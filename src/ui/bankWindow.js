@@ -291,7 +291,7 @@ export class BankWindow {
    *  purses, which is how a player sees at a glance what a deposit
    *  can actually reach.
    *
-   *  AUDIT 54: and the line itself is `playerEntity.GetGoldAmount()`
+   *  AUDIT 58: and the line itself is `playerEntity.GetGoldAmount()`
    *  (:241) - coins PLUS every letter of credit in the pack
    *  (PlayerEntity.cs:1313-1316) - not the bare coin counter. This
    *  window read the coins alone, on the one screen whose DEPOSIT

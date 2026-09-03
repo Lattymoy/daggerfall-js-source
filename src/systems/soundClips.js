@@ -153,7 +153,7 @@ export function swingSoundFor(weapon) {
   return SOUND.None;   // DFU's `default:` - anything that is not a weapon rings nothing
 }
 
-/** AUDIT 54: THE TWO VOLUME SCALES A HIT SOUND IS PLAYED AT. The clip
+/** AUDIT 58: THE TWO VOLUME SCALES A HIT SOUND IS PLAYED AT. The clip
  *  FAMILIES are shared - EnemySounds.PlayHitSound and PlayerFootsteps'
  *  PlayWeaponHitSound/PlayWeaponlessHitSound roll the same Hit1
  *  ranges - but the volumes are not, and the port had EnemySounds'

@@ -239,7 +239,7 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     'the JOYSTICK tab note that sends the reader to this row must still be there');
 });
 
-test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A row, and the removal row stops saying nothing ships', () => {
+test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A row, and the removal row stops saying nothing ships', () => {
   // The file's only roads row said the system was "REMOVED WHOLE" and
   // "Nothing of this departure ships". Five modules, 2 MB of vendored
   // third-party data and an ungated call in the classic lane say
@@ -262,7 +262,7 @@ test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
   assert.match(row, /Roads\.md:194/, 'and cites Mac’s always-on call');
   assert.match(row, /`systems\/travel\.js` stays the verbatim port/, 'and what stayed removed');
-  // AUDIT 54 R1 (d): the bake's cache version is a DERIVABLE figure like
+  // AUDIT 58 R1 (d): the bake's cache version is a DERIVABLE figure like
   // every other in this file - the row states it, roadsCache.js IS it.
   const ver = /GENERATOR_VERSION (\d+)/.exec(row);
   assert.ok(ver, 'the row no longer names the bake\u2019s cache version');
@@ -277,7 +277,7 @@ test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A ro
     assert.ok(rootFile(`src/world/${m}`).length > 0, `src/world/${m} ships`);
   }
   const host = rootFile('src/scenes/world.js');
-  // AUDIT 54 R1 (b): THE GATE IS THE STATEMENT ABOVE, NOT THE CALL LINE.
+  // AUDIT 58 R1 (b): THE GATE IS THE STATEMENT ABOVE, NOT THE CALL LINE.
   // This read the two `terrainGen.setRoads*` LINES and rejected
   // `isEnhanced` inside them, which is not how a gate is written: wrapping
   // the whole block (`if (isEnhanced()) loadModRoads().then(...)`, or an
@@ -299,7 +299,7 @@ test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, 2,
     'and world.js holds no third wire outside it');
 
-  // AUDIT 54 R1 (a): the row's own line cite RESOLVES. It read
+  // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
   // `world.js:327-330` - four lines of the ROADS 3/22 comment block - from
   // the day it was written, and the pin above re-derived the no-gate fact
   // without ever reading the number, so the one pointer a reader is sent to
@@ -328,7 +328,7 @@ test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.ok(!/Basic Roads' design credited, none of its data/.test(rootFile('bible/Home.md')),
     'Home.md still says none of his data ships');
 
-  // AUDIT 54 (records): F5 swept the BIBLE and stopped there, so two
+  // AUDIT 58 (records): F5 swept the BIBLE and stopped there, so two
   // `src/` headers went on reasoning from the retired premise - and
   // both used it to say something about themselves. windmills.js
   // called itself "the only departure of its kind" because the roads

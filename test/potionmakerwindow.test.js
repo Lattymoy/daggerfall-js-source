@@ -10,7 +10,7 @@ import {
 import {
   POTION_RECIPES, potionRecipeKey, CAULDRON_CAPACITY,
 } from '../src/systems/potions.js';
-// AUDIT 54: the gold label is GetGoldAmount, not the bare counter
+// AUDIT 58: the gold label is GetGoldAmount, not the bare counter
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -285,7 +285,7 @@ test('M2: the box and the picker swallow input before the window does', () => {
   assert.equal(w.done, true);
 });
 
-test('AUDIT 54: the mixer\'s gold label is GetGoldAmount - coins PLUS letters of credit (:138)', () => {
+test('AUDIT 58: the mixer\'s gold label is GetGoldAmount - coins PLUS letters of credit (:138)', () => {
   // Refresh writes `goldLabel.Text = GameManager.Instance.PlayerEntity
   // .GetGoldAmount().ToString()` (DaggerfallPotionMakerWindow.cs:138),
   // and GetGoldAmount is `goldPieces + items.GetCreditAmount()`

@@ -77,7 +77,7 @@
 // carries it as THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN
 // BUILD TAG, cited BY NAME because a Ledger line number rots; the row
 // is the title screen's branding row applied to the second and last
-// place DFU writes its own name into a game screen. AUDIT 54's records
+// place DFU writes its own name into a game screen. AUDIT 58's records
 // lane wrote that row: the sentence here had claimed the approval for
 // a wave before anyone wrote it down, which is the AUDIT 17m shape.
 

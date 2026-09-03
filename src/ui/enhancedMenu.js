@@ -215,7 +215,7 @@ function savedGame() {
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
-    // AUDIT 54: THE PURSE IS A COUNTER, NOT AN ITEM. E4 moved gold onto
+    // AUDIT 58: THE PURSE IS A COUNTER, NOT AN ITEM. E4 moved gold onto
     // GoldPieces (`data.playerEntity.goldPieces = entity.GoldPieces`,
     // SerializablePlayer.cs:133 - systems/save.js's snapshotPlayer
     // writes snap.goldPieces beside the collections), and restorePlayer

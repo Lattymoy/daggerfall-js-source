@@ -140,7 +140,7 @@ test('magicfidelity magic-8/9: the trap arms and the enemy AoC wiring', () => {
   const hm = readFileSync(join(root, 'src/scenes/hostMagic.js'), 'utf8');
   assert.ok(hm.includes('let readiedFree = false;'), 'the engine carries readySpellDoesNotCostSpellPoints');
   assert.ok(hm.includes('!readiedFree && silenceBlocksCast'), 'a free ready bypasses the cast silence gate (:404)');
-  // AUDIT 54: the price is captured ONCE at the ready
+  // AUDIT 58: the price is captured ONCE at the ready
   // (EntityEffectManager.cs:326-328 readySpellCastingCost) and the
   // cast spends the STORED number, so the free arm zeroes it there.
   assert.ok(hm.includes('const spellPointCost = free ? 0 : calculateCastCost(sp, playerEntity).sp;'), 'a free ready is priced at nothing');

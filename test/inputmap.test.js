@@ -105,7 +105,7 @@ test('I2: no host reads a bound key raw - the sweep', () => {
       for (const m of line.matchAll(/keys\.has\('([^']+)'\)/g)) {
         if (bound.has(m[1])) offenders.push(`${rel}:${i + 1} reads ${m[1]} raw`);
       }
-      // AUDIT 54 (talk lane) WIDENED THE SWEEP. The rule is "a read the
+      // AUDIT 58 (talk lane) WIDENED THE SWEEP. The rule is "a read the
       // registry cannot rebind", and `keys.has('<code>')` was only ONE
       // shape of it: townTalk.js and dungeon.js each carried a
       // `{ F1: 'steal', F2: 'grab', ... }[e.code]` LOOKUP TABLE keyed on
@@ -177,7 +177,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // with the windows themselves built and mounted elsewhere.
   const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/,   // AUDIT 54 (f3/input): + the held-keys Set, so a rebound COMBO reaches this table too
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/,   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound COMBO reaches this table too
     'the interior arm routes the shared table');
   // Each hook must MOUNT something, not merely exist - a named method
   // with an empty body answers the key and opens nothing, which is

@@ -304,7 +304,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.ok(!WM.includes('interiorArrows.update(dt);'), 'the bare geometry call is gone');
   assert.match(call, /playerFeet: player\.pos,/);
   assert.match(call, /onPlayerHit: \(m\) => \{/);
-  // AUDIT 54 (review): the target list is the HOST'S WHOLE DATABASE,
+  // AUDIT 58 (review): the target list is the HOST'S WHOLE DATABASE,
   // not the encounter pool alone. It read `interiorFoes?.foes` here,
   // so a shaft loosed at a watchman `spawnCityGuardsInside` had stood
   // in the room met nothing and died on geometry - arrowFlight.js's

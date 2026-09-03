@@ -13,7 +13,7 @@ import { DFPalette } from '../src/formats/dfPalette.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// AUDIT 54: the window's two money reads are GetGoldAmount
+// AUDIT 58: the window's two money reads are GetGoldAmount
 import { letterOfCredit } from '../src/systems/inventory.js';
 import { goldAmount, totalGoldAmount, deductGold } from '../src/systems/court.js';
 
@@ -388,7 +388,7 @@ test('U40: the offer box expands %cpn, %cn and %a - the LIVE PROBE read all thre
   assert.notEqual(price, w.box.cost, 'the haggle really did move it');
 });
 
-test('AUDIT 54: the window asks GetGoldAmount - coins PLUS letters of credit - in BOTH places, and every host wires it', () => {
+test('AUDIT 58: the window asks GetGoldAmount - coins PLUS letters of credit - in BOTH places, and every host wires it', () => {
   // DaggerfallTradeWindow reads PlayerEntity.GetGoldAmount() twice:
   // the cost strip's gold label (:488) and ShowTradePopup's refusal
   // (:1116 `WindowMode != Sell && WindowMode != SellMagic &&

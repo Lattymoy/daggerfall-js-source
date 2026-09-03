@@ -1,4 +1,4 @@
-// AUDIT 54 (f3/input) - ACTIVATECURSOR, ONE READER PER HOST.
+// AUDIT 58 (f3/input) - ACTIVATECURSOR, ONE READER PER HOST.
 //
 // PlayerMouseLook.cs:190-198 reads Actions.ActivateCursor in exactly
 // one place and flips `cursorActive` once per press, behind one guard:
@@ -72,7 +72,7 @@ function stubDom() {
   return dom;
 }
 
-test('AUDIT 54 (f3/input): ONE Enter is ONE toggle, and the composed guard is DFU’s !IsGamePaused', () => {
+test('AUDIT 58 (f3/input): ONE Enter is ONE toggle, and the composed guard is DFU’s !IsGamePaused', () => {
   const dom = stubDom();
   const b = createBindings(); resetDefaults(b); setBindings(b);
   setCursorActive(false);
@@ -110,7 +110,7 @@ test('AUDIT 54 (f3/input): ONE Enter is ONE toggle, and the composed guard is DF
   }
 });
 
-test('AUDIT 54 (f3/input): TWO registrations is the defect - one press, two flips, net ZERO', () => {
+test('AUDIT 58 (f3/input): TWO registrations is the defect - one press, two flips, net ZERO', () => {
   // The shape ?world and ?exterior shipped, kept here as the reason the
   // count below is a law and not a tidiness rule. This is the finding's
   // own reproduction, run against the real module.
@@ -129,7 +129,7 @@ test('AUDIT 54 (f3/input): TWO registrations is the defect - one press, two flip
   }
 });
 
-test('AUDIT 54 (f3/input): every ENTRY host binds ActivateCursor at most once (THE FOUR HOSTS RULE)', () => {
+test('AUDIT 58 (f3/input): every ENTRY host binds ActivateCursor at most once (THE FOUR HOSTS RULE)', () => {
   // DISCOVERED, not enumerated - the same lesson as the U47 host sweep
   // in test/nativeinventory.test.js. The entry hosts are whatever
   // src/main.js boots, and the registrations that reach one of them are

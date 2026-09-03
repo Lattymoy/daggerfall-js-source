@@ -167,7 +167,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   const keys = new Set();
   addEventListener('keydown', (e) => {
     // U47: FIRST, before any early return - one list, in ui/input.js.
-    // AUDIT 54 (f2/hosts): this host was the FIFTH keydown and the U47
+    // AUDIT 58 (f2/hosts): this host was the FIFTH keydown and the U47
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law

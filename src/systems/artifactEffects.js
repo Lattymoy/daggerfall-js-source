@@ -34,7 +34,7 @@
 
 import { savingThrow, ELEMENTS, EFFECT_FLAGS } from './spellcast.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { equipTableOf } from './equip.js';   // AUDIT 54: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
+import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf } from './statMods.js';
@@ -342,7 +342,7 @@ export function artifactHook(hookName) {
  * CurrentHealth write does. Registered by worldTick (the racial hit
  * hook's shape).
  *
- * AUDIT 54: AND THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+ * AUDIT 58: AND THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
  * does return `durabilityLoss = reflectedDamage`, but this call site
  * declares `DaggerfallUnityItem item = null;` (FormulaHelper.cs:707),
  * never assigns it, passes it as `sourceItem` and DISCARDS the

@@ -404,7 +404,7 @@ test('audit18 ui-native F12: CharSheet.click - the exit button closes, every DFU
   // and a point on no button is NOT consumed
   assert.equal(new CharSheet(e).click(300, 195), false);
 
-  // AUDIT 54: THE EIGHT ATTRIBUTE POPUP BUTTONS. DFU lays
+  // AUDIT 58: THE EIGHT ATTRIBUTE POPUP BUTTONS. DFU lays
   // `(141, 6 + 24*i, 28, 20)` over the stat column
   // (DaggerfallCharacterSheetWindow.cs:209-216) and
   // StatButton_OnMouseClick's NOT-levelling arm (:925-936) plays

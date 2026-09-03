@@ -280,7 +280,7 @@ test('V3: the Ring of Namira reflects by the attacker\'s TEAM at the attack tail
   const skel = { mobileType: MOBILE_TYPES.SkeletalWarrior, health: 40 };
   onPlayerStruckByEnemy(skel, p, 10);
   assert.equal(skel.health, 20, '10 x 2 reflected');
-  // AUDIT 54: THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+  // AUDIT 58: THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
   // returns durabilityLoss, but FormulaHelper.cs:707 passes
   // `sourceItem: item` with item still null and :712-716 discards the
   // PayloadCallbackResults - only EntityEffectManager's dispatchers

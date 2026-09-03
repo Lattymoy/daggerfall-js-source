@@ -34,7 +34,7 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun is up and the ground is lit
 const MODE = arg('mode', 'enhanced');
-// AUDIT 54 (f3/render): EE3's `--ground` knob stood here and passed
+// AUDIT 58 (f3/render): EE3's `--ground` knob stood here and passed
 // `&ground=<mode>` to a page that has not read it since 8256ae2 ("REVERT
 // the Enhanced Environments ground arc": "no reader of tileArrayFor,
 // enhancedGround or groundMode remains anywhere"), and then printed

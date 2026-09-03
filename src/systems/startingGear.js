@@ -118,7 +118,7 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
     add({ group: 'Weapons', templateIndex: STARTING_WEAPON_BY_CLASS[i], material: STARTING_MATERIAL_BY_CLASS[i] });
     if (i === ARCHER_CLASS_INDEX) {
       add({ group: 'Weapons', templateIndex: BATTLE_AXE, material: 1 });
-      // AUDIT 54: the pile is minted through the ONE home of
+      // AUDIT 58: the pile is minted through the ONE home of
       // CreateWeapon's arrow arm, not hand-built. DFU builds it as
       // `ItemBuilder.CreateWeapon(Weapons.Arrow, WeaponMaterialTypes.Iron)`
       // then writes the stack after (ItemHelper.cs:1342-1344), and that

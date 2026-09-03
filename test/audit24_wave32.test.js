@@ -9,7 +9,7 @@ import {
 } from '../src/systems/worldTick.js';
 import { createPlayerTicker, subscribeFoePools } from '../src/scenes/shared.js';
 import { STAT_KEYS_ORDER } from '../src/systems/statMods.js';
-import { entityIsParalyzed } from '../src/systems/effects.js';   // AUDIT 54: what the interior pools read every frame and never aged
+import { entityIsParalyzed } from '../src/systems/effects.js';   // AUDIT 58: what the interior pools read every frame and never aged
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const bleed = (rounds) => ({
@@ -120,7 +120,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   const x = rd('src/scenes/exterior.js');
   assert.ok(x.includes('subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);'),
     'the town host subscribes its watch');
-  // AUDIT 54 (review): AND THE INTERIOR HOST, which this test's title
+  // AUDIT 58 (review): AND THE INTERIOR HOST, which this test's title
   // has always claimed and never checked. It mounts two pools
   // (interiorFoes since IF, interiorGuards since ROAD-B), ran NO
   // fan-out at all - `runMagicRoundsFor` never named worldModes, so
@@ -128,7 +128,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // READ the effect list every frame. Nothing ended one: a Continuous
   // Damage bundle on a foe in a shop never took a round, a poison
   // never fired, and a paralysed foe stayed paralysed for the life of
-  // the interior. AUDIT 54 opened the enchant door that lands those
+  // the interior. AUDIT 58 opened the enchant door that lands those
   // payloads there, so the gap stopped being latent.
   const m = rd('src/scenes/worldModes.js');
   assert.ok(m.includes('subscribeFoePools(interiorTicker, [() => interiorFoes?.foes ?? [], () => interiorGuards?.guards ?? []], insideFoeSinks);'),
@@ -138,7 +138,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
     assert.equal((src.match(/const foeSinks = \(g\) => \(\{/g) ?? []).length, 1, `${name}: one foeSinks`);
   }
   assert.ok(x.includes('\n    foeSinks,\n'), 'exterior.js: the cast engine takes the same one');
-  // AUDIT 54 (review): the world host's cast engine takes it through
+  // AUDIT 58 (review): the world host's cast engine takes it through
   // the POOL-MEMBERSHIP router instead, because its interior mode has
   // live foes now and a record from a building must knock back and die
   // against THAT building's collider - `enchantFoeSinks` still answers
@@ -161,7 +161,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   assert.ok(!/for \(let r = _prevMinute;/.test(d), 'and its old private minute loop is gone');
 });
 
-test('AUDIT 54: an interior foe\'s bundle AGES AND EXPIRES on its host\'s ticker - both pools, null-safe', () => {
+test('AUDIT 58: an interior foe\'s bundle AGES AND EXPIRES on its host\'s ticker - both pools, null-safe', () => {
   // The behavioural half of the pin above. The interior host's fan-out
   // is the same one call, so what is checked here is what the missing
   // call cost: an effect that is READ every frame (exteriorFoes.js and

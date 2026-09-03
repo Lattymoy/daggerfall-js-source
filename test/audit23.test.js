@@ -147,7 +147,7 @@ test('AUDIT 23: both dungeon-mounting hosts pass the spawn applier; the snapshot
   // Both hosts are pinned to the three-argument form.
   const dj = readFileSync(join(root, 'src/scenes/dungeon.js'), 'utf8');
   for (const [name, sourceText] of [['dungeon.js', dj], ['worldModes.js', wm]]) {
-    // AUDIT 54 (f3/input): a FOURTH argument joined - the host's
+    // AUDIT 58 (f3/input): a FOURTH argument joined - the host's
     // held-keys Set, without which routeKey's actionOf cannot see a
     // combo (InputManager.cs:1666-1712). The spawn applier must stay
     // THIRD, which is what this pin is about, so the tail is read too.

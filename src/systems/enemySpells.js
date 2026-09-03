@@ -57,7 +57,7 @@ export const ENEMY_MAGIC_SKILL = 80;
  *  order fire/cold/poison/shock/magic): fire 352, cold 353,
  *  poison 350, shock 351, magic 349.
  *
- *  AUDIT 54: these are DAGGER.SND record IDs, not record indices.
+ *  AUDIT 58: these are DAGGER.SND record IDs, not record indices.
  *  EntityEffectManager.cs:44-48 names every one of them `...SoundID`,
  *  and PlayCastSound (:1948-1961) spends them through
  *  `audioSource.PlayOneShot((uint)castSoundID)` - the UINT overload

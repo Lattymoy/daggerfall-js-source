@@ -1,4 +1,4 @@
-// AUDIT 54 (f3/input) - THE THREE UNREACHABLE ROWS.
+// AUDIT 58 (f3/input) - THE THREE UNREACHABLE ROWS.
 //
 // ui/input.js's overlayAction tests the typed-character class FIRST:
 //   if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key)) return 'char:' + e.key;
@@ -31,7 +31,7 @@ import { ChargenFlow } from '../src/ui/chargen.js';
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 const STATS = { strength: 40, intelligence: 30, willpower: 35, agility: 45, endurance: 50, personality: 25, speed: 55, luck: 20 };
 
-test('AUDIT 54 (f3/input): overlayAction can never answer "minus" or "reroll" - the table is honest now', () => {
+test('AUDIT 58 (f3/input): overlayAction can never answer "minus" or "reroll" - the table is honest now', () => {
   // Every printable single character, which is every key the branch
   // above the table can claim.
   const answers = new Set();
@@ -65,7 +65,7 @@ test('AUDIT 54 (f3/input): overlayAction can never answer "minus" or "reroll" - 
   assert.ok(fn.indexOf("return 'char:' + e.key;") < fn.indexOf('return ({'), 'and it is genuinely first');
 });
 
-test('AUDIT 54 (f3/input): a LevelUpScreen point spent with "+" comes back with "-"', () => {
+test('AUDIT 58 (f3/input): a LevelUpScreen point spent with "+" comes back with "-"', () => {
   const s = new LevelUpScreen({ stats: { ...STATS }, pendingLevel: 2 }, () => 0);
   const pool0 = s.pool, str0 = s.working.strength;
   assert.ok(pool0 > 0, 'the rollout has a pool to spend');
@@ -85,7 +85,7 @@ test('AUDIT 54 (f3/input): a LevelUpScreen point spent with "+" comes back with 
   assert.match(src('ui/charsheet.js'), /'\+\/- assign {3}ENTER when pool 0'/);
 });
 
-test('AUDIT 54 (f3/input): chargen’s R rerolls from the keyboard, as the screen has always claimed', () => {
+test('AUDIT 58 (f3/input): chargen’s R rerolls from the keyboard, as the screen has always claimed', () => {
   const f = new ChargenFlow([], () => 0);
   f.state = 'stats';
   let rolls = 0;

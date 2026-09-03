@@ -19,7 +19,7 @@ import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoic
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
-import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 54: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
+import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
@@ -110,7 +110,7 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   entity.items = entity.items ?? [];
   const worn = equipmentItems(eq);
   entity.items.push(...worn);
-  // AUDIT 54: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
+  // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
   // :1421-1450 pair every roll with
   // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before
   // `Items.AddItem(item)` - a foe's table is genuinely worn, and
@@ -268,7 +268,7 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
   if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   const vamp = vampireAttackVoice(playerEntity, rolls);
-  // AUDIT 54: the hard 0 is DFU's. PlayAttackVoice applies the lift in
+  // AUDIT 58: the hard 0 is DFU's. PlayAttackVoice applies the lift in
   // the `customSound == SoundClips.None` arm only (FPSWeapon.cs:313
   // -320); the override arm at :323 is a bare
   // `PlayOneShot(customSound, 0, 1f)` at the source's own pitch.
@@ -324,7 +324,7 @@ export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
 }
 
 /** The two player-voice sites play the same way - one shot, at the
- *  listener, pitch-lifted. AUDIT 54: the lift is APPLIED here now.
+ *  listener, pitch-lifted. AUDIT 58: the lift is APPLIED here now.
  *  FPSWeapon.cs:316-319 (the attack grunt) and PlayerFootsteps.cs:359
  *  -362 (the pain cry) both read the source's pitch, add
  *  Random.Range(0, 0.3f), play the one shot and put the pitch back -
@@ -435,7 +435,7 @@ export function applyDamageToNonPlayer(attacker, target, {
   weapon = null, direction = null, bowAttack = false,
   dealDamage, calculateAttackDamage, audio = null, rolls = Math.random,
   hitEffects = null,
-  // AUDIT 54: THE TWO SEAMS CalculateAttackDamage OWNS AND THIS
+  // AUDIT 58: THE TWO SEAMS CalculateAttackDamage OWNS AND THIS
   // PAYLOAD NEVER OFFERED. FormulaHelper.cs:691-696 inflicts the
   // weapon's poison inside the formula for EVERY attacker/target pair
   // - `if (damage > 0 && weapon.poisonType != Poisons.None) {

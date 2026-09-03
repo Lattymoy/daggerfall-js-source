@@ -35,7 +35,7 @@ test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane s
   assert.match(menu, /setModSetting\(vendor, key, !modSetting\(vendor, key\)\)/, 'a click flips one');
 });
 
-// AUDIT 54 F3: THE SWITCH HAS TO CROSS THE SEAM, NOT JUST BE READ AT THE
+// AUDIT 58 F3: THE SWITCH HAS TO CROSS THE SEAM, NOT JUST BE READ AT THE
 // CALL SITE. The pin above matched the source text of the call and of the
 // fallback arm; nothing asserted that setRoadsData or the worker's his-data
 // arm FORWARDS `smooth`. All three rebuilt the network object field by
@@ -44,7 +44,7 @@ test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane s
 // as `undefined`, `undefined !== false` ran the smoother anyway, and the
 // host logged ", smoothing off" on the exact path where smoothing still
 // ran. These three drive the wires instead of reading them.
-test('ROADS 24 / AUDIT 54 F3: setRoadsData carries `smooth` into the network this thread keeps', async () => {
+test('ROADS 24 / AUDIT 58 F3: setRoadsData carries `smooth` into the network this thread keeps', async () => {
   const { TerrainGenClient } = await import('../src/world/terrainGenClient.js');
   const net = () => ({ roads: new Uint8Array(8), tracks: new Uint8Array(8) });
   const client = new TerrainGenClient({ woods: null });   // no bytes -> no worker
@@ -58,7 +58,7 @@ test('ROADS 24 / AUDIT 54 F3: setRoadsData carries `smooth` into the network thi
   assert.equal(client.roads().smooth, true, 'a caller with no switches keeps the kernel’s default-on gate');
 });
 
-test('ROADS 24 / AUDIT 54 F3: the copy posted to the worker carries `smooth` too', async () => {
+test('ROADS 24 / AUDIT 58 F3: the copy posted to the worker carries `smooth` too', async () => {
   const { TerrainGenClient } = await import('../src/world/terrainGenClient.js');
   const posted = [];
   const fake = { postMessage: (m) => posted.push(m), terminate() {} };
@@ -73,7 +73,7 @@ test('ROADS 24 / AUDIT 54 F3: the copy posted to the worker carries `smooth` too
   assert.equal(posted.at(-1).net.smooth, true);
 });
 
-test('ROADS 24 / AUDIT 54 F3: the worker’s his-data arm honours `smooth` - the kernel’s heights prove it', async () => {
+test('ROADS 24 / AUDIT 58 F3: the worker’s his-data arm honours `smooth` - the kernel’s heights prove it', async () => {
   // The worker's `roads` is module-private, so this drives the REAL message
   // loop end to end: init, his network, one job - and reads the answer's
   // heights. With the switch on, smoothRoadHeights runs over the road tiles
@@ -108,7 +108,7 @@ test('ROADS 24 / AUDIT 54 F3: the worker’s his-data arm honours `smooth` - the
   }
 });
 
-// AUDIT 54 F3 (R1): AND THE FOURTH REBUILD, ON THE OTHER PATH. The three
+// AUDIT 58 F3 (R1): AND THE FOURTH REBUILD, ON THE OTHER PATH. The three
 // pins above walk the VENDORED arm, where the worker replies `net: null`.
 // On the OURS arm the worker replies with a two-field slice of the network
 // it built (for the map), and the client's reply handler rebuilt `_roads`
@@ -117,7 +117,7 @@ test('ROADS 24 / AUDIT 54 F3: the worker’s his-data arm honours `smooth` - the
 // set. Every same-thread build after that - a worker job error, a worker
 // death, a solo `generate()` - then smoothed with SmoothRoads off. This
 // drives the REAL client with a fake worker and reads the kernel's heights.
-test('ROADS 24 / AUDIT 54 F3: the worker\u2019s roads REPLY keeps the switches - the same-thread kernel\u2019s heights prove it', async () => {
+test('ROADS 24 / AUDIT 58 F3: the worker\u2019s roads REPLY keeps the switches - the same-thread kernel\u2019s heights prove it', async () => {
   const { TerrainGenClient } = await import('../src/world/terrainGenClient.js');
   const { WoodsFile, MAP_WIDTH, MAP_HEIGHT } = await import('../src/formats/woodsFile.js');
   const bytes = syntheticWoods(MAP_WIDTH, MAP_HEIGHT);

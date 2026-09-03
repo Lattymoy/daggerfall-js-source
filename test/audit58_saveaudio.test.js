@@ -1,4 +1,4 @@
-// AUDIT 54, fix lane 3 (save and audio): the four laws whose fix
+// AUDIT 58, fix lane 3 (save and audio): the four laws whose fix
 // touches more hosts than any single suite owns - the combat-voice
 // pitch lift, PlayerFootsteps' FootstepVolumeScale on its three
 // one-shots, the graveyard ambient layer's second exterior host, and
@@ -42,7 +42,7 @@ function riggedEngine() {
   return { e, shots };
 }
 
-test('AUDIT 54: the combat-voice pitch lift REACHES the source, flat and positional', () => {
+test('AUDIT 58: the combat-voice pitch lift REACHES the source, flat and positional', () => {
   // EnemySounds.cs:172-175, FPSWeapon.cs:316-319 and PlayerFootsteps.cs
   // :359-362 are the same four lines three times: read the source's
   // pitch, add Random.Range(0, 0.3f), play the one shot, put it back.
@@ -58,7 +58,7 @@ test('AUDIT 54: the combat-voice pitch lift REACHES the source, flat and positio
   assert.deepEqual(shots, [1, 1.2, 1, 1.3], 'the default is 1 and a lift really lands on the source');
 });
 
-test('AUDIT 54: every combat-voice play site spends the lift it was handed', () => {
+test('AUDIT 58: every combat-voice play site spends the lift it was handed', () => {
   // The value is produced in exactly two places (combatVoices.js's
   // combatVoice/playerVoice) and consumed at thirteen. A site that
   // takes the voice object and plays only `.clip` is the defect.
@@ -84,7 +84,7 @@ test('AUDIT 54: every combat-voice play site spends the lift it was handed', () 
   assert.match(rd('src/scenes/hostCombat.js'), /if \(vamp != null\) return \{ clip: vamp, pitchLift: 0 \};/);
 });
 
-test('AUDIT 54: fall damage, the hard fall and the large splash carry FootstepVolumeScale', () => {
+test('AUDIT 58: fall damage, the hard fall and the large splash carry FootstepVolumeScale', () => {
   // PlayerFootsteps.cs:30 declares FootstepVolumeScale = 0.7f, and all
   // THREE of the component's non-stride one-shots pass it -
   // ApplyPlayerFallDamage (:307-311), HardFallAlert (:315-319) and
@@ -117,7 +117,7 @@ test('AUDIT 54: fall damage, the hard fall and the large splash carry FootstepVo
   }
 });
 
-test('AUDIT 54: the graveyard ambient layer is armed in BOTH exterior hosts', () => {
+test('AUDIT 58: the graveyard ambient layer is armed in BOTH exterior hosts', () => {
   // AmbientEffectsPlayer.Start subscribes PlayerGPS.OnEnterLocationRect
   // on EVERY instance (:89) and the handler arms IsCemeteryNearby when
   // the entered location is a Graveyard and the player is outside
@@ -146,7 +146,7 @@ test('AUDIT 54: the graveyard ambient layer is armed in BOTH exterior hosts', ()
   }
 });
 
-test('AUDIT 54: the blow that lands ON the player is PlayerFootsteps\' 1, not EnemySounds\' 1.1', () => {
+test('AUDIT 58: the blow that lands ON the player is PlayerFootsteps\' 1, not EnemySounds\' 1.1', () => {
   // Two scales through one signature (DaggerfallAudioSource.cs:188).
   // EnemySounds.PlayHitSound ends PlayOneShot(sound, 1, 1.1f) - the
   // PLAYER striking a foe. EnemyAttack.SendDamageToPlayer (:404-415)

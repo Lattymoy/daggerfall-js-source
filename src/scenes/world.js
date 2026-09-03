@@ -66,17 +66,17 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
-import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 54: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
-  addPermanentScene, interiorSceneName,   // AUDIT 54: the two names AssignShipToPlayer makes permanent (DaggerfallBankManager.cs:103-110)
+  addPermanentScene, interiorSceneName,   // AUDIT 58: the two names AssignShipToPlayer makes permanent (DaggerfallBankManager.cs:103-110)
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';
-import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
@@ -84,7 +84,7 @@ import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e:
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
-import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 54 F4
+import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
 import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
@@ -102,7 +102,7 @@ import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
 import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
-import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 54: MacroHelper.GetRandomFullName, one home
+import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
@@ -144,8 +144,8 @@ import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, 
 import { testPresetById, applyTestCharacter } from '../systems/testRoom.js';   // TR3: the Test Room's one home
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
-import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 54: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
-import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 54: DFU's two hit volumes
+import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 58: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
+import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
@@ -166,7 +166,7 @@ import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the Ques
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 54: the membership question the Wabbajack door asks too
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -307,11 +307,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
   // W1: the window reads the map through ContentReader's own
   // dictionary - one MapSummary per location, keyed by map pixel.
-  // AUDIT 54 F4: hoisted here from the travel block below because
+  // AUDIT 58 F4: hoisted here from the travel block below because
   // SmoothLocationNeighbourhood is HasLocation's other caller and has
   // to run before the first pixel streams.
   const mapDict = buildMapDict(maps);
-  // AUDIT 54 F4: StreamingWorld.ReadyCheck's two runtime data repairs
+  // AUDIT 58 F4: StreamingWorld.ReadyCheck's two runtime data repairs
   // (StreamingWorld.cs:1676-1685), which had no port. Both mutate the
   // in-memory reader buffers ONCE, before anything streams: the
   // dilation hides the raised square coastline by pushing land climate
@@ -441,7 +441,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
-  // AUDIT 54 (f3/render): the rain's two DIALS, read once at boot from
+  // AUDIT 58 (f3/render): the rain's two DIALS, read once at boot from
   // the params this host already carries. `enhanced` is the LANE - the
   // sky controller's own answer (scenes/shared.js createSkyController),
   // fixed for a scene - so the enhanced lane compiles WX1's program in
@@ -1480,7 +1480,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // like onCrime - npcSession mounts below, and the first topics set
     // (the streaming update) runs long after boot.
     onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
-    // AUDIT 54 (talk lane): the mode keys sit UNDER the window gate, and
+    // AUDIT 58 (talk lane): the mode keys sit UNDER the window gate, and
     // this host's second slot is the mode machine's - a window held
     // there is invisible to townTalk's own `overlay`. `modes` is
     // declared below, so the read is deferred (the regionIndex idiom).
@@ -1803,7 +1803,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (dmg <= 0) return;
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
-        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         // AUDIT 24 (wave 46): PlayerFootsteps hears the same
         // RemoveHealth the flash does - a 40% cry in the player's own
         // race and gender.
@@ -1828,7 +1828,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       hurtPlayer(playerEntity, dmg);
-      audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+      audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
       // EnemyAttack.SendDamageToPlayer (:404-406) SendMessages
       // "RemoveHealth" for EVERY attacker, and PlayerFootsteps
       // .RemoveHealth (:348-364) answers with the 40% pain cry.
@@ -2096,7 +2096,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     surfacePlayer,
     // X-slice: encounter foes are spell targets too.
     //
-    // AUDIT 54 (review): and this list kept the exact interior SCENE
+    // AUDIT 58 (review): and this list kept the exact interior SCENE
     // GATE the lane struck from its enchant twin below. This is the
     // only cast engine indoors - worldModes takes this instance (`M2:
     // the one cast engine + SPELLS.STD ride into the interior arm`),
@@ -2172,7 +2172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // spell points), applySpellToTarget CastWhenStrikes' landing with
   // saves rolled. nearbyFoes serves the affinity scans off the live
   // pools; spawnFoe is SoulBound's break release. The interior mode
-  // shares this mount, and AUDIT 54 gave it a REAL pool: the clause
+  // shares this mount, and AUDIT 58 gave it a REAL pool: the clause
   // that stood here said "its foes list is empty, so the scan arms
   // answer none", which stopped being true when IF mounted
   // interiorFoes and ROAD-B stood the watch beside it - the arms
@@ -2224,7 +2224,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // supplies the three live reads it asks for.
   const _mode = () => (modes?.mode ?? 'exterior');
   const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
-  // AUDIT 54: the INTERIOR pool is the third live read, and the host
+  // AUDIT 58: the INTERIOR pool is the third live read, and the host
   // already answers it - `insideFoes()` is worldModes' own join of
   // interiorFoes and the indoor watch, the same one this file joins
   // for the hostility database at `_liveEnemyDatabase` above. Its
@@ -2234,7 +2234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _insidePool = () => modes?.insideFoes?.() ?? [];
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes], _insidePool);
   const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
-  /** AUDIT 54 (review): THE WABBAJACK'S TRANSFORM, routed by the same
+  /** AUDIT 58 (review): THE WABBAJACK'S TRANSFORM, routed by the same
    *  POOL MEMBERSHIP the sinks are. This body sat inside the mount
    *  below and reached `exteriorFoes.removeFoe` / `.spawnFoe`
    *  UNCONDITIONALLY, over a record the getter above had just widened.
@@ -2529,7 +2529,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
-    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
+    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // Q4-v: the live machine's log walk and the player's notebook
@@ -2677,7 +2677,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // inside the third `else`, after the other two arms have
       // returned.
       preventedMessage: getPreventedRestMessage,
-      // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+      // AUDIT 58: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
       // a pending `give pc ... notify` offer takes this press and
       // the rest window stays shut (ui/pendingOffer.js).
       giveOffer,
@@ -2689,7 +2689,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      // AUDIT 54: the offer took the press - the item was handed
+      // AUDIT 58: the offer took the press - the item was handed
       // over inside GiveOffer() and there is nothing to say.
       if (d.kind === 'offer') return;
       if (d.kind === 'blocked') {
@@ -3717,7 +3717,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
     if (!extras) return false;
-    // AUDIT 54: StartFromClassicSave.cs:616 -
+    // AUDIT 58: StartFromClassicSave.cs:616 -
     // `Banking.DaggerfallBankManager.AssignShipToPlayer(saveVars
     // .PlayerOwnedShip)`, and AssignShipToPlayer is TWO statements
     // (DaggerfallBankManager.cs:488-497): the deed AND both of the
@@ -3800,7 +3800,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT);
       return;
     }
-    // AUDIT 54: the rung the comment above already named and the code
+    // AUDIT 58: the rung the comment above already named and the code
     // did not carry - `if (!GiveOffer())` (DaggerfallUI.cs:612) sits
     // between AreEnemiesNearby and the sun-damage box. A pending
     // `give pc _item_ notify` offer is handed over HERE and the press
@@ -4053,7 +4053,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
-    /** AUDIT 54 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
+    /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
      *  panel of the large HUD (ui/hudLarge.js:229), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
@@ -4215,7 +4215,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shop door as outside it (test/modalkeys.test.js red-proofs the
     // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
-    // AUDIT 54 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
+    // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
     // held-keys Set (ui/input.js:95-105), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
@@ -4303,7 +4303,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
-  // AUDIT 54 (f3/input) - THE ONE READER. This host builds the mode
+  // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
   // (player/pointerLock.js:54-81), so ONE Enter flipped it twice and
@@ -5100,7 +5100,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   /** NameHelper.FullName for the current region's bank - the two name
    *  macros (%fn, %mn) draw it (TalkManagerMCP.cs:60-71).
-   *  AUDIT 54: the bank is PlayerGPS.CurrentRegionIndex's, which is
+   *  AUDIT 58: the bank is PlayerGPS.CurrentRegionIndex's, which is
    *  the POLITIC-derived index _questRegionIndex answers - the current
    *  LOCATION's regionIndex is -1 across the whole wilderness and fell
    *  through getNameBankOfRegion to Breton, the same drift AUDIT 24
@@ -5467,7 +5467,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // The stamp is returned WHENEVER the source was idle, even if the
     // clip itself failed to start: DFU stamps it beside PlayOneShot,
     // which swallows a missing clip in silence.
-    // AUDIT 54: the id is the Quests-Sounds table's `id` column, a
+    // AUDIT 58: the id is the Quests-Sounds table's `id` column, a
     // DAGGER.SND record ID - PlaySound.cs:74-75 resolves it through
     // SoundReader.GetSoundIndex before :112 plays the INT overload.
     // The port moved the resolution behind this hook (Ledger A), and
@@ -6284,7 +6284,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // is only cleared by update(), so billing it on a frame the motor
         // never ran would charge the same fall once per held frame.
         if (!_seasonHeld) applyFallLanding(playerEntity, player.landedFallDistance, {
-          sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 54: the caller's FootstepVolumeScale rides through
+          sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 58: the caller's FootstepVolumeScale rides through
           inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
         });
         // ROAD-B (b3): the exterior surface model, recomputed every
@@ -6558,7 +6558,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // nothing down yet is a cloudy day. Classic: the word, verbatim.
     ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
-    ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 54: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
+    ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
     // shipped DFU renders no flash (PlayLightningEffect is 0 on both
@@ -6985,7 +6985,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         }) : 0;
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           // AUDIT 24 (wave 46): an arrow reaches the player through
           // BowDamage -> ApplyDamageToPlayer -> SendDamageToPlayer,
           // the same door as a blow, so it owes the flash and the cry
@@ -7016,7 +7016,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           : exteriorFoes.damageFoe(f, d, player.pos, m.dir)),
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
-        // AUDIT 54: WeaponManager.cs:630's HandleAttackFromSource sits
+        // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. The watch
         // pool's damage door carries no hostility pair of its own, so

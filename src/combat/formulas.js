@@ -450,7 +450,7 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-/** AUDIT 54: EnemyAttack.MeleeDamage's FIRST step, which no foe-vs-foe
+/** AUDIT 58: EnemyAttack.MeleeDamage's FIRST step, which no foe-vs-foe
  *  arm ran - "Switch to hand-to-hand if enemy is immune to weapon"
  *  (EnemyAttack.cs:191-194):
  *

@@ -338,7 +338,7 @@ test('ROAD-A7: the painting box asks for the picture and sizes the parchment rou
   assert.match(code, /itemInfoPanelRows\(this\.infoItem/);
 });
 
-// ── AUDIT 54: DaggerfallListPickerWindow's TWO CONSTRUCTOR ARGS ──
+// ── AUDIT 58: DaggerfallListPickerWindow's TWO CONSTRUCTOR ARGS ──
 //
 // `DaggerfallListPickerWindow(uiManager, previous, DaggerfallFont font
 // = null, int rowsDisplayed = 0)` (:52-56) feeds listBox.Font (:40-44)

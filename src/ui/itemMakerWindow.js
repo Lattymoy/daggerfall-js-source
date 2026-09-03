@@ -159,7 +159,7 @@ export async function preloadItemMakerArt(deps) {
   try {
     _art = await loadImg(deps, 'ITEM00I0.IMG');
     _tabs = await loadImg(deps, 'ITEM01I0.IMG');
-    // AUDIT 54: both enchantment pickers are SmallFont, 12 rows
+    // AUDIT 58: both enchantment pickers are SmallFont, 12 rows
     // (:372, :376), so the FNT has to be warm before one opens.
     await preloadListPickerSmallFont(deps);
   } catch { console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed'); }
@@ -289,7 +289,7 @@ export class ItemMakerWindow {
       items: types.map(enchantmentName),
       onPick: (i) => { this.picker = null; this._pickPrimary(types[i]); },
       onCancel: () => { this.picker = null; },
-      // AUDIT 54: DaggerfallItemMakerWindow.cs::372 builds this picker
+      // AUDIT 58: DaggerfallItemMakerWindow.cs::372 builds this picker
       // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
       // font and the row count travel together (12 x (5+1) = the
       // 72px listBox).
@@ -310,7 +310,7 @@ export class ItemMakerWindow {
       items: options.map((o) => o.label),
       onPick: (i) => { this.picker = null; this._pickSecondary(type, options[i].param); },
       onCancel: () => { this.picker = null; },
-      // AUDIT 54: DaggerfallItemMakerWindow.cs::376 builds this picker
+      // AUDIT 58: DaggerfallItemMakerWindow.cs::376 builds this picker
       // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
       // font and the row count travel together (12 x (5+1) = the
       // 72px listBox).

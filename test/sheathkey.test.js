@@ -42,7 +42,7 @@ test('SHEATH: the large HUD panel still reaches the door through routeAction', (
   const ctx = dungeonLikeCtx();
   assert.equal(routeAction('ReadyWeapon', ctx), true);
   assert.equal(ctx.sheathed, false, 'the panel toggled it once');
-  // AUDIT 54 (f2/hosts): and the arm is HONEST about a ctx without the
+  // AUDIT 58 (f2/hosts): and the arm is HONEST about a ctx without the
   // door - it reports false, which is the whole reason a host missing
   // toggleSheath was silent rather than broken. This half of the pin
   // was the vacuous one: it drove the arm against dungeonLikeCtx()
@@ -80,7 +80,7 @@ test('SHEATH: every host polls ReadyWeapon on an edge, and the dungeon hosts rou
   assert.match(read('src/ui/input.js'), /if \(POLLED_ACTIONS\.has\(act\)\) return false;/, 'and routeKey declines it');
 });
 
-// AUDIT 54 (f2/hosts): THE PANEL'S DOOR IN ALL FOUR HOSTS. HUDLarge.cs
+// AUDIT 58 (f2/hosts): THE PANEL'S DOOR IN ALL FOUR HOSTS. HUDLarge.cs
 // :477-484's SheathPanel_OnMouseClick calls
 // GameManager.Instance.WeaponManager.ToggleSheath() - a singleton, no
 // scene gate, registered for both buttons at :211-212 - so the panel is

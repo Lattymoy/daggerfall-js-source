@@ -15,7 +15,7 @@
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
-import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
@@ -240,7 +240,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.dead = true;
       f.questBehaviour?.notifyDestroyed();
     },
-    // AUDIT 54: the SetHealth(0) door, not a damage source - like
+    // AUDIT 58: the SetHealth(0) door, not a damage source - like
     // hurtPlayer's bypassShield it must not be mitigated.
     zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
     spellsByIndex: () => spellsByIndex?.(),
@@ -269,7 +269,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      // AUDIT 54: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio?.play3dId?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       explodeAt: magicHooks?.explodeAt,
@@ -300,7 +300,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  reassign), and the player arm additionally reverts a struck
    *  former ally to its species (:204-213). resetAllyTeamOnPlayerAttack
    *  raises IsHostile itself, so a headless stub ai still stands up. */
-  /** AUDIT 54: HandleAttackFromSource's PLAYER ARM, lifted out of the
+  /** AUDIT 58: HandleAttackFromSource's PLAYER ARM, lifted out of the
    *  damage door - DFU runs it for every swing that CONNECTED, damage
    *  or none. WeaponManager.WeaponDamage's `damage > 0` fork closes at
    *  :615 and :627/:630 (`DecreaseHealth(damage)` then
@@ -325,7 +325,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (fromPlayer && f.ai) {
       handleAttackFromPlayer(f, playerFeet);
     }
-    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
     // player's. DFU's hook is inside the ABSTRACT BASE's
     // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
     // shield effect to mitigate incoming damage from all sources"), so
@@ -613,7 +613,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
               // world.js already uses for spell sinks).
               dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, ffwd) : damageFoe(t, d, null, ffwd)),
               audio, hitEffects,
-              // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+              // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
               // a poisoned foe blade doses the foe it strikes. Without
               // the hook the formula still cleared the dose.
               onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
@@ -623,7 +623,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
             audio?.play3d?.(enemyMissSound(fwpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const fv = enemyAttackVoice(f);   // :216-226 fires whatever the target
-          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + fv.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + fv.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
           continue;   // the player arm below is the ELSE
         }
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
@@ -672,7 +672,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // C2-slice (combat-17): the 20% enemy-class attack voice at
         // the damage frame, whatever the outcome.
         const v = enemyAttackVoice(f);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
       // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
       // returns at the top while paralysed (:91-94), so MeleeDamage and
@@ -713,7 +713,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (this path is melee-only, never a bow).
     const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
@@ -731,7 +731,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
         damageFoe(foe, damage, playerFeet, lookDir);
       } else {
         const snd = zeroDamageHitSound({
@@ -740,7 +740,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
-        // AUDIT 54: WeaponManager.cs:630 runs after the damage fork
+        // AUDIT 58: WeaponManager.cs:630 runs after the damage fork
         // closes (:615) - a connecting swing enrages what it touched
         // even at zero damage. Only the aggro half: :627's
         // DecreaseHealth(0) is a no-op and the knockback/hurt sit
@@ -927,7 +927,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       weapon: m.weapon, direction: dir, bowAttack: true, rolls, calculateAttackDamage,
       dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, dir) : damageFoe(t, d, null, dir)),
       audio, hitEffects,
-      // AUDIT 54: the poisoned SHAFT doses its foe mark too - the
+      // AUDIT 58: the poisoned SHAFT doses its foe mark too - the
       // clear at FormulaHelper.cs:695 fires with or without a hook.
       onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
       say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)

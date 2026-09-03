@@ -27,7 +27,7 @@ export const TREASURE_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
 export const PICKPOCKET_DISTANCE = 128 * GLOBAL_SCALE;
 export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
 export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
-/** AUDIT 54 (talk lane): TextManager 'youAreTooFarAway'
+/** AUDIT 58 (talk lane): TextManager 'youAreTooFarAway'
  *  (Master Localization CSV Files/Internal_Strings.csv:22 -
  *  `youAreTooFarAway,You are too far away...`), the ONE string every
  *  reach refusal in PlayerActivate speaks: the static-NPC arm
@@ -38,7 +38,7 @@ export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
  *  'You are too far away.' with a full stop, so one localized key was
  *  shipping as two different sentences in one session. */
 export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
-/** AUDIT 54 (talk lane): TextManager 'youSee'
+/** AUDIT 58 (talk lane): TextManager 'youSee'
  *  (Internal_Strings.csv:53 - `youSee,You see %s.`), the WHOLE of
  *  PresentNPCInfo (PlayerActivate.cs:1484-1486): one HUD line naming
  *  the NPC, with %s replaced by StaticNPC.DisplayName. It is what

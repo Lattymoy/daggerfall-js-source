@@ -101,7 +101,7 @@ export function createPlayerMagic({
   let pendingClickCast = false;
   let readiedSpell = null;
   let readiedFree = false;   // readySpellDoesNotCostSpellPoints (magic-8)
-  // AUDIT 54: readySpellCastingCost (EntityEffectManager.cs:61). The
+  // AUDIT 58: readySpellCastingCost (EntityEffectManager.cs:61). The
   // spell is PRICED ONCE, at the ready (:326-328
   // `readySpellCastingCost = spellPointCost;`), and CastReadySpell
   // spends THAT number (:423-425) - it never re-prices at the click.
@@ -309,7 +309,7 @@ export function createPlayerMagic({
       if (!EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]) continue;
       tallySkill(playerEntity, effectSchool(e), 1);
     }
-    // AUDIT 54: the ID door - PlayCastSound's `(uint)castSoundID`
+    // AUDIT 58: the ID door - PlayCastSound's `(uint)castSoundID`
     // (EntityEffectManager.cs:1958 -> DaggerfallAudioSource.cs:232-238)
     audio.playOneShotId(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
   }
@@ -434,7 +434,7 @@ export function createPlayerMagic({
     // :408 - "a previous cast must not be in progress". The hands own
     // the 0.2s and a second click inside it does nothing at all.
     if (castInProgress) return false;
-    // AUDIT 54: the cost is the one CAPTURED AT READY, not a fresh
+    // AUDIT 58: the cost is the one CAPTURED AT READY, not a fresh
     // pricing. CastReadySpell has exactly THREE gates - SilenceCheck
     // (:403-405), the ready/castInProgress pair (:407-409) and the
     // ByTouch range probe (:411-421) - and then spends
@@ -653,7 +653,7 @@ export function createPlayerMagic({
       if (!bundle) return null;
       applySpellToPlayer(bundle, playerEntity.level, null,
         { bypassSavingThrows: true, bypassChance: true });
-      audio.playOneShotId(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);   // AUDIT 54: the same ID door
+      audio.playOneShotId(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);   // AUDIT 58: the same ID door
       return bundle.name;
     },
     /** WeaponManager's HasReadySpell leg - the weapon hides while a
@@ -749,7 +749,7 @@ export function createPlayerMagic({
         ? (spellsByIndex?.get(index) ?? (playerEntity?.spells ?? []).find((sp) => sp?.index === index) ?? null)
         : null;
       readiedFree = false;   // every writer of readiedSpell declares its freeness (magic-8)
-      // AUDIT 54: and every writer of readiedSpell declares its PRICE
+      // AUDIT 58: and every writer of readiedSpell declares its PRICE
       // too - readySpellCastingCost is set beside readySpell at
       // :327-328, so a restored ready is priced at restore time rather
       // than re-priced at the click.

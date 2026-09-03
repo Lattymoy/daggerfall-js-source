@@ -1,4 +1,4 @@
-// AUDIT 54 (talk lane) - THE REPAIR-SHOP MERCHANT POPUP: DFU's
+// AUDIT 58 (talk lane) - THE REPAIR-SHOP MERCHANT POPUP: DFU's
 // DaggerfallMerchantRepairPopupWindow (MIT, Daggerfall Workshop /
 // Hazelnut) on real ARENA2 art. The FOUR-button panel an armorer, a
 // general store or a weaponsmith puts in front of you - Repair, Talk,

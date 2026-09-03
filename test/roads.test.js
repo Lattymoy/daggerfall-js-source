@@ -463,7 +463,7 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   const n = smoothRoadHeights(samples, tilemap);
   assert.ok(n > 0, 'some corners were smoothed');
   // under the road (column 63/64, plus the edge tiles' corners 62..66): flatter
-  // AUDIT 54 (f2/hosts): read back through the SAMPLER's layout,
+  // AUDIT 58 (f2/hosts): read back through the SAMPLER's layout,
   // sample(x, y) = s[x * hDim + y] (terrainSampler.js:139, DFU's
   // JobA.Idx(y, x, hDim) at TerrainSampler.cs:123) - NOT the tilemap's
   // x + y*tDim, which is what this pin used to use and what let the
@@ -766,7 +766,7 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
   assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
   const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
-  // AUDIT 54 F3: `smooth` joins `water` on this arm - it was the one
+  // AUDIT 58 F3: `smooth` joins `water` on this arm - it was the one
   // switch the three rebuilds of the network object dropped, so the
   // Mods pane's SmoothRoads was inert on the path the game takes.
   // The behavioural half lives in test/modsettings.test.js.

@@ -33,7 +33,7 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // The hurtPlayer(bypassShield) idiom: one door, and the caller says
   // where the blow came from. Defaulting true leaves every player
   // blow and spell exactly as it was.
-  // AUDIT 54: the three doors also take bypassShield now, the same
+  // AUDIT 58: the three doors also take bypassShield now, the same
   // idiom for the same reason - Shield mitigates DAMAGE, and the
   // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
   assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
@@ -89,7 +89,7 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // the two facts separately, plus the ordering the new statement
   // must keep.
   assert.match(xf, /if \(fromPlayer && f\.ai\) \{/, 'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
-  // AUDIT 54 MOVED THIS NEEDLE AGAIN, for the same reason ROAD-B did.
+  // AUDIT 58 MOVED THIS NEEDLE AGAIN, for the same reason ROAD-B did.
   // WeaponManager.cs:627/:630 are TWO statements after the damage
   // fork closes (:615), so HandleAttackFromSource's player arm is a
   // member of its own now (`handleAttackFromPlayer`) that the damage

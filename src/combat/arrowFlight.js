@@ -162,7 +162,7 @@ export class ArrowFlight {
 export function playerArrowHitFoe(m, foe, {
   playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
   audio = null, hitEffects = null, say = null, onInflictPoison = null,
-  // AUDIT 54: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
+  // AUDIT 58: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
   // the damage fork - it runs for every shaft that CONNECTED, so a
   // zero-damage arrow enrages what it hit and, through
   // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
@@ -187,7 +187,7 @@ export function playerArrowHitFoe(m, foe, {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, [at[0], at[1], at[2]]);
     const pain = enemyPainVoice(foe, dmg, rolls);
-    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
   }
   // :627/:630's unconditional pair, whatever the fork above did - and

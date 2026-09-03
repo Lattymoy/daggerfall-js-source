@@ -1,4 +1,4 @@
-// THE PENDING QUEST OFFER (AUDIT 54) - DaggerfallUI's half of
+// THE PENDING QUEST OFFER (AUDIT 58) - DaggerfallUI's half of
 // GivePc's deferred hand-over, MIT Daggerfall Workshop.
 //
 // A `give pc _item_ notify 1234` / `... silently` line does not fire

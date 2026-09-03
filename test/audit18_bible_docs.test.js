@@ -496,7 +496,7 @@ test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const dead = [...new Set(named)].filter((f) => !records.includes(f) && !UNINDEXED_RECORDS.includes(f));
   assert.deepEqual(dead, [], `the index names records that are gone:\n${dead.join('\n')}`);
 
-  // AUDIT 54 (records): ONE ENTRY PER RECORD, the other half of the
+  // AUDIT 58 (records): ONE ENTRY PER RECORD, the other half of the
   // law. The both-ways check above is satisfied by a DUPLICATE, and
   // two of them were live: `Audit-48.md` was indexed twice under two
   // unrelated descriptions (a same-day number collision overwrote the
@@ -654,7 +654,7 @@ test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () =
 });
 
 // ---------------------------------------------------------------------------
-// AUDIT 54 (records lane): THE PAGES THAT POINT AT THEMSELVES.
+// AUDIT 58 (records lane): THE PAGES THAT POINT AT THEMSELVES.
 //
 // Three defects of one kind, all in the campaign's own status page and
 // all invisible to every gate the tree had. (1) Six citations named
@@ -674,7 +674,7 @@ test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () =
 // against the thing it is a claim ABOUT.
 // ---------------------------------------------------------------------------
 
-test('AUDIT 54: the campaign record is cited to the file that holds it, and the page is free of its own residue', () => {
+test('AUDIT 58: the campaign record is cited to the file that holds it, and the page is free of its own residue', () => {
   const STATUS = 'bible/01-Overview/Port-Status-2026-09-02.md';
   const ROAD = 'bible/01-Overview/Road-To-1-1.md';
 

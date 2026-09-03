@@ -84,7 +84,7 @@ export function getRandomNameBank() {
  *          ? Genders.Female : Genders.Male;
  *      return DaggerfallUnity.Instance.NameHelper.FullName(nameBankType, gender);
  *
- *  AUDIT 54: the GENDER IS A COIN FLIP on the DFRandom stream, and it
+ *  AUDIT 58: the GENDER IS A COIN FLIP on the DFRandom stream, and it
  *  is drawn whichever way it lands. The talk MCP hardcoded Male, so
  *  the fallback stranger was never a woman AND the unspent draw left
  *  every later value on that stream shifted by one. `regionIndex` is

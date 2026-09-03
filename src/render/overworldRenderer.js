@@ -461,7 +461,7 @@ export class OverworldRenderer {
     this._freeSet(this._terrain); this._terrain = null;
     this._freeSet(this._markers); this._markers = null;
     this._freeSet(this._route); this._route = null;
-    // AUDIT 54 (f3/render): THE ROAD LAYER IS AN ALLOCATION LIKE ANY
+    // AUDIT 58 (f3/render): THE ROAD LAYER IS AN ALLOCATION LIKE ANY
     // OTHER, and it is the largest one here - ROADS 25 mints one VAO and
     // one buffer PER CHAIN (setRoads, above), and Hazelnut's arrays
     // trace ~5,800 chains for roads and tracks alone

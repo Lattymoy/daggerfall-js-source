@@ -92,7 +92,7 @@ test('IF: CreateFoe\'s interior arm is the dungeon arm with one term changed', (
 });
 
 test('IF: enemiesNearby is ONE scan over this host\'s own database, at all three consumers', () => {
-  // AUDIT 54 WIDENED THE DATABASE. GameManager.AreEnemiesNearby
+  // AUDIT 58 WIDENED THE DATABASE. GameManager.AreEnemiesNearby
   // (:684-732) is one method over ActiveGameObjectDatabase; this host
   // has TWO pools, and the scan named only interiorFoes - so the
   // indoor watch was invisible to the rest gate, the hourly break and
@@ -166,7 +166,7 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
   // its own two pools. The law the pin guards - the pool is armed for
   // targeting, over its host's whole database, through the ONE senses
   // builder - is unchanged and is what these still say.
-  // AUDIT 54: the join is WRITTEN ONCE now (interiorFoePool /
+  // AUDIT 58: the join is WRITTEN ONCE now (interiorFoePool /
   // interiorEnemyDatabase) and the senses read it, because four other
   // readers in this host were asking the narrowed question while this
   // one and insideFoes spelled the join out.
@@ -176,7 +176,7 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'and the join itself has exactly one home');
   assert.equal((WM.match(/\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)/g) ?? []).length, 1,
     'the spread is spelled out ONCE - every reader calls the join');
-  // AUDIT 54 (review): "every reader" was wider than what this held.
+  // AUDIT 58 (review): "every reader" was wider than what this held.
   // Two readers were still asking the narrowed question when it was
   // written: DFU's PLACEMENT OCCUPANCY test - `Physics.OverlapSphere
   // (testPoint, 0.65f); if (colliders.Length > 0) return;`

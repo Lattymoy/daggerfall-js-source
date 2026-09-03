@@ -1,4 +1,4 @@
-// AUDIT 54 - THE QUEST JOURNAL'S FIVE TOOLTIPS.
+// AUDIT 58 - THE QUEST JOURNAL'S FIVE TOOLTIPS.
 //
 // DaggerfallQuestJournalWindow.cs:103-104 drops the window's tooltip
 // delay to 1 second, :120-121 gives the dialog button

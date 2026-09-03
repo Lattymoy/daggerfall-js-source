@@ -817,7 +817,7 @@ ships, which is the warning the section's own preamble opens with.
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
     `scenes/world.js:3417` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1910` (the
-    ":524-525" clear that lets spawns resume). AUDIT 54 re-resolved this
+    ":524-525" clear that lets spawns resume). AUDIT 58 re-resolved this
     pair - both cites had drifted off the lines they name.
 11. **`:536` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
     `src/formats/mapsFile.js:104`, with the C# line range cited.
@@ -845,7 +845,7 @@ ships, which is the warning the section's own preamble opens with.
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
 `Port-Ledger.md` section A carries **69 rows, 7 struck - 62 standing
-approved departures** (the 66th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 54 F5; the 69th is the pause window's version line, appended by AUDIT 54's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down) plus the slot-0 reroll bullet and the
+approved departures** (the 66th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 58 F5; the 69th is the pause window's version line, appended by AUDIT 58's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down) plus the slot-0 reroll bullet and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
 
@@ -909,7 +909,7 @@ faithful to whatever reference it does have, and none of them is a gap.
   52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive matched
   precision are ledger row `:503`, narrowed at E8 and the only part of
   this that is still open work.
-- **Removed, then re-integrated (AUDIT 54 F5 corrects this bullet):** the
+- **Removed, then re-integrated (AUDIT 58 F5 corrects this bullet):** the
   port's own road system was removed whole on 2026-08-29 (~5,200 lines),
   which retired the only departure that ever touched the travel law -
   `systems/travel.js` is the verbatim port again and `byRoad` is a

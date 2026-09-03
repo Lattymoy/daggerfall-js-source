@@ -137,7 +137,7 @@ test('DT1: all four hosts name their kinds to the one walk', () => {
   const e = read('src/scenes/exterior.js');
   const d = read('src/scenes/dungeonContext.js');
   // the interior host: containers (shelves AND furniture) + its foes.
-  // AUDIT 54 WIDENED BOTH READS. UpdateNearbyObjects walks ONE
+  // AUDIT 58 WIDENED BOTH READS. UpdateNearbyObjects walks ONE
   // database (PlayerGPS.cs:747-777) and this host has TWO pools -
   // interiorFoes and ROAD-B's indoor watch - so Detect Enemy showed an
   // empty room with 2-5 Knight_CityWatch standing in it and Detect

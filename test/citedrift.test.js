@@ -105,7 +105,7 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   assert.match(read('test/doctrine.test.js'), /!\/\\bDEPARTURES\?\\b\/\.test\(text\)/,
     'the doctrine gate no longer scans the PLURAL departure shout');
 
-  // AUDIT 54 (records): the SAME shape, found again in a file the
+  // AUDIT 58 (records): the SAME shape, found again in a file the
   // doctrine gate cannot see. `ui/pauseWindow.js` drew the port's build
   // tag where DaggerfallPauseOptionsWindow.cs draws VersionInfo, and
   // closed the sentence with "(Ledger A: VersionInfo strings are DFU's
@@ -138,10 +138,10 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   assert.equal(Number(m[3]), rows.length - rows.filter((r) => struck(r.s)).length,
     'section A standing count is not rows minus struck');
 
-  // AUDIT 54 R1 (f): ...and the ORDINALS in the same sentence, which the
+  // AUDIT 58 R1 (f): ...and the ORDINALS in the same sentence, which the
   // three digits above never touched. Every row this table had ever
   // gained was APPENDED, so "the Nth is X" and "N rows" moved together
-  // and the arithmetic hid the difference; AUDIT 54 F5 inserted a row at
+  // and the arithmetic hid the difference; AUDIT 58 F5 inserted a row at
   // position 2 and the sentence went two ways wrong at once - WIND1 was
   // still called the 65th when it had become the 66th, and the new row
   // was given the end-of-table ordinal of a row it had pushed down.
@@ -182,7 +182,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   assert.ok(stated.length >= 2, 'Port-Status no longer states what the tool answers');
   for (const n of stated) assert.equal(n, count, 'a Port-Status count drifted from Home.md');
 
-  // AUDIT 54 (records): the two "answers N" sentences were the only
+  // AUDIT 58 (records): the two "answers N" sentences were the only
   // thing pinned here, so Port-Status went on stating THREE other
   // current figures in prose the gate never read - "(10 after Wave E's
   // seven closures and QX1's eighth)" at the head, "twelve sites and
@@ -291,7 +291,7 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
       'a loose FaceUVTool row cite names another row');
   }
 
-  // AUDIT 54 (records): the PROSE form, which nothing read. Three
+  // AUDIT 58 (records): the PROSE form, which nothing read. Three
   // "Ledger row NNN" cites outside the numbered list were stale by the
   // same six lines section 2 was re-resolved for and this pin never
   // saw, because they carry no backtick-colon shape - "Ledger row
@@ -393,7 +393,7 @@ test('CD5: a `Port-Ledger.md:NNN` cite anywhere in the tree lands on its own row
 
 // ═══ CD6: Port-Status' src-file cites resolve, and a blanket bump reddens ═══
 //
-// AUDIT 54 R1 (e). The AUDIT 54 F5 wave inserted one Ledger row and
+// AUDIT 58 R1 (e). The AUDIT 58 F5 wave inserted one Ledger row and
 // re-resolved the `:NNN` identifiers that moved with it - correctly. The
 // same pass also added +1 to four cites into `src/ui/hud.js` and
 // `src/ui/nativeInventory.js`, two files that wave did not touch at all,

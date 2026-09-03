@@ -1377,7 +1377,7 @@ export const YOU_RECEIVE_GOLD_PIECES = 'You receive %s gold pieces.';
  *  shows QuestComplete without loot; "give pc anItem notify nnnn" /
  *  "... silently" put the item straight in the inventory - but only
  *  in town, outdoors, between 07:00 and 18:00, after a 40..500-tick
- *  random delay (the Ledger A roll). AUDIT 54: the moment that delay
+ *  random delay (the Ledger A roll). AUDIT 58: the moment that delay
  *  is rolled the action raises OnOfferPending (GivePc.cs:96, the
  *  static event at :238-244); DaggerfallUI is its one subscriber
  *  (DaggerfallUI.cs:352) and latches the sender, and the next REST or
@@ -1456,7 +1456,7 @@ export class GivePc extends ActionTemplate {
     this.offerImmediately = false;
     this.setComplete();
   }
-  /** OfferImmediately (GivePc.cs:142-147). AUDIT 54: its caller is
+  /** OfferImmediately (GivePc.cs:142-147). AUDIT 58: its caller is
    *  DaggerfallUI.GiveOffer() (:1717-1726) - the rest and fast-travel
    *  presses - not the guild questor UI, which never touches it. */
   offerImmediatelyNow() {

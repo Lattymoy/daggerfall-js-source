@@ -1,4 +1,4 @@
-// AUDIT 54 f3 (magic, effects, quest actions) - the seven laws this
+// AUDIT 58 f3 (magic, effects, quest actions) - the seven laws this
 // wave paid, each pinned at the exact value the port had wrong. Every
 // assertion here is RED under the pre-fix source.
 import { test } from 'node:test';
@@ -25,7 +25,7 @@ const src = (p) => readFileSync(join(root, 'src', p), 'utf8');
 
 // ── F1: the archer's arrow pile ───────────────────────────────────
 
-test('AUDIT 54: the archer\'s starting arrows come off CreateWeapon\'s arrow arm - condition ZERO', () => {
+test('AUDIT 58: the archer\'s starting arrows come off CreateWeapon\'s arrow arm - condition ZERO', () => {
   // ItemHelper.cs:1342-1344 builds the pile through
   // ItemBuilder.CreateWeapon(Weapons.Arrow, Iron) and only THEN writes
   // stackCount; the arrow arm's three writes include
@@ -86,7 +86,7 @@ function magicRig(player) {
   return { magic, world };
 }
 
-test('AUDIT 54: CastReadySpell has NO magicka gate - a drain after the ready still fires, clamped at 0', () => {
+test('AUDIT 58: CastReadySpell has NO magicka gate - a drain after the ready still fires, clamped at 0', () => {
   // EntityEffectManager.cs:337-343 is the ONLY sufficiency test in the
   // file and it is SetReadySpell's ("Daggerfall does this when setting
   // ready spell"). CastReadySpell (:401-425) has three gates - silence,
@@ -108,7 +108,7 @@ test('AUDIT 54: CastReadySpell has NO magicka gate - a drain after the ready sti
   assert.equal(magic.missileCount(), 1, 'and the missile left the hands');
 });
 
-test('AUDIT 54: the spell is priced ONCE, at the ready - a skill change mid-aim does not re-bill', () => {
+test('AUDIT 58: the spell is priced ONCE, at the ready - a skill change mid-aim does not re-bill', () => {
   // :326-328 computes CalculateTotalEffectCosts and STORES it in
   // readySpellCastingCost; :423-425 spends that number. The port
   // recomputed at click time off the live entity.
@@ -126,7 +126,7 @@ test('AUDIT 54: the spell is priced ONCE, at the ready - a skill change mid-aim 
 
 // ── F3: the Shield pool on the foe doors ──────────────────────────
 
-test('AUDIT 54: all three foe damage doors consult the Shield pool, and the zeroing door bypasses it', () => {
+test('AUDIT 58: all three foe damage doors consult the Shield pool, and the zeroing door bypasses it', () => {
   // DaggerfallEntity.DecreaseHealth (:313-328) carries the hook on the
   // ABSTRACT BASE - "Allow an active shield effect to mitigate incoming
   // damage from all sources" - so a foe carrying the bundle absorbs
@@ -156,7 +156,7 @@ test('AUDIT 54: all three foe damage doors consult the Shield pool, and the zero
 
 // ── F4/F5: the effect catalogue ───────────────────────────────────
 
-test('AUDIT 54: the six concealment effects carry DFU\'s parenthesised DisplayName override', () => {
+test('AUDIT 58: the six concealment effects carry DFU\'s parenthesised DisplayName override', () => {
   // Six classes and only six override DisplayName, all at :41, all as
   // string.Format("{0} ({1})", GroupName, SubGroupName) - and the Spell
   // Maker's filled slot is DisplayName's one reader
@@ -178,7 +178,7 @@ test('AUDIT 54: the six concealment effects carry DFU\'s parenthesised DisplayNa
   assert.equal(effectByKey('13,0').subgroup, 'Normal');
 });
 
-test('AUDIT 54: MorphSelf declares no support flag at all', () => {
+test('AUDIT 58: MorphSelf declares no support flag at all', () => {
   // MorphSelf.SetProperties (MorphSelf.cs:24-33) assigns no
   // properties.Support*, so BaseEntityEffect's ctor leaves all three
   // false (EntityEffect.cs:293-297) - the zero-component effect the
@@ -222,7 +222,7 @@ function offerMachine() {
   return m;
 }
 
-test('AUDIT 54: GivePc raises OnOfferPending, and the next rest/travel press spends the latch', () => {
+test('AUDIT 58: GivePc raises OnOfferPending, and the next rest/travel press spends the latch', () => {
   // GivePc.cs:91-97 - the delay roll's LAST line is
   // RaiseOnOfferPendingEvent(this); DaggerfallUI latches the sender
   // (:352, :1731-1735) and GiveOffer() (:1717-1726) hands the item over
@@ -249,7 +249,7 @@ test('AUDIT 54: GivePc raises OnOfferPending, and the next rest/travel press spe
   assert.equal(giveOffer(), false, 'a second press finds nothing and rests/travels normally');
 });
 
-test('AUDIT 54: GiveOffer is a RUNG in both ladders - after the prevented message, before the racial override', () => {
+test('AUDIT 58: GiveOffer is a RUNG in both ladders - after the prevented message, before the racial override', () => {
   // Rest: DaggerfallUI.cs:680 `else if (!GiveOffer())`. Travel: :612
   // `if (!GiveOffer())`, between AreEnemiesNearby and the sun-damage box.
   const yes = () => true;
@@ -283,7 +283,7 @@ test('AUDIT 54: GiveOffer is a RUNG in both ladders - after the prevented messag
 
 // ── F7: the talk MCP's random name ────────────────────────────────
 
-test('AUDIT 54: GetRandomFullName draws the gender - the talk fallback is not always a man', () => {
+test('AUDIT 58: GetRandomFullName draws the gender - the talk fallback is not always a man', () => {
   // MacroHelper.cs:333-341: `Genders gender =
   // (DFRandom.random_range_inclusive(0, 1) == 1) ? Female : Male;`
   // The port hardcoded Male, which both lost every woman AND left the

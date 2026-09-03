@@ -33,7 +33,7 @@ function win(over = {}) {
   let closed = 0;
   const player = {
     gold: () => goldAmount(entity),
-    // AUDIT 54: bankPurse's OTHER quantity - PlayerEntity.GetGoldAmount
+    // AUDIT 58: bankPurse's OTHER quantity - PlayerEntity.GetGoldAmount
     // (:1313-1316), coins plus letters of credit. The harness had wired
     // the coin reader alone, which is why the label pin below could not
     // see which one the window drew.
@@ -326,7 +326,7 @@ test('B2: the inventory label carries the WAGON in parentheses (:241-246)', () =
   assert.equal(dry.w.labels().inventory, '1000', 'no cart, no parenthesis');
   const cart = win({ wagon: { group: 'Currency', stackCount: 5000 } });
   assert.equal(cart.w.labels().inventory, '1000 (+5000)');
-  // AUDIT 54: and the line itself is `playerEntity.GetGoldAmount()`
+  // AUDIT 58: and the line itself is `playerEntity.GetGoldAmount()`
   // (:241) - coins PLUS every letter of credit in the pack
   // (PlayerEntity.cs:1313-1316), not the bare coin counter. A player
   // who sold while overloaded holds paper and no coin, and this is the

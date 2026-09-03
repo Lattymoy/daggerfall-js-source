@@ -5,7 +5,7 @@
 // first-open rule (GetFirstSlot). WEAPON_HANDS: Either / Both per
 // weapon template. The two bow rows (129/130) are the extraction's
 // record of DFU's OFF answer only: ItemEquipTable.cs:633-635 returns
-// LeftOnly when BowLeftHandWithSwitching is on, and AUDIT 54 put that
+// LeftOnly when BowLeftHandWithSwitching is on, and AUDIT 58 put that
 // branch in getItemHands (equipTable.js), which READS the setting.
 // SHIELD_INDICES: LeftOnly in GetItemHands.
 

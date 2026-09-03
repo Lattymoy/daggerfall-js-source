@@ -25,7 +25,7 @@
 //   click and a DisplayUnits page on the trough - the topic list is
 //   HorizontalScrollModes.PixelWise too, so a long topic PANS.
 //
-// AUDIT 54 (talk lane): the button labels are baked in TALK01I0, but
+// AUDIT 58 (talk lane): the button labels are baked in TALK01I0, but
 // their STATE is not - TALK02I0 (the grayed categories) and TALK03I0
 // (the highlighted modes) supply the six 107x10 strips DFU assigns to
 // the six buttons on every mode change (:34-35, :436-490, :944-949,
@@ -79,7 +79,7 @@ export const TALK_RECTS = Object.freeze({
   conversationUp: [303, 64, 9, 16],
   conversationDown: [303, 176, 9, 16],
   topicDown: [102, 161, 9, 16],
-  // AUDIT 54 (talk lane): the HORIZONTAL pair and the slider between
+  // AUDIT 58 (talk lane): the HORIZONTAL pair and the slider between
   // them - rectButtonTopicLeft/Right (:207-208) and
   // horizontalSliderTopic's Position/Size (:766-767). listboxTopic is
   // HorizontalScrollMode.PixelWise with a RectRestrictedRenderArea over
@@ -188,7 +188,7 @@ export function layoutPixelRows(heights, scrollPx, panelH, rowSpacing = 0) {
  *  the TOP, and a long one is pinned to its last row. */
 export const conversationScroll = (contentH, panelH) => Math.max(0, contentH - panelH);
 
-// ---- AUDIT 54 (talk lane): THE SIX BUTTON STRIPS ------------------
+// ---- AUDIT 58 (talk lane): THE SIX BUTTON STRIPS ------------------
 // DaggerfallTalkWindow.cs:34-35 names two more images beside the base
 // panel - talkCategoriesImgName = "TALK02I0.IMG" and
 // highlightedOptionsImgName = "TALK03I0.IMG" - and :436-490 cuts SIX
@@ -381,7 +381,7 @@ export class NativeTalkWindow {
     // never read back up.
     this.conversationScroll = null;
     this._conversationContentH = 0;
-    // AUDIT 54: horizontalSliderTopic.ScrollIndex, in PIXELS
+    // AUDIT 58: horizontalSliderTopic.ScrollIndex, in PIXELS
     // (listboxTopic.HorizontalScrollIndex, :1364). UpdateScrollBarsTopic
     // zeroes it with every page (:816), so _setListboxTopics does.
     // _topicWidthContent is ListBox.WidthContent measured at the last
@@ -529,7 +529,7 @@ export class NativeTalkWindow {
   _pickIndex(idx) {
     const it = this.topics[idx];
     if (!it) return;
-    // AUDIT 54 (talk lane): this is `listboxTopic.SelectedIndex = index`
+    // AUDIT 58 (talk lane): this is `listboxTopic.SelectedIndex = index`
     // (:1307) and NOTHING more. The assignment raises OnSelectItem
     // (ListBox.cs:761-771), whose handler is guarded -
     // `if (index != selectionIndexLastUsed) UpdateQuestion(index);`
@@ -561,7 +561,7 @@ export class NativeTalkWindow {
       this._updateQuestion(idx);   // :1333 - "and get new question text for textlabel"
     }
   }
-  /** AUDIT 54 (talk lane): ButtonTone{Polite,Normal,Blunt}_OnClickHandler
+  /** AUDIT 58 (talk lane): ButtonTone{Polite,Normal,Blunt}_OnClickHandler
    *  (DaggerfallTalkWindow.cs:1501-1532), whole. All three handlers are
    *  the same four statements: assign the tone, RETURN on the
    *  toneLastUsed guard (:1505), UpdateCheckboxes, then
@@ -661,7 +661,7 @@ export class NativeTalkWindow {
     if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(2); return true; }
     if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
     if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
-    // AUDIT 54: the horizontal pair, one slider unit a click (:1433, :1439).
+    // AUDIT 58: the horizontal pair, one slider unit a click (:1433, :1439).
     if (inRect(R.topicLeft, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(-1); return true; }
     if (inRect(R.topicRight, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(1); return true; }
     // ...and the trough, which pages by DisplayUnits on whichever side
@@ -737,7 +737,7 @@ export class NativeTalkWindow {
     // which is Color.clear - the letterbox is NOT painted.
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
-    // AUDIT 54: the six button BackgroundTextures, over the base art
+    // AUDIT 58: the six button BackgroundTextures, over the base art
     // and under everything else - DFU assigns all six on every mode
     // change (:944-949, :967-968, :1022-1088), so all six are blitted
     // from state here. The `base` ones are the identity (their source
@@ -763,7 +763,7 @@ export class NativeTalkWindow {
     // panelTone: the flat 6x6 toggleColor fill at the active position
     const toneRect = [R.tonePolite, R.toneNormal, R.toneBlunt][this.hooks.tone()];
     drawRect(renderer, m, toneRect[0], toneRect[1], toneRect[2], toneRect[3], TALK_TOGGLE_COLOR);
-    // AUDIT 54 (talk lane): the topic rows PAN, they are not cut. This
+    // AUDIT 58 (talk lane): the topic rows PAN, they are not cut. This
     // listbox is HorizontalScrollModes.PixelWise (:545), where
     // ListBox.cs:556-557 sets the row label's MaxWidth to -1 - no
     // truncation at all - and ListBox.Draw lays each row at

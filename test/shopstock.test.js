@@ -10,7 +10,7 @@ import {
   calculateTradePrice, regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART, SHOP_BUYS_GROUPS, shopBuysItem,
 } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
-import { OIL_TEMPLATE } from '../src/systems/inventory.js';   // AUDIT 54: the oil-bottle stack clause
+import { OIL_TEMPLATE } from '../src/systems/inventory.js';   // AUDIT 58: the oil-bottle stack clause
 
 test('itemTemplates: the 288-row table + group enum mapping + material values', () => {
   assert.equal(ITEM_TEMPLATES.length, 288);
@@ -126,7 +126,7 @@ test('shopStock: storeBuysItemType verbatim (E3 sell gating)', () => {
   assert.ok(!shopBuysItem(BUILDING_TYPES.Tavern, { group: 'Weapons' }));
 });
 
-test('AUDIT 54: a shop shelves 5-20 OIL BOTTLES when torches come from items (DaggerfallLoot.cs:246-248)', () => {
+test('AUDIT 58: a shop shelves 5-20 OIL BOTTLES when torches come from items (DaggerfallLoot.cs:246-248)', () => {
   // StockShopShelf's generic mint arm carries a SECOND statement:
   //   item = new DaggerfallUnityItem(itemGroup, j);
   //   if (DaggerfallUnity.Settings.PlayerTorchFromItems &&

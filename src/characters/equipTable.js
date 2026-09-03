@@ -9,7 +9,7 @@
 //     first open of right,left).
 //   - GetItemHands: weapon map -> shields LeftOnly -> None. Bows READ
 //     DFU's BowLeftHandWithSwitching setting (ItemEquipTable.cs:
-//     633-635): on = LeftOnly, off = the classic Both. AUDIT 54: the
+//     633-635): on = LeftOnly, off = the classic Both. AUDIT 58: the
 //     port used to pin them to the default, which left the setting
 //     half-applied - the two members that DO read it (hud's arrow
 //     counter, playerWeapon's switch delay) both assume the table put
@@ -19,7 +19,7 @@
 
 import { EQUIP_SLOTS } from './paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES, WEAPON_HANDS, SHIELD_INDICES } from './equipRules.js';
-import { getBool } from '../systems/settings.js';   // AUDIT 54: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
+import { getBool } from '../systems/settings.js';   // AUDIT 58: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
 
 export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Either: 3, Both: 4 });
 /** Weapons.Short_Bow / Weapons.Long_Bow - the one switch case in
@@ -35,7 +35,7 @@ export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowL
   if (group !== ITEM_GROUPS.Weapons && group !== ITEM_GROUPS.Armor) {
     return ITEM_HANDS.None;
   }
-  // AUDIT 54: `case Weapons.Short_Bow: case Weapons.Long_Bow: return
+  // AUDIT 58: `case Weapons.Short_Bow: case Weapons.Long_Bow: return
   // DaggerfallUnity.Settings.BowLeftHandWithSwitching ?
   // ItemHands.LeftOnly : ItemHands.Both;` (ItemEquipTable.cs:633-635).
   // The generated WEAPON_HANDS row is DFU's OFF answer and stays the

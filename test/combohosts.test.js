@@ -1,4 +1,4 @@
-// AUDIT 54 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
+// AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
 //
 // InputManager.GetUnaryKey's combo branch (InputManager.cs:1666-1712)
 // does two things: a held modifier plus the combo'd key produces the
@@ -46,7 +46,7 @@ function keyCtx() {
   };
 }
 
-test('AUDIT 54 (f3/input): the OUTDOOR ladders’ read - Shift+I opens the inventory, bare I still opens Status', () => {
+test('AUDIT 58 (f3/input): the OUTDOOR ladders’ read - Shift+I opens the inventory, bare I still opens Status', () => {
   store();
   try {
     // world.js / exterior.js run their own ladder off actionOf. The Set
@@ -64,7 +64,7 @@ test('AUDIT 54 (f3/input): the OUTDOOR ladders’ read - Shift+I opens the inven
   } finally { setBindings(null); }
 });
 
-test('AUDIT 54 (f3/input): routeKey carries the Set through to the same arm (the two dungeon hosts + the interior arm)', () => {
+test('AUDIT 58 (f3/input): routeKey carries the Set through to the same arm (the two dungeon hosts + the interior arm)', () => {
   store();
   try {
     const withSet = keyCtx();
@@ -85,7 +85,7 @@ test('AUDIT 54 (f3/input): routeKey carries the Set through to the same arm (the
   } finally { setBindings(null); }
 });
 
-test('AUDIT 54 (f3/input): EVERY host that registers a keydown hands its held-keys Set in', () => {
+test('AUDIT 58 (f3/input): EVERY host that registers a keydown hands its held-keys Set in', () => {
   // DISCOVERED, not enumerated - the U47 host sweep's shape
   // (test/nativeinventory.test.js). A host joins this law by existing.
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')

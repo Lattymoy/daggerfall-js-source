@@ -62,7 +62,7 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands =
       createBillboardBatch: (archive, record, size, centres) => { world.batchesMade++; return { archive, record, size, centres, origin: null }; },
       destroyBillboardBatch: () => { world.batchesFreed++; },
     },
-    // AUDIT 54: the cast sound goes through the ID door (PlayCastSound's
+    // AUDIT 58: the cast sound goes through the ID door (PlayCastSound's
     // `(uint)castSoundID`, EntityEffectManager.cs:1958), so the fake
     // device carries the ID entry points the host actually calls.
     audio: {

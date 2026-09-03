@@ -46,7 +46,7 @@ import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as item
   isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
 import { isSummoned, carriedWeight, totalWeight } from '../systems/inventory.js';   // TransferItem's summoned guard
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
-// AUDIT 54: DaggerfallTradeWindow inherits the two target-icon panels
+// AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
 // and overrides both halves (:630-647, :649-670).
 import {
   CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
@@ -74,7 +74,7 @@ export const TRADE_RECTS = Object.freeze({
   actionPanel: [222, 10, 39, 190],       // the mode's own panel - INVE08/10/12/14 (:755-764)
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
-  // AUDIT 54: the inherited localTargetIconRect / remoteTargetIconRect
+  // AUDIT 58: the inherited localTargetIconRect / remoteTargetIconRect
   // (DaggerfallInventoryWindow.cs:49-50) - this window updates both in
   // Setup (:262-263) and overrides what each one shows.
   localTargetIcon: LOCAL_TARGET_ICON_RECT,
@@ -676,7 +676,7 @@ export class NativeTradeWindow {
     // window had to show because it transacted at the click.
     shadowText(renderer, font, String(this.cost().cost), m, R.costPanel[0] + 28, R.costPanel[1] + 2);
     shadowText(renderer, font, String(this.hooks.gold()), m, R.costPanel[0] + 68, R.costPanel[1] + 2);
-    // AUDIT 54: the two inherited target-icon panels, updated in Setup
+    // AUDIT 58: the two inherited target-icon panels, updated in Setup
     // (:262-263) and on every Refresh. The local one is this screen's
     // only encumbrance readout, and it counts the BASKET.
     const lti = this._localTargetIcon();

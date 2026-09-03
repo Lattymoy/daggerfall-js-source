@@ -237,7 +237,7 @@ test('wave D: the dungeon host hands the ctx its OWN doors', () => {
     'the Oghma opens this host\'s one sheet construction, not a second bag');
   // the Wabbajack over this host's own pool, with DFU's quest guard.
   //
-  // AUDIT 54 (review): the BODY moved out of this literal onto the api,
+  // AUDIT 58 (review): the BODY moved out of this literal onto the api,
   // and the mount takes it by name. It had to: this literal is mounted
   // only on the STANDALONE route (`enchantCtx: false` from worldModes),
   // so on the hosted route world.js's mount was the session singleton
@@ -247,7 +247,7 @@ test('wave D: the dungeon host hands the ctx its OWN doors', () => {
   // routes, and world.js asks pool membership which one to call.
   assert.match(mount, /replaceFoe: replaceFoeInPool,/);
   assert.match(DC, /function replaceFoeInPool\(targetEntity, mobileType\) \{/);
-  assert.match(DC, /replaceFoe: replaceFoeInPool,   \/\/ AUDIT 54/,
+  assert.match(DC, /replaceFoe: replaceFoeInPool,   \/\/ AUDIT 58/,
     'and the api carries it, so the hosted route can reach this pool at all');
   const body = DC.slice(DC.indexOf('function replaceFoeInPool('), DC.indexOf('// FS1 (wave D): the mount itself.'));
   assert.match(body, /if \(f\.questBehaviour && !f\.questBehaviour\.isFoeDead\) return;/);

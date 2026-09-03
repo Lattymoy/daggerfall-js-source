@@ -75,7 +75,7 @@ test('P1: the cache DETACHES from the live scene (:84-98)', () => {
 test('P1: only loot, doors and the player\'s own piles are cached - enemies are NOT (:88-96)', () => {
   // DFU's own comment says so, and writes empty arrays for the other
   // two stateful types. A shop's occupants are rebuilt every entry.
-  // AUDIT 54: the THIRD array is the player's dropped piles, which are
+  // AUDIT 58: the THIRD array is the player's dropped piles, which are
   // LootContainerTypes.DroppedLoot rows inside DFU's own
   // GetLootContainerData (SerializableStateManager.cs:343-354) and a
   // separate pool in this port - so the store carries three, not two.
@@ -90,7 +90,7 @@ test('P1: only loot, doors and the player\'s own piles are cached - enemies are 
   assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [], droppedPiles: [] });
 });
 
-test('AUDIT 54 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {
+test('AUDIT 58 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {
   // The producer (worldModes.currentSceneState) built the list and the
   // consumer (restoreInteriorScene -> restorePiles) read it back, but
   // the STORE between them destructured only two keys - so

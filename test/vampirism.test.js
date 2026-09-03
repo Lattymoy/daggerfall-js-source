@@ -68,7 +68,7 @@ test('V2b: the advantages are the VAMPIRE\'S seven and six - Anthotis minds alon
   vampirismMagicRound(p, { nowMinutes: 1 });
   for (const stat of VAMPIRE_STATS) assert.equal(liveStat(p, stat), 70, `${stat} +20`);
   assert.equal(liveStat(p, 'intelligence'), 50, 'a Vraseth mind is untouched');
-  // AUDIT 54: this read `skillValue(baseline) + VAMPIRE_SKILL_MOD` - the
+  // AUDIT 58: this read `skillValue(baseline) + VAMPIRE_SKILL_MOD` - the
   // port's own constant on BOTH sides of the equals, so the equation held
   // for any value and 30 -> 25 survived the whole suite while its twin was
   // doubly pinned. The base fixture's skills are {}, so the vampire's are

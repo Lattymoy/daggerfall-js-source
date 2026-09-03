@@ -205,7 +205,7 @@ export class AudioEngine {
    *  Returns the clip duration in seconds (A3's exclusive ambient
    *  channel tracks busy time with it), or undefined when not ready.
    *
-   *  AUDIT 54: `pitch` is Unity's AudioSource.pitch, which WebAudio
+   *  AUDIT 58: `pitch` is Unity's AudioSource.pitch, which WebAudio
    *  spells playbackRate - the same resampling, and the same 1.0
    *  default. DFU's three combat-voice sites raise it for exactly one
    *  shot and put it back (EnemySounds.cs:172-175, FPSWeapon.cs:316
@@ -225,7 +225,7 @@ export class AudioEngine {
     return buf.duration;
   }
 
-  /** AUDIT 54 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
+  /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
    *  :152-158) is `soundFile.GetRecordIndex(soundID)`: a DAGGER.SND
    *  record ID resolved to that record's INDEX in the archive. The two
    *  spaces are UNRELATED - the archive's directory numbers the records
@@ -358,7 +358,7 @@ export class AudioEngine {
    *  `maxDistance = AttractRadius` (:57-60), with its own reason -
    *  loop3d already carried that note for torches. Inverse stays the
    *  default so no existing caller changes. */
-  /** AUDIT 54: `pitch` rides the options bag here (AudioSource.pitch /
+  /** AUDIT 58: `pitch` rides the options bag here (AudioSource.pitch /
    *  playbackRate), because every 3D combat voice DFU plays is
    *  pitch-lifted - EnemySounds.cs:172-175 raises the SOURCE's pitch
    *  around PlayOneShot and restores it after. */
@@ -482,7 +482,7 @@ export class QuestAudioSource {
     return dur;
   }
 
-  /** AUDIT 54: the ID-space twin, for the ONE caller that has an id
+  /** AUDIT 58: the ID-space twin, for the ONE caller that has an id
    *  rather than an index - the quest `play sound` action, whose value
    *  comes from the Quests-Sounds table's `id` column. PlaySound.cs:74
    *  -75 resolves it at CREATE (`GetSoundIndex(soundID)`) and :112

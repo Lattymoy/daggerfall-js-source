@@ -28,7 +28,7 @@ export const BULLETIN_BOARD_ACTIVATION_DISTANCE = MOBILE_NPC_ACTIVATION_DISTANCE
  *  mid-screen refusal :712 - the string as the table spells it,
  *  ellipsis and all.
  *
- *  AUDIT 54 (talk lane) CLOSED THE STRAY THIS NOTE RECORDED: the
+ *  AUDIT 58 (talk lane) CLOSED THE STRAY THIS NOTE RECORDED: the
  *  string is ONE key, so it is now one constant, in PlayerActivate's
  *  own module (player/activate.js). scenes/townTalk.js's three reach
  *  refusals spoke the same key as 'You are too far away.' with a full

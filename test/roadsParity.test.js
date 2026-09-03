@@ -41,7 +41,7 @@ test('AUDIT 51: our painter matches the mod\u2019s PaintPath byte for byte over 
 // AUDIT 51: THE SMOOTHER IS THE MOD'S - SmoothRoadsJob, ported. Road and
 // water_temp tiles only, the tile's four corners, a five-point mean in
 // place in scan order. And the one recorded divergence, put back on the
-// index it is actually about by AUDIT 54 (f2/hosts): the TILEMAP is
+// index it is actually about by AUDIT 58 (f2/hosts): the TILEMAP is
 // x + y*tDim (JobA.Idx(x, y, tDim), TerrainHelper.cs:170) and the
 // HEIGHTMAP is y + x*hDim (JobA.Idx(y, x, hDim), TerrainSampler.cs:123
 // - what terrainSampler.js:139 writes). The mod's sample base is the
@@ -80,7 +80,7 @@ test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corne
   assert.match(src, /const idx = x \* hDim \+ y;/, 'and the corner base is the HEIGHTMAP\u2019s - TerrainSampler.cs:123');
 });
 
-// AUDIT 54 (f2/hosts): THE DIRECTIONAL PIN neither older test could
+// AUDIT 58 (f2/hosts): THE DIRECTIONAL PIN neither older test could
 // make. Both computed their expected corners from the smoother's own
 // base, so a transposed write agreed with itself and stayed green for
 // three audits. This one asks the question in WORLD terms instead:
@@ -91,7 +91,7 @@ test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corne
 // nothing at sample-y 62..66. Under the transposed base it is exactly
 // the other way round: the bed is untouched and a mirrored E-W strip
 // of open ground is blurred.
-test('AUDIT 54: a NORTH-SOUTH road smooths a north-south bed - the corner base is the heightmap\u2019s, not the tilemap\u2019s', async () => {
+test('AUDIT 58: a NORTH-SOUTH road smooths a north-south bed - the corner base is the heightmap\u2019s, not the tilemap\u2019s', async () => {
   const { smoothRoadHeights, paintRoads, TILE: T } = await import('../src/world/roadPainter.js');
   const { DIR } = await import('../src/world/roadNetwork.js');
   const H = 129, TD = 128;

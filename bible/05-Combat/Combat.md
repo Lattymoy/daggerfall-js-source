@@ -662,11 +662,11 @@ pre-chargen INTERIM_WEAPON cannot be minted a condition
 (Object.isExtensible) and a 0-max item cannot break - the first
 swing of a fresh boot would otherwise have thrown a TypeError.
 
-4 pins (conditiondamage.test.js), 3 mutations run, 3 killed. AUDIT 54:
+4 pins (conditiondamage.test.js), 3 mutations run, 3 killed. AUDIT 58:
 the 20% floor roll's THRESHOLD was not one of them - the drives 0.99
 and 0.1 agree for every value from 11 to 99, so the one number the
 test names in its own title was the one it could not see. It is
-straddled at 0.195/0.205 in audit54_pins.test.js now: 6 pins, 6
+straddled at 0.195/0.205 in audit58_pins.test.js now: 6 pins, 6
 mutations run, 6 killed.
 
 ## C19 (2026-08-20): the C2-slice - audio arms, the poison hook, roll-order parity, COMBAT VOICES - SHIPPED
@@ -707,7 +707,7 @@ the 40% pain voice on a landed player hit (heavyDamage = a quarter
 of max health), the CityWatch knight forced male, and the player's
 own 20% attack grunt at the hit frame, never for a bow, reading the
 PLAYER's race and gender. All behind the CombatVoices setting,
-shipping enabled. AUDIT 54: the pitch lift is APPLIED now - it was
+shipping enabled. AUDIT 58: the pitch lift is APPLIED now - it was
 returned on the voice object and dropped at every one of the thirteen
 play sites, because `audio.playOneShot` and `audio.play3d` took no
 pitch. Both carry one (WebAudio's playbackRate is Unity's

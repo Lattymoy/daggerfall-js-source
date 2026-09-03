@@ -12,7 +12,7 @@ Consumers live in the dungeon: door open/close (DungeonDoor clips on
 the ActionSystem onDoorState seam), player swing on Strike-state
 entry (FPSWeapon shape), landed hits at the struck foe / whiffs
 (Hit2/Parry6), the player taking hits (PlayerFootsteps families, at
-volumeScale 1 - EnemySounds' 1.1 is the PLAYER-STRIKING side, AUDIT 54),
+volumeScale 1 - EnemySounds' 1.1 is the PLAYER-STRIKING side, AUDIT 58),
 enemy attack sounds (50%, humans silent), and the EnemySounds attract
 loop verbatim (radius 16, delay Range(3,10) always stepping, 80/20
 bark/move, humans silent). Enemy Move/Bark/AttackSound columns
@@ -41,7 +41,7 @@ DaggerfallAction:
   origin through the default min1/max500 3D profile. (The field
   doubles as data on some flags - Hurt21's damage bound, CastSpell's
   spell id - and DFU plays those as sounds too; preserved.)
-  AUDIT 54: it is a DAGGER.SND record **ID**, not a record index, and
+  AUDIT 58: it is a DAGGER.SND record **ID**, not a record index, and
   the port played it as one. RDBLayout names the parameter
   `int soundID_and_index` (:951) and DaggerfallAction.cs:42's own
   comment calls it "the raw sound index", but the wiring settles it:
@@ -115,7 +115,7 @@ object 5/28, the exterior WeatherAmbientEffects 5/25.
   and play3d/playOneShot now return the clip duration.
 - **RESIDUAL (honest)**: doNotPlayInCastle pends castle-block
   detection (deps.inCastle stays false); the cemetery howl/bird
-  layer (IsCemeteryNearby) is wired in BOTH exterior hosts (AUDIT 54 -
+  layer (IsCemeteryNearby) is wired in BOTH exterior hosts (AUDIT 58 -
   world.js arms it on the rect edge, exterior.js once at load, since
   that host never leaves its one location's rect); the RMB
   exterior animal/torch sources still pend (Ledger C row unchanged);
@@ -208,7 +208,7 @@ as PlayerFootsteps' customAudioSource is. RESIDUE on the struck
 row: the exterior path/water TILE arms (no tile-under-player lookup
 yet - the same flag the fall-damage exemption rides) and the mount
 gate (transport arc). The fall/splash/pain one-shots that share the
-C# file were already home (P14, combat) - but AUDIT 54 found them
+C# file were already home (P14, combat) - but AUDIT 58 found them
 playing at FULL volume: `FootstepVolumeScale` (PlayerFootsteps.cs:30)
 is 0.7 and all THREE non-stride one-shots pass it -
 ApplyPlayerFallDamage (:307-311), HardFallAlert (:315-319) and

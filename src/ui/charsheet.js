@@ -109,7 +109,7 @@ export class LevelUpScreen {
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
     else if (action === 'down') this.cursor = (this.cursor + 1) % 8;
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
-    // AUDIT 54 (f3/input): + 'char:-'. This screen carries no
+    // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
     // (scenes/townTalk.js's keyed arm and ui/input.js:229-230) - and
     // overlayAction can never answer 'minus', because its typed-
@@ -196,7 +196,7 @@ const ROLLOUT_ACTIONS = Object.freeze({
   minus: 'minus', Minus: 'minus', NumpadSubtract: 'minus',
 });
 
-/** AUDIT 54: GetStatDescriptionTextID (TextProvider.cs:582-604) - the
+/** AUDIT 58: GetStatDescriptionTextID (TextProvider.cs:582-604) - the
  *  eight attribute buttons' Tags, and they are TEXT.RSC records 0..7
  *  in DFCareer.Stats order, which is STAT_KEYS_ORDER's order exactly
  *  (Strength 0 ... Luck 7). AddAttributePopupButton
@@ -415,7 +415,7 @@ export class CharSheet {
         if (inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) { this.cursor = i; return true; }
       }
     }
-    // AUDIT 54: THE EIGHT ATTRIBUTE POPUP BUTTONS' OTHER ARM.
+    // AUDIT 58: THE EIGHT ATTRIBUTE POPUP BUTTONS' OTHER ARM.
     // StatButton_OnMouseClick (:925-941) is a two-armed handler: while
     // levelling the rollout above claims these rects, and OTHERWISE it
     // plays ButtonClick and pops the stat's own TEXT.RSC description as

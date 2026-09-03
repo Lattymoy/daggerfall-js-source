@@ -90,7 +90,7 @@ export class WoodsFile {
     this.heightMapBuffer = this._bytes.slice(start, start + MAP_BUFFER_LENGTH);
   }
 
-  /** AUDIT 54 F4: write heightMapBuffer back over the raw WOODS.WLD
+  /** AUDIT 58 F4: write heightMapBuffer back over the raw WOODS.WLD
    *  bytes. _readHeightMap takes a COPY, and the EV7 worker builds its
    *  own WoodsFile from those bytes, so a startup repair of the live
    *  buffer (SmoothLocationNeighbourhood) has to land here too or the

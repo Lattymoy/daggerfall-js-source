@@ -31,7 +31,7 @@ import {
 } from '../src/formats/saveGames.js';
 import { BsaFile } from '../src/formats/bsaFile.js';
 import { stripTransformedRace, toCharacterDocument, TRANSFORMED_RACES } from '../src/systems/classicSave.js';
-// AUDIT 54: AssignShipToPlayer's permanent half on the classic-import path
+// AUDIT 58: AssignShipToPlayer's permanent half on the classic-import path
 import { assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../src/systems/banking.js';
 import {
   createSceneCache, addPermanentScene, containsPermanentScene, worldSceneName, interiorSceneName,
@@ -1592,7 +1592,7 @@ const MIN_SNAP = snapshotPlayer({
   spells: [], activeEffects: [], sceneCache: createSceneCache(),
 }, {});
 
-test('AUDIT 54 (SAV3): the classic import runs AssignShipToPlayer WHOLE - the deed AND both permanent scenes', () => {
+test('AUDIT 58 (SAV3): the classic import runs AssignShipToPlayer WHOLE - the deed AND both permanent scenes', () => {
   // StartGameBehaviour.StartFromClassicSave:616 calls
   // DaggerfallBankManager.AssignShipToPlayer(saveVars.PlayerOwnedShip),
   // and that member is TWO statements (:488-497): `ownedShip =

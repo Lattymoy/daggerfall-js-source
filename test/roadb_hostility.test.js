@@ -220,7 +220,7 @@ test('ROAD-B: both exterior/interior foe pools take the area walk on a struck pa
   assert.ok(i > 0 && j > i, 'the area walk precedes the per-foe law, and reads isHostile before it');
   assert.ok(f.includes('makeAreaHostile = null,'), 'the dep defaults absent (the pre-wiring shape)');
   const wm = src('src/scenes/worldModes.js');
-  // AUDIT 54: the area is the interior's WHOLE database, not one of
+  // AUDIT 58: the area is the interior's WHOLE database, not one of
   // its two pools. This was the only makeAreaHostile in the tree that
   // walked half a database where GameManager.MakeEnemiesHostile
   // (:793-806) walks all of ActiveGameObjectDatabase - so striking a

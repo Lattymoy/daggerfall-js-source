@@ -174,7 +174,7 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   // method - is unchanged, and is what these two still assert.
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/,
     'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack');
-  // AUDIT 54: the player arm is its own member now (WeaponManager.cs
+  // AUDIT 58: the player arm is its own member now (WeaponManager.cs
   // :627/:630 run it for every CONNECTING swing, damage or none), so
   // the gate calls it and the body is read where it lives.
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,

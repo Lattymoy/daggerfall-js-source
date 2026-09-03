@@ -12,9 +12,9 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion   // AUDIT 54: LOCATION_TYPES for the graveyard ambient arm
+import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion   // AUDIT 58: LOCATION_TYPES for the graveyard ambient arm
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
-import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
@@ -35,7 +35,7 @@ import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
-import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 54 (f2/hosts): the session's ONE enchant ctx - this host mounted none
+import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58 (f2/hosts): the session's ONE enchant ctx - this host mounted none
 import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
@@ -102,14 +102,14 @@ import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, 
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
-import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 54: DFU's two hit volumes
+import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup's box
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 54 (f2/hosts): the live enchant pool, its sinks router and the membership question
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -307,7 +307,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
-  // AUDIT 54 (f3/render): the rain's two DIALS, read once at boot from
+  // AUDIT 58 (f3/render): the rain's two DIALS, read once at boot from
   // the params this host already carries. `enhanced` is the LANE - the
   // sky controller's own answer (scenes/shared.js createSkyController),
   // fixed for a scene - so the enhanced lane compiles WX1's program in
@@ -799,7 +799,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       locationName, regionName,
       playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
     },
-    // AUDIT 54 (talk lane): the mode keys sit UNDER the window gate, and
+    // AUDIT 58 (talk lane): the mode keys sit UNDER the window gate, and
     // this host's second slot is the mode machine's - a window held
     // there is invisible to townTalk's own `overlay`. `modes` is
     // declared below, so the read is deferred (the regionIndex idiom).
@@ -1013,7 +1013,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (dmg <= 0) return;
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
-        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         // AUDIT 24 (wave 46): PlayerFootsteps hears the same
         // RemoveHealth the flash does - a 40% cry in the player's own
         // race and gender.
@@ -1127,7 +1127,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // inside the third `else`, after the other two arms have
       // returned.
       preventedMessage: getPreventedRestMessage,
-      // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+      // AUDIT 58: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
       // a pending `give pc ... notify` offer takes this press and
       // the rest window stays shut (ui/pendingOffer.js).
       giveOffer,
@@ -1139,7 +1139,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      // AUDIT 54: the offer took the press - the item was handed
+      // AUDIT 58: the offer took the press - the item was handed
       // over inside GiveOffer() and there is nothing to say.
       if (d.kind === 'offer') return;
       if (d.kind === 'blocked') {
@@ -1370,7 +1370,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       ],
     }));
   }
-  /** AUDIT 54 (f2/hosts): HOISTED, because the enchant ctx below needs
+  /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
    *  (effects.js:828/:842) - world.js:2017 hoisted its copy for exactly
@@ -1512,7 +1512,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
-    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
+    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // QX1: THE LOGBOOK BUTTON DRAWS NOW. U43 withheld the two quest
@@ -1651,7 +1651,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
     },
     toggleSpellbook: () => toggleSpellbook(),
-    // AUDIT 54 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
+    // AUDIT 58 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
@@ -1791,7 +1791,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to step into, so the sentence was second-hand here in the first
     // place - which is how it outlived the arc twice over.
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
-    // AUDIT 54 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
+    // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
     // held-keys Set (ui/input.js:95-105), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
@@ -1870,7 +1870,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
   // is unreachable, because IsLargeHUDInteractable IS this flag.
-  // AUDIT 54 (f3/input) - THE ONE READER. This host builds the mode
+  // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
   // (player/pointerLock.js:54-81), so ONE Enter flipped it twice and
@@ -2220,7 +2220,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       onButton: (b) => { respond(b); return []; },
     }),
     // E6: PlaySound's busy skip over the ONE source (PlaySound.cs:110-116).
-    // AUDIT 54: the table id goes through the ID door, as
+    // AUDIT 58: the table id goes through the ID door, as
     // PlaySound.cs:74-75 does at create - the four-hosts twin of the
     // world host's hook.
     playSound: (id) => {
@@ -2410,7 +2410,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLocation.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
-  /** AUDIT 54 (f2/hosts): THE ENCHANT CTX, MOUNTED HERE TOO - THE FOUR
+  /** AUDIT 58 (f2/hosts): THE ENCHANT CTX, MOUNTED HERE TOO - THE FOUR
    *  HOSTS RULE, and the third host that owed it.
    *
    *  scenes/hostEnchant.js:1-2 states the law as "one body, mounted by
@@ -2484,7 +2484,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  parent transform, so the pool that owns the billboard is the one
      *  that must do both. Hoisted out of the mount literal for the
      *  reason world.js's twin is: a foe door that names a host pool
-     *  from inside the ctx is the defect the AUDIT 54 review found
+     *  from inside the ctx is the defect the AUDIT 58 review found
      *  there.
      *
      *  THE EXTERIOR ARM REFUSES, and that is a departure written down
@@ -2686,7 +2686,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
-  // AUDIT 54 (F089's other host): AmbientEffectsPlayer.Start subscribes
+  // AUDIT 58 (F089's other host): AmbientEffectsPlayer.Start subscribes
   // PlayerGPS.OnEnterLocationRect on EVERY instance (:89), and the
   // handler arms IsCemeteryNearby when the entered location is a
   // Graveyard and the player is outside (:518-529). This host loads ONE
@@ -2888,7 +2888,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // uses, so the two hosts cannot answer differently for the same
       // ground.
       applyFallLanding(playerEntity, player.landedFallDistance, {
-        sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 54: the caller's FootstepVolumeScale rides through
+        sound: (id, vol) => audio.playOneShot(id, vol),   // AUDIT 58: the caller's FootstepVolumeScale rides through
         inOutdoorWater: isOutdoorWaterTile(playerGroundTileRaw()),
       });
       // ROAD-B (b3): the exterior surface model, recomputed where
@@ -3064,7 +3064,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
     ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
-    ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 54: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
+    ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -3255,7 +3255,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos, m.dir),   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
-        // AUDIT 54: no onAttackFromPlayer here. WeaponManager.cs:630
+        // AUDIT 58: no onAttackFromPlayer here. WeaponManager.cs:630
         // runs for every shaft that connected, but this host mounts the
         // WATCH pool alone and cityGuards' damage door carries no
         // hostility pair to run (its siblings pass their encounter

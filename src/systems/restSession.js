@@ -159,7 +159,7 @@ export function clearPreventRestConditions() { preventRestConditions.clear(); }
  *    RegisterPreventRestCondition turns a null message into "" so a
  *    caller can block rest without wording it, and the dispatch falls
  *    back to 355 rather than showing a blank box. null is NOT "".
- * 4. A PENDING QUEST OFFER TAKES THE PRESS (AUDIT 54). `else if
+ * 4. A PENDING QUEST OFFER TAKES THE PRESS (AUDIT 58). `else if
  *    (!GiveOffer())` (:680) is a RUNG this ladder was missing: when a
  *    `give pc _item_ notify`/`silently` offer has become eligible,
  *    DaggerfallUI hands the item over on the spot and swallows the

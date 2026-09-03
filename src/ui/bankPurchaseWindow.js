@@ -78,7 +78,7 @@ export const LIST_ROW_H = 8;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
 
-/** AUDIT 54: the two ARROW STRIPS (:51-52) and the sub-rects
+/** AUDIT 58: the two ARROW STRIPS (:51-52) and the sub-rects
  *  LoadTextures (:355-366) cuts out of them - BANK01I1.IMG is green
  *  ("more items available") and BANK01I2.IMG red. arrowsFullSize is
  *  9x80 and the down arrow sits at y=64 (:26-28) - NOT the item
@@ -120,7 +120,7 @@ export async function preloadPurchaseArt(deps) {
   try {
     _art = await loadImg(deps, 'BANK01I0.IMG');
   } catch { console.warn('[bank] BANK01I0 unavailable; the purchase window stays closed'); }
-  // AUDIT 54: the arrow strips are their own try - a missing pair
+  // AUDIT 58: the arrow strips are their own try - a missing pair
   // leaves the base image's arrows standing rather than closing the
   // window, the same degradation preloadScrollerArrowArt takes.
   if (_arrowArt) return;
@@ -197,7 +197,7 @@ export class BankPurchaseWindow {
   /** UpdateListScrollerButtons (:339-352), verbatim: up is green once
    *  `index > 0`, down while `index < count - listDisplayUnits`, and a
    *  list that FITS (`count <= listDisplayUnits`) forces both red -
-   *  which falls out here, because the max scroll is then 0. AUDIT 54
+   *  which falls out here, because the max scroll is then 0. AUDIT 58
    *  gave both their first reader in `src/`: draw() picks the green or
    *  red crop off them. */
   canScrollUp() { return this.scroll > 0; }
@@ -278,7 +278,7 @@ export class BankPurchaseWindow {
     const m = nativeMetrics(canvas);
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);
-    // AUDIT 54: SetupScrollButtons (:316-336) puts a 9x16 arrow at
+    // AUDIT 58: SetupScrollButtons (:316-336) puts a 9x16 arrow at
     // (105,23) and (105,87), and UpdateListScrollerButtons swaps each
     // between the green and the red strip on every redraw.
     if (_arrowArt) {

@@ -388,7 +388,7 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   // and strips any held bundle), THEN the Breaks payload - both
   // through hooks so this leaf stays below the enchantment module.
   // SoulBound's break releases the soul.
-  // AUDIT 54: BY IDENTITY, not by the port's worn mark.
+  // AUDIT 58: BY IDENTITY, not by the port's worn mark.
   // DaggerfallUnityItem.ItemBreaks calls UnequipItem(owner), which
   // walks the owner's table and takes off whichever slot holds THIS
   // item (:1183-1196) - `unequipItem` above IS that walk. The mark

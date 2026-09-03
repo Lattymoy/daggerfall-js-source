@@ -1,4 +1,4 @@
-// AUDIT 54 - THE TWO TARGET-ICON PANELS both classic list windows
+// AUDIT 58 - THE TWO TARGET-ICON PANELS both classic list windows
 // draw over their lists (DaggerfallInventoryWindow.cs:49-50, :424-439,
 // :857-890; DaggerfallTradeWindow.cs:262-263, :630-670).
 //

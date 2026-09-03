@@ -279,7 +279,7 @@ test('hudLarge: all four hosts draw the bar and offer it the click, and the cros
   for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
     assert.match(src(host), /routeLargeHudClick\(/, `${host} offers the bar the click`);
   }
-  // AUDIT 54 (f3/input): the ActivateCursor half of this loop was a
+  // AUDIT 58 (f3/input): the ActivateCursor half of this loop was a
   // TEXT-PRESENCE check, and it passed while ?world and ?exterior each
   // ran TWO registrations - the host's own and the mode machine's -
   // over a module-global flag, so one Enter netted zero toggles and

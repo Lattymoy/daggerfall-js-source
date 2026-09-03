@@ -64,8 +64,8 @@ import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, carriedWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
-import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 54: PlayerEntity.MaxEncumbrance, the local target icon's denominator
-// AUDIT 54: the two 55x34 target-icon panels both classic windows draw
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 58: PlayerEntity.MaxEncumbrance, the local target icon's denominator
+// AUDIT 58: the two 55x34 target-icon panels both classic windows draw
 // over their lists (DaggerfallInventoryWindow.cs:424-439, :857-890).
 import {
   CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
@@ -107,7 +107,7 @@ export const INV_RECTS = Object.freeze({
   paperDoll: [49, 13, 110, 184],   // paperDoll.Position + its 110x184 panel
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
-  // AUDIT 54: localTargetIconRect / remoteTargetIconRect (:49-50) -
+  // AUDIT 58: localTargetIconRect / remoteTargetIconRect (:49-50) -
   // named in this header's geometry list since U8d but carried by
   // nothing, so neither panel was ever drawn.
   localTargetIcon: LOCAL_TARGET_ICON_RECT,
@@ -247,7 +247,7 @@ export async function preloadInventoryArt(deps) {
     // ROAD-A7: the two arrow strips (ItemListScroller.cs:504-516). A
     // missing pair is not fatal - the base image's own arrows show.
     await preloadScrollerArrowArt(deps);
-    // AUDIT 54: INVE16I0.CIF, the container pictures both target-icon
+    // AUDIT 58: INVE16I0.CIF, the container pictures both target-icon
     // panels lay out ScaleToFit (ItemHelper.cs:47, :673-686). Optional
     // for the same reason the arrow strips are.
     await preloadContainerIconArt(deps);
@@ -977,7 +977,7 @@ export class NativeInventoryWindow {
       const wr = INV_RECTS.wagon;
       drawImgSub(renderer, _art.gold, m, wr[0], wr[1], wr[2], wr[3]);
     }
-    // AUDIT 54: the two target-icon panels (SetupTargetIconPanels
+    // AUDIT 58: the two target-icon panels (SetupTargetIconPanels
     // :424-439, updated at :333-334 and on every Refresh). The local
     // one is the only place either classic list screen prints what the
     // player is carrying.

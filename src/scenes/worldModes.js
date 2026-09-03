@@ -26,7 +26,7 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 54: PresentNPCInfo's one line
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -68,14 +68,14 @@ import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-poo
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
-import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 54: DFU's two hit volumes
+import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 58: DFU's two hit volumes
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 39r: ShowPlayerDamage - an arrow indoors comes through the same door as a blow
-import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 54: and the magic-round fan-out both of them owe
+import { sensesContext, subscribeFoePools } from './shared.js';   // IF: the one senses builder every pool is handed; AUDIT 58: and the magic-round fan-out both of them owe
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
 import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
-import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 54: the 354 refusal's other term
+import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 58: the 354 refusal's other term
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
@@ -144,7 +144,7 @@ import { guildOfFaction, isMember } from '../systems/guilds.js';
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
@@ -158,7 +158,7 @@ import {
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
 import { MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
-import { MerchantRepairWindow, preloadMerchantRepairArt, merchantRepairArtLoaded } from '../ui/merchantRepairWindow.js';   // AUDIT 54: the repair shop's four-button popup
+import { MerchantRepairWindow, preloadMerchantRepairArt, merchantRepairArtLoaded } from '../ui/merchantRepairWindow.js';   // AUDIT 58: the repair shop's four-button popup
 import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -395,7 +395,7 @@ export function createWorldModes(host) {
   //
   // DT1: BOTH pools were left empty here on the claim that this host
   // has nothing to put in them. It has had both for slices. The
-  // entities are `interiorFoePool()` - AUDIT 54's join of the real
+  // entities are `interiorFoePool()` - AUDIT 58's join of the real
   // foe pool IF gave buildings (quest foes, the Daedric punishment
   // wave) with ROAD-B's indoor watch, because UpdateNearbyObjects
   // walks ONE database and both pools are in it - and the loot is what
@@ -424,7 +424,7 @@ export function createWorldModes(host) {
     loot: () => nearbyLootRecords({
       piles: interiorDropped._piles,
       containers: [...(interiorCtx?.shelves ?? []), ...(interiorCtx?.containers ?? [])],
-      foes: interiorFoePool(),   // AUDIT 54: the WATCH's corpses are lootable containers too
+      foes: interiorFoePool(),   // AUDIT 58: the WATCH's corpses are lootable containers too
     }),
     feet: () => player.pos,
   });
@@ -581,7 +581,7 @@ export function createWorldModes(host) {
         playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
         playerYawRad: cam.yaw,
         fovDegrees: fieldOfView() * 180 / Math.PI,
-        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 54 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 58 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
         rolls,
       });
       const spot = placeFoeFreely(env, { minDistance, maxDistance });
@@ -597,7 +597,7 @@ export function createWorldModes(host) {
   /** IF: this host's enemies-nearby scan, which used to be the
    *  literal `false` three consumers each carried. GameManager
    *  .AreEnemiesNearby is one method over one database; the interior's
-   *  database is BOTH of its pools (AUDIT 54 - it named only
+   *  database is BOTH of its pools (AUDIT 58 - it named only
    *  `interiorFoes`, so a player could lie down and sleep the night
    *  through in a tavern with 2-5 Knight_CityWatch spawned into the
    *  room by `spawnCityGuardsInside`, and the rest window's hourly
@@ -620,7 +620,7 @@ export function createWorldModes(host) {
       playerFeet: [feet[0], feet[1] + 0.9, feet[2]],   // the controller centre, not the feet
       playerYawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,       // the law speaks DEGREES
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 54 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 58 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
     });
     const spot = placeFoeFreely(env);
     if (!spot) return false;
@@ -659,7 +659,7 @@ export function createWorldModes(host) {
       // area is this host's TWO pools (the street's are a different
       // scene, and the exterior host does not tick them while the
       // player is indoors), so the walk is this host's database.
-      // AUDIT 54: it was `interiorFoes.foes` alone, so a struck
+      // AUDIT 58: it was `interiorFoes.foes` alone, so a struck
       // shopkeeper-foe left the watchmen standing in the same room
       // passive - the one makeAreaHostile in the tree that walked
       // half a database where C# walks all of one.
@@ -668,7 +668,7 @@ export function createWorldModes(host) {
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
         hurtPlayer(playerEntity, dmg);
-        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+        audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
         playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
         surfacePlayer();
       },
@@ -709,7 +709,7 @@ export function createWorldModes(host) {
    *  OnTransitionExterior takes the interior's enemies with it, and
    *  the watch are enemies. */
   let interiorGuards = null;
-  /** AUDIT 54 (hosts-consistency): THIS HOST'S ACTIVE ENEMY DATABASE,
+  /** AUDIT 58 (hosts-consistency): THIS HOST'S ACTIVE ENEMY DATABASE,
    *  WRITTEN ONCE. DFU has ONE database per scene -
    *  ActiveGameObjectDatabase.GetActiveEnemyBehaviours() - and
    *  GameManager.AreEnemiesNearby (:684-732), GameManager
@@ -730,7 +730,7 @@ export function createWorldModes(host) {
    *  at each reader). */
   const interiorFoePool = () => [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])];
   const interiorEnemyDatabase = () => interiorFoePool().filter((f) => !f.dead);
-  /** AUDIT 54 (review): THE DAMAGE/DRAIN DOORS for a record from either
+  /** AUDIT 58 (review): THE DAMAGE/DRAIN DOORS for a record from either
    *  of this host's pools, written where the ticker can reach them.
    *  This body was inlined in `insideFoeSinksFor` below - the enchant
    *  ctx's one consumer - and the returned literal is built after the
@@ -770,7 +770,7 @@ export function createWorldModes(host) {
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
    *  fired, and a paralysed foe stayed paralysed for the life of the
-   *  interior. AUDIT 54 opened the door that lands those payloads
+   *  interior. AUDIT 58 opened the door that lands those payloads
    *  here (the enchant ctx answers `insideFoes()` in interior mode
    *  now), so the gap stopped being latent. Same call shape as
    *  world.js and exterior.js, on the window `interiorTicker.tick`
@@ -802,7 +802,7 @@ export function createWorldModes(host) {
         if (dmg <= 0) return;
         const apply = () => {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+          audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
           surfacePlayer();
         };
@@ -986,7 +986,7 @@ export function createWorldModes(host) {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
     preloadMerchantServiceArt({ renderer, fetchBytes, palette });   // UI2: GNRC01I0, beside its guild sibling
-    preloadMerchantRepairArt({ renderer, fetchBytes, palette });   // AUDIT 54: REPR01I0, the repair shop's own panel
+    preloadMerchantRepairArt({ renderer, fetchBytes, palette });   // AUDIT 58: REPR01I0, the repair shop's own panel
     preloadCovenArt({ renderer, fetchBytes, palette });   // CW1: DAED00I0 for the witches' panel
     preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
@@ -1558,7 +1558,7 @@ export function createWorldModes(host) {
         reducedRepairCost: repairDiscount,
         skills: skills(),
       }),
-      // AUDIT 54: the trade window asks about money TWICE and both
+      // AUDIT 58: the trade window asks about money TWICE and both
       // readings are GetGoldAmount - the cost strip's gold label
       // (DaggerfallTradeWindow.cs:488 `goldLabel.Text =
       // PlayerEntity.GetGoldAmount().ToString()`) and ShowTradePopup's
@@ -1921,7 +1921,7 @@ export function createWorldModes(host) {
   }
 
 
-  /** AUDIT 54 (talk lane) - ActivateStaticNPC's OWN switch
+  /** AUDIT 58 (talk lane) - ActivateStaticNPC's OWN switch
    *  (PlayerActivate.cs:753-768). The static-NPC arm had no
    *  interaction-mode test at all, in either ray: `case Info:
    *  PresentNPCInfo(npc); break;` (:755-757) is the whole of that mode
@@ -2032,7 +2032,7 @@ export function createWorldModes(host) {
     // window in Sell mode) and Exit. The banking arm landed at B2 (it
     // is the next arm below); the tavern's landed with U39.
     //
-    // AUDIT 54 (talk lane) BUILT THE POPUP THIS ARM WAS MISSING.
+    // AUDIT 58 (talk lane) BUILT THE POPUP THIS ARM WAS MISSING.
     // PlayerActivate.cs:1579-1580 pushes MerchantRepairPopup here, and
     // the port jumped straight into openRepairService with onTalk/onSell
     // hooks that the SHIPPING arm of that function - the native trade
@@ -3179,7 +3179,7 @@ export function createWorldModes(host) {
       potionWin = new PotionMakerWindow({
         packItems: () => (playerEntity.items ??= []),
         wagonItems: () => (playerEntity.wagonItems ??= []),
-        // AUDIT 54: Refresh's gold label is GetGoldAmount
+        // AUDIT 58: Refresh's gold label is GetGoldAmount
         // (DaggerfallPotionMakerWindow.cs:138) - coins PLUS letters of
         // credit (PlayerEntity.cs:1313-1316), the same reader the item
         // maker (itemMakerWindow.js), the spellbook and the character
@@ -3397,7 +3397,7 @@ export function createWorldModes(host) {
    *  second menu.
    *
    *  The keyed flow stays because it is the fallback with no ARENA2.
-   *  AUDIT 54 (talk lane) retired the second half of this sentence:
+   *  AUDIT 58 (talk lane) retired the second half of this sentence:
    *  Talk and Sell belong to the merchant POPUP
    *  (DaggerfallMerchantRepairPopupWindow.cs:24-27), which the repair
    *  arm mounts now, and DFU's trade window carries no such buttons
@@ -4109,7 +4109,7 @@ export function createWorldModes(host) {
   function tryExit() {
     const eye = player.eye;
     const dir = eyeDir();
-    // QG1, AUDIT 54: the quest-resource click arm, which this ray was
+    // QG1, AUDIT 58: the quest-resource click arm, which this ray was
     // the only one of the three without - tryExitDungeon carries it
     // and so does world.js's exterior ladder, while CreateFoe's
     // PlaceFoeBuildingInterior arm (CreateFoe.cs:219-233) stands quest
@@ -4377,7 +4377,7 @@ export function createWorldModes(host) {
           // simply overwrite the routed one and win silently. The
           // standalone ?dungeon route passes none and mounts its own.
           //
-          // AUDIT 54 (f2/hosts): "an outer host already owns it" was
+          // AUDIT 58 (f2/hosts): "an outer host already owns it" was
           // this flag's whole premise and it was HALF TRUE - exterior.js
           // builds this machine too and mounted nothing, so a dungeon
           // or a shop entered from ?exterior inherited a null ctx from
@@ -5088,7 +5088,7 @@ export function createWorldModes(host) {
         }) : 0;
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
-          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
@@ -5101,7 +5101,7 @@ export function createWorldModes(host) {
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
       },
-      // AUDIT 54 (review): BOTH pools, through the one join. This read
+      // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
       // died on geometry (arrowFlight.js:102-112 is a shaft's ONLY
@@ -5124,7 +5124,7 @@ export function createWorldModes(host) {
           : interiorGuards?.hurtGuard(f, d, player.pos, m.dir)),
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
-        // AUDIT 54: WeaponManager.cs:630 after the damage fork - a
+        // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room. The
         // interior watch pool's door carries no hostility pair.
         onAttackFromPlayer: (f) => { if (f._encounter) interiorFoes?.handleAttackFromPlayer(f, player.pos); },
@@ -5235,7 +5235,7 @@ export function createWorldModes(host) {
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
-        // AUDIT 54: the PLAYER's blow landing on a foe - EnemySounds.cs:125's 1.1, not PlayerFootsteps' 1
+        // AUDIT 58: the PLAYER's blow landing on a foe - EnemySounds.cs:125's 1.1, not PlayerFootsteps' 1
         makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {
         tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
         continue;
@@ -5816,7 +5816,7 @@ export function createWorldModes(host) {
    *  expression: the attack seam below and the HOST's cursor toggle
    *  read it (it is published on the returned object).
    *
-   *  AUDIT 54 (f3/input) - ONE READER OF THE ACTION PER HOST.
+   *  AUDIT 58 (f3/input) - ONE READER OF THE ACTION PER HOST.
    *  PlayerMouseLook.cs:190-198 reads ActivateCursor in exactly one
    *  place and flips `cursorActive` once per press:
    *    if (!GameManager.IsGamePaused &&
@@ -6152,7 +6152,7 @@ export function createWorldModes(host) {
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
-    // AUDIT 54 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
+    // AUDIT 58 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
@@ -6211,14 +6211,14 @@ export function createWorldModes(host) {
         // inside the third `else`, after the other two arms have
         // returned.
         preventedMessage: getPreventedRestMessage,
-        // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+        // AUDIT 58: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
         // a pending `give pc ... notify` offer takes this press and
         // the rest window stays shut (ui/pendingOffer.js).
         giveOffer,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
-        // AUDIT 54: DFU raises the enemy alert on the enemies arm
+        // AUDIT 58: DFU raises the enemy alert on the enemies arm
         // (DaggerfallUI.cs:655 - NOT the rest window's :655, which is
         // DoRestForAWhile). The open gate is ONE scene-free handler:
         // `if (AreEnemiesNearby(true)) { SetEnemyAlert(true);
@@ -6228,7 +6228,7 @@ export function createWorldModes(host) {
         // (dungeonContext.js) raised it, so an interior refusal never
         // armed the flag intermittentEnemySpawn rolls on.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(interiorTicker.classicMinutes));
-        // AUDIT 54: the offer took the press - the item was handed
+        // AUDIT 58: the offer took the press - the item was handed
         // over inside GiveOffer() and there is nothing to say.
         if (d.kind === 'offer') return;
         if (d.kind === 'blocked') {
@@ -6280,12 +6280,12 @@ export function createWorldModes(host) {
     // through a shop door. This routes the same ui/input.js table the
     // dungeon arm has always used, over an interior ctx.
     if (mode === 'interior') {
-      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 54 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
+      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
       return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 54 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
@@ -6639,7 +6639,7 @@ export function createWorldModes(host) {
       if (mode === 'interior') return interiorEnemyDatabase();
       return [];
     },
-    /** AUDIT 54 (EC1's third mode): the SINKS for a record `insideFoes`
+    /** AUDIT 58 (EC1's third mode): the SINKS for a record `insideFoes`
      *  handed out - dungeonContext's `foeSinksFor` twin, for the host
      *  that had none. The enchant ctx is a session singleton mounted
      *  in world.js, and its foe pool answered `[]` in interior mode,
@@ -6659,7 +6659,7 @@ export function createWorldModes(host) {
      *  the drift the join above was written to end. This is the door
      *  onto that one definition. */
     insideFoeSinksFor(foe) { return insideFoeSinks(foe); },
-    /** AUDIT 54 (review): THE WABBAJACK'S TRANSFORM over this host's
+    /** AUDIT 58 (review): THE WABBAJACK'S TRANSFORM over this host's
      *  pools - dungeonContext.js's twin, for the host that had none.
      *  world.js's `replaceFoe` deletes the struck record and stands
      *  its replacement, and it did both through `exteriorFoes` with
@@ -6883,7 +6883,7 @@ export function createWorldModes(host) {
     // this host's arithmetic - `interiorPaused` is the one place the
     // question is asked (see its note at the stack's construction).
     get overlayHeld() { return (mode === 'interior' && interiorPaused()) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
-    /** AUDIT 54 (f3/input): the mode machine's own "a window I draw is
+    /** AUDIT 58 (f3/input): the mode machine's own "a window I draw is
      *  up" read, published so the HOST's single bindCursorToggle can OR
      *  it into its guard. One reader of Actions.ActivateCursor per host
      *  (PlayerMouseLook.cs:190-198); see modalWindowUp's note above. */

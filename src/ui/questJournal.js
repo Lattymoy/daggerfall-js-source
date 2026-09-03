@@ -75,7 +75,7 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 /** JournalDisplay (:66-72). The order IS the cycle order (:248-264). */
 export const JOURNAL_MODES = Object.freeze(['activeQuests', 'finishedQuests', 'notebook', 'messages']);
 
-/** AUDIT 54: THE WINDOW'S FIVE TOOLTIPS, Internal_Strings.csv:784,
+/** AUDIT 58: THE WINDOW'S FIVE TOOLTIPS, Internal_Strings.csv:784,
  *  :786, :788, :790, :792 verbatim. The dialog button carries
  *  "dialogButtonInfo" for the life of the window (:120-121); the TITLE
  *  label starts on "activeQuestsInfo" (:165-166) and is re-pointed per
@@ -205,12 +205,12 @@ export class QuestJournalWindow {
     this.moveRemoveBox = null;
     this.noteBox = null;
     this._font = null;
-    // AUDIT 54: the window's shared tooltip, at DFU's per-window delay.
+    // AUDIT 58: the window's shared tooltip, at DFU's per-window delay.
     this.tip = new ToolTip(JOURNAL_TOOLTIP_DELAY);
     audio.playOneShot(SOUND.OpenBook, 1);
   }
 
-  /** AUDIT 54: the two panels DFU hangs a ToolTipText on - the dialog
+  /** AUDIT 58: the two panels DFU hangs a ToolTipText on - the dialog
    *  button (:120-121) and the title label (:165-166, re-pointed at
    *  :571/:615/:625/:635). Anything else clears it. */
   hover(vx, vy) {
@@ -677,7 +677,7 @@ export class QuestJournalWindow {
       this.findBox.box = layoutMessageBox(font, this.findBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       drawMessageBox(renderer, m, font, this.findBox.box);
     }
-    this.tip.draw(renderer, m, font);   // AUDIT 54: LAST - DFU's final-component order
+    this.tip.draw(renderer, m, font);   // AUDIT 58: LAST - DFU's final-component order
     return true;
   }
 }

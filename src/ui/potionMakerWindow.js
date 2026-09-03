@@ -95,7 +95,7 @@ export async function preloadPotionArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'MASK00I0.IMG');
-    // AUDIT 54: the recipe picker is SmallFont, 12 rows (:113).
+    // AUDIT 58: the recipe picker is SmallFont, 12 rows (:113).
     await preloadListPickerSmallFont(deps);
   } catch { console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed'); }
 }
@@ -244,7 +244,7 @@ export class PotionMakerWindow {
       items: known.map((r) => r.name),
       onPick: (i) => { this._fillFrom(known[i]); this.picker = null; },
       onCancel: () => { this.picker = null; },
-      // AUDIT 54: DaggerfallPotionMakerWindow.cs:113 builds this
+      // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
       // picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)`.
       font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });

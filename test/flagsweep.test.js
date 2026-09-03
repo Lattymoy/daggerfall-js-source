@@ -140,7 +140,7 @@ test('FS1: the F5/F6 arc is retired, and U43 really did route the table indoors'
   // U43's interior arm: the SAME ui/input.js table, over an interior
   // ctx that carries the doors those keys open.
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /if \(mode === 'interior'\) \{\n\s*if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/);   // AUDIT 54 (f3/input): + the held-keys Set
+  assert.match(modes, /if \(mode === 'interior'\) \{\n\s*if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/);   // AUDIT 58 (f3/input): + the held-keys Set
   assert.match(modes, /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/);
   for (const arm of ['CharacterSheet', 'Inventory', 'LogBook', 'NoteBook']) {
     assert.ok(read('src/ui/input.js').includes(`case '${arm}':`), `${arm} is in the one table`);
@@ -176,7 +176,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal(/FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/.test(dc), false,
     'the flag is retired where it stood');
-  // AUDIT 54 (f2/hosts): THE THIRD HOST. This list read as the law and
+  // AUDIT 58 (f2/hosts): THE THIRD HOST. This list read as the law and
   // was only the shape - `scenes/exterior.js` is a full combat host
   // that mints starting gear, opens the native inventory, buys off shop
   // shelves through its own mode machine and takes dungeon loot, and it

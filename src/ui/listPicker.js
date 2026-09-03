@@ -32,7 +32,7 @@
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
-import { FntFile } from '../formats/fntFile.js';   // AUDIT 54: FONT0002, DaggerfallUI.SmallFont
+import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
 import { makeFont } from './text.js';
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
@@ -90,7 +90,7 @@ export async function preloadListPickerArt(deps) {
 }
 export const listPickerArtLoaded = () => !!_art;
 
-/** AUDIT 54: DaggerfallUI.SmallFont (FONT0002, DaggerfallUI.cs:155)
+/** AUDIT 58: DaggerfallUI.SmallFont (FONT0002, DaggerfallUI.cs:155)
  *  against the FONT0003 DefaultFont (:156). Three windows build this
  *  picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)` -
  *  DaggerfallItemMakerWindow.cs:372 and :376, DaggerfallPotionMaker
@@ -141,7 +141,7 @@ export class ListPickerWindow {
     this.onCancel = onCancel;
     this.backdrop = backdrop;
     this.allowCancel = allowCancel;
-    // AUDIT 54: the two arguments DaggerfallListPickerWindow's
+    // AUDIT 58: the two arguments DaggerfallListPickerWindow's
     // constructor takes (:52-56), in its own guarded forms - `Font`
     // (:40-44) falls back to DaggerfallUI.DefaultFont, which here is
     // whatever font the HOST hands draw(); `RowsDisplayed` (:46-50)
@@ -335,7 +335,7 @@ export class ListPickerWindow {
       // FONT0003 - so from the 6th visible row on, the row you
       // highlighted was not the row you selected, and the 9th was
       // unselectable outright.
-      // AUDIT 54: the window's OWN font outranks the host's, because
+      // AUDIT 58: the window's OWN font outranks the host's, because
       // DFU's listBox.Font was assigned from the constructor argument
       // (:40-44) - the row pitch, the hit grid and the glyphs all have
       // to move together or the 12-row SmallFont pickers mis-select.
@@ -379,7 +379,7 @@ export class ListPickerWindow {
     // go away here or it would hold the host for ever showing nothing -
     // so this bypasses AllowCancel deliberately, and says so.
     if (!_art) { this.done = true; this.onCancel?.(); return; }
-    // AUDIT 54: `listBox.Font = (value != null) ? value :
+    // AUDIT 58: `listBox.Font = (value != null) ? value :
     // DaggerfallUI.DefaultFont` (:40-44) - the host's font is the
     // DEFAULT, not the override.
     font = this.pickerFont ?? font;

@@ -139,7 +139,7 @@ test('H4: the host pass - scissor brackets beginFrame\'s clear, viewport follows
   assert.ok(wm.includes('drawModelPreview: drawBankModelPreview'), 'and the window is handed the door');
 });
 
-// ── AUDIT 54: THE PRICE LIST'S TWO ARROWS ────────────────────────
+// ── AUDIT 58: THE PRICE LIST'S TWO ARROWS ────────────────────────
 //
 // DaggerfallBankPurchasePopUp cuts a green and a red 9x16 arrow out of
 // BANK01I1.IMG / BANK01I2.IMG (:51-52, LoadTextures :355-366) against

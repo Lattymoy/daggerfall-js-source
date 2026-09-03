@@ -40,7 +40,7 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   assert.ok(tt.includes('if (!best || bestDist > RAY_DISTANCE) return false;'), 'the ray reach is the only silent bound');
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's
   // currentMode is global) - the gates read it live, same law
-  // AUDIT 54 (talk lane) MOVED THIS PIN: the refusal is the localized
+  // AUDIT 58 (talk lane) MOVED THIS PIN: the refusal is the localized
   // key 'youAreTooFarAway' (Internal_Strings.csv:22) and there is one
   // constant for it now (player/activate.js), so the literal these two
   // lines used to carry - a full stop where the table spells an

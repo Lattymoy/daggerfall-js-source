@@ -49,7 +49,7 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
     assert.ok(s.includes("(modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider"),
       `${f}: missiles hit the walls of the mode the player is in`);
     if (f === 'world.js') {
-      // AUDIT 54 (review): the world host's arm is NO LONGER A GATE.
+      // AUDIT 58 (review): the world host's arm is NO LONGER A GATE.
       // This is the only cast engine indoors - worldModes takes this
       // instance, drives firePending/update on the interior frame and
       // routes the interior attack click into interceptAttack - and

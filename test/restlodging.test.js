@@ -705,7 +705,7 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     assert.match(h, /if \(d\.kind === 'blocked'\) \{/, f);
     assert.match(h, /racialRestBlock\(playerEntity/, f);
     assert.match(h, /racialOverrideBlocks: !!rb/, f);
-    // AUDIT 54: the OPEN GATE HAS TWO TERMS, and the interior host
+    // AUDIT 58: the OPEN GATE HAS TWO TERMS, and the interior host
     // carried only one. DaggerfallUI.cs:651-656 is
     // `if (AreEnemiesNearby(true)) { PlayerEntity.SetEnemyAlert(true);
     // MessageBox(354); }` - raise the alert, THEN show the box. Three
@@ -733,7 +733,7 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   // this pin guards (every host runs restDecision, scene-free, before
   // opening) is unchanged and stronger.
   assert.match(wm, /enemiesNearby: interiorEnemiesNearby\(\{ resting: true \}\),[^}]*swimming: false,/s);
-  // AUDIT 54: over BOTH of this host's pools. It named interiorFoes
+  // AUDIT 58: over BOTH of this host's pools. It named interiorFoes
   // alone, so a player could lie down in a tavern with 2-5
   // Knight_CityWatch spawned into the room by spawnCityGuardsInside
   // and sleep the night through - the quest pool was empty, so the

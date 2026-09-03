@@ -1,4 +1,4 @@
-// AUDIT 54 (the unpinned-laws lane). Every law below already SHIPPED
+// AUDIT 58 (the unpinned-laws lane). Every law below already SHIPPED
 // correctly - the defect was that nothing in the suite could tell if it
 // stopped. Each of these was reproduced as a surviving mutant: the port
 // value was changed, the whole suite stayed green, and the value was
@@ -74,7 +74,7 @@ const career = {
   minorSkills: [SKILLS.ShortBlade, SKILLS.Archery, SKILLS.Running, SKILLS.Swimming, SKILLS.Climbing, SKILLS.Medical],
 };
 
-test('AUDIT 54: the reflexes use-scale is pinned from BOTH sides - a tally UNDER the bar never raises', () => {
+test('AUDIT 58: the reflexes use-scale is pinned from BOTH sides - a tally UNDER the bar never raises', () => {
   // PlayerEntity.cs:1377-1378
   //   int reflexesMod = 0x10000 - (((int)reflexes - 2) << 13);
   //   int calculatedSkillUses = (skillUses[i] * reflexesMod) >> 16;
@@ -135,7 +135,7 @@ const DFU_ADVANCEMENT_MULTIPLIERS = [
   8,                                   // CriticalStrike
 ];
 
-test('AUDIT 54: all 35 advancement multipliers, cell for cell against DaggerfallSkills.cs', () => {
+test('AUDIT 58: all 35 advancement multipliers, cell for cell against DaggerfallSkills.cs', () => {
   // Four of 35 cells were asserted, so CriticalStrike 8 -> 6 and
   // Jumping 5 -> 7 each survived the whole suite. A transcription typo
   // in a data table produces loot/advancement that is merely WRONG for
@@ -148,7 +148,7 @@ test('AUDIT 54: all 35 advancement multipliers, cell for cell against Daggerfall
 });
 
 const SKILLS_CS = dfuFile('Assets/Scripts/Game/Entities/DaggerfallSkills.cs');
-test('AUDIT 54: the advancement multipliers REBUILT from DaggerfallSkills.cs', { skip: !existsSync(SKILLS_CS) && 'DFU checkout absent (DFU_PATH)' }, () => {
+test('AUDIT 58: the advancement multipliers REBUILT from DaggerfallSkills.cs', { skip: !existsSync(SKILLS_CS) && 'DFU checkout absent (DFU_PATH)' }, () => {
   // The audit24_loottables.test.js idiom: regenerate the table from the
   // reference rather than remember it, so the port cannot drift from a
   // DFU nobody re-reads. It skips without a checkout, which is why the
@@ -171,7 +171,7 @@ test('AUDIT 54: the advancement multipliers REBUILT from DaggerfallSkills.cs', {
 });
 
 // ── 3 + 4: LootTables ─────────────────────────────────────────────────
-test('AUDIT 54: the loot level split - C1/C2/P1/P2 scale, C3/M1/M2 are FLAT', () => {
+test('AUDIT 58: the loot level split - C1/C2/P1/P2 scale, C3/M1/M2 are FLAT', () => {
   // LootTables.cs:217-223 (the released game over DF Chronicles):
   //   RandomIngredient(matrix.C1 * playerEntity.Level, CreatureIngredients1, items);
   //   RandomIngredient(matrix.C2 * playerEntity.Level, CreatureIngredients2, items);
@@ -202,7 +202,7 @@ test('AUDIT 54: the loot level split - C1/C2/P1/P2 scale, C3/M1/M2 are FLAT', ()
   }
 });
 
-test('AUDIT 54: loot gold is Range(MinGold, MaxGold + 1) - MaxGold itself is reachable', () => {
+test('AUDIT 58: loot gold is Range(MinGold, MaxGold + 1) - MaxGold itself is reachable', () => {
   // LootTables.cs:194 `Random.Range(matrix.MinGold, matrix.MaxGold + 1)`
   // - Random.Range(int,int) is max-EXCLUSIVE, so the `+ 1` is what lets
   // a pile ever pay MaxGold. Every existing gold assertion rolled 0,
@@ -218,7 +218,7 @@ test('AUDIT 54: loot gold is Range(MinGold, MaxGold + 1) - MaxGold itself is rea
 });
 
 // ── 5: SavingThrow ────────────────────────────────────────────────────
-test('AUDIT 54: SavingThrow\'s mixed-tolerance fold and the 5..95 clamp, with no career data', () => {
+test('AUDIT 58: SavingThrow\'s mixed-tolerance fold and the 5..95 clamp, with no career data', () => {
   // FormulaHelper.cs:1512-1519 is DFU's own departure from classic -
   // tolerance flags MIX rather than short-circuit. Immune ALONE always
   // reaches the `savingThrow >= 100 -> return 0` arm (:1529-1530), which
@@ -253,7 +253,7 @@ test('AUDIT 54: SavingThrow\'s mixed-tolerance fold and the 5..95 clamp, with no
 });
 
 // ── 6: the condition-damage floor roll ────────────────────────────────
-test('AUDIT 54: the condition-damage floor roll is exactly 20%', () => {
+test('AUDIT 58: the condition-damage floor roll is exactly 20%', () => {
   // ApplyConditionDamageThroughPhysicalHit (FormulaHelper.cs:1131-1132):
   //   int amount = (10 * damage + 50) / 100;
   //   if ((amount == 0) && Dice100.SuccessRoll(20)) amount = 1;
@@ -272,7 +272,7 @@ test('AUDIT 54: the condition-damage floor roll is exactly 20%', () => {
 });
 
 // ── 7: the automap containment skin ───────────────────────────────────
-test('AUDIT 54: AABB_TOLERANCE is 0.05, and the skin decides which model a probe credits', () => {
+test('AUDIT 58: AABB_TOLERANCE is 0.05, and the skin decides which model a probe credits', () => {
   // automapModel.js:48. DFU has no analogue constant - it resolves a
   // reveal by `hit.collider` - so the port's skin has neither a
   // reference anchor nor, until now, a pin: its one test computed its
@@ -293,7 +293,7 @@ test('AUDIT 54: AABB_TOLERANCE is 0.05, and the skin decides which model a probe
 });
 
 // ── 8: Range(min, max + 1) in hand to hand ────────────────────────────
-test('AUDIT 54: hand-to-hand damage rolls Range(min, max + 1) - the top value is reachable', () => {
+test('AUDIT 58: hand-to-hand damage rolls Range(min, max + 1) - the top value is reachable', () => {
   // FormulaHelper.cs:779 `Random.Range(minBaseDamage, maxBaseDamage + 1)`.
   // Every drive in the tree was roll 0, where `min` comes back whether
   // the width is `max + 1 - min` or `max - min`, so dropping the `+ 1` -
@@ -309,7 +309,7 @@ test('AUDIT 54: hand-to-hand damage rolls Range(min, max + 1) - the top value is
 });
 
 // ── 9 + 10: CalculateCost / CalculateTradePrice ───────────────────────
-test('AUDIT 54: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelper.cs:2042-2043)', () => {
+test('AUDIT 58: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelper.cs:2042-2043)', () => {
   // CalculateCost floors the base value at 1 (FH:1892-1893) and THEN
   // divides by the region's adjustment, so a sub-1000 province drives an
   // already-1 cost to 0 and the SECOND floor is the only thing that
@@ -326,7 +326,7 @@ test('AUDIT 54: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelp
   assert.equal(calculateItemRepairCost(5, 10, 0, 100, { priceAdjustment: 750 }), 2);
 });
 
-test('AUDIT 54: CalculateTradePrice\'s SELLING branch, by value (FormulaHelper.cs:1994)', () => {
+test('AUDIT 58: CalculateTradePrice\'s SELLING branch, by value (FormulaHelper.cs:1994)', () => {
   //   amount = ((((179 * delta_mercantile) >> 8) + ((51 * delta_personality) >> 8)) * cost) >> 8;
   // The buy branch had a hand-derived anchor; the sell branch had only
   // `sell < buy` and two monotonicity checks, all of which survive a
@@ -342,7 +342,7 @@ test('AUDIT 54: CalculateTradePrice\'s SELLING branch, by value (FormulaHelper.c
 });
 
 // ── 11: NormalizeReputations does NOT propagate ───────────────────────
-test('AUDIT 54: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239/:2241)', () => {
+test('AUDIT 58: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239/:2241)', () => {
   // NormalizeReputations calls `factionData.ChangeReputation(id, 1)` -
   // the TWO-argument overload, and PersistentFactionData.cs:390 declares
   // `bool ChangeReputation(int factionID, int amount, bool propagate = false)`.

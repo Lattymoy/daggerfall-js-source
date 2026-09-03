@@ -34,7 +34,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -108,7 +108,7 @@ import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, disp
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // DR1: DoModeAction's spell arm (:954-995)
 import { isEquipped } from '../systems/equip.js';   // DR1: FilterLocalItems' `!item.IsEquipped` (:693)
-import { totalGoldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip - AUDIT 54: PlayerEntity.GetGoldAmount (:1313-1316), coins PLUS letters
+import { totalGoldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip - AUDIT 58: PlayerEntity.GetGoldAmount (:1313-1316), coins PLUS letters
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
@@ -117,7 +117,7 @@ import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../syste
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
-import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 54: DaggerfallUI.GiveOffer, the rung in front of the rest press
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
@@ -133,11 +133,11 @@ import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
-  SOUND, hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME,   // AUDIT 54: DFU's two hit volumes
+  SOUND, hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME,   // AUDIT 58: DFU's two hit volumes
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD,
 } from '../systems/soundClips.js';
-import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 54: PlayerFootsteps.FootstepVolumeScale (:30) - the stride's 0.7, which its three one-shots carry too
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30) - the stride's 0.7, which its three one-shots carry too
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
@@ -572,7 +572,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       REACTIONS, sampleClip,
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
-      dropWeaponIfTargetImmune: formulas.dropWeaponIfTargetImmune,   // AUDIT 54: EnemyAttack.cs:191-194
+      dropWeaponIfTargetImmune: formulas.dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
@@ -903,7 +903,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.questBehaviour?.notifyDestroyed();
       dropCandidate(f);
     },
-    // AUDIT 54: this is the SetHealth(0) door, not a damage source -
+    // AUDIT 58: this is the SetHealth(0) door, not a damage source -
     // like hurtPlayer's bypassShield it must not be mitigated, or a
     // quest that removes a foe would be eaten by its own Shield.
     zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
@@ -1238,7 +1238,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // A2: DaggerfallAction.Play's sound - the RDB sound field fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
-  // AUDIT 54: it is a sound ID, not a record index. RDBLayout names
+  // AUDIT 58: it is a sound ID, not a record index. RDBLayout names
   // the parameter `int soundID_and_index` (:951) and stores it as
   // action.Index (:964), whose own comment calls it "the raw sound
   // index from daggerfall" (DaggerfallAction.cs:42) - but the wiring
@@ -1692,7 +1692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // spliceable, because a click TRANSFERS out of it.
       packItems: () => (playerEntity.items ??= []),
       isEquipped: (it) => isEquipped(it),
-      // AUDIT 54: goldLabel is GetGoldAmount
+      // AUDIT 58: goldLabel is GetGoldAmount
       // (DaggerfallTradeWindow.cs:488) on EVERY mount of this window,
       // the dungeon's Identify included - coins plus letters of credit
       // (PlayerEntity.cs:1313-1316). Label-only here, since the spell
@@ -1877,7 +1877,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  feet with the damage taken carried over. A quest foe still in
    *  use is left alone - QuestResourceBehaviour's own check.
    *
-   *  AUDIT 54 (review): lifted out of the ctx literal below and put
+   *  AUDIT 58 (review): lifted out of the ctx literal below and put
    *  on the api, because that literal is mounted ONLY on the
    *  standalone route (`opts.enchantCtx !== false`) while the hosted
    *  route leaves world.js's mount as the session singleton - so a
@@ -2095,7 +2095,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeDeps.castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      // AUDIT 54: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio.play3dId(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       explodeAt: magic.explodeAt,
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
@@ -2361,7 +2361,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // C2-slice (combat-17): the player's 20% attack grunt fires once
     // per hit frame, never for a bow (this path is melee-only).
     const grunt = playerAttackGrunt(playerEntity, false, Math.random);   // explicit: this path's resolveHit rides Math.random too (no injected seam here)
-    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
+    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
@@ -2381,7 +2381,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         });
         if (snd?.at === 'enemy') audio.play3d(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio.playOneShot(snd.sound, 1.1);
-        // AUDIT 54: ...and the swing still ENRAGES what it touched.
+        // AUDIT 58: ...and the swing still ENRAGES what it touched.
         // WeaponManager.cs:630's HandleAttackFromSource sits after the
         // damage fork closes (:615), so a connecting swing that lost
         // the roll wakes a pacified foe and the whole room with it.
@@ -2403,7 +2403,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
-      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
     // combat-14: the no-entity fallback - only a swing that connected
@@ -2571,7 +2571,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
                 onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
-                // AUDIT 54: WeaponManager.cs:630 runs for every shaft that
+                // AUDIT 58: WeaponManager.cs:630 runs for every shaft that
                 // CONNECTED, damage or none.
                 onAttackFromPlayer: (t) => handleAttackFromPlayer(t, lastPlayerFeet),
               });
@@ -2597,7 +2597,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 calculateAttackDamage: foeDeps.calculateAttackDamage,
                 dealDamage: (tt, d) => tt.hurtFromFoe?.(d, m.dir),
                 audio, hitEffects,
-                // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+                // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
                 // a poisoned foe blade doses the foe it strikes, on DFU's
                 // own target (the struck entity). Without the hook the
                 // formula still cleared the dose, so the blade was spent
@@ -2637,7 +2637,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // PlayWeaponHitSound's family, NOT PlayArrowSound - which
             // has no sender anywhere in the DFU tree and is dead.
             if (dmg > 0) {
-              audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+              audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
               flashPlayerDamage();
               playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
             } else if (m.shooterFoe) {
@@ -2836,7 +2836,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
-  /** AUDIT 54: HandleAttackFromSource's PLAYER ARM, lifted out of the
+  /** AUDIT 58: HandleAttackFromSource's PLAYER ARM, lifted out of the
    *  damage door because DFU runs it on a CONNECTING swing whether or
    *  not the swing dealt anything. WeaponManager.WeaponDamage's damage
    *  fork closes at :615; :627 `enemyEntity.DecreaseHealth(damage)`
@@ -2888,7 +2888,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (fromPlayer && foe.ai) {
       handleAttackFromPlayer(foe, playerFeet);
     }
-    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
     // player's. DFU's hook is inside the ABSTRACT BASE's
     // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
     // shield effect to mitigate incoming damage from all sources"), so
@@ -2979,7 +2979,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  melee damage frame, whatever the outcome (MeleeDamage's tail). */
   function foeAttackVoice(f) {
     const v = enemyAttackVoice(f);
-    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
   }
 
   /** MT-iv: MeleeDamage's TWO-ARM SPLIT (EnemyAttack.cs:199-209) -
@@ -3005,7 +3005,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         calculateAttackDamage: foeDeps.calculateAttackDamage,
         dealDamage: (tt, d) => tt.hurtFromFoe?.(d, fwd),
         audio, hitEffects,
-        // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate - a
+        // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate - a
         // poisoned foe blade doses the foe it strikes, on DFU's own
         // target. Without the hook the formula still cleared the dose.
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
@@ -3053,7 +3053,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
       say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
-    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
+    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
     // C2-slice (combat-9): a connected attack that LOST the roll
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -4064,7 +4064,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
-    replaceFoe: replaceFoeInPool,   // AUDIT 54 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
+    replaceFoe: replaceFoeInPool,   // AUDIT 58 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
     drawFoes,
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
@@ -4182,7 +4182,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // inside the third `else`, after the other two arms have
         // returned.
         preventedMessage: getPreventedRestMessage,
-        // AUDIT 54: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+        // AUDIT 58: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
         // a pending `give pc ... notify` offer takes this press and
         // the rest window stays shut (ui/pendingOffer.js).
         giveOffer,
@@ -4193,7 +4193,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // enemies arm (DaggerfallUI.cs:655, not the rest window's
         // :655), which is what arms this host's rest-encounter roll.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
-        // AUDIT 54: the offer took the press - the item was handed
+        // AUDIT 58: the offer took the press - the item was handed
         // over inside GiveOffer() and there is nothing to say.
         if (d.kind === 'offer') return;
         if (d.kind === 'blocked') {
@@ -4225,7 +4225,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
     reportActivity({ running = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
-      // AUDIT 54: PlayLargeSplash is PlayOneShot(SplashLargeSound, 0,
+      // AUDIT 58: PlayLargeSplash is PlayOneShot(SplashLargeSound, 0,
       // FootstepVolumeScale) - PlayerFootsteps.cs:323-326.
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge, FOOTSTEP_VOLUME);   // PlayLargeSplash on entry
       _activity.running = running;
@@ -4252,9 +4252,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (fell > FALL_DAMAGE_THRESHOLD) {
         hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
         flashPlayerDamage();
-        audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:307-311
+        audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:307-311
       } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
-        audio.playOneShot(SOUND.FallHard, FOOTSTEP_VOLUME);   // AUDIT 54: PlayerFootsteps.cs:315-319
+        audio.playOneShot(SOUND.FallHard, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:315-319
       }
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
@@ -4660,7 +4660,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
-        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
+        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
         ...questJournalHooks(),

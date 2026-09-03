@@ -30,7 +30,7 @@ import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
-import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 54: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
@@ -852,7 +852,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
     flashPlayerDamage();
-    // AUDIT 54: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
+    // AUDIT 58: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
     // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
     // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
     // FallHardSound (:315-319) - the 0.7 is CHOSEN on these, not an
@@ -1673,7 +1673,7 @@ export function createRestDeps(entity, opts = {}) {
  *  MODE, because DFU has one database per scene and every one of the
  *  three is a scene.
  *
- *  AUDIT 54 (hosts-consistency): the INTERIOR arm was `[]`, on a
+ *  AUDIT 58 (hosts-consistency): the INTERIOR arm was `[]`, on a
  *  stated premise - "the port stands no foe pool inside a building" -
  *  that stopped being true when the IF slice mounted `interiorFoes`
  *  and ROAD-B mounted `interiorGuards` beside it. The gap was the
@@ -1703,7 +1703,7 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
  *  answer, and a mutant dropping it SURVIVED. An unfalsifiable term is
  *  not caution, it is a second law that no test is holding.
  *
- *  AUDIT 54: the INSIDE pool joins by the same rule, and it is not an
+ *  AUDIT 58: the INSIDE pool joins by the same rule, and it is not an
  *  unfalsifiable term - an interior record sent through the exterior
  *  door would knock back and kill against the STREET's collider and
  *  through the street's death chain, which is exactly the failure the
@@ -1721,7 +1721,7 @@ export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, 
 /** WHOSE RECORD IS THIS - the membership question by itself, because
  *  the sinks are not the only door the enchant ctx opens over a foe.
  *
- *  AUDIT 54 (review): the Wabbajack's `replaceFoe` REMOVES the struck
+ *  AUDIT 58 (review): the Wabbajack's `replaceFoe` REMOVES the struck
  *  record and stands its replacement, and the host was answering that
  *  question by not asking it - both reaches were the exterior pool's,
  *  over a getter that had just been widened to hand out dungeon and

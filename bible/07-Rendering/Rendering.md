@@ -198,7 +198,7 @@ directory by `test/audit18_bible_docs.test.js`:
 - `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning. TWO PROFILES,
-  TWO PROGRAMS (AUDIT 54 f3/render): the classic pass is DFU's cap on
+  TWO PROGRAMS (AUDIT 58 f3/render): the classic pass is DFU's cap on
   its own shader, byte for byte as it stood before EE8, and the
   enhanced lane is WX1's lab program, entered on `draw()`'s first
   line. EE8's mixed `uEnh` arms - unreachable from the day WX1 landed

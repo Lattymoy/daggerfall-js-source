@@ -67,7 +67,7 @@ export class TerrainGenClient {
         if (m.t === 'roads') {
           // ROADS 7: the arrays come back for the map (and, as it happens,
           // for the fallback - the lazy build stands down when they do).
-          // AUDIT 54 F3 (R1): this is the FOURTH rebuild of the network
+          // AUDIT 58 F3 (R1): this is the FOURTH rebuild of the network
           // object, and the one on the OURS path - the worker posts `net`
           // back only from the settlements arm (terrainGenWorker.js's
           // `back`, a deliberate two-field slice, for the map). It took
@@ -132,7 +132,7 @@ export class TerrainGenClient {
 
   setRoadsData(net, onStats = null) {
     this._settlements = null;
-    // AUDIT 54 F3: `smooth` rides his data too. It was dropped by all three
+    // AUDIT 58 F3: `smooth` rides his data too. It was dropped by all three
     // rebuilds of the network object below while `water` survived them, so the
     // Mods pane's SmoothRoads switch reached the kernel only on the fallback
     // path and read `undefined` - i.e. ON - on the path the game takes.

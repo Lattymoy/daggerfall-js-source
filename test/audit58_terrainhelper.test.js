@@ -1,4 +1,4 @@
-// AUDIT 54 F4: TERRAINHELPER'S TWO STARTUP DATA REPAIRS.
+// AUDIT 58 F4: TERRAINHELPER'S TWO STARTUP DATA REPAIRS.
 // StreamingWorld.ReadyCheck (StreamingWorld.cs:1676-1685) runs
 // DilateCoastalClimate(reader, 2) and SmoothLocationNeighbourhood(reader)
 // once, before anything streams; neither had a port, so every
@@ -32,7 +32,7 @@ function oceanMaps(land = []) {
   return maps;
 }
 
-test('AUDIT 54 F4: DilateCoastalClimate pushes land climate into the ocean beside it - one ring per pass', () => {
+test('AUDIT 58 F4: DilateCoastalClimate pushes land climate into the ocean beside it - one ring per pass', () => {
   assert.equal(OCEAN_CLIMATE, 223, 'TransferLandToOcean’s `const int oceanClimate = 223`');
   const MOUNTAIN = 226;
   // One land pixel in the middle of the sea, DFU's own +1 X column.
@@ -63,7 +63,7 @@ test('AUDIT 54 F4: DilateCoastalClimate pushes land climate into the ocean besid
   assert.notDeepEqual(want, getWorldClimateSettings(OCEAN_CLIMATE), 'and the two settings really do differ');
 });
 
-test('AUDIT 54 F4: the dilation only ever writes OCEAN, and only from LAND', () => {
+test('AUDIT 58 F4: the dilation only ever writes OCEAN, and only from LAND', () => {
   const MOUNTAIN = 226;
   const DESERT = 224;
   // Two land pixels side by side: neither overwrites the other.
@@ -72,7 +72,7 @@ test('AUDIT 54 F4: the dilation only ever writes OCEAN, and only from LAND', () 
   assert.equal(maps.getClimateIndex(501, 250), MOUNTAIN, 'land is never a destination');
   assert.equal(maps.getClimateIndex(502, 250), DESERT, 'nor is its neighbour');
 
-  // AUDIT 54 R1 (g): THE DESTINATION TEST READS THE LIVE BUFFER TOO.
+  // AUDIT 58 R1 (g): THE DESTINATION TEST READS THE LIVE BUFFER TOO.
   // TransferLandToOcean reads BOTH sides from the pre-pass buffer -
   // TerrainHelper.cs:425-426 for the source, :430-431 for the
   // destination - and writes only the clone. The source half was pinned
@@ -111,7 +111,7 @@ function heightWorld(locations = []) {
   return { woods, mapDict };
 }
 
-test('AUDIT 54 F4: SmoothLocationNeighbourhood flattens a steep location’s 3x3 to its truncated mean', () => {
+test('AUDIT 58 F4: SmoothLocationNeighbourhood flattens a steep location’s 3x3 to its truncated mean', () => {
   assert.equal(SMOOTH_GRADIENT_THRESHOLD, 20, 'DFU’s `int threshold = 20`');
   assert.equal(terrainGradient(10, 40, 5), 35, '|dx| + |dy|, DFU’s faster arm');
 
@@ -132,7 +132,7 @@ test('AUDIT 54 F4: SmoothLocationNeighbourhood flattens a steep location’s 3x3
   assert.equal(h[at(402, 200)], 0, 'nothing outside the 3x3 moves');
 });
 
-test('AUDIT 54 F4: the gradient gate is strict, and only a map-dict pixel is a candidate', () => {
+test('AUDIT 58 F4: the gradient gate is strict, and only a map-dict pixel is a candidate', () => {
   const at = (x, y) => y * MAP_WIDTH + x;
   // Exactly at the threshold: `> threshold` does NOT fire.
   const flat = heightWorld([[400, 200]]);
@@ -149,7 +149,7 @@ test('AUDIT 54 F4: the gradient gate is strict, and only a map-dict pixel is a c
   assert.equal(wild.woods.heightMapBuffer[at(401, 200)], 40);
 });
 
-test('AUDIT 54 F4: the smoothing writes the LIVE buffer in scan order - a later location reads an earlier one’s mean', () => {
+test('AUDIT 58 F4: the smoothing writes the LIVE buffer in scan order - a later location reads an earlier one’s mean', () => {
   const at = (x, y) => y * MAP_WIDTH + x;
   // Two locations three apart on the same row, sharing no 3x3 cell but
   // the second's gradient sample (x+1) lands in the first's neighbourhood.
@@ -167,7 +167,7 @@ test('AUDIT 54 F4: the smoothing writes the LIVE buffer in scan order - a later 
   assert.equal(h[at(402, 200)], 10, 'outside the first 3x3, untouched');
 });
 
-test('AUDIT 54 F4: the smoothed heights reach the raw WOODS bytes the terrain worker reads', () => {
+test('AUDIT 58 F4: the smoothed heights reach the raw WOODS bytes the terrain worker reads', () => {
   // The EV7 worker builds its OWN WoodsFile from the raw file bytes, and
   // _readHeightMap takes a COPY - so a repair of the live buffer has to be
   // written back or the two kernels sample different heights.
@@ -186,7 +186,7 @@ test('AUDIT 54 F4: the smoothed heights reach the raw WOODS bytes the terrain wo
   assert.equal(new WoodsFile().syncHeightMapBytes(), false, 'nothing loaded, nothing to write');
 });
 
-test('AUDIT 54 F4: the host runs both repairs at ReadyCheck’s point - before the terrain client copies the bytes', () => {
+test('AUDIT 58 F4: the host runs both repairs at ReadyCheck’s point - before the terrain client copies the bytes', () => {
   const host = readFileSync('src/scenes/world.js', 'utf8');
   const at = (re, what) => {
     const i = host.search(re);
@@ -206,7 +206,7 @@ test('AUDIT 54 F4: the host runs both repairs at ReadyCheck’s point - before t
   assert.ok(!/isEnhanced/.test(block), 'no isEnhanced() gate on either repair');
 });
 
-test('AUDIT 54 F4 (R1): the boot repair invalidates the cached road bake it changed the input of', async () => {
+test('AUDIT 58 F4 (R1): the boot repair invalidates the cached road bake it changed the input of', async () => {
   // The ours-network bake routes and water-tests over WOODS heights
   // (roadsProducer's heightAt / isWater), and the smoothing rewrites
   // those bytes IN PLACE before the worker ever reads them. The bake's
@@ -220,7 +220,7 @@ test('AUDIT 54 F4 (R1): the boot repair invalidates the cached road bake it chan
   assert.ok(GENERATOR_VERSION >= 20,
     `roadsCache's GENERATOR_VERSION is ${GENERATOR_VERSION}; the boot repair took it to 20`);
   const cache = readFileSync('src/world/roadsCache.js', 'utf8');
-  assert.match(cache, /AUDIT 54 F4/, 'roadsCache never says which repair the bump answers');
+  assert.match(cache, /AUDIT 58 F4/, 'roadsCache never says which repair the bump answers');
   assert.match(cache, /19 -> 20/, 'the bump is not recorded beside the constant');
   // ...and the repair really is upstream of the bake's input: the host
   // smooths and syncs before the client hands the bytes over.

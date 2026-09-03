@@ -45,7 +45,7 @@
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
-import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 54: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
@@ -69,7 +69,7 @@ import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // AUD
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
-  dropWeaponIfTargetImmune,   // AUDIT 54: EnemyAttack.cs:191-194, the foe-vs-foe metal drop
+  dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194, the foe-vs-foe metal drop
   enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
   enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
 } from '../combat/formulas.js';
@@ -526,7 +526,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
-    // AUDIT 54: THE SHIELD POOL, on the FOE door as well as the
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
     // player's. DFU's hook is inside the ABSTRACT BASE's
     // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
     // shield effect to mitigate incoming damage from all sources"), so
@@ -768,7 +768,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
               calculateAttackDamage,
               dealDamage: (t, d) => t.hurtFromFoe?.(d, ffwd),
               audio, hitEffects,
-              // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+              // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
               // the watch's poisoned blade doses the monster it strikes.
               // Without the hook the formula still cleared the dose, so
               // the blade was spent against the player too.
@@ -779,7 +779,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
             audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const gv = enemyAttackVoice(g);   // :216-226 fires whatever the target
-          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + gv.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + gv.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
           continue;
         }
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
@@ -815,7 +815,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // C2-slice (combat-17): the 20% attack voice - the watch is
         // the Knight_CityWatch class, whose voice is FORCED male.
         const v = enemyAttackVoice(g);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
@@ -866,7 +866,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (melee-only path).
     const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 54: FPSWeapon.cs:316-319's lift
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rand); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing
@@ -885,7 +885,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 54: EnemySounds.cs:172-175
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
         damageGuard(foe, damage, playerFeet, lookDir);
       } else {
         // WeaponManager.cs:609-615: a connecting swing that dealt
@@ -897,7 +897,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
-        // AUDIT 54: ...and the swing still reaches the damage door.
+        // AUDIT 58: ...and the swing still reaches the damage door.
         // WeaponManager.cs:627/:630 - DecreaseHealth(damage) and
         // HandleAttackFromSource - run AFTER the `damage > 0` fork
         // closes (:615), so a connecting swing that lost the roll is

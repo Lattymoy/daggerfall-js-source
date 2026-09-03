@@ -509,9 +509,9 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   assert.match(shared, /const weatherName = params\.get\('weather'\) \?\? extra\?\.weather \?\? 'sunny';/);
 });
 
-// ═══ EE8/AUDIT 54: two profiles, two programs - and the classic lane
+// ═══ EE8/AUDIT 58: two profiles, two programs - and the classic lane
 // pays for the classic one only ═══════════════════════════════════
-test('AUDIT 54 (f3/render): the classic precipitation program carries no enhanced arm, and no enhanced buffer', () => {
+test('AUDIT 58 (f3/render): the classic precipitation program carries no enhanced arm, and no enhanced buffer', () => {
   const p = read('src/render/precipitation.js');
   // the module minus its prose - the header RECORDS what was removed,
   // by name, and the record must not read as the thing itself
@@ -560,7 +560,7 @@ test('AUDIT 54 (f3/render): the classic precipitation program carries no enhance
   }
 });
 
-test('AUDIT 54 (f3/render): the classic lane builds 1000 particles and no lab program; the enhanced lane builds the lab\u2019s 26,000', async () => {
+test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab program; the enhanced lane builds the lab\u2019s 26,000', async () => {
   const { PrecipitationRenderer, LAB_COUNTS } = await import('../src/render/precipitation.js');
   // the audit26/renderalloc/glstate Proxy-GL precedent, counting what
   // the constructor actually mints and uploads

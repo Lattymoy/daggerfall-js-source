@@ -264,9 +264,9 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     + unrecorded.join('\n'));
 });
 
-// ═══ AUDIT 54 (f3/render): a gate knob that reads nothing is a door
+// ═══ AUDIT 58 (f3/render): a gate knob that reads nothing is a door
 // that can neither fail nor act ═════════════════════════════════════
-test('AUDIT 54: every URL knob the world render gate hands the page has a live reader in src/', () => {
+test('AUDIT 58: every URL knob the world render gate hands the page has a live reader in src/', () => {
   const g = readFileSync(join(root, 'tools/worldRenderGate.mjs'), 'utf8');
   // EE3's --ground survived the ground arc's REVERT (8256ae2, "no
   // reader of tileArrayFor, enhancedGround or groundMode remains

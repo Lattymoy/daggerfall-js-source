@@ -8,7 +8,7 @@
 // alpha blended, drawn after all other passes. Deliberately unfogged
 // (the volume hugs the camera inside any fog's near field).
 //
-// AUDIT 54 (f3/render): TWO PROFILES ARE TWO PROGRAMS, not one shader
+// AUDIT 58 (f3/render): TWO PROFILES ARE TWO PROGRAMS, not one shader
 // with a switch. EE8 mixed an enhanced arm into the stages below under
 // `uEnh`; WX1 then gave the enhanced lane the lab's own program and
 // returned from draw() into it before any of that arm could be reached
@@ -90,7 +90,7 @@ const SNOW = {
   size: [0.07, 0.07],
   color: [1, 1, 1, 0.85],
 };
-// AUDIT 54 (f3/render): EE8's RAIN_ENH/STORM_ENH/SNOW_ENH profiles and
+// AUDIT 58 (f3/render): EE8's RAIN_ENH/STORM_ENH/SNOW_ENH profiles and
 // their PRECIP_ENHANCED_MAX = 26000 stood here. Their only reader was
 // the ternary in draw() below, downstream of WX1's early return into
 // drawLab - unreachable from the day WX1 landed. The lab's volume is
@@ -226,7 +226,7 @@ function compileShader(gl, type, src) {
 }
 
 export class PrecipitationRenderer {
-  /** AUDIT 54 (f3/render): `opts.enhanced` is the LANE, not the frame -
+  /** AUDIT 58 (f3/render): `opts.enhanced` is the LANE, not the frame -
    *  the host passes `sky.enhanced` (scenes/shared.js's createSkyController
    *  return), which is fixed for a scene, while the per-frame
    *  `precip.enhanced` field below rides the deck. The lane builds WX1's
@@ -255,7 +255,7 @@ export class PrecipitationRenderer {
 
     // One buffer sized for the LARGEST set this program can draw, and
     // the smaller profile draws a prefix of it. Per-particle quad (4
-    // verts). AUDIT 54 (f3/render): this was PRECIP_ENHANCED_MAX =
+    // verts). AUDIT 58 (f3/render): this was PRECIP_ENHANCED_MAX =
     // 26,000 - a 26,000-iteration build and ~2.7 MB of buffers for a
     // program whose only reachable counts are RAIN's 1000 (DFU's
     // Rain_Particles_Splash cap) and SNOW's 800. The lab's 26,000 are
@@ -294,7 +294,7 @@ export class PrecipitationRenderer {
     /** EE8: the wind's travel, integrated by the host in world units. */
     this.windOff = new Float32Array(2);
     /** EE8: an optional cap on the enhanced count (?rain=<n>), for gates.
-     *  AUDIT 54 (f3/render): taken at CONSTRUCTION, from the host's own
+     *  AUDIT 58 (f3/render): taken at CONSTRUCTION, from the host's own
      *  boot params - it is a page dial and cannot change during a load,
      *  and both hosts were re-parsing `location.search` for it on every
      *  frame that rain drew, in the pass whose header claims zero
@@ -325,7 +325,7 @@ export class PrecipitationRenderer {
    *  in the constructor, so a shader fault is a constructor fault the
    *  boot probe sees; drawLab builds it on demand, so a renderer that
    *  is handed the deck without the lane's flag still draws the lab's
-   *  rain rather than throwing. AUDIT 54 (f3/render): it used to be
+   *  rain rather than throwing. AUDIT 58 (f3/render): it used to be
    *  built unconditionally - the classic skin compiled two stages it
    *  can never bind and uploaded 26,000 instances it can never draw. */
   _buildLab() {
@@ -399,7 +399,7 @@ export class PrecipitationRenderer {
 
   draw(mode, proj, view, camPos, camRight, timeSeconds) {
     if (this.enhanced) return this.drawLab(mode, proj, view, camPos, camRight, timeSeconds);
-    // AUDIT 54 (f3/render): below this line `this.enhanced` is FALSE, and
+    // AUDIT 58 (f3/render): below this line `this.enhanced` is FALSE, and
     // every arm that asked it again was dead - the enhanced profiles it
     // chose, and the countCap it read (?rain=<n> caps the LAB's volume,
     // drawLab above, which is the only volume big enough to need it).

@@ -86,7 +86,7 @@ export const toolTipDelay = () => getFloat('GUI', 'ToolTipDelayInSeconds', 0, 10
  * zero), but re-entering the same tip after a twitch does not.
  */
 export class ToolTip {
-  /** AUDIT 54: `delaySeconds` is DFU's per-component ToolTipDelay
+  /** AUDIT 58: `delaySeconds` is DFU's per-component ToolTipDelay
    *  (ToolTip.cs:44), which a window may override on the shared
    *  defaultToolTip - the quest journal does exactly that
    *  (DaggerfallQuestJournalWindow.cs:103-104,

@@ -80,7 +80,7 @@ test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none
   for (const [host, re] of release) assert.match(src(host), re, `${host}: the release stays ungated`);
   // ONE expression for "a mode window is up" - the attack seam and the
   // HOSTS' cursor toggle read the same one rather than each spelling it
-  // out. AUDIT 54 (f3/input): the toggle is no longer registered HERE.
+  // out. AUDIT 58 (f3/input): the toggle is no longer registered HERE.
   // bindCursorToggle installs a listener per call over a module-global
   // flag, and both outdoor hosts build this machine unconditionally, so
   // a registration here was a SECOND reader of Actions.ActivateCursor

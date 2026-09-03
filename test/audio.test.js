@@ -170,7 +170,7 @@ test('E6: the world host reads that busy state as PlaySound.cs:110-116 does', ()
   // The host cannot boot headless, so the wiring is source-pinned - the
   // shape is `if (source.IsPlaying()) skip; else { PlayOneShot; stamp }`,
   // over the ONE source the QuestMachine carries (PlaySound.cs:112).
-  // AUDIT 54: and the value it plays goes through the ID door, because
+  // AUDIT 58: and the value it plays goes through the ID door, because
   // the Quests-Sounds `id` column is a DAGGER.SND record ID.
   const w = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(w, /const questAudioSource = new QuestAudioSource\(audio\);/,
@@ -188,7 +188,7 @@ test('E6: the world host reads that busy state as PlaySound.cs:110-116 does', ()
 });
 
 
-// ═══ AUDIT 54: THE ID DOOR ══════════════════════════════════════════
+// ═══ AUDIT 58: THE ID DOOR ══════════════════════════════════════════
 // SoundReader.GetSoundIndex (SoundReader.cs:152-158) is
 // `soundFile.GetRecordIndex(soundID)`. DaggerfallAudioSource carries
 // TWO overloads of every entry point for exactly that reason - one
@@ -213,7 +213,7 @@ function sndWithIds(ids) {
   return out;
 }
 
-test('AUDIT 54: the engine resolves a sound ID to its record INDEX before playing', async () => {
+test('AUDIT 58: the engine resolves a sound ID to its record INDEX before playing', async () => {
   const { SndFile } = await import('../src/formats/sndFile.js');
   const snd = new SndFile();
   // ids 3, 349, 6 - so id 349 lives at INDEX 1 and id 6 at INDEX 2
@@ -249,7 +249,7 @@ test('AUDIT 54: the engine resolves a sound ID to its record INDEX before playin
   assert.equal(bare.play3dId(349, [0, 0, 0]), undefined);
 });
 
-test('AUDIT 54: the quest source stamps busy off the ID door, not the index one', () => {
+test('AUDIT 58: the quest source stamps busy off the ID door, not the index one', () => {
   // PlaySound.cs resolves at CREATE (:74-75) and plays the INT overload
   // (:112); the port moved the resolution behind the playSound hook
   // (Port-Ledger A), so the stamp has to ride the ID entry point.
@@ -270,7 +270,7 @@ test('AUDIT 54: the quest source stamps busy off the ID door, not the index one'
   assert.deepEqual(played, [386, 11146]);
 });
 
-test('AUDIT 54: every DFU ...SoundID site takes the ID door, and no other site does', () => {
+test('AUDIT 58: every DFU ...SoundID site takes the ID door, and no other site does', () => {
   const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
   // EntityEffectManager's five cast constants (:44-48) are IDs, spent
   // through PlayCastSound's `(uint)castSoundID` (:1958).

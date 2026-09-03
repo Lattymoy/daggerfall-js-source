@@ -484,7 +484,7 @@ test('EE13: the Enhanced pane offers a season/weather test that spawns in a rand
   assert.match(w, /console\.info\(`\[world\] random spawn: /, 'the town is named, so a good one can be found again');
 });
 
-// ── AUDIT 54: THE SAVE CARD'S GOLD ROW ───────────────────────────
+// ── AUDIT 58: THE SAVE CARD'S GOLD ROW ───────────────────────────
 //
 // E4 moved the purse off the item list and onto the GoldPieces counter
 // (`data.playerEntity.goldPieces = entity.GoldPieces`,

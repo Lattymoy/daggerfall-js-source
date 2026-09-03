@@ -1,4 +1,4 @@
-// AUDIT 54 (talk lane, 2026-09-03) - NINE LAWS THE FIX WAVE LANDED IN
+// AUDIT 58 (talk lane, 2026-09-03) - NINE LAWS THE FIX WAVE LANDED IN
 // the talk window, the town interaction seam and the two static-NPC
 // rays. Every pin below is red under the mutation its comment names.
 import { test } from 'node:test';
@@ -33,7 +33,7 @@ const dblClick = (w, x, y) => { w.click(x, y, false, 1000); return w.click(x, y,
 // MUTANT: `_setTone(t) { this.hooks.setTone(t); }` - drop the
 // _updateQuestion call (which is what the three radios used to be).
 
-test('AUDIT 54 talk: a tone change RE-DRAWS the question (ButtonTone*_OnClickHandler :1501-1532)', () => {
+test('AUDIT 58 talk: a tone change RE-DRAWS the question (ButtonTone*_OnClickHandler :1501-1532)', () => {
   const state = { tone: 1 };
   const hooks = {
     tone: () => state.tone,
@@ -88,7 +88,7 @@ test('AUDIT 54 talk: a tone change RE-DRAWS the question (ButtonTone*_OnClickHan
 // MUTANT: put `this._updateQuestion(idx);` back above the _pushQA in
 // _pickIndex (i.e. drop the selectionIndexLastUsed guard).
 
-test('AUDIT 54 talk: the asked question is the DISPLAYED question (ListboxTopic_OnSelectItem :1381-1387)', () => {
+test('AUDIT 58 talk: the asked question is the DISPLAYED question (ListboxTopic_OnSelectItem :1381-1387)', () => {
   // GetQuestionText is ExpandRandomTextRecord - a fresh RANDOM variant
   // of the record per call - so a hook that cycles variants is the
   // record, and the pin is whether the pair logs the standing one.
@@ -132,7 +132,7 @@ test('AUDIT 54 talk: the asked question is the DISPLAYED question (ListboxTopic_
 // MUTANT: swap any one strip for its opposite in talkButtonStrips (e.g.
 // whereIs: whereIs ? 'whereIsGrayedOut' : 'whereIsHighlighted').
 
-test('AUDIT 54 talk: the six button strips and where each is cut from (:34-35, :436-490)', () => {
+test('AUDIT 58 talk: the six button strips and where each is cut from (:34-35, :436-490)', () => {
   assert.equal(TALK_CATEGORIES_IMG, 'TALK02I0.IMG');      // :34
   assert.equal(TALK_HIGHLIGHT_IMG, 'TALK03I0.IMG');       // :35
   assert.deepEqual([...TALK_CATEGORIES], ['location', 'people', 'things', 'work']);
@@ -199,7 +199,7 @@ test('AUDIT 54 talk: the six button strips and where each is cut from (:34-35, :
 // MUTANT: delete the topicLeft/topicRight/topicSlider arms from click()
 // (the state stays at 0, which is what truncation was standing in for).
 
-test('AUDIT 54 talk: the topic list PANS - two arrows, a slider, no truncation (:207-208, :765-767, :1430-1440)', () => {
+test('AUDIT 58 talk: the topic list PANS - two arrows, a slider, no truncation (:207-208, :765-767, :1430-1440)', () => {
   assert.deepEqual([...TALK_RECTS.topicLeft], [4, 177, 16, 9]);
   assert.deepEqual([...TALK_RECTS.topicRight], [86, 177, 16, 9]);
   assert.deepEqual([...TALK_RECTS.topicSlider], [22, 178, 62, 5]);
@@ -246,7 +246,7 @@ test('AUDIT 54 talk: the topic list PANS - two arrows, a slider, no truncation (
 // MUTANT: put 'You are too far away.' back at any of townTalk's three
 // refusals.
 
-test('AUDIT 54 talk: youAreTooFarAway is ONE string in ONE place (Internal_Strings.csv:22)', () => {
+test('AUDIT 58 talk: youAreTooFarAway is ONE string in ONE place (Internal_Strings.csv:22)', () => {
   assert.equal(TOO_FAR_AWAY_TEXT, 'You are too far away...');
   assert.equal(BOARD_TOO_FAR, TOO_FAR_AWAY_TEXT, 'the bulletin board re-exports the same constant');
   const tt = src('src/scenes/townTalk.js');
@@ -260,7 +260,7 @@ test('AUDIT 54 talk: youAreTooFarAway is ONE string in ONE place (Internal_Strin
 // MUTANT: drop the `info` fork in activateStaticNpc so every mode falls
 // to openStaticNpc again.
 
-test('AUDIT 54 talk: Info on a STATIC NPC is PresentNPCInfo and nothing else (PlayerActivate.cs:753-768)', () => {
+test('AUDIT 58 talk: Info on a STATIC NPC is PresentNPCInfo and nothing else (PlayerActivate.cs:753-768)', () => {
   assert.equal(YOU_SEE_TEXT, 'You see %s.');                       // Internal_Strings.csv:53
   assert.equal(presentNpcInfoText('Nithella Tomarnas'), 'You see Nithella Tomarnas.');
   assert.equal(presentNpcInfoText(null), 'You see .');             // an unnamed NPC still prints
@@ -291,7 +291,7 @@ test('AUDIT 54 talk: Info on a STATIC NPC is PresentNPCInfo and nothing else (Pl
 // MUTANT: change any button rect, or make the worldModes arm call
 // openRepairService directly with the popup art loaded.
 
-test('AUDIT 54 talk: DaggerfallMerchantRepairPopupWindow, its four buttons and its route', () => {
+test('AUDIT 58 talk: DaggerfallMerchantRepairPopupWindow, its four buttons and its route', () => {
   assert.equal(REPAIR_PANEL_W, 130);
   assert.equal(REPAIR_PANEL_H, 51);                        // :79
   assert.equal(REPAIR_PANEL_X, 95);                        // Center on 320
@@ -355,7 +355,7 @@ const talkHost = (over = {}) => createTownTalk({
 
 const withDefaults = () => { const b = createBindings(); resetDefaults(b); setBindings(b); return b; };
 
-test('AUDIT 54 talk: the mode keys are ACTIONS, and a window shuts them down (PlayerActivate.cs:221-228)', () => {
+test('AUDIT 58 talk: the mode keys are ACTIONS, and a window shuts them down (PlayerActivate.cs:221-228)', () => {
   withDefaults();
   assert.deepEqual({ ...MODE_ACTIONS },
     { StealMode: 'steal', GrabMode: 'grab', InfoMode: 'info', TalkMode: 'dialogue' });
@@ -399,9 +399,9 @@ test('AUDIT 54 talk: the mode keys are ACTIONS, and a window shuts them down (Pl
   withDefaults();
 });
 
-test('AUDIT 54 talk: the dungeon host carries the same two halves', () => {
+test('AUDIT 58 talk: the dungeon host carries the same two halves', () => {
   const d = src('src/scenes/dungeon.js');
-  // AUDIT 54 (records): this quoted `actionOf(e)` verbatim, and the
+  // AUDIT 58 (records): this quoted `actionOf(e)` verbatim, and the
   // input lane's combo arm then handed the read its held-keys Set
   // (`actionOf(e, keys)`, InputManager.cs:1666-1712) - a correct
   // change that turned the pin red for a claim it never made. The

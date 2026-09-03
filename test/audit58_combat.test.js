@@ -1,4 +1,4 @@
-// AUDIT 54 (combat lane): the six laws this fix wave landed, each
+// AUDIT 58 (combat lane): the six laws this fix wave landed, each
 // pinned so the mutation that undoes it is RED.
 //
 //   1. EnemyAttack.cs:191-194 - "Switch to hand-to-hand if enemy is
@@ -47,7 +47,7 @@ const foeEntity = (mobileType, over = {}) => ({
   armorValues: new Array(7).fill(100), items: [], ...over,
 });
 
-test('AUDIT 54: the foe-vs-foe metal drop - a weapon the target refuses becomes hand-to-hand, not a permanent zero', () => {
+test('AUDIT 58: the foe-vs-foe metal drop - a weapon the target refuses becomes hand-to-hand, not a permanent zero', () => {
   const ghost = foeEntity(GHOST);
   assert.equal(ghost.minMetalToHit, 2, 'a Ghost refuses anything under Silver');
   const iron = createWeapon(118, 0);   // Broadsword, iron - the city watch is forced to itemLevel 1
@@ -76,7 +76,7 @@ test('AUDIT 54: the foe-vs-foe metal drop - a weapon the target refuses becomes 
   assert.ok(dropped > 0, 'DFU never reaches that gate foe-vs-foe: the hand-to-hand arm deals real damage');
 });
 
-test('AUDIT 54: all three foe-vs-foe MELEE arms run the drop, and no player arm does', () => {
+test('AUDIT 58: all three foe-vs-foe MELEE arms run the drop, and no player arm does', () => {
   // MUTANT: unwrap any one of these three and this pin is red.
   assert.match(src('scenes/cityGuards.js'),
     /const fwpn = chooseEnemyWeapon\(dropWeaponIfTargetImmune\(g\.entity\.weapon, _foeTarget\.entity\), ENEMY_BASICS\[GUARD_MOBILE_TYPE\]\);/,
@@ -117,7 +117,7 @@ const fullyEquippedOrc = () => {
   } finally { Math.random = saved; }
 };
 
-test('AUDIT 54: a foe WEARS its equipment - the table DamageEquipment reads is filled', () => {
+test('AUDIT 58: a foe WEARS its equipment - the table DamageEquipment reads is filled', () => {
   const e = fullyEquippedOrc();
   const slots = equipTableOf(e);
   // MUTANT: delete the placement loop in equipEnemy and every one of
@@ -138,7 +138,7 @@ test('AUDIT 54: a foe WEARS its equipment - the table DamageEquipment reads is f
   assert.ok(e.items.every((it) => it.equipSlot == null), 'no equipSlot mark on a foe\'s gear');
 });
 
-test('AUDIT 54: DamageEquipment\'s struck side finally fires against a foe - shield when covered, else the part\'s armour, and a break takes it off', () => {
+test('AUDIT 58: DamageEquipment\'s struck side finally fires against a foe - shield when covered, else the part\'s armour, and a break takes it off', () => {
   const e = fullyEquippedOrc();
   const slots = equipTableOf(e);
   const player = { isPlayer: true };
@@ -165,7 +165,7 @@ test('AUDIT 54: DamageEquipment\'s struck side finally fires against a foe - shi
 // 3. The connecting zero-damage swing (WeaponManager.cs:627-630)
 // ---------------------------------------------------------------
 
-test('AUDIT 54: a zero-damage ARROW that CONNECTED still runs HandleAttackFromSource', () => {
+test('AUDIT 58: a zero-damage ARROW that CONNECTED still runs HandleAttackFromSource', () => {
   const foe = {
     entity: {
       // a Ghost's refusal is the deterministic zero: the shaft
@@ -192,7 +192,7 @@ test('AUDIT 54: a zero-damage ARROW that CONNECTED still runs HandleAttackFromSo
   assert.equal(foe.entity.items.length, 1, 'and the arrow is still recoverable (:146-148)');
 });
 
-test('AUDIT 54: every player-attack resolver reaches the door on a zero-damage connect', () => {
+test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage connect', () => {
   // The dungeon and exterior pools call the lifted member; the watch
   // pool routes through its damage door with no ray (WeaponManager's
   // knockback is inside the damage arm, and weaponKnockbackSpeed(0, w)
@@ -220,7 +220,7 @@ test('AUDIT 54: every player-attack resolver reaches the door on a zero-damage c
   assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \{ if \(!cityGuards\.guards\.includes\(f\)\) exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\); \},/);
   assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \{ if \(f\._encounter\) interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\); \},/);
   assert.match(dg, /onAttackFromPlayer: \(t\) => handleAttackFromPlayer\(t, lastPlayerFeet\),/);
-  assert.match(src('scenes/exterior.js'), /AUDIT 54: no onAttackFromPlayer here/,
+  assert.match(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
     'the fourth host mounts the watch alone and records the absence as a fact');
 });
 
@@ -228,7 +228,7 @@ test('AUDIT 54: every player-attack resolver reaches the door on a zero-damage c
 // 4. The foe-vs-foe weapon poison (FormulaHelper.cs:691-696)
 // ---------------------------------------------------------------
 
-test('AUDIT 54: a poisoned foe blade DOSES the foe it strikes, and spends the dose once', () => {
+test('AUDIT 58: a poisoned foe blade DOSES the foe it strikes, and spends the dose once', () => {
   const mk = () => ({ ai: { feet: [0, 0, 0], height: 1.8 }, entity: foeEntity(KNIGHT_CITY_WATCH, { health: 40, maxHealth: 40 }) });
   const attacker = mk(), target = mk();
   const weapon = { templateIndex: 118, material: 2, poisonType: 130 };
@@ -247,7 +247,7 @@ test('AUDIT 54: a poisoned foe blade DOSES the foe it strikes, and spends the do
   assert.equal(weapon.poisonType, -1, 'and the dose is spent, exactly once (FormulaHelper.cs:695)');
 });
 
-test('AUDIT 54: all five foe-vs-foe payload sites hand the poison seam their host\'s clock', () => {
+test('AUDIT 58: all five foe-vs-foe payload sites hand the poison seam their host\'s clock', () => {
   const need = [
     ['scenes/cityGuards.js', 1], ['scenes/exteriorFoes.js', 2], ['scenes/dungeonContext.js', 2],
   ];
@@ -266,7 +266,7 @@ test('AUDIT 54: all five foe-vs-foe payload sites hand the poison seam their hos
 // 5. The bows' hands (ItemEquipTable.cs:633-635)
 // ---------------------------------------------------------------
 
-test('AUDIT 54: GetItemHands READS BowLeftHandWithSwitching - both arms, and the slot follows', () => {
+test('AUDIT 58: GetItemHands READS BowLeftHandWithSwitching - both arms, and the slot follows', () => {
   resetToDefaults();
   assert.deepEqual([...BOW_HAND_TEMPLATES], [129, 130], 'Short_Bow, Long_Bow');
   const bow = { group: ITEM_GROUPS.Weapons, templateIndex: 130 };

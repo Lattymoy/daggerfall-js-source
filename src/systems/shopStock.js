@@ -47,8 +47,8 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { OIL_TEMPLATE } from './inventory.js';   // AUDIT 54: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
-import { getBool } from './settings.js';   // AUDIT 54: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
+import { OIL_TEMPLATE } from './inventory.js';   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
+import { getBool } from './settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
 import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: FactionIDs.The_Merchants, one home
@@ -186,7 +186,7 @@ export const needsRestock = (container, today) => (container?.stockedDate ?? 0) 
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value.
  *
- *  AUDIT 54: `torchesFromItems` ports DaggerfallUnity.Settings.
+ *  AUDIT 58: `torchesFromItems` ports DaggerfallUnity.Settings.
  *  PlayerTorchFromItems for the oil-bottle stack clause below. Like
  *  startingGear.assignStartingGear and playerTorch.tickPlayerTorch,
  *  the DEFAULT is a point-of-use store read - a parameter with a
@@ -314,7 +314,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       } else {
         const templateIndex = GROUP_TEMPLATE_INDICES[group][j];
         const it = { group, templateIndex };
-        // AUDIT 54: DaggerfallLoot.cs:246-248 - the generic mint's
+        // AUDIT 58: DaggerfallLoot.cs:246-248 - the generic mint's
         // SECOND statement, which the port had dropped:
         //   if (DaggerfallUnity.Settings.PlayerTorchFromItems &&
         //       item.IsOfTemplate(ItemGroups.UselessItems2, (int)UselessItems2.Oil))

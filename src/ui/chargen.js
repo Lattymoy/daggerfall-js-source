@@ -1687,7 +1687,7 @@ export class ChargenFlow {
       // taken back except by clicking the spinner. '+' and '=' were
       // never affected (neither is a typed character here).
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
-      // AUDIT 54 (f3/input): + 'char:r'/'char:R', the same root cause
+      // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
       // typed-character class (ui/input.js:152), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
@@ -1809,7 +1809,7 @@ export class ChargenFlow {
   /** CreateCharRaceSelect (:115) plays RaceTemplate.ClipID - a BSA
    *  sound id resolved through SndFile.GetRecordIndex, the verbatim
    *  path ("From high in the Wrothgarian mountains...").
-   *  AUDIT 54: through the engine's own ID door now
+   *  AUDIT 58: through the engine's own ID door now
    *  (DaggerfallAudioSource.PlayOneShot(uint), :232-238) rather than a
    *  private getRecordIndex here - ONE DFU MEMBER, ONE EXPORT. */
   _playRaceClip() {

@@ -459,7 +459,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // including the exterior host, which has nothing to quickload and
   // must still not go fullscreen.
   assert.match(code('ui/input.js'), /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/);
-  // AUDIT 54 (f2/hosts): DISCOVERED, not enumerated. This loop named
+  // AUDIT 58 (f2/hosts): DISCOVERED, not enumerated. This loop named
   // four hosts, and the U47 rollout that wrote it named the same four -
   // so scenes/interior.js, the FIFTH host-level keydown, registered one
   // and never swallowed: F5 in the ?interior route reloaded the page and

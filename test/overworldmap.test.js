@@ -601,7 +601,7 @@ test('U61/EV6: the overworld pass brackets its state and marks a foreign seam in
   assert.match(src, /dispose\(\)/, 'every allocation has an owner');
 });
 
-test('AUDIT 54 (f3/render): dispose frees the ROAD chains it minted - every allocation has an owner (AUDIT 17e)', async () => {
+test('AUDIT 58 (f3/render): dispose frees the ROAD chains it minted - every allocation has an owner (AUDIT 17e)', async () => {
   const { OverworldRenderer } = await import('../src/render/overworldRenderer.js');
   // the audit26/renderalloc/glstate Proxy-GL precedent, holding the
   // handles: what is created and not deleted is what leaks

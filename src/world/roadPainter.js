@@ -253,7 +253,7 @@ export function classify(x, y, mask) {
  *  and in scan order (so later corners read earlier results, as his
  *  does), over x,y in [1, hDim-3], skipping the location rect.
  *
- *  ONE DELIBERATE DIVERGENCE, and AUDIT 54 (f2/hosts) moved it onto
+ *  ONE DELIBERATE DIVERGENCE, and AUDIT 58 (f2/hosts) moved it onto
  *  the index it was always about. This kernel joins TWO layouts and
  *  they are different, both of them DFU's: the TILEMAP is
  *  JobA.Idx(x, y, tDim) = x + y*tDim (TerrainHelper.cs:170, with

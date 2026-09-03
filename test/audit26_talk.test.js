@@ -43,7 +43,7 @@ test('F016: the static NPC name bank is the REGION\'s, and the race path is gone
   // and the invented helper is gone from the module
   const sn = src('characters/staticNpc.js');
   assert.equal(sn.includes('export const bankForRace'), false, 'bankForRace went with the default that invented it');
-  // every host call site passes the region's bank. AUDIT 54 (talk
+  // every host call site passes the region's bank. AUDIT 58 (talk
   // lane) added the THIRD: PresentNPCInfo (PlayerActivate.cs:1484-1486)
   // speaks StaticNPC.DisplayName too, so the Info arm reads the same
   // bank as the two StaticNPCClick sites.

@@ -40,14 +40,14 @@ import { makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
-import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 54: the mode keys read the registry, not e.code
+import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
-// AUDIT 54 (talk lane): the reach refusal is ONE localized key -
+// AUDIT 58 (talk lane): the reach refusal is ONE localized key -
 // TextManager 'youAreTooFarAway' (Internal_Strings.csv:22), spoken by
 // ActivateMobileNPC at PlayerActivate.cs:780 and :790 - so it is one
 // constant, in PlayerActivate's own module. These three sites spelled
@@ -77,7 +77,7 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
 import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
-// AUDIT 54 (talk lane): the four modes ride the keybinding registry
+// AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
 // (player/interactionMode.js), because PlayerActivate.cs:221-228 reads
 // InputManager ACTIONS and F1-F4 are only their defaults.
@@ -351,7 +351,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (overlay?.done) dropOverlay();
       return true;
     }
-    // AUDIT 54 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
+    // AUDIT 58 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
     // DFU switches the interaction mode in PlayerActivate.Update
     // (PlayerActivate.cs:221-228), and a pausing window shuts that read
     // down entirely: UserInterfaceManager.AddWindow -> PauseGame(true)

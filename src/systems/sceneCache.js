@@ -95,7 +95,7 @@ const copyPiles = (piles) => piles.map((p) => ({
  *  Enemies are NOT cached, so a shop's occupants are rebuilt fresh
  *  every entry; that is DFU's behaviour and not an omission here.
  *
- *  AUDIT 54 (ID1's missing half): `droppedPiles` is the THIRD field
+ *  AUDIT 58 (ID1's missing half): `droppedPiles` is the THIRD field
  *  the interior host builds and this store used to throw away. DFU
  *  has no third field because it needs none - CacheScene stores
  *  GetLootContainerData() (SerializableStateManager.cs:88-96), which

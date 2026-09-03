@@ -4382,7 +4382,7 @@ DaggerfallInventoryWindow's whole second inventory:
 Prose: exitTooFar/cannotHoldAnymore/wagonFullGold are taken VERBATIM
 from Internal_Strings.csv (:847, :829, :815) - the string source is in
 the reference tree, so the old "prose ours pending a source" note was
-stale, not a departure (AUDIT 54).
+stale, not a departure (AUDIT 58).
 RESIDUE: DFU's on-foot gate rides the transport arc.
 
 Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon

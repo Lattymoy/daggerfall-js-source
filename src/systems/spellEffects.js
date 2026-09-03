@@ -90,7 +90,7 @@ const ROWS = [
   // "<effect not found>" while it was absent. `craftable: false`
   // keeps it out of the two picker lists, which is what
   // AllowedCraftingStations = None means (MorphSelf.cs:30).
-  // AUDIT 54: NO support flag. MorphSelf.SetProperties
+  // AUDIT 58: NO support flag. MorphSelf.SetProperties
   // (MorphSelf.cs:24-33) assigns Key, ClassicKey, AllowedTargets,
   // AllowedElements, AllowedCraftingStations, ShowSpellIcon and
   // MagicSkill and NOTHING else, so BaseEntityEffect's ctor defaults
@@ -168,7 +168,7 @@ export const PORTED_KEYS = new Set([
   '43,255',                                                         // Teleport (the inline arm)
 ]);
 
-/** AUDIT 54: EntityEffect.DisplayName (EntityEffect.cs:385-387) is
+/** AUDIT 58: EntityEffect.DisplayName (EntityEffect.cs:385-387) is
  *  `GetDisplayName()` by default, which manufactures
  *  `string.Format("{0} {1}", groupName, subGroupName)` -
  *  UNPARENTHESISED - and whose own comment says "Effects can override

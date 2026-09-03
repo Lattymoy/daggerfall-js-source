@@ -10,7 +10,7 @@
 
 export const MODES = ['steal', 'grab', 'info', 'dialogue'];
 
-/** AUDIT 54 (talk lane): PlayerActivate.Update reads the four modes as
+/** AUDIT 58 (talk lane): PlayerActivate.Update reads the four modes as
  *  ACTIONS, not as keys - `if (InputManager.Instance.ActionStarted(
  *  InputManager.Actions.StealMode)) ChangeInteractionMode(...)` and its
  *  three siblings (PlayerActivate.cs:221-228) - and the F1-F4 that

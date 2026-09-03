@@ -47,7 +47,7 @@ neighbours, IN PLACE and in scan order, over [1, hDim-3], skipping the
 rect. Mine smoothed every path tile's corners from a copy of the
 original heights. Ported.
 
-**One deliberate divergence, recorded - and AUDIT 54 (f2/hosts,
+**One deliberate divergence, recorded - and AUDIT 58 (f2/hosts,
 2026-09-03) moved it onto the index it was always about.** The kernel
 joins TWO layouts and they differ, both of them DFU's: the TILEMAP is
 `JobA.Idx(x, y, tDim)` = `x + y*tDim` (TerrainHelper.cs:170, with

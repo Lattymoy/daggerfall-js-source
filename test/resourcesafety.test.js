@@ -69,7 +69,7 @@ function rig() {
       createBillboardBatch: () => { world.made++; return { origin: null }; },
       destroyBillboardBatch: () => { world.freed++; },
     },
-    audio: { playOneShot: () => {}, play3d: () => {}, playOneShotId: () => {}, play3dId: () => {} },   // AUDIT 54: the ID door twins
+    audio: { playOneShot: () => {}, play3d: () => {}, playOneShotId: () => {}, play3dId: () => {} },   // AUDIT 58: the ID door twins
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
     uploadRecord: () => {},
     collider: { raycast: () => Infinity },

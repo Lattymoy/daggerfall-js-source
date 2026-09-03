@@ -545,7 +545,7 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
   plays the element cast sound (EntityEffectManager constants: fire
   352, cold 353, poison 350, shock 351, magic 349 - element-indexed
   in enemySpells.SPELL_CAST_SOUND) from the caster at the enemy 3D
-  profile (max 16). AUDIT 54: those five numbers are DAGGER.SND record
+  profile (max 16). AUDIT 58: those five numbers are DAGGER.SND record
   IDs, not record indices - EntityEffectManager.cs:44-48 names every
   one of them `...SoundID` and PlayCastSound spends them through
   `PlayOneShot((uint)castSoundID)` (:1958), the UINT overload
@@ -933,7 +933,7 @@ hosts' door path):
   inside interiors/dungeons and every probe frame-sync starved.
 
 FLAGGED loud: selling + the offer/counteroffer haggle UI pend
-(CalculateTradePrice's selling branch is ported, and AUDIT 54 gave it
+(CalculateTradePrice's selling branch is ported, and AUDIT 58 gave it
 the numeric anchors it had never had - it carried only inequalities, so
 its 51*dp and 179*dm coefficients both mutated freely); shop
 OPEN HOURS pend (shelves answer at any hour); Library/Guild/Temple

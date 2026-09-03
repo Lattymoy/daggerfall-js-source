@@ -1,4 +1,4 @@
-// AUDIT 54 - THE TWO TARGET-ICON PANELS of the classic inventory and
+// AUDIT 58 - THE TWO TARGET-ICON PANELS of the classic inventory and
 // trade windows (DaggerfallInventoryWindow.SetupTargetIconPanels
 // :424-439, UpdateLocalTargetIcon :857-863, UpdateRemoteTargetIcon
 // :865-890; DaggerfallTradeWindow's overrides :630-647).

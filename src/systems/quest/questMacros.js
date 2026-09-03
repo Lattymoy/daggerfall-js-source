@@ -35,7 +35,7 @@ import { liveStat } from '../statMods.js';                       // M-X: %mad's 
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
 import { entityMaxEncumbrance } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength)
 import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
-import { GENDERS, getNameBankOfRegion, fullName, getNameBank, getRandomFullName } from '../../characters/nameHelper.js';   // AUDIT 54: GetRandomFullName's one home
+import { GENDERS, getNameBankOfRegion, fullName, getNameBank, getRandomFullName } from '../../characters/nameHelper.js';   // AUDIT 58: GetRandomFullName's one home
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
 // RaceTemplate.GetRaceFromFactionRace; unmapped falls to Breton in
@@ -371,7 +371,7 @@ const HANDLERS = {
       }
     }
     if (!w) return null;
-    // AUDIT 54: this arm IS MacroHelper.GetRandomFullName (:333-341),
+    // AUDIT 58: this arm IS MacroHelper.GetRandomFullName (:333-341),
     // now through its one home rather than a second copy of the body.
     return getRandomFullName(w.currentRegionIndex?.() ?? -1);
   },

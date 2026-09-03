@@ -352,7 +352,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   // ROAD-E6: the four release arms share one tail (`done`), and every
   // one of them goes through it - self, touch, area, missile - so CAST
   // is raised once per release, still before the ready clears.
-  // AUDIT 54: the tail also zeroes readySpellCastingCost, as DFU's own
+  // AUDIT 58: the tail also zeroes readySpellCastingCost, as DFU's own
   // release handler does at :2137-2141.
   assert.match(hm, /const done = \(v\) => \{ onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; \};/,
     'every release path raises CAST before the ready clears');
@@ -380,7 +380,7 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
   for (const [file, poolExpr] of [
     ['src/scenes/world.js', /pickQuestFoe\(cam\.pos, useFwd, \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\], collider\)/],
     ['src/scenes/worldModes.js', /pickQuestFoe\(eye, dir, dungeonCtx\.foes, dungeonCtx\.collider\)/],
-    // AUDIT 54: THE THIRD RAY. `tryExit` - the interior activation -
+    // AUDIT 58: THE THIRD RAY. `tryExit` - the interior activation -
     // was the one host ladder with no quest-resource arm at all, while
     // CreateFoe's PlaceFoeBuildingInterior (CreateFoe.cs:219-233)
     // stands quest foes in a building freely and this host mounts

@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { combatVoice, playerVoice, raceGenderPainSound, raceGenderAttackSound, PAIN_VOICE_CHANCE, isHeavyDamage } from '../src/combat/combatVoices.js';
 import { playerPainVoice, playPlayerVoice, playerAttackGrunt } from '../src/scenes/hostCombat.js';
-import { hitSoundFor, PLAYER_HIT_VOLUME } from '../src/systems/soundClips.js';   // AUDIT 54: PlayerFootsteps' 1, not EnemySounds' 1.1
+import { hitSoundFor, PLAYER_HIT_VOLUME } from '../src/systems/soundClips.js';   // AUDIT 58: PlayerFootsteps' 1, not EnemySounds' 1.1
 import { RACES } from '../src/systems/races.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -52,7 +52,7 @@ function playerHurtHandlers(file) {
  *  Math.random - pinning that pins the 40% gate and both clip picks. */
 function takeABlow(handlerSrc, dmg, wpn = null) {
   const heard = [], billed = [];
-  // AUDIT 54: the third argument is the pitch (AudioSource.pitch), so
+  // AUDIT 58: the third argument is the pitch (AudioSource.pitch), so
   // the lift the voice tables roll is CAUGHT here rather than dropped.
   const audio = { playOneShot: (clip, vol, pitch) => heard.push([clip, vol, pitch]) };
   const entity = { race: 'Breton', gender: 'female', maxHealth: 40 };
@@ -172,7 +172,7 @@ test('audit24 wave46: the pain voice - forty percent, the player\'s own race, he
   const heard = [];
   const audio = { playOneShot: (c, v2, p) => heard.push([c, v2, p]) };
   assert.equal(playPlayerVoice(audio, { clip: 405, pitchLift: 0.1 }), 405);
-  // AUDIT 54: the lift is APPLIED, not just returned. FPSWeapon.cs:316
+  // AUDIT 58: the lift is APPLIED, not just returned. FPSWeapon.cs:316
   // -319 and PlayerFootsteps.cs:359-362 raise the source's pitch by
   // the roll, play the one shot and put it back - so the rate is
   // 1 + pitchLift. The suite used to pin the DROP here.
@@ -237,7 +237,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
     handlers.forEach((h, i) => {
       const landed = takeABlow(h, 10);
       assert.deepEqual(landed.billed, [10], `${file} door ${i + 1}: the blow bills the health`);
-      // AUDIT 54: the blow that lands ON the player is PlayerFootsteps'
+      // AUDIT 58: the blow that lands ON the player is PlayerFootsteps'
       // volumeScale 1 (PlayerFootsteps.cs:330-344), never EnemySounds'
       // 1.1 - and the cry carries the pitch lift Math.random pins to 0
       // here (`1 + 0`), which used to be computed and dropped.
@@ -268,7 +268,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   assert.ok(di > 0, 'the dungeon arrow arm is annotated');
   const dArm = d.slice(di, d.indexOf('addItem(playerEntity.items', di));
   assert.match(dArm, /audio\.playOneShot\(hitSoundFor\(m\.weapon\), PLAYER_HIT_VOLUME\)/,
-    'dungeon: the arrow SOUNDS - it was silent, and at the PLAYER volume (AUDIT 54)');
+    'dungeon: the arrow SOUNDS - it was silent, and at the PLAYER volume (AUDIT 58)');
   // and all three hang off a LANDED arrow: SendDamageToPlayer is only
   // reached from ApplyDamageToPlayer's `if (damage > 0)` arm, so a
   // miss must make no noise, no flash and no cry

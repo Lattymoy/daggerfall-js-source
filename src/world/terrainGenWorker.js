@@ -42,7 +42,7 @@ function handle(m) {
       roads = null;
       // ROADS 22: his arrays arrive ready-made and ride every job from
       // now on; no build, no cache, nothing to wait for.
-      // AUDIT 54 F3: `smooth` rides his data on this arm too - it was
+      // AUDIT 58 F3: `smooth` rides his data on this arm too - it was
       // dropped here (and at both of the client's rebuilds) while `water`
       // survived, so the Mods pane's SmoothRoads switch was inert on the
       // path the game actually takes.
