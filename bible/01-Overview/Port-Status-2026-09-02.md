@@ -420,13 +420,20 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   not a missing target. `createQuestBridge` is built here over the
   route's ONE loaded city (every `PlayerGPS` read in its world adapter
   answers `dfLocation` outright, which is the whole difference from the
-  streaming host), and the eight surfaces that had each recorded the
-  absence separately now read the machine: the pause window's Quests
-  tab and the interior pause's, the character sheet's LOGBOOK button,
-  `TickRest`'s per-hour `QuestMachine.Tick`, the Status box's macro
-  context, a quest letter's display name, the exterior automap's
-  residence plates, and the mode machine's own `mountScene` over every
-  building and dungeon it opens.*
+  streaming host), and it rides into the mode machine, so `mountScene`
+  mounts it over every building and dungeon the city opens. SEVEN of
+  the EIGHT surfaces that had each recorded the absence separately now
+  read the machine: `TickRest`'s per-hour `QuestMachine.Tick`, the
+  inventory's quest read and a quest letter's display name, the
+  character sheet's LOGBOOK button, the Status box's macro context, the
+  exterior automap's residence plates (wired and correct, and empty
+  until this route has a topic tree - it supplies two of DFU's three
+  source arms), the pause window's Quests tab (and the mode machine's
+  interior pause off the same one walk), and the pause window's
+  Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
+  C#'s empty-machine answer for the narrower reason written at its own
+  site, and the `src/scenes/worldModes.js:1617` row below still
+  stands.*
 
 **Blocked - data, an asset, or a layer the port does not have.**
 

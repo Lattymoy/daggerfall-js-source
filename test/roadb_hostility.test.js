@@ -247,4 +247,17 @@ test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool 
     'the inline copy is gone');
   const wm = src('src/scenes/worldModes.js');
   assert.ok(/insideFoes\(\) \{/.test(wm), 'and the mode machine answers the inside half');
+
+  // ...AND SO DOES THE FIXED-CITY HOST. QX1 gave `?exterior` a quest
+  // bridge and wired its MakeEnemiesHostile door to `liveQuestFoes` -
+  // the walk narrowed to QuestResourceBehaviour carriers - so
+  // `enemies makehostile` flipped nothing but quest-spawned foes in a
+  // mounted mode and left the dungeon's own population, and every
+  // watchman in a shop, standing passive. The two producers are two
+  // different questions and this host has to keep them apart too.
+  const ex = src('src/scenes/exterior.js');
+  assert.ok(ex.includes('makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),'),
+    'the fixed-city host\'s quest door walks the UNNARROWED database');
+  assert.ok(ex.includes('return [...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>'),
+    'and questFoeInstances - the one caller that really asks the narrow question - keeps liveQuestFoes');
 });

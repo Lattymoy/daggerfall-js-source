@@ -78,9 +78,31 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   // prompt - it used to say "Recall pends here" for the whole spell,
   // which was true of one arm and false as a refusal.
   const ex = readFileSync(new URL('../src/scenes/exterior.js', import.meta.url), 'utf8');
-  assert.ok(ex.includes('onTeleport: () => teleportPrompt(),'), 'the fixed-city host routes the prompt');
+  // TP2 REVIEW: BOTH SITES, ANCHORED. `exterior.js` carries the same
+  // `onTeleport: () => teleportPrompt(),` line TWICE - once on its own
+  // spell engine and once in the bag it hands DOWN to the mode machine
+  // - and a bare `includes` is satisfied by either, so nulling the
+  // modes one (which is what keeps a MOUNTED dungeon off the standalone
+  // host's refusal, worldModes -> dungeonContext) passed the suite.
+  const bag = (src, open) => {
+    const i = src.indexOf(open);
+    assert.notEqual(i, -1, `exterior.js no longer opens ${open}`);
+    const end = src.indexOf('\n  });', i);
+    assert.ok(end > i, `exterior.js's ${open} bag is not closed the way this pin reads it`);
+    return src.slice(i, end);
+  };
+  assert.ok(bag(ex, 'const magic = createPlayerMagic({').includes('onTeleport: () => teleportPrompt(),'),
+    'the fixed-city host routes its own arrivals to the prompt');
+  assert.ok(bag(ex, 'var modes = createWorldModes({').includes('onTeleport: () => teleportPrompt(),'),
+    'and hands the SAME prompt down to the modes it mounts - without it the mounted dungeon keeps its standalone refusal');
   assert.ok(ex.includes("lines: ['Do you want to Teleport or Set an Anchor?'],"), 'and speaks record 4000');
-  assert.ok(ex.includes("townTalk.say('You must set an anchor first.')"), 'and raises the 4001 refusal');
+  // ...and the 4001 refusal is the RECORD, in DFU's own box shape -
+  // not a HUD line paraphrasing it (Internal_RSC.csv:4821).
+  assert.ok(ex.includes('new ActionTextBox(plainLines(townTalk.lines(ANCHOR_MUST_BE_SET))'),
+    'the fixed-city host raises record 4001 through the same TEXT.RSC door its other boxes read');
+  assert.ok(ex.includes("?? ['An Anchor must be set before you can Teleport.']"),
+    '...with the record\'s own words as the no-TEXT.RSC fallback');
+  assert.equal(/You must set an anchor first/.test(ex), false, 'the paraphrase is gone');
   assert.equal(/Recall pends here/.test(ex), false, 'the whole-spell refusal is gone');
   // the STANDALONE dungeon still refuses LOUDLY (INTERIM doctrine),
   // never silently - it has no outer host to hand the plan's arms to.

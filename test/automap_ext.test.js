@@ -1244,8 +1244,18 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
     // same call between the summaries walk and the window, off its own
     // bridge. Its THIRD source arm stays absent on purpose: that one is
     // TalkManager's (`locationWasMarkedOnMapByNPC`) and `?exterior`
-    // runs no topic tree at all, which residenceQuestName optional-calls
-    // through, so the absence costs that clause and nothing else.
+    // runs no topic tree at all.
+    //   AND THAT ABSENCE COSTS THE WHOLE PLATE, not one clause.
+    // residenceQuestName optional-calls the arm and the very next line
+    // is `if (!r?.isQuestResource) continue`, which skips the only
+    // assignment to buildingQuestName - so with two arms of three that
+    // host's stamp resolves '' for EVERY residence and raises no plate
+    // at all. That is still DFU's own answer for a route with no NPC
+    // who can mark a house (ExteriorAutomap.cs:695-700 reads
+    // locationWasMarkedOnMapByNPC only through that ref call), so the
+    // stamp is wired and correct the moment a topic tree lands there -
+    // it is not a plate that host raises today. Pinned as a fact, with
+    // the fixed-city host's OWN two-arm source shape:
     const edoor = src('src/scenes/exterior.js');
     const estamp = edoor.slice(edoor.indexOf('    stampResidenceQuestNames(summaries, discoveredBuildings(locId), {'),
       edoor.indexOf('townTalk.showOverlay(new ExteriorAutomapWindow({'));
@@ -1254,7 +1264,15 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
     assert.match(estamp, /getQuest: \(questID\) => questBridge\?\.machine\.getQuest\(questID\) \?\? null,/);
     assert.equal(/isBuildingQuestResource/.test(estamp), false,
       'no topic tree in this route - the arm is absent, not faked');
-    assert.match(estamp, /\}, dfLocation\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
+    assert.match(estamp, /\}, dfLocation\.mapTableData\.mapId \?\? 0\);|\}, dfLocation\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
+    // The two-arm source, RUN against the very quest and building this
+    // test just marked: the marked house that names 'The Marked House'
+    // with all three arms names NOTHING with the fixed-city host's two.
+    assert.equal(residenceQuestName({
+      getAllActiveQuestIds: () => [3],
+      getQuest: () => quest,
+    }, 100, house.buildingKey), '',
+    'two arms of three: `?exterior` names no residence until a topic tree lands there');
   } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 

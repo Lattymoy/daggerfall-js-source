@@ -465,11 +465,13 @@ test('PX25: every host hands the pause window the arms it already had', () => {
   }
   // THE FILTER STILL HAS TEETH: an arm handed over is not an arm that
   // always opens something. Every host's Chronicle arm goes through a
-  // maker that answers null without a bridge (or, in the fixed-city
-  // host, without the art), and the button then opens NOTHING rather
-  // than an empty book - the anti-lie law U32 wrote for the sheet.
+  // maker that answers null without a bridge, and the button then
+  // opens NOTHING rather than an empty book - the anti-lie law U32
+  // wrote for the sheet. The ART half of the refusal is the chronicle
+  // DOOR's own (`if (!questJournalArtLoaded()) return null`), which is
+  // why no host asks it in front of the preload that satisfies it.
   assert.match(read('src/scenes/exterior.js'),
-    /if \(!questBridge \|\| !chronicleDoorReady\(\)\) return null;/);
+    /const makeJournalWindow = \(mode\) => \{\n\s*if \(!questBridge\) return null;/);
   assert.match(read('src/scenes/dungeonContext.js'), /if \(!opts\.questBridge\) return null;/);
 });
 

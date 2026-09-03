@@ -80,7 +80,7 @@ import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
 import { preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors   // QX1 dropped the unused `QuestJournalWindow` beside it - the classic window is reached through the chronicle door, never constructed here
-import { createChronicleWindow, chronicleDoorReady } from '../ui/chronicleDoor.js';   // QX1/PX24d: the chronicle's ONE door, and the skin fork in front of it
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // QX1/PX24d: the chronicle's ONE door - the skin fork lives behind it, and its classic arm IS the art gate
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -141,11 +141,15 @@ import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';   // QX1: the quest layer's reputation doors
+import { findFactions, findFactionByTypeAndRegion, getPeopleOfCurrentRegion, getCourtOfCurrentRegion } from '../systems/talk.js';   // QX1 review: Person.cs's faction-type reads, over the PERSISTENT store
+import { FACTION_TYPES } from '../formats/factionFile.js';   // QX1 review: GetRegionFaction's Province filter
+import { liveVampirism } from '../systems/racialLive.js';   // QX1 review: the PC's clan, off the curse entry
+import { mintQuestFoeWave } from './questFoeHost.js';   // QX1 review/B1: the data side of CreateFoeGameObjects
 import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
 import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
 import { createQuestBridge, tokensToRows } from './questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
 import { QuestAudioSource } from '../systems/audio.js';   // QX1/E6: PlaySound's ONE source per machine
-import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan
+import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan, and the 4001 record id
 import { locationWorldRect } from '../world/streamingWorld.js';   // TP2: the native frame this host's origin stands at
 import { GLOBAL_SCALE } from '../world/meshReader.js';   // TP2: scene units <-> native world units
 
@@ -794,6 +798,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  preloadQuestJournalArt({ renderer, fetchBytes, palette });   // U43: LGBK00I0 warms at boot, so L / N / the pause Chronicle open on the FIRST press
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -1233,9 +1238,17 @@ export async function bootExterior(canvas, renderer, params, status) {
       ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
       pixel: _locPixel,
     });
-    // "Anchor must be set" - the 4001 box (:268-275). The cast is spent
-    // either way; DFU refunds nothing.
-    if (!plan) { townTalk.say('You must set an anchor first.'); return; }
+    // "An Anchor must be set before you can Teleport." - TEXT.RSC
+    // record 4001 (Internal_RSC.csv:4821), raised in the same
+    // ClickAnywhereToClose box DFU raises (:268-275) rather than as a
+    // HUD line, and read through the same TEXT.RSC door the rest of
+    // this host's boxes use. The cast is spent either way; DFU refunds
+    // nothing.
+    if (!plan) {
+      townTalk.showOverlay(new ActionTextBox(plainLines(townTalk.lines(ANCHOR_MUST_BE_SET))
+        ?? ['An Anchor must be set before you can Teleport.']));
+      return;
+    }
     if (plan.kind === 'same-interior') {
       // ":129-134 - Just need to move player." Nothing is torn down and
       // nothing is loaded: the room you stand in IS the anchor's room.
@@ -1271,10 +1284,13 @@ export async function bootExterior(canvas, renderer, params, status) {
         landed = !!(await modes?.startInDungeon?.());
         if (landed) modes?.setPlayerLocalPosition(anchorLanding(a));
         // No entrance in this location: DFU's "all else fails" exterior
-        // landing (:645-655). The player keeps the street they stand on,
-        // which is this host's counterpart of the pixel teleport's own
-        // landing - a dungeon anchor's stored height is in the DUNGEON's
-        // frame and would drop them through the world.
+        // landing (RespawnPlayer :548-553, "Teleporting to origin of
+        // nearest map pixel"). The landing below is NOT anchorLanding -
+        // a dungeon anchor's `local` and its stored height are in the
+        // DUNGEON's frame and would drop the player through the world -
+        // it is the anchor's own natives, which for a dungeon anchor
+        // setRecallAnchor deliberately stores as the location rect's
+        // origin, at this host's ground height.
         else townTalk.say('The way underground is closed. Repositioning player.');
       } else if (plan.arrive === 'building') {
         landed = !!(await modes?.restoreInterior?.(a.interior, anchorLanding(a)));
@@ -1282,8 +1298,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       if (landed) {
         cam.pos = player.eyeAt();   // EV1: the interpolated render eye
-      } else if (plan.arrive !== 'dungeon') {
-        const [lx, ly, lz] = anchorLanding(a);
+      } else {
+        // EVERY unlanded arm repositions, the failed DUNGEON mount
+        // included: the cast may have torn down the interior it was
+        // made in (the forceExitToExterior above), so leaving the
+        // player where they stood leaves them inside a building shell.
+        const [lx, ly, lz] = plan.arrive === 'dungeon'
+          ? [(a.nativeX - _anchorRect.minX) * GLOBAL_SCALE, GROUND_OFFSET * 0.025 + 2, (a.nativeZ - _anchorRect.minZ) * GLOBAL_SCALE]
+          : anchorLanding(a);
         if (walkMode) player.spawn(lx, ly, lz); else cam.pos = [lx, ly + 40, lz];
       }
       // "Restore final position and unwire event" (:242) - the pose
@@ -1474,7 +1496,13 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  goes nowhere. No bridge, no book - the same nothing the sheet's
    *  LOGBOOK button gives. */
   const makeJournalWindow = (mode) => {
-    if (!questBridge || !chronicleDoorReady()) return null;
+    if (!questBridge) return null;
+    // WARM FIRST, THEN ASK. The door's own classic arm IS the art gate
+    // (chronicleDoor.js:68 `if (!questJournalArtLoaded()) return null`),
+    // so a readiness test placed AHEAD of the preload that satisfies it
+    // made the classic skin answer null for ever - the warm behind the
+    // gate could never run. dungeonContext.js:1122-1124 is the shape:
+    // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
       ...questJournalHooks(),
@@ -1643,9 +1671,18 @@ export async function bootExterior(canvas, renderer, params, status) {
       // TalkManager's (:698-705, the `locationWasMarkedOnMapByNPC`
       // half) and stays ABSENT: it needs a topic tree, and this route
       // runs no rumor mill or topic tree at all - the same reason its
-      // bulletin board opens on the location name alone. residenceQuestName
-      // optional-calls it (exteriorAutomapWindow.js:460), so the absence
-      // costs exactly that clause and nothing else.
+      // bulletin board opens on the location name alone.
+      //   AND THAT COSTS THE WHOLE PLATE, not one clause. residenceQuestName
+      // optional-calls the arm at exteriorAutomapWindow.js:460 and the
+      // NEXT line is `if (!r?.isQuestResource) continue`, which skips
+      // the only assignment to buildingQuestName - so with the arm
+      // absent this stamp resolves '' for every residence and raises no
+      // plate at all. That is still DFU's own answer HERE:
+      // ExteriorAutomap.cs:695-700 reads locationWasMarkedOnMapByNPC
+      // only through that ref call, and a route with no topic tree has
+      // no NPC that can mark a house. So the stamp is wired and correct
+      // the moment a topic tree lands on this route; today it is the
+      // empty answer, not a plate this host raises.
       stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
         getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])]
           .filter((q) => !q.questTombstoned).map((q) => q.uid),
@@ -1909,16 +1946,41 @@ export async function bootExterior(canvas, renderer, params, status) {
   // `ctx.x?.()` - the headless charter, world.js's own posture. What is
   // deliberately absent here, and why:
   //   - THE TALK SEAMS (addQuestTopics, the six rumor doors, the four
-  //     %f-faction getters, removeNpcQuestor). This route runs no rumor
-  //     mill, topic tree or NPC session at all - the same absence its
-  //     bulletin board records when it opens on the location name alone.
+  //     %f-faction NAME getters, removeNpcQuestor). This route runs no
+  //     rumor mill, topic tree or NPC session at all - the same absence
+  //     its bulletin board records when it opens on the location name
+  //     alone. The faction-TYPE family beside them is a different
+  //     question with a different producer - the persistent store - and
+  //     is mounted below.
   //   - THE ITEM SEAMS (giveItemToPlayer and its four siblings) and the
   //     videos, faces, disease and cure doors, none of which has a
   //     producer in this file.
-  // Gold, crime, the guard call, the hostility pair, time, reputation
-  // and the popup stack all DO have producers here, so they are wired.
+  //   - CreateFoe's OUTDOOR PLACEMENT ARM ONLY (:252-257's 5/20 and
+  //     8/25 rings). This route mints no exterior foe pool, only the
+  //     watch, so an outdoor wave answers false and stays pending -
+  //     TryPlacement's own failed-placement shape. The SEAM itself is
+  //     wired (createFoeGameObjects / tryPlaceFoe / raiseOnEncounterEvent
+  //     below), and its inside arms are live off the mode machine.
+  // Gold, crime, the guard call, the hostility pair, time, reputation,
+  // the FACTION STORE (the Person chain's faction-type reads, all over
+  // the persistent clone factionRep owns - never the raw FACTION.TXT
+  // dictionary), the site mount and the popup stack all DO have
+  // producers here, so they are wired.
   const _questAudioSource = new QuestAudioSource(audio);   // E6: ONE source per machine
   const _questStore = () => (townTalk.factionDict ? ensureFactionRep(playerEntity, townTalk.factionDict) : null);
+  /** PersistentFactionData.GetRegionFaction (:272-287): FindFactions
+   *  (Province, -1, -1, region) and take the first row - the record
+   *  both GetCurrentRegionFaction and GetCurrentRegionVampireClan
+   *  read. C# throws on a miss; the port answers null, the refusal
+   *  convention its People/Courts siblings already keep. world.js's
+   *  twin (:4446-4450) asks the travel pixel for its region index;
+   *  this route stands on ONE location for its whole life, so the
+   *  region is `dfLocation.regionIndex` outright. */
+  const _regionFaction = () => {
+    const dict = _questStore()?.dict ?? null;
+    if (!dict) return null;
+    return findFactions(dict, { type: FACTION_TYPES.Province, region: dfLocation.regionIndex })[0] ?? null;
+  };
   /** Quest parchment boxes land in whichever overlay slot is LIVE -
    *  the mode machine's when a mode is mounted, this host's townTalk
    *  slot otherwise - and they PUSH (DaggerfallMessageBox.Show is a
@@ -1945,7 +2007,44 @@ export async function bootExterior(canvas, renderer, params, status) {
     }),
     getBlock: (name) => blocks.getBlockByName(name),
     flatCaption: (archive, record) => pipeline.flatCaption(archive, record),   // NPC1: the =symbol_ macro's caption
-    getFactionData: (id) => townTalk.factionDict?.get(id) ?? null,
+    // AUDIT 39 (#23) / QX1 review: EVERY faction read below goes
+    // through `_questStore()` - PlayerEntity.FactionData, the MUTABLE
+    // clone factionRep owns - and never the raw FACTION.TXT dictionary
+    // the reader holds. The write path (getReputation / changeReputation
+    // below) has always been the clone, so a read off the file was a
+    // read of a different Map: `change repute with _npc_ by 30` landed
+    // on one and `when repute with _npc_ is at least N` asked the
+    // other. world.js:4706 is the same line.
+    getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
+    /** PersistentFactionData.FindFactions by type - Person.cs's
+     *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
+     *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
+    findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
+    /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
+     *  %rn/%rt's producer - world.js:4719-4722. */
+    findFactionByTypeAndRegion: (type, regionIndex) => {
+      const s = _questStore();
+      return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
+    },
+    /** PlayerGPS.GetPeopleOfCurrentRegion (:440-457). */
+    currentRegionPeople: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, dfLocation.regionIndex)?.id ?? -1,
+    /** PlayerGPS.GetCourtOfCurrentRegion (:469-483). */
+    currentRegionCourt: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, dfLocation.regionIndex)?.id ?? -1,
+    /** PlayerGPS.GetCurrentRegionFaction (:459-467). */
+    currentRegionFaction: () => _regionFaction()?.id ?? -1,
+    /** PlayerGPS.GetCurrentRegionVampireClan (:485-490): the SAME
+     *  Province record's `vam` column. */
+    currentRegionVampireClan: () => _regionFaction()?.vam ?? -1,
+    /** (racialEffect as VampirismEffect).VampireClan - -1 when the PC
+     *  is no vampire. */
+    playerVampireClan: () => liveVampirism(playerEntity)?.clan ?? -1,
+    /** VampirismEffect.GetClanName (:317-320). NULL - never '' - is
+     *  what makes %vam print C#'s own "PC not a vampire" literal. */
+    playerVampireClanName: () => {
+      const clan = liveVampirism(playerEntity)?.clan ?? 0;
+      if (!clan) return null;
+      return _questStore()?.dict.get(clan)?.name ?? '';
+    },
     // PlayerGPS's location reads. This route stands on ONE location for
     // its whole life and never leaves its rect, so each of these is a
     // constant where the streaming host has to ask the pixel.
@@ -1979,6 +2078,36 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!b) return null;
       return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };
     },
+    /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
+     *  AddQuestResourceObjects over whatever site the player already
+     *  stands in. The mode machine owns the mount and is already
+     *  mode-aware (worldModes:1258), so this is world.js:4739's line
+     *  over this host's own modes bag. */
+    mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+    // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
+    // them `create foe` minted nothing here and no quest that kills or
+    // meets a Foe could complete on this route.
+    /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
+     *  `count` inactive handles, activation deferred to placement.
+     *  Bridge-only, no host state - world.js:4747's call verbatim. */
+    createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
+    /** CreateFoe.TryPlacement (:183-211). The INSIDE arms are live on
+     *  this route - worldModes.tryPlaceQuestFoe places in a dungeon and
+     *  pends in an interior, the same producer world.js calls.
+     *
+     *  RECORDED DEPARTURE, ONE ARM: the OUTDOOR arm (:252-257's 5/20
+     *  and 8/25 rings) has no producer here - this host mints no
+     *  exterior foe pool, only the watch - so an outdoor wave answers
+     *  false, stays pending and re-attempts every machine tick until
+     *  the player steps into a mounted interior or dungeon, which is
+     *  TryPlacement's own failed-placement shape. */
+    tryPlaceFoe: (handle) => ((modes?.mode ?? 'exterior') === 'exterior'
+      ? false
+      : (modes?.tryPlaceQuestFoe?.(handle) ?? false)),
+    /** GameManager.RaiseOnEncounterEvent - its one core consumer is the
+     *  rest window's AbortRestForEnemySpawn, which worldModes routes
+     *  back to THIS file's own slot (its `abortRestForEnemySpawn`). */
+    raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
     /** PlayerGPS.DiscoverLocation (:872-890) - resolve by name and file
      *  it, THROWING when the pair names nothing, C#'s own throw. */
     discoverLocation: (regionName_, locationName_) => {
@@ -2020,7 +2149,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       _questAudioSource.playOneShot(id);
       return true;
     },
-    isPlayerInTown: () => isPlayerInTown(_musicLocationType()),
+    // GivePc.cs:84 and its siblings ask IsPlayerInTown(TRUE, TRUE) -
+    // both optional flags, mustBeInLocationRect AND mustBeOutside - so
+    // a quest item handed over while the player stands in a shop goes
+    // to the pending pile rather than straight into the pack. The
+    // flagless form is a different question and has its own caller
+    // below (`inTownLocation`, CanRest's second arm). This is the
+    // closure S40 gave this host, and world.js:5416's line.
+    isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
     // pair PayMoney needs, TrainPc's bare clock move, and F036's
@@ -2037,7 +2173,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-B: GameManager.cs:790-806 through the ONE law
     // (hostCombat.makeEnemiesHostile) over this route's whole live
     // database - the watch above ground and the mounted mode's pool.
-    makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])]),
+    // The pool term is `insideFoes`, the UNNARROWED walk
+    // (worldModes:6492): MakeEnemiesHostile flips every active enemy,
+    // not only the ones carrying a QuestResourceBehaviour. The narrowed
+    // walk (`liveQuestFoes`) has its own caller below - questFoeInstances,
+    // which is the one seam that really does ask the narrower question.
+    makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),
     clearEnemies: () => cityGuards.clearLive?.(),
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
     // over ONE database - the inside pool unioned in, or SetComplete

@@ -1796,9 +1796,9 @@ export function createWorldModes(host) {
   // bridge lands, with no frame drawn in between; it is NOT a
   // quest-change re-run, because DFU has none - a quest that starts
   // while you stand in the town leaves the home copy there until the
-  // block is laid again. `scenes/exterior.js` mounts no quest bridge
-  // (it says so at its own NPC site), which is C#'s empty-machine
-  // answer: everyone stands.
+  // block is laid again. `scenes/exterior.js` mounts a quest bridge now
+  // (QX1) but not at LAYOUT and cannot re-run the pass when one lands -
+  // its own NPC site says why: C#'s empty-machine answer, everyone stands.
   //
   // ROAD-F GS1 CLOSED THE GUILD-SERVICE HALF (2026-09-03).
   //
