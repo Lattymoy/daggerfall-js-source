@@ -88,7 +88,10 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
 test('GR2: darker green and a billboard about Y in the lab and the game alike; one wind mapping; a time-sliced walk', async () => {
   const { placeLabGrass, placeLabGrassSteps, labWindSlider, LAB_GRASS_FS, LAB_GRASS_VS } = await import('../src/render/labGrass.js');
   // 1. darker green, in the lab's own text (the byte-exact pin above holds it in the game)
-  assert.match(LAB_GRASS_FS, /vec3 root = vec3\(0\.06,0\.09,0\.04\);\s*\n\s*vec3 mid {2}= vec3\(0\.13,0\.20,0\.07\);\s*\n\s*vec3 tip {2}= vec3\(0\.24,0\.32,0\.12\);/);
+    // GR4: the ROOT is the ground's own colour now (see the GR4 pin); the
+  // mid and tip keep GR2's darker green.
+  assert.match(LAB_GRASS_FS, /vec3 root = vGround \* 0\.62;\s*\n\s*vec3 mid {2}= vec3\(0\.13,0\.20,0\.07\);\s*\n\s*vec3 tip {2}= vec3\(0\.24,0\.32,0\.12\);/,
+    'GR2\u2019s darker mid and tip, on GR4\u2019s ground root');
   // 4. a blade's width runs ACROSS the line to the eye, not along world X
   assert.match(LAB_GRASS_VS, /vec2 toEye = uEye\.xz - root;\s*\n\s*vec2 side = length\(toEye\) > 1e-4 \? normalize\(vec2\(-toEye\.y, toEye\.x\)\) : vec2\(1\.0, 0\.0\);\s*\n\s*p\.xz \+= side \* \(aCorner\.x-0\.5\) \* aInst2\.w \* \(1\.0 - vT\*0\.75\);/);
   assert.ok(!/p\.xz \+= vec2\(aCorner\.x-0\.5\) \* aInst2\.w/.test(LAB_GRASS_VS), 'the flat-from-the-side form is gone');
@@ -111,4 +114,60 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   assert.match(w, /do \{ r = labGrassWalk\.next\(\); \} while \(!r\.done && performance\.now\(\) - t0 < 4\);/, 'four milliseconds a frame');
   assert.match(w, /if \(r\.done\) \{ labGrass\.set\(r\.value\); labGrassWalk = null; labGrassCentre = labGrassWalkCentre; \}/, 'swapped in whole when done');
   assert.match(w, /labGrassCentre = null; labGrassWalk = null;   \/\/ AUDIT 49 F2/, 'an origin shift abandons a walk in flight');
+});
+
+// ── GR4: THE ROOT IS THE GROUND ───────────────────────────────────
+// RedRoryOTheGlen, via Mac: "the base of the grass blending into the
+// ground and all you can make out are the tips through a gradient -
+// reminds me of how the older Novalogic games handled grass."
+test('GR4: the root takes the colour of the tile it stands on, and the base fades in', async () => {
+  const { LAB_GRASS_VS, LAB_GRASS_FS, placeLabGrassSteps } = await import('../src/render/labGrass.js');
+  // THE SHADER, still the lab's byte for byte (the GR1 pin above holds):
+  // a fourth instance attribute carries the ground's colour, the root
+  // is that colour darkened as a sward's shade would, and the alpha
+  // fades in from the base so the planted line is gone.
+  assert.match(LAB_GRASS_VS, /layout\(location=4\) in vec3 aGround;/);
+  assert.match(LAB_GRASS_VS, /vGround = aGround;/);
+  assert.match(LAB_GRASS_FS, /in vec3 vGround;/);
+  assert.match(LAB_GRASS_FS, /vec3 root = vGround \* 0\.62;/, 'the root IS the ground, darkened');
+  assert.doesNotMatch(LAB_GRASS_FS, /vec3 root = vec3\(0\.06,0\.09,0\.04\);/, 'the fixed olive root is gone');
+  assert.match(LAB_GRASS_FS, /o = vec4\(c, vFade \* smoothstep\(0\.0, 0\.30, vT\)\);/, 'the base fades in');
+  // THE PLACER bakes it from the host's ground(x, z), and without one
+  // hands back the olive the root used to be - so a host with no
+  // ground colour draws GR2's grass unchanged rather than black.
+  const gen = placeLabGrassSteps({ centre: [1000, 1000], keep: () => 0, ground: (x, z) => [x > 1000 ? 0.5 : 0.1, 0.2, 0.3], density: 4000 });
+  let r; do { r = gen.next(); } while (!r.done);
+  const { inst, ground, count } = r.value;
+  assert.equal(ground.length, count * 3, 'three floats a blade');
+  const near = (a, b) => Math.abs(a - b) < 1e-6;   // Float32Array stores 0.1 as 0.10000000149
+  for (let i = 0; i < 50; i++) {
+    const east = inst[i * 4] > 1000;
+    assert.ok(near(ground[i * 3], east ? 0.5 : 0.1), 'each blade carries the colour of ITS ground');
+    assert.ok(near(ground[i * 3 + 1], 0.2));
+  }
+  const bare = placeLabGrassSteps({ centre: [0, 0], keep: () => 0, density: 100 });
+  let b; do { b = bare.next(); } while (!b.done);
+  assert.ok([0.10, 0.145, 0.065].every((v, k) => near(b.value.ground[k], v)), 'no ground callback: the old olive');
+  // THE RENDERER takes the fourth buffer as a vec3 with the instance divisor.
+  const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
+  assert.match(src, /this\.bufs = \[1, 2, 3, 4\]\.map/);
+  assert.match(src, /loc === 3 \? 1 : loc === 4 \? 3 : 4/);
+  assert.match(src, /\[3, placed\.ground\]/);
+});
+
+test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texels already are', () => {
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  // Averaged where the layers are decoded for the tile array - the
+  // texels are on the CPU there already, once per archive - rather
+  // than sampled per blade.
+  assert.match(world, /groundMeanColour\.set\(groundArchive, layers\.map\(\(rgba\) => \{/);
+  assert.match(world, /return n \? \[r \/ n \/ 255, g \/ n \/ 255, b \/ n \/ 255\] : \[0\.10, 0\.145, 0\.065\];/);
+  // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
+  // answering with the colour instead of the height, so the root under
+  // a blade takes the colour of the very tile keep let it stand on.
+  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('labGrassWalk = placeLabGrassSteps('));
+  assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
+  assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
+  assert.match(g, /return groundMeanColour\.get\(p\.groundArchive\)\?\.\[rec\] \?\? null;/);
+  assert.match(world, /placeLabGrassSteps\(\{ centre: \[ex, ez\], keep, ground \}\)/, 'and the placer is handed it');
 });

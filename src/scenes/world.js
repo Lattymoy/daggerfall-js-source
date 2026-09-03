@@ -407,6 +407,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
   const grassRecords = new Map();   // archive -> Set of grass records
+  const groundMeanColour = new Map();   // GR4: archive -> [record] -> mean rgb 0..1
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassCentre = null;   // world xz the current scatter was placed around
@@ -603,6 +604,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
       renderer.uploadTileArray(groundArchive, layers);
+      // GR4: each record's MEAN colour, for the grass root that stands on
+      // it - averaged once here, where the texels are already on the CPU,
+      // rather than sampled per blade.
+      groundMeanColour.set(groundArchive, layers.map((rgba) => {
+        const n = rgba.length >>> 2; let r = 0, g = 0, b = 0;
+        for (let i = 0; i < rgba.length; i += 4) { r += rgba[i]; g += rgba[i + 1]; b += rgba[i + 2]; }
+        return n ? [r / n / 255, g / n / 255, b / n / 255] : [0.10, 0.145, 0.065];
+      }));
     }
     // GR1: which of this archive's records are GRASS, from its own texels -
     // roads excluded by record, and a winter archive has no green base so
@@ -6581,7 +6590,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           return null;
         };
-        labGrassWalk = placeLabGrassSteps({ centre: [ex, ez], keep });
+        // GR4: the SAME lookup keep makes, answering with the tile's mean
+        // colour instead of its height - so the root under a blade takes
+        // the colour of the very tile keep let it stand on.
+        const ground = (x, z) => {
+          for (const { p, t } of pieces) {
+            const lx = x - t[0]; const lz = z - t[2];
+            if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+            const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+            const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+            return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
+          }
+          return null;
+        };
+        labGrassWalk = placeLabGrassSteps({ centre: [ex, ez], keep, ground });
         labGrassWalkCentre = [ex, ez];
         window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, centre: labGrassCentre, walking: !!labGrassWalk });   // GR1: for the gate
       }

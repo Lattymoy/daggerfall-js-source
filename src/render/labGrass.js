@@ -41,11 +41,13 @@ float terrain(vec2 p){ return aRootY; }`;
 export const LAB_GRASS_VS = `layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
+layout(location=4) in vec3 aGround;      // GR4: the ground's own colour under this blade, baked by the placer
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
 uniform vec2 uWindDir;
 uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
+out vec3 vGround;                       // GR4
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -128,6 +130,7 @@ void main(){
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
   vTint = aInst2.z;
+  vGround = aGround;                      // GR4: carried to the root
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
   // a low sun on one side and goes dark on the other - which is what
@@ -136,7 +139,7 @@ void main(){
   vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
   gl_Position = uVP * vec4(p,1.0);
 }`;
-export const LAB_GRASS_FS = `in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet;
+export const LAB_GRASS_FS = `in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround;
 uniform vec3 uAmb, uSunCol; uniform float uDim;
 out vec4 o;
 void main(){
@@ -146,7 +149,15 @@ void main(){
   // blades read as depth instead of a green haze.
   // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
   // emerald - a Daggerfall field, not a golf course.
-  vec3 root = vec3(0.06,0.09,0.04);
+  // GR4 (RedRoryOTheGlen, via Mac: the base of the grass blending into
+  // the ground and all you can make out are the tips through a
+  // gradient - how the older Novalogic games did it). THE ROOT IS THE
+  // GROUND. A fixed olive root drew a hard line at every base where a
+  // blade met a tile of another shade - the one tell that makes a
+  // field read as quads stuck on. The root takes the colour of the
+  // ground it stands on, darkened as a sward's shade would, and the
+  // olive only arrives by the mid.
+  vec3 root = vGround * 0.62;
   vec3 mid  = vec3(0.13,0.20,0.07);
   vec3 tip  = vec3(0.24,0.32,0.12);
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
@@ -161,7 +172,9 @@ void main(){
   c *= uDim;
   // the rim is the SUN's colour, and only where the sun can reach
   c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
-  o = vec4(c, vFade);
+  // GR4: ...and the base fades IN, so what reads as a blade is its upper
+  // part - the tips through a gradient - rather than a planted line.
+  o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));
 }`;
 
 export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 200, span: 210, seed: 0x2f6e2b1 });
@@ -203,9 +216,10 @@ export function placeLabGrass(opts) {
  * scatter in when the walk is done. The law, the seed and the sequence
  * are identical - only the clock is shared.
  */
-export function* placeLabGrassSteps({ centre, keep, density = LAB_GRASS.density, height = LAB_GRASS.height, span = LAB_GRASS.span, seed = LAB_GRASS.seed, step = 60000 }) {
+export function* placeLabGrassSteps({ centre, keep, ground = null, density = LAB_GRASS.density, height = LAB_GRASS.height, span = LAB_GRASS.span, seed = LAB_GRASS.seed, step = 60000 }) {
   const N = density | 0;
   const inst = new Float32Array(N * 4); const inst2 = new Float32Array(N * 4); const rootY = new Float32Array(N);
+  const groundCol = new Float32Array(N * 3);   // GR4: the ground's colour under each blade
   let s = seed >>> 0;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
   let n = 0;
@@ -223,11 +237,17 @@ export function* placeLabGrassSteps({ centre, keep, density = LAB_GRASS.density,
       inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
       inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
       rootY[n] = y;
+      // GR4: the ground's own colour under this root, from the host that
+      // knows which tile it stands on. Absent, the olive the lab's root
+      // used to be, so a host without one draws GR2's grass unchanged.
+      const gc = ground ? ground(x, z) : null;
+      groundCol[n * 3] = gc ? gc[0] : 0.10; groundCol[n * 3 + 1] = gc ? gc[1] : 0.145; groundCol[n * 3 + 2] = gc ? gc[2] : 0.065;
       n++;
     }
     if ((i + 1) % step === 0) yield null;
   }
-  return { inst: inst.subarray(0, n * 4), inst2: inst2.subarray(0, n * 4), rootY: rootY.subarray(0, n), count: n };
+  return { inst: inst.subarray(0, n * 4), inst2: inst2.subarray(0, n * 4), rootY: rootY.subarray(0, n),
+    ground: groundCol.subarray(0, n * 3), count: n };
 }
 
 /** the lab's blade: five stacked quads */
@@ -303,10 +323,10 @@ export class LabGrassRenderer {
     gl.bufferData(gl.ARRAY_BUFFER, corners, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     this.verts = corners.length / 2;
-    this.bufs = [1, 2, 3].map((loc) => {
+    this.bufs = [1, 2, 3, 4].map((loc) => {   // GR4: 4 is the ground colour
       const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
       gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW);
-      gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 3 ? 1 : 4, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 3 ? 1 : loc === 4 ? 3 : 4, gl.FLOAT, false, 0, 0);
       gl.vertexAttribDivisor(loc, 1);
       return b;
     });
@@ -325,7 +345,7 @@ export class LabGrassRenderer {
   /** upload a scatter from placeLabGrass. Creates nothing, draws nothing. */
   set(placed) {
     const gl = this.gl;
-    for (const [i, data] of [[0, placed.inst], [1, placed.inst2], [2, placed.rootY]]) {
+    for (const [i, data] of [[0, placed.inst], [1, placed.inst2], [2, placed.rootY], [3, placed.ground]]) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
     }
