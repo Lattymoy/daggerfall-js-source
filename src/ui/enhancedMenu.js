@@ -87,7 +87,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
-import { TEST_PRESETS } from '../systems/testRoom.js';   // TR3: the one home the pane shows
+import { TEST_PRESETS, TEST_RIDE } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
@@ -360,6 +360,13 @@ function paneTest(body) {
     c.append(acts([{ label: `Enter as the ${p.label}`, primary: true, onClick: () => onAction(`test:${p.id}`) }]));
     body.append(c);
   }
+  // TSR4: the ride - one more door through the SAME `test:<id>` choice,
+  // the entry resolved by testRoom's testEntryById at the boot.
+  const ride = el('div', 'card');
+  ride.append(el('h3', null, TEST_RIDE.label));
+  ride.append(el('p', 'meta', TEST_RIDE.blurb));
+  ride.append(acts([{ label: 'Ride out', primary: true, onClick: () => onAction(`test:${TEST_RIDE.id}`) }]));
+  body.append(ride);
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────

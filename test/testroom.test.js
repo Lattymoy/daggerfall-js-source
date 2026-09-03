@@ -16,8 +16,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  TEST_PRESETS, testPresetById, testGearRows, testItemOf, applyTestCharacter,
+  TEST_PRESETS, TEST_RIDE, testPresetById, testEntryById, testGearRows, testItemOf, applyTestCharacter, seedTestMount,
 } from '../src/systems/testRoom.js';
+import { hasHorse, TRANSPORT_HORSE_TEMPLATE } from '../src/systems/inventorySession.js';
 import { armBuildOptsOf } from '../src/combat/weaponRig.js';
 import { RACES } from '../src/systems/races.js';
 import { CLASS_CAREERS } from '../src/systems/chargen.js';
@@ -132,7 +133,8 @@ test('TSR3: the three doors all read the one home', () => {
   // through to the wizard), the same headless seam, the armory, and
   // the arms built only when the data is attached.
   const world = read('src/scenes/world.js');
-  assert.match(world, /const testPreset = !playerEntity\.chargenDone && params\.has\('test'\) \? testPresetById\(params\.get\('test'\)\) : null;/);
+  assert.match(world, /const testEntry = !playerEntity\.chargenDone && params\.has\('test'\) \? testEntryById\(params\.get\('test'\)\) : null;\s*\n\s*const testPreset = testEntry\?\.preset \?\? null;/,
+    'TSR4: the entry resolves first, the preset off it - an unknown id is still null before the branch');
   assert.match(world, /await applyTestCharacter\(playerEntity, preset, \{ fetchBytes, spellsByIndex: sbi \}\)/);
   assert.match(world, /if \(morrowindDataCount\(\) > 0\)/, 'no data, no build - the classic sprite stands');
   assert.match(world, /await buildArmsFor\(playerEntity\)/, 'with data, the rigs come up without the pause-card trip');
@@ -163,4 +165,59 @@ test('TSR1: a preset becomes a live character - identity, armory, dressed baseli
   assert.ok(worn.some((it) => it.templateIndex === WEAPONS_ENUM.Longsword), 'the longsword is in hand');
   // And the female pack carries the female clothes.
   assert.ok(entity.items.some((it) => it.templateIndex === 200), 'womens Plain Robes (200) in the pack');
+});
+
+// TSR4 (2026-09-03, Mac: "an option that spawns you into the outside
+// world with a mount to test"). The ride is a SPAWN on top of a preset,
+// resolved through the one entry door, with the horse minted the way
+// the general store mints one and the landing/mount owed to the host.
+
+test('TSR4: the ride entry rides the baseline preset through the one door, and an unknown id is still null', () => {
+  assert.equal(TEST_RIDE.id, 'ride');
+  assert.ok(testPresetById(TEST_RIDE.preset), 'the ride names a real preset');
+  const ride = testEntryById('ride');
+  assert.equal(ride.ride, true);
+  assert.equal(ride.preset.id, TEST_RIDE.preset);
+  const plain = testEntryById('khajiit-monk');
+  assert.equal(plain.ride, false, 'a preset entry is not a ride');
+  assert.equal(plain.preset.id, 'khajiit-monk');
+  assert.equal(testEntryById('no-such'), null, 'never a guess');
+  assert.ok(TEST_RIDE.label && TEST_RIDE.blurb, 'the card has words');
+});
+
+test('TSR4: the mount is the store\'s own horse, once, and the pack answers hasHorse for it', () => {
+  const entity = { items: [] };
+  assert.equal(hasHorse(entity.items), false);
+  assert.equal(seedTestMount(entity), true);
+  assert.equal(hasHorse(entity.items), true, 'the T window\'s own question');
+  const horse = entity.items.find((it) => it.templateIndex === TRANSPORT_HORSE_TEMPLATE);
+  assert.equal(horse.group, 'Transportation');
+  assert.equal(horse.name, ITEM_TEMPLATES[TRANSPORT_HORSE_TEMPLATE].name, 'the template names it, as the shelf does');
+  assert.ok(horse.maxCondition > 0, 'mintCondition ran');
+  assert.ok(horse.value > 0, 'and the shelf\'s base value rides along');
+  assert.equal(seedTestMount(entity), false, 'a pack with a horse is left alone');
+  assert.equal(entity.items.filter((it) => it.templateIndex === TRANSPORT_HORSE_TEMPLATE).length, 1);
+});
+
+test('TSR4: the pane, the boot and the frame gate - the edge landing, the ONE transport door, never before the first stand', () => {
+  const menu = read('src/ui/enhancedMenu.js');
+  assert.match(menu, /onAction\(`test:\$\{TEST_RIDE\.id\}`\)/, 'the ride card fires the same choice family');
+  const world = read('src/scenes/world.js');
+  // the horse lands with the armory; the mount is DEFERRED to the frame
+  // loop's spawn gate, so it can never run before the player has a floor
+  assert.match(world, /if \(testEntry\.ride\) \{ seedTestMount\(playerEntity\); rideOutWanted = true; \}/);
+  assert.match(world, /if \(rideOutWanted && playerSpawned\) rideOut\(\);/, 'the frame gate');
+  const rideAt = world.indexOf('const rideOut = () => {');
+  const gateAt = world.indexOf('if (rideOutWanted && playerSpawned) rideOut();');
+  assert.ok(rideAt > 0 && gateAt > rideAt, 'defined at the boot, fired from the loop');
+  const body = world.slice(rideAt, world.indexOf('};', rideAt));
+  // the landing is the fast-travel arrival's own edge law (no start
+  // markers = outside the walls, facing in), floored the arrival's way
+  assert.ok(body.includes("locationLandingFor(startPixel.x, startPixel.y, { noMarkers: true })"), 'the edge landing');
+  assert.ok(body.includes('floorLanding(collider, edge.pos, ARRIVAL_REACH, ARRIVAL_LIFT)'), 'floored like an arrival');
+  assert.ok(body.includes('cam.yaw = edge.yaw;'), 'facing the location, as PositionPlayerToLocation sets it');
+  // the mount goes through U53's ONE door - tr5 pins that the door is
+  // the only motor call, so this cannot be a second one
+  assert.ok(body.includes('setTransportModeHere(TRANSPORT_MODES.Horse);'), 'the one transport door');
+  assert.ok(!body.includes('player.setTransportMode('), 'never the motor directly');
 });

@@ -300,7 +300,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
-- `src/ui/enhancedMenu.js:1794` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1801` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/pauseWindow.js:65` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits

@@ -5470,3 +5470,30 @@ it on every other (F12's law - New Game must not re-enter the room);
 the world boot resolves the preset BEFORE branching, so an unknown id
 falls through to the wizard rather than guessing, and builds the arms
 only when Morrowind data is attached.
+
+**TSR4 - RIDE OUT (2026-09-03, Mac: "an option that spawns you into
+the outside world with a mount to test").** The ride is a SPAWN on top
+of a preset, not a seventh character: `TEST_RIDE` names the baseline
+Nord Warrior, and `testEntryById` is the one door the boot resolves a
+`test=` id through - a preset answers `{preset, ride:false}`, `ride`
+answers the baseline with `ride:true`, an unknown id still answers
+null before the branch. The pane's card fires the SAME `test:<id>`
+choice family, so main.js's F12 law is untouched. Three things the
+host owes the ride, each borrowed rather than built: the HORSE is
+`seedTestMount` - the general store's own mint (`mintCondition` over
+the template's name, the shelf's base value), once, so the T window,
+the travel card and the pack all answer `hasHorse` as for a bought
+one; the LANDING is the fast-travel arrival's own edge law
+(`locationLandingFor` with no start markers = `positionPlayerToLocation`'s
+outside point, EXTRA_DISTANCE past the chosen wall, facing in, floored
+the arrival's way with ARRIVAL_REACH/LIFT); the MOUNT is U53's ONE
+transport door, so the classic CFA sprite and the enhanced saddle
+(MW-D42, the vendored horse of MW-D50) come up exactly as a T-key
+mount brings them. THE ORDER IS THE POINT: the horse lands with the
+armory in the async boot, but the landing and the mount are DEFERRED
+to the frame loop's spawn gate (`rideOutWanted`) - whichever of the
+character and the start pixel comes second fires it - so the ride can
+never re-land a player who has no floor yet, and never reads the
+arrival constants before the boot has declared them. A pixel with no
+location keeps the centre landing and still mounts. Pins in
+`testroom.test.js` (TSR4).
