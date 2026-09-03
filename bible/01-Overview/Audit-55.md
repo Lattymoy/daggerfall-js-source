@@ -1,75 +1,63 @@
-# AUDIT 55 - THE WIND AND THE WEATHER (2026-09-03)
+# AUDIT 55 - THE SWITCH'S REACH (2026-09-03)
 
-Mac: "do another audit on all our wind/weather changes." GR3, GR4,
-WIND1 - none of them seen by a human yet.
+Mac: "Do a comprehensive audit. I also think enhanced AI is affecting
+NPCs. I noticed they were hovering and walking around in mid air."
 
-## Two faults in WIND1, both mine, both fixed here (WIND2)
+## Why this shape
 
-**F1 - the clouds streamed at every front.** Every cloud consumer
-formed its drift as **wind x time**: the sky's JS `deckCover` did
-`wind[0] * time`, its GLSL twin `wind * uTime`, and the terrain's
-shadow deck `uCloudWind * uCloudTime`. With a fixed per-weather wind
-those were harmless - the offset only moved at a weather change, and
-the 14-second ease slid it. WIND1 made the wind move **every frame for
-three hours**, so the offset jumped by (delta wind) x (seconds since
-the sky began) - hours in, a small change of wind threw the whole
-field across the sky. The rain and the windmills never had this fault:
-the rain accumulates `windOff` (the lab's design) and the mills
-integrate their angle ("THE ANGLE IS INTEGRATED, NOT COMPUTED",
-windmills.js:199). The sky and the ground now do the same: the
-controller integrates one `driftXZ += wind * dt` where the wind and the
-clock meet, hands it to the sky state, and every deck reads the drift.
-`uDrift` beside `uWind`, `uCloudDrift` beside `uCloudWind`; a caller
-without a drift gets the old product, so nothing else moved.
+The Enhanced AI arc shipped five slices in two days and the first
+thing a player saw of AI 4 was a bug the suite could not see (every foe
+a floating billboard - a temporal dead zone inside a per-foe try). The
+second playtest found a bake that was not height-invariant. So this
+audit does two things: it takes the NPC report as a hypothesis and
+tests it for a MECHANISM rather than for plausibility, and it sweeps
+the arc's own new seams for the fault shapes those two bugs had - a
+value produced in one place and read in another, and an assumption
+that only held at the origin.
 
-**F2 - the sky turned before the wind rose.** WIND1's ease stretched
-only while the front's factor was *strictly between 0 and 1*. At the
-change the factor is exactly 0, so the sky crossed in its old fourteen
-seconds and THEN the wind built over three hours: the storm arrived
-and the wind followed it - the reverse of what Mac asked for, and of
-what WIND1's record claimed. The headless time-lapse showed it (the
-wind at 64 at the change, 133 an hour later) and I read it as the
-build rather than as the lag. `inLead()` is true from the change until
-the front arrives, factor or no factor, and the ease stretches on that.
+Eight sweeps. Two findings. The NPC report is **unreproduced, with no
+mechanism found** - and that is a result, stated as one.
 
-Pinned: the drift integrated once, no deck multiplying wind by time,
-`inLead()` true at the change while the factor is still 0. Four
-mutants, four dead - one of them WIND1's own condition.
+## The sweeps
 
-## The consumers, one by one
+| # | Sweep | Result |
+|---|---|---|
+| 1 | Every reader of `enhancedAI` / `EnhancedEnemyAI` / `enhancedNav` in src | four files: `ai/enhancedMotor.js`, `scenes/dungeonContext.js`, `systems/uiPrefs.js`, `ui/enhancedMenu.js`. **None is an NPC path.** `mobilePerson.js`, `world.js`, `exterior.js`, `cityGuards.js`, `exteriorFoes.js` and `enemyMotor.js` cannot see the switch. **Pinned** (`AUDIT 55: the switch's reach`) |
+| 2 | The townsperson's ground against the terrain's: `world.js` hands `groundY: () => locOrigin[1]`, a constant; `locOrigin[1] = avg * worldHeight + 0.05`; `heightAt` reads the same flattened `samples * worldHeight` | consistent by construction - persons stand on the plane `blendLocationTerrain` planes the rect to. The standalone exterior hands `collider.heightAt`. **clean** |
+| 3 | Today's wind (WIND1, GR2) against the billboard batches persons render through | the wind reaches `tUCloudWind` and the grass instancing; no billboard shader or batch carries a wind term. **clean** |
+| 4 | The EE ground revert rebuilt `renderer.js` from EE2 with EE5 and the automap replayed - anything else in that window would be silently gone | the ROAD-C flight-2 review's automap work (`uLight3Dir`, `WATER_MAP_COLOR`) is present; no billboard, flat, anchor or sprite change touched `renderer.js` in the window. **clean** |
+| 5 | Every code line changed in `world.js` since the Wave E merge | grass only (GR2's walk, GR4's root colour, WIND1's slider). Nothing near persons, the floating-origin translation, or heights. **clean** |
+| 6 | The bake's origin assumptions, after 4b-pre found one (the anchor at y=0) | `navmesh.js:114`'s "no bottom = solid from y=0" arena rule is dead for us: every triRaster box carries `bottom` (`triRaster.js:84`). The phantom ground is `minY - 10`, relative. `xmin`/`zmin` come from the input's extent. **clean**, with 4b-pre's fix pinned at 0, 25 and -40 |
+| 7 | The extra opts (`nav`, `navWorld`, `navSeed`) handed to a CLASSIC `EnemyAI` when the switch is off | the base constructor destructures named keys; nothing leaks onto a classic foe. **clean** |
+| 8 | Every classic flag the enhanced motor's own code reads or relies on | **F1** |
 
-| Consumer | Reads | Rate or product | Verdict |
-|---|---|---|---|
-| Cloud deck (sky) | `state.drift` | integrated (WIND2) | fixed |
-| Cloud shadows (ground) | `cloudShadow.drift` | integrated (WIND2) | fixed |
-| Grass lean | `uWindV` magnitude | instantaneous - a lean, not a position | right |
-| Grass gust | `sky.gustAt(t)` | shaped by strength | right |
-| Rain / snow | `windOff` | integrated by the host | right |
-| Windmills | `sky.wind()` | angle integrated | right - **see the note** |
+## The findings
 
-**The note.** The rotor law was calibrated on the OLD fixed sunny
-(0.0108 -> 13 deg/s). The model's sunny afternoons span 0.0062-0.0159
-across 39 seeds, so a mill turns from ~3 to ~24 deg/s on a fair day,
-and a thunder front (0.0308) spins it near 58 deg/s - **4.5x the
-classic rate**. That may read as frantic. It never stalls on a sunny
-day (floor 0.0062, stall 0.005); a calm fog can, which is right. Left
-for Mac's eyes rather than re-tuned blind.
+**F1 - the nudge's fall probe was silenced by the stuck foe's own
+obstacle flag.** `_fallCheck` returns "no fall" WITHOUT CASTING when
+`obstacleDetected`, `foundUpwardSlope` or `foundDoor` is set
+(`enemyMotor.js:929`). A foe the watchdog fires on is stuck against
+something, so it has `obstacleDetected` set almost by definition - the
+probe 4b-pre added answered false in exactly the case it was added
+for. The nudge now clears the three classic flags for the probe and
+restores them; the drop answer is taken before `fallDetected` is put
+back to false. Pinned with the real `_fallCheck` under a spy, all three
+flags set going in, all three restored coming out.
 
-## What AUDIT 49 actually verified
+**F2 - the NPC report has no mechanism in the tree.** Sweeps 1-5. The
+switch cannot reach a townsperson; the ground it stands on is the plane
+its terrain is planed to; nothing that landed today moves a billboard
+or a height. This audit cannot reproduce it and does not claim it is
+not happening. What it can say: if it is happening, it is not Enhanced
+AI, and it is not today's world.js. Two things would date it - whether
+it reproduces with the switch off, and whether it is the streaming
+`?world` host or the standalone exterior, which ground persons
+differently (sweep 2). Left open, not closed.
 
-AUDIT 49 (2026-09-02) audited "the lab's grass and weather in the
-game" and passed the lab rain. It did so with `precip.enhanced` FALSE
-- GR3 found the controller never carried `cloudShadow`, so the flag
-had never been true and the lab rain path (`drawLab`, `uEnh`) had
-never once run in the game. The same holds for EE5's ground shadows,
-verified with a null deck (amount 0). Both are live now for the first
-time and neither has been seen. AUDIT 49's findings stand; its
-verification of those two paths does not, and its page should say so.
+## What this audit did not do
 
-## What stands unseen
-
-GR3 (wind, lab rain, ground shadows), GR4 (roots on real tiles), WIND1
-+ WIND2 (every consumer at once). Each is a never-rendered path under
-the Incident's law. Two ways to look: a day boundary with a stormy
-tomorrow for the front; a calm one for the drift, where the clouds
-should now move steadily rather than slide.
+Nothing here ran in a browser or a real dungeon. Every sweep is a read
+of the tree and every pin a node test. The arc's own note stands:
+"nothing here has been seen in a real dungeon" is still true of every
+line of AI 4 that a test cannot reach, and the two playtests so far
+each found something the suite could not.

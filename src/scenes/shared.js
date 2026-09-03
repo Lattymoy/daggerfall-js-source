@@ -330,7 +330,7 @@ export function createSkyController(gl, params) {
         // rolling in. `dt` is stretched or shrunk to make the ease's
         // own walk land on the front's clock.
         windModel.tick(extra?.classicMinutes ?? 0, weatherName);
-        // WIND2 (AUDIT 55): the ease stretches for the WHOLE lead, from
+        // WIND2 (AUDIT 56): the ease stretches for the WHOLE lead, from
         // the change itself. WIND1 stretched it only while the front's
         // factor was strictly between 0 and 1 - and at the change the
         // factor is exactly 0, so the sky crossed in its old fourteen

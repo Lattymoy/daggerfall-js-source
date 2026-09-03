@@ -192,9 +192,20 @@ export class EnhancedEnemyAI extends EnemyAI {
       const ox = (-hz / hl) * s, oz = (hx / hl) * s;
       const nx = this.feet[0] + ox * STUCK_NUDGE, nz = this.feet[2] + oz * STUCK_NUDGE;
       if (!navWalkable(chf, nx, nz)) continue;
-      // adaptation 4: classic's own drop test, on the nudge's heading
+      // adaptation 4: classic's own drop test, on the nudge's heading.
+      // WITH THE OBSTACLE FLAGS CLEARED FOR THE PROBE. _fallCheck returns
+      // "no fall" without casting when obstacleDetected, foundUpwardSlope
+      // or foundDoor is set - and a foe the watchdog fires on is stuck
+      // against something, so it has obstacleDetected set almost by
+      // definition. AUDIT 55 found the check answering false in exactly
+      // the case it was added for. The flags are the classic tick's to
+      // own; they are put back as they were.
+      const od = this.obstacleDetected, us = this.foundUpwardSlope, fd = this.foundDoor;
+      this.obstacleDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
       this._fallCheck([ox, 0, oz]);
-      if (this.fallDetected) { this.fallDetected = false; continue; }
+      const drop = this.fallDetected;
+      this.obstacleDetected = od; this.foundUpwardSlope = us; this.foundDoor = fd; this.fallDetected = false;
+      if (drop) continue;
       this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2]);
       break;
     }

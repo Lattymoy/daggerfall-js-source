@@ -418,6 +418,44 @@ test('ENHANCED AI 4a: the stuck nudge asks the fall check, and takes the other s
   assert.ok(probes.every((d) => Math.abs(d[2]) < 1e-9 && Math.abs(Math.abs(d[0]) - 1) < 1e-9), 'the fall check was asked in the wrong direction');
 });
 
+test('ENHANCED AI 4a: the nudge\u2019s fall probe is not silenced by a stuck foe\u2019s own obstacle flag', () => {
+  // AUDIT 55. The real _fallCheck returns "no fall" without casting when
+  // obstacleDetected is set, and a foe the watchdog fires on is stuck
+  // against something - so the flag is set in exactly the case the
+  // probe exists for. The nudge clears the classic flags for the probe
+  // and restores them. MUTANT: stop clearing them and the real
+  // _fallCheck below answers false with obstacleDetected set.
+  const c = room();
+  const bake = bakeNavFromCollider(c, { anchor: START });
+  const { ai } = foe(EnhancedEnemyAI, c, bake, START);
+  tick(ai, TARGET);
+  let seen = null;
+  const real = ai._fallCheck.bind(ai);
+  ai._fallCheck = (d) => { seen = { od: ai.obstacleDetected, us: ai.foundUpwardSlope, fd: ai.foundDoor }; real(d); };
+  ai.obstacleDetected = true; ai.foundUpwardSlope = true; ai.foundDoor = true;
+  ai.stuckT = STUCK_T; ai.lastX = ai.feet[0]; ai.lastZ = ai.feet[2];
+  ai._stuckWatch(bake.chf, 0, 1, 0.01);
+  assert.ok(seen, 'the probe never ran');
+  assert.deepEqual(seen, { od: false, us: false, fd: false }, 'the probe ran with the flags still set');
+  assert.equal(ai.obstacleDetected, true, 'the flag was not restored');
+  assert.equal(ai.foundUpwardSlope, true); assert.equal(ai.foundDoor, true);
+  assert.equal(ai.fallDetected, false, 'fallDetected leaked out of the probe');
+});
+
+test('AUDIT 55: the switch\u2019s reach is the dungeon host\u2019s foes and nothing else', () => {
+  // Mac's report: "I think enhanced AI is affecting NPCs - hovering and
+  // walking in mid air." The pref is read in exactly four files, and
+  // none of them is a path a townsperson, a guard or an exterior foe
+  // takes. This pins that reach so a future reader can answer the same
+  // question in one test instead of a sweep.
+  const readers = ['src/ai/enhancedMotor.js', 'src/scenes/dungeonContext.js', 'src/systems/uiPrefs.js', 'src/ui/enhancedMenu.js'];
+  for (const f of ['src/characters/mobilePerson.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/characters/enemyMotor.js']) {
+    const src = rd(f);
+    assert.ok(!/enhancedAI|EnhancedEnemyAI|enhancedNav|enhancedMotor/.test(src), `${f} can see the switch`);
+  }
+  for (const f of readers) assert.ok(/enhancedAI|EnhancedEnemyAI|enhancedNav/.test(rd(f)), `${f} lost its read`);
+});
+
 test('ENHANCED AI 4: the host chooses the motor by the switch and refills the budget each frame', () => {
   const host = rd('src/scenes/dungeonContext.js');
   assert.equal((host.match(/getPref\('enhancedAI'\) \? D\.EnhancedEnemyAI : D\.EnemyAI/g) || []).length, 2, 'both construction sites choose by the pref');

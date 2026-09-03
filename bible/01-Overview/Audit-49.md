@@ -61,4 +61,4 @@ and it is later. And the harness cannot screenshot a million lab
 blades in its time budget, so the grass has not been SEEN by me - it
 has been counted, and its shaders proven identical.
 
-**Correction (AUDIT 55, 2026-09-03):** this audit's verification of the lab rain ran with `precip.enhanced` FALSE - the sky controller never carried `cloudShadow` (GR3), so the enhanced precipitation path had never executed in the game. The findings above stand; the rain's verification does not. See Audit-55.md.
+**Correction (AUDIT 56, 2026-09-03):** this audit's verification of the lab rain ran with `precip.enhanced` FALSE - the sky controller never carried `cloudShadow` (GR3), so the enhanced precipitation path had never executed in the game. The findings above stand; the rain's verification does not. See Audit-56.md.

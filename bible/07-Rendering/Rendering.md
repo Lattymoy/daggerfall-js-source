@@ -85,7 +85,7 @@ directory by `test/audit18_bible_docs.test.js`:
   around 110, and the storm leaving at 114 -> 102 -> 75 -> 60 -> 42 over
   five. ENHANCED ONLY - the classic sky never reaches the row. Not
   seen: no ARENA2 here, and this lights every wind consumer at once, so
-  it goes to Mac's eyes by the Incident's law. **WIND2 (AUDIT 55,
+  it goes to Mac's eyes by the Incident's law. **WIND2 (AUDIT 56,
   2026-09-03): two faults in WIND1, both mine.** Every cloud consumer
   formed its drift as wind x time, so a wind that moved every frame
   threw the field across the sky at every front - the controller
