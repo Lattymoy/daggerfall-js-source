@@ -262,6 +262,25 @@ export function scaleFor(rec, billboardHeight) {
   return rec.height > 1e-3 ? billboardHeight / rec.height : 1;
 }
 
+/**
+ * Where an archive's models live, from the page that wants them.
+ *
+ * Vite copies public/ to the build's ROOT, and the game page sits one
+ * directory down at /play/ - so a relative 'trees/500.json' from the
+ * page asks for /play/trees/500.json, which is a 404 in production
+ * (TR5: Mac saw no trees; every load answered null and every flat
+ * stayed a billboard). The site root is the page's path with its
+ * trailing /play/ removed, which also holds under a project-pages
+ * prefix and for a probe page served at the root.
+ * Pure, and pinned on the production shapes.
+ */
+export function treesUrl(archive, base = globalThis.document?.baseURI ?? 'http://localhost/') {
+  const u = new URL(base);
+  u.pathname = u.pathname.replace(/\/play\/[^/]*$/, '/');
+  u.search = ''; u.hash = '';
+  return new URL(`trees/${archive}.json`, u).href;
+}
+
 export class TreeModelRenderer {
   constructor(gl) {
     this.gl = gl;
@@ -283,7 +302,7 @@ export class TreeModelRenderer {
   async load(archive, fetchJson = (url) => fetch(url).then((r) => (r.ok ? r.json() : null))) {
     if (this.archives.has(archive)) return this.archives.get(archive);
     let json = null;
-    try { json = await fetchJson(`trees/${archive}.json`); } catch { json = null; }
+    try { json = await fetchJson(treesUrl(archive)); } catch { json = null; }
     this.archives.set(archive, json && json.records ? json : null);
     return this.archives.get(archive);
   }

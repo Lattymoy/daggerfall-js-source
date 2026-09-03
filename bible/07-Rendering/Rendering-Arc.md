@@ -939,3 +939,18 @@ T2's law forbids, and it was pushed once in that state.
 Still not seen: the trees IN THE GAME - the host's flat loop swapping a
 billboard for a mesh, the record uploaded by the pipeline, the sky's
 own wind. That is the walk Mac takes.
+
+### TR5 - no trees in the game (2026-09-03, Mac: "I'm not seeing them")
+
+`treeModels.load` fetched `trees/<archive>.json` relative to the page.
+Vite copies public/ to the build's ROOT and the game page sits at
+/play/, so the browser asked for /play/trees/500.json - a 404 in
+production; every load answered null and every flat stayed a
+billboard, exactly as designed and exactly wrong. `treesUrl` resolves
+from the site root (the page's path with its trailing /play/ removed),
+pinned on the production, project-pages, probe and dev-server shapes.
+The probe never saw it because its harness page is served at the root.
+
+Found beside it, not fixed here: `src/tools/paperdoll/skin.js` fetches
+`./skin/heads/*.png` the same way, and /play/skin/heads/ is a 404 on
+the live site too. Flagged for whoever owns the paperdoll.

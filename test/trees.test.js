@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
-  opaqueBox, sideStream, topStream, scaleFor, phaseAt, synthesizeCrownTop,
+  opaqueBox, sideStream, topStream, scaleFor, phaseAt, synthesizeCrownTop, treesUrl,
   TREE_LEAN, TOP_VIEW_DOT, CROWN_TURNS, CROWN_WIDTH_FRACTION, CROWN_MAX_SIZE,
 } from '../src/render/treeModels.js';
 
@@ -209,4 +209,18 @@ test('TR2: the host remakes the top from the record and the renderer draws it af
   const rec = { top: { pos: [0, 0, 0, 1, 0, 0, 0, 0, 1], uv: [0, 0, 1, 0, 0, 1] } };
   assert.equal(topStream(rec).count, 3);
   assert.equal(topStream({ top: { pos: [], uv: [] } }), null);
+});
+
+
+test('TR5: the models are fetched from the SITE ROOT, not from under /play/', () => {
+  // public/ is copied to the build root; the game page is at /play/. A
+  // relative fetch from the page was /play/trees/500.json - a 404 in
+  // production, so every load answered null and no tree ever drew.
+  // MUTANT: fetch `trees/${archive}.json` relative again.
+  assert.equal(treesUrl(500, 'https://daggerfalljs.dev/play/'), 'https://daggerfalljs.dev/trees/500.json');
+  assert.equal(treesUrl(500, 'https://daggerfalljs.dev/play/index.html?world'), 'https://daggerfalljs.dev/trees/500.json');
+  assert.equal(treesUrl(502, 'https://lattymoy.github.io/daggerfall-js-source/play/'), 'https://lattymoy.github.io/daggerfall-js-source/trees/502.json');
+  assert.equal(treesUrl(500, 'http://localhost:5199/__treeprobe.html'), 'http://localhost:5199/trees/500.json');
+  assert.equal(treesUrl(500, 'http://localhost:5173/play/'), 'http://localhost:5173/trees/500.json');
+  assert.ok(/fetchJson\(treesUrl\(archive\)\)/.test(rd('src/render/treeModels.js')), 'load does not go through treesUrl');
 });
