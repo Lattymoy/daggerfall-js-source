@@ -6613,7 +6613,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 49 F4: the lab's uWind is WIND.speed, which carries the gust;
       // uWindV is the rate without it - the same pair the rain is fed
       const tsec = now / 1000;
-      const gustG = 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
+      // WIND1: the gust envelope is the WIND'S, shaped by its strength -
+      // a light wind breathes slow, a strong one gusts sharp and often -
+      // rather than one fixed sine stack for every weather. The vector
+      // above already carries the front; this carries its temper.
+      const gustG = sky.gustAt?.(tsec) ?? (0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4));
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
         { dir, speed: slider * gustG, windV: [dir[0] * slider * 0.16, dir[1] * slider * 0.16] });
