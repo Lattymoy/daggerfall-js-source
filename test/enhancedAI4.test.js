@@ -327,7 +327,19 @@ test('ENHANCED AI 4: the host chooses the motor by the switch and refills the bu
   assert.equal((host.match(/getPref\('enhancedAI'\) \? D\.EnhancedEnemyAI : D\.EnemyAI/g) || []).length, 2, 'both construction sites choose by the pref');
   assert.ok(/nav: \(\) => enhancedNav\.chf, navWorld: enhancedNav\.world/.test(host), 'the bake is a thunk and the world is the host\u2019s');
   assert.ok(/enhancedNav\.world\.pathBudget = enhancedNav\.world\.budgetPerFrame/.test(host), 'the budget is refilled once a frame (his enemy.js:404)');
-  assert.ok(/world: foeDeps\.makeNavWorld\(\)/.test(host), 'one world per host, made where enhancedNav is declared');
+  // THE BUG MAC FOUND. buildFoeAt runs in buildDungeonContext's top-level
+  // flow and reads `enhancedNav.world` at construction; the object must
+  // therefore be declared ABOVE the foe block, or every foe hits the
+  // temporal dead zone inside its per-foe try and is left a floating
+  // billboard with no motor. Pinned by line ORDER, since no node test
+  // can run this host without ARENA2.
+  const decl = host.indexOf('const enhancedNav = {');
+  const firstMint = host.indexOf('async function buildFoeAt(');
+  const lazy = host.indexOf('const [shared, engineRig');
+  assert.ok(decl > 0 && firstMint > 0 && lazy > 0);
+  assert.ok(decl < lazy, 'enhancedNav must be declared before the lazy foe block');
+  assert.ok(decl < firstMint, 'enhancedNav must be declared before buildFoeAt');
+  assert.ok(/enhancedNav\.world = makeNavWorld\(\)/.test(host), 'one world per host, made in the lazy block');
   // The other two hosts are AI 5 and do not construct it yet - stated.
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     assert.ok(!/EnhancedEnemyAI/.test(rd(f)), `${f} is AI 5, not this slice`);
