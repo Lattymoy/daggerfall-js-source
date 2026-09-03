@@ -2489,6 +2489,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
+    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // Q4-v: the live machine's log walk and the player's notebook

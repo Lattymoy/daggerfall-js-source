@@ -144,6 +144,8 @@ test('M2: mixing a real recipe mints a potion and SPENDS the ingredients (:311-3
   assert.equal(minted[0].name, 'slowFalling');
   assert.equal(minted[0].key, potionRecipeKey(byName('slowFalling').ingredients));
   assert.equal(w.box.rows[0].text, POTION_MIXED);
+  assert.equal(POTION_MIXED, 'Your potion has been mixed.',
+    'Internal_Strings.csv:853 "potionMixed", verbatim');
   assert.equal(w.cauldron.length, 0, 'the pot is emptied');
   assert.equal(pack.length, 0, 'and the ingredients are gone from the pack');
   // AUDIT 26 F177: MixCauldron never touches the name label
@@ -158,6 +160,8 @@ test('M2: a FAILED mix makes nothing and STILL spends the ingredients (:328-333)
   clickRect(w, 'mix');
   assert.equal(minted.length, 0, 'no potion - DFU refuses to make a useless one');
   assert.equal(w.box.rows[0].text, POTION_FAILED);
+  assert.equal(POTION_FAILED, 'Those ingredients did not concoct an effective potion.',
+    'Internal_Strings.csv:854 "potionFailed", verbatim');
   assert.equal(pack.length, 0, 'but the herbs are burnt either way');
   assert.equal(w.cauldron.length, 0);
 });
@@ -184,6 +188,8 @@ test('M2: the RECIPES button - an empty list is a MESSAGE, not an empty picker (
   clickRect(none.w, 'recipes');
   assert.equal(none.w.picker, null);
   assert.equal(none.w.box.rows[0].text, NO_RECIPES);
+  assert.equal(NO_RECIPES, 'You have no recipes.',
+    'Internal_Strings.csv:852 "noRecipes", verbatim');
 
   // with recipes known, the picker opens on their names
   const slowKey = potionRecipeKey(byName('slowFalling').ingredients);

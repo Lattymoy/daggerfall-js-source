@@ -22,7 +22,7 @@ import {
   preloadTalkArt, talkArtLoaded,
 } from '../src/ui/nativeTalk.js';
 import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
-import { CharSheet, CHARSHEET_RECTS } from '../src/ui/charsheet.js';
+import { CharSheet, CHARSHEET_RECTS, STATS_ROLLOUT_SELECT, statDescriptionTextId } from '../src/ui/charsheet.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';   // U26: the keyed window is deleted
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 import { actionOf, setBindings } from '../src/ui/input.js';
@@ -403,6 +403,43 @@ test('audit18 ui-native F12: CharSheet.click - the exit button closes, every DFU
   }
   // and a point on no button is NOT consumed
   assert.equal(new CharSheet(e).click(300, 195), false);
+
+  // AUDIT 54: THE EIGHT ATTRIBUTE POPUP BUTTONS. DFU lays
+  // `(141, 6 + 24*i, 28, 20)` over the stat column
+  // (DaggerfallCharacterSheetWindow.cs:209-216) and
+  // StatButton_OnMouseClick's NOT-levelling arm (:925-936) plays
+  // ButtonClick and pops the stat's TEXT.RSC description
+  // (GetStatDescriptionTextID -> records 0..7, TextProvider.cs
+  // :582-604). The port answered them only WHILE levelling, so on a
+  // normal sheet all eight returned false, silently - and this test's
+  // own "every DFU rect is consumed" walk did not reach them because
+  // they are not in CHARSHEET_RECTS.
+  const se = STATS_ROLLOUT_SELECT;
+  assert.deepEqual([se.x, se.y, se.w, se.h, se.step], [141, 6, 28, 20, 24]);
+  for (let i = 0; i < 8; i++) {
+    assert.equal(statDescriptionTextId(i), i, 'DFCareer.Stats order IS records 0..7');
+    const asked = [];
+    const w = new CharSheet(e, { rows: (id) => { asked.push(id); return [`stat ${id}`]; } });
+    assert.equal(w.leveling, false, 'a normal sheet, which is the arm that was missing');
+    assert.ok(w.click(se.x + 1, se.y + se.step * i + 1), `attribute ${i} is answered`);
+    assert.deepEqual(asked, [i], 'and it asks for THAT stat\'s record');
+    assert.ok(w.child, 'the description box is up (ClickAnywhereToClose)');
+  }
+  // a host with no TEXT.RSC still gets the click and the consume, and
+  // no empty box
+  const bare = new CharSheet(e);
+  assert.ok(bare.click(se.x + 1, se.y + 1));
+  assert.equal(bare.child, null);
+  // ...and while LEVELLING the rollout keeps first claim on them
+  const lvl = new CharSheet({
+    ...e, readyToLevelUp: true, pendingLevel: 2, level: 1, health: 20, maxHealth: 20,
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    career: { hitPointsPerLevel: 10 },
+  }, { rows: () => ['x'] }, () => 0.5);
+  assert.equal(lvl.leveling, true);
+  assert.ok(lvl.click(se.x + 1, se.y + se.step * 3 + 1));
+  assert.equal(lvl.cursor, 3, 'SelectStat, not the popup');
+  assert.equal(lvl.child, null, 'and no description box while levelling');
 });
 
 // ---------------------------------------------------------------

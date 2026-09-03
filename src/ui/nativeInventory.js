@@ -63,12 +63,19 @@ import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROA
 import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, carriedWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 54: PlayerEntity.MaxEncumbrance, the local target icon's denominator
+// AUDIT 54: the two 55x34 target-icon panels both classic windows draw
+// over their lists (DaggerfallInventoryWindow.cs:424-439, :857-890).
+import {
+  CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
+  preloadContainerIconArt, drawTargetIconPanel, targetIconWeightText,
+} from './targetIconPanel.js';
 // U56: TransferItem's ladder - the guards, their order, and the split.
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
-import { planStore, planTake, applyTransfer, planDropGold } from '../systems/itemTransfer.js';
+import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
@@ -100,6 +107,11 @@ export const INV_RECTS = Object.freeze({
   paperDoll: [49, 13, 110, 184],   // paperDoll.Position + its 110x184 panel
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
+  // AUDIT 54: localTargetIconRect / remoteTargetIconRect (:49-50) -
+  // named in this header's geometry list since U8d but carried by
+  // nothing, so neither panel was ever drawn.
+  localTargetIcon: LOCAL_TARGET_ICON_RECT,
+  remoteTargetIcon: REMOTE_TARGET_ICON_RECT,
   exit: [222, 178, 39, 22],
   // U25: itemInfoPanelRect + the ITEM00I0 cutout it draws
   // (DaggerfallInventoryWindow.cs :55-56, :1036-1037).
@@ -235,10 +247,18 @@ export async function preloadInventoryArt(deps) {
     // ROAD-A7: the two arrow strips (ItemListScroller.cs:504-516). A
     // missing pair is not fatal - the base image's own arrows show.
     await preloadScrollerArrowArt(deps);
+    // AUDIT 54: INVE16I0.CIF, the container pictures both target-icon
+    // panels lay out ScaleToFit (ItemHelper.cs:47, :673-686). Optional
+    // for the same reason the arrow strips are.
+    await preloadContainerIconArt(deps);
     setPaintingArtDeps(deps);   // ROAD-A7: the *PAINT.CIF reader's renderer/palette/fetch
   } catch { console.warn('[inventory] INVE00I0/INVE01I0 unavailable; F6 stays dark'); }
 }
 export const inventoryArtLoaded = () => !!_art;
+/** The test seam potionMakerWindow's `_setPotionArtForTests` already
+ *  established: a window whose draw() carries law needs a door that
+ *  does not depend on ARENA2 being present. */
+export function _setInventoryArtForTests(art) { _art = art; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -340,6 +360,44 @@ export class NativeInventoryWindow {
     this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remote().length);
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
+  /** GetCarriedWeight (:852-855) - virtual, because the trade window
+   *  overrides it with `CarriedWeight + basketItems.GetWeight()`
+   *  (DaggerfallTradeWindow.cs:630-633). */
+  _carriedWeight() { return carriedWeight(this.hooks.entity ?? {}); }
+  /** UpdateLocalTargetIcon (:857-863): the Backpack picture, which
+   *  "never changes on inventory window", and carried / MaxEncumbrance. */
+  _localTargetIcon() {
+    return {
+      container: CONTAINER_IMAGES.Backpack,
+      label: targetIconWeightText(this._carriedWeight(), entityMaxEncumbrance(this.hooks.entity ?? {})),
+    };
+  }
+  /** UpdateRemoteTargetIcon (:865-890). The label is EMPTY except in
+   *  wagon mode, where it is WagonWeight / ItemHelper.WagonKgLimit
+   *  (PlayerEntity.cs:185 - WagonItems.GetWeight()). The picture is the
+   *  wagon's, else the loot target's own container image, else Ground
+   *  - which is what RemoteTargetTypes.Dropped always resolves to.
+   *
+   *  DFU has two arms between those: dropIconTexture > -1 and a
+   *  lootTarget with a TextureArchive, both of which address a WORLD
+   *  FLAT rather than a container picture. Neither is reachable here -
+   *  the port's loot hook is `{ items() }` and carries no flat
+   *  identity - so this ladder is the part of :865-890 the tree's data
+   *  can answer, and the drop-icon cycling (:2104-2146) rides that
+   *  same missing identity. */
+  _remoteTargetIcon() {
+    if (this.usingWagon) {
+      return {
+        container: CONTAINER_IMAGES.Wagon,
+        label: targetIconWeightText(totalWeight(this._remote()), WAGON_KG_LIMIT_LOCAL),
+      };
+    }
+    const loot = this.hooks.loot;
+    return {
+      container: loot ? (loot.containerImage?.() ?? CONTAINER_IMAGES.Ground) : CONTAINER_IMAGES.Ground,
+      label: '',
+    };
+  }
   _remote() {
     return remoteTarget(this.hooks, {
       usingWagon: this.usingWagon,
@@ -919,6 +977,14 @@ export class NativeInventoryWindow {
       const wr = INV_RECTS.wagon;
       drawImgSub(renderer, _art.gold, m, wr[0], wr[1], wr[2], wr[3]);
     }
+    // AUDIT 54: the two target-icon panels (SetupTargetIconPanels
+    // :424-439, updated at :333-334 and on every Refresh). The local
+    // one is the only place either classic list screen prints what the
+    // player is carrying.
+    const lti = this._localTargetIcon();
+    drawTargetIconPanel(renderer, m, font, INV_RECTS.localTargetIcon, lti.container, lti.label);
+    const rti = this._remoteTargetIcon();
+    drawTargetIconPanel(renderer, m, font, INV_RECTS.remoteTargetIcon, rti.container, rti.label);
     // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
     // (RefreshArmourValues - (100 - av)/5 per body part, plus the
     // enchantment armorMod; the drained/increased label COLOURS are

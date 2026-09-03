@@ -24,6 +24,7 @@ import { getMessageResources } from '../systems/quest/questMacros.js';   // Ques
 import { REGION_NAMES, patchRegionIndex } from '../formats/mapsFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { ToolTip } from './toolTip.js';   // U37's shared component - this window points two panels at it
 
 let _art = null;
 // AUDIT 24 (wave 40): DaggerfallQuestJournalWindow.cs:161-163 builds
@@ -73,6 +74,29 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 
 /** JournalDisplay (:66-72). The order IS the cycle order (:248-264). */
 export const JOURNAL_MODES = Object.freeze(['activeQuests', 'finishedQuests', 'notebook', 'messages']);
+
+/** AUDIT 54: THE WINDOW'S FIVE TOOLTIPS, Internal_Strings.csv:784,
+ *  :786, :788, :790, :792 verbatim. The dialog button carries
+ *  "dialogButtonInfo" for the life of the window (:120-121); the TITLE
+ *  label starts on "activeQuestsInfo" (:165-166) and is re-pointed per
+ *  page by the four SetText* methods (:571, :615, :625, :635).
+ *
+ *  These are not decoration: finishedQuestsInfo and notebookInfo are
+ *  the ONLY place the game says that an entry is moved with a left
+ *  click and deleted with a right one - which is exactly what
+ *  handleClick/removeEntry below do. The port carried neither string
+ *  nor a hover seam to hang them on. */
+export const JOURNAL_TIPS = Object.freeze({
+  dialog: 'Switch between: Active Quests; Finished Quests; Notebook; Messages',
+  activeQuests: 'Click on an active quest that has a target location to initiate travel.',
+  finishedQuests: 'Click on an entry to move it. Right click to delete.',
+  notebook: 'Click a note to move. Right click to delete. Click in-between to add a new note.',
+  messages: 'History of messages recently shown on screen',
+});
+/** `defaultToolTip.ToolTipDelay = 1` (:103-104) - this window's own
+ *  override of the GUI setting, the same per-window idiom the automap
+ *  carries. */
+export const JOURNAL_TOOLTIP_DELAY = 1;
 
 /** The page titles. DFU pulls these through TextManager; the port has
  *  no localisation table, so the English literals live here - the same
@@ -181,8 +205,23 @@ export class QuestJournalWindow {
     this.moveRemoveBox = null;
     this.noteBox = null;
     this._font = null;
+    // AUDIT 54: the window's shared tooltip, at DFU's per-window delay.
+    this.tip = new ToolTip(JOURNAL_TOOLTIP_DELAY);
     audio.playOneShot(SOUND.OpenBook, 1);
   }
+
+  /** AUDIT 54: the two panels DFU hangs a ToolTipText on - the dialog
+   *  button (:120-121) and the title label (:165-166, re-pointed at
+   *  :571/:615/:625/:635). Anything else clears it. */
+  hover(vx, vy) {
+    if (inRect(JOURNAL_RECTS.dialog, vx, vy)) { this.tip.show(JOURNAL_TIPS.dialog, vx, vy); return; }
+    if (inRect(JOURNAL_RECTS.title, vx, vy)) { this.tip.show(JOURNAL_TIPS[this.mode], vx, vy); return; }
+    this.tip.hide();
+  }
+
+  /** The rest clock, driven by whichever host mounted the window - the
+   *  overlay seams all forward `tick`. */
+  tick(dt) { this.tip.update(dt); }
 
   /** questLogLabel.LineHeight - the pitch the page was last drawn at,
    *  which is what HandleClick divides by (:391). */
@@ -638,6 +677,7 @@ export class QuestJournalWindow {
       this.findBox.box = layoutMessageBox(font, this.findBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       drawMessageBox(renderer, m, font, this.findBox.box);
     }
+    this.tip.draw(renderer, m, font);   // AUDIT 54: LAST - DFU's final-component order
     return true;
   }
 }

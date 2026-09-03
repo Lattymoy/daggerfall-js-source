@@ -116,6 +116,10 @@ test('wagon: the 750kg gates - the refusal, the split-take, the gold clamp', () 
   assert.ok(goldInWagon, 'the clamp still drops what fits');
   assert.equal(goldInWagon.stackCount, 4000, '10kg headroom / 0.0025kg per piece');
   assert.equal(w2.topBox.rows[0].text, wagonFullGoldText(4000), 'the wagonFullGold box names the clamp');
+  // THE PROSE ITSELF, not the formatter compared to itself:
+  // Internal_Strings.csv:815 "wagonFullGold", String.Format with
+  // wagonCanHold at DaggerfallInventoryWindow.cs:1303.
+  assert.equal(w2.topBox.rows[0].text, 'Your wagon could only hold 4000 gold pieces.');
   assert.equal(rich.goldPieces, 96000, 'and only the clamped amount left the counter');
 });
 

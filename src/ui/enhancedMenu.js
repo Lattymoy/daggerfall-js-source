@@ -215,7 +215,19 @@ function savedGame() {
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
-    gold: (snap.items ?? []).find((i) => i?.name === 'Gold Pieces')?.stackCount ?? null,
+    // AUDIT 54: THE PURSE IS A COUNTER, NOT AN ITEM. E4 moved gold onto
+    // GoldPieces (`data.playerEntity.goldPieces = entity.GoldPieces`,
+    // SerializablePlayer.cs:133 - systems/save.js's snapshotPlayer
+    // writes snap.goldPieces beside the collections), and restorePlayer
+    // SPLICES every Currency row out of a pre-E4 envelope's item list.
+    // Scanning snap.items for a gold-named row therefore never
+    // matched on any post-E4 save, save.gold was always null, and
+    // stats() drops a null outright - so the Continue and Save cards
+    // silently lost their whole Gold row. Every other reader in the
+    // tree asks the counter (ui/enhancedInventory.js's goldPiecesOf).
+    // Null is kept for a pre-E4 envelope that has no field, which draws
+    // the card without a bogus 0.
+    gold: snap.goldPieces ?? null,
     when: date ? dateString(date) : null,
     hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
     chargenDone: snap.chargenDone !== false,

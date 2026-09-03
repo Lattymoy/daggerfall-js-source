@@ -1491,6 +1491,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
+    rows: (id, pick) => townTalk.lines(id, pick),   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // QX1: THE LOGBOOK BUTTON DRAWS NOW. U43 withheld the two quest

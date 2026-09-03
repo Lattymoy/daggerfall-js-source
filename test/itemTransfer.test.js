@@ -38,8 +38,10 @@ test('U56: the numbers and the words the ladder refuses with', () => {
   // and pass - which is what the wagon suite had been doing since the
   // W-slice. These two lines are the only place either string is
   // actually held.
-  assert.equal(CANNOT_HOLD_TEXT, 'Your wagon cannot hold any more.');
-  assert.equal(CANNOT_CARRY_TEXT, 'You cannot carry any more.');
+  assert.equal(CANNOT_HOLD_TEXT, 'Your wagon cannot hold any more stuff.',
+    'Internal_Strings.csv:829 "cannotHoldAnymore", verbatim');
+  assert.equal(CANNOT_CARRY_TEXT, 'You cannot carry any more stuff.',
+    'Internal_Strings.csv:828 "cannotCarryAnymore", verbatim');
   assert.equal(REFUSAL.wagonFull.text, CANNOT_HOLD_TEXT);
   assert.equal(REFUSAL.cannotCarry.text, CANNOT_CARRY_TEXT);
 });

@@ -38,7 +38,7 @@
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
 // here are ours.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgCrop, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -78,6 +78,20 @@ export const LIST_ROW_H = 8;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
 
+/** AUDIT 54: the two ARROW STRIPS (:51-52) and the sub-rects
+ *  LoadTextures (:355-366) cuts out of them - BANK01I1.IMG is green
+ *  ("more items available") and BANK01I2.IMG red. arrowsFullSize is
+ *  9x80 and the down arrow sits at y=64 (:26-28) - NOT the item
+ *  scroller's 9x152 / y=136, which is a different pair of strips.
+ *  The port drew neither, so this list never told the player it
+ *  scrolled: exactly the defect itemScroller.js:120-123 records
+ *  fixing for the inventory rail. */
+export const PURCHASE_ARROWS_FULL = Object.freeze({ w: 9, h: 80 });
+export const PURCHASE_UP_ARROW_RECT = Object.freeze([0, 0, 9, 16]);
+export const PURCHASE_DOWN_ARROW_RECT = Object.freeze([0, 64, 9, 16]);
+export const PURCHASE_GREEN_ARROWS = 'BANK01I1.IMG';
+export const PURCHASE_RED_ARROWS = 'BANK01I2.IMG';
+
 /** rotSpeed (:68) - the model turns one degree every 0.02 seconds,
  *  NEGATIVE about Y (Update :175). */
 export const PREVIEW_ROT_SPEED = 0.02;
@@ -100,13 +114,27 @@ export const priceRow = (price) => `Price : ${price} gold`;
 const SELECTED_TEXT = [1, 0.85, 0.4, 1];
 
 let _art = null;
+let _arrowArt = null;
 export async function preloadPurchaseArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'BANK01I0.IMG');
   } catch { console.warn('[bank] BANK01I0 unavailable; the purchase window stays closed'); }
+  // AUDIT 54: the arrow strips are their own try - a missing pair
+  // leaves the base image's arrows standing rather than closing the
+  // window, the same degradation preloadScrollerArrowArt takes.
+  if (_arrowArt) return;
+  try {
+    const [green, red] = await Promise.all([
+      loadImg(deps, PURCHASE_GREEN_ARROWS), loadImg(deps, PURCHASE_RED_ARROWS),
+    ]);
+    _arrowArt = { green, red };
+  } catch { console.warn('[bank] BANK01I1/BANK01I2 unavailable; the price list keeps the background arrows'); }
 }
 export const purchaseArtLoaded = () => !!_art;
+export const purchaseArrowArtLoaded = () => !!_arrowArt;
+/** The test seam for both caches. */
+export function _setPurchaseArtForTests(art, arrows = null) { _art = art; _arrowArt = arrows; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry + PURCHASE_PANEL_Y
   && x < rx + PURCHASE_PANEL_X + rw && y < ry + PURCHASE_PANEL_Y + rh;
@@ -166,9 +194,12 @@ export class BankPurchaseWindow {
       .map((it, i) => ({ item: it, index: this.scroll + i, text: this.priceText(it) }));
   }
 
-  /** UpdateListScrollerButtons (:338-346) - the arrows are GREEN only
-   *  while there is somewhere to go, which is what the port draws
-   *  instead of the two arrow textures DFU swaps. */
+  /** UpdateListScrollerButtons (:339-352), verbatim: up is green once
+   *  `index > 0`, down while `index < count - listDisplayUnits`, and a
+   *  list that FITS (`count <= listDisplayUnits`) forces both red -
+   *  which falls out here, because the max scroll is then 0. AUDIT 54
+   *  gave both their first reader in `src/`: draw() picks the green or
+   *  red crop off them. */
   canScrollUp() { return this.scroll > 0; }
   canScrollDown() { return this.scroll < Math.max(0, this.items().length - LIST_ROWS); }
 
@@ -247,6 +278,18 @@ export class BankPurchaseWindow {
     const m = nativeMetrics(canvas);
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);
+    // AUDIT 54: SetupScrollButtons (:316-336) puts a 9x16 arrow at
+    // (105,23) and (105,87), and UpdateListScrollerButtons swaps each
+    // between the green and the red strip on every redraw.
+    if (_arrowArt) {
+      for (const [rect, src, green] of [
+        [PURCHASE_RECTS.upArrow, PURCHASE_UP_ARROW_RECT, this.canScrollUp()],
+        [PURCHASE_RECTS.downArrow, PURCHASE_DOWN_ARROW_RECT, this.canScrollDown()],
+      ]) {
+        drawImgCrop(renderer, _arrowArt[green ? 'green' : 'red'], m, src,
+          [PURCHASE_PANEL_X + rect[0], PURCHASE_PANEL_Y + rect[1], rect[2], rect[3]]);
+      }
+    }
     const [lx, ly] = PURCHASE_RECTS.priceList;
     for (const r of this.rows()) {
       const y = ly + (r.index - this.scroll) * LIST_ROW_H;

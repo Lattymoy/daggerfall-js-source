@@ -32,7 +32,7 @@ import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit,
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
-import { planTake, applyTransfer, clearLightSourceOnLeave } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
@@ -44,7 +44,15 @@ import {
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
   isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
-import { isSummoned } from '../systems/inventory.js';   // TransferItem's summoned guard
+import { isSummoned, carriedWeight, totalWeight } from '../systems/inventory.js';   // TransferItem's summoned guard
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
+// AUDIT 54: DaggerfallTradeWindow inherits the two target-icon panels
+// and overrides both halves (:630-647, :649-670).
+import {
+  CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
+  drawTargetIconPanel, targetIconWeightText,
+} from './targetIconPanel.js';
+import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
 import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
@@ -66,6 +74,11 @@ export const TRADE_RECTS = Object.freeze({
   actionPanel: [222, 10, 39, 190],       // the mode's own panel - INVE08/10/12/14 (:755-764)
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
+  // AUDIT 54: the inherited localTargetIconRect / remoteTargetIconRect
+  // (DaggerfallInventoryWindow.cs:49-50) - this window updates both in
+  // Setup (:262-263) and overrides what each one shows.
+  localTargetIcon: LOCAL_TARGET_ICON_RECT,
+  remoteTargetIcon: REMOTE_TARGET_ICON_RECT,
   exit: [222 + 0, 178, 39, 22],          // the inventory exit rect over the action panel art
   modeAction: [222 + 4, 10 + 124, 31, 14],   // the mode action (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
@@ -98,6 +111,8 @@ export async function preloadTradeArt(deps) {
   } catch { console.warn('[trade] INVE00I0/SHOP00I0/mode panels unavailable; the keyed shelf window stands in'); }
 }
 export const tradeArtLoaded = () => !!_art;
+/** The same ARENA2-free door the inventory window carries. */
+export function _setTradeArtForTests(art) { _art = art; }
 /** The panel this mode draws, or null in Inventory mode - DFU's own
  *  `if (actionButtonsTexture != null)` guard at :213. */
 export const modeActionPanel = (mode) => _art?.panels.get(modeActionArt(mode)) ?? null;
@@ -151,6 +166,11 @@ export class NativeTradeWindow {
     // to be drawn on both sides depending on mode.
     this.basket = [];
     this.staged = [];
+    // SelectWagon(false) at the end of Setup (:266). The action
+    // panel's wagon button is still one of this file's consumed
+    // no-ops, so nothing flips it yet - but the local target icon's
+    // override (:635-647) is written against it rather than around it.
+    this.usingWagon = false;
     this.box = null;             // the confirm / refusal box, when one is up
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
     // D7: the window's shared ToolTip - one tip, both lists, exactly
@@ -375,7 +395,7 @@ export class NativeTradeWindow {
         bag: [...this.hooks.packItems(), ...this.basket],
         entity: this.hooks.entity ?? null,
       });
-      if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? 'You cannot carry any more.', center: true }], buttons: null }; return; }
+      if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
       applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
       return;
     }
@@ -593,6 +613,39 @@ export class NativeTradeWindow {
     return inRect(R.actionPanel, vx, vy) || inRect(R.costPanel, vx, vy);
   }
 
+  /** GetCarriedWeight override (:630-633): `PlayerEntity.CarriedWeight
+   *  + basketItems.GetWeight()` - what the player walks out with, not
+   *  what is in the pack right now. */
+  _carriedWeight() {
+    return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket);
+  }
+  /** UpdateLocalTargetIcon override (:635-647): the wagon's picture
+   *  and its 750kg line while UsingWagon, else the base window's
+   *  Backpack + carried/MaxEncumbrance (:857-863). */
+  _localTargetIcon() {
+    if (this.usingWagon) {
+      return {
+        container: CONTAINER_IMAGES.Wagon,
+        label: targetIconWeightText(totalWeight(this.hooks.entity?.wagonItems ?? []), WAGON_KG_LIMIT),
+      };
+    }
+    return {
+      container: CONTAINER_IMAGES.Backpack,
+      label: targetIconWeightText(this._carriedWeight(), entityMaxEncumbrance(this.hooks.entity ?? {})),
+    };
+  }
+  /** UpdateRemoteTargetIcon override (:649-670): one picture per
+   *  WindowMode, and NO label on this side - the base window's
+   *  `remoteTargetIconLabel.Text = String.Empty` (:868) is never
+   *  written over here. */
+  _remoteTargetIcon() {
+    const container = this.mode === 'Buy' ? CONTAINER_IMAGES.Shelves
+      : this.mode === 'Repair' ? CONTAINER_IMAGES.Anvil
+        : this.mode === 'Identify' ? CONTAINER_IMAGES.Magic
+          : CONTAINER_IMAGES.Merchant;   // Sell / SellMagic / default
+    return { container, label: '' };
+  }
+
   _drawIcon(renderer, m, it, rect, slot) { return this._icon(renderer, m, it, rect, slot); }
 
   draw(renderer, canvas, font) {
@@ -623,6 +676,13 @@ export class NativeTradeWindow {
     // window had to show because it transacted at the click.
     shadowText(renderer, font, String(this.cost().cost), m, R.costPanel[0] + 28, R.costPanel[1] + 2);
     shadowText(renderer, font, String(this.hooks.gold()), m, R.costPanel[0] + 68, R.costPanel[1] + 2);
+    // AUDIT 54: the two inherited target-icon panels, updated in Setup
+    // (:262-263) and on every Refresh. The local one is this screen's
+    // only encumbrance readout, and it counts the BASKET.
+    const lti = this._localTargetIcon();
+    drawTargetIconPanel(renderer, m, font, R.localTargetIcon, lti.container, lti.label);
+    const rti = this._remoteTargetIcon();
+    drawTargetIconPanel(renderer, m, font, R.remoteTargetIcon, rti.container, rti.label);
     for (const [rect, scroll, items] of [
       [R.remoteList, this.remoteScroll, this.remoteList()],
       [R.localList, this.localScroll, this.localList()],

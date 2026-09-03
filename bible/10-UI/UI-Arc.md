@@ -4379,10 +4379,11 @@ DaggerfallInventoryWindow's whole second inventory:
   restore an empty cart. All five window constructions hand
   `wagonItems`; the dungeon host hands the exit-door proximity.
 
-Prose flags: exitTooFar/cannotHoldAnymore/wagonFullGold keys cited,
-prose ours pending a string source (the established pattern).
-RESIDUE: the wagon weight label ("x / 750" on the remote icon) is a
-drawing note; DFU's on-foot gate rides the transport arc.
+Prose: exitTooFar/cannotHoldAnymore/wagonFullGold are taken VERBATIM
+from Internal_Strings.csv (:847, :829, :815) - the string source is in
+the reference tree, so the old "prose ours pending a source" note was
+stale, not a departure (AUDIT 54).
+RESIDUE: DFU's on-foot gate rides the transport arc.
 
 Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
 transfer gate dropped; the no-loot auto-open dropped; the gold

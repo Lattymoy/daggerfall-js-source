@@ -185,6 +185,14 @@ const ROLLOUT_ACTIONS = Object.freeze({
   minus: 'minus', Minus: 'minus', NumpadSubtract: 'minus',
 });
 
+/** AUDIT 54: GetStatDescriptionTextID (TextProvider.cs:582-604) - the
+ *  eight attribute buttons' Tags, and they are TEXT.RSC records 0..7
+ *  in DFCareer.Stats order, which is STAT_KEYS_ORDER's order exactly
+ *  (Strength 0 ... Luck 7). AddAttributePopupButton
+ *  (DaggerfallCharacterSheetWindow.cs:269-274) hangs one on each of
+ *  the eight `(141, 6 + 24*i, 28, 20)` rects (:209-216). */
+export const statDescriptionTextId = (i) => (i >= 0 && i < STAT_KEYS_ORDER.length ? i : -1);
+
 /** Internal_Strings.csv:110 - CheckIfDoneLeveling's refusal (:437-443). */
 export const MUST_DISTRIBUTE_BONUS_POINTS = 'You must distribute all bonus points.';
 /** DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54),
@@ -394,6 +402,28 @@ export class CharSheet {
       if (inRect([sp.x, spY + 13, sp.w, 7], vx, vy)) { this.input('minus'); return true; }
       for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
         if (inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) { this.cursor = i; return true; }
+      }
+    }
+    // AUDIT 54: THE EIGHT ATTRIBUTE POPUP BUTTONS' OTHER ARM.
+    // StatButton_OnMouseClick (:925-941) is a two-armed handler: while
+    // levelling the rollout above claims these rects, and OTHERWISE it
+    // plays ButtonClick and pops the stat's own TEXT.RSC description as
+    // a ClickAnywhereToClose box (SetTextTokens((int)sender.Tag,
+    // playerEntity.Stats)). The port had only the levelling arm, so
+    // clicking any of the eight attribute values on a normal sheet did
+    // nothing at all - not even a click - and this method's own "every
+    // DFU button rect is answered or consumed" was false for them.
+    // DFU's macro source for the box is playerEntity.Stats; the port's
+    // `rows` door is the same TEXT.RSC read the rest of the window's
+    // siblings make.
+    {
+      const se = STATS_ROLLOUT_SELECT;
+      for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+        if (!inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) continue;
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        const rows = this.hooks.rows?.(statDescriptionTextId(i)) ?? [];
+        if (rows.length) this.child = new ActionTextBox(rows);
+        return true;
       }
     }
     if (inRect(R.exit, vx, vy)) {

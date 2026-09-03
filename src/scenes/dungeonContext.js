@@ -4646,6 +4646,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
+        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 54: the eight attribute popups' TEXT.RSC records 0..7
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
         ...questJournalHooks(),
