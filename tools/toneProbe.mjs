@@ -11,7 +11,7 @@
 // a window that was working. The DRIVE is unchanged, because the keys
 // are: KeyT is the tone cycle (nativeTalk.js:431), KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
-// What moved is what is READ: `native` (townTalk.js:1146, true only
+// What moved is what is READ: `native` (townTalk.js:1185, true only
 // when the art window is up), `tone`, and the ABSENCE of
 // `overlayOptions` - which is the positive statement that the window
 // under the keys is the native one and not the keyed fallback.

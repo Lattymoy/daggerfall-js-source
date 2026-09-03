@@ -26,7 +26,7 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb } from '../player/activate.js';   // QG1: the foe-click door
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 54: PresentNPCInfo's one line
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -159,6 +159,7 @@ import {
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
 import { MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
+import { MerchantRepairWindow, preloadMerchantRepairArt, merchantRepairArtLoaded } from '../ui/merchantRepairWindow.js';   // AUDIT 54: the repair shop's four-button popup
 import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -986,6 +987,7 @@ export function createWorldModes(host) {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
     preloadMerchantServiceArt({ renderer, fetchBytes, palette });   // UI2: GNRC01I0, beside its guild sibling
+    preloadMerchantRepairArt({ renderer, fetchBytes, palette });   // AUDIT 54: REPR01I0, the repair shop's own panel
     preloadCovenArt({ renderer, fetchBytes, palette });   // CW1: DAED00I0 for the witches' panel
     preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
@@ -1920,12 +1922,55 @@ export function createWorldModes(host) {
   }
 
 
+  /** AUDIT 54 (talk lane) - ActivateStaticNPC's OWN switch
+   *  (PlayerActivate.cs:753-768). The static-NPC arm had no
+   *  interaction-mode test at all, in either ray: `case Info:
+   *  PresentNPCInfo(npc); break;` (:755-757) is the whole of that mode
+   *  and it reaches NOTHING else - only Grab, Talk and Steal fall to
+   *  StaticNPCClick (:758-767). So in Info mode a shop clerk opened the
+   *  guild-service popup, the merchant/repair/tavern/bank popup, a quest
+   *  offer or the talk window, where DFU prints one HUD line and stops.
+   *
+   *  The gate sits HERE rather than at the two call sites (the exterior
+   *  ray's `person:` arm and the interior ray's) so both rays inherit
+   *  it, which is the four-hosts rule: one law, one place.
+   *
+   *  The mobile arm is NOT this arm and must not be aligned to it -
+   *  ActivateMobileNPC (:773-784) genuinely falls Info, Grab and Talk
+   *  through to one TalkToMobileNPC call, which is the law
+   *  scenes/townTalk.js's header records. */
   function activateStaticNpc(pn) {
     if (!pn) return;
     // ASYNC NEVER DROPS: FACTION.TXT may still be loading on the first
     // click of a session. ensureFactions coalesces, so the click lands
-    // when the file does rather than being swallowed.
-    Promise.resolve(townTalk?.ensureFactions?.()).then(() => openStaticNpc(pn)).catch(() => {});
+    // when the file does rather than being swallowed. Info needs the
+    // dict too - StaticNPC.DisplayName reads the NPC's faction.
+    const info = getInteractionMode() === 'info';
+    Promise.resolve(townTalk?.ensureFactions?.())
+      .then(() => (info ? presentNpcInfo(pn) : openStaticNpc(pn))).catch(() => {});
+  }
+
+  /** PresentNPCInfo (PlayerActivate.cs:1484-1499): one HUD line,
+   *  `GetLocalizedText("youSee").Replace("%s", npc.DisplayName)`.
+   *
+   *  It derives the NPC record the way openStaticNpc does but through
+   *  `staticNpcData` ALONE - never `questBridge.clickNpc`, which is
+   *  StaticNPCClick's LastNPCClicked stamp (:1521) and belongs to the
+   *  other three modes; nor does it run the quest-resource or
+   *  faction-listener returns, which are inside StaticNPCClick too.
+   *  The QuestDebugger reputation half (:1488-1498) has no port: there
+   *  is no HUDQuestDebugger here, and its own gate is
+   *  `QuestDebugger.State != Nothing`, which is that debugger's
+   *  default-off state. */
+  function presentNpcInfo(pn) {
+    const npcSceneCtx = {
+      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
+      ...(pn?.context != null ? { context: pn.context } : {}),
+    };
+    const dict = townTalk?.factionDict ?? null;
+    const displayName = staticNpcName(staticNpcData(pn, npcSceneCtx),
+      { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+    townTalk?.say?.(presentNpcInfoText(displayName));
   }
 
   function openStaticNpc(pn, { forceTalk = false } = {}) {
@@ -1982,13 +2027,37 @@ export function createWorldModes(host) {
     if (route.kind === 'witchesCoven') { openWitchesCoven(pn, npcData); return; }
     // R1: the repair-shop merchant (DaggerfallMerchantRepairPopupWindow
     // - Armorer/GeneralStore/WeaponSmith per RMBLayout.IsRepairShop).
-    // The popup carries THREE buttons (:82-97): Repair (the window's
-    // list), Talk (T - re-runs this routing with the merchant arm
-    // skipped and menu:true, TalkButton_OnMouseClick :143-148), and
-    // and Sell, which U40 landed - the popup's third button opens the
-    // trade window in Sell mode. The banking arm landed at B2 (it is
-    // the next arm below); the tavern's landed with U39.
+    // The popup carries FOUR buttons (:24-27): Repair (the repair
+    // screen), Talk (re-runs this routing with the merchant arm
+    // skipped, TalkButton_OnMouseClick :143-148), Sell (the trade
+    // window in Sell mode) and Exit. The banking arm landed at B2 (it
+    // is the next arm below); the tavern's landed with U39.
+    //
+    // AUDIT 54 (talk lane) BUILT THE POPUP THIS ARM WAS MISSING.
+    // PlayerActivate.cs:1579-1580 pushes MerchantRepairPopup here, and
+    // the port jumped straight into openRepairService with onTalk/onSell
+    // hooks that the SHIPPING arm of that function - the native trade
+    // screen, taken whenever a building record and the trade art are
+    // present - does not read; only the ARENA2-less keyed list did. So
+    // in every real repair shop the two routes were dead. The popup
+    // owns Talk and Sell now (as DFU has it: the trade window carries
+    // no such buttons), and the direct call with its two hooks stays
+    // as the fallback for a session with no REPR01I0 - the never-trap
+    // idiom the merchant/tavern/coven arms all take.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
+      if (merchantRepairArtLoaded()) {
+        let win = null;
+        win = new MerchantRepairWindow({
+          onRepair: () => openRepairService({}),
+          onTalk: () => openStaticNpc(pn, { forceTalk: true }),
+          onSell: () => openMerchantSell(),
+          // The U24 identity guard: a window that dispatches to another
+          // must not be nulled by its OWN onClose.
+          onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+        });
+        mountInterior(win);
+        return;
+      }
       openRepairService({
         onTalk: () => openStaticNpc(pn, { forceTalk: true }),
         onSell: () => openMerchantSell(),
@@ -3328,10 +3397,14 @@ export function createWorldModes(host) {
    *  list and the interrupt confirm are the same screen rather than a
    *  second menu.
    *
-   *  The keyed flow stays because it is the fallback with no ARENA2 -
-   *  and because it is the only one of the two that can offer Talk and
-   *  Sell, which DFU puts on the merchant POPUP (:82-97), not on the
-   *  trade window. */
+   *  The keyed flow stays because it is the fallback with no ARENA2.
+   *  AUDIT 54 (talk lane) retired the second half of this sentence:
+   *  Talk and Sell belong to the merchant POPUP
+   *  (DaggerfallMerchantRepairPopupWindow.cs:24-27), which the repair
+   *  arm mounts now, and DFU's trade window carries no such buttons
+   *  either - so ctx.onTalk/ctx.onSell are the FALLBACK's rows, read
+   *  only when REPR01I0 is absent or a guild's Repair is entered from
+   *  the street with no building record. */
   function openRepairService(ctx = {}) {
     const b = interiorBuilding;
     if (b && tradeArtLoaded() && _shopFont) {

@@ -778,6 +778,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       locationName, regionName,
       playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
     },
+    // AUDIT 54 (talk lane): the mode keys sit UNDER the window gate, and
+    // this host's second slot is the mode machine's - a window held
+    // there is invisible to townTalk's own `overlay`. `modes` is
+    // declared below, so the read is deferred (the regionIndex idiom).
+    otherOverlayActive: () => modes?.overlayHeld ?? false,
   });
   townTalk.ensureLoaded();
   /** THE GAME PAUSE for this host - ONE composition, asked of the

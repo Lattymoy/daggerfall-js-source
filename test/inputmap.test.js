@@ -105,6 +105,19 @@ test('I2: no host reads a bound key raw - the sweep', () => {
       for (const m of line.matchAll(/keys\.has\('([^']+)'\)/g)) {
         if (bound.has(m[1])) offenders.push(`${rel}:${i + 1} reads ${m[1]} raw`);
       }
+      // AUDIT 54 (talk lane) WIDENED THE SWEEP. The rule is "a read the
+      // registry cannot rebind", and `keys.has('<code>')` was only ONE
+      // shape of it: townTalk.js and dungeon.js each carried a
+      // `{ F1: 'steal', F2: 'grab', ... }[e.code]` LOOKUP TABLE keyed on
+      // bound codes, which the matcher above cannot see - so both
+      // dispatch sites for StealMode/GrabMode/InfoMode/TalkMode
+      // (PlayerActivate.cs:221-228, four real ACTIONS in the registry)
+      // passed a sweep whose stated rule they violated, and every
+      // rebind of those four rows in the controls grid was inert. An
+      // object-literal KEY that is a default-bound code is that shape.
+      for (const m of line.matchAll(/[{,]\s*'?([A-Za-z][A-Za-z0-9]*)'?\s*:/g)) {
+        if (bound.has(m[1])) offenders.push(`${rel}:${i + 1} keys a table on ${m[1]} instead of an action`);
+      }
     });
   }
   assert.deepEqual(offenders, [],
