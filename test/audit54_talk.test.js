@@ -401,7 +401,7 @@ test('AUDIT 54 talk: the mode keys are ACTIONS, and a window shuts them down (Pl
 
 test('AUDIT 54 talk: the dungeon host carries the same two halves', () => {
   const d = src('src/scenes/dungeon.js');
-  assert.ok(d.includes('const im = MODE_ACTIONS[actionOf(e)];'), 'the registry, not e.code');
+  assert.ok(d.includes('const im = MODE_ACTIONS[actionOf(e, keys)];'), 'the registry (with the held-keys Set the combo arm needs), not e.code');
   assert.ok(d.includes('if (!ctx.uiOverlayActive && im !== getInteractionMode())'),
     'and no mode change under an open window');
   assert.equal(/\{ F1: 'steal'/.test(d), false, 'the literal table is gone');

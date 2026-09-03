@@ -69,7 +69,7 @@ function magicRig(player) {
   const world = { said: [], missiles: 0 };
   const magic = createPlayerMagic({
     renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch() {} },
-    audio: { playOneShot() {}, play3d() {} },
+    audio: { playOneShot() {}, playOneShotId() {}, play3d() {}, play3dId() {} },
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
     uploadRecord() {}, uploadRecordFrame() {},
     collider: { raycast: () => Infinity },
