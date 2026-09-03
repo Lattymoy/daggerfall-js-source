@@ -226,7 +226,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // InputManager.cs:487-503 returns before currentActions is
     // populated), so the mode must NOT flip under an open overlay -
     // the very next line already has the predicate.
-    const im = MODE_ACTIONS[actionOf(e)];
+    const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
