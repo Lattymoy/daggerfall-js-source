@@ -1,8 +1,11 @@
 // BSA container reader.
 // 1:1 translation of Daggerfall Unity's BsaFile.cs (MIT, Daggerfall Workshop /
-// Gavin Clayton). Logic and constants kept verbatim; Unity disk plumbing
-// (FileProxy, RewriteRecord write-back, path extension checks) dropped because
-// our runtime reads immutable byte buffers only. See bible/01-Overview/Port-Doctrine.md.
+// Gavin Clayton). Logic and constants kept verbatim with ONE measured
+// exception - the NameRecord directory's name scan is bounded at the 14-byte
+// name field, where DFU's is unbounded (see ReadDirectory below). Unity disk
+// plumbing (FileProxy, RewriteRecord write-back, path extension checks)
+// dropped because our runtime reads immutable byte buffers only.
+// See bible/01-Overview/Port-Doctrine.md.
 //
 // Format:
 //   Header (4 bytes): int16 directoryCount, uint16 directoryType. Little-endian.
@@ -43,8 +46,17 @@ export class BsaFile {
       let pos = bytes.byteLength - NAME_ENTRY_SIZE * this._directoryCount;
       this._directoryStart = pos;
       for (let i = 0; i < this._directoryCount; i++) {
-        // DFU reads a null-terminated CString from the 14-byte name field.
-        // Bounded at 14 here; identical for all valid data.
+        // DEPARTURE (measured): DFU reads the name with
+        // FileProxy.ReadCString(reader, 0) (BsaFile.cs:400), which is
+        // UNBOUNDED - it scans for the NUL past the 14-byte field and into the
+        // Int32 RecordSize, and would glue those bytes onto the name (the size
+        // itself still reads correctly, because ReadDirectory then seeks back
+        // to Position + 14). On the last entry the scan would run off the end
+        // of the file and throw. Bounded at 14 here. The two behaviours can
+        // only differ for a name that fills all 14 bytes with no terminator;
+        // MAPS.BSA has none - all 248 directory names are the 12-byte
+        // "MAPXITEM.NNN" form, so the longest is 12 and every one is
+        // NUL-terminated inside the field.
         const name = this._readCString(pos, NAME_FIELD_SIZE);
         const size = this._view.getInt32(pos + NAME_FIELD_SIZE, true);
         this._directory.push({ name, id: null, size, position: recordPosition });

@@ -203,13 +203,17 @@ E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:268`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
-were waiting on. That leaves **12** open flags as
+were waiting on. The SHIP LANDING then took a seventh
+(`scenes/world.js:2871`, the two ship pixels): the owner supplied the
+real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
+locations rather than open sea, and the boarding became an ordinary
+location arrival. That leaves **11** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
-prefab, the two ship pixels), a DFU original that does not exist (the
-standalone dungeon host's windows, the enhanced menu's keyboard), or
-the owner's call (the gamepad layer, the pause dropdown's mod rows).
+prefab), a DFU original that does not exist (the standalone dungeon
+host's windows, the enhanced menu's keyboard), or the owner's call
+(the gamepad layer, the pause dropdown's mod rows).
 
 ## The standing watches (not wave work)
 
