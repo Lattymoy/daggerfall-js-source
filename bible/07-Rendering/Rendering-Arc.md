@@ -901,3 +901,28 @@ than wear the wrong picture - and three were: 501_16, 502_14, 511_12.
 climate; a binary format is a later slice if the size ever matters.
 
 Not seen in a browser. Nothing in TR1-3 has drawn through GL.
+
+### TR4 - the GL run (2026-09-03, Mac: "Can I see it")
+
+Nothing in TR1-3 had drawn through GL. `tools/treesProbe.mjs` runs the
+shipped `public/trees/<archive>.json` through the REAL
+`render/treeModels.js` in headless Chromium's WebGL2, with the island
+the partner cut from each classic sprite standing in for the record -
+the pixels the runtime will get from the player's own TEXTURE.500 -
+and films it: 28 trees of archive 500's seven records on a ring, the
+camera orbiting, the wind rising from calm to a gale over twelve
+seconds. The pack is read from a path; nothing from it is written
+anywhere but the frames.
+
+Seen: the shaders compile and link; the record texture, the opaque-box
+remap and the crown-top upload go through the real build()/draw();
+every card wears its piece; the tops sit on the crowns; instancing
+draws each record's trees in one call; the crowns lean with the wind
+and the trunks stand. 360 frames, no GL errors (the two Chromium
+notices are the SwiftShader deprecation and ReadPixels stalls from the
+capture). The island rule the converter uses moved to
+`tools/lib/treeAtlas.mjs` so the probe reads the same one.
+
+Still not seen: the trees IN THE GAME - the host's flat loop swapping a
+billboard for a mesh, the record uploaded by the pipeline, the sky's
+own wind. That is the walk Mac takes.
