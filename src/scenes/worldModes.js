@@ -5021,6 +5021,10 @@ export function createWorldModes(host) {
           : interiorGuards?.hurtGuard(f, d, player.pos, m.dir)),
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
+        // AUDIT 54: WeaponManager.cs:630 after the damage fork - a
+        // zero-damage shaft still enrages its mark and the room. The
+        // interior watch pool's door carries no hostility pair.
+        onAttackFromPlayer: (f) => { if (f._encounter) interiorFoes?.handleAttackFromPlayer(f, player.pos); },
       }),
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);

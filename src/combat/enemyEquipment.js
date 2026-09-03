@@ -225,9 +225,17 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
  *  marker is skipped; a leftHand WEAPON is its own item. */
 export function equipmentItems(eq) {
   const items = [];
-  if (eq.rightHand) items.push({ group: 'Weapons', ...eq.rightHand });
-  if (eq.leftHand && !eq.leftHand.shield) items.push({ group: 'Weapons', ...eq.leftHand });
-  for (const a of eq.armorPieces) items.push({ group: 'Armor', templateIndex: a.piece, material: a.material });
+  // AUDIT 54: the SAME record, not a copy. ItemHelper.cs:1382-1383
+  // equips `weapon` and then adds THAT instance to Items, so the blade
+  // the foe swings (entity.weapon), the one in its right hand slot and
+  // the one its corpse drops are one object - which is why a dose
+  // spent by FormulaHelper.cs:695 is spent on the loot too.
+  if (eq.rightHand) items.push(eq.rightHand);
+  if (eq.leftHand && !eq.leftHand.shield) items.push(eq.leftHand);
+  // AUDIT 54: ItemBuilder.CreateArmor mints a condition with the piece
+  // (items-5); these records had none, so a struck foe's cuirass had
+  // nothing to bill even once its equip table existed.
+  for (const a of eq.armorPieces) items.push(mintCondition({ group: 'Armor', templateIndex: a.piece, material: a.material }));
   return items;
 }
 

@@ -3018,6 +3018,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos, m.dir),   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+        // AUDIT 54: no onAttackFromPlayer here. WeaponManager.cs:630
+        // runs for every shaft that connected, but this host mounts the
+        // WATCH pool alone and cityGuards' damage door carries no
+        // hostility pair to run (its siblings pass their encounter
+        // pool's). Recorded so the absence reads as a fact, not a miss.
       }),
     });
     arrows.draw(renderer, texRemap);

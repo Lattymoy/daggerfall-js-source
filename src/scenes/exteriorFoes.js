@@ -33,7 +33,7 @@ import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '..
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
 import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
-import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
+import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -296,17 +296,30 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  reassign), and the player arm additionally reverts a struck
    *  former ally to its species (:204-213). resetAllyTeamOnPlayerAttack
    *  raises IsHostile itself, so a headless stub ai still stands up. */
+  /** AUDIT 54: HandleAttackFromSource's PLAYER ARM, lifted out of the
+   *  damage door - DFU runs it for every swing that CONNECTED, damage
+   *  or none. WeaponManager.WeaponDamage's `damage > 0` fork closes at
+   *  :615 and :627/:630 (`DecreaseHealth(damage)` then
+   *  `HandleAttackFromSource(PlayerEntityBehaviour)`) run
+   *  unconditionally after it, so a swing that lost the to-hit roll
+   *  still wakes a pacified foe and, through :255-258, its whole area.
+   *  This pool skipped the door entirely at zero damage. */
+  function handleAttackFromPlayer(f, playerFeet = null) {
+    if (!f?.ai) return;
+    // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 sits BEFORE the
+    // call below and is a different law - the whole area turns, this
+    // one foe additionally learns where the blow came from. The
+    // `!isHostile` read must precede the walk, which flips this foe
+    // too.
+    if (!f.ai.isHostile) makeAreaHostile?.();
+    f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
+    resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+  }
+
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
     markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (fromPlayer && f.ai) {
-      // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 sits BEFORE the
-      // call below and is a different law - the whole area turns, this
-      // one foe additionally learns where the blow came from. The
-      // `!isHostile` read must precede the walk, which flips this foe
-      // too.
-      if (!f.ai.isHostile) makeAreaHostile?.();
-      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
-      resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+      handleAttackFromPlayer(f, playerFeet);
     }
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
@@ -566,7 +579,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           ? f.ai.target : null;
         if (_foeTarget) {
           const fdx = _tgt[0] - f.ai.feet[0], fdz = _tgt[2] - f.ai.feet[2];
-          const fwpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+          // EnemyAttack.cs:191-194, the step before the reach fork: a
+          // metal-immune FOE target nulls the weapon and the striker
+          // falls through to its hand-to-hand attack.
+          const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(f.entity.weapon, _foeTarget.entity), ENEMY_BASICS[f.mobileType]);
           const ffwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
           if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
             applyDamageToNonPlayer(f, _foeTarget, {
@@ -579,6 +595,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
               // world.js already uses for spell sinks).
               dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, ffwd) : damageFoe(t, d, null, ffwd)),
               audio, hitEffects,
+              // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+              // a poisoned foe blade doses the foe it strikes. Without
+              // the hook the formula still cleared the dose.
+              onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+              say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
             });
           } else {
             audio?.play3d?.(enemyMissSound(fwpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -701,6 +722,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
+        // AUDIT 54: WeaponManager.cs:630 runs after the damage fork
+        // closes (:615) - a connecting swing enrages what it touched
+        // even at zero damage. Only the aggro half: :627's
+        // DecreaseHealth(0) is a no-op and the knockback/hurt sit
+        // inside DFU's own `damage > 0` arm.
+        handleAttackFromPlayer(foe, playerFeet);
       }
     }
     return any;
@@ -882,13 +909,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       weapon: m.weapon, direction: dir, bowAttack: true, rolls, calculateAttackDamage,
       dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, dir) : damageFoe(t, d, null, dir)),
       audio, hitEffects,
+      // AUDIT 54: the poisoned SHAFT doses its foe mark too - the
+      // clear at FormulaHelper.cs:695 fires with or without a hook.
+      onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+      say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
     });
     if (target.entity?.items) {
       addItem(target.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
     }
   }
 
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

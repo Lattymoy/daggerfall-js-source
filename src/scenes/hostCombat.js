@@ -19,6 +19,7 @@ import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoic
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 54: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
@@ -107,7 +108,43 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   // AssignEnemyStartingEquipment adds every equipped piece to the
   // entity's items - the corpse's droppable loot.
   entity.items = entity.items ?? [];
-  entity.items.push(...equipmentItems(eq));
+  const worn = equipmentItems(eq);
+  entity.items.push(...worn);
+  // AUDIT 54: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
+  // :1421-1450 pair every roll with
+  // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before
+  // `Items.AddItem(item)` - a foe's table is genuinely worn, and
+  // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
+  // arrays, so `equipTableOf(target)` handed back the lazy all-null
+  // table (equip.js:40-41) for every enemy in the game and
+  // FormulaHelper.DamageEquipment's STRUCK side - the shield at
+  // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
+  // could not fire once: only the attacker's own weapon ever took
+  // condition off a foe.
+  //
+  // The placement is DFU's `playEquipSounds: false` load arm, the
+  // shape rebuildEquipState already uses: the slot takes the item and
+  // nothing else runs. It does NOT go through equipItem, because that
+  // would re-derive armorValues through the generic
+  // updateEquippedArmorValues and double-subtract over the
+  // SetEnemyEquipment pass above, which owns the Feet-exclusive bound
+  // (EnemyEntity.cs:414) and the class/monster clamps.
+  //
+  // The port's `item.equipSlot` mark is deliberately NOT written: it
+  // is this port's device for the PLAYER's list filter
+  // (FilterLocalItems) and the save relink, and DFU's items carry no
+  // such field - the equip state lives in the entity's table, which
+  // dies with the entity. Marking a foe's gear would hide its own
+  // corpse's loot from every inventory tab. Nothing needs the mark:
+  // DamageEquipment reads the table, and a break unequips through
+  // DaggerfallUnityItem.UnequipItem's identity scan (equip.js's
+  // unequipItem), which is how DFU finds the slot too.
+  const slots = equipTableOf(entity);
+  for (const it of worn) {
+    const slot = getEquipSlot(entity, it);   // GetEquipSlot routes the shield to LeftHand and each piece to its own slot
+    if (slot === EQUIP_SLOTS.None || slots[slot]) continue;
+    slots[slot] = it;
+  }
   return eq;
 }
 
@@ -391,6 +428,20 @@ export function applyDamageToNonPlayer(attacker, target, {
   weapon = null, direction = null, bowAttack = false,
   dealDamage, calculateAttackDamage, audio = null, rolls = Math.random,
   hitEffects = null,
+  // AUDIT 54: THE TWO SEAMS CalculateAttackDamage OWNS AND THIS
+  // PAYLOAD NEVER OFFERED. FormulaHelper.cs:691-696 inflicts the
+  // weapon's poison inside the formula for EVERY attacker/target pair
+  // - `if (damage > 0 && weapon.poisonType != Poisons.None) {
+  // InflictPoison(attacker, target, weapon.poisonType, false);
+  // weapon.poisonType = Poisons.None; }` - with no player gate, and
+  // EnemyAttack.cs:314 routes foe-vs-foe damage straight through it.
+  // The port hoisted the inflict onto a hook but kept the CLEAR
+  // unconditional (formulas.js), so with no hook the blade's dose was
+  // SPENT and nothing was poisoned. `say` is DamageEquipment's break
+  // line: ItemBreaks PopupMessages whatever the owner
+  // (DaggerfallUnityItem.cs:1198-1203), so a foe's shield breaking
+  // speaks in DFU too.
+  onInflictPoison = null, say = null,
 } = {}) {
   if (!target || !attacker) return 0;   // :305-306, `senses.Target == null`
   const aEnt = attacker.entity, tEnt = target.entity;
@@ -400,7 +451,7 @@ export function applyDamageToNonPlayer(attacker, target, {
   // Every pool seeds its striker's melee timer from the same field
   // (`new EnemyAttack({ ..., reflexes: playerEntity.reflexes })`), so
   // the value the game holds is already on the attacker's record.
-  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls, playerReflexes: attacker.attack?.reflexes ?? null });
+  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls, playerReflexes: attacker.attack?.reflexes ?? null, onInflictPoison, say });
   // :316-317 - the ATTACKER's normal-power concealment breaks on a
   // landed blow, whoever it landed on.
   if (damage > 0 && attacker.breakConcealment) attacker.breakConcealment();

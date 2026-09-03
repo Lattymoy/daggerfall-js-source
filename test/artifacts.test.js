@@ -280,7 +280,15 @@ test('V3: the Ring of Namira reflects by the attacker\'s TEAM at the attack tail
   const skel = { mobileType: MOBILE_TYPES.SkeletalWarrior, health: 40 };
   onPlayerStruckByEnemy(skel, p, 10);
   assert.equal(skel.health, 20, '10 x 2 reflected');
-  assert.equal(ring.currentCondition, 800 - 20, 'the ring pays the reflection');
+  // AUDIT 54: THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+  // returns durabilityLoss, but FormulaHelper.cs:707 passes
+  // `sourceItem: item` with item still null and :712-716 discards the
+  // PayloadCallbackResults - only EntityEffectManager's dispatchers
+  // (:1041-1042, :1095-1096, :1107-1108) ever read durabilityLoss,
+  // which is why the Mace/Razor/Rose wear down and Namira does not.
+  // MUTANT KILLED: restoring `lowerCondition(ring, reflected, target)`
+  // takes this to 780 and 760.
+  assert.equal(ring.currentCondition, 800, 'the ring takes NO durability loss');
   // Daedra: half, trunc
   const daedra = { mobileType: MOBILE_TYPES.FrostDaedra, health: 40 };
   onPlayerStruckByEnemy(daedra, p, 9);
@@ -289,6 +297,9 @@ test('V3: the Ring of Namira reflects by the attacker\'s TEAM at the attack tail
   const orc = { mobileType: MOBILE_TYPES.Orc, health: 40 };
   onPlayerStruckByEnemy(orc, p, 10);
   assert.equal(orc.health, 30);
+  assert.equal(ring.currentCondition, 800, 'still pristine after four reflected blows');
+  assert.ok(!read('src/systems/artifactEffects.js').includes('lowerCondition(ring'),
+    'the bill is gone, not commented out');
   // no ring, nothing
   const bare = P();
   const orc2 = { mobileType: MOBILE_TYPES.Orc, health: 40 };

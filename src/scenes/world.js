@@ -6844,6 +6844,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           : exteriorFoes.damageFoe(f, d, player.pos, m.dir)),
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+        // AUDIT 54: WeaponManager.cs:630's HandleAttackFromSource sits
+        // AFTER the damage fork closes (:615), so a shaft that lost the
+        // roll still enrages what it hit and wakes the area. The watch
+        // pool's damage door carries no hostility pair of its own, so
+        // only the encounter pool has one to run.
+        onAttackFromPlayer: (f) => { if (!cityGuards.guards.includes(f)) exteriorFoes.handleAttackFromPlayer(f, player.pos); },
       }),
     });
     arrows.draw(renderer);

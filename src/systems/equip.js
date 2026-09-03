@@ -388,7 +388,15 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   // and strips any held bundle), THEN the Breaks payload - both
   // through hooks so this leaf stays below the enchantment module.
   // SoulBound's break releases the soul.
-  if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
+  // AUDIT 54: BY IDENTITY, not by the port's worn mark.
+  // DaggerfallUnityItem.ItemBreaks calls UnequipItem(owner), which
+  // walks the owner's table and takes off whichever slot holds THIS
+  // item (:1183-1196) - `unequipItem` above IS that walk. The mark
+  // is a port device the player's items carry; a FOE's worn gear is
+  // placed in its table without one (hostCombat.equipEnemy, so its
+  // own corpse's loot is not hidden from every inventory tab), and
+  // the mark-keyed call could never take a broken foe's shield off.
+  if (owner) unequipItem(owner, item);
   _hooks.onItemBroken?.(item, owner, say);
   return true;
 }

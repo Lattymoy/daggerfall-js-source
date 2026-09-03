@@ -7,25 +7,45 @@
 //     the next non-LeftOnly weapon replace it THERE; weapons route by
 //     hands (RightOnly/Both -> right, LeftOnly -> left, Either ->
 //     first open of right,left).
-//   - GetItemHands: weapon map -> shields LeftOnly -> None. Bows ride
-//     DFU's BowLeftHandWithSwitching setting whose default (false)
-//     is the classic Both - we port the default (Ledger note in arc).
+//   - GetItemHands: weapon map -> shields LeftOnly -> None. Bows READ
+//     DFU's BowLeftHandWithSwitching setting (ItemEquipTable.cs:
+//     633-635): on = LeftOnly, off = the classic Both. AUDIT 54: the
+//     port used to pin them to the default, which left the setting
+//     half-applied - the two members that DO read it (hud's arrow
+//     counter, playerWeapon's switch delay) both assume the table put
+//     the bow in the LEFT hand, and it never could.
 // Items here are the data shape {group, templateIndex}; equip/unequip
 // mechanics (unequip lists, prohibitions) are Systems-arc territory.
 
 import { EQUIP_SLOTS } from './paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES, WEAPON_HANDS, SHIELD_INDICES } from './equipRules.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 54: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
 
 export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Either: 3, Both: 4 });
+/** Weapons.Short_Bow / Weapons.Long_Bow - the one switch case in
+ *  GetItemHands that is not a constant (ItemEquipTable.cs:633-635). */
+export const BOW_HAND_TEMPLATES = Object.freeze([129, 130]);
 const GROUP_NAME = { [ITEM_GROUPS.Armor]: 'Armor', [ITEM_GROUPS.Jewellery]: 'Jewellery', [ITEM_GROUPS.MensClothing]: 'MensClothing', [ITEM_GROUPS.WomensClothing]: 'WomensClothing' };
 
-export function getItemHands(item) {
+export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowLeftHandWithSwitching') } = {}) {
   // U8f: the player bag speaks STRING groups (the shopStock/loot
   // shape) and worn bag items land in the slots verbatim - accept
   // both conventions here so the 2H-replace rule can inspect them.
   const group = typeof item.group === 'string' ? (ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None) : item.group;
   if (group !== ITEM_GROUPS.Weapons && group !== ITEM_GROUPS.Armor) {
     return ITEM_HANDS.None;
+  }
+  // AUDIT 54: `case Weapons.Short_Bow: case Weapons.Long_Bow: return
+  // DaggerfallUnity.Settings.BowLeftHandWithSwitching ?
+  // ItemHands.LeftOnly : ItemHands.Both;` (ItemEquipTable.cs:633-635).
+  // The generated WEAPON_HANDS row is DFU's OFF answer and stays the
+  // default; this is the branch that made the row conditional. With
+  // the setting on the bow lands in EQUIP_SLOTS.LeftHand and bumps a
+  // held 2H exactly as a shield does - which is what hud's arrow
+  // counter (hud.js:361-365) and playerWeapon.toggleHand (:238) have
+  // assumed since AUDIT 28 made the key live.
+  if (group === ITEM_GROUPS.Weapons && BOW_HAND_TEMPLATES.includes(item.templateIndex)) {
+    return bowLeftHand ? ITEM_HANDS.LeftOnly : ITEM_HANDS.Both;
   }
   const w = WEAPON_HANDS[item.templateIndex];
   if (w) return ITEM_HANDS[w];

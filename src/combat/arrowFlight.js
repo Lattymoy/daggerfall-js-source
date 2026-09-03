@@ -162,6 +162,15 @@ export class ArrowFlight {
 export function playerArrowHitFoe(m, foe, {
   playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
   audio = null, hitEffects = null, say = null, onInflictPoison = null,
+  // AUDIT 54: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
+  // the damage fork - it runs for every shaft that CONNECTED, so a
+  // zero-damage arrow enrages what it hit and, through
+  // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
+  // ride `dealDamage` with a 0: that door carries the pools' knockback,
+  // and WeaponManager's knockback (:575-582) is inside the `damage > 0`
+  // arm - weaponKnockbackSpeed(0, w) would return the 15/ratio FLOOR
+  // and shove a foe DFU leaves standing.
+  onAttackFromPlayer = null,
   rolls = Math.random,
 } = {}) {
   if (!foe || foe.dead || !playerEntity) return 0;
@@ -181,6 +190,9 @@ export function playerArrowHitFoe(m, foe, {
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16 });
     dealDamage?.(foe, dmg);
   }
+  // :627/:630's unconditional pair, whatever the fork above did - and
+  // BEFORE the arrow is added back (BowDamage's own order).
+  onAttackFromPlayer?.(foe);
   if (foe.entity?.items) {
     addItem(foe.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
   }

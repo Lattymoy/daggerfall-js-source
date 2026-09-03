@@ -570,6 +570,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       REACTIONS, sampleClip,
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
+      dropWeaponIfTargetImmune: formulas.dropWeaponIfTargetImmune,   // AUDIT 54: EnemyAttack.cs:191-194
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
@@ -2358,6 +2359,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         });
         if (snd?.at === 'enemy') audio.play3d(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio.playOneShot(snd.sound, 1.1);
+        // AUDIT 54: ...and the swing still ENRAGES what it touched.
+        // WeaponManager.cs:630's HandleAttackFromSource sits after the
+        // damage fork closes (:615), so a connecting swing that lost
+        // the roll wakes a pacified foe and the whole room with it.
+        // Only the aggro half runs here: :627's DecreaseHealth(0)
+        // changes nothing, and the knockback/hurt the damage door also
+        // carries lives INSIDE WeaponManager's `damage > 0` arm.
+        handleAttackFromPlayer(foe, playerFeet);
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
@@ -2540,6 +2549,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
                 onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
+                // AUDIT 54: WeaponManager.cs:630 runs for every shaft that
+                // CONNECTED, damage or none.
+                onAttackFromPlayer: (t) => handleAttackFromPlayer(t, lastPlayerFeet),
               });
               retireMissile(m);
               break;
@@ -2563,6 +2575,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 calculateAttackDamage: foeDeps.calculateAttackDamage,
                 dealDamage: (tt, d) => tt.hurtFromFoe?.(d, m.dir),
                 audio, hitEffects,
+                // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+                // a poisoned foe blade doses the foe it strikes, on DFU's
+                // own target (the struck entity). Without the hook the
+                // formula still cleared the dose, so the blade was spent
+                // and nothing was poisoned.
+                onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+                say: (l) => hudText.add(l),   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
               });
             }
             // :145-147 - the recovered Arrow goes into the TARGET's
@@ -2795,6 +2814,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
+  /** AUDIT 54: HandleAttackFromSource's PLAYER ARM, lifted out of the
+   *  damage door because DFU runs it on a CONNECTING swing whether or
+   *  not the swing dealt anything. WeaponManager.WeaponDamage's damage
+   *  fork closes at :615; :627 `enemyEntity.DecreaseHealth(damage)`
+   *  and :630 `HandleAttackFromSource(PlayerEntityBehaviour)` are two
+   *  unconditional statements after it, so a swing that lost the
+   *  to-hit roll (calculateSuccessfulHit clamps 3..97 - a miss is
+   *  always possible) still enrages what it touched. The port routed
+   *  the pair through damageFoe alone, and every player-attack
+   *  resolver skipped damageFoe at zero damage: a foe talked down by
+   *  tryLanguagePacification stayed pacified and the room slept on.
+   *  DaggerfallEntityBehaviour.cs:249-261's body is unchanged below. */
+  function handleAttackFromPlayer(foe, playerFeet = null) {
+    if (!foe?.ai) return;
+    // ROAD-B: ...and the AREA turns with it.
+    // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
+    //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
+    //     enemyMotor.MakeEnemyHostileToAttacker(player);
+    // - so striking one sleeping/passive foe wakes the WHOLE room,
+    // and only the struck one learns where you are. The port had the
+    // second call and not the first, which is why a passive RDB
+    // guard could be picked off one at a time in a room full of
+    // them. The `!isHostile` read has to happen BEFORE the walk,
+    // because the walk flips this foe too.
+    if (!foe.ai.isHostile) makeEnemiesHostile(foes);
+    if (foeDeps) {
+      foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
+      foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
+    } else if (!foe.ai.isHostile) {
+      foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);   // wave 36: seeded with where the attack came from
+    }
+  }
+
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
   function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {}) {
@@ -2812,23 +2864,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // must, and a foe hurt before the subsystem loaded still stands
     // up through the legacy arm.
     if (fromPlayer && foe.ai) {
-      // ROAD-B: ...and the AREA turns with it.
-      // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
-      //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
-      //     enemyMotor.MakeEnemyHostileToAttacker(player);
-      // - so striking one sleeping/passive foe wakes the WHOLE room,
-      // and only the struck one learns where you are. The port had the
-      // second call and not the first, which is why a passive RDB
-      // guard could be picked off one at a time in a room full of
-      // them. The `!isHostile` read has to happen BEFORE the walk,
-      // because the walk flips this foe too.
-      if (!foe.ai.isHostile) makeEnemiesHostile(foes);
-      if (foeDeps) {
-        foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
-        foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
-      } else if (!foe.ai.isHostile) {
-        foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);   // wave 36: seeded with where the attack came from
-      }
+      handleAttackFromPlayer(foe, playerFeet);
     }
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
@@ -2921,7 +2957,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!foeDeps || !f.ai._armedTargeting || !t || foeDeps.isPlayerTarget(t)) return false;
     const tf = t.ai.feet;
     const fdx = tf[0] - f.ai.feet[0], fdz = tf[2] - f.ai.feet[2];
-    const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    // EnemyAttack.cs:191-194 - the metal drop runs BEFORE the reach
+    // fork and before the weapon-vs-weaponless swap, so a Ghost or a
+    // Lich takes the striker's hand-to-hand attack instead of the
+    // silent report(0) the material gate hands enemies.
+    const wpn = foeDeps.chooseEnemyWeapon(foeDeps.dropWeaponIfTargetImmune(f.entity.weapon, t.entity), ENEMY_BASICS[f.mobileType]);
     const fwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
     if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, fdx, fdz, foeDeps.MELEE_HIT_YAW_DEG))) {
       applyDamageToNonPlayer(f, t, {
@@ -2929,6 +2969,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         calculateAttackDamage: foeDeps.calculateAttackDamage,
         dealDamage: (tt, d) => tt.hurtFromFoe?.(d, fwd),
         audio, hitEffects,
+        // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate - a
+        // poisoned foe blade doses the foe it strikes, on DFU's own
+        // target. Without the hook the formula still cleared the dose.
+        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+        say: (l) => hudText.add(l),   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
       });
     } else {
       audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });

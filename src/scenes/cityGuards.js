@@ -68,6 +68,7 @@ import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // AUD
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
+  dropWeaponIfTargetImmune,   // AUDIT 54: EnemyAttack.cs:191-194, the foe-vs-foe metal drop
   enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
   enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
 } from '../combat/formulas.js';
@@ -740,7 +741,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           ? g.ai.target : null;
         if (_foeTarget) {
           const fdx = _tgt[0] - g.ai.feet[0], fdz = _tgt[2] - g.ai.feet[2];
-          const fwpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+          // EnemyAttack.cs:191-194 runs BEFORE the reach fork: a target
+          // that refuses this metal drops the weapon and the watchman
+          // swings hand-to-hand (dropWeaponIfTargetImmune), which is the
+          // only place MinMetalToHit is live - the player has none.
+          const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(g.entity.weapon, _foeTarget.entity), ENEMY_BASICS[GUARD_MOBILE_TYPE]);
           const ffwd = [Math.sin(g.ai.yaw), 0, Math.cos(g.ai.yaw)];   // transform.forward (:208)
           if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
             applyDamageToNonPlayer(g, _foeTarget, {
@@ -748,6 +753,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
               calculateAttackDamage,
               dealDamage: (t, d) => t.hurtFromFoe?.(d, ffwd),
               audio, hitEffects,
+              // AUDIT 54: FormulaHelper.cs:691-696 has NO player gate -
+              // the watch's poisoned blade doses the monster it strikes.
+              // Without the hook the formula still cleared the dose, so
+              // the blade was spent against the player too.
+              onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+              say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
             });
           } else {
             audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
@@ -871,6 +882,18 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
+        // AUDIT 54: ...and the swing still reaches the damage door.
+        // WeaponManager.cs:627/:630 - DecreaseHealth(damage) and
+        // HandleAttackFromSource - run AFTER the `damage > 0` fork
+        // closes (:615), so a connecting swing that lost the roll is
+        // not a nothing. The ray is NOT passed: WeaponManager's
+        // knockback (:575-582) is inside the damage arm, and
+        // weaponKnockbackSpeed(0, w) returns the 15/ratio floor.
+        // Knight_CityWatch is EnemyClass, so DaggerfallEntityBehaviour
+        // .cs:250-260's hostility pair covers it - this door carries
+        // none yet (the two encounter pools' do), so the call is the
+        // structure and the pair is a separate, unported half.
+        damageGuard(foe, 0, playerFeet, null);
       }
     }
     // WeaponManager.cs:419-436: a connecting swing tallies the weapon

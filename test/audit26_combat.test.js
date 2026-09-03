@@ -86,7 +86,15 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // the two facts separately, plus the ordering the new statement
   // must keep.
   assert.match(xf, /if \(fromPlayer && f\.ai\) \{/, 'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
-  const xfGate = xf.slice(xf.indexOf('if (fromPlayer && f.ai) {'));
+  // AUDIT 54 MOVED THIS NEEDLE AGAIN, for the same reason ROAD-B did.
+  // WeaponManager.cs:627/:630 are TWO statements after the damage
+  // fork closes (:615), so HandleAttackFromSource's player arm is a
+  // member of its own now (`handleAttackFromPlayer`) that the damage
+  // door and the zero-damage arm both call. The gate is still the
+  // player-source one; the body is where the slice reads it.
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,
+    'the damage door calls it inside the same gate');
+  const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {'));
   assert.match(xfGate.slice(0, 600), /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
   assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
     'and the area walk reads isHostile BEFORE the per-foe law flips it');
