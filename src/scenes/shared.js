@@ -168,6 +168,7 @@ export function createSkyController(gl, params) {
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
   const windModel = createWindModel();   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it)
+  const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds
   let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
@@ -329,15 +330,29 @@ export function createSkyController(gl, params) {
         // rolling in. `dt` is stretched or shrunk to make the ease's
         // own walk land on the front's clock.
         windModel.tick(extra?.classicMinutes ?? 0, weatherName);
-        const fp = windModel.frontProgress();
-        const easeDt = fp > 0 && fp < 1 ? dt * (WEATHER_EASE_SECONDS / (FRONT_LEAD_MIN * 60 / 12)) : dt;
+        // WIND2 (AUDIT 55): the ease stretches for the WHOLE lead, from
+        // the change itself. WIND1 stretched it only while the front's
+        // factor was strictly between 0 and 1 - and at the change the
+        // factor is exactly 0, so the sky crossed in its old fourteen
+        // seconds and THEN the wind rose over three hours: the storm
+        // arrived and the wind followed it, the reverse of what was
+        // asked for and of what the record claimed. `inLead()` is true
+        // from the change until the front's arrival.
+        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_SECONDS / (FRONT_LEAD_MIN * 60 / 12)) : dt;
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
+        // WIND2: the cloud DRIFT is integrated here, once, in real
+        // seconds - the one place the wind and the clock meet. Every deck
+        // reads this offset instead of multiplying wind by time, which
+        // with a wind that moves every frame made the clouds stream.
+        driftXZ[0] += weatherRowNow.wind[0] * dt;
+        driftXZ[1] += weatherRowNow.wind[1] * dt;
         enhancedSky.setState(skyState({
           minuteOfDay,
           weather: weatherName,
           classicMinutes: extra?.classicMinutes ?? 0,
           seconds,
+          drift: driftXZ,   // WIND2
           row: weatherRowNow,
         }));
         return;

@@ -157,10 +157,17 @@ export function createWindModel({ seed = 7 } = {}) {
       return Math.min(1, c * drift + f);
     },
 
-    /** Where the front is: 0 before and after, 1 at its height. The sky
-     *  may ease its row on this, so the clouds arrive BEHIND the wind. */
+    /** Where the front is: 0 before and after, 1 at its height. */
     frontProgress() {
       return front ? frontFactor(nowMin - front.at) : 0;
+    },
+
+    /** WIND2: true from the weather change until the front ARRIVES - the
+     *  whole lead, including its first minute when the factor is still
+     *  0. The sky eases its row on THIS, so the clouds arrive behind the
+     *  wind rather than ahead of it. */
+    inLead() {
+      return !!front && nowMin < front.at;
     },
 
     /** The wind's direction in radians: the day's, turned by the front. */

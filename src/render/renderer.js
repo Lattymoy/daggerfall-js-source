@@ -419,6 +419,7 @@ void main() {
 const CLOUD_SHADOW_GLSL = `
 uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
 uniform vec2 uCloudWind;
+uniform vec2 uCloudDrift;   // WIND2
 float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
 float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
   return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
@@ -492,7 +493,7 @@ void main() {
   // uShadowAmt is 0 for the classic skin and every interior: the branch
   // does not run and classic draws exactly what it drew.
   if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
-    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudWind * uCloudTime;
+    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudDrift;   // WIND2: integrated, not wind * time
     float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
     diff *= 1.0 - cov * uShadowAmt;
   }
@@ -862,6 +863,7 @@ export class Renderer {
     this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
     this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
     this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
+    this.tUCloudDrift = gl.getUniformLocation(this.terrainProgram, 'uCloudDrift');
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -2416,6 +2418,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
     gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
     gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
+    gl.uniform2f(this.tUCloudDrift, cs?.drift ? cs.drift[0] : 0, cs?.drift ? cs.drift[1] : 0);   // WIND2
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);
