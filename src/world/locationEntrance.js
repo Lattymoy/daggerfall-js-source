@@ -148,3 +148,42 @@ export function entranceOptionsForLocationType(locationType) {
     grounded: locationType !== LOCATION_TYPE_HOME_YOUR_SHIPS,
   };
 }
+
+/**
+ * PositionPlayerToLocation's OUTER overload (StreamingWorld.cs:1437-1467) -
+ * the arm Update() runs for RepositionMethods.RandomStartMarker once the
+ * terrain update has finished (:274-295). It reads the DFLocation that
+ * stands on the pixel, derives the two booleans off its LocationType and
+ * hands the private overload the location's block dimensions.
+ *
+ * GetPlayerLocationObject answering null is DFU's "No location found,
+ * fail back to terrain origin" (:1441-1446); this reports it as `null`
+ * and leaves the fallback to the host, which owns the terrain origin.
+ *
+ * THE SHIP TAKES THIS ARM LIKE ANY OTHER LOCATION. Map pixels (2,2) and
+ * (5,5) carry region 31 ("High Rock sea coast") locations 1 and 2, both
+ * named "Your Ship", both LocationTypes.HomeYourShips (14), both 1x1
+ * with a single SHIPAA00/SHIPAA01 block - so the two booleans come out
+ * useNearestStartMarker TRUE and grounded FALSE, and the boarding lands
+ * on the deck rather than at a terrain origin.
+ *
+ * @param {object} dfLocation MapsFile.getLocation output
+ * @param {object} [opts] origin / startMarkers / roll, as
+ *   positionPlayerToLocation takes them
+ * @returns {{pos:[number,number,number], yaw:number, side:string,
+ *            usedStartMarker:boolean, grounded:boolean}|null}
+ */
+export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], roll } = {}) {
+  const ext = dfLocation?.exterior?.exteriorData;
+  if (!ext) return null;   // :1441-1446 - no location object, no landing
+  const opts = entranceOptionsForLocationType(dfLocation.mapTableData?.locationType ?? 0);
+  const at = positionPlayerToLocation({
+    mapWidth: ext.width,
+    mapHeight: ext.height,
+    origin,
+    startMarkers,
+    useNearestStartMarker: opts.useNearestStartMarker,
+    ...(roll ? { roll } : {}),
+  });
+  return { ...at, grounded: opts.grounded };
+}

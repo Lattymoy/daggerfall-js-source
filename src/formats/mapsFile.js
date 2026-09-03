@@ -4,9 +4,14 @@
 //   - Region names, races, and temple faction ids are the FALL.EXE tables.
 //   - Each region is four consecutive BSA records: MAPPITEM, MAPDITEM,
 //     MAPTABLE, MAPNAMES.
-//   - Map names are 32-byte strides; two locations fill all 32 bytes without
-//     a terminator and the read overflows into the next record, so names are
-//     truncated to 32 chars exactly as DFU does.
+//   - Map names are 32-byte strides; two locations fill all 32 bytes with no
+//     terminator, so the terminator scan runs ON INSIDE the SAME MAPNAMES
+//     record and swallows the NEXT NAME SLOT - it never leaves the record
+//     (measured: Bhoriane slot 61 of 190 reads 1956..2009 of a 6084-byte
+//     record, Kambria slot 270 of 310 reads 8644..8701 of 9924). The 32-char
+//     truncation is still load-bearing: uncapped, those two locations get the
+//     following location's name glued on. The stride is what keeps the NEXT
+//     name correct, not the cap.
 //   - Map table longitude/latitude/type/discovered come from bitfields;
 //     LocationType uses uint wraparound ((4*bitfield) >> 27).
 //   - RMB block-name letter2 uses (byte)(2*blockCharacter) >> 6 - the 8-bit
@@ -18,6 +23,43 @@
 // quest/save systems - it belongs to the Systems arcs). PatchRegionIndex
 // shipped with the journal's click-through travel, which is its one
 // consumer; it is below REGION_NAMES, the table it reads.
+// ALSO not ported, and none of these was listed until the MAPS.BSA sweep
+// went looking for members rather than for values (road/maps-record):
+//   - GetMapPixelIDFromLongitudeLatitude (MapsFile.cs:386-401). Its DFU
+//     callers are all PlayerGPS discovery (PlayerGPS.cs:855, 879, 936, 993,
+//     1045, 1073, 1146, 1201). The port's PlayerGPS half does NOT recompute
+//     it and so has nothing to route through here: systems/discovery.js keys
+//     discoveredLocations by `mapId & 0xfffff`, which is DFU's own documented
+//     identity for the same number ("MapTableData.MapId & 0x000fffff =
+//     WorldPixelID", MapsFile.cs:391-393) and held for all 15,251 locations
+//     in the file. The two halves of the C# helper are both exported here -
+//     longitudeLatitudeToMapPixel and getMapPixelID - and systems/
+//     mapDirectory.js composes them for the pixel-keyed map dictionary.
+//   - WorldCoordToLongitudeLatitude (:341-347), SetClimateIndex and
+//     SetPoliticIndex (:905-946 - PAK WRITES, and this runtime reads
+//     immutable buffers), DefaultClimateSettings (:306-313 - DEFAULT_CLIMATE
+//     is exported and getWorldClimateSettings takes it), the
+//     ResolveRmbBlockName(dfLocation, x, y) overload (:1136-1147 - the port
+//     keeps getRmbBlockName plus the raw-components resolveRmbBlockName),
+//     LoadRegion(string) (:630-636 - loadRegion(getRegionIndex(name))), and
+//     the MinWorldCoordX/Z, MaxWorldCoordX/Z, MinWorldTileCoordX/Z and
+//     MinMapPixelX/Y constants. No port consumer reads any of them.
+//
+// Recorded DEPARTURES from the C# (each measured against the real
+// MAPS.BSA on road/maps-record):
+//   - getRegion / getRegionByName / getLocation / getLocationByName return
+//     NULL on failure where C# returns a default-constructed DFRegion or
+//     DFLocation with Loaded = false (MapsFile.cs:723-816). This is the
+//     port-wide convention and every consumer found - scenes/world.js,
+//     systems/quest/place.js, ui/travelMapWindow.js, systems/mapDirectory.js,
+//     ui/overworldMap.js, world/roadsProducer.js - already guards with
+//     `?.` / `?? null`.
+//   - loadRegion memoizes; C# re-reads the four records every call. See the
+//     comment at the cache check.
+//   - _readCStringSkip clamps its terminator scan at the record end; C#'s is
+//     unbounded and would throw. See the comment there.
+//   - readLocationIdFast drops C#'s WorldDataReplacement early return, which
+//     is unreachable here. See the comment there.
 // GetNameBankOfRegion SHIPPED with the Characters arc (C2): it lives at
 // characters/nameHelper.js getNameBankOfRegion over the REGION_RACES table
 // exported from here, and scenes/townTalk.js calls it on every directory
@@ -333,6 +375,12 @@ export class MapsFile {
   /** Load a region into memory and decompose it for use. */
   loadRegion(region) {
     if (region < 0 || region >= this.regionCount) return false;
+    // DEPARTURE (measured): C# LoadRegion has NO cache check - every call
+    // discards lastRegion and re-reads the four BSA records, rebuilding
+    // DFRegion (MapsFile.cs:653-680). Memoized here. The decoded region is
+    // identical either way, and autoDiscard's "at most one region resident"
+    // invariant survives, because the only call that skips the discard is a
+    // repeat of the region that is already the resident one.
     if (this._regions[region] !== null) return true;
 
     if (this.autoDiscard && this._lastRegion !== -1) this.discardRegion(this._lastRegion);
@@ -484,7 +532,17 @@ export class MapsFile {
     return result;
   }
 
-  /** LocationId with minimal overhead. Region must be loaded. */
+  /** LocationId with minimal overhead. Region must be loaded.
+   *
+   *  DEPARTURE (measured): C#'s FIRST statement is dropped. ReadLocationIdFast
+   *  (MapsFile.cs:1133-1137) returns
+   *  `regions[region].DFRegion.MapTable[location].LocationId` when it is
+   *  non-zero - that is how a WorldDataReplacement-ADDED location carries an
+   *  id that has no bytes in classic data. WorldDataReplacement is not ported,
+   *  so _readMapTable writes a literal `locationId: 0` into every row (:646)
+   *  and the early return is unreachable rather than missing. The byte walk
+   *  below agreed with the exterior record header's locationId for all 15,251
+   *  locations in MAPS.BSA. */
   readLocationIdFast(region, location) {
     const rec = this._regions[region];
     const v = new DataView(rec.mapPItem.buffer, rec.mapPItem.byteOffset, rec.mapPItem.byteLength);
@@ -518,8 +576,19 @@ export class MapsFile {
   }
 
   _readCStringSkip(bytes, r, stride) {
-    // Reads to null terminator (unbounded, as DFU's ReadCStringSkip), then
-    // advances exactly stride bytes.
+    // Reads to null terminator, then advances exactly stride bytes.
+    //
+    // DEPARTURE (measured): DFU's ReadCStringSkip -> ReadCString(reader, 0)
+    // (FileProxy.cs:380-408) finds the terminator with `while
+    // (reader.ReadByte() != 0)` and NO upper bound, so a run that reaches the
+    // end of the record buffer throws EndOfStreamException; inside
+    // ReadMapNames that propagates to ReadRegion's catch and LoadRegion
+    // returns false for the WHOLE region. The `end < bytes.byteLength` clamp
+    // below returns what it read instead. Equivalent on classic MAPS.BSA: of
+    // the 15,251 name slots in the 45 populated regions exactly TWO run past
+    // their 32-byte stride, and neither reaches its record end (Bhoriane
+    // 1956..2009 of 6084, Kambria 8644..8701 of 9924), so the clamp never
+    // fires - it is a refusal to crash on data classic does not contain.
     let end = r.pos;
     while (end < bytes.byteLength && bytes[end] !== 0) end++;
     let s = '';
@@ -542,7 +611,12 @@ export class MapsFile {
       let mapName = this._readCStringSkip(bytes, r, 32);
       // Two locations fill all 32 bytes with no terminator ("The Unfortunate
       // Porcupine Hostel" in Bhoriane, "The Feather and Barbarian Tavern" in
-      // Kambria); cap at 32 chars to prevent overflow into the next record.
+      // Kambria). The uncapped scan stays INSIDE this MAPNAMES record and
+      // swallows the NEXT NAME SLOT - "The Unfortunate Porcupine HostelThe
+      // Yeomsley Cemetery", "The Feather and Barbarian TavernGentle Martyr of
+      // Zenithar" - so the cap protects the name, not the record. The next
+      // name is read correctly either way: the reader advances by the 32-byte
+      // stride, never by what the scan consumed.
       if (mapName.length > 32) mapName = mapName.slice(0, 32);
       dfRegion.mapNames[i] = mapName;
       if (!dfRegion.mapNameLookup.has(mapName)) dfRegion.mapNameLookup.set(mapName, i);

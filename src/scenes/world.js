@@ -150,9 +150,11 @@ import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocat
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-// The court release's RandomStartMarker arm (StreamingWorld's
-// PositionPlayerToLocation), the law and its two location-type reads.
-import { positionPlayerToLocation, locationStartMarkers, entranceOptionsForLocationType } from '../world/locationEntrance.js';
+// The RandomStartMarker arm (StreamingWorld's PositionPlayerToLocation),
+// the law and its two location-type reads. TWO callers reach it here -
+// the court release and the ship's boarding - because DFU reaches it
+// from one place: TeleportToCoordinates(x, y, RandomStartMarker).
+import { locationArrivalLanding, locationStartMarkers } from '../world/locationEntrance.js';
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
@@ -2691,11 +2693,49 @@ export async function bootWorld(canvas, renderer, params, status) {
       }),
     });
   };
+  /** StreamingWorld's RandomStartMarker landing for the location that
+   *  stands on a BUILT map pixel, in that pixel's own local frame.
+   *
+   *  PositionPlayerToLocation (:1437-1467) reads the DFLocation, builds
+   *  the location origin DFU builds at :1452-1453 - the tile origin in
+   *  world units, y = 2.0f * MeshReader.GlobalScale - and hands the law
+   *  the block dimensions plus the location's start markers. buildPixel's
+   *  own `locOrigin` is that same vector with the pixel's average height
+   *  already in it, so it is preferred whenever the pixel is standing.
+   *
+   *  The markers are the location's archive-199 record-10 editor flats,
+   *  the same flats buildPixel already collects for the exterior NPCs,
+   *  read in the LOCATION frame and handed the law with the origin, so
+   *  the arithmetic is entirely DFU's.
+   *
+   *  Null is DFU's "No location found, fail back to terrain origin"
+   *  (:1441-1446) - the caller's own default landing stands in for it. */
+  function locationLandingFor(px, py) {
+    const key = `${px},${py}`;
+    const dfLoc = locationIndex.get(key);
+    if (!dfLoc?.exterior?.exteriorData) return null;
+    const b = built.get(key);
+    const tilePos = getLocationTerrainTileOrigin(dfLoc);
+    const origin = b?.locOrigin
+      ? [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]]
+      : [tilePos.x * tileSide, 2.0 * 0.025, tilePos.y * tileSide];
+    const startMarkers = b?.locBlocks
+      ? locationStartMarkers(b.locBlocks.map((bl) => ({
+        originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
+      })))
+      : [];
+    const at = locationArrivalLanding(dfLoc, { origin, startMarkers });
+    if (!at) return null;
+    // The location frame IS the built pixel's local frame; only the
+    // vertical compensation the streamer carries has to be added back.
+    return { pos: [at.pos[0], at.pos[1] + state.compensation[1] + 2, at.pos[2]], yaw: at.yaw, grounded: at.grounded };
+  }
+
   /** The teleport core fast travel and the quickload share: destroy
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null } = {}) {
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -2740,21 +2780,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     let dest;   // `finally`: a throwing build must not leave the poll off
     try { dest = await buildPixel(first.px, first.py); }
     finally { _seasonStraightening = false; }
+    // TeleportToMapPixel STORES the reposition method and calls
+    // InitWorld (:1076-1095); Update() applies it only once the terrain
+    // update has finished (:266-295). So the RandomStartMarker arm runs
+    // HERE, against the pixel that has just been built - its location
+    // origin, its blocks' start markers, and the streamer's new
+    // compensation - and never against the pixel being left.
+    const landing = reposition === REPOSITION.RandomStartMarker ? locationLandingFor(px, py) : null;
+    const local = landing?.pos ?? localPos;
+    // `grounded` is StreamingWorld.RepositionPlayer's own last argument
+    // (:1587, :1592), which the location arm derives from the
+    // LocationType: TRUE for every location but HomeYourShips.
+    const ground = landing ? landing.grounded : grounded;
     // PositionPlayerToLocation ends in FixStanding (StreamingWorld
     // :1597-1608): the arrival is snapped to what is under it, not
     // dropped from 2u up. The pixel is built by now, so the collider
     // has its terrain and its blocks; nothing beneath leaves the +2
     // (and gravity) as the fallback it always was.
-    const raw = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
-    // `grounded` is StreamingWorld.RepositionPlayer's own last argument
-    // (:1587, :1592), which the location-entrance arm passes TRUE for
-    // every location but HomeYourShips: the entrance point is computed
-    // on the location's flat origin plane and FixStanding drops it onto
-    // whatever the terrain actually is. A localPos WITHOUT it stands
-    // exactly where it was told (the ship's remembered deck).
-    const pos = walkMode && (!localPos || grounded) ? floorLanding(collider, raw) : raw;
+    const raw = local ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    // The entrance point is computed on the location's flat origin
+    // plane and FixStanding drops it onto whatever the terrain actually
+    // is; a landing WITHOUT grounded stands exactly where it was told -
+    // the ship's deck, which is above the water the terrain would give.
+    const pos = walkMode && (!local || ground) ? floorLanding(collider, raw) : raw;
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
+    // PositionPlayerToLocation sets the facing itself, through
+    // PlayerMouseLook.SetFacing (:1552-1584), so the yaw lands with the
+    // position rather than being left to the caller.
+    if (landing) cam.yaw = landing.yaw;
     // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a
     // new origin (fast travel, quickload); CreateFoe's pending waves
     // invalidate across live AND scheduled quests.
@@ -2792,35 +2846,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    */
   function positionPlayerAtLocationEntrance() {
     const px = playerTravelPixel();
-    const key = `${px.x},${px.y}`;
-    const dfLoc = locationIndex.get(key);
+    const dfLoc = locationIndex.get(`${px.x},${px.y}`);
     if (!dfLoc?.exterior?.exteriorData) return;   // HasLocation false - DFU teleports nowhere
-    const b = built.get(key);
-    const tilePos = getLocationTerrainTileOrigin(dfLoc);
-    // The location origin DFU builds at :1452-1453: the tile origin in
-    // world units, y = 2.0f * MeshReader.GlobalScale. buildPixel's
-    // locOrigin is that same vector with the pixel's own average height
-    // already in it, so it is preferred when the pixel is standing.
-    const origin = b?.locOrigin
-      ? [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]]
-      : [tilePos.x * tileSide, 2.0 * 0.025, tilePos.y * tileSide];
-    const opts = entranceOptionsForLocationType(dfLoc.mapTableData?.locationType ?? 0);
-    const markers = b?.locBlocks
-      ? locationStartMarkers(b.locBlocks.map((bl) => ({
-        originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
-      })))
-      : [];
-    const at = positionPlayerToLocation({
-      mapWidth: dfLoc.exterior.exteriorData.width,
-      mapHeight: dfLoc.exterior.exteriorData.height,
-      origin, startMarkers: markers, useNearestStartMarker: opts.useNearestStartMarker,
-    });
-    // The pixel is re-origined by the teleport, so the location frame
-    // above IS the destination pixel's local frame; only the vertical
-    // compensation the streamer carries has to be added back.
-    const local = [at.pos[0], at.pos[1] + state.compensation[1] + 2, at.pos[2]];
-    _teleportToPixel(px.x, px.y, local, { grounded: opts.grounded })
-      .then(() => { cam.yaw = at.yaw; })
+    _teleportToPixel(px.x, px.y, null, { reposition: REPOSITION.RandomStartMarker })
       .catch((e) => console.error('[court] reposition failed:', e));
   }
 
@@ -2886,11 +2914,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TR-AUDIT F-F1: READ the reposition rather than infer it from
     // `restore`. StreamingWorld's RandomStartMarker is
     // PositionPlayerToLocation, which puts you at a random SIDE of the
-    // location at that pixel and FALLS BACK TO THE TERRAIN ORIGIN when
-    // the pixel has none (:1437-1447). The ship coords are open sea, so
-    // the fallback is the arm that runs and the port's own default
-    // landing stands in for it - FLAGGED for the first session with
-    // ARENA2: confirm map pixels (2,2) and (5,5) carry no location.
+    // location at that pixel and falls back to the terrain origin only
+    // when the pixel has none (:1437-1447).
+    //
+    // MEASURED, 2026-09-03, against the owner's real MAPS.BSA: the two
+    // ship pixels are NOT open sea. Map pixel (2,2) carries region 31
+    // ("High Rock sea coast") location index 1, "Your Ship", mapId
+    // 1050578, LocationTypes.HomeYourShips (14), 1x1, block
+    // SHIPAA00.RMB; map pixel (5,5) carries region 31 index 2, "Your
+    // Ship", mapId 2102157, block SHIPAA01.RMB - and those two mapIds
+    // are systems/banking.js SHIP_INTERIOR_MAP_IDS exactly. Nothing
+    // else in the 62 regions stands on either pixel.
+    //
+    // So the fallback never runs and this arrival is an ORDINARY
+    // location arrival: `reposition` rides into the teleport core, the
+    // core runs the location arm once the destination pixel is built,
+    // and HomeYourShips' own two booleans (useNearestStartMarker true,
+    // grounded false - :1462-1464) put the player on the deck at a
+    // random side of the ship's block rather than at a terrain origin
+    // dropped to sea level. The pin is tr4_ship.test.js's data gate.
     const localPos = t.reposition === REPOSITION.None ? t.restore.pos : null;
     // A10 - THE SCENE CACHE ROUND THE TELEPORT (:382-388, :393-398).
     // BOTH arms of the ship do the same three things in the same
@@ -2916,7 +2958,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // because a pile that came back in local ones would land wherever
     // the floating origin happened to be.
     cacheExteriorScene(here);
-    await _teleportToPixel(t.go.x, t.go.y, localPos);
+    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition });
     restoreExteriorScene(t.go);
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
