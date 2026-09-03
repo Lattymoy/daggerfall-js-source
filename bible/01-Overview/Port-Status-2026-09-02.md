@@ -791,7 +791,7 @@ ships, which is the warning the section's own preamble opens with.
     clock, so the traveled window is not replayed) and `:1910` (the
     ":524-525" clear that lets spawns resume). AUDIT 54 re-resolved this
     pair - both cites had drifted off the lines they name.
-11. **`:522` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
+11. **`:534` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
     `src/formats/mapsFile.js:104`, with the C# line range cited.
 12. **`:578` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
