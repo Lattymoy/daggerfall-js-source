@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:699)". Section A carried no widget row at all -
+//     (Port-Ledger.md:700)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -105,6 +105,31 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   assert.match(read('test/doctrine.test.js'), /!\/\\bDEPARTURES\?\\b\/\.test\(text\)/,
     'the doctrine gate no longer scans the PLURAL departure shout');
 
+  // AUDIT 54 (records): the SAME shape, found again in a file the
+  // doctrine gate cannot see. `ui/pauseWindow.js` drew the port's build
+  // tag where DaggerfallPauseOptionsWindow.cs draws VersionInfo, and
+  // closed the sentence with "(Ledger A: VersionInfo strings are DFU's
+  // identity, not this port's)" - a live departure claiming an approval
+  // nobody had written: section A carried no version row at all, and
+  // doctrine.test.js:238 skips the file because it shouts no DEPARTURE
+  // token. The row exists now and, like TB1, is cited BY NAME.
+  const verRows = rows.filter((r) => /THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG/.test(r.s));
+  assert.equal(verRows.length, 1, 'section A carries exactly one pause-window version row');
+  for (const f of ['src/ui/pauseWindow.js', 'src/buildTag.js']) {
+    assert.ok(verRows[0].s.includes(f), `the version row does not name ${f}`);
+  }
+  const pause = read('src/ui/pauseWindow.js');
+  const pauseFlat = pause.replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+  assert.match(pauseFlat, /Ledger A carries it as THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG/,
+    'pauseWindow.js does not cite the version row by name');
+  assert.equal(/Port-Ledger\.md:\d+/.test(pause), false,
+    'pauseWindow.js cites the Ledger by line number, which is what rots');
+  // ...and the departure it describes is still LIVE, or the row is the lie.
+  assert.match(pause, /import \{ BUILD_TAG \} from '\.\.\/buildTag\.js';/,
+    'the version line no longer draws the port build tag - re-read the Ledger row before editing this');
+  assert.match(pause, /const ver = `project-dagger \$\{BUILD_TAG\}`;/,
+    'the substituted string is not the one the Ledger row records');
+
   // Port-Status counts section A; the count moves when a row is added.
   const m = /section A carries \*\*(\d+) rows, (\d+) struck - (\d+) standing/.exec(read(STATUS));
   assert.ok(m, 'Port-Status no longer states section A\'s tally');
@@ -156,6 +181,52 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
     .map((m) => Number(m[1]));
   assert.ok(stated.length >= 2, 'Port-Status no longer states what the tool answers');
   for (const n of stated) assert.equal(n, count, 'a Port-Status count drifted from Home.md');
+
+  // AUDIT 54 (records): the two "answers N" sentences were the only
+  // thing pinned here, so Port-Status went on stating THREE other
+  // current figures in prose the gate never read - "(10 after Wave E's
+  // seven closures and QX1's eighth)" at the head, "twelve sites and
+  // six rows" in the one-sentence version, and a list-1 heading that
+  // said TWELVE STAND over a list whose own arithmetic paragraph said
+  // seven. Prose is a count like any other, so the PROSE is pinned:
+  // every figure below is read out of the page and compared with the
+  // list Home.md actually holds.
+  const WORDS = { seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+    thirteen: 13, fourteen: 14, seventeen: 17, nineteen: 19 };
+  const statusText = read(STATUS);
+  const prose = [
+    [/(\d+) stand after Wave E/, 'the head paragraph\'s "N stand" figure'],
+    [/worked that list down to \*\*(\w+) sites/, 'the one-sentence version\'s site count'],
+    [/## 1\. The nineteen open flags this was measured over - (\w+) STAND/, 'the list-1 heading'],
+    [/\*\*(\w+) sites carry a blocker\*\*/, 'the Overall section\'s blocker count'],
+  ];
+  for (const [pick, what] of prose) {
+    const hit = pick.exec(statusText);
+    assert.ok(hit, `Port-Status no longer states ${what}`);
+    const n = /^\d+$/.test(hit[1]) ? Number(hit[1]) : WORDS[hit[1].toLowerCase()];
+    assert.ok(n !== undefined, `${what} is written as "${hit[1]}", which this pin cannot read as a number`);
+    assert.equal(n, count, `${what} drifted from Home.md's open-flag list`);
+  }
+
+  // ...and the LIST ITSELF, which is what a reader counts. A closure
+  // that strikes nothing leaves a live-sounding row behind, and the
+  // heading above cannot see it: three entries stood as blocked in
+  // list 1 while the same page struck them in section 2.
+  const doc = lines(STATUS);
+  const lo = doc.findIndex((l) => l.startsWith('## 1. The nineteen open flags'));
+  const hi = doc.findIndex((l) => l.startsWith('## 2. '));
+  assert.ok(lo > 0 && hi > lo, 'Port-Status list 1 not found');
+  const body = doc.slice(lo, hi);
+  // One bullet may name two SITES (playerTorch's pair, "**`:12`** and
+  // **`:51`**"), and the list is a list of sites, so sites are what is
+  // counted: the bullet's own line plus its continuation.
+  let sites = 0;
+  body.forEach((l, i) => {
+    if (!/^- \*\*`src\//.test(l)) return;
+    sites += `${l}\n${body[i + 1] ?? ''}`.split('**`src/').length - 1;
+  });
+  assert.equal(sites, count,
+    `list 1 carries ${sites} unstruck sites against Home.md's ${count} - a closure struck nothing`);
 
   // ...and the wave's six closures are NAMED, because "leaving 17" was
   // readable only as long as nobody asked which two.
@@ -218,6 +289,29 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
   for (const m of text.matchAll(/(?:rides row|are ledger row) `:(\d+)`/g)) {
     assert.match(ledgerLine(Number(m[1])), /FaceUVTool's 1,803-UV residual/,
       'a loose FaceUVTool row cite names another row');
+  }
+
+  // AUDIT 54 (records): the PROSE form, which nothing read. Three
+  // "Ledger row NNN" cites outside the numbered list were stale by the
+  // same six lines section 2 was re-resolved for and this pin never
+  // saw, because they carry no backtick-colon shape - "Ledger row
+  // 574's adjudication" landed on the vampirism row, "row 562's" on
+  // RespawnPlayer, "row 511's" on quest monster names. They are
+  // written in section 2's own `:NNN` idiom now, and resolved here.
+  const PROSE_ROWS = [
+    [/Ledger row `:(\d+)`'?s? one residue is the phone path/, /THE CLASSIC `\.SAV` READER/],
+    [/Ledger row `:(\d+)`'?s residue list is spent/, /FAST TRAVEL residue/],
+  ];
+  for (const [pick, anchor] of PROSE_ROWS) {
+    const hit = pick.exec(text);
+    assert.ok(hit, `Port-Status no longer carries the prose row cite ${anchor}`);
+    assert.match(ledgerLine(Number(hit[1])), anchor, 'a prose "Ledger row" cite names another row');
+  }
+  const dungeonCites = [...text.matchAll(/Ledger row `:(\d+)`(?:'s adjudication|\. The two WINDOWS)/g)];
+  assert.equal(dungeonCites.length, 2, 'the standalone-dungeon adjudication is no longer cited twice');
+  for (const m of dungeonCites) {
+    assert.match(ledgerLine(Number(m[1])), /THE STANDALONE DUNGEON HOST HAS NO TRADE WINDOW/,
+      'the standalone-dungeon adjudication cites another row');
   }
 
   // ...and the section's own bounds and tallies, which drifted with them

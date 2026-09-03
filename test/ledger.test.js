@@ -16,7 +16,7 @@
 // holds over Testing.md's suite count.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
@@ -327,4 +327,36 @@ test('AUDIT 54 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(status, /Removed, then re-integrated/, 'and says what actually happened');
   assert.ok(!/Basic Roads' design credited, none of its data/.test(rootFile('bible/Home.md')),
     'Home.md still says none of his data ships');
+
+  // AUDIT 54 (records): F5 swept the BIBLE and stopped there, so two
+  // `src/` headers went on reasoning from the retired premise - and
+  // both used it to say something about themselves. windmills.js
+  // called itself "the only departure of its kind" because the roads
+  // "were removed whole", and dataSource.js gave the removal as the
+  // reason its derived store has no consumer. The store really has
+  // none, and windmills really is enhanced-only; only the REASONS were
+  // false. So the sweep is a sweep: no src/ site may rest on the
+  // premise, and each one's own true claim is pinned beside it.
+  /** A header read as PROSE: comment markers off, wraps closed. */
+  const prose = (p2) => rootFile(p2).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+  for (const f of ['src/world/windmills.js', 'src/scenes/dataSource.js']) {
+    const flat = prose(f);
+    assert.ok(!/road system was removed whole/.test(flat),
+      `${f} still rests on "the road system was removed whole"`);
+    assert.ok(!/the only departure of its kind/.test(flat),
+      `${f} still calls itself the only departure of its kind - roads are one again`);
+    assert.match(flat, /ROADS 22-25/, `${f} does not cite the row that retired the premise`);
+  }
+  const mills = prose('src/world/windmills.js');
+  assert.match(mills, /ENHANCED-ONLY DEPARTURE \(Ledger A\)/, 'windmills is still enhanced-only, and must still say so');
+  assert.match(mills, /ALWAYS ON IN BOTH LANES/, 'and must say how the roads row differs from it');
+  const ds = rootFile('src/scenes/dataSource.js');
+  assert.match(ds, /IT CURRENTLY HAS NO CONSUMER\./, 'the derived store’s true claim went with the false reason');
+  assert.match(prose('src/scenes/dataSource.js'), /roadsCache\.js/, 'and must say where the rebuilt roads cache instead');
+  const walk = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`)
+      : e.name.endsWith('.js') ? [`${dir}/${e.name}`] : []));
+  const consumers = walk('src').filter((f) => f !== 'src/scenes/dataSource.js'
+    && /storeDerived\(/.test(rootFile(f)));
+  assert.deepEqual(consumers, [], 'the derived store has a consumer now - dataSource.js’s header says it has none');
 });

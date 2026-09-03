@@ -40,8 +40,14 @@ const MW_STORE = 'morrowind';
  *  an artifact derived from the old folder is worse than rebuilding.
  *
  *  IT CURRENTLY HAS NO CONSUMER. The road network was the first and
- *  the only one, and the road system was removed whole on 2026-08-29
- *  (Mac's call). The store, its sweep and its version stay: they are
+ *  the only one, and its travel and render halves were removed on
+ *  2026-08-29 (Mac's call). ROADS 22-25 brought roads BACK on
+ *  2026-09-02 - Port-Ledger section A, the ROADS 22-25 row - and they
+ *  did NOT come back through this door: the rebuilt network bakes into
+ *  its own IndexedDB database (`src/world/roadsCache.js`, DB
+ *  'daggerfall-roads', with its own GENERATOR_VERSION), so this generic
+ *  store still has no caller. The store, its sweep and its version
+ *  stay: they are
  *  generic plumbing, the next derived artifact will want exactly this
  *  contract, and tearing out an IndexedDB store to reclaim nothing
  *  would churn the schema and four unrelated suites that pin the store
@@ -373,7 +379,9 @@ export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
  *  strictly better than a store-level stamp that can only answer
  *  "different", never "damaged".
  *
- *  No caller since the road system was removed - see DERIVED_STORE. */
+ *  No caller: the one consumer this ever had was the removed road bake,
+ *  and the re-integrated roads cache into their own DB - see
+ *  DERIVED_STORE. */
 export async function storeDerived(key, bytes) {
   const d = await getDb();
   await new Promise((res, rej) => {
