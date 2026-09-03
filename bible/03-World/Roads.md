@@ -530,3 +530,20 @@ store is injectable, which is what lets the law be pinned in node. A
 job that arrives during the lookup queues behind it, as it queued
 behind the synchronous build, so no chunk is ever roadless. The boot
 log's stats carry `cached: true` on a hit.
+
+## ROADS 25 - the first pixels were painted before the network landed (2026-09-03)
+
+Mac: "some roads are missing even though they show on the map." The
+network loads asynchronously (`loadModRoads().then(...)`) while the
+world starts building terrain at once, so the first pixels - the ones
+around the spawn - were painted with `roads = null` and then KEPT. The
+map rebuilt itself when the network landed (ROADS 7's grid-cache key);
+the terrain never did. The generator now says whether a network was
+present (`withRoads`), the host keeps it on the pixel, and when the
+network lands every pixel painted without one is torn down and
+rebuilt - on both arrival paths, since the mod-data path returns
+early. A pixel already in flight when the network landed arrives
+roadless after the sweep and goes straight back, the worker having the
+network by then because message order is kept. Pinned; three mutants
+dead, one of them the early return that would have skipped the sweep
+on the common path.
