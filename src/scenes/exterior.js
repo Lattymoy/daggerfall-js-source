@@ -118,7 +118,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { isEnhanced } from '../systems/uiSkin.js';
 import { labWindSlider } from '../render/labGrass.js';   // GR2: the sky's wind on the lab's slider
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
+import { setWeather, currentWeather, tickWeather, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold, setCrimeCommitted } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -282,6 +282,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const weatherTerms = () => ({ sun: weatherSun, dim: 1, fog: weatherFog });
   let wxNow = weatherTerms();
   let wxFrom = wxNow;
+  let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
     weatherFog = fogForWeather(w);
@@ -2187,8 +2188,18 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (currentWeather() !== weather) applyWeather(currentWeather());   // drift-aware (world.js's twin note)
     }
     // WX2: the front's word for this frame (world.js's twin note).
-    const enhancedFront = !!sky?.cloudShadow;
-    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000 });
+    // ?front=off is the slice's kill switch (the arc's rule: every slice
+    // has one) - the row's numbers whole and DFU's cap on the cut, under
+    // the enhanced sky, for gates and shots that want WX1's volume.
+    const enhancedFront = !!sky?.cloudShadow && params.get('front') !== 'off';
+    // WX2a (AUDIT 57): a change the player was not PRESENT for - a load,
+    // a travel landing, a respawn roll, a day rolled while underground -
+    // is a jump, not a front. The sim stamps it; the sky drops its eased
+    // row and the wind its front, and the ground takes the word whole.
+    const jump = weatherJumpStamp() !== seenJump;
+    seenJump = weatherJumpStamp();
+    if (jump) sky.weatherJump();
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
@@ -2207,7 +2218,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     // light, never a multiplier on the sun. The player keeps ticking on
     // both skins - it is the clip schedule the Audio arc reads.
     // ?flashtest pins the strobe on for shots.
-    const strobe = lightning ? lightning.tick(dt) : 1;
+    const strobeNow = lightning ? lightning.tick(dt) : 1;   // the player keeps ticking on both skins - the schedule is its own
+    // WX2a (AUDIT 57): under the front the FLASH waits for the storm to be
+    // HERE. The player was built at the sim's cut, so the strobe lit a
+    // sky that was still mostly clear for the whole three-hour lead, and
+    // went on after the storm had cleared while the last drops drained.
+    // The thunder one-shots already follow the shown mode through the
+    // ambience preset; the flash now follows the same word.
+    const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
+    const strobe = lightningShown ? strobeNow : 1;
     const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.

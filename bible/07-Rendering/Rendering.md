@@ -149,7 +149,40 @@ directory by `test/audit18_bible_docs.test.js`:
   whole, draws DFU's cap, and never reads the module; the lab's shaders
   are untouched (WX1's byte-exact pins hold - the fade is in the count,
   not the fragment). Not seen: no ARENA2 here; it goes to Mac's eyes by
-  the Incident's law, with `?wseed` replaying a day's rolls.
+  the Incident's law, with `?wseed` replaying a day's rolls. `?front=off`
+  is the slice's kill switch: the row's numbers whole and DFU's cap on
+  the cut under the enhanced sky, for gates and shots that want WX1's
+  volume. **WX2a (AUDIT 57, 2026-09-03): five findings in WX2, all
+  mine.** F1 the storm's FLASH began at the sim's cut - the player was
+  built there - and lit a sky that was still mostly clear for the whole
+  three-hour lead, then went on after the storm had cleared while the
+  last drops drained; the thunder one-shots already followed the shown
+  mode through the ambience preset, and the flash follows the same word
+  now (the player still ticks every frame on both skins). F2 the slice
+  had no kill switch where every slice in the arc has one: `?front=off`.
+  F3 THE PLAYER ARRIVING IS NOT THE WEATHER ARRIVING: WIND1 built a
+  three-hour front at every change of the word, and DFU's own paths hand
+  it changes the player was not present for - a load, a fast-travel
+  landing, a teleport's respawn roll, a day's roll drained on the first
+  frame back out of a dungeon. WX2 made the cost visible: a rainy save
+  loaded dry for a quarter of an hour. The sim stamps those (a load
+  always; a landing, a respawn roll and a drain more than thirty minutes
+  after its roll when they change the word; a LIVE day roll never), the
+  hosts read the stamp once a frame, the controller drops its eased row
+  (the first-call law takes the new one whole) and the wind its front,
+  and the ground takes the word whole - no crossing, no taper, the drops
+  down on the frame. A live roll under the sky is still a front. F4 the
+  WX2 record claimed `?wseed` replays a day's rolls; it reached the sky's
+  Rain1/Rain2 pick and the episode's peak and never the wind's own roll -
+  the controller seeds the wind model from it now. F5 the record's
+  numbers were not pinned to the module's - the ranges and the windows
+  quoted here and in the Ledger row are held against PRECIP_PEAK,
+  PRECIP_IN and PRECIP_OUT. Sound under the lanes walked: the tick order
+  (the front reads the model one frame behind the sky, and the jump is
+  told to the sky first); the classic path byte-identical in every term;
+  WX1's byte-exact shaders untouched; both hosts wired alike; `?weather=`
+  still pins the sim and a pinned boot is never a front; the stub audio
+  handles. Still unseen: all of it, in a browser, with ARENA2.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing

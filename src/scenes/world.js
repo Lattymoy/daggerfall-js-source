@@ -228,7 +228,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -442,6 +442,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const weatherTerms = () => ({ sun: weatherSun, dim: LAB_DIM[weather] ?? 1, fog: weatherFog });
   let wxNow = weatherTerms();
   let wxFrom = wxNow;
+  let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
     weatherFog = scaleFogForDistance(fogForWeather(w), fogDistance);   // EV4
@@ -6303,8 +6304,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WX2: the front's word for this frame. Under the enhanced sky the
     // arrival is WIND1's front, read off the controller; under the
     // classic sky it is 1 and the terms are the weather's own.
-    const enhancedFront = !!sky?.cloudShadow;
-    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000 });
+    // ?front=off is the slice's kill switch (the arc's rule: every slice
+    // has one) - the row's numbers whole and DFU's cap on the cut, under
+    // the enhanced sky, for gates and shots that want WX1's volume.
+    const enhancedFront = !!sky?.cloudShadow && params.get('front') !== 'off';
+    // WX2a (AUDIT 57): a change the player was not PRESENT for - a load,
+    // a travel landing, a respawn roll, a day rolled while underground -
+    // is a jump, not a front. The sim stamps it; the sky drops its eased
+    // row and the wind its front, and the ground takes the word whole.
+    const jump = weatherJumpStamp() !== seenJump;
+    seenJump = weatherJumpStamp();
+    if (jump) sky.weatherJump();
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
@@ -6323,7 +6334,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so the storm is sound-only, and the line this models sets an
     // absolute intensity on that separate light, not the sun). The
     // player ticks on both skins: the clip schedule is the Audio arc's.
-    const strobe = lightning ? lightning.tick(dt) : 1;
+    const strobeNow = lightning ? lightning.tick(dt) : 1;   // the player keeps ticking on both skins - the schedule is its own
+    // WX2a (AUDIT 57): under the front the FLASH waits for the storm to be
+    // HERE. The player was built at the sim's cut, so the strobe lit a
+    // sky that was still mostly clear for the whole three-hour lead, and
+    // went on after the storm had cleared while the last drops drained.
+    // The thunder one-shots already follow the shown mode through the
+    // ambience preset; the flash now follows the same word.
+    const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
+    const strobe = lightningShown ? strobeNow : 1;
     const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.

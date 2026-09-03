@@ -12,6 +12,12 @@ import {
 } from '../src/systems/weatherFront.js';
 import { createWindModel, FRONT_LEAD_MIN, FRONT_HOLD_MIN, FRONT_TAIL_MIN } from '../src/systems/wind.js';
 import { FOG_SETTINGS } from '../src/world/weather.js';
+import {
+  resetWeatherSim, setWeather, currentWeather, restoreWeather, applyClimateWeather, weatherRespawn, tickWeather,
+  rollClimateWeathersForDay, rollWeather, weatherJumpStamp, STALE_DRAIN_MINUTES, WEATHER_TYPES,
+} from '../src/systems/weatherSim.js';
+import { CLIMATES } from '../src/formats/mapsFile.js';
+import { seasonValue, dateFromClassicMinutes } from '../src/systems/gameDate.js';
 import { AmbientEffects } from '../src/systems/ambientEffects.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -243,8 +249,8 @@ test('WX2 the renderer: the lab draw scales the profile by the intensity and dra
 test('WX2 the hosts: both read the front under the enhanced sky only, and the classic path takes the row\u2019s own terms whole', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow;/, `${host}: the front rides the enhanced sky`);
-    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000 \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic`);
+    assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow && params\.get\('front'\) !== 'off';/, `${host}: the front rides the enhanced sky, and ?front=off is its kill switch`);
+    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along`);
     assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, weatherTerms\(\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);
     assert.match(h, /ambience\.setPreset\(presetForExterior\(enhancedFront \? soundWeather\(fx, weather\) : weather, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim`);
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
@@ -260,4 +266,130 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
   // is 1 and the front is a pass-through: pinned at the seam
   const sh = read('src/scenes/shared.js');
   assert.ok(sh.indexOf('windModel.tick(') > sh.indexOf('if (enhancedSky) {'), 'the model ticks inside the enhanced branch only');
+});
+
+// ═══ WX2a - AUDIT 57: the front audited ═══════════════════════════════
+
+test('AUDIT 57 F3 (sim): a change the player was not present for stamps a JUMP - a load, a travel landing, a respawn roll, a stale drain - and a live day roll does not', () => {
+  resetWeatherSim();
+  try {
+    const ci = CLIMATES.Woodlands;
+    const NOW = 20 * 1440 + 600;
+    const season = seasonValue(dateFromClassicMinutes(NOW));
+    // two rolls that land on DIFFERENT words for this climate and season
+    // rollWeather answers the ENUM (the array's byte); the sim's word is the name
+    const lo = WEATHER_TYPES[rollWeather(ci, season, () => 0.001)]; const hi = WEATHER_TYPES[rollWeather(ci, season, () => 0.999)];
+    assert.notEqual(lo, hi, 'the table has two ends');
+    const stamp = () => weatherJumpStamp();
+    // boot: the first drain rolls and applies, and is not a jump (the hosts' models are fresh anyway)
+    tickWeather(NOW, ci, () => 0.001);
+    assert.equal(stamp(), 0, 'a boot is not a jump');
+    // a LIVE day roll, drained on the frame it happened, is a front
+    rollClimateWeathersForDay(NOW + 840, () => 0.999);
+    assert.equal(tickWeather(NOW + 840 + 1, ci), true, 'the drain applied the other end');
+    assert.equal(currentWeather(), hi);
+    assert.equal(stamp(), 0, 'a live drain is a front, not a jump');
+    // a STALE one - the roll happened while the player was inside - is a jump
+    rollClimateWeathersForDay(NOW + 2 * 1440, () => 0.001);
+    assert.equal(tickWeather(NOW + 2 * 1440 + STALE_DRAIN_MINUTES + 1, ci), true);
+    assert.equal(stamp(), 1, 'a drain more than the stale window after its roll is a jump');
+    // the same lateness with NO change stamps nothing
+    rollClimateWeathersForDay(NOW + 3 * 1440, () => 0.001);
+    assert.equal(tickWeather(NOW + 3 * 1440 + 200, ci), false);
+    assert.equal(stamp(), 1, 'no change, no jump');
+    // a fast-travel landing (OnInitWorld's apply) is a jump when it changes the word
+    rollClimateWeathersForDay(NOW + 4 * 1440, () => 0.999); tickWeather(NOW + 4 * 1440 + 1, ci);
+    const before = stamp();
+    assert.equal(applyClimateWeather(ci), false, 'the same slot: no change');
+    assert.equal(stamp(), before, '...and no jump');
+    rollClimateWeathersForDay(NOW + 5 * 1440, () => 0.001);
+    assert.equal(applyClimateWeather(ci), true);
+    assert.equal(stamp(), before + 1, 'a landing under a different sky is a jump');
+    // a respawn roll to a new climate base is a jump when it changes the word
+    setWeather(lo === 'sunny' ? hi : lo);
+    const b2 = stamp();
+    const changed = weatherRespawn(NOW + 6 * 1440, CLIMATES.Desert, () => (currentWeather() === 'sunny' ? 0.999 : 0.001));
+    assert.equal(stamp(), b2 + (changed ? 1 : 0), 'the respawn stamps exactly when it changed the word');
+    // a load always stamps: the player lands under the saved sky, whole
+    const b3 = stamp();
+    restoreWeather('rain');
+    assert.equal(currentWeather(), 'rain');
+    assert.equal(stamp(), b3 + 1, 'a restore is a jump');
+    resetWeatherSim();
+    assert.equal(stamp(), 0, 'the test seam clears it');
+  } finally { resetWeatherSim(); }
+});
+
+test('AUDIT 57 F3 (wind + controller): a jumped change builds no front and drops one that is up; ?wseed reaches the wind', () => {
+  const m = createWindModel({ seed: 7 });
+  m.tick(600, 'sunny');
+  m.jump();
+  assert.equal(m.state().jumpPending, true);
+  m.tick(601, 'thunder');
+  assert.equal(m.state().front, null, 'the player arrived under the storm: no front');
+  assert.equal(m.arrival(), 1, 'arrived');
+  assert.equal(m.state().jumpPending, false, 'the jump is spent on the tick that saw it');
+  m.tick(700, 'sunny');
+  assert.ok(m.state().front, 'the next real change builds as before');
+  assert.ok(m.arrival() < 1);
+  m.jump();
+  assert.equal(m.state().front, null, 'a jump drops the front that is up - the world it belonged to is gone');
+  assert.equal(m.arrival(), 1);
+  m.tick(701, 'sunny');
+  assert.equal(m.state().front, null, 'and a jump with no change of word builds nothing');
+  const sh = read('src/scenes/shared.js');
+  assert.match(sh, /weatherJump\(\) \{\s*\n\s*weatherRowNow = null;\s*\n\s*windModel\.jump\(\);/, 'the controller drops its eased row (the first-call law takes the new one whole) and tells the wind');
+  assert.match(sh, /const windModel = createWindModel\(\{ seed: Number\(params\.get\('wseed'\)\) \|\| 7 \}\);/, 'F4: ?wseed replays the wind\u2019s rolls too - the record claimed it and it did not');
+});
+
+test('AUDIT 57 F3 (front): a jumped change lands whole - no crossing, no taper, the drops down on the frame - and a later real change still builds', () => {
+  const f = createWeatherFront({ seed: 5 });
+  f.tick({ weather: 'sunny', arrival: 1 });
+  const s = f.tick({ weather: 'rain', arrival: 0, jump: true, dt: 1 / 60, tsec: 0 });
+  assert.equal(s.changed, false, 'nothing to cross');
+  assert.equal(s.from, 'rain'); assert.equal(s.to, 'rain');
+  assert.equal(s.t, 1, 'the arrival is 1 by contract, whatever the model\u2019s last frame said');
+  assert.ok(s.intensity > 0.1 && Math.abs(s.intensity - s.peak * wander(0, f.state().episode.phase)) < 1e-9, 'the drops land whole on the frame');
+  assert.equal(s.shown, 'rain');
+  assert.equal(f.state().outgoing, null, 'no episode tapers');
+  // a jump with the SAME word changes nothing
+  const same = f.tick({ weather: 'rain', arrival: 1, jump: true, dt: 1 / 60, tsec: 1 });
+  assert.equal(same.changed, false); assert.equal(same.shown, 'rain');
+  // and the next real change builds as WX2 does
+  const cut = f.tick({ weather: 'sunny', arrival: 0, dt: 1 / 60, tsec: 2 });
+  assert.equal(cut.changed, true); assert.equal(cut.from, 'rain'); assert.equal(cut.shown, 'rain', 'the rain tapers from here');
+  // a jump into a word with no precipitation, from rain, drains at once
+  const g = createWeatherFront({ seed: 5 });
+  g.tick({ weather: 'rain', arrival: 1 });
+  const dry = g.tick({ weather: 'sunny', arrival: 1, jump: true, dt: 1 / 60 });
+  assert.equal(dry.intensity, 0); assert.equal(dry.shown, null);
+});
+
+test('AUDIT 57 F1 + F2 + F3 (hosts): the flash waits for the storm, ?front=off is the kill switch, and the jump reaches the sky before the front', () => {
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = read(host);
+    assert.match(h, /const jump = weatherJumpStamp\(\) !== seenJump;\s*\n\s*seenJump = weatherJumpStamp\(\);\s*\n\s*if \(jump\) sky\.weatherJump\(\);\s*\n\s*const fx = weatherFront\.tick\(/, `${host}: the stamp is read once, the sky told first, the front told on the same tick`);
+    assert.match(h, /let seenJump = weatherJumpStamp\(\);/, `${host}: the boot's stamp is the baseline - a boot is never a jump`);
+    assert.match(h, /const lightningShown = !enhancedFront \|\| fx\.shown === 'storm' \? lightning : null;/, `${host}: the flash follows the shown storm under the front and the player on classic`);
+    assert.match(h, /const strobeNow = lightning \? lightning\.tick\(dt\) : 1;/, `${host}: the player ticks every frame regardless`);
+    assert.match(h, /const flash = params\.has\('flashtest'\) \? 2 : \(isEnhanced\(\) \? strobe : 1\);/, `${host}: ?flashtest still pins the flash on`);
+    assert.match(h, /params\.get\('front'\) !== 'off'/, `${host}: the kill switch`);
+  }
+});
+
+test('AUDIT 57 F5 (record): the Rendering entry and the Ledger row quote the constants the module holds', () => {
+  const r = read('bible/07-Rendering/Rendering.md');
+  const entry = r.slice(r.indexOf('**WX2 (2026-09-03) THE FRONT REACHES THE'), r.indexOf('- `enhancedSky.js` - ES1 the ENHANCED SKY'));
+  assert.ok(entry.length > 500, 'the WX2 entry stands');
+  const fmt = (r2) => `${r2[0]}..${r2[1].toFixed(r2[1] === 1 ? 1 : 2).replace(/0$/, '')}`;
+  for (const [mode, label] of [['rain', 'rain'], ['storm', 'storm'], ['snow', 'snow']]) {
+    const [lo, hi] = PRECIP_PEAK[mode];
+    const re = new RegExp(`${label}\\s+${String(lo).replace('.', '\\.')}\\.\\.${hi === 1 ? '1\\.0' : String(hi).replace('.', '\\.')}`);   // the entry wraps its lines
+    assert.match(entry, re, `Rendering.md names the ${mode} range the module holds (${fmt([lo, hi])})`);
+    assert.match(read('bible/01-Overview/Port-Ledger.md'), re, `the Ledger row names the ${mode} range`);
+  }
+  assert.match(entry, new RegExp(`\\(${PRECIP_IN[0]}\\.\\.${PRECIP_IN[1]}\\)`), 'the fill-in window');
+  assert.match(entry, new RegExp(`\\(${PRECIP_OUT[0]}\\.\\.${PRECIP_OUT[1].toFixed(2)}\\)`), 'the thin-out window');
+  assert.match(entry, /\?front=off/, 'the kill switch is recorded');
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /\?front=off/, 'and in the Ledger row');
 });

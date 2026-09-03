@@ -165,15 +165,22 @@ export function createWeatherFront({ seed = 7 } = {}) {
   let out = null;
 
   return {
-    tick({ dt = 0, weather = 'sunny', arrival = 1, nowMinutes = 0, tsec = 0 } = {}) {
+    tick({ dt = 0, weather = 'sunny', arrival = 1, nowMinutes = 0, tsec = 0, jump = false } = {}) {
       const first = last === null;
+      // WX2a (AUDIT 57): a JUMP is a change the player was not present for
+      // - a load, a travel landing, a respawn roll, a day rolled while
+      // underground. It is taken as a first word is: nothing crosses,
+      // nothing tapers, the drops land whole. The arrival is 1 by
+      // contract (the wind builds no front for it), whatever the model's
+      // last frame still says.
+      const whole = first || (jump && weather !== last);
       let changed = false;
       if (weather !== last) {
-        changed = !first;
-        from = first ? weather : last;
+        changed = !whole;
+        from = whole ? weather : last;
         to = weather;
         last = weather;
-        outgoing = first ? null : episode;
+        outgoing = whole ? null : episode;
         const mode = precipitationForWeather(weather);
         if (mode) {
           // THE EPISODE'S ROLL: seeded on the cut's minute, as WIND1
@@ -184,7 +191,7 @@ export function createWeatherFront({ seed = 7 } = {}) {
           episode = null;
         }
       }
-      const a = Math.min(1, Math.max(0, arrival));
+      const a = whole && jump ? 1 : Math.min(1, Math.max(0, arrival));
       const inMode = episode?.mode ?? null;
       const outMode = outgoing?.mode ?? null;
       let mode = null;
@@ -207,7 +214,7 @@ export function createWeatherFront({ seed = 7 } = {}) {
       // a change of kind mid-fall never relabels the residual - the last
       // few flakes are not a few drops
       if (shown && mode && precipKind(shown) !== precipKind(mode)) intensity = 0;
-      if (first) intensity = target;   // a boot into rain is rain (the sky's own first-call law)
+      if (whole) intensity = target;   // a boot into rain is rain (the sky's own first-call law); so is a load into it
       else intensity += (target - intensity) * (1 - Math.exp(-Math.max(0, dt) / PRECIP_SMOOTH_SECONDS));
       if (intensity < SHOWN_FLOOR && target === 0) intensity = 0;
       shown = intensity >= SHOWN_FLOOR ? mode : null;
