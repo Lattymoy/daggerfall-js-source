@@ -112,6 +112,23 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   assert.equal(Number(m[2]), rows.filter((r) => struck(r.s)).length, 'section A struck count drifted');
   assert.equal(Number(m[3]), rows.length - rows.filter((r) => struck(r.s)).length,
     'section A standing count is not rows minus struck');
+
+  // AUDIT 54 R1 (f): ...and the ORDINALS in the same sentence, which the
+  // three digits above never touched. Every row this table had ever
+  // gained was APPENDED, so "the Nth is X" and "N rows" moved together
+  // and the arithmetic hid the difference; AUDIT 54 F5 inserted a row at
+  // position 2 and the sentence went two ways wrong at once - WIND1 was
+  // still called the 65th when it had become the 66th, and the new row
+  // was given the end-of-table ordinal of a row it had pushed down.
+  const ORDINALS = [[/\(the (\d+)(?:st|nd|rd|th) is WIND1/, /THE WIND \(WIND1/],
+    [/the (\d+)(?:st|nd|rd|th) is the re-integrated road system/, /^\| \*\*ROADS 22-25/]];
+  for (const [pick, anchor] of ORDINALS) {
+    const hit = pick.exec(read(STATUS));
+    assert.ok(hit, `Port-Status' section A tally no longer states ${anchor}'s ordinal`);
+    const at = rows[Number(hit[1]) - 1];
+    assert.ok(at, `the stated ordinal ${hit[1]} is past the end of section A`);
+    assert.match(at.s, anchor, `section A row ${hit[1]} is not the row the tally calls it`);
+  }
 });
 
 // ═══ CD2: the open-flag count is the tool's, in every page that states it ═══
@@ -278,4 +295,59 @@ test('CD5: a `Port-Ledger.md:NNN` cite anywhere in the tree lands on its own row
     });
   }
   assert.deepEqual(bad, [], 'a Ledger line cite names another row');
+});
+
+// ═══ CD6: Port-Status' src-file cites resolve, and a blanket bump reddens ═══
+//
+// AUDIT 54 R1 (e). The AUDIT 54 F5 wave inserted one Ledger row and
+// re-resolved the `:NNN` identifiers that moved with it - correctly. The
+// same pass also added +1 to four cites into `src/ui/hud.js` and
+// `src/ui/nativeInventory.js`, two files that wave did not touch at all,
+// so three cites that had been EXACT became wrong (`:456` -> `:457`, a
+// comment; `:459` -> `:460`, the body of the enhanced branch instead of
+// the branch; `:470` -> `:471`, the wrong field) and a fourth stale one
+// stayed stale. CD3 resolves Ledger ROW identifiers and never looks at a
+// `src/` path, which is why a numeric sweep over this page was invisible.
+// These are the page's src-file cites, each read out of the page and
+// resolved against the line it names.
+const STATUS_SOURCE_CITES = [
+  // the ui-hud row: one full cite and three bare `:N` continuations
+  ['| **ui-hud** |', /`(?:ui\/hud\.js)?:(\d+)`/g, 'src/ui/hud.js', [
+    /const rig = updateHudVitals\(/,
+    /drawNearDeathFlicker\(renderer, canvas, cur/,
+    /if \(isEnhanced\(\) && typeof document/,
+    /detected: detected \?\? null,/,
+  ]],
+];
+
+test('CD6: every `src/` line Port-Status cites is the line it describes', () => {
+  const doc = lines(STATUS);
+  const bad = [];
+  for (const [rowStart, pick, target, anchors] of STATUS_SOURCE_CITES) {
+    const row = doc.find((l) => l.startsWith(rowStart));
+    assert.ok(row, `Port-Status has no row starting ${rowStart}`);
+    const cites = [...row.matchAll(pick)].map((m) => Number(m[1]));
+    assert.equal(cites.length, anchors.length,
+      `${rowStart} carries ${cites.length} ${target} cites, the pin knows ${anchors.length}`);
+    cites.forEach((n, i) => {
+      const line = lines(target)[n - 1] ?? '';
+      if (!anchors[i].test(line)) bad.push(`${rowStart} -> ${target}:${n} is ${JSON.stringify(line.slice(0, 60))}`);
+    });
+  }
+
+  // item 9's RecordLocationFromMap clause, whose pair was stale on both
+  // sides of the bump: it now names the hook itself, as a range, and the
+  // host arm that fills it.
+  const text = read(STATUS);
+  const hook = /`ui\/nativeInventory\.js:(\d+)-(\d+)`/.exec(text);
+  assert.ok(hook, 'Port-Status no longer cites the nativeInventory reveal hook');
+  const slice = lines('src/ui/nativeInventory.js').slice(Number(hook[1]) - 1, Number(hook[2])).join('\n');
+  assert.match(slice, /RecordLocationFromMap's DiscoverRandomLocation/, 'the cited range is not the reveal hook');
+  assert.match(slice, /revealMap: this\.hooks\.revealMap \?\? null,/, 'the cited range misses the hook itself');
+  const host = /`scenes\/world\.js:(\d+)`/.exec(text);
+  assert.ok(host, 'Port-Status no longer cites the host arm that fills it');
+  assert.match(lines('src/scenes/world.js')[Number(host[1]) - 1] ?? '', /revealMap: \(\) => revealLocation\('readMap'\)/,
+    'the world.js cite is not the arm that fills the reveal hook');
+
+  assert.deepEqual(bad, [], 'a Port-Status src cite names a line it does not describe');
 });

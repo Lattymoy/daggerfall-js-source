@@ -67,7 +67,18 @@ export class TerrainGenClient {
         if (m.t === 'roads') {
           // ROADS 7: the arrays come back for the map (and, as it happens,
           // for the fallback - the lazy build stands down when they do).
-          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks };
+          // AUDIT 54 F3 (R1): this is the FOURTH rebuild of the network
+          // object, and the one on the OURS path - the worker posts `net`
+          // back only from the settlements arm (terrainGenWorker.js's
+          // `back`, a deliberate two-field slice, for the map). It took
+          // the two fields and dropped the switches, and once it has run
+          // `_roadsFallback()` early-returns, so the one rebuild that
+          // carries them could never re-establish them: a same-thread
+          // build after a worker job error or a worker death then ran
+          // `smoothRoadHeights` with SmoothRoads off. The switches come
+          // from `_switches` - the same object the worker is running, and
+          // the shape terrainGenWorker.js and _roadsFallback() both use.
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}) };
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }

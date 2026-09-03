@@ -311,7 +311,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:451` runs `updateHudVitals` and `:457` `drawNearDeathFlicker`, both above the enhanced branch at `:460` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:471`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:451` runs `updateHudVitals` and `:456` `drawNearDeathFlicker`, both above the enhanced branch at `:459` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:470`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:759` over `RECTS.pickScroll`, `spellbookWindow.js:887` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:64` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
@@ -768,7 +768,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:467` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:570`, `:608`, `scenes/world.js:2083`), the
+   (`ui/nativeInventory.js:575-579`, `scenes/world.js:2343`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
@@ -807,7 +807,7 @@ ships, which is the warning the section's own preamble opens with.
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
 `Port-Ledger.md` section A carries **67 rows, 7 struck - 60 standing
-approved departures** (the 65th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 67th is the re-integrated road system, added by AUDIT 54 F5) plus the slot-0 reroll bullet and the
+approved departures** (the 66th is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 54 F5) plus the slot-0 reroll bullet and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
 

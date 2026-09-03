@@ -108,6 +108,53 @@ test('ROADS 24 / AUDIT 54 F3: the worker’s his-data arm honours `smooth` - the
   }
 });
 
+// AUDIT 54 F3 (R1): AND THE FOURTH REBUILD, ON THE OTHER PATH. The three
+// pins above walk the VENDORED arm, where the worker replies `net: null`.
+// On the OURS arm the worker replies with a two-field slice of the network
+// it built (for the map), and the client's reply handler rebuilt `_roads`
+// from those two fields alone - dropping the switches, and locking them
+// out for good, since `_roadsFallback()` early-returns once `_roads` is
+// set. Every same-thread build after that - a worker job error, a worker
+// death, a solo `generate()` - then smoothed with SmoothRoads off. This
+// drives the REAL client with a fake worker and reads the kernel's heights.
+test('ROADS 24 / AUDIT 54 F3: the worker\u2019s roads REPLY keeps the switches - the same-thread kernel\u2019s heights prove it', async () => {
+  const { TerrainGenClient } = await import('../src/world/terrainGenClient.js');
+  const { WoodsFile, MAP_WIDTH, MAP_HEIGHT } = await import('../src/formats/woodsFile.js');
+  const bytes = syntheticWoods(MAP_WIDTH, MAP_HEIGHT);
+  const px = 400, py = 200;
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    const run = async (smooth) => {
+      const woods = new WoodsFile();
+      assert.equal(woods.load(bytes.slice()), true, 'the synthetic WOODS loads');
+      const fake = { postMessage() {}, terminate() {} };
+      const client = new TerrainGenClient({ woods, woodsBytes: bytes.slice(), workerFactory: () => fake });
+      // the ours path: a settlement list, the switches, and the worker's
+      // reply carrying the built network back for the map
+      client.setRoads([{ x: px, y: py, type: 0 }], null, { smooth, water: false });
+      const roads = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
+      roads[py * MAP_WIDTH + px] = 0xff;   // every direction: a painted crossroads
+      fake.onmessage({ data: { t: 'roads', net: { roads, tracks: new Uint8Array(MAP_WIDTH * MAP_HEIGHT) } } });
+      assert.equal(client.roads().smooth, smooth, 'the reply arm kept the switch');
+      // ...and now the worker fails this job, so the SAME-THREAD kernel
+      // answers it with whatever `_roads` is holding.
+      const answer = client.generate({
+        px, py, stride: 1, tilemap: new Uint8Array(128 * 128),
+        locationRect: null, hasLocation: false, climateType: 302,
+      });
+      fake.onmessage({ data: { t: 'error', message: 'worker job failed' } });
+      return (await answer).samples;
+    };
+    const off = await run(false);
+    const on = await run(true);
+    assert.notDeepEqual(Array.from(on), Array.from(off),
+      'SmoothRoads off must reach the fallback kernel - the heights are identical, so it did not');
+  } finally {
+    console.warn = warn;
+  }
+});
+
 /** The synthetic WOODS.WLD of test/terrain.test.js - no ARENA2 needed. */
 function syntheticWoods(W, H) {
   const offsetsStart = 32 + 28 * 4;

@@ -68,9 +68,30 @@ test('AUDIT 54 F4: the dilation only ever writes OCEAN, and only from LAND', () 
   const DESERT = 224;
   // Two land pixels side by side: neither overwrites the other.
   const maps = oceanMaps([[501, 250, MOUNTAIN], [502, 250, DESERT]]);
-  dilateCoastalClimate(maps, 2);
+  const changed = dilateCoastalClimate(maps, 2);
   assert.equal(maps.getClimateIndex(501, 250), MOUNTAIN, 'land is never a destination');
   assert.equal(maps.getClimateIndex(502, 250), DESERT, 'nor is its neighbour');
+
+  // AUDIT 54 R1 (g): THE DESTINATION TEST READS THE LIVE BUFFER TOO.
+  // TransferLandToOcean reads BOTH sides from the pre-pass buffer -
+  // TerrainHelper.cs:425-426 for the source, :430-431 for the
+  // destination - and writes only the clone. The source half was pinned
+  // above; this shape is the only place the DESTINATION half is
+  // observable, and it is the shape this test already builds: the four
+  // ocean cells BOTH land pixels reach are written twice in one scan,
+  // and because the ocean test re-reads the untouched live buffer the
+  // LATER source (the higher x, DESERT) wins. Reading `climateArray`
+  // there would make the first writer win and flip which land climate -
+  // and so which ground archive, nature set, sky and people - every
+  // coastal boundary pixel inherits.
+  for (const [x, y] of [[501, 249], [502, 249], [501, 251], [502, 251]]) {
+    assert.equal(maps.getClimateIndex(x, y), DESERT, `(${x},${y}) takes the LATER source\u2019s climate`);
+  }
+  assert.equal(maps.getClimateIndex(500, 250), MOUNTAIN, 'a cell only MOUNTAIN reaches keeps MOUNTAIN');
+  assert.equal(maps.getClimateIndex(503, 250), DESERT, 'and only DESERT reaches this one');
+  // the count separates the two variants on its own: a destination read
+  // from the clone never sees a cell it already wrote as ocean again.
+  assert.equal(changed, 36, 'the two sources contend over exactly this many cells');
   // An all-ocean map is a no-op: nothing is a source.
   const sea = oceanMaps();
   assert.equal(dilateCoastalClimate(sea, 2), 0, 'ocean alone dilates nothing');
@@ -183,6 +204,34 @@ test('AUDIT 54 F4: the host runs both repairs at ReadyCheck’s point - before t
   // Classic-lane law: neither repair sits behind the enhanced gate.
   const block = host.slice(dilate - 400, client);
   assert.ok(!/isEnhanced/.test(block), 'no isEnhanced() gate on either repair');
+});
+
+test('AUDIT 54 F4 (R1): the boot repair invalidates the cached road bake it changed the input of', async () => {
+  // The ours-network bake routes and water-tests over WOODS heights
+  // (roadsProducer's heightAt / isWater), and the smoothing rewrites
+  // those bytes IN PLACE before the worker ever reads them. The bake's
+  // IndexedDB key stands in for the height content with the file's byte
+  // LENGTH, which an in-place write cannot move - so a network baked on
+  // any build before this repair would be served unchanged for smoothed
+  // terrain, routed over heights that no longer exist. The module's own
+  // rule ("bumped by hand whenever the generator's logic changes shape")
+  // makes that a hand bump, and this is what holds it.
+  const { GENERATOR_VERSION } = await import('../src/world/roadsCache.js');
+  assert.ok(GENERATOR_VERSION >= 20,
+    `roadsCache's GENERATOR_VERSION is ${GENERATOR_VERSION}; the boot repair took it to 20`);
+  const cache = readFileSync('src/world/roadsCache.js', 'utf8');
+  assert.match(cache, /AUDIT 54 F4/, 'roadsCache never says which repair the bump answers');
+  assert.match(cache, /19 -> 20/, 'the bump is not recorded beside the constant');
+  // ...and the repair really is upstream of the bake's input: the host
+  // smooths and syncs before the client hands the bytes over.
+  const host = readFileSync('src/scenes/world.js', 'utf8');
+  const smooth = host.search(/smoothLocationNeighbourhood\(mapDict, woods\);/);
+  const sync = host.search(/woods\.syncHeightMapBytes\(\);/);
+  const client = host.search(/new TerrainGenClient\(\{ woods, woodsBytes \}\)/);
+  assert.ok(smooth > 0 && smooth < sync && sync < client,
+    'the smoothed heights no longer reach the worker that bakes the network');
+  assert.match(readFileSync('src/world/roadsProducer.js', 'utf8'), /woods\.getHeightMapValue\(x, y\)/,
+    'the bake no longer routes over the heights the repair rewrites');
 });
 
 // The synthetic WOODS.WLD of test/terrain.test.js, kept local so this
