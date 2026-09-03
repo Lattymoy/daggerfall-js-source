@@ -36,12 +36,19 @@ function fixture() {
   const dFoe = { name: 'dungeon-rat' };
   const otherDFoe = { name: 'dungeon-bat' };
   const xFoe = { name: 'street-thug' };
+  // AUDIT 54: the interior's TWO pools - the quest/encounter foes IF
+  // mounted and ROAD-B's indoor watch - which worldModes joins into
+  // one answer exactly as it does for MakeEnemiesHostile.
+  const iFoe = { name: 'shop-daedroth' };
+  const iWatch = { name: 'indoor-watchman' };
+  const insideSinks = (f) => ({ hurt: (n) => hits.push(['interior', f.name, n]) });
   const dungeonCtx = {
     foes: [dFoe, otherDFoe],
     foeSinksFor: (f) => ({ hurt: (n) => hits.push(['dungeon', f.name, n]) }),
   };
   const exteriorSinks = (f) => ({ hurt: (n) => hits.push(['exterior', f.name, n]) });
-  return { hits, dFoe, otherDFoe, xFoe, dungeonCtx, exteriorSinks, exteriorPool: () => [xFoe] };
+  return { hits, dFoe, otherDFoe, xFoe, iFoe, iWatch, dungeonCtx, exteriorSinks, insideSinks,
+    exteriorPool: () => [xFoe], insidePool: () => [iFoe, iWatch] };
 }
 
 test('EC1: the live pool follows the MODE - dungeon foes are reachable', () => {
@@ -52,12 +59,27 @@ test('EC1: the live pool follows the MODE - dungeon foes are reachable', () => {
     'and the exterior pool is still exactly the exterior pool - a dungeon ctx left mounted from a previous descent cannot leak into it');
 });
 
-test('EC1: an interior answers EMPTY, and that is the honest answer rather than a gate', () => {
+test('AUDIT 54: an interior answers ITS OWN TWO POOLS - the third live mode had no arm at all', () => {
+  // THE STRUCK ROW: this test used to assert `[]` here, on the stated
+  // premise that "the port stands no foe pool inside a building".
+  // That premise died twice over - IF mounted `interiorFoes` and
+  // ROAD-B mounted `interiorGuards` beside it - and the vacuous pin
+  // held the original EC1 defect open for the third mode: inside a
+  // building a CastWhenStrikes weapon (paralysis, Wizard's Fire, the
+  // rest of the classic strike spells) found no record and returned,
+  // and the vampiric drain and both artifact affinity scans saw an
+  // empty room. Silently, in a mode with live enemies in it.
   const f = fixture();
-  assert.deepEqual(liveEnchantFoes('interior', f.dungeonCtx, f.exteriorPool), [],
-    'the port stands no foe pool inside a building; DFU\'s list holds enemies and civilian mobiles, neither of which exists there');
+  assert.deepEqual(liveEnchantFoes('interior', f.dungeonCtx, f.exteriorPool, f.insidePool), [f.iFoe, f.iWatch],
+    'the whole active enemy database of the building the player is in - the quest foes AND the watch');
   // and it does not silently borrow the exterior pool it is standing on
-  assert.equal(liveEnchantFoes('interior', null, f.exteriorPool).length, 0);
+  assert.deepEqual(liveEnchantFoes('interior', null, f.exteriorPool, () => []), []);
+  // ...nor does the exterior arm borrow the interior's, which is the
+  // leak the other way: the street's pools are a different scene.
+  assert.deepEqual(liveEnchantFoes('exterior', f.dungeonCtx, f.exteriorPool, f.insidePool), [f.xFoe]);
+  // an interior mid-transition (no context yet) must not take the frame down
+  assert.deepEqual(liveEnchantFoes('interior', null, f.exteriorPool, null), []);
+  assert.deepEqual(liveEnchantFoes('interior', null, f.exteriorPool, () => undefined), []);
 });
 
 test('EC1: a dungeon with no ctx yet answers empty rather than throwing', () => {
@@ -77,17 +99,34 @@ test('EC1: sinks route by POOL MEMBERSHIP, and the mode is not consulted', () =>
   // against a collider that record was never built for.
   liveEnchantFoeSinks(f.xFoe, f.dungeonCtx, f.exteriorSinks).hurt(3);
   assert.deepEqual(f.hits[1], ['exterior', 'street-thug', 3], 'a stranger to the dungeon pool goes through the exterior door');
+  // AUDIT 54: and an INTERIOR record goes through the interior host's
+  // own damage door. Widening the pool without this would have been
+  // worse than the gap it closed - a record from a building sent
+  // through `foeSinks` knocks back and dies against the STREET's
+  // collider and death chain.
+  liveEnchantFoeSinks(f.iFoe, f.dungeonCtx, f.exteriorSinks, f.insidePool, f.insideSinks).hurt(9);
+  assert.deepEqual(f.hits[2], ['interior', 'shop-daedroth', 9], 'an interior record goes through the interior host\'s damage door');
+  liveEnchantFoeSinks(f.iWatch, f.dungeonCtx, f.exteriorSinks, f.insidePool, f.insideSinks).hurt(2);
+  assert.deepEqual(f.hits[3], ['interior', 'indoor-watchman', 2], 'and so does the indoor watch - one pool, one door');
+  // the DUNGEON is still asked first: insideFoes answers the dungeon's
+  // own pool while one is mounted, and that record is the dungeon's.
+  liveEnchantFoeSinks(f.dFoe, f.dungeonCtx, f.exteriorSinks, () => [f.dFoe], f.insideSinks).hurt(1);
+  assert.deepEqual(f.hits[4], ['dungeon', 'dungeon-rat', 1], 'membership is asked in host order, dungeon first');
+  // a stranger to BOTH inner pools still takes the exterior door
+  liveEnchantFoeSinks(f.xFoe, f.dungeonCtx, f.exteriorSinks, f.insidePool, f.insideSinks).hurt(5);
+  assert.deepEqual(f.hits[5], ['exterior', 'street-thug', 5]);
   // and the router takes no mode at all - it cannot be asked the wrong
   // question. (It took one until the campaign showed no record is ever
   // in both pools, so the term could not change an answer.)
-  assert.equal(liveEnchantFoeSinks.length, 3, 'foe, dungeonCtx, exteriorSinks - and nothing else');
+  assert.equal(liveEnchantFoeSinks.length, 5,
+    'foe, dungeonCtx, exteriorSinks, insidePool, insideSinks - and nothing else');
 });
 
 test('EC1: an exterior record is untouched by the new branch, ctx or no ctx', () => {
   const f = fixture();
   liveEnchantFoeSinks(f.xFoe, f.dungeonCtx, f.exteriorSinks).hurt(4);
   liveEnchantFoeSinks(f.xFoe, null, f.exteriorSinks).hurt(5);
-  liveEnchantFoeSinks(f.xFoe, {}, f.exteriorSinks).hurt(6);
+  liveEnchantFoeSinks(f.xFoe, {}, f.exteriorSinks, null, f.insideSinks).hurt(6);
   assert.deepEqual(f.hits, [['exterior', 'street-thug', 4], ['exterior', 'street-thug', 5], ['exterior', 'street-thug', 6]],
     'the path that already worked still works - with a live ctx, with none, and with one still building');
 });
@@ -96,8 +135,16 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   const world = read('src/scenes/world.js');
   assert.equal(/const enchantFoes = \(\) => \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'/.test(world), false,
     'the exterior-only gate is gone');
-  assert.match(world, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\);/);
-  assert.match(world, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks\);/);
+  assert.match(world, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/,
+    'AUDIT 54: the interior pool is the host\'s own join, not a third spelling of it');
+  assert.match(world, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], _insidePool\);/);
+  assert.match(world, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
+  // and the interior host really answers that sinks door, over its own
+  // two pools, with world.js's own _encounter split
+  const wm = read('src/scenes/worldModes.js');
+  assert.match(wm, /insideFoeSinksFor\(foe\) \{/, 'the interior host has a foeSinksFor of its own');
+  assert.match(wm, /if \(foe\._encounter\) interiorFoes\?\.damageFoe\(foe, n, player\.pos\);\n\s+else interiorGuards\?\.hurtGuard\(foe, n, player\.pos\);/,
+    'routed by pool, so the billboard dies in the pool that owns it');
   // every enchant-ctx site that reaches a foe's vitals goes through the
   // router - a bare foeSinks() there is the exterior assumption again.
   //

@@ -2149,8 +2149,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // supplies the three live reads it asks for.
   const _mode = () => (modes?.mode ?? 'exterior');
   const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
-  const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes]);
-  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks);
+  // AUDIT 54: the INTERIOR pool is the third live read, and the host
+  // already answers it - `insideFoes()` is worldModes' own join of
+  // interiorFoes and the indoor watch, the same one this file joins
+  // for the hostility database at `_liveEnemyDatabase` above. Its
+  // sinks come from the interior host too (`insideFoeSinksFor`),
+  // because a record from that pool must knock back and die against
+  // THAT building's collider, not the street's.
+  const _insidePool = () => modes?.insideFoes?.() ?? [];
+  const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes], _insidePool);
+  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
   /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
    *  Rose's Daedroth - through DFU's OWN placement law, in whichever
    *  world the player is actually standing in.

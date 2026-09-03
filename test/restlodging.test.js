@@ -705,7 +705,23 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     assert.match(h, /if \(d\.kind === 'blocked'\) \{/, f);
     assert.match(h, /racialRestBlock\(playerEntity/, f);
     assert.match(h, /racialOverrideBlocks: !!rb/, f);
+    // AUDIT 54: the OPEN GATE HAS TWO TERMS, and the interior host
+    // carried only one. DaggerfallUI.cs:651-656 is
+    // `if (AreEnemiesNearby(true)) { PlayerEntity.SetEnemyAlert(true);
+    // MessageBox(354); }` - raise the alert, THEN show the box. Three
+    // hosts ported both; worldModes showed the box and left
+    // playerEntity.enemyAlertActive down, so an interior refusal never
+    // armed the flag intermittentEnemySpawn rolls on (encounters.js
+    // :101) while the identical refusal outdoors or underground did.
+    assert.match(h, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, /,
+      `${f}: the enemies arm raises the alert before the box`);
+    assert.match(h, /import \{[^}]*setEnemyAlert[^}]*\} from '\.\.\/systems\/encounters\.js'/, f);
+    assert.ok(h.indexOf("if (d.kind === 'enemies') setEnemyAlert(") < h.indexOf("if (d.kind === 'blocked') {"),
+      `${f}: DFU raises the alert first`);
   }
+  // and the interior host uses ITS OWN clock for the stamp - the one
+  // racialRestBlock takes one line above (the 8h decay reads it back)
+  assert.match(wm, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, Math\.floor\(interiorTicker\.classicMinutes\)\);/);
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
@@ -717,8 +733,15 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   // this pin guards (every host runs restDecision, scene-free, before
   // opening) is unchanged and stronger.
   assert.match(wm, /enemiesNearby: interiorEnemiesNearby\(\{ resting: true \}\),[^}]*swimming: false,/s);
-  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/,
-    'and it is the ONE shared scan over this host\'s own pool');
+  // AUDIT 54: over BOTH of this host's pools. It named interiorFoes
+  // alone, so a player could lie down in a tavern with 2-5
+  // Knight_CityWatch spawned into the room by spawnCityGuardsInside
+  // and sleep the night through - the quest pool was empty, so the
+  // gate answered false where DFU's one database answers true.
+  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby\(interiorFoePool\(\), opts\) : false\);/,
+    'and it is the ONE shared scan over this host\'s own DATABASE - both pools');
+  assert.doesNotMatch(wm, /areEnemiesNearby\(interiorFoes\.foes/,
+    'the narrowed scan is deleted, not annotated');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);

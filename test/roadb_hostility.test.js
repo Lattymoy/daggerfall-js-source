@@ -220,8 +220,17 @@ test('ROAD-B: both exterior/interior foe pools take the area walk on a struck pa
   assert.ok(i > 0 && j > i, 'the area walk precedes the per-foe law, and reads isHostile before it');
   assert.ok(f.includes('makeAreaHostile = null,'), 'the dep defaults absent (the pre-wiring shape)');
   const wm = src('src/scenes/worldModes.js');
-  assert.ok(wm.includes('makeAreaHostile: () => makeEnemiesHostile(interiorFoes?.foes ?? []),'),
-    'a building interior is its own area');
+  // AUDIT 54: the area is the interior's WHOLE database, not one of
+  // its two pools. This was the only makeAreaHostile in the tree that
+  // walked half a database where GameManager.MakeEnemiesHostile
+  // (:793-806) walks all of ActiveGameObjectDatabase - so striking a
+  // passive foe in a shop left the watchmen in the same room passive.
+  assert.ok(wm.includes('makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),'),
+    'a building interior is its own area - BOTH of its pools');
+  assert.ok(!wm.includes('makeEnemiesHostile(interiorFoes?.foes ?? [])'),
+    'and the narrowed walk is gone, not annotated');
+  assert.ok(wm.includes('const interiorEnemyDatabase = () => interiorFoePool().filter((f) => !f.dead);'),
+    'the database is the live half of the ONE join');
 });
 
 test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool included', () => {

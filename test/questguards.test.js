@@ -378,12 +378,33 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
   for (const [file, poolExpr] of [
     ['src/scenes/world.js', /pickQuestFoe\(cam\.pos, useFwd, \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\], collider\)/],
     ['src/scenes/worldModes.js', /pickQuestFoe\(eye, dir, dungeonCtx\.foes, dungeonCtx\.collider\)/],
+    // AUDIT 54: THE THIRD RAY. `tryExit` - the interior activation -
+    // was the one host ladder with no quest-resource arm at all, while
+    // CreateFoe's PlaceFoeBuildingInterior (CreateFoe.cs:219-233)
+    // stands quest foes in a building freely and this host mounts
+    // them (tryPlaceInteriorQuestFoe). So a QuestResourceBehaviour
+    // riding an interior foe could never receive SetPlayerClicked -
+    // `clicked foe` fired in a dungeon and in the street and nowhere
+    // indoors. PlayerActivate.cs:325-338 has no scene gate.
+    ['src/scenes/worldModes.js', /pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\)/],
   ]) {
     const src = readSrc(file);
     assert.match(src, poolExpr, `${file} picks over its live pool`);
     assert.match(src, /getInteractionMode\(\) !== 'info'[^]{0,400}?\.questBehaviour\.doClick\(\)/,
       `${file} gates on Info and clicks through the behaviour`);
   }
+  // ...and the interior arm really is INSIDE tryExit, opening it, so
+  // the door/container/shelf/ladder/loot ladder below still runs -
+  // PlayerActivate's block has no return.
+  const wm = readSrc('src/scenes/worldModes.js');
+  assert.equal((wm.match(/pickQuestFoe\(/g) ?? []).length, 2,
+    'both of this host\'s rays carry the arm - the dungeon one and the interior one');
+  const tryExit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon('));
+  assert.ok(tryExit.length > 0, 'the interior ray is found');
+  assert.match(tryExit, /if \(getInteractionMode\(\) !== 'info' && interiorCtx\) \{\n\s+const qf = pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\);\n\s+if \(qf\) qf\.questBehaviour\.doClick\(\);\n\s+\}/,
+    'the interior ray carries the dungeon ray\'s arm, over its own two pools');
+  assert.ok(tryExit.indexOf('pickQuestFoe(') < tryExit.indexOf('const targets ='),
+    'it opens the ladder rather than consuming the activation');
   // non-consuming: world.js's arm sits ABOVE the townTalk activation
   const world = readSrc('src/scenes/world.js');
   assert.ok(world.indexOf('qf.questBehaviour.doClick()') < world.indexOf('townTalk.tryActivate(cam.pos'),

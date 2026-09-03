@@ -136,13 +136,23 @@ test('DT1: all four hosts name their kinds to the one walk', () => {
   const w = read('src/scenes/world.js');
   const e = read('src/scenes/exterior.js');
   const d = read('src/scenes/dungeonContext.js');
-  // the interior host: containers (shelves AND furniture) + its foes
+  // the interior host: containers (shelves AND furniture) + its foes.
+  // AUDIT 54 WIDENED BOTH READS. UpdateNearbyObjects walks ONE
+  // database (PlayerGPS.cs:747-777) and this host has TWO pools -
+  // interiorFoes and ROAD-B's indoor watch - so Detect Enemy showed an
+  // empty room with 2-5 Knight_CityWatch standing in it and Detect
+  // Treasure missed their corpses. `interiorFoePool()` is the join,
+  // raw: the loot walk NEEDS the dead (a corpse is the container).
   const wmFeed = feed(wm, 'const detectFeed = createDetectFeed');
   assert.match(wmFeed, /nearbyLootRecords\(\{/);
   assert.match(wmFeed, /interiorCtx\?\.shelves/);
   assert.match(wmFeed, /interiorCtx\?\.containers/);
-  assert.match(wmFeed, /foes: interiorFoes\?\.foes \?\? \[\]/);
-  assert.match(wmFeed, /entities: \(\) => \(interiorFoes\?\.foes \?\? \[\]\)/, 'the entity pool too');
+  assert.match(wmFeed, /foes: interiorFoePool\(\),/);
+  assert.match(wmFeed, /entities: \(\) => interiorFoePool\(\)\.filter\(\(f\) => !f\.dead && f\.ai\)/, 'the entity pool too');
+  assert.doesNotMatch(wmFeed, /interiorFoes\?\.foes \?\? \[\]/,
+    'and neither read is narrowed to one of the two pools any more');
+  assert.match(wm, /const interiorFoePool = \(\) => \[\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)\];/,
+    'the join has ONE home in this host');
   // the dungeon: the RDB piles, the player’s drops, and its foes
   const dFeed = feed(d, 'const detectFeed = createDetectFeed');
   assert.match(dFeed, /piles: \[\.\.\.lootPiles, \.\.\.droppedLoot\._piles\], foes \}/);

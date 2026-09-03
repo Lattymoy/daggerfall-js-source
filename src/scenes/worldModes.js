@@ -75,7 +75,7 @@ import { sensesContext } from './shared.js';   // IF: the one senses builder eve
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
 import { mwViewFrame, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
-import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database
+import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 54: the 354 refusal's other term
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
@@ -394,8 +394,10 @@ export function createWorldModes(host) {
   //
   // DT1: BOTH pools were left empty here on the claim that this host
   // has nothing to put in them. It has had both for slices. The
-  // entities are `interiorFoes` - a real foe pool since IF, carrying
-  // quest foes and the Daedric punishment wave - and the loot is what
+  // entities are `interiorFoePool()` - AUDIT 54's join of the real
+  // foe pool IF gave buildings (quest foes, the Daedric punishment
+  // wave) with ROAD-B's indoor watch, because UpdateNearbyObjects
+  // walks ONE database and both pools are in it - and the loot is what
   // DaggerfallInterior.AddFurnitureAction (:780-841) hangs a
   // DaggerfallLoot on: shop shelves (:796-801, E2) and house
   // containers (:829-838, S2b), plus the corpse markers this pool
@@ -417,11 +419,11 @@ export function createWorldModes(host) {
   // The thunks are lazy - `interiorCtx` and `interiorFoes` are
   // declared below and only read at tick time.
   const detectFeed = createDetectFeed(playerEntity, {
-    entities: () => (interiorFoes?.foes ?? []).filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    entities: () => interiorFoePool().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     loot: () => nearbyLootRecords({
       piles: interiorDropped._piles,
       containers: [...(interiorCtx?.shelves ?? []), ...(interiorCtx?.containers ?? [])],
-      foes: interiorFoes?.foes ?? [],
+      foes: interiorFoePool(),   // AUDIT 54: the WATCH's corpses are lootable containers too
     }),
     feet: () => player.pos,
   });
@@ -594,10 +596,15 @@ export function createWorldModes(host) {
   /** IF: this host's enemies-nearby scan, which used to be the
    *  literal `false` three consumers each carried. GameManager
    *  .AreEnemiesNearby is one method over one database; the interior's
-   *  database is its pool. An interior with no pool minted (no
-   *  building entered) answers false because there is genuinely
+   *  database is BOTH of its pools (AUDIT 54 - it named only
+   *  `interiorFoes`, so a player could lie down and sleep the night
+   *  through in a tavern with 2-5 Knight_CityWatch spawned into the
+   *  room by `spawnCityGuardsInside`, and the rest window's hourly
+   *  break never fired either). An interior with NEITHER pool minted
+   *  (no building entered) answers false because there is genuinely
    *  nothing there - not because the host cannot look. */
-  const interiorEnemiesNearby = (opts = {}) => (interiorFoes ? areEnemiesNearby(interiorFoes.foes, opts) : false);
+  const interiorEnemiesNearby = (opts = {}) => ((interiorFoes || interiorGuards)
+    ? areEnemiesNearby(interiorFoePool(), opts) : false);
 
   /**
    * IF: CreateFoe's INTERIOR arm - PlaceFoeBuildingInterior
@@ -648,10 +655,14 @@ export function createWorldModes(host) {
       playerSinks: interiorTicker.sinks,
       // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 - striking a
       // non-hostile foe turns the whole area. Inside a building the
-      // area IS this pool (the street's two pools are a different
+      // area is this host's TWO pools (the street's are a different
       // scene, and the exterior host does not tick them while the
-      // player is indoors), so the walk is the pool's own list.
-      makeAreaHostile: () => makeEnemiesHostile(interiorFoes?.foes ?? []),
+      // player is indoors), so the walk is this host's database.
+      // AUDIT 54: it was `interiorFoes.foes` alone, so a struck
+      // shopkeeper-foe left the watchmen standing in the same room
+      // passive - the one makeAreaHostile in the tree that walked
+      // half a database where C# walks all of one.
+      makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
       say: (l) => say(l),
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
@@ -697,6 +708,27 @@ export function createWorldModes(host) {
    *  OnTransitionExterior takes the interior's enemies with it, and
    *  the watch are enemies. */
   let interiorGuards = null;
+  /** AUDIT 54 (hosts-consistency): THIS HOST'S ACTIVE ENEMY DATABASE,
+   *  WRITTEN ONCE. DFU has ONE database per scene -
+   *  ActiveGameObjectDatabase.GetActiveEnemyBehaviours() - and
+   *  GameManager.AreEnemiesNearby (:684-732), GameManager
+   *  .MakeEnemiesHostile (:793-806) and PlayerGPS.UpdateNearbyObjects
+   *  (:747-777) all walk that one list. This host has TWO pools, and
+   *  the join was spelled out at the senses and at `insideFoes` while
+   *  FOUR readers asked `interiorFoes` alone: enemies-nearby (so the
+   *  rest gate let you sleep the night through with 2-5
+   *  Knight_CityWatch standing in the room), makeAreaHostile (so
+   *  striking a passive foe in a shop left the watch passive), and
+   *  both halves of the Detect feed (an empty room, and no watchman's
+   *  corpse). One definition, five readers.
+   *
+   *  The RAW pool carries the dead - corpses are what
+   *  `GetActiveLoot()` walks and what Detect Treasure marks; the
+   *  DATABASE is the live filter every enemy walk wants. The exterior
+   *  host draws the same two (world.js's `exteriorFoePool`, filtered
+   *  at each reader). */
+  const interiorFoePool = () => [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])];
+  const interiorEnemyDatabase = () => interiorFoePool().filter((f) => !f.dead);
   /** IF/ROAD-B: the interior's senses context, built once per frame
    *  and handed to BOTH pools. `candidates` is this host's whole
    *  active-enemy database (MT's join): a watchman called into a shop
@@ -704,7 +736,7 @@ export function createWorldModes(host) {
    *  the street's two pools are one for the exterior host. */
   const _interiorSenses = () => sensesContext(playerEntity, interiorTicker.classicMinutes, {
     movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
-    candidates: () => [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])].filter((f) => !f.dead),
+    candidates: () => interiorEnemyDatabase(),
     playerEntity,
   });
   function makeInteriorGuards(ctx) {
@@ -3935,6 +3967,22 @@ export function createWorldModes(host) {
   function tryExit() {
     const eye = player.eye;
     const dir = eyeDir();
+    // QG1, AUDIT 54: the quest-resource click arm, which this ray was
+    // the only one of the three without - tryExitDungeon carries it
+    // and so does world.js's exterior ladder, while CreateFoe's
+    // PlaceFoeBuildingInterior arm (CreateFoe.cs:219-233) stands quest
+    // foes in a building freely, so a QuestResourceBehaviour riding
+    // one could never receive SetPlayerClicked and `clicked foe`
+    // could not fire indoors. Runs FIRST and does not consume
+    // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
+    // the door/ladder/loot ladder below still runs. Over BOTH pools,
+    // as the exterior arm runs over its own two; pickQuestFoe skips
+    // any foe without a questBehaviour (activate.js:117), so the
+    // watch costs nothing.
+    if (getInteractionMode() !== 'info' && interiorCtx) {
+      const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
+      if (qf) qf.questBehaviour.doClick();
+    }
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
     const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
@@ -5939,10 +5987,13 @@ export function createWorldModes(host) {
     // nothing in it.
     //
     // THE OPEN GATE runs here too - DFU raises it from one scene-free
-    // handler (DaggerfallUI.cs:651-687). This host mounts no foe pool
-    // and has no water, but StartRestGroundedCheck is very much live
-    // indoors: a levitating player cannot lie down in a shop any more
-    // than in a dungeon.
+    // handler (DaggerfallUI.cs:651-687). This host has no water, but
+    // StartRestGroundedCheck is very much live indoors (a levitating
+    // player cannot lie down in a shop any more than in a dungeon),
+    // and so is the enemies arm: the sentence that stood here denied
+    // this host any foe pool at all, which stopped being true when IF
+    // mounted one and ROAD-B mounted the watch beside it. Both terms
+    // of :651-656 run below.
     //
     // CanRest itself does NOT run here. It runs on the WHILE and
     // HEALED buttons inside the window (:641-690), which is what keeps
@@ -5964,6 +6015,16 @@ export function createWorldModes(host) {
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
+        // AUDIT 54: DFU raises the enemy alert on the enemies arm
+        // (DaggerfallUI.cs:655 - NOT the rest window's :655, which is
+        // DoRestForAWhile). The open gate is ONE scene-free handler:
+        // `if (AreEnemiesNearby(true)) { SetEnemyAlert(true);
+        // MessageBox(354); }` - two terms. This host showed the box
+        // and left the flag down, while the identical refusal in the
+        // street (world.js, exterior.js) and underground
+        // (dungeonContext.js) raised it, so an interior refusal never
+        // armed the flag intermittentEnemySpawn rolls on.
+        if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(interiorTicker.classicMinutes));
         if (d.kind === 'blocked') {
           const lines = plainLines(townTalk?.lines?.(rb.textId));   // V2b: the unfed vampire's own box
           if (lines) mountInterior(new ActionTextBox(lines));
@@ -6369,10 +6430,38 @@ export function createWorldModes(host) {
       if (mode === 'dungeon' && dungeonCtx) return dungeonCtx.foes.filter((f) => !f.dead);
       // ROAD-B: a building holds TWO pools - the encounter/quest foes
       // and the watch that can be called in through its front door.
-      if (mode === 'interior') {
-        return [...(interiorFoes?.foes ?? []), ...(interiorGuards?.guards ?? [])].filter((f) => !f.dead);
-      }
+      if (mode === 'interior') return interiorEnemyDatabase();
       return [];
+    },
+    /** AUDIT 54 (EC1's third mode): the SINKS for a record `insideFoes`
+     *  handed out - dungeonContext's `foeSinksFor` twin, for the host
+     *  that had none. The enchant ctx is a session singleton mounted
+     *  in world.js, and its foe pool answered `[]` in interior mode,
+     *  so every enchantment payload that needs a foe - CastWhenStrikes
+     *  (paralysis, Wizard's Fire, the rest of the classic strike
+     *  spells), the vampiric drain, and both artifact affinity scans -
+     *  was silent inside a building. Handing the pool over without the
+     *  sinks would have been worse than the gap: shared.js routes by
+     *  POOL MEMBERSHIP, and an interior record falling through to the
+     *  street's `foeSinks` would knock back and kill against the
+     *  EXTERIOR collider and death chain.
+     *
+     *  The split inside is world.js's own (`_encounter` marks a
+     *  createExteriorFoes record; a watchman carries no such field),
+     *  so the damage lands in the pool that owns the billboard. */
+    insideFoeSinksFor(foe) {
+      return {
+        hurt: (n) => {
+          if (n <= 0) return;
+          if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos);
+          else interiorGuards?.hurtGuard(foe, n, player.pos);
+        },
+        heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
+        drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
+        restoreMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.min(foe.entity.maxMagicka ?? Infinity, (foe.entity.magicka ?? 0) + n); },
+        drainFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.max(0, (foe.entity.fatigue ?? 0) - n); },
+        restoreFatigue: (n) => { if (n > 0) foe.entity.fatigue = Math.min(maxFatigue(foe.entity), (foe.entity.fatigue ?? 0) + n); },
+      };
     },
     tryPlaceQuestFoe(handle) {
       if (mode === 'interior') return tryPlaceInteriorQuestFoe(handle);

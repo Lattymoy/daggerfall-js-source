@@ -1647,12 +1647,23 @@ export function createRestDeps(entity, opts = {}) {
 // is small, exact and worth testing on its own: which pool is live,
 // and which host's sinks a record from that pool must go through.
 
-/** The foes an enchantment can reach right now.
- *  Interiors answer EMPTY honestly rather than by gate: the port
- *  stands no foe pool inside a building, and DFU's own list holds
- *  enemies and civilian mobiles, neither of which exists there. */
-export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
+/** The foes an enchantment can reach right now - ONE ARM PER LIVE
+ *  MODE, because DFU has one database per scene and every one of the
+ *  three is a scene.
+ *
+ *  AUDIT 54 (hosts-consistency): the INTERIOR arm was `[]`, on a
+ *  stated premise - "the port stands no foe pool inside a building" -
+ *  that stopped being true when the IF slice mounted `interiorFoes`
+ *  and ROAD-B mounted `interiorGuards` beside it. The gap was the
+ *  original EC1 defect, left standing for the third mode: a
+ *  CastWhenStrikes weapon (paralysis, Wizard's Fire, the other classic
+ *  strike spells), the vampiric drain and both artifact affinity scans
+ *  did nothing inside a shop, silently. The interior host answers the
+ *  same "whole active enemy database" question for its own two pools
+ *  (worldModes' insideFoes), so the arm is a pool it already had. */
+export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
   if (mode === 'dungeon') return dungeonCtx?.foes ?? [];
+  if (mode === 'interior') return insidePool?.() ?? [];
   if (mode === 'exterior') return exteriorPool?.() ?? [];
   return [];
 }
@@ -1668,8 +1679,18 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
  *  This took the MODE as well until the campaign called the bluff: no
  *  record is in both pools, so the mode term could not change an
  *  answer, and a mutant dropping it SURVIVED. An unfalsifiable term is
- *  not caution, it is a second law that no test is holding. */
-export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks) {
+ *  not caution, it is a second law that no test is holding.
+ *
+ *  AUDIT 54: the INSIDE pool joins by the same rule, and it is not an
+ *  unfalsifiable term - an interior record sent through the exterior
+ *  door would knock back and kill against the STREET's collider and
+ *  through the street's death chain, which is exactly the failure the
+ *  paragraph above describes for the dungeon. Asked SECOND, after the
+ *  dungeon: `insideFoes()` answers the dungeon's own pool when a
+ *  dungeon is mounted, and that record belongs to the dungeon's
+ *  sinks. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
   if (dungeonCtx?.foes?.includes(foe)) return dungeonCtx.foeSinksFor(foe);
+  if (insidePool?.()?.includes(foe)) return insideSinks(foe);
   return exteriorSinks(foe);
 }
