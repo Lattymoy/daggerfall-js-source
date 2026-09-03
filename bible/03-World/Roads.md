@@ -360,6 +360,15 @@ chains (his data: 1,508 road chains, 4,289 track). The chips choose
 layers at draw time, so a toggle re-uploads nothing. Lift order, which
 is draw order: stream < river < track < trunk < route.
 
+**AUDIT 54 (f3/render): the layer has an owner.** One VAO and one
+buffer per chain is ~5,800 of each on his arrays, minted fresh by every
+travel-map window - and `OverworldRenderer.dispose()`, whose own
+heading is "Every allocation has an owner (AUDIT 17e)", freed every
+sibling set and not this one, so every close of the map orphaned the
+whole network on the session's one shared GL context. `_freeRoads()`
+is called from `dispose()` now, pinned in overworldmap.test.js against
+a handle-holding Proxy-GL.
+
 ## Audit 51 (2026-09-02) - parity by oracle
 
 `01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte

@@ -440,7 +440,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  // AUDIT 54 (f3/render): the rain's two DIALS, read once at boot from
+  // the params this host already carries. `enhanced` is the LANE - the
+  // sky controller's own answer (scenes/shared.js createSkyController),
+  // fixed for a scene - so the enhanced lane compiles WX1's program in
+  // the constructor (a shader fault stays a constructor fault) and the
+  // classic lane never compiles it at all. `countCap` is ?rain=<n>, a
+  // gate dial that cannot change during a page load: it was being read
+  // by constructing a URLSearchParams and re-parsing location.search on
+  // EVERY frame that rain, storm or snow drew, one step above the pass
+  // EV2 swept for exactly this class of per-frame garbage.
+  const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
+  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
@@ -457,7 +468,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && !precip) precip = new PrecipitationRenderer(renderer.gl);
+    if (precipMode && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);
     lightning = w === 'thunder'
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
   }
@@ -6796,7 +6807,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // row - INTEGRATED here as travel, so a change in the wind moves what
       // falls next and never what has already fallen.
       precip.enhanced = !!sky?.cloudShadow;
-      precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
       if (precip.enhanced) {
         // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
         // a direction and a speed (its wind vector, in the deck's units,

@@ -264,6 +264,31 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     + unrecorded.join('\n'));
 });
 
+// ═══ AUDIT 54 (f3/render): a gate knob that reads nothing is a door
+// that can neither fail nor act ═════════════════════════════════════
+test('AUDIT 54: every URL knob the world render gate hands the page has a live reader in src/', () => {
+  const g = readFileSync(join(root, 'tools/worldRenderGate.mjs'), 'utf8');
+  // EE3's --ground survived the ground arc's REVERT (8256ae2, "no
+  // reader of tileArrayFor, enhancedGround or groundMode remains
+  // anywhere"): the gate went on appending &ground=<mode> to a URL
+  // nothing parsed and printing "ground=<mode>" in its PASS line, so a
+  // run could claim it had gated a mode that no longer exists.
+  const line = g.split('\n').find((l) => l.startsWith('const dials = '));
+  assert.ok(line, 'the gate builds its extra query knobs in one place');
+  const knobs = [...line.matchAll(/&(\w+)=\$\{/g)].map((m) => m[1]);
+  assert.ok(knobs.length >= 4, `the knobs are still here: ${knobs.join(', ')}`);
+  const src = tracked('src').filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+  for (const k of knobs) {
+    assert.ok(src.includes(`get('${k}')`) || src.includes(`get("${k}")`),
+      `--${k} hands the page ?${k}=<v> and nothing in src/ reads it: a knob with no reader `
+      + 'gates nothing, and the gate\u2019s own pass line then claims it did');
+  }
+  assert.ok(!/ground=/.test(line) && !/GROUND/.test(g), 'the reverted ground knob is gone from the URL and the pass line');
+  assert.match(g, /world render gate ok \(\$\{MODE\}, \$\{MINUTES\} min\)/,
+    'the pass line names only what the run actually set');
+});
+
 // ═══ EE0: the world render gate exists, and reads the compositor's frame ═══
 test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
   const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');
