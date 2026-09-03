@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { Collider } from '../src/player/collider.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { bakeNavFromCollider } from '../src/ai/navBake.js';
+import { findPath } from '../src/ai/navmesh.js';
 import {
   EnhancedEnemyAI, makeNavWorld, navWalkable,
   REPATH_INT, REPATH_FAIL, STUCK_T, STUCK_EPS2, STUCK_NUDGE, WP_REACH, PATH_BUDGET_PER_FRAME, PROJECT_MARGIN,
@@ -25,9 +26,10 @@ const Id = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
 /** A 12x12 room with a wall down its middle leaving a gap at one end:
  *  a foe on one side, a target on the other, straight line blocked. */
-function room({ gapAt = 'south' } = {}) {
+function room({ gapAt = 'south', y = 0 } = {}) {
   const c = new Collider(() => -1000);
-  const quad = (key, a, b, cc, d) => c.addMesh(key, new Float32Array([...a, ...b, ...cc, ...d]), QUAD, Id);
+  const Y = (v) => [v[0], v[1] + y, v[2]];
+  const quad = (key, a, b, cc, d) => c.addMesh(key, new Float32Array([...Y(a), ...Y(b), ...Y(cc), ...Y(d)]), QUAD, Id);
   quad('floor', [0, 0, 0], [12, 0, 0], [12, 0, 12], [0, 0, 12]);
   // four outer walls, 3 tall
   quad('n', [0, 0, 0], [12, 0, 0], [12, 3, 0], [0, 3, 0]);
@@ -320,6 +322,100 @@ test('ENHANCED AI 4: a broken navmesh costs the feature, never the dungeon', () 
   assert.equal(ai.path, null);
   // And it still walks - the classic step ran throughout.
   assert.ok(Math.hypot(ai.feet[0] - START[0], ai.feet[2] - START[2]) > 0.5, 'the foe stopped moving');
+});
+
+test('ENHANCED AI 4a: the route supplies x and z; the y is CLASSIC\u2019S, never the nav\u2019s zero', () => {
+  // The live chf is hydrated without colliders, so findPath's waypoints
+  // carry y = 0 wherever the dungeon is. A flyer moves along a 3D
+  // heading toward its destination and its out-of-sight stop measures
+  // the y term, so at y = 0 it dives or climbs forever and never
+  // arrives - Mac's disappearing foes. The room sits at y = 25 here so
+  // that 0 and "the floor" are different numbers.
+  const H = 25;
+  const c = room({ y: H });
+  const start = [2, H, 2], target = [10, H + 1.5, 2];   // the target 1.5 up: its y must survive to the goal
+  const bake = bakeNavFromCollider(c, { anchor: start });
+  // The LIVE chf is hydrated on the main thread from the worker or the
+  // cache and carries no colliders, so findPath has no surface to
+  // sample and answers y = 0. A fresh in-process bake does carry them;
+  // strip them so this test runs the condition the game actually runs.
+  delete bake.chf.colliders;
+  const { ai } = foe(EnhancedEnemyAI, c, bake, start);
+  tick(ai, target);
+  assert.ok(ai.path && ai.path.length >= 3, 'a route with corners');
+  assert.ok(ai.path.every((p) => p[1] === 0), 'precondition: without colliders the nav reports y = 0');
+  // A corner: the foe's own y.
+  ai.pathI = 1;
+  ai._getDestination(target);
+  assert.ok(Math.abs(ai.destination[1] - ai.feet[1]) < 1e-9, `a corner took y ${ai.destination[1]}, not the foe's ${ai.feet[1]}`);
+  // The goal: the goal's real y - the predicted target position's, which
+  // is what classic's own destination carries.
+  ai.pathI = ai.path.length - 1;
+  ai._getDestination(target);
+  assert.ok(Math.abs(ai.destination[1] - ai._navGoal(target)[1]) < 1e-9, 'the goal took the wrong y');
+  assert.ok(Math.abs(ai.destination[1]) > 1, 'the goal is not at the nav\u2019s zero');
+});
+
+test('ENHANCED AI 4a: the bake is height-invariant - the anchor carries its y', () => {
+  // buildRegions elects the kept component by the span NEAREST THE
+  // ANCHOR'S HEIGHT, defaulting y to 0. AI 3 passed x and z only, so
+  // every bake was anchored at y = 0: at a room at 0 the real floor won
+  // by accident, and at y = 25 the phantom ground (minY - 10 = 15) won,
+  // every real floor was culled - the walls' too - and the route ran
+  // straight through the divider. Real dungeons are not at 0.
+  // MUTANT: drop the y from regionAnchor and the y = 25 room fails.
+  const routeAt = (H) => {
+    const c = room({ y: H });
+    const bake = bakeNavFromCollider(c, { anchor: [2, H, 2] });
+    const p = findPath(bake.chf, [2, 0, 2], [10, 0, 2]);
+    return { p, wall: navWalkable(bake.chf, 6, 5), polys: bake.stats.polys };
+  };
+  const at0 = routeAt(0), at25 = routeAt(25), atNeg = routeAt(-40);
+  for (const [h, r] of [[0, at0], [25, at25], [-40, atNeg]]) {
+    assert.ok(r.p && r.p.length >= 3, `at y=${h} the route has no corners - it went through the wall`);
+    assert.equal(r.wall, false, `at y=${h} the divider is walkable`);
+  }
+  assert.equal(at25.polys, at0.polys, 'the mesh changes with height');
+  assert.equal(atNeg.polys, at0.polys, 'the mesh changes with height');
+  // And the same x,z corners regardless of height.
+  const xz = (r) => r.p.map((q) => `${q[0].toFixed(2)},${q[2].toFixed(2)}`).join('|');
+  assert.equal(xz(at25), xz(at0));
+  assert.equal(xz(atNeg), xz(at0));
+  // ONE HOME: all three bake paths build the anchor through regionAnchor.
+  for (const f of ['src/ai/navBake.js', 'src/ai/navWorker.js', 'src/ai/navClient.js']) {
+    const src = rd(f);
+    assert.ok(/buildRegions\(chf, \{ anchor: regionAnchor\(/.test(src), `${f} builds its own anchor`);
+    assert.ok(!/anchor: \{ x: [a-z.]*anchor\[0\], z:/.test(src), `${f} still builds an anchor without y`);
+  }
+});
+
+test('ENHANCED AI 4a: the stuck nudge asks the fall check, and takes the other side or none', () => {
+  // Every classic move runs _fallCheck first; a nudge that skipped it
+  // could side-step a foe off a ledge the nav's 0.5 m cells never saw.
+  const c = room();
+  const bake = bakeNavFromCollider(c, { anchor: START });
+  const { ai } = foe(EnhancedEnemyAI, c, bake, START);
+  tick(ai, TARGET);
+  const probes = [];
+  // Both sides drop: no nudge at all, but the route still drops.
+  ai._fallCheck = (d) => { probes.push([...d]); ai.fallDetected = true; };
+  const x0 = ai.feet[0], z0 = ai.feet[2];
+  ai._stuckWatch(bake.chf, 0, 1, STUCK_T + 0.01);
+  assert.equal(probes.length, 2, 'both sides were asked');
+  assert.ok(Math.abs(ai.feet[0] - x0) < 1e-9 && Math.abs(ai.feet[2] - z0) < 1e-9, 'a nudge went off a drop');
+  assert.equal(ai.path, null, 'the wedged route must still drop');
+  // Only the first side drops: the second is taken.
+  tick(ai, TARGET);
+  probes.length = 0;
+  let n = 0;
+  ai._fallCheck = (d) => { probes.push([...d]); ai.fallDetected = (n++ === 0); };
+  const x1 = ai.feet[0], z1 = ai.feet[2];
+  ai.stuckT = STUCK_T; ai.lastX = ai.feet[0]; ai.lastZ = ai.feet[2];
+  ai._stuckWatch(bake.chf, 0, 1, 0.01);
+  assert.equal(probes.length, 2);
+  assert.ok(Math.hypot(ai.feet[0] - x1, ai.feet[2] - z1) > 0.1, 'the safe side was not taken');
+  // The probe direction is perpendicular to the heading (0,1): +-x.
+  assert.ok(probes.every((d) => Math.abs(d[2]) < 1e-9 && Math.abs(Math.abs(d[0]) - 1) < 1e-9), 'the fall check was asked in the wrong direction');
 });
 
 test('ENHANCED AI 4: the host chooses the motor by the switch and refills the budget each frame', () => {

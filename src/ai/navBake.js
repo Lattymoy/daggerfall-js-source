@@ -51,6 +51,19 @@ export function navInputFromCollider(collider, { buckets = null } = {}) {
  * drops the rest (project-final/main.js:233 bakes anchored, always).
  * @returns {{ chf, cols, agent, stats }}
  */
+/**
+ * The anchor as buildRegions wants it - WITH ITS Y. The kept component
+ * is elected by the span nearest the anchor's height, and the default
+ * when y is absent is 0: the phantom ground (minY - 10) is nearer to 0
+ * than any real floor not itself at 0, so an anchor without y elects
+ * the phantom and culls every real floor. Three call sites once built
+ * this literal by hand and all three dropped the y; they build it here
+ * now, and a test reads all three.
+ */
+export function regionAnchor(anchor) {
+  return { x: anchor[0], y: anchor[1], z: anchor[2] };
+}
+
 export function bakeNavFromCollider(collider, { anchor, agent = AGENT, buckets = null, budget = 250000, target = 80000 } = {}) {
   if (!anchor) throw new Error('bakeNavFromCollider: an anchor is required - the navmesh serves the component the agents live in');
   const t0 = (globalThis.performance ?? Date).now();
@@ -70,7 +83,18 @@ export function bakeNavFromCollider(collider, { anchor, agent = AGENT, buckets =
   const ground = { at: () => floor, min: floor };
   const nav = buildNav(cols, ag, [], ground);
   const chf = buildCompact(nav, ag);
-  buildRegions(chf, { anchor: { x: anchor[0], z: anchor[2] } });
+  // THE ANCHOR CARRIES ITS Y. buildRegions elects the kept component by
+  // the span NEAREST THE ANCHOR'S HEIGHT (his FOUNDRY S3 rule: "an
+  // abyss floor 22m down is the column's first span"), defaulting y to
+  // 0 when none is given. AI 3 passed only x and z, so every bake was
+  // anchored at y = 0 - and the phantom ground (minY - 10) is nearer to
+  // 0 than any dungeon floor that is not itself at 0. Our test rooms
+  // were at 0, so the real floor won by accident; a room at y = 25
+  // elected the phantom, culled every real floor - the walls' too, so
+  // the walls read as walkable - and routes ran straight through them.
+  // Real dungeons are not at 0. Mac's report: foes into walls, clumped,
+  // gone.
+  buildRegions(chf, { anchor: regionAnchor(anchor) });
   buildContours(chf);
   buildPolyMesh(chf);
   buildPolyMeshDetail(chf, cols);
