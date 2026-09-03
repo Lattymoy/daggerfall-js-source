@@ -429,9 +429,14 @@ test('host: ReleaseFromPrison\'s last two lines are wired to the world', () => {
   // the same-pixel teleport, and RandomStartMarker's law.
   assert.match(world, /if \(!dfLoc\?\.exterior\?\.exteriorData\) return;\s*\/\/ HasLocation false/,
     'no location on the pixel means no teleport at all');
-  assert.match(world, /_teleportToPixel\(px\.x, px\.y, local, \{ grounded: opts\.grounded \}\)/,
-    'TeleportToCoordinates to the SAME map pixel');
-  assert.match(world, /positionPlayerToLocation\(\{/, 'through the ported law, not a host guess');
+  assert.match(world, /_teleportToPixel\(px\.x, px\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\)/,
+    'TeleportToCoordinates to the SAME map pixel, with RandomStartMarker');
+  // ...and the core runs the arm once the destination pixel is built,
+  // exactly where StreamingWorld.Update runs it (:266-295).
+  assert.match(world, /const landing = reposition === REPOSITION\.RandomStartMarker \? locationLandingFor\(px, py\) : null;/,
+    'the reposition method rides the teleport, as TeleportToMapPixel stores it');
+  assert.match(world, /const at = locationArrivalLanding\(dfLoc, \{ origin, startMarkers \}\);/,
+    'through the ported law, not a host guess');
   assert.match(world, /preloadPrisonScreenArt\(/, 'and PRIS00I0 warms at boot like every other window');
   // the FLAGGED trio is GONE from the flow - retiring a flag deletes
   // the sentence that named it.

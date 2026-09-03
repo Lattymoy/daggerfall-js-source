@@ -164,8 +164,21 @@ export const WORLD_MAP_TERRAIN_DIM = 32768;
 export const MARKER_TILE_SCALE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE;   // 819.2
 /** refWidth/refHeight (:1396-1397): blockSize x numMaxBlocks x layoutMultiplier. */
 export const MARKER_REF_SPAN = BLOCK_PX * EXT_NUM_MAX_BLOCKS * EXT_LAYOUT_MULTIPLIER;   // 512
-/** the custom-location offsets (:1391-1395) - CUST-prefixed 1x1 towns
- *  are laid out differently, and DFU corrects the marker by hand */
+/** the custom-location offsets (:1391-1395). DFLocation.HasCustomLocationPosition
+ *  (DFLocation.cs:87-97, ported at world/locationLayout.js:30) picks out 1x1
+ *  locations whose block 0 carries the CUST prefix; those are laid out
+ *  differently, and DFU corrects the marker by hand.
+ *
+ *  NOT towns - this comment said "towns" until a MAPS.BSA sweep counted them.
+ *  EXACTLY EIGHT locations in the whole file qualify, and every one is
+ *  locationType 4 (DungeonLabyrinth): the main-story dungeon exteriors
+ *  Scourg Barrow (CUSTAA10, Dragontail Mountains), Direnni Tower (CUSTAA06,
+ *  Isle of Balfiera), Shedungent (CUSTAA19, Wrothgarian Mountains),
+ *  Privateer's Hold (CUSTAA30, Daggerfall), Woodborne Hall (CUSTAA29,
+ *  Wayrest), Orsinium (CUSTAA09, Orsinium Area), Lysandus' Tomb (CUSTAA08,
+ *  Menevia) and Castle Llugwych (CUSTAA07, Ykalon) - eight of the fourteen
+ *  MAIN_STORY_DUNGEON_IDS. Zero towns take the correction, and DFU's own
+ *  wording (DFLocation.cs:87) says "1x1 locations", not towns. */
 export const CUSTOM_LOCATION_OFFSET = Object.freeze([-64, +3]);
 // the marker trio's colours and sizes (:1616-1649)
 const MARKER_CIRCLE_RGBA = [0.75, 0.71, 0.71, 1];        // :1646
