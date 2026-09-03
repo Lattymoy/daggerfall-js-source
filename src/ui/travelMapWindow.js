@@ -193,10 +193,30 @@ export const OFFSET_LOOKUP = Object.freeze({
 /** The eighteen regions with NO page in the offset table (:590-648):
  *  the wildernesses, the two generic villages and the four coast
  *  strips. DFU's UpdateMapLocationDotsTexture indexes offsetLookup
- *  directly, so opening one of these throws KeyNotFoundException;
- *  the port REFUSES the page instead - a recorded departure, since
- *  a crash is not a behaviour worth reproducing. Nothing paints
- *  them in the region picker, so nothing normally clicks them. */
+ *  directly (:677, :885, :1151), so opening one of these throws
+ *  KeyNotFoundException; the port REFUSES the page instead - a recorded
+ *  departure, since a crash is not a behaviour worth reproducing.
+ *
+ *  SEVENTEEN of the eighteen are genuinely empty in MAPS.BSA: all four of
+ *  their BSA records are zero-length and loadRegion() returns false, so there
+ *  is nothing to paint. THE EIGHTEENTH IS NOT, and this comment used to claim
+ *  otherwise. Region 31, High Rock sea coast, holds THREE real locations -
+ *  Mantellan Crux (mapId 1001, map pixel (1,1), DUNGAA00.RMB, one of the
+ *  fourteen MAIN_STORY_DUNGEON_IDS) and both "Your Ship" moorings, mapId
+ *  1050578 at (2,2) with SHIPAA00.RMB and mapId 2102157 at (5,5) with
+ *  SHIPAA01.RMB.
+ *
+ *  What survives the correction is that the refusal withholds nothing DFU
+ *  would have given. DFU's own page table has no FMAP0I31.IMG row either, so
+ *  region 31 is unpageable in DFU too; GetPlayerRegion (:1609-1617) subtracts
+ *  128 from the politic index and answers -1 at sea, where the sea coast's
+ *  politic is 64, so "I'M AT" cannot open it; and a moored ship is not a
+ *  travel-map destination in the first place - TransportManager.BoardShip
+ *  teleports straight to DaggerfallBankManager.GetShipCoords()
+ *  (TransportManager.cs:368-397), and getPixelColorIndex's empty
+ *  HomeYourShips arm means the map would draw no dot for either mooring even
+ *  with a page. Mantellan Crux is entered through the main quest, not
+ *  travelled to. */
 export const hasRegionPage = (region) => getRegionMapNames(region).every((n) => !!OFFSET_LOOKUP[n]);
 
 /** GetRegionMapNames (:1660-1672) - three regions page across two
