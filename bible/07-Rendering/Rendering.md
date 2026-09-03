@@ -37,7 +37,28 @@ directory by `test/audit18_bible_docs.test.js`:
   and never one moving. The controller carries a live getter now, and
   `test/gr3_wind.test.js` pins the value (sunny is the lab's 70, not 0)
   and a blade's actual tip travel on real placer output (29% of its
-  height over half a gust) - the two assertions GR2 lacked.
+  height over half a gust) - the two assertions GR2 lacked. **GR4
+  (2026-09-02): THE ROOT IS THE GROUND.** RedRoryOTheGlen, in the
+  Discord, on Mac's screenshot: "the base of the grass blending into
+  the ground and all you can make out are the tips through a gradient -
+  reminds me of how the older Novalogic games handled grass." He is
+  describing a real technique (ground-colour bleed, in modern terms)
+  aimed at the one tell that makes billboard grass read as quads stuck
+  on: the hard line where a blade of a fixed colour meets ground of
+  another. Our root was a fixed olive. Now a fourth instance attribute
+  carries THE GROUND'S OWN COLOUR under each blade, the root is that
+  colour darkened as a sward's shade would (the olive arrives by the
+  mid), and the alpha fades in from the base so what reads as a blade is
+  its upper part. The lab bakes it from its own drawn ground's pixels;
+  the game from each TILE RECORD'S MEAN colour, averaged once where the
+  texels are already on the CPU for the tile array, and looked up by
+  keep's own tile maths so the root takes the colour of the very tile
+  keep let it stand on. No ground callback hands back the old olive, so
+  a host without one draws GR2's grass unchanged. The shader changed IN
+  THE LAB and the game copied it, string for string - the GR1 pin holds.
+  Period-correct, as it happens: Daggerfall and Comanche are the same
+  year. Seen in the lab before/after; the GAME side is a never-rendered
+  path and goes to Mac's eyes by the Incident's law.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing
