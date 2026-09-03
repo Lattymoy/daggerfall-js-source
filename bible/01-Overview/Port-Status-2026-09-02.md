@@ -49,8 +49,8 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **9** | `node tools/regenOpenFlags.mjs --check` answers 9 ("9 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
-| open flags | 151 | **10** | `node tools/regenOpenFlags.mjs --check` answers 10 ("10 entries, up to date" - DR1 2026-09-03 retired `scenes/dungeonContext.js`'s by shipping both window seams). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **8** | `node tools/regenOpenFlags.mjs --check` answers 8 ("8 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **8** | `node tools/regenOpenFlags.mjs --check` answers 8 ("10 entries, up to date" - DR1 2026-09-03 retired `scenes/dungeonContext.js`'s by shipping both window seams). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -568,9 +568,9 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
 when this was measured, over the 19 the list then held. **As of ROAD-F,
-`node tools/regenOpenFlags.mjs --check` answers 9**,
+`node tools/regenOpenFlags.mjs --check` answers 8**,
 when this was measured, over the 19 the list then held. **As of Wave E,
-the ship landing and DR1, `node tools/regenOpenFlags.mjs --check` answers 10**,
+the ship landing and DR1, `node tools/regenOpenFlags.mjs --check` answers 8**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
