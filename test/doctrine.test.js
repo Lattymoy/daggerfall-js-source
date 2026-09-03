@@ -42,6 +42,15 @@ const PUBLIC_ALLOWLIST = new Map([
   // runtime, never the pixels - and a test proves it holds nothing
   // else.
   ['public/trees/500.json', "OURS - our partner's tree geometry for archive 500; positions, UVs and card tags, no pixels"],
+  ['public/trees/501.json', "OURS - our partner's tree geometry for archive 501; positions, UVs and card tags, no pixels"],
+  ['public/trees/502.json', "OURS - our partner's tree geometry for archive 502; positions, UVs and card tags, no pixels"],
+  ['public/trees/503.json', "OURS - our partner's tree geometry for archive 503; positions, UVs and card tags, no pixels"],
+  ['public/trees/504.json', "OURS - our partner's tree geometry for archive 504; positions, UVs and card tags, no pixels"],
+  ['public/trees/505.json', "OURS - our partner's tree geometry for archive 505; positions, UVs and card tags, no pixels"],
+  ['public/trees/506.json', "OURS - our partner's tree geometry for archive 506; positions, UVs and card tags, no pixels"],
+  ['public/trees/508.json', "OURS - our partner's tree geometry for archive 508; positions, UVs and card tags, no pixels"],
+  ['public/trees/509.json', "OURS - our partner's tree geometry for archive 509; positions, UVs and card tags, no pixels"],
+  ['public/trees/510.json', "OURS - our partner's tree geometry for archive 510; positions, UVs and card tags, no pixels"],
   // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
   // (U65f): two marks, a title card and the one recorded piece of
   // music this port ever shipped. The rows went with the files; this

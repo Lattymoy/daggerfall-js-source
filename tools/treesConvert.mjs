@@ -52,6 +52,10 @@ if (!root || !archives.length) {
 /** Round to the mesh's precision: a tree's cards are metres across and
  *  a millimetre is below anything the eye or the wind will show. */
 const r3 = (v) => Math.round(v * 1000) / 1000;
+/** A record whose side cards land on their island's opaque pixels less
+ *  often than this is refused: the flat stays a flat rather than wear
+ *  the wrong picture. */
+const MIN_COVERAGE = 0.5;
 const r4 = (v) => Math.round(v * 10000) / 10000;
 
 // ── Collada ──────────────────────────────────────────────────────
@@ -73,8 +77,27 @@ function parseDae(text) {
     const pos = m[2].match(/<input semantic="POSITION" source="#([^"]+)"/);
     vertsMap.set(m[1], pos[1]);
   }
+  // material -> image filename, through Collada's effect/surface chain
+  const images = new Map();
+  for (const m of text.matchAll(/<image id="([^"]+)"[^>]*>\s*<init_from>([^<]+)<\/init_from>/g)) images.set(m[1], decodeURIComponent(m[2].trim()));
+  const surfaces = new Map();   // effect id -> image id
+  for (const m of text.matchAll(/<effect id="([^"]+)"[\s\S]*?<\/effect>/g)) {
+    const img = m[0].match(/<surface type="2D">\s*<init_from>([^<]+)<\/init_from>/) ?? m[0].match(/<init_from>([^<]+)<\/init_from>/);
+    if (img) surfaces.set(m[1], img[1].trim());
+  }
+  const materials = new Map();  // material id -> effect id
+  for (const m of text.matchAll(/<material id="([^"]+)"[^>]*>\s*<instance_effect url="#([^"]+)"/g)) materials.set(m[1], m[2]);
+  const bound = new Map();      // symbol -> material id
+  for (const m of text.matchAll(/<instance_material symbol="([^"]+)" target="#([^"]+)"/g)) bound.set(m[1], m[2]);
+  const imageOf = (symbol) => {
+    const mat = bound.get(symbol) ?? symbol;
+    const eff = materials.get(mat);
+    const imgId = eff ? surfaces.get(eff) : null;
+    return (imgId && images.get(imgId)) ?? images.get(imgId) ?? null;
+  };
   const tris = [];
   for (const m of text.matchAll(/<triangles ([^>]*)>([\s\S]*?)<\/triangles>/g)) {
+    const image = imageOf((m[1].match(/material="([^"]+)"/) ?? [])[1] ?? '');
     const inputs = [...m[2].matchAll(/<input semantic="(\w+)" source="#([^"]+)" offset="(\d+)"/g)]
       .map((i) => ({ sem: i[1], src: i[2], off: Number(i[3]) }));
     const stride = Math.max(...inputs.map((i) => i.off)) + 1;
@@ -83,7 +106,7 @@ function parseDae(text) {
     const P = by('VERTEX'), N = by('NORMAL'), T = by('TEXCOORD');
     const pos = src(vertsMap.get(P.src) ?? P.src), nrm = N ? src(N.src) : null, uv = T ? src(T.src) : null;
     for (let t = 0; t + stride * 3 <= idx.length; t += stride * 3) {
-      const tri = { p: [], n: [], uv: [] };
+      const tri = { p: [], n: [], uv: [], image };
       for (let k = 0; k < 3; k++) {
         const b = t + k * stride;
         const pi = idx[b + P.off]; tri.p.push([pos[pi * 3], pos[pi * 3 + 1], pos[pi * 3 + 2]]);
@@ -155,11 +178,45 @@ function islandFor(atlas, u, v) {
 
 for (const archive of archives) {
   const dir = join(root, String(archive));
-  const atlasPath = readdirSync(dir).find((f) => /atlas\.png$/i.test(f) && !/opaque/i.test(f))
-    ?? readdirSync(dir).find((f) => /\.png$/i.test(f) && !/opaque/i.test(f));
-  if (!atlasPath) { console.error(`${archive}: no atlas`); continue; }
-  const atlas = islands(PNG.sync.read(readFileSync(join(dir, atlasPath))));
-  const out = { archive: Number(archive), records: {}, stats: { models: 0, tris: 0, sideCards: 0, topCards: 0 } };
+  const files = readdirSync(dir);
+  const alphaAtlases = files.filter((f) => /\.png$/i.test(f) && !/opaque/i.test(f));
+  const atlases = new Map();    // resolved filename -> islands
+  /** The atlas a triangle block's image resolves to, by this rule:
+   *  the bound file if it exists (its ALPHA twin when it names the
+   *  opaque one - the twins share a layout to 99.9%, black-matted, and
+   *  the alpha one carries the islands); else, if the folder has ONE
+   *  alpha atlas, that (two archives bind renamed files); else null and
+   *  the block is skipped, counted. */
+  // An archive's OWN atlas - <archive>_Atlas*.png, alpha - is the
+  // default for a block with no binding (three of 501's models were
+  // exported without images, beside a stray desert atlas).
+  const own = alphaAtlases.find((f) => f.toLowerCase().startsWith(`${archive}`.toLowerCase()) && /atlas/i.test(f))
+    ?? (alphaAtlases.length === 1 ? alphaAtlases[0] : null);
+  const resolve = (image) => {
+    if (!image) return own;
+    const base = basename(image);
+    const twin = base.replace(/_?opaque/i, '');
+    const cand = [base, twin, ...files.filter((f) => f.toLowerCase() === base.toLowerCase())];
+    const hit = cand.find((c) => files.includes(c) && !/opaque/i.test(c)) ?? cand.find((c) => files.includes(c));
+    if (hit) return hit;
+    return own;
+  };
+  const atlasFor = (image) => {
+    const file = resolve(image);
+    if (!file) return null;
+    if (!atlases.has(file)) {
+      const png = PNG.sync.read(readFileSync(join(dir, file)));
+      // an opaque atlas has no alpha: its islands are its non-black
+      if (/opaque/i.test(file)) {
+        for (let i = 0; i < png.width * png.height; i++) {
+          const o = i * 4; png.data[o + 3] = (png.data[o] | png.data[o + 1] | png.data[o + 2]) > 8 ? 255 : 0;
+        }
+      }
+      atlases.set(file, islands(png));
+    }
+    return atlases.get(file);
+  };
+  const out = { archive: Number(archive), records: {}, stats: { models: 0, tris: 0, sideCards: 0, topCards: 0, skippedTris: 0, atlases: {} } };
 
   for (const f of readdirSync(dir).filter((n) => n.endsWith('.dae')).sort()) {
     const m = f.match(/_(\d+)\.dae$/); if (!m) continue;
@@ -172,13 +229,26 @@ for (const archive of archives) {
     // a horizontal card (a crown top), else vertical (a side view).
     const side = { pos: [], uv: [] }, top = { pos: [], uv: [] };
     let minY = Infinity, maxY = -Infinity, radius = 0;
+    // COVERAGE: a self-check on the re-basing. A card's centroid, re-based
+    // onto its island's box, should land on an OPAQUE pixel of that
+    // island most of the time; a wrong island or a wrong box lands on
+    // transparency. Reported per record, and a record under
+    // MIN_COVERAGE is refused rather than shipped wrong.
+    let sampled = 0, hit = 0;
     for (const t of tris) {
+      const atlas = atlasFor(t.image);
+      if (!atlas) { out.stats.skippedTris++; continue; }
+      out.stats.atlases[resolve(t.image)] = (out.stats.atlases[resolve(t.image)] ?? 0) + 1;
       const n = t.n[0] ?? [0, 0, 1];
       const horizontal = Math.abs(n[1]) > 0.7;
       const cu = (t.uv[0][0] + t.uv[1][0] + t.uv[2][0]) / 3, cv = (t.uv[0][1] + t.uv[1][1] + t.uv[2][1]) / 3;
       const isl = islandFor(atlas, cu, cv);
       const bx = isl.x0, bw = Math.max(1, isl.x1 - isl.x0), by = isl.y0, bh = Math.max(1, isl.y1 - isl.y0);
       const dst = horizontal ? top : side;
+      if (!horizontal) {
+        const px = Math.min(atlas.W - 1, Math.max(0, Math.round(cu * atlas.W))), py = Math.min(atlas.H - 1, Math.max(0, Math.round((1 - cv) * atlas.H)));
+        sampled++; if (atlas.label[py * atlas.W + px] === isl.id) hit++;
+      }
       for (let k = 0; k < 3; k++) {
         const [x, y, z] = t.p[k];
         dst.pos.push(r3(x), r3(y), r3(z));
@@ -192,7 +262,11 @@ for (const archive of archives) {
         dst.uv.push(r4(Math.min(1.02, Math.max(-0.02, su))), r4(Math.min(1.02, Math.max(-0.02, sv))));
       }
     }
+    if (!side.pos.length) continue;                  // every card skipped: no model, the flat stays
+    const coverage = sampled ? hit / sampled : 0;
+    if (coverage < MIN_COVERAGE) { out.stats.refused = (out.stats.refused ?? []).concat([`${record}:${coverage.toFixed(2)}`]); continue; }
     out.records[record] = {
+      coverage: r4(coverage),
       height: r3(maxY - minY), base: r3(minY), radius: r3(radius),
       side: { pos: side.pos, uv: side.uv }, top: { pos: top.pos, uv: top.uv },
     };
@@ -202,7 +276,15 @@ for (const archive of archives) {
 
   mkdirSync('public/trees', { recursive: true });
   const dest = `public/trees/${archive}.json`;
+  if (!out.stats.models) {
+    // nothing survived: no file, and the runtime's fetch answers 404 -> null -> billboards
+    if (existsSync(dest)) { const { unlinkSync } = await import('node:fs'); unlinkSync(dest); }
+    console.log(`${archive}: no models survived${out.stats.refused ? ' (refused ' + out.stats.refused.join(' ') + ')' : ''} - nothing written`);
+    continue;
+  }
   writeFileSync(dest, JSON.stringify(out));
   const kb = Math.round(readFileSync(dest).length / 1024);
-  console.log(`${archive}: ${out.stats.models} models, ${out.stats.tris} tris (${out.stats.sideCards | 0} side / ${out.stats.topCards | 0} top tris) -> ${dest} ${kb} KB`);
+  const cov = Object.values(out.records).map((r) => r.coverage);
+  const minCov = cov.length ? Math.min(...cov).toFixed(2) : '-';
+  console.log(`${archive}: ${out.stats.models} models, ${out.stats.tris} tris (${out.stats.sideCards | 0} side / ${out.stats.topCards | 0} top, ${out.stats.skippedTris} skipped) coverage min ${minCov}${out.stats.refused ? ' REFUSED ' + out.stats.refused.join(' ') : ''} -> ${dest} ${kb} KB`);
 }

@@ -866,3 +866,38 @@ browser. It goes to Mac's eyes.
 15 mutants, 15 dead. Next: TR2 synthesises the crown-top cards from the
 sprite (a 4-way radial of the crown; the cards ship tagged and are
 skipped today); TR3 the other archives and the seasons' swaps.
+
+## TR2 + TR3 - the crown from above, and every climate (2026-09-03)
+
+**TR2.** A horizontal card is what a crown looks like from underneath -
+from the ground, looking up - a view Daggerfall never drew. Our partner
+painted one per record into the atlas: the side sprite's crown, turned
+four times about its own centre into a pinwheel. That picture is game
+data by the doctrine (it is the sprite, rotated), so it is not shipped;
+it is REMADE at runtime by the same construction, from the record the
+player supplied. `synthesizeCrownTop` finds the crown by width - the
+first row from the bottom at least CROWN_WIDTH_FRACTION as wide as the
+widest is where the trunk ends - and turns it CROWN_TURNS times; the
+raster uploads under `record#top`, the frame-key shape
+uploadRecordFrame already mints, and the top cards draw after the side
+cards in it. Seen in a software render on four sprite shapes: a pine
+becomes a four-point star, an oak a round crown, exactly what the
+partner drew. Pinned square, four-fold, and trunk-free.
+
+**TR3.** The converter reads each triangle block's Collada material
+binding through to its image, because the archives are not one atlas
+each: 502 binds four, 504 binds its opaque twin for half its cards, two
+archives bind files the partner renamed, and three of 501's models bind
+nothing at all. The alpha and opaque twins share a layout to 99.9%,
+black-matted, so the alpha one's islands serve both; a block with no
+binding takes the archive's own named atlas.
+
+And a self-check rides along, because ten archives is more than the eye
+will inspect: COVERAGE, how often a side card's centroid, re-based,
+lands on its island's opaque pixels. It runs 0.79-1.00 across the
+pack. A record under 0.5 is REFUSED - the flat stays a flat rather
+than wear the wrong picture - and three were: 501_16, 502_14, 511_12.
+511 ships nothing. Ten files, 112 models, 2.5 MB, fetched one per
+climate; a binary format is a later slice if the size ever matters.
+
+Not seen in a browser. Nothing in TR1-3 has drawn through GL.

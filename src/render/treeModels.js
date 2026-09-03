@@ -43,8 +43,78 @@
 export const TREE_LEAN = 0.018;
 
 /** Cards whose normal is this close to vertical are crown-tops: views
- *  Daggerfall never drew. TR1 skips them; TR2 synthesises them. */
+ *  Daggerfall never drew. TR2 synthesises them from the sprite. */
 export const TOP_VIEW_DOT = 0.7;
+
+// ── TR2: THE CROWN FROM ABOVE ──────────────────────────────────────
+//
+// A horizontal card is what a crown looks like from underneath - from
+// the ground, looking up - and Daggerfall drew no such view. Our
+// partner painted one per record into the atlas: the side sprite's
+// crown, turned four times about its own centre into a pinwheel. That
+// picture is game data by the doctrine (it is the sprite, rotated), so
+// it is not shipped; it is REMADE here, at runtime, from the record the
+// player supplied, by the same construction. The tree's crown from
+// above is the tree's own crown, four ways.
+//
+// The crown is the sprite above the trunk. The trunk is found by
+// width: scanning up from the bottom of the opaque box, the first row
+// at least CROWN_WIDTH_FRACTION as wide as the widest row is where the
+// crown begins. A bush with no trunk is all crown.
+
+export const CROWN_WIDTH_FRACTION = 0.45;
+export const CROWN_TURNS = 4;
+export const CROWN_MAX_SIZE = 256;
+
+/**
+ * Synthesise the crown-top raster from a record's RGBA and its opaque
+ * box. Returns { width, height, data: Uint8ClampedArray } - the shape
+ * uploadTexture takes - or null for a record with nothing opaque.
+ * Pure, and pinned: four-fold symmetric, alpha where the crown is.
+ */
+export function synthesizeCrownTop(color32, box) {
+  if (!box) return null;
+  const W = color32.width, H = color32.height, src = color32.data;
+  const x0 = Math.round(box[0] * W), y0 = Math.round(box[1] * H);
+  const x1 = Math.round(box[2] * W), y1 = Math.round(box[3] * H);
+  const bw = x1 - x0, bh = y1 - y0;
+  if (bw <= 0 || bh <= 0) return null;
+  // the crown's first row, by width
+  const widths = new Int32Array(bh);
+  let maxW = 0;
+  for (let y = 0; y < bh; y++) {
+    let l = -1, r = -1;
+    for (let x = 0; x < bw; x++) {
+      if (src[((y0 + y) * W + x0 + x) * 4 + 3] < 128) continue;
+      if (l < 0) l = x; r = x;
+    }
+    widths[y] = l < 0 ? 0 : r - l + 1;
+    if (widths[y] > maxW) maxW = widths[y];
+  }
+  let crownEnd = bh;                                        // exclusive row, from the top
+  for (let y = bh - 1; y >= 0; y--) { if (widths[y] >= maxW * CROWN_WIDTH_FRACTION) { crownEnd = y + 1; break; } }
+  const ch = Math.max(1, crownEnd);
+  // the pinwheel: the crown turned CROWN_TURNS times about its centre
+  const S = Math.min(CROWN_MAX_SIZE, Math.max(bw, ch) + 2);
+  const out = new Uint8ClampedArray(S * S * 4);
+  const cx = bw / 2, cy = ch / 2, ox = S / 2, oy = S / 2;
+  const scale = (S - 2) / Math.max(bw, ch);
+  for (let py = 0; py < S; py++) {
+    for (let px = 0; px < S; px++) {
+      const dx = (px + 0.5 - ox) / scale, dy = (py + 0.5 - oy) / scale;
+      let best = 0, o = (py * S + px) * 4;
+      for (let k = 0; k < CROWN_TURNS; k++) {
+        const a = (k * Math.PI * 2) / CROWN_TURNS, c = Math.cos(a), sn = Math.sin(a);
+        const sx = Math.floor(cx + dx * c - dy * sn), sy = Math.floor(cy + dx * sn + dy * c);
+        if (sx < 0 || sy < 0 || sx >= bw || sy >= ch) continue;
+        const si = ((y0 + sy) * W + x0 + sx) * 4;
+        const al = src[si + 3];
+        if (al > best) { best = al; out[o] = src[si]; out[o + 1] = src[si + 1]; out[o + 2] = src[si + 2]; out[o + 3] = al; }
+      }
+    }
+  }
+  return { width: S, height: S, data: out };
+}
 
 const VS = `#version 300 es
 precision highp float;
@@ -163,6 +233,19 @@ export function sideStream(rec) {
   return { verts, count: n };
 }
 
+/** The crown-top cards' vertex stream, or null when there are none. */
+export function topStream(rec) {
+  const pos = rec.top?.pos ?? [], uv = rec.top?.uv ?? [];
+  const n = pos.length / 3;
+  if (!n) return null;
+  const verts = new Float32Array(n * 5);
+  for (let i = 0; i < n; i++) {
+    verts[i * 5] = pos[i * 3]; verts[i * 5 + 1] = pos[i * 3 + 1]; verts[i * 5 + 2] = pos[i * 3 + 2];
+    verts[i * 5 + 3] = uv[i * 2]; verts[i * 5 + 4] = uv[i * 2 + 1];
+  }
+  return { verts, count: n };
+}
+
 /** The mesh's scale so its height equals the billboard's. */
 export function scaleFor(rec, billboardHeight) {
   return rec.height > 1e-3 ? billboardHeight / rec.height : 1;
@@ -207,20 +290,14 @@ export class TreeModelRenderer {
    * height; `bitmap` the record's DFBitmap for the opaque box.
    * Returns the batch, or null if there is nothing to draw.
    */
-  build(archive, record, rec, centers, billboardHeight, bitmap) {
+  build(archive, record, rec, centers, billboardHeight, bitmap, { color32 = null, upload = null } = {}) {
     const gl = this.gl;
     const stream = sideStream(rec);
     const box = bitmap ? opaqueBox(bitmap) : [0, 0, 1, 1];
     if (!stream || !box || !centers.length) return null;
     const key = `${archive}_${record}`;
     this.dispose(key);
-    const vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    const vbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, stream.verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+    // the instances, shared by both card sets
     const inst = new Float32Array(centers.length * 4);
     for (let i = 0; i < centers.length; i++) {
       const [x, y, z] = centers[i];
@@ -229,9 +306,34 @@ export class TreeModelRenderer {
     const ibo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, ibo);
     gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(2, 1);
-    gl.bindVertexArray(null);
-    const batch = { key, archive, record, vao, vbo, ibo, count: stream.count, instances: centers.length, rec, scale: scaleFor(rec, billboardHeight), box };
+    const vaoFor = (verts) => {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+      gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+      gl.bindBuffer(gl.ARRAY_BUFFER, ibo);
+      gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(2, 1);
+      gl.bindVertexArray(null);
+      return { vao, vbo };
+    };
+    const side = vaoFor(stream.verts);
+    // TR2: the crown-top cards, in a texture remade from the record.
+    // Any failure here costs the tops, never the tree.
+    let top = null, topKey = null;
+    const ts = topStream(rec);
+    if (ts && color32 && upload) {
+      try {
+        const raster = synthesizeCrownTop(color32, box);
+        if (raster) { topKey = `${record}#top`; upload(topKey, raster); top = { ...vaoFor(ts.verts), count: ts.count }; }
+      } catch (e) { top = null; topKey = null; console.warn('[trees] no crown top:', key, e?.message ?? e); }
+    }
+    const batch = {
+      key, archive, record, vao: side.vao, vbo: side.vbo, ibo, count: stream.count, instances: centers.length,
+      rec, scale: scaleFor(rec, billboardHeight), box, top, topKey: topKey ? `${archive}_${topKey}` : null,
+    };
     this.meshes.set(key, batch);
     return batch;
   }
@@ -241,6 +343,7 @@ export class TreeModelRenderer {
     if (!b) return;
     const gl = this.gl;
     gl.deleteVertexArray(b.vao); gl.deleteBuffer(b.vbo); gl.deleteBuffer(b.ibo);
+    if (b.top) { gl.deleteVertexArray(b.top.vao); gl.deleteBuffer(b.top.vbo); }
     this.meshes.delete(key);
   }
 
@@ -279,6 +382,15 @@ export class TreeModelRenderer {
       gl.bindVertexArray(b.vao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, b.count, b.instances);
       drawn += b.instances;
+      // TR2: the crown-tops, in the synthesised raster (a whole texture,
+      // so the box is the unit square)
+      const topTex = b.top && b.topKey ? r.textures.get(b.topKey) : null;
+      if (topTex) {
+        gl.bindTexture(gl.TEXTURE_2D, topTex);
+        gl.uniform4f(u.box, 0, 0, 1, 1);
+        gl.bindVertexArray(b.top.vao);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, b.top.count, b.instances);
+      }
     }
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);

@@ -872,7 +872,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (rec) {
         try {
           const bases = centers.map(([cx, cy, cz]) => [cx, cy - size[1] / 2, cz]);
-          const tb = treeModels.build(archive, record, rec, bases, size[1], t.getDFBitmap(record, 0));
+          const bm = t.getDFBitmap(record, 0);
+          const tb = treeModels.build(archive, record, rec, bases, size[1], bm, {
+            // TR2: the crown-top is remade from the record's own RGBA and
+            // uploaded under `record#top`, the frame-key shape
+            // uploadRecordFrame already mints
+            color32: t.getColor32(bm, 0),
+            upload: (k, raster) => renderer.uploadTexture(archive, k, raster),
+          });
           if (tb) { treeBatches.push(tb.key); continue; }
         } catch (e) { console.warn('[trees] fell back to the flat:', k, e?.message ?? e); }
       }

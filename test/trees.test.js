@@ -9,25 +9,42 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { opaqueBox, sideStream, scaleFor, phaseAt, TREE_LEAN, TOP_VIEW_DOT } from '../src/render/treeModels.js';
+import {
+  opaqueBox, sideStream, topStream, scaleFor, phaseAt, synthesizeCrownTop,
+  TREE_LEAN, TOP_VIEW_DOT, CROWN_TURNS, CROWN_WIDTH_FRACTION, CROWN_MAX_SIZE,
+} from '../src/render/treeModels.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
-test('TR1: the shipped file is GEOMETRY - positions, UVs, tags, and nothing that could be a pixel', () => {
-  const path = 'public/trees/500.json';
+import { readdirSync } from 'node:fs';
+const TREE_FILES = readdirSync(new URL('../public/trees/', import.meta.url)).filter((f) => f.endsWith('.json')).sort();
+
+test('TR3: every climate that has models ships one, and none is empty', () => {
+  // The partner modelled 500-511 bar 507; 511's one model was refused by
+  // the converter's coverage check, so ten files ship. A file with no
+  // records would be a fetch for nothing.
+  assert.deepEqual(TREE_FILES, ['500.json', '501.json', '502.json', '503.json', '504.json', '505.json', '506.json', '508.json', '509.json', '510.json']);
+});
+
+for (const file of TREE_FILES) test(`TR1/TR3: ${file} is GEOMETRY - positions, UVs, tags, and nothing that could be a pixel`, () => {
+  const path = `public/trees/${file}`;
   assert.ok(existsSync(new URL(`../${path}`, import.meta.url)), `${path} is missing`);
   const raw = rd(path);
   // No base64, no data URIs, no PNG/RGBA blobs: a render of game data
   // is game data, and this file must not be one in any encoding.
   assert.ok(!/data:image|base64|iVBOR|\\u00|rgba/i.test(raw), 'the file carries something that could be pixels');
   const j = JSON.parse(raw);
-  assert.equal(j.archive, 500);
+  assert.equal(j.archive, Number(file.slice(0, -5)));
   const recs = Object.entries(j.records);
-  assert.ok(recs.length >= 5, `only ${recs.length} records`);
+  assert.ok(recs.length >= 1, `only ${recs.length} records`);
   for (const [rec, m] of recs) {
     assert.ok(Number.isInteger(Number(rec)) && Number(rec) > 0, `record key ${rec}`);
-    assert.deepEqual(Object.keys(m).sort(), ['base', 'height', 'radius', 'side', 'top'], `record ${rec} carries extra fields`);
-    assert.ok(m.height > 1 && m.height < 60, `record ${rec} height ${m.height} is not a tree`);
+    assert.deepEqual(Object.keys(m).sort(), ['base', 'coverage', 'height', 'radius', 'side', 'top'], `record ${rec} carries extra fields`);
+    // The converter's self-check rode along: how often a side card's
+    // centroid, re-based, lands on its island's opaque pixels. Under
+    // 0.5 the converter refuses the record; nothing shipped is under it.
+    assert.ok(m.coverage >= 0.5 && m.coverage <= 1, `record ${rec} coverage ${m.coverage}`);
+    assert.ok(m.height > 0.3 && m.height < 60, `record ${rec} height ${m.height} is not a tree`);
     for (const view of ['side', 'top']) {
       assert.equal(m[view].pos.length % 9, 0, `record ${rec} ${view} pos is not triangles`);
       assert.equal(m[view].uv.length, (m[view].pos.length / 3) * 2, `record ${rec} ${view} uv/pos mismatch`);
@@ -56,7 +73,7 @@ test('TR1: the mesh is scaled to the billboard\u2019s height, and its base sits 
   // the height - so a mesh stands where a flat stood. Pinned by source.
   const host = rd('src/scenes/world.js');
   assert.ok(/centers\.map\(\(\[cx, cy, cz\]\) => \[cx, cy - size\[1\] \/ 2, cz\]\)/.test(host), 'the host does not lower the base to the flat\u2019s bottom');
-  assert.ok(/treeModels\.build\(archive, record, rec, bases, size\[1\], t\.getDFBitmap\(record, 0\)\)/.test(host), 'the host does not hand the billboard height and the bitmap');
+  assert.ok(/treeModels\.build\(archive, record, rec, bases, size\[1\], bm, \{/.test(host) && /const bm = t\.getDFBitmap\(record, 0\);/.test(host), 'the host does not hand the billboard height and the bitmap');
 });
 
 test('TR1: sideStream interleaves side cards only', () => {
@@ -112,4 +129,79 @@ test('TR1: the host\u2019s switch, fallback and teardown', () => {
   // slice does not touch, named here so nobody reads "one wind" as
   // "one wind everywhere". Two slider calls: the rain's and ours.
   assert.equal((host.match(/labWindSlider\(w\)/g) || []).length, 2, 'a third wind vector appeared');
+});
+
+
+// ── TR2: the crown from above ──────────────────────────────────────
+
+/** A sprite: a wide green crown over a narrow brown trunk. */
+function treeSprite({ w = 40, h = 60, crownRows = 36, trunkW = 4 } = {}) {
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    const crown = y < crownRows;
+    const half = crown ? Math.round((w / 2) * Math.sin((y + 1) / crownRows * Math.PI)) : trunkW / 2;
+    for (let x = 0; x < w; x++) {
+      if (Math.abs(x - w / 2) > half) continue;
+      const o = (y * w + x) * 4;
+      if (crown) { data[o] = 30; data[o + 1] = 120; data[o + 2] = 40; } else { data[o] = 110; data[o + 1] = 70; data[o + 2] = 30; }
+      data[o + 3] = 255;
+    }
+  }
+  return { width: w, height: h, data };
+}
+
+test('TR2: the crown-top is remade from the sprite - square, four-fold, and crown only', () => {
+  const sp = treeSprite();
+  const bm = { width: sp.width, height: sp.height, data: new Uint8Array(sp.width * sp.height).map((_, i) => (sp.data[i * 4 + 3] ? 1 : 0)) };
+  const top = synthesizeCrownTop(sp, opaqueBox(bm));
+  assert.ok(top && top.width === top.height, 'the raster is not square');
+  assert.ok(top.width <= CROWN_MAX_SIZE);
+  const S = top.width, at = (x, y) => top.data[(y * S + x) * 4 + 3];
+  // FOUR-FOLD. Turning the raster a quarter turn about its centre must
+  // reproduce its alpha. MUTANT: CROWN_TURNS = 1 and the trunk-less
+  // crown's outline stops matching its own rotation.
+  let mismatch = 0, opaque = 0;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const a = at(x, y) > 127, b = at(S - 1 - y, x) > 127;
+    if (a) opaque++;
+    if (a !== b) mismatch++;
+  }
+  assert.ok(opaque > S * S * 0.15, 'the crown covers too little');
+  assert.ok(mismatch <= S * S * 0.03, `the raster is not four-fold symmetric (${mismatch} px differ)`);
+  // CROWN ONLY. The trunk is narrow, so it is cut by the width rule and
+  // no brown reaches the raster. MUTANT: CROWN_WIDTH_FRACTION = 0 keeps
+  // every row and the trunk shows as a brown cross.
+  let brown = 0;
+  for (let i = 0; i < S * S; i++) if (top.data[i * 4 + 3] > 127 && top.data[i * 4] > 90) brown++;
+  assert.equal(brown, 0, `${brown} trunk pixels reached the crown-top`);
+  assert.equal(CROWN_TURNS, 4);
+  assert.ok(CROWN_WIDTH_FRACTION > 0.2 && CROWN_WIDTH_FRACTION < 0.8);
+});
+
+test('TR2: a bush with no trunk is all crown, and nothing opaque is nothing', () => {
+  const bush = treeSprite({ crownRows: 60, trunkW: 0 });
+  const bm = { width: bush.width, height: bush.height, data: new Uint8Array(bush.width * bush.height).map((_, i) => (bush.data[i * 4 + 3] ? 1 : 0)) };
+  const top = synthesizeCrownTop(bush, opaqueBox(bm));
+  assert.ok(top, 'a bush has a top');
+  assert.equal(synthesizeCrownTop(bush, null), null, 'no box, no raster');
+  const empty = { width: 8, height: 8, data: new Uint8ClampedArray(256) };
+  assert.equal(synthesizeCrownTop(empty, opaqueBox({ width: 8, height: 8, data: new Uint8Array(64) })), null);
+});
+
+test('TR2: the host remakes the top from the record and the renderer draws it after the sides', () => {
+  const host = rd('src/scenes/world.js'), trees = rd('src/render/treeModels.js');
+  assert.ok(/color32: t\.getColor32\(bm, 0\)/.test(host), 'the host does not hand the record\u2019s RGBA');
+  assert.ok(/upload: \(k, raster\) => renderer\.uploadTexture\(archive, k, raster\)/.test(host), 'the host does not hand an upload');
+  assert.ok(/topKey = `\$\{record\}#top`/.test(trees), 'the top is not keyed record#top');
+  // the tops draw AFTER the sides in the same batch, in their own texture
+  const sideDraw = trees.indexOf('gl.drawArraysInstanced(gl.TRIANGLES, 0, b.count, b.instances);');
+  const topDraw = trees.indexOf('gl.drawArraysInstanced(gl.TRIANGLES, 0, b.top.count, b.instances);');
+  assert.ok(sideDraw > 0 && topDraw > sideDraw, 'the tops do not draw after the sides');
+  assert.ok(/gl\.uniform4f\(u\.box, 0, 0, 1, 1\);/.test(trees), 'the top raster is not drawn whole');
+  // and die with the batch
+  assert.ok(/if \(b\.top\) \{ gl\.deleteVertexArray\(b\.top\.vao\); gl\.deleteBuffer\(b\.top\.vbo\); \}/.test(trees), 'the top VAO leaks on dispose');
+  // topStream is the side stream's twin
+  const rec = { top: { pos: [0, 0, 0, 1, 0, 0, 0, 0, 1], uv: [0, 0, 1, 0, 0, 1] } };
+  assert.equal(topStream(rec).count, 3);
+  assert.equal(topStream({ top: { pos: [], uv: [] } }), null);
 });
