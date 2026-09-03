@@ -1781,18 +1781,24 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
   // It is UNPACED: DFU calls the machine directly, bypassing
   // QuestMachine.Update's ticksPerSecond timer, so the hosts must
   // reach `machine.tick` and not questBridge.tick.
-  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js']) {
+  // QX1: FOUR hosts now, not two-and-a-half. exterior.js used to pass
+  // `tickQuests: null` with a note saying it mounted no bridge at all;
+  // it mounts one, so a rested night in the fixed-city host runs the
+  // same six unpaced machine ticks an hour as every other host.
+  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /tickQuests: \(\) => questBridge\?\.machine\?\.tick\?\.\(\),/, f);
   }
   assert.match(src('src/scenes/dungeonContext.js'),
     /tickQuests: \(\) => opts\.questBridge\?\.machine\?\.tick\?\.\(\),/);
-  // exterior.js mounts no bridge at all, and says so rather than
-  // omitting the key - the construction sweep should see a decision.
-  assert.match(src('src/scenes/exterior.js'), /tickQuests: null,/);
+  // the KEY, not the words: the bridge's own header quotes the retired
+  // decision verbatim, which is the tree's rule for a retirement record.
+  assert.equal(/tickQuests: null,/.test(src('src/scenes/exterior.js')), false,
+    'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
   assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
+  assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });
 
 

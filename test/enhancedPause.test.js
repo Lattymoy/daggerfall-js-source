@@ -450,20 +450,27 @@ test('PX25: the Stats page carries the doors, and only the ones a host handed ov
 test('PX25: every host hands the pause window the arms it already had', () => {
   // Each host already exposed toggleInventory / toggleSpellbook /
   // toggleLogbook; nothing new is built here, the pause window is
-  // simply given the same reach. A host WITHOUT one passes nothing.
-  for (const [host, want] of [
-    ['src/scenes/dungeonContext.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/worldModes.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/world.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/exterior.js', ['openPack', 'openSpellbook']],
-  ]) {
+  // simply given the same reach. A host WITHOUT one passes nothing -
+  // which is why `?exterior` used to hand over two: it had no journal
+  // maker, because it had no quest machine to fill a book from. QX1
+  // gave it both, so ALL FOUR hosts hand over three now, and the
+  // filter's teeth are pinned one line down instead.
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/worldModes.js',
+    'src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
-    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 900);
-    for (const hook of want) assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
-    if (!want.includes('openChronicle')) {
-      assert.ok(!call.includes('openChronicle:'), `${host} has no journal maker and honestly passes none`);
+    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 1200);
+    for (const hook of ['openPack', 'openSpellbook', 'openChronicle']) {
+      assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
     }
   }
+  // THE FILTER STILL HAS TEETH: an arm handed over is not an arm that
+  // always opens something. Every host's Chronicle arm goes through a
+  // maker that answers null without a bridge (or, in the fixed-city
+  // host, without the art), and the button then opens NOTHING rather
+  // than an empty book - the anti-lie law U32 wrote for the sheet.
+  assert.match(read('src/scenes/exterior.js'),
+    /if \(!questBridge \|\| !chronicleDoorReady\(\)\) return null;/);
+  assert.match(read('src/scenes/dungeonContext.js'), /if \(!opts\.questBridge\) return null;/);
 });
 
 // ── PX26: THE DIAL'S NORTH, AND THE SHEET THAT SAT LEFT ───────────

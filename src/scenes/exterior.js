@@ -12,7 +12,7 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES } from '../formats/mapsFile.js';   // QX1: GetRaceOfCurrentRegion
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
@@ -59,7 +59,7 @@ import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above 
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // AUDIT 23 (C14); QX1: GameManager.MakeEnemiesHostile, the quest action's door
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
@@ -69,7 +69,7 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
+import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); QX1: the notebook's header shapes
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
@@ -79,7 +79,8 @@ import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
-import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors   // QX1 dropped the unused `QuestJournalWindow` beside it - the classic window is reached through the chronicle door, never constructed here
+import { createChronicleWindow, chronicleDoorReady } from '../ui/chronicleDoor.js';   // QX1/PX24d: the chronicle's ONE door, and the skin fork in front of it
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -119,7 +120,7 @@ import { labWindSlider } from '../render/labGrass.js';   // GR2: the sky's wind 
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
-import { addGold, setCrimeCommitted } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter
+import { addGold, goldAmount, totalGoldAmount, deductGold, deductGoldPieces, setCrimeCommitted, legalRepOf, changeLegalRep } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter; QX1: the quest layer's gold, legal-rep and crime doors
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
@@ -131,13 +132,22 @@ import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from 
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
-import { ExteriorAutomapWindow, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; E3: ExteriorAutoMapConsoleCommands
+import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; QX1/ROAD-D D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
-import { discoveredBuildings, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename
+import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
+import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
+import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';   // QX1: the quest layer's reputation doors
+import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
+import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
+import { createQuestBridge, tokensToRows } from './questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
+import { QuestAudioSource } from '../systems/audio.js';   // QX1/E6: PlaySound's ONE source per machine
+import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan
+import { locationWorldRect } from '../world/streamingWorld.js';   // TP2: the native frame this host's origin stands at
+import { GLOBAL_SCALE } from '../world/meshReader.js';   // TP2: scene units <-> native world units
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -163,6 +173,25 @@ export async function bootExterior(canvas, renderer, params, status) {
   arch.load(archBytes);
   const maps = new MapsFile();
   maps.load(mapsBytes, climateBytes, politicBytes);
+  // QX1 - THE QUEST PACK, loaded WITH the rest of the location's data
+  // and not later. The bridge itself cannot be built until the clock,
+  // the talk seam and the guard pool exist, far down this boot, but
+  // the AWAIT belongs here: `?world` crashed on a click taken during
+  // its own `await loadQuestPack()` (the pointerdown note below), and
+  // the cure for that shape is not to add a second await between this
+  // host's listeners and its `modes` declaration when the load can sit
+  // in front of both. Vendored files, no network - `loadQuestPack` is
+  // one shared promise however many hosts ask.
+  //   DYNAMIC, not a static import: `questData.js` is built on Vite's
+  // `import.meta.glob`, a compile-time transform that simply does not
+  // exist under bare node, and a static import would drag THIS FILE out
+  // of test/moduleload_smoke.test.js's importable set - the one test
+  // that RUNS this host's module body rather than reading it as text,
+  // and the test written after a boot failure that every text pin
+  // missed. world.js is on that exclusion list for exactly this import;
+  // one line of `await import` keeps this host off it.
+  const { loadQuestPack } = await import('./questData.js');
+  const questPack = await loadQuestPack();
 
   // Assemble the location.
   const dfLocation = maps.getLocationByName(regionName, locationName);
@@ -572,18 +601,30 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     host's static NPCs take it (interiorContext.js:298-316).
   //   - E3: RMBLayout's THIRD act on one of these flats
   //     (`QuestMachine.Instance.SetupIndividualStaticNPC(go,
-  //     obj.FactionID)`, :377/:453) has no machine to ask in THIS host,
-  //     which mounts no quest bridge at all - the same decision
-  //     `tickQuests: null` records for TickRest above, and the same
-  //     stance D5 rowed for this host's automap plates ("scenes/
-  //     exterior.js mounts none, so its every residence takes DFU's own
-  //     empty-set answer"). With no live quest there is no site link to
-  //     place an individual elsewhere, so C#'s own answer here is the
-  //     one below: every street NPC stands, and none carries a
-  //     behaviour. The pass with a machine behind it, and the away
-  //     arm's SetActive(false) taking the billboard out of the batch at
-  //     layout, is `scenes/world.js`'s standPixelNpcs - the host that
-  //     has the bridge.
+  //     obj.FactionID)`, :377/:453) still takes DFU's empty-machine
+  //     answer here, and QX1 CHANGED WHY. This host has a quest bridge
+  //     now (below, at `questBridge = createQuestBridge`) - what it
+  //     does not have is one at LAYOUT: the bridge needs the clock,
+  //     the talk seam and the guard pool, none of which exists until
+  //     long after this loop, and DFU's layout can always ask because QuestMachine
+  //     is a scene singleton. world.js survives the same ordering by
+  //     re-running the pass idempotently when its bridge lands - and it
+  //     can only do that because it keeps the NPC flats OUT of the
+  //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
+  //     continue;`, world.js:801) and stands them in batches of their
+  //     own over the ACTIVE set. THIS host builds one batch per
+  //     (archive, record) for the WHOLE city, up front, with every
+  //     street NPC's center already inside it (the batch loop above), and
+  //     the away arm's entire observable half is `SetActive(false)` -
+  //     the home copy of an individual a live quest has placed elsewhere
+  //     leaving the draw AND the activation ray. world.js's own sentence
+  //     for why it splits them is the reason this cannot be bolted on
+  //     here: "a center already inside a built batch cannot leave one."
+  //     So every street NPC stands and none carries a behaviour, which
+  //     is exactly C#'s answer with no individual placed away; closing
+  //     it is a change to this route's ONE location batch, not to the
+  //     quest layer. `scenes/world.js`'s standPixelNpcs is the pass with
+  //     a machine behind it.
   await pipeline.loadFlats();
   const exteriorNpcs = [];
   for (const flat of exteriorNpcFlats) {
@@ -807,6 +848,61 @@ export async function bootExterior(canvas, renderer, params, status) {
     showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })),
     factionDict: () => townTalk.factionDict ?? null,
   });
+  // QX1: InitAtGameStart runs ONCE when a NEW character finishes
+  // chargen (StartGameBehaviour's OnStartGame path), world.js's own
+  // shape and for its own reason - chargen resolves asynchronously and
+  // the bridge is composed further down the boot, so the moment is
+  // RECORDED and fired by whichever side is ready last. An already-made
+  // character (chargenDone at boot) is a continuing session, not a new
+  // game, and takes no init - exactly as DFU raises OnStartGame from the
+  // starting flows alone.
+  let questBridge = null;
+  let _questStartPending = false, _questStarted = false;
+  const questInitAtGameStart = () => {
+    if (_questStarted) return;
+    if (!questBridge) { _questStartPending = true; return; }
+    _questStarted = true;
+    questBridge.initAtGameStart();
+  };
+  /** QX1: the two journal seams a character sheet and an F5 journal
+   *  take. charSheetHooks' LOGBOOK filter asks only that both were
+   *  handed over, so this answers the EMPTY object while the bridge is
+   *  still composing - the button is withheld rather than opened onto a
+   *  log nothing can fill. dungeonContext's `questJournalHooks` is the
+   *  same shape off its own `opts.questBridge`. */
+  const questJournalHooks = () => (questBridge ? {
+    questMessages: () => questBridge.machine.getAllQuestLogMessages() ?? [],
+    notebook: () => questBridge.notebook ?? null,
+  } : {});
+  /** QX1/PX4: the pause journal's rail - one active row per quest that
+   *  has written a log entry, its newest-first messages, and the
+   *  shortest live clock on the quest's resources. ONE home in this
+   *  host, because both consumers are this host's: `hudCtx.togglePause`
+   *  below and the `pauseQuestLog` the mode machine hands its INTERIOR
+   *  pause (a pause in a shop shows the same rail as one in the
+   *  street). world.js keeps two copies of this walk; two copies is two
+   *  laws the day one of them moves. */
+  const pauseQuestLog = () => {
+    const m = questBridge?.machine;
+    const active = [];
+    if (m) {
+      for (const q of m.quests.values()) {
+        const les = q.getLogMessages();
+        if (!les?.length) continue;
+        const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+        if (!messages.length) continue;
+        let clockSeconds = null;
+        for (const r of q.resources.values()) {
+          if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+            clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+          }
+        }
+        active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+      }
+    }
+    return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
+  };
+  const pauseQuestMessages = () => questBridge?.machine.getAllQuestLogMessages() ?? [];
   if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
@@ -816,6 +912,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
           { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
         surfacePlayer();
+        questInitAtGameStart();   // QX1: OnStartGame for the headless character
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone) {
@@ -835,6 +932,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
+          questInitAtGameStart();   // QX1: OnStartGame for the new character
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -941,11 +1039,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
     advanceMinutes: (n) => playerTicker.advance(n),
-    // No tickQuests: this dev host mounts no quest bridge at all
-    // (grep questBridge in this file returns nothing), so TickRest
-    // :379 has nothing to call. Named rather than omitted, because
-    // the construction sweep should see a decision.
-    tickQuests: null,
+    // QX1: TickRest's per-hour QuestMachine.Instance.Tick (:379),
+    // through THIS host's own bridge. It used to be `null` with a note
+    // saying "grep questBridge in this file returns nothing" - true
+    // until QX1 mounted one, and a resting player is exactly when a
+    // quest clock is meant to run out. Same expression the other three
+    // hosts pass (THE FOUR HOSTS RULE).
+    tickQuests: () => questBridge?.machine?.tick?.(),
     // AreEnemiesNearby's RESTING variant. This host mounts no foe pool
     // but the city watch, and `activeCount() > 0` - which the first
     // draft borrowed from the exhaustion arm - would block sleep for
@@ -1063,8 +1163,157 @@ export async function bootExterior(canvas, renderer, params, status) {
     drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
   });
+  // ---- TP2 - THE RECALL ANCHOR, IN THE FIXED-CITY HOST ----
+  //
+  // Teleport.cs (the Mysticism effect the player calls Recall), the
+  // arms this route CAN take. The line that stood at `onTeleport`
+  // below said the whole spell pended here because "the anchor
+  // machinery lives in the streaming ?world host" - true of ONE arm and
+  // false as a refusal, the same shape A10 found and fixed in the
+  // dungeon context. Set-anchor needs nothing but a position and a
+  // context (:100-117); the same-interior arm needs nothing but a move
+  // (:129-134); and a cross-context arm INSIDE one map pixel needs the
+  // mode teardown and the two re-entries, all of which this host's own
+  // mode machine owns. What it cannot do is the arm that leaves the
+  // pixel - flagged, narrowed, at its own line inside recallToAnchor.
+  //
+  // The law is systems/teleportAnchor.js (the anchor's shape,
+  // IsSameInterior, the plan); this is the host half.
+  //
+  // THE FRAME. `?exterior` lays its one location at the scene origin
+  // (the automap's `locOrigin: [0, 0, 0]` below says so), and in the
+  // streaming host that origin is the location's own world rect
+  // (PlayerGPS.SetWorldLocationRect, streamingWorld.locationWorldRect).
+  // So an anchor's nativeX/nativeZ are stated in the SAME native frame
+  // both hosts use, rather than in a private one - and `y` goes in raw,
+  // because this host has no floating origin to compensate for (the
+  // batches' own `_box` comment above says it: "world-space here - this
+  // host has no floating origin").
+  const _anchorRect = locationWorldRect(dfLocation, _locPixel.x, _locPixel.y);
+  const _anchorNative = (p) => ({ x: _anchorRect.minX + p[0] / GLOBAL_SCALE, z: _anchorRect.minZ + p[2] / GLOBAL_SCALE });
+  /** RestorePosition's landing, in the frame the arrival speaks. A
+   *  DUNGEON anchor's `local` IS the landing (its frame is its own and
+   *  is rebuilt at the same origin every mount); everything else -
+   *  outside and inside a building alike, P8's unified frame - comes
+   *  back off the natives. */
+  const anchorLanding = (a) => {
+    if (a.insideDungeon && a.local) return [...a.local];
+    return [(a.nativeX - _anchorRect.minX) * GLOBAL_SCALE, a.y ?? 2, (a.nativeZ - _anchorRect.minZ) * GLOBAL_SCALE];
+  };
+  /** SetAnchor (:100-117): the outer host's world half, the mounted
+   *  mode's inside half, one record. Works in EVERY mode this route can
+   *  stand in, which is why it is not the flagged half. */
+  function setRecallAnchor() {
+    const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
+    const pf = walkMode ? player.pos : cam.pos;
+    // A DUNGEON's local frame is its own, so its world coordinates are
+    // the pixel's rather than the player's feet - "only one dungeon per
+    // map pixel allowed" (:211) makes the pixel the whole identity.
+    const inDungeon = inside.worldContext === WORLD_CONTEXT.Dungeon;
+    const wc = inDungeon ? null : _anchorNative(pf);
+    playerEntity.anchorPosition = makeAnchor({
+      worldContext: inside.worldContext,
+      pixel: _locPixel,
+      nativeX: wc ? wc.x : _anchorRect.minX,
+      nativeZ: wc ? wc.z : _anchorRect.minZ,
+      y: pf[1],
+      local: inside.local,
+      yaw: cam.yaw, pitch: cam.pitch,
+      buildingKey: inside.buildingKey,
+      interior: inside.interior,
+    });
+  }
+  let _recalling = false;
+  /** TeleportPlayer (:119-164) + the respawner's tail (:228-256), the
+   *  arms that land inside this route's one loaded city. */
+  async function recallToAnchor() {
+    if (_recalling) return;
+    const anchor = playerEntity.anchorPosition;
+    const plan = teleportPlan(anchor, {
+      ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
+      pixel: _locPixel,
+    });
+    // "Anchor must be set" - the 4001 box (:268-275). The cast is spent
+    // either way; DFU refunds nothing.
+    if (!plan) { townTalk.say('You must set an anchor first.'); return; }
+    if (plan.kind === 'same-interior') {
+      // ":129-134 - Just need to move player." Nothing is torn down and
+      // nothing is loaded: the room you stand in IS the anchor's room.
+      modes?.setPlayerLocalPosition?.(anchorLanding(anchor));
+      cam.yaw = plan.yaw; cam.pitch = plan.pitch;
+      playerEntity.playerTeleportedIntoDungeon = plan.teleportedIntoDungeon;
+      playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms (:133)
+      surfacePlayer();
+      return;
+    }
+    const a = plan.anchor;
+    // TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
+    if (a.pixel?.x !== _locPixel.x || a.pixel?.y !== _locPixel.y) {
+      townTalk.say(`(Recall cannot leave ${dfLocation.name ?? locationName} here - the anchor is at another location, and the arrival is the streaming ?world host's)`);
+      return;
+    }
+    _recalling = true;
+    try {
+      // "Cache scene before departing" (:145-151). This route caches no
+      // exterior scene - there is nothing streamed to cache - so the
+      // arm that survives is the BUILDING one, which forceExitToExterior
+      // writes itself (the same write the real door makes,
+      // PlayerEnterExit.cs:860); inside a dungeon DFU caches nothing at
+      // all and takes TransitionDungeonExteriorImmediate (:151).
+      if ((modes?.mode ?? 'exterior') !== 'exterior') {
+        modes?.forceExitToExterior({ cacheScene: plan.cacheScene === 'building' });
+      }
+      // RestorePositionHelper's three arms (PlayerEnterExit.cs:622-655),
+      // in its own order: dungeon first, then building with doors, then
+      // outside.
+      let landed = false;
+      if (plan.arrive === 'dungeon') {
+        landed = !!(await modes?.startInDungeon?.());
+        if (landed) modes?.setPlayerLocalPosition(anchorLanding(a));
+        // No entrance in this location: DFU's "all else fails" exterior
+        // landing (:645-655). The player keeps the street they stand on,
+        // which is this host's counterpart of the pixel teleport's own
+        // landing - a dungeon anchor's stored height is in the DUNGEON's
+        // frame and would drop them through the world.
+        else townTalk.say('The way underground is closed. Repositioning player.');
+      } else if (plan.arrive === 'building') {
+        landed = !!(await modes?.restoreInterior?.(a.interior, anchorLanding(a)));
+        if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
+      }
+      if (landed) {
+        cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+      } else if (plan.arrive !== 'dungeon') {
+        const [lx, ly, lz] = anchorLanding(a);
+        if (walkMode) player.spawn(lx, ly, lz); else cam.pos = [lx, ly + 40, lz];
+      }
+      // "Restore final position and unwire event" (:242) - the pose
+      // rides the transform, exactly as RestorePosition sets it.
+      cam.yaw = a.yaw ?? cam.yaw; cam.pitch = a.pitch ?? cam.pitch;
+      playerEntity.playerTeleportedIntoDungeon = plan.teleportedIntoDungeon;   // :246
+      playerEntity.anchorPosition = null;   // consumed on arrival
+      surfacePlayer();
+    } finally {
+      _recalling = false;
+    }
+  }
+  /** PromptPlayer (:81-98): the 4000 anchor/teleport box, with
+   *  AllowCancel - DFU's own QoL, and its own comment says the cast is
+   *  not refunded. Every host routes its Recall arrival here; this one
+   *  routes its INTERIOR and DUNGEON modes here too (the createWorldModes
+   *  bag's `onTeleport`), so a Recall cast in a shop raises the same box
+   *  as one cast in the street. */
+  function teleportPrompt() {
+    townTalk.showOverlay(new ChoiceWindow({
+      lines: ['Do you want to Teleport or Set an Anchor?'],
+      options: [
+        { code: 'KeyA', label: 'A - set anchor', action: () => setRecallAnchor() },
+        { code: 'KeyT', label: 'T - teleport', action: () => { recallToAnchor(); } },
+        { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+      ],
+    }));
+  }
   const magic = createPlayerMagic({
-    onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    onTeleport: () => teleportPrompt(),   // TP2: the 4000 box, the arms this host can take
     // X11b: the Create Item picker, through the same worldModes opener
     // the streaming host uses - which mounts into whichever slot the
     // current mode actually draws.
@@ -1161,12 +1410,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // omitted, so the construction sweep sees a DECISION.
     revealMap: null,
     drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-    // NULL on purpose, the same DECISION revealMap above is. This page
-    // mounts no quest bridge at all, so there is no QuestMachine to
-    // ask: the use-click block finds nothing watching and falls
-    // through (DaggerfallInventoryWindow.cs:1681), and a quest
-    // letter keeps its plain template name. Named, not omitted.
-    getQuest: null,
+    // QX1: the use-click block's quest read
+    // (DaggerfallInventoryWindow.cs:1681) and the quest LETTER's
+    // display name, off this host's own machine. It was `null` with a
+    // note saying this page mounts no bridge; it mounts one now, so a
+    // quest letter carries its quest's name here as it does in the
+    // world host.
+    getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
     ...extra,
@@ -1199,13 +1449,43 @@ export async function bootExterior(canvas, renderer, params, status) {
     artDeps: { renderer, fetchBytes, palette },
     inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
-    // U43: NO quest hooks here, on purpose. `?town` mounts no quest
-    // bridge, so charSheetHooks withholds the LOGBOOK button and the
-    // sheet gives its refusal - the same honest answer the standalone
-    // `?dungeon` page gets. An empty journal would tell a player they
-    // have no quests when the truth is this page cannot see them, and
-    // for the same reason this host answers neither L nor N.
+    // QX1: THE LOGBOOK BUTTON DRAWS NOW. U43 withheld the two quest
+    // hooks here and said why - "`?town` mounts no quest bridge, so
+    // charSheetHooks withholds the LOGBOOK button and the sheet gives
+    // its refusal... an empty journal would tell a player they have no
+    // quests when the truth is this page cannot see them". The page can
+    // see them: these are the same two expressions world.js and the
+    // dungeon context hand their sheets, off this host's own machine.
+    ...questJournalHooks(),
   });
+  /** QX1/U43: the two journal doors (GameManager.cs:541-548), ONE
+   *  window either way - LogBook opens it as it stands, NoteBook on the
+   *  Notebook page (DaggerfallUI.cs:704-711). The import for this has
+   *  sat at the top of this file since U43 with NO CALLER, because the
+   *  host had no machine to fill a journal from; it has one, so the
+   *  door is hung. Through ui/chronicleDoor.js, exactly as the other
+   *  three hosts reach it - the host hands over what only it knows and
+   *  the door picks the skin.
+   *
+   *  HandleQuestClicks' find-place seam (:439-466) is deliberately NOT
+   *  here, the same decision the dungeon context records: `?exterior`
+   *  owns no travel map, so there is nowhere to send the player and the
+   *  journal leaves the dialog unoffered rather than raising one that
+   *  goes nowhere. No bridge, no book - the same nothing the sheet's
+   *  LOGBOOK button gives. */
+  const makeJournalWindow = (mode) => {
+    if (!questBridge || !chronicleDoorReady()) return null;
+    preloadQuestJournalArt({ renderer, fetchBytes, palette });
+    return createChronicleWindow({
+      ...questJournalHooks(),
+      mode,
+      entity: playerEntity,
+      // The classic modes map onto the two sections the chronicle
+      // holds; the two quest modes land on Notes because the pause
+      // window has carried quests since PX4.
+      section: mode === 'messages' ? 'messages' : 'notes',
+    });
+  };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
   let hPrevW = false;   // a12: the SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
@@ -1282,12 +1562,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // agreed. That is what drift looks like the day before it stops.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     // BS1/F198: the Status action's health box (the four-hosts seam).
-    // ST1: the record-22 box leads here too; this dev scene has no
-    // quest machine (see TickRest's note), so the null context leaves
-    // each macro as its bracketed placeholder - the null-MCP posture.
+    // ST1: the record-22 box leads here too, and QX1 gave it a real
+    // MACRO CONTEXT. It used to pass `null` because "this dev scene has
+    // no quest machine", which left every macro as its bracketed
+    // placeholder - the null-MCP posture, correct then and a lie now.
+    // Same expression the world and dungeon hosts pass.
     showStatus: () => {
       const rows = (id) => townTalk.lines(id);
-      townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, null))
+      townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
         .addNext(healthStatusRows(playerEntity, rows)));
     },
     toggleInventory: () => {
@@ -1297,6 +1579,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
     },
     toggleSpellbook: () => toggleSpellbook(),
+    // QX1/U43: the two journal keys, which this host had never
+    // answered - the doors are the same ONE window the sheet's LOGBOOK
+    // button opens, and the world and both interior hosts have answered
+    // L and N since U43 (THE FOUR HOSTS RULE).
+    toggleLogbook: () => { const w = makeJournalWindow('activeQuests'); if (w) townTalk.showOverlay(w); },
+    toggleNotebook: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
     toggleRest: () => toggleRest(),
     // PX26 (Mac: "the north option should be the new journal we
@@ -1311,16 +1599,28 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
         at: opts.at ?? null,   // PX26: the page the door was pressed for
-        // PX25: the sheet's own doors. This host has no journal maker,
-        // so it hands over two and the Chronicle button never draws -
-        // which is the point of the filter, not a gap in it.
+        // PX25: the sheet's own doors. QX1 gave this host the THIRD -
+        // the note used to say "this host has no journal maker, so it
+        // hands over two and the Chronicle button never draws", and the
+        // maker exists now. The filter still does its job: no bridge or
+        // no art and makeJournalWindow answers null, so the button opens
+        // nothing rather than an empty book.
         openPack: () => townTalk.showOverlay(makeInventoryWindow()),
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
+        openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
-        // PX3 FLAGGED: questMessages - this test host mounts no quest
-        // bridge, so the pause window's Quests tab says so.
+        // PX3 SHIPPED (QX1): the Quests tab reads THIS host's own quest
+        // machine. The flag here said "this test host mounts no quest
+        // bridge, so the pause window's Quests tab says so" - the
+        // refusal was honest and the premise is gone: the bridge is
+        // built below over this route's one fixed city, and these are
+        // the same two walks world.js and dungeonContext hand their
+        // pause windows. The rail's own home is `pauseQuestLog` above,
+        // which the interior pause reads too.
+        questMessages: pauseQuestMessages,
+        questLog: pauseQuestLog,
       });
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
@@ -1333,14 +1633,24 @@ export async function bootExterior(canvas, renderer, params, status) {
       getGpuMesh(99900).catch(() => {});
       const summaries = buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
         { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex) });
-      // ROAD-D D5: NO stampResidenceQuestNames here, and that is not a
-      // gap. The residence plate arm (ExteriorAutomap.cs:682-709) walks
-      // QuestMachine.GetAllActiveQuests, and this dev host mounts no
-      // quest bridge at all (see TickRest's note above) - so the honest
-      // answer for every residence is DFU's own empty-set answer,
-      // `buildingQuestName = string.Empty`, which is what leaving
-      // `questName` unset already means to buildPlates. world.js is the
-      // host that has the machine and it does the stamp.
+      // ROAD-D D5, PAID BY QX1. The residence plate arm
+      // (ExteriorAutomap.cs:682-709) walks QuestMachine.GetAllActiveQuests
+      // and this host had no machine to walk, so every residence took
+      // DFU's own empty-set answer. It has one now, and the stamp is the
+      // same call world.js makes - resolved ONCE per open (:273), which
+      // is this build.
+      //   The THIRD source arm, `isBuildingQuestResource`, is
+      // TalkManager's (:698-705, the `locationWasMarkedOnMapByNPC`
+      // half) and stays ABSENT: it needs a topic tree, and this route
+      // runs no rumor mill or topic tree at all - the same reason its
+      // bulletin board opens on the location name alone. residenceQuestName
+      // optional-calls it (exteriorAutomapWindow.js:460), so the absence
+      // costs exactly that clause and nothing else.
+      stampResidenceQuestNames(summaries, discoveredBuildings(locId), {
+        getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])]
+          .filter((q) => !q.questTombstoned).map((q) => q.uid),
+        getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
+      }, dfLocation.mapTableData?.mapId ?? 0);
       townTalk.showOverlay(new ExteriorAutomapWindow({
         locationName: dfLocation.name ?? locationName,
         locationId: locId,
@@ -1410,6 +1720,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },
       ])) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
+      // U43: LogBook (L) and NoteBook (N), two of GameManager's own
+      // dispatch chain (:541-548). QX1 gave this host something to put
+      // in them.
+      if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return; }
+      if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return; }
       // U8d: F6 opens the classic inventory (DFU's default Inventory
       // binding; same host rule as F5).
       if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return; }
@@ -1568,6 +1883,178 @@ export async function bootExterior(canvas, renderer, params, status) {
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
+  // ---- QX1: THE QUEST BRIDGE - THE MACHINE OVER THIS ONE CITY ----
+  //
+  // PX3 flagged this route as "this test host mounts no quest bridge",
+  // and EIGHT sites in this file had each recorded that same absence
+  // separately, as a deliberate decision: TickRest's `tickQuests: null`,
+  // the inventory's `getQuest: null`, the character sheet's withheld
+  // LOGBOOK button, the Status box's null macro context, the automap's
+  // unstamped residence plates, the pause window's Quests tab, the pause
+  // window's undrawn Chronicle button, and the exterior static-NPC pass.
+  // ONE missing construction under all of them. It is built here, the
+  // way world.js builds its own - and it mounts over THIS route's one
+  // fixed city rather than over a stream: every location read below
+  // answers `dfLocation` outright, which is the whole difference between
+  // the two hosts. SEVEN of the eight read the machine now; the eighth
+  // (the static-NPC pass) keeps C#'s empty-machine answer for a
+  // different and narrower reason, written down at its own site - the
+  // location is laid and batched before any bridge can exist here, and
+  // the away arm cannot take a center out of a batch already built.
+  //
+  // The world seam is composed from the host's REAL objects (MapsFile,
+  // BlocksFile, the faction dictionary, the one clock, the guard pool,
+  // the overlay slot); members this route cannot honestly answer stay
+  // ABSENT and the law modules read the charter's null through their own
+  // `ctx.x?.()` - the headless charter, world.js's own posture. What is
+  // deliberately absent here, and why:
+  //   - THE TALK SEAMS (addQuestTopics, the six rumor doors, the four
+  //     %f-faction getters, removeNpcQuestor). This route runs no rumor
+  //     mill, topic tree or NPC session at all - the same absence its
+  //     bulletin board records when it opens on the location name alone.
+  //   - THE ITEM SEAMS (giveItemToPlayer and its four siblings) and the
+  //     videos, faces, disease and cure doors, none of which has a
+  //     producer in this file.
+  // Gold, crime, the guard call, the hostility pair, time, reputation
+  // and the popup stack all DO have producers here, so they are wired.
+  const _questAudioSource = new QuestAudioSource(audio);   // E6: ONE source per machine
+  const _questStore = () => (townTalk.factionDict ? ensureFactionRep(playerEntity, townTalk.factionDict) : null);
+  /** Quest parchment boxes land in whichever overlay slot is LIVE -
+   *  the mode machine's when a mode is mounted, this host's townTalk
+   *  slot otherwise - and they PUSH (DaggerfallMessageBox.Show is a
+   *  uiManager.PushWindow), so a box arriving mid-rest suspends the rest
+   *  instead of throwing it away. world.js's showQuestBox, minus the
+   *  scene-cache arm this route has no streamer for. */
+  let _questBoxWin = null;
+  const showQuestBox = (box) => {
+    const live = (modes?.questOverlay ?? null) === _questBoxWin || (townTalk?.overlay ?? null) === _questBoxWin;
+    if (_questBoxWin && !_questBoxWin.done && live) { _questBoxWin.push([box]); return; }
+    const win = new ServiceFlowWindow([box], { onClose: () => { if (_questBoxWin === win) _questBoxWin = null; } });
+    _questBoxWin = win;
+    if (modes?.showQuestOverlay?.(win)) return;
+    townTalk.pushOverlay(win);
+  };
+  const questWorld = {
+    // AUDIT 28 W4/F-B2: DFU's smaller-dungeon law lives INSIDE
+    // MapsFile.GetLocation, so quest marker enumeration walks the FIVE
+    // BLOCK dungeon when the law says so - and the machine is
+    // late-bound here exactly as DFU consults its singleton.
+    maps: Object.create(maps, {
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine }) },
+      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine }) },
+    }),
+    getBlock: (name) => blocks.getBlockByName(name),
+    flatCaption: (archive, record) => pipeline.flatCaption(archive, record),   // NPC1: the =symbol_ macro's caption
+    getFactionData: (id) => townTalk.factionDict?.get(id) ?? null,
+    // PlayerGPS's location reads. This route stands on ONE location for
+    // its whole life and never leaves its rect, so each of these is a
+    // constant where the streaming host has to ask the pixel.
+    currentLocation: () => dfLocation,
+    currentRegionIndex: () => dfLocation.regionIndex,
+    currentLocationIndex: () => dfLocation.locationIndex ?? -1,
+    currentLocationType: () => dfLocation.mapTableData?.locationType ?? null,
+    currentRegionName: () => maps.getRegion(dfLocation.regionIndex)?.name ?? '',
+    currentRegionRace: () => REGION_RACES[dfLocation.regionIndex] + 1,   // PlayerGPS.GetRaceOfCurrentRegion (:432-435)
+    currentClimateIndex: () => locClimateIndex,
+    currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
+    isPlayerInLocationRect: () => _musicInLocationRect(),
+    playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
+    legalRepNow: () => legalRepOf(playerEntity, dfLocation.regionIndex),   // %ltn's fourteen bands
+    changeLegalRep: (amount) => changeLegalRep(playerEntity, dfLocation.regionIndex, amount),
+    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], dfLocation.regionIndex, buildingKey),
+    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
+    // %cbd - MacroHelper.CurrentBuilding (:849-867): inside a building
+    // the name is REGENERATED from the building's own seed; outside one
+    // C# answers "[invalid]", which is the handler's null arm.
+    currentBuildingName: () => {
+      const b = modes?.interiorBuilding;
+      if (!b) return null;
+      return generateBuildingName(b.nameSeed, b.buildingType, { ...(townTalk.nameOpts?.() ?? {}), factionId: b.factionId ?? 0 });
+    },
+    // B2: PcAt / IsPlayerHere / ConfigureFromPlayerLocation - the
+    // mounted mode is the answer, exactly as in the streaming host.
+    playerInside: () => {
+      if ((modes?.mode ?? 'exterior') === 'dungeon') return { dungeon: { name: modes?.dungeonLocation?.name ?? '' } };
+      const b = modes?.interiorBuilding;
+      if (!b) return null;
+      return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };
+    },
+    /** PlayerGPS.DiscoverLocation (:872-890) - resolve by name and file
+     *  it, THROWING when the pair names nothing, C#'s own throw. */
+    discoverLocation: (regionName_, locationName_) => {
+      const l = maps.getLocationByName(regionName_, locationName_);
+      if (!l?.loaded) throw new Error(`Error finding location ${regionName_} : ${locationName_}`);
+      discoverLocation(l.mapTableData.mapId, { regionName: l.regionName, locationName: l.name });
+    },
+    addNote: (text) => questBridge?.notebook?.addNote(text),
+    addNoteTokens: (tokens) => questBridge?.notebook?.addNoteTokens(tokens),
+  };
+  questBridge = createQuestBridge({
+    data: questPack,
+    world: questWorld,
+    playerEntity,
+    classicSeconds: () => playerTicker.classicMinutes * 60,
+    // The notebook's three header reads (PlayerNotebook's own ctx).
+    dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
+    midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
+    cityName: () => dfLocation.name ?? locationName,
+    addHUDText: (t) => townTalk.say(t),
+    // The tokens arrive ALREADY expanded and already chunked - Quest.cs:785.
+    showPopup: (_q, tokens) => { const rows = tokensToRows(tokens); if (rows.length) showQuestBox({ rows }); },
+    showPrompt: (q, message, respond) => showQuestBox({
+      rows: tokensToRows(message.getTextTokens(-1, q.rolls)),
+      buttons: 'YesNo',
+      onYes: () => { respond(true); return []; },
+      onNo: () => { respond(false); return []; },
+    }),
+    // QG1: PromptMulti's 2-4 BUTTONS.RCI records; the click answers the
+    // record NUMBER back and the action routes by value.
+    showPromptMulti: (q, message, buttons, respond) => showQuestBox({
+      rows: tokensToRows(message.getTextTokens(-1, q.rolls)),
+      buttonsMulti: buttons,
+      onButton: (b) => { respond(b); return []; },
+    }),
+    // E6: PlaySound's busy skip over the ONE source (PlaySound.cs:110-116).
+    playSound: (id) => {
+      if (_questAudioSource.isPlaying()) return false;
+      _questAudioSource.playOneShot(id);
+      return true;
+    },
+    isPlayerInTown: () => isPlayerInTown(_musicLocationType()),
+    // Q5: the un-pended quest actions' doors, all of them this host's
+    // own arms - the crime setter (V4's SuppressCrime gate), the gold
+    // pair PayMoney needs, TrainPc's bare clock move, and F036's
+    // witness-arm caller with the live watch.
+    setPlayerCrime: (crime) => setCrimeCommitted(playerEntity, crime),
+    getGoldPieces: () => goldAmount(playerEntity),
+    deductGoldPieces: (n) => deductGoldPieces(playerEntity, n),
+    getGold: () => goldAmount(playerEntity),
+    getTotalGold: () => totalGoldAmount(playerEntity),   // PayMoney's `money` arm - coins PLUS letters
+    deductGold: (n) => deductGold(playerEntity, n),
+    addGold: (n) => addGold(playerEntity, n),
+    raiseTime: (seconds) => playerTicker.advance(seconds / 60),
+    spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
+    // ROAD-B: GameManager.cs:790-806 through the ONE law
+    // (hostCombat.makeEnemiesHostile) over this route's whole live
+    // database - the watch above ground and the mounted mode's pool.
+    makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])]),
+    clearEnemies: () => cityGuards.clearLive?.(),
+    // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
+    // over ONE database - the inside pool unioned in, or SetComplete
+    // never completes and the action re-runs every tick for ever.
+    questFoeInstances: (symbol) => {
+      const want = symbol?.name ?? null;
+      if (want == null) return [];
+      return [...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
+        !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
+    },
+    getReputation: (fid) => { const st = _questStore(); return st ? getReputation(st, fid) : 0; },
+    changeReputation: (fid, amount, propagate) => { const st = _questStore(); if (st) changeReputation(st, fid, amount, propagate); },
+    changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
+  });
+  questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
+  if (_questStartPending) questInitAtGameStart();   // chargen got here first
+
   // P7: the exterior scene hosts the same mode machine as ?world -
   // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
   // door drops into the location's crawl, exits land verbatim.
@@ -1607,6 +2094,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // for. Same rule as makeInventory - this host owns the builder and
     // its dependency list; worldModes only chooses the slot.
     makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
+    // QX1/U43: ...and the journal, so L and N answer inside a shop off
+    // this host's builder too (worldModes' toggleLogbook/toggleNotebook
+    // read host.makeJournal and nothing else).
+    makeJournal: (mode) => makeJournalWindow(mode),
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // R1: without this the exterior-lock anti-grind record and
@@ -1614,6 +2105,24 @@ export async function bootExterior(canvas, renderer, params, status) {
     // null skips both) - the same `region:location` string the world
     // host and townTalk's reveal use.
     discoveryLocationId: () => `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
+    // QX1: THE BRIDGE RIDES INTO THE MODE MACHINE. This is what makes
+    // the machine mount OVER THIS CITY rather than beside it: worldModes
+    // runs `questBridge.mountScene(adapter, SITE_TYPES.Building,
+    // buildingKey)` on every interior it opens and `SITE_TYPES.Dungeon`
+    // on the crawl, walks the site links for the automap's active-quest
+    // buildings, and registers a static-NPC click as
+    // `setLastNPCClicked`. Without it every one of those evaporated
+    // through its own `questBridge?.` - the AUDIT 24 seam shape.
+    questBridge,
+    // PX17c/QX1: the interior pause reads the SAME rail the street
+    // pause does (worldModes hands these two to its openPauseFlow), so
+    // a pause in a tavern is not a different journal.
+    pauseQuestMessages, pauseQuestLog,
+    // TP2: a Recall cast inside a shop or the crawl raises THIS host's
+    // 4000 box, exactly as world.js hands its own prompt down. Without
+    // it the mounted dungeon context kept its standalone refusal and a
+    // cast underground did nothing at all.
+    onTeleport: () => teleportPrompt(),
     // U39: this host never passed a scene context, so every consumer
     // of questSceneCtx().mapId read the `?? 0` fallback - which the
     // tavern's rental key exposed, since a room is stored by (mapId,
@@ -1963,6 +2472,12 @@ export async function bootExterior(canvas, renderer, params, status) {
         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083
         jumped: player.jumped,
       });
+      // QX1: QuestMachine.Update's pacing (QuestMachine.cs:305-320) -
+      // the bridge holds the ticksPerSecond timer, so the frame just
+      // hands it real seconds. Behind the SAME overlay gate the clock
+      // takes above: DFU's PauseGame zeroes Time.timeScale, and
+      // QuestMachine.Update is an Update.
+      if (!_overlayHeld) questBridge?.tick(dt);
       // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were written
       // ONLY inside worldModes' dungeon branch and never cleared, so
       // leaving a dungeon while levitating stranded the player in the

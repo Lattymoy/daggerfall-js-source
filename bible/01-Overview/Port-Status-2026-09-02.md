@@ -17,8 +17,8 @@ the method and the old one is named as corrected.*
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
 closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **19 open flags** (12 after Wave E's seven
-closures - list 1 marks them) with the blocker the
+three lists at the bottom: the **19 open flags** (10 after Wave E's seven
+closures and QX1's eighth - list 1 marks them) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
 the road**. Everything above those lists is the measurement that makes
@@ -49,8 +49,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **8** | `node tools/regenOpenFlags.mjs --check` answers 8 ("8 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
-| open flags | 151 | **8** | `node tools/regenOpenFlags.mjs --check` answers 8 ("10 entries, up to date" - DR1 2026-09-03 retired `scenes/dungeonContext.js`'s by shipping both window seams). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **7** | `node tools/regenOpenFlags.mjs --check` answers 7 ("7 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -402,21 +401,32 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 **Blocked - host scope.**
 
 - **`src/scenes/exterior.js:1031`** - Recall pends here; the anchor
-  machinery lives in the streaming `?world` host. *Recall's ARRIVAL
-  needs the streaming world's position and region machinery -
-  `teleportPrompt` into `teleportTo` (`scenes/world.js:2881`, `:2892`;
-  the triage's own citations predate Wave D and have drifted).
-  `?exterior` loads one fixed city with no arrival seam and no outer
-  host to delegate to, unlike `dungeonContext`, which takes
-  `opts.onTeleport` from the modes host. Nothing can be ported into
-  this file that would land the player at an anchor outside its single
-  loaded location; making `?exterior` stream is an owner decision about
-  a dev route.*
-- **`src/scenes/exterior.js:1283`** - PX3: this test host mounts no
-  quest bridge, so the pause window's Quests tab says so. *Unlike the
-  dungeon host, whose PX3 was paid off `opts.questBridge`, this file
-  has no bridge at all and constructs no quest machine. The refusal is
-  honest rather than a silent empty list.*
+  machinery lives in the streaming `?world` host. **NARROWED (TP2,
+  2026-09-03).** *The triage's verdict was true of ONE arm and wrong as
+  a refusal - the same mistake A10 found in the dungeon context. Set-anchor
+  (`Teleport.cs:100-117`) needs a position and a context, both of which
+  this host has in every mode; the same-interior arm (:129-134) is a bare
+  move; and the whole cross-context arm INSIDE the loaded pixel runs on
+  this route's own mode machine (`forceExitToExterior`, `restoreInterior`,
+  `startInDungeon`, `setPlayerLocalPosition`). All of that ships. What
+  stays flagged, at its own line inside `recallToAnchor`, is the ONE arm
+  named exactly: a jump to an anchor on ANOTHER map pixel, which is
+  `_teleportToPixel`'s - the streamer's - and there is no streamer here.
+  Its refusal names the reason instead of eating the cast.*
+- ~~**`src/scenes/exterior.js:1283`** - PX3: this test host mounts no
+  quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
+  (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
+  at all and constructs no quest machine" - was a missing construction,
+  not a missing target. `createQuestBridge` is built here over the
+  route's ONE loaded city (every `PlayerGPS` read in its world adapter
+  answers `dfLocation` outright, which is the whole difference from the
+  streaming host), and the eight surfaces that had each recorded the
+  absence separately now read the machine: the pause window's Quests
+  tab and the interior pause's, the character sheet's LOGBOOK button,
+  `TickRest`'s per-hour `QuestMachine.Tick`, the Status box's macro
+  context, a quest letter's display name, the exterior automap's
+  residence plates, and the mode machine's own `mountScene` over every
+  building and dungeon it opens.*
 
 **Blocked - data, an asset, or a layer the port does not have.**
 
@@ -567,10 +577,8 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   rather than to a live flag.*
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
-when this was measured, over the 19 the list then held. **As of ROAD-F,
-`node tools/regenOpenFlags.mjs --check` answers 8**,
-when this was measured, over the 19 the list then held. **As of Wave E,
-the ship landing and DR1, `node tools/regenOpenFlags.mjs --check` answers 8**,
+when this was measured, over the 19 the list then held. **As of Wave E, the ship
+landing, ROAD-F (GS1, GS2, DR1) and QX1/TP2, `node tools/regenOpenFlags.mjs --check` answers 7**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
@@ -912,8 +920,13 @@ DFU to port `?dungeon`'s window seams from, there is no
 is no mod system for `PauseOptionsDropdown` to list. The fifth - the
 ship pixels no one could check without MAPS.BSA - closed on 2026-09-03
 when the owner supplied the file; the data gate that reads it lives in
-the suite and skips itself when it is absent. Two are host scope on the port's own
-dev routes. One is an owner's design call - focus order across the
+the suite and skips itself when it is absent. Two were host scope on
+the port's own dev routes, and QX1/TP2 (2026-09-03) read both again:
+`?exterior`'s PX3 was a missing construction rather than a missing
+target and SHIPPED whole, and its Recall NARROWED to the single
+cross-LOCATION jump a route with no streamer cannot arrive at - so ONE
+host-scope sentence stands where two did, plus the standalone dungeon's.
+One is an owner's design call - focus order across the
 enhanced menu's rail. One is a layer the port does not have, the
 gamepad, and it takes the two input-config windows with it. One - the
 ~300-entry macro handler table - is effort, and the largest single

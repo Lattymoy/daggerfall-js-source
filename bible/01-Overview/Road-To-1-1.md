@@ -207,20 +207,28 @@ were waiting on. The SHIP LANDING then took a seventh
 (`scenes/world.js:2871`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
-location arrival. **ROAD-F then took two more**: GS1 closed the
+location arrival. **ROAD-F then took three more**: GS1 closed the
 guild-service popup above ground (`scenes/worldModes.js:1687`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
-That leaves **8** open flags as
-location arrival. DR1 (2026-09-03) then took an eighth
+DR1 (2026-09-03) took another
 (`scenes/dungeonContext.js:1709`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals
 and both of which that host could already draw, tick and click.
-That leaves **8** open flags as of
-this wave - the count `node tools/regenOpenFlags.mjs --check`
+THE FIXED-CITY HOST then took the next
+(`scenes/exterior.js`'s PX3, "this test host mounts no quest bridge"):
+QX1 builds one over the route's single loaded city, so the pause
+window's Quests tab, the LOGBOOK button, TickRest's per-hour tick, the
+Status box's macro context, a quest letter's name and the automap's
+residence plates all read the machine instead of saying they cannot -
+and TP2 NARROWED the flag beside it, that host's Recall, to the one
+cross-LOCATION jump a route with no streamer cannot make (set-anchor,
+the same-interior move and the whole cross-context arm INSIDE the
+loaded pixel all ship). That leaves **7** open flags as
+of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
 prefab), a DFU original that does not exist (the enhanced menu's

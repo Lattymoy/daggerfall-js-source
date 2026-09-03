@@ -90,11 +90,14 @@ test('ST1: all four hosts open the CHAIN - record 22 first, the health box next'
     assert.match(s, /new ActionTextBox\(statusInfoRows\((?:rows|rscLines), /, `${h} leads with record 22`);
     assert.match(s, /\.addNext\(healthStatusRows\(playerEntity, (?:rows|rscLines)\)\)/, `${h} chains the health box`);
   }
-  // the three machine-bearing hosts pass the live context; the dev
-  // exterior has none and says so with an explicit null
-  for (const h of ['scenes/world.js', 'scenes/worldModes.js']) {
+  // QX1: ALL FOUR pass the live context now. The fixed-city host used
+  // to hand an explicit `null` because it mounted no machine - the
+  // null-MCP posture, correct while it was true - and it builds one, so
+  // every macro in record 22 expands here as it does everywhere else.
+  for (const h of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/exterior.js']) {
     assert.match(src(h), /questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null/, `${h} hands the machine's context`);
   }
   assert.match(src('scenes/dungeonContext.js'), /opts\.questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null/);
-  assert.match(src('scenes/exterior.js'), /statusInfoRows\(rows, null\)/);
+  assert.equal(/statusInfoRows\(rows, null\)/.test(src('scenes/exterior.js')), false,
+    'no host is left passing the null context');
 });

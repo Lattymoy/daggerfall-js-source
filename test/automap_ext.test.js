@@ -1240,9 +1240,21 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
     assert.match(door, /getAllActiveQuestIds: activeQuestIds,/, 'QuestMachine.GetAllActiveQuests, the tree\'s own definition');
     assert.match(door, /isBuildingQuestResource: \(mapID, key\) => topicTree\.isBuildingQuestResource\(mapID, key\),/);
     assert.match(door, /\}, dfLoc\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
-    // ...and the OTHER host mounts no quest machine at all, so it
-    // stamps nothing and says why (DFU's empty-set answer is the same)
-    assert.equal(/stampResidenceQuestNames\(/.test(src('src/scenes/exterior.js')), false);
+    // ...and QX1 gave the OTHER host a machine, so it stamps too - the
+    // same call between the summaries walk and the window, off its own
+    // bridge. Its THIRD source arm stays absent on purpose: that one is
+    // TalkManager's (`locationWasMarkedOnMapByNPC`) and `?exterior`
+    // runs no topic tree at all, which residenceQuestName optional-calls
+    // through, so the absence costs that clause and nothing else.
+    const edoor = src('src/scenes/exterior.js');
+    const estamp = edoor.slice(edoor.indexOf('    stampResidenceQuestNames(summaries, discoveredBuildings(locId), {'),
+      edoor.indexOf('townTalk.showOverlay(new ExteriorAutomapWindow({'));
+    assert.ok(estamp.length, 'the fixed-city host stamps its residence plates');
+    assert.match(estamp, /getAllActiveQuestIds: \(\) => \[\.\.\.\(questBridge\?\.machine\.quests\.values\(\) \?\? \[\]\)\]/);
+    assert.match(estamp, /getQuest: \(questID\) => questBridge\?\.machine\.getQuest\(questID\) \?\? null,/);
+    assert.equal(/isBuildingQuestResource/.test(estamp), false,
+      'no topic tree in this route - the arm is absent, not faked');
+    assert.match(estamp, /\}, dfLocation\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
   } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 

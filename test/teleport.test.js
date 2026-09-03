@@ -74,9 +74,16 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   const fn = wm.slice(i, wm.indexOf('},', i));
   assert.ok(fn.includes("mode = 'exterior';"), 'the forced exit lands the mode');
   assert.ok(fn.includes('player.collider = baseCollider();'), 'and restores the exterior collider');
-  // the other hosts refuse LOUDLY (INTERIM doctrine), never silently
-  for (const host of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
-    const h = readFileSync(new URL(`../${host}`, import.meta.url), 'utf8');
-    assert.ok(h.includes('onTeleport: () =>') && h.includes('Recall pends'), `${host} says the interim line`);
-  }
+  // TP2: the FIXED-CITY host raises the same 4000 box now, off its own
+  // prompt - it used to say "Recall pends here" for the whole spell,
+  // which was true of one arm and false as a refusal.
+  const ex = readFileSync(new URL('../src/scenes/exterior.js', import.meta.url), 'utf8');
+  assert.ok(ex.includes('onTeleport: () => teleportPrompt(),'), 'the fixed-city host routes the prompt');
+  assert.ok(ex.includes("lines: ['Do you want to Teleport or Set an Anchor?'],"), 'and speaks record 4000');
+  assert.ok(ex.includes("townTalk.say('You must set an anchor first.')"), 'and raises the 4001 refusal');
+  assert.equal(/Recall pends here/.test(ex), false, 'the whole-spell refusal is gone');
+  // the STANDALONE dungeon still refuses LOUDLY (INTERIM doctrine),
+  // never silently - it has no outer host to hand the plan's arms to.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  assert.ok(dc.includes('onTeleport: () =>') && dc.includes('Recall pends'), 'dungeonContext says the interim line');
 });
