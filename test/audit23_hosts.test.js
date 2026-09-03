@@ -174,7 +174,7 @@ test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () =
     // AUDIT 28 W1 re-aimed this from the literal line: the night arm
     // reads NightAmbientLightScale now, so the pin holds the LAW - the
     // weather scale is the third argument - not the hard-coded 1.
-    assert.match(text, /exteriorAmbient\(minute, .+?, weatherSun\)/, `${name}: ambient rides the weather scale`);
+    assert.match(text, /exteriorAmbient\(minute, .+?, wxNow\.sun\)/, `${name}: ambient rides the weather scale`);   // WX2: the scale on the front (the row's own under classic)
   }
 });
 

@@ -280,6 +280,11 @@ export function createSkyController(gl, params) {
     /** WIND1: 0..1 - the front's height, for anything that wants to
      *  arrive behind the wind. */
     frontProgress() { return windModel.frontProgress(); },
+    /** WX2: 0..1 - how far the incoming weather has ARRIVED (1 from the
+     *  front's landing on, and 1 with no front up), for the ground's
+     *  terms and the drops to cross on. Under the classic sky the model
+     *  never ticks and this answers 1: no front, nothing to cross. */
+    frontArrival() { return windModel.arrival(); },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a

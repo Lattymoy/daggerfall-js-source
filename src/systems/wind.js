@@ -162,6 +162,16 @@ export function createWindModel({ seed = 7 } = {}) {
       return front ? frontFactor(nowMin - front.at) : 0;
     },
 
+    /** WX2: how far the INCOMING weather has arrived, 0..1 - the front's
+     *  rise, and 1 from its arrival on, through the hold and the tail,
+     *  where frontProgress falls back to 0 because the WIND is leaving
+     *  while the weather stays. 1 with no front up: a boot into rain is
+     *  rain. The ground's terms and the drops cross on this
+     *  (systems/weatherFront.js), as the sky's ease already does. */
+    arrival() {
+      return front && nowMin < front.at ? frontFactor(nowMin - front.at) : 1;
+    },
+
     /** WIND2: true from the weather change until the front ARRIVES - the
      *  whole lead, including its first minute when the factor is still
      *  0. The sky eases its row on THIS, so the clouds arrive behind the

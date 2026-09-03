@@ -209,8 +209,11 @@ test('W1 review: the precip draw gates on the MODE in both hosts - the renderer 
   // applyWeather lazily creates the PrecipitationRenderer and never
   // drops it; a draw gated on the object alone rained under clear
   // skies forever after the first storm passed (the review's bug).
-  assert.match(src('src/scenes/world.js'), /if \(precipMode && precip\) \{/);
-  assert.match(src('src/scenes/exterior.js'), /if \(precipMode && precip\) \{/);
+  // WX2: the gate is the mode SHOWN - the sim's under the classic sky,
+  // the front's under the enhanced one, where the outgoing rain tapers
+  // after the sim has cleared - and still never the object.
+  assert.match(src('src/scenes/world.js'), /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown && precip\) \{/);
+  assert.match(src('src/scenes/exterior.js'), /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown && precip\) \{/);
   // and the respawner roll lives on the RESPAWNER path alone
   assert.match(src('src/scenes/world.js'), /_respawnAtSite[\s\S]{0,900}weatherRespawn\(/);
   assert.doesNotMatch(src('src/scenes/world.js').slice(0, src('src/scenes/world.js').indexOf('async function _respawnAtSite')), /weatherRespawn\(/, 'no earlier caller - not the teleport, not fast travel');

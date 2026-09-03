@@ -50,6 +50,7 @@ import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNp
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -273,6 +274,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
+  // WX2: the front reaches the ground - world.js's twin note. This host
+  // has no grass, so its dim is 1; the sun scale, the fog row and the
+  // drops cross on the front under the enhanced sky, and the classic
+  // path takes the row's own numbers whole.
+  const weatherFront = createWeatherFront({ seed: Number(params.get('wseed')) || 7 });
+  const weatherTerms = () => ({ sun: weatherSun, dim: 1, fog: weatherFog });
+  let wxNow = weatherTerms();
+  let wxFrom = wxNow;
   function applyWeather(w) {
     weather = w;
     weatherFog = fogForWeather(w);
@@ -2177,9 +2186,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       tickWeather(Math.floor(playerTicker.classicMinutes), locClimateIndex);
       if (currentWeather() !== weather) applyWeather(currentWeather());   // drift-aware (world.js's twin note)
     }
+    // WX2: the front's word for this frame (world.js's twin note).
+    const enhancedFront = !!sky?.cloudShadow;
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000 });
+    if (fx.changed) wxFrom = wxNow;
+    wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
-    ambience.setPreset(presetForExterior(weather, isNight(minute)));
+    // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
+    ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
+    ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye });
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
@@ -2198,14 +2214,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherSun), moonNow), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
+      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), sunScale(minute) * wxNow.sun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,
     // off at night; positioned at the player (the eye here - the
     // 0.8 controller-center offset is <1% of the 150 range).
     {
-      const iScale = indirectLightScale(minute) * weatherSun;
+      const iScale = indirectLightScale(minute) * wxNow.sun;   // WX2: the front's scale
       renderer.setIndirectLight(eye, INDIRECT_LIGHT_RANGE, new Float32Array([
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
@@ -2230,11 +2246,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
     // heavy rain fogs to Color.gray, not to the sky tint.
-    const fogColor = outdoorFogColor(weatherFog, sky.renderer.clearColor);
-    renderer.setFog(weatherFog.mode,
-      weatherFog.density, weatherFog.start, weatherFog.end, fogColor);
+    const fogNow = wxNow.fog;   // WX2: the row on the front (the table's own row, classic and settled)
+    const fogColor = outdoorFogColor(fogNow, sky.renderer.clearColor);
+    renderer.setFog(fogNow.mode,
+      fogNow.density, fogNow.start, fogNow.end, fogColor);
     sky.renderer.fogColor = fogColor;
-    sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
+    sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
     // City lanterns: on 17:00-08:00 (IsCityLightsOn), each flickering
     // verbatim DaggerfallLight (14 ticks/s toward random range targets).
@@ -2422,7 +2439,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...hitEffects.batches());
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, UP_Y);
     }
-    if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
+    // WX2: what falls is what the front SHOWS (world.js's twin note)
+    const precipShown = enhancedFront ? fx.shown : precipMode;
+    if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up
       // EE8: the enhanced profile rides the switch, and the wind that drives
       // its rain is the SKY'S OWN - the deck's wind from the eased weather
       // row - INTEGRATED here as travel, so a change in the wind moves what
@@ -2430,6 +2449,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       precip.enhanced = !!sky?.cloudShadow;
       precip.countCap = Number(new URLSearchParams(globalThis.location?.search ?? '').get('rain')) || null;
       if (precip.enhanced) {
+        precip.intensity = fx.intensity;   // WX2: the front's share of the profile
         // WX1: THE LAB'S WIND LAW, term for term. The sky's eased row gives
         // a direction and a speed (its wind vector, in the deck's units,
         // times 260 for the lab's slider units); a slow three-sine GUST
@@ -2449,7 +2469,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         precip.windOff[1] += dir[1] * slider * gust * 0.16 * dtp;
       }
       precip._lastNow = now;
-      precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
+      precip.draw(precipShown, proj, view, new Float32Array(eye), camRight, now / 1000);
       renderer.markForeignPass();   // EV6: so did the rain
     }
     // C9: the exterior FP weapon (first-person walk only - the V

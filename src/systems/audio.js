@@ -235,6 +235,8 @@ export class AudioEngine {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();
       },
+      /** WX2: the loop's gain, live - the rain loop fades with the front. */
+      setVolume(v) { gain.gain.value = Math.max(0, Math.min(1, v)); },
     };
   }
 

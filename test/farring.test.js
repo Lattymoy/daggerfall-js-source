@@ -175,7 +175,7 @@ test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign
   const skyAt = world.indexOf('sky.draw(cam.yaw');
   const markAt = world.indexOf('renderer.markForeignPass();', skyAt);
   const span = world.slice(skyAt, markAt);
-  assert.ok(span.includes("weatherFog.mode === 'linear'"), 'exp fog (weather) hides the ring');
+  assert.ok(span.includes("fogNow.mode === 'linear'"), 'exp fog (weather) hides the ring');   // WX2: the row on the front
   assert.ok(span.includes('farRing.draw(view, {'), 'drawn while the depth buffer is still the sky\'s');
   assert.ok(span.includes('state.pixelTranslation(farRing.baseX, farRing.baseY'),
     'one translation places the whole mesh - recenters are free');

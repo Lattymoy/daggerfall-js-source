@@ -108,6 +108,48 @@ directory by `test/audit18_bible_docs.test.js`:
   stretched only while the front's factor was strictly between 0 and
   1, which is 0 at the change, so the sky turned in fourteen seconds
   and the wind followed - `inLead()` stretches it for the whole lead.
+- `systems/weatherFront.js` - **WX2 (2026-09-03) THE FRONT REACHES THE
+  GROUND.** Mac: "Instead of rain/snow starting and stopping immediately,
+  I want it to fade in and out slowly, how the grass prototype handles
+  it... snow and rain shouldn't always be a downpour. It can sprinkle, or
+  lightly snow." The tree's state before it: the sim cuts its word
+  between two ticks (Daggerfall's law, untouched), the enhanced sky eases
+  toward the new row over WIND1's three-hour lead - and everything UNDER
+  the sky snapped on the frame of the cut: all 26,000 drops, the sun
+  scale (x0.45), the fog row, the grass dim and the rain loop, a quarter
+  of an hour before the deck had darkened. The Enhanced-Environments arc
+  had recorded the lab's front as "not ported" because the sky eased;
+  that was true of the sky alone. Now the GROUND crosses on the same
+  front: the wind model answers `arrival()` - 0 at the cut, 1 when the
+  front lands and 1 from then on (unlike frontProgress, which falls as
+  the WIND leaves while the weather stays) - and the hosts blend the sun
+  scale, the fog row and the grass dim from what was ON SCREEN at the
+  cut toward the incoming weather's on it (a second cut mid-front starts
+  from the half-crossed value; a fog row that changes mode switches at
+  the midpoint, under a deck already half turned). The DROPS are the
+  lab's own law, `Math.round(wx.n * wsky.fall)`: the renderer's count is
+  the profile times an intensity the front walks - filling in over the
+  arrival's last stretch (0.55..0.95), so the rain starts when the sky
+  already looks like rain, and thinning out over the first (0.15..0.60)
+  when the incoming weather has none, so a sunny word tapers the rain
+  under a sky still opening rather than stopping it dead. A change of
+  kind (rain to snow) drains the old before the new fills; rain into
+  storm walks the peak across with no gap; a twelve-second smoothing
+  rides on top so a jump in the clock never steps the count. THE
+  EPISODE: every precipitating cut rolls a PEAK from its mode's range -
+  rain 0.25..1.0 (a sprinkle to a downpour), storm 0.6..1.0, snow
+  0.2..0.85 - seeded on the cut's minute as WIND1 seeds its front, and
+  the intensity WANDERS under the peak (0.6..1.0 on two slow periods) so
+  a shower is never one number for an hour. The ear follows what FALLS:
+  the rain loop's gain is the intensity (a `setVolume` on the engine's
+  loop handle, `rainGain` on AmbientEffects) and its preset is the shown
+  mode - a rain word with nothing down yet is a cloudy day; the outgoing
+  rain keeps its loop while it tapers. ENHANCED ONLY and a recorded
+  departure (Port-Ledger WX2): the classic path takes the row's numbers
+  whole, draws DFU's cap, and never reads the module; the lab's shaders
+  are untouched (WX1's byte-exact pins hold - the fade is in the count,
+  not the fragment). Not seen: no ARENA2 here; it goes to Mac's eyes by
+  the Incident's law, with `?wseed` replaying a day's rolls.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing

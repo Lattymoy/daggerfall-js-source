@@ -80,6 +80,13 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    /** WX2: the rain loop's gain, 0..1. Unity's AudioSource plays the
+     *  loop at its serialized volume, and so does this on the classic
+     *  path, which never sets it: 1. Under the enhanced environments the
+     *  host sets it to the front's intensity each frame, so the loop
+     *  fades with the drops instead of stepping on with the sim's word. */
+    this.rainGain = 1;
+    this._rainGainSet = null;
     // F089: the SECOND channel - a graveyard's howl/bird layer, armed
     // by the location rect and ticking its own counter beside the
     // shared one (:57-59, :154-162).
@@ -225,6 +232,13 @@ export class AmbientEffects {
     // loops start lazily for their presets (Update, verbatim)
     if ((this.preset === 'rain' || this.preset === 'storm') && !this._rainLoop) {
       this._rainLoop = this.engine.loop(AMBIENT_RAIN_LOOP, 1);
+      this._rainGainSet = null;   // WX2: a fresh source takes the gain below
+    }
+    // WX2: the gain follows the front. Written only when it moves, and
+    // only to a handle that carries the setter (a stub engine's may not).
+    if (this._rainLoop && this._rainGainSet !== this.rainGain) {
+      this._rainLoop.setVolume?.(this.rainGain);
+      this._rainGainSet = this.rainGain;
     }
     if (this.preset === 'clearNight' && !this._cricketsLoop) {
       this._cricketsLoop = this.engine.loop(AMBIENT_CRICKETS_LOOP, 1);

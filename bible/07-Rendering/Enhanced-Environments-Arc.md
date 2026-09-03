@@ -71,9 +71,15 @@ in the game:
 | weather | volume of drops/flakes round the camera | precipitation billboards (separate pass) | replace or extend that pass |
 | surface field | puddles, snow, deformation, melt | none | the chunker's vertices |
 
-The lab's FRONT (eased weather) is NOT ported: `shared.js` already
-eases weather (ES1c `easeWeather`) and feeds it to the sky. The lab's
-front gives way to the game's.
+The lab's FRONT (eased weather) was recorded here as NOT ported, because
+`shared.js` already eases weather (ES1c `easeWeather`) and feeds it to
+the sky. That was true of the SKY alone: the lab's front also eases the
+world's terms and holds the particles off until the deck is in, and
+none of that had crossed - the drops, the sun scale, the fog and the
+grass dim snapped on the sim's cut under a sky that took WIND1's lead
+to turn. WX2 (`systems/weatherFront.js`, 2026-09-03) ports that half
+onto the game's own front; see `Rendering.md` WX2. The lab's slider
+still gives way to the game's clock.
 
 The lab's RAY CONVENTION fix is NOT ported: it was a lab bug. The game
 builds its ray from a host passing its own camera's yaw and pitch.

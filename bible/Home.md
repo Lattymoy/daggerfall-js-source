@@ -292,8 +292,8 @@ combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
 - `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/exterior.js:1067` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1322` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1076` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1331` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/worldModes.js:1687` - FLAGGED, above ground only, with the DFU line it owes:
 - `src/systems/inputActions.js:465` - STILL FLAGGED:
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
