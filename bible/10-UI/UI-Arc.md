@@ -8339,8 +8339,23 @@ spilling.
 
 Pins: 1 more (7). 3 more mutations, 3 dead.
 
-ON THE HORIZON for this HUD: a crosshair in the pixel face, the
-interaction-mode icon, and the arrow count.
+PX32 (2026-09-03): THE RETICLE. Both classic calls -
+`drawCrosshairAndModeIcon` at hud.js's two sites - sit BELOW the
+enhanced branch's return, so the enhanced skin had no crosshair and no
+mode word at all: a player could not see where they were aiming or
+which mode they were in. The laws are hudCrosshair.js's own, imported
+rather than restated - `GUI/Crosshair` shows a cross; under the styles
+where the icon IS the crosshair the mode's WORD stands at the centre
+instead, Grab alone keeping the plain cross because it is the mode you
+aim in; under the other styles the word sits in the corner, and under
+"none" nowhere. In the pixel language: a square 18px cross in bone
+with the classic shadow, the word in the classic shadowed pair. Not
+scaled by the HUD's scale - a reticle is a point, and the scale is for
+things read at the edges. Driven through every combination of style
+and mode against the classic's rules, all dead-centre. 1 pin, 4
+mutations, 4 dead.
+
+ON THE HORIZON for this HUD: the arrow count.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the

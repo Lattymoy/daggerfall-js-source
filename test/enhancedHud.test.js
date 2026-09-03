@@ -236,3 +236,27 @@ test('PX30d: fatigue has no FIELD, it has a LAW - and the bar said 576000%', () 
   // 1 stays - never 0% while anything is left.
   assert.match(src, /const shown = now > 0 \? Math\.max\(1, Math\.min\(100, Math\.round\(pct\)\)\) : 0;/);
 });
+
+test('PX32: the reticle - the enhanced skin had NO crosshair and NO mode word', () => {
+  // Both classic calls sit below the enhanced branch's return, so a
+  // player on the enhanced skin could not see where they were aiming
+  // or which mode they were in. The laws are hudCrosshair.js's own,
+  // IMPORTED: which setting shows a crosshair, which style makes the
+  // mode's word the crosshair (Grab alone keeps the plain cross - it is
+  // the mode you aim in), which styles show a corner word.
+  const src = read('src/ui/enhancedHud.js');
+  assert.match(src, /import \{ crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL \} from '\.\/hudCrosshair\.js'/);
+  assert.match(src, /import \{ getInteractionMode \} from '\.\.\/player\/interactionMode\.js'/);
+  assert.match(src, /const showCross = crosshairEnabled\(\) && !\(asCross && mode !== 'grab'\);/);
+  assert.match(src, /const showCentreWord = crosshairEnabled\(\) && asCross && mode !== 'grab' && !!label;/);
+  assert.match(src, /const showCorner = !asCross && modeIconEnabled\(style\) && !!label;/);
+  assert.doesNotMatch(src, /'STEAL'|'GRAB'|'INFO'|'TALK'/, 'the words are the classic\'s table, never retyped');
+  // Guarded like every other write here.
+  assert.match(src, /if \(last\.reticle !== rk\) \{/);
+  // A reticle is a POINT: it is not scaled by the HUD's scale.
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.hud-reticle \{ position: absolute; left: 50%; top: 50%; transform: translate\(-50%, -50%\);/);
+  assert.doesNotMatch(css, /\.hud-reticle \{[^}]*--hud-scale/);
+  assert.match(css, /\.hud-cross::before, \.hud-cross::after \{ content: ''; position: absolute; background: #d8cfae;/);
+  assert.match(css, /\.hud-modeword \{[^}]*color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\); \}/, 'the mode word in the classic shadowed pair');
+});
