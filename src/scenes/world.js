@@ -2762,6 +2762,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  every built pixel, re-origin the streamer (its own verbatim
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
+  // TL1: how far an ARRIVAL looks for its floor - up and down - against
+  // the ten units an ordinary door step uses. A location's flat and the
+  // terrain ten units past its edge can differ by far more on a steep site.
+  const ARRIVAL_LIFT = 40;
+  const ARRIVAL_REACH = 240;
   async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
@@ -2829,7 +2834,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // plane and FixStanding drops it onto whatever the terrain actually
     // is; a landing WITHOUT grounded stands exactly where it was told -
     // the ship's deck, which is above the water the terrain would give.
-    const pos = walkMode && (!local || ground) ? floorLanding(collider, raw) : raw;
+    // TL1: the arrival's ray starts well above the raw and reaches well
+    // below it - a hillside village's edge is not within ten units of
+    // the flat, in either direction. The first hit is still the surface.
+    const pos = walkMode && (!local || ground) ? floorLanding(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT) : raw;
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // PositionPlayerToLocation sets the facing itself, through
