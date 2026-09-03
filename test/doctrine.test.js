@@ -31,6 +31,17 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
+  // ── THE TREES (TR1) ─────────────────────────────────────────────
+  // Our partner's tree meshes: leaf-cards arranged into a tree, one per
+  // classic nature flat, converted from their Blender/Collada work by
+  // tools/treesConvert.mjs. GEOMETRY ONLY. The pack they were authored
+  // in carries an atlas of Daggerfall's own tree sprites, and that
+  // atlas does not ship and is not read here: a render of game data is
+  // game data. The file holds positions and UVs re-based onto the
+  // sprite's opaque box - a MAPPING onto pixels the player supplies at
+  // runtime, never the pixels - and a test proves it holds nothing
+  // else.
+  ['public/trees/500.json', "OURS - our partner's tree geometry for archive 500; positions, UVs and card tags, no pixels"],
   // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
   // (U65f): two marks, a title card and the one recorded piece of
   // music this port ever shipped. The rows went with the files; this

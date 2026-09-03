@@ -810,3 +810,59 @@ measure and LEVELS - 8 against 69 - is the decisive one.
 ON THE HORIZON: the sky as a setting rather than a URL, lightning on
 the thunder weather, and a season's hand on the palette.
 
+
+## TR1 THE TREES - our partner's meshes, wearing the player's own sprite (2026-09-03)
+
+Mac: "I want to work on how we could texture this and implement it as a
+proper replacement for trees, along with having them interact with the
+wind system." The pack is our partner's: a Unity project of Collada
+leaf-card meshes, one per classic nature flat (115 models, 26k tris
+across archives 500-511), each archive with a 1024² atlas.
+
+**The atlas is Daggerfall's own tree sprites** - TEXTURE.500's records
+cut out and packed, with a synthesised top-down of each crown beside
+them. Port-Doctrine's second non-negotiable, A RENDER OF GAME DATA IS
+GAME DATA, means it cannot ship, whoever packed it. The GEOMETRY is
+ours and can.
+
+So the mesh wears the player's own sprite. `tools/treesConvert.mjs`
+reads the atlas for one thing - which opaque island each card's UVs
+land on - and re-bases the card's UVs onto that island's box; the
+shipped `public/trees/<archive>.json` is positions, UVs and card tags,
+and a pin proves it holds nothing that could be a pixel. At runtime
+`render/treeModels.js` draws the mesh instanced at the flat's positions
+in the record's own texture - the billboard path's own upload - with
+the record's opaque box measured once from the same DFBitmap, and the
+billboard's fog and light law (BB_FS) for the fragment. The mesh is
+scaled to the billboard's height and stood on the flat's bottom edge:
+the switch changes what a tree IS, not how big or where.
+
+**The wind is the grass's, term for term** - `labGrass.js`'s wdir,
+along, gust and push, pinned byte-exact - weighted by the square of the
+height above the base so trunks stand and crowns sway, with a phase
+off the tree's position so twins differ. The host's wind vector, which
+lived inline in the grass block, is hoisted to one object built once a
+frame that the grass and the trees both read; `?grass=off` can no
+longer take the trees' wind with it. (The rain still builds its own
+copy of the vector, with the pre-WIND1 gust envelope - pre-existing,
+named, not touched here.)
+
+Enhanced-only under the grass's pref, `?trees=off` to escape. Only
+nature flats with a model become trees; a built tree skips its flat, a
+failed one falls back to it, and the pixel frees its trees with
+everything else. Archive 500 ships 7 of its 31 records modelled; the
+rest stay billboards.
+
+**Two things recorded rather than assumed.** The numbers the partner
+painted on the atlas and the file names disagree (500_16.dae does not
+wear the sprite labelled 16). The file name is the flat the model
+replaces and is taken as authoritative; the runtime should sanity-check
+the record's opaque aspect against the island's - not yet done. And
+the converter is verified by a software render of the converted meshes
+sampling the islands as the runtime will sample the record - every
+card wore the right piece - but the GL renderer has NOT run in a
+browser. It goes to Mac's eyes.
+
+15 mutants, 15 dead. Next: TR2 synthesises the crown-top cards from the
+sprite (a 4-way radial of the crown; the cards ship tagged and are
+skipped today); TR3 the other archives and the seasons' swaps.
