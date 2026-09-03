@@ -265,7 +265,8 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
   assert.notEqual(eased.cloudCover, weatherRow('sunny').cover);
   // And the controller keeps one and walks it.
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, dt\);/);
+  assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);/,
+    'WIND1: the ease still walks the row; its dt now follows the wind\'s front (easeDt), so a violent arrival builds behind the wind');
   assert.match(shared, /row: weatherRowNow,/);
 });
 

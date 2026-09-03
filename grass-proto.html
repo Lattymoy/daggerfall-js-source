@@ -701,11 +701,13 @@ const grassProg = prog(HEAD + FIELD + `
 layout(location=0) in vec2 aCorner;      // one blade quad, 0..1
 layout(location=1) in vec4 aInst;        // xz, height, phase
 layout(location=2) in vec4 aInst2;       // lean.xz, tint, width
+layout(location=4) in vec3 aGround;      // GR4: the ground's own colour under this blade, baked by the placer
 uniform mat4 uVP; uniform float uTime, uWind, uRange; uniform vec3 uEye, uSunDir;
 uniform vec2 uWindDir;
 uniform float uSnowFull;           // PROTO-22: the SAME line the ground draws
 uniform sampler2D uGField; uniform vec2 uGFieldOrigin; uniform float uGFieldM, uSnowGlobal; uniform vec2 uWindV;
 out float vT; out float vTint; out float vFade; out float vLam; out float vSnow; out float vWet;
+out vec3 vGround;                       // GR4
 void main(){
   vec2 root = aInst.xy;
   float d = distance(root, uEye.xz);
@@ -788,6 +790,7 @@ void main(){
   // the ground draws and not an approximation of it
   p.y = terrain(root) + snowSurf + vT * h;
   vTint = aInst2.z;
+  vGround = aGround;                      // GR4: carried to the root
   // MAC'S NOTE: the blades take the TIME OF DAY. A blade's normal is
   // roughly its own lean crossed with up, so a leaning blade catches
   // a low sun on one side and goes dark on the other - which is what
@@ -796,7 +799,7 @@ void main(){
   vLam = max(dot(nrm, normalize(uSunDir)), 0.0);
   gl_Position = uVP * vec4(p,1.0);
 }`, HEAD + `
-in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet;
+in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround;
 uniform vec3 uAmb, uSunCol; uniform float uDim;
 out vec4 o;
 void main(){
@@ -806,7 +809,15 @@ void main(){
   // blades read as depth instead of a green haze.
   // PROTO-7 (Mac: reduce the bright colour): the sward is olive, not
   // emerald - a Daggerfall field, not a golf course.
-  vec3 root = vec3(0.06,0.09,0.04);
+  // GR4 (RedRoryOTheGlen, via Mac: the base of the grass blending into
+  // the ground and all you can make out are the tips through a
+  // gradient - how the older Novalogic games did it). THE ROOT IS THE
+  // GROUND. A fixed olive root drew a hard line at every base where a
+  // blade met a tile of another shade - the one tell that makes a
+  // field read as quads stuck on. The root takes the colour of the
+  // ground it stands on, darkened as a sward's shade would, and the
+  // olive only arrives by the mid.
+  vec3 root = vGround * 0.62;
   vec3 mid  = vec3(0.13,0.20,0.07);
   vec3 tip  = vec3(0.24,0.32,0.12);
   vec3 c = mix(root, mid, smoothstep(0.0,0.55,vT));
@@ -821,7 +832,9 @@ void main(){
   c *= uDim;
   // the rim is the SUN's colour, and only where the sun can reach
   c += uSunCol * 0.20 * smoothstep(0.86,1.0,vT) * vLam;
-  o = vec4(c, vFade);
+  // GR4: ...and the base fades IN, so what reads as a blade is its upper
+  // part - the tips through a gradient - rather than a planted line.
+  o = vec4(c, vFade * smoothstep(0.0, 0.30, vT));
 }`);
 
 // ── geometry ───────────────────────────────────────────────────────
@@ -872,6 +885,7 @@ gl.bindVertexArray(nvao);
 function build() {
   const N = state.density | 0;
   const inst = new Float32Array(N * 4), inst2 = new Float32Array(N * 4);
+  const ground = new Float32Array(N * 3);   // GR4: the ground's colour under each blade, off the drawn ground's own pixels
   // deterministic placement on a hashed seed - the rule the nature
   // pass already uses, so a blade is where it was last frame
   let s = 0x2f6e2b1;
@@ -890,6 +904,11 @@ function build() {
     inst2[i * 4 + 1] = (rnd() - 0.5) * 0.5;
     inst2[i * 4 + 2] = rnd();
     inst2[i * 4 + 3] = 0.052 + rnd() * 0.055;
+    { // GR4: the same texel the ground pass paints under this root (vUV = xz / uTilePx)
+      const u = ((inst[i * 4] / state.tile) % 1 + 1) % 1, v = ((inst[i * 4 + 1] / state.tile) % 1 + 1) % 1;
+      const o = ((Math.floor(v * SIZE) % SIZE) * SIZE + (Math.floor(u * SIZE) % SIZE)) * 4;
+      ground[i * 3] = px[o] / 255; ground[i * 3 + 1] = px[o + 1] / 255; ground[i * 3 + 2] = px[o + 2] / 255;
+    }
   }
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
@@ -903,11 +922,11 @@ function build() {
   gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(corners), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  for (const [loc, data] of [[1, inst], [2, inst2]]) {
+  for (const [loc, data] of [[1, inst], [2, inst2], [4, ground]]) {
     const b = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, b);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, loc === 4 ? 3 : 4, gl.FLOAT, false, 0, 0);   // GR4: the ground colour is a vec3
     gl.vertexAttribDivisor(loc, 1);
   }
   gr = { vao, count: N, verts: corners.length / 2 };
