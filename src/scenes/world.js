@@ -594,7 +594,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return flying;
   }
 
-  async function buildPixelNow(px, py) {
+  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     const key = `${px},${py}`;
     const dfLocation = locationIndex.get(key) || null;
     // EV7: the LOCATION half stays here - setLocationTiles reads
@@ -942,7 +942,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // was painted without it and arrives AFTER the sweep. It goes straight
     // back for a rebuild - the worker has the network by now, since the
     // message order is kept.
-    if (!withRoads && terrainGen.hasRoads) { destroyPixel(px, py, { collectLoose: false }); return; }
+    // ROADS 25a (Mac: "boot failed: can't access property centerHeight"):
+    // the rebuild is THIS call's to make, not a caller's to notice. The
+    // first cut tore the pixel down and returned nothing, and the boot
+    // path - which awaits the PLAYER's pixel and stands the camera on its
+    // centreHeight - read a property off undefined whenever the network
+    // landed during that first build, which on a fast connection is
+    // every boot. The teleport landing awaited the same nothing. So the
+    // roadless pixel is rebuilt here and the rebuilt entry returned;
+    // once, because the worker's message order guarantees the second
+    // paint has the network, and a network that vanished again is not a
+    // reason to loop.
+    if (!withRoads && terrainGen.hasRoads) {
+      destroyPixel(px, py, { collectLoose: false });
+      if (roadsRetry) console.warn(`[roads] pixel ${key} painted without the network twice - kept as painted`);
+      else return buildPixelNow(px, py, { roadsRetry: true });
+    }
     const entry = built.get(key);
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
     // the player may have crossed during the worker round trip - and

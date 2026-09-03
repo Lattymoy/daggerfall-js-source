@@ -834,7 +834,13 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
   // A pixel IN FLIGHT when the network landed arrives roadless after the
   // sweep, and goes straight back.
-  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/);
+  // ROADS 25a: the roadless pixel is REBUILT by the builder itself and the
+  // entry returned - a caller awaiting the player's pixel (the boot's
+  // camera, the teleport landing) never receives undefined. Once: the
+  // worker's message order guarantees the second paint has the network.
+  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{\s*\n\s*destroyPixel\(px, py, \{ collectLoose: false \}\);\s*\n\s*if \(roadsRetry\) console\.warn\([^\n]*\);\s*\n\s*else return buildPixelNow\(px, py, \{ roadsRetry: true \}\);\s*\n\s*\}/);
+  assert.match(world, /async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{/);
+  assert.doesNotMatch(world, /terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/, 'no path in the builder resolves the player\u2019s pixel to nothing');
   assert.match(read('src/world/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);
   // The map was ALREADY rebuilt on arrival (ROADS 7); the terrain now is too.
   assert.match(read('bible/03-World/Roads.md'), /keys its grid cache on the network it was drawn with/);
