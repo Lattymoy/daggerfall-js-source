@@ -213,12 +213,19 @@ replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 That leaves **9** open flags as
-of this wave - the count `node tools/regenOpenFlags.mjs --check`
+location arrival. DR1 (2026-09-03) then took an eighth
+(`scenes/dungeonContext.js:1709`, the standalone dungeon host's two
+window seams) by BUILDING them: "a DFU original that does not exist"
+had been that flag's stated blocker, and it was a claim about the
+SCENE, not about the two windows - both of which have DFU originals
+and both of which that host could already draw, tick and click.
+That leaves **10** open flags as of
+this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
-prefab), a DFU original that does not exist (the standalone dungeon
-host's windows, the enhanced menu's keyboard), or the owner's call
-(the gamepad layer, the pause dropdown's mod rows).
+prefab), a DFU original that does not exist (the enhanced menu's
+keyboard), or the owner's call (the gamepad layer, the pause
+dropdown's mod rows).
 
 ## The standing watches (not wave work)
 

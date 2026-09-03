@@ -87,7 +87,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
-import { LabGrassRenderer, placeLabGrassSteps, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { TreeModelRenderer } from '../render/treeModels.js';   // TR1: our partner's tree meshes, wearing the player's own sprite
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
@@ -418,8 +418,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // swaps a tree for a tree.
   const treeModels = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('trees') !== 'off'
     ? new TreeModelRenderer(renderer.gl) : null;
-  let labGrassCentre = null;   // world xz the current scatter was placed around
-  let labGrassWalk = null; let labGrassWalkCentre = null;   // GR2: the scatter being walked, a few ms a frame
+  let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   function applyWeather(w) {
@@ -6210,7 +6209,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
-      labGrassCentre = null; labGrassWalk = null;   // AUDIT 49 F2: the scatter is baked in world coordinates and the world just moved - re-place it around the eye
+      labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
       droppedLoot.offsetAll(r.offset);
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
@@ -6652,51 +6651,50 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     if (labGrass) {
       const ex = cam.pos[0]; const ez = cam.pos[2];
-      // GR2: the walk is TIME-SLICED - four milliseconds a frame of the
-      // lab's 1,200,000 candidates, the finished scatter swapped in whole
-      // - so the hitch Mac felt every 60m is gone and the blades appear a
-      // few frames after the eye moves, never in one stall
-      if (labGrassWalk) {
-        const t0 = performance.now(); let r;
-        do { r = labGrassWalk.next(); } while (!r.done && performance.now() - t0 < 4);
-        if (r.done) { labGrass.set(r.value); labGrassWalk = null; labGrassCentre = labGrassWalkCentre; }
-      } else if (!labGrassCentre || Math.hypot(ex - labGrassCentre[0], ez - labGrassCentre[1]) > 60) {
-        const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
-        const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
-        const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
-        const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
-        const keep = (x, z) => {
-          for (const { p, t, grass } of pieces) {
-            const lx = x - t[0]; const lz = z - t[2];
-            if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
-            const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-            const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
-            if (rec === 0 || !grass || !grass.has(rec)) return null;
-            const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
-            const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
-            const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
-            if (h <= sea) return null;
-            return h + t[1];
-          }
-          return null;
-        };
-        // GR4: the SAME lookup keep makes, answering with the tile's mean
-        // colour instead of its height - so the root under a blade takes
-        // the colour of the very tile keep let it stand on.
-        const ground = (x, z) => {
-          for (const { p, t } of pieces) {
-            const lx = x - t[0]; const lz = z - t[2];
-            if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
-            const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-            const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
-            return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
-          }
-          return null;
-        };
-        labGrassWalk = placeLabGrassSteps({ centre: [ex, ez], keep, ground });
-        labGrassWalkCentre = [ex, ez];
-        window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, centre: labGrassCentre, walking: !!labGrassWalk });   // GR1: for the gate
-      }
+      // GR5: THE FIELD IS ANCHORED TO THE WORLD. GR2's walk placed every
+      // blade relative to the eye and swapped the whole field when the
+      // eye moved 60m - the switch, and the hitch of one 60MB upload.
+      // Now each world cell keeps its own blades whoever is looking;
+      // walking fills cells at the leading edge and frees them at the
+      // trailing one, a couple a frame, inside the range fade. The
+      // keep()/ground() closures below only capture the near pieces and
+      // cost nothing to rebuild; the cells they answer for are the ones
+      // being filled this frame.
+      const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
+      const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+      const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
+      const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
+      const keep = (x, z) => {
+        for (const { p, t, grass } of pieces) {
+          const lx = x - t[0]; const lz = z - t[2];
+          if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+          const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+          const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+          if (rec === 0 || !grass || !grass.has(rec)) return null;
+          const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
+          const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
+          const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
+          if (h <= sea) return null;
+          return h + t[1];
+        }
+        return null;
+      };
+      // GR4: the SAME lookup keep makes, answering with the tile's mean
+      // colour instead of its height - so the root under a blade takes
+      // the colour of the very tile keep let it stand on.
+      const ground = (x, z) => {
+        for (const { p, t } of pieces) {
+          const lx = x - t[0]; const lz = z - t[2];
+          if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+          const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+          const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+          return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
+        }
+        return null;
+      };
+      if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground });
+      labGrassField.update(ex, ez, keep, ground);
+      window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
       labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
         { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: LAB_DIM[weather] ?? 1 },
         sceneWind());

@@ -291,7 +291,6 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/scenes/dungeonContext.js:1709` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/exterior.js:1067` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1322` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/systems/inputActions.js:465` - STILL FLAGGED:

@@ -901,3 +901,41 @@ than wear the wrong picture - and three were: 501_16, 502_14, 511_12.
 climate; a binary format is a later slice if the size ever matters.
 
 Not seen in a browser. Nothing in TR1-3 has drawn through GL.
+
+### TR4 - the GL run (2026-09-03, Mac: "Can I see it")
+
+Nothing in TR1-3 had drawn through GL. `tools/treesProbe.mjs` runs the
+shipped `public/trees/<archive>.json` through the REAL
+`render/treeModels.js` in headless Chromium's WebGL2, with the island
+the partner cut from each classic sprite standing in for the record -
+the pixels the runtime will get from the player's own TEXTURE.500 -
+and films it: 28 trees of archive 500's seven records on a ring, the
+camera orbiting, the wind rising from calm to a gale over twelve
+seconds. The pack is read from a path; nothing from it is written
+anywhere but the frames.
+
+Seen: the shaders compile and link; the record texture, the opaque-box
+remap and the crown-top upload go through the real build()/draw();
+every card wears its piece; the tops sit on the crowns; instancing
+draws each record's trees in one call; the crowns lean with the wind
+and the trunks stand. 360 frames, no GL errors (the two Chromium
+notices are the SwiftShader deprecation and ReadPixels stalls from the
+capture). The island rule the converter uses moved to
+`tools/lib/treeAtlas.mjs` so the probe reads the same one.
+
+**And the probe found the lean was wrong.** Its first film drove the
+wind at |windV| 1.7, ten times gentler than the sky ever does, and the
+crowns swayed nicely. Calibrating the probe to the sky's own range -
+0.0046..0.0308 through labWindSlider and the host's 0.16 gives |windV|
+4.8 calm, ~11 sunny, 32 storm - showed TREE_LEAN 0.018 bending a 16 m
+crown 2.9 m on a sunny day and 12 m in a storm. It is 0.003 now: half
+a metre sunny, two in a storm, pinned as a fraction of height against
+the range. The probe's first measurement was also wrong - it compared
+frames a second apart and the orbiting camera swamped the wind - and
+now measures a fixed camera at one instant, calm against calm (zero)
+and calm against storm. And it judges: it could not fail before, which
+T2's law forbids, and it was pushed once in that state.
+
+Still not seen: the trees IN THE GAME - the host's flat loop swapping a
+billboard for a mesh, the record uploaded by the pipeline, the sky's
+own wind. That is the walk Mac takes.

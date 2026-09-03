@@ -1,5 +1,9 @@
 # Port Status 2026-09-02 - 1:1 against Daggerfall Unity, re-measured
 
+- ~~**`src/systems/skills.js:164`** - "AUDIT 18: the +10% used to be
+  INTERIM 0 behind a flag blaming a decode that had ALREADY
+  SHIPPED".~~ **CLOSED (ROAD-F GS2, 2026-09-03).** *The work was
+  already done - D9 shipped `AcrobatMotor.cs:96-101`'s nested
 *The state of the tree at the campaign's closing head (the commit that carries this page; the figures below were first taken at `c3c12ee` and re-taken at the close), after the Road-to-1:1
 campaign (`Road-To-1-1.md`; audited in `Audit-49.md`). Supersedes
 `Port-Status-2026-09.md`, which measured `6881171` - the tree AUDIT 44
@@ -46,6 +50,7 @@ measurement as taken, kept because the two lists are read against it.
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
 | open flags | 151 | **9** | `node tools/regenOpenFlags.mjs --check` answers 9 ("9 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **10** | `node tools/regenOpenFlags.mjs --check` answers 10 ("10 entries, up to date" - DR1 2026-09-03 retired `scenes/dungeonContext.js`'s by shipping both window seams). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -536,10 +541,9 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Neither, and the list cannot tell.**
 
-- ~~**`src/systems/skills.js:164`** - "AUDIT 18: the +10% used to be
-  INTERIM 0 behind a flag blaming a decode that had ALREADY
-  SHIPPED".~~ **CLOSED (ROAD-F GS2, 2026-09-03).** *The work was
-  already done - D9 shipped `AcrobatMotor.cs:96-101`'s nested
+- **`src/systems/skills.js:164`** - "AUDIT 18: the +10% used to be
+  INTERIM 0 behind a flag blaming a decode that had ALREADY SHIPPED".
+  *The work is done. D9 shipped `AcrobatMotor.cs:96-101`'s nested
   `ImprovedAthleticism` term at `skills.js:189-201`, over the two
   constants named from `AcrobatMotor.cs:14-15` - and the sentence the
   list quoted was a past-tense retirement record that happened to
@@ -553,10 +557,20 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `test/flagsweep.test.js` - the record's own words, the shipped term
   it records, and `flagLines()` answering empty over the file -
   mutation-checked by putting the token back.*
+  constants named from `AcrobatMotor.cs:14-15`, and the sentence the
+  list quotes is a past-tense retirement record that happens to contain
+  the word INTERIM. `tools/regenOpenFlags.mjs` matches
+  FLAGGED/INTERIM per line and cannot read tense, so this is a false
+  positive of the only part of the record that could not otherwise lie.
+  Home.md's own law - RETIRING A FLAG DELETES THE SENTENCE
+  (`Home.md:116-119`) - is the fix, applied to a retirement record
+  rather than to a live flag.*
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
 when this was measured, over the 19 the list then held. **As of ROAD-F,
 `node tools/regenOpenFlags.mjs --check` answers 9**,
+when this was measured, over the 19 the list then held. **As of Wave E,
+the ship landing and DR1, `node tools/regenOpenFlags.mjs --check` answers 10**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
@@ -578,11 +592,10 @@ regenerated onto the new sites: `exterior.js:1073` -> `:1089`,
 `exterior.js:1325` -> `:1344`, `world.js:2819` -> `:2932`,
 ~~`worldModes.js:1659` -> `:1687`~~ (**CLOSED at ROAD-F GS1**, below),
 `pauseWindow.js:58` -> `:61`. The
+`worldModes.js:1659` -> `:1687`, `pauseWindow.js:58` -> `:61`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
-
 **ROAD-F (2026-09-03) took the last two this page still owed.**
-
 - ~~**`src/scenes/worldModes.js:1687`** - above ground only: the GUILD
   SERVICE popup.~~ **SHIPPED (GS1).** *`StaticNPCClick` pushes the
   popup on `Services.HasGuildService` ALONE
@@ -649,7 +662,7 @@ section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
 Section C's table is **247 rows** between `Port-Ledger.md:453` and
-`:699` (`awk '/^\|/ && !/^\|---/'`). **225 are struck.** Of the 22 that
+`:699` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
 are not, four are VidFile quirks filed under the wrong section
 (ported-as-is, no route), three carry a **Kept** verdict (the climate
 swap dimensions, the secondary picker's cancel path, the rep window's
@@ -661,10 +674,10 @@ taxonomy), two are audit preambles, one is RESERVED by the owner
 their own text that they are closed (`RegionPowerAndConditionsUpdate`,
 vampirism/lycanthropy).
 
-That accounts for 17 of the 22, leaving **5 unstruck rows that carry a
+That accounts for 17 of the 21, leaving **4 unstruck rows that carry a
 route** - plus `:570`, struck at its head but carrying a live PENDING
-clause in its tail, for **seven rows that still owe work: items 1-7
-below.** The measurement this section was first written over read 246
+clause in its tail, for **six rows that still owe work: items 1-6
+below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
 work the entries themselves argued for - the closeout tail struck the
 six STALE rows (items 9-14), E8 struck item 8, and E4 added one new
@@ -712,10 +725,24 @@ ships, which is the warning the section's own preamble opens with.
 6. **`:570` (struck, with a live clause) the keybinding registry** ->
    the mouse/advanced and joystick sub-windows, the two of DFU's 65
    game windows the port does not cite.
-7. **`:579` the standalone dungeon host has no trade window** -> a
+7. ~~**`:579` the standalone dungeon host has no trade window** -> a
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
-   this is an owner decision about a dev route, not a routed gap.
+   this is an owner decision about a dev route, not a routed gap.~~
+   **CLOSED (DR1, 2026-09-03), and the adjudication was the wrong one.**
+   "No DFU original for the scene" is true and does not decide the
+   question, because the two WINDOWS have DFU originals and the seam
+   they hang off is the port's own - which is exactly the case the
+   four-hosts rule is written for: build DFU's law verbatim where DFU
+   has one, the port's existing seam where the host is the port's own.
+   `scenes/dungeonContext.js` now mounts `NativeTradeWindow` in
+   Identify mode (Identify.cs:71-76, DoModeAction's spell arm
+   :954-995) and the Dispel Magic bundle picker, both through
+   `mountSpellWindow` -> `pushDungeonWindow`, with INVE00I0/SHOP00I0
+   warmed at boot beside PICK00I0. Nothing was blocked: every hook the
+   mount omits is one of DFU's own Buy/Repair/Sell mode gates, named in
+   the struck row. Three DR1 pins in `x11b.test.js`, each red when its
+   arm's mount is reverted to the PR1 refusal.
 8. ~~**`:580` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
    `tools/shopProbe.mjs` is RETIRED - it drove the keyed browse window
    U8c/U40 replaced, and its subject is covered twice over by

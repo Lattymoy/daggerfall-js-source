@@ -63,7 +63,10 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && p\.season !== SEASON\.Winter/, 'near ring only, never in winter');
   assert.match(w, /if \(rec === 0 \|\| !grass \|\| !grass\.has\(rec\)\) return null;/, 'a water record or a non-grass record: no blade');
   assert.match(w, /if \(h <= sea\) return null;/, 'under the sea plane: no blade');
-  assert.match(w, /Math\.hypot\(ex - labGrassCentre\[0\], ez - labGrassCentre\[1\]\) > 60/, 'the scatter follows the eye');
+  // GR5: the field follows the eye by CELLS now - filled at the leading
+  // edge, freed at the trailing one - rather than re-scattering whole
+  // when the eye moved 60m.
+  assert.match(w, /labGrassField\.update\(ex, ez, keep, ground\);/, 'the field follows the eye');
   assert.match(w, /labGrass\.draw\(proj, view, new Float32Array\(cam\.pos\), now \/ 1000,/);
   assert.match(w, /renderer\.markForeignPass\(\);   \/\/ EV6: the grass changed programs/);
 });
@@ -77,7 +80,7 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
   assert.match(g, /gl\.disable\(gl\.BLEND\);\s*\n\s*if \(culled\) gl\.enable\(gl\.CULL_FACE\);/, 'and put back as it was found');
   assert.ok(!/CULL_FACE/.test(readFileSync('grass-proto.html', 'utf8')), 'the lab itself never culls');
   // F2: the scatter is baked in world coordinates; an origin shift re-places it
-  assert.match(w, /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassCentre = null;/, 'the origin shift forces a re-place');
+  assert.match(w, /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassField = null;/, 'the origin shift forces a re-place');
   // F3: the records are learned whenever missing, not only on a tile-cache miss
   assert.match(w, /if \(!grassRecords\.has\(groundArchive\)\) \{\s*\n\s*const layers = \[\];/);
   assert.ok(!/renderer\.uploadTileArray\(groundArchive, layers\);\s*\n[^}]*grassRecords\.set/.test(w), 'not inside the cache-miss block');
@@ -111,9 +114,14 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   assert.equal(yields, 12, 'twelve yields for 1.2M at 100k a step');
   assert.equal(r.value.count, whole.count, 'the same blades');
   for (let k = 0; k < 40; k++) assert.equal(r.value.inst[k], whole.inst[k], 'in the same order');
-  assert.match(w, /do \{ r = labGrassWalk\.next\(\); \} while \(!r\.done && performance\.now\(\) - t0 < 4\);/, 'four milliseconds a frame');
-  assert.match(w, /if \(r\.done\) \{ labGrass\.set\(r\.value\); labGrassWalk = null; labGrassCentre = labGrassWalkCentre; \}/, 'swapped in whole when done');
-  assert.match(w, /labGrassCentre = null; labGrassWalk = null;   \/\/ AUDIT 49 F2/, 'an origin shift abandons a walk in flight');
+  // GR5 replaced the time-sliced walk with a world-anchored field filled
+  // a cell or two a frame - the same promise (no stall) kept a
+  // different way, pinned in the GR5 tests below.
+  assert.match(w, /labGrassField\.update\(ex, ez, keep, ground\);/, 'four milliseconds a frame');
+  // GR5: nothing is swapped in whole any more - a cell arrives by one
+  // bufferSubData into its own slot. The whole-field swap WAS the hitch.
+  assert.doesNotMatch(w, /labGrass\.set\(/, 'no whole-field swap');
+  assert.match(w, /labGrassField = null;   \/\/ AUDIT 49 F2 \/ GR5/, 'an origin shift abandons a walk in flight');
 });
 
 // ── GR4: THE ROOT IS THE GROUND ───────────────────────────────────
@@ -165,9 +173,58 @@ test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texe
   // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
   // answering with the colour instead of the height, so the root under
   // a blade takes the colour of the very tile keep let it stand on.
-  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('labGrassWalk = placeLabGrassSteps('));
+  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassFields('));
   assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
   assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
   assert.match(g, /return groundMeanColour\.get\(p\.groundArchive\)\?\.\[rec\] \?\? null;/);
-  assert.match(world, /placeLabGrassSteps\(\{ centre: \[ex, ez\], keep, ground \}\)/, 'and the placer is handed it');
+  assert.match(world, /labGrassField\.update\(ex, ez, keep, ground\);/, 'and the field is handed it');
+});
+
+// ── GR5: THE FIELD IS ANCHORED TO THE WORLD ───────────────────────
+// Mac: "it sometimes hitches and switches while walking. There's also a
+// slight pop in/pop out issue."
+test('GR5: a cell grows the same blades whoever is looking, and walking touches only the edges', async () => {
+  const { placeLabGrassCell, grassPerCell, createGrassField, GRASS_CELL } = await import('../src/render/labGrass.js');
+  const perCell = grassPerCell();
+  // ANCHORED: the same cell, byte for byte, from its own coordinates -
+  // GR2 placed every blade relative to the EYE from one seed, so a
+  // rebuild moved the whole field.
+  const a = placeLabGrassCell(33, -12, { keep: () => 0, perCell });
+  const b = placeLabGrassCell(33, -12, { keep: () => 0, perCell });
+  assert.ok(a.inst.every((v, i) => v === b.inst[i]) && a.inst2.every((v, i) => v === b.inst2[i]));
+  assert.notEqual(a.inst[0], placeLabGrassCell(34, -12, { keep: () => 0, perCell }).inst[0], 'a neighbour is its own');
+  for (let i = 0; i < a.count; i++) {
+    assert.ok(a.inst[i * 4] >= 33 * GRASS_CELL - 1 && a.inst[i * 4] < 34 * GRASS_CELL + 1, 'a blade stands in its cell');
+  }
+  // PADDED: a refused blade leaves a zero-height slot, which draws nothing.
+  const half = placeLabGrassCell(0, 0, { keep: (x, z) => (x < 15 ? 0 : null), perCell });
+  assert.ok(half.count < perCell && half.count > 0);
+  assert.equal(half.inst[(perCell - 1) * 4 + 2], 0, 'the pad has no height');
+  // INCREMENTAL: the field frees and fills EDGES only, a few a frame -
+  // never a whole-field upload.
+  const w = []; const r = { allocSlots(p, s) { w.push(['a', p, s]); }, writeSlot(s, p) { w.push(['w', s, p.count]); }, clearSlot(s) { w.push(['c', s]); } };
+  const f = createGrassField(r, { keep: () => 0, perFrame: 400 });
+  assert.equal(w[0][0], 'a', 'the buffers are sized once, up front');
+  f.update(1000, 1000); const live = w.filter((x) => x[0] === 'w').length; w.length = 0;
+  f.update(1005, 1000);
+  assert.equal(w.length, 0, 'five metres: nothing moves');
+  f.update(1040, 1000);
+  const writes = w.filter((x) => x[0] === 'w').length, clears = w.filter((x) => x[0] === 'c').length;
+  assert.ok(writes > 0 && writes < live / 4 && clears === writes, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
+  // ...and a frame fills at most perFrame, so the walk cannot hitch.
+  const g = createGrassField(r, { keep: () => 0, perFrame: 2 }); w.length = 0;
+  const pending = g.update(0, 0);
+  assert.equal(w.filter((x) => x[0] === 'w').length, 2, 'two cells a frame');
+  assert.ok(pending > 0, 'the rest wait their turn');
+});
+
+test('GR5: the host runs the field, not the walk', () => {
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground \}\);/);
+  assert.match(world, /labGrassField\.update\(ex, ez, keep, ground\);/, 'this frame\'s keep/ground, since the near pieces move with the eye');
+  assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');
+  assert.match(world, /labGrassField = null;   \/\/ AUDIT 49 F2 \/ GR5/, 'a new world starts empty');
+  const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
+  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* stride \* 4, data\);/, 'a cell arrives by bufferSubData into its slot');
+  assert.match(src, /clearSlot\(slot\) \{[\s\S]{0,400}bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* 4 \* 4, this\._zeros\)/, 'and leaves by zeros');
 });

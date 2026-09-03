@@ -216,6 +216,118 @@ export function placeLabGrass(opts) {
  * scatter in when the walk is done. The law, the seed and the sequence
  * are identical - only the clock is shared.
  */
+// ── GR5: THE FIELD IS ANCHORED TO THE WORLD, NOT TO THE EYE ─────────
+//
+// Mac: "it sometimes hitches and switches while walking. There's also a
+// slight pop in/pop out issue." Both were one design: every blade was
+// placed RELATIVE TO THE CENTRE from one seed, so when the eye moved
+// 60m and the scatter rebuilt, every blade in the field moved with it
+// - the switch - and the rebuild's finish uploaded all 1.2M blades in
+// one call - the hitch.
+//
+// Now the world is cut into CELLS, each seeded from its own coordinates,
+// so a patch of ground always grows the same blades whoever is looking.
+// Walking adds cells at the leading edge and frees them at the trailing
+// one, inside the range fade; nothing in the middle ever moves. Each
+// cell owns a fixed SLOT in the buffers - padded with zero-height blades
+// - so a cell arrives by one bufferSubData into its slot and leaves by
+// one write of zeros: no repack, no whole-field upload, ever.
+//
+// The blade laws are unchanged: the same height, lean, tint, width and
+// phase draws, in the same order per blade, so the field LOOKS the same
+// - only where the randomness is anchored moved.
+export const GRASS_CELL = 30;
+
+/** One cell's seed, from its coordinates - the anchor. */
+export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
+  let h = (seed ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h ^ (cx * 0x85ebca6b | 0), 0xc2b2ae35) >>> 0;
+  h = Math.imul(h ^ (cz * 0x27d4eb2f | 0), 0x165667b1) >>> 0;
+  h ^= h >>> 15;
+  return (h || 1) >>> 0;
+}
+
+/** How many blades a cell holds, from the lab's density over its span. */
+export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.span, cell = GRASS_CELL) =>
+  Math.max(1, Math.round(density * (cell * cell) / ((span * 2) * (span * 2))));
+
+/**
+ * One cell's blades, padded to `perCell` with zero-height blades so the
+ * slot is always full. The laws are placeLabGrassSteps' own, per blade.
+ */
+export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL }) {
+  const inst = new Float32Array(perCell * 4); const inst2 = new Float32Array(perCell * 4);
+  const rootY = new Float32Array(perCell); const groundCol = new Float32Array(perCell * 3);
+  let s = grassCellSeed(cx, cz, seed);
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const ox = cx * cell, oz = cz * cell;
+  let n = 0;
+  for (let i = 0; i < perCell; i++) {
+    const px = rnd() * cell, pz = rnd() * cell;
+    const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
+    const x = ox + px + Math.cos(a) * rr, z = oz + pz + Math.sin(a) * rr;
+    const h = (0.22 + rnd() * 0.42) * (height / 34);
+    const phase = rnd() * 6.283;
+    const lx = (rnd() - 0.5) * 0.5, lz = (rnd() - 0.5) * 0.5;
+    const tint = rnd();
+    const w = 0.052 + rnd() * 0.055;
+    const y = keep(x, z);
+    if (y === null || y === undefined) continue;
+    inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
+    inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
+    rootY[n] = y;
+    const gc = ground ? ground(x, z) : null;
+    groundCol[n * 3] = gc ? gc[0] : 0.10; groundCol[n * 3 + 1] = gc ? gc[1] : 0.145; groundCol[n * 3 + 2] = gc ? gc[2] : 0.065;
+    n++;
+  }
+  // the pad: height 0 draws nothing (the vertex stage collapses h=0)
+  return { inst, inst2, rootY, ground: groundCol, count: n, perCell };
+}
+
+/**
+ * The field: which cells stand around the eye, each in its own slot.
+ * `update(ex, ez)` a frame: it frees cells out of range, and fills at
+ * most `perFrame` new ones - a cell is a few thousand blades and a
+ * few thousand keep() lookups, milliseconds, so the walk never
+ * hitches and never has to be time-sliced.
+ */
+export function createGrassField(renderer, { keep, ground = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, perFrame = 2 }) {
+  const perCell = grassPerCell(density, span, cell);
+  const side = Math.ceil((span * 2) / cell) + 1;
+  const slots = side * side;
+  renderer.allocSlots(perCell, slots);
+  const live = new Map();     // 'cx,cz' -> slot
+  const free = [];
+  for (let i = 0; i < slots; i++) free.push(i);
+  return {
+    perCell, slots, live,
+    update(ex, ez, keepNow = keep, groundNow = ground) {
+      const c0x = Math.floor((ex - span) / cell), c1x = Math.floor((ex + span) / cell);
+      const c0z = Math.floor((ez - span) / cell), c1z = Math.floor((ez + span) / cell);
+      // free what fell out of range
+      for (const [key, slot] of live) {
+        const [cx, cz] = key.split(',').map(Number);
+        if (cx < c0x || cx > c1x || cz < c0z || cz > c1z) { renderer.clearSlot(slot); live.delete(key); free.push(slot); }
+      }
+      // fill what came into range, nearest first, a few a frame
+      let budget = perFrame;
+      const want = [];
+      for (let cz = c0z; cz <= c1z; cz++) for (let cx = c0x; cx <= c1x; cx++) {
+        const key = `${cx},${cz}`;
+        if (!live.has(key)) want.push([Math.hypot((cx + 0.5) * cell - ex, (cz + 0.5) * cell - ez), cx, cz, key]);
+      }
+      want.sort((a, b) => a[0] - b[0]);
+      for (const [, cx, cz, key] of want) {
+        if (budget-- <= 0 || !free.length) break;
+        const slot = free.pop();
+        renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell }));
+        live.set(key, slot);
+      }
+      return want.length;   // cells still pending
+    },
+  };
+}
+
 export function* placeLabGrassSteps({ centre, keep, ground = null, density = LAB_GRASS.density, height = LAB_GRASS.height, span = LAB_GRASS.span, seed = LAB_GRASS.seed, step = 60000 }) {
   const N = density | 0;
   const inst = new Float32Array(N * 4); const inst2 = new Float32Array(N * 4); const rootY = new Float32Array(N);
@@ -340,6 +452,39 @@ export class LabGrassRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.count = 0;
     this._vp = new Float32Array(16);
+  }
+
+  /** GR5: size the buffers for `slots` cells of `perCell` blades each,
+   *  all zero - a slot draws nothing until a cell is written into it. */
+  allocSlots(perCell, slots) {
+    const gl = this.gl;
+    this.perCell = perCell; this.slots = slots;
+    const sizes = [slots * perCell * 4 * 4, slots * perCell * 4 * 4, slots * perCell * 4, slots * perCell * 3 * 4];
+    for (let i = 0; i < 4; i++) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
+      gl.bufferData(gl.ARRAY_BUFFER, sizes[i], gl.DYNAMIC_DRAW);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    this.count = slots * perCell;
+  }
+
+  /** GR5: one cell into its slot - one bufferSubData per buffer, no repack. */
+  writeSlot(slot, placed) {
+    const gl = this.gl; const p = this.perCell;
+    for (const [i, data, stride] of [[0, placed.inst, 4], [1, placed.inst2, 4], [2, placed.rootY, 1], [3, placed.ground, 3]]) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
+      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * stride * 4, data);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  }
+
+  /** GR5: a cell leaves - its heights go to zero, and h=0 draws nothing. */
+  clearSlot(slot) {
+    const gl = this.gl; const p = this.perCell;
+    if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Float32Array(p * 4);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[0]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 4 * 4, this._zeros);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
   /** upload a scatter from placeLabGrass. Creates nothing, draws nothing. */

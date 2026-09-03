@@ -104,8 +104,13 @@ test('TR1: the wind law is the grass\u2019s, term for term', () => {
   assert.equal(T(/float gust = [^;]+;/), G(/float gust = [^;]+;/));
   assert.equal(T(/float push = [^;]+;/), G(/float push = [^;]+;/));
   assert.equal(T(/float along = dot\(([^,]+), wdir\);/).replace(/dot\([^,]+,/, 'dot(root,'), G(/float along = dot\(root, wdir\);/));
-  // A tree is not a blade: it leans less than the grass's 0.055.
-  assert.ok(TREE_LEAN > 0 && TREE_LEAN < 0.055);
+  // CALIBRATED TO THE SKY'S RANGE. |windV| is 4.8 calm, ~11 sunny, 32
+  // storm; push is 0.55..1.3 of it. The lean per metre of height is
+  // push * TREE_LEAN: a storm must bend a crown under 16% of its
+  // height and a sunny day must still show. TR4's probe found the first
+  // constant put a storm at 75%. MUTANT: 0.018 fails the first bound.
+  assert.ok(TREE_LEAN * 32 * 1.3 < 0.16, `a storm bends a crown ${(TREE_LEAN * 32 * 1.3 * 100).toFixed(0)}% of its height`);
+  assert.ok(TREE_LEAN * 11 * 0.9 > 0.02, 'a sunny day does not move the crown at all');
   // ...and by the square of its height above the base, so trunks stand.
   assert.ok(/\* t \* t \* uHeight \* uScale/.test(trees), 'the lean is not weighted t^2');
 });

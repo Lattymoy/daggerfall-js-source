@@ -104,7 +104,11 @@ import {
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
+import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
+import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // DR1: DoModeAction's spell arm (:954-995)
+import { isEquipped } from '../systems/equip.js';   // DR1: FilterLocalItems' `!item.IsEquipped` (:693)
+import { goldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
@@ -1081,7 +1085,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // only ever asked for SCBG04I0, so the constant existed with no
   // caller until now.
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
-  preloadListPickerArt({ renderer, fetchBytes, palette });   // X11b: PICK00I0 for the Create Item picker - without this the seam is silently dead
+  preloadListPickerArt({ renderer, fetchBytes, palette });   // X11b: PICK00I0 for the Create Item picker AND (DR1) the Dispel Magic bundle picker - without this the seam is silently dead
+  // DR1: INVE00I0 + SHOP00I0 + FONT0004 + the mode panels, warmed at
+  // BOOT for the same reason X11c moved worldModes' warm off the
+  // first door: the Identify WINDOW is a SPELL's, and a caster who
+  // has never opened a shop still owns the spell. Without the warm
+  // `tradeArtLoaded()` answers false for ever and the seam is
+  // silently dead - the exact shape the PICK00I0 line above guards.
+  preloadTradeArt({ renderer, fetchBytes, palette });
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
     .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
@@ -1636,6 +1647,120 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // a PARAMETER everywhere else in this tree. So the body moved to
   // scenes/hostEnchant.js and both hosts hand in their own doors; a
   // copied mount would have diverged the first time an arm grew.
+  /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
+   *  they go through. `mountSpellWindow` is worldModes'
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:835,
+   *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
+   *  calls here - this file's own pushDungeonWindow, which IS
+   *  UserInterfaceManager.PushWindow. So a spell window raised over an
+   *  open automap or rest window lands ON TOP and uncovers it on
+   *  close, rather than being refused or clobbering the slot.
+   *
+   *  There is no closeSpellWindow twin, for the same reason worldModes
+   *  makes its dungeon arm a deliberate no-op (:857): both windows
+   *  raise `done` from inside their own pick/cancel/close
+   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
+   *  NativeTradeWindow's close, ui/nativeTrade.js:450), and
+   *  tickOverlay drains the slot and reconciles the stack. A second
+   *  clear here would only race that drain. */
+  const mountSpellWindow = (win) => pushDungeonWindow(win);
+
+  /** DR1: IDENTIFY'S WINDOW, in the standalone `?dungeon` host.
+   *  Identify.cs:71-76 refunds the cost, then pushes a
+   *  DaggerfallTradeWindow in Identify mode with UsingIdentifySpell
+   *  set and IdentifySpellCost = cost.spellPointCost - so the magicka
+   *  the window charges on the Identify click IS the number the effect
+   *  just gave back, which is what makes the round trip free when the
+   *  player closes the window without identifying anything. That is
+   *  worldModes.openIdentifyWindow's law (:6215-6226) and this is the
+   *  same construction over THIS host's bindings.
+   *
+   *  The hook set is the one Identify mode actually reads, and the
+   *  omissions are DFU's own mode gates, not port residue:
+   *    shelfItems/otherItems/repairItems/nowMinutes/allowMagicRepairs/
+   *    isBeingRepaired - Buy and Repair only (remoteList :256-259,
+   *      _takeItemFromRepair :388, _clear :430)
+   *    accepts/enchanted - localListAccepts' Sell and SellMagic arms
+   *      (tradeModes.js:348-350); Identify returns true unfiltered
+   *    weight - sellProceeds, on the Sell confirm alone (:490)
+   *    priceCtx - read by tradeCost's PAID Identify arm (:263-265) and
+   *      by _modeAction's ShowTradePopup ELSE (:456-466). Neither can
+   *      run on this mount: `usingIdentifySpell` is true, so the cost
+   *      walk takes DFU's "Identify spell remains free" line
+   *      (:479-481) and _modeAction returns at :458 before it reads a
+   *      price context. There is no merchant underground to sell the
+   *      paid service anyway - that is DFU's shape too, not a gap. */
+  function openIdentifySpellWindow({ chance, cost }) {
+    return new NativeTradeWindow({
+      mode: 'Identify',
+      usingIdentifySpell: true,
+      // D7: the LIVE collection (:389 `localItems = PlayerEntity.Items`),
+      // spliceable, because a click TRANSFERS out of it.
+      packItems: () => (playerEntity.items ??= []),
+      isEquipped: (it) => isEquipped(it),
+      gold: () => goldAmount(playerEntity),
+      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],
+      cityName: () => '',        // a dungeon has no city name to quote back
+      shopName: '',              // ...and no shop; Identify.cs pushes no building
+      icons: { getTexture, uploadRecord, textures: renderer.textures },
+      entity: playerEntity,
+      // The same bridge read openInventory takes: QuestMachine.GetQuest
+      // for TransferItem's quest gate (DaggerfallInventoryWindow.cs:1489)
+      // and ResolveItemLongName's letter arm. The standalone page mounts
+      // no bridge and answers null - DFU's own fall-through.
+      getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+      // DoModeAction's SPELL arm (DaggerfallTradeWindow.cs:954-995),
+      // the same body worldModes.commitTrade runs (:1527-1556). The
+      // magicka refusal turns back the WHOLE pass and answers FALSE,
+      // which leaves the lot staged for a caster who steps away and
+      // comes back with the points (F144); the pass spends the points
+      // ONCE for the whole list whatever the rolls say; and there is
+      // no Mercantile tally, because the spell never reaches
+      // ConfirmTrade.
+      commit: (_mode, staged) => {
+        if (cost > (playerEntity.magicka ?? 0)) {
+          hudText.add(NOT_ENOUGH_SPELL_POINTS_TEXT);
+          surfacePlayer();
+          return false;
+        }
+        const pass = identifySpellPass(staged, chance, Math.random);
+        for (const it of pass.identified) it.isIdentified = true;
+        if (pass.spendMagicka) {
+          playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - cost);
+        }
+        hudText.add(identifiedTallyText(pass.successCount, pass.total));
+        surfacePlayer();
+        return true;
+      },
+    });
+  }
+
+  /** DR1: DISPEL MAGIC'S BUNDLE PICKER, the same window
+   *  worldModes.openDispelPicker (:6129-6152) builds - DFU pushes a
+   *  DaggerfallListPickerWindow over the player's live bundles by
+   *  name, picking one removes it and cancelling wastes the cast (no
+   *  refund, unlike Identify). The one asymmetry is DFU's: the
+   *  player's OWN casts always come off, and only something cast AT
+   *  them gets the roll. */
+  function openDispelPicker({ chance }) {
+    if (!listPickerArtLoaded()) return false;
+    const bundles = dispellableBundles(liveBundles(playerEntity));
+    if (!bundles.length) { hudText.add('You have no magic to dispel.'); return true; }
+    return mountSpellWindow(new ListPickerWindow({
+      items: bundles.map((b) => b.name || '(unnamed)'),
+      onPick: (i) => {
+        const b = bundles[i];
+        if (!b) return;
+        const r = dispelBundle(playerEntity, b.bundleId, {
+          selfCast: b.bundleType === 'Spell' && b.selfCast !== false,
+          roll01: Math.random(), chance,
+        });
+        if (r.alert) hudText.add(DISPEL_MAGIC_TEXT[r.alert]);
+      },
+      onCancel: () => {},   // the cast is spent; the drain closes the slot
+    }));
+  }
+
   const magic = createPlayerMagic({
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is
@@ -1705,17 +1830,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const f of gone) questPoolOps.removeFoe(f);
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
-    // PR1: the two window seams this host cannot mount, LOUD (the
-    // onTeleport INTERIM shape). Absent, the engine's dispatch
-    // optional-chained into silence: Identify refunded its cost and
-    // said NOTHING, Dispel Magic spent the cast on nothing and said
-    // NOTHING - the anti-lie law's exact shape. The full trade window
-    // and the bundle picker live on the worldModes host; DFU has no
-    // standalone dungeon scene at all (this is the port's own dev
-    // route), so the shipped bootWorld path carries both windows and
-    // this host says why it cannot.
-    onIdentify: () => hudText.add('You cannot concentrate on that right now. (the Identify window lives in the ?world route)'),
-    onDispelMagic: () => hudText.add('You cannot concentrate on that right now. (the Dispel Magic picker lives in the ?world route)'),
+    // DR1: THE TWO WINDOW SEAMS, MOUNTED. PR1 made them refuse out
+    // loud in what it called "the onTeleport INTERIM shape", which was
+    // the right answer to the SILENCE it found (absent, both
+    // optional-chained past the engine's dispatch: Identify refunded
+    // its cost and said NOTHING, Dispel Magic spent the cast on
+    // nothing and said NOTHING). But the refusal's REASON - "the
+    // window lives on the worldModes host" - was true of where the
+    // window was BUILT, not of what this host can mount. Both windows
+    // are `isChoiceWindow` natives over host-agnostic art, and this
+    // context already owns every seam one
+    // needs: pushDungeonWindow to raise it, tickOverlay to tick and
+    // drain it, overlayClick / overlayPointer / overlayHover /
+    // overlayWheel / overlayKeyUp to drive it, and drawOverlay's
+    // native arm to paint it. The art is warmed at boot beside
+    // PICK00I0. So they open here, and complete here.
+    //
+    // Both go through mountSpellWindow, which is worldModes'
+    // mountSpellWindow dungeon arm - the same door, one host down.
+    // The refusal that remains is the ART one, the X11b idiom: no
+    // INVE00I0/SHOP00I0 (or no PICK00I0) means no window, and a seam
+    // that cannot mount says so rather than swallowing the cast.
+    onIdentify: ({ chance, refund } = {}) => {
+      if (!tradeArtLoaded()
+        || !mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))) {
+        hudText.add('You cannot concentrate on that right now.');
+      }
+    },
+    onDispelMagic: ({ chance } = {}) => {
+      if (!openDispelPicker({ chance })) hudText.add('You cannot concentrate on that right now.');
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     now: () => classicMinutesRef.value,   // V2a: MorphSelf's once-a-day clock
     collider,
