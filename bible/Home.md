@@ -291,7 +291,7 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/scenes/dungeonContext.js:1709` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:1687` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/exterior.js:1067` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1322` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/worldModes.js:1687` - FLAGGED, above ground only, with the DFU line it owes:
@@ -299,7 +299,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/systems/skills.js:164` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
-- `src/ui/enhancedMenu.js:1795` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1787` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/pauseWindow.js:65` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits
