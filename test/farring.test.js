@@ -181,6 +181,6 @@ test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign
     'one translation places the whole mesh - recenters are free');
   assert.ok(span.includes('farRing.needsRebuild(state.current.x, state.current.y)'),
     'the grid follows the walk');
-  assert.equal((world.match(/renderer\.markForeignPass\(\);/g) || []).length, 4,
-    'the ring shares the sky\'s seam - the EV6 count stands (GR1 added the grass, the third; TR1 the trees, the fourth)');
+  assert.equal((world.match(/renderer\.markForeignPass\(\);/g) || []).length, 3,
+    'the ring shares the sky\'s seam - the EV6 count stands (GR1 added the grass, the third)');
 });
