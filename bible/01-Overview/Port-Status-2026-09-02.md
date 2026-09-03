@@ -45,7 +45,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **11** | `node tools/regenOpenFlags.mjs --check` answers 11 ("11 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **9** | `node tools/regenOpenFlags.mjs --check` answers 9 ("9 entries, up to date"). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - and Wave E then retired six, named in list 1; the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -536,22 +536,27 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Neither, and the list cannot tell.**
 
-- **`src/systems/skills.js:164`** - "AUDIT 18: the +10% used to be
-  INTERIM 0 behind a flag blaming a decode that had ALREADY SHIPPED".
-  *The work is done. D9 shipped `AcrobatMotor.cs:96-101`'s nested
+- ~~**`src/systems/skills.js:164`** - "AUDIT 18: the +10% used to be
+  INTERIM 0 behind a flag blaming a decode that had ALREADY
+  SHIPPED".~~ **CLOSED (ROAD-F GS2, 2026-09-03).** *The work was
+  already done - D9 shipped `AcrobatMotor.cs:96-101`'s nested
   `ImprovedAthleticism` term at `skills.js:189-201`, over the two
-  constants named from `AcrobatMotor.cs:14-15`, and the sentence the
-  list quotes is a past-tense retirement record that happens to contain
-  the word INTERIM. `tools/regenOpenFlags.mjs` matches
-  FLAGGED/INTERIM per line and cannot read tense, so this is a false
-  positive of the only part of the record that could not otherwise lie.
-  Home.md's own law - RETIRING A FLAG DELETES THE SENTENCE
-  (`Home.md:116-119`) - is the fix, applied to a retirement record
-  rather than to a live flag.*
+  constants named from `AcrobatMotor.cs:14-15` - and the sentence the
+  list quoted was a past-tense retirement record that happened to
+  contain the marker. `tools/flagSites.mjs` deliberately does not try
+  to read tense (its own header says why: a wrong count is worse than
+  a known-incomplete one), so the fix is the one this entry named -
+  Home.md's law that RETIRING A FLAG DELETES THE SENTENCE
+  (`Home.md:116-119`), applied to a retirement record rather than to a
+  live flag. The sentence now reads "a hard 0 behind a placeholder
+  flag" and says exactly what it said. Pinned in
+  `test/flagsweep.test.js` - the record's own words, the shipped term
+  it records, and `flagLines()` answering empty over the file -
+  mutation-checked by putting the token back.*
 
 **The arithmetic.** 10 blocked + 6 narrowed + 1 false positive = 17
-when this was measured, over the 19 the list then held. **As of Wave E and
-the ship landing, `node tools/regenOpenFlags.mjs --check` answers 11**,
+when this was measured, over the 19 the list then held. **As of ROAD-F,
+`node tools/regenOpenFlags.mjs --check` answers 9**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/citedrift.test.js` holds both documents to
@@ -571,9 +576,45 @@ could see the others' closures until the squash, which is how "leaving
 Five of the twelve survivors only MOVED, and `Home.md` was
 regenerated onto the new sites: `exterior.js:1073` -> `:1089`,
 `exterior.js:1325` -> `:1344`, `world.js:2819` -> `:2932`,
-`worldModes.js:1659` -> `:1687`, `pauseWindow.js:58` -> `:61`. The
+~~`worldModes.js:1659` -> `:1687`~~ (**CLOSED at ROAD-F GS1**, below),
+`pauseWindow.js:58` -> `:61`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
+
+**ROAD-F (2026-09-03) took the last two this page still owed.**
+
+- ~~**`src/scenes/worldModes.js:1687`** - above ground only: the GUILD
+  SERVICE popup.~~ **SHIPPED (GS1).** *`StaticNPCClick` pushes the
+  popup on `Services.HasGuildService` ALONE
+  (`PlayerActivate.cs:1552-1568`) - the `BuildingDiscoveryData` beside
+  it supplies the guild GROUP, and `:1543-1546` has already answered
+  `GuildGroups.None` for a player who is not inside a building - so a
+  street NPC carrying a guild-service faction opens it in C# too, into
+  DFU's ONE `UserInterfaceManager` stack. The port's departure was
+  never the routing (`staticNpcRoute` has answered `guildService`
+  outdoors since G8) but the SLOT. The flag named the honest shape and
+  GS1 built it: `mountServiceWindow`, the REPLACE-mode sibling of
+  `mountSpellWindow` (which refuses an occupied interior slot on
+  purpose, while every site in this chain is a dispatch out of the
+  popup already in it - DFU's own `CloseWindow(); PushWindow(next);`,
+  `DaggerfallGuildServicePopupWindow.cs:340-450`), whose exterior arm
+  is townTalk's slot, the one the outdoor talk window, the outdoor
+  quest offer and the outdoor refusals already use. `closeSpellWindow`
+  needed no sibling - it was already mode-general - so the ~24 identity
+  guards became calls to it. The sweep is `openGuildService`,
+  `openWitchesCoven` (a coven is an exterior location, so its popup was
+  outdoor-only from the start), `popupTalkToStaticNpc`, every arm of
+  `openServiceFlow` and the `openRepairService` subtree under it; and
+  `guildServiceRepair`, which answered `return interiorOverlay` and so
+  read null above ground, hands back the window the opener mounted.
+  NARROWED to one sentence: outdoors the guild's Repair opens the KEYED
+  list, not the native INVE12I0 screen, because `openTradeWindow`
+  prices and stages against a building record the street does not have
+  - and DFU's own arm (`:353-356`) reads quality off
+  `PlayerEnterExit.BuildingDiscoveryData`, stale or zero for a player
+  who is not inside one. Pinned in `test/audit26_extnpcs.test.js` (the
+  routing law outdoors, the lifted door's three arms run for real, the
+  chain swept), mutation-checked by removing the outdoor arm.*
 
 **Recorded by the closeout tail - the spell-hand port.**
 

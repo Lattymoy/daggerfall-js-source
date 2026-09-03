@@ -854,6 +854,43 @@ export function createWorldModes(host) {
     if (interiorOverlay === win) { interiorOverlay = null; return; }
     if (mode !== 'dungeon') townTalk?.closeOverlay?.(win);
   }
+  /** ROAD-F GS1: ...and the REPLACE-MODE door beside the two, which
+   *  the GUILD SERVICE chain needs and mountSpellWindow cannot be.
+   *
+   *  mountSpellWindow REFUSES an occupied interior slot on purpose
+   *  (`if (interiorOverlay) return false` above) so a hotkey cannot
+   *  stack a second window on the one already up. Every site in the
+   *  guild chain is the other case, and it is DFU's own: each of
+   *  DaggerfallGuildServicePopupWindow's service arms runs
+   *  `CloseWindow(); uiManager.PushWindow(next);` (:383-394, :409-411,
+   *  :449-453 and the rest of the switch) - a pop and a push that net
+   *  to a REPLACEMENT of the popup that is itself in the slot. So this
+   *  door replaces where that one refuses, and the two are otherwise
+   *  the same three arms over the same three slots.
+   *
+   *  The exterior arm is townTalk's slot, which is CloseWindow-then-
+   *  Push already (showOverlay's own note there) - the same slot the
+   *  outdoor talk window, the outdoor quest offer and the outdoor
+   *  refusals go into, and the one both outdoor hosts draw, tick,
+   *  click, key and pause on. That is what lets a STREET NPC carrying
+   *  a guild-service faction open the popup at all: above ground
+   *  `interiorOverlay` is a slot no frame draws.
+   *
+   *  The CLOSE half is `closeSpellWindow` unchanged - it is already
+   *  mode-general (the interior slot by identity, townTalk's by its
+   *  own identity guard, the dungeon's by its own drain) - so the
+   *  chain needed one new door and not two.
+   *
+   *  Returns the window, so an arm that must both mount and hand back
+   *  (the popup's onService reads the return value and answers "not
+   *  available yet" on a null) is one statement. */
+  function mountServiceWindow(win) {
+    if (!win) return null;
+    if (mode === 'dungeon') { dungeonCtx?.showOverlay?.(win); return win; }
+    if (mode === 'interior') { interiorOverlay = win; return win; }
+    townTalk?.showOverlay?.(win);
+    return win;
+  }
   let _shopFont = null;
   const ensureShopFont = () => {
     preloadTradeArt({ renderer, fetchBytes, palette });   // U8c: the trade screen art rides shop entry too
@@ -1684,29 +1721,61 @@ export function createWorldModes(host) {
   // (it says so at its own NPC site), which is C#'s empty-machine
   // answer: everyone stands.
   //
-  // FLAGGED, above ground only, with the DFU line it owes:
+  // ROAD-F GS1 CLOSED THE GUILD-SERVICE HALF (2026-09-03).
   //
-  //   - the GUILD SERVICE popup, if a street NPC ever carries a guild
-  //     service faction: its window and every window it dispatches to
-  //     mount in `interiorOverlay`, which only the interior/dungeon
-  //     frame draws. Talk, the quest offer and the refusals all mount
-  //     where the current mode draws.
+  // StaticNPCClick pushes the guild popup on `Services.HasGuildService`
+  // ALONE (PlayerActivate.cs:1552-1568) - the read of
+  // BuildingDiscoveryData beside it is the guild GROUP, not a gate, and
+  // :1543-1546 has already answered GuildGroups.None for a player who is
+  // not inside a building. So a street NPC carrying a guild-service
+  // faction opens the popup in C#, and it opens it into DFU's ONE
+  // UserInterfaceManager stack. The port's departure was never the
+  // routing (staticNpcRoute has answered `guildService` outdoors since
+  // G8) but the SLOT: the popup and every window it dispatches to went
+  // into `interiorOverlay`, which only the interior/dungeon frame
+  // draws, ticks, keys and clicks - so above ground it was set and then
+  // never seen.
   //
-  //     WHY THE EXISTING PAIR IS NOT THE FIX (checked, D10):
-  //     mountSpellWindow refuses an OCCUPIED interior slot on purpose
-  //     (`if (interiorOverlay) return false`, :793) so a hotkey cannot
-  //     stack a second window - but every site in this chain is a
-  //     DISPATCH from the popup that is already in the slot, which is
-  //     exactly the case that must replace. So the swap needs a
-  //     replace-mode door beside the two, not just the two. And the
-  //     chain does not stop at openGuildService/openServiceFlow's ~24
-  //     sites: guildServiceRepair reaches openRepairService ->
-  //     showRepairList, which the interior-only repair MERCHANT shares,
-  //     and the keyed trade/spell/item/book windows under it, none of
-  //     which the exterior frame draws or ticks either. The honest
-  //     shape is one door plus a sweep of that whole subtree, and a
-  //     street NPC with a guild-service faction is the only caller it
-  //     would serve - so it stays recorded rather than half-swapped.
+  // The fix is the shape this flag named: ONE DOOR plus a sweep of the
+  // subtree under it.
+  //   - the door is `mountServiceWindow` (:887), the REPLACE-mode
+  //     sibling of mountSpellWindow. mountSpellWindow refuses an
+  //     occupied interior slot on purpose so a hotkey cannot stack a
+  //     second window; every site in this chain is the other case, and
+  //     it is DFU's own - each arm of DoGuildService runs
+  //     `CloseWindow(); uiManager.PushWindow(next);`
+  //     (DaggerfallGuildServicePopupWindow.cs:340-450), a pop and a push
+  //     that net to a REPLACEMENT of the popup already in the slot. Its
+  //     exterior arm is townTalk's slot, which is CloseWindow-then-Push
+  //     already and is where the outdoor talk window, the outdoor quest
+  //     offer and the outdoor refusals go.
+  //   - the CLOSE half needed no second door: `closeSpellWindow` (:853)
+  //     was already mode-general, so the ~24 identity guards became
+  //     calls to it.
+  //   - the sweep is openGuildService, openWitchesCoven (a coven is an
+  //     exterior location, so its popup was outdoor-only from the
+  //     start), popupTalkToStaticNpc, every arm of openServiceFlow -
+  //     the boxes, the film, the teleport map, the armour pick, the
+  //     potion/item/spell makers, the buy-spells book and the four
+  //     trade modes - and openRepairService -> showRepairList ->
+  //     repairItem/showRepairJobs/collectJob under it.
+  //   - guildServiceRepair used to answer `return interiorOverlay`,
+  //     which above ground reads a slot nothing was written into: the
+  //     popup saw null and printed "That service is not available yet."
+  //     over the list it had just opened. openRepairService HANDS BACK
+  //     the window it mounted now.
+  //
+  // NARROWED, and this sentence is the whole of what is left: outdoors
+  // the guild's Repair service opens the KEYED list, not the native
+  // INVE12I0 screen. openRepairService's native arm is gated on
+  // `interiorBuilding` because openTradeWindow prices against a
+  // building record (quality, regionIndex) and stages against that
+  // building's shelf; in the street there is no building record at all,
+  // and DFU's own Repair arm (:353-356) pushes a trade window whose
+  // quality read is PlayerEnterExit.BuildingDiscoveryData - stale or
+  // zero for a player who is not inside one. The keyed list is the same
+  // service over the same repairService.js laws with `b?.quality ?? 0`,
+  // which is that same zero, said honestly.
   //
   // The routing law is systems/guildServiceFlow.js; this end owns only
   // the geometry, the faction lookups and the window.
@@ -2469,7 +2538,12 @@ export function createWorldModes(host) {
       { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
       { menu: true, isSpyMaster });
     if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
-      interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
+      // The popup yields to the conversation, as DFU's CloseWindow-
+      // then-push does. Only the INTERIOR slot needs saying so: it has
+      // no replace-on-push, while townTalk's openTalkWindow below goes
+      // through showOverlay, which IS CloseWindow-then-Push and drops
+      // the popup this call came out of (ROAD-F GS1's outdoor arm).
+      interiorOverlay = null;
       npcSession?.startNewConversation();   // #108: the same OnPush reset - this door is a push too
       townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2, portrait: staticNpcPortrait(npcData) });
       return;
@@ -2505,14 +2579,14 @@ export function createWorldModes(host) {
         if (!boxes.length || !guildServiceArtLoaded()) return null;
         let offerWin = null;
         offerWin = new ServiceFlowWindow(boxes, {
-          onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+          onClose: () => closeSpellWindow(offerWin),
         });
-        interiorOverlay = offerWin;
+        mountServiceWindow(offerWin);
         return { dispatched: true };
       },
-      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+      onClose: () => closeSpellWindow(win),
     });
-    interiorOverlay = win;
+    mountServiceWindow(win);
   }
 
   function openGuildService(pn, route, npcData) {
@@ -2570,7 +2644,7 @@ export function createWorldModes(host) {
           onYes: () => {
             joinGuild(memberships, guild, gameDate());
             const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
-            interiorOverlay = welcome;
+            mountServiceWindow(welcome);
           },
         };
       },
@@ -2602,12 +2676,12 @@ export function createWorldModes(host) {
         // land in the overlay slot and the next frame would ask a
         // plain object to draw itself.
         if (flow.rows) return flow;
-        interiorOverlay = flow;
+        mountServiceWindow(flow);
         return { dispatched: true };
       },
-      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+      onClose: () => closeSpellWindow(win),
     });
-    interiorOverlay = win;
+    mountServiceWindow(win);
   }
 
   /** U42: the CLASSIC spellbook in CAST mode - the interior host's
@@ -2638,7 +2712,7 @@ export function createWorldModes(host) {
     if (!destination) return null;
     const membership = guild ? membershipOf(memberships, guild) : null;
     const b = interiorBuilding;
-    const closeSelf = () => { if (interiorOverlay === flow) interiorOverlay = null; };
+    const closeSelf = () => closeSpellWindow(flow);
     const now = () => interiorTicker.classicMinutes;   // already CLASSIC minutes (AUDIT 21 F2)
     const godName = guild?.divine ?? '';
     let flow = null;
@@ -2777,8 +2851,7 @@ export function createWorldModes(host) {
         },
       });
       if (!win) return null;
-      interiorOverlay = win;
-      return win;
+      return mountServiceWindow(win);
     }
     if (destination === 'guildServiceDaedraSummoning') {
       // G7 - the last of the twenty destinations. Two boxes: "is it a
@@ -2855,9 +2928,9 @@ export function createWorldModes(host) {
             if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return;
             let offerWin = null;
             offerWin = new ServiceFlowWindow(boxes, {
-              onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+              onClose: () => closeSpellWindow(offerWin),
             });
-            interiorOverlay = offerWin;
+            mountServiceWindow(offerWin);
           };
           if (offered?.kind === 'offer' && r.daedra.video) {
             fetchBytes(r.daedra.video).then((bytes) => {
@@ -2870,10 +2943,10 @@ export function createWorldModes(host) {
                   count: REFUSAL_FOE_COUNT[0] + Math.floor(Math.random() * (REFUSAL_FOE_COUNT[1] + 1 - REFUSAL_FOE_COUNT[0])),
                   minDistance: 8, maxDistance: 64,
                 }),
-                onClose: () => { if (interiorOverlay === sw) interiorOverlay = null; },
+                onClose: () => closeSpellWindow(sw),
               });
               if (!sw.flc.readyToPlay) { mountBoxes(); return; }
-              interiorOverlay = sw;
+              mountServiceWindow(sw);
             }).catch(() => mountBoxes());
             return null;
           }
@@ -2913,12 +2986,15 @@ export function createWorldModes(host) {
     if (destination === 'guildServiceTeleport') {
       const win = host.openTeleportMap?.();
       if (!win) return null;
-      interiorOverlay = win;
-      return win;
+      return mountServiceWindow(win);
     }
     if (destination === 'guildServiceRepair') {
-      openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
-      return interiorOverlay;
+      // ROAD-F GS1: openRepairService HANDS BACK the window it mounted.
+      // It used to re-read `interiorOverlay`, which above ground is a
+      // slot nothing was ever written into - so the popup read a null,
+      // answered "That service is not available yet." and printed it
+      // over the repair list it had just opened in the street's slot.
+      return openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
     }
     // S1: the spell maker. DFU pushes its own singleton window from
     // the service popup (DaggerfallGuildServicePopupWindow:389-394);
@@ -2968,9 +3044,9 @@ export function createWorldModes(host) {
         },
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
-        onClose: () => { if (interiorOverlay === potionWin) interiorOverlay = null; },
+        onClose: () => closeSpellWindow(potionWin),
       });
-      interiorOverlay = potionWin;
+      mountServiceWindow(potionWin);
       return null;
     }
     // M4: the item maker, the Mages Guild's own enchanter. M4 wired
@@ -2985,9 +3061,9 @@ export function createWorldModes(host) {
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
         onEnchanted: () => surfacePlayer(),
-        onClose: () => { if (interiorOverlay === itemWin) interiorOverlay = null; },
+        onClose: () => closeSpellWindow(itemWin),
       });
-      interiorOverlay = itemWin;
+      mountServiceWindow(itemWin);
       return null;
     }
     // U42: BUY SPELLS. DFU pushes the spellbook itself in BUY MODE
@@ -3020,14 +3096,13 @@ export function createWorldModes(host) {
         }),
         classicMinutes: () => Math.floor(worldMinutes()),
         rows,
-        onClose: () => { if (interiorOverlay === bookWin) interiorOverlay = null; },
+        onClose: () => closeSpellWindow(bookWin),
       }, { buyMode: true });
       // Mount AND hand back, the repair arm's shape rather than the
       // maker windows' `return null` - the popup's onService reads the
       // return value, and a null makes it answer "not available yet"
       // over a window that just opened.
-      interiorOverlay = bookWin;
-      return bookWin;
+      return mountServiceWindow(bookWin);
     }
     // E8: the spell maker is a NATIVE window now (INFO01I0), so it
     // takes the art gate its two sibling maker windows take. `rows` is
@@ -3038,9 +3113,9 @@ export function createWorldModes(host) {
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
         rows,
-        onClose: () => { if (interiorOverlay === makerWin) interiorOverlay = null; },
+        onClose: () => closeSpellWindow(makerWin),
       });
-      interiorOverlay = makerWin;
+      mountServiceWindow(makerWin);
       // The popup's onService reads the return value and answers "not
       // available yet" on a null, so this hands the window back the way
       // the buy-spells arm does.
@@ -3105,7 +3180,7 @@ export function createWorldModes(host) {
     service: () => null,
     rows,
     steps: () => [{ textId: guild.text.welcome, clickAnywhere: true, closesWindow: true }],
-    onClose: () => { if (interiorOverlay === self()) interiorOverlay = null; },
+    onClose: () => closeSpellWindow(self()),
   });
 
   // ---- R1/D7: THE REPAIR SERVICE. R1 shipped it over the
@@ -3159,10 +3234,13 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     if (b && tradeArtLoaded() && _shopFont) {
       const shelf = (interiorCtx?.shelves ?? [])[0] ?? { items: [] };
-      interiorOverlay = openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null });
-      return;
+      return mountServiceWindow(openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null }));
     }
-    showRepairList(0, ctx);
+    // The native screen is the SHOP's (it stages against the building's
+    // shelf and its remote list is the queue at this buildingKey); a
+    // guild's repair reached from the street has no building at all, so
+    // it takes the keyed list, which reads buildingKey 0 throughout.
+    return showRepairList(0, ctx);
   }
   function showRepairList(page, ctx) {
     const now = Math.floor(worldMinutes());
@@ -3186,10 +3264,10 @@ export function createWorldModes(host) {
     // Sell). The split landed, so the button does.
     if (ctx.onSell) options.push({ code: 'KeyS', label: 'S - sell', action: () => ctx.onSell() });
     options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
-    interiorOverlay = new ChoiceWindow({
+    return mountServiceWindow(new ChoiceWindow({
       lines: [interiorBuilding?.name || 'Repairs', `Repair: (you have ${goldAmount(playerEntity)} gold)`],
       options,
-    });
+    }));
   }
   function repairItem(it, ctx) {
     const rows = (id) => townTalk?.lines?.(id) ?? [];
@@ -3202,12 +3280,12 @@ export function createWorldModes(host) {
       const lines = refusal === 'magic' ? _rowsText(rows(MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID), 'You cannot repair magic items.')
         : refusal === 'undamaged' ? _rowsText(rows(DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID), 'This item does not need to be repaired.')
         : [CANNOT_BE_REPAIRED_TEXT];
-      interiorOverlay = new ChoiceWindow({ lines, options: back });
+      mountServiceWindow(new ChoiceWindow({ lines, options: back }));
       return;
     }
     const price = repairPrice(it, ctx.reducedRepairCost);
     if (goldAmount(playerEntity) < price) {
-      interiorOverlay = new ChoiceWindow({ lines: ['You do not have enough gold.'], options: back });
+      mountServiceWindow(new ChoiceWindow({ lines: ['You do not have enough gold.'], options: back }));
       return;
     }
     deductGold(playerEntity, price);
@@ -3247,7 +3325,7 @@ export function createWorldModes(host) {
     }));
     if ((page + 1) * per < jobs.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showRepairJobs(ctx, page + 1) });
     options.push({ code: 'Escape', label: 'Esc - back', action: () => showRepairList(0, ctx) });
-    interiorOverlay = new ChoiceWindow({ lines: ['Items left for repair:'], options });
+    mountServiceWindow(new ChoiceWindow({ lines: ['Items left for repair:'], options }));
   }
   function collectJob(it, ctx) {
     const now = Math.floor(worldMinutes());
@@ -3261,13 +3339,13 @@ export function createWorldModes(host) {
     if (isBeingRepaired(it) && !isRepairFinished(it, now)) {
       // interruptRepair's Yes/No (:843-855): the item comes back
       // partial, the gold stays spent
-      interiorOverlay = new ChoiceWindow({
+      mountServiceWindow(new ChoiceWindow({
         lines: [INTERRUPT_REPAIR_TEXT],   // Internal_Strings.csv:819, the one constant the native window speaks too
         options: [
           { code: 'KeyY', label: 'Y - yes', action: takeBack },
           { code: 'KeyN', label: 'N - no', action: () => showRepairJobs(ctx) },
         ],
-      });
+      }));
       return;
     }
     takeBack();
@@ -5183,7 +5261,7 @@ export function createWorldModes(host) {
       const flow = openServiceFlow(destination, { guild, memberships, store: null, rows: null, route: null });
       // the same contract the real caller keeps: a window mounts, a
       // BOX does not (it belongs on the popup that asked)
-      if (flow && !flow.rows) interiorOverlay = flow;
+      if (flow && !flow.rows) mountServiceWindow(flow);   // GS1: through the door, so a probe run outdoors mounts where the mode draws
       return guild?.factionId ?? null;
     };
     /** Join a guild at a chosen rank, so a probe can reach the

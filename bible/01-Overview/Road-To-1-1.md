@@ -207,7 +207,12 @@ were waiting on. The SHIP LANDING then took a seventh
 (`scenes/world.js:2871`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
-location arrival. That leaves **11** open flags as
+location arrival. **ROAD-F then took two more**: GS1 closed the
+guild-service popup above ground (`scenes/worldModes.js:1687`) with the
+replace-mode mount door plus the sweep of the subtree under it, and GS2
+reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
+on the list was that it wrote the marker down in the past tense.
+That leaves **9** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

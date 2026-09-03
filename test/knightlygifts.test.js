@@ -297,7 +297,10 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
   assert.ok(i > 0, 'the caller exists');
   const call = src.slice(i, src.indexOf('return { dispatched: true };', i) + 30);
   assert.ok(call.includes('if (flow.rows) return flow;'), 'a box is handed back, not mounted');
-  assert.ok(call.indexOf('if (flow.rows)') < call.indexOf('interiorOverlay = flow;'),
+  // ROAD-F GS1 respelled the mount - the slot a window goes into is
+  // now the CURRENT mode's, through mountServiceWindow - but the law
+  // this pins is the ORDER and it is untouched.
+  assert.ok(call.indexOf('if (flow.rows)') < call.indexOf('mountServiceWindow(flow);'),
     'and the test comes BEFORE the mount, or it never runs');
 
   // the two arms really do answer boxes, so the guard is not dead
@@ -308,5 +311,5 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
 
   // the probe seam keeps the same contract, or it would prove the
   // opposite of what the host does
-  assert.ok(src.includes('if (flow && !flow.rows) interiorOverlay = flow;'));
+  assert.ok(src.includes('if (flow && !flow.rows) mountServiceWindow(flow);'));
 });

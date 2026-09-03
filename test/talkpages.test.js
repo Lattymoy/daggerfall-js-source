@@ -148,7 +148,12 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
     'the Talk button is not the Spymaster');
   assert.match(modes, /talkAsSpymaster: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: true \}\)/,
     'and the 402 greeting\'s dismissal is');
-  assert.match(modes, /interiorOverlay = null;\s*\/\/ the popup yields to the conversation/);
+  // ROAD-F GS1: the sentence moved above the statement when the
+  // outdoor arm was recorded beside it - openTalkWindow goes through
+  // townTalk's showOverlay, which IS CloseWindow-then-Push, so only
+  // the INTERIOR slot needs clearing by hand.
+  assert.match(modes, /\/\/ The popup yields to the conversation, as DFU's CloseWindow-/);
+  assert.match(modes, /^\s*interiorOverlay = null;$/m);
   // ONE window-opener - the mobile path and the static path share it
   assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null \} = \{\}\)/);
   // ROAD-D D10: the mobile arm carries its portrait too - always

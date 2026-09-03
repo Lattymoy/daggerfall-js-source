@@ -1086,7 +1086,10 @@ test('U42: BuySpells and BuySpellsMages are no longer FLAGGED nulls', () => {
   // The popup's onService reads what openServiceFlow RETURNS and
   // answers "not available yet" on a null, so this arm hands the
   // window back as the repair arm does rather than mounting silently.
-  assert.ok(/interiorOverlay = bookWin;\n      return bookWin;/.test(modes),
+  // ROAD-F GS1: mountServiceWindow HANDS THE WINDOW BACK, so the
+  // mount and the return are one statement - the law pinned here is
+  // still "mounts AND returns", not the two lines it used to take.
+  assert.ok(/return mountServiceWindow\(bookWin\);/.test(modes),
     'the arm mounts AND returns the window');
 });
 

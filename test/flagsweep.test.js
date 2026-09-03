@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { flagLines } from '../tools/flagSites.mjs';   // IN1: the ONE definition of an open-flag site
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
@@ -106,6 +107,31 @@ test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () 
   // with the macro context the bridge hands down.
   assert.match(read('src/systems/healthStatus.js'), /export function statusInfoRows\(/);
   assert.match(read('src/scenes/world.js'), /new ActionTextBox\(statusInfoRows\(rows, questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null\)\)/);
+});
+
+// ROAD-F GS2: THE THIRD KIND OF STALENESS - a retirement RECORD that
+// answers the grep. FS1 catches a flag that delegates to a file with
+// no flag in it; the bible's own Port-Status list carries a third
+// case it could only file under "neither, and the list cannot tell":
+// a sentence whose WORK IS DONE and which mentions the marker in order
+// to say so. tools/flagSites.mjs will not guess at tense (its header
+// says why - a wrong count is worse than a known-incomplete one), so
+// the fix is Home.md's own law applied to the record: say the same
+// thing without the token.
+test('ROAD-F GS2: the acrobatics retirement record no longer answers the flag grep', () => {
+  const skills = read('src/systems/skills.js');
+  // the sentence still says exactly what it said - a placeholder zero,
+  // behind a flag that blamed a decode which had already shipped
+  assert.match(skills, /the \+10% used to be a hard 0 behind a placeholder flag/);
+  assert.match(skills, /blaming a decode that had ALREADY SHIPPED in U20b/);
+  assert.match(skills, /CLASS09 \(Acrobat\)/);
+  // ...and the work it records really is in the file: D9's nested
+  // ImprovedAthleticism term off AcrobatMotor.cs:96-101.
+  assert.match(skills, /improvedAthleticism/);
+  // ...but the file is no longer an OPEN-FLAG SITE, so bible/Home.md's
+  // list stops carrying a closed departure.
+  assert.deepEqual(flagLines(skills), [],
+    'src/systems/skills.js is back on the open-flag list - the record answers the marker again');
 });
 
 test('FS1: the F5/F6 arc is retired, and U43 really did route the table indoors', () => {

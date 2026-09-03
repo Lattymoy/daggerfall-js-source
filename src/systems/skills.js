@@ -161,11 +161,15 @@ export function resetSkillsRecentlyRaised(entity) {
  *  JumpingSkill * 0.5 / 100 (skill adds up to +50% force), plus
  *  athleticismMultiplier 0.1 when the career carries Athleticism.
  *
- *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
- *  decode that had ALREADY SHIPPED in U20b (specialAdvantages.js
- *  parses the bitfield) - and CLASS09 (Acrobat) carries
- *  abilityFlagsAndSpellPointsBitfield 0x1406, so a VANILLA Acrobat,
- *  not just a custom class, jumped 10% short.
+ *  AUDIT 18: the +10% used to be a hard 0 behind a placeholder flag
+ *  blaming a decode that had ALREADY SHIPPED in U20b
+ *  (specialAdvantages.js parses the bitfield) - and CLASS09 (Acrobat)
+ *  carries abilityFlagsAndSpellPointsBitfield 0x1406, so a VANILLA
+ *  Acrobat, not just a custom class, jumped 10% short. (ROAD-F GS2
+ *  reworded this sentence off the flag grep's marker: it is a
+ *  RETIREMENT RECORD, and tools/flagSites.mjs deliberately does not
+ *  try to read tense, so a past-tense mention of the token kept
+ *  listing a closed departure on bible/Home.md's open list.)
  *
  *  D9: improvedAthleticism (+0.1, AcrobatMotor.cs:15) now ships too.
  *  It is an ImprovesTalents ENCHANTMENT (ImprovesTalents.cs:75-88 ->

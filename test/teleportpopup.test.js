@@ -200,8 +200,9 @@ test('G5: the service reaches the map through a HOST DOOR, and a host without on
   // itself and answers null cannot be told apart from a service that
   // does not exist, and the popup needs the difference to know
   // whether to close
-  assert.ok(arm.includes('interiorOverlay = win;'), 'mounted');
-  assert.ok(arm.includes('return win;'), 'and returned');
+  // ROAD-F GS1: one statement does both now - mountServiceWindow puts
+  // the window in the slot the CURRENT mode draws and hands it back.
+  assert.ok(arm.includes('return mountServiceWindow(win);'), 'mounted and returned');
 
   // the WORLD host supplies the door and arms the map; the other
   // hosts do not, which is why the arm has to be optional
