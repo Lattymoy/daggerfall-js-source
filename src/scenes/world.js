@@ -29,6 +29,7 @@ import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda ri
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
+import { loadVendoredPegas } from '../systems/pegasVendor.js';   // MW-D50: the mod vendored with permission, ranked behind the player's own
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
@@ -1245,13 +1246,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     ridingAnimator.mount(mode);
     ridingArt = null;
-    // MW-D42: mounting a HORSE in the enhanced skin saddles the
-    // player's own Pegas horse, once per session, if their attached
-    // Morrowind data carries the mod (MW-D40's loose door). Absent
-    // data, a failed parse, or the classic skin all leave `pegas`
-    // null and the CFA sprite rides exactly as before - the mod's
-    // assets are the PLAYER'S, read at runtime like ARENA2, never
-    // bundled (the license is the architecture; see pegasHorse.js).
+    // MW-D42: a HORSE in the enhanced skin saddles the Pegas horse once
+    // per session - the player's own attached copy (MW-D40's loose door)
+    // ranks ahead of the set vendored with permission (MW-D50). A failed
+    // load or the classic skin leave `pegas` null; the CFA sprite rides.
     if (mode === TRANSPORT_MODES.Horse) tryLoadPegas();
   };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
@@ -1262,10 +1260,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (pegasWanted || !isEnhanced()) return;
     pegasWanted = true;
     try {
-      const archives = await loadMorrowindArchives();
+      const attached = await loadMorrowindArchives();
+      const vendored = await loadVendoredPegas();   // MW-D50: null when the vendor tree carries no horse
+      const archives = vendored ? [...attached, vendored] : attached;   // the player's own copy answers first
       const horse = loadPegasHorse({ renderer, archives });
-      if (!horse.ok) {
-        if (horse.stage !== 'data') console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
+      if (!horse.ok) {   // MW-D50: with a vendored set behind it, a miss at any stage is worth a line
+        console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
         return;
       }
       pegasSounds = await registerHorseSounds(audio, archives);

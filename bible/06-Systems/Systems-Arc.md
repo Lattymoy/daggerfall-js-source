@@ -5414,7 +5414,10 @@ runtime through the MW lane, never bundled. The arc stays closed: the
 sprite is still the 1:1 lane and every classic path is byte-identical;
 two pins moved by exactly the lines the swap needed (tr3's ride-loop
 clip, tr5's mode-door tail), both recorded in their tests. The whole
-story lives in Morrowind-Rules MW-D40..42.)
+story lives in Morrowind-Rules MW-D40..42. 2026-09-03: MW-D50 vendors
+the mod's horse with the author's consent - vendor/pegas-horse/ - so
+the enhanced ride has it out of the box, the player's own attach
+ranking ahead; nothing on the classic lane moved, no pin moved.)
 
 ## TSR - THE TEST ROOM (2026-08-31, Mac's ask)
 

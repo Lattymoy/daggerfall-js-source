@@ -11,13 +11,16 @@ import { fileURLToPath } from 'node:url';
 // thing that catches that whole class: it imports every module under
 // src/ and fails if any throws.
 //
-// Nine cannot be imported under bare node, and the list is asserted
+// Ten cannot be imported under bare node, and the list is asserted
 // EXACTLY so the blind spot cannot silently grow:
-//   - three use Vite's `import.meta.glob`, which is a compile-time
-//     transform and simply absent outside the bundler;
+//   - four use Vite's `import.meta.glob`, which is a compile-time
+//     transform and simply absent outside the bundler (MW-D50's
+//     pegasVendor.js is the fourth: its pure half lives in
+//     pegasHorse.js and is imported below; the glob file itself is
+//     text-pinned in mwd50_vendoredhorse.test.js);
 //   - six are browser tools that touch `document`/`location` at module
 //     scope.
-// For those nine, tdz_selfreference.test.js is the standing guard.
+// For those ten, tdz_selfreference.test.js is the standing guard.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const walk = (d, out = []) => {
@@ -29,11 +32,12 @@ const walk = (d, out = []) => {
   return out;
 };
 
-/** The known-unimportable nine, with the reason each is excluded. */
+/** The known-unimportable ten, with the reason each is excluded. */
 export const NOT_IMPORTABLE = Object.freeze({
   'src/main.js': 'import.meta.glob',
   'src/scenes/questData.js': 'import.meta.glob',
   'src/scenes/world.js': 'import.meta.glob',
+  'src/systems/pegasVendor.js': 'import.meta.glob',
   'src/tools/enhancedChargen.js': 'document at module scope',
   'src/tools/enhancedMenu.js': 'document at module scope',
   'src/tools/enhancedUI.js': 'document at module scope',
@@ -63,15 +67,16 @@ test('every module under src/ loads - its body RUNS, not just parses', async () 
   assert.deepEqual(unexpectedlyFine, [], `these import fine now - remove them from NOT_IMPORTABLE:\n  ${unexpectedlyFine.join('\n  ')}`);
 });
 
-test('the blind spot is exactly nine modules, each with a reason', () => {
+test('the blind spot is exactly ten modules, each with a reason', () => {
   const files = walk(join(root, 'src')).map((f) => relative(root, f).split('\\').join('/'));
   for (const f of Object.keys(NOT_IMPORTABLE)) {
     assert.ok(files.includes(f), `${f} is on the exclusion list and no longer exists`);
   }
-  assert.equal(Object.keys(NOT_IMPORTABLE).length, 9);
+  assert.equal(Object.keys(NOT_IMPORTABLE).length, 10);
   // The three that matter are the hosts: they carry the most edits and
   // the least coverage, which is exactly the combination that produced
   // the boot failure. Recorded here so the next reader sees the cost.
+  // The fourth (MW-D50) is a leaf that only globs and fetches.
   const globbed = Object.entries(NOT_IMPORTABLE).filter(([, why]) => why === 'import.meta.glob');
-  assert.equal(globbed.length, 3);
+  assert.equal(globbed.length, 4);
 });

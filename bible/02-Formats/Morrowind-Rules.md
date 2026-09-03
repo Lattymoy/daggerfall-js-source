@@ -6177,9 +6177,11 @@ keys unchanged); a rejected clip registers nothing and the classic
 fallback stands. mwd40_loosefiles.test.js.
 
 MW-D41: THE PEGAS HORSE ASSEMBLY (systems/pegasHorse.js). THE LICENSE
-IS THE ARCHITECTURE: the mod's readme (MADMAX, 2004) forbids
-modifying its files or building them into another mod - so NOTHING is
-baked or bundled; the module reads the PLAYER'S OWN copy at runtime
+IS THE ARCHITECTURE (superseded 2026-09-03 by MW-D50 below: the
+author's written consent is in hand, the files are vendored verbatim,
+and the runtime door below stays as the OVERRIDE): the mod's readme
+(MADMAX, 2004) forbids modifying its files or building them into
+another mod without written consent - so NOTHING was baked or bundled; the module reads the PLAYER'S OWN copy at runtime
 through the archives seam, exactly as the port reads their ARENA2,
 and the repo carries only interoperability code. What the mod's data
 is (measured on the real files, per the staging law): one skinned
@@ -6220,6 +6222,58 @@ riding. The cart keeps the sprite always - the mod carries no cart.
 mwd42_ride.test.js. RECORDED, NOT BUILT: the other nineteen coats
 (a variant picker), the idle SoundGen moans, turn-in-place clips,
 and the unicorn/wings - all present in the data, all waiting.
+
+MW-D50: THE VENDORED HORSE (2026-09-03, Mac: the horse "didn't
+implement it directly like our other integrated mods" - then, asked
+about the readme's "without my written consent": "we have
+permission"). MW-D41's "the license is the architecture" was the right
+call for the consent it did not have, and the wrong shape once it did:
+a player who never attached the mod never saw a horse, and nothing on
+the settings card said one existed. So the files are VENDORED now,
+the way the roads carry Hazelnut's network and the mills Kamer's
+sails: vendor/pegas-horse/ holds exactly the set one coat variant
+rides on - xhorse1.nif, xhorse1.kf, the coat the MESH names
+(cait_horse1x.dds, read out of the .nif by the script, not guessed
+from a filename), the four hoof/voice clips - about 1.2 MB, plus the
+mod's two readmes whole, and a manifest of sizes and sha256s that the
+suite pins the tree to BOTH WAYS. Verbatim is a checked claim because
+it is the readme's own condition ("kept original and intact"); the
+consent is recorded in the vendor README and on the About screen
+(credits.js, CR1's rule: a modder's name in front of the player). The
+horse model is Cait's per the mod's credits, and the README says so.
+
+THE LOADER IS NOT A BAKE, and the reason is the mirror of the mills':
+they bake because a COLLADA parser at runtime would be a second mesh
+path; the port already parses .nif/.kf/.dds at runtime for every MW
+feature, so the vendored tree is served as the files it is.
+systems/pegasVendor.js (host-only: a build-time Vite glob over the
+tree, per-file URLs, fetched lazily on the first mount, one variant,
+cached, never throwing) hands pegasHorse.js's new
+assembleVendoredArchive the manifest and a fetcher, and gets back ONE
+loose archive - the {has, get} duck MW-D40 attaches arrive as, so
+loadPegasHorse cannot tell the two apart. Only the files a variant
+needs are fetched, never the tree; the coat is horseCoatPath's read
+of the mesh through the same path correction the assembly applies;
+a missing mesh or clips answers null (no horse), a failing optional
+file is skipped (the MW-D41 degrade). world.js's tryLoadPegas ranks
+the PLAYER'S OWN attach AHEAD of the vendored set - the engine's
+data-files-over-archive law, the same one that ranks loose files over
+.bsa - so a coat or a newer build the player attaches still wins, and
+every earlier law holds: once per session, enhanced only, the one
+transport door, the sprite on every failure, the cart always the
+sprite. The miss at stage 'data' is logged now (it used to be the
+silent no-attach case; with a vendored set behind it, it is a broken
+vendor tree). scripts/vendorPegas.mjs is the only writer of the tree
+and SHIPS ONLY WHEN PROVEN: it assembles the horse through the runtime
+path over a stub renderer before writing a byte and refuses unless the
+coat hangs and Idle/Walkforward/Runforward all arm - a vendor tree that
+cannot ride is not a vendor tree. Proven on the real files: 17 clip
+groups, coat 256x256 with 9 mips, the three gaits deform.
+mwd50_vendoredhorse.test.js (the pure half over the crafted fixture
+and a fake fetcher; the tree against its manifest; the real variant 1
+end to end). STILL WAITING, unchanged from MW-D42: the variant picker
+(the script takes --variants; the ride reads 1), the SoundGen moans,
+the turns, the unicorn.
 
 MW-D42 REOPENED RULE 24'S LAST LINE, and it needed reopening. Mac,
 playing it: the 3D bow "damages on click instead of following the bow

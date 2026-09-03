@@ -1,0 +1,52 @@
+v3.1 fixes
+1. The unicorn can now run on statics.
+2. Wings added for the unicorn. If you don't like it you can turn it on/off by holding down the SNEAK button and then activate on the unicorn while flying.
+3. You can also turn on/off the night eye by activating on the unicorn while flying.
+4. Also, you can adjust the toggle the flying speed between full speed and half speed by tabbing any of the directional button while on RUNNING mode.
+5. Fixed the horse moaning sound.
+
+For those who has downloaded v3.0 you can patch it with the file horseranch31patch.rar
+
+-------------------------------------------------
+
+This was actually intended as a fix patch on some of the so called "bugs" reported. I'm getting tired replying mails to the same old questions over and over again. So, these new fixes will probably help to reduce and not create more questions. However, one thing leads to another, and there goes my 2 days holiday. ;)
+
+I have not tested all things extensively, so if there's any problem with anything, I'll just release a patch later. Here's what's fixes and new on Pegas Horse Ranch v3.0 :
+
+1. Hopefully resolved ( never tested in full ) the "no foal" issue after successful breeding. For those who doesn't know, the problem is caused by conflict with other mods and not a "BUG".
+
+2. For those smart fellas, who likes to teleport in and out of the Pegas Inn and then get stuck on the lift, well, the lift now automatically adjusts itself depending on which level the player enters.
+
+3. Fixes the trainers and training statistics....hehe....didn't realise it was bugged till I was playing with one of my new horsie.
+
+4. You can now adjust your player's height while mounted on the horse. While mounted on horse and stationary, just press SNEAK + ACTIVATE at the same time. So, don't come after me if your new race does not sit nicely on the horsie.
+
+5. A new horse...well, you can't really call it a horse. Okay, maybe a horse with a horn....wait....that should be called an unicorn. You can only bred one unicorn in the game but I'm not going to tell you the combination. There are clues around though and is quite easy to figure out.
+
+6. Another easter egg on the unicorn but I'm not telling either. Ok..maybe a little....just remember to fully train him/her. One small little problem though, not sure why the unicorn cannot enter the training pen no matter how large I make it, so you can just position it next to the training pen gate and it should be recognized that the unicorn is ready for training after you dismount. REMEMBER to activate "Train Horse" in the menu first to indicate that you want to train the unicorn.
+
+7. The good ole 72hrs game bug. Well, I've put a so called timer in the companion script which hopefully will automatically terminate itself before it happens. I have not tested it myself though :P
+
+8. And, lastly, selling prices for horses has been adjusted since some people says it's too easy to make money from this mod. Well, it's still easy but you need a bit more hard work and investment at the beginning.
+
+There are some other minor fixes but I forgot what they are. As I have said, the changes have not been fully tested. I do not have the time and luxury to do this anymore. Oh yeah....one more thing, I believe you have to start a new game with this. Sorry....not my fault. ;)
+
+Enjoy!!!
+
+Credit goes to Lady Eternity for her wonderful unicorn model used in the mod.
+
+And for those of you who still have not done it. AlienSlof had released an absolute wonderful high rez re-texture for the horses. You can pick it up from here.
+http://planetelderscrolls.gamespy.com/View.php?view=Mods.Detail&id=3245
+
+-------------------------------
+Total files in RAR = 182 files
+
+ESM		01 file
+ESP		01 file
+Readme		02 files
+Bookart		20 files
+Icons		05 files
+Meshes		94 files
+Music		02 files
+Sound		06 files
+Textures	52 files
