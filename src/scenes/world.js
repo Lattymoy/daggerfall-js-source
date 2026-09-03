@@ -2709,7 +2709,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  Null is DFU's "No location found, fail back to terrain origin"
    *  (:1441-1446) - the caller's own default landing stands in for it. */
-  function locationLandingFor(px, py) {
+  function locationLandingFor(px, py, { noMarkers = false } = {}) {
     const key = `${px},${py}`;
     const dfLoc = locationIndex.get(key);
     if (!dfLoc?.exterior?.exteriorData) return null;
@@ -2718,7 +2718,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const origin = b?.locOrigin
       ? [b.locOrigin[0], b.locOrigin[1], b.locOrigin[2]]
       : [tilePos.x * tileSide, 2.0 * 0.025, tilePos.y * tileSide];
-    const startMarkers = b?.locBlocks
+    const startMarkers = b?.locBlocks && !noMarkers
       ? locationStartMarkers(b.locBlocks.map((bl) => ({
         originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
       })))
@@ -2739,6 +2739,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // terrain ten units past its edge can differ by far more on a steep site.
   const ARRIVAL_LIFT = 40;
   const ARRIVAL_REACH = 240;
+  // TL2: a floor this far ABOVE the location's flat is a roof, not the
+  // ground - a step or a doorsill is under a unit; a house is many.
+  const OBSTRUCTED_ABOVE = 3;
   async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
@@ -2809,7 +2812,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TL1: the arrival's ray starts well above the raw and reaches well
     // below it - a hillside village's edge is not within ten units of
     // the flat, in either direction. The first hit is still the surface.
-    const pos = walkMode && (!local || ground) ? floorLanding(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT) : raw;
+    let pos = walkMode && (!local || ground) ? floorLanding(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT) : raw;
+    // TL2 (Mac: "you can spawn inside the building geometry"): the floor
+    // the ray found is checked against the location's own flat. A
+    // marker standing in a building's footprint puts a ROOF under the
+    // ray - a floor well above the flat - and the player was placed on
+    // or in the geometry. That landing is refused, and the arrival
+    // falls back to the edge landing, which stands outside the blocks
+    // by construction. On a valid marker the floor IS the flat and
+    // nothing changes.
+    if (walkMode && landing && pos[1] - raw[1] > OBSTRUCTED_ABOVE) {
+      const edge = locationLandingFor(px, py, { noMarkers: true });
+      if (edge) {
+        const eraw = edge.pos;
+        pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
+        console.warn(`[travel] start marker at ${raw[0].toFixed(1)},${raw[2].toFixed(1)} stands in geometry (floor ${(pos[1] - raw[1]).toFixed(1)} above the flat) - landing at the edge instead`);
+      }
+    }
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // PositionPlayerToLocation sets the facing itself, through

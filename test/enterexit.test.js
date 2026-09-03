@@ -164,7 +164,7 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   assert.match(w, /const local = landing\?\.pos \?\? localPos;/, 'the location landing outranks the caller\'s');
   assert.match(w, /const ground = landing \? landing\.grounded : grounded;/, 'grounded off the LocationType when there is a landing');
   // TL1: the arrival looks further for its floor than a door step does.
-  assert.match(w, /const pos = walkMode && \(!local \|\| ground\) \? floorLanding\(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT\) : raw;/, 'fast travel / teleport arrivals');
+  assert.match(w, /let pos = walkMode && \(!local \|\| ground\) \? floorLanding\(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT\) : raw;/, 'fast travel / teleport arrivals');   // TL2: `let`, so an obstructed marker can fall back
   assert.match(w, /const stand = floorLanding\(collider, \[cam\.pos\[0\], heightAt\(cam\.pos\[0\], cam\.pos\[2\]\) \+ 2, cam\.pos\[2\]\]\);/, 'the first drop-in');
   // And a saved position is restored as saved - a load or an anchor
   // recall keeps its own y (DFU restores the transform verbatim).
@@ -198,4 +198,22 @@ test('TL1: an arrival finds a floor far below OR far above its raw, where a door
   // Ordinary door steps keep their ten units - a step is not a fast travel.
   const ee = readFileSync(new URL('../src/player/enterExit.js', import.meta.url), 'utf8');
   assert.match(ee, /export function floorLanding\(collider, pos, maxDist = 10, extraHeight = 0\)/);
+});
+
+// ── TL2: A LANDING IN A BUILDING'S FOOTPRINT IS REFUSED ────────────
+// Mac: "you can spawn inside the building geometry."
+test('TL2: a marker whose floor is a roof falls back to the edge landing', async () => {
+  const { readFileSync } = await import('node:fs');
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  // The floor the arrival ray found is checked against the flat: more
+  // than OBSTRUCTED_ABOVE over it is a roof, and the landing is refused
+  // for the edge landing, which stands outside the blocks by construction.
+  assert.match(w, /const OBSTRUCTED_ABOVE = 3;/);
+  assert.match(w, /if \(walkMode && landing && pos\[1\] - raw\[1\] > OBSTRUCTED_ABOVE\) \{\s*\n\s*const edge = locationLandingFor\(px, py, \{ noMarkers: true \}\);/);
+  assert.match(w, /pos = floorLanding\(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT\);/, 'and the edge is floored the same way');
+  // noMarkers really removes the markers from the choice.
+  assert.match(w, /const startMarkers = b\?\.locBlocks && !noMarkers/);
+  // Only a MARKER landing is second-guessed: the edge landing and a
+  // caller's explicit localPos stand where they were told.
+  assert.match(w, /walkMode && landing && pos\[1\]/);
 });
