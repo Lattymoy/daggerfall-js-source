@@ -1687,7 +1687,14 @@ export class ChargenFlow {
       // taken back except by clicking the spinner. '+' and '=' were
       // never affected (neither is a typed character here).
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
-      else if (action === 'reroll') this.reroll();
+      // AUDIT 54 (f3/input): + 'char:r'/'char:R', the same root cause
+      // as the 'minus' line above - r and R fall inside overlayAction's
+      // typed-character class (ui/input.js:152), so the 'reroll' row
+      // that used to sit in its table was unreachable and only the
+      // mouse rect (ui/chargenArt.js:1449) ever reached this. The hint
+      // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
+      // arm stays for that mouse rect.
+      else if (action === 'reroll' || action === 'char:r' || action === 'char:R') this.reroll();
       // AUDIT 18: OkButton_OnMouseClick (:187-200) does not SWALLOW the
       // click when the pool is unspent - it pops TEXT.RSC 14
       // (strYouMustDistributeYourBonusPoints, :33) as a

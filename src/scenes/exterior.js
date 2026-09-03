@@ -1770,7 +1770,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to step into, so the sentence was second-hand here in the first
     // place - which is how it outlived the arc twice over.
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
-    const act = actionOf(e);   // I2: the registry owns the code -> action read
+    // AUDIT 54 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
+    // actionOf resolves a COMBO code only when it is handed the host's
+    // held-keys Set (ui/input.js:95-105), and no host passed one - so
+    // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
+    // for the POLLED actions, which read through held(), and dead for
+    // every DISPATCHED one. A player who bound Inventory to Shift+I in
+    // the controls window got the Status box instead and could never
+    // open the inventory. The Set is filled by the `keys.add(e.code)`
+    // below, i.e. by EARLIER presses, so at this point it holds the
+    // modifier and not yet this key - which is exactly what the arm
+    // expects (:102 unions e.code in itself), and it carries the
+    // suppression half too (:1681-1685, "space is jump, LeftShift+
+    // Space opens inventory: we want to ignore jumping").
+    const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.
@@ -1836,7 +1849,20 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
   // is unreachable, because IsLargeHUDInteractable IS this flag.
-  bindCursorToggle(canvas, () => gamePaused(), actionOf);
+  // AUDIT 54 (f3/input) - THE ONE READER. This host builds the mode
+  // machine unconditionally, and that machine used to register a
+  // SECOND bindCursorToggle over the same module-global flag
+  // (player/pointerLock.js:54-81), so ONE Enter flipped it twice and
+  // `cursorActive()` could never rise here at all - the large HUD's
+  // eleven panels were unreachable by mouse in this host, and the
+  // second flip fired a releaseLook/requestLook pair inside one event.
+  // PlayerMouseLook.cs:190-198 reads the action ONCE per press behind
+  // ONE guard (`!GameManager.IsGamePaused`), so the machine's guard is
+  // OR'd into this binding instead of carrying a listener of its own
+  // (scenes/worldModes.js's modalWindowUp, published on the object).
+  // `modes` is the hoisted var this file's other listeners already
+  // read through `?.`, so the closure reaches it once it is built.
+  bindCursorToggle(canvas, () => gamePaused() || (modes?.modalWindowUp?.() ?? false), actionOf);
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`

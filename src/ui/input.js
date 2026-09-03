@@ -150,9 +150,21 @@ export const anyMove = (mv) => mv.forwards || mv.backwards || mv.left || mv.righ
  *  joined for the U6 input box (the blind-god answer is "1"). */
 export function overlayAction(e) {
   if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key)) return 'char:' + e.key;
+  // AUDIT 54 (f3/input): the table below can never see '-', 'r' or 'R'
+  // - the typed-character branch above owns them (the trailing `-` in
+  // that class is a LITERAL, and r/R fall under a-zA-Z), so the rows
+  // `'-': 'minus'`, `r: 'reroll'`, `R: 'reroll'` that used to stand
+  // here were unreachable and read as a promise the module could not
+  // keep. A consumer that wants those keys reads 'char:-' / 'char:r' /
+  // 'char:R' beside its own action name, as ui/chargen.js:1689 already
+  // did and ui/charsheet.js's LevelUpScreen now does. The branches are
+  // deliberately NOT reordered: putting the table first would starve
+  // every text field of '-', 'r' and 'R'. '+' and '=' are outside the
+  // class, so 'plus' still arrives as an action - the asymmetry is the
+  // character class's, not a choice.
   return ({
     ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
-    Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll',
+    Escape: 'back', '+': 'plus', '=': 'plus',
   })[e.key] ?? null;
 }
 
@@ -198,7 +210,14 @@ export function routeKeyUp(e, ctx) {
 
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). Cases carry DFU's
- *  action names; each cites its DFU consumer. */
+ *  action names; each cites its DFU consumer.
+ *
+ *  AUDIT 54 (f3/input): `keys` is the HOST'S held-keys Set and it is
+ *  not optional in practice - without it actionOf below cannot see a
+ *  combo, and GetUnaryKey's combo branch (InputManager.cs:1666-1712)
+ *  is dead for every DISPATCHED action while staying live for the
+ *  polled ones, which read through held(). Every host that registers a
+ *  keydown hands its own Set in; test/combohosts.test.js sweeps them. */
 export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   if (ctx.uiOverlayActive) {
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
@@ -211,7 +230,7 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
     if (a) { ctx.overlayInput(a); return true; }
     // Quickload works from ANY overlay (the death screen's F11 hint
     // must be true); everything else stays gated.
-    if (actionOf(e) === 'QuickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }
+    if (actionOf(e, keys) === 'QuickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 54 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window
     return false;
   }
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has

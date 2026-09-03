@@ -177,7 +177,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // with the windows themselves built and mounted elsewhere.
   const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\) e\.preventDefault\(\);/,
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/,   // AUDIT 54 (f3/input): + the held-keys Set, so a rebound COMBO reaches this table too
     'the interior arm routes the shared table');
   // Each hook must MOUNT something, not merely exist - a named method
   // with an empty body answers the key and opens nothing, which is

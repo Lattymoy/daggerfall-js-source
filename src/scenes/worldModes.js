@@ -128,7 +128,6 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
-import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
@@ -5812,11 +5811,33 @@ export function createWorldModes(host) {
   // C8 E3c: RMB drag-to-swing forwarded to the active dungeon context
   // (the shared machine consumes deltas once per frame). contextmenu
   // suppressed so the right button is a weapon control, as classic.
-  // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   /** A window owned by the mode this host is drawing is up. ONE
-   *  expression: the cursor toggle and the attack seam below read it. */
+   *  expression: the attack seam below and the HOST's cursor toggle
+   *  read it (it is published on the returned object).
+   *
+   *  AUDIT 54 (f3/input) - ONE READER OF THE ACTION PER HOST.
+   *  PlayerMouseLook.cs:190-198 reads ActivateCursor in exactly one
+   *  place and flips `cursorActive` once per press:
+   *    if (!GameManager.IsGamePaused &&
+   *        InputManager.Instance.ActionStarted(Actions.ActivateCursor))
+   *      ... cursorActive = !cursorActive;
+   *  This mode machine used to register a SECOND bindCursorToggle of
+   *  its own, and `bindCursorToggle` installs a fresh window listener
+   *  per call over a MODULE-global flag (player/pointerLock.js:54-81).
+   *  ?world and ?exterior build this machine unconditionally, so one
+   *  Enter ran both handlers and flipped the flag TWICE - net zero -
+   *  and `cursorActive()` could never rise in the two shipping outdoor
+   *  hosts. IsLargeHUDInteractable IS that flag (ui/hudLarge.js's
+   *  activeMouseOverLargeHUD and routeLargeHudClick, PlayerActivate.cs
+   *  :230-236), so the large HUD's eleven panels were unreachable by
+   *  mouse there; the second flip also fired a releaseLook/requestLook
+   *  pair inside one event, the post-exit cooldown requestLook's own
+   *  header says the browser refuses. The registration is gone; the
+   *  guard lives on, OR'd into the single host-level binding, so a
+   *  window this machine owns still refuses the toggle - and DFU's
+   *  IsGamePaused half (a townTalk overlay up) now refuses it too,
+   *  which the machine's own handler did not. */
   const modalWindowUp = () => (mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay);
-  bindCursorToggle(canvas, modalWindowUp, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   // C9: interior mode routes the same RMB seam to its weapon rig.
   const modalAttackSink = () =>
@@ -6258,12 +6279,12 @@ export function createWorldModes(host) {
     // through a shop door. This routes the same ui/input.js table the
     // dungeon arm has always used, over an interior ctx.
     if (mode === 'interior') {
-      if (routeKey(e, interiorKeyCtx)) e.preventDefault();
+      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 54 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
       return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 54 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
@@ -6861,6 +6882,11 @@ export function createWorldModes(host) {
     // this host's arithmetic - `interiorPaused` is the one place the
     // question is asked (see its note at the stack's construction).
     get overlayHeld() { return (mode === 'interior' && interiorPaused()) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
+    /** AUDIT 54 (f3/input): the mode machine's own "a window I draw is
+     *  up" read, published so the HOST's single bindCursorToggle can OR
+     *  it into its guard. One reader of Actions.ActivateCursor per host
+     *  (PlayerMouseLook.cs:190-198); see modalWindowUp's note above. */
+    modalWindowUp,
     get transitioning() { return transitioning; },
     /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideDungeonCastle (:136-139),
      *  which GameManager.IsPlayerInsideCastle (GameManager.cs:420-423) is

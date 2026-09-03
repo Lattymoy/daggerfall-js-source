@@ -78,10 +78,19 @@ test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none
     ['src/scenes/exterior.js', /if \(e\.button === 2 && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
   ];
   for (const [host, re] of release) assert.match(src(host), re, `${host}: the release stays ungated`);
-  // ONE expression for "a mode window is up" - the cursor toggle and the
-  // attack seam read the same one rather than each spelling it out.
+  // ONE expression for "a mode window is up" - the attack seam and the
+  // HOSTS' cursor toggle read the same one rather than each spelling it
+  // out. AUDIT 54 (f3/input): the toggle is no longer registered HERE.
+  // bindCursorToggle installs a listener per call over a module-global
+  // flag, and both outdoor hosts build this machine unconditionally, so
+  // a registration here was a SECOND reader of Actions.ActivateCursor
+  // and one Enter netted zero (PlayerMouseLook.cs:190-198 has exactly
+  // one). The expression is published on the returned object instead
+  // and OR'd into the host's single binding - test/cursortoggle.test.js
+  // sweeps the count over every entry host's import closure.
   assert.match(WM, /const modalWindowUp = \(\) => \(mode === 'dungeon' \? !!dungeonCtx\?\.uiOverlayActive : !!interiorOverlay\);/);
-  assert.match(WM, /bindCursorToggle\(canvas, modalWindowUp, actionOf\);/);
+  assert.match(WM, /^ {4}modalWindowUp,$/m, 'published for the host that owns the one binding');
+  assert.doesNotMatch(WM, /bindCursorToggle\(/, 'and registered nowhere in this file');
 });
 
 // ---------------------------------------------------------------------

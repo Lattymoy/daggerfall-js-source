@@ -79,7 +79,7 @@ const HOSTS = [
   },
   {
     file: 'src/scenes/worldModes.js',
-    keyDown: /if \(routeKey\(e, interiorKeyCtx\)\)/,
+    keyDown: /if \(routeKey\(e, interiorKeyCtx, null, keys\)\)/,   // AUDIT 54 (f3/input): + the held-keys Set
     keyUp: /interiorOverlay\.keyup\?\.\(e\.code, e\);/,
     pointerDown: /interiorOverlay\.pointer\?\.\('down'/,
     pointerUp: /interiorOverlay\.release\?\.\(\);/,

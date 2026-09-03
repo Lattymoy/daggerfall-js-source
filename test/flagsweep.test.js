@@ -140,7 +140,7 @@ test('FS1: the F5/F6 arc is retired, and U43 really did route the table indoors'
   // U43's interior arm: the SAME ui/input.js table, over an interior
   // ctx that carries the doors those keys open.
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /if \(mode === 'interior'\) \{\n\s*if \(routeKey\(e, interiorKeyCtx\)\) e\.preventDefault\(\);/);
+  assert.match(modes, /if \(mode === 'interior'\) \{\n\s*if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/);   // AUDIT 54 (f3/input): + the held-keys Set
   assert.match(modes, /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/);
   for (const arm of ['CharacterSheet', 'Inventory', 'LogBook', 'NoteBook']) {
     assert.ok(read('src/ui/input.js').includes(`case '${arm}':`), `${arm} is in the one table`);

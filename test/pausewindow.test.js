@@ -169,7 +169,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // none, which is what the default is for.
   assert.match(modes, /togglePause\(opts = \{\}\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/, 'and routeKey calls it bare');
-  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\)/, '...and the table drives it');
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\)/, '...and the table drives it');   // AUDIT 54 (f3/input): + the held-keys Set
   assert.match(modes, /preloadPauseFlowArt\(/);
   // and the door out is the ONE menu unwind (audit24_onehome watches
   // the symbol; this pins the CALL in the exit hook of each host)

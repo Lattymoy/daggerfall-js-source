@@ -278,8 +278,23 @@ test('hudLarge: all four hosts draw the bar and offer it the click, and the cros
   // (the same split U14's overlay seam has).
   for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
     assert.match(src(host), /routeLargeHudClick\(/, `${host} offers the bar the click`);
-    assert.match(src(host), /bindCursorToggle\(canvas/, `${host} binds ActivateCursor`);
   }
+  // AUDIT 54 (f3/input): the ActivateCursor half of this loop was a
+  // TEXT-PRESENCE check, and it passed while ?world and ?exterior each
+  // ran TWO registrations - the host's own and the mode machine's -
+  // over a module-global flag, so one Enter netted zero toggles and
+  // `cursorActive()` could never rise. That flag IS
+  // IsLargeHUDInteractable (activeMouseOverLargeHUD and
+  // routeLargeHudClick below), so the eleven panels were unreachable by
+  // mouse in both shipping outdoor hosts while this line stayed green.
+  // The law is a COUNT, not a presence, and it lives where it can be
+  // counted: test/cursortoggle.test.js sweeps every entry host's
+  // scenes/ import closure and drives one Enter through the real
+  // module. What stays here is the consumer end - the two reads that
+  // made the defect visible.
+  const hl = src('ui/hudLarge.js');
+  assert.match(hl, /export const activeMouseOverLargeHUD = \(\) =>\n {2}_overBar && largeHudEnabled\(\) && cursorActive\(\);/);
+  assert.match(hl, /if \(!largeHudEnabled\(\) \|\| windowUp \|\| !cursorActive\(\)\) return false;/);
   // DaggerfallHUD.cs:214-220: the bar turns OFF the vitals, the
   // compass and the mode icon - and nothing else. The crosshair is
   // still drawn on the large-HUD branch.

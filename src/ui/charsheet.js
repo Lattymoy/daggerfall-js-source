@@ -109,7 +109,18 @@ export class LevelUpScreen {
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
     else if (action === 'down') this.cursor = (this.cursor + 1) % 8;
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
-    else if (action === 'minus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
+    // AUDIT 54 (f3/input): + 'char:-'. This screen carries no
+    // isChoiceWindow, so both hosts hand it overlayAction's answer
+    // (scenes/townTalk.js's keyed arm and ui/input.js:229-230) - and
+    // overlayAction can never answer 'minus', because its typed-
+    // character branch (ui/input.js:152) owns the hyphen. The bare
+    // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
+    // code table (:196) both still produce it. Without this, a
+    // level-up point could be spent from the keyboard and never taken
+    // back, under a screen that prints '+/- assign' at :143 - and
+    // LevelUpScreen has no click of its own to fall back on.
+    // StatsRollout.cs:255's down-spinner is the same door.
+    else if (action === 'minus' || action === 'char:-') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
     else if (action === 'confirm' && this.pool === 0) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
