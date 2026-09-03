@@ -1559,6 +1559,24 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .hud-readied.on { border-color: var(--brass); }
 .hud-readied .hud-handname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* PX32: THE RETICLE. A square cross in bone with the classic shadow,
+   at the viewport's centre; the mode's word takes its place under the
+   styles where the icon IS the crosshair, and sits in the corner under
+   the others - hudCrosshair.js's own laws. Not scaled by the HUD's
+   scale: a reticle is a point, and the scale is for things read at
+   the edges. */
+.hud-reticle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center; }
+.hud-cross { position: relative; display: block; width: 18px; height: 18px; }
+.hud-cross::before, .hud-cross::after { content: ''; position: absolute; background: #d8cfae;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hud-cross::before { left: 0; top: 8px; width: 18px; height: 2px; }
+.hud-cross::after { left: 8px; top: 0; width: 2px; height: 18px; }
+.hud-modeword { font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em; text-transform: uppercase;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-modecentre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.hud-modecorner { position: absolute; left: 24px; bottom: 24px; }
+
 /* THE EFFECTS, beneath the bars. An expiring one takes the classic
    shadowed pair, which is what this UI has always used for urgency. */
 .hud-effects { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;

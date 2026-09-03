@@ -31,6 +31,11 @@ import { compassScroll, breathShortThreshold, compassMarkerLerp, DETECT_MARKER_R
 import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
+// PX32: the reticle's LAWS are the classic module's - which setting shows
+// a crosshair, which style makes the mode word the crosshair, which
+// styles show a corner word - imported rather than restated.
+import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from './hudCrosshair.js';
+import { getInteractionMode } from '../player/interactionMode.js';
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -262,9 +267,25 @@ function build(doc) {
   bottom.append(effects);
   root.append(bottom);
 
+  // PX32: THE RETICLE. The enhanced branch returns before the classic
+  // draws its crosshair and mode word, so the enhanced skin had NEITHER
+  // - a player could not see where they were aiming or which mode they
+  // were in. Same laws as hudCrosshair.js, in the pixel language: a
+  // square cross in bone with the classic shadow; under the styles
+  // where the icon IS the crosshair, the mode's WORD stands at the
+  // centre instead (Grab alone keeps the plain cross - it is the mode
+  // you aim in); under the others, the word sits in the corner.
+  const reticle = el('div', 'hud-reticle');
+  const cross = el('i', 'hud-cross');
+  const centreWord = el('span', 'hud-modeword hud-modecentre');
+  reticle.append(cross, centreWord);
+  root.append(reticle);
+  const cornerWord = el('span', 'hud-modeword hud-modecorner');
+  root.append(cornerWord);
+
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, magicka, health, fatigue, effects,
-    breath, breathFill, readied, weapon };
+    breath, breathFill, readied, weapon, reticle, cross, centreWord, cornerWord };
 }
 
 /**
@@ -395,6 +416,25 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     if (weaponName) {
       parts.weapon.append(el('span', 'hud-handkind', 'Hand'), el('span', 'hud-handname', weaponName));
     }
+  }
+
+  // THE RETICLE, on the classic's own laws. The cursor up hides it all,
+  // as the classic hides its own (the whole HUD is hidden then).
+  const style = interactionIconStyle();
+  const asCross = iconReplacesCrosshair(style);
+  const mode = getInteractionMode();
+  const label = MODE_LABEL[mode] ?? '';
+  const showCross = crosshairEnabled() && !(asCross && mode !== 'grab');
+  const showCentreWord = crosshairEnabled() && asCross && mode !== 'grab' && !!label;
+  const showCorner = !asCross && modeIconEnabled(style) && !!label;
+  const rk = `${showCross}|${showCentreWord ? label : ''}|${showCorner ? label : ''}`;
+  if (last.reticle !== rk) {
+    last.reticle = rk;
+    parts.cross.style.display = showCross ? '' : 'none';
+    parts.centreWord.textContent = showCentreWord ? label : '';
+    parts.centreWord.style.display = showCentreWord ? '' : 'none';
+    parts.cornerWord.textContent = showCorner ? label : '';
+    parts.cornerWord.style.display = showCorner ? '' : 'none';
   }
 
   // THE EFFECTS. Rebuilt only when the SET changes - a countdown that
