@@ -296,7 +296,7 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:904, worldModes.js:5770, dungeonContext.js:4064),
+      // (townTalk.js:904, worldModes.js:5778, dungeonContext.js:4064),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you

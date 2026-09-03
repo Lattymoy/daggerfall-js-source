@@ -23,7 +23,7 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 200)); });
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:1046-1047) - swallows every
+// keydown ladder (exterior.js:1048-1049) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&world&play&tod=12:00&class=16');

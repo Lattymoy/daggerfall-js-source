@@ -4303,6 +4303,14 @@ export function createWorldModes(host) {
           // the live mode is dungeon, so a second mount on build would
           // simply overwrite the routed one and win silently. The
           // standalone ?dungeon route passes none and mounts its own.
+          //
+          // AUDIT 54 (f2/hosts): "an outer host already owns it" was
+          // this flag's whole premise and it was HALF TRUE - exterior.js
+          // builds this machine too and mounted nothing, so a dungeon
+          // or a shop entered from ?exterior inherited a null ctx from
+          // a host that had none. That host now mounts the same body
+          // off its own pools, which is what makes the premise true for
+          // both routes rather than for one.
           enchantCtx: false,
           // wave 22: PopupText.AddText files into the notebook ring
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
@@ -5011,7 +5019,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5453's own wave-46 note); the interior
+          // a blow (world.js:5470's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6048,6 +6056,12 @@ export function createWorldModes(host) {
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    // AUDIT 54 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
+    // is a WeaponManager singleton call with no scene gate, so the
+    // eleventh panel answers here too. The law is at world.js's twin
+    // (THE FOUR HOSTS RULE); routeKey still declines the key
+    // (ui/input.js:226), so the frame poll stays its only keyboard door.
+    toggleSheath() { interiorWeapon.toggleSheath(); },
     /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
      *  :691-694) - inside, the key refuses with a HUD line instead of
      *  opening the picker. Both interior modes are inside. */

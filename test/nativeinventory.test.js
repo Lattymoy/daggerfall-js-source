@@ -6,7 +6,7 @@ import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTempla
   goldPanelRows,
 } from '../src/ui/nativeInventory.js';
 import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y, SLOT_H } from '../src/ui/itemScroller.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeKey, typedChar } from '../src/ui/input.js';
@@ -459,8 +459,34 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // including the exterior host, which has nothing to quickload and
   // must still not go fullscreen.
   assert.match(code('ui/input.js'), /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/);
-  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
+  // AUDIT 54 (f2/hosts): DISCOVERED, not enumerated. This loop named
+  // four hosts, and the U47 rollout that wrote it named the same four -
+  // so scenes/interior.js, the FIFTH host-level keydown, registered one
+  // and never swallowed: F5 in the ?interior route reloaded the page and
+  // destroyed the session (AUDIT 17e F41's own failure) and F11 went
+  // fullscreen. A list a lane has to remember to extend is what let that
+  // happen, so the pin now asks the tree which hosts register a keydown
+  // and holds every one of them to ui/input.js:282-283's "every host
+  // that registers a keydown calls this FIRST".
+  const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
+  const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')
+    && /\n  addEventListener\('keydown', \(e\) => \{/.test(readFileSync(join(SCENES, f), 'utf8')));
+  assert.deepEqual(hosts.sort(), ['dungeon.js', 'exterior.js', 'interior.js', 'world.js', 'worldModes.js'],
+    'the host-level keydowns in the tree - a sixth joins this list by existing, not by being remembered');
+  for (const host of hosts.map((f) => `scenes/${f}`)) {
     assert.match(code(host), /swallowBrowserKey\(e\)/, `${host} swallows them`);
+    assert.match(code(host), /import \{[^}]*swallowBrowserKey[^}]*\} from '\.\.\/ui\/input\.js'/, `${host} takes them from the one list`);
     assert.doesNotMatch(code(host), /e\.code === 'F5' \|\| e\.code === 'F6'/, `${host} keeps no second list`);
   }
+  // ...and FIRST, ahead of the early returns. interior.js's handler
+  // returns out of its overlay arm and its KeyM arm before either
+  // reaches preventDefault, so a swallow placed after them is no
+  // swallow at all - which is why the law says first and not merely
+  // present.
+  const body = code('scenes/interior.js');
+  const kd = body.slice(body.indexOf("\n  addEventListener('keydown', (e) => {"));
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf('if (overlay)'),
+    'interior.js swallows BEFORE the overlay arm returns');
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (e.code === 'KeyM')"),
+    'interior.js swallows BEFORE the automap arm returns');
 });

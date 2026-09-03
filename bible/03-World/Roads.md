@@ -368,6 +368,15 @@ corrected transpose; the arrays are his to the byte. ROADS 22's claim
 that the mod paints no ring is corrected there: it paves the rect's
 padding, roads only.
 
+AUDIT 54 (f2/hosts, 2026-09-03) corrected WHICH index that transpose is
+on. The tilemap is `x + y*tDim` and the heightmap is `y + x*hDim`
+(TerrainSampler.cs:123 against TerrainHelper.cs:170) - the mod's
+transpose is on the SAMPLE base, and the "correction" recorded here was
+made on the tile read, where `y*tDim + x` is literally his
+`Idx(x, y, tDim)`. So the divergence was written down as closed while
+the defect it named ran in both lanes: no road bed was smoothed and an
+east-west strip of open ground was blurred in its place.
+
 ## Audit 45 (2026-09-01)
 
 The deep pass over Roads 1-3: `01-Overview/Audit-45.md`. F1 the track

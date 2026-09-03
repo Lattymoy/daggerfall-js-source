@@ -291,7 +291,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1215` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:123-131` the gated call, `:170` the guard). |
-| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:4169`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:2494` carries the sweep and `hostMagic.js:592` its missile half. |
+| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:4186`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:2494` carries the sweep and `hostMagic.js:592` its missile half. |
 | **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:56`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
 | **scenes-dungeon** | Deep, one lifecycle leak | **Near-1:1** | The three process-global seams return on destroy. ROAD-D D8 made this the fourth caller of `playerArrowHitFoe`, moved its action flats, mounted the enchant ctx off the shared `scenes/hostEnchant.js`, and routed its chargen through the one construction seam. |
 | **scenes-support** | Near-1:1 | **Near-1:1** | ROAD-D D9 stood the city-watch fallback through `FoeSpawner.PlaceFoeFreely` on its own collider. Court reads the live region. |
@@ -400,7 +400,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:1031`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:1033`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. **NARROWED (TP2,
   2026-09-03).** *The triage's verdict was true of ONE arm and wrong as
   a refusal - the same mistake A10 found in the dungeon context. Set-anchor
@@ -413,7 +413,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1283`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1285`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -603,8 +603,8 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the twelve survivors only MOVED, and `Home.md` was
-regenerated onto the new sites: `exterior.js:1073` -> `:1089`,
-`exterior.js:1325` -> `:1344`, `world.js:2819` -> `:2932`,
+regenerated onto the new sites: `exterior.js:1075` -> `:1089`,
+`exterior.js:1342` -> `:1344`, `world.js:2819` -> `:2932`,
 ~~`worldModes.js:1659` -> `:1687`~~ (**CLOSED at ROAD-F GS1**, below),
 `pauseWindow.js:58` -> `:61`. The
 `worldModes.js:1659` -> `:1687`, `pauseWindow.js:58` -> `:61`. The

@@ -34,6 +34,8 @@ import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
+import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 54 (f2/hosts): the session's ONE enchant ctx - this host mounted none
+import { createEnchantCtx, standLooseFoe } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -105,7 +107,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 54 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -1334,6 +1336,21 @@ export async function bootExterior(canvas, renderer, params, status) {
       ],
     }));
   }
+  /** AUDIT 54 (f2/hosts): HOISTED, because the enchant ctx below needs
+   *  the same object. A caster reaches applySpell as `{ entity, sinks }`
+   *  and the sinks are what a Transfer effect heals the caster through
+   *  (effects.js:828/:842) - world.js:2016 hoisted its copy for exactly
+   *  that reason when reflection was wired, and this host's stayed
+   *  inline only because nothing else had asked for it. */
+  const playerSpellSinks = {
+    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+    heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
+    drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
+    restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
+    drainFatigue: (n) => drainExteriorFatigue(n),
+    restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
+    say: (l) => townTalk.say(l),
+  };
   const magic = createPlayerMagic({
     onTeleport: () => teleportPrompt(),   // TP2: the 4000 box, the arms this host can take
     // X11b: the Create Item picker, through the same worldModes opener
@@ -1363,15 +1380,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
-    playerSinks: {
-      hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
-      heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
-      drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
-      restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
-      drainFatigue: (n) => drainExteriorFatigue(n),
-      restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
-      say: (l) => townTalk.say(l),
-    },
+    playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
@@ -1607,6 +1616,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
     },
     toggleSpellbook: () => toggleSpellbook(),
+    // AUDIT 54 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
+    // is a WeaponManager singleton call with no scene gate, so the
+    // eleventh panel answers here too. The law is at world.js's twin
+    // (THE FOUR HOSTS RULE); routeKey still declines the key
+    // (ui/input.js:226), so the frame poll stays its only keyboard door.
+    toggleSheath: () => weaponRig.toggleSheath(),
     // QX1/U43: the two journal keys, which this host had never
     // answered - the doors are the same ONE window the sheet's LOGBOOK
     // button opens, and the world and both interior hosts have answered
@@ -2331,6 +2346,129 @@ export async function bootExterior(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLocation.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  /** AUDIT 54 (f2/hosts): THE ENCHANT CTX, MOUNTED HERE TOO - THE FOUR
+   *  HOSTS RULE, and the third host that owed it.
+   *
+   *  scenes/hostEnchant.js:1-2 states the law as "one body, mounted by
+   *  every host that can hold an enchanted item", and this host can:
+   *  it mints starting gear, opens the native inventory (whose USE arm
+   *  is systems/useItem.js's doItemEnchantmentPayloads with NO per-call
+   *  ctx - "the cast arms ride the host's mounted enchantCtx"), and its
+   *  mode machine reaches shop shelves (shopStock.js's MagicItems
+   *  group) and dungeon loot. It mounted NOTHING, so
+   *  setDefaultEnchantCtx's `_defaultCtx` stayed null for the whole
+   *  session (enchantments.js:249-251) and every arm that folds it in
+   *  optional-chained into silence - the exact FS1 shape the standalone
+   *  ?dungeon host was in before wave D. Worse: exterior.js builds
+   *  createWorldModes, which passes `enchantCtx: false` to
+   *  buildDungeonContext unconditionally on the stated premise that an
+   *  OUTER host already owns it - true of ?world and false here - so a
+   *  dungeon or a shop entered from this route mounted nothing either.
+   *
+   *  What was dead, with the ctx null: CastWhenUsed and CastWhenStrikes
+   *  found no spell record and still billed 10 condition
+   *  (enchantments.js:333-341, :372-379), HealthLeech never billed the
+   *  wearer and stamped its last-used minute at epoch 0
+   *  (:556-577), CastWhenHeld could never take the resting degrade rate
+   *  (:364), and the held/round scans - VampiricEffect AtRange,
+   *  ExtraSpellPts' season/moon/affinity, RegensHealth's sun and dark
+   *  arms, BadReactionsFrom - saw nothing at all.
+   *
+   *  The pools are this host's own, through the SAME shared law
+   *  world.js routes by (shared.js liveEnchantFoes /
+   *  liveEnchantFoeSinks / enchantFoeHost): one arm per live mode,
+   *  because DFU has one active-enemy database per scene
+   *  (PlayerGPS.cs:747-777), and the sinks routed by POOL MEMBERSHIP so
+   *  a record never knocks back against the wrong host's collider. This
+   *  host's exterior pool is the WATCH alone - it mints no encounter
+   *  foes - and the interior/dungeon arms are worldModes' own
+   *  (`insideFoes` / `insideFoeSinksFor` / `insideReplaceFoe`, and
+   *  `modes.dungeonCtx`).
+   *
+   *  Placed AFTER `var modes = ...` so the fold routes by live mode the
+   *  way EC1 routes world.js's, and it is the same BODY - a hand-rolled
+   *  second ctx here is the shape FS1 was written about. */
+  {
+    const _mode = () => (modes?.mode ?? 'exterior');
+    const _insidePool = () => modes?.insideFoes?.() ?? [];
+    const enchantFeet = () => (walkMode ? player.pos : cam.pos);
+    const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => cityGuards.guards, _insidePool);
+    const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
+    /** SD1: SoulBound's break release and the Sanguine Rose's
+     *  Daedroth, through DFU's own placement - but only where this
+     *  session has a pool to stand one IN. That is the dungeon the mode
+     *  machine mounts; above ground this host's only pool is the WATCH,
+     *  which mints watchmen and exposes no free spawn pair, and a
+     *  building has none of its own here at all. Refusing is EC1's
+     *  answer and the honest one until a pool exists - the same refusal
+     *  world.js makes for its interior mode. */
+    const _standLooseFoe = (mobileType, o = {}) => {
+      const d = _mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
+      if (!d) return null;
+      return standLooseFoe({
+        collider: d.collider,
+        feet: enchantFeet(),
+        yawRad: cam.yaw,
+        fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+        foes: enchantFoes(),
+        spawn: (mt, pos, so) => d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied }),
+      }, mobileType, o);
+    };
+    /** V3: the Wabbajack's transform, routed by the same POOL
+     *  MEMBERSHIP the sinks are - WabbajackEffect.cs:63-95 removes the
+     *  struck enemy and CreateEnemy's the new career under its OWN
+     *  parent transform, so the pool that owns the billboard is the one
+     *  that must do both. Hoisted out of the mount literal for the
+     *  reason world.js's twin is: a foe door that names a host pool
+     *  from inside the ctx is the defect the AUDIT 54 review found
+     *  there.
+     *
+     *  THE EXTERIOR ARM REFUSES, and that is a departure written down
+     *  rather than a mis-route - worldModes.js already wrote the same
+     *  one for the same pool: `createCityGuards` exposes no
+     *  remove/spawn pair, so the only reach available would be another
+     *  host's, which is exactly the confusion this door exists to end.
+     *  Leaving the watchman standing is the smaller departure. */
+    const _enchantReplaceFoe = (targetEntity, mobileType) => {
+      const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
+      if (!f) return;
+      if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+      const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+      const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+      const stamp = (nf) => {
+        if (!nf?.entity) return;
+        nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+        nf.entity.health -= missing;        // carry over damage (:94)
+      };
+      const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
+      if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }
+      if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); }
+    };
+    setDefaultEnchantCtx(createEnchantCtx({
+      playerEntity,
+      spellsByIndex: () => spellsByIndex,
+      now: () => Math.floor(playerTicker.classicMinutes),
+      sinks: {
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
+      },
+      playerSpellSinks,
+      say: (l) => townTalk.say(l),
+      magic,
+      foes: () => enchantFoes(),
+      foeSinks: (f) => enchantFoeSinks(f),
+      feet: () => enchantFeet(),
+      standLooseFoe: _standLooseFoe,
+      // V3: Azura's TEXT.RSC popup, through this host's overlay slot.
+      messageBox: (id) => {
+        const lines = plainLines(townTalk.lines(id));
+        if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      },
+      // U52: the Oghma opens THIS host's one sheet construction.
+      openCharacterSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+      replaceFoe: (targetEntity, mobileType) => _enchantReplaceFoe(targetEntity, mobileType),
+    }));
+  }
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) registers its two
   // verbs; this host owns that window too, so it registers them the way
   // world.js does. It has no travel map (that door is world.js's), so

@@ -264,6 +264,62 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
     'and the shared body names no host\'s pool at all');
 });
 
+test('AUDIT 54 (f2/hosts): the EXTERIOR host mounts the same body over its own pools', () => {
+  // The third host that can hold an enchanted item and mounted nothing.
+  // `_defaultCtx` is a session singleton (enchantments.js:249-251) and
+  // in a ?exterior session it stayed null for the whole boot, so every
+  // arm that folds it in optional-chained into silence - CastWhenUsed
+  // and CastWhenStrikes found no record and still billed 10 condition,
+  // HealthLeech never billed the wearer and stamped its last-used
+  // minute at epoch 0, CastWhenHeld could never take the resting
+  // degrade rate, and the held/round scans saw nothing. And because
+  // this host builds createWorldModes - which passes `enchantCtx:
+  // false` on the premise that an outer host owns the mount - the
+  // dungeons and shops entered from here inherited the hole.
+  const ext = read('src/scenes/exterior.js');
+  assert.match(ext, /import \{ setDefaultEnchantCtx \} from '\.\.\/systems\/enchantments\.js';/);
+  assert.match(ext, /import \{ createEnchantCtx, standLooseFoe \} from '\.\/hostEnchant\.js';/);
+  const at = ext.indexOf('setDefaultEnchantCtx(createEnchantCtx({');
+  assert.ok(at > 0, 'the host mounts the SHARED body, not a second copy of it');
+  // ...and it mounts AFTER the mode machine exists, so the fold routes
+  // by LIVE mode the way EC1 routes world.js's.
+  assert.ok(ext.indexOf('var modes = createWorldModes({') < at,
+    'the mount comes after `var modes = ...` - a mount above it reads undefined for every mode');
+  // the three live reads, through the ONE shared law, over THIS host's
+  // own pools: the watch above ground (it mints no encounter foes), and
+  // worldModes' own two arms for inside and below.
+  assert.match(ext, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/);
+  assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => cityGuards\.guards, _insidePool\);/);
+  assert.match(ext, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
+  // the same law the world host's mount is held to: NO site inside the
+  // ctx literal names a host pool - every foe door is a thunk over
+  // something that routes by membership. This is the exact shape the
+  // AUDIT 54 review caught in world.js's `replaceFoe`.
+  const mount = ext.slice(at, ext.indexOf('\n  }\n', at));
+  assert.match(mount, /foes: \(\) => enchantFoes\(\),/);
+  assert.match(mount, /foeSinks: \(f\) => enchantFoeSinks\(f\),/);
+  assert.equal(/cityGuards\.|dungeonCtx\.|interiorFoes/.test(mount), false,
+    'no site inside the mount names a host pool directly');
+  // and the reflection path travels with the player's OWN sinks, which
+  // is why they are hoisted here rather than inlined into the cast
+  // engine (effects.js:828/:842 heals the caster through them).
+  assert.match(ext, /const playerSpellSinks = \{/);
+  assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
+  assert.match(mount, /^\s*playerSpellSinks,$/m);
+  // the Wabbajack's exterior arm REFUSES, and says why - the watch has
+  // no remove/spawn pair, exactly as worldModes wrote down for it.
+  const rf = ext.slice(ext.indexOf('const _enchantReplaceFoe ='), at);
+  assert.match(rf, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/);
+  assert.match(rf, /if \(host === 'dungeon'\)/);
+  assert.match(rf, /if \(host === 'inside'\)/);
+  assert.equal(/cityGuards\./.test(rf), false, 'and no exterior arm at all - the watch is left standing');
+  // the loose-foe arm refuses where there is no pool to stand one in,
+  // and reaches the dungeon's own chain where there is (SD1).
+  const sf = ext.slice(ext.indexOf('const _standLooseFoe ='), ext.indexOf('const _enchantReplaceFoe ='));
+  assert.match(sf, /const d = _mode\(\) === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*if \(!d\) return null;/);
+  assert.match(sf, /spawn: \(mt, pos, so\) => d\.spawnLooseFoe\(/);
+});
+
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {
   const world = read('src/scenes/world.js');
   // onDispel removes what it dispels through exteriorFoes.removeFoe, and

@@ -253,14 +253,35 @@ export function classify(x, y, mask) {
  *  and in scan order (so later corners read earlier results, as his
  *  does), over x,y in [1, hDim-3], skipping the location rect.
  *
- *  ONE DELIBERATE DIVERGENCE, recorded: the mod reads the tile at
- *  JobA.Idx(x, y, tDim) - x as the ROW - which is transposed against
- *  its own painter (index = y*tDim + x), so a north-south road there
- *  smooths an east-west strip. A typo is not a design; the tile is
- *  read at y*tDim + x here.
+ *  ONE DELIBERATE DIVERGENCE, and AUDIT 54 (f2/hosts) moved it onto
+ *  the index it was always about. This kernel joins TWO layouts and
+ *  they are different, both of them DFU's: the TILEMAP is
+ *  JobA.Idx(x, y, tDim) = x + y*tDim (TerrainHelper.cs:170, with
+ *  JobHelpers.cs:19-22 Idx(r, c, dim) = r + c*dim), while the
+ *  HEIGHTMAP is JobA.Idx(y, x, hDim) = y + x*hDim (TerrainSampler
+ *  .cs:123; DefaultTerrainSampler.cs:77-78 takes x from Col and y
+ *  from Row) - which is exactly what terrainSampler.js:139 writes and
+ *  what every consumer in this tree reads (terrainTiles.js:146 and
+ *  :317, terrainSurface.js:105-106, terrainNature.js:68 and :136).
+ *  The mod walks the HEIGHTMAP taking x from Row and y from Col, so
+ *  its sample base is Idx(x, y, hDim) - the transpose - while its
+ *  tile read, Idx(x, y, tDim), is its own painter's layout and needs
+ *  nothing. A north-south road there smooths an east-west strip.
  *
- * @param {Float32Array} samples - 129x129 corner heights, row-major; mutated.
- * @param {Uint8Array} tilemap - 128x128 after the painter.
+ *  A typo is not a design: the tile is read at y*tDim + x (which IS
+ *  his Idx(x, y, tDim) - unchanged, and always was) and the corner
+ *  base is x*hDim + y, the sampler's Idx(y, x, hDim). The note here
+ *  used to claim the correction was on the TILE read, where there was
+ *  nothing to correct, so the divergence was recorded as closed while
+ *  the transpose it named sat live on the height write: in BOTH lanes
+ *  every road bed went unsmoothed and a mirrored strip of open ground
+ *  was blurred in its place.
+ *
+ * @param {Float32Array} samples - 129x129 corner heights in the SAMPLER's
+ *   layout, sample(x, y) = samples[x * hDim + y] (terrainSampler.js:139);
+ *   mutated in place.
+ * @param {Uint8Array} tilemap - 128x128 after the painter, tile(x, y) =
+ *   tilemap[y * tDim + x] (terrainTiles.js:249). The two differ.
  * @returns {number} corner samples smoothed (with repeats, as his counts).
  */
 export const SMOOTHED_TILES = Object.freeze(new Set([46, 0xff]));
@@ -276,7 +297,7 @@ export function smoothRoadHeights(samples, tilemap, hDim = 129, rect = null) {
       if (rect && x >= rect.xMin && x < rect.xMax + 1 && y >= rect.yMin && y < rect.yMax + 1) continue;
       const tile = tilemap[y * tDim + x];
       if (tile !== 46 && tile !== 0xff) continue;
-      const idx = y * hDim + x;
+      const idx = x * hDim + y;   // TerrainSampler.cs:123 JobA.Idx(y, x, hDim) - the HEIGHTMAP's layout, not the tilemap's
       smooth(idx); smooth(idx + 1); smooth(idx + hDim); smooth(idx + hDim + 1);
     }
   }

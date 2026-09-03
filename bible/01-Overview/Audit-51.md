@@ -47,11 +47,29 @@ neighbours, IN PLACE and in scan order, over [1, hDim-3], skipping the
 rect. Mine smoothed every path tile's corners from a copy of the
 original heights. Ported.
 
-**One deliberate divergence, recorded.** The job reads the tile at
-`JobA.Idx(x, y, tDim)` - x as the ROW - transposed against its own
-painter's `index = y*tDim + x`. In the mod a north-south road smooths
-an east-west strip. A typo is not a design; ours reads `y*tDim + x`,
-and the pin says so.
+**One deliberate divergence, recorded - and AUDIT 54 (f2/hosts,
+2026-09-03) moved it onto the index it was always about.** The kernel
+joins TWO layouts and they differ, both of them DFU's: the TILEMAP is
+`JobA.Idx(x, y, tDim)` = `x + y*tDim` (TerrainHelper.cs:170, with
+JobHelpers.cs:19-22 `Idx(r, c, dim) = r + c*dim`), and the HEIGHTMAP is
+`JobA.Idx(y, x, hDim)` = `y + x*hDim` (TerrainSampler.cs:123;
+DefaultTerrainSampler.cs:77-78 takes x from `Col` and y from `Row`) -
+which is what `terrainSampler.js:139` writes and what every consumer in
+this tree reads. The mod walks the heightmap with x from `Row`, so its
+SAMPLE BASE is the transpose; its tile read is its own painter's layout
+and needs nothing. In the mod a north-south road smooths an east-west
+strip.
+
+This paragraph used to say the correction was on the TILE read, where
+`y*tDim + x` **is** his `Idx(x, y, tDim)` - the same expression, so the
+correction was a no-op - while the transpose it named sat live on the
+height write. Roads are ALWAYS ON in both lanes, so for three audits
+every road bed went unsmoothed and a mirrored strip of open ground was
+blurred instead. Both pins were blind because both computed their
+expected corners from the smoother's own base. Ours now reads the tile
+at `y*tDim + x` (unchanged) and the corner base at `x*hDim + y`, and
+`test/roadsParity.test.js` asks the question in world terms instead: a
+north-south road must move a north-south bed.
 
 ## Cleared
 

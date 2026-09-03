@@ -176,10 +176,27 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal(/FLAGGED \(THE FOUR HOSTS RULE\): THE ENCHANT CTX IS NOT\n\s*\/\/ MOUNTED HERE/.test(dc), false,
     'the flag is retired where it stood');
+  // AUDIT 54 (f2/hosts): THE THIRD HOST. This list read as the law and
+  // was only the shape - `scenes/exterior.js` is a full combat host
+  // that mints starting gear, opens the native inventory, buys off shop
+  // shelves through its own mode machine and takes dungeon loot, and it
+  // mounted nothing, so `_defaultCtx` was null for that whole session
+  // and every payload optional-chained into silence. It also builds
+  // createWorldModes, which passes `enchantCtx: false` on the premise
+  // that an outer host owns the mount - so the dungeons and shops
+  // entered from ?exterior inherited the hole. The predicate is "every
+  // host that can hold an enchanted item" (hostEnchant.js:1-2), not
+  // "the two that happen to mount it".
   const callers = SRC.filter((f) => f !== 'src/systems/enchantments.js'
     && /setDefaultEnchantCtx\(/.test(TEXT.get(f)));
-  assert.deepEqual(callers.sort(), ['src/scenes/dungeonContext.js', 'src/scenes/world.js'],
-    'both hosts that can hold an enchanted item mount it, and no third file does');
+  assert.deepEqual(callers.sort(), ['src/scenes/dungeonContext.js', 'src/scenes/exterior.js', 'src/scenes/world.js'],
+    'every host that can hold an enchanted item mounts it, and no other file does');
+  // ...and the two outer hosts that build the mode machine both mount,
+  // which is what makes worldModes' `enchantCtx: false` premise true.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(TEXT.get(f), /createWorldModes\(\{/, `${f} builds the mode machine`);
+    assert.ok(callers.includes(f), `${f} owns the ctx the machine's dungeons decline to mount`);
+  }
   // ...through ONE body. A host that hand-rolled a ctx object would be
   // the shape the flag was written about, one host later.
   for (const f of callers) {
