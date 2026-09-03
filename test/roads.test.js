@@ -811,3 +811,31 @@ test('ROADS 23: rivers paint water with a bank and streams narrow, only when wat
   paintRoads(grass(), both, DIR.N | DIR.S, 0, null, 129, { river: DIR.N | DIR.S, water: true });
   assert.equal(both[10 * 128 + 63] & 0x3f, TILE.road, 'roads first');
 });
+
+// ── ROADS 25: THE FIRST PIXELS WERE PAINTED BEFORE THE NETWORK LANDED ──
+// Mac: "some roads are missing even though they show on the map."
+test('ROADS 25: a pixel says whether a network was present, and the host rebuilds the ones painted without one', async () => {
+  const { generatePixelTerrain } = await import('../src/world/terrainGen.js');
+  const { readFileSync } = await import('node:fs');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  // The generator's own word: was a network there when this pixel was painted.
+  const gen = read('src/world/terrainGen.js');
+  assert.match(gen, /withRoads: !!roads,/);
+  assert.equal(typeof generatePixelTerrain, 'function');
+  const world = read('src/scenes/world.js');
+  // The host keeps it on the pixel entry...
+  assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads \} = await terrainGen\.generate\(/);
+  assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);
+  // ...and when the network lands, tears down every pixel built without
+  // one so the stream rebuilds it - on BOTH arrival paths, since the
+  // mod-data path returns early.
+  assert.match(world, /function rebuildRoadless\(\) \{[\s\S]{0,300}if \(!p\.withRoads\) \{ destroyPixel\(p\.px, p\.py, \{ collectLoose: false \}\); roadless\+\+; \}/);
+  assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
+  assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
+  // A pixel IN FLIGHT when the network landed arrives roadless after the
+  // sweep, and goes straight back.
+  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/);
+  assert.match(read('src/world/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);
+  // The map was ALREADY rebuilt on arrival (ROADS 7); the terrain now is too.
+  assert.match(read('bible/03-World/Roads.md'), /keys its grid cache on the network it was drawn with/);
+});

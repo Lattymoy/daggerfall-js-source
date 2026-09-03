@@ -115,6 +115,10 @@ export class TerrainGenClient {
 
   /** ROADS 22: a ready-made network (his) - kept here for the map and
    *  the fallback, a copy posted to the worker. No build anywhere. */
+  /** ROADS 25: whether a network is known to this client - set the
+   *  moment setRoads/setRoadsData is called, before the worker has it. */
+  get hasRoads() { return !!this._roads || !!this._settlements; }
+
   setRoadsData(net, onStats = null) {
     this._settlements = null;
     this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water };
