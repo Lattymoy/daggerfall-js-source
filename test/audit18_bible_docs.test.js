@@ -570,13 +570,13 @@ test('AUDIT 39r: the foreign-pass count is the real call-site count', () => {
     'the overworld pass restores its own program again - it is not a foreign seam then');
   const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/ui/overworldMap.js']
     .reduce((n, f) => n + read(f).split('renderer.markForeignPass();').length - 1, 0);
-  assert.equal(hosts, 6, 'six host call sites across the five passes (GR1: the lab\'s grass is the fifth)');
+  assert.equal(hosts, 7, 'seven host call sites across the six passes (GR1: the lab\'s grass is the fifth; TR1: the trees the sixth)');
   const ev = read('bible/07-Rendering/Enhanced-Visuals-Arc.md').replace(/\s+/g, ' ');
   assert.ok(!ev.includes('three passes change programs behind the renderer\'s back'),
     'the EV arc is counting three passes again');
-  assert.match(ev, /five passes change programs behind the renderer's back/);
+  assert.match(ev, /six passes change programs behind the renderer's back/);
   assert.match(read('src/render/renderer.js').replace(/\s+/g, ' '),
-    /the five passes \/\/ that change programs behind the renderer's back/);
+    /the six passes \/\/ that change programs behind the renderer's back/);
 });
 
 test('AUDIT 39r: three arc pages stop advertising work the wave closed or disproved', () => {
