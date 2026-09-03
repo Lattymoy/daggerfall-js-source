@@ -150,7 +150,7 @@ mkdirSync('/tmp/treeprobe', { recursive: true });
 writeFileSync('public/__treeprobe.html', HARNESS);
 const server = await createServer({ server: { port: 5199 }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errors = [];
@@ -178,8 +178,9 @@ try {
   for (let f = 0; f < N; f++) {
     const t = f / FPS;
     const ang = t * 0.12, eye = [Math.cos(ang) * 22, 6.5, Math.sin(ang) * 22], at = [0, 7, 0];
-    const wind = 0.25 + 0.75 * Math.min(1, t / 8);
-    drawn = await page.evaluate(([t2, e, a, w]) => window.__frame(t2, e, a, [w * 1.6, w * 0.5]), [t, eye, at, wind]);
+    // the sky's own range: |windV| 4.8 calm -> 32 storm (see TREE_LEAN)
+    const mag = 4.8 + (32 - 4.8) * Math.min(1, t / 8);
+    drawn = await page.evaluate(([t2, e, a, m]) => window.__frame(t2, e, a, [m * 0.95, m * 0.31]), [t, eye, at, mag]);
     const png = await page.$eval('#c', (c) => c.toDataURL('image/png').split(',')[1]);
     writeFileSync(`/tmp/treeprobe/f${String(f).padStart(4, '0')}.png`, Buffer.from(png, 'base64'));
     if (f % 60 === 0) process.stderr.write(`\r  frame ${f}/${N}  trees ${drawn}`);
@@ -188,10 +189,41 @@ try {
   if (errors.length) console.log('page errors:', errors.slice(0, 5));
   const ff = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', String(FPS), '-i', '/tmp/treeprobe/f%04d.png',
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', outArg]);
-  console.log(ff.status === 0 ? `wrote ${outArg}` : `ffmpeg failed: ${ff.stderr}`);
   // a contact sheet of three moments for the record
   spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', '/tmp/treeprobe/f0000.png', '-i', '/tmp/treeprobe/f0180.png', '-i', '/tmp/treeprobe/f0330.png',
     '-filter_complex', '[0][1][2]hstack=3', '/tmp/treeprobe/sheet.png']);
+
+  // ── THE JUDGEMENTS. A probe that cannot fail is the disease T2 was
+  // written for; this one's exit code is its subject's.
+  const laid = Object.values(layout).reduce((n, c) => n + c.length, 0);
+  // our own failures ('trees shader: ' / 'trees program: '), GL errors,
+  // and JS errors - NOT Chromium's SwiftShader deprecation notice, which
+  // the first draft's /shader/ matched
+  const realErrors = errors.filter((e) => /trees shader:|trees program:|INVALID_|TypeError|ReferenceError|no webgl2|no json/.test(e));
+  // Did the wind move anything? Measured with a FIXED camera at ONE
+  // instant - the first draft compared frames a second apart and the
+  // orbiting camera swamped the wind. Calm-vs-calm is the noise floor
+  // (zero: same t, same wind, same picture); calm-vs-storm is the wind.
+  const still = async (m) => { await page.evaluate(([mm]) => window.__frame(4.0, [0, 6.5, 22], [0, 7, 0], [mm * 0.95, mm * 0.31]), [m]);
+    return Buffer.from(await page.$eval('#c', (c) => c.toDataURL('image/png').split(',')[1]), 'base64'); };
+  const diff = (A0, B0) => { const A = PNG.sync.read(A0), B = PNG.sync.read(B0); let d = 0;
+    for (let i = 0; i < A.data.length; i += 4) if (Math.abs(A.data[i] - B.data[i]) + Math.abs(A.data[i + 1] - B.data[i + 1]) > 40) d++; return d; };
+  const c1 = await still(4.8), c2 = await still(4.8), st = await still(32);
+  const calm = diff(c1, c2), gale = diff(c1, st);
+  const treePx = (() => { const A = PNG.sync.read(c1); let n = 0; for (let i = 0; i < A.data.length; i += 4) if (!(A.data[i] === 158 && A.data[i + 1] === 173)) n++; return n; })();
+  const checks = [
+    ['the shaders built and the page threw nothing real', realErrors.length === 0, realErrors.slice(0, 2).join(' | ')],
+    ['every stand-in record built a batch', info.built === Object.keys(standIns).length, `${info.built} of ${Object.keys(standIns).length}`],
+    ['every laid-out tree drew', drawn === laid, `${drawn} of ${laid}`],
+    ['the film wrote', ff.status === 0, String(ff.stderr ?? '').slice(0, 80)],
+    ['the storm moves the trees; a calm repeat moves nothing', gale > 0 && calm === 0, `calm-vs-calm ${calm} px, calm-vs-storm ${gale} px`],
+    // and not the whole tree: a crown sways, it does not teleport
+    ['the storm moves part of the tree, not all of it', gale > treePx * 0.02 && gale < treePx * 0.6, `${gale} of ${treePx} tree px`],
+  ];
+  let ok = true;
+  for (const [name, pass, detail] of checks) { ok = ok && pass; console.log(`${pass ? '  PASS' : '  FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); }
+  console.log(`${checks.filter((c) => c[1]).length}/${checks.length} passed; ${outArg}`);
+  process.exitCode = ok ? 0 : 1;
 } finally {
   await browser.close();
   await server.close();

@@ -38,9 +38,20 @@
 // those, and null means "draw it as you always did".
 // ═══════════════════════════════════════════════════════════════════
 
-/** How far a crown leans per unit of wind, relative to the grass's
- *  0.055. A tree is not a blade. */
-export const TREE_LEAN = 0.018;
+/** How far a crown leans per unit of wind.
+ *
+ *  CALIBRATED TO THE SKY'S OWN RANGE, not to the grass's 0.055. The
+ *  sky's wind vector runs 0.0046..0.0308 (wind.js WIND_ROW_CALM +
+ *  strength * WIND_ROW_SPAN); labWindSlider makes that 30..200, and the
+ *  host's windV is the slider * 0.16, so |windV| is 4.8 calm, ~11 on a
+ *  sunny day, 32 in a storm - and push is 0.55..1.3 of it with the
+ *  gust. The lean in world units is push * TREE_LEAN * height, so at
+ *  0.018 a 16 m crown moved 2.9 m on a sunny day and 12 m in a storm:
+ *  a forest in permanent collapse, found by the probe at TR4 when its
+ *  own wind was driven ten times too gently to notice. 0.003 puts a
+ *  sunny day at half a metre and a storm at two - a crown that sways,
+ *  a trunk that stands. */
+export const TREE_LEAN = 0.003;
 
 /** Cards whose normal is this close to vertical are crown-tops: views
  *  Daggerfall never drew. TR2 synthesises them from the sprite. */
