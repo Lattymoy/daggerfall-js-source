@@ -17,7 +17,7 @@ import {
   toggleTransactionInput, parseTransactionAmount,
 } from '../src/systems/banking.js';
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
-import { goldAmount, deductGold, addGold } from '../src/systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold, addGold } from '../src/systems/court.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const R = TRANSACTION_RESULT;
@@ -33,6 +33,11 @@ function win(over = {}) {
   let closed = 0;
   const player = {
     gold: () => goldAmount(entity),
+    // AUDIT 54: bankPurse's OTHER quantity - PlayerEntity.GetGoldAmount
+    // (:1313-1316), coins plus letters of credit. The harness had wired
+    // the coin reader alone, which is why the label pin below could not
+    // see which one the window drew.
+    totalGold: () => totalGoldAmount(entity),
     deductGold: (n) => deductGold(entity, n),
     addGold: (n) => addGold(entity, n),
     wagonGold: () => wagon?.stackCount ?? 0,
@@ -321,6 +326,16 @@ test('B2: the inventory label carries the WAGON in parentheses (:241-246)', () =
   assert.equal(dry.w.labels().inventory, '1000', 'no cart, no parenthesis');
   const cart = win({ wagon: { group: 'Currency', stackCount: 5000 } });
   assert.equal(cart.w.labels().inventory, '1000 (+5000)');
+  // AUDIT 54: and the line itself is `playerEntity.GetGoldAmount()`
+  // (:241) - coins PLUS every letter of credit in the pack
+  // (PlayerEntity.cs:1313-1316), not the bare coin counter. A player
+  // who sold while overloaded holds paper and no coin, and this is the
+  // one screen whose DEPOSIT LETTERS button banks exactly that paper:
+  // it read 0 while offering to take 5000.
+  const paper = win({ entity: { level: 5, goldPieces: 0, items: [letterOfCredit(5000)] } });
+  assert.equal(paper.w.labels().inventory, '5000', 'the letter is money on this label');
+  const both = win({ entity: { level: 5, goldPieces: 250, items: [letterOfCredit(5000)] }, wagon: { group: 'Currency', stackCount: 40 } });
+  assert.equal(both.w.labels().inventory, '5250 (+40)', 'coins + letters, then the cart in parentheses');
   // one label, two purses - which is how a player sees what a deposit
   // can actually reach
   cart.accounts[17].accountGold = 42;

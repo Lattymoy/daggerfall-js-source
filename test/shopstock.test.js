@@ -10,6 +10,7 @@ import {
   calculateTradePrice, regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART, SHOP_BUYS_GROUPS, shopBuysItem,
 } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { OIL_TEMPLATE } from '../src/systems/inventory.js';   // AUDIT 54: the oil-bottle stack clause
 
 test('itemTemplates: the 288-row table + group enum mapping + material values', () => {
   assert.equal(ITEM_TEMPLATES.length, 288);
@@ -123,4 +124,52 @@ test('shopStock: storeBuysItemType verbatim (E3 sell gating)', () => {
   assert.ok(!shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Currency' }));
   // taverns and houses buy nothing
   assert.ok(!shopBuysItem(BUILDING_TYPES.Tavern, { group: 'Weapons' }));
+});
+
+test('AUDIT 54: a shop shelves 5-20 OIL BOTTLES when torches come from items (DaggerfallLoot.cs:246-248)', () => {
+  // StockShopShelf's generic mint arm carries a SECOND statement:
+  //   item = new DaggerfallUnityItem(itemGroup, j);
+  //   if (DaggerfallUnity.Settings.PlayerTorchFromItems &&
+  //       item.IsOfTemplate(ItemGroups.UselessItems2, (int)UselessItems2.Oil))
+  //       item.stackCount = Random.Range(5, 20 + 1);  // Shops stock 5-20 bottles
+  // The port minted the bottle and dropped the clause, so a lantern
+  // player bought singles - and the shelf price is value x stackCount
+  // (itemInfo Worth), so the cost was off by the same factor.
+  const shelf = (on, rolls) => stockShopShelf(
+    { buildingType: BUILDING_TYPES.GeneralStore, quality: 20 }, { level: 1 },
+    { rolls, torchesFromItems: on });
+  const oils = (list) => list.filter((i) => i.group === 'UselessItems2' && i.templateIndex === OIL_TEMPLATE);
+
+  // UselessItems2 rides the General Store pair table at chance 0x32
+  // (and the Pawn Shop's at 0x14), so the arm is reachable at all:
+  assert.equal(oils(shelf(true, () => 0)).length, 1, 'the store really does shelve oil');
+  assert.equal(oils(stockShopShelf({ buildingType: BUILDING_TYPES.PawnShop, quality: 20 }, { level: 1 }, { rolls: () => 0, torchesFromItems: true })).length, 1);
+
+  // SETTING OFF: no stack term at all - the port's absent stackCount
+  // IS DFU's default of 1 (`item.stackCount ?? 1` everywhere it is
+  // read) - and NO ROLL is drawn, which is C#'s own short-circuit:
+  // the day-seeded stream must be identical with the setting off.
+  const off = oils(shelf(false, () => 0));
+  assert.equal(off.length, 1);
+  assert.equal(off[0].stackCount ?? 1, 1, 'one bottle, as before the clause');
+  const draws = (on) => { let n = 0; shelf(on, () => { n++; return 0; }); return n; };
+  assert.equal(draws(true) - draws(false), 1, 'exactly ONE extra draw, and only for the oil');
+
+  // SETTING ON: Random.Range(5, 20 + 1) - 5 at the bottom of the roll,
+  // 20 at the top, INCLUSIVE. The zero stream pins the floor exactly;
+  // the seeded sweep pins both bounds and that nothing escapes them.
+  assert.equal(oils(shelf(true, () => 0))[0].stackCount, 5, 'Range(5, 21) floors at 5');
+  const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296; };
+  let lo = Infinity, hi = -Infinity, rows = 0;
+  for (let sd = 1; sd <= 400; sd++) {
+    for (const it of oils(shelf(true, lcg(sd)))) {
+      rows++;
+      lo = Math.min(lo, it.stackCount);
+      hi = Math.max(hi, it.stackCount);
+      assert.ok(it.stackCount >= 5 && it.stackCount <= 20, `stack ${it.stackCount} out of Range(5, 20 + 1)`);
+    }
+  }
+  assert.ok(rows > 100, 'the sweep really shelved oil');
+  assert.equal(lo, 5, 'the low bound is REACHED');
+  assert.equal(hi, 20, 'and so is 20 - Range(5, 20 + 1) is inclusive of 20');
 });

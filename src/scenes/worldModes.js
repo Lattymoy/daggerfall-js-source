@@ -1556,7 +1556,20 @@ export function createWorldModes(host) {
         reducedRepairCost: repairDiscount,
         skills: skills(),
       }),
-      gold: () => goldAmount(playerEntity),
+      // AUDIT 54: the trade window asks about money TWICE and both
+      // readings are GetGoldAmount - the cost strip's gold label
+      // (DaggerfallTradeWindow.cs:488 `goldLabel.Text =
+      // PlayerEntity.GetGoldAmount().ToString()`) and ShowTradePopup's
+      // refusal (:1116 `... && PlayerEntity.GetGoldAmount() <
+      // tradePrice`), which is coins PLUS letters of credit
+      // (PlayerEntity.cs:1313-1316). This hook feeds both, and it had
+      // been the COINS-ONLY reader: a character holding one 5000-gold
+      // letter and no coin was refused every purchase, repair and
+      // identification while commitTrade's deductGold below would have
+      // paid from that letter - the gate and the payment disagreeing,
+      // exactly what AUDIT 26 F103-F105/F178 fixed at the bank, court
+      // and tavern doors (the note at bankPurse spells it out).
+      gold: () => totalGoldAmount(playerEntity),
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
       cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
       weight: () => ({
@@ -3097,7 +3110,16 @@ export function createWorldModes(host) {
       potionWin = new PotionMakerWindow({
         packItems: () => (playerEntity.items ??= []),
         wagonItems: () => (playerEntity.wagonItems ??= []),
-        gold: () => goldAmount(playerEntity),
+        // AUDIT 54: Refresh's gold label is GetGoldAmount
+        // (DaggerfallPotionMakerWindow.cs:138) - coins PLUS letters of
+        // credit (PlayerEntity.cs:1313-1316), the same reader the item
+        // maker (itemMakerWindow.js), the spellbook and the character
+        // sheet take. The two windows whose labels really are the bare
+        // GoldPieces counter are the spell maker
+        // (DaggerfallSpellMakerWindow.cs:358) and the travel popup
+        // (DaggerfallTravelPopUp.cs:280), and both carry that note;
+        // this one had the coins-only reader without it.
+        gold: () => totalGoldAmount(playerEntity),
         // The recipes the player has LEARNED. Reading a recipe scroll
         // is the useItem arm that fills this; until then a character
         // knows none and the button says so, which is DFU's own

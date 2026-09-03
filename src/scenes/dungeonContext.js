@@ -108,7 +108,7 @@ import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, disp
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // DR1: DoModeAction's spell arm (:954-995)
 import { isEquipped } from '../systems/equip.js';   // DR1: FilterLocalItems' `!item.IsEquipped` (:693)
-import { goldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip
+import { totalGoldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip - AUDIT 54: PlayerEntity.GetGoldAmount (:1313-1316), coins PLUS letters
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
@@ -1677,7 +1677,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // spliceable, because a click TRANSFERS out of it.
       packItems: () => (playerEntity.items ??= []),
       isEquipped: (it) => isEquipped(it),
-      gold: () => goldAmount(playerEntity),
+      // AUDIT 54: goldLabel is GetGoldAmount
+      // (DaggerfallTradeWindow.cs:488) on EVERY mount of this window,
+      // the dungeon's Identify included - coins plus letters of credit
+      // (PlayerEntity.cs:1313-1316). Label-only here, since the spell
+      // arm returns before ShowTradePopup's gold gate (:1116), but the
+      // strip is the same strip and reads the same quantity.
+      gold: () => totalGoldAmount(playerEntity),
       rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],
       cityName: () => '',        // a dungeon has no city name to quote back
       shopName: '',              // ...and no shop; Identify.cs pushes no building

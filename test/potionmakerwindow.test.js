@@ -10,6 +10,15 @@ import {
 import {
   POTION_RECIPES, potionRecipeKey, CAULDRON_CAPACITY,
 } from '../src/systems/potions.js';
+// AUDIT 54: the gold label is GetGoldAmount, not the bare counter
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { letterOfCredit } from '../src/systems/inventory.js';
+import { goldAmount, totalGoldAmount } from '../src/systems/court.js';
+import { FNT_ASCII_START } from '../src/formats/fntFile.js';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const byName = (n) => POTION_RECIPES.find((r) => r.name === n);
 const ing = (t, n = 1) => ({ templateIndex: t, stackCount: n });
@@ -268,4 +277,40 @@ test('M2: the box and the picker swallow input before the window does', () => {
   // ...and now Escape closes
   w.input('Escape');
   assert.equal(w.done, true);
+});
+
+test('AUDIT 54: the mixer\'s gold label is GetGoldAmount - coins PLUS letters of credit (:138)', () => {
+  // Refresh writes `goldLabel.Text = GameManager.Instance.PlayerEntity
+  // .GetGoldAmount().ToString()` (DaggerfallPotionMakerWindow.cs:138),
+  // and GetGoldAmount is `goldPieces + items.GetCreditAmount()`
+  // (PlayerEntity.cs:1313-1316). The two labels in the window set that
+  // really are the bare GoldPieces counter are the spell maker's
+  // (DaggerfallSpellMakerWindow.cs:358) and the travel popup's (:280),
+  // and both carry that note; this one had the coins-only reader and
+  // no note, so a character whose money is all paper read 0 gold.
+  const entity = { goldPieces: 0, items: [letterOfCredit(5000)] };
+  assert.equal(goldAmount(entity), 0, 'the counter alone');
+  assert.equal(totalGoldAmount(entity), 5000, 'GetGoldAmount sees the letter');
+
+  // the DRAW is the observation: a font that records the glyph indices
+  // it is asked for (text.js:88-89) reconstructs the painted string.
+  _setPotionArtForTests({ tex: 'mask00', w: 320, h: 200 });
+  try {
+    const chars = [];
+    const spy = { tex: null, fnt: { fixedHeight: 6, glyphWidth: (gi) => { chars.push(String.fromCharCode(gi + FNT_ASCII_START)); return 4; } } };
+    const { w } = win({ hooks: { gold: () => totalGoldAmount(entity) } });
+    w.draw(recorder(), { width: 320, height: 200 }, spy);
+    assert.match(chars.join(''), /5000/, 'the mixer paints the letter\'s face value');
+  } finally { _setPotionArtForTests(null); }
+
+  // ...and the law lives at the HOST's mount, which is what supplies
+  // the hook - the window paints whatever it is handed.
+  const wm = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
+  const start = wm.indexOf('potionWin = new PotionMakerWindow({');
+  assert.ok(start > 0, 'found the mount');
+  const mount = wm.slice(start, wm.indexOf('\n      });', start));
+  assert.match(mount, /gold: \(\) => totalGoldAmount\(playerEntity\),/,
+    'DaggerfallPotionMakerWindow.cs:138 reads GetGoldAmount');
+  assert.doesNotMatch(mount, /gold: \(\) => goldAmount\(playerEntity\),/,
+    'not the coins-only counter');
 });

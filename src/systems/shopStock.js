@@ -47,6 +47,8 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
+import { OIL_TEMPLATE } from './inventory.js';   // AUDIT 54: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
+import { getBool } from './settings.js';   // AUDIT 54: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
 import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: FactionIDs.The_Merchants, one home
@@ -182,8 +184,15 @@ export const createStockedDate = (date) => ((date?.year ?? 0) * 1000) + dayOfYea
 export const needsRestock = (container, today) => (container?.stockedDate ?? 0) < today;
 
 /** StockShopShelf, verbatim. Returns the item list; every item
- *  carries value = its DaggerfallUnityItem base value. */
-export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random } = {}) {
+ *  carries value = its DaggerfallUnityItem base value.
+ *
+ *  AUDIT 54: `torchesFromItems` ports DaggerfallUnity.Settings.
+ *  PlayerTorchFromItems for the oil-bottle stack clause below. Like
+ *  startingGear.assignStartingGear and playerTorch.tickPlayerTorch,
+ *  the DEFAULT is a point-of-use store read - a parameter with a
+ *  `false` default would have been a switch every caller can forget -
+ *  and an explicit argument still overrides it (the tests do). */
+export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems') } = {}) {
   const items = [];
   // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
   // plain item; AUDIT 18: the shelf minted rows with none, so the
@@ -303,7 +312,24 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         const variant = Math.floor(rolls() * (ITEM_TEMPLATES[templateIndex]?.variants ?? 0));
         add({ group, templateIndex, variant, dye: CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)] });
       } else {
-        add({ group, templateIndex: GROUP_TEMPLATE_INDICES[group][j] });
+        const templateIndex = GROUP_TEMPLATE_INDICES[group][j];
+        const it = { group, templateIndex };
+        // AUDIT 54: DaggerfallLoot.cs:246-248 - the generic mint's
+        // SECOND statement, which the port had dropped:
+        //   if (DaggerfallUnity.Settings.PlayerTorchFromItems &&
+        //       item.IsOfTemplate(ItemGroups.UselessItems2, (int)UselessItems2.Oil))
+        //       item.stackCount = Random.Range(5, 20 + 1);  // Shops stock 5-20 bottles
+        // UselessItems2 rides the General Store (chance 0x32) and Pawn
+        // Shop (0x14) pair tables, so a lit-from-items player was
+        // buying single bottles where classic sells a case - and the
+        // shelf PRICE is value x stackCount, so both the cost and the
+        // lantern fuel were off by that factor. The roll is drawn ONLY
+        // when the setting is on AND the item is oil, which is C#'s
+        // own short-circuit: with the setting off the day-seeded
+        // stream is untouched.
+        if (torchesFromItems && group === 'UselessItems2' && templateIndex === OIL_TEMPLATE)
+          it.stackCount = 5 + Math.floor(rolls() * 16);   // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
+        add(it);
       }
     }
   }
