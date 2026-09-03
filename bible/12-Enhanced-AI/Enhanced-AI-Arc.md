@@ -185,3 +185,26 @@ system; other foes via `syncNavObstacles` and his RVO `avoidHeading`;
 cityGuards and exteriorFoes (AI 5). Nothing here has been seen in a
 real dungeon - the ARENA2-gated Privateer's Hold bake is still Mac's
 to run.
+
+### ENHANCED AI 4a - the floating billboards (2026-09-02, Mac's report)
+
+Mac, with the switch on: "the enemies dont move attack or anything.
+They just animate above the ground."
+
+`buildFoeAt` runs in `buildDungeonContext`'s top-level flow at :861 and
+reads `enhancedNav.world` AT CONSTRUCTION - not through a thunk - while
+AI 4's first cut declared `enhancedNav` at :1289. Every foe hit the
+temporal dead zone inside `buildFoeAt`'s own per-foe try, which is
+built to skip a bad foe and keep the dungeon: no motor, so no gravity,
+no landing, no pursuit, no attack - a floating billboard, animating,
+exactly as reported. V4's sweep had caught the SAME class of bug one
+line earlier (the `??=` at :572) and I fixed that one by moving the
+declaration DOWN - past the mint - which is how the second one was
+made. V4 did not catch it because the read sits inside a function it
+cannot date.
+
+The declaration is beside `foes` now, above every mint; the world is
+made in the lazy block. Pinned by ORDER in the source - the only pin
+available, since no node test can run this host without ARENA2. Which
+is also the honest gap: AI 4 shipped with "nothing here has been seen
+in a real dungeon", and the first thing seeing it found was this.

@@ -531,6 +531,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // verbatim, untouched.
   const foes = [];
   let foeDeps = null;
+  // ENHANCED AI 3b + 4. Declared HERE, above every foe mint, because
+  // buildFoeAt runs in this function's top-level flow and reads
+  // `enhancedNav.world` at construction - not through a thunk. The
+  // first cut declared this 700 lines lower and every dungeon foe hit
+  // the temporal dead zone inside buildFoeAt's per-foe try: no motor,
+  // a floating billboard, no pursuit, no attack. Mac saw exactly that.
+  // V4's sweep did not catch it because the read is inside a function
+  // it cannot date. `world` is filled in the lazy block below, where
+  // makeNavWorld is in scope; a foe-less dungeon leaves it null.
+  const enhancedNav = { requested: false, client: null, chf: null, world: null };
   // S16: the SPELLS.STD map SetEnemyCareer resolves its lists against.
   // It loads after the marker foes are built (the `const spellsByIndex`
   // below), so the load loop runs with this still null and the one-time
@@ -591,6 +601,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // resolvePlayerHit already does.
       runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,
     };
+    // ENHANCED AI 4: the routes' world - the per-frame findPath budget
+    // and the nav epoch, one per host, every foe reading the same one.
+    enhancedNav.world = makeNavWorld();
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
      // BODY00I0 fetch, the ramp derive) must not black-screen the
@@ -1282,13 +1295,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null;
-  // ENHANCED AI 3b, + 4's `world`: the routes' per-frame findPath budget
-  // and the nav epoch, one per host, every foe reading the same one.
-  // Made HERE and not in the lazy block above it, because that block
-  // runs first: V4's sweep caught the first draft reading `enhancedNav`
-  // 700 lines before this declaration - a real ReferenceError, not a
-  // style point. foeDeps is assigned by then and carries makeNavWorld.
-  const enhancedNav = { requested: false, client: null, chf: null, world: foeDeps.makeNavWorld() };
+  // (enhancedNav is declared beside `foes` at the top of this function -
+  // see the note there for why it cannot live here.)
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
