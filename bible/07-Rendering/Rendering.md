@@ -85,7 +85,14 @@ directory by `test/audit18_bible_docs.test.js`:
   around 110, and the storm leaving at 114 -> 102 -> 75 -> 60 -> 42 over
   five. ENHANCED ONLY - the classic sky never reaches the row. Not
   seen: no ARENA2 here, and this lights every wind consumer at once, so
-  it goes to Mac's eyes by the Incident's law.
+  it goes to Mac's eyes by the Incident's law. **WIND2 (AUDIT 55,
+  2026-09-03): two faults in WIND1, both mine.** Every cloud consumer
+  formed its drift as wind x time, so a wind that moved every frame
+  threw the field across the sky at every front - the controller
+  integrates one drift now and every deck reads it. And the ease
+  stretched only while the front's factor was strictly between 0 and
+  1, which is 0 at the change, so the sky turned in fourteen seconds
+  and the wind followed - `inLead()` stretches it for the whole lead.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing

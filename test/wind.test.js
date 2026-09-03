@@ -66,7 +66,12 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);\s*\n\s*weatherRowNow\.wind = windModel\.vector\(\);/);
   // The sky's own ease stretches to the front's lead while a front is
   // up, so the clouds arrive BEHIND the wind - a storm rolling in.
-  assert.match(shared, /const easeDt = fp > 0 && fp < 1 \? dt \* \(WEATHER_EASE_SECONDS \/ \(FRONT_LEAD_MIN \* 60 \/ 12\)\) : dt;/);
+  // WIND2: for the WHOLE lead, from the change. WIND1 stretched it only
+  // while the front's factor was strictly between 0 and 1 - and at the
+  // change the factor is exactly 0, so the sky crossed in fourteen
+  // seconds and the wind rose after it: the storm arrived and the wind
+  // followed. The reverse of what was asked.
+  assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_SECONDS \/ \(FRONT_LEAD_MIN \* 60 \/ 12\)\) : dt;/);
   assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName\);/, 'ticked on the GAME clock');
   // The rows' fixed vectors stay as the classic-sky fallback and are no
   // longer what a consumer sees under the enhanced one.
@@ -77,4 +82,31 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   // ENHANCED ONLY: the model lives inside the controller and the classic
   // sky never reaches the row.
   assert.doesNotMatch(read('src/render/skyRenderer.js'), /windModel|createWindModel/);
+});
+
+test('WIND2: the clouds move by an INTEGRATED drift, and the wind leads the sky for the whole lead', () => {
+  // With a fixed per-weather wind, wind * time and an integrated drift
+  // were the same number. With WIND1's wind changing every frame
+  // through a three-hour front, wind * time made the cloud field's
+  // offset jump by (delta wind) * (seconds since the sky began): the
+  // clouds STREAMED across the sky at every front. Nobody saw it,
+  // because nobody has seen WIND1.
+  const m = createWindModel({ seed: 3 });
+  m.tick(1000, 'sunny');
+  assert.equal(m.inLead(), false, 'no front, no lead');
+  m.tick(1440, 'thunder');
+  assert.equal(m.inLead(), true, 'from the change itself...');
+  assert.equal(m.frontProgress(), 0, '...even while the factor is still 0 - the case WIND1 missed');
+  m.tick(1440 + FRONT_LEAD_MIN - 1, 'thunder');
+  assert.equal(m.inLead(), true);
+  m.tick(1440 + FRONT_LEAD_MIN, 'thunder');
+  assert.equal(m.inLead(), false, 'and not once it has arrived');
+  const shared = read('src/scenes/shared.js');
+  assert.match(shared, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt;/, 'the drift is integrated ONCE, where the wind and the clock meet');
+  assert.match(shared, /drift: driftXZ,/, 'and handed to the sky state');
+  const sky = read('src/render/enhancedSky.js');
+  assert.doesNotMatch(sky, /wind \* uTime|w\[0\] \* time|wind\[0\] \* time/, 'no deck multiplies wind by time any more');
+  assert.match(sky, /drift: state\.drift \?\? \[0, 0\],/, 'and the ground\'s deck carries the drift');
+  assert.match(read('src/render/renderer.js'), /\+ uCloudDrift;/);
+  assert.doesNotMatch(read('src/render/renderer.js'), /uCloudWind \* uCloudTime/);
 });

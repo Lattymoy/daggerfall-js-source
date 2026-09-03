@@ -298,9 +298,10 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
 test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither on the gradient', () => {
   const fs = read('src/render/enhancedSky.js');
   // Two decks: a high one and a low one, the low occluding the high.
-  assert.match(fs, /vec2 deck\(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias\)/);
-  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uWind \* 0\.55,/, 'the high deck is smaller and slower');
-  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uWind,/, 'the low one larger and faster - so they move against each other');
+  assert.match(fs, /vec2 deck\(vec3 dir, float scale, vec2 drift, float cover, float soft, float bias\)/);
+  // WIND2: the decks move by an integrated DRIFT, not wind * time.
+  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uDrift \* 0\.55,/, 'the high deck is smaller and slower');
+  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uDrift,/, 'the low one larger and faster - so they move against each other');
   assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/, 'the low deck covers the high one where it is');
   // Lit by the sun: a rim toward it, a darker belly away from it.
   assert.match(fs, /float sunAz = max\(dot\(dir, uSunDir\), 0\.0\);/);
@@ -339,10 +340,12 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   // the sun's own direction. A drift here is a sun that dims when the
   // sky says it should not, so the two texts are pinned against each other.
   const fs = read('src/render/enhancedSky.js');
-  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uWind \* 0\.55, uCloudCover \* 0\.75, uCloudSoft \* 1\.5, 0\.0\);/);
-  assert.match(fs, /const hi = deckCover\(d, 0\.95, \[w\[0\] \* 0\.55, w\[1\] \* 0\.55\], state\.cloudCover \* 0\.75, state\.cloudSoft \* 1\.5, t\);/);
-  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uWind, uCloudCover, uCloudSoft, 0\.0\);/);
-  assert.match(fs, /const lo = deckCover\(d, 1\.9, w, state\.cloudCover, state\.cloudSoft, t\);/);
+  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uDrift \* 0\.55, uCloudCover \* 0\.75, uCloudSoft \* 1\.5, 0\.0\);/);
+  // WIND2: the JS twin reads the same integrated drift the shader does -
+  // the pair still cannot disagree, which is this pin's whole point.
+  assert.match(fs, /const hi = deckCover\(d, 0\.95, \[dr\[0\] \* 0\.55, dr\[1\] \* 0\.55\], state\.cloudCover \* 0\.75, state\.cloudSoft \* 1\.5\);/);
+  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uDrift, uCloudCover, uCloudSoft, 0\.0\);/);
+  assert.match(fs, /const lo = deckCover\(d, 1\.9, dr, state\.cloudCover, state\.cloudSoft\);/);
   assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/);
   assert.match(fs, /clamp01\(lo \+ hi \* \(1 - lo\) \* 0\.7\)/);
   // The JS noise is the GLSL noise: same magic numbers, same octaves.
@@ -444,7 +447,7 @@ test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has 
   const { paletteAt, SKY_KEYS } = await import('../src/render/enhancedSky.js');
   const fs = read('src/render/enhancedSky.js');
   // F1: the projection is capped, or the horizon has no cloud
-  assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ wind \* uTime;/);
+  assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ drift;/);
   // F2: the star field takes no position from a cell id
   const stars = fs.slice(fs.indexOf('float stars('), fs.indexOf('float stars(') + 3200)
     .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
@@ -479,7 +482,7 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   assert.ok(!/uShadowAmt/.test(r.slice(fi, fj)), 'and the mesh shader is untouched');
   // ONE FIELD: the sky's own hash, noise and fbm, offsets and all
   assert.match(r, /float tfbm\(vec2 p\)\{ float v=0\.0,a=0\.5; for\(int i=0;i<5;i\+\+\)\{ v\+=a\*tvn\(p\); p=p\*2\.03\+vec2\(17\.1,9\.7\); a\*=0\.5; \} return v; \}/);
-  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudWind \* uCloudTime;/,
+  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudDrift;/,
     'the sun\u2019s own ray picks the point on the deck');
   // OFF is free and cannot change classic
   assert.match(r, /this\._cloudShadow = null;/);
