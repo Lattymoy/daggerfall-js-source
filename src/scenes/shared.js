@@ -11,7 +11,8 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_SECONDS } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
@@ -166,6 +167,7 @@ export function createSkyController(gl, params) {
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  const windModel = createWindModel();   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it)
   let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
@@ -272,6 +274,11 @@ export function createSkyController(gl, params) {
     wind() {
       return weatherRowNow ? weatherRowNow.wind : null;
     },
+    /** WIND1: the wind's gust multiplier now, shaped by its strength. */
+    gustAt(tsec) { return windModel.gust(tsec); },
+    /** WIND1: 0..1 - the front's height, for anything that wants to
+     *  arrive behind the wind. */
+    frontProgress() { return windModel.frontProgress(); },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a
@@ -307,7 +314,25 @@ export function createSkyController(gl, params) {
         const want = weatherRow(weatherName);
         const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
         weatherAt = seconds;
-        weatherRowNow = easeWeather(weatherRowNow, want, dt);
+        // WIND1: THE WIND IS ITS OWN STATE, and the sky's row takes it
+        // rather than carrying a fixed vector per weather. The model
+        // ticks on the game clock; a weather change is a FRONT and the
+        // wind leads it - so the clouds' drift below, the ground's
+        // shadows, the grass, the rain and the mills all rise with the
+        // wind before the sky finishes turning, and fall after it
+        // clears. One seam (WM2b), one vector, everything together.
+        //
+        // And the SKY'S OWN EASE follows the front: a mild change still
+        // crosses in the old fourteen seconds, but a violent arrival
+        // takes the front's lead to build, so from the ground the wind
+        // gets up first and the sky darkens behind it - the storm
+        // rolling in. `dt` is stretched or shrunk to make the ease's
+        // own walk land on the front's clock.
+        windModel.tick(extra?.classicMinutes ?? 0, weatherName);
+        const fp = windModel.frontProgress();
+        const easeDt = fp > 0 && fp < 1 ? dt * (WEATHER_EASE_SECONDS / (FRONT_LEAD_MIN * 60 / 12)) : dt;
+        weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
+        weatherRowNow.wind = windModel.vector();
         enhancedSky.setState(skyState({
           minuteOfDay,
           weather: weatherName,
