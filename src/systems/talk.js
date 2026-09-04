@@ -299,7 +299,7 @@ export function getReactionToPlayer(faction, player) {
  *  Currency stack), 33% find nothing valuable (random text 8999);
  *  failure sets CrimeCommitted = Pickpocketing AND spawns the watch -
  *  G1 shipped that half, townTalk.js:512's `if (!r.success) onCrime?.()`
- *  into the single SpawnCityGuards entry (world.js:1594 _spawnGuards,
+ *  into the single SpawnCityGuards entry (world.js:1595 _spawnGuards,
  *  exterior.js the same seam), which is PlayerActivate.cs:1656-1658's
  *  two lines in order. Enemy pickpocketing (PlayerActivate.cs:830-838)
  *  has no host arm yet: formulas.js's CalculatePickpocketingChance

@@ -621,7 +621,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:1499 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:1510 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven

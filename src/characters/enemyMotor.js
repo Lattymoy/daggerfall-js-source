@@ -1512,7 +1512,7 @@ export class EnemyAI {
         if (waterY !== null && center < waterY) {
           let my = myRaw;
           if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
-          this.collider.move(this.feet, mx, my, mz);
+          this.collider.move(this.feet, mx, my, mz, this.height);
         }
       } else if (this.flies || this.levitating) {
         // :293-298 - `else if (flies || IsLevitating) controller.Move(...)`,
@@ -1524,12 +1524,12 @@ export class EnemyAI {
         // knocked-back levitator sails and does not drop.
         if (this.flies && !this.levitating) this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
         else this.velY = 0;   // no gravity arm claims a levitator: the port's accumulator must not carry one either
-        const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
+        const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz, this.height);
         if (r.grounded) this.velY = 0;
         this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
       } else {
         this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
-        const r = this.collider.move(this.feet, mx, this.velY * dt, mz);
+        const r = this.collider.move(this.feet, mx, this.velY * dt, mz, this.height);
         if (r.grounded) this.velY = 0;
         this._trackFall(r.grounded);
       }
@@ -1557,7 +1557,7 @@ export class EnemyAI {
       if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); return; }
       let my = d[1] * this.speed * dt;
       if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
-      this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt);
+      this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt, this.height);
       return;
     }
 
@@ -1609,7 +1609,7 @@ export class EnemyAI {
       this._obstacleCheck(d);
       this._fallCheck(d);
       if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); this.lastGroundedY = this.feet[1]; return; }
-      this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt);
+      this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt, this.height);
       this.lastGroundedY = this.feet[1];   // the altitude-control anchor, post-move
       return;
     }
@@ -1650,7 +1650,7 @@ export class EnemyAI {
         dzm = dir2d[2] * this.speed * dt;
       }
     }
-    const r = this.collider.move(this.feet, dxm, dy, dzm);
+    const r = this.collider.move(this.feet, dxm, dy, dzm, this.height);
     if (r.grounded) this.velY = 0;
     this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;

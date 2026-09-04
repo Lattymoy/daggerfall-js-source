@@ -7,6 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { INTERIOR_CLEAR, SKY_CLEAR } from '../render/renderer.js';
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -2195,7 +2196,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1905 mounts the same one, gated on
+  // and dungeonContext.js:1916 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4092
@@ -2283,7 +2284,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:237-242) never looks the record up in `foes`, and
+    // (exteriorFoes.js:247-252) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4457,7 +4458,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:184, "a right-click on a window is the window's...
+  // (dungeon.js:186, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5957,7 +5958,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:84, so the
+  // only reader of `load` in the whole tree is dungeon.js:85, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6289,7 +6290,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:468's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:470's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6703,6 +6704,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setClearColor((modes?.mode ?? 'exterior') !== 'exterior' ? INTERIOR_CLEAR : SKY_CLEAR);   // INCIDENT 2026-09-04: CameraClearManager.cs:51-57 - inside clears to BLACK, outside to the sky
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);

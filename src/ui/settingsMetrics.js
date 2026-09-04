@@ -4,7 +4,7 @@
 // That function floors to the largest integer scale that fits a whole
 // 320x200 page (nativePanel.js:28-31), which on every phone in either
 // orientation is s=1 - verified at 390x844, 844x390, 393x851, 375x667
-// and 360x640. Since renderer.js:1060-1064 sets canvas.width from
+// and 360x640. Since renderer.js:1067-1071 sets canvas.width from
 // clientWidth with NO devicePixelRatio, s=1 means SEVEN CSS PIXELS of
 // text: half of what the launcher's hardcoded s=2 already showed. A
 // readability pass that halves the type on the device that needs it

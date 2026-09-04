@@ -298,7 +298,7 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/scenes/exterior.js:1407` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
+- `src/scenes/exterior.js:1408` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/systems/inputActions.js:543` - STILL FLAGGED:
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
@@ -815,7 +815,7 @@ emit a negative zero.
 **2026-08-18 - AUDIT 17k, the parity pass over U16 + U17 + U18, and
 THE FIST CRASH.** Mac's report first: attacking with a fist crashed
 the game. Root-caused live (tools/fistProbe.mjs reproduced it at
-`dungeonContext.js:1499` before the fix): bare hands are a NULL weapon
+`dungeonContext.js:1510` before the fix): bare hands are a NULL weapon
 since U8h bound the rig to `equip.slots[RightHand]` - and the DEFAULT
 state, because starting weapons land in the bag unequipped (DFU adds
 them via AddItem, never equips) - and the DUNGEON host read

@@ -38,6 +38,7 @@ import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemy
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { enemyControllerHeight, idleSpriteHeight, spriteOriginY } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats)
 import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
@@ -141,10 +142,27 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // injectable roll), humans only; monsters read the male texture.
       const gender = MobileUnit.resolveGender(forcedGender ?? 'unspecified', basics);
       const behaviour = basics.behaviour ?? 'General';
+      const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+      const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the world it was built
+      // for is gone, and pushing it now would land a departure-point
+      // foe in the destination pixel beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; the caller already reads null as "no foe stood".
+      if (gen !== epoch) return null;
+      // INCIDENT 2026-09-04 (ceiling bats): the texture is fetched
+      // BEFORE the AI stands because the capsule height reads the idle
+      // sprite (SetupDemoEnemy.cs:103-115), and a FLYER's spawn point
+      // is its sprite CENTRE (FinalizeFoe's +1.5 lifts the transform,
+      // CreateFoe.cs:341-359; CreateEnemy skips the ground align for
+      // Flying, GameObjectHelper.cs:1227) - the motor keeps FEET.
+      const idleH = idleSpriteHeight(tex);
+      if (behaviour === 'Flying') pending.feet[1] = pos[1] - idleH / 2;
       const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
+        height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
@@ -165,17 +183,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const sbi = spellsByIndex?.();
       if (sbi) assignEnemySpells(entity, sbi);
       const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
-      const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
-      const tex = await getTexture(archive);
-      // AUDIT-39r: a sweep crossed this spawn - the world it was built
-      // for is gone, and pushing it now would land a departure-point
-      // foe in the destination pixel beside restoreWorld's copies.
-      // Nothing is allocated yet, so dropping the record is the whole
-      // cancel; the caller already reads null as "no foe stood".
-      if (gen !== epoch) return null;
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
+      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
       // MT-ii: THE RECORD IS THE CANDIDATE. getTargets reads `ai` and
       // `entity` off it, and its identity IS the target handle (the
@@ -791,7 +801,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const sz = scaledBillboardSize(f.tex.getSize(o.record), f.tex.getScale(o.record));
       f.batch.record = rkey;
       f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
-      f.batch.origin = f.ai.feet;
+      // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across
+      // records (DaggerfallMobileUnit.cs:407-410); a walker its feet.
+      const _bh = f.mobile.basics.behaviour ?? 'General';
+      if ((_bh === 'Flying' || _bh === 'Aquatic') && f.idleH !== undefined) {
+        const org = f._origin ?? (f._origin = [0, 0, 0]);
+        org[0] = f.ai.feet[0]; org[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); org[2] = f.ai.feet[2];
+        f.batch.origin = org;
+      } else f.batch.origin = f.ai.feet;
       out.push(f.batch);
     }
     return [...out, ...corpseBatches.map((c) => c.batch)];

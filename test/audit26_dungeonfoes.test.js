@@ -159,7 +159,7 @@ test('F050: every dungeon foe gets its spell list at BUILD time (EnemyEntity.cs:
 // =====================================================================
 
 test('F051: the ?dungeon fly-cam is gated on the OVERLAY, not on the imported input helper', () => {
-  // `held` at dungeon.js:33 is the input helper - a function, always
+  // `held` at dungeon.js:34 is the input helper - a function, always
   // truthy - so `} else if (!held) {` was a branch that could not run:
   // with ?dungeon&fly or ?shot, WASD never moved the camera. The gate
   // was a local overlay boolean once, renamed overlayHeld at :353.
