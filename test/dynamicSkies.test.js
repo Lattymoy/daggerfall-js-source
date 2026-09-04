@@ -28,7 +28,7 @@ import {
   LightningFlash, pixelSnowSettings,
 } from '../src/systems/dynamicSkies.js';
 import { DynamicSkies } from '../src/systems/dynamicSkiesRuntime.js';
-import { FS, COLOR_PROPERTIES, FLOAT_PROPERTIES } from '../src/render/dynamicSkiesRenderer.js';
+import { FS, COLOR_PROPERTIES, FLOAT_PROPERTIES, UNIFORM_NAMES } from '../src/render/dynamicSkiesRenderer.js';
 import { LUNAR_PHASES, lunarPhase, dateFromClassicMinutes, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { evaluateCurve, daylightScale, setLightCurve, sunDirection } from '../src/world/worldClock.js';
 import { FOG_SETTINGS, fogForWeather, fogFactor } from '../src/world/weather.js';
@@ -322,8 +322,14 @@ test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomis
   assert.ok(near(on.x, 10) && near(on.y, 20 + 30) && near(on.z, 30), 'over the player: (-10..10, 20..40, -10..10) at the midpoint');
   assert.ok(near(on.range, 750), 'range 500..1000');
   assert.ok(near(on.color[0], 0.9 * 1.0), 'colour 0.8..1 x intensity 0.5..1.5');
-  assert.ok(f.tick(0.1), 'still on at 0.15 s');
-  assert.equal(f.tick(0.1), null, 'off after 0.2 s');
+  assert.ok(f.tick(0.1), 'still on at 0.1 s (the entering frame is not charged)');
+  assert.ok(f.tick(0.09), 'still on at 0.19 s');
+  assert.equal(f.tick(0.02), null, 'off after 0.2 s');
+  // a hitch: the frame that starts a flash is lit whatever its dt
+  const hitch = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
+  hitch.startFlash([0, 0, 0]);
+  assert.ok(hitch.tick(0.25), 'a 0.25 s frame still shows the flash it started');
+  assert.equal(hitch.tick(0.25), null);
   // a miss: Random.value >= 0.5
   const g = new LightningFlash(seq([0.7]));
   assert.equal(g.startFlash([0, 0, 0]), false);
@@ -331,8 +337,8 @@ test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomis
   // a double flash: two halves of 0.1 with a 0.1 gap
   const d = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
   assert.equal(d.startFlash([0, 0, 0]), true);
-  assert.ok(d.tick(0.05)); assert.equal(d.tick(0.1), null, 'first half over at 0.1'); assert.equal(d.tick(0.04), null, 'the gap');
-  assert.ok(d.tick(0.02), 'the second half, at 0.2'); assert.equal(d.tick(0.1), null);
+  assert.ok(d.tick(0.05), 'lit on the entering frame'); assert.ok(d.tick(0.05), 'still lit at 0.05'); assert.equal(d.tick(0.05), null, 'first half over at 0.1');
+  assert.equal(d.tick(0.04), null, 'the gap'); assert.ok(d.tick(0.06), 'the second half, at the gap\u2019s end'); assert.equal(d.tick(0.1), null);
   // stopAll: the interior teardown
   const h = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
   h.startFlash([0, 0, 0]); h.tick(0.01); h.stopAll();
@@ -431,6 +437,15 @@ test('DS1 shader: every property the mod declares is a uniform of the same name,
   assert.equal(new Set(COLOR_PROPERTIES).size, COLOR_PROPERTIES.length);
   assert.equal(new Set(FLOAT_PROPERTIES).size, FLOAT_PROPERTIES.length);
   assert.ok(!FLOAT_PROPERTIES.includes('_CloudTopColorBoost'), 'the top boost is the float3 quirk, uploaded apart');
+  // ...and every uniform the GLSL declares has its location fetched (the
+  // DS1 review: `_CloudTopColorBoost` was read by the shader and fetched
+  // by nobody, so its upload was a silent no-op)
+  const fetched = new Set(UNIFORM_NAMES);
+  for (const u of glslUniforms) assert.ok(fetched.has(u), `${u} is declared by the FS and never fetched`);
+  assert.equal(new Set(UNIFORM_NAMES).size, UNIFORM_NAMES.length);
+  // the horizon: below it `vert` runs at the mesh's vertex rows, never a hair under the line
+  assert.match(FS, /V2F IN = vertAsMesh\(worldPos\);/);
+  assert.match(FS, /#define MESH_ROW 0\.0625/);
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────

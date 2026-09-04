@@ -144,6 +144,43 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/skin/heads/breton-7.png', 'OURS - baked from our own generated head turnaround'],
   ['public/skin/heads/breton-8.png', 'OURS - baked from our own generated head turnaround'],
   ['public/skin/heads/breton-9.png', 'OURS - baked from our own generated head turnaround'],
+  // DYNAMIC SKIES (DS1, vendor/dynamic-skies/Textures/). The first rows on
+  // this list that are NOT ours: nineteen textures of a third-party mod,
+  // vendored whole with its authors' permission, and PUBLISHED - Vite emits
+  // them into the build through import.meta.glob, so they are as public as
+  // public/. The question this list asks - did the pixels come from ARENA2? -
+  // has two answers here. Ten are the mod's own art beyond doubt (a normal
+  // map, pixel-art moons, masks, noise, a snowflake, a flat black field).
+  // Nine cannot be settled from a container with no ARENA2 in it: the
+  // `CdM*` cloud sheets, which the mod's Nexus page says were "created with
+  // Daggerfall's vanilla skies and palettes", and the `VanillaStars` pair.
+  // The evidence for re-creation rather than export is recorded in the
+  // vendor README (2048x2048 star fields and 512x512 grayscale cloud
+  // cutouts with 500-1600 colours, where the classic files are 320x200 /
+  // 512x220 and paletted to 256), and it is evidence, not proof. The
+  // windmills precedent (vendor/windmills-kamer/README.md) left textures
+  // OUT when they were provably classic exports; these are carried on the
+  // mod's permission as it ships them, with the question flagged for Mac.
+  // Dropping a family is a preset edit (the file names), not a code change.
+  ['vendor/dynamic-skies/Textures/CdMCloudsNormal.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own normal map (Unity import of its grayscale source)"],
+  ['vendor/dynamic-skies/Textures/DefaultStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own star field"],
+  ['vendor/dynamic-skies/Textures/DefaultStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle mask"],
+  ['vendor/dynamic-skies/Textures/DefaultStarsTwinkleNoise.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle noise"],
+  ['vendor/dynamic-skies/Textures/NLStarsBlack.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; a single flat black texel field"],
+  ['vendor/dynamic-skies/Textures/NLStarsThiefTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle mask"],
+  ['vendor/dynamic-skies/Textures/NLstarsHighlight.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own highlight sheet"],
+  ['vendor/dynamic-skies/Textures/PixelEnceladus.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own pixel-art moon"],
+  ['vendor/dynamic-skies/Textures/PixelMars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own pixel-art moon"],
+  ['vendor/dynamic-skies/Textures/PixelSnow.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; a two-colour 64x64 snowflake"],
+  ['vendor/dynamic-skies/Textures/CdMCloudy.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMOvercast2.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMRain.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMSnow.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMSunny.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMSunny2.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/CdMThunder.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/VanillaStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
+  ['vendor/dynamic-skies/Textures/VanillaStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {

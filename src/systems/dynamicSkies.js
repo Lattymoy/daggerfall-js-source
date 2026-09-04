@@ -773,7 +773,13 @@ export class LightningFlash {
    *  it is on, else null. */
   tick(dt) {
     for (const r of this._routines) {
-      if (r.step === -1) { r.step = 0; r.t = 0; this._enter(r); }
+      // The frame that starts a routine turns the light on and is NOT
+      // charged against the duration: Unity's `yield return new
+      // WaitForSeconds(duration)` starts counting at the yield and cannot
+      // resume before the next frame, so a flash is always rendered for
+      // at least one frame (the DS1 review: a hitch frame's dt used to
+      // switch the light on and off inside one call - no flash at all).
+      if (r.step === -1) { r.step = 0; r.t = 0; this._enter(r); continue; }
       r.t += dt;
       while (r.step < r.steps.length && r.t >= r.steps[r.step][1]) {
         r.t -= r.steps[r.step][1];

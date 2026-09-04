@@ -243,7 +243,10 @@ void main(){
   // projected height as a fraction of the viewport, clamped; the quad is
   // square on the screen and does not turn (startRotation 0, no rotation
   // over lifetime)
-  float frac = clamp(0.5 * sz * uProjY / max(c.w, 1e-4), uMinSize, uMaxSize);
+  // the two sliders are independent (100..800 each), so the pair is
+  // ordered first - GLSL's clamp is undefined for lo > hi
+  float lo = min(uMinSize, uMaxSize), hi = max(uMinSize, uMaxSize);
+  float frac = clamp(0.5 * sz * uProjY / max(c.w, 1e-4), lo, hi);
   float h = frac * 2.0;
   c.xy += vec2((aCorner.x-0.5) * h / uAspect, (aCorner.y-0.5) * h) * c.w;
   vUv = aCorner;

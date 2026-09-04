@@ -52,9 +52,11 @@ Exactly what the mod's runtime reads, as the shipped bundle carries it:
 - The C# (`BLBSkybox.cs`, `Scripts/*.cs`): ported to
   `src/systems/dynamicSkies.js` and `src/systems/dynamicSkiesRuntime.js`,
   cited by file and line, as DFU's own C# is.
-- The thirteen textures no shipped preset names (CdMClouds, CdMOvercast,
-  CdMPixelClouds, CdMPixelClouds2, DefaultMars, DefaultEnceladus,
-  NLStarsThief, NLStarsThiefMask and the HD/Pixel variants), the
+- The eight textures in the shipped bundle that no preset names
+  (CdMClouds, CdMOvercast, CdMPixelClouds, CdMPixelClouds2, DefaultMars,
+  DefaultEnceladus, NLStarsThief, NLStarsThiefMask) and the ten more in the
+  repository the manifest never ships (the HD and Pixel variants,
+  DefaultStarsBlack, VanillaStarsHighlight) - eighteen in all; the
   `Resources/*Night.json` presets, the two alternative skybox materials
   (NoSun, Simple - unreachable, the material suffix is commented out),
   the sun-shafts scripts and shaders (not wired by the mod), the
@@ -75,6 +77,24 @@ from here (no ARENA2 in this container); they are carried on the
 authors' permission as the mod ships them, and the question is Mac's to
 rule on. Swapping a family out is a preset edit (the file names), not
 a code change.
+
+The evidence, for what it is worth (measured from the PNGs here, so it
+is evidence and not proof): `VanillaStars` and its twinkle mask are
+2048x2048 fields of single-pixel stars over a flat navy ground, with
+1154 and 359 colours; the `CdM*` sheets are 512x512 (Overcast2 is
+1024x1024) grayscale cloud CUTOUTS - two alpha levels - with 217 to
+1670 colours each. The classic files are 320x200 (`NITE??I0.IMG`) and
+512x220 (`SKY??.DAT`), paletted to 256 colours, and carry no alpha. A
+resampled, greyscaled cutout of a classic frame could still produce
+those numbers, which is why the question stays open.
+
+Every texture here has a row on the doctrine allow-list in
+`test/doctrine.test.js` (the pin that fails on any tracked raster it
+cannot explain): ten rows say "the mod's own art", the nine above say
+"PROVENANCE OPEN, Mac's ruling pending". The windmills precedent
+(`vendor/windmills-kamer/README.md`) left textures OUT when they were
+provably Daggerfall's own art exported to PNG; these are neither
+provably that nor replaceable without changing what the player sees.
 
 ## How it reaches the game
 

@@ -41,10 +41,19 @@ WeatherType), five fog presets, a light curve, and a lightning script.
 
 ## Three translations, said out loud
 
-1. **Per pixel, not per vertex.** Unity runs the skybox's `vert` on a
-   tessellated mesh and interpolates skyColor/sunColor/fogColor; here
-   `vert` runs per pixel on the same eye ray - the limit of the
-   tessellation, with no interpolation artefacts across the horizon.
+1. **Per pixel above the horizon, the mesh's rows below it.** Unity
+   runs the skybox's `vert` on a tessellated mesh and interpolates
+   skyColor/sunColor/fogColor; here `vert` runs per pixel on the same
+   eye ray above the horizon - the limit of the tessellation. Below it
+   that limit is wrong: the ground arm's `far` is at its maximum for a
+   ray a hair under the line, where no vertex sits, and a per-pixel
+   `vert` painted a bright rim along the whole horizon the mod never
+   draws (the DS1 review measured a white row under the horizon at
+   dawn). So below the horizon the pass evaluates `vert` at the two
+   vertex rows the ray falls between (MESH_ROW = 1/16, the first row at
+   y = 0, which takes the sky arm) and interpolates, as a triangle
+   would. Unity's own skybox mesh is not in the tree; the sixteen-row
+   hemisphere is the recorded equivalence.
 2. **Linear colour space.** DFU renders LINEAR
    (`ProjectSettings.asset` m_ActiveColorSpace 1). So: sRGB textures are
    `SRGB8_ALPHA8` (the GPU decodes before filtering, as Unity's does),
@@ -72,9 +81,11 @@ WeatherType), five fog presets, a light curve, and a lightning script.
   the day and wraps at midnight (the clouds jump with it - the mod's).
 - `AmbientEffectsPlayer.RaiseOnPlayEffectEvent` fires from `PlayEffects`
   after every one-shot (both arms); the cemetery layer never raises it.
-- `Snow_Particles.prefab`'s renderer: minParticleSize 0, max 0.2; the
-  mod's defaults (100 and 300, /100000) hold a flake between one and
-  three pixels of a 1080p frame.
+- The snow renderer the mod edits is PlayerAdvanced.prefab's
+  Snow_Particles INSTANCE, whose override is minParticleSize 0 /
+  maxParticleSize 0.075 (the standalone Snow_Particles.prefab says
+  0.2); the mod's defaults (100 and 300, /100000) replace both and
+  hold a flake between one and three pixels of a 1080p frame.
 
 ## Quirks kept ("1:1" is the mod as it ships)
 
@@ -154,8 +165,9 @@ the pixel snow, and nothing else. Interiors and dungeons are untouched
 
 ## Not carried, and one question
 
-Not carried: the thirteen textures no shipped preset names, the
-`*Night.json` presets, the NoSun/Simple materials (unreachable), the
+Not carried: the eight bundle textures no shipped preset names and the
+ten more the manifest never ships (eighteen in all), the `*Night.json`
+presets, the NoSun/Simple materials (unreachable), the
 sun-shafts scripts (not wired by the mod), the preset-mod door
 (FindPresetMod - no other mod to find), the compiled `.dll`, the C#
 (ported and cited instead).
@@ -168,4 +180,12 @@ pixels cannot be settled here (no ARENA2 in this container). The
 doctrine's rule is that a render of game data is game data and that
 Bethesda's art is Bethesda's to waive; they are carried on the authors'
 permission as the mod ships them, and swapping a family out is a
-preset edit, not a code change. Recorded in the vendor README too.
+preset edit, not a code change. Recorded in the vendor README too,
+with the measured evidence (2048x2048 star fields, 512x512 grayscale
+cloud cutouts with hundreds of colours, against 320x200 / 512x220
+paletted classic frames - suggestive of re-creation, not proof). All
+nineteen textures carry rows on `test/doctrine.test.js`'s allow-list,
+the first rows there that are not OURS: ten "the mod's own art", nine
+"PROVENANCE OPEN, Mac's ruling pending". The windmills precedent left
+textures out when they were provably classic exports; these are not
+provably that, and are not replaceable without changing the sky.

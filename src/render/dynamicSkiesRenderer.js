@@ -8,9 +8,19 @@
 // THREE TRANSLATIONS, said out loud:
 //   1. Unity draws a skybox as a tessellated mesh and runs `vert` per
 //      vertex, interpolating skyColor/sunColor/fogColor across each
-//      triangle; here `vert` runs per PIXEL on the same eye ray. That
-//      is the limit of Unity's tessellation, and the only difference
-//      is the absence of interpolation artefacts across the horizon.
+//      triangle; here `vert` runs per PIXEL on the same eye ray ABOVE
+//      the horizon, which is the limit of the tessellation. BELOW it
+//      the limit is wrong: the ground arm's `far = -kCameraHeight /
+//      min(-0.001, y)` is at its 0.1 maximum for rays a hair under the
+//      horizon, where no mesh vertex ever sits (a vertex at y = 0 takes
+//      the sky arm), so a per-pixel `vert` painted a bright rim along
+//      the whole horizon that the shipped mod does not draw (the review
+//      of DS1 measured it: a full-white row under the horizon at dawn).
+//      So below the horizon the pass does what the mesh does: it
+//      evaluates `vert` at the two vertex rows the ray falls between
+//      (MESH_ROW apart, the first at y = 0) and interpolates. Unity's
+//      own skybox mesh is not in the tree; MESH_ROW is a sixteen-row
+//      hemisphere, recorded as the equivalence.
 //   2. Colour space. DFU renders LINEAR (ProjectSettings
 //      m_ActiveColorSpace 1): sRGB textures are linearised on sample
 //      (SRGB8_ALPHA8 here - the GPU's own decode, before filtering, as
@@ -73,6 +83,14 @@ export const FLOAT_PROPERTIES = Object.freeze([
   '_SecundaMaxSize', '_SecundaMinSize', '_SecundaOrbitSpeed', '_SecundaOrbitOffset', '_SecundaSemiMajAxis', '_SecundaSemiMinAxis',
 ]);
 const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
+/** Every uniform the pass fetches a location for - which must be every
+ *  uniform the GLSL declares (the DS1 review found `_CloudTopColorBoost`
+ *  read by the shader and fetched by nobody, so its upload was a silent
+ *  no-op and the mod's red-only boost never happened). Pinned against
+ *  the FS's own declarations in test/dynamicSkies.test.js. */
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', '_WorldSpaceLightPos0', '_LightColor0', 'uFogColor', 'uFogMix',
+  '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
+  ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
 
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -374,6 +392,30 @@ V2F vert(vec3 eyeRay) {
   return OUT;
 }
 
+// ── the mesh's vertex rows below the horizon (translation 1) ────
+#define MESH_ROW 0.0625
+vec3 rayAtHeight(vec3 dir, float y) {
+  float h = sqrt(max(1.0 - y * y, 0.0));
+  float l = length(dir.xz);
+  vec2 xz = l > 1e-6 ? dir.xz / l * h : vec2(h, 0.0);
+  return vec3(xz.x, y, xz.y);
+}
+V2F vertAsMesh(vec3 dir) {
+  if (dir.y >= 0.0) return vert(dir);
+  float t = -dir.y / MESH_ROW;
+  float rowHi = floor(t);
+  float f = t - rowHi;
+  V2F a = vert(rayAtHeight(dir, -rowHi * MESH_ROW));          // the row above the ray (y = 0 is the sky arm)
+  V2F b = vert(rayAtHeight(dir, -(rowHi + 1.0) * MESH_ROW));  // the row below
+  V2F o;
+  o.vertex = -dir;
+  o.groundColor = mix(a.groundColor, b.groundColor, f);
+  o.skyColor = mix(a.skyColor, b.skyColor, f);
+  o.sunColor = mix(a.sunColor, b.sunColor, f);
+  o.fogColor = mix(a.fogColor, b.fogColor, f);
+  return o;
+}
+
 // ── frag ─────────────────────────────────────────────────────────
 float linearToSrgb(float c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
 
@@ -386,7 +428,7 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 worldPos = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
-  V2F IN = vert(worldPos);
+  V2F IN = vertAsMesh(worldPos);
 
   vec4 col = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -660,9 +702,7 @@ export class DynamicSkiesRenderer {
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     this.program = prog;
     this.u = {};
-    const names = ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', '_WorldSpaceLightPos0', '_LightColor0', 'uFogColor', 'uFogMix',
-      ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES];
-    for (const name of names) this.u[name] = gl.getUniformLocation(prog, name);
+    for (const name of UNIFORM_NAMES) this.u[name] = gl.getUniformLocation(prog, name);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const vb = gl.createBuffer();
