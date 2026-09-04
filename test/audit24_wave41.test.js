@@ -161,7 +161,14 @@ test('audit24 wave41: SetVolumeScale is lazy, and it leaves the attack sound sta
   let mutedCasts = 0;
   const brig = new EnemySoundSource(BRIGAND, scripted(0));
   for (let i = 0; i < 10; i++) brig.tick(1, 1, () => { mutedCasts++; return true; });
-  assert.ok(brig.waitCounter >= 0, 'it ticked');
+  // AUDIT 58: `waitCounter >= 0` was VACUOUS - the field starts at 0
+  // (enemySounds.js:98), only ever takes `dt > 0 ? dt : 0` (:113) or a
+  // reset to 0 (:120), so it is non-negative by construction and the
+  // assertion held even for a source whose clock never advanced at all,
+  // which is exactly what its message claimed to exclude. scripted(0)
+  // makes StartWaiting roll 3 every time (:196-200), so at dt 1 the muted
+  // foe fires and resets on tick 4 of each cycle and 10 ticks leave 2.
+  assert.equal(brig.waitCounter, 2, 'it ticked, and the muted foe still reset on its 4s cadence');
   assert.equal(mutedCasts, 0, 'a muted foe never probes');
 
   // occluded -> 0.25
