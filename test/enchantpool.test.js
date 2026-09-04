@@ -171,10 +171,13 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   assert.match(body, /if \(host === 'inside'\) \{ Promise\.resolve\(modes\?\.insideReplaceFoe\?\.\(f, mobileType, feet\)\)\.then\(stamp\)\.catch\(\(\) => \{\}\); return; \}/);
   // ROAD-G G1: the exterior arm is a router TOO now, because the street
   // is two pools. `exteriorFoePool` is the watch AND the encounter
-  // foes, and this arm handed both to the encounter pool's remover: a
-  // struck WATCHMAN was not in `foes`, so removeFoe released nothing
-  // and the transformed guard kept standing, kept swinging and kept its
-  // VAO while its replacement stood up beside it. The RE-STAND stays
+  // foes, and this arm handed both to the encounter pool's remover.
+  // That was not a leak - removeFoe never looks the record up in `foes`
+  // (exteriorFoes.js:237-242) and both pools share the host's one
+  // renderer - but the teardown of a watchman is the WATCH's to own,
+  // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
+  // encounter-pool term a guard has no business reaching, so the
+  // removal is routed by pool membership. The RE-STAND stays
   // the encounter pool's for either - WabbajackEffect's careerIDs are
   // seventeen monsters and no Knight_CityWatch, so CreateEnemy always
   // mints an EnemyMonster (WabbajackEffect.cs:24-44, :87-88).

@@ -2294,11 +2294,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ROAD-G G1: THE STREET HAS TWO POOLS, and the removal must go
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
-    // encounter pool's remover for both. A struck WATCHMAN was simply
-    // not in `foes`, so removeFoe found nothing to release: the
-    // watchman kept standing, kept swinging and kept its VAO while a
-    // second monster stood up beside it. DFU transforms any
-    // EnemyEntity and Knight_CityWatch is one (WabbajackEffect.cs:64).
+    // encounter pool's remover for both. That was not a leak: removeFoe
+    // (exteriorFoes.js:237-242) never looks the record up in `foes`, and
+    // both pools share this host's one renderer, so a struck WATCHMAN
+    // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
+    // batch freed, `dead = true`, no corpse, skipped by the next AI pass
+    // (cityGuards.js:718) and spliced out at the end of it (:889).
+    // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
+    // teardown of its own records so the two can diverge safely, and
+    // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
+    // :241) is an encounter-pool term a watchman has no business
+    // reaching. DFU transforms any EnemyEntity and Knight_CityWatch is
+    // one (WabbajackEffect.cs:64).
     // The RE-STAND is the encounter pool's either way: careerIDs holds
     // seventeen monsters and no watch (:24-44), so CreateEnemy mints an
     // EnemyMonster whichever pool the struck record came from - and
@@ -4641,7 +4648,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6355-6322 -
+  // worldModes answers it in BOTH modes (worldModes.js:6367-6379 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7086,10 +7093,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
         // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
         // AFTER the damage fork closes (:615), so a shaft that lost the
-        // roll still enrages what it hit and wakes the area. The watch
-        // pool's damage door carries no hostility pair of its own, so
-        // only the encounter pool has one to run.
-        onAttackFromPlayer: (f) => { if (!cityGuards.guards.includes(f)) exteriorFoes.handleAttackFromPlayer(f, player.pos); },
+        // roll still enrages what it hit and wakes the area. ROAD-G G1
+        // (review): the WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // as `dealDamage` above it does, instead of excluding the
+        // guards - a zero-damage shaft into a pacified watchman has to
+        // reach the same door the zero-damage SWING already reaches
+        // (cityGuards.js:960). DFU makes no pool distinction:
+        // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
+        // :660-688) calls WeaponDamage, so :630 runs for the shaft as
+        // for the swing.
+        onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
+          ? cityGuards.handleAttackFromPlayer(f, player.pos)
+          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     arrows.draw(renderer);

@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:750-780`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:753-821`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -513,6 +513,15 @@ Left, deliberately, each recorded at its site or here:
   join was lifted to `_liveEnemyDatabase`, so its two arms cannot walk
   different databases), and `worldModes.js`'s `interiorEnemyDatabase`.
   Pinned RUNNING against the live pool in `test/roadg_pools.test.js`.
+  **G1's review closed the arm the lane missed**: an ARROW reaches a pool
+  through two seams, and only `dealDamage` (inside `arrowFlight`'s own
+  `dmg > 0` fork) had been wired - the unconditional `onAttackFromPlayer`
+  seam, which is where :630 actually lives (`arrowFlight.js:195`), still
+  excluded the guards in all three hosts that resolve a player shaft. So
+  a zero-damage arrow into a pacified watchman turned nobody while the
+  identical SWING turned the area. `handleAttackFromPlayer` is on the
+  pool's public surface now (as the encounter pool's has always been,
+  `exteriorFoes.js:940`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the
@@ -521,10 +530,15 @@ Left, deliberately, each recorded at its site or here:
   - off the scene, batch freed, no corpse and no death chain - and both
   the indoor arm (`worldModes.insideReplaceFoe`) and the STREET arm
   (`world.js`'s `enchantReplaceFoe`) route by pool membership through it.
-  The street half was worse than this bullet recorded: that arm handed a
-  struck watchman to the ENCOUNTER pool's `removeFoe`, which could not
-  find it, so the guard kept standing, kept swinging and kept its VAO
-  while its replacement stood up beside it. The re-stand is the encounter
+  The street half was not a leak, and this bullet does not claim one:
+  that arm handed a struck watchman to the ENCOUNTER pool's `removeFoe`,
+  which never looks a record up in `foes` and shares the host's one
+  renderer, so the watchman got exactly what `removeGuard` gives it -
+  batch freed, `dead = true`, no corpse, pruned by the next `update()`
+  pass. Routing by pool membership is an OWNERSHIP law: each removal now
+  goes through the pool that owns the billboard, so the two teardowns can
+  diverge safely and `removeFoe`'s `questBehaviour?.notifyDestroyed()`
+  stays an encounter-pool term. The re-stand is the encounter
   pool's either way, because `careerIDs` is seventeen monsters and no
   watch (:24-44). `exterior.js` still refuses, on the true premise: that
   route mounts no encounter pool above ground, so CreateEnemy has nowhere

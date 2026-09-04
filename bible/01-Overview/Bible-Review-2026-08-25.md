@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1058-1024` opens the real talk window.
+  `:446` (B7); `worldModes.js:1061-1072` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:3735-3694` routes them). UI-Arc carries no records
+  (`worldModes.js:3741-3745` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and

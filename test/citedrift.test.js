@@ -511,8 +511,14 @@ const SOURCE_CITES = [
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:507`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
   ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-1001` build `createDetectFeed`/,
+  // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
+  // exactly the defect this file exists to catch - the leading number
+  // was re-resolved and the trailing one left where it was, leaving a
+  // range that cannot exist (`exterior.js:1034-1001`).
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-1044` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:1034-(\d+)` build `createDetectFeed`/,
+    EX, /^ {2}\}\);$/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:820`, `exterior\.js:(\d+)`/,
     EX, /const droppedLoot = createDroppedLoot\(/],
   ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-807`/,
@@ -521,8 +527,10 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-2784` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3010` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:2986-(\d+)` return on modal frames/,
+    EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:90-114`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
 ];
@@ -686,4 +694,43 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
     'the world.js cite is not the arm that fills the reveal hook');
 
   assert.deepEqual(bad, [], 'a Port-Status src cite names a line it does not describe');
+});
+
+// ---------------------------------------------------------------------------
+// CD7 (ROAD-G G1 review, 2026-09-04): A RANGE WHOSE END PRECEDES ITS
+// START IS NOT A CITATION AT ALL.
+//
+// The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
+// hosts, and the pass advanced only the LEADING number of every
+// multi-number citation: `cityGuards.js:710-664`, `world.js:4766-4742`,
+// `worldModes.js:996 against :959`. Forty of them came out as ranges
+// that cannot exist, and every pin in this file was green throughout,
+// because each one resolves a single number a human chose to list.
+//
+// This pin needs no list. It reads every tracked source, test, tool and
+// bible page and refuses any citation into a PORT file (`*.js`/`*.mjs`)
+// whose second number is smaller than its first - the range form
+// `A-B`, the slash pair `A/:B` and the `A against :B` form alike. C#
+// reference cites are exempt: DFU's own members are legitimately cited
+// out of order (a caller at :481 against its callee at :409).
+// MUTANT: put any one of the forty back and this goes red.
+// ---------------------------------------------------------------------------
+test('CD7: no citation into a port file names a range that runs backwards', () => {
+  const CITE = /([A-Za-z0-9_./-]+\.(?:js|mjs)):(\d+)\s*(?:-|\/:|\/|\s+against\s+:)\s*:?(\d+)/g;
+  const walk = (dir) => readdirSync(join(root, dir), { withFileTypes: true }).flatMap((e) => {
+    if (e.name === 'node_modules' || e.name.startsWith('.')) return [];
+    const rel = `${dir}/${e.name}`;
+    return e.isDirectory() ? walk(rel) : (/\.(js|mjs|md)$/.test(e.name) ? [rel] : []);
+  });
+  const backwards = [];
+  // this file alone is exempt: it QUOTES the corrupted forms above, as
+  // the record of what the check is for.
+  for (const rel of ['src', 'test', 'tools', 'bible'].flatMap(walk).filter((r) => r !== 'test/citedrift.test.js')) {
+    lines(rel).forEach((l, i) => {
+      for (const m of l.matchAll(CITE)) {
+        if (Number(m[3]) < Number(m[2])) backwards.push(`${rel}:${i + 1}: ${m[0]}`);
+      }
+    });
+  }
+  assert.deepEqual(backwards, [], 'a citation names a range whose end precedes its start');
 });

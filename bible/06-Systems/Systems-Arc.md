@@ -5513,10 +5513,12 @@ location keeps the centre landing and still mounts. Pins in
 Two of V3's nine payloads carried a refusal that was never about the
 payload. **The Wabbajack** could not transform a city watchman, because
 `createCityGuards` exposed no removal door - and in the STREET the arm
-did something worse than refuse: it handed a struck watchman to the
-ENCOUNTER pool's `removeFoe`, which could not find it, so the guard
-kept standing and kept its VAO while its replacement stood up beside
-it. **SoulBound's break release and the Sanguine Rose's Daedroth**
+handed a struck watchman to the ENCOUNTER pool's `removeFoe`. That was
+not a leak (the remover never looks a record up in `foes`, so it tore
+the watchman down exactly as `removeGuard` does); it was the wrong
+OWNER, with an encounter-pool `notifyDestroyed()` reaching a record
+that carries no quest behaviour. **SoulBound's break release and the
+Sanguine Rose's Daedroth**
 could not be stood inside a building, on a premise ("interiors have no
 foe pool") that had died the day `interiorFoes.spawnFoe` went live.
 

@@ -2268,7 +2268,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4766-4742. */
+     *  %rn/%rt's producer - world.js:4791-4794. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -3532,10 +3532,19 @@ export async function bootExterior(canvas, renderer, params, status) {
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
         // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
         // AFTER the damage fork closes (:615), so a shaft that lost the
-        // roll still enrages what it hit and wakes the area. The WATCH
-        // pool's damage door carries no hostility pair of its own, so
-        // only the encounter pool has one to run.
-        onAttackFromPlayer: (f) => { if (!cityGuards.guards.includes(f)) exteriorFoes.handleAttackFromPlayer(f, player.pos); },
+        // roll still enrages what it hit and wakes the area. ROAD-G G1
+        // (review): the WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // as `dealDamage` above it does, instead of excluding the
+        // guards - a zero-damage shaft into a pacified watchman has to
+        // reach the same door the zero-damage SWING already reaches
+        // (cityGuards.js:960). DFU makes no pool distinction:
+        // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
+        // :660-688) calls WeaponDamage, so :630 runs for the shaft as
+        // for the swing.
+        onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
+          ? cityGuards.handleAttackFromPlayer(f, player.pos)
+          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     arrows.draw(renderer, texRemap);

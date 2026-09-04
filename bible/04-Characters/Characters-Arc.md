@@ -2707,6 +2707,31 @@ arm reaches it too, because WeaponManager's `damage > 0` fork closes at
 in that arm which said the pair was "a separate, unported half" is
 retired rather than reworded.
 
+**The lane shipped that for the MELEE arms only, and the review caught
+it.** A player ARROW reaches a pool through two separate seams:
+`dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
+and `onAttackFromPlayer`, which it calls unconditionally
+(`arrowFlight.js:195`) precisely because that is where :630 lives. All
+three hosts that resolve a player arrow EXCLUDED the guards from the
+second seam, on a sentence — "the watch pool's damage door carries no
+hostility pair of its own" — that this lane's own `handleAttackFromPlayer`
+had just falsified. So a zero-damage shaft into a watchman talked down
+by Etiquette turned nobody, while the identical shaft into an encounter
+foe beside him turned the whole area and the identical zero-damage
+SWING into the same watchman turned it too. DFU makes no such
+distinction: `AssignBowDamageToTarget`'s player arm
+(DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
+:630 runs for the shaft exactly as for the swing. The pool's door is
+PUBLIC now (beside `removeGuard` on the returned surface, as the
+encounter pool has always exported its own at `exteriorFoes.js:940`)
+and all three seams ROUTE by pool membership, mirroring the
+`dealDamage` router directly above each of them. A DAMAGING shaft now
+runs the pair twice for a guard - once inside `damageGuard`, once
+through the seam - which is exactly the shape the encounter pool has
+carried since ROAD-B, and it is idempotent: the `!isHostile` read is
+already false on the second pass and both remaining calls re-assign the
+same values.
+
 THE FOUR HOSTS RULE decided the wiring: three hosts mint watchmen and
 each hands in its OWN area, because DFU's database is one per SCENE and
 not one per pool. `world.js` passes `_makeEnemiesHostile` (the two
@@ -2726,12 +2751,16 @@ standing. `removeGuard` is that door now - WabbajackEffect.cs:86's
 batch freed, and deliberately NOT a death (no corpse, no loot, no
 crime).
 
-The STREET half was worse than the note admitted. `world.js`'s exterior
-arm reached `exteriorFoes.removeFoe` unconditionally over a pool that
-is the watch AND the encounter foes, so a struck watchman was handed to
-a remover that could not find it: the guard kept standing, kept
-swinging and kept its VAO while its replacement stood up beside it.
-Both hosts route by POOL MEMBERSHIP now, the same law
+The STREET half was an OWNERSHIP hole, not a leak. `world.js`'s
+exterior arm reached `exteriorFoes.removeFoe` unconditionally over a
+pool that is the watch AND the encounter foes - and that remover never
+looks a record up in `foes` and shares the host's one renderer, so a
+struck watchman got exactly what `removeGuard` gives it (batch freed,
+`dead = true`, no corpse, skipped and then spliced by the next
+`update()` pass). What was wrong is that the watch's teardown was the
+encounter pool's to define, with `removeFoe`'s
+`questBehaviour?.notifyDestroyed()` reaching a record that has no quest
+behaviour to notify. Both hosts route by POOL MEMBERSHIP now, the same law
 `enchantFoeHost` states for the sinks. The RE-STAND stays the encounter
 pool's in both, and that is not a mis-route: `careerIDs` is seventeen
 monsters with no Knight_CityWatch in it (:24-44), so `CreateEnemy`

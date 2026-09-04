@@ -806,7 +806,7 @@ export function createWorldModes(host) {
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:441-442 and
-   *  cityGuards.js:710-664 each take `entityIsParalyzed` +
+   *  cityGuards.js:716-717 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -5176,9 +5176,15 @@ export function createWorldModes(host) {
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
-        // zero-damage shaft still enrages its mark and the room. The
-        // interior watch pool's door carries no hostility pair.
-        onAttackFromPlayer: (f) => { if (f._encounter) interiorFoes?.handleAttackFromPlayer(f, player.pos); },
+        // zero-damage shaft still enrages its mark and the room.
+        // ROAD-G G1 (review): the interior WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam splits by pool exactly
+        // as `dealDamage` above it does rather than dropping the
+        // non-encounter half - the zero-damage SWING already reaches
+        // that door (cityGuards.js:960) and the shaft owes the same.
+        onAttackFromPlayer: (f) => (f._encounter
+          ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
+          : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);

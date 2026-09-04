@@ -538,8 +538,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  walk unreachable for the only case that needs it - a watchman
    *  talked down by Etiquette/Streetwise, or one restored peaceful by
    *  cityGuards' own `hostile: false` arm. DFU runs this for every
-   *  swing that CONNECTED, damage or none (WeaponManager.cs:615, :630),
-   *  and both of this pool's arms reach the door. */
+   *  blow that CONNECTED, damage or none (WeaponManager.cs:615, :630),
+   *  and ALL THREE of this pool's arms reach the door: the melee swing
+   *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
+   *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:195)
+   *  because `dealDamage` is inside its own `dmg > 0` fork - so the
+   *  door is PUBLIC (the returned surface below), exactly as the
+   *  encounter pool's is (exteriorFoes.js:940). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1165,7 +1171,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard,
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.
@@ -1180,6 +1186,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // direction - Knight_CityWatch is EnemyClass, so the first arm
     // fires. A caller with no direction (a spell) still passes none.
     hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir),
-    _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
+    // ROAD-G G1 (review): the seam forwards the OPTIONS bag too, so the
+    // `fromPlayer` gate (F035's law, DaggerfallEntityBehaviour.cs:203)
+    // has a negative arm a test can drive. `hurtGuard` above forwards
+    // none, and the real `fromPlayer: false` callers - the cross-pool
+    // `hurtFromFoe` minted at spawn (:264) and the fall arm inside
+    // update() - both need ARENA2 to reach.
+    _damage: (i, dmg, opts) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null, opts); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

@@ -20,11 +20,15 @@
 //  (b) The WATCH refused the Wabbajack. DFU transforms any
 //      `EnemyEntity` (WabbajackEffect.cs:63-95) and a watchman is one,
 //      but the guard pool exposed no removal door, so both hosts wrote
-//      the refusal into the code instead. Worse in the street than the
-//      note admitted: world.js's exterior arm handed a struck watchman
-//      to the ENCOUNTER pool's `removeFoe`, which could not find it -
-//      so the guard kept standing, kept swinging and kept its VAO
-//      while its replacement stood up beside it.
+//      the refusal into the code instead. In the street the arm handed
+//      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
+//      was not a leak: that remover never looks the record up in
+//      `foes` (exteriorFoes.js:237-242) and both pools share the host's
+//      one renderer, so the watchman got exactly what `removeGuard`
+//      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
+//      pool owns the teardown of its own records, and `removeFoe`'s
+//      `questBehaviour?.notifyDestroyed()` is an encounter-pool term
+//      the watch has no business reaching.
 //
 //  (c) `world.js`'s `_standLooseFoe` refused INTERIOR mode on the
 //      premise "interiors have no foe pool to stand one in", which
@@ -49,6 +53,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
 import { PLAYER_TARGET } from '../src/characters/enemyTargets.js';
+import { playerArrowHitFoe } from '../src/combat/arrowFlight.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(root, rel), 'utf8');
@@ -130,18 +135,111 @@ test('ROAD-G G1(a): the READ precedes the walk, and the walk precedes the flip',
     'the whole-area walk fires FIRST, then this foe learns where the blow came from');
 });
 
-test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s law, kept)', () => {
+test('ROAD-G G1(a): a connecting swing that dealt NOTHING still reaches the door', () => {
+  // WeaponManager.cs:630's HandleAttackFromSource sits outside the
+  // `damage > 0` fork that closes at :615, so a swing that lost the
+  // to-hit roll still turns what it touched.
   const walks = [];
   const { g } = pool({ makeAreaHostile: () => walks.push('walk') });
   const w = watchman({ hostile: false });
   g.guards.push(w);
-  // the cross-pool door a monster's swing comes through, and the fall
-  // arm - EnemyMotor.ApplyFallDamage calls DecreaseHealth and nothing
-  // else (:1398-1401)
-  w.hurtFromFoe = null;
-  g.hurtGuard(w, 0, null, null);   // still a PLAYER blow: WeaponManager.cs:630 sits outside the `damage > 0` fork
+  g.hurtGuard(w, 0, null, null);
   assert.deepEqual(walks, ['walk'], 'a connecting swing that dealt nothing still reaches the door');
   assert.equal(w.ai.calls.length, 1);
+});
+
+test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s law, kept)', () => {
+  // ROAD-G G1 (review): the pin that used to carry this title drove
+  // `hurtGuard`, which forwards no options bag - so `fromPlayer`
+  // always defaulted TRUE and the negative arm was unreachable from
+  // it. The gate is DFU's `sourceEntityBehaviour ==
+  // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
+  // the whole aggro block at :250-261: a watchman struck by a rat
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:264) or
+  // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
+  // and nothing else, :1398-1401) must turn NOBODY.
+  //
+  // MUTANT: drop the `if (fromPlayer)` at cityGuards.js's aggro call
+  // and all three assertions below go red.
+  const walks = [];
+  const { g } = pool({ makeAreaHostile: () => walks.push('walk') });
+  const w = watchman({ hostile: false, team: 'PlayerAlly' });
+  g.guards.push(w);
+  g._damage(0, 3, { fromPlayer: false });
+  assert.deepEqual(walks, [], 'a rat\'s blow does not walk the active database');
+  assert.equal(w.ai.calls.length, 0, 'nor seeds this guard\'s own target/give-up bookkeeping');
+  assert.equal(w.entity.team, 'PlayerAlly', 'nor reverts the ally team - :204-213 never runs');
+  assert.equal(w.ai.isHostile, false, 'and the watchman stays pacified');
+  // ...and the SAME door with the bag left off is a player blow, so all
+  // three statements run: the gate is the only difference.
+  g._damage(0, 3);
+  assert.deepEqual(walks, ['walk']);
+  assert.equal(w.ai.calls.length, 1);
+  assert.equal(w.entity.team, 'CityWatch');
+});
+
+test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', () => {
+  // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
+  // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
+  // which arrowFlight calls inside its own `dmg > 0` fork
+  // (arrowFlight.js:186-192), and `onAttackFromPlayer`, which it calls
+  // unconditionally at :195 because that is where WeaponManager.cs:630
+  // lives - and all three hosts that resolve a player shaft EXCLUDED the
+  // guards from the second one, on a sentence this pool's own
+  // `handleAttackFromPlayer` had already falsified. DFU makes no such
+  // distinction: AssignBowDamageToTarget's player arm
+  // (DaggerfallMissile.cs:660-688) calls WeaponManager.WeaponDamage, so
+  // :630 runs for the shaft exactly as for the swing.
+  //
+  // MUTANTS: (1) drop `handleAttackFromPlayer` from the pool's returned
+  // surface and this throws; (2) restore the hosts' exclusion arm
+  // (`if (!cityGuards.guards.includes(f)) ...`) and the source pin below
+  // goes red.
+  const walks = [];
+  const { g } = pool({ makeAreaHostile: () => walks.push('walk') });
+  const w = watchman({ hostile: false, team: 'PlayerAlly' });
+  // FormulaHelper.cs:576-583: a weapon material the target refuses
+  // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
+  // (formulas.js:523-531).
+  w.entity.minMetalToHit = 1;
+  g.guards.push(w);
+  const hits = [];
+  const dmg = playerArrowHitFoe({ pos: [1, 0, 4], dir: [0, 0, -1], weapon: { material: 0, templateIndex: 121 } }, w, {
+    playerEntity: { isPlayer: true, level: 1, skills: {}, items: [], stats: {} },
+    playerFeet: [1, 0, 4],
+    // the host's router, verbatim in shape: the damage door is the
+    // pool's own, and it never fires for a zero-damage shaft...
+    dealDamage: (f, d) => hits.push(d),
+    // ...while the hostility seam is unconditional and routes by pool.
+    onAttackFromPlayer: (f) => (g.guards.includes(f)
+      ? g.handleAttackFromPlayer(f, [1, 0, 4])
+      : assert.fail('the watchman must take the WATCH pool\'s door')),
+  });
+  assert.equal(dmg, 0, 'the material was refused: the shaft connected and dealt nothing');
+  assert.deepEqual(hits, [], 'so the damage door never ran');
+  assert.deepEqual(walks, ['walk'], 'and the pacified watchman still turned the whole active database');
+  assert.equal(w.ai.calls.length, 1, 'and learned where the shaft came from');
+  assert.equal(w.ai.isHostile, true);
+  assert.equal(w.entity.team, 'CityWatch', 'and the ally team reverted to the static row');
+});
+
+test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
+  // The door is PUBLIC now, as the encounter pool's has always been
+  // (exteriorFoes.js:940), so every host can reach it.
+  const cg = read('src/scenes/cityGuards.js');
+  assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
+    'the watch exports its hostility pair on the returned surface');
+  const router = (pool) => new RegExp(`onAttackFromPlayer: \\(f\\) => \\(${pool}`);
+  assert.match(read('src/scenes/world.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
+    'the street routes by pool membership, as its dealDamage does');
+  assert.match(read('src/scenes/exterior.js'), router('cityGuards\\.guards\\.includes\\(f\\)\\n\\s+\\? cityGuards\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: exteriorFoes\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
+    'the exterior host too - it mounts both pools');
+  assert.match(read('src/scenes/worldModes.js'), router('f\\._encounter\\n\\s+\\? interiorFoes\\?\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\n\\s+: interiorGuards\\?\\.handleAttackFromPlayer\\(f, player\\.pos\\)\\),'),
+    'and the interior watch, which the encounter half used to drop');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    assert.equal(/carries no hostility pair/.test(read(f)), false,
+      `${f}: the false sentence is struck, not reworded`);
+  }
 });
 
 test('ROAD-G G1(a): a struck former ALLY reverts to the static row\'s team', () => {
@@ -205,11 +303,33 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // EnemyMonster.
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s+else exteriorFoes\.removeFoe\(f\);/,
-    'the street: a struck watchman is no longer handed to the encounter pool\'s remover, which could not find it');
+    'the street: the removal goes through the pool that owns the record, not the encounter pool\'s remover');
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /else if \(interiorGuards\?\.guards\.includes\(foe\)\) interiorGuards\.removeGuard\(foe\);/,
     'the building: the indoor watch transforms like any foe');
   assert.equal(/THE WATCH IS REFUSED/.test(wm), false, 'and the written refusal is retired, not reworded');
+
+  // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
+  // and is struck in all seven places it reached. `removeFoe`
+  // (exteriorFoes.js:237-242) never looks a record up in `foes` and
+  // both pools share the host's one renderer, so the old arm tore a
+  // watchman down exactly as `removeGuard` does - batch freed,
+  // `dead = true`, no corpse, skipped by cityGuards.js:718 and spliced
+  // at :889 in that same pass. The router is an OWNERSHIP fix, not a
+  // leak fix, and no page may say otherwise again.
+  // (the halves are joined at runtime so this very file does not carry
+  // the sentence it bans)
+  const struck = [['kept', 'standing'], ['kept its', 'VAO'], ['stood up', 'beside'], ['could not', 'find it']]
+    .map(([a, b]) => new RegExp(`${a} ${b}`));
+  for (const rel of ['src/scenes/world.js', 'test/roadg_pools.test.js', 'test/enchantpool.test.js',
+    'bible/01-Overview/Audit-58.md', 'bible/04-Characters/Characters-Arc.md',
+    'bible/06-Systems/Systems-Arc.md', 'bible/09-Testing/Testing.md']) {
+    const t = read(rel);
+    for (const re of struck) {
+      assert.equal(re.test(t), false, `${rel}: the false "${re.source}" rationale is struck, not reworded`);
+    }
+  }
+  assert.match(w, /That was not a leak: removeFoe/, 'and world.js states the true one where the router lives');
 });
 
 // ═══ (c) the loose foe stands where the player is standing ═══
@@ -222,6 +342,18 @@ test('ROAD-G G1(c): the SPAWN arms stand a foe in the world the player IS in', (
   const stand = wm.slice(wm.indexOf('function standInteriorLooseFoe('), wm.indexOf('function makeInteriorFoes('));
   assert.match(stand, /if \(!interiorCtx \|\| !interiorFoes\) return null;/, 'no building mounted is the only refusal left');
   assert.match(stand, /collider: interiorCtx\.collider,/, 'raycast against THIS building');
+  // ROAD-G G1 (review): the one term the port has already been bitten
+  // by. `fieldOfView()` answers RADIANS (viewSettings.js) and the law
+  // speaks DEGREES (MainCamera.fieldOfView) - the S-A lane's catch,
+  // written at worldModes.js's dungeon arm. Raw, the direction angle
+  // placeFoeFreely reads is ~1 degree instead of ~75, so the Sanguine
+  // Rose's allied Daedroth (lineOfSightCheck defaults TRUE,
+  // hostEnchant.js:61/:195) stands DEAD AHEAD inside the view instead
+  // of just outside the cone. MUTANT: `fieldOfView()` raw, or
+  // `* 90 / Math.PI` - both red here, and the slice is scoped to this
+  // arm so worldModes' three other spellings cannot mask it.
+  assert.match(stand, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/,
+    'the placement cone is DEGREES, not the radians fieldOfView() answers');
   assert.match(stand, /foes: interiorFoePool\(\),/, 'and the occupancy test walks both of its pools - the watch blocks a spot too');
   assert.match(stand, /spawn: \(mt, pos, o\) => interiorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\),/,
     'through the building\'s own chain, carrying allied for the Sanguine Rose');
