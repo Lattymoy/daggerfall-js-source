@@ -168,6 +168,10 @@ export class BaseImageFile {
     const dstWidth = srcWidth + border * 2, dstHeight = srcHeight + border * 2;
     const out = new Uint8ClampedArray(dstWidth * dstHeight * 4);
     const A = albedo.colors;
+    // Color.Lerp interpolates ALPHA with the other three channels; otherEmission
+    // is a Color (black, i.e. opaque, at the call sites) and the albedo alpha is
+    // 0 on cutout texels, SPECTRAL_ALPHA elsewhere.
+    const oa = otherEmission.length > 3 ? otherEmission[3] : 255;
     for (let y = 0; y < srcHeight; y++) {
       const srcRow = y * srcWidth;
       const dstRow = (dstHeight - 1 - border - y) * dstWidth;
@@ -183,7 +187,7 @@ export class BaseImageFile {
           out[dst] = Math.round(otherEmission[0] + (r - otherEmission[0]) * t);
           out[dst + 1] = Math.round(otherEmission[1] + (g - otherEmission[1]) * t);
           out[dst + 2] = Math.round(otherEmission[2] + (b - otherEmission[2]) * t);
-          out[dst + 3] = 255;
+          out[dst + 3] = Math.round(oa + (A[dst + 3] - oa) * t);
         }
       }
     }

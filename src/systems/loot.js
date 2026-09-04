@@ -14,18 +14,25 @@
 //   - DFU reseeds Unity's global Random with items.GetHashCode()
 //     (an arbitrary hash, no determinism value); our uniform roll
 //     slots match the role per the approved engine-PRNG stance
-// INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-// (setMagicItemTemplates) - a context that has not loaded it
-// under-generates by that category.
+// MI (magic items) rolls need the MAGIC.DEF registry
+// (setMagicItemTemplates), and EVERY host that can generate loot now
+// loads it: scenes/shared.js:99-102 (loadMagicRegistries) feeds the
+// module table this file reads, called from dungeonContext.js:890,
+// world.js:1273 and exterior.js:879 - interiors run inside those hosts
+// and read the same table. What is left is the data-absent boot, and
+// that is DFU's own answer rather than a stand-in: shared.js:102
+// records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
+import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue } from './itemTemplates.js';   // F103: SetItem writes the value with the name
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
-import { getRandomBookID } from './books.js';   // IM1: CreateRandomBook's message roll
+import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
+import { potionRecipeByKey } from './potions.js';   // F103: PotionRecipeKey's price side effect
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -69,14 +76,18 @@ const LOOT_GROUP_KEYS = Object.freeze([
 ]);
 export const ITEM_GROUPS = Object.freeze(Object.fromEntries(
   LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])));
-export const BOOK_TEMPLATE = 277;
+export { BOOK_TEMPLATE };   // ONE DFU MEMBER, ONE EXPORT: template 277's home is books.js now
 
-// DaggerfallLootDataTables + LootTables.GenerateLoot verbatim data
-// (moved here from the dungeon scene in the 2026-07-06b audit - a
-// scene file is no home for source tables):
-export const RANDOM_TREASURE_ARCHIVE = 216;                    // randomTreasureArchive
+// LootTables.GenerateLoot verbatim data (moved here from the dungeon
+// scene in the 2026-07-06b audit - a scene file is no home for source
+// tables). ROAD-G G5: DaggerfallLootDataTables' own three members went
+// on to `systems/lootDataTables.js` - DFU's own file boundary - so a
+// leaf can read the drop-icon table without importing this generator;
+// they are RE-EXPORTED here, so every importer that reads them off
+// `loot.js` still does.
+export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS };
 export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
-export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
+
 /** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
 export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
 
@@ -119,8 +130,22 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
  *  AUDIT 18: the loot factories minted bare {group, templateIndex},
  *  so the dungeon item list (the keyed window that lived in what is
  *  now ui/deathScreen.js) labelled a looted
- *  Yellow Flowers "PlantIngredients1". */
-const named = (item) => ({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name });
+ *  Yellow Flowers "PlantIngredients1".
+ *
+ *  AUDIT 39 F103: and SetItem's OTHER write goes with the name -
+ *  `value = itemTemplate.basePrice` (DaggerfallUnityItem.cs:563),
+ *  through SetItemPropertiesByMaterial's multiplier (ItemBuilder.cs:
+ *  649) for the material bands, which is what itemBaseValue answers.
+ *  NO DFU item exists without a value, and the trade window reads
+ *  `item.value` raw: an undefined one summed to NaN, and
+ *  CalculateTradePrice's `>>8` collapsed that to 0 - looted gear sold
+ *  for nothing and was taken. Anything minted with its own value
+ *  (a magic item's enchantment sum) keeps it. */
+const named = (item) => ({
+  ...item,
+  name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name,
+  value: item.value ?? itemBaseValue(item),
+});
 
 /** ItemBuilder.CreateRandomClothing verbatim (:184-208): a uniform
  *  template over the gender's group, then RandomClothingDye, THEN
@@ -172,9 +197,10 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   // mint never set it, so a dungeon-loot book had no id: no title on
   // the info panel and nothing for the reader to open), THEN
   // CurrentVariant = Range(0, book.TotalVariants), variants 2 for
-  // template 277. The file-read price (book.value = bookFile.Price)
-  // stays the loud interim shopStock records.
-  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: getRandomBookID(rolls), variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) }));
+  // template 277, THEN `book.value = bookFile.Price`. A2 closed that
+  // last clause and took the whole member into books.js, so the three
+  // sites that had it inline share one mint and one draw order.
+  halving(matrix.BK, () => createRandomBook(rolls));
   halving(matrix.RL, () => ({ group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) }));
   return items;
 }
@@ -225,10 +251,12 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses.
   //
-  // G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-  // since S4c - the enchantment cost sum was unported, so a magic
-  // item sold at its mundane base - and M4's catalogue closed that
-  // half. `newItem.value = value` REPLACES whatever the base item was
+  // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
+  // S4c - the enchantment cost sum unported, so a magic item sold at
+  // its mundane base - closed with M4's catalogue: the sum is
+  // legacyEnchantmentValue (enchantments.js:218-236) and it is called
+  // on the `value:` line below. `newItem.value = value` REPLACES
+  // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same
   // enchantment are worth the same; and it replaces MAGIC.DEF's own
   // stored `value` field too, which is why that field is read and
@@ -260,15 +288,110 @@ export const ITEM_GROUP_NAME_BY_CLASS = Object.freeze([
   'QuestItems', 'MiscItems', 'Currency',
 ]);
 
+// ── THE ITEM FLAG BITMASKS (DaggerfallUnityItem.cs:94-98) ─────────
+//
+// A4: two constants and the derivation over them. Every item DFU
+// MINTS carries its identity as booleans on the port's record
+// (createArtifact below writes `artifact` and `isIdentified` where
+// DFU writes `flags = artifactMask | identifiedMask`, :617) - but an
+// item read out of a CLASSIC SAVE arrives with the classic flags word
+// and nothing else, so the two bits have to be read back out of it.
+
+export const ITEM_IDENTIFIED_MASK = 0x20;
+export const ITEM_ARTIFACT_MASK = 0x800;
+
+/** ItemEnums.ArtifactsSubTypes (:238-264) by NAME, in Enum.GetNames
+ *  order - which is value order, so None (-1) leads. The names are the
+ *  lookup key, not decoration: LegacyGetArtifactSubType matches them
+ *  against the item's own short name. */
+export const ARTIFACT_SUB_TYPE_NAMES = Object.freeze([
+  ['None', -1],
+  ['Masque_of_Clavicus', 0], ['Mehrunes_Razor', 1], ['Mace_of_Molag_Bal', 2],
+  ['Hircine_Ring', 3], ['Sanguine_Rose', 4], ['Oghma_Infinium', 5],
+  ['Wabbajack', 6], ['Ring_of_Namira', 7], ['Skull_of_Corruption', 8],
+  ['Azuras_Star', 9], ['Volendrung', 10], ['Warlocks_Ring', 11],
+  ['Auriels_Bow', 12], ['Necromancers_Amulet', 13], ['Chrysamere', 14],
+  ['Lords_Mail', 15], ['Staff_of_Magnus', 16], ['Ring_of_Khajiit', 17],
+  ['Ebony_Mail', 18], ['Auriels_Shield', 19], ['Spell_Breaker', 20],
+  ['Skeletons_Key', 21], ['Ebony_Blade', 22],
+]);
+
+/**
+ * ItemHelper.LegacyGetArtifactSubType (ItemHelper.cs:532-541) verbatim.
+ * The short name loses its apostrophes and turns its spaces into
+ * underscores, then the FIRST enum name it CONTAINS wins - a substring
+ * test, not equality, because classic short names carry decoration
+ * ("Auriel's Bow" but also the odd prefixed variant). Answers
+ * ArtifactsSubTypes.None (-1) when nothing matches.
+ */
+export function legacyGetArtifactSubType(itemShortName) {
+  const key = String(itemShortName ?? '').replaceAll('\'', '').replaceAll(' ', '_');
+  for (const [name, value] of ARTIFACT_SUB_TYPE_NAMES) {
+    if (key.includes(name)) return value;
+  }
+  return -1;
+}
+
+/**
+ * DaggerfallUnityItem.LegacyArtifactIndexBitfieldCheck (:1697-1707),
+ * run by FromItemRecord (:1582) on every classic item and by the
+ * legacy-save restore (:1678).
+ *
+ * "Newly created artifacts store their artifact index in
+ * artifactIndexBitfield as artifactIndex << 1 | 1" - bit 0 is the
+ * HAS-AN-INDEX flag, so an item whose flags say artifact but whose
+ * bitfield's low bit is clear came from data that predates the field,
+ * and the index is recovered by reversing the name to the enum the way
+ * older versions did. A name that matches nothing leaves the bitfield
+ * alone: an artifact with no recoverable index, which is DFU's own
+ * outcome (GetArtifactSubType then throws and the caller logs).
+ *
+ * MUTATES the item, as the C# mutates `this`. Returns the item.
+ */
+export function legacyArtifactIndexBitfieldCheck(item) {
+  if (!item?.artifact) return item;
+  if (((item.artifactIndexBitfield ?? 0) & 1) !== 0) return item;
+  const subType = legacyGetArtifactSubType(item.shortName ?? item.name);
+  if (subType !== -1) item.artifactIndexBitfield = (subType << 1) | 1;
+  return item;
+}
+
+/** ItemHelper.GetArtifactTextureIndices (ItemHelper.cs:519-523), the
+ *  whole of it: the ARCHIVE is the player's gender and nothing else,
+ *  and the RECORD is this table indexed by the artifact subtype
+ *  (ItemHelper.cs:43). Both are static - no ARENA2 read anywhere in
+ *  the call. */
+export const ARTIFACT_MALE_TEXTURE_ARCHIVE = 432;     // ItemHelper.cs:50
+export const ARTIFACT_FEMALE_TEXTURE_ARCHIVE = 433;   // ItemHelper.cs:51
+export const ARTIFACT_TEXTURE_INDEX_MAPPINGS = Object.freeze([
+  12, 13, 10, 8, 19, 16, 25, 18, 21, 2, 24, 26, 0, 15, 3, 9, 23, 17, 7, 1, 22, 20, 5,
+]);
+export function artifactTextureIndices(artifactIndex, gender = 'male') {
+  return {
+    archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE,
+    record: ARTIFACT_TEXTURE_INDEX_MAPPINGS[artifactIndex] ?? 0,
+  };
+}
+
 /** DaggerfallUnityItem.SetArtifact (DaggerfallUnityItem.cs:580-612)
  *  over the MAGIC.DEF registry: the artifact template (rows with type
  *  ArtifactClass1/2, file order - ItemHelper.cs:1511-1517) expands to
  *  its base group/groupIndex, armor material moves to the plate band
  *  (0x200+), the magic name replaces the base name and the
- *  enchantments ride raw. The artifact texture-index half is the
- *  inventory art's concern (the icons resolve at Q4's quest-item UI).
- *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity. */
-export function createArtifact(templates, artifactIndex) {
+ *  enchantments ride raw.
+ *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity.
+ *
+ *  D9: THE TEXTURE INDICES SHIP. They used to be waved off as "the
+ *  inventory art's concern", but SetArtifact writes all four
+ *  (:608-611, world = player, on DFU's own "not sure about artifact
+ *  world textures" note) and one LAW reads them: Open.CheckCastByItem
+ *  identifies the Skeleton's Key by `IsArtifact && WorldTextureArchive
+ *  == 432 && WorldTextureRecord == 20` (Open.cs:176-180) - so without
+ *  them no item could ever be the key. Note what that means for a
+ *  FEMALE character: her artifacts are archive 433, so her Skeleton's
+ *  Key does NOT bypass the door's level test. That is DFU's, verbatim,
+ *  and it is why the gender rides this call. */
+export function createArtifact(templates, artifactIndex, { gender = 'male' } = {}) {
   const artifacts = templates.filter((t) => t.type === 1 || t.type === 2);
   const magicItem = artifacts[artifactIndex];
   if (!magicItem) throw new Error(`Artifact template index out of range: ArtifactIndex=${artifactIndex}`);
@@ -276,14 +399,17 @@ export function createArtifact(templates, artifactIndex) {
   const templateIndex = GROUP_TEMPLATE_INDICES[groupName]?.[magicItem.groupIndex];
   let material = magicItem.material;
   if (magicItem.group === 2) material = 0x200 + material;   // Armor -> plate band
-  // The two identity flags itemInfo reads (DFU checks ArtifactsSubTypes
-  // - ItemEnums.cs:246,250: Oghma_Infinium = 5, Azuras_Star = 9).
-  // AUDIT 22 F11's producerless flags gain their producer here.
-  const identity = {};
-  if (artifactIndex === 5) identity.oghmaInfinium = true;
-  if (artifactIndex === 9) identity.azurasStar = true;
+  // ROAD-U: the two identity BOOLEANS this used to stamp here
+  // (`oghmaInfinium` on index 5, `azurasStar` on index 9) are gone.
+  // Nothing in DFU carries them: ItemHelper.GetItemInfo (:782, :811)
+  // and SoulTrap.cs:129 both ask the ITEM's own enchantment record for
+  // SpecialArtifactEffect + subtype, which SetArtifact copies below
+  // and which a classic import carries too - so keying on a flag only
+  // this mint wrote made every imported Oghma a plain book and every
+  // imported Star an inert gem. The identity now rides
+  // `enchantments`, one predicate for both paths
+  // (artifactEffects.hasArtifactSubtype).
   return {
-    ...identity,
     group: groupName,
     templateIndex,
     name: magicItem.name,
@@ -304,6 +430,11 @@ export function createArtifact(templates, artifactIndex) {
     enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
     maxCondition: magicItem.uses,
     currentCondition: magicItem.uses,
+    // SetArtifact :608-611 - the same pair twice, player and world.
+    playerTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    playerTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
+    worldTextureArchive: artifactTextureIndices(artifactIndex, gender).archive,
+    worldTextureRecord: artifactTextureIndices(artifactIndex, gender).record,
     // SetArtifact's own price (:615) - the MAGIC.DEF row's value, not
     // the mundane base template's (Q2b-ii VERIFY: it was dropped).
     value: magicItem.value,
@@ -367,9 +498,18 @@ export const POTION_RECIPE_TEMPLATE_INDEX = 278;
 /** UselessItems1 index 1 = the glass bottle a potion IS (:754). */
 export const POTION_TEMPLATE_INDEX = GROUP_TEMPLATE_INDICES.UselessItems1[1];
 
+/** AUDIT 39 F103: PotionRecipeKey's setter carries the PRICE - "has a
+ *  side effect (ugh, sorry) of populating the item value from the
+ *  recipe price" (DaggerfallUnityItem.cs:387-399), and it is the whole
+ *  worth of a potion or a recipe: the bottle's own basePrice is 1.
+ *  A key no recipe answers leaves the template value standing, as the
+ *  setter's own null guard does. */
+const potionValue = (recipeKey, item) => potionRecipeByKey(recipeKey)?.price ?? itemBaseValue(item);
+
 /** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key. */
 export function createPotion(recipeKey) {
-  return mintCondition({ group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey });
+  const potion = { group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey };
+  return mintCondition({ ...potion, value: potionValue(recipeKey, potion) });
 }
 
 /** ItemBuilder.CreateRandomPotion (:761-766). */
@@ -381,7 +521,7 @@ export function createRandomPotion(rolls = Math.random) {
  *  chance of 0 never fires and no roll is wasted deciding that. */
 export function randomlyAddMap(chance, items, rolls = Math.random) {
   if (!dice100(chance, rolls())) return null;
-  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX });
+  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX, value: itemBaseValue({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX }) });   // F103: SetItem's basePrice
   items.push(map);
   return map;
 }
@@ -398,7 +538,10 @@ export function randomlyAddPotion(chance, items, rolls = Math.random) {
 export function randomlyAddPotionRecipe(chance, items, rolls = Math.random) {
   if (!dice100(chance, rolls())) return null;
   const key = CLASSIC_RECIPE_KEYS[Math.floor(rolls() * CLASSIC_RECIPE_KEYS.length)];
-  const recipe = mintCondition({ group: 'MiscItems', templateIndex: POTION_RECIPE_TEMPLATE_INDEX, potionRecipeKey: key });
+  // CreateRandomRecipe sets PotionRecipeKey too (ItemBuilder.cs:772),
+  // so a recipe is priced by the potion it teaches, not by MiscItems 4.
+  const row = { group: 'MiscItems', templateIndex: POTION_RECIPE_TEMPLATE_INDEX, potionRecipeKey: key };
+  const recipe = mintCondition({ ...row, value: potionValue(key, row) });
   items.push(recipe);
   return recipe;
 }

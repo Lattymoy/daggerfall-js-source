@@ -17,11 +17,14 @@ import {
   WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT,
 } from '../src/systems/itemTransfer.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../src/systems/createItem.js';
-import { totalWeight } from '../src/systems/inventory.js';
+import { totalWeight, goldStack } from '../src/systems/inventory.js';
 
 const book = (n = 1) => ({ group: 'Books', templateIndex: 277, name: 'Book', stackCount: n });
 const cart = () => ({ group: 'Transportation', templateIndex: 93, name: 'Small Cart' });
-const gold = (n = 100) => ({ group: 'Currency', templateIndex: 137, name: 'Gold Pieces', stackCount: n });
+/** Currency.Gold_pieces is template 276 (ItemEnums.cs:605-608) and
+ *  IsOfTemplate compares BOTH terms - this fixture used to carry 137,
+ *  which E4's interception would not have recognised as gold. */
+const gold = (n = 100) => goldStack(n);
 const summon = (it) => Object.assign(it, { timeForItemToDisappear: 1000 });
 /** liveStat reads .stats, so a bare entity with a strength is enough
  *  to give the carry gate a MaxEncumbrance of str*1.5 kg. */
@@ -35,8 +38,10 @@ test('U56: the numbers and the words the ladder refuses with', () => {
   // and pass - which is what the wagon suite had been doing since the
   // W-slice. These two lines are the only place either string is
   // actually held.
-  assert.equal(CANNOT_HOLD_TEXT, 'Your wagon cannot hold any more.');
-  assert.equal(CANNOT_CARRY_TEXT, 'You cannot carry any more.');
+  assert.equal(CANNOT_HOLD_TEXT, 'Your wagon cannot hold any more stuff.',
+    'Internal_Strings.csv:829 "cannotHoldAnymore", verbatim');
+  assert.equal(CANNOT_CARRY_TEXT, 'You cannot carry any more stuff.',
+    'Internal_Strings.csv:828 "cannotCarryAnymore", verbatim');
   assert.equal(REFUSAL.wagonFull.text, CANNOT_HOLD_TEXT);
   assert.equal(REFUSAL.cannotCarry.text, CANNOT_CARRY_TEXT);
 });
@@ -115,6 +120,24 @@ test('U56 planTake: the carry gate, the two sounds, and the gift', () => {
   // DoTransferItem: gold rides its own clink (:1569)
   assert.equal(planTake(gold(500), { bag: [] }).sound, 'gold');
   assert.equal(planTake(book(), { bag: [] }).sound, 'click');
+  // ...and it is IsOfTemplate, BOTH terms (DaggerfallUnityItem.cs:
+  // 647-653). A Currency row that is not template 276 is not gold
+  // pieces...
+  assert.equal(planTake({ group: 'Currency', templateIndex: 137, stackCount: 5 }, { bag: [] }).sound,
+    'click', 'the group alone does not make a coin');
+  // ...and the index alone does not either: MiscItems.Unused is ALSO
+  // template 276 (ItemEnums.cs:592-608 - Letter_of_credit 275 then a
+  // bare `Unused`), the very collision the two-term test exists to
+  // resolve, and classicSave.js:299 really does build such a row.
+  assert.equal(planTake({ group: 'MiscItems', templateIndex: 276, stackCount: 5 }, { bag: [] }).sound,
+    'click', 'the index alone does not make a coin');
+  // ...and the interception is where the loss would be DESTRUCTIVE:
+  // a MiscItems row must move as an item, not be minted into coin.
+  const mFrom = [{ group: 'MiscItems', templateIndex: 276, stackCount: 7 }];
+  const mTo = [], mEnt = { goldPieces: 0, items: [] };
+  assert.notEqual(applyTransfer(mFrom[0], { amount: 7 }, mFrom, mTo, { entity: mEnt, toPlayer: true }), null);
+  assert.equal(mTo.length, 1, 'MiscItems.Unused arrives as a row');
+  assert.equal(mEnt.goldPieces, 0, 'and mints no coin');
   // and the gate is ABOVE the sound - a refused transfer is silent
   assert.equal(planTake(gold(500), { bag: [book(100)], entity: e }).sound, undefined,
     'a refused transfer still picked a sound');
@@ -164,6 +187,75 @@ test('U56 applyTransfer: the split leaves a remainder, the whole move keeps its 
   const keep = from3[0];
   applyTransfer(book(3), { amount: 3 }, from3, []);
   assert.deepEqual(from3, [keep], 'splice(-1, 1) ate the wrong item');
+});
+
+// ROAD-Ar R5. DFU has no partial transfer that skips SplitStack:
+// TransferItem (:1515-1540) sends every `maxAmount < item.stackCount`
+// move into the split popup, whose handler is
+// `stackFrom.SplitStack(stackItem, count)` (:1554) before
+// DoTransferItem. ItemCollection.cs:267 mints
+// `ItemBuilder.CreateItem(group, templateIndex)`, and SetItem
+// (DaggerfallUnityItem.cs:558-572) zeroes nativeMaterialValue,
+// currentVariant, flags, message and the recipe carrier, resets value
+// to basePrice and condition to hitPoints. So the half that travels is
+// a TEMPLATE, not a copy. The ladder used to re-spell the member as
+// `{ ...item, stackCount }`, which is the fourth re-spelling a2 set out
+// to remove and the only one on the main path.
+test('ROAD-Ar R5: a partial move is a SplitStack MINT, not a copy of the record', () => {
+  const shared = [{ type: 1, param: 3 }];
+  const potion = {
+    group: 'UselessItems1', templateIndex: 83, name: 'Potion of Healing',
+    stackCount: 3, condition: 4, material: 2, variant: 5, flags: 8,
+    message: 41, potionRecipeKey: 8765, value: 999, enchantments: shared,
+  };
+  const from = [potion];
+  const to = [];
+  const taken = applyTransfer(potion, { amount: 1 }, from, to);
+
+  assert.equal(potion.stackCount, 2, 'the remainder stays behind');
+  assert.equal(to.length, 1);
+  assert.equal(taken, to[0]);
+  assert.equal(taken.stackCount, 1);
+  assert.equal(taken.group, potion.group, 'the mint keeps the group...');
+  assert.equal(taken.templateIndex, potion.templateIndex, '...and the template index');
+  // ...and nothing else. These five are exactly SetItem's zeroing.
+  assert.equal(taken.material, 0, 'nativeMaterialValue = 0');
+  assert.equal(taken.variant, 0, 'currentVariant = 0');
+  assert.equal(taken.flags, 0);
+  assert.equal(taken.message, 0);
+  assert.equal(taken.potionRecipeKey ?? 0, 0, 'the recipe does not ride along');
+  assert.notEqual(taken.value, 999, 'value is reset to the template basePrice');
+  assert.notEqual(taken.condition, 4, 'condition is reset to hitPoints, not inherited');
+  assert.notEqual(taken.enchantments, shared,
+    'the split half shared the source enchantment ARRAY by reference');
+
+  // The observable consequence: DFU's stored half will NOT re-stack
+  // with the remainder, because stacksWith reads message and recipe.
+  assert.equal(to.length, 1);
+  applyTransfer(potion, { amount: 2 }, from, to);
+  assert.equal(to.length, 2, 'a template and a keyed potion are not one stack');
+
+  // ...but a split that carries no identity terms MUST still re-merge
+  // where DFU merges. FindExistingStack (ItemCollection.cs:708-713)
+  // compares group, index, message, recipe and expiry - not material -
+  // and SetItem writes nativeMaterialValue = 0, which is what an item
+  // carrying no material field means everywhere else in the port. The
+  // gold stack is the case that proves it: goldStack() mints without
+  // the field, the split mints with a 0.
+  const purse = [goldStack(100)];
+  const pile = [goldStack(300)];
+  applyTransfer(pile[0], { amount: 100 }, pile, purse);
+  assert.equal(purse.length, 1, 'the split gold did not merge into the purse');
+  assert.equal(purse[0].stackCount, 200);
+  assert.equal(pile[0].stackCount, 200);
+
+  // The whole-move arm is untouched: identity still travels.
+  const one = { group: 'UselessItems1', templateIndex: 83, stackCount: 1, potionRecipeKey: 8765 };
+  const src = [one];
+  const dst = [];
+  assert.equal(applyTransfer(one, { amount: 1 }, src, dst), one,
+    'a whole move is not a split - DFU moves the record itself');
+  assert.equal(dst[0].potionRecipeKey, 8765);
 });
 
 // ── AUDIT 26's QUEST ARM, ON THE LADDER ──────────────────────────

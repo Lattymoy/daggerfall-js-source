@@ -171,6 +171,14 @@ export function calculateCastCost(spell, casterEntity) {
   const m = TARGET_COST_MULT[spell.rangeType] ?? 1.0;
   gold = Math.trunc(gold * m);
   sp = Math.trunc(sp * m);
+  // FormulaHelper.cs:2233-2236 "Set vampire spell cost" - the granted
+  // records' MinimumCastingCost ASSIGNS the floor, it does not merely
+  // floor: a clan spell (or the lycanthrope's morph) costs exactly 5
+  // however expensive its effects price out. AUDIT 39: read as
+  // equivalent to the floor below, which only ever raises a cheap
+  // spell - Haarvenu's Ice Storm and the Lycanthropy morph were billed
+  // full skill-scaled cost.
+  if (spell.minimumCastingCost) sp = CAST_COST_FLOOR;
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
   return { gold, sp };
 }

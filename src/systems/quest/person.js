@@ -13,7 +13,8 @@
 // ride quest.hooks.world (the persistent faction store accessors and
 // the region-faction lookups documented at machine.js); a HEADLESS
 // parse leaves `npcPending` true LOUDLY, the sitePending precedent.
-// Random draws ride the quest's injectable roll (Ledger A), including
+// Random draws ride the quest's injectable roll (THE ENGINE-PRNG RULE,
+// Ledger A), including
 // the DateTime.Now.Millisecond name seed, and the display name's
 // classic srand(nameSeed) draw is DFU's own.
 //

@@ -82,7 +82,9 @@ test('audit24 player: every water line in the hosts measures the same live centr
     assert.match(rd(f), /player\.pos\[1\] \+ player\.height \/ 2 \+ 50 \* 0\.025 - 0\.95 < surf/,
       `${f}: the swim toggle rides the live capsule`);
     const call = rd(f).slice(rd(f).indexOf('drawFoes(dt, canvas, proj, view, cam.pos, player.pos,'));
-    assert.ok(call.slice(0, call.indexOf(';')).endsWith(', player.height)'),
+    // MW-D15 added a trailing sneak argument, so the test is that the
+    // height is THERE and live, not that it is last.
+    assert.ok(call.slice(0, call.indexOf(';')).includes(', player.height'),
       `${f}: and hands that height to the breath/ambience pass`);
   }
   const dc = rd('src/scenes/dungeonContext.js');
@@ -110,6 +112,11 @@ test('audit24 player: AddMovement\'s three arms, in DFU\'s order', () => {
   const a = mk();
   a.p.swimming = true; a.p.waterWalking = true;
   a.p.speed = 2.5;                      // whatever the last grounded frame wrote
+  // AUDIT 39 (#57): the swim/levitate EDGE raises CancelMovement
+  // (LevitateMotor :151/:159/:174/:182), and FixedUpdate spends one
+  // whole step on the cancel block (:286-294) before the mode moves
+  // anything - so the mode's first move is the SECOND step.
+  a.p.update(DT, fwd, 0, 0); a.moves.length = 0;
   a.p.update(DT, fwd, 0, 0);
   assert.ok(Math.abs(horiz(a.moves[0]) - 2.5 * DT) < 1e-6, 'the frozen field, not walkSpeed');
   // ...and pressing run mid-swim changes nothing, because the field is
@@ -121,6 +128,7 @@ test('audit24 player: AddMovement\'s three arms, in DFU\'s order', () => {
   const b = mk();
   b.p.swimming = true; b.p.waterWalking = true; b.p.levitating = true;
   b.p.speed = 3.0;
+  b.p.update(DT, fwd, 0, 0); b.moves.length = 0;   // the cancelMovement step (AUDIT 39 #57)
   b.p.update(DT, fwd, 0, 0);
   assert.ok(Math.abs(horiz(b.moves[0]) - 3.0 * DT) < 1e-6,
     'not the 4.0 levitate constant - the port used to short-circuit here');
@@ -128,6 +136,7 @@ test('audit24 player: AddMovement\'s three arms, in DFU\'s order', () => {
   const c = mk();
   c.p.levitating = true;
   c.p.speed = 3.0;
+  c.p.update(DT, fwd, 0, 0); c.moves.length = 0;   // the cancelMovement step (AUDIT 39 #57)
   c.p.update(DT, fwd, 0, 0);
   assert.ok(Math.abs(horiz(c.moves[0]) - LEVITATE_MOVE_SPEED * DT) < 1e-6);
   // ...and the water-walking arm takes NO surface clamp: it returns
@@ -136,6 +145,7 @@ test('audit24 player: AddMovement\'s three arms, in DFU\'s order', () => {
   d.p.swimming = true; d.p.waterWalking = true; d.p.speed = 3.0;
   d.p.waterSurfaceY = 1;
   d.p.pos[1] = 0.9;                     // well past the clamp threshold
+  d.p.update(DT, floatUp, 0, 0); d.moves.length = 0;   // the cancelMovement step (AUDIT 39 #57)
   d.p.update(DT, floatUp, 0, 0);
   assert.ok(d.moves[0][1] > 0, 'the clamp lives inside the OTHER arm');
 });

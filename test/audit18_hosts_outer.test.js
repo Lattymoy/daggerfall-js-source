@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:219 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:225 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });
@@ -264,7 +264,9 @@ test('audit18 hosts: the streaming recenter carries fallStart AND the arrows', (
   const block = s.slice(s.indexOf('if (r.offset) {'), s.indexOf('if (r.pixelChanged)'));
   assert.match(block, /adjustFallStart\(player, r\.offset\[1\]\)/,
     'the recenter shifts the player but not fallStart');
-  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.pos[0] +='),
+  // EV1 moved the shift into player.offsetOrigin (both ends of the
+  // interpolation span move together); the ORDER law is unchanged.
+  assert.ok(block.indexOf('adjustFallStart') < block.indexOf('player.offsetOrigin('),
     'AdjustFallStart runs BEFORE the position shift (FloatingOrigin.cs:176-181)');
   assert.match(block, /offsetArrows\(arrows, r\.offset\)/);
   assert.doesNotMatch(s, /arrows\.offsetAll\?\./,
@@ -524,7 +526,7 @@ test('audit18 hosts: outdoorFogColor is SetSkyFogColor, threshold included', () 
 test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law', () => {
   for (const host of EXTERIOR_HOSTS) {
     const s = src(host);
-    assert.match(s, /const fogColor = outdoorFogColor\(weatherFog, sky\.renderer\.clearColor\)/,
+    assert.match(s, /const fogColor = outdoorFogColor\(fogNow, sky\.renderer\.clearColor\)/,   // WX2: the row on the front
       `${host} passes the sky colour unconditionally - a blizzard fogs to a blue tint`);
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }
@@ -718,7 +720,10 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   assert.ok(keep, 'the diet is still one expression');
   const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
   const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
-  assert.deepEqual([version, sum], [8, 'b790da41e4823038'],
+  // MOVED at AUDIT 39 F156: PAINT.DAT joined the diet - the painting
+  // descriptions had no reader host at all, and a name KEEP rejects
+  // has no source in production. v8 -> v9 re-ingests the stale sets.
+  assert.deepEqual([version, sum], [9, 'f898f68bcee8501a'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
 

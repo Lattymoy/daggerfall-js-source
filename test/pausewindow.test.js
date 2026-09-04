@@ -75,9 +75,20 @@ test('I3: continue closes, exit confirms on 1069, No keeps playing', () => {
   const w2 = new PauseOptionsWindow({});
   w2.click(px + 76 + 1, py + 60 + 1);   // continue
   assert.equal(w2.done, true);
-  // and the same Escape that opened it closes it (:186-190)
+  // and the same Escape that opened it closes it (:183-188) - on the
+  // RELEASE, which is GetKeyUp (ROAD-E E1 built that edge). The bare
+  // release is inert, because DFU opens this window on
+  // `ActionComplete` (GameManager.cs:515-518 - the release) while every
+  // host here opens on the press, so the door carries
+  // DaggerfallAutomapWindow.cs:703-713's deferral and the Escape that
+  // opens it cannot close it in the same breath. The host-level walk is
+  // roade_up_seam.test.js's.
   const w3 = new PauseOptionsWindow({});
+  w3.keyup('Escape');
+  assert.equal(w3.done, false, 'a release with nothing armed closes nothing (:709)');
   w3.input('Escape');
+  assert.equal(w3.done, false, 'the press is not the close - :186 reads GetKeyUp');
+  w3.keyup('Escape');
   assert.equal(w3.done, true);
 });
 
@@ -158,7 +169,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // none, which is what the default is for.
   assert.match(modes, /togglePause\(opts = \{\}\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/, 'and routeKey calls it bare');
-  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\)/, '...and the table drives it');
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\)/, '...and the table drives it');   // AUDIT 58 (f3/input): + the held-keys Set
   assert.match(modes, /preloadPauseFlowArt\(/);
   // and the door out is the ONE menu unwind (audit24_onehome watches
   // the symbol; this pins the CALL in the exit hook of each host)

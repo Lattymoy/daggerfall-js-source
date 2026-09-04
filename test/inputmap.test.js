@@ -105,6 +105,19 @@ test('I2: no host reads a bound key raw - the sweep', () => {
       for (const m of line.matchAll(/keys\.has\('([^']+)'\)/g)) {
         if (bound.has(m[1])) offenders.push(`${rel}:${i + 1} reads ${m[1]} raw`);
       }
+      // AUDIT 58 (talk lane) WIDENED THE SWEEP. The rule is "a read the
+      // registry cannot rebind", and `keys.has('<code>')` was only ONE
+      // shape of it: townTalk.js and dungeon.js each carried a
+      // `{ F1: 'steal', F2: 'grab', ... }[e.code]` LOOKUP TABLE keyed on
+      // bound codes, which the matcher above cannot see - so both
+      // dispatch sites for StealMode/GrabMode/InfoMode/TalkMode
+      // (PlayerActivate.cs:221-228, four real ACTIONS in the registry)
+      // passed a sweep whose stated rule they violated, and every
+      // rebind of those four rows in the controls grid was inert. An
+      // object-literal KEY that is a default-bound code is that shape.
+      for (const m of line.matchAll(/[{,]\s*'?([A-Za-z][A-Za-z0-9]*)'?\s*:/g)) {
+        if (bound.has(m[1])) offenders.push(`${rel}:${i + 1} keys a table on ${m[1]} instead of an action`);
+      }
     });
   }
   assert.deepEqual(offenders, [],
@@ -164,7 +177,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // with the windows themselves built and mounted elsewhere.
   const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\) e\.preventDefault\(\);/,
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx, null, keys\)\) e\.preventDefault\(\);/,   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound COMBO reaches this table too
     'the interior arm routes the shared table');
   // Each hook must MOUNT something, not merely exist - a named method
   // with an empty body answers the key and opens nothing, which is
@@ -173,7 +186,10 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // interior host only picks the slot.
   const MOUNTS = [
     ['toggleCharSheet', /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/],
-    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(host\.makeInventory\?\.\(\)\); \}/],
+    // RE-ANCHORED at ID1 (F041): the inventory goes through this
+    // host's ONE door now (interiorInventory), which is still the OUTER
+    // host's window - it only folds in the interior drop pool.
+    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(interiorInventory\(\)\); \}/],
     ['toggleSpellbook', /toggleSpellbook\(\) \{ if \(magic\) mountInterior\(makeSpellbookWindow\(\)\); \}/],
     ['toggleLogbook', /toggleLogbook\(\) \{ mountInterior\(host\.makeJournal\?\.\('activeQuests'\)\); \}/],
     ['toggleNotebook', /toggleNotebook\(\) \{ mountInterior\(host\.makeJournal\?\.\('notebook'\)\); \}/],
@@ -243,8 +259,28 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   assert.match(modes, /if \(mode === 'dungeon' && dungeonCtx\?\.showOverlay\) return dungeonCtx\.showOverlay\(win\);/,
     'showQuestOverlay has a dungeon arm');
   const dc = src('scenes/dungeonContext.js');
-  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win \|\| activeOverlay\) return false;/,
-    'and the dungeon slot REFUSES rather than clobbering a live window');
+  // ROAD-B B1 MOVED THIS PIN. It used to read `if (!win ||
+  // activeOverlay) return false;` - "the dungeon slot REFUSES rather
+  // than clobbering a live window", which was the only safe thing a
+  // single slot could do and cost the dungeon the quest text outright:
+  // a _TUTOR__ message arriving while the automap or a rest window was
+  // up simply never appeared. The slot is the top of a real stack now
+  // (ui/windowStack.js), so the popup does what DFU does - PushWindow
+  // (UserInterfaceManager.cs:79-91) - and the window it covers is
+  // suspended, not clobbered and not lost.
+  //
+  // ROAD-B B5 MOVED IT AGAIN, one level: the push is now the named
+  // function `pushDungeonWindow`, because B5's refusal-guard walk gave
+  // it four more callers inside this file (the infection popup,
+  // ShowText, ShowTextWithInput and the rest mastery box) that are
+  // built ABOVE the returned ctx object and could not reach a member of
+  // it. The ctx member delegates rather than keeping a second copy, so
+  // what this pin asks for is the DOOR and the delegation.
+  assert.match(dc, /function pushDungeonWindow\(win\) \{\n {4}if \(!win\) return false;\n {4}dungeonWindows\.reconcile\(activeOverlay\);/,
+    'and the dungeon slot PUSHES onto the stack rather than refusing');
+  assert.match(dc, /dungeonWindows\.pushWindow\(win\);\n {4}return true;/);
+  assert.match(dc, /showOverlay\(win\) \{ return pushDungeonWindow\(win\); \},/,
+    'and the ctx member is that same door');
   // ...and the host stops warning, because the fall-through is gone
   assert.equal(/popup in dungeon mode pends/.test(src('scenes/world.js')), false,
     "world.js's dungeon-popup warning is retired, not silenced");

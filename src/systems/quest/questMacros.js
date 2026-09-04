@@ -34,8 +34,8 @@ import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
 import { liveStat } from '../statMods.js';                       // M-X: %mad's MagicResist read
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
 import { entityMaxEncumbrance } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength)
-import { surname } from '../../characters/nameHelper.js';        // M-X: %ln
-import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
+import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
+import { GENDERS, getNameBankOfRegion, fullName, getNameBank, getRandomFullName } from '../../characters/nameHelper.js';   // AUDIT 58: GetRandomFullName's one home
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
 // RaceTemplate.GetRaceFromFactionRace; unmapped falls to Breton in
@@ -44,8 +44,8 @@ const FACTION_RACE_KEYS = Object.freeze({
   0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
-import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue } from '../gameDate.js';
-import { REGION_TEMPLES } from '../../formats/mapsFile.js';
+import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
+import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
 export const MACRO_TYPES = Object.freeze({
@@ -371,9 +371,9 @@ const HANDLERS = {
       }
     }
     if (!w) return null;
-    const bank = getNameBankOfRegion(w.currentRegionIndex?.() ?? -1);
-    const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
-    return fullName(bank, gender);
+    // AUDIT 58: this arm IS MacroHelper.GetRandomFullName (:333-341),
+    // now through its one home rather than a second copy of the body.
+    return getRandomFullName(w.currentRegionIndex?.() ?? -1);
   },
   // %rt/%t: RegentTitle (MacroHelper.cs:644-650) DISCARDS
   // FindFactionByTypeAndRegion's bool and reads the out struct
@@ -389,7 +389,8 @@ const HANDLERS = {
   // DFU is Lord. The sibling %rn above already separates them, gating
   // on `!w`; these two did not. rulerTitle's own `?? 'Lord'` is
   // already GetRulerTitle's default arm, so the zero struct falls
-  // through it exactly.
+  // through it exactly. %lt1 (TitleOfLordOfFaction1, below) is the
+  // THIRD row on this law and was carried through the same way.
   '%rt': (mcp, hooks) => {
     const w = hooks?.world;
     if (!w) return null;
@@ -426,10 +427,12 @@ const HANDLERS = {
     if (loc?.loaded) return loc.name;
     return w.maps?.getRegion?.(w.currentRegionIndex?.())?.name ?? null;
   },
-  '%dat': (mcp) => {
-    const now = mcp?.quest?.nowSeconds?.();
-    return now != null ? dateString(dateFromSeconds(now)) : null;
-  },
+  // E7: Date (MacroHelper.cs:764-767) is a GLOBAL -
+  // `WorldTime.Now.DateString()` - and the port read it off the QUEST's
+  // own clock, so every non-quest context (the talk MCP above all)
+  // answered [nullMCP] where DFU prints the date. It reads the same
+  // clock the rest of the date/time block does now.
+  '%dat': (mcp, hooks) => { const d = nowDate(hooks); return d ? dateString(d) : null; },
   '%pg3': (mcp, hooks) =>
     (hooks?.playerGender?.() === 'female') ? EN.pronounHer2 : EN.pronounHis,
   // AUDIT 24 systems: MacroHelper.cs:240-245 registers ALL SIX
@@ -546,14 +549,16 @@ const HANDLERS = {
   '%pg2self': (mcp, hooks) => pgender(hooks) ? EN.pronounHerself : EN.pronounHimself,
   '%pg4': (mcp, hooks) => pgender(hooks) ? EN.pronounHers : EN.pronounHis2,
 
-  // RANDOM NAMES (the mcp-less %ln off the current region's bank;
-  // the mcp-sourced pairs ride the biography/talk sources)
-  '%ln': (mcp, hooks) => {
-    const w = hooks?.world;
-    if (!w) return null;
-    const bank = getNameBankOfRegion(w.currentRegionIndex?.() ?? -1);
-    return surname(bank);
-  },
+  // RANDOM NAMES (the mcp-less %ln off a RANDOM race's bank; the
+  // mcp-sourced pairs ride the biography/talk sources)
+  //
+  // LastName (MacroHelper.cs:1102-1105) is `NameHelper.Surname(
+  // GetRandomNameBank())`, and GetRandomNameBank (:303-308) re-seeds
+  // and rolls Races 1..8 - it reads NO world state, so the row cannot
+  // be gated on `hooks.world` and cannot answer the [nullMCP]
+  // sentinel. The region-bank form is GetRandomFullName (:333-341),
+  // which is what questMacroSource's name/femaleName/maleName use.
+  '%ln': () => surname(getRandomNameBank()),
   '%bn': (mcp) => call(mcp, 'name'),
   '%fn2': (mcp) => call(mcp, 'femaleName'),
   '%mn2': (mcp) => call(mcp, 'maleName'),
@@ -597,17 +602,25 @@ const HANDLERS = {
   '%ct': (mcp, hooks) => {   // CityType's switch, verbatim strings
     const t = hooks?.world?.currentLocationType?.();
     if (t == null) return null;
-    return CITY_TYPES[t] ?? String(t);
+    return CITY_TYPES[t] ?? LOCATION_TYPE_NAMES[t] ?? String(t);
   },
   '%cn2': (mcp, hooks) => {   // the region's first OTHER TownCity
     const w = hooks?.world;
     const region = w?.maps?.getRegion?.(w.currentRegionIndex?.());
-    if (!region?.mapTable) return null;
+    if (!region?.mapTable) return null;   // headless: no region was read at all
     const here = w.currentLocationIndex?.() ?? -1;
     for (let i = 0; i < region.mapTable.length; i++) {
-      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) return region.mapNames?.[i] ?? null;
+      // GetLocalizedLocationName(MapId, MapNames[i]) always yields a
+      // string, so a found-but-unnamed row is not a miss either.
+      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) {
+        return region.mapNames?.[i] ?? CITY_NAME2_FALLBACK;
+      }
     }
-    return null;
+    // MacroHelper.cs:585 `return GetLocalizedText("daggerfall")` -
+    // C#'s own "Localizaed fallback in case of error". A region whose
+    // only TownCity is the one the player stands in takes this arm,
+    // and it must not render the [nullMCP] sentinel.
+    return CITY_NAME2_FALLBACK;
   },
   '%cbd': (mcp, hooks) => {   // CurrentBuilding: "[invalid]" outside
     const w = hooks?.world;
@@ -633,9 +646,17 @@ const HANDLERS = {
   '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? hooks?.world?.getFactionData?.(idFaction2)?.name ?? null : null),
   '%fl1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1) ?? null,
   '%fl2': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction2) ?? null,
+  // TitleOfLordOfFaction1 (MacroHelper.cs:1040-1047) DISCARDS
+  // GetFactionData's bool and reads the out struct regardless, and
+  // PersistentFactionData assigns `new FactionFile.FactionData()`
+  // before searching - so a MISS hands back all zeros and
+  // GetRulerTitle(0) takes its default: arm, "Lord". The third row on
+  // the law the %rt/%nrn block above records: gate on the WORLD (the
+  // port's headless charter), never on the lookup.
   '%lt1': (mcp, hooks) => {
-    const fd = hooks?.world?.getFactionData?.(idFaction1);
-    return fd ? rulerTitle(fd.ruler ?? 0) : null;
+    const w = hooks?.world;
+    if (!w) return null;
+    return rulerTitle(w.getFactionData?.(idFaction1)?.ruler ?? 0);
   },
   '%ol1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1, true) ?? null,
   '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(randomRangeInclusive(0, 4)) ?? null,
@@ -646,7 +667,12 @@ const HANDLERS = {
   '%dng': (mcp) => call(mcp, 'dungeon'),
   '%hpn': (mcp) => call(mcp, 'homeProvinceName'),
   '%hpw': (mcp) => call(mcp, 'geographicalFeature'),
-  '%lev': (mcp) => call(mcp, 'guildTitle'),   // %lev shares GuildTitle with %pct, minus its player-name fallback
+  // E7: %lev and %pct are the SAME C# row (`{ "%lev", GuildTitle }`,
+  // `{ "%pct", GuildTitle }`), so %lev carries GuildTitle's mcp-null
+  // arm too - the PLAYER's name. The port had given it the bare
+  // call-through, which answered [srcDataUnknown] against any source
+  // without the override where DFU answers a name.
+  '%lev': (mcp, hooks) => HANDLERS['%pct'](mcp, hooks),
 
   // the SPELL-INFO block (the spell bundle's MCP - the spellbook
   // info arc mounts the source)
@@ -662,6 +688,145 @@ const HANDLERS = {
   '%cld': (mcp) => call(mcp, 'durationPerLevel'),
   '%clm': (mcp) => call(mcp, 'magnitudePerLevel'),
   '%mpw': (mcp) => call(mcp, 'magicPowers'),   // token-level in C#; the string arm until the spell MCP lands (recorded)
+
+  // ── E7 (2026-09-02): THE TABLE'S LAST THIRTY-SIX ROWS ──────────
+  // M-X left thirty-seven of MacroHelper's rows RECORDED at their
+  // consumers rather than in the table (test/macrocoverage.test.js's
+  // ELSEWHERE map), with its own note: "Consolidating them into the
+  // one table is the recorded follow-up, not a gap." This is that
+  // consolidation. DFU has ONE macroHandlers dictionary and
+  // ExpandMacros runs the WHOLE of it over every token it is handed -
+  // so a talk record naming %it, a quest message naming %hnt, or a
+  // book naming %pp1 all reach the same row. The per-window VALUE
+  // MAPS (itemInfo, guildServiceActions, arrestFlow, talkSession)
+  // still answer first through expandMacroValues' `sym in values`
+  // arm; these rows are what a symbol resolves to when it reaches the
+  // LADDER instead, which before E7 was `%xx[undefined]` for all
+  // thirty-seven - the shape DFU reserves for a macro it has never
+  // heard of.
+  //
+  // The call-throughs are `mcp.GetMacroDataSource().X()` verbatim: a
+  // source without the override answers NOT_IMPLEMENTED and the
+  // ladder lands on [srcDataUnknown], which is exactly what DFU's
+  // MacroDataSource base throws its way.
+
+  // %, the 217th row - "Not really a macro, just print %"
+  // (MacroHelper.cs:243, Percent :843-846). The terminator scan finds
+  // it on its own: '%' is itself a MACRO_TERMINATOR, so `%%` and `%.`
+  // both name the one-character symbol and the second character
+  // survives.
+  '%': () => '%',
+
+  // the ITEM family (ItemHelper's MCP - MacroHelper.cs:1215-1268;
+  // note %it/%wep/%arm/%bt are ONE handler, ItemName)
+  '%it': (mcp) => call(mcp, 'itemName'),
+  '%wep': (mcp) => call(mcp, 'itemName'),
+  '%arm': (mcp) => call(mcp, 'itemName'),
+  '%bt': (mcp) => call(mcp, 'itemName'),
+  '%ba': (mcp) => call(mcp, 'bookAuthor'),
+  '%mat': (mcp) => call(mcp, 'material'),
+  '%qua': (mcp) => call(mcp, 'condition'),
+  '%kg': (mcp) => call(mcp, 'weight'),
+  '%wdm': (mcp) => call(mcp, 'weaponDamage'),
+  '%mod': (mcp) => call(mcp, 'armourMod'),
+  '%wth': (mcp) => call(mcp, 'worth'),
+  '%hs': (mcp) => call(mcp, 'heldSoul'),
+  '%po': (mcp) => call(mcp, 'potion'),
+
+  // the PAINTING family (MacroHelper.cs:1278-1300)
+  '%adj': (mcp) => call(mcp, 'paintingAdjective'),
+  '%an': (mcp) => call(mcp, 'artistName'),
+  '%pp1': (mcp) => call(mcp, 'paintingPrefix1'),
+  '%pp2': (mcp) => call(mcp, 'paintingPrefix2'),
+  '%sub': (mcp) => call(mcp, 'paintingSubject'),
+
+  // the SERVICE family (the guild/tavern windows' MCP)
+  '%a': (mcp) => call(mcp, 'amount'),
+  '%cpn': (mcp) => call(mcp, 'shopName'),
+  '%dwr': (mcp) => call(mcp, 'roomHoursLeft'),
+
+  // the TALK MCP family (TalkManagerMCP.cs's own overrides -
+  // MacroHelper.cs:1403-1432). %di, %n/%nam/%bn, %fn, %mn, %oth and
+  // the pronouns already stood above; these four are the rest.
+  '%hnt': (mcp) => call(mcp, 'dialogHint'),
+  '%hnt2': (mcp) => call(mcp, 'dialogHint2'),
+  '%pqn': (mcp) => call(mcp, 'potentialQuestorName'),
+  '%pqp': (mcp) => call(mcp, 'potentialQuestorLocation'),
+
+  // the PLAYER's purse (GoldCarried :946-949, PlayerEntity.GoldPieces -
+  // the machine's own Q5 door, not GetGoldAmount's letters-of-credit
+  // total)
+  '%gii': (mcp, hooks) => str(hooks?.getGoldPieces?.()),
+
+  // %map - LocationRevealedByMapItem (:1092-1095), PlayerGPS's field.
+  // (Not to be confused with the notebook note's literal
+  // `.Replace("%map", name)` in the exterior host, which is DFU's own
+  // string surgery on a localized note and never touches this table.)
+  '%map': (mcp, hooks) => hooks?.world?.locationRevealedByMapItem?.() ?? null,
+
+  // ── the TALK GLOBALS ────────────────────────────────────────────
+  // Four handlers that are NOT the talk MCP's - they are static rows
+  // reaching GameManager.Instance.TalkManager directly - but every
+  // talk record runs the whole table, so they resolve there. The
+  // port's TalkManager stand-in is the answer pipeline, and
+  // talkMacros.js's talkMacroHooks derives these seams from it; a
+  // context with no TalkManager at all answers null -> [nullMCP],
+  // the headless charter.
+  '%1com': (mcp, hooks) => hooks?.world?.talkPCGreetingOrFollowUpText?.() ?? null,   // GreetingOrFollowUpText :957-960
+  '%hnr': (mcp, hooks) => hooks?.world?.talkHonoric?.() ?? null,                     // Honorific :890-893
+  '%fcn': (mcp, hooks) => hooks?.world?.talkLocationOfRegionalBuilding?.() ?? null,  // LocationOfRegionalBuilding :1097-1100
+  /** DialogKeySubject (:1059-1083) - %key. The switch is on the
+   *  key-subject TYPE, and four of its six arms answer the same
+   *  field; Work goes through GetWorkString and QuestTopic prefers
+   *  the current list item's caption, falling back to the field when
+   *  there is no item. Unset (and C#'s shared `default:`) is ''. */
+  '%key': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w?.talkKeySubjectType) return null;
+    switch (w.talkKeySubjectType()) {
+      case 'Building':
+      case 'Person':
+      case 'Thing':
+      case 'Organization':
+        return w.talkKeySubject?.() ?? null;
+      case 'Work':
+        return w.talkWorkString?.() ?? null;
+      case 'QuestTopic': {
+        const item = w.talkCurrentQuestionListItem?.() ?? null;
+        return item != null ? item.caption : (w.talkKeySubject?.() ?? null);
+      }
+      default:
+        return '';
+    }
+  },
+  /** MarkLocationOnMap (:1085-1090) - %loc. THE SIDE EFFECT LIVES IN
+   *  THE MACRO: the map is revealed only when the answer being
+   *  expanded is the map-reveal record, which is what
+   *  GetKeySubjectBuildingOnMap's flag says, and the macro answers
+   *  the key subject either way. Nystul's own comment on the table
+   *  row says it: "it seems to return the name of the building and
+   *  reveal the map only if a 7332 dialog was chosen". */
+  '%loc': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w?.talkKeySubject) return null;
+    if (w.talkMarkLocationOnMap?.()) w.markKeySubjectLocationOnMap?.();
+    return w.talkKeySubject();
+  },
+
+  // ── the COURT GLOBALS (DaggerfallUI.Instance.DfCourtWindow) ─────
+  // The BODIES are already ported and stay in their one home:
+  // systems/court.js carries MacroHelper.Crime's verbatim name table
+  // (CRIME_NAMES) and MacroHelper.Penalty's three-way fork
+  // (penaltyText). These rows are the table's reach into the live
+  // court, through seams the arrest flow can mount; unmounted they
+  // answer [nullMCP], which is what a table row for a window that is
+  // not open should say. (scenes/arrestFlow.js still answers the
+  // court record's own %cri/%pen/%gtp/%dip through its VALUE MAP,
+  // which resolves before the ladder is ever reached.)
+  '%cri': (mcp, hooks) => hooks?.world?.courtCrimeName?.() ?? null,          // Crime :665-704
+  '%pen': (mcp, hooks) => hooks?.world?.courtPenaltyText?.() ?? null,        // Penalty :706-719
+  '%gtp': (mcp, hooks) => str(hooks?.world?.courtFine?.()),                  // GoldToPay :721-724
+  '%dip': (mcp, hooks) => str(hooks?.world?.courtDaysInPrison?.()),          // DaysInPrison :726-729
 };
 
 // M-X: the BIOGRAPHY %q block - Q1..Q12 with the a/b arms (C# has
@@ -679,9 +844,13 @@ const signedOff = (hooks, field) => {
   return e ? signedFmt(e[field] ?? 0) : null;
 };
 const pgender = (hooks) => hooks?.playerGender?.() === 'female';
+/** hooks.nowSeconds is EPOCH-RELATIVE (classic minutes x 60), so the
+ *  epoch goes back on before the date is read - otherwise %year answers
+ *  1 where DFU's WorldTime.Now.Year answers 405. The epoch is exactly
+ *  404 x 360-day years, so every other field is unmoved by this. */
 const nowDate = (hooks) => {
   const sec = hooks?.nowSeconds?.();
-  return sec == null ? null : dateFromSeconds(sec);
+  return sec == null ? null : dateFromSeconds(CLASSIC_EPOCH_IN_SECONDS + sec);
 };
 /** GetSuffix (DaggerfallDateTime.cs:641-651), on the ONE-based day. */
 const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th');
@@ -690,23 +859,42 @@ const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day ==
 const LOCAL_PROVINCE_BRETON = 1;
 /** DFRegion.LocationTypes.TownCity (mapsFile.LOCATION_TYPES). */
 const TOWN_CITY_TYPE = 0;
+/** CityName2's error fallback (MacroHelper.cs:585,
+ *  `GetLocalizedText("daggerfall")` = Internal_Strings.csv:1275
+ *  `daggerfall,Daggerfall`). */
+const CITY_NAME2_FALLBACK = 'Daggerfall';
 /** CityType's switch (MacroHelper %ct), the Internal_Strings values
  *  over mapsFile.LOCATION_TYPES' real ids: TownCity 0 city,
  *  TownHamlet 1 hamlet, TownVillage 2 village, HomeFarms 3 farm,
  *  HomePoor 11 shack, HomeWealthy 8 manor, Tavern 6 community,
  *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
- *  falls to the enum's own name-string arm (the default:). */
+ *  falls to the default:, Enum.ToString() - the member NAME. */
 const CITY_TYPES = Object.freeze({
   0: 'city', 1: 'hamlet', 2: 'village', 3: 'farm',
   11: 'shack', 8: 'manor', 6: 'community', 5: 'temple', 9: 'shrine',
 });
+/** The default: arm, `gps.CurrentLocationType.ToString()`
+ *  (MacroHelper.cs:617). On a DEFINED DFRegion.LocationTypes member
+ *  C# stringifies the MEMBER NAME - "Graveyard", "Coven",
+ *  "DungeonKeep" - not the number; only a value the enum does not
+ *  define stringifies as its digits, which is the String(t) tail. */
+const LOCATION_TYPE_NAMES = Object.freeze(Object.fromEntries(
+  Object.entries(LOCATION_TYPES).map(([name, id]) => [id, name])));
 
 
 // C#'s table carries these with a NULL handler - '[unhandled]'.
 const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
   // M-X: the rest of C#'s null rows - each renders [unhandled], verbatim
   '%hol', '%hrg', '%htwn', '%key2', '%mit', '%on', '%pdg', '%plq', '%pnq',
-  '%ptm', '%qot', '%vn', '%wpn']);
+  '%ptm', '%qot', '%vn', '%wpn',
+  // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
+  // the table's answer is [unhandled]; the travel window's own
+  // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
+  // ui/travelMapWindow.js:927 after it) is string surgery on TEXT.RSC
+  // 31 that never reaches this ladder. M-X had recorded it as a port
+  // handler standing where C# has null, with a carve-out in the
+  // coverage gate; there was never a handler to carve out.
+  '%tcn']);
 
 /** M-X: the coverage gate's surface - the table's whole membership,
  *  so test/macrocoverage.test.js can diff it against MacroHelper.cs
@@ -714,10 +902,23 @@ const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
 export const macroTableCoverage = () => ({ handled: Object.keys(HANDLERS), nulls: [...NULL_HANDLERS] });
 
 /** MacroHelper.GetValue (MacroHelper.cs:502-528): the error-shape
- *  ladder, verbatim. mcp/mcp2 are {quest, source} bundles or null. */
-export function getContextValue(symbolStr, quest, hooks) {
-  const mcp = quest ? { quest, source: questMacroSource(quest) } : null;
-  const mcp2 = quest?.externalMCP ?? null;
+ *  ladder, verbatim, over an ALREADY-BUILT macro context provider.
+ *  `mcp`/`mcp2` are {quest?, source} bundles or null - the quest's
+ *  (getContextValue below) or the talk MCP's (talkMacros.js). E7
+ *  split this out of getContextValue so the second MCP the port has
+ *  can ride the one ladder instead of growing a second.
+ *
+ *  The FOUR SENTINELS, in C#'s own order:
+ *    the table does not carry the symbol   -> symbolStr[undefined]
+ *    it carries it with a NULL handler     -> symbolStr[unhandled]
+ *    the handler answers null              -> symbolStr[nullMCP]
+ *    the source method is NotImplemented,
+ *      and the SECOND provider misses too  -> symbolStr[srcDataUnknown]
+ *  Note the try2 arm re-invokes the SAME handler with the second
+ *  provider, so a handler with an mcp-null fallback (GuildTitle's
+ *  player name) answers out of it rather than reaching the sentinel -
+ *  C#'s `svp.Invoke(mcp2)` with a null mcp2, exactly. */
+export function getMacroValue(symbolStr, mcp, hooks, mcp2 = null) {
   if (NULL_HANDLERS.has(symbolStr)) return symbolStr + '[unhandled]';
   const handler = HANDLERS[symbolStr];
   if (!handler) return symbolStr + '[undefined]';
@@ -728,6 +929,12 @@ export function getContextValue(symbolStr, quest, hooks) {
   const try2 = handler(mcp2, hooks);
   if (try2 !== NOT_IMPLEMENTED && try2 != null) return try2;
   return symbolStr + '[srcDataUnknown]';
+}
+
+/** The QUEST context's entry into the ladder above. */
+export function getContextValue(symbolStr, quest, hooks) {
+  const mcp = quest ? { quest, source: questMacroSource(quest) } : null;
+  return getMacroValue(symbolStr, mcp, hooks, quest?.externalMCP ?? null);
 }
 
 // ---- ExpandQuestMessage (QuestMacroHelper.cs:91-160) ----

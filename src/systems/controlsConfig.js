@@ -1,18 +1,24 @@
 // I4 - THE CONTROLS STAGING LAW: ControlsConfigManager.cs (MIT,
-// Daggerfall Workshop) minus its combo arms. The controls window
-// edits a STAGED copy of both binding dicts; nothing reaches the
-// live registry until the window closes on a valid configuration
-// (SetAllKeyBindValues on OnPop), and Default resets through the
-// registry's own law.
+// Daggerfall Workshop). The controls window edits a STAGED copy of
+// both binding dicts; nothing reaches the live registry until the
+// window closes on a valid configuration (SetAllKeyBindValues on
+// OnPop), and Default resets through the registry's own law.
 //
-// FLAGGED with I1's combo flag: GetDuplicates' second and third
-// phases (:147-221) exist to mark a combo's MODIFIER as clashing
-// with an independent bind. The port has no key combos, so those
-// arms have nothing to walk; the simple same-string phase is the
-// whole reachable law and the combo phases land with combos.
+// A8 RETIRED THE COMBO FLAG THAT STOOD HERE. It said GetDuplicates'
+// second and third phases had nothing to walk because the port had no
+// key combos. It has them now (inputActions.js's comboCode pack), so
+// all three phases are below and live, and this file is the whole of
+// ControlsConfigManager rather than most of it.
+//
+// The one structural difference from C# stands: DFU's staged dicts
+// hold DISPLAY STRINGS and parse them back with ParseKeyCodeString /
+// GetComboCode(String); the port's hold CODES, because the port's code
+// alphabet is already strings. comboString() in inputActions.js is the
+// display face when one is wanted.
 
 import {
   ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, resetDefaults,
+  isCombo, getCombo, comboCode,
 } from './inputActions.js';
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
@@ -43,14 +49,65 @@ export function setUnsavedBinding(u, action, code) {
   currentDict(u).set(action, code);
 }
 
-/** GetDuplicates' reachable phase (:180-188): every code that appears
- *  twice, with unbound (null) never counting. */
+/**
+ * GetDuplicates (:144-215), ALL THREE PHASES. A8 made the second and
+ * third reachable by giving the port combos; before that the simple
+ * same-code pass was the whole story.
+ *
+ * The first pass is DFU's OrderByDescending key selector (:152-174),
+ * and its SIDE EFFECTS are the point: LINQ runs the selector once per
+ * element, in source order, before the sort is enumerated, and the
+ * selector records each combo's MODIFIER into `recorded` - which is
+ * what makes a later independent bind on that same modifier read as a
+ * duplicate. The sort then puts the combos first (stable, so equals
+ * keep source order) and the simple pass walks that list.
+ *
+ * Unbound is DFU's KeyCode.None string, which `str != none` keeps out
+ * of the dupe set; here unbound is null and skips the same way.
+ */
 export function getDuplicates(codes) {
-  const seen = new Set(), dupes = new Set();
-  for (const c of codes) {
+  const recorded = new Set();
+  const dupes = new Set();
+  const modifiers = new Map();   // modifier code -> the combos it heads
+  const list = [...codes];
+
+  // the key selector's pass (:152-174), in source order
+  const isComboCode = list.map((c) => {
+    if (c == null || !isCombo(c)) return false;
+    const [mod] = getCombo(c);
+    // "Add modifier to 'recorded' so it cannot be used as an
+    // independent keybind"
+    if (!recorded.has(mod)) recorded.add(mod);
+    if (!modifiers.has(mod)) modifiers.set(mod, new Set());
+    modifiers.get(mod).add(c);
+    return true;
+  });
+  // OrderByDescending(bool): combos first, stable within each group
+  const sorted = [
+    ...list.filter((_, i) => isComboCode[i]),
+    ...list.filter((_, i) => !isComboCode[i]),
+  ];
+
+  // "Simple check for duplicates in the list" (:178-186)
+  for (const c of sorted) {
     if (c == null) continue;
-    if (seen.has(c)) dupes.add(c);
-    else seen.add(c);
+    if (!recorded.has(c)) recorded.add(c);
+    else dupes.add(c);
+  }
+
+  // "Mark combos as dupes too if a modifier has been used as an
+  // independent keybind" (:188-196) - Shift+T against a bare Shift.
+  for (const [mod, combos] of modifiers) {
+    if (dupes.has(mod)) for (const c of combos) dupes.add(c);
+  }
+
+  // "Mark combos as dupes if the combo'd key is also used as a
+  // modifier" (:198-214) - Shift+T against Z+Shift.
+  for (const c of sorted) {
+    if (c == null || !isCombo(c)) continue;
+    const [, key] = getCombo(c);
+    const mods = modifiers.get(key);
+    if (mods) { for (const m of mods) dupes.add(m); dupes.add(c); }
   }
   return dupes;
 }
@@ -131,6 +188,15 @@ const CLASSIC_NAMES = Object.freeze({
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
   if (code == null) return 'NONE';   // KeyCode.None.ToString(), through the classic-font ToUpper tail (NT3 F082)
+  // A8: the COMBO arm (:509-513). Each half goes through GetButtonText
+  // ITSELF, at its DEFAULT fullString - so a combo reads in the classic
+  // names, "LSHIFT + T" - and only the JOINED string meets
+  // FormatButtonText, whose ten-character cap most combos overrun into
+  // the '...' the tooltip stands behind.
+  if (isCombo(code)) {
+    const [mod, key] = getCombo(code);
+    return formatButtonText(`${buttonText(mod)} + ${buttonText(key)}`, full);
+  }
   if (CLASSIC_NAMES[code]) return CLASSIC_NAMES[code];
   let t = code;
   const digit = /^Digit(\d)$/.exec(code);
@@ -145,8 +211,57 @@ export function buttonText(code, full = false) {
   // the classic font, so the non-SDF arm is its law). ENTER, SPACE,
   // LEFT - as the DOS-inspired window shows them.
   else if (/^Arrow(\w+)$/.test(code)) t = code.slice(5);
-  if (t.length <= MAX_BUTTON_TEXT || full) {
-    return t.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim().toUpperCase();
+  return formatButtonText(t, full);
+}
+
+/** FormatButtonText (:561-568) plus the classic-font ToUpper tail
+ *  (:521), which is where both arms of GetButtonText land. */
+function formatButtonText(text, full) {
+  if (text.length <= MAX_BUTTON_TEXT || full) {
+    return text.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim().toUpperCase();
   }
   return ELONGATED_TEXT;
+}
+
+// ── the two helpers both rebinding windows need (ROAD-G G6) ─────────
+//
+// They were private to ui/controlsWindow.js until the ADVANCED tab's
+// destination - ui/mouseControlsWindow.js, the other window that
+// captures keys and prompts to remove them - needed the same two. The
+// grid imports the WINDOW, so the shared halves cannot live in the
+// grid without a cycle, and PromptRemoveKeybindMessage is
+// ControlsConfigManager's own method anyway (:290-320).
+
+/** The three virtual modifiers a KeyboardEvent reports, each mapped to
+ *  the LEFT physical key. The modifier keys themselves are excluded:
+ *  pressing Shift alone must bind Shift, not a Shift+Shift combo. DFU
+ *  takes TWO key-downs and lets ANY key be the modifier
+ *  (DaggerfallControlsWindow.WaitForKeyPress :380-424); a browser
+ *  KeyboardEvent reports three flags and no side, so this door offers
+ *  the LEFT side of the three - which is what every DFU default binds.
+ *  The storage, the duplicate law and the runtime read take any pair. */
+const EVENT_MODIFIERS = Object.freeze([
+  ['ctrlKey', 'ControlLeft', ['ControlLeft', 'ControlRight']],
+  ['shiftKey', 'ShiftLeft', ['ShiftLeft', 'ShiftRight']],
+  ['altKey', 'AltLeft', ['AltLeft', 'AltRight']],
+]);
+export function comboFromEvent(code, e) {
+  if (!e) return null;
+  for (const [flag, mod, own] of EVENT_MODIFIERS) {
+    if (e[flag] && !own.includes(code)) return comboCode(mod, code);
+  }
+  return null;
+}
+
+/** The remove prompt's action face (:302): camel case split. */
+export const splitCamel = (s) => s.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
+
+/** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
+ *  record formatted with the camel-split action name and the FULL
+ *  button text of the code being removed. */
+export function removeKeybindPromptRows(action, code) {
+  return [
+    'Are you sure you want to remove the keybind',
+    `for ${splitCamel(action)} ('${buttonText(code, true)}')?`,
+  ];
 }

@@ -30,10 +30,24 @@
 // and systems/guilds.js (the join decision). The message boxes it
 // stacks are the U11 parchment.
 //
-// FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-// (:129, :133, :141, :147) read from the player's own keybind file,
-// which the port has no source for; the keyboard accelerators here
-// are the port's own (Ledger A) and are named as such.
+// THE HOTKEYS (D1, retiring the flag that stood here): the old note
+// said DFU read these from "the player's own keybind file, which the
+// port has no source for". Both halves were wrong. The source is
+// DaggerfallShortcut's TEXT DATABASE, StreamingAssets/Text/
+// DialogShortcuts.txt (DaggerfallShortcut.cs:307-326), which IS in the
+// reference tree - and A8 already ported it whole to
+// systems/dialogShortcuts.js. So the four bindings are now the table's
+// answers (:128 GuildsJoin J, :134 GuildsTalk T, :145 the SERVICE's
+// own button, :151 GuildsExit E) instead of four literals. The
+// middle one is the correction that flag was hiding: DFU hangs
+// `Services.GetServiceShortcutButton(service)` there, so the letter
+// moves with the service - Training R, Get Quest G, Identify I,
+// Donate D, Cure C... - where the port spelled a flat KeyS, which is
+// right for exactly two of the twenty (SellMagicItems, Spymaster).
+// The order asked is DFU's ADD order (join, talk, service, exit),
+// which is the order Panel.ProcessHotkeySequences walks - it matters,
+// because a member panel drops Join and because Spymaster's S and
+// SellMagicItems' S sit under a Talk that is T, never colliding.
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -41,7 +55,8 @@ import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { serviceLabel } from '../systems/guildServiceFlow.js';
+import { serviceLabel, serviceShortcutButton } from '../systems/guildServiceFlow.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** mainPanel.Size (:124) - and the size of both IMGs. */
 export const PANEL_W = 130, PANEL_H = 51;
@@ -142,7 +157,7 @@ export class GuildServiceWindow {
     if (r?.dispatched) this._close();
   }
 
-  input(code) {
+  input(code, e = null) {
     if (this.top) {
       if (this.top.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissTop(MB_BUTTONS.Yes);
@@ -152,11 +167,31 @@ export class GuildServiceWindow {
       this._dismissTop();
       return;
     }
-    // The port's own accelerators (Ledger A - DFU reads its keybinds).
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this._close(); return; }
-    if (code === 'KeyJ' && !this.hooks.member()) { this._join(); return; }
-    if (code === 'KeyT') { this.hooks.onTalk?.(); this._close(); return; }
-    if (code === 'KeyS') this._service();
+    // Escape/Enter are the port host's close keys, not DFU buttons.
+    if (code === 'Escape' || code === 'Enter') { this._close(); return; }
+    // D1: the four Hotkeys, from the table, in DFU's button ADD order.
+    const serviceBtn = serviceShortcutButton(this.hooks.service?.());
+    const buttons = [
+      ...(this.hooks.member() ? [] : ['GuildsJoin']),   // the row only EXISTS for a non-member (:127-132)
+      'GuildsTalk',
+      ...(serviceBtn ? [serviceBtn] : []),              // Buttons.None -> no accelerator at all
+      'GuildsExit',
+    ];
+    const hit = firstHotkey(buttons, code, e);
+    if (hit === null) return;
+    // F141 on the KEYBOARD side too: Talk/Service/Exit each play
+    // ButtonClick in their OnKeyboardEvent's KeyDown arm (:299, :460,
+    // :500), and Join - the one button with NO OnKeyboardEvent
+    // handler - reaches its OnMouseClick through Button
+    // .ProcessHotkeySequences' faked click (Button.cs:85-90), sound
+    // included. So all four sound, which the flat letters never did.
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    switch (hit) {
+      case 'GuildsJoin': this._join(); return;
+      case 'GuildsTalk': this.hooks.onTalk?.(); this._close(); return;
+      case 'GuildsExit': this._close(); return;
+      default: this._service();   // whichever of the nineteen service buttons hit
+    }
   }
 
   click(vx, vy) {

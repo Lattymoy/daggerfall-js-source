@@ -37,7 +37,8 @@ const purse = (entity, { maxKg = 1e9, carriedKg = 0, wagon = null } = {}) => ({
   carriedWeightKg: () => carriedKg,
   maxEncumbranceKg: () => maxKg,
 });
-const player = (gold = 1000) => ({ level: 5, items: [{ group: 'Currency', stackCount: gold }] });
+// E4: the purse is PlayerEntity.GoldPieces, a counter.
+const player = (gold = 1000) => ({ level: 5, goldPieces: gold, items: [] });
 
 test('B1: TransactionResult values ARE TEXT.RSC ids (:29-51)', () => {
   // 0282-0299 is one contiguous block of banking dialogue, which is
@@ -187,7 +188,7 @@ test('B1: depositing letters takes EVERY one, at face value (:377-389)', () => {
   assert.equal(depositAllLetters(accounts, 0, purse(e)), R.NONE);
   assert.equal(accountTotal(accounts, 0), 2000, 'both letters, at face value');
   assert.equal(e.items.filter((i) => i.templateIndex === LETTER_OF_CREDIT_TEMPLATE).length, 0);
-  assert.equal(e.items.length, 2, 'the sword and the purse are untouched');
+  assert.equal(e.items.length, 1, 'the sword is untouched (E4: the purse is not an item)');
   // an empty pack is not an error
   assert.equal(depositAllLetters(accounts, 0, purse(e)), R.NONE);
 });

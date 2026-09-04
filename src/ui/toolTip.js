@@ -86,7 +86,14 @@ export const toolTipDelay = () => getFloat('GUI', 'ToolTipDelayInSeconds', 0, 10
  * zero), but re-entering the same tip after a twitch does not.
  */
 export class ToolTip {
-  constructor() {
+  /** AUDIT 58: `delaySeconds` is DFU's per-component ToolTipDelay
+   *  (ToolTip.cs:44), which a window may override on the shared
+   *  defaultToolTip - the quest journal does exactly that
+   *  (DaggerfallQuestJournalWindow.cs:103-104,
+   *  `defaultToolTip.ToolTipDelay = 1`), the same idiom the automap's
+   *  own clock below carries. Null means the GUI setting. */
+  constructor(delaySeconds = null) {
+    this.delaySeconds = delaySeconds;
     this.text = null;
     this._pending = null;
     this._elapsed = 0;
@@ -108,27 +115,50 @@ export class ToolTip {
   update(dt) {
     if (!this._pending) { this.text = null; return; }
     this._elapsed += dt;
-    this.text = this._elapsed >= toolTipDelay() ? this._pending : null;
+    this.text = this._elapsed >= (this.delaySeconds ?? toolTipDelay()) ? this._pending : null;
   }
 
   /** Drawn LAST by its window (DFU's final-component order). */
   draw(renderer, m, font) {
-    if (!this.text || !toolTipsEnabled()) return;
-    const rows = toolTipRows(this.text);
-    // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
-    // same reader messageBox's rowH uses.
-    const glyph = font?.fnt?.fixedHeight ?? 6;
-    let widest = 0;
-    for (const r of rows) widest = Math.max(widest, measureText(font.fnt, r));
-    const [w, h] = toolTipSize(rows, widest, glyph);
-    const [x, y] = toolTipPosition(this.x, this.y, w, h);
-    const bg = parseHexColor(getString('GUI', 'ToolTipBackgroundColor'), DEFAULT_TOOLTIP_TEXT_BG);
-    const fg = parseHexColor(getString('GUI', 'ToolTipTextColor'), DEFAULT_TOOLTIP_TEXT_FG);
-    drawRect(renderer, m, x, y, w, h, bg);
-    // NO SHADOW: DFU draws the tooltip with a bare font.DrawText
-    // (:213-217), unlike every labelled button in the UI.
-    rows.forEach((r, i) => drawText(renderer, font, r,
-      m.ox + (x + TOOLTIP_MARGIN) * m.s,
-      m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s, m.s, fg));
+    if (!this.text) return;
+    drawToolTipBox(renderer, m, font, this.text, this.x, this.y);
   }
+}
+
+/**
+ * ToolTip.Draw's BODY, with the rest clock left to the caller (:158-217).
+ * The ToolTip class above owns DFU's per-component clock; ROAD-C c2/S5's
+ * automap window owns a DIFFERENT one - ui/automapChrome.js's, which is
+ * the only clock that knows about SuppressToolTip and about the automap's
+ * own ToolTipDelay of 1 second (DaggerfallAutomapWindow.cs:22, :492-502).
+ * Both draw the SAME box, so the box lives here once. EnableToolTips is
+ * checked here because it is the master switch for every SHARED tooltip.
+ *
+ * `ignoreEnableSetting` is the one exception DFU itself carries, and it
+ * has exactly one caller: the EXTERIOR automap's building nameplates.
+ * That tooltip is not the window's shared `defaultToolTip` - which
+ * DaggerfallBaseWindow.cs:50-56 only builds when the setting is on -
+ * but a private `nameplateToolTip`, constructed bare
+ * (DaggerfallExteriorAutomapWindow.cs:870-871) and drawn
+ * unconditionally in that window's Draw() (:571-572). Turning tooltips
+ * off in DFU does not silence the town map's plate names.
+ */
+export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false } = {}) {
+  if (!text || (!ignoreEnableSetting && !toolTipsEnabled())) return;
+  const rows = toolTipRows(text);
+  // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
+  // same reader messageBox's rowH uses.
+  const glyph = font?.fnt?.fixedHeight ?? 6;
+  let widest = 0;
+  for (const r of rows) widest = Math.max(widest, measureText(font.fnt, r));
+  const [w, h] = toolTipSize(rows, widest, glyph);
+  const [x, y] = toolTipPosition(vx, vy, w, h);
+  const bg = parseHexColor(getString('GUI', 'ToolTipBackgroundColor'), DEFAULT_TOOLTIP_TEXT_BG);
+  const fg = parseHexColor(getString('GUI', 'ToolTipTextColor'), DEFAULT_TOOLTIP_TEXT_FG);
+  drawRect(renderer, m, x, y, w, h, bg);
+  // NO SHADOW: DFU draws the tooltip with a bare font.DrawText
+  // (:213-217), unlike every labelled button in the UI.
+  rows.forEach((r, i) => drawText(renderer, font, r,
+    m.ox + (x + TOOLTIP_MARGIN) * m.s,
+    m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s, m.s, fg));
 }

@@ -3,16 +3,63 @@
 // the ACTIVE code paths (MIT, Daggerfall Workshop; original author
 // Nystul). DFU's right-aligned arms are dead there too -
 // allowRightAlignedNameplates is hard false (:114) - so plates only
-// ever displace VERTICALLY, and the port's keyed window never
-// rotates the map, so DFU's rotated corner vectors stay axis-aligned
-// and the intersect predicate reduces to its plain form (recorded
-// simplification - the law is identical at rotation 0).
+// ever displace VERTICALLY.
+//
+// THE CORNERS ARE AXIS-ALIGNED, AND THAT IS DFU'S BEHAVIOUR, NOT A
+// SIMPLIFICATION. c2/S10 made the map really rotate, so the old note
+// ("the port's keyed window never rotates the map") no longer applies -
+// and the answer got BETTER, not worse. RotateBuildingNameplates
+// (ExteriorAutomap.cs:370-386) does rotate the four stored corners by
+// Quaternion.AngleAxis(-angle, Vector3.forward), but every rotate
+// action calls UpdateAutomapView, which recomputes ALL FOUR corners
+// axis-aligned from textLabel.Position (window :892-896) BEFORE
+// ComputeNameplateOffsets ever reads them, and the drawn label is a
+// screen-space TextLabel that never rotates either. The rotated
+// corners are DEAD CODE in DFU: feeding them to this solver would be a
+// DEPARTURE, so they are deliberately not ported.
 //
 // A plate is { x, y, w, h }: x = the LEFT edge (plates are
 // left-aligned at their anchor, ResetRotationBuildingNameplates
 // :388-401), y = the vertical CENTER, w/h post-scale. The answer is
 // a parallel array of { offY, replaced } - replaced plates render as
 // "*" (:1365-1376), DFU's own surrender for a spot it cannot clear.
+
+import { RMB_DIMENSION } from '../formats/blocksFile.js';   // BlocksFile.RMBDimension - one home
+
+/**
+ * ROAD-C c2/S10 HALF B - THE ANCHOR, and it is the last real 1:1 gap
+ * on this surface. DFU walks EVERY building of EVERY block and anchors
+ * each plate on the building subrecord's OWN position
+ * (ExteriorAutomap.cs:664-665):
+ *
+ *   xPosBuilding = layout.rect.xpos + (int)(Position.x / (RMBDimension * GlobalScale) * blockSizeWidth)
+ *   yPosBuilding = layout.rect.ypos + (int)(Position.z / (RMBDimension * GlobalScale) * blockSizeHeight)
+ *
+ * layout.rect.xpos/ypos are the block's grid cell x64 (:1441-1451), and
+ * BuildingSummary.Position is `(XPos, 0, RMBDimension - ZPos) *
+ * GlobalScale` (RMBLayout.cs:570), so the divisor cancels the scale
+ * back out and the fraction is the subrecord's place inside its own
+ * block. The cast is C#'s `(int)` - TRUNCATION toward zero, not a
+ * floor - and it is reproduced.
+ *
+ * The port used to anchor on the discovered exterior DOOR, because
+ * nothing enumerated buildings without one. It does now
+ * (world/buildingSummaries.js), so the substitution retires: this move
+ * shifts EVERY plate in EVERY town, and the layout pins were
+ * re-baselined with it.
+ *
+ * The answer is in DFU's layout-pixel space: x east, y NORTH (the
+ * texture's own bottom-up rows), origin at the layout's south-west
+ * corner. The window subtracts half the layout to reach world.
+ */
+export const NAMEPLATE_BLOCK_PX = 64;            // blockSizeWidth/Height
+export function nameplateAnchor(blockX, blockY, position, globalScale = 0.025) {
+  const div = RMB_DIMENSION * globalScale;
+  return [
+    blockX * NAMEPLATE_BLOCK_PX + Math.trunc((position[0] / div) * NAMEPLATE_BLOCK_PX),
+    blockY * NAMEPLATE_BLOCK_PX + Math.trunc((position[2] / div) * NAMEPLATE_BLOCK_PX),
+  ];
+}
 
 /** The intersect predicate (CheckIntersectionOfNameplates,
  *  :993-1010): vertical overlap within the summed half-heights AND
@@ -68,7 +115,15 @@ export function resolveNameplates(input) {
     for (const p of plates) {
       if (p.placed || p.count !== 1) continue;
       const q = plates.find((o) => o !== p && !o.placed && nameplatesIntersect(p, o));
-      if (!q) continue;
+      // AUDIT 39 F134: the search MISS is a placement, not a skip
+      // (:1179-1184) - `if (j >= buildingNameplates.Length) { first.
+      // numCollisionsDetected = 0; first.placed = true; continue; }`.
+      // The state is reachable: countAll counts every plate while this
+      // search takes only UNPLACED ones, so a count-1 plate whose sole
+      // collider was placed mid-pass lands here. Skipped, it fell to
+      // the ±h hop and then to the "*" surrender F139 already caught
+      // on the neighbouring arm.
+      if (!q) { p.count = 0; p.placed = true; continue; }
       const dy = Math.abs((p.y + p.offY) - (q.y + q.offY));
       const ySize = p.h / 2 + q.h / 2;
       const [dp, dq] = dirsOf(p, q);

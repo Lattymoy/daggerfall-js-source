@@ -6,7 +6,9 @@ import {
   HOUSE_FLAG_MASK, ARMOR_FLAG_START, armorMaskForRank, hasClaimedArmor,
   giftArmorMaterial, GIFT_ARMOR_PIECES, receiveArmorDecision, claimArmor,
   ARMOR_TEXT_ID, NO_ARMOR_TEXT_ID, NO_HOUSE_TEXT_ID, HOUSE_TEXT_ID, SPYMASTER_GREETING_TEXT_ID,
+  restoreKnightlyOrderFlags, ARMOR_FLAG_ANY_MASK, LEGACY_ARMOR_FLAG_MASK,
 } from '../src/systems/knightlyGifts.js';
+import { GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
@@ -198,6 +200,73 @@ test('G6: the flags ride the save, and a pre-G6 membership restores as unclaimed
   assert.equal(hasClaimedArmor(old[4], 6), false);
 });
 
+// =====================================================================
+// D9: KnightlyOrder.RestoreGuildData's armour-bit migration
+// (KnightlyOrder.cs:283-295), run on every load through save.js's
+// restoreMembershipBook (save.js:46) from restorePlayer (save.js:570).
+// =====================================================================
+test('D9: RestoreGuildData back-fills the armour bit for every rank BELOW the current one', () => {
+  // the gate is `(flags & 4092) == 0` (:288) - NO new-style bit set
+  assert.equal(ARMOR_FLAG_ANY_MASK, 4092);
+  assert.equal(LEGACY_ARMOR_FLAG_MASK, 1);
+
+  // rank 3, nothing claimed: bits for ranks 0..2 (4|8|16), NOT the
+  // rank's own bit - the current rank's gift is still owed (:290-291)
+  assert.equal(restoreKnightlyOrderFlags({ rank: 3, flags: 0 }).flags, 28);
+  // the pre-0.11 BOOLEAN "armour taken" flag (bit 0) additionally
+  // claims the OWN rank's bit (:292-293): 1|4|8|16|32
+  assert.equal(restoreKnightlyOrderFlags({ rank: 3, flags: 1 }).flags, 61);
+  // a book already written in the new style is left exactly alone
+  assert.equal(restoreKnightlyOrderFlags({ rank: 5, flags: 4 }).flags, 4);
+  // claimHouse's row (flags = HOUSE_FLAG_MASK) trips the gate but has
+  // no rank below 0 to fill, so it too comes back untouched
+  assert.equal(restoreKnightlyOrderFlags({ rank: 0, flags: HOUSE_FLAG_MASK }).flags, HOUSE_FLAG_MASK);
+  assert.equal(restoreKnightlyOrderFlags(null), null);
+});
+
+test('D9: the header names the module that really holds the load door', () => {
+  // the one-home comment is a NAVIGATION instrument - it sent readers
+  // to guilds.js, which has no restore door at all and never had one.
+  const gifts = readFileSync(new URL('../src/systems/knightlyGifts.js', import.meta.url), 'utf8');
+  const guilds = readFileSync(new URL('../src/systems/guilds.js', import.meta.url), 'utf8');
+  const save = readFileSync(new URL('../src/systems/save.js', import.meta.url), 'utf8');
+  assert.ok(!/restoreMembershipBook/.test(guilds), 'guilds.js holds no restoreMembershipBook');
+  assert.match(save, /const restoreMembershipBook = /, 'save.js defines it');
+  assert.match(save, /restoreKnightlyOrderFlags\(knightly\)/, 'and it is the caller');
+  const door = gifts.match(/The one door is restoreKnightlyOrderFlags below, run by (\S+?)'s/);
+  assert.ok(door, 'the header still names the door');
+  assert.equal(door[1], 'save.js', 'and it names the file that actually holds it');
+});
+
+test('D9: the back-fill runs at the LOAD door, so a demotion cannot re-open a claimed gift', () => {
+  const KNIGHTS = GUILD_GROUPS.KnightlyOrder;
+  const roundTrip = (memberships) => {
+    const snap = JSON.parse(JSON.stringify(snapshotPlayer({ guildMemberships: memberships })));
+    const back = {};
+    restorePlayer(back, snap);
+    return back.guildMemberships;
+  };
+  // a pre-D9 book: rank 3 knight who never claimed anything
+  const plain = roundTrip({ [KNIGHTS]: { guild: 'KnightlyOrder', rank: 3, lastRankChange: 2, flags: 0 } });
+  const row = plain[KNIGHTS];
+  assert.equal(row.flags, 28, 'the load back-filled ranks 0..2');
+  assert.equal(hasClaimedArmor(row, 2), true);
+  assert.equal(hasClaimedArmor(row, 3), false, 'the current rank is still owed its gift');
+  // and the observable: demoted to rank 2, the smith refuses
+  assert.equal(receiveArmorDecision({ ...row, rank: 2 }, { rolls: () => 0.5 }).kind, 'refuse');
+  assert.equal(receiveArmorDecision({ ...row, rank: 2 }, { rolls: () => 0.5 }).textId, NO_ARMOR_TEXT_ID);
+  assert.equal(receiveArmorDecision(row, { rolls: () => 0.5 }).kind, 'offer');
+
+  // save.js:570-571 restores through TWO arms - the V2e store shape
+  // takes the same door on BOTH books
+  const store = roundTrip({
+    mortal: { [KNIGHTS]: { guild: 'KnightlyOrder', rank: 2, flags: 0 } },
+    vampire: { [KNIGHTS]: { guild: 'KnightlyOrder', rank: 4, flags: 1 } },
+  });
+  assert.equal(store.mortal[KNIGHTS].flags, 4 | 8);
+  assert.equal(store.vampire[KNIGHTS].flags, 1 | 4 | 8 | 16 | 32 | 64);
+});
+
 test('G6: the two destinations, and the records they speak', () => {
   assert.equal(serviceDestination('Spymaster'), 'guildServiceSpymaster');
   assert.equal(serviceDestination('ReceiveArmor'), 'guildServiceReceiveArmor');
@@ -228,7 +297,10 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
   assert.ok(i > 0, 'the caller exists');
   const call = src.slice(i, src.indexOf('return { dispatched: true };', i) + 30);
   assert.ok(call.includes('if (flow.rows) return flow;'), 'a box is handed back, not mounted');
-  assert.ok(call.indexOf('if (flow.rows)') < call.indexOf('interiorOverlay = flow;'),
+  // ROAD-F GS1 respelled the mount - the slot a window goes into is
+  // now the CURRENT mode's, through mountServiceWindow - but the law
+  // this pins is the ORDER and it is untouched.
+  assert.ok(call.indexOf('if (flow.rows)') < call.indexOf('mountServiceWindow(flow);'),
     'and the test comes BEFORE the mount, or it never runs');
 
   // the two arms really do answer boxes, so the guard is not dead
@@ -239,5 +311,5 @@ test('G6: an arm may answer a BOX, and a box is not a window', () => {
 
   // the probe seam keeps the same contract, or it would prove the
   // opposite of what the host does
-  assert.ok(src.includes('if (flow && !flow.rows) interiorOverlay = flow;'));
+  assert.ok(src.includes('if (flow && !flow.rows) mountServiceWindow(flow);'));
 });

@@ -115,7 +115,7 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   // being handed over rather than on the exact shape of the literal -
   // what this gate is for is that setupStaticNpc reaches the context,
   // not that nothing else ever travels with it.
-  assert.match(wm, /\{ voxelfolk, piece, paint, setupStaticNpc[,}][^)]*\)/,
+  assert.match(wm, /\{\s*voxelfolk, piece, paint, setupStaticNpc[,}]/,
     'and hands it to buildInteriorContext');
 
   const ic = rd('src/scenes/interiorContext.js');
@@ -126,8 +126,16 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   // marker walk asks IsAlreadyPlaced.
   assert.ok(call < ic.indexOf('for (const flat of interior.flats)'),
     'and does it during layout, before the flats batch');
-  assert.match(ic, /setActive\(active\) \{ pn\.active = !!active; \}/,
+  // PIN MOVED (ROAD review-p): the bare `setActive(active) { pn.active
+  // = !!active; }` literal is gone, because a flag write is only half
+  // of SetActive - a flip that lands AFTER these loops have read the
+  // flag has to stand the person itself. The law this gate holds is
+  // unchanged (SetActive reaches THIS person's flag); it now reads the
+  // routed host, and roadb_rest_residue.test.js owns the routing.
+  assert.match(ic, /pn\.host = makeInteriorPersonHost\(pn, \{/,
     'the host wires SetActive to the person');
+  assert.match(ic, /setActive\(active\) \{[\s\S]{0,200}pn\.active = active;/,
+    'and it is still the person\'s own flag that moves');
   // SetActive(false) on a GameObject takes the renderer AND the
   // collider: the away copy must not draw and must not be clickable.
   // BOTH draw paths - the classic billboard batch and ?voxelfolk's rig -

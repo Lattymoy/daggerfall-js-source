@@ -20,11 +20,14 @@
 // change to the law it names.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { join, dirname, resolve, relative } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 import { openPauseFlow, pauseDoorReady, pauseArtLoaded } from '../src/ui/pauseDoor.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
 
+const root = new URL('../', import.meta.url).pathname.replace(/\/$/, '');
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 // uiSkin reads globalThis.location.search when it is given no string,
@@ -447,20 +450,29 @@ test('PX25: the Stats page carries the doors, and only the ones a host handed ov
 test('PX25: every host hands the pause window the arms it already had', () => {
   // Each host already exposed toggleInventory / toggleSpellbook /
   // toggleLogbook; nothing new is built here, the pause window is
-  // simply given the same reach. A host WITHOUT one passes nothing.
-  for (const [host, want] of [
-    ['src/scenes/dungeonContext.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/worldModes.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/world.js', ['openPack', 'openSpellbook', 'openChronicle']],
-    ['src/scenes/exterior.js', ['openPack', 'openSpellbook']],
-  ]) {
+  // simply given the same reach. A host WITHOUT one passes nothing -
+  // which is why `?exterior` used to hand over two: it had no journal
+  // maker, because it had no quest machine to fill a book from. QX1
+  // gave it both, so ALL FOUR hosts hand over three now, and the
+  // filter's teeth are pinned one line down instead.
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/worldModes.js',
+    'src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
-    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 900);
-    for (const hook of want) assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
-    if (!want.includes('openChronicle')) {
-      assert.ok(!call.includes('openChronicle:'), `${host} has no journal maker and honestly passes none`);
+    const call = s.slice(s.indexOf('openPauseFlow('), s.indexOf('openPauseFlow(') + 1200);
+    for (const hook of ['openPack', 'openSpellbook', 'openChronicle']) {
+      assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);
     }
   }
+  // THE FILTER STILL HAS TEETH: an arm handed over is not an arm that
+  // always opens something. Every host's Chronicle arm goes through a
+  // maker that answers null without a bridge, and the button then
+  // opens NOTHING rather than an empty book - the anti-lie law U32
+  // wrote for the sheet. The ART half of the refusal is the chronicle
+  // DOOR's own (`if (!questJournalArtLoaded()) return null`), which is
+  // why no host asks it in front of the preload that satisfies it.
+  assert.match(read('src/scenes/exterior.js'),
+    /const makeJournalWindow = \(mode\) => \{\n\s*if \(!questBridge\) return null;/);
+  assert.match(read('src/scenes/dungeonContext.js'), /if \(!opts\.questBridge\) return null;/);
 });
 
 // ── PX26: THE DIAL'S NORTH, AND THE SHEET THAT SAT LEFT ───────────
@@ -513,6 +525,36 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
   assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
 });
 
+test('PX28b: TAB ITSELF closes an open window - the registry answers the key', () => {
+  // Mac: "Tab should also minimize any open UI menus, currently it only
+  // applies to the radial." PX28 taught the DIAL to put a window away,
+  // and that was the wrong half: openPixelDial is only reached through
+  // the HOST's key routing, and while an enhanced window is up the
+  // WINDOW owns the keyboard - so Tab never got there.
+  const reg = read('src/ui/enhancedOverlays.js');
+  // ONE listener, where the registry already knows what is open, so a
+  // window added later is covered by having registered at all.
+  assert.match(reg, /window\.addEventListener\('keydown', onTab, true\);/, 'capture phase');
+  assert.match(reg, /if \(e\.code !== 'Tab'/);
+  assert.match(reg, /closeTopOverlay\(\);/);
+  assert.equal((reg.match(/addEventListener/g) ?? []).length, 1, 'ONE listener, not one per window');
+  // ALIVE ONLY WHILE THE STACK IS: registering starts it, the last
+  // unregister stops it, and closing the last one stops it too - or
+  // Tab would be eaten in a world with nothing open.
+  assert.match(reg, /stack\.push\(entry\);\n\s*listen\(\);/);
+  assert.match(reg, /if \(!stack\.length\) unlisten\(\);/);
+  assert.equal((reg.match(/if \(!stack\.length\) unlisten\(\);/g) ?? []).length, 2,
+    'both ways the stack can empty');
+  assert.match(reg, /export function clearOverlays\(\) \{ stack\.length = 0; unlisten\(\); \}/);
+  // A TEXT FIELD OWNS TAB - the chronicle's composer and the
+  // spellbook's rename are both fields.
+  assert.match(reg, /t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable/);
+  // NOT through overlayAction's 'back': Escape means back a LEVEL in a
+  // window that has them, and Tab means put this away. Two words.
+  assert.doesNotMatch(read('src/ui/input.js'), /Tab: 'back'/);
+  assert.match(read('src/ui/input.js'), /Escape: 'back'/);
+});
+
 test('PX28: Tab puts away what it opened, then raises the dial', () => {
   // Mac: "when hitting tab a second time, it should minimize any UI."
   // The dial already closed ITSELF on a second press; what it could not
@@ -538,4 +580,128 @@ test('PX28: Tab puts away what it opened, then raises the dial', () => {
     assert.match(s, /unregister = registerOverlay\(close\);/, `${door} registers`);
     assert.match(s, /unregister\(\);/, `${door} unregisters on teardown`);
   }
+});
+
+test('PX29: the framed windows are CENTRED, and it is the family that is fixed', () => {
+  // Mac reported the chronicle; the spellbook was 260px and 140px off
+  // too, and had been since PX23 - invisible because every shot of it
+  // was of the ELEMENT rather than the viewport. `.px-home` is
+  // position:fixed inset:0 with no flex; the pause face centres its
+  // window by putting it in a .px-stage, and neither of these two got
+  // one.
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.sb-shell, \.cr-shell \{ display: flex; align-items: center; justify-content: center; \}/,
+    'the FOURTH shared-part fault of this arc, fixed for the family');
+  // ...and the shells really are the ones the two windows mount.
+  assert.match(read('src/ui/enhancedSpellbook.js'), /'px-home px-over sb-shell'/);
+  assert.match(read('src/ui/enhancedChronicle.js'), /'px-home px-over cr-shell'/);
+});
+
+// ── AUDIT UI 2 (2026-08-27): THE TWO FAULTS THAT KEPT RECURRING ───
+// Mac asked for a comprehensive audit before continuing. The live
+// sweep across three viewports and every enhanced surface came back
+// clean, so the value is in the two STATIC sweeps - because the two
+// faults this arc actually shipped were both invisible to a window's
+// own pins.
+test('AUDIT UI 2: no part is styled for one shell and left bare in another', () => {
+  // The recurring fault: PX23's divider, PX24's head, PX24c's chips
+  // and PX29's stage were each scoped to ONE shell while another
+  // window drew the same class - so each rendered as bare text until
+  // someone looked. Four times.
+  const css = read('src/ui/enhancedStyle.js');
+  const body = css.slice(css.indexOf('export const ENHANCED_CSS = `'));
+  const produces = (f) => new Set([...read(f).matchAll(/'([a-z][\w-]*(?: [a-z][\w-]*)*)'/g)]
+    .flatMap((m) => m[1].split(/\s+/)));
+  const shells = {
+    'sb-shell': produces('src/ui/enhancedSpellbook.js'),
+    'cr-shell': produces('src/ui/enhancedChronicle.js'),
+    'pack-shell': produces('src/ui/enhancedInventory.js'),
+    'px-home': produces('src/ui/enhancedMenu.js'),
+  };
+  const bare = [];
+  for (const m of body.matchAll(/^([^{@\n][^{]*)\{/gm)) {
+    const parts = m[1].trim().split(',').map((s) => s.trim());
+    for (const one of parts) {
+      const hit = /^\.([\w-]+-shell|px-home) \.([\w-]+)$/.exec(one);
+      if (!hit) continue;
+      const [, shell, part] = hit;
+      if (new RegExp(`^\\.${part}[\\s,{:]`, 'm').test(body)) continue;   // a base rule covers everyone
+      for (const [other, set] of Object.entries(shells)) {
+        if (other === shell || !set.has(part)) continue;
+        if (parts.some((q) => q.startsWith(`.${other} `))) continue;
+        if (new RegExp(`\\.${other} \\.${part}\\b`).test(body)) continue;
+        bare.push(`.${other} draws .${part}, styled only for .${shell}`);
+      }
+    }
+  }
+  assert.deepEqual([...new Set(bare)], [],
+    'a part one window styles and another draws unstyled renders as bare text');
+});
+
+// AUDIT 39 widened the sweep above by the one case it is blind to. It
+// compares one shell against another, so a part styled in NO shell has
+// nothing to compare and reports clean - which is why it found the
+// three ANNOTATION classes acceptable while they drew at body's 15px
+// full-bone, LARGER and brighter than the 14px .row-name each of them
+// hangs beneath. That is the very "bare running text" fault the pin
+// was written for, arriving by the door it does not watch.
+test('AUDIT 39: an annotation drawn by an enhanced view has a rule of its own', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const body = css.slice(css.indexOf('export const ENHANCED_CSS = `'));
+  // The classes that ANNOTATE a label rather than being one. Each must
+  // read as a note; without a rule each inherits the body font and
+  // outweighs the thing it explains.
+  const annotations = ['row-note', 'row-sub', 'note'];
+  const drawnBy = ['src/ui/enhancedMenu.js', 'src/ui/enhancedChargen.js']
+    .map((f) => read(f)).join('\n');
+  for (const cls of annotations) {
+    assert.ok(new RegExp(`el\\('\\w+', '${cls}'`).test(drawnBy), `nothing draws .${cls} any more`);
+    assert.ok(new RegExp(`(^|[\\s,])\\.${cls}[\\s,{:]`, 'm').test(body),
+      `.${cls} is drawn and styled nowhere - it renders as bare running text`);
+  }
+  // ...and each is DIMMER and SMALLER than the label above it, which
+  // is the whole point of the rule rather than merely having one.
+  assert.match(body, /\.row-note, \.row-sub \{ color: var\(--dim\); font-size: 12\.5px;/);
+  assert.match(body, /^\.note \{ color: var\(--dim\); font-size: 13px;/m);
+  assert.match(body, /\.row-name \{ font-size: 14px; \}/, 'the label they must not outweigh');
+});
+
+test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
+  // PX24's fault, as a law: the chronicle's door and window were built,
+  // pinned and browser-verified, and NOTHING called the door. Every pin
+  // it wrote was about the door's own behaviour and all of them passed.
+  // Reachability has to follow DYNAMIC imports - the doors load their
+  // windows with import() - which is what made the first version of
+  // this sweep report every window as unreachable.
+  const files = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' })
+    .split('\n').filter((f) => f.endsWith('.js'));
+  const text = Object.fromEntries(files.map((f) => [f, readFileSync(join(root, f), 'utf8')]));
+  const edges = {};
+  for (const f of files) {
+    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\()\s*['"](\.[^'"]+)['"]/g)]
+      .map((m) => relative(root, resolve(join(root, dirname(f)), m[1])))
+      .filter((p) => text[p] !== undefined))];
+  }
+  // The roots are the hosts AND main.js: the cursor and the crash line
+  // hang off boot, not off a scene, and the first version of this
+  // sweep called them orphans for it.
+  const seen = new Set(['src/main.js', ...files.filter((f) => f.startsWith('src/scenes/'))]);
+  const q = [...seen];
+  while (q.length) for (const n of edges[q.pop()] ?? []) if (!seen.has(n)) { seen.add(n); q.push(n); }
+  const windows = files.filter((f) => /^src\/ui\/(enhanced|pixel|loot)/.test(f)
+    && !/enhancedStyle|enhancedOverlays/.test(f));
+  assert.ok(windows.length >= 8, `${windows.length} enhanced windows found`);
+  assert.deepEqual(windows.filter((w) => !seen.has(w)), [],
+    'a window nothing reaches is a window nobody can open');
+  // ...and no src/ui module at all is orphaned. THE STAGING EXEMPTION
+  // IS GONE, as its own counter-pin instructed: flight 2 mounted
+  // ui/automapChrome.js from BOTH ends - c2/S5's native dungeon window
+  // and c2/S10's exterior town map - so the chrome is reached from the
+  // hosts like everything else, the list is empty and the sweep is
+  // unconditional again, which is the state it has to be in for PX24's
+  // fault (a window nothing reaches) to stay caught.
+  assert.deepEqual(files.filter((f) => f.startsWith('src/ui/') && !seen.has(f)), [],
+    'a src/ui module nothing reaches is a module nobody can open');
+  assert.ok(seen.has('src/ui/automapChrome.js'),
+    'the automap chrome is reachable - flight 2 mounted it in both automap windows');
 });

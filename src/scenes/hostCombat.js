@@ -10,6 +10,7 @@
 
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
+import { liveLycanthropy } from '../systems/lycanthropy.js';   // AUDIT 39: SuppressOptionalCombatVoices, the racial override's own gate
 import {
   ENEMY_GROUPS, dice100,
   enemyKnockbackApplies, weaponKnockbackSpeed, enemyWeightClassicUnits,   // MT-ii: ApplyDamageToNonPlayer's knockback
@@ -18,8 +19,9 @@ import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoic
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
-import { swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
+import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -106,7 +108,43 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   // AssignEnemyStartingEquipment adds every equipped piece to the
   // entity's items - the corpse's droppable loot.
   entity.items = entity.items ?? [];
-  entity.items.push(...equipmentItems(eq));
+  const worn = equipmentItems(eq);
+  entity.items.push(...worn);
+  // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
+  // :1421-1450 pair every roll with
+  // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before
+  // `Items.AddItem(item)` - a foe's table is genuinely worn, and
+  // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
+  // arrays, so `equipTableOf(target)` handed back the lazy all-null
+  // table (equip.js:40-41) for every enemy in the game and
+  // FormulaHelper.DamageEquipment's STRUCK side - the shield at
+  // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
+  // could not fire once: only the attacker's own weapon ever took
+  // condition off a foe.
+  //
+  // The placement is DFU's `playEquipSounds: false` load arm, the
+  // shape rebuildEquipState already uses: the slot takes the item and
+  // nothing else runs. It does NOT go through equipItem, because that
+  // would re-derive armorValues through the generic
+  // updateEquippedArmorValues and double-subtract over the
+  // SetEnemyEquipment pass above, which owns the Feet-exclusive bound
+  // (EnemyEntity.cs:414) and the class/monster clamps.
+  //
+  // The port's `item.equipSlot` mark is deliberately NOT written: it
+  // is this port's device for the PLAYER's list filter
+  // (FilterLocalItems) and the save relink, and DFU's items carry no
+  // such field - the equip state lives in the entity's table, which
+  // dies with the entity. Marking a foe's gear would hide its own
+  // corpse's loot from every inventory tab. Nothing needs the mark:
+  // DamageEquipment reads the table, and a break unequips through
+  // DaggerfallUnityItem.UnequipItem's identity scan (equip.js's
+  // unequipItem), which is how DFU finds the slot too.
+  const slots = equipTableOf(entity);
+  for (const it of worn) {
+    const slot = getEquipSlot(entity, it);   // GetEquipSlot routes the shield to LeftHand and each piece to its own slot
+    if (slot === EQUIP_SLOTS.None || slots[slot]) continue;
+    slots[slot] = it;
+  }
   return eq;
 }
 
@@ -209,6 +247,17 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
   });
 }
 
+/** RacialOverrideEffect.SuppressOptionalCombatVoices
+ *  (RacialOverrideEffect.cs:37-40, false by default). LycanthropyEffect
+ *  .cs:105-108 is the ONE override and it returns isTransformed - a
+ *  transformed lycanthrope has its own attack voices (the beast bark
+ *  the hosts play on a landed hit), so the human grunt and scream are
+ *  silenced while the beast is out. Vampirism does not override it; it
+ *  overrides the CLIP instead (the grunt below). Asked AHEAD of the
+ *  Dice100 draw at both sites, exactly as DFU asks it, so the roll
+ *  stream is unchanged. */
+export const suppressOptionalCombatVoices = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+
 /** The PLAYER's 20% attack grunt at the hit frame - never for a bow
  *  (WeaponManager.cs:385-389). V5: the racial override's clip rides
  *  GetRaceGenderAttackSound's own order (DaggerfallEntity.cs:979-988)
@@ -216,9 +265,13 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
  *  a vampire grunts as a vampire, by gender. Returns
  *  { clip, pitchLift } or null. */
 export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
-  if (!combatVoicesEnabled() || isBow) return null;
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   const vamp = vampireAttackVoice(playerEntity, rolls);
+  // AUDIT 58: the hard 0 is DFU's. PlayAttackVoice applies the lift in
+  // the `customSound == SoundClips.None` arm only (FPSWeapon.cs:313
+  // -320); the override arm at :323 is a bare
+  // `PlayOneShot(customSound, 0, 1f)` at the source's own pitch.
   if (vamp != null) return { clip: vamp, pitchLift: 0 };
   // AUDIT 24 (wave 46): playerVoice, not combatVoice. FPSWeapon
   // .PlayAttackVoice:315 calls GetRaceGenderAttackSound DIRECTLY and
@@ -259,7 +312,7 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
  * in the port.
  */
 export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
-  if (!combatVoicesEnabled() || !(damage > 0)) return null;
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || !(damage > 0)) return null;
   if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
   return playerVoice({
     race: RACES[playerEntity.race] ?? 1,
@@ -271,13 +324,16 @@ export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
 }
 
 /** The two player-voice sites play the same way - one shot, at the
- *  listener, pitch-lifted. `audio.playOneShot` takes no pitch yet, so
- *  the lift is RECORDED on the returned object and dropped here; when
- *  the audio seam grows a pitch argument this is the one place that
- *  has to learn it. */
+ *  listener, pitch-lifted. AUDIT 58: the lift is APPLIED here now.
+ *  FPSWeapon.cs:316-319 (the attack grunt) and PlayerFootsteps.cs:359
+ *  -362 (the pain cry) both read the source's pitch, add
+ *  Random.Range(0, 0.3f), play the one shot and put the pitch back -
+ *  so the played rate is `1 + pitchLift`. The engine's one-shot took
+ *  no pitch until this audit, and the value was computed at both
+ *  producers and dropped at every one of the thirteen play sites. */
 export function playPlayerVoice(audio, voice) {
   if (!voice || !(voice.clip >= 0)) return null;
-  audio?.playOneShot?.(voice.clip, 1);
+  audio?.playOneShot?.(voice.clip, 1, 1 + (voice.pitchLift ?? 0));
   return voice.clip;
 }
 
@@ -379,10 +435,30 @@ export function applyDamageToNonPlayer(attacker, target, {
   weapon = null, direction = null, bowAttack = false,
   dealDamage, calculateAttackDamage, audio = null, rolls = Math.random,
   hitEffects = null,
+  // AUDIT 58: THE TWO SEAMS CalculateAttackDamage OWNS AND THIS
+  // PAYLOAD NEVER OFFERED. FormulaHelper.cs:691-696 inflicts the
+  // weapon's poison inside the formula for EVERY attacker/target pair
+  // - `if (damage > 0 && weapon.poisonType != Poisons.None) {
+  // InflictPoison(attacker, target, weapon.poisonType, false);
+  // weapon.poisonType = Poisons.None; }` - with no player gate, and
+  // EnemyAttack.cs:314 routes foe-vs-foe damage straight through it.
+  // The port hoisted the inflict onto a hook but kept the CLEAR
+  // unconditional (formulas.js), so with no hook the blade's dose was
+  // SPENT and nothing was poisoned. `say` is DamageEquipment's break
+  // line: ItemBreaks PopupMessages whatever the owner
+  // (DaggerfallUnityItem.cs:1198-1203), so a foe's shield breaking
+  // speaks in DFU too.
+  onInflictPoison = null, say = null,
 } = {}) {
   if (!target || !attacker) return 0;   // :305-306, `senses.Target == null`
   const aEnt = attacker.entity, tEnt = target.entity;
-  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls });
+  // AUDIT 39: the monster multi-attack gate reads the PLAYER's Reflexes
+  // setting even when the player is nowhere in the strike
+  // (FormulaHelper.cs:551/:654), and neither entity here carries it.
+  // Every pool seeds its striker's melee timer from the same field
+  // (`new EnemyAttack({ ..., reflexes: playerEntity.reflexes })`), so
+  // the value the game holds is already on the attacker's record.
+  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls, playerReflexes: attacker.attack?.reflexes ?? null, onInflictPoison, say });
   // :316-317 - the ATTACKER's normal-power concealment breaks on a
   // landed blow, whoever it landed on.
   if (damage > 0 && attacker.breakConcealment) attacker.breakConcealment();
@@ -392,7 +468,7 @@ export function applyDamageToNonPlayer(attacker, target, {
     // :323 PlayHitSound at the TARGET (hitSoundFor is the port's one
     // home for EnemySounds.PlayHitSound's weapon-aware clip), then
     // :325-333 the blood splash at the target's centre + height/8.
-    audio?.play3d?.(hitSoundFor(weapon), at, 1.1, { maxDistance: 16 });
+    audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0,
       [at[0], at[1] + (target.ai?.height ?? 1.8) / 8, at[2]]);
     // :336-350 - the knockback, on the ATTACKER-class guard
@@ -426,6 +502,50 @@ export function applyDamageToNonPlayer(attacker, target, {
   // :389-391 - and the struck foe turns on whoever hit it.
   target.ai?.makeEnemyHostileToAttacker?.(attacker, attacker.ai?.feet ?? null);
   return damage;
+}
+
+// ---- GameManager.MakeEnemiesHostile (ROAD-B, hostility model) ----
+/**
+ * GameManager.cs:790-806, verbatim - "Make all enemies in an area go
+ * hostile":
+ *
+ *     foreach (DaggerfallEntityBehaviour entityBehaviour in
+ *              ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
+ *         if (EntityType == EnemyMonster || EntityType == EnemyClass)
+ *             if (enemyMotor) enemyMotor.IsHostile = true;
+ *
+ * ONE field, and nothing else. No target, no GiveUpTimer, no
+ * remembered position - that is MakeEnemyHostileToAttacker, which DFU
+ * calls SEPARATELY, right after this one, at both sites that want both
+ * (DaggerfallEntityBehaviour.cs:250-261, PlayerActivate.cs:1662-1671).
+ * The port's own `makeHostileToPlayer` is that other law; calling it
+ * from here would give every foe in the room the player's position for
+ * free, which is exactly the bug the two-call shape avoids.
+ *
+ * The EntityTypes filter is satisfied by construction here: every
+ * record in a port pool is an EnemyEntity of one of those two types
+ * (EnemyMonster or EnemyClass) - the pools mint nothing else. The
+ * `if (enemyMotor)` guard is NOT free, so it stays: a record whose AI
+ * has not landed yet (cityGuards' spawn crosses two awaits) has no
+ * motor to write, and a dead one is not in ActiveGameObjectDatabase at
+ * all (EnemyDeath destroys the GameObject).
+ *
+ * "In an area" is the ACTIVE DATABASE, which is one database for the
+ * whole scene - so a caller hands this the union of every live pool
+ * its host owns, the same join `questFoeInstances` makes.
+ *
+ * @param {Iterable} foes live pool records ({ ai, dead })
+ * @returns {number} how many were NOT already hostile (the wiring's
+ *   test seam; DFU's own loop returns nothing and writes blind)
+ */
+export function makeEnemiesHostile(foes) {
+  let flipped = 0;
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.ai) continue;
+    if (!f.ai.isHostile) flipped++;
+    f.ai.isHostile = true;
+  }
+  return flipped;
 }
 
 // ---- First-encounter language pacification (AUDIT 24, wave 42) ----

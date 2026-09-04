@@ -31,6 +31,14 @@ import {
 } from '../src/formats/saveGames.js';
 import { BsaFile } from '../src/formats/bsaFile.js';
 import { stripTransformedRace, toCharacterDocument, TRANSFORMED_RACES } from '../src/systems/classicSave.js';
+// AUDIT 58: AssignShipToPlayer's permanent half on the classic-import path
+import { assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../src/systems/banking.js';
+import {
+  createSceneCache, addPermanentScene, containsPermanentScene, worldSceneName, interiorSceneName,
+  cacheScene, restoreCachedScene, clearSceneCache,
+} from '../src/systems/sceneCache.js';
+import { BUILDING_KEY_0 } from '../src/systems/talkTopics.js';
+import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from '../src/systems/infection.js';
 
@@ -895,6 +903,7 @@ import {
 import { SAVE_VERSION } from '../src/systems/save.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
+import { CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';   // AUDIT 39: PotionRecipe.classicRecipeKeys
 
 // A parameterized 107-byte item record data block.
 function itemData({ name = 'Thing', group = 3, index = 4, value = 100, flags = 0,
@@ -1064,7 +1073,12 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
     name: 'My Sword', group: 3, index: 4, value: 999, flags: 0,
     currentCondition: 300, maxCondition: 400, typeDependentData: 0,
     image1: 0x1234, material: 2, color: 0, enchantmentPoints: 0, message: 0,
-    magic: Array.from({ length: 10 }, () => ({ type: 0, param: 0 })),
+    // AUDIT 39: the empty fixture moved from 0 to -1. EnchantmentTypes.
+    // None is -1 (ItemsFile.cs:113) and classic writes 0xFFFF into the
+    // unused slots, which the reader takes signed; 0 is CastWhenUsed, a
+    // REAL enchantment. The old pin asserted the discard over an array
+    // of ten CastWhenUsed entries, so it passed on the wrong sentinel.
+    magic: Array.from({ length: 10 }, () => ({ type: -1, param: -1 })),
   } });
   assert.equal(sword.group, 'Weapons');
   assert.equal(sword.templateIndex, 117);              // Weapons[4]
@@ -1072,6 +1086,16 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
   assert.equal(sword.value, 999);
   assert.equal(sword.stackCount, 1);
   assert.equal(sword.enchantments, undefined, 'an all-None magic array is discarded');
+
+  // and the other side of the sentinel: ten CastWhenUsed(0) entries are
+  // ten real enchantments and the array is KEPT.
+  const cast = classicItemFromRecord({ parsedData: {
+    name: 'Wand', group: 3, index: 4, value: 999, flags: 0,
+    currentCondition: 300, maxCondition: 400, typeDependentData: 0,
+    image1: 0x1234, material: 2, color: 0, enchantmentPoints: 0, message: 0,
+    magic: Array.from({ length: 10 }, () => ({ type: 0, param: 0 })),
+  } });
+  assert.equal(cast.enchantments?.length, 10, 'EnchantmentTypes.CastWhenUsed is not None');
 
   const arrows = classicItemFromRecord({ parsedData: {
     name: 'Arrows', group: 3, index: 18, value: 1, flags: 0,
@@ -1089,10 +1113,50 @@ test('SAV2: item conversion - template mapping, arrows stack, enchantment discar
   assert.deepEqual(magic.enchantments, [{ type: 24, param: 7 }, { type: -1, param: -1 }]);
 });
 
+// AUDIT 39: FromItemRecord's recipe arm (DaggerfallUnityItem.cs:1577-1579)
+// - "Convert classic recipes to DFU recipe key". Without it an imported
+// bottle carries no key and drinks as nothing, and an imported recipe
+// sheet names no potion.
+test('SAV2: classic potions and recipes carry their DFU recipe key across the import', () => {
+  const potion = classicItemFromRecord({ parsedData: {
+    name: 'Potion', group: 1, index: 1, value: 25, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: 2,   // classic recipe 2 = Healing
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(potion.group, 'UselessItems1');
+  assert.equal(potion.templateIndex, 83, 'a potion IS a glass bottle');
+  assert.equal(potion.potionRecipeKey, CLASSIC_RECIPE_KEYS[2]);
+
+  const recipe = classicItemFromRecord({ parsedData: {
+    name: 'Recipe', group: 27, index: 4, value: 100, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: 19,   // the last row
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(recipe.templateIndex, 278);
+  assert.equal(recipe.potionRecipeKey, CLASSIC_RECIPE_KEYS[19]);
+
+  // DFU's guard is the upper bound alone, and it is exclusive: a byte
+  // past the twenty rows leaves the item keyless rather than throwing.
+  const junk = classicItemFromRecord({ parsedData: {
+    name: 'Potion', group: 1, index: 1, value: 25, flags: 0,
+    currentCondition: 1, maxCondition: 1, typeDependentData: CLASSIC_RECIPE_KEYS.length,
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(junk.potionRecipeKey, undefined);
+
+  // and nothing else takes a key - the same byte is an arrow stack.
+  const arrows = classicItemFromRecord({ parsedData: {
+    name: 'Arrows', group: 3, index: 18, value: 1, flags: 0,
+    currentCondition: 0, maxCondition: 0, typeDependentData: 5,
+    image1: 0, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(arrows.potionRecipeKey, undefined);
+});
+
 test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured time, gold', () => {
   const tree = buildImportTree();
   const spellsByIndex = new Map([[77, { name: 'Test Spell' }]]);
-  const { items, wagonItems, spells } = classicItemsAndSpells(tree, { spellsByIndex });
+  const { items, wagonItems, spells, goldPieces } = classicItemsAndSpells(tree, { spellsByIndex });
 
   const names = items.map((i) => i.name);
   assert.ok(!names.includes('Hacked'), 'image1 == 0 is discarded');
@@ -1110,8 +1174,11 @@ test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured t
   const conjured = items.find((i) => i.name === 'Conjured');
   assert.equal(conjured.timeForItemToDisappear, 5555, 'flag 0x1000 takes the root Time');
 
-  const gold = items.find((i) => i.group === 'Currency');
-  assert.equal(gold.stackCount, 100000, 'physicalGold mints the one gold stack');
+  // E4: `playerEntity.GoldPieces = physicalGold`
+  // (StartGameBehaviour.cs:602-603) - the COUNTER, and nothing lands
+  // in the imported bag.
+  assert.equal(goldPieces, 100000, 'physicalGold IS PlayerEntity.GoldPieces');
+  assert.equal(items.filter((i) => i.group === 'Currency').length, 0);
 
   // The stock spell matched by index AND name travels as its index.
   assert.deepEqual(spells, [77]);
@@ -1254,6 +1321,26 @@ test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => 
   assert.equal(snap.biographyReactionMod, -2);
   assert.equal(snap.lastSkillCheckTime, 13579);
   assert.equal(snap.timeOfLastSkillTraining, 666666);
+  // AUDIT 39: the rest of AssignCharacter's clock/tally block
+  // (PlayerEntity.cs:856-861). The document carried them and the
+  // envelope did not, so restorePlayer's `?? 0` arms zeroed both
+  // crime-guild tallies and both letter clocks on every import.
+  assert.equal(snap.lastTimePlayerAteOrDrankAtTavern, 555555);
+  assert.equal(snap.timeForThievesGuildLetter, 777777);
+  assert.equal(snap.timeForDarkBrotherhoodLetter, 888888);
+  assert.equal(snap.darkBrotherhoodRequirementTally, 3);
+  assert.equal(snap.thievesGuildRequirementTally, 4);
+  // A4 (Road to 1:1): the last three AssignCharacter members
+  // (PlayerEntity.cs:851-856). timeToBecomeVampireOrWerebeast is the
+  // ONLY way classic's three-days stamp reaches a character at all -
+  // the temple's Cure Disease counts it as one more disease and clears
+  // it - minMetalToHit is the weapon-material floor
+  // CalculateAttackDamage reads on the target, and the two
+  // SkillsRaisedThisLevel words land word for word in
+  // skillsRecentlyRaised, which the character sheet highlights.
+  assert.equal(snap.timeToBecomeVampireOrWerebeast, 333333);
+  assert.equal(snap.minMetalToHit, 2, 'WeaponMaterialTypes.Silver, verbatim from 0x42');
+  assert.deepEqual(snap.skillsRecentlyRaised, [0xa1b2c3d4, 7]);
 
   assert.deepEqual(snap.sGroupReputations.slice(0, 5), [10, -20, 30, -40, 50]);
   assert.equal(snap.sGroupReputations.length, 11);
@@ -1265,7 +1352,8 @@ test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => 
   assert.equal(snap.bankAccounts[0].accountGold, 1000);
   assert.equal(snap.ownedShip, 0, 'the small ship');
   assert.deepEqual(snap.spells, [77]);
-  assert.ok(snap.items.some((i) => i.group === 'Currency'));
+  assert.equal(snap.goldPieces, 100000, 'E4: physicalGold rides the envelope as the counter');
+  assert.ok(!snap.items.some((i) => i.group === 'Currency'));
   assert.deepEqual(snap.backStory, ['a scrappy urchin', '']);
   // The savevars fixture's faction 368 matches the fake dict - its
   // LIVE rep (-3) merges in; 400 has no savevars row and keeps the
@@ -1495,4 +1583,66 @@ test('SAV3: the wiring source pins - menu arm, boot arm order, chargen gate, mai
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   // SET on classicload, DELETE on anything else (the F12 law's shape).
   assert.match(main, /if \(action === 'classicload'\) params\.set\('classicload', '1'\);\n\s*else params\.delete\('classicload'\);/);
+});
+
+/** The smallest player snapshot restorePlayer accepts, for the ship
+ *  arm below - built by the real snapshotter so it cannot drift. */
+const MIN_SNAP = snapshotPlayer({
+  name: 'Rin', stats: {}, skills: [], skillUses: [], items: [],
+  spells: [], activeEffects: [], sceneCache: createSceneCache(),
+}, {});
+
+test('AUDIT 58 (SAV3): the classic import runs AssignShipToPlayer WHOLE - the deed AND both permanent scenes', () => {
+  // StartGameBehaviour.StartFromClassicSave:616 calls
+  // DaggerfallBankManager.AssignShipToPlayer(saveVars.PlayerOwnedShip),
+  // and that member is TWO statements (:488-497): `ownedShip =
+  // shipType` AND both of the ship's scenes onto the permanent list.
+  // The converter carries only the deed (`ownedShip`, with
+  // `sceneCache: null`), and restorePlayer mints an EMPTY permanent set
+  // from that null - so an imported ship's two scenes were ordinary and
+  // the first world move threw away everything left aboard, where a
+  // ship BOUGHT in the same session kept it.
+  const entity = { stats: {}, items: [] };
+  restorePlayer(entity, { ...MIN_SNAP, ownedShip: SHIP_TYPES.Small, sceneCache: null });
+  assert.equal(entity.sceneCache.permanent.size, 0, 'the null cache mints an EMPTY permanent set');
+
+  const addBoth = (s) => {
+    addPermanentScene(entity.sceneCache, worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
+    addPermanentScene(entity.sceneCache, interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
+  };
+  assignShipToPlayer(entity, entity.ownedShip, { addPermanentScene: addBoth });
+
+  const exterior = worldSceneName(2, 2);                                  // shipCoords[0]
+  const interior = interiorSceneName(1050578, BUILDING_KEY_0);            // shipInteriorSceneNames[0]
+  assert.equal(entity.ownedShip, SHIP_TYPES.Small, 'the deed still lands');
+  assert.ok(containsPermanentScene(entity.sceneCache, exterior), 'the ship pixel is permanent');
+  assert.ok(containsPermanentScene(entity.sceneCache, interior), 'and so is its interior');
+
+  // ...which is the whole point: the world move keeps what was left
+  // aboard (SerializableStateManager.ClearSceneCache(false)).
+  cacheScene(entity.sceneCache, interior, { droppedPiles: [{ pos: [0, 0, 0], record: 1, items: [{ n: 1 }] }] });
+  clearSceneCache(entity.sceneCache, { start: false });
+  assert.equal(restoreCachedScene(entity.sceneCache, interior).droppedPiles.length, 1,
+    'the chest in the hold survives the world moving on');
+
+  // None imports nothing - DFU's `if (shipType != ShipType.None)`.
+  const poor = { stats: {}, items: [] };
+  restorePlayer(poor, { ...MIN_SNAP, ownedShip: SHIP_TYPES.None, sceneCache: null });
+  assignShipToPlayer(poor, poor.ownedShip, { addPermanentScene: addBoth });
+  assert.equal(poor.sceneCache.permanent.size, 0);
+
+  // and the HOST really runs it on the import path - classicLoadBoot
+  // has no headless boot, so the wiring is source-pinned.
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const boot = world.slice(world.indexOf('async function classicLoadBoot()'));
+  const body = boot.slice(0, boot.indexOf('const toggleTravelMap'));
+  assert.match(body, /assignShipToPlayer\(playerEntity, playerEntity\.ownedShip, \{/,
+    'the import goes through the port\'s AssignShipToPlayer, not a raw field write');
+  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, worldSceneName\(SHIP_COORDS\[s\]\.x, SHIP_COORDS\[s\]\.y\)\)/);
+  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[s\], BUILDING_KEY_0\)\)/);
+  // DFU's ORDER: NewCharacterCleanup's ClearSceneCache(true) (:468)
+  // runs first, the ship's scenes are added after (:616) - here that
+  // means after restorePlayer has minted the cache.
+  assert.ok(body.indexOf('restorePlayer(playerEntity, bundle.snap') < body.indexOf('assignShipToPlayer(playerEntity'),
+    'the scenes are added AFTER the cache is minted, never before');
 });

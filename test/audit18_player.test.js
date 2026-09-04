@@ -200,6 +200,11 @@ test('audit18 player F3: IsStandingStill needs GROUNDED, and the swim path compa
   assert.equal(m2.speed, walkSpeed(50));
   pool.onGround = false;
   m2.swimming = true;
+  // AUDIT 39 (#57) added a step here: the swim EDGE raises
+  // CancelMovement (LevitateMotor.SetSwimming :174-186), and
+  // FixedUpdate's cancel block (:286-294) spends one step doing
+  // nothing at all before the swim path runs.
+  m2.update(1 / 60, { ...still(), forward: 1 }, 0);   // the cancelMovement step
   m2.update(1 / 60, { ...still(), forward: 1 }, 0);   // this frame still ends grounded=false
   m2.update(1 / 60, { ...still(), forward: 1 }, 0);
   assert.equal(m2.grounded, false);
@@ -218,6 +223,7 @@ test('audit18 player F3: IsStandingStill needs GROUNDED, and the swim path compa
   assert.equal(m3.speed, sneakSpeed(walkSpeed(50)));
   pool2.onGround = false;
   m3.swimming = true;
+  m3.update(1 / 60, { ...still(), forward: 1 }, 0);   // AUDIT 39 (#57): the cancelMovement step the swim edge costs
   m3.update(1 / 60, { ...still(), forward: 1 }, 0);
   m3.update(1 / 60, { ...still(), forward: 1 }, 0);
   assert.equal(m3.grounded, false);

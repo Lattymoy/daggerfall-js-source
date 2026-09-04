@@ -116,11 +116,20 @@ export function sunDirection(minuteOfDay) {
 
 /** Exterior ambient color for the time of day (nightAmbientScale
  *  default 1). AUDIT 23 (wts-2) - PlayerAmbientLight.cs:120-125: the
- *  day lerp factor is daylightScale x the weather sunlight scale
+ *  day lerp factor rides the weather sunlight scale
  *  (WeatherManager.SetSunlightScale's 0.25 storm / 0.45 rain-snow /
- *  0.65 overcast-fog-winter), so a storming noon reads near-night. */
+ *  0.65 overcast-fog-winter), so a storming noon reads near-night.
+ *  AUDIT 39 (#13): TWICE, not once. SunlightManager.Update (:119-127)
+ *  writes the scale INTO its own daylightScale field while the key
+ *  light is enabled (`daylightScale *= ScaleFactor`) and DaylightScale
+ *  returns that already-scaled field, so
+ *  CalcDaytimeAmbientLight's `DaylightScale * ScaleFactor` - run from
+ *  LateUpdate, after Update - is curve x scale^2. The KEY light is
+ *  scaled once (sunScale x weatherScale at the hosts) and stays so.
+ *  The night arm needs no branch: the curve is 0 outside dawn-dusk in
+ *  both, and DFU skips the *= only where it would multiply zero. */
 export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1, weatherScale = 1) {
-  const s = daylightScale(minuteOfDay) * weatherScale;
+  const s = daylightScale(minuteOfDay) * weatherScale * weatherScale;
   const out = new Float32Array(3);
   for (let i = 0; i < 3; i++) {
     const night = EXTERIOR_NIGHT_AMBIENT[i] * nightAmbientScale;

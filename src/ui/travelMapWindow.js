@@ -6,11 +6,11 @@
 // four filter buttons, the find box and its list picker, and the
 // travel popup behind it (ui/travelPopUp.js).
 //
-// It RETIRES ui/travelMap.js, the keyed typeahead that stood in for
-// this window since the F-slice - the Ledger row called it INTERIM
-// and this is the window it was standing in for. What it carried
-// forward: the visibility law (checkLocationDiscovered, TV-slice)
-// and the arrival seam (onTravel -> the host's fastTravelTo).
+// It RETIRED ui/travelMap.js, the keyed typeahead that stood in for
+// this window since the F-slice: that file is gone from src/ and
+// nothing imports it. What it carried forward and this window holds:
+// the visibility law (checkLocationDiscovered, TV-slice) and the
+// arrival seam (onTravel -> the host's fastTravelTo).
 //
 // THE NATIVE-WINDOW RULE, element by element:
 // - the background is the whole 320x200 TRAV0I00.IMG (:326);
@@ -67,20 +67,33 @@
 //   region maps (:648-660, :821-833) have no door here.
 // - no world data replacement: checkLocationDiscovered reads the
 //   BAKED map table flag, which is what the TV-slice already did.
-// - the console's map_reveallocations pair has no console to live
-//   in; the flag survives as setRevealUndiscoveredLocations.
+// - (RETIRED by ROAD-E E3, 2026-09-02: the console's THREE commands -
+//   map_reveallocations, map_hidelocations and map_reveallocation -
+//   are registered on the real ConsoleCommandsDatabase by the
+//   registrar at the foot of this file, and the flag they set is the
+//   same setRevealUndiscoveredLocations. What has no port is the
+//   console WINDOW, which is a recorded departure in Ledger A: DFU's
+//   is the third-party UnityConsole addon's Unity uGUI prefab, not
+//   DFU source.)
 // - DFU's Update() polls the mouse every frame; the port's windows
 //   are told (hover/click), so the same work happens on the move.
 //
-// FLAGGED, idling loudly: the guild TELEPORT mode
-// (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1705-1730),
-// which waits on the guild arc's teleport service. (TravelMapSaveData
-// is NOT flagged: it ships through systems/travelMapState.js and the
-// session envelope.) The journal's click-through travel (GotoPlace,
+// The guild TELEPORT mode (ActivateTeleportationTravel +
+// DaggerfallTeleportPopUp, :1705-1730) idled here for one slice and is
+// LIVE at G5: the service it waited on is systems/guildServiceFlow.js's
+// `Teleport: 'guildServiceTeleport'`, and this file carries the map
+// half - ui/teleportPopUp.js imported above, TELE00I0 preloaded, the
+// one-shot `teleportationTravel` flag, activateTeleportationTravel
+// (ActivateTeleportationTravel) and the TeleportPopUpWindow raised on
+// the destination pick. (TravelMapSaveData ships through
+// systems/travelMapState.js and the session envelope.) The journal's
+// click-through travel (GotoPlace,
 // :214-217 and its Update consumer :443-455) is LIVE - ui/questJournal.js
 // offers the find dialog and the host hands the place here.
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
+import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from './overworldModel.js';   // ROADS 13/24: the relief's colours
+import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
 import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
@@ -96,6 +109,7 @@ import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../systems/discovery.js';
 import { getBool } from '../systems/settings.js';
+import { registerCommand, consoleLog, HELP_COMMAND } from '../systems/consoleCommands.js';   // E3: the console command database
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData } from '../systems/travelMapState.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -179,10 +193,30 @@ export const OFFSET_LOOKUP = Object.freeze({
 /** The eighteen regions with NO page in the offset table (:590-648):
  *  the wildernesses, the two generic villages and the four coast
  *  strips. DFU's UpdateMapLocationDotsTexture indexes offsetLookup
- *  directly, so opening one of these throws KeyNotFoundException;
- *  the port REFUSES the page instead - a recorded departure, since
- *  a crash is not a behaviour worth reproducing. Nothing paints
- *  them in the region picker, so nothing normally clicks them. */
+ *  directly (:677, :885, :1151), so opening one of these throws
+ *  KeyNotFoundException; the port REFUSES the page instead - a recorded
+ *  departure, since a crash is not a behaviour worth reproducing.
+ *
+ *  SEVENTEEN of the eighteen are genuinely empty in MAPS.BSA: all four of
+ *  their BSA records are zero-length and loadRegion() returns false, so there
+ *  is nothing to paint. THE EIGHTEENTH IS NOT, and this comment used to claim
+ *  otherwise. Region 31, High Rock sea coast, holds THREE real locations -
+ *  Mantellan Crux (mapId 1001, map pixel (1,1), DUNGAA00.RMB, one of the
+ *  fourteen MAIN_STORY_DUNGEON_IDS) and both "Your Ship" moorings, mapId
+ *  1050578 at (2,2) with SHIPAA00.RMB and mapId 2102157 at (5,5) with
+ *  SHIPAA01.RMB.
+ *
+ *  What survives the correction is that the refusal withholds nothing DFU
+ *  would have given. DFU's own page table has no FMAP0I31.IMG row either, so
+ *  region 31 is unpageable in DFU too; GetPlayerRegion (:1609-1617) subtracts
+ *  128 from the politic index and answers -1 at sea, where the sea coast's
+ *  politic is 64, so "I'M AT" cannot open it; and a moored ship is not a
+ *  travel-map destination in the first place - TransportManager.BoardShip
+ *  teleports straight to DaggerfallBankManager.GetShipCoords()
+ *  (TransportManager.cs:368-397), and getPixelColorIndex's empty
+ *  HomeYourShips arm means the map would draw no dot for either mooring even
+ *  with a page. Mantellan Crux is entered through the main quest, not
+ *  travelled to. */
 export const hasRegionPage = (region) => getRegionMapNames(region).every((n) => !!OFFSET_LOOKUP[n]);
 
 /** GetRegionMapNames (:1660-1672) - three regions page across two
@@ -231,8 +265,9 @@ export function getPixelColorIndex(locationType, filters = {}) {
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
 
-// map_reveallocations / map_hidelocations (:1788-1884) - the flag
-// outlives the console the port does not have.
+// map_reveallocations / map_hidelocations (:1788-1884). E3 gave them
+// the database DFU registers them in (the registrar is at the foot of
+// this file); the flag they set is this one.
 let _revealUndiscoveredLocations = false;
 export function setRevealUndiscoveredLocations(on) { _revealUndiscoveredLocations = !!on; }
 export const revealUndiscoveredLocations = () => _revealUndiscoveredLocations;
@@ -479,6 +514,38 @@ export class TravelMapWindow {
     this.scale = getRegionMapScale(this.selectedRegion);
     this._dotsBuf.fill(0);
     this._outlineBuf.fill(0);
+    // ROADS 13 (the ROADS 7 gap, named three times): THE CLASSIC MAP
+    // DRAWS THE NETWORK TOO. Same loop, same texel-to-pixel law
+    // (originX + x, originY + y), same "this region only" rule as the
+    // dots, written UNDER them so a town's dot stays on top of the road
+    // that reaches it. The flags are the shared store's - the enhanced
+    // map's two chips flip them and the save carries them - because the
+    // classic panel has no native art for two more buttons; a classic
+    // player sees roads on and tracks on until the enhanced map says
+    // otherwise, which is the same inversion the four DFU filters use.
+    const net = this.deps.roads?.() ?? null;
+    if (net) {
+      const showRoads = !this.filters.roads, showTracks = !this.filters.tracks;
+      const showRivers = !!net.water && !this.filters.rivers, showStreams = !!net.water && !this.filters.streams;   // ROADS 24
+      const roadPx = packRGBA(OVERWORLD_ROAD[0], OVERWORLD_ROAD[1], OVERWORLD_ROAD[2], 255);
+      const trackPx = packRGBA(OVERWORLD_TRACK[0], OVERWORLD_TRACK[1], OVERWORLD_TRACK[2], 255);
+      const riverPx = packRGBA(OVERWORLD_RIVER[0], OVERWORLD_RIVER[1], OVERWORLD_RIVER[2], 255);
+      const streamPx = packRGBA(OVERWORLD_STREAM[0], OVERWORLD_STREAM[1], OVERWORLD_STREAM[2], 255);
+      for (let y = 0; y < height && (showRoads || showTracks || showRivers || showStreams); y++) {
+        for (let x = 0; x < width; x++) {
+          const px = originX + x, py = originY + y;
+          if (px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) continue;
+          const i = py * MAP_WIDTH + px;
+          const kind = (showRoads && net.roads[i]) ? 2 : ((showTracks && net.tracks[i]) ? 1
+            : ((showRivers && net.rivers?.[i]) ? 4 : ((showStreams && net.streams?.[i]) ? 3 : 0)));   // ROADS 24
+          if (!kind) continue;
+          const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
+          if (offset >= width * height) continue;
+          if (maps.getPoliticIndex(px, py) - 128 !== this.selectedRegion) continue;
+          this._dotsBuf[offset] = kind === 2 ? roadPx : kind === 1 ? trackPx : kind === 4 ? riverPx : streamPx;
+        }
+      }
+    }
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         // the `* scale` on the whole offset is DFU's own (:691)
@@ -894,6 +961,9 @@ export class TravelMapWindow {
       hasHorse: this.deps.hasHorse,
       hasCart: this.deps.hasCart,
       hasShip: this.deps.hasShip,
+      // TravelTimeCalculator.cs:163's Knightly Order consult, passed
+      // through for the same reason FastTravel's entity is.
+      freeTavernRooms: this.deps.freeTavernRooms,
       diseaseCount: this.deps.diseaseCount,
       poisonCount: this.deps.poisonCount,
       textRsc: _art?.textRsc ?? null,
@@ -997,6 +1067,26 @@ export class TravelMapWindow {
 
   // --- the host seam ---
 
+  /** D4: THE KEY-UP EDGE. A DFU Button with an OnKeyboardEvent handler
+   *  is raised on BOTH edges of its Hotkey (Button.cs:79-92), and this
+   *  window's travel popup is the one place in the port that needs the
+   *  release: EXIT plays its click on the press and pops on the
+   *  release (DaggerfallTravelPopUp.cs:482-495). Routed exactly like
+   *  `input` above - to whichever sub-window owns the keyboard - and
+   *  nothing else on this map reads a key-up, so the map's own arms
+   *  answer nothing rather than mirroring the ladder. */
+  keyup(code, e = null) {
+    if (this.telePopUp) {
+      this.telePopUp.keyup?.(code, e);
+      if (this.telePopUp?.done) this.telePopUp = null;
+      return;
+    }
+    if (this.popUp) {
+      this.popUp.keyup?.(code, e);
+      if (this.popUp?.done) this.popUp = null;
+    }
+  }
+
   input(code, e = null) {
     if (this.telePopUp) {
       this.telePopUp.input(code, e);
@@ -1054,10 +1144,16 @@ export class TravelMapWindow {
     }
   }
 
+  /** ROAD-E E1: the release edge, forwarded to the teleport list the
+   *  way `hover` is - the thumb latches on the press, and until the
+   *  hosts routed pointer UP nothing dropped it but the next move. */
+  release() { this.picker?.release(); }
+
   hover(vx, vy, e = null) {
     if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }
-    if (this.picker || this.top) return;
+    if (this.picker) { this.picker.hover(vx, vy, e); return; }   // ROAD-A7: the teleport list's own hover
+    if (this.top) return;
     if (vx === this.lastMousePos[0] && vy === this.lastMousePos[1]) return;
     this.lastMousePos = [vx, vy];
     if (this.regionSelected) this._updateMouseOverLocation();
@@ -1308,5 +1404,60 @@ export class TravelMapWindow {
     if (messageBoxArtLoaded() && drawMessageBox(renderer, m, font, this._box)) return;
     (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text ?? r,
       m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, [0.9, 0.9, 0.75, 1]));
+  }
+}
+
+// ── ROAD-E E3: TravelMapConsoleCommands ──────────────────────────────
+// DaggerfallTravelMapWindow.cs:1786-1884, registered in the window's
+// own constructor there (:226-234) and here by the host that builds
+// this window - the port's windows are per-open and its hosts are what
+// persist, which is also where `isPlayerInside` and PlayerGPS live.
+// Three commands, not two: the recorded departure above named the pair
+// this file's flag sets, and `map_reveallocation` (singular) is the
+// third row of the same RegisterCommands.
+export function registerTravelMapConsoleCommands(deps = {}) {
+  const inside = () => !!deps.isPlayerInside?.();
+  try {
+    registerCommand('map_reveallocations',
+      'Reveals undiscovered locations on travelmap (temporary)',
+      'map_reveallocations',
+      () => {
+        if (inside()) return 'this command only has an effect when outside';
+        _revealUndiscoveredLocations = true;
+        return 'undiscovered locations have been revealed (temporary) on the travelmap';
+      });
+    registerCommand('map_hidelocations',
+      'Hides undiscovered locations on travelmap',
+      'map_hidelocations',
+      () => {
+        if (inside()) return 'this command only has an effect when outside';
+        _revealUndiscoveredLocations = false;
+        return 'undiscovered locations have been hidden on the travelmap again';
+      });
+    // RevealLocation (:1846-1884). Its `error` field is declared and
+    // never read in C#, which is why no string below is it. The
+    // too-few-arguments arm LOGS the sentence and answers with HELP's
+    // own details block for this command - and C#'s try/catch around
+    // the log answers the same way either way, because the only thing
+    // in the try is the log itself.
+    registerCommand('map_reveallocation',
+      'Permanently reveals the location with [locationName] in region [regionName] on travelmap',
+      'map_reveallocation [regionName] [locationName] - inside the name strings use underscores instead of spaces, e.g Dragontail_Mountains',
+      (args) => {
+        if (args == null || args.length < 2) {
+          consoleLog('please provide both a region name as well as a location name');
+          return HELP_COMMAND.execute(['map_reveallocation']);
+        }
+        const regionName = String(args[0]).replaceAll('_', ' ');
+        const locationName = String(args[1]).replaceAll('_', ' ');
+        try {
+          deps.discoverLocation?.(regionName, locationName);
+          return `revealed location ${regionName} : ${locationName} on the travelmap`;
+        } catch (ex) {
+          return `Could not reveal location: ${ex?.message ?? ex}`;
+        }
+      });
+  } catch (ex) {
+    console.error(`Error Registering Travelmap Console commands: ${ex?.message ?? ex}`);
   }
 }

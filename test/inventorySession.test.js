@@ -25,7 +25,7 @@ test('U57: the numbers and the words', () => {
   // the same import the source does, which is the vacuous shape U56
   // found in the wagon suite. These two lines are where they are held.
   assert.equal(NO_WAGON_TEXT, "You don't own a wagon.");
-  assert.equal(EXIT_TOO_FAR_TEXT, 'You are too far from the exit.');
+  assert.equal(EXIT_TOO_FAR_TEXT, 'The exit is too far away for you to access your wagon.');   // Internal_Strings.csv:847
   assert.equal(WAGON_REFUSAL.noWagon.text, NO_WAGON_TEXT);
   assert.equal(WAGON_REFUSAL.exitTooFar.text, EXIT_TOO_FAR_TEXT);
   // Items.Contains(Transportation, Small_cart) - the cart is IN THE

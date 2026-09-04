@@ -78,6 +78,54 @@ export const BUILDING_NONE = -1;
 export const remainingHoursRented = (room, nowMinutes) =>
   (room ? Math.ceil((room.expiryMinutes - nowMinutes) / 60) : -1);
 
+// ---- ROAD-B B5: THE PREVENT-REST REGISTRY (GameManager.cs:52,
+// :637-675) ----
+//
+// The port has carried this registry's ANSWER since U48 -
+// restDecision's third arm reads a `preventedMessage` - but never the
+// registry, so nothing could produce one and both consumers (the open
+// gate and, from B5, TickRest's per-frame poll) were fed a permanent
+// null. DFU's own tree has no caller either; the doc comment names the
+// audience ("prevents the player from starting or continuing to rest")
+// and the class is ported whole because that is the doctrine, with the
+// EMPTY-STRING normalisation which is the half that is NOT inert - it
+// is the difference between "no prevention" and "prevented, wordlessly"
+// and both consumers already branch on it.
+//
+// The Dictionary is keyed by the HANDLER, so re-registering the same
+// function replaces its message rather than doubling the condition, and
+// insertion order decides which of two live conditions speaks (C#'s
+// Dictionary enumeration order is unspecified; a Map's is insertion,
+// which is the deterministic reading of the same walk).
+const preventRestConditions = new Map();
+
+/** RegisterPreventRestCondition (:660-666). A null message becomes ""
+ *  - DFU's own comment: "If the message is null, it is assumed by the
+ *  game that there was no prevention, so we must set it to be the
+ *  empty string instead". */
+export function registerPreventRestCondition(handler, message) {
+  if (typeof handler !== 'function') return;
+  preventRestConditions.set(handler, message == null ? '' : message);
+}
+
+/** UnregisterPreventRestCondition (:672-675). */
+export function unregisterPreventRestCondition(handler) {
+  preventRestConditions.delete(handler);
+}
+
+/** GetPreventedRestMessage (:641-653) - the FIRST condition that
+ *  answers true speaks; null when none do. */
+export function getPreventedRestMessage() {
+  for (const [handler, message] of preventRestConditions) {
+    if (handler()) return message;
+  }
+  return null;
+}
+
+/** Not DFU's - the port's teardown door, so a page that rebuilds its
+ *  scene does not carry a dead closure's condition into the next one. */
+export function clearPreventRestConditions() { preventRestConditions.clear(); }
+
 /**
  * U48 - THE REST DISPATCH (DaggerfallUI.cs:651-688), which is the
  * question ABOVE CanRest: not where the player may sleep, but whether
@@ -89,7 +137,7 @@ export const remainingHoursRented = (room, nowMinutes) =>
  * inside dungeonContext, so above ground a player could open the rest
  * window while swimming, while falling, and with a foe in the street.
  *
- * FOUR THINGS IN ORDER, and the order is the law:
+ * FIVE THINGS IN ORDER, and the order is the law:
  *
  * 1. ENEMIES OUTRANK THE WATER, because DFU's is an if/else-if chain -
  *    and it matters, because only this arm RAISES THE ALERT (:654-655),
@@ -98,29 +146,56 @@ export const remainingHoursRented = (room, nowMinutes) =>
  * 2. Swimming or airborne is 355. StartRestGroundedCheck is the
  *    grounded half and lives in player/motor.js, its DFU home.
  * 3. THE PREVENTED-REST REGISTRY (GameManager.GetPreventedRestMessage,
- *    :641-653) and its EMPTY STRING, which is deliberate:
+ *    :641-653), ASKED ONLY HERE - it is fetched inside the third
+ *    `else` (:667-669), so DFU never runs a registered condition on a
+ *    press the enemy or the swimming/grounded arm answered. The
+ *    registry's handlers are arbitrary caller-supplied `Func<bool>`s
+ *    (:660-666), so "when they run" is part of the contract and not
+ *    an optimisation; pass this as a FUNCTION and the arm calls it,
+ *    the way shared.js hands TickRest the producer rather than a
+ *    polled value. A plain string or null still works, for the
+ *    callers that already have the answer.
+ *    ...and its EMPTY STRING, which is deliberate:
  *    RegisterPreventRestCondition turns a null message into "" so a
  *    caller can block rest without wording it, and the dispatch falls
  *    back to 355 rather than showing a blank box. null is NOT "".
- * 4. A RACIAL OVERRIDE REFUSES SILENTLY - RacialOverrideEffect
+ * 4. A PENDING QUEST OFFER TAKES THE PRESS (AUDIT 58). `else if
+ *    (!GiveOffer())` (:680) is a RUNG this ladder was missing: when a
+ *    `give pc _item_ notify`/`silently` offer has become eligible,
+ *    DaggerfallUI hands the item over on the spot and swallows the
+ *    press - the rest window does not open, and the NEXT press rests
+ *    normally (DaggerfallUI.cs:1717-1726; ui/pendingOffer.js is the
+ *    latch). It is a PRODUCER for the same reason the registry above
+ *    is: GiveOffer has a side effect, so "when it runs" is the law -
+ *    only on a press the first three arms did not answer.
+ * 5. A RACIAL OVERRIDE REFUSES SILENTLY - RacialOverrideEffect
  *    .CheckStartRest, "allow custom race to block rest (e.g. vampire
  *    not sated)" - and it is LAST, so a swimming vampire is told about
  *    the water, which is the arm they can act on.
  *
  * Answers { kind: 'rest' | 'enemies' | 'cannot' | 'prevented' |
- * 'blocked' } with the textId or message the caller speaks.
+ * 'offer' | 'blocked' } with the textId or message the caller speaks;
+ * 'offer' has nothing to say - the press is simply spent.
  */
 export function restDecision({
   enemiesNearby = false, swimming = false, grounded = true,
-  preventedMessage = null, racialOverrideBlocks = false,
+  preventedMessage = null, giveOffer = null, racialOverrideBlocks = false,
 } = {}) {
   if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
   if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
-  if (preventedMessage !== null && preventedMessage !== undefined) {
-    return preventedMessage === ''
+  // The third `else` (:667-669) - and the first line of it that runs.
+  const prevented = typeof preventedMessage === 'function' ? preventedMessage() : preventedMessage;
+  if (prevented !== null && prevented !== undefined) {
+    return prevented === ''
       ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
-      : { kind: 'prevented', message: preventedMessage };
+      // the RESOLVED text, never the producer: every host renders this
+      // field straight into an ActionTextBox line, and DaggerfallUI.cs
+      // :667-669 shows the string GetPreventedRestMessage returned.
+      : { kind: 'prevented', message: prevented };
   }
+  // :680's `else if (!GiveOffer())` - inside the third else, after the
+  // prevented-rest message and BEFORE the racial override.
+  if (typeof giveOffer === 'function' ? giveOffer() : !!giveOffer) return { kind: 'offer' };
   if (racialOverrideBlocks) return { kind: 'blocked' };
   return { kind: 'rest' };
 }
@@ -301,7 +376,12 @@ export function interiorRestPlace({
 
 
 export class RestSession {
-  constructor(mode, hours, deps, remainingHoursRented = -1) {
+  /** ROAD-B B5: `isTopWindow` is DaggerfallRestWindow's own
+   *  `uiManager.TopWindow != this` (TickRest :364/:399), handed down by
+   *  the window because only the window knows which stack entry it is.
+   *  An absent seam answers "I am the top", which is what a headless
+   *  session and a host with no stack both mean. */
+  constructor(mode, hours, deps, remainingHoursRented = -1, isTopWindow = null) {
     this.mode = mode;
     this.hoursRemaining = hours ?? 0;
     this.deps = deps;
@@ -310,6 +390,7 @@ export class RestSession {
     // a rented room" sentinel and the reason a dungeon rest is not
     // billed by the hour.
     this.remainingHoursRented = remainingHoursRented;
+    this.isTopWindow = isTopWindow;
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
@@ -336,6 +417,43 @@ export class RestSession {
    *  AbortRestForEnemySpawn (:301-304): latch only; the next tick
    *  answers the enemies-nearby break. */
   abortForEnemySpawn() { this._abortEnemySpawn = true; }
+
+  /**
+   * ROAD-B B5 - THE PER-FRAME PREVENTED-REST POLL.
+   *
+   * TickRest reads GameManager.GetPreventedRestMessage TWICE per frame
+   * (:357-360 before the clock moves at all, :407-410 after the hour's
+   * enemy check) and ENDS THE REST the moment it answers non-null. The
+   * port had the registry's shape - restDecision's third arm - but only
+   * on the OPEN gate, so a condition registered while the player slept
+   * (DFU's own doc: "prevents the player from starting OR CONTINUING to
+   * rest", GameManager.cs:656-659) could never interrupt one. A quest
+   * that forbade sleeping until a ritual finished stopped you lying
+   * down and then let you sleep through it.
+   *
+   * The EMPTY STRING is the same law restDecision carries and it is
+   * EndRest's, not the poll's (:465-478): a registered condition with
+   * no wording is "" - the message box falls back to TEXT.RSC 355
+   * rather than showing a blank one - and that is why `null` and `''`
+   * cannot be folded together here either.
+   *
+   * The result is built by hand rather than through `_finish`, exactly
+   * like the enemy break above it: EndRest's ladder puts enemyBrokeRest
+   * FIRST and preventedRestMessage SECOND, both ABOVE the expired-room
+   * arm (:461-486), so a prevented rest in a room that ran out this
+   * same hour speaks the prevention, not the landlord.
+   */
+  _prevented() {
+    const m = this.deps.preventedRestMessage?.();
+    if (m === null || m === undefined) return null;
+    return m === ''
+      ? { textId: REST_TEXT.cannotRestNow, prevented: true, enemyBroke: false, died: false }
+      : { textId: null, text: m, prevented: true, enemyBroke: false, died: false };
+  }
+
+  /** `uiManager.TopWindow != this` (:364, :399). See the ctor note:
+   *  no seam means no stack above this window. */
+  _covered() { return this.isTopWindow ? !this.isTopWindow() : false; }
 
   /** CheckRent (:441-448), run at the END of every rested hour
    *  (:435-436) after the mode's own completion test. Verbatim, and
@@ -387,6 +505,22 @@ export class RestSession {
       return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
     }
 
+    // TickRest :357-360, and the ORDER is DFU's: the abort latch above
+    // outranks the poll, and the poll outranks the top-window test
+    // below - so a condition that lands while a message box covers the
+    // rest still ends it on the frame the box is dismissed, and does it
+    // BEFORE any world time passes.
+    const preventedNow = this._prevented();
+    if (preventedNow) return preventedNow;
+
+    // :361-365. Redundant under the port's hosts in the same way it is
+    // redundant in DFU - DaggerfallUI.cs:433 updates the TOP WINDOW and
+    // nothing else, which is exactly what B1's hosts do - and kept for
+    // the same reason DFU keeps it: it is the pair of the reachable one
+    // below, and a host that ever ticks a covered window must not
+    // advance its clock.
+    if (this._covered()) return null;
+
     this._timer += dt;
     while (this._timer >= this._subTickEvery) {
       this._timer -= this._subTickEvery;
@@ -407,11 +541,32 @@ export class RestSession {
       // real-time pacing, so the port must call the unpaced door too.
       this.deps.tickQuests?.();
       this._minutesOfHour += MINUTES_PER_TICK;
-      if (this._minutesOfHour < 60) continue;
+      if (this._minutesOfHour < 60) {
+        // :381-385 returns false here, so DFU's frame is over either
+        // way; the port's loop is what has to be told. A quest popup
+        // the tick above pushed suspends the rest AT ONCE rather than
+        // running the rest of this dt out underneath it.
+        if (this._covered()) return null;
+        continue;
+      }
       this._minutesOfHour = 0;
       this.totalHours++;
+      // TickRest :396-399 - the SECOND top-window test, and DFU's own
+      // comment says why it exists: "Checking for second time as quest
+      // tick above can perfectly align with rest ending". This is the
+      // REACHABLE one, because the quest tick runs INSIDE the loop.
+      // The quirk is exact and deliberate: totalHours has ALREADY been
+      // counted (:394), so the covered hour reaches OnSleepEnd's
+      // six-hour test while the sleeper gets no vitals and a timed rest
+      // loses no hour off its counter.
+      if (this._covered()) return null;
       // A full hour: the enemy break first, then vitals/completion.
       if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
+      // :405-410 - the poll AGAIN, after the enemies and before the
+      // vitals, so a condition that turns on during the hour's own
+      // quest ticks stops the healing rather than following it.
+      const preventedHour = this._prevented();
+      if (preventedHour) return preventedHour;
       // TickRest's own order (:348-438): the mode's completion is
       // decided FIRST and CheckRent runs after it, so a rest that
       // finishes on the very hour the room expires answers the

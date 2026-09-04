@@ -166,7 +166,8 @@ export class Foe extends QuestResource {
    *  ("Always treating monsters as male for now"); humanoids roll
    *  gender at 55% MALE and draw a full name from the REGION's bank.
    *  Both wall-clock DateTime.Now.Millisecond seeds ride the quest's
-   *  injectable roll (0..999, the same surface) per Ledger A; the
+   *  injectable roll (0..999, the same surface) per THE ENGINE-PRNG
+   *  RULE, Ledger A; the
    *  monster seed ADDS DFRandom.random_range(1, 1000000) drawn from
    *  DFRandom's own current state, verbatim. */
   _setFoeName(world) {

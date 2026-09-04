@@ -228,16 +228,18 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   return steps;
 }
 
-/** The service the popup's middle button runs, and whether the port
- *  can run it yet. DoGuildService's switch (:334-452) has twenty
- *  arms; the ones whose destination window does not exist are named
- *  here rather than silently doing nothing, so the popup can say
- *  "not yet" the way DFU's own `default:` arm does.
- *
- *  SHIPPED lands in U24 (training, donation, cure disease) and Q4-ii
- *  (Quests -> quest/offerFlow.js's offerGuildQuest, the GetQuest
- *  override's law). Every other arm is FLAGGED with the window it
- *  waits on. */
+/** The service the popup's middle button runs. DoGuildService's switch
+ *  (:334-452) has twenty arms, and the table below now names a shipped
+ *  window for ALL TWENTY - U24 opened it with three (training,
+ *  donation, cure disease), Q4-ii added Quests (quest/offerFlow.js's
+ *  offerGuildQuest, the GetQuest override's law), and DR2 closed the
+ *  last of them. Nothing waits on a window any more: worldModes.js
+ *  routes every destination this table can answer (:2513-:2906), and
+ *  its own note at :2436-2438 records that serviceDestination has no
+ *  null left to name. The `?? null` on serviceDestination and the
+ *  caller's "not available yet" line stay because DFU's own switch
+ *  ends in a `default:` arm too (:447-450, CloseWindow then a message
+ *  box) - an unknown service string is answered, not thrown at. */
 export const SERVICE_DESTINATION = Object.freeze({
   Training: 'guildServiceTraining',
   Donate: 'guildServiceDonation',
@@ -265,6 +267,46 @@ export const SERVICE_DESTINATION = Object.freeze({
   ReceiveHouse: 'guildServiceReceiveHouse',   // H1: KnightlyOrder.ReceiveHouse, over the live house registry
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;
+
+/** D1: Services.GetServiceShortcutButton (Services.cs:408-459) - the
+ *  DaggerfallShortcut button whose binding the popup hangs on its
+ *  MIDDLE button, so the service's accelerator changes with the
+ *  service. It is a SECOND switch over the same enum as the label
+ *  table, and it does not track it: BuySpells and BuySpellsMages fall
+ *  into one arm here as they do there (:433-435), but Quests maps to
+ *  `GuildsGetQuest` and CureDisease to `GuildsCure`, neither of which
+ *  is the enum name. Nineteen arms for twenty services, and the
+ *  `default:` answers Buttons.None - which shortcutBinding turns into
+ *  HotkeySequence.None, a button with no accelerator at all.
+ *
+ *  DFU checks `customNpcServiceButtons` first (:411-413), the mod
+ *  registry for services a mod added; there is no mod system here
+ *  (Ledger C, Not planned), so the switch is the whole function. */
+export const SERVICE_SHORTCUT = Object.freeze({
+  Training: 'GuildsTraining',
+  Quests: 'GuildsGetQuest',
+  Repair: 'GuildsRepair',
+  Identify: 'GuildsIdentify',
+  Donate: 'GuildsDonate',
+  CureDisease: 'GuildsCure',
+  BuyPotions: 'GuildsBuyPotions',
+  MakePotions: 'GuildsMakePotions',
+  BuySpells: 'GuildsBuySpells',
+  BuySpellsMages: 'GuildsBuySpells',   // the two share one arm (:433-435)
+  MakeSpells: 'GuildsMakeSpells',
+  BuyMagicItems: 'GuildsBuyMagicItems',
+  MakeMagicItems: 'GuildsMakeMagicItems',
+  SellMagicItems: 'GuildsSellMagicItems',
+  Teleport: 'GuildsTeleport',
+  DaedraSummoning: 'GuildsDaedraSummon',
+  Spymaster: 'GuildsSpymaster',
+  BuySoulgems: 'GuildsBuySoulgems',
+  ReceiveArmor: 'GuildsReceiveArmor',
+  ReceiveHouse: 'GuildsReceiveHouse',
+});
+/** `null` is DFU's `Buttons.None` - the caller must not ask the table
+ *  for a binding it has no row for. */
+export const serviceShortcutButton = (service) => SERVICE_SHORTCUT[service] ?? null;
 
 /** Re-exported so a host wires one import surface (the popup needs
  *  both halves and G3 owns the other one). */

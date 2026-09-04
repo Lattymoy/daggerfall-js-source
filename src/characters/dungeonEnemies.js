@@ -24,7 +24,9 @@
 import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
 import { MOBILE_TYPES } from './mobileTypes.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
 
+const EDITOR_FLATS_ARCHIVE = 199;   // TextureReader.EditorFlatsTextureArchive
 const FIXED_RECORD = 16;
 const RANDOM_RECORD = 15;
 const UNDERWATER_TABLE = 19;
@@ -80,17 +82,45 @@ export function chooseRandomEnemyType(table, playerLevel) {
  * @returns {Array<{x,y,z,mobileType,fixed:boolean,reaction:'hostile'|'passive',
  *   gender:'unspecified'|'female'|'male',spawnDistanceType:number}>}
  */
-export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, playerLevel = 1 }) {
-  // Verbatim table fill: one classic stream per dungeon.
-  srand(locationId);
+/** DaggerfallDungeon.cs:41 - RandomMonsterVariance, the alternate
+ *  arm's +/- band around the power index. */
+export const RANDOM_MONSTER_VARIANCE = 4;
+
+/**
+ * AUDIT 28 W3: THE ALTERNATE ARM - AddRandomRDBEnemy (RDBLayout.cs
+ * :1290-1346), behind Settings.AlternateRandomEnemySelection ("more
+ * randomized"). No 256-entry classic lists: each random flat picks
+ * straight from its table by the PLAYER's power. monsterPower is
+ * Clamp01(level / 20) (DaggerfallDungeon.cs:302); the base index is
+ * (int)(table.length * power), the band is base +/- RandomMonsterVariance
+ * clamped to the table, and the pick is Random.Range(min, max + 1) -
+ * Unity's stream, which the port answers with the same xorshift the
+ * slot reroll uses (Ledger A: DFU seeds it with DateTime.Now.Ticks).
+ * Water: :1323 `waterLevel >= YPos` takes the dungeon table, else the
+ * underwater one - the classic arm's `waterLevel < rawY` inverted.
+ */
+export function alternateRandomEnemyType(table, playerLevel, rng, variance = RANDOM_MONSTER_VARIANCE) {
+  const monsterPower = Math.min(Math.max(playerLevel / 20, 0), 1);
+  const base = Math.trunc(table.length * monsterPower);
+  let min = base - variance; if (min < 0) min = 0;
+  let max = base + variance; if (max >= table.length) max = table.length - 1;
+  return table[rng(min, max + 1)];
+}
+
+export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, playerLevel = 1,
+  alternate = getBool('Enhancements', 'AlternateRandomEnemySelection') } = {}) {
+  const slotRng = makeSlotRng(locationId);
   const nonWater = new Array(256);
   const water = new Array(256);
-  // Verbatim fill: DFU indexes EncounterTables[dungeonType] with no
-  // guard here (out of range throws before any flat, same as C#); the
-  // per-flat range check below mirrors AddRandomRDBEnemyClassic.
-  for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[dungeonType], playerLevel);
-  for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[UNDERWATER_TABLE], playerLevel);
-  const slotRng = makeSlotRng(locationId);
+  if (!alternate) {
+    // Verbatim table fill: one classic stream per dungeon.
+    srand(locationId);
+    // Verbatim fill: DFU indexes EncounterTables[dungeonType] with no
+    // guard here (out of range throws before any flat, same as C#); the
+    // per-flat range check below mirrors AddRandomRDBEnemyClassic.
+    for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[dungeonType], playerLevel);
+    for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[UNDERWATER_TABLE], playerLevel);
+  }
 
   const out = [];
   const emit = (marker, block, mobileType, fixed) => {
@@ -121,6 +151,15 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
 
   for (const block of blockLayouts) {
     for (const marker of block.markers) {
+      // AUDIT 39 (#19): editorObjects is archive-199 ONLY
+      // (RDBLayout.cs:352), and AddFixedEnemies/AddRandomEnemies
+      // iterate nothing else - the record-alone test below is safe only
+      // over that filtered list. The port's markers array also carries
+      // the archive-216 fixed-treasure flats, which share the record
+      // namespace (216/16 would spawn a Rat from `undefined & 0xff`,
+      // 216/15 an undefined mobile type) and none of the enemy fields.
+      // A marker with no archive is an editor flat, per rdbLayout.
+      if ((marker.archive ?? EDITOR_FLATS_ARCHIVE) !== EDITOR_FLATS_ARCHIVE) continue;
       if (marker.record === FIXED_RECORD) {
         const typeValue = marker.factionOrMobileId & 0xff;
         if (typeValue === 99) continue;
@@ -128,6 +167,13 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
       } else if (marker.record === RANDOM_RECORD) {
         if (dungeonType >= ENCOUNTER_TABLES.length) continue; // verbatim per-flat guard
         const usingWater = block.waterLevel < marker.rawY;
+        if (alternate) {
+          // AddRandomRDBEnemy: no slot, no lists - the table by water
+          // and the pick by the player's power.
+          const table = ENCOUNTER_TABLES[usingWater ? UNDERWATER_TABLE : dungeonType];
+          emit(marker, block, alternateRandomEnemyType(table, playerLevel, slotRng), false);
+          continue;
+        }
         let slot = marker.flags;
         if (slot === 0) slot = slotRng(1, 7);
         emit(marker, block, (usingWater ? water : nonWater)[slot], false);

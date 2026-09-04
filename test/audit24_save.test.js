@@ -60,27 +60,29 @@ test('audit24 save: a pre-S15 save defaults fatigue to MaxFatigue = (Str + End) 
   assert.equal(t2.fatigue, 1234, 'the default is only for a MISSING field');
 });
 
-test('audit24 save: a pre-17f Currency stack is upgraded ONLY when it has no template index', () => {
-  // stacksWith compares templateIndex, so a restored index-less gold
-  // stack would grow a SECOND stack the next time gold was added - and
-  // goldAmount only ever finds the first. The guard is an AND of two
-  // conditions and both matter: an OR would rewrite every Currency
-  // stack (losing a real index) and every index-less item of any group.
+test('audit24 save / E4: EVERY restored Currency stack is absorbed into the counter, whatever its index', () => {
+  // The 17f upgrade this pin used to hold - stamp template 276 on an
+  // index-less stack so stacksWith would still merge it - is moot:
+  // PlayerEntity.Items can no longer hold Currency at all. The
+  // successor law is UNCONDITIONAL, and that is the point: an
+  // index-less pre-17f stack, an already-indexed one and (a save from
+  // any older wave) both at once all end up as one number, and
+  // nothing of any other group is touched.
   const e = makeEntity({
     items: [
       { group: 'Currency', stackCount: 500 },                       // pre-17f: no index
-      { group: 'Currency', templateIndex: 7, stackCount: 250 },     // already upgraded
+      { group: 'Currency', templateIndex: 276, stackCount: 250 },   // already upgraded
       { group: 'Weapons', stackCount: 1 },                          // index-less, NOT currency
     ],
   });
   const snap = snapshotPlayer(e, {});
+  delete snap.goldPieces;   // a save older than E4 carries no counter
   const t = makeEntity();
   restorePlayer(t, snap);
-  assert.ok(t.items[0].templateIndex != null, 'the index-less Currency stack gained one');
-  assert.equal(t.items[0].stackCount, 500, 'and kept its gold');
-  assert.equal(t.items[1].templateIndex, 7, 'an already-indexed stack is left alone');
-  assert.equal(t.items[2].templateIndex, undefined, 'and a non-Currency item is never touched');
-  assert.equal(t.items[2].group, 'Weapons');
+  assert.equal(t.goldPieces, 750, 'both stacks land in PlayerEntity.GoldPieces');
+  assert.equal(t.items.length, 1, 'and neither survives in the pack');
+  assert.equal(t.items[0].templateIndex, undefined, 'a non-Currency item is never touched');
+  assert.equal(t.items[0].group, 'Weapons');
 });
 
 test('audit24 save: the light-source sentinel is -1, and only >= 0 relinks', () => {

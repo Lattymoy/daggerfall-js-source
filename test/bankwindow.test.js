@@ -17,7 +17,7 @@ import {
   toggleTransactionInput, parseTransactionAmount,
 } from '../src/systems/banking.js';
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
-import { goldAmount, deductGold, addGold } from '../src/systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold, addGold } from '../src/systems/court.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const R = TRANSACTION_RESULT;
@@ -27,12 +27,17 @@ const rows = (id) => [{ text: `#${id}`, center: true }];
 const idOf = (box) => Number(/^#(\d+)/.exec(box?.rows?.[0]?.text ?? '')?.[1]);
 
 function win(over = {}) {
-  const entity = over.entity ?? { level: 5, items: [{ group: 'Currency', stackCount: 1000 }] };
+  const entity = over.entity ?? { level: 5, goldPieces: 1000, items: [] };   // E4: the counter
   const accounts = over.accounts ?? createBankAccounts(62);
   const wagon = over.wagon ?? null;
   let closed = 0;
   const player = {
     gold: () => goldAmount(entity),
+    // AUDIT 58: bankPurse's OTHER quantity - PlayerEntity.GetGoldAmount
+    // (:1313-1316), coins plus letters of credit. The harness had wired
+    // the coin reader alone, which is why the label pin below could not
+    // see which one the window drew.
+    totalGold: () => totalGoldAmount(entity),
     deductGold: (n) => deductGold(entity, n),
     addGold: (n) => addGold(entity, n),
     wagonGold: () => wagon?.stackCount ?? 0,
@@ -276,11 +281,61 @@ test('B2: the house and ship buttons refuse before opening anything (:417-472)',
   assert.equal(f.w.box.amount, 85000, '100000 x 0.85, truncated');
 });
 
+test('D6: BUY SHIP in a port opens the SHIPYARD - the else arm, not a refusal (:455-464)', () => {
+  // The one reachable SUCCESS case used to answer NOT_PORT_TOWN: a
+  // port town with no ship is buyShipDecision's `pick`, and DFU takes
+  // the else arm and pushes BankPurchasePopup with a NULL house list
+  // (:463). Unlike BUY HOUSE there is no fallback popup here - the
+  // ships list is a fixed pair that cannot be empty.
+  let opened = 0;
+  const hooks = { openShipPurchase: () => { opened++; return true; } };
+  const a = win({ isPortTown: true, hooks });
+  clickRect(a.w, 'buyShip');
+  assert.equal(a.w.box, null, 'a port town with no ship is not refused');
+  assert.equal(opened, 1, 'and the shipyard is what it opens');
+  // ...and BOTH refusals still stand, in DFU's own order
+  const b = win({ isPortTown: true, ownsShip: true, hooks });
+  clickRect(b.w, 'buyShip');
+  assert.equal(idOf(b.w.box), R.ALREADY_OWN_SHIP);
+  const c = win({ isPortTown: false, hooks });
+  clickRect(c.w, 'buyShip');
+  assert.equal(idOf(c.w.box), R.NOT_PORT_TOWN);
+  assert.equal(opened, 1, 'neither refusal ever reaches the list');
+});
+
+test('D6: the host mounts BOTH arms of the ONE popup, and PurchaseShip has a caller at last', () => {
+  const wm = readFileSync(join(root, 'src', 'scenes', 'worldModes.js'), 'utf8');
+  assert.match(wm, /const openBankMarket = \(arms\) => \{/,
+    'DFU has one popup class; the port must not grow a second mount for it');
+  assert.match(wm, /openShipPurchase: \(\) => openBankMarket\(\{/, 'BUY SHIP reaches it with no house list at all');
+  assert.match(wm, /purchaseShip\(playerEntity\.bankAccounts, bankRegion\(\), ship, playerEntity, bankPurse\(\)/,
+    'PurchaseShip (:467-486) is callerless again');
+  // AssignShipToPlayer (:488-497) makes BOTH scenes permanent - the
+  // exact pair SellShip drops
+  assert.match(wm, /addPermanentScene\(sceneCache\(\), worldSceneName\(SHIP_COORDS\[s\]\.x, SHIP_COORDS\[s\]\.y\)\)/);
+  assert.match(wm, /addPermanentScene\(sceneCache\(\), interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[s\], BUILDING_KEY_0\)\)/);
+  // ...and the door of the ship it sells answers the lock ladder: the
+  // key was simply absent at the call, so buildingLocks' last arm
+  // (PlayerActivate.cs:1307-1308) could never fire
+  assert.match(wm, /^ {10}ownsShip: ownsShip\(playerEntity\),$/m,
+    'buildingIsUnlocked is handed no ownsShip, so it defaults false');
+});
+
 test('B2: the inventory label carries the WAGON in parentheses (:241-246)', () => {
   const dry = win();
   assert.equal(dry.w.labels().inventory, '1000', 'no cart, no parenthesis');
   const cart = win({ wagon: { group: 'Currency', stackCount: 5000 } });
   assert.equal(cart.w.labels().inventory, '1000 (+5000)');
+  // AUDIT 58: and the line itself is `playerEntity.GetGoldAmount()`
+  // (:241) - coins PLUS every letter of credit in the pack
+  // (PlayerEntity.cs:1313-1316), not the bare coin counter. A player
+  // who sold while overloaded holds paper and no coin, and this is the
+  // one screen whose DEPOSIT LETTERS button banks exactly that paper:
+  // it read 0 while offering to take 5000.
+  const paper = win({ entity: { level: 5, goldPieces: 0, items: [letterOfCredit(5000)] } });
+  assert.equal(paper.w.labels().inventory, '5000', 'the letter is money on this label');
+  const both = win({ entity: { level: 5, goldPieces: 250, items: [letterOfCredit(5000)] }, wagon: { group: 'Currency', stackCount: 40 } });
+  assert.equal(both.w.labels().inventory, '5250 (+40)', 'coins + letters, then the cart in parentheses');
   // one label, two purses - which is how a player sees what a deposit
   // can actually reach
   cart.accounts[17].accountGold = 42;

@@ -6,7 +6,7 @@ import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTempla
   goldPanelRows,
 } from '../src/ui/nativeInventory.js';
 import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y, SLOT_H } from '../src/ui/itemScroller.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeKey, typedChar } from '../src/ui/input.js';
@@ -86,10 +86,15 @@ test('itemScroller: the shared rail law (hit kinds + clamped paging)', () => {
   // the LEFT 9px rail: 16px arrows at y0/y136, the bar between
   assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 5), { kind: 'up' });
   assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + DOWN_ARROW_Y + 5), { kind: 'down' });
-  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 70), { kind: 'page-up' });
-  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 100), { kind: 'page-down' });
+  // AUDIT 39 F126 moved these two: the rail used to split on its own
+  // midpoint (y=76), where VerticalScrollBar.cs:142-150 pages off the
+  // THUMB. A 20-item list at scroll 0 puts the thumb at the bar's top,
+  // so y=70 is BELOW it and pages down - it answered 'page-up' before
+  // and applyScroll clamped the click into nothing.
+  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 70, 0, 20), { kind: 'page-down' });
+  assert.deepEqual(scrollerHit(rect, 163 + 4, 48 + 100, 0, 20), { kind: 'page-down' });
   assert.equal(scrollerHit(rect, 162, 100), null, 'outside the scroller');
-  assert.equal(scrollerHit(rect, 163 + 4, 48 + ARROW_H).kind, 'page-up', 'y16 is past the up arrow');
+  assert.equal(scrollerHit(rect, 163 + 4, 48 + ARROW_H, 0, 20).kind, 'page-up', 'y16 is past the up arrow');
   // buttons at x>=9 map slots by 38px
   assert.deepEqual(scrollerHit(rect, 163 + CELL_X, 48 + 39), { kind: 'slot', slot: 1 });
   // paging clamps to the list
@@ -129,28 +134,30 @@ test('U25: Use mode uses, and an EQUIP click on a light source uses too', () => 
 });
 
 test('U25: the gold button drops gold into the remote pile, refusing bad amounts', () => {
-  const gold = { group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 500 };
-  // (the gold button acts wherever the lists are pointing)
-  const bag = [gold];
-  const entity = { isPlayer: true, items: bag };
+  // E4: `int playerGold = PlayerEntity.GoldPieces` (:1288) - the purse
+  // is the COUNTER, and the amount that leaves it mints a fresh pile
+  // (ItemBuilder.CreateGoldPieces) in the remote container (:1307).
+  const bag = [];
+  const entity = { isPlayer: true, items: bag, goldPieces: 500 };
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
   w.click(230, 130);            // the gold button
   assert.equal(w.topBox.field, true);
   assert.equal(w.goldEntry, '0', 'TextBox.Text = "0"');
   // 0 is refused outright - DFU returns without clamping
   w.input('Enter');
-  assert.equal(gold.stackCount, 500);
+  assert.equal(entity.goldPieces, 500);
   // so is more than you carry
   w.click(230, 130);
   w.goldEntry = '9999';
   w.input('Enter');
-  assert.equal(gold.stackCount, 500);
+  assert.equal(entity.goldPieces, 500);
   // a real amount lands in the remote pile
   w.click(230, 130);
   w.goldEntry = '120';
   w.input('Enter');
-  assert.equal(gold.stackCount, 380);
+  assert.equal(entity.goldPieces, 380);
   assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);
+  assert.equal(bag.length, 0, 'and the pack never held a coin');
 });
 
 test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
@@ -183,13 +190,23 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     const j = src.indexOf('createInventoryWindow({');
     const block = src.slice(j, src.indexOf('\n  });', j));
     for (const hook of REQUIRED) {
-      assert.ok(block.includes(hook), `${f}'s builder is missing ${hook}`);
+      // A hook may arrive through a SPREAD BAG the host shares with
+      // another reader (world.js's `useHooks`, which the use-magic-item
+      // pick also takes) - that IS the one-builder law rather than a
+      // breach of it, so resolve one level of `...bag` before failing.
+      const reachable = block.includes(hook) || [...block.matchAll(/\.\.\.(\w+),/g)].some(([, bag]) => {
+        const d = src.indexOf(`const ${bag} = {`);
+        return d >= 0 && src.slice(d, src.indexOf('\n  };', d)).includes(hook);
+      });
+      assert.ok(reachable, `${f}'s builder is missing ${hook}`);
     }
     // ...and the loot arm goes THROUGH it, carrying only what differs
     assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
       `${f}: the loot pile must reach the same builder`);
     const loot = src.slice(src.indexOf('townTalk.showOverlay(makeInventoryWindow({'));
-    assert.match(loot.slice(0, 700), /loot: \{ items: \(\) => pile\.items \}/);
+    // G5: DaggerfallLoot's identity travels with the pile through the
+    // ONE shared shape, so a fifth call site cannot ship a partial one.
+    assert.match(loot.slice(0, 700), /loot: droppedLootHooks\(pile\)/);
     assert.match(loot.slice(0, 700), /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
   }
   // the dungeon host has one too, and it is the door's
@@ -444,8 +461,34 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // including the exterior host, which has nothing to quickload and
   // must still not go fullscreen.
   assert.match(code('ui/input.js'), /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/);
-  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
+  // AUDIT 58 (f2/hosts): DISCOVERED, not enumerated. This loop named
+  // four hosts, and the U47 rollout that wrote it named the same four -
+  // so scenes/interior.js, the FIFTH host-level keydown, registered one
+  // and never swallowed: F5 in the ?interior route reloaded the page and
+  // destroyed the session (AUDIT 17e F41's own failure) and F11 went
+  // fullscreen. A list a lane has to remember to extend is what let that
+  // happen, so the pin now asks the tree which hosts register a keydown
+  // and holds every one of them to ui/input.js:378-379's "every host
+  // that registers a keydown calls this FIRST".
+  const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
+  const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')
+    && /\n  addEventListener\('keydown', \(e\) => \{/.test(readFileSync(join(SCENES, f), 'utf8')));
+  assert.deepEqual(hosts.sort(), ['dungeon.js', 'exterior.js', 'interior.js', 'world.js', 'worldModes.js'],
+    'the host-level keydowns in the tree - a sixth joins this list by existing, not by being remembered');
+  for (const host of hosts.map((f) => `scenes/${f}`)) {
     assert.match(code(host), /swallowBrowserKey\(e\)/, `${host} swallows them`);
+    assert.match(code(host), /import \{[^}]*swallowBrowserKey[^}]*\} from '\.\.\/ui\/input\.js'/, `${host} takes them from the one list`);
     assert.doesNotMatch(code(host), /e\.code === 'F5' \|\| e\.code === 'F6'/, `${host} keeps no second list`);
   }
+  // ...and FIRST, ahead of the early returns. interior.js's handler
+  // returns out of its overlay arm and its KeyM arm before either
+  // reaches preventDefault, so a swallow placed after them is no
+  // swallow at all - which is why the law says first and not merely
+  // present.
+  const body = code('scenes/interior.js');
+  const kd = body.slice(body.indexOf("\n  addEventListener('keydown', (e) => {"));
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf('if (overlay)'),
+    'interior.js swallows BEFORE the overlay arm returns');
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (e.code === 'KeyM')"),
+    'interior.js swallows BEFORE the automap arm returns');
 });

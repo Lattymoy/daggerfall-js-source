@@ -21,7 +21,9 @@
 // eye DISCARDS a translucent setting's alpha (ToolTipBackgroundColor
 // ships 404040D2) and only typing eight hex digits can keep it.
 //
-// RECORDED DEPARTURES:
+// RECORDED DEPARTURES. Ledger A carries all four as THE COLOR
+// PICKER'S FOUR HOST SEAMS (AUDIT 58, seams lane), cited by name
+// because a line number rots:
 // - the crosshair DRAG (:150-175) collapses to tap-to-place: the
 //   settings host is single-shot (a drag is a scroll, never a tap -
 //   launcherScene's own law), the same posture every ported scrollbar

@@ -1,0 +1,120 @@
+# The DOWNLOADABLE build (Desktop-App.md). Pushing a tag shaped
+# app-v* builds the desktop shell's installers on all three OSes and
+# attaches them to a GitHub Release at that tag - which is where the
+# landing page's "On your desktop" section points. workflow_dispatch
+# builds the same installers as run artifacts, for trying a build
+# without cutting a release.
+#
+# The house gate rides in front: the ubuntu job runs `npm run check`
+# whole (a red suite never ships an installer any more than it ships
+# the site); the windows/macos jobs build only - the suite's own
+# lawful home is ubuntu (deploy.yml), and what the other two runners
+# contribute is packaging, not verification.
+#
+# Doctrine unchanged: the installers carry the built site and the
+# shell, NO game data - the app asks for the player's own ARENA2
+# folder on first run, exactly as the website does.
+name: release-desktop
+
+# THREE DOORS to a release, because a door is only a door for who can
+# open it: a pushed app-v* tag (anyone with tag push), a dispatch with
+# release_tag (anyone with workflow rights), and THE MARKER FILE - a
+# main push that touches .github/DESKTOP_RELEASE cuts a release at
+# whatever tag the file names. The marker is the door a branch-only
+# git relay can open through an ordinary merged PR, which is how the
+# first release was cut; it also leaves the release history readable
+# in git. It lives HERE and not in app/ because its first home,
+# app/RELEASE, collided with electron-builder's app/release output
+# directory on case-INSENSITIVE filesystems - mkdir EEXIST, and the
+# windows and macos legs of the first release died on it while ubuntu
+# sailed. The audit's own finding class, biting the release infra.
+on:
+  push:
+    tags:
+      - 'app-v*'
+    branches:
+      - main
+    paths:
+      - '.github/DESKTOP_RELEASE'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to create a Release at (app-v*); empty = run artifacts only'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      # No signing identities exist; without this electron-builder
+      # hunts for one on macOS and fails the build looking.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      # One answer to "which tag, if any": the dispatch input, the
+      # pushed tag itself, or the marker file's first line. Empty
+      # means artifacts-only.
+      - name: Resolve release tag
+        id: reltag
+        shell: bash
+        run: |
+          TAG='${{ inputs.release_tag }}'
+          if [ -z "$TAG" ] && [[ '${{ github.ref }}' == refs/tags/app-v* ]]; then TAG='${{ github.ref_name }}'; fi
+          if [ -z "$TAG" ] && [ -f .github/DESKTOP_RELEASE ]; then TAG=$(head -1 .github/DESKTOP_RELEASE | tr -d '[:space:]'); fi
+          case "$TAG" in app-v*) ;; *) TAG='' ;; esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "release tag: '${TAG:-<none - artifacts only>}'"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install site dependencies
+        run: npm ci
+
+      - name: Gate (ubuntu carries the suite)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run check
+
+      - name: Build the site
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run build
+
+      - name: Install shell dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Build installers
+        run: npx electron-builder --publish never
+        working-directory: app
+
+      - name: Attach installers to the release
+        if: steps.reltag.outputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.reltag.outputs.tag }}
+          files: |
+            app/release/*.AppImage
+            app/release/*.exe
+            app/release/*.dmg
+          generate_release_notes: true
+
+      - name: Keep installers as run artifacts (manual runs)
+        if: steps.reltag.outputs.tag == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            app/release/*.AppImage
+            app/release/*.exe
+            app/release/*.dmg
+          if-no-files-found: error

@@ -40,8 +40,13 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   assert.ok(tt.includes('if (!best || bestDist > RAY_DISTANCE) return false;'), 'the ray reach is the only silent bound');
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's
   // currentMode is global) - the gates read it live, same law
-  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }"));
-  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }"));
+  // AUDIT 58 (talk lane) MOVED THIS PIN: the refusal is the localized
+  // key 'youAreTooFarAway' (Internal_Strings.csv:22) and there is one
+  // constant for it now (player/activate.js), so the literal these two
+  // lines used to carry - a full stop where the table spells an
+  // ellipsis - is gone from the source.
+  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
+  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
 });
 
 test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured space keeps it', () => {
@@ -49,7 +54,12 @@ test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured spa
   const t = src('src/ui/text.js');
   assert.ok(t.includes('cx += spaceGlyphWidth(fnt) * scale;'), 'drawText: width alone');
   assert.equal(/cx \+= \(spaceGlyphWidth\(fnt\) \+ FNT_GLYPH_SPACING\) \* scale/.test(t), false, 'the old symmetric advance is gone');
-  assert.ok(/w \+= \(code < FNT_ASCII_START \? spaceGlyphWidth\(fnt\) : fnt\.glyphWidth\(code - FNT_ASCII_START\)\) \+ FNT_GLYPH_SPACING;/.test(t),
+  // AUDIT 39 F129 MOVED THIS PIN: the space test is now `code ===
+  // FNT_SPACE_CODE`, because measureText folds through Encoding.ASCII
+  // and substitutes ErrorCode first (:373-379) - after that, the only
+  // sub-33 code left IS the space. The law pinned here is unchanged:
+  // every glyph, space included, adds GlyphSpacing to the measure.
+  assert.ok(/w \+= \(code === FNT_SPACE_CODE \? spaceGlyphWidth\(fnt\) : fnt\.glyphWidth\(code - FNT_ASCII_START\)\) \+ FNT_GLYPH_SPACING;/.test(t),
     'measureText adds the spacing for every glyph, space included');
 });
 

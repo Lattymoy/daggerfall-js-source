@@ -143,6 +143,19 @@ let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the o
 let _climateWeathersRolled = false;         // StartGameBehaviour.cs:435-436's one-shot "Randomize weathers"
 let _updateFromClimateArray = false;        // WeatherManager.updateWeatherFromClimateArray (:105)
 let _lastClimateBase = CLIMATE_BASE_TYPES.None;   // lastRespawnClimate (WeatherManager.cs:90)
+// WX2a (AUDIT 57): A CHANGE THE PLAYER WAS NOT PRESENT FOR IS A JUMP, NOT
+// A FRONT. The enhanced sky (WIND1) and the ground (WX2) build a
+// three-hour front at every change of the word, and DFU's own paths hand
+// them changes that are not weather arriving but the player arriving:
+// a load, a fast-travel landing, a teleport's respawn roll, a day's roll
+// drained on the first frame back out of a dungeon. Each of those bumps
+// this stamp; the hosts read it once a frame and snap instead of
+// building. The classic path, which snaps on every change, reads nothing.
+let _jumps = 0;
+let _rolledAtMinutes = null;                 // when the day's array was rolled, to tell a stale drain from a live one
+/** A drain more than this many game minutes after its roll was a day the
+ *  player spent inside - the weather changed hours ago, out of sight. */
+export const STALE_DRAIN_MINUTES = 30;
 
 export const currentWeather = () => WEATHER_TYPES[_current];
 export const currentWeatherEnum = () => _current;
@@ -174,25 +187,42 @@ export function weatherForClimate(climateIndex) {
   const zone = CLIMATE_INDICES[climateIndex - CLIMATES.Ocean];
   // A bogus climate answers the CURRENT weather unchanged - DFU's
   // :432-434 would throw IndexOutOfRange; the defensive arm is the
-  // port's, recorded (tickWeather then reports no change).
+  // port's (tickWeather then reports no change), and it rides the
+  // same Ledger A row as the arrival law above.
   return zone == null ? _current : _climateWeathers[zone];
 }
 
 /** StreamingWorld_OnInitWorld's application half (WeatherManager.cs:
  *  524-543 -> SetWeatherFromWeatherClimateArray): a world re-init
  *  (fast travel arrival) applies the destination climate's ARRAY
- *  slot - no fresh roll. DEPARTURE (recorded): DFU suppresses this
+ *  slot - no fresh roll. RECORDED DEPARTURE: DFU suppresses this
  *  for the rest of a session once any save has loaded
  *  (startedFromLoadedSaveGame stays true), which exists to keep the
  *  boot-time init from clobbering a loaded sky; the port applies on
  *  every arrival instead of freezing travel weather forever after
- *  the first load. Answers true when the weather changed. */
+ *  the first load. Ledger A carries it as TRAVEL WEATHER IS APPLIED
+ *  ON EVERY ARRIVAL, NOT FROZEN AFTER THE FIRST LOAD (AUDIT 58,
+ *  seams lane), cited by name because a line number rots. Answers
+ *  true when the weather changed. */
 export function applyClimateWeather(climateIndex) {
+  const changed = applyFromArray(climateIndex);
+  if (changed) _jumps++;   // WX2a: a world re-init is the PLAYER arriving, not the weather
+  return changed;
+}
+
+/** The array slot applied, and nothing said about how it got there: the
+ *  drain's half (a front, when live) and the travel arrival's (a jump). */
+function applyFromArray(climateIndex) {
   const next = weatherForClimate(climateIndex);
   if (next === _current) return false;
   _current = next;
   return true;
 }
+
+/** WX2a: the count of weather changes that were jumps. A host keeps the
+ *  last value it saw; a new one means the change on this frame (if any)
+ *  is to be taken whole, not built toward. */
+export const weatherJumpStamp = () => _jumps;
 
 /**
  * S41 - THE DAY CHANGE'S WEATHER MEMBER (PlayerEntity.cs:447-448),
@@ -221,6 +251,7 @@ export function rollClimateWeathersForDay(nowMinutes, rolls = Math.random) {
   setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
   _climateWeathersRolled = true;
   _updateFromClimateArray = true;
+  _rolledAtMinutes = nowMinutes;   // WX2a: the drain measures its lateness from here
 }
 
 /** THE EXTERIOR FRAME'S WEATHER DRAIN - WeatherManager.Update's
@@ -242,10 +273,18 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
     setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
     _climateWeathersRolled = true;
     _updateFromClimateArray = true;   // OnInitWorld raises it at every non-load start (:534)
+    _rolledAtMinutes = nowMinutes;
   }
   if (!_updateFromClimateArray) return false;
   _updateFromClimateArray = false;
-  return applyClimateWeather(climateIndex);
+  const changed = applyFromArray(climateIndex);
+  // WX2a: a LIVE drain - the day turned while the player stood under the
+  // sky - is a front. A STALE one - the roll happened while they were
+  // inside, and lands on the first frame back out - is a jump: the
+  // weather changed hours ago, and the sky they step out under is
+  // already the new one.
+  if (changed && _rolledAtMinutes != null && nowMinutes - _rolledAtMinutes > STALE_DRAIN_MINUTES) _jumps++;
+  return changed;
 }
 
 /** PollWeatherChanges(true) at respawn (WeatherManager.cs:514-522 +
@@ -260,6 +299,7 @@ export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random) {
   const next = rollWeather(climateIndex, seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
   if (next === _current) return false;
   _current = next;
+  _jumps++;   // WX2a: the respawn's "different sky at the destination" is the player arriving under it
   return true;
 }
 
@@ -278,6 +318,7 @@ export function restoreWeather(weather) {
   // so a load cannot fire a day change of its own.
   _climateWeathersRolled = true;
   _updateFromClimateArray = false;
+  _jumps++;   // WX2a: a load lands the player under the saved sky, whole
 }
 
 /** SAV3: the classic-save import's weather arm. StartFromClassicSave
@@ -303,4 +344,6 @@ export function resetWeatherSim() {
   _climateWeathersRolled = false;
   _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
+  _jumps = 0;
+  _rolledAtMinutes = null;
 }

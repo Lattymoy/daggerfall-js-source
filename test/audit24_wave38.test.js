@@ -13,6 +13,8 @@ import {
   mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, ARROW_TEMPLATE_INDEX,
 } from '../src/scenes/corpseMarker.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
+import { goldStack } from '../src/systems/inventory.js';
+import { goldAmount } from '../src/systems/court.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../src/combat/formulas.js';
 import { ENEMY_BASICS, ENEMY_NAMES, enemyDisplayName } from '../src/characters/enemyBasics.js';
@@ -74,6 +76,51 @@ test('audit24 wave38: the corpse lands on the GROUND, not where the flyer died',
     collider: null, corpseTexture: { archive: 405, record: 1 }, feet: [1, 9, 2],
   });
   assert.deepEqual(c2.pos, [1, 9, 2]);
+});
+
+test('AUDIT 39: a recenter DURING the corpse mint moves the body with the world', async () => {
+  // AUDIT 17e F23 / THE FOUR HOSTS RULE. The mint baked `pos` from
+  // `feet` BEFORE `await getTexture(archive)` - a cold TEXTURE.###
+  // read that spans frames on a first kill of a type - and the record
+  // joins `corpseBatches` only in the caller's `.then`, so offsetAll
+  // (the only thing that shifts a corpse) could reach neither the
+  // record nor the position. A recenter in that window left the body
+  // AND its loot AABB a whole map pixel (819.2) from the kill.
+  //
+  // The pools shift `ai.feet` IN PLACE, so reading it after the warm
+  // is what makes the mint follow the world.
+  const r = rig({ floorY: 0 });
+  let land;
+  const feet = [10, 0, -4];                       // the pool's live array
+  const c = mintCorpseMarker({
+    renderer: r.renderer,
+    getTexture: () => new Promise((res) => { land = () => res({ recordCount: 8, getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }) }); }),
+    uploadRecordFrame: r.uploadRecordFrame,
+    collider: r.collider, corpseTexture: { archive: 405, record: 1 }, feet,
+  });
+  await new Promise((res) => setTimeout(res, 0));
+  assert.equal(r.made.length, 0, 'nothing is baked while the archive warms');
+  feet[0] -= 819.2;                               // the floating origin recenters
+  land();
+  const marker = await c;
+  assert.deepEqual(marker.pos, [10 - 819.2, 0, -4], 'the body stands where the foe now does');
+  assert.deepEqual(r.made[0].centres[0], [10 - 819.2, 0, -4], 'and the STATIC_DRAW batch was baked there');
+});
+
+test('AUDIT 39: a pool that prunes keys its corpses by a stable id, not by the array index', () => {
+  // cityGuards splices walk-aways out of `guards` now, so an index is
+  // no longer a name: the body at index 1 when the target list was
+  // built is a different body once anything ahead of it leaves. Pools
+  // that never splice (exteriorFoes) keep the index, which is what the
+  // default is for.
+  const bodies = [{ corpse: true, id: 7 }, { corpse: true, id: 9 }];
+  const byId = corpseLootTargets(bodies, 'guardCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0], idOf: (e) => e.id });
+  assert.deepEqual(byId.map((t) => t.key), ['guardCorpse:7', 'guardCorpse:9']);
+  bodies.shift();   // the walk-away ahead of it is pruned
+  assert.deepEqual(corpseLootTargets(bodies, 'guardCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0], idOf: (e) => e.id })
+    .map((t) => t.key), ['guardCorpse:9'], 'the surviving body keeps its name');
+  const byIndex = corpseLootTargets(bodies, 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
+  assert.deepEqual(byIndex.map((t) => t.key), ['foeCorpse:0'], 'no idOf, the index stands');
 });
 
 test('audit24 wave38: the SL2 guard, and the two ways a mint declines', async () => {
@@ -166,6 +213,26 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   player.items = [];
   assert.equal(takeCorpseLoot({ corpse: true, entity: { items: [{ templateIndex: 120 }] } }, player, s), 1);
   assert.deepEqual(say, ['You take 1 item.']);
+
+  // E4's GOLD DOOR, on the bulk take. DoTransferItem's first statement
+  // (DaggerfallInventoryWindow.cs:1562-1571) spends a Currency pile
+  // bound for PlayerEntity.Items into the counter and never adds it to
+  // the list; DFU reaches it because :957 opens the window over the
+  // corpse. The port's bulk take is the residue this file records, so
+  // the door is spelled in takeCorpseLoot - without it a corpse's
+  // loot-table gold (loot.js:169) lands in the pack, where
+  // court.goldAmount cannot see it and it is unspendable forever.
+  say.length = 0;
+  player.items = [];
+  player.goldPieces = 50;
+  const rich = { corpse: true, entity: { items: [goldStack(500), { name: 'Dagger', templateIndex: 111 }] } };
+  assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
+  assert.deepEqual(say, ['You take 2 items.']);
+  assert.equal(player.items.some((it) => it.group === 'Currency'), false,
+    'the player\'s collection can NEVER hold Currency (inventory.js:48-56)');
+  assert.equal(player.items.length, 1);
+  assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
+  assert.equal(goldAmount(player), 550, 'and it is spendable');
 });
 
 test('audit24 wave38: the kill notice, and the name table that was out of reach', () => {
@@ -226,12 +293,40 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ONE pick over BOTH pools: the nearest body wins, not the pool the
   // host happens to ask first.
-  const w = rd('src/scenes/world.js');
-  assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/);
-  assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/);
-  assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/);
-  assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
-    'the watch-only pick is gone');
+  // ROAD-G G2 (review): BOTH exterior hosts. The fixed-city host took
+  // this law verbatim when it mounted the encounter pool, and the pin
+  // read world.js alone - so `? exteriorFoes : cityGuards` could be
+  // reduced to `cityGuards` there with the whole suite green.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const w = rd(f);
+    assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/, f);
+    assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
+    assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/, f);
+    assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
+      `${f}: the watch-only pick is gone`);
+  }
+
+  // ...and the ROUTER itself, RUN off the fixed-city host's own line.
+  // Routing a `foeCorpse:` key into the watch pool is not a harmless
+  // miss: cityGuards.js:990-992 turns the key into
+  // `guards.find((g) => g.id === id)` over ids minted by
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:158-181)
+  // tests only `corpseDisabled` and `entity.items` - never death - so
+  // opening an encounter corpse would empty a LIVE watchman's pack.
+  const armSrc = rd('src/scenes/exterior.js').split('\n')
+    .find((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
+  assert.ok(armSrc, 'the fixed-city host no longer carries the corpse-key router');
+  const took = [];
+  const arm = new Function('lootKey', 'exteriorFoes', 'cityGuards', 'townTalk', 'surfacePlayer', armSrc);
+  const run = (k) => arm(k,
+    { takeLoot: (key) => took.push(['encounter', key]) },
+    { takeLoot: (key) => took.push(['watch', key]) },
+    { say: () => {} }, () => {});
+  run('foeCorpse:3');
+  run('guardCorpse:3');
+  run(null);
+  assert.deepEqual(took, [['encounter', 'foeCorpse:3'], ['watch', 'guardCorpse:3']],
+    'the KEY picks the pool - an encounter corpse never reaches a live watchman');
 
   // the target reach is the corpse one, everywhere it is built
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [2, 3, 4] });

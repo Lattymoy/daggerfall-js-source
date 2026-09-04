@@ -102,7 +102,7 @@ test('HC1: the host answers houseOwned at BUILD, off the bank registry (:816)', 
   const wm = src('scenes/worldModes.js');
   assert.ok(wm.includes('const houseOwned = !!interiorBuilding && isHouseOwned(playerEntity.houses ?? [], interiorBuilding.regionIndex ?? 0, interiorBuilding.buildingKey);'),
     'the host owns the registry and evaluates at BUILD');
-  assert.ok(wm.includes('setupStaticNpc, houseOwned, peopleVisible })'),
+  assert.ok(wm.includes('setupStaticNpc, houseOwned, peopleVisible,'),
     'the answer rides the opts into buildInteriorContext - the peopleVisible idiom');
 });
 
@@ -121,13 +121,29 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   const houseGuard = arm.indexOf('|| isHouseOwned(playerEntity.houses ?? []');
   assert.ok(guard >= 0 && houseGuard > guard, 'the ship arm (:905-906) rides the same OR as the house');
   const ownedLatch = arm.indexOf('c.items ??= [];');
-  const stock = arm.indexOf('c.items ??= stockHouseContainer(');
+  // PIN MOVED at A2, deliberately: the stranger arm's `??=` became the
+  // stockedDate day comparison PlayerActivate actually makes (:911-915).
+  // The claim is unchanged - owned latches empty, and it does so before
+  // the stranger arm can stock - and the "(stockedDate = 1)" the old
+  // message parenthesised is now a real write on the line above.
+  const stock = arm.indexOf('c.items = stockHouseContainer(');
   assert.ok(ownedLatch >= 0 && stock >= 0 && ownedLatch < stock,
     'owned latches empty (stockedDate = 1) BEFORE the stranger arm ever stocks');
+  assert.ok(arm.indexOf('c.stockedDate = 1;') >= 0 && arm.indexOf('c.stockedDate = 1;') < stock,
+    'and stamps DFU\'s literal 1 so the container serialises and never restocks');
   // the storage is the loot-target inventory - DFU's LootTarget tail -
   // and it opens in BOTH arms through the one openLoot
-  assert.ok(arm.slice(0, ownedLatch + 200).includes('host.makeInventory?.({ loot: { items: () => c.items } })'),
+  // RE-ANCHORED at ID1 (F041): one door for this host's inventory
+  // windows. The claim is unchanged.
+  // RE-ANCHORED again at PT1: openLoot grew a private-property mode
+  // and a close hook, so the window is no longer one line - and a
+  // fixed +200 character reach was always a bet on that. The claim is
+  // the same: BOTH arms open through the one openLoot, whose remote
+  // side IS the container collection.
+  assert.ok(arm.slice(0, ownedLatch).includes('loot: { items: () => c.items },'),
     'the remote side IS the container collection - two-way, live');
+  assert.ok(arm.slice(0, ownedLatch).includes('const openLoot = (privateProperty = false) => {'),
+    'one openLoot, whose only difference between the arms is the theft flag');
   // the old stopgap is GONE: nothing in this arm dumps the container
   // into the player any more
   assert.equal(arm.slice(0, arm.indexOf('interiorCtx.actions.activate')).includes('transferAll('), false,
@@ -146,8 +162,13 @@ test('HC1: a stocked stranger\'s container - empty does NOTHING, full asks TEXT.
   const yes = arm.indexOf("code: 'KeyY'");
   const no = arm.indexOf("code: 'KeyN'");
   assert.ok(yes >= 0 && no > yes, 'Yes/No in DFU\'s button order');
-  assert.ok(arm.slice(yes, no).includes('action: openLoot'),
+  assert.ok(arm.slice(yes, no).includes('action: () => openLoot(true)'),
     'Yes opens the same loot-target inventory (PrivateProperty_OnButtonClick :1090-1093)');
+  // PT1: and it opens it in PRIVATE-PROPERTY mode, which is the whole
+  // difference between this arm and the owned-house one above -
+  // `loot.houseOwned` (:919) is set here and nowhere else.
+  assert.ok(arm.slice(0, yes).includes('openLoot();'),
+    'the OWNED arm opens the same window with the flag off');
   assert.ok(arm.slice(no, no + 120).includes('action: () => {}'),
     'No claims nothing - DFU just clears the LootTarget');
 });

@@ -205,8 +205,14 @@ test('player: P11 swim/levitate motor - formulas, look-directed motion, surface 
   // move (the 08-17 fixed-timestep hotfix retired the old dt-as-time-
   // compression fixture style - large dts now clamp, as live jank does).
   const DT = 1 / 60;
+  // AUDIT 39 (#57): every swim/levitate EDGE raises CancelMovement
+  // (LevitateMotor :151/:159/:174/:182) and FixedUpdate spends one
+  // whole step on the cancel block (:286-294). That step records no
+  // move, so the moves[] indices below are untouched by it.
+  const cancelStep = () => p.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0);
   // LEVITATING: look-directed (pitch tilts the path), speed 4.0, no gravity
   p.levitating = true;
+  cancelStep();
   p.velY = -3;   // any prior fall velocity dies
   p.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 2);
   assert.equal(p.velY, 0);
@@ -214,6 +220,7 @@ test('player: P11 swim/levitate motor - formulas, look-directed motion, surface 
   // SWIMMING: the look's vertical is ZEROED; speed = swimSpeed(walk)
   p.levitating = false;
   p.swimming = true;
+  cancelStep();
   p.waterSurfaceY = 100;   // far above - no clamp
   p.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 3);
   const swim = moves[1];
@@ -233,6 +240,7 @@ test('player: P11 swim/levitate motor - formulas, look-directed motion, surface 
   p.waterWalking = false;
   // the .7071 diagonal limit applies to the grounded path too (P11 fix)
   p.swimming = false;
+  cancelStep();
   p.grounded = true;
   p.update(DT, { forward: 1, strafe: 1, run: false, jump: false, up: false, down: false }, 0, 0);
   const g = moves[5];

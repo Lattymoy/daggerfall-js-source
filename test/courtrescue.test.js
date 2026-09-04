@@ -57,11 +57,25 @@ test('CR1: the flow arm - before the plead box, with the acquittal exit trio', (
   const flow = read('src/scenes/arrestFlow.js');
   const from = flow.indexOf('const rescue = court ? guildRescue(court, { guildRankOf, roll: rolls }) : null;');
   assert.ok(from > 0, 'the arm exists, on the startCourt record');
-  const body = flow.slice(from, from + 500);
-  assert.match(body, /clearArrest\(\);\s*\n\s*fillVitalSigns\(playerEntity\);\s*\n\s*raiseRepForSentence\(playerEntity, court\);/,
+  const body = flow.slice(from, from + 900);
+  // PIN MOVED (Road to 1:1, a3), and CORRECTED WHILE IT MOVED. The
+  // release used to run FIRST here - `clearArrest()` above the pair -
+  // which cost nothing while release was only a clock jump. It is now
+  // ReleaseFromPrison's whole five lines, so DFU's order is
+  // load-bearing: FillVitalSigns (:191), RaiseReputationForDoingSentence
+  // (:192), THEN state 100's release. And this is the ONE arm that
+  // never sets repositionPlayer (:193 goes straight to state = 100),
+  // so it releases WITHOUT the entrance reposition.
+  assert.match(body, /fillVitalSigns\(playerEntity\);\s*\n\s*raiseRepForSentence\(playerEntity, court\);\s*\n\s*release\(\{ reposition: false \}\);/,
     'FillVitalSigns + RaiseReputationForDoingSentence + release (:191-193)');
   assert.match(body, /courtLines\(rescue\.textId,/, 'TEXT.RSC 550/551 through the court macro pass');
-  assert.match(body, /return;\s*\n\s*\}\s*\n\s*townTalk\.showOverlay/,
+  // ROAD-B B5: the door renamed, the law did not. Every box of the
+  // trial now goes through `courtBox` - a PushWindow onto the live
+  // court window for the first, a one-level replacement for each later
+  // one - so the courtroom stands behind the plea. What this pin
+  // actually asserts is the RETURN: the rescue arm ends before the
+  // plead box is ever built.
+  assert.match(body, /return;\s*\n\s*\}\s*\n\s*courtBox\(/,
     'a rescued player never sees the plead box');
   // the default member read is the one guild home
   assert.match(flow, /guildOfFaction\(factionId, resolveVariantGuild\(dict\), dict\)/,

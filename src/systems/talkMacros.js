@@ -1,5 +1,5 @@
-// TalkManagerMCP.cs, 1:1 (TK-v) - the macro data source
-// ExpandRandomTextRecord hands every talk record to.
+// TalkManagerMCP.cs, 1:1 (TK-v, completed by E7) - the macro data
+// source ExpandRandomTextRecord hands every talk record to.
 //
 // This is the module that makes the arc's live slots OBSERVABLE. TK-iii
 // found two TalkManager fields that exist only for the duration of one
@@ -13,101 +13,128 @@
 //   MacroHelper.ExpandMacros(ref tokens, this)   // this = TalkManagerMCP
 //   return TokensToString(tokens, false)         // note: NO separator
 //
-// The handlers below are that MCP. Each is named for its C# override,
-// and every one of them reads the pipeline or the session rather than
-// a copy of its own.
+// E7 (2026-09-02) - THE TABLE IS THE WHOLE TABLE. `ExpandMacros` runs
+// MacroHelper's ONE macroHandlers dictionary - 217 rows - over every
+// token it is handed, whatever the context provider is. This file used
+// to carry a private table of twenty-six rows and answer everything
+// else with the EMPTY STRING, so the ~190 other macros DFU renders for
+// real were silently deleted out of talk records, and the four error
+// shapes GetValue speaks were unreachable. It carries no table at all
+// now: the port's one table is quest/questMacros.js (MacroHelper's home
+// since M-X, completed to all 217 rows by E7) and this module supplies
+// what C# supplies - the MCP.
+//
+// What a talk expansion is, in DFU's own three parts:
+//   the DATA SOURCE   TalkManagerDataSource's THIRTEEN overrides
+//                     (TalkManagerMCP.cs:41-199), below as
+//                     talkMacroSource. Everything the base class does
+//                     NOT override throws NotImplementedException,
+//                     which is why %str, %q7b, %mat and the rest of
+//                     the contextual table answer symbolStr +
+//                     "[srcDataUnknown]" in a talk record - GetValue's
+//                     second-provider retry lands on a null mcp2.
+//   the GAME MANAGER  the GLOBAL rows read GameManager.Instance
+//                     directly (PlayerEntity, PlayerGPS, WorldTime,
+//                     TalkManager itself). The port's stand-in is the
+//                     quest machine's macro hooks - ONE GameManager,
+//                     as C# has - plus the TalkManager seams below,
+//                     which the answer pipeline is.
+//   the LADDER        MacroHelper.GetValue, questMacros' getMacroValue.
 import { tokensToString } from './rumorMill.js';
 import { QUESTION_TYPE } from './topicTree.js';
 import { TALK_STRINGS } from './answerPipeline.js';
-import { firstName, raceDisplayName } from './talkSession.js';
+import { getMacroValue, macroTableCoverage } from './quest/questMacros.js';
 
-/** The %-macro tokens MacroHelper resolves through the talk MCP, in
- *  the order GetMacro's alternation reaches them. */
+/** Every symbol MacroHelper's dictionary carries, handled rows and
+ *  C#-null rows alike - the set ExpandMacros can resolve. Read off
+ *  the ONE table so the two can never drift. */
+export const MACRO_SYMBOLS = Object.freeze((() => {
+  const { handled, nulls } = macroTableCoverage();
+  return [...handled, ...nulls];
+})());
+
+/** The symbols a TALK record resolves through the MCP's own data
+ *  source - the thirteen overrides, and the rows C# points at them.
+ *  Note the sharing: Name answers %n/%nam/%bn, FemaleName %fn/%fn2,
+ *  MaleName %mn/%mn2, and each Pronoun answers its lowercase row AND
+ *  its CapFirst twin (MacroHelper.cs:236-241). Everything else in the
+ *  table is either a global or a source method the talk MCP does not
+ *  override. */
 export const TALK_MACROS = Object.freeze([
-  '%n', '%fn', '%mn', '%di', '%hnt2', '%hnt', '%oth',
-  '%g4', '%g3', '%g2', '%g', '%pqn', '%pqp',
-  // TK-vi: the three MacroHelper GLOBALS that read TalkManager's own
-  // fields. They are not "the talk MCP's" - DialogKeySubject
-  // (MacroHelper.cs:1059-1083), MarkLocationOnMap (:1085-1090) and
-  // LocationOfRegionalBuilding (:1097-1100) are static handlers that
-  // reach GameManager.Instance.TalkManager directly - but
-  // ExpandRandomTextRecord runs the WHOLE table, so a talk record
-  // carrying them resolves them. The port's expansion answered the
-  // empty string for all three, which silently deleted the building
-  // name from every direction and map-reveal answer and dropped %loc's
-  // map-marking SIDE EFFECT with it.
-  '%key', '%loc', '%fcn',
-  // The MacroHelper GLOBALS a TALK record carries. Same reason as the
-  // three above: ExpandMacros runs the WHOLE table (MacroHelper.cs:
-  // 419-494) and GetValue (:503-528) answers a symbol the table does
-  // not carry with symbolStr + "[undefined]" - never with the value
-  // the record wanted. %1com is the PC's own opening line
-  // (GreetingOrFollowUpText :44, :957-960 -> TalkManager.
-  // GetPCGreetingOrFollowUpText :1149-1156), which EVERY question
-  // record 7225/7212/7231 + tone opens with; %pcf (:151), %pcn (:152),
-  // %cn (:67 -> CityName :566-573), %hnr (:111 -> GetHonoric
-  // :1826-1832) and %ra (:210 -> PlayerRace :942-945) are the four the
-  // greeting and where-is answer sets carry.
-  '%1com', '%pcf', '%pcn', '%cn', '%hnr', '%ra',
+  '%n', '%nam', '%bn',
+  '%fn', '%fn2', '%mn', '%mn2',
+  '%di', '%hnt', '%hnt2', '%oth',
+  '%g', '%g1', '%G', '%G1', '%g2', '%G2', '%g3', '%G3', '%g4', '%G4',
+  '%pqn', '%pqp',
+]);
+
+/** The thirteen method names TalkManagerDataSource overrides
+ *  (TalkManagerMCP.cs:49-199), in file order. */
+export const TALK_SOURCE_METHODS = Object.freeze([
+  'name', 'femaleName', 'maleName', 'direction', 'dialogHint',
+  'dialogHint2', 'oath', 'pronoun', 'pronoun2', 'pronoun3', 'pronoun4',
+  'potentialQuestorName', 'potentialQuestorLocation',
 ]);
 
 /** MacroHelper's oath base (:201 + the faction race id), the same
  *  literal talkSession.js already carries for the mobile ladder. */
 export const OATH_BASE_TEXT_ID = 201;
 
-/** The talk MCP's handler table. `ctx` carries the two engine objects
- *  and the host's data seams:
- *    pipeline  - TK-iii's AnswerPipeline (the fields C# reads off
- *                TalkManager: currentQuestionListItem, greetingNameNPC,
- *                markLocationOnMap, locationOfRegionalBuilding)
- *    session   - TK-iv's NPCSession (npcRace, the questor pool)
- *    fullName(gender)          - NameHelper.FullName for the region
- *    randomText(id)            - TextProvider.GetRandomText
- *    localizedText(key)        - TextManager
- *    raceOfCurrentRegion()     - PlayerGPS
- *    factionRaceId(race)       - RaceTemplate.GetFactionRaceFromRace
- *    bumpSeed(delta)           - DFRandom.Seed += / -= (MaleName's quirk)
- *    toneIndex()               - TalkManager.currentTalkTone, through
- *                                DaggerfallTalkWindow.TalkToneToIndex
- *    cityName()                - PlayerGPS, MacroHelper.CityName's fork
- *    playerName()              - PlayerEntity.Name
- *    playerGender()            - PlayerEntity.Gender
- *    playerRace()              - PlayerEntity.BirthRaceTemplate
+/**
+ * TalkManagerDataSource (TalkManagerMCP.cs:41-199) - the MCP's own
+ * thirteen answers. `ctx` carries the two engine objects and the
+ * host's data seams:
+ *   pipeline  - TK-iii's AnswerPipeline (the fields C# reads off
+ *               TalkManager: currentQuestionListItem, greetingNameNPC,
+ *               markLocationOnMap, locationOfRegionalBuilding)
+ *   session   - TK-iv's NPCSession (npcRace, the questor pool)
+ *   fullName(gender)          - NameHelper.FullName for the region
+ *   randomFullName()          - MacroHelper.GetRandomFullName
+ *   randomText(id)            - TextProvider.GetRandomText
+ *   localizedText(key)        - TextManager
+ *   raceOfCurrentRegion()     - PlayerGPS
+ *   factionRaceId(race)       - RaceTemplate.GetFactionRaceFromRace
+ *   bumpSeed(delta)           - DFRandom.Seed += / -= (MaleName's quirk)
+ *   questorGender()           - TalkManagerContext.potentialQuestorGender
+ * A method ABSENT from this object is C#'s MacroDataSource base
+ * throwing NotImplementedException - the ladder's [srcDataUnknown]
+ * arm - so the list must stay exactly the thirteen.
  */
-export function talkMacroHandlers(ctx) {
+export function talkMacroSource(ctx) {
   const text = (key) => ctx.localizedText?.(key) ?? TALK_STRINGS[key] ?? '';
   const item = () => ctx.pipeline?.currentQuestionListItem ?? null;
   const qt = () => item()?.questionType ?? null;
   const err = () => text('resolvingError');
+  const female = () => ctx.questorGender?.() === 'female';
 
   return {
-    /** Name (:51-58): "Used for greeting messages only: 7215, 7216,
+    /** Name (:49-56): "Used for greeting messages only: 7215, 7216,
      *  7217". THE %n SLOT - greetingNameNPC is live for exactly one
      *  expansion, and when it is empty the macro falls back to a
      *  RANDOM full name rather than to nothing. */
-    '%n': () => {
+    name() {
       const greeting = ctx.pipeline?.greetingNameNPC ?? '';
       if (greeting) return greeting;
-      return ctx.randomFullName?.() ?? '';
+      return ctx.randomFullName?.() ?? null;
     },
 
-    /** FemaleName (:60-64): a full name from the region's name bank. */
-    '%fn': () => ctx.fullName?.('female') ?? '',
+    /** FemaleName (:58-62): a full name from the region's name bank. */
+    femaleName() { return ctx.fullName?.('female') ?? null; },
 
-    /** MaleName (:66-73). THE SEED NUDGE: C# adds 3547 to DFRandom's
+    /** MaleName (:64-71). THE SEED NUDGE: C# adds 3547 to DFRandom's
      *  seed before drawing and subtracts it after, so a male name and
      *  a female name drawn in the same breath differ - and the stream
      *  is left exactly where it was found. */
-    '%mn': () => {
+    maleName() {
       ctx.bumpSeed?.(3547);
-      const name = ctx.fullName?.('male') ?? '';
+      const name = ctx.fullName?.('male') ?? null;
       ctx.bumpSeed?.(-3547);
       return name;
     },
 
-    /** Direction (:75-82): the compass, for the two where-is types
+    /** Direction (:73-80): the compass, for the two where-is types
      *  only. Everything else is the resolving error. */
-    '%di': () => {
+    direction() {
       const t = qt();
       if (t === QUESTION_TYPE.LocalBuilding || t === QUESTION_TYPE.Person) {
         return ctx.pipeline.getKeySubjectLocationCompassDirection();
@@ -115,12 +142,12 @@ export function talkMacroHandlers(ctx) {
       return err();
     },
 
-    /** DialogHint (:84-103) and DialogHint2 (:105-131). The two differ
+    /** DialogHint (:82-101) and DialogHint2 (:103-122). The two differ
      *  in ONE arm - the quest types, where %hnt reads anyInfo and
      *  %hnt2 reads rumors (with the spymaster inversion inside). Every
      *  other arm is identical, which is why the building fork runs for
      *  both. */
-    '%hnt': () => {
+    dialogHint() {
       const t = qt();
       if (t === QUESTION_TYPE.LocalBuilding) return ctx.pipeline.getKeySubjectBuildingHint();
       if (t === QUESTION_TYPE.Person) return ctx.pipeline.getKeySubjectPersonHint();
@@ -130,7 +157,7 @@ export function talkMacroHandlers(ctx) {
       if (t === QUESTION_TYPE.OrganizationInfo) return ctx.pipeline.getOrganizationInfo(item());
       return err();
     },
-    '%hnt2': () => {
+    dialogHint2() {
       const t = qt();
       if (t === QUESTION_TYPE.LocalBuilding) return ctx.pipeline.getKeySubjectBuildingHint();
       if (t === QUESTION_TYPE.Person) return ctx.pipeline.getKeySubjectPersonHint();
@@ -141,105 +168,94 @@ export function talkMacroHandlers(ctx) {
       return err();
     },
 
-    /** Oath (:133-144). DFU's own improvement, with its comment: the
+    /** Oath (:124-137). DFU's own improvement, with its comment: the
      *  oath is chosen by the NPC's FACTION race id, where classic used
      *  the region's hardcoded race - which had every High Rock NPC
      *  swearing Nord oaths and every Hammerfell NPC swearing Khajiit
      *  ones. The NPC's race falls back to the region's when unset. */
-    '%oth': () => {
+    oath() {
       let race = ctx.session?.npcData?.race ?? null;
       if (!race) race = ctx.raceOfCurrentRegion?.() ?? null;
       const oathId = ctx.factionRaceId?.(race) ?? 0;
-      return ctx.randomText?.(OATH_BASE_TEXT_ID + oathId) ?? '';
+      return ctx.randomText?.(OATH_BASE_TEXT_ID + oathId) ?? null;
     },
 
-    /** The four pronouns (:146-194), every one of them the POTENTIAL
+    /** The four pronouns (:139-187), every one of them the POTENTIAL
      *  QUESTOR's gender - not the talk partner's. C#'s `default:`
-     *  shares the Male case, so anything that is not Female is he. */
-    '%g': () => text(ctx.questorGender?.() === 'female' ? 'pronounShe' : 'pronounHe'),
-    '%g2': () => text(ctx.questorGender?.() === 'female' ? 'pronounHer' : 'pronounHim'),
-    '%g3': () => text(ctx.questorGender?.() === 'female' ? 'pronounHer2' : 'pronounHis'),
-    '%g4': () => text(ctx.questorGender?.() === 'female' ? 'pronounHers' : 'pronounHis2'),
+     *  shares the Male case, so anything that is not Female is he.
+     *  Pronoun2self is NOT overridden here, which is why %g2self in a
+     *  talk record answers [srcDataUnknown]. */
+    pronoun() { return text(female() ? 'pronounShe' : 'pronounHe'); },
+    pronoun2() { return text(female() ? 'pronounHer' : 'pronounHim'); },
+    pronoun3() { return text(female() ? 'pronounHer2' : 'pronounHis'); },
+    pronoun4() { return text(female() ? 'pronounHers' : 'pronounHis2'); },
 
-    /** DialogKeySubject (:1059-1083) - %key. The switch is on the
-     *  key-subject TYPE, and four of its six arms answer the same
-     *  field; Work goes through GetWorkString and QuestTopic prefers
-     *  the current list item's caption, falling back to the field when
-     *  there is no item. Unset (and C#'s shared `default:`) is ''. */
-    '%key': () => {
-      const p = ctx.pipeline;
-      if (!p) return '';
-      switch (p.currentKeySubjectType) {
-        case 'Building':
-        case 'Person':
-        case 'Thing':
-        case 'Organization':
-          return p.currentKeySubject;
-        case 'Work':
-          return p.getWorkString();
-        case 'QuestTopic':
-          return item() != null ? item().caption : p.currentKeySubject;
-        default:
-          return '';
-      }
-    },
-
-    /** MarkLocationOnMap (:1085-1090) - %loc. THE SIDE EFFECT LIVES IN
-     *  THE MACRO: the map is revealed only when the answer being
-     *  expanded is the map-reveal record, which is what
-     *  GetKeySubjectBuildingOnMap's flag says, and the macro answers
-     *  the key subject either way. Nystul's own comment on the table
-     *  row says it: "it seems to return the name of the building and
-     *  reveal the map only if a 7332 dialog was chosen". */
-    '%loc': () => {
-      const p = ctx.pipeline;
-      if (!p) return '';
-      if (p.markLocationOnMap) p.markKeySubjectLocationOnMap();
-      return p.currentKeySubject;
-    },
-
-    /** LocationOfRegionalBuilding (:1097-1100) - %fcn, the town the
-     *  regional-building answer named. */
-    '%fcn': () => ctx.pipeline?.locationOfRegionalBuilding ?? '',
-
-    /** PotentialQuestorName / PotentialQuestorLocation (:197-205).
+    /** PotentialQuestorName / PotentialQuestorLocation (:189-197).
      *  The location's key is **%pqp** - MacroHelper.cs:163, "Potential
      *  Quest Giver's Location". Not %pql, which is not a macro at all
      *  and would have left every record carrying the real one
      *  unresolved. */
-    '%pqn': () => ctx.session?.getQuestorName() ?? '',
-    '%pqp': () => ctx.session?.getQuestorLocation() ?? '',
-
-    /** GreetingOrFollowUpText (:957-960) - %1com, THE PLAYER'S OWN
-     *  OPENING. GetPCGreetingOrFollowUpText (TalkManager.cs:1149-1156)
-     *  reads TalkManager's three live fields with no arguments at all:
-     *  the current talk tone, the reaction (the greeting addresses the
-     *  NPC by name only above 0, else by 7221+tone) and nameNPC. The
-     *  port keeps those on the host and the session, so they come in
-     *  through the seams - the method itself is the pipeline's. */
-    '%1com': () => ctx.pipeline?.getPCGreetingOrFollowUpText(
-      ctx.toneIndex?.() ?? 1,
-      ctx.session?.reactionToPlayer ?? 0,
-      ctx.session?.nameNPC ?? '',
-    ) ?? '',
-
-    /** PlayerFirstname (:784-787) / PlayerName (:779-782) - %pcf is
-     *  GetFirstname over PlayerEntity.Name, %pcn the whole of it. */
-    '%pcf': () => firstName(ctx.playerName?.() ?? ''),
-    '%pcn': () => ctx.playerName?.() ?? '',
-
-    /** CityName (:566-573) - %cn: the current LOCATION's name, and the
-     *  region's name when the player stands on no location at all. */
-    '%cn': () => ctx.cityName?.() ?? '',
-
-    /** Honorific (:890-893) - %hnr, TalkManager.GetHonoric
-     *  (:1826-1832) by the PLAYER's gender. */
-    '%hnr': () => ctx.pipeline?.getHonoric(ctx.playerGender?.() ?? '') ?? '',
-
-    /** PlayerRace (:942-945) - %ra, the BIRTH race template's display
-     *  name (a transformed vampire or werewolf keeps it). */
-    '%ra': () => raceDisplayName(ctx.playerRace?.() ?? ''),
+    potentialQuestorName() { return ctx.session?.getQuestorName() ?? null; },
+    potentialQuestorLocation() { return ctx.session?.getQuestorLocation() ?? null; },
   };
+}
+
+/**
+ * The GameManager the GLOBAL rows read, for the duration of a talk
+ * expansion. `ctx.hooks` is the host's one macro-hook bundle (the
+ * quest machine's macroContext) - DFU has ONE GameManager and so does
+ * the port - and this adds the rows whose singleton is
+ * `GameManager.Instance.TalkManager`, which in this port is the
+ * ANSWER PIPELINE. %key, %loc, %fcn, %hnr and %1com are static
+ * MacroHelper handlers rather than the MCP's, but ExpandMacros runs
+ * the whole table, so a talk record carrying them resolves them here.
+ * With no pipeline they are simply absent and answer [nullMCP].
+ */
+export function talkMacroHooks(ctx) {
+  const base = ctx?.hooks ?? {};
+  const p = ctx?.pipeline ?? null;
+  if (!p) return base;
+  return {
+    ...base,
+    world: {
+      ...(base.world ?? {}),
+      // DialogKeySubject's four reads (MacroHelper.cs:1059-1083)
+      talkKeySubjectType: () => p.currentKeySubjectType,
+      talkKeySubject: () => p.currentKeySubject,
+      talkWorkString: () => p.getWorkString(),
+      talkCurrentQuestionListItem: () => p.currentQuestionListItem ?? null,
+      // MarkLocationOnMap's flag and its SIDE EFFECT (:1085-1090)
+      talkMarkLocationOnMap: () => p.markLocationOnMap,
+      markKeySubjectLocationOnMap: () => p.markKeySubjectLocationOnMap(),
+      // LocationOfRegionalBuilding (:1097-1100)
+      talkLocationOfRegionalBuilding: () => p.locationOfRegionalBuilding,
+      // Honorific (:890-893) -> TalkManager.GetHonoric (:1826-1832),
+      // by the PLAYER's gender
+      talkHonoric: () => p.getHonoric(ctx.playerGender?.() ?? base.playerGender?.() ?? ''),
+      // GreetingOrFollowUpText (:957-960) -> GetPCGreetingOrFollowUpText
+      // (TalkManager.cs:1149-1156), which reads TalkManager's three
+      // live fields with no arguments at all: the current talk tone,
+      // the reaction (the greeting addresses the NPC by name only
+      // above 0, else by 7221+tone) and nameNPC.
+      talkPCGreetingOrFollowUpText: () => p.getPCGreetingOrFollowUpText(
+        ctx.toneIndex?.() ?? 1,
+        ctx.session?.reactionToPlayer ?? 0,
+        ctx.session?.nameNPC ?? '',
+      ),
+    },
+  };
+}
+
+/** The talk MCP bound to one expansion: MacroHelper's whole table as
+ *  niladic handlers, each already carrying GetValue's ladder - so a
+ *  row the talk source does not override answers its sentinel rather
+ *  than nothing. `%pql` is absent because it is not a DFU macro. */
+export function talkMacroHandlers(ctx) {
+  const mcp = { source: talkMacroSource(ctx) };
+  const hooks = talkMacroHooks(ctx);
+  const table = {};
+  for (const symbol of MACRO_SYMBOLS) table[symbol] = () => getMacroValue(symbol, mcp, hooks);
+  return table;
 }
 
 /** MacroHelper's macro terminators (:412). Any non-alpha character
@@ -264,21 +280,21 @@ export const MACRO_TERMINATORS = Object.freeze([
  *  swallowed, which is how `%di|ern` becomes "southern". Every other
  *  terminator is left in the text.
  *
- *  Unknown macros resolve through the same path and answer whatever
- *  the handler table has for them - here, the empty string. FLAGGED:
- *  GetValue (:503-528) answers symbolStr + "[undefined]" for a symbol
- *  the table does not carry and symbolStr + "[unhandled]" for one it
- *  carries with a null handler, and the port cannot tell those two
- *  apart until the whole ~300-entry table is named. Every macro a
- *  talk record ACTUALLY carries belongs in TALK_MACROS above instead
- *  of relying on this arm.
+ *  E7: A SYMBOL THE TABLE DOES NOT CARRY is `symbolStr +
+ *  "[undefined]"` - GetValue's outermost else (:526-527) - not the
+ *  empty string this walk used to substitute. That was the FLAG at
+ *  :268, and it was blocked on exactly one thing: a 26-row table would
+ *  have stamped `%xx[undefined]` across ~190 macros DFU renders for
+ *  real. The table is all 217 rows now, so the shape is safe to speak
+ *  and every one of the four sentinels is reachable. Handlers passed
+ *  in directly (a test's two-row map) take the same arm.
  *
  *  The tokens are rewritten IN PLACE, as C#'s `ref` array is. */
 export function expandTalkMacros(tokens, handlers) {
   const cache = new Map();
   const valueOf = (name) => {
     if (cache.has(name)) return cache.get(name);
-    const v = String(handlers[name]?.() ?? '');
+    const v = name in handlers ? String(handlers[name]() ?? '') : `${name}[undefined]`;
     cache.set(name, v);
     return v;
   };

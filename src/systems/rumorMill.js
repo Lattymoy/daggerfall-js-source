@@ -65,6 +65,7 @@
 //   rolls                 - Math.random-compatible (Random.Range +
 //                           Dice100)
 
+import { getInt } from './settings.js';   // AUDIT 28 W1: QuestRumorWeight, read live
 import { dice100 } from '../combat/formulas.js';
 
 /** TalkManager.RumorType (:341-346). */
@@ -210,7 +211,11 @@ export class RumorMill {
    *  ambient entries 1; each step keeps the current pick with
    *  probability weight/(totalSoFar + weight). */
   weightedRandomRumor(validRumors) {
-    const questRumorWeight = this.deps.questRumorWeight ?? DEFAULT_QUEST_RUMOR_WEIGHT;
+    // AUDIT 28 W1: DFU reads the SETTING here (:1452), not a constructor
+    // argument - and no host ever passed deps.questRumorWeight, so the
+    // slider was stored and ignored. GetInt's 1..100 range (SettingsManager
+    // :512); the dep stays as the test seam it always was.
+    const questRumorWeight = this.deps.questRumorWeight ?? getInt('GUI', 'QuestRumorWeight', 1, 100);
     let totalWeight = 0;
     let selected = validRumors[0];
     for (const rumor of validRumors) {

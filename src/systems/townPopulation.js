@@ -13,7 +13,7 @@
 // people (the scene passes the tables); the guard crime RESPONSE
 // pends the crime system (they spawn and walk now).
 
-import { PERSON_TEXTURES, GUARD_TEXTURE, MobilePerson } from '../characters/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson } from '../characters/mobilePerson.js';
 import { NAV_CELL } from '../world/cityNavigation.js';
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';
 
@@ -85,14 +85,31 @@ export class TownPopulation {
       person.setIdentity(GUARD_TEXTURE, true);
       person.gender = GENDERS.Male;
       person.nameNPC = fullName(bank, GENDERS.Male);
+      this._setFaceRecord(person, GENDERS.Male, 0);   // the guard arm is personOutfitVariant 0 (:147-149)
       return;
     }
     const tables = PERSON_TEXTURES[this.race] ?? PERSON_TEXTURES.Breton;
     const female = Math.floor(this.rand() * 2) === 1;
     const genderTable = female ? tables.female : tables.male;
-    person.setIdentity(genderTable[Math.floor(this.rand() * genderTable.length)], false);
+    const variant = Math.floor(this.rand() * genderTable.length);   // personOutfitVariant
+    person.setIdentity(genderTable[variant], false);
     person.gender = female ? GENDERS.Female : GENDERS.Male;
     person.nameNPC = fullName(bank, person.gender);
+    this._setFaceRecord(person, person.gender, variant);
+  }
+
+  /** ROAD-D D10 - SetPerson's tail (MobilePersonNPC.cs:218-224): the
+   *  walker's TALK PORTRAIT record, `recordIndices[outfitVariant] +
+   *  Random.Range(0, numPersonFaceVariants)` into TFAC00I0.RCI. The
+   *  draw is on the ENGINE stream (UnityEngine.Random, this.rand),
+   *  and it falls AFTER the name because SetPerson orders it that way
+   *  - the name rides DFRandom, so the two streams never interleave.
+   *  Nothing minted this before, so every mobile conversation showed
+   *  the talk window's empty portrait frame. */
+  _setFaceRecord(person, gender, variant) {
+    const faces = PERSON_FACE_RECORDS[this.race] ?? PERSON_FACE_RECORDS.Breton;
+    const table = gender === GENDERS.Female ? faces.female : faces.male;
+    person.personFaceRecordId = table[variant] + Math.floor(this.rand() * NUM_PERSON_FACE_VARIANTS);
   }
 
   /** One 10Hz tick (SpawnAvailableMobile + UpdateMobiles). playerPos =

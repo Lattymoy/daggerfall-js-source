@@ -104,10 +104,19 @@ export function applyChannelEvents(state, events) {
  * the full stream knows when the pedal comes up.
  *
  * MIDI's threshold is 64 - below is up, 64 and above is down. A pedal
- * left down at the end of the song closes at Infinity, so the last
+ * left down at the end of the song closes at `endTick`, so the last
  * chord rings to the loop rather than being cut by a missing up.
+ *
+ * AUDIT 39: `endTick` is the song's own durationTicks and it is not
+ * optional decoration. The open pedal used to close at Infinity, and
+ * sustainedDuration then returned Infinity for the hanging chord - a
+ * non-finite time into AudioParam.setValueAtTime, whose WebIDL argument
+ * is a RESTRICTED double, throws TypeError out of the pump before the
+ * cursor advances, so the window was re-voiced until the stall-skip
+ * jumped past it and the chord never sounded at all. The default stays
+ * Infinity for the pure callers that pass no song length.
  */
-export function sustainIntervals(events) {
+export function sustainIntervals(events, endTick = Infinity) {
   const byChannel = new Map();
   const open = new Map();
   for (const e of events ?? []) {
@@ -123,7 +132,7 @@ export function sustainIntervals(events) {
   }
   for (const [ch, tick] of open) {
     if (!byChannel.has(ch)) byChannel.set(ch, []);
-    byChannel.get(ch).push([tick, Infinity]);
+    byChannel.get(ch).push([tick, Math.max(tick, endTick)]);
   }
   return byChannel;
 }
@@ -200,7 +209,8 @@ export class SongPlayer {
     this.song = song;
     // Computed once per song, not per window: the pedal map is a pure
     // function of the event list and the scheduler re-enters constantly.
-    this._sustain = sustainIntervals(song.events);
+    this._sustain = sustainIntervals(song.events,
+      Number.isFinite(song.durationTicks) ? song.durationTicks : Infinity);
     this.playing = true;
     this._state = freshChannelState();
     this._resyncChannelGains();   // audio-4: a new song starts at full channel volume
@@ -216,6 +226,7 @@ export class SongPlayer {
   stop() {
     this.playing = false;
     if (this._timer !== null) { clearInterval(this._timer); this._timer = null; }
+    this._cancelChannelGains();
     for (const v of this._voices) {
       try { v.stop(); } catch { /* already stopped */ }
     }
@@ -298,7 +309,13 @@ export class SongPlayer {
   _voice(e, when, durationSeconds) {
     const ctx = this.ctx;
     const ch = this._state[e.channel] ?? { program: 0, volume: 1, pan: 0, bend: 0 };
-    const dur = Math.max(0.05, durationSeconds || 0.2);
+    // AUDIT 39: EVERY time this method hands the graph must be finite.
+    // AudioParam.setValueAtTime and stop() take WebIDL restricted
+    // doubles, so one non-finite duration throws out of the pump and
+    // strands the cursor - a note with no usable length gets the same
+    // 0.2s a missing one gets rather than taking the scheduler down.
+    const rawDur = durationSeconds || 0.2;
+    const dur = Math.max(0.05, Number.isFinite(rawDur) ? rawDur : 0.2);
     // NOT multiplied by ch.volume any more - the channel's gain node owns
     // that, so a CC7 during a held note is audible (AUDIT 19).
     const amp = velocityGain(e.velocity);
@@ -406,11 +423,29 @@ export class SongPlayer {
    *  play() and the loop rewind reset the STATE to volume 1 but the
    *  NODES kept the last song's (or last pass's) CC7 values, so any
    *  channel whose first CC7 lands late played at the stale gain. */
+  /** AUDIT 39: and the reset must CANCEL first, as resyncGain:189 does
+   *  on the master. _control schedules CC7 at absolute future times up
+   *  to a full lookahead ahead; setValueAtTime only inserts an event, it
+   *  does not clear later ones - so a CC7 from the song being left
+   *  behind fired after the new song's tick-0 CC7 and, because HMI songs
+   *  send CC7 at tick 0 and then rarely, held that channel at the old
+   *  song's volume for the rest of the track. */
   _resyncChannelGains() {
     if (!this._chGains) return;
     for (const [ch, g] of Object.entries(this._chGains)) {
-      g.gain.setValueAtTime(this._state[ch]?.volume ?? 1, this.ctx.currentTime);
+      const now = this.ctx.currentTime;
+      g.gain.cancelScheduledValues(now);
+      g.gain.setValueAtTime(this._state[ch]?.volume ?? 1, now);
     }
+  }
+
+  /** A stopped song leaves no automation on the graph either: the nodes
+   *  outlive the song, and stop() is reachable without a play() after it
+   *  (the mute, the loop's last pass). */
+  _cancelChannelGains() {
+    if (!this._chGains || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    for (const g of Object.values(this._chGains)) g.gain.cancelScheduledValues(now);
   }
 
   _channelGain(channel) {

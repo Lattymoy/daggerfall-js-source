@@ -11,21 +11,25 @@
 // sGroupReputations by the same, so a biography answer changes how
 // townspeople greet you from the first conversation.
 //
-// FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-// LOGGED, not applied - DFU has never implemented them either
-// (BiogFile.cs:427-440), so applying a guess would be a divergence,
-// not a fix. `&` is a data quirk in six of the files; DFU logs it as
-// an invalid command and moves on.
+// NOT A GAP, recorded (closeout): AE, AF and AO are parsed and
+// LOGGED, not applied, because that is verbatim what DFU does -
+// BiogFile.cs:427 heads the arms "// Unimplemented commands" and
+// :428-431/:432-435/:436-439 log "CreateCharBiography: AE|AF|AO -
+// command unimplemented." and nothing else. applyEffect (:163-165)
+// is those three arms. Applying a guess would BE the divergence.
+// `&` is a data quirk in six of the files; DFU's else at :441-444
+// logs "Invalid command - " and moves on, which is :167 here.
 // `rf` FACTION reputation parks its deltas on the entity, because this
 // runs before FACTION.TXT is in hand. S25's attachFactionRep drains
 // them at the end of finishChargen, PROPAGATING, exactly as
 // BiogFile.cs:339 does.
 
-import { addItem, goldStack } from './inventory.js';
+import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js';   // E4: the GP command writes the counter
 import { itemBaseValue, templateByIndex, templateFor } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
 import { ensureReactionState } from './talk.js';
+import { createRandomBook } from './books.js';   // A2: ItemBuilder.CreateRandomBook, one member
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
@@ -62,6 +66,11 @@ const ARROW_TEMPLATE = 131;
 const mintItem = (group, groupIndex, material, rolls) => {
   const t = templateFor(group, groupIndex);
   if (!t) return null;
+  // A2: an IT Books row IS CreateRandomBook - the id, the variant and
+  // the BOOK FILE's price - so it leaves through the one member rather
+  // than through the generic template mint below. This closes the loud
+  // interim that used to log here on every biography book.
+  if (group === 'Books') return createRandomBook(rolls);
   const item = { group, templateIndex: t.index };
   if (group === 'Weapons') {
     // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an
@@ -76,16 +85,6 @@ const mintItem = (group, groupIndex, material, rolls) => {
       item.currentCondition = 0;
     } else item.material = material;
   } else if (group === 'Armor') item.material = weaponToArmorMaterial(material);
-  // CreateRandomBook (ItemBuilder.cs:256-269) rolls Range(0,
-  // TotalVariants) so biography books vary the way shop books do.
-  // INTERIM, loud and the same one shopStock.js:115 carries: message
-  // (GetRandomBookID) and value (BookFile.Price, a 300..800 roll off
-  // the file's own seed) need the books arc's BOOKS reader, so the
-  // value below is the TEMPLATE price.
-  else if (group === 'Books') {
-    item.variant = Math.floor(rolls() * (t.variants ?? 1));
-    console.log('[biog] IT Books - book-file pricing pends (loud); the value is the template price');
-  }
   item.name = templateByIndex(t.index)?.name;
   item.value = itemBaseValue(item);
   return item;
@@ -114,11 +113,13 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     const arg = tokens.length > 2 ? tokens[1] + tokens[2] : tokens[1];
     const v = Number.parseInt(arg, 10);
     if (!Number.isFinite(v)) { console.warn(`[biog] GP - invalid argument: ${effect}`); return null; }
-    entity.items = entity.items ?? [];
-    let stack = entity.items.find((it) => it.group === 'Currency');
-    if (!stack) entity.items.push(stack = goldStack(0));
-    if (arg[0] === '+') stack.stackCount += Math.abs(v);
-    else if (arg[0] === '-') stack.stackCount = Math.max(0, stack.stackCount - Math.abs(v));   // never negative
+    // E4: `playerEntity.GoldPieces +=/-= parseResult` (:283-289) - the
+    // COUNTER, which is what BiogFile writes. The MINUS arm stays the
+    // port's own (Ledger A): DFU double-negates the already-signed
+    // TryParse result and so ADDS on `-`; the port subtracts, clamped
+    // at zero the way DFU's own next line clamps.
+    if (arg[0] === '+') addGoldPieces(entity, Math.abs(v));
+    else if (arg[0] === '-') entity.goldPieces = Math.max(0, goldPiecesOf(entity) - Math.abs(v));
     return 'gold';
   }
   if (effect.startsWith('IT')) {

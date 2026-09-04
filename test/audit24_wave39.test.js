@@ -191,7 +191,10 @@ test('audit24 wave39: the pool registers with a persistent draw list when the ho
   // host runs it itself, so neither can forget it and neither can run it
   // twice.
   const ctxSrc = rd('src/scenes/dungeonContext.js');
-  const drawFoes = ctxSrc.slice(ctxSrc.indexOf('function drawFoes('), ctxSrc.indexOf('function drawFoes(') + 1500);
+  // 1500 chars was a fit to the body as it stood; MW-D15's latch pushed
+  // the tick past it. A window big enough to hold the body is the point,
+  // not the number.
+  const drawFoes = ctxSrc.slice(ctxSrc.indexOf('function drawFoes('), ctxSrc.indexOf('function drawFoes(') + 2500);
   assert.match(drawFoes, /hitEffects\.tick\(dt\);/, 'the splash clock runs inside drawFoes');
   assert.doesNotMatch(rd('src/scenes/dungeon.js'), /hitEffects\.tick\(/, 'the dev host no longer runs it (it would run twice)');
   assert.doesNotMatch(rd('src/scenes/worldModes.js'), /hitEffects\.tick\(/, 'the played host never has to');

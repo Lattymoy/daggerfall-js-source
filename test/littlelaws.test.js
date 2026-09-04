@@ -5,7 +5,7 @@
 // minute under the 2880 cap; see the Port-Ledger.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canHoldAmount, weightInGPUnits, effectiveUnitWeightInKg, itemWeight, totalWeight, goldStack } from '../src/systems/inventory.js';
+import { canHoldAmount, weightInGPUnits, effectiveUnitWeightInKg, itemWeight, totalWeight, goldStack, carriedWeight } from '../src/systems/inventory.js';
 import { maxEncumbrance, calculateAttackDamage, MATERIAL_INEFFECTIVE_TEXT } from '../src/combat/formulas.js';
 import { checkForLevelUp } from '../src/systems/advancement.js';
 import { NativeInventoryWindow, CANNOT_CARRY_TEXT } from '../src/ui/nativeInventory.js';
@@ -35,10 +35,13 @@ test('littlelaws items-9: ComputeCanHoldAmount - GP units, integer division, the
 });
 
 test('littlelaws items-9: the window gate - refuse at zero fit, split-take a partial stack', () => {
-  // STR 20 -> capacity 30 kg; the bag holds 29.75 kg of gold
-  const entity = { stats: { strength: 20 }, items: [] };
+  // STR 20 -> capacity 30 kg; the PURSE holds 29.75 kg of it. E4: the
+  // load the gate weighs is GetCarriedWeight() = PlayerEntity
+  // .CarriedWeight (:852-855, :184), which is the pack PLUS
+  // `goldPieces * goldPieceWeightInKg` - so a fat purse fills the
+  // encumbrance bar exactly as the old bag stack did.
+  const entity = { stats: { strength: 20 }, items: [], goldPieces: 11900 };   // 29.75 kg
   const bag = entity.items;
-  bag.push(goldStack(11900));   // 29.75 kg
   const dagger = { group: 'Weapons', templateIndex: 113, name: 'Dagger' };   // 0.5 kg
   const loot = [dagger, goldStack(300)];   // 0.75 kg of coins
   const w = new NativeInventoryWindow({ items: () => bag, entity, icons: ICONS, loot: { items: () => loot } });
@@ -46,15 +49,17 @@ test('littlelaws items-9: the window gate - refuse at zero fit, split-take a par
   // the dagger (200 GP units) cannot fit the 100 GP units of room
   w._pickRemote(0);
   assert.equal(loot.length, 2, 'the refused item stays in the pile');
-  assert.equal(bag.length, 1, 'and nothing landed in the bag');
+  assert.equal(bag.length, 0, 'and nothing landed in the bag');
   assert.equal(w.topBox?.rows?.[0]?.text, CANNOT_CARRY_TEXT, 'CanCarryAmount says so (key cannotCarryAnymore)');
   w._dismissBox();
   // the 300-coin stack partially fits: TAKE exactly the 100 that do
-  // (TransferItem's split popup defaults to maxAmount - the Enter path)
+  // (TransferItem's split popup defaults to maxAmount - the Enter
+  // path), and DoTransferItem spends the split half into the counter
   w._pickRemote(1);
   assert.equal(loot[1].stackCount, 200, 'the pile keeps what did not fit');
-  assert.equal(bag[0].stackCount, 12000, 'the bag merged the 100 that did');
-  assert.equal(totalWeight(bag), 30, 'the load is AT capacity now');
+  assert.equal(entity.goldPieces, 12000, 'GoldPieces += the 100 that did');
+  assert.equal(bag.length, 0, 'and the pack still holds no Currency');
+  assert.equal(carriedWeight(entity), 30, 'the load is AT capacity now');
   // ...and the next coin refuses
   w._pickRemote(1);
   assert.equal(loot[1].stackCount, 200);
@@ -72,6 +77,8 @@ test('littlelaws combat-16: a too-low weapon material says so for the PLAYER, si
   const n = calculateAttackDamage({ isPlayer: true }, { minMetalToHit: 2 }, { weapon, say: (l) => said.push(l) });
   assert.equal(n, 0, 'the material gate returns 0 damage');
   assert.deepEqual(said, [MATERIAL_INEFFECTIVE_TEXT], 'the HUD line fires once (FormulaHelper.cs:576-583)');
+  // and the line is the ROW, not our paraphrase (Internal_Strings.csv:56)
+  assert.deepEqual(said, ['The material of the weapon you are using is ineffective.']);
   // an enemy swinging the same weapon fails SILENTLY (attacker == player gate)
   const said2 = [];
   assert.equal(calculateAttackDamage({ isPlayer: false }, { minMetalToHit: 2 }, { weapon, say: (l) => said2.push(l) }), 0);

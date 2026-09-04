@@ -16,12 +16,14 @@
 // art and draws it the way DaggerfallUI does.
 //
 // Departures (documented):
-//   - FlipHorizontal (the left-handed option) is not implemented;
-//     classic right-hand is the only mode until a settings surface
-//     exists. The alignment math keeps the non-flipped branches only.
 //   - weaponOffsetHeight is 0: the large HUD does not exist here yet.
+// FlipHorizontal (Controls/Handedness == 1, StartGameBehaviour :269 -
+// "only supporting left-hand rendering for now") landed with AUDIT 28
+// W13: the mirror and the AlignRight -> AlignLeft swap on the three
+// symmetric states, as FPSWeapon :378-388 and :459-464 have them.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Handedness
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
@@ -59,6 +61,7 @@ export const ALIGN = Object.freeze({ Left: 0, Center: 1, Right: 2 });
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
 // ui/nativePanel.js.
 import { NATIVE_W, NATIVE_H } from '../ui/nativePanel.js';
+import { weaponOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
 
 export { NATIVE_W, NATIVE_H };
 
@@ -246,12 +249,25 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
 
 /**
  * FPSWeapon.UpdateWeapon + OnGUI placement, verbatim (right-hand,
- * point filtering, no large-HUD offset): the weapon image overlays a
- * 320x200 design surface stretched to the canvas, bottom-anchored,
- * aligned per the state's table row.
+ * point filtering): the weapon image overlays a 320x200 design
+ * surface stretched to the canvas, bottom-anchored above the large
+ * HUD's offset, aligned per the state's table row.
  */
-export function drawFpsWeapon(renderer, canvas, art, state, frame) {
+/** FPSWeapon :378, :459: FlipHorizontal mirrors only the states whose
+ *  art is hand-symmetric - Idle, StrikeDown, StrikeUp. A left or right
+ *  strike keeps its side. */
+export const FLIP_STATES = Object.freeze(['Idle', 'StrikeDown', 'StrikeUp']);
+
+export function drawFpsWeapon(renderer, canvas, art, state, frame, {
+  flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
+  // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
+  // through the ONE home for the large HUD's laws rather than
+  // recomputed - and DEFAULTED here, so the single caller
+  // (combat/weaponRig.js) does not have to know the bar exists.
+  offsetHeight = weaponOffsetHeight(),
+} = {}) {
   if (!art) return;
+  const flip = flipHorizontal && FLIP_STATES.includes(state);
   const stateIdx = STATE_INDEX[state] ?? 0;
   const anim = art.anims[stateIdx];
   const recordIdx = art.weaponType === WEAPON_TYPES.Bow ? 0 : anim.Record;
@@ -264,9 +280,15 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame) {
   const w = rec.width * scaleX;
   const h = rec.height * scaleY;
   let x;
-  if (anim.Alignment === ALIGN.Left) x = canvas.width * anim.Offset;
-  else if (anim.Alignment === ALIGN.Center) x = canvas.width / 2 - w / 2;
+  // AlignRight's flip arm (:459-464) is AlignLeft; AlignLeft itself is
+  // not swapped (:439-446).
+  const alignment = (flip && anim.Alignment === ALIGN.Right) ? ALIGN.Left : anim.Alignment;
+  if (alignment === ALIGN.Left) x = canvas.width * anim.Offset;
+  else if (alignment === ALIGN.Center) x = canvas.width / 2 - w / 2;
   else x = canvas.width * (1 - anim.Offset) - w;
-  const y = canvas.height - h;   // weaponOffsetHeight 0 (no large HUD)
-  renderer.drawScreenQuad(tex, { x, y, w, h });
+  // OnGUI's rect (:388): `screenRect.height - height - weaponOffsetHeight`.
+  const y = canvas.height - h - offsetHeight;
+  // The mirror: rect.xMax .. -width (:388), i.e. u from 1 to 0.
+  const src = flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined;
+  renderer.drawScreenQuad(tex, { x, y, w, h }, src);
 }

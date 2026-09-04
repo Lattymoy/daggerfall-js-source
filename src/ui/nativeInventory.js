@@ -12,7 +12,8 @@
 //   remove y80, use y103, gold y126; local list (163,48,59,152),
 //   remote list (261,48,59,152) - the shared ItemListScroller;
 //   local/remote target icons (165/263,12,55,34); exit (222,178,39,22);
-//   paperdoll at (49,13).
+//   paperdoll at (49,13); the twelve ACCESSORY buttons in two columns
+//   (x=1 and x=24), 21x20, first pair at y=11, rowOffset 31.
 //
 // THE TAB FILTER (AddLocalItem verbatim): WeaponsAndArmor = groups
 // Weapons/Armor, not enchanted; MagicItems = enchanted or the
@@ -35,43 +36,65 @@
 // taken item is equipped too (RemoteItemListScroller_OnItemClick's
 // TransferItem equip:true - shipped in U8g). Closing with
 // session-dropped items hands them to hooks.onDrop - the host mints
-// the ground pile flat. Info mode pops an interim item panel
-// (name/weight/value - DFU's 1016 info text PENDS).
-// AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: this header
-// still said Equip and equip-after-transfer were FLAGGED after U8g
-// shipped both. The WAGON shipped at the W-slice (ShowWagon as the
-// computed remote target, the 750kg gates, the dungeon exit rule);
-// STILL OPEN here: letter-of-credit. Use mode, the real 1016 info
-// text and the IsLightSource equip branch shipped at U25 (AUDIT 23
-// trimmed the stale list).
+// the ground pile flat. Info mode pops the item panel on the REAL
+// 1016 record (systems/itemInfo.js, shipped at U25).
+// AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: every clause
+// this header once carried as open has shipped. Equip and
+// equip-after-transfer went at U8g; the WAGON at the W-slice (ShowWagon
+// as the computed remote target, the 750kg gates, the dungeon exit
+// rule); Use mode, the 1016 info text and the IsLightSource equip
+// branch at U25 (AUDIT 23 trimmed that list). The LETTER OF CREDIT
+// went last and whole: minted at systems/inventory.js:67
+// (DaggerfallTradeWindow.cs:1044-1048), summed by creditAmount at
+// systems/court.js:208 (ItemCollection.GetCreditAmount, ItemCollection
+// .cs:108-118), spent letters-before-coins with the shortfall returned
+// by deductGold at court.js:250 (DeductGoldAmount, PlayerEntity.cs
+// :1324-1354), banked at systems/banking.js:463/:476, and described by
+// the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
+// THIS surface anyway - DaggerfallInventoryWindow.cs has no
+// letter-of-credit arm at all.
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
-import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { itemInfoRows, itemInfoPanelRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
 import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, carriedWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 58: PlayerEntity.MaxEncumbrance, the local target icon's denominator
+// AUDIT 58: the two 55x34 target-icon panels both classic windows draw
+// over their lists (DaggerfallInventoryWindow.cs:424-439, :857-890).
+import {
+  CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
+  preloadContainerIconArt, drawTargetIconPanel, targetIconWeightText, dropIconImage,
+} from './targetIconPanel.js';
 // U56: TransferItem's ladder - the guards, their order, and the split.
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
-import { planStore, planTake, applyTransfer, planDropGold } from '../systems/itemTransfer.js';
+import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
   openState, remoteTarget, planWagonToggle, closeSession,
+  // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
+  // the cycling arithmetic and dropIconIdxs' record lookup.
+  openDropIcon, canChangeDropIcon, cycleDropIcon, dropIconRecord,
 } from '../systems/inventorySession.js';
-import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
-import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex,
+  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick } from './itemScroller.js';
+import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -87,12 +110,37 @@ export const INV_RECTS = Object.freeze({
   paperDoll: [49, 13, 110, 184],   // paperDoll.Position + its 110x184 panel
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
+  // AUDIT 58: localTargetIconRect / remoteTargetIconRect (:49-50) -
+  // named in this header's geometry list since U8d but carried by
+  // nothing, so neither panel was ever drawn.
+  localTargetIcon: LOCAL_TARGET_ICON_RECT,
+  remoteTargetIcon: REMOTE_TARGET_ICON_RECT,
   exit: [222, 178, 39, 22],
   // U25: itemInfoPanelRect + the ITEM00I0 cutout it draws
   // (DaggerfallInventoryWindow.cs :55-56, :1036-1037).
   itemInfoPanel: [223, 145, 37, 32],
   infoCutout: [196, 68, 50, 37],
 });
+/** SetupAccessoryElements (DaggerfallInventoryWindow.cs:523-576) -
+ *  THE TWELVE ACCESSORY BUTTONS, in equip-slot order Amulet0..Crystal1.
+ *  Two columns, col0 x=1 and col1 x=24, buttonSize 21x20, the first
+ *  pair at y=11 and each pair dropping by rowOffset 31.
+ *
+ *  These are the ONLY door to a worn amulet, bracelet, ring, bracer,
+ *  mark or crystal. FilterLocalItems drops every equipped item from
+ *  all four tabs (filterByTab's first line), and PaperDollRenderer
+ *  blits Jewellery only above slot 11 (IsEquippedToBody), so nothing
+ *  the doll hit-tests can reach slots 0..11. Without these buttons a
+ *  ring, once worn, could never be unequipped, sold or dropped. */
+export const ACCESSORY_SLOT_MIN = EQUIP_SLOTS.Amulet0;
+export const ACCESSORY_SLOT_MAX = EQUIP_SLOTS.Crystal1;
+export const ACCESSORY_RECTS = Object.freeze(
+  Array.from({ length: ACCESSORY_SLOT_MAX - ACCESSORY_SLOT_MIN + 1 },
+    (_, i) => Object.freeze([i % 2 === 0 ? 1 : 24, 11 + 31 * Math.floor(i / 2), 21, 20])));
+/** accessoryButtonMarginSize = 1 (:152) - the icon panel is a
+ *  ScaleToFit child of the button's INTERIOR, MaxAutoScale 1. */
+export const ACCESSORY_MARGIN = 1;
+
 /** itemInfoPanelLabel's own layout (:444-455): Position (2,0), middle
  *  aligned in the panel, TextScale 0.43 and ExtraLeading 3. */
 export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, maxWidth: 37 });
@@ -142,6 +190,24 @@ export {
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
+/** A8: the Hotkey assignments this screen makes, in DFU's own setup
+ *  order - exit first (:319), then the four tabs (:478-490), then the
+ *  six action buttons (:497-517). Panel.ProcessHotkeySequences returns
+ *  on the first hit, so the order is part of the law. */
+const INVENTORY_BUTTONS = Object.freeze([
+  'InventoryExit',
+  'InventoryWeapons', 'InventoryMagic', 'InventoryClothing', 'InventoryIngredients',
+  'InventoryWagon', 'InventoryInfo', 'InventoryEquip', 'InventoryRemove',
+  'InventoryUse', 'InventoryGold',
+]);
+const TAB_BUTTONS = Object.freeze({
+  InventoryWeapons: 'weapons', InventoryMagic: 'magic',
+  InventoryClothing: 'clothing', InventoryIngredients: 'ingredients',
+});
+const MODE_BUTTONS = Object.freeze({
+  InventoryInfo: 'info', InventoryEquip: 'equip',
+  InventoryRemove: 'remove', InventoryUse: 'use',
+});
 const SPELLBOOK_TEMPLATE = 132;    // MiscItems.Spellbook
 
 // DFU ItemTemplates.txt isIngredient - exactly indices 0..77
@@ -181,16 +247,72 @@ export async function preloadInventoryArt(deps) {
       deps.fetchBytes('FONT0004.FNT'),
     ]);
     _art = { base, gold, info, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
+    // ROAD-A7: the two arrow strips (ItemListScroller.cs:504-516). A
+    // missing pair is not fatal - the base image's own arrows show.
+    await preloadScrollerArrowArt(deps);
+    // AUDIT 58: INVE16I0.CIF, the container pictures both target-icon
+    // panels lay out ScaleToFit (ItemHelper.cs:47, :673-686). Optional
+    // for the same reason the arrow strips are.
+    await preloadContainerIconArt(deps);
+    setPaintingArtDeps(deps);   // ROAD-A7: the *PAINT.CIF reader's renderer/palette/fetch
   } catch { console.warn('[inventory] INVE00I0/INVE01I0 unavailable; F6 stays dark'); }
 }
 export const inventoryArtLoaded = () => !!_art;
+/** The test seam potionMakerWindow's `_setPotionArtForTests` already
+ *  established: a window whose draw() carries law needs a door that
+ *  does not depend on ARENA2 being present. */
+export function _setInventoryArtForTests(art) { _art = art; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
+/** The accessory buttons' own icon panels (:556-563): ScaleToFit,
+ *  MaxAutoScale 1, centered both axes inside the button's 1px margin.
+ *  Separate from itemScroller's drawer because that one is welded to
+ *  the 50x38 list cell - same warm/upload dance over the host texture
+ *  pipeline, other geometry. */
+function makeAccessoryIconDrawer(icons, identityOf = null) {
+  const warm = new Set();
+  const sizes = new Map();
+  const drawer = (renderer, m, it, rect) => {
+    const img = inventoryItemImage(it, identityOf?.() ?? undefined);
+    if (!img || !img.archive) return false;
+    const key = `${img.archive}_${img.record}`;
+    if (!warm.has(key)) {
+      warm.add(key);
+      icons.getTexture(img.archive).then((tex) => {
+        if (img.record < tex.recordCount) {
+          icons.uploadRecord(img.archive, img.record);
+          sizes.set(key, tex.getSize(img.record));
+        }
+      }).catch(() => {});
+    }
+    const glTex = icons.textures.get(key);
+    const size = sizes.get(key);
+    if (!glTex || !size?.width) return false;
+    const [rx, ry, rw, rh] = rect;
+    const fit = Math.min(1, (rw - ACCESSORY_MARGIN * 2) / size.width, (rh - ACCESSORY_MARGIN * 2) / size.height);
+    const w = size.width * fit, h = size.height * fit;
+    // the V-FLIPPED source rect: record textures store BOTTOM-UP rows
+    renderer.drawScreenQuad(glTex, {
+      x: m.ox + (rx + (rw - w) / 2) * m.s, y: m.oy + (ry + (rh - h) / 2) * m.s,
+      w: w * m.s, h: h * m.s,
+    }, { u0: 0, v0: 1, u1: 1, v1: 0 });
+    return true;
+  };
+  drawer._warm = warm;       // test seams, as itemScroller's drawer has
+  drawer._sizes = sizes;
+  return drawer;
+}
+
 /** hooks = { items() -> the player bag, icons: { getTexture,
- *  uploadRecord, textures }, loot?: { items() -> the ground pile }
- *  (a loot target opened the window), onDrop?(items) (the session's
- *  dropped pile needs a world flat), onClose() }. */
+ *  uploadRecord, textures }, loot?: { items() -> the ground pile,
+ *  and G5's three DaggerfallLoot fields - playerOwned,
+ *  textureArchive, textureRecord - plus `pos`, the container's world
+ *  position OnPop mints the replacement pile at } (a loot target
+ *  opened the window), onDrop?(items, icon, at) (the session's
+ *  dropped pile needs a world flat; `icon` is the chosen
+ *  {archive, record} or null for the random roll, `at` the loot
+ *  target's position or null for the player's feet), onClose() }. */
 export class NativeInventoryWindow {
   constructor(hooks) {
     this.hooks = hooks;
@@ -219,7 +341,12 @@ export class NativeInventoryWindow {
     // closing WITHOUT taking claims nothing.
     this.chooseOne = open.chooseOne;
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
+    // G5: OnPush's drop-icon seed (:593-631) - the archive the remote
+    // panel shows and the INDEX into that archive's dropIconIdxs list,
+    // -1 when nothing has been picked.
+    this.dropIcon = openDropIcon(hooks, this.chooseOne);
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
+    this._accessoryIcon = makeAccessoryIconDrawer(hooks.icons, () => hooks.entity);   // the twelve worn slots
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
     // FX1 (F128): SetEquipDelayTime(false) on the window PUSH - the
     // hand snapshot the close bills against. The swap pause is billed
@@ -245,6 +372,69 @@ export class NativeInventoryWindow {
     this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remote().length);
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
+  /** GetCarriedWeight (:852-855) - virtual, because the trade window
+   *  overrides it with `CarriedWeight + basketItems.GetWeight()`
+   *  (DaggerfallTradeWindow.cs:630-633). */
+  _carriedWeight() { return carriedWeight(this.hooks.entity ?? {}); }
+  /** UpdateLocalTargetIcon (:857-863): the Backpack picture, which
+   *  "never changes on inventory window", and carried / MaxEncumbrance. */
+  _localTargetIcon() {
+    return {
+      container: CONTAINER_IMAGES.Backpack,
+      label: targetIconWeightText(this._carriedWeight(), entityMaxEncumbrance(this.hooks.entity ?? {})),
+    };
+  }
+  /** UpdateRemoteTargetIcon (:865-890), the WHOLE ladder. The label is
+   *  EMPTY except in wagon mode, where it is WagonWeight /
+   *  ItemHelper.WagonKgLimit (PlayerEntity.cs:185 - WagonItems
+   *  .GetWeight()). Then, in DFU's order:
+   *
+   *  - dropIconTexture > -1 (:875-879): the CHOSEN flat -
+   *    `TextureFile.IndexToFileName(dropIconArchive)` at
+   *    `dropIconIdxs[dropIconArchive][dropIconTexture]`.
+   *  - a lootTarget with a TextureArchive (:880-884): that container's
+   *    OWN world flat - the pile or treasure marker you are standing
+   *    over, not a picture of a chest.
+   *  - otherwise (:885-889) the container image: the loot target's
+   *    ContainerImage, else Ground, which is what
+   *    RemoteTargetTypes.Dropped always resolves to.
+   *
+   *  ROAD-G G5 built the first two. AUDIT 58 left them recorded because
+   *  the port's loot hook was `{ items() }` and carried no flat
+   *  identity; it carries DaggerfallLoot's own three fields now
+   *  (playerOwned, TextureArchive, TextureRecord). */
+  _remoteTargetIcon() {
+    if (this.usingWagon) {
+      return {
+        container: CONTAINER_IMAGES.Wagon,
+        label: targetIconWeightText(totalWeight(this._remote()), WAGON_KG_LIMIT_LOCAL),
+      };
+    }
+    const loot = this.hooks.loot;
+    const chosen = dropIconRecord(this.dropIcon.archive, this.dropIcon.texture);
+    if (chosen != null) {
+      return { image: dropIconImage(this.dropIcon.archive, chosen), label: '' };
+    }
+    if (loot && (loot.textureArchive ?? 0) > 0) {
+      return { image: dropIconImage(loot.textureArchive, loot.textureRecord), label: '' };
+    }
+    return {
+      container: loot ? (loot.containerImage?.() ?? CONTAINER_IMAGES.Ground) : CONTAINER_IMAGES.Ground,
+      label: '',
+    };
+  }
+
+  /** The three cycling handlers (:2104-2138) behind ONE door, because
+   *  they differ only in the step and in whether a click sound plays.
+   *  DFU's order is the pin: the LEFT and RIGHT handlers play
+   *  SoundClips.ButtonClick BEFORE CanChangeDropIcon is even asked, so
+   *  a shop shelf's panel still clicks and changes nothing, while the
+   *  MIDDLE handler (:2104-2113) plays no sound at all. */
+  _cycleDropIcon(by) {
+    if (by !== 0) audio.playOneShot(SOUND.ButtonClick, 1);
+    if (!canChangeDropIcon(this.hooks, this)) return;
+    this.dropIcon = cycleDropIcon(this.dropIcon, by);
+  }
   _remote() {
     return remoteTarget(this.hooks, {
       usingWagon: this.usingWagon,
@@ -299,11 +489,14 @@ export class NativeInventoryWindow {
 
   /** S23: the career equip gate (DaggerfallInventoryWindow :1343-1381).
    *  DFU refuses the equip and pops TEXT.RSC 1068 on a
-   *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-   *  info panel below is: this surface has no TEXT.RSC source and no
-   *  parchment frame of its own yet, so the refusal shows on the same
-   *  interim popup. The REFUSAL ITSELF is verbatim - the item does not
-   *  equip, which is the half that changes play. */
+   *  ClickAnywhereToClose message box, and U25 shipped that box whole:
+   *  the record comes off the host's TEXT.RSC seam (:408-411, with the
+   *  BROKEN gate's own record at :399-402) and draws on the U11
+   *  parchment through layoutMessageBox/drawMessageBox (:979-982),
+   *  while click() dismisses any non-field box at :795-797 - which IS
+   *  ClickAnywhereToClose. The REFUSAL ITSELF was verbatim from the
+   *  start - the item does not equip, which is the half that changes
+   *  play. */
   _refuseForbidden(it) {
     // AUDIT 24 (wave 29): the BROKEN gate runs first
     // (DaggerfallInventoryWindow.cs:1330-1341) - before the
@@ -345,7 +538,18 @@ export class NativeInventoryWindow {
     // :296-349), and its quest-letter arm is what makes one quest
     // letter tell apart from another. `getQuest` is the host's
     // QuestMachine.GetQuest; a host with none leaves the plain name.
-    this.boxes = [{ rows: itemInfoRows(it, rows, { name: this._longName(it) }) }];
+    const infoRows = itemInfoRows(it, rows, { name: this._longName(it) });
+    // ROAD-A7: the PAINTINGS arm (:1619-1631). itemInfoRows has just
+    // minted (or found) the painting's identity on the item, and that
+    // identity names the CIF and the record the picture comes out of.
+    // DFU's arm is exclusive - a painting chains no second box, it is
+    // ClickAnywhereToClose with the image panel and nothing else.
+    if (it?.group === 'Paintings' && it.paintingInfo) {
+      this.boxes = [{ rows: infoRows, painting: it.paintingInfo }];
+      this.infoItem = it;
+      return;
+    }
+    this.boxes = [{ rows: infoRows }];
     if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
     this.infoItem = it;
   }
@@ -432,7 +636,12 @@ export class NativeInventoryWindow {
       rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
       field: true,
       onInput: (text) => {
-        const player = this.hooks.entity ?? { items: this.hooks.items() };
+        // E4: `int playerGold = PlayerEntity.GoldPieces` (:1288) - the
+        // COUNTER, so the purse is the entity's or there is none. A
+        // host that mounts the window without one drops every amount
+        // through planDropGold's own silent range refusal, which is
+        // what DFU does with a purse of zero.
+        const player = this.hooks.entity ?? {};
         // U57: the range refusal and the wagon clamp are
         // systems/itemTransfer.js; the BOX is this window's.
         const plan = planDropGold(text, {
@@ -562,7 +771,13 @@ export class NativeInventoryWindow {
       // else the button click (:1583) - after the carry gate, so a
       // refused transfer stays silent.
       audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
-      const taken = applyTransfer(it, plan, remote, bag);
+      // E4: `PlayerEntity.Items == to` is TRUE on this side of the
+      // window - this is the arm DoTransferItem's gold interception
+      // (:1562-1571) exists for, so a pile taken here is spent into
+      // GoldPieces and the member RETURNS. The null IS that return: no
+      // equip (:1580), no choose-one close (:1585-1591).
+      const taken = applyTransfer(it, plan, remote, bag, { entity: this.hooks.entity, toPlayer: true });
+      if (taken === null) return;
       if (plan.equip && this.hooks.entity) {
         // S23: the taken item still has to pass the career gate
         if (this._refuseForbidden(taken)) return;
@@ -601,12 +816,38 @@ export class NativeInventoryWindow {
       this._dismissBox();
       return;
     }
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE' || code === 'F6') { this._close(); return; }
+    // F6 is the TOGGLE binding closing its own window (the port's
+    // toggleClosedBinding arm); Escape and Enter are the overlay
+    // seam's. Everything else on this screen is DaggerfallShortcut's,
+    // and A8 retired the interim letters that stood here: E used to
+    // close, which is InventoryEquip's letter in DFU, and the tabs
+    // answered to digits 1-4 where DFU gives them F1-F4.
+    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
-    if (code === 'KeyI') this.mode = 'info';
-    const t = /^Digit([1-4])$/.exec(code);   // digits jump tabs (interim accelerator)
-    if (t) this._setTab(TABS[Number(t[1]) - 1]);
+    // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its
+    // setup order (:319, :478-517).
+    const hit = firstHotkey(INVENTORY_BUTTONS, code, e);
+    if (!hit) return;
+    if (hit === 'InventoryExit') { this._close(); return; }
+    const tab = TAB_BUTTONS[hit];
+    if (tab) { this._setTab(tab); return; }
+    // U25's law again, from the keyboard: WAGON and GOLD ACT, the
+    // other four SELECT a mode (:1234-1285).
+    audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
+    if (hit === 'InventoryWagon') { this._wagon(); return; }
+    if (hit === 'InventoryGold') { this._dropGold(); return; }
+    this.mode = MODE_BUTTONS[hit];
+  }
+
+  /** Which accessory BUTTON a point falls in, as an equip slot, or
+   *  null. The rects live left of the paperdoll and below the tabs, so
+   *  they overlap nothing else on the panel. */
+  _accessoryAt(vx, vy) {
+    for (let slot = ACCESSORY_SLOT_MIN; slot <= ACCESSORY_SLOT_MAX; slot++) {
+      if (inRect(ACCESSORY_RECTS[slot - ACCESSORY_SLOT_MIN], vx, vy)) return slot;
+    }
+    return null;
   }
 
   /**
@@ -642,6 +883,15 @@ export class NativeInventoryWindow {
       if (worn) { this.infoItem = worn; this.infoGold = false; }
       return;
     }
+    // The ACCESSORY BUTTONS (AccessoryItemsButton_OnMouseEnter,
+    // :2210-2220). An EMPTY slot returns before the panel is touched,
+    // exactly as the doll's own miss leaves it standing.
+    const acc = this._accessoryAt(vx, vy);
+    if (acc != null) {
+      const worn = this.hooks.entity?.equip?.slots?.[acc];
+      if (worn) { this.infoItem = worn; this.infoGold = false; }
+      return;
+    }
     // The two LISTS (:2224-2242). ItemListScroller raises OnHover for
     // a slot that HOLDS an item; the scroll arrows and the gaps raise
     // nothing, so they leave the panel as it stands.
@@ -658,12 +908,22 @@ export class NativeInventoryWindow {
     }
   }
 
-  click(vx, vy) {
+  /** G5: `right` is I4's flag and `middle` is this slice's - the
+   *  remote target icon panel is the one component in the window with
+   *  THREE separate click handlers (:437-439), so the middle button
+   *  has to reach it or a third of the law is unreachable. */
+  click(vx, vy, right = false, middle = false) {
     if (this.topBox) {
       if (!this.topBox.field) this._dismissBox();   // a field takes keys, not clicks
       return true;
     }
     const R = INV_RECTS;
+    // G5: the drop-icon panel (:437-439). LEFT cycles the icon UP,
+    // RIGHT cycles it DOWN and MIDDLE takes the next archive.
+    if (inRect(R.remoteTargetIcon, vx, vy)) {
+      this._cycleDropIcon(middle ? 0 : (right ? -1 : 1));
+      return true;
+    }
     if (inRect(R.exit, vx, vy)) { this._close(); return true; }
     for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
     for (const mode of MODES) {
@@ -675,6 +935,22 @@ export class NativeInventoryWindow {
       if (mode === 'wagon') { this._wagon(); return true; }
       if (mode === 'gold') { this._dropGold(); return true; }
       this.mode = mode;
+      return true;
+    }
+    // AccessoryItemsButton_OnMouseClick (:1883-1906). The click sound
+    // plays FIRST, ahead of the empty-slot bail, in DFU's order - and
+    // Info then plays ShowInfoPopup's own (:1596), which is two clicks
+    // on that arm in classic too. Equip (and Select) UNEQUIPS: this is
+    // the only reach a worn ring has, the doll's mask cannot see it.
+    const acc = this._accessoryAt(vx, vy);
+    if (acc != null) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      const worn = this.hooks.entity?.equip?.slots?.[acc];
+      if (!worn) return true;
+      if (this.mode === 'equip') { unequipSlot(this.hooks.entity, acc); refreshPaperDoll(this.hooks.entity); }
+      else if (this.mode === 'info') this._info(worn);
+      // UseItem(item) with NO collection, as the doll's arm passes none
+      else if (this.mode === 'use') this._use(worn, null);
       return true;
     }
     // U8g: the paperdoll takes clicks - Remove unequips the topmost
@@ -697,16 +973,20 @@ export class NativeInventoryWindow {
       }
       return true;
     }
-    const hit = scrollerHit(R.localList, vx, vy);
+    // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+    // needs the scroll index and the list length.
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
       if (hit.kind === 'slot') this._pick(hit.slot);
-      else this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length);
+      // ROAD-A7: the two ARROWS click (ItemListScroller.cs:590-604);
+      // the rail and the thumb are silent.
+      else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length); }
       return true;
     }
-    const rhit = scrollerHit(R.remoteList, vx, vy);
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
       if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
-      else this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length);
+      else { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
       return true;
     }
     return false;
@@ -744,6 +1024,14 @@ export class NativeInventoryWindow {
       const wr = INV_RECTS.wagon;
       drawImgSub(renderer, _art.gold, m, wr[0], wr[1], wr[2], wr[3]);
     }
+    // AUDIT 58: the two target-icon panels (SetupTargetIconPanels
+    // :424-439, updated at :333-334 and on every Refresh). The local
+    // one is the only place either classic list screen prints what the
+    // player is carrying.
+    const lti = this._localTargetIcon();
+    drawTargetIconPanel(renderer, m, font, INV_RECTS.localTargetIcon, lti.container, lti.label);
+    const rti = this._remoteTargetIcon();
+    drawTargetIconPanel(renderer, m, font, INV_RECTS.remoteTargetIcon, rti.container, rti.label, rti.image);
     // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
     // (RefreshArmourValues - (100 - av)/5 per body part, plus the
     // enchantment armorMod; the drained/increased label COLOURS are
@@ -755,6 +1043,16 @@ export class NativeInventoryWindow {
     const armorMod = enchantArmorDisplayMod(this.hooks.entity);
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
       shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod)), m, 49 + lx, 13 + ly));
+    // UpdateAccessoryItemsDisplay (:963-996): the twelve worn slots in
+    // equip-slot order. An EMPTY slot draws nothing - the button's own
+    // frame is already in INVE00I0.
+    const wornSlots = this.hooks.entity?.equip?.slots;
+    if (wornSlots) {
+      for (let slot = ACCESSORY_SLOT_MIN; slot <= ACCESSORY_SLOT_MAX; slot++) {
+        const it = wornSlots[slot];
+        if (it) this._accessoryIcon(renderer, m, it, ACCESSORY_RECTS[slot - ACCESSORY_SLOT_MIN]);
+      }
+    }
     this._clampScroll();
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely
@@ -766,6 +1064,11 @@ export class NativeInventoryWindow {
         this._icon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art.font4, m, it, rect, s);
       });
+      // ROAD-A7: UpdateListScrollerButtons (:486-501) and
+      // VerticalScrollBar.Draw - the arrows swap red/green with the
+      // range ends and the thumb draws from DFU's three art slices.
+      drawScrollerArrows(renderer, m, rect, scroll, items.length);
+      drawScrollerThumb(renderer, m, rect, scroll, items.length);
     }
     // U25: the ITEM INFO PANEL - a 50x37 cutout of ITEM00I0 drawn into
     // the 37x32 rect at (223,145), at itemInfoPanelLabel's own
@@ -773,15 +1076,20 @@ export class NativeInventoryWindow {
     // DFU does: `hover(vx, vy)` above reads the slot, the doll layer
     // or the gold button under the cursor, and the panel is STICKY
     // between them.
-    if (_art.info) {
+    // UI4: Setup only ADDS the panel when the setting is on (:303-307),
+    // so with it off there is no cutout and no text - the plain
+    // background shows through. It ships True, which is why the port
+    // drawing it unconditionally has looked right all along.
+    if (_art.info && getBool('GUI', 'EnableInventoryInfoPanel')) {
       drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
       // U47: the GOLD button's own two lines, which are generated and
       // need no TEXT.RSC - so they draw even in a host with none.
-      const carriedGold = this.infoGold
-        ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
+      const carriedGold = this.infoGold ? goldAmount(this.hooks.entity ?? {}) : 0;
       const panelRows = this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
-        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
+        // ROAD-A7: the PANEL's read, not the popup's - :1135-1137
+        // keeps only a painting's title here.
+        : ((this.infoItem && this.hooks.rows) ? itemInfoPanelRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
       if (panelRows) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
         const rows = panelRows;
@@ -796,9 +1104,16 @@ export class NativeInventoryWindow {
     const box = this.topBox;
     if (box) {
       const rows = box.field ? [...box.rows, ` > ${this.goldEntry ?? ''}_`] : box.rows;
+      // ROAD-A7: a painting box carries an ImagePanel, which is part of
+      // the SIZING (UpdatePanelSizes :527-534) - so the picture is
+      // measured into the layout, not stamped over it. It arrives on a
+      // later frame than the click, and until it does the box is the
+      // plain parchment, which is exactly what a missing CIF leaves.
+      const pic = box.painting ? paintingImage(box.painting) : null;
       const laid = layoutMessageBox(font, rows, [],
-        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] } : {});
-      drawMessageBox(renderer, m, font, laid);
+        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] }
+          : (pic ? { image: { width: pic.w, height: pic.h } } : {}));
+      drawMessageBox(renderer, m, font, laid, pic ? { image: pic.tex } : {});
     }
   }
 }

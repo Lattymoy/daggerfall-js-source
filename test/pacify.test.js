@@ -166,12 +166,32 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.match(dgs, /\} else if \(!foe\.ai\.isHostile\) \{\n\s*foe\.ai\.isHostile = true;/,
     'with the legacy raise kept for a degraded foe subsystem');
   const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
-  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
-    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
+  // ROAD-B MOVED THIS NEEDLE (same move as audit26_combat's twin):
+  // DaggerfallEntityBehaviour.cs:255-258's AREA walk now sits between
+  // the player-source gate and the per-foe law, so the two are no
+  // longer adjacent lines. The mechanic the pin guards - a pacified
+  // foe struck BY THE PLAYER stands back up, through the whole C#
+  // method - is unchanged, and is what these two still assert.
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/,
+    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack');
+  // AUDIT 58: the player arm is its own member now (WeaponManager.cs
+  // :627/:630 run it for every CONNECTING swing, damage or none), so
+  // the gate calls it and the body is read where it lives.
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,
+    'the damage door runs it inside the player-source gate');
+  assert.match(xfs.slice(xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {'),
+    xfs.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {') + 900),
+    /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
   assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
     'and reverts a struck former ally to its species');
-  // the motor's own field names the mechanic it was waiting for
-  assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),
-    /isHostile = true;\s*\/\/ EnemyMotor\.IsHostile - pacification/,
-    'the seam was anticipated by name');
+  // the motor's own field names the mechanic it was waiting for.
+  // AUDIT 39 moved this pin: IsHostile is no longer hard-set true in
+  // the constructor - EnemyMotor.Start:122 seeds it from the mobile's
+  // MobileReactions, so a Passive dungeon marker spawns non-hostile
+  // and the option defaults to true for every caller without one.
+  const mot = readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8');
+  assert.match(mot, /constructor\(collider, feet, yawRad, \{ liveSpeed = 50, isHostile = true,/,
+    'the seam is an option, defaulting hostile');
+  assert.match(mot, /EnemyMotor\.Start:122 `IsHostile = mobile\.Enemy\.Reactions == Hostile`/,
+    'the seam is named against the C# that sets it');
 });

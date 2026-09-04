@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { setValue, resetToDefaults, LIVE } from '../src/systems/settings.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  INFO_TEXT, HELM_AND_SHIELD_MATERIAL_DISPLAY, armorShouldShowMaterial, itemInfoTextId,
+  INFO_TEXT, armorShouldShowMaterial, itemInfoTextId,
   CONDITION_WORDS, CONDITION_THRESHOLDS, conditionPercentage, conditionWord,
   weightString, weaponDamageString, armourModString, materialName, expandItemInfo, itemInfoRows,
   setBookAuthor, getBookAuthor,
@@ -15,6 +16,7 @@ import { TEMPLATES } from '../src/systems/useItem.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { TextRsc } from '../src/formats/textRsc.js';
+import { createRandomBook } from '../src/systems/books.js';   // A2
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -29,19 +31,33 @@ test('U25: the thirteen info records are DFU\'s literals', () => {
 });
 
 test('U25: armor and weapons each pick between a WITH- and WITHOUT-material record', () => {
-  // classic behaviour (setting 0): a helm or a shield never shows its
-  // material, everything else does
-  assert.equal(HELM_AND_SHIELD_MATERIAL_DISPLAY, 0);
+  // classic behaviour (setting 0, DFU's shipped default): a helm or a
+  // shield never shows its material, everything else does
   const cuirass = { group: 'Armor', templateIndex: 102, material: ARMOR_MATERIAL.Iron };
   const helm = { group: 'Armor', templateIndex: TEMPLATES.Helm, material: ARMOR_MATERIAL.Iron };
   const shield = { group: 'Armor', templateIndex: 109, material: ARMOR_MATERIAL.Iron };
   assert.equal(armorShouldShowMaterial(cuirass), true);
   assert.equal(armorShouldShowMaterial(helm), false);
   assert.equal(armorShouldShowMaterial(shield), false);
+  // AUDIT 28 W3: the other three values (ItemHelper.cs:833-840),
+  // through the parameter and through the live setting.
+  const leatherHelm = { ...helm, material: ARMOR_MATERIAL.Leather };
+  const chainHelm = { ...helm, material: ARMOR_MATERIAL.Chain };
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 1)), [false, false, true], '1: all but leather and chain');
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 2)), [false, true, true], '2: all but leather');
+  assert.deepEqual([leatherHelm, chainHelm, helm].map((h) => armorShouldShowMaterial(h, 3)), [true, true, true], '3: all');
+  assert.equal(armorShouldShowMaterial({ ...helm, artifact: true }, 3), false, 'an artifact never, even at 3');
+  assert.equal(armorShouldShowMaterial(leatherHelm, 1), false); assert.equal(armorShouldShowMaterial(cuirass, 0), true);
+  setValue('GUI', 'HelmAndShieldMaterialDisplay', 2);
+  assert.equal(armorShouldShowMaterial(chainHelm), true, 'read live');
+  setValue('GUI', 'HelmAndShieldMaterialDisplay', 9);
+  assert.equal(armorShouldShowMaterial(leatherHelm), true, 'GetInt clamps 9 to 3');
+  resetToDefaults();
   assert.equal(itemInfoTextId(cuirass), INFO_TEXT.armor);
   assert.equal(itemInfoTextId(helm), INFO_TEXT.armorNoMaterial);
   // an ARTIFACT never shows a material, whatever it is
   assert.equal(armorShouldShowMaterial({ ...cuirass, artifact: true }), false);
+  assert.equal(LIVE['GUI/HelmAndShieldMaterialDisplay'], 'src/systems/itemInfo.js');
   // weapons: an arrow has its own record, an artifact drops the material
   assert.equal(itemInfoTextId({ group: 'Weapons', templateIndex: 118 }), INFO_TEXT.weapon);
   assert.equal(itemInfoTextId({ group: 'Weapons', templateIndex: TEMPLATES.Arrow }), INFO_TEXT.arrow);
@@ -218,9 +234,22 @@ test('IM1: the %ba cache - the reader\'s load feeds it, an empty author line kee
 });
 
 test('IM1: a dungeon-loot book carries its id - CreateRandomBook\'s message roll, BEFORE the variant', () => {
+  // PIN MOVED at A2 (ROAD TO 1:1): the inline mint in loot.js became a
+  // call to books.createRandomBook, the one member all four sites now
+  // share, so the source pin on loot.js's expression can no longer see
+  // the draw order. The claim is the same and it is now BEHAVIOURAL -
+  // the id is drawn first and the variant second (ItemBuilder.cs:261-262).
   const loot = readFileSync(join(SRC, 'systems', 'loot.js'), 'utf8');
-  assert.match(loot, /message: getRandomBookID\(rolls\), variant: Math\.floor\(rolls\(\)/,
-    'the id rolls first, then the variant, in the one mint expression');
+  assert.match(loot, /halving\(matrix\.BK, \(\) => createRandomBook\(rolls\)\)/,
+    'the loot mint IS CreateRandomBook');
+  // A stream that answers 0 then 0.99 must take the FIRST book id and
+  // the LAST variant; swap the order and both answers swap with it.
+  const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+  const first = createRandomBook(seq(0, 0.99));
+  const last = createRandomBook(seq(0.99, 0));
+  assert.notEqual(first.message, last.message, 'the id reads the FIRST draw');
+  assert.equal(first.variant, 1, 'and the variant the second (template 277 has two)');
+  assert.equal(last.variant, 0);
 });
 
 test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignment', () => {
@@ -248,30 +277,37 @@ test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignm
   assert.deepEqual(rsc.variantLinesById(3100, () => 0), rsc.linesById(3100, 0));
 });
 
-test('AUDIT 22 F11 retired at Q2b-ii: createArtifact is the producer of the three artifact flags', async () => {
-  // The pin that guarded these as producerless went red the day the
-  // quest Item mint's artifact arm landed - as designed. The flags now
-  // pin THE SHAPE THE PRODUCER MINTS: identity flags derive from the
-  // artifact index (ArtifactsSubTypes - Oghma_Infinium 5, Azuras_Star
-  // 9, ItemEnums.cs:246,250), the base item expands from the MAGIC.DEF
-  // template, armor material moves to the plate band.
+test('ROAD-U (was AUDIT 22 F11): artifact IDENTITY is the enchantment record, not a mint-only flag', async () => {
+  // THIS PIN MOVED, and the law it now holds is DFU's. It used to
+  // assert that createArtifact stamped two BOOLEANS - `oghmaInfinium`
+  // on index 5, `azurasStar` on index 9 - and the subtype tests keyed
+  // on them. DFU carries no such flags: GetItemInfo asks the item's
+  // own legacy enchantment record (:782 for the Oghma, :811 with
+  // `param == 9` for the Star) and SoulTrap.cs:129 asks
+  // ContainsEnchantment. Keying on a flag only the MINT wrote meant a
+  // classic import - which carries the very same enchantment array -
+  // failed every one of those tests: an imported Oghma read 1009
+  // (plain book), an imported Star 1003 (plain misc), and an equipped
+  // imported Star captured no souls. What createArtifact mints is the
+  // FLAGS WORD's own (artifact + identified), the index bitfield, the
+  // MAGIC.DEF expansion and the enchantments the identity rides on.
   const { createArtifact } = await import('../src/systems/loot.js');
+  const special = (param) => [{ type: 26, param }];   // EnchantmentTypes.SpecialArtifactEffect
   const T = (i, over = {}) => ({ index: i, name: `A${i}`, type: 1, group: 14, groupIndex: 0, enchantments: [], uses: 100, value: 0, material: 0, ...over });
   const templates = Array.from({ length: 12 }, (_, i) => T(i));
-  templates[5] = T(5, { group: 7, groupIndex: 0 });    // Oghma Infinium is a book
-  templates[9] = T(9, { group: 14, groupIndex: 2 });   // Azura's Star, a gem
+  templates[5] = T(5, { group: 7, groupIndex: 0, enchantments: special(5) });    // Oghma Infinium is a book
+  templates[9] = T(9, { group: 14, groupIndex: 2, enchantments: special(9) });   // Azura's Star, a gem
   templates[3] = T(3, { group: 2, groupIndex: 4, material: 3 });   // an armor artifact
 
   const oghma = createArtifact(templates, 5);
-  assert.equal(oghma.oghmaInfinium, true);
-  assert.equal(oghma.azurasStar, undefined);
+  assert.equal(oghma.oghmaInfinium, undefined, 'no boolean is minted any more');
   assert.equal(oghma.artifact, true);
+  assert.equal(itemInfoTextId(oghma), INFO_TEXT.oghmaInfinium, 'the RECORD answers (:782)');
   const star = createArtifact(templates, 9);
-  assert.equal(star.azurasStar, true);
-  assert.equal(star.oghmaInfinium, undefined);
+  assert.equal(star.azurasStar, undefined);
+  assert.equal(itemInfoTextId(star), INFO_TEXT.soulTrap, ':811, param == Azuras_Star');
   const plain = createArtifact(templates, 0);
-  assert.equal(plain.azurasStar, undefined);
-  assert.equal(plain.oghmaInfinium, undefined);
+  assert.equal(itemInfoTextId(plain), INFO_TEXT.misc, 'an artifact gem with no Special effect is misc');
   assert.equal(plain.artifact, true);
   // the armor artifact's material lands in the plate band
   const armor = createArtifact(templates, 3);

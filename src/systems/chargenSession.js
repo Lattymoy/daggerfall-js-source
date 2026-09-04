@@ -4,10 +4,14 @@
 // THE FOUR HOSTS RULE: chargen used to live entirely inside
 // dungeonContext, so a player who booted straight into a town
 // (either exterior host) never created a character at all - they
-// played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-// 50, Warrior-shaped nothing). The dungeon kept its own copy of the
-// load/apply code, which is exactly the duplication the audit's
-// rules forbid, so both live here now.
+// played the pre-chargen placeholder entity (flat skills 30,
+// maxHealth 50, Warrior-shaped nothing; it is described at
+// characters/playerEntity.js:5). The dungeon kept its own copy of
+// the load/apply code, which is exactly the duplication the audit's
+// rules forbid, so both live here now. FIXED, not pending: world.js:
+// 126/:1364-1366 and exterior.js:107/:958-960 both import and run
+// createChargenFlow + createChargenWindow from here, so a town boot
+// runs the wizard.
 //
 // The returned object is shaped for the exterior hosts' overlay seam
 // (townTalk.showOverlay): isChoiceWindow so it receives RAW key
@@ -161,7 +165,12 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
  *  - the kit: AssignStartingGear runs ONCE, at creation; the bag is
  *    cleared first so an interim seed leaves no stray dagger.
  *  - the reputations: PlayerEntity.AssignCharacter (:844-848) seeds
- *    the five social groups BEFORE any biography effect adds to them. */
+ *    the five social groups BEFORE any biography effect adds to them.
+ *  - the biography and the faction store (AUDIT 39): ApplyEffects runs
+ *    BEFORE AssignStartingEquipment in DFU, and the store the `rf`
+ *    deltas drain into is what InitializeRegionData then walks. A
+ *    result carrying neither (the hosts' font-less fallback) skips
+ *    both arms and keeps the rest of the seam. */
 export function applyCreationExtras(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   if (spellsByIndex) {
     const setIndex = result.isCustom ? customSpellSetIndex(result.career) : result.careerIndex;
@@ -184,11 +193,32 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
   // Enemies essentially could not hit a new character.
   playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
-  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   if (result.customReps) {
     if (!playerEntity.sGroupReputations) playerEntity.sGroupReputations = new Array(SOCIAL_GROUP_COUNT).fill(0);
     for (let i = 0; i < result.customReps.length; i++) playerEntity.sGroupReputations[i] = result.customReps[i];
   }
+  // AUDIT 39: THE BIOGRAPHY LANDS BEFORE THE KIT, as DFU orders it -
+  // BiogFile.ApplyEffects (StartGameBehaviour.cs:415-416) then
+  // AssignStartingEquipment (:419). AddItem's default is
+  // AddPosition.Back, so the collection order IS the bag order: an
+  // answer's IT item heads the list in classic and trailed the torches
+  // here, and its GP arithmetic ran against the kit's 100 gold instead
+  // of an empty purse (a "-" command clamps at 0, so the sign of the
+  // divergence is real money). The reputations stay ahead of it -
+  // AssignCharacter seeds the five groups (:844-848) before any
+  // biography effect adds to them.
+  if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
+  // S25/AUDIT 39: the faction store, built and drained of whatever the
+  // biography parked - BiogFile.cs:339 applies its `rf` deltas INSIDE
+  // ApplyEffects, so the drain belongs immediately after it. It must
+  // also precede the region bootstrap below, which walks this very
+  // store: this call used to sit in finishChargen, thirty lines LATER,
+  // so InitializeRegionData's 24 passes walked an undefined dict and
+  // returned at once - and even a store attached by some other route
+  // was then thrown away, since attachFactionRep rebuilds fresh
+  // records out of the dictionary.
+  if (result.factionDict) attachFactionRep(playerEntity, result.factionDict);
+  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   // StartGameBehaviour.cs:432-433 "Initialize region data" ->
   // PlayerEntity.InitializeRegionData (:2189-2218): every new character
   // is born with the 62-region condition store, so the writers that
@@ -218,18 +248,13 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // character.backStory;`) and DaggerfallPlayerHistoryWindow reads it
   // back; nothing here assigned it, so save.js only ever serialised [].
   playerEntity.backStory = [...(result.backStory ?? [])];
+  // S3e: the biography effects land over the BUILT character (after
+  // applyCharacter's rolls, so a skill bonus rides on top of the
+  // distributed value) and the faction store is attached and drained
+  // with them - both inside applyCreationExtras since AUDIT 39, where
+  // DFU's own order puts them: ahead of the starting kit, and ahead of
+  // the region bootstrap that reads the store.
   applyCreationExtras(playerEntity, result, spellsByIndex, { rolls });
-  // S3e: the BIOGRAPHY effects land LAST, exactly where DFU applies
-  // them (StartGameBehaviour.cs:415-416 - at game start, over the built
-  // character), so a skill bonus rides on top of the distributed value
-  // instead of being overwritten by applyCharacter's roll.
-  if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
-  // S25: right after the biography, because applyBiographyEffects is
-  // what parks the `rf` deltas - attaching earlier would build the
-  // store and drain nothing. DFU applies these INSIDE the biography
-  // (BiogFile.cs:339), before the level-up anchor below, so this is
-  // also where the order puts it.
-  attachFactionRep(playerEntity, result.factionDict);
   // AUDIT 18: and the LEVEL-UP ANCHOR is taken AFTER them
   // (StartGameBehaviour.cs:424-426 - SetCurrentLevelUpSkillSum, then
   // StartingLevelUpSkillSum = CurrentLevelUpSkillSum), unconditionally.
@@ -307,12 +332,14 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *    - scenes/world.js       WIRED (it calls this)
  *    - scenes/exterior.js    WIRED (it calls this)
  *    - scenes/worldModes.js  N/A - interiors never run the wizard
- *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
- *      own overlay and draws it directly, so it cannot reach this
- *      fork. It keeps the CLASSIC wizard. Since U31 the classic start
- *      boots the WORLD host, so that path is the `?dungeon` dev scene
- *      alone - a real gap, and a small one, recorded rather than
- *      quietly left. */
+ *    - scenes/dungeonContext.js  WIRED (wave D - it calls this). It
+ *      held the RAW flow as its own overlay and drew it directly, so
+ *      it could reach neither the skin fork nor the fire-once latch;
+ *      routing it here also stopped it letterboxing the wizard TWICE
+ *      (its non-native draw arm applied a screen offset under art
+ *      that reads nativeMetrics off the real canvas itself). Since
+ *      U31 that path is the `?dungeon` dev scene alone, which is why
+ *      it stayed open so long - but small is not the same as absent. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   let _fired = false;
   // A DOM view needs a DOM. The headless suite constructs this window
@@ -336,8 +363,14 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
       // the same frame did not.
       if (_fired) return;
       // the SHARED overlay table (ui/input.js) - not a second copy
-      const a = overlayAction(ev ?? { key: codeToKey(code) });
-      if (a) flow.input(a);
+      // ROAD-E2: the EVENT is built once and handed BOTH to the table
+      // and to the flow. The flow asks the DaggerfallShortcut table
+      // about modifiers (the builder's Ctrl-U ResetBonusPool), and the
+      // action string alone cannot carry them - 'char:u' is what Ctrl-U
+      // and a bare u both look like here.
+      const kev = ev ?? { key: codeToKey(code) };
+      const a = overlayAction(kev);
+      if (a) flow.input(a, kev);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard (the flow flags it; the host unwinds) - once, like done
       if (flow.cancelled) { _fired = true; onCancel?.(); return; }
@@ -351,14 +384,44 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
       if (flow.cancelled) { _fired = true; onCancel?.(); return; }
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
+    // ROAD-E2 / THE FOUR HOSTS RULE: the HOVER seam, which the wizard
+    // had no use for until the list pickers' scroll bar gained a
+    // thumb drag. VerticalScrollBar.Update (:101-130) polls
+    // InputManager.GetMouseButton(0) every frame, and `e.buttons` is
+    // the port's only reading of it - without this the thumb could
+    // latch on the press and then never move. Every host that runs
+    // the wizard already routes a mousemove here: world.js and
+    // exterior.js through `townTalk.hover` (townTalk.js:1076-1087,
+    // the route itself :1085), dungeonContext.js through `overlayHover`
+    // (:4613), which dungeon.js:351 and worldModes.js:6506 both feed.
+    // (ROAD-G G4 review: all four were stale - re-resolved by content,
+    // against the same six routes G4-11 sweeps.) Hovering never
+    // advances the flow, so no done check.
+    hover(vx, vy, e = null) { if (!_fired) flow.hover?.(vx, vy, e); },
+    // ROAD-G G4: THE OTHER EDGE, on the same rule. The hover seam above
+    // is GetMouseButton(0)'s per-frame poll; this is the frame it turns
+    // false (VerticalScrollBar.Update's else arm, :123-129), and every
+    // host that routes the hover routes it - `townTalk.pointer('up')`
+    // reaches a window that has only `release()`, `worldModes`' interior
+    // slot and `dungeonContext.overlayPointer`'s up arm call it beside
+    // their pointer route, and `interior.js` has its own listener.
+    // Releasing never advances the flow, so no done check.
+    release() { if (!_fired) flow.releasePickBar?.(); },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },
-    // F2 / THE FOUR-HOSTS RULE: the townTalk hosts drive the overlay's
-    // clock through this wrapper; dungeonContext holds the RAW flow and
-    // reaches flow.tick directly.
+    // F2 / THE FOUR-HOSTS RULE: every host that runs the wizard drives
+    // the overlay's clock through this wrapper - dungeonContext reached
+    // flow.tick directly until wave D put it through this door too.
     tick(dt) { flow.tick?.(dt); },
-    draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
+    // FS-slice (wave D): the host's OWN scale wins when it hands one
+    // in. Every overlay seam in the tree passes the letterbox scale it
+    // just computed off the real canvas (townTalk:881,
+    // dungeonContext's drawOverlay), and this arm dropped it on the
+    // floor for the constructed default - so the art-less interim
+    // panels drew at 2 on a canvas the rest of the UI was drawing at 3
+    // or 4. `hudScale` stays the default for a caller that passes none.
+    draw(renderer, canvas, font, scale = hudScale) { flow.draw(renderer, canvas, font, scale); },
   };
 }
 

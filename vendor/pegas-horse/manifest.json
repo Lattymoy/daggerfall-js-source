@@ -1,0 +1,59 @@
+{
+  "mod": "Pegas Horse Ranch v3.1 (MADMAX and Team, 2004; horse model by Cait)",
+  "consent": "the author's written consent, confirmed by Mac 2026-09-03 - see README.md",
+  "vendored": "2026-09-04",
+  "variants": [
+    1
+  ],
+  "readmes": [
+    "Pegas Horse Ranch Readme.txt",
+    "Pegas v3.1 readme.txt"
+  ],
+  "files": [
+    {
+      "path": "meshes/maxhorse/xhorse1.kf",
+      "bytes": 104562,
+      "sha256": "d24c3fc7a7a1988d393a3b460096c3504c720a889788ed142f548c333fa3ce8d"
+    },
+    {
+      "path": "meshes/maxhorse/xhorse1.nif",
+      "bytes": 106186,
+      "sha256": "4d4cbb3411b2de8fe8e3bd3fedc189b78290c512ef463d1a9b5f4c94e7bb7de6"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_gallop.wav",
+      "bytes": 76716,
+      "sha256": "01fe061cae9f65d17e33959f1b056b0fe7ea9d6fdaf4feed9a9bf377b8cf1501"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_idle2.wav",
+      "bytes": 112896,
+      "sha256": "f01b4bf3da74feb3556e5585c98e3fd00bc6bb433855e23563f14ed3611519b1"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_idle3.wav",
+      "bytes": 8508,
+      "sha256": "8049ac4b76da45ef4f15c27df13856dcc8575e4a4cdf8dd08747ba5dc5b99996"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_roar.wav",
+      "bytes": 234512,
+      "sha256": "db56739d7455f4671caeff37b804290a893b56f16a9937d1ea12011c3bdfa939"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_scream.wav",
+      "bytes": 234542,
+      "sha256": "9268a5f7b9d5be98b39e64237c216f8647f1cb6d490d2b7fd1bc919c505a5766"
+    },
+    {
+      "path": "sound/cr/maxhorse/horse_trot.wav",
+      "bytes": 543788,
+      "sha256": "26b4b529301726f90f7cab996300c1be49504fdc56e54ce2ee17cfaad1e02c26"
+    },
+    {
+      "path": "textures/cait_horse1x.dds",
+      "bytes": 43832,
+      "sha256": "f1b53c309fdd149d7bb008e738acec0a9ab46c9682c6863f92c472b05469c445"
+    }
+  ]
+}

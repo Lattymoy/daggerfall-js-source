@@ -18,15 +18,33 @@ import { RMB_DIMENSION } from '../formats/blocksFile.js';
 export const RMB_SIDE = RMB_DIMENSION * GLOBAL_SCALE;
 
 /**
+ * DFLocation.HasCustomLocationPosition (DFLocation.cs:88-97), verbatim
+ * including its comment's uncertainty: "Some 1x1 locations (e.g.
+ * Privateer's Hold exterior) are positioned differently. Seems to be
+ * 1x1 blocks using CUST prefix, but possibly more research needed."
+ *
+ * ROAD-C c2/S10 needs it because the exterior automap's player marker
+ * takes a hand correction at exactly those locations
+ * (ExteriorAutomap.cs:1391-1395: -64 on x, +3 on z).
+ */
+export function hasCustomLocationPosition(dfLocation) {
+  const ext = dfLocation?.exterior?.exteriorData;
+  if (!ext || ext.width !== 1 || ext.height !== 1) return false;
+  return String(ext.blockNames?.[0] ?? '').startsWith('CUST');
+}
+
+/**
  * Lay out a full exterior location.
  * @param {object} dfLocation - MapsFile.getLocation output.
  * @param {MapsFile} mapsFile - for block-name resolution.
  * @param {BlocksFile} blocksFile - block source.
+ * @param {{enhanced?:boolean}} [opts] - the caller's skin, passed to
+ *   layoutRmbBlock (the mill subrecord it attaches is enhanced-only).
  * @returns {{width:number,height:number,groundArchive:number,
  *   blocks:Array<{x:number,y:number,blockName:string,dfBlock:object,
  *   layout:object,originX:number,originZ:number}>}}
  */
-export function layoutLocation(dfLocation, mapsFile, blocksFile) {
+export function layoutLocation(dfLocation, mapsFile, blocksFile, { enhanced = false } = {}) {
   const width = dfLocation.exterior.exteriorData.width;
   const height = dfLocation.exterior.exteriorData.height;
   const blocks = [];
@@ -41,7 +59,7 @@ export function layoutLocation(dfLocation, mapsFile, blocksFile) {
         y,
         blockName,
         dfBlock,
-        layout: layoutRmbBlock(dfBlock),
+        layout: layoutRmbBlock(dfBlock, { enhanced }),
         originX: x * RMB_SIDE,
         originZ: y * RMB_SIDE,
       });

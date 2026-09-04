@@ -804,11 +804,13 @@ export class TopicTree {
 
   // ---- the SaveDataConversation halves this slice owns ----
 
-  /** dictQuestInfo as plain data. DEPARTURE (Ledger A shape): C#
-   *  serializes the live questResource references and then OVERWRITES
-   *  them all in the relink on load - dead weight the port drops;
-   *  everything else travels verbatim (the answer token lists
-   *  included). */
+  /** dictQuestInfo as plain data. RECORDED DEPARTURE: C# serializes
+   *  the live questResource references and then OVERWRITES them all in
+   *  the relink on load - dead weight the port drops; everything else
+   *  travels verbatim (the answer token lists included). Ledger A
+   *  carries it as THE CONVERSATION SAVE STORES `dictQuestInfo` AS
+   *  PLAIN DATA (AUDIT 58, seams lane), cited by name because a line
+   *  number rots. */
   getSaveData() {
     return {
       dictQuestInfo: [...this.dictQuestInfo.entries()].map(([questID, questResources]) => ({

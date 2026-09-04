@@ -278,14 +278,19 @@ test('audit26 F067: the identify SPELL refuses on magicka and never reaches the 
   const pass = commit.indexOf('identifySpellPass(staged');
   assert.ok(gate > 0, 'the magicka refusal exists');
   assert.ok(pass > gate, 'and it is tested before the pass runs');
-  assert.match(commit, /townTalk\?\.say\?\.\(NOT_ENOUGH_SPELL_POINTS_TEXT\);\s*\n\s*surfacePlayer\(\);\s*\n\s*return;/,
+  // MOVED at AUDIT 39 F144: the refusal now answers FALSE. DFU returns
+  // from DoModeAction before ClearSelectedItems (:960-963), so the lot
+  // stays staged for a caster who comes back with the points - and the
+  // window learns that only from the commit's answer. The law the pin
+  // guards is unchanged: nothing identified, nothing spent, no tally.
+  assert.match(commit, /townTalk\?\.say\?\.\(NOT_ENOUGH_SPELL_POINTS_TEXT\);\s*\n\s*surfacePlayer\(\);\s*\n\s*return false;/,
     'the refusal turns back the WHOLE pass');
 
   // the tally is ConfirmTrade's, so the spell arm returns before it
   const tally = commit.indexOf('tallySkill(playerEntity, SKILLS.Mercantile, 1);');
   assert.ok(tally > 0, 'the tally is still there for every OTHER mode');
   const spellArm = commit.slice(commit.indexOf('if (identifySpell) {'), tally);
-  assert.equal((spellArm.match(/\n\s*return;/g) ?? []).length, 2,
+  assert.equal((spellArm.match(/\n\s*return( false)?;/g) ?? []).length, 2,
     'both exits from the spell arm - refused and completed - return before the tally');
 
   // ...and the paid SERVICE is the sibling arm, which falls through
@@ -301,5 +306,5 @@ test('audit26 F067: the refused pass spends nothing - the per-item roll never ru
   const ran = identifySpellPass(items, 100, () => 0);
   assert.equal(ran.successCount, 2, 'the pass identifies when it runs at all');
   assert.equal(ran.spendMagicka, true);
-  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'Not enough spell points left.');
+  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'You do not have enough spell points left.');
 });

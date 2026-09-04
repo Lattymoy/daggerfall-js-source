@@ -40,6 +40,7 @@ import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { thumbSpan, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: the list picker's thumb, DFU's own slices
 import { drawText, measureText, makeFont } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text; AUDIT 18: SmallFont
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, DaggerfallUI.SmallFont
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
@@ -173,6 +174,20 @@ export const METHOD_CHOOSE_QUESTIONS = Object.freeze([8, 100, 167, 34]);  // cho
  *  image, which made it the one hit path in the arc that needed art -
  *  and so the one the pins could not drive. Draw and hit share it. */
 export const PICK_PANEL = Object.freeze([60, 36, 200, 128]);
+
+/** ROAD-E2 - the picker's scroll bar in NATIVE coordinates, the ONE
+ *  rect the draw, the hit and the drag all resolve against. DFU adds
+ *  it as a pickerPanel CHILD at (181,23) sized 5x82
+ *  (DaggerfallListPickerWindow.cs:96-99), so its screen rect is the
+ *  panel's own origin plus that - 60+181, 36+23. Every list picker in
+ *  the wizard inherits it: the class list (CreateCharClassSelect
+ *  extends DaggerfallListPickerWindow), the builder's skill and help
+ *  pickers (CreateCharCustomClass.cs:283, :368) and the two special
+ *  advantage pickers (CreateCharSpecialAdvantageWindow.cs:270, :273). */
+export const PICK_SCROLL_RECT = Object.freeze([
+  PICK_PANEL[0] + RECTS.pickScroll[0], PICK_PANEL[1] + RECTS.pickScroll[1],
+  RECTS.pickScroll[2], RECTS.pickScroll[3],
+]);
 
 // U20a - the CUSTOM-CLASS BUILDER (CreateCharCustomClass.cs). The
 // window is CUST00I0.IMG full-screen; the difficulty dagger is
@@ -715,11 +730,36 @@ function drawClassConfirm(renderer, m, font, flow) {
  *  it (ONE DFU MEMBER, ONE EXPORT). Draws the visible window from
  *  `scroll`, the selected row in the selected colour; returns the
  *  panel origin + row height for the caller's overlays.
- *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
- *  is verbatim and simple (VerticalScrollBar.cs:206-221) but the
- *  thumb is three texture slices this port has not identified yet,
- *  and inventing a colour would break the NATIVE-WINDOW RULE. The
- *  rail and both arrows are baked into PICK00I0 and do draw. */
+ *
+ *  ROAD-D2 drew the THUMB. AUDIT 17g flagged it because the three
+ *  texture slices were unidentified and inventing a colour would
+ *  break the NATIVE-WINDOW RULE; ROAD-A7 then identified and carried
+ *  them (vScrollThumbTop/Body/Bottom, fifteen literal bytes in
+ *  ui/verticalScrollBar.js), so nothing is invented here: the bar is
+ *  the picker panel's own 5x82 at (181,23) (RECTS.pickScroll,
+ *  DaggerfallListPickerWindow.cs:96-99), the span is
+ *  VerticalScrollBar.cs:206-211 verbatim through thumbSpan, and Draw
+ *  (:135-139) paints NOTHING when the list fits - which thumbSpan's
+ *  null carries. The rail and both arrows are baked into PICK00I0.
+ *
+ *  ROAD-E2 SHIPPED THE HIT, which AUDIT 17g had narrowed to itself.
+ *  All three of chargenHit's picker arms now answer `PICK_SCROLL_RECT`
+ *  with `{ pickBar: [vx, vy] }`, and `ChargenFlow` drives DFU's own
+ *  component through it - one `VerticalScrollBar` (ui/verticalScrollBar.js,
+ *  the same object the shared list picker and the item scroller use),
+ *  re-pointed each frame at whichever picker is open by
+ *  `_openPickList` + `syncPickBar`, which are
+ *  DaggerfallListPickerWindow.Update (:103-119) verbatim: TotalUnits
+ *  from the live list, DisplayUnits from RowsDisplayed, and the index
+ *  flowing FROM the bar while the thumb is dragged and TO it
+ *  otherwise. `press()` is MouseClick's trough paging (:142-150) and
+ *  Update's drag latch (:105-113); `flow.hover` is Update's per-frame
+ *  arm, polling the host's `e.buttons & 1` for
+ *  InputManager.GetMouseButton(0) exactly as ui/listPicker.js:292
+ *  does. The held-button frame the flag named is that hover seam, and
+ *  every host that runs the wizard already routes it
+ *  (townTalk.hover for world.js and exterior.js, overlayHover for
+ *  dungeonContext.js; worldModes.js and interior.js never run it). */
 function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_ROWS) {
   const [ox, oy] = PICK_PANEL;
   drawImg(renderer, img('PICK00I0.IMG'), m, ox, oy);
@@ -736,7 +776,25 @@ function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_
     shadowText(renderer, font, names[idx], m, ox + lx, oy + y,
       { color: idx === selected ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
   }
+  drawPickerScrollThumb(renderer, m, names.length, rows, scroll);
   return [ox, oy, h];
+}
+
+/** ROAD-D2 - the picker's scrollBar (DaggerfallListPickerWindow.cs:96-99
+ *  is the rect; VerticalScrollBar.cs:132-221 is everything it does).
+ *  Its own function because it is its own COMPONENT in DFU and because
+ *  it needs no art: PICK00I0 has the rail and the arrows baked in, the
+ *  thumb is the three carried slices, so this pins bare where the rest
+ *  of drawListPicker cannot. Update (:103-119) refreshes TotalUnits
+ *  from the live list and DisplayUnits from RowsDisplayed every frame,
+ *  which is exactly the two arguments here - so the 9-row class list
+ *  and the 15-row SmallFont pickers each take their own fraction of
+ *  the rail. */
+export function drawPickerScrollThumb(renderer, m, totalUnits, displayUnits, scrollIndex) {
+  const [ox, oy] = PICK_PANEL;
+  const [sx, sy, sw, sh] = RECTS.pickScroll;
+  return drawScrollThumb(renderer, m, [ox + sx, oy + sy, sw, sh],
+    thumbSpan(sh, totalUnits, displayUnits, scrollIndex));
 }
 
 function drawClass(renderer, m, font, flow) {
@@ -1227,6 +1285,7 @@ export function chargenHit(flow, vx, vy) {
     const lx = vx - ox, ly = vy - oy;
     if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return 'up';
     if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return 'down';
+    if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
     // a click ON a row selects it (DaggerfallListPickerWindow's list)
     const [plx, ply, plw] = RECTS.pickList;
     if (lx >= plx && lx < plx + plw && ly >= ply) {
@@ -1289,6 +1348,7 @@ export function chargenHit(flow, vx, vy) {
       const lx = vx - ox, ly = vy - oy;
       if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
       if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+      if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
       const [plx, ply, plw] = RECTS.pickList;
       if (lx >= plx && lx < plx + plw && ly >= ply) {
         const row = Math.floor((ly - ply) / (c._rowH || 1));
@@ -1319,6 +1379,7 @@ export function chargenHit(flow, vx, vy) {
         const lx = vx - ox, ly = vy - oy;
         if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
         if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+        if (inRect(PICK_SCROLL_RECT)) return { pickBar: [vx, vy] };   // ROAD-E2: the bar answers in NATIVE coords - press() and the drag both want them
         const [plx, ply, plw] = RECTS.pickList;
         if (lx >= plx && lx < plx + plw && ly >= ply) {
           // AUDIT 18: advPickerItemCount rows, at SmallFont's 6px pitch

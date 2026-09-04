@@ -76,28 +76,58 @@ export function collectCityLights(dfBlock, getScaledSize) {
  * Without it the return is the bare vec4 array, unchanged - the
  * exterior lantern callers.
  */
-export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null) {
+/** EV2: the selection scratch. The old body allocated one {l, index,
+ *  d} object PER LIGHT and full-sorted, every frame, in all four
+ *  hosts. A bounded stable insertion into two module arrays keeps the
+ *  exact same answer - `>` on the shift and strict `<` on admission
+ *  reproduce a stable sort's tie order (earliest index wins, at the
+ *  cut too) - with zero allocation until the small result arrays,
+ *  which stay per-call because setPointLights holds the returned
+ *  buffer across the frame's re-uploads. */
+const _selD = [];
+const _selIdx = [];
+
+/** A10: `xzRange` is DungeonLightHandler's cut, handed in by the
+ *  callers that have one (the dungeon hosts). It is a RANGE, not a
+ *  count: a light farther than it on XZ is not a candidate at all,
+ *  which is the reference's own per-light `myLight.enabled = false`
+ *  (DungeonLightHandler.cs:60-74). 0 means "no cut" - every exterior
+ *  and interior caller, unchanged. See dungeonLights.js for why the
+ *  two rules compose in this order. */
+export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0) {
   const perLight = typeof range !== 'number' ? range : null;
-  const sorted = lights
-    .map((l, index) => {
-      const dx = l.x - pos[0];
-      const dy = l.y - pos[1];
-      const dz = l.z - pos[2];
-      return { l, index, d: dx * dx + dy * dy + dz * dz };
-    })
-    .sort((a, b) => a.d - b.d)
-    .slice(0, max);
-  const out = new Float32Array(sorted.length * 4);
-  for (let i = 0; i < sorted.length; i++) {
-    out[i * 4] = sorted[i].l.x;
-    out[i * 4 + 1] = sorted[i].l.y;
-    out[i * 4 + 2] = sorted[i].l.z;
-    out[i * 4 + 3] = perLight ? perLight[sorted[i].index] : range;
+  const xz2 = xzRange > 0 ? xzRange * xzRange : 0;
+  let count = 0;
+  for (let i = 0; i < lights.length; i++) {
+    const l = lights[i];
+    const dx = l.x - pos[0];
+    const dy = l.y - pos[1];
+    const dz = l.z - pos[2];
+    // The XZ block-range gate, BEFORE the nearest-N admission: DFU
+    // compares XZ only ("dungeon blocks have no defined vertical
+    // height", :62) and disables on strictly greater, so a light
+    // exactly at the range stays lit.
+    if (xz2 && dx * dx + dz * dz > xz2) continue;
+    const d = dx * dx + dy * dy + dz * dz;
+    if (count >= max && d >= _selD[count - 1]) continue;   // not admitted; ties keep the earlier light
+    let j = count < max ? count++ : count - 1;
+    while (j > 0 && _selD[j - 1] > d) { _selD[j] = _selD[j - 1]; _selIdx[j] = _selIdx[j - 1]; j--; }
+    _selD[j] = d; _selIdx[j] = i;
+  }
+  const out = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) {
+    const l = lights[_selIdx[i]];
+    out[i * 4] = l.x;
+    out[i * 4 + 1] = l.y;
+    out[i * 4 + 2] = l.z;
+    out[i * 4 + 3] = perLight ? perLight[_selIdx[i]] : range;
   }
   if (!colorOf) return out;
-  const colors = new Float32Array(sorted.length * 3);
-  for (let i = 0; i < sorted.length; i++) {
-    const c = colorOf(sorted[i].l, sorted[i].index);
+  // The colour arm rides the SAME selection - the one-sort law above
+  // holds exactly as before: one ordering, two views of it.
+  const colors = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const c = colorOf(lights[_selIdx[i]], _selIdx[i]);
     colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
   }
   return { data: out, colors };

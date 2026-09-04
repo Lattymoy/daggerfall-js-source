@@ -4,8 +4,10 @@
 //   "Only ingredients, potions, gold pieces, oil and arrows are
 //    stackable, but equipped items, enchanted ingredients and quest
 //    items are never stackable."
-// Potions have no group yet (they pend the magic slice) - the rule
-// covers them the day they do.
+// Potions and books stack too - the rule's own words, and both arms
+// are live (AUDIT 39 F105; the sentence that stood here said potions
+// had no group yet, which stopped being true when the magic slice
+// landed).
 // Weight: template baseWeight, zeroed by the template's
 // hasNoEncumbrance bit (EffectiveUnitWeightInKg); weapons scale by
 // the ItemBuilder rule "Weight is baseWeight * value / 4" through the
@@ -17,6 +19,9 @@
 
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
 import { weightMultipliersByMaterial } from '../characters/weapons.js';
+// A2: SetItem's two draws-and-writes, one home each (itemTemplates.js
+// is a leaf of this module's import graph - it reads the same JSON).
+import { mintCondition, rollPaintingMessage, templateByIndex } from './itemTemplates.js';
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -40,16 +45,75 @@ export function isEnchanted(item) {
  *  Pieces" / "Gold pieces"), so the stack drew no icon at all and its
  *  label changed depending on who created it.
  *
- *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
- *  the GOLD button reads - it is not an item and never appears in the
- *  list. The port's S2 shape carries it as a bag stack; retiring that
- *  is its own slice (goldAmount/trade/loot all read the stack). */
+ *  E4 (2026-09-02) RETIRED THE REPRESENTATION FLAG: gold is a COUNTER
+ *  now, `entity.goldPieces` (PlayerEntity.cs:64 `protected int
+ *  goldPieces = 0`, :158 the GoldPieces property), and the PLAYER'S
+ *  COLLECTION CAN NO LONGER HOLD CURRENCY - which is the invariant
+ *  every consumer downstream of it leans on. A gold PILE is still an
+ *  item, because DFU's is: ItemBuilder.CreateGoldPieces (:791-798)
+ *  mints one into loot, the wagon and a quest resource, and
+ *  DaggerfallBankManager reads the WagonItems stack by group and
+ *  template. What no longer exists is a Currency stack in
+ *  PlayerEntity.Items.
+ *
+ *  The seam is the TRANSFER DOOR. DoTransferItem (:1562-1571)
+ *  intercepts a Currency.Gold_pieces item whose destination is
+ *  PlayerEntity.Items, does `GoldPieces += stackCount`, removes the
+ *  item from the source and returns BEFORE the transfer - so a pile
+ *  is spent into the counter at the moment it would enter the pack,
+ *  and no later code has to exclude it. systems/itemTransfer.js's
+ *  applyTransfer carries that arm for every screen that transfers.
+ *  D9's other finding stands and is why there is no filter here:
+ *  DaggerfallInventoryWindow.AddLocalItem (:914-943) has NO Currency
+ *  arm - its four tab tests are weapon/armor, enchanted, ingredient
+ *  and everything-else, exactly what ui/nativeInventory.js
+ *  filterByTab already ports. The list cannot show gold because the
+ *  collection never holds any.
+ *
+ *  Every OTHER producer writes the counter directly, as DFU's does:
+ *  startingGear (StartGameBehaviour's 100), biography's GP command
+ *  (BiogFile.cs:283-289), the pickpocket (PlayerActivate.cs:1628),
+ *  classicSave's physicalGold (StartGameBehaviour.cs:603), the quest
+ *  machine's GetItem gold arm (GetItem.cs:73-78), court.addGold and
+ *  every trade/bank payment (court.deductGold IS
+ *  PlayerEntity.DeductGoldAmount).
+ *
+ *  Weight was never the difference and still is not: template 276's
+ *  baseWeight is 0.0025 = DaggerfallBankManager.goldPieceWeightInKg,
+ *  so `carriedWeight` below adds `goldPieces * goldPieceWeightInKg`
+ *  by hand exactly as PlayerEntity.cs:184 does, and every reader of
+ *  the old bag total now asks that member instead. */
 export const GOLD_TEMPLATE = 276;
 export const goldStack = (stackCount = 0) => ({
   group: 'Currency', templateIndex: GOLD_TEMPLATE,
   name: templates.find((t) => t.index === GOLD_TEMPLATE)?.name ?? 'Gold Pieces',
+  // ItemBuilder.CreateGoldPieces (:791-798) writes `newItem.value = 1`
+  // over the template's basePrice - a pile is worth its own count, and
+  // a merchant's shelf total would otherwise read template 276's row.
+  value: 1,
   stackCount,
 });
+
+/** `item.IsOfTemplate(ItemGroups.Currency, (int)Currency.Gold_pieces)`
+ *  - DFU's own test, spelled once. Both terms, because DaggerfallUnity
+ *  Item.IsOfTemplate (:647-653) compares the group AND the index -
+ *  and it must, since MiscItems.Unused is template 276 too
+ *  (ItemEnums.cs:592-608). */
+export const isGoldPieces = (item) =>
+  item?.group === 'Currency' && item?.templateIndex === GOLD_TEMPLATE;
+
+/** PlayerEntity.GoldPieces (:158), read. C#'s field defaults to 0, so
+ *  an entity that has never held a coin reads the same as one that
+ *  spent its last. */
+export const goldPiecesOf = (entity) => entity?.goldPieces ?? 0;
+
+/** `playerEntity.GoldPieces += amount` - the write every producer
+ *  makes. The setter is unclamped in DFU and so is this. */
+export function addGoldPieces(entity, amount) {
+  if (!entity) return 0;
+  entity.goldPieces = goldPiecesOf(entity) + amount;
+  return entity.goldPieces;
+}
 
 /** MiscItems.Letter_of_credit (ItemEnums.cs) - minted the one place
  *  DFU mints it (DaggerfallTradeWindow.cs:1044-1048): a sale whose
@@ -69,6 +133,13 @@ export const letterOfCredit = (value = 0) => ({
  *  IsOfTemplate arms of IsItemStackable. */
 export const ARROW_TEMPLATE = 131;
 export const OIL_TEMPLATE = 252;
+/** UselessItems1.Glass_Bottle - IsPotion is that one template
+ *  (DaggerfallUnityItem.cs:352-355). systems/useItem.js exports the
+ *  predicate and is its home; this module cannot import it, because
+ *  combat/formulas.js imports THIS one and useItem's chain reaches
+ *  formulas - the pair is spelled here rather than closing that
+ *  cycle. */
+export const GLASS_BOTTLE_TEMPLATE = 83;
 
 // ---- X11b: SUMMONED ITEMS (the Create Item spell's conjured gear) --
 /** DaggerfallUnityItem.IsSummoned (:416-419), verbatim: "Summoned
@@ -89,11 +160,15 @@ export const isSummoned = (item) => (item?.timeForItemToDisappear ?? 0) !== 0;
  *  shelved by the Alchemist/GemStore/PawnShop stock tables, so ten
  *  bought rubies sat as ten rows. Oil was dropped the same way.
  *
- *  Books are the one arm deliberately NOT ported: IsItemStackable
- *  does name ItemGroups.Books, but ItemCollection.FindExistingStack
- *  (:699-718) additionally requires `checkItem.message == item.message`
- *  - the per-book id the port does not model - so stacking books here
- *  would merge two DIFFERENT books, which DFU never does. */
+ *  AUDIT 39 F105: the POTION and BOOKS arms land here too. Both were
+ *  held back by notes that had gone stale - potions "have no group
+ *  yet" (they are minted with their recipe key by loot.createPotion
+ *  and stocked by the alchemist and the guild) and books carry no
+ *  per-book id (every shelf and loot book has carried `message` since
+ *  IM1/B1). The identity terms those notes were right to demand are
+ *  in stacksWith now, where FindExistingStack keeps them. Note the
+ *  ingredient arm cannot stand in for either: templates 83 and 277
+ *  both ship isIngredient false. */
 export function isStackable(item) {
   // X11b: DFU's FIRST clause, ahead of the three below
   // (DaggerfallUnityItem.cs:682-689): a summoned item does not stack
@@ -108,10 +183,11 @@ export function isStackable(item) {
   // of DFU's rule were no-ops.
   if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
   if (templates[item.templateIndex]?.isIngredient) return true;   // IsIngredient
+  if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion
+  if (item.group === 'Books') return true;                        // ItemGroup == ItemGroups.Books
   if (item.group === 'Currency') return true;                     // IsOfTemplate(Currency, Gold_pieces)
   if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;
   if (item.group === 'UselessItems2' && item.templateIndex === OIL_TEMPLATE) return true;
-  // Potions join here when their group exists (the rule names them).
   return false;
 }
 
@@ -123,11 +199,42 @@ export function isStackable(item) {
  *  item.TimeForItemToDisappear` alongside the group and index, so two
  *  conjured arrow stacks with different lifetimes stay apart - and a
  *  conjured stack never merges into a real one, which would hand the
- *  real arrows an expiry or (worse) let the conjured ones outlive it. */
+ *  real arrows an expiry or (worse) let the conjured ones outlive it.
+ *
+ *  AUDIT 39 F105: and the same member's OTHER two identity terms,
+ *  `checkItem.message == item.message` and `checkItem.PotionRecipeKey
+ *  == item.PotionRecipeKey` (:706-713). They are what keeps the two
+ *  arms isStackable just gained honest: two different books share a
+ *  group and a template index and differ only by the book id, and two
+ *  different potions are the same glass bottle. */
 export function stacksWith(a, b) {
   return isStackable(a) && isStackable(b) &&
     a.group === b.group && a.templateIndex === b.templateIndex &&
-    (a.material ?? null) === (b.material ?? null) &&
+    // ROAD-Ar R5 (fallout): an ABSENT material is material 0, which is
+    // how the whole rest of the port reads the field (paperDoll :126,
+    // itemTemplates :61/:63, equip :345, weaponRig :162 - all
+    // `material ?? 0`) and what DFU's int nativeMaterialValue is when
+    // nothing sets it. The `?? null` sentinel here made undefined and 0
+    // different things, so a SplitStack mint - which writes
+    // nativeMaterialValue = 0 verbatim (DaggerfallUnityItem.cs:558) -
+    // could not re-merge into a source stack that carried no material
+    // field at all, e.g. the gold stack goldStack() mints.
+    //
+    // RECORDED, and not a divergence: FindExistingStack (:708-713)
+    // does not compare material AT ALL, so the port carries one term
+    // DFU does not - and the term is INERT, which is why it may stay.
+    // Nothing that reaches isStackable's ladder (:126-131) carries a
+    // material: ingredients, glass-bottle potions, books, Currency and
+    // oil have none, and the one stackable WEAPON is the arrow, whose
+    // material DFU itself zeroes - CreateWeapon's arrow arm writes
+    // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:131-138
+    // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
+    // wherever ItemCollection.cs:706-714 would have matched, and the
+    // `?? 0` above is the fix that keeps it that way.
+    (a.material ?? 0) === (b.material ?? 0) &&
+    (a.message ?? 0) === (b.message ?? 0) &&
+    (a.potionRecipeKey ?? 0) === (b.potionRecipeKey ?? 0) &&
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
 }
 
@@ -143,17 +250,70 @@ export function addItem(list, item) {
   return item;
 }
 
-/** ItemCollection.SplitStack (:261-272). Picking the WHOLE stack
- *  answers the stack itself; picking fewer mints a new record for the
- *  picked count (added to the collection unstacked, `noStack: true`)
- *  and leaves the rest on the original. Null on a non-stack, a bad
- *  count, or a stack this collection does not hold. */
-export function splitStack(list, stack, numberToPick) {
+/**
+ * ItemCollection.SplitStack (:261-272). Picking the WHOLE stack
+ * answers the stack itself; picking fewer mints a new record for the
+ * picked count (added to the collection unstacked, `noStack: true`)
+ * and leaves the rest on the original. Null on a non-stack, a bad
+ * count, or a stack this collection does not hold - `IsAStack()` is
+ * `stackCount > 1` (DaggerfallUnityItem.cs:701-704).
+ *
+ * A2 - THE PICKED ITEM IS A FRESH TEMPLATE MINT, NOT A COPY:
+ *
+ *     pickedItems = ItemBuilder.CreateItem(stack.ItemGroup, stack.TemplateIndex)
+ *
+ * CreateItem (:102-124) runs the DaggerfallUnityItem ctor, which runs
+ * SetItem (:538-573) - and SetItem writes the TEMPLATE's row over
+ * everything: nativeMaterialValue 0, dyeColor Unchanged, currentVariant
+ * 0, value = basePrice, flags 0, condition = hitPoints both ways,
+ * enchantmentPoints from the template, message 0 (a Paintings roll),
+ * stackCount 1. It carries nothing at all from the stack it came out
+ * of except the group and the template index.
+ *
+ * The port spread the source record instead, which is a different item
+ * in four ways that matter: per-item CONDITION rode along (a stack
+ * worn to 3 split into two stacks worth 3), ENCHANTMENTS were
+ * duplicated by reference - the item maker splits ONE off a stack to
+ * enchant precisely so the rest stay plain, and a shared array would
+ * have enchanted the whole stack - and `message` and `potionRecipeKey`
+ * came with it, which stacksWith reads as identity. DFU's split is a
+ * fresh item, so a Paintings split would draw its own picture; nothing
+ * stackable is a painting, but SetItem's law is stated whole here
+ * because the next reader will ask.
+ *
+ * The two mint terms the port keeps one home for - condition
+ * (mintCondition) and the Paintings message (rollPaintingMessage) -
+ * are called by name rather than respelled.
+ *
+ * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
+ * inline re-spellings of this member (equip.js:230 and
+ * potionMakerWindow.js:163, both on paths where nothing stackable is
+ * equippable) and missed a THIRD, which was the one on the main path:
+ * itemTransfer._applyTransfer's partial arm, reached by every
+ * pack<->wagon/loot and shelf->basket move that the wagon or carry
+ * gate clamps below stackCount. That one now calls this member, so the
+ * two spellings can no longer disagree about what a split produces.
+ * The recorded remainder is therefore equip.js and potionMakerWindow.js
+ * ONLY - if a third appears, it is new.
+ */
+export function splitStack(list, stack, numberToPick, { rolls = Math.random } = {}) {
   const count = stack?.stackCount ?? 1;
   if (count <= 1 || numberToPick < 1 || numberToPick > count || !list.includes(stack)) return null;
   if (numberToPick === count) return stack;
-  const picked = { ...stack, stackCount: numberToPick };
-  list.push(picked);
+  const template = templateByIndex(stack.templateIndex);
+  const picked = mintCondition({
+    group: stack.group,
+    templateIndex: stack.templateIndex,
+    name: template?.name,
+    material: 0,                                  // nativeMaterialValue = 0
+    flags: 0,
+    variant: 0,                                   // currentVariant = 0
+    value: template?.basePrice ?? 0,              // value = itemTemplate.basePrice
+    enchantmentPoints: template?.enchantmentPoints,
+    message: stack.group === 'Paintings' ? rollPaintingMessage(rolls) : 0,
+    stackCount: numberToPick,
+  });
+  list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;
 }
@@ -281,7 +441,12 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  zero it, that flag gates only encumbrance. */
 export function unitWeightInKg(item) {
   const t = templates[item.templateIndex];
-  let base = t ? t.baseWeight : 0;
+  // DFU copies the template weight onto the item (weightInKg) and reads
+  // the ITEM; the port reads the template by index, so an item with no
+  // Daggerfall row (PH1: the mod's Horse Saddle, PegasItems 1001)
+  // carries its own. A Daggerfall item always has its row, so the classic
+  // lane never reaches the fallback.
+  let base = t ? t.baseWeight : (item.weight ?? 0);
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
     base = weightForMaterial(base, item.material);
   }
@@ -328,6 +493,18 @@ export const weightInGPUnits = (kg) => Math.round(kg * 400);
  *  and U40's letter-of-credit gate, which asks whether a sale's
  *  proceeds would push the player past MaxEncumbrance. */
 export const GOLD_PIECE_WEIGHT_KG = 0.0025;
+
+/** PlayerEntity.CarriedWeight (:184), verbatim:
+ *  `Items.GetWeight() + (goldPieces * DaggerfallBankManager
+ *  .goldPieceWeightInKg)`. E4: with gold off the item list this is the
+ *  only honest reading of what the player carries, and it is what the
+ *  four readers DFU has all ask for - the character sheet's
+ *  encumbrance line (:404), DaggerfallInventoryWindow.GetCarriedWeight
+ *  (:852-855, which the CanCarryAmount gate reads), the bank's
+ *  withdrawal weight test (DaggerfallBankManager.cs:370) and
+ *  LevitateMotor's over-encumbered walk (:83). */
+export const carriedWeight = (entity) =>
+  totalWeight(entity?.items ?? []) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
 
 /** ComputeCanHoldAmount (DaggerfallInventoryWindow.cs:1444-1455,
  *  L-slice AUDIT 23 items-9): how many units of an item fit under a

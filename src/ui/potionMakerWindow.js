@@ -21,16 +21,20 @@
 // slot cap, the wagon fallback and the break. This file is the panel,
 // the two lists and the picker.
 //
-// FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
-// label through ItemListScroller's own template; the port's shared
-// scroller draws the icon and the stack label, and the tooltip rides
-// U37's ToolTip once the scroller exposes a per-slot hover.
+// D7: DFU's ingredient buttons carry a tooltip AND a stack-count label
+// through ItemListScroller's own template, and both are here now. The
+// stack label is the shared scroller's drawStackLabel
+// (ItemListScroller.cs:360-365/:447); the tooltip is the same file's
+// :340/:464 - the window's shared ToolTip, its text
+// ResolveItemLongName, moved onto whichever button the pointer rests
+// over. Both lists get one, because DFU builds both out of the same
+// ItemListScroller (:226-239) and hands both the same tip.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
-import { makeIconDrawer, drawStackLabel } from './itemScroller.js';
+import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
+import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
 import { isEnchanted } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148)
 import { SOUND } from '../systems/soundClips.js';
@@ -78,10 +82,12 @@ export const INGREDIENT_SCROLL_UP = Object.freeze([5, 30, 9, 16]);
 export const INGREDIENT_SCROLL_DOWN = Object.freeze([5, 30 + 142 - 16, 9, 16]);
 
 /** "potionMixed" / "potionFailed" / "noRecipes" / "reqIngredients" -
- *  Internal_Strings, recovered. */
-export const POTION_MIXED = 'You have successfully mixed a potion.';
-export const POTION_FAILED = 'The ingredients you have combined are useless.';
-export const NO_RECIPES = 'You do not know any potion recipes.';
+ *  Internal_Strings.csv:852-855, verbatim. The keys are asked for at
+ *  DaggerfallPotionMakerWindow.cs:381 (noRecipes), :325 (potionMixed),
+ *  :332 (potionFailed) and :300 (reqIngredients). */
+export const POTION_MIXED = 'Your potion has been mixed.';
+export const POTION_FAILED = 'Those ingredients did not concoct an effective potion.';
+export const NO_RECIPES = 'You have no recipes.';
 export const REQ_INGREDIENTS = 'You do not have the ingredients required.';
 
 let _art = null;
@@ -89,6 +95,8 @@ export async function preloadPotionArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'MASK00I0.IMG');
+    // AUDIT 58: the recipe picker is SmallFont, 12 rows (:113).
+    await preloadListPickerSmallFont(deps);
   } catch { console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed'); }
 }
 export const potionArtLoaded = () => !!_art;
@@ -127,6 +135,22 @@ export class PotionMakerWindow {
     this.box = null;
     this.picker = null;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
+    this._tip = makeSlotToolTip();   // D7: the window's shared ToolTip (:340)
+  }
+
+  /** The rest clock DaggerfallBaseWindow's defaultToolTip runs. */
+  tick(dt) { this._tip.update(dt); }
+
+  /** The item under the cursor, on either list - the two grids the
+   *  click path already reads, so the tip can never name a slot the
+   *  click would miss. */
+  _itemAt(vx, vy) {
+    const R = POTION_RECTS;
+    const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
+    if (cs !== null) return this.cauldron[cs] ?? null;
+    const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
+    if (is === null) return null;
+    return this.ingredients()[this.scroll * INGREDIENT_COLS + is] ?? null;
   }
 
   _close() { this.done = true; this.hooks.onClose?.(); }
@@ -220,6 +244,9 @@ export class PotionMakerWindow {
       items: known.map((r) => r.name),
       onPick: (i) => { this._fillFrom(known[i]); this.picker = null; },
       onCancel: () => { this.picker = null; },
+      // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
+      // picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)`.
+      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
@@ -254,6 +281,20 @@ export class PotionMakerWindow {
     if (code === 'Enter' || code === 'KeyM') { this._mix(); return; }
     if (code === 'KeyR') this._recipes();
   }
+
+  /** ROAD-A7: the recipe picker's hover seam. D7: and, with no picker
+   *  over the panel, the item tooltip - which follows the pointer the
+   *  way a button's ToolTip does, and clears the moment it rests on
+   *  nothing. */
+  hover(vx, vy, e = null) {
+    if (this.picker) { this.picker.hover(vx, vy, e); this._tip.hide(); return; }
+    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    this._tip.show(this._itemAt(vx, vy), vx, vy);
+  }
+
+  /** ROAD-E E1: the release edge, forwarded the way `hover` is - the
+   *  picker's thumb latches on the press and this is what ends it. */
+  release() { this.picker?.release(); }
 
   click(vx, vy) {
     if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
@@ -307,5 +348,6 @@ export class PotionMakerWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
+    this._tip.draw(renderer, m, font);   // D7: drawn LAST, over everything (DFU's final-component order)
   }
 }

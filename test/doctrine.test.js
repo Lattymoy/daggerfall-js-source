@@ -31,14 +31,20 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
-  // THE SITE'S PICTURES (U60c). Screens of the ENHANCED skin - type and
-  // layout - taken by tools/siteShots.mjs with NO ARENA2 anywhere: the
-  // tool boots its own vite with no data folder, proves the game's own
-  // data fetch 404s, and aborts if the folder pick appears. Not one
-  // pixel on them came from the game.
-  ['public/site/menu-settings.png', 'OURS - the enhanced settings shell, no game data loaded (tools/siteShots.mjs)'],
-  ['public/site/menu-phone.png', 'OURS - the enhanced menu on a phone, no game data loaded (tools/siteShots.mjs)'],
-  ['public/site/menu-home.png', 'OURS - the enhanced pixel home, no game data loaded (tools/siteShots.mjs)'],
+  // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
+  // (U65f): two marks, a title card and the one recorded piece of
+  // music this port ever shipped. The rows went with the files; this
+  // sentence replaces the rationale that outlived them, because a
+  // licensing position stated over an empty list tells a reader the
+  // repo publishes a music recording and two third-party trademarks,
+  // and it publishes neither. Every note is synthesised from the
+  // player's own MIDI.BSA again (systems/songPlayer.js, the A5 arc).
+  // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
+  // (Mac, 2026-08-31): the landing page carries no raster at all now -
+  // landing.test.js pins <img> absent - so the three menu screens,
+  // their OURS rows and tools/siteShots.mjs went together. The both-
+  // ways check below is why removing them is safe: a row cannot
+  // outlive its file, and a returning picture must re-earn its row.
   // THE BAKED SKIN (tools/skin/). These pixels never touched ARENA2: the
   // source is our own generated eight-direction turnaround, projected onto
   // buildNeutralBody, which is a from-scratch DESIGNED figure and not a trace
@@ -157,7 +163,14 @@ test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file',
   // a tracked file must have a row - so a row could be written for a
   // file that never landed, or outlive one that was deleted, and the
   // list would still pass while meaning less than it claims.
-  const stale = [...PUBLIC_ALLOWLIST.keys()].filter((f) => !tracked('public').includes(f));
+  // The list is public-only again: it briefly reached into src/assets
+  // for the intro (Vite emits those into the build, so they are just
+  // as PUBLISHED as public/), and 1c62e11 took the intro out. The
+  // reverse check still reads each row's OWN directory rather than
+  // assuming public/, so the next published-but-not-public row needs
+  // no new machinery.
+  const stale = [...PUBLIC_ALLOWLIST.keys()]
+    .filter((f) => !tracked(f.split('/')[0]).includes(f));
   assert.deepEqual(stale, [],
     'these rows name files that are not tracked. A row is a CLAIM that a published\n'
     + 'file is ours; a claim about a file that does not exist is not a claim.');
@@ -220,29 +233,192 @@ test('doctrine: .gitignore still blocks the game data it claims to block', () =>
 // four files declared "this is a deliberate departure" with no row either.
 // Both are the AUDIT 17m shape - a comment pointing at an approval that does
 // not exist - and the second one had been repeated four times.
+//
+// ROAD-G G7 (records sweep, 2026-09-04) WIDENED THE POPULATION TO THE CITE
+// ITSELF. F7's eleven sites were caught because they happened to shout
+// DEPARTURE; the gate then scanned only that token, so the OTHER half of F7's
+// finding - "a `src/` site cites Ledger A and no row on that page names the
+// file" - went on recurring in silence. Seventeen files were in exactly that
+// state at HEAD: `characters/dungeonEnemies.js`, `world/dungeonTextures.js`,
+// `player/cameraRecoiler.js`, `player/moveScanner.js`, `scenes/menu.js`,
+// `systems/repairService.js`, `systems/riding.js`, seven of
+// `systems/quest/*` (clock, foe, message, parser, person, quest, questLists),
+// `ui/enhancedCharSheet.js`, `ui/merchantServiceWindow.js` and
+// `ui/transportWindow.js`. Each was adjudicated one of three ways and none
+// was waved through: the ROW EXISTED and the cite was silent about it (the
+// engine-PRNG rule, which now carries its live roster; the dungeon-seed
+// bullet; the main-menu EXIT row) - the row was OWED and was written (the
+// `AdvancedClimbing` scaffolding, the merchant popup's accelerators, the
+// port's scalar clock) - or the COMMENT WAS WRONG: `transportWindow.js`
+// claimed "the port's own letters (Ledger A - DFU reads its keybind table)"
+// when DaggerfallTransportWindow.cs:100-137 binds all five buttons out of
+// `DialogShortcuts.txt`, which A8 ported whole, so the letters were wired to
+// the table and the departure ceased to exist.
+//
+// The RESOLUTION here stays the loose one - the Ledger names the file
+// SOMEWHERE - deliberately, and the AUDIT 58 gate below is the strict tier.
+// A class rule (the engine-PRNG rule, the settings surface) covers a
+// population rather than a path, so a per-file section-A row would be the
+// wrong shape for it; what the widened gate demands instead is that the class
+// row keep a ROSTER, which is the one line a new site has to touch.
 // ---------------------------------------------------------------------------
 
-test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its file', () => {
+test('doctrine: every DEPARTURE or Ledger A cite in src/ has a Ledger row naming its file', () => {
   const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
   const unrecorded = [];
+  let scanned = 0;
   for (const f of tracked('src')) {
     if (!f.endsWith('.js')) continue;
     const text = readFileSync(join(root, f), 'utf8');
     // Both spellings: the shouted convention, and the prose one that let
     // messageBox.js's row go unenforced when this pin first landed.
-    if (!/\bDEPARTURE\b/.test(text) && !/deliberate departure/i.test(text)) continue;
+    // ROAD-E fix-D: and the PLURAL. `\bDEPARTURE\b` is false on
+    // "RECORDED DEPARTURES", so nine files that shout the plural - the
+    // spell maker among them, which cited a Ledger A row that did not
+    // exist - were never scanned at all. The trailing S is now optional.
+    // ROAD-G G7: `Ledger A` joins the two DEPARTURE spellings. A file that
+    // names section A is claiming an approval just as loudly as one that
+    // shouts the word, and that half of F7's finding was never gated.
+    if (!/\bDEPARTURES?\b/.test(text) && !/deliberate departure/i.test(text)
+      && !/Ledger A/.test(text)) continue;
     // The LEDGER must name the file. Citing the Ledger from the source side is
     // NOT enough and deliberately does not count here: F7's eleven sites all
     // cited "the Ledger A engine-PRNG rule" and no such row existed. A claim
     // of approval is not an approval.
+    scanned++;
     const base = f.split('/').pop();
     if (ledger.includes(f) || ledger.includes(base)) continue;
     unrecorded.push(f);
   }
+  // ...and the population itself, so a rewording cannot quietly empty the
+  // gate the way `\bDEPARTURE\b` emptied it against the plural.
+  assert.ok(scanned >= 100,
+    `only ${scanned} files match the DEPARTURE / Ledger A claim - the shapes moved and this gate went quiet`);
   assert.deepEqual(unrecorded, [],
-    'these files declare a DEPARTURE and no Ledger row names them. The Ledger says\n'
+    'these files declare a DEPARTURE, or cite Ledger A, and no Ledger row names\n'
+    + 'them. The Ledger says\n'
     + '"if a departure or gap is not on this page, it does not exist", which is only\n'
     + 'usable as a gate while it is true - a later audit greps the Ledger to decide\n'
     + '"approved or bug?" and gets the wrong answer:\n'
     + unrecorded.join('\n'));
+});
+
+// ═══ AUDIT 58 (seams): a RECORDED departure resolves against a
+// section-A row that NAMES THE FILE ════════════════════════════════
+//
+// The gate above asks only whether Port-Ledger.md mentions the file
+// ANYWHERE. That is the whole 922-line page, struck rows included, and
+// it is how nine files went on declaring an approval nobody had
+// written: `musicReplacement.js` was satisfied by a live section-C mod
+// row, `weatherSim.js` by the STRUCK "~~THE WEATHER ODDS TABLE~~"
+// row, `colorPicker.js` and `nativeTalk.js` by struck CLOSED rows,
+// `input.js` by the struck C2 hotkey row that retires a blocker and
+// approves nothing. test/citedrift.test.js named this vacuity in its
+// own header when CD1 closed it for the TB1 family and the pause
+// window; the other eight were left standing.
+//
+// The two tiers are deliberate. THE PLAIN TOKEN keeps the loose test,
+// because dozens of files say "DEPARTURE" while citing a RULE row that
+// covers a class rather than a path - the engine-PRNG rule, the
+// settings-surface row - and narrowing that population would redden
+// working citations. THE CLAIM - a file that shouts its departure is
+// already RECORDED - is what must resolve, and it resolves the way an
+// approval has to: an UNSTRUCK row inside section A that names the
+// file. A claim of approval is not an approval; a struck row is not
+// one either.
+const A_BOUNDS = ['## A. Approved departures from DFU', '## A-note (H1)'];
+/** The claim shapes: "RECORDED DEPARTURE(S)", "DEPARTURE (recorded",
+ *  "DEPARTURE (Ledger A shape)", "DEPARTURES, both recorded". */
+const RECORDED_CLAIM =
+  /\bRECORDED DEPARTURES?\b|\bDEPARTURES?\b[^.\n]{0,40}\((?:recorded|Ledger A shape)|\bDEPARTURES?, both recorded\b/;
+
+test('AUDIT 58: a file claiming a RECORDED departure has an unstruck section-A row naming it', () => {
+  const doc = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8').split('\n');
+  const lo = doc.findIndex((l) => l.startsWith(A_BOUNDS[0]));
+  const hi = doc.findIndex((l) => l.startsWith(A_BOUNDS[1]));
+  assert.ok(lo >= 0 && hi > lo, 'Port-Ledger has no section A');
+  // section A's table rows, minus the header and the struck ones -
+  // citedrift's own `awk '/^\|/ && !/^\|---/'` and `struck` helpers.
+  const approved = doc.slice(lo, hi)
+    .filter((l) => /^\|/.test(l) && !/^\|---/.test(l) && !/^\| What \|/.test(l))
+    .filter((l) => !/^\|\s*(\*\*)?~~/.test(l))
+    .join('\n');
+  assert.ok(approved.length > 1000, 'section A resolved to nothing - the bounds moved');
+
+  const claimed = [];
+  const unrowed = [];
+  for (const f of tracked('src')) {
+    if (!f.endsWith('.js')) continue;
+    // comments WRAP, so the claim is read off the unwrapped prose
+    const flat = readFileSync(join(root, f), 'utf8')
+      .replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    if (!RECORDED_CLAIM.test(flat)) continue;
+    claimed.push(f);
+    const base = f.split('/').pop();
+    if (!approved.includes(f) && !approved.includes(base)) unrowed.push(f);
+  }
+  assert.ok(claimed.length >= 18,
+    `only ${claimed.length} files match the RECORDED-departure claim - the shapes moved and this gate went quiet`);
+  assert.deepEqual(unrowed, [],
+    'these files say their departure is already RECORDED and no unstruck section-A row\n'
+    + 'names them. "If a departure or gap is not on this page, it does not exist" is only\n'
+    + 'usable while it is true, and a STRUCK section-C row is not an approval:\n'
+    + unrowed.join('\n'));
+});
+
+// ═══ AUDIT 58 (f3/render): a gate knob that reads nothing is a door
+// that can neither fail nor act ═════════════════════════════════════
+test('AUDIT 58: every URL knob the world render gate hands the page has a live reader in src/', () => {
+  const g = readFileSync(join(root, 'tools/worldRenderGate.mjs'), 'utf8');
+  // EE3's --ground survived the ground arc's REVERT (8256ae2, "no
+  // reader of tileArrayFor, enhancedGround or groundMode remains
+  // anywhere"): the gate went on appending &ground=<mode> to a URL
+  // nothing parsed and printing "ground=<mode>" in its PASS line, so a
+  // run could claim it had gated a mode that no longer exists.
+  const line = g.split('\n').find((l) => l.startsWith('const dials = '));
+  assert.ok(line, 'the gate builds its extra query knobs in one place');
+  const knobs = [...line.matchAll(/&(\w+)=\$\{/g)].map((m) => m[1]);
+  assert.ok(knobs.length >= 4, `the knobs are still here: ${knobs.join(', ')}`);
+  const src = tracked('src').filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+  for (const k of knobs) {
+    assert.ok(src.includes(`get('${k}')`) || src.includes(`get("${k}")`),
+      `--${k} hands the page ?${k}=<v> and nothing in src/ reads it: a knob with no reader `
+      + 'gates nothing, and the gate\u2019s own pass line then claims it did');
+  }
+  assert.ok(!/ground=/.test(line) && !/GROUND/.test(g), 'the reverted ground knob is gone from the URL and the pass line');
+  assert.match(g, /world render gate ok \(\$\{MODE\}, \$\{MINUTES\} min\)/,
+    'the pass line names only what the run actually set');
+});
+
+// ═══ EE0: the world render gate exists, and reads the compositor's frame ═══
+test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
+  const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');
+  // it boots the GAME, against data, into the exterior
+  // AUDIT 48 F1: the classic mode must open the SKIN's door, ?skin=classic.
+  // A bare ?classic is the classic start-location door, and every
+  // classic-mode run before this rendered the enhanced skin.
+  assert.match(g, /const skin = MODE === 'classic' \? '&skin=classic' : '';/);
+  assert.ok(!/'&classic'/.test(g), 'the start-location door is not the skin door');
+  // EE7: the gate can boot either host - ?exterior by default, ?world
+  // with --world, where the grass lives
+  assert.match(g, /\/play\/\?\$\{WORLD \? 'world' : 'exterior'\}&shot&novideo&nofoes/);
+  assert.match(g, /window\.__frame/, 'it must wait for frames, not for load');
+  // it judges the COMPOSITOR'S frame: a readPixels outside the game's
+  // rAF returns a cleared buffer, which reads as "everything is black"
+  assert.match(g, /canvas\.screenshot\(\{ type: 'png'/);
+  assert.ok(!/readPixels\(/.test(g), 'a read-back of the default framebuffer lies here');
+  // and it fails on the three things a black world has
+  // EE3 sharpened these: the lower half is judged, and then the TERRAIN
+  // itself by a median band, because a lit building beside a void
+  // ground passed the lower-half check
+  assert.match(g, /the lower half is lit/);
+  assert.match(g, /the lower half has detail/);
+  assert.match(g, /the TERRAIN is lit \(street band median/);
+  assert.match(g, /the sky is drawn/);
+  // the arc plan names it as every slice's gate
+  const plan = readFileSync('bible/07-Rendering/Enhanced-Environments-Arc.md', 'utf8');
+  assert.match(plan, /tools\/worldRenderGate\.mjs/);
+  assert.match(plan, /an upload may create, fill and\s+parameterise an object\. It may not draw/,
+    'the law the texture incident taught must be in the plan');
 });

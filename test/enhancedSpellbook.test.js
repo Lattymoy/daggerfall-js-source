@@ -33,7 +33,10 @@ test('PX23 door: four hosts collapse to ONE seam, and the BUY window is not it',
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js']) {
     const s = read(f);
     assert.match(s, /createSpellbookWindow\(\{/, `${f} goes through the door`);
-    assert.match(s, /rows: \(id\) =>/, `${f} keeps its own TEXT.RSC reach`);
+    // ROAD A7 MOVED THIS PIN: the painting flow widened the rows seam
+    // with the dfRand variant pick in the three hosts that hang
+    // paintings; dungeons hang none, so dungeonContext keeps (id).
+    assert.match(s, /rows: \(id(?:, pick)?\) =>/, `${f} keeps its own TEXT.RSC reach`);
     // The latch moved into the door for the PLAYER's book. worldModes
     // keeps one, and it is the BUY window's - a shop needs to know what
     // you already own to grey out what you have.
@@ -75,6 +78,72 @@ test('PX23 book: it borrows every law and invents none', () => {
   assert.match(book, /from '\.\.\/systems\/spellEffects\.js'/, 'the same effectByKey spellbookWindow.js:120 uses');
   assert.match(book, /spellEffects, spellPointCost, EFFECT_NOT_FOUND,/, 'the laws are imported, not rewritten');
   assert.doesNotMatch(book, /tag === 'lycanthrope'|tag === 'vampire'/, 'the tags are constants, never typed');
+});
+
+test('AUDIT 39: DELETE is two presses in BOTH books, and the words are the classic\'s', () => {
+  // The enhanced book spliced `deps.spells()` - which spellbookDoor
+  // hands over as `entity.spells` BY REFERENCE - on a single click,
+  // while DFU's DeleteButton_OnMouseClick (:811-838) ends by parking
+  // the row in deleteSpellIndex and raising a YesNo box on
+  // "deleteSpell", and only DeleteSpellConfirm_OnButtonClick's Yes arm
+  // (:840-852) deletes. The port's CLASSIC window carries all of that,
+  // so the two skins disagreed about an unrecoverable act.
+  const src = read('src/ui/enhancedSpellbook.js');
+  assert.match(src, /DELETE_SPELL_PROMPT/, 'the prompt is the classic\'s own string, imported');
+  assert.doesNotMatch(src, /'Do you want to delete this spell\?'/, 'and never retyped');
+  assert.match(src, /^let deleting = null;/m, 'deleteSpellIndex, by another name');
+  // THE PRESS ARMS, IT DOES NOT DELETE.
+  const del = src.slice(src.indexOf("const del = el('button', 'act', 'Delete');"));
+  const arm = del.slice(0, del.indexOf('acts.append(del);'));
+  assert.match(arm, /deleting = sel\.i;/);
+  assert.doesNotMatch(arm, /splice/, 'the Delete button must not touch the array');
+  // ...and the two refusals still answer FIRST, as they do in DFU.
+  assert.ok(arm.indexOf('sel.undeletable') < arm.indexOf('deleting = sel.i;'));
+  // ONLY YES SPLICES, and BOTH answers dismiss the CARD, not the book.
+  //
+  // AUDIT-39r: THIS PIN MOVED, DELIBERATELY. The first version read
+  // the CloseWindow() at :851 as "either answer ends the book" and
+  // demanded onExit() in both arms. That call is
+  // UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+  // RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+  // TopWindow - the YesNo box mb.Show() pushed, since
+  // DaggerfallMessageBox.ActivateButton (:479-484) only raises the
+  // event. The spellbook stays, which is why the Yes arm bothers with
+  // RefreshSpellsList(true) and UpdateSelection().
+  const confirm = src.slice(src.indexOf('function confirmDelete(yes) {'));
+  const bodyOf = confirm.slice(0, confirm.indexOf('\n}'));
+  assert.match(bodyOf, /if \(yes && deleting !== null\)/, 'only Yes splices');
+  assert.match(bodyOf, /list\.splice\(deleting, 1\);/);
+  assert.match(bodyOf, /deleting = null;\n\s*render\(\);/, 'both answers redraw the book that stays');
+  assert.doesNotMatch(bodyOf, /onExit/, 'no answer to this box closes the spellbook');
+  assert.equal((src.match(/\.splice\(/g) ?? []).length, 1, 'exactly one splice in the whole file, and it is this one');
+  // The box is MODAL, as a PUSHED DaggerfallMessageBox is: the window
+  // under the scrim is disabled outright, so Ready cannot ready a
+  // spell and a rail row cannot silently drop the question.
+  const scrim = src.slice(src.indexOf('if (deleting !== null) {', src.indexOf('win.append(body);')));
+  assert.match(scrim, /win\.querySelectorAll\('button, input'\)\) b\.disabled = true;/,
+    'every control beneath the prompt goes dead');
+  assert.match(scrim, /win\.append\(deleteScrim\(\)\);/, 'and the prompt is drawn OVER the window');
+  assert.match(read('src/ui/enhancedStyle.js'), /\.sb-shell \.sb-ask \{ position: absolute; inset: 0;/,
+    'the scrim is a scrim, not a card parked in the detail column');
+  // ...and it answers to the same two keys the classic window does
+  // (spellbookWindow.js KeyY/KeyN), which the first version had not:
+  // Escape was its only answer and nothing at all was Yes.
+  const onKey = src.slice(src.indexOf('function onKey(e)'));
+  assert.ok(onKey.indexOf('if (deleting !== null) {') < onKey.indexOf("e.key === 'ArrowDown'"),
+    'the arrows must not walk the rail while the box is up');
+  const gate = onKey.slice(onKey.indexOf('if (deleting !== null) {'), onKey.indexOf("e.key === 'ArrowDown'"));
+  assert.match(gate, /e\.code === 'KeyY'/, 'Y answers Yes');
+  assert.match(gate, /e\.code === 'KeyN'/, 'N answers No');
+  assert.match(gate, /overlayAction\(e\) === 'back'/, 'and Escape is the No the classic window reads');
+  assert.match(gate, /confirmDelete\(yes\);/, 'both keys land on the one handler the buttons use');
+  // and the classic window it is now level with reads the same law.
+  const classic = read('src/ui/spellbookWindow.js');
+  assert.match(classic, /this\.deleteSpellIndex = this\.selectedIndex;\n\s*this\.top = 'delete';/);
+  assert.match(classic, /confirmDelete\(yes\) \{\n\s*if \(yes && this\.deleteSpellIndex !== -1\)/);
+  const classicConfirm = classic.slice(classic.indexOf('confirmDelete(yes) {'));
+  assert.doesNotMatch(classicConfirm.slice(0, classicConfirm.indexOf('\n  }')), /this\._close\(\)/,
+    'the classic book carried the same misreading and no longer does');
 });
 
 test('PX23 book: the pixel family\'s own bones, and no invented furniture', () => {

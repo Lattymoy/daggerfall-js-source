@@ -10,6 +10,7 @@ import { SPELL_ABSORPTION } from '../src/systems/absorption.js';
 import { calculateCastCost } from '../src/systems/spellcost.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { MISSILE_SPEED, MISSILE_LIFESPAN_S } from '../src/systems/spellcast.js';
+import { SpellCastAnim, RELEASE_FRAME, ANIM_SPEED } from '../src/combat/fpsSpellCasting.js';
 
 const damageEffect = (mag = 20) => ({
   type: 4, subType: 0,
@@ -43,20 +44,35 @@ const mkFoe = (x, z) => ({
   },
 });
 
-/** A full engine over stubs; returns { magic, world } for inspection. */
-function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity } = {}) {
+/** A full engine over stubs; returns { magic, world } for inspection.
+ *  ROAD-E6: `hands` mounts a REAL FPSSpellCasting animation as the
+ *  engine's startCastAnim, which is how the four hosts wire their
+ *  weapon rig - without it the engine takes DFU's no-animation arm and
+ *  resolves the cast on the spot. */
+function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands = null } = {}) {
   const world = {
-    player, foes, said: [], sounds: [], hurtPlayer: 0, foeHurt: new Map(),
+    player, foes, said: [], sounds: [], castSoundIds: [], hurtPlayer: 0, foeHurt: new Map(),
     batchesMade: 0, batchesFreed: 0, surfaced: 0,
+    // AUDIT 39: the two uploaders are DIFFERENT KEYS - `${a}_${r}` and
+    // `${a}_${r}#${f}` - so which one a pool is handed is observable.
+    records: [], frames: [],
   };
   const magic = createPlayerMagic({
     renderer: {
-      createBillboardBatch: () => { world.batchesMade++; return { origin: null }; },
+      createBillboardBatch: (archive, record, size, centres) => { world.batchesMade++; return { archive, record, size, centres, origin: null }; },
       destroyBillboardBatch: () => { world.batchesFreed++; },
     },
-    audio: { playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id) },
+    // AUDIT 58: the cast sound goes through the ID door (PlayCastSound's
+    // `(uint)castSoundID`, EntityEffectManager.cs:1958), so the fake
+    // device carries the ID entry points the host actually calls.
+    audio: {
+      playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id),
+      playOneShotId: (id) => { world.castSoundIds.push(id); world.sounds.push(id); },
+      play3dId: (id) => { world.castSoundIds.push(id); world.sounds.push(id); },
+    },
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
-    uploadRecord: () => {},
+    uploadRecord: (a, r) => world.records.push(`${a}_${r}`),
+    uploadRecordFrame: (a, r, f) => world.frames.push(`${a}_${r}#${f}`),
     collider: { raycast },
     playerEntity: player,
     playerSinks: {
@@ -73,6 +89,7 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity } = {}) 
     }),
     absorbCtx: () => ({ inside: true, day: false }),
     rolls: () => 0.99,   // deterministic: saves fail, magnitudes roll high-end
+    startCastAnim: hands ? (sp, onRelease) => hands.playOneShot(sp.element, onRelease) : null,
   });
   return { magic, world };
 }
@@ -181,6 +198,28 @@ test('hostMagic missiles: a wall retires; an AreaAtRange wall hit EXPLODES at th
   assert.ok(aoe.world.hurtPlayer > 0, 'and the too-close caster');
 });
 
+test('AUDIT 39: the impact flash uploads on the FRAME key, which is the key the draw looks for', async () => {
+  // DaggerfallMissile.DoCollision (:364-370) - UseSpellBillboardAnims
+  // (1, true) at ImpactBillboardFramesPerSecond. hitEffects uploads
+  // every frame of record 1 under the composite `${record}#${frame}`
+  // key and sets `batch.frame = 0`, and the draw then asks the texture
+  // map for `${archive}_${record}#${frame}` and RETURNS if it is not
+  // there. The engine handed the pool the 2-arg `uploadRecord` in the
+  // 3-arg `uploadRecordFrame` slot, so `375_1` was uploaded, `375_1#0`
+  // was asked for, and every impact flash in every host that mounts
+  // this engine drew nothing at all - F033 shipped dead and green,
+  // because its pin only counted call sites.
+  const { magic, world } = rig({ raycast: () => 0.4 });   // a wall just ahead
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  magic.update(0.05, [0, 0, 0]);                 // the missile reaches the wall
+  await new Promise((r) => setTimeout(r, 0));    // the flash's archive warms
+  assert.ok(world.frames.includes('375_1#0'),
+    `record 1 of the element archive, frame-keyed (saw ${JSON.stringify(world.frames)})`);
+  assert.equal(world.records.includes('375_1'), false,
+    'and never under the record-only key, which the draw cannot find');
+});
+
 test('hostMagic missiles: the lifespan retires a flier that hits nothing', () => {
   const { magic, world } = rig();
   magic.setReadied(spellOf(2, [damageEffect()]));
@@ -189,6 +228,38 @@ test('hostMagic missiles: the lifespan retires a flier that hits nothing', () =>
   for (let i = 0; i < steps; i++) magic.update(0.25, null);
   assert.equal(world.batchesFreed, world.batchesMade);
   assert.ok(MISSILE_SPEED > 0);
+});
+
+test('AUDIT-39r: clearMissiles is the load/teleport sweep - the flights go, the engine stays', async () => {
+  // CleanupUntrackedObjects (StreamingWorld.cs:1620-1644, on
+  // SaveLoadManager_OnStartLoad): "remove loose enemies, missiles, etc.
+  // on load or new game", and the same sweep a teleport reaches through
+  // ClearStreamingWorld. A missile in the air when a fast travel or a
+  // quickload lands must not arrive with the player. This seam shipped
+  // held by nothing but a source-text grep of world.js - deleting the
+  // whole method left the suite green while the one call site became a
+  // TypeError inside an async teleport.
+  const { magic, world } = rig();
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true, 'straight up - nothing to hit');
+  assert.equal(magic.missileCount(), 1, 'one flight in the air');
+  magic.update(0.05, null);                     // the flight asks for its art
+  await new Promise((r) => setTimeout(r, 0));   // the archive warms and the billboard exists
+  assert.ok(world.batchesMade > 0, 'the flight has a billboard');
+
+  magic.clearMissiles();
+  assert.equal(magic.missileCount(), 0, 'the sweep takes it');
+  assert.equal(world.batchesFreed, world.batchesMade, 'and hands its billboard back');
+  magic.update(0.05, [0, 0, 0]);   // nothing swept is walked again
+  assert.equal(magic.missileCount(), 0);
+
+  // destroy() is the TERMINAL teardown and takes the candle and the
+  // impact batches with it; the engine outlives a teleport, so this
+  // frees the flights alone and must leave a castable engine behind.
+  magic.clearMissiles();   // idempotent
+  magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 1, 0]), true);
+  assert.equal(magic.missileCount(), 1, 'the engine still casts after the sweep');
 });
 
 test('hostMagic click seam: interceptAttack consumes the armed click; firePending casts ONCE', () => {
@@ -225,4 +296,134 @@ test('hostMagic save seam: readiedIndex round-trips through setReadiedByIndex', 
   assert.equal(fresh.readied(), sp);
   fresh.setReadiedByIndex(null, byIndex);
   assert.equal(fresh.readied(), null);
+});
+
+
+// ═══ ROAD-E6: THE RELEASE FRAME IS THE SPELL ════════════════════════
+// EntityEffectManager.CastReadySpell (:400-439) spends the magicka and
+// starts the hands; FPSSpellCasting's coroutine raises OnReleaseFrame
+// five frames later (:283-284) and PlayerSpellCasting_OnReleaseFrame
+// (:2098-2143) is what tallies, sounds, launches and clears.
+
+test('ROAD-E6: the cast SPENDS and starts the hands; the spell leaves them five frames later', () => {
+  const hands = new SpellCastAnim();
+  const { magic, world } = rig({ hands });
+  const sp = spellOf(2, [damageEffect()]);
+  const cost = calculateCastCost(sp, world.player).sp;
+  magic.setReadied(sp);
+
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), true, 'the cast started');
+  // :423-425 DecreaseMagicka is at the CAST, before a frame of motion.
+  assert.equal(world.player.magicka, 500 - cost, 'the magicka is spent at the cast');
+  assert.equal(hands.isPlayingAnim, true, 'PlayOneShot ran (:434)');
+  assert.equal(magic.castInProgress(), true, 'castInProgress (:435)');
+  // ...and NOTHING of the release has happened yet.
+  assert.equal(magic.missileCount(), 0, 'no missile before the release frame');
+  assert.equal(world.player.skillUses[SKILLS.Destruction], 0, 'no tally before the release frame');
+  assert.deepEqual(world.sounds, [], 'no cast sound before the release frame');
+  assert.equal(magic.readied(), sp, 'the ready survives the hand motion (:2135 clears it, not :434)');
+
+  // Four steps of 0.04s - frame 4 of 7 - and the spell is still in hand.
+  for (let i = 0; i < RELEASE_FRAME - 1; i++) hands.tick(ANIM_SPEED);
+  assert.equal(magic.missileCount(), 0, 'frame 4 is not the release frame');
+  assert.equal(world.player.magicka, 500 - cost, 'and nothing spends twice');
+
+  // The fifth step IS releaseFrame (:46 = 5).
+  assert.equal(hands.tick(ANIM_SPEED), true, 'the step that crosses releaseFrame');
+  assert.equal(magic.missileCount(), 1, 'the missile leaves the hands on frame 5');
+  assert.equal(world.player.skillUses[SKILLS.Destruction], 1, "the tally is the release frame's (:2109)");
+  assert.equal(world.sounds.length, 1, 'and so is the cast sound (:2112-2115)');
+  assert.equal(magic.readied(), null, 'the ready clears at :2135');
+  assert.equal(magic.castInProgress(), false, ':2100');
+});
+
+test('ROAD-E6: castInProgress refuses a second cast and a new ready for the whole 0.2s', () => {
+  const hands = new SpellCastAnim();
+  const { magic, world } = rig({ player: mkPlayer({ health: 20 }), hands });
+  const sp = spellOf(2, [damageEffect()]);
+  const cost = calculateCastCost(sp, world.player).sp;
+  magic.setReadied(sp);
+  magic.castInput([0, 0.9, 0], [0, 0, 1]);
+
+  // :408 - "a previous cast must not be in progress".
+  assert.equal(magic.castInput([0, 0.9, 0], [0, 0, 1]), false, 'the second click does nothing');
+  assert.equal(world.player.magicka, 500 - cost, 'and spends nothing');
+  // :315 - SetReadySpell's own castInProgress term. It refuses BEFORE
+  // touching a field, so the spell already readied is left standing.
+  magic.readySpell(spellOf(0, [healEffect()]));
+  assert.equal(magic.readied(), sp, 'no new ready while the hands are in motion');
+  assert.equal(world.player.health, 20, 'and the CasterOnly instant did not fire');
+
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  assert.equal(magic.castInProgress(), false, 'the window closes on the release frame');
+  assert.equal(magic.missileCount(), 1);
+});
+
+test('ROAD-E6: a spell aborted inside the window never reaches the release - and is not refunded', () => {
+  const hands = new SpellCastAnim();
+  const { magic, world } = rig({ hands });
+  const sp = spellOf(2, [damageEffect()]);
+  const cost = calculateCastCost(sp, world.player).sp;
+  magic.setReadied(sp);
+  magic.castInput([0, 0.9, 0], [0, 0, 1]);
+  // AbortReadySpell (:361-365) nulls readySpell and nothing else.
+  magic.setReadied(null);
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  // :2102-2104 "Must have a ready spell" - DFU's own comment at :2107
+  // is "Cancelled spells do not reach this point".
+  assert.equal(magic.missileCount(), 0, 'nothing launched');
+  assert.equal(world.player.skillUses[SKILLS.Destruction], 0, 'nothing tallied');
+  assert.deepEqual(world.sounds, [], 'nothing sounded');
+  assert.equal(world.player.magicka, 500 - cost, 'the magicka stays spent - there is no refund');
+  assert.equal(magic.castInProgress(), false, 'the flag still clears (:2100 runs first)');
+});
+
+test("ROAD-E6: no animation means the release is NOW - DFU's own no-anim arm", () => {
+  // CastNoAnimSpell (:367-398) and the non-player EnemyCastReadySpell
+  // branch (:436-439) both resolve inline: an engine with no rig, or a
+  // rig whose PlayOneShot refuses (an element with no CIF archive),
+  // never touches FPSSpellCasting.
+  const bare = rig();                       // no hands at all
+  bare.magic.setReadied(spellOf(2, [damageEffect()]));
+  assert.equal(bare.magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  assert.equal(bare.magic.missileCount(), 1, 'the missile flew on the spot');
+  assert.equal(bare.magic.castInProgress(), false, 'and no window opened');
+
+  // GetMagicAnimFilename has no arm for ElementTypes.None, so
+  // PlayOneShot refuses and the engine takes the same immediate path.
+  const hands = new SpellCastAnim();
+  const none = rig({ hands });
+  none.magic.setReadied(spellOf(2, [damageEffect()], { element: 99 }));
+  assert.equal(none.magic.castInput([0, 0.9, 0], [0, 0, 1]), true);
+  assert.equal(hands.isPlayingAnim, false, 'no archive, no hands');
+  assert.equal(none.magic.missileCount(), 1, 'the spell still goes');
+});
+
+test('ROAD-E6: ByTouch picks TWICE - the pre-spend gate, then DoTouch on the live aim', () => {
+  // DFU spawns the missile at the release frame, so its Start runs
+  // DoTouch off the caster transform AT THAT MOMENT
+  // (DaggerfallMissile.cs:265-286, :273-275). The gate at :411-421 only
+  // decides whether the magicka is spent at all.
+  const hands = new SpellCastAnim();
+  const gone = mkFoe(0, 1.5);
+  const one = rig({ foes: [gone], hands });
+  one.magic.setReadied(spellOf(1, [damageEffect()]));
+  assert.equal(one.magic.castInput([0, 0.9, 0], [0, 0, 1]), true, 'the pre-spend gate found it');
+  gone.ai.feet = [0, 0, 30];   // out of reach before the hands open
+  for (let i = 0; i < RELEASE_FRAME; i++) hands.tick(ANIM_SPEED);
+  assert.equal(one.world.foeHurt.get(gone), undefined, 'DoTouch found nothing on the release frame');
+
+  // ...and the aim is the LIVE one: every host feeds the engine its
+  // eye/dir once a frame through firePending, so a player who turns
+  // during the 0.2s touches whatever the NEW look is pointing at.
+  const h2 = new SpellCastAnim();
+  const ahead = mkFoe(0, 1.5);
+  const aside = mkFoe(1.5, 0);
+  const two = rig({ foes: [ahead, aside], hands: h2 });
+  two.magic.setReadied(spellOf(1, [damageEffect()]));
+  two.magic.castInput([0, 0.9, 0], [0, 0, 1]);
+  two.magic.firePending([0, 0.9, 0], [1, 0, 0]);   // the host's next frame, turned
+  for (let i = 0; i < RELEASE_FRAME; i++) h2.tick(ANIM_SPEED);
+  assert.equal(two.world.foeHurt.get(ahead), undefined, 'the cast-time target is not the one touched');
+  assert.ok(two.world.foeHurt.get(aside) > 0, 'the release touched what the live aim points at');
 });

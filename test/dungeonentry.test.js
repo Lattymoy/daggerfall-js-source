@@ -111,15 +111,61 @@ test('DE1: closestDoorTo is FindClosestDoorToPlayer - nearest world centre wins'
   assert.equal(closestDoorTo([0, 0, 0], null), null);
 });
 
+test('DE2: every dungeon facing LEVELS THE PITCH, as all three DFU calls do', () => {
+  // DE1 shipped the yaw half and left the pitch. SetFacing(Vector3) is
+  // `LookRotation(forward).eulerAngles` fed to SetFacing(yaw, pitch)
+  // (PlayerMouseLook.cs:286-291), and every vector the dungeon members
+  // pass is HORIZONTAL - Vector3.forward, a door normal - so the pitch
+  // it computes is 0. The exit says it outright: SetHorizontalFacing
+  // is SetFacing(yaw, 0f) (:294-299). Walk in looking at the sky and
+  // DFU levels you; the port left you craning.
+  const modes = read('src/scenes/worldModes.js');
+  // the ENTRY - inside the same guard as the yaw, because
+  // TransitionDungeonInterior only faces when it found a door
+  assert.match(modes, /if \(_yaw !== null\) \{\n\s*cam\.yaw = _yaw;[\s\S]{0,900}?cam\.pitch = 0;\n\s*\}/,
+    'the entry levels the pitch, and only when it faces at all');
+  // the EXIT landing
+  assert.match(modes, /cam\.yaw = Math\.atan2\(landing\.normal\[0\], landing\.normal\[2\]\);[\s\S]{0,700}?cam\.pitch = 0;/,
+    'the exit levels the pitch');
+  // exactly two transition sites level it - a third would mean some
+  // other path started snapping the view without a DFU member behind it
+  assert.equal((modes.match(/cam\.pitch = 0;/g) ?? []).length, 2);
+  // and BUILDINGS still do not face at all: neither TransitionInterior
+  // nor BuildingTransitionExteriorLogic touches PlayerMouseLook, so a
+  // shop door leaves the player's bearing alone
+  const at = modes.indexOf('const landing = interiorLanding(');
+  assert.equal(/cam\.(yaw|pitch) = /.test(modes.slice(at, at + 900)), false,
+    'a building door must not snap the view - DFU never faces on either building transition');
+});
+
+test('DE2: the standalone host is already level by construction', () => {
+  // StartDungeonInterior faces Vector3.forward, which is yaw 0 pitch 0.
+  // scenes/dungeon.js builds its camera that way, so it needs no arm -
+  // and a pin here stops someone "fixing" it into one.
+  assert.match(read('src/scenes/dungeon.js'), /const cam = \{ pos: spawn, yaw: 0, pitch: 0 \};/);
+});
+
 test('DE1: each host call site takes the member it actually is', () => {
   const modes = read('src/scenes/worldModes.js');
   // the walk-in default is the transition - the common way in
   assert.match(modes, /async function tryEnterDungeon\(hit, entries, \{ preferEnterMarker = false \} = \{\}\)/,
     'the DEFAULT is the door transition, because that is how a player gets in');
   assert.match(modes, /const spawn = ctx\.startSpawn\(\{ preferEnterMarker \}\);/);
-  assert.match(modes, /if \(!spawn\) \{ console\.error\('\[dungeon\] no start marker; transition aborted'\); return false; \}/,
-    'the refusal is carried through: the player stays outside at the door');
-  assert.match(modes, /const _yaw = ctx\.entryFacingYaw\(spawn, \{ preferEnterMarker \}\);\n\s*if \(_yaw !== null\) cam\.yaw = _yaw;/);
+  // AUDIT 39 (#29) MOVED THIS PIN. The one-liner it held said the
+  // player stays outside; the code around it had already switched
+  // mode, dungeonLoc and the collider, so the "abort" left the player
+  // in dungeon mode at their exterior position on a leaked context.
+  // DFU tests the marker BEFORE EnableDungeonParent/MovePlayerToMarker
+  // and Destroys the layout (PlayerEnterExit.cs:921-934), so the
+  // refusal is a block now and the law it pins is the ORDER.
+  assert.match(modes, /if \(!spawn\) \{\n\s+console\.error\('\[dungeon\] no start marker; transition aborted'\);\n\s+ctx\.destroy\(\);\n\s+dungeonCtx = null;\n\s+return false;\n\s+\}/,
+    'the refusal is carried through: the player stays outside at the door, and the layout is destroyed');
+  assert.ok(modes.indexOf("mode = 'dungeon';") > modes.indexOf('const spawn = ctx.startSpawn({ preferEnterMarker });'),
+    'nothing commits the mode before the marker is known');
+  // DE2 re-anchored this: the one-liner became a block when the pitch
+  // half landed, and the law it holds - the host asks for the facing
+  // of the member it IS, and applies it - did not change.
+  assert.match(modes, /const _yaw = ctx\.entryFacingYaw\(spawn, \{ preferEnterMarker \}\);\n\s*if \(_yaw !== null\) \{/);
   // a new game is the OTHER member
   assert.match(modes, /return tryEnterDungeon\(hit, entries, \{ preferEnterMarker: true \}\);/);
   // and the standalone host is StartDungeonInterior by definition

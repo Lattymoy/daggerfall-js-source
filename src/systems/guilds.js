@@ -567,6 +567,30 @@ export function isEligibleToJoin(entity, guild, store) {
 export const INVITATION_ONLY = Object.freeze(['ThievesGuild', 'DarkBrotherhood']);
 export const isJoinableByApplication = (guild) => !INVITATION_ONLY.includes(guild.name);
 
+/** GuildManager.QuestMachine_OnQuestEnded (:53-67), registered in the
+ *  manager's OWN CONSTRUCTOR (:45-47, "Listen for quest end events
+ *  which trigger joining TG & DB") - and it is the ONLY door into
+ *  either guild. The shipped initiation scripts carry no join action
+ *  of their own, INVITATION_ONLY nulls out the walk-in above, so
+ *  without this listener both guilds are permanently unjoinable and
+ *  everything keyed on their membership is dead code (AUDIT 39 F96).
+ *
+ *  Three details are DFU's and are pinned: the whole thing is gated on
+ *  quest SUCCESS, the two names are tested by two independent `if`s
+ *  rather than a chain, and the join is AddMembership -> Guild.Join()
+ *  (:122-126, :309-313), which is joinGuild - rank 0 and today's date,
+ *  not a rank the quest awarded. */
+export function guildInitiationQuestEnded(memberships, questName, questSuccess, now) {
+  if (!questSuccess) return [];
+  const joined = [];
+  for (const guild of [GUILDS.ThievesGuild, GUILDS.DarkBrotherhood]) {
+    if (questName !== guild.initiationQuest) continue;
+    joinGuild(memberships, guild, now);
+    joined.push(guild);
+  }
+  return joined;
+}
+
 /** TokensIneligible (:111-115) as a decision rather than tokens: a
  *  NEGATIVE reputation is refused FOR reputation, anything else for
  *  skill. The two are different TEXT.RSC records, and a player refused

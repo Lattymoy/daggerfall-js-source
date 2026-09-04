@@ -21,18 +21,40 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
   const halfH = worldH / 2;
   const halfW = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * s / 2;   // azimuth-safe upper bound - holds under rig yaw for free
   const center = transformPoint(rigMat, (b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, (b.minZ + b.maxZ) / 2);   // through rigMat, so yaw rotation is exact
+  return drawRigSpriteBox(renderer, canvas, rig.mesh, rigMat, { center, halfW, halfH }, proj, view, eye);
+}
+
+/**
+ * The pixelize standard's TAIL, one home (MW-D24 extracted it verbatim
+ * so the Morrowind third-person body and the voxel foes size and
+ * composite through the SAME law): given the world-space box a rig
+ * occupies - its center, half-height along world up and azimuth-safe
+ * half-width - render the mesh into the low-res sprite under a fitted
+ * ortho from the main view's azimuth and composite the camera-facing
+ * fogged quad. Callers own the box because they own the rig's space
+ * (the voxel rigs measure Y-up rig bounds; the Morrowind body measures
+ * its Z-up assembly and maps axes before calling).
+ */
+/** MW-D43b (Mac: "3rd person is still pixelated"): `pixel` defaults to
+ *  CHAR_PIXEL, which is the SPRITE standard and stays the law for every
+ *  Daggerfall character drawn through here. The Morrowind third-person
+ *  body is not one - it is the same mesh the first-person arm is, and
+ *  MW-D43 already gave that its own dial while missing this pass, which
+ *  is the OTHER half of the same picture and the half Mac was looking
+ *  at when he said it was still wrong. */
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH }, proj, view, eye, pixel = CHAR_PIXEL) {
   const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
   const pvS = multiply(proj, view);
   const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
   const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;
-  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / CHAR_PIXEL)));
+  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / pixel)));
   const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const camDir = [dx / dist, dy / dist, dz / dist];
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;
   const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
   const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
-  const sTex = renderer.renderCharacterSprite(rig.mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
+  const sTex = renderer.renderCharacterSprite(mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
   renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
   return { center, halfW, halfH, pw, ph };
 }

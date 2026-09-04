@@ -45,7 +45,14 @@ import { STAT_KEYS_ORDER } from './statMods.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';
 import { ITEM_GROUP_BY_ID } from './biography.js';
 import { GROUP_TEMPLATE_INDICES, templateFor } from './itemTemplates.js';
-import { goldStack } from './inventory.js';
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the None sentinel FromItemRecord tests
+import { isPotion, isPotionRecipe } from './useItem.js';
+import {
+  CLASSIC_RECIPE_KEYS,   // PotionRecipe.classicRecipeKeys
+  // A4: the flag masks and the legacy artifact-index recovery, at
+  // their one home beside createArtifact.
+  ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
+} from './loot.js';
 import { equipItem } from './equip.js';
 import { guildGroupOfFaction, daySinceZero } from './guilds.js';
 import { dateFromClassicMinutes } from './gameDate.js';
@@ -302,10 +309,38 @@ export function classicItemFromRecord(record) {
     typeDependentData: d.typeDependentData,
     enchantmentPoints: d.enchantmentPoints,
     message: d.message,
+    // A4: the two IDENTITY BITS the classic flags word carries
+    // (DaggerfallUnityItem.cs:96-97). The port models both as booleans
+    // on the record - createArtifact writes them where DFU writes the
+    // word (:617) - so an import that copied `flags` alone left every
+    // classic artifact reading as a plain enchanted item: itemInfo
+    // printed its material and armor rating (which an artifact never
+    // shows), an imported Oghma Infinium opened the plain book reader
+    // instead of its Used payload (useItem.js isBook), and the trade
+    // window offered to IDENTIFY an item classic had already
+    // identified, at (25 * value) >> 8.
+    artifact: (d.flags & ITEM_ARTIFACT_MASK) > 0,
+    isIdentified: (d.flags & ITEM_IDENTIFIED_MASK) > 0,
   };
   // "If item is an arrow, typeDependentData is the stack count" -
   // Weapons group index 18.
   item.stackCount = (d.group === 3 && d.index === 18) ? d.typeDependentData : 1;
+  // "Convert classic recipes to DFU recipe key" (:1577-1579). The same
+  // byte names the recipe on a potion or a recipe sheet; without the
+  // conversion an imported bottle carries no key and drinks as
+  // nothing. The guard is DFU's - the upper bound only, and the byte
+  // is unsigned.
+  if ((isPotion(item) || isPotionRecipe(item)) && d.typeDependentData < CLASSIC_RECIPE_KEYS.length) {
+    item.potionRecipeKey = CLASSIC_RECIPE_KEYS[d.typeDependentData];
+  }
+  // "Try to generate artifactIndexBitfield if this data is missing
+  // from save" (:1581-1582) - DFU's own comment, at DFU's own place in
+  // FromItemRecord: after the recipe conversion, before the variant.
+  // A classic record has no bitfield at all, so this is the ONLY thing
+  // that gives an imported artifact its index - and the index is what
+  // names the artifact's Info description (record 8700 + subtype) and
+  // what the Special enchantment's payload dispatch keys on.
+  legacyArtifactIndexBitfieldCheck(item);
   // Clothing keeps its dye byte (DyeColors values match classic);
   // currentVariant = playerRecord - template.playerTextureRecord, the
   // cloak's +1 exactly as IsCloak carves it out.
@@ -320,9 +355,14 @@ export function classicItemFromRecord(record) {
     item.variant = (d.image1 & 0x7f) - template.playerTextureRecord;
   }
   // The legacy magic array becomes item.enchantments, DISCARDED whole
-  // when no entry carries a real type (EnchantmentTypes.None = 0).
+  // when no entry carries a real type. AUDIT 39: the sentinel is
+  // EnchantmentTypes.None = -1 (ItemsFile.cs:113), NOT 0 - 0 is
+  // CastWhenUsed, a real enchantment. Classic writes 0xFFFF into the
+  // empty slots and the reader takes them signed, so testing against
+  // 0 kept a ten-entry array on EVERY imported item and isEnchanted
+  // answered true for all of them.
   const enchantments = (d.magic ?? []).map((m) => ({ type: m.type, param: m.param }));
-  if (enchantments.some((e) => e.type !== 0)) item.enchantments = enchantments;
+  if (enchantments.some((e) => e.type !== ENCHANTMENT_TYPES.None)) item.enchantments = enchantments;
   return item;
 }
 
@@ -351,7 +391,7 @@ export function classicSpellsFromContainer(containerRecord, spellsByIndex = null
  *  wagon and bag apart, equips what the character record's 27 equip
  *  slots name, imports the spellbook's spells, and mints the physical
  *  gold as the port's one Currency stack.
- *  @returns {{items, wagonItems, spells, scratch}} */
+ *  @returns {{items, wagonItems, spells, goldPieces, scratch}} */
 export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
   // The scratch entity exists so the ONE equip law places equipSlot -
   // its table and armor writes are discarded with it.
@@ -406,11 +446,13 @@ export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
     }
   }
 
-  // GoldPieces (:602-603): the port's gold is the one Currency stack.
-  const physicalGold = character.parsedData?.physicalGold ?? 0;
-  if (physicalGold > 0) scratch.items.push(goldStack(physicalGold));
+  // GoldPieces (StartGameBehaviour.cs:602-603), verbatim since E4:
+  // `playerEntity.GoldPieces = (int)characterRecord.ParsedData
+  // .physicalGold` - an assignment to the COUNTER, so a zero purse
+  // is an honest zero rather than an absent stack.
+  const goldPieces = character.parsedData?.physicalGold ?? 0;
 
-  return { items: scratch.items, wagonItems: scratch.wagonItems, spells, scratch };
+  return { items: scratch.items, wagonItems: scratch.wagonItems, spells, goldPieces, scratch };
 }
 
 /** PlayerEntity.AssignGuildMemberships + GuildManager.
@@ -574,7 +616,7 @@ export function classicSaveToSnapshot(saveGames, {
 
   // Items, spells, gold and the worn set - the equip law runs on the
   // scratch, whose slot marks ride each item into the envelope.
-  const { items, wagonItems, spells, scratch } = classicItemsAndSpells(saveTree, { spellsByIndex });
+  const { items, wagonItems, spells, goldPieces, scratch } = classicItemsAndSpells(saveTree, { spellsByIndex });
 
   // The stats object in the port's keyed shape.
   const stats = {};
@@ -655,8 +697,41 @@ export function classicSaveToSnapshot(saveGames, {
 
     lastSkillCheckTime: saveVars.lastSkillCheckTime,
     timeOfLastSkillTraining: doc.lastTimePlayerBoughtTraining,
+    // AUDIT 39: the rest of AssignCharacter's clock/tally block
+    // (PlayerEntity.cs:856-861). The document carried all five and the
+    // envelope carried none, so restorePlayer's `?? 0` arms zeroed
+    // both crime-guild tallies and both letter clocks - a character
+    // nine thefts into the Thieves Guild requirement imported at zero
+    // and a scheduled invitation never came - and the tavern meal
+    // clock arrived undefined.
+    lastTimePlayerAteOrDrankAtTavern: doc.lastTimePlayerAteOrDrankAtTavern,
+    timeForThievesGuildLetter: doc.timeForThievesGuildLetter,
+    timeForDarkBrotherhoodLetter: doc.timeForDarkBrotherhoodLetter,
+    darkBrotherhoodRequirementTally: doc.darkBrotherhoodRequirementTally,
+    thievesGuildRequirementTally: doc.thievesGuildRequirementTally,
+    // A4: the last two AssignCharacter members the document carried
+    // and the envelope dropped (PlayerEntity.cs:855-856).
+    // timeToBecomeVampireOrWerebeast is classic's three-days stamp and
+    // this import is the ONLY way it ever reaches a character - the
+    // temple's cure counts it as one more disease and clears it
+    // (guildServiceActions.js); dropped, an imported character three
+    // days from turning was cured of everything but the turn.
+    // minMetalToHit is the weapon-material floor CalculateAttackDamage
+    // reads on the target: classic writes Silver on a live
+    // vampire/werebeast, and the two curses re-arm it on their next
+    // constant round, so this is the value that stands in between.
+    timeToBecomeVampireOrWerebeast: doc.timeToBecomeVampireOrWerebeast,
+    minMetalToHit: doc.minMetalToHit,
+    // And the two masks classic calls SkillsRaisedThisLevel, which
+    // AssignCharacter lands word for word in skillsRecentlyRaised
+    // (:851-852) - the marks the character sheet highlights on the
+    // first visit after an import.
+    skillsRecentlyRaised: [doc.skillsRaisedThisLevel1, doc.skillsRaisedThisLevel2],
 
     items, wagonItems,
+    // StartGameBehaviour.cs:603 - the purse rides the envelope as the
+    // counter restorePlayer now restores (E4).
+    goldPieces,
     otherItems: [],
     // The envelope's spell shape (save.js S1): a NUMBER is a stock
     // SPELLS.STD index, an OBJECT is a made spell riding whole. The
@@ -709,6 +784,17 @@ export function classicSaveToSnapshot(saveGames, {
           }
         }
       });
+      // A4 VERIFIED (Road to 1:1): `buildings` stays EMPTY because the
+      // reference leaves it empty. SaveGames.cs:215-248 is the whole
+      // of DFU's MAPSAVE handling and it walks locations only - the
+      // 0x40 bit per location index, then
+      // `gps.DiscoverLocation(regionName, location.Name)` - and
+      // PlayerGPS.DiscoverBuilding (:917) has no classic-import caller
+      // anywhere in the tree (its callers are PlayerActivate,
+      // PlayerEnterExit, TalkManager, the bank and the two secret
+      // guilds - all live play). A classic character arrives with
+      // every town they had found and no building inside any of them,
+      // exactly as they do in DFU. Not a gap; do not "fix" it.
       snap.discovery = { buildings: {}, locations };
     }
   }

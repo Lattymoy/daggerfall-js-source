@@ -76,12 +76,15 @@ export const SPAWNER_ARMS = Object.freeze({
   wilderness: Object.freeze({ minDistance: MIN_WILDERNESS_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
   // :610 - resting in a dungeon under an alert. THE ONE THAT PASSES FALSE.
   dungeonRest: Object.freeze({ minDistance: MIN_DUNGEON_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: false }),
-  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
-  // port stands guards through the street-person pool (cityGuards'
-  // spawnGuardAt takes a person's own position and facing), which is a
-  // different placement problem from this ring and is not folded in
-  // here. The row is carried so the table is the whole call site list
-  // and a reader can see what is not wired.
+  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. D9 WIRED IT.
+  // The row used to be carried unread, on the grounds that the watch
+  // arrives through the street-person pool; that is true of the pool
+  // arm (spawnGuardAt takes a person's own position and facing, which
+  // is a conversion, not a spawn), but PlayerEntity.cs:687 is the
+  // FALLBACK - "nobody in the pool converted" - and it is a plain
+  // CreateFoeSpawner like every other row here. cityGuards.js now
+  // stands those guards through placeFoeFreely with this band, so the
+  // table is read end to end.
   cityGuards: Object.freeze({ minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true }),
 });
 
@@ -140,13 +143,36 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
   return table[min + Math.floor(rolls() * (max + 1 - min))];   // Range(min, max+1)
 }
 
+// ---- PreventEnemySpawns (PlayerEntity.cs:47/:145) -------------------
+//
+// A ONE-UPDATE shield, set by the three arms that RAISE THE CLOCK
+// without the player living through the minutes: fast travel
+// (DaggerfallTravelPopUp.cs:347), the vampirism transformation
+// (VampirismInfection.cs:157), and the jail skip - which sets it
+// TWICE, once as the sentence's days elapse
+// (DaggerfallCourtWindow.cs:473) and again on every release
+// (:484). DFU's own note at :479-481 says why: "Enemy spawns are
+// prevented after time is raised for fast travel, jail time, and
+// vampire transformation." Without it, walking out of a thirty-day
+// sentence runs thirty days' worth of catch-up spawn rolls in one
+// frame, on the courthouse steps.
+//
+// PlayerEntity.Update guards the WHOLE catch-up loop with it (:482) -
+// the passive guard rolls at :498-511 are inside that loop and are
+// suppressed with the spawns - and clears it at the tail of the same
+// update (:524-525). The host that owns the loop owns both halves;
+// the read below is DFU's own belt-and-braces copy at :560, whose
+// comment admits it "should not need" to be there.
+
 /** IntermittentEnemySpawn (:547-618) as a pure decision: null, or
  *  { mobileType, minDistance }. ctx adds { inside, inDungeon,
- *  isResting, enemyAlertActive, gameMinutes } to chooseRandomEnemy's.
- *  The caller runs it per elapsed game minute (the catch-up loop)
- *  and stops on the first spawn, exactly as PlayerEntity.Update. */
+ *  isResting, enemyAlertActive, gameMinutes, preventEnemySpawns } to
+ *  chooseRandomEnemy's. The caller runs it per elapsed game minute
+ *  (the catch-up loop) and stops on the first spawn, exactly as
+ *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
-  if (!timeForSpawn(ctx.gameMinutes)) return null;
+  // :560 - `if (!timeForSpawn || preventEnemySpawns) return false;`
+  if (!timeForSpawn(ctx.gameMinutes) || ctx.preventEnemySpawns) return null;
   const timeOfDay = ctx.gameMinutes % 1440;
   if (!ctx.inside) {
     if (ctx.inLocationRect) {
@@ -186,6 +212,10 @@ export const PASSIVE_GUARD_LEGAL_REP = -10;
 export const PASSIVE_GUARD_LOW_REP_CHANCE = 5;
 export const PASSIVE_GUARD_BANISHED_CHANCE = 10;
 export const SEVERE_PUNISHMENT_BANISHED = 1;
+/** The court's own second write (DaggerfallCourtWindow.cs:288, state
+ *  5). Nothing READS bit 2 in DFU - it is a record, not a trigger -
+ *  but the two bits are one field and belong in one home. */
+export const SEVERE_PUNISHMENT_EXECUTED = 2;
 
 /** How many SpawnCityGuards(false) calls this ONE catch-up minute
  *  owes: 0, 1 or - both rolls landing, which DFU permits because the
@@ -255,8 +285,18 @@ export const RESTING_DISTANCE = 12;
  * port had dropped entirely; it is what a caller passes to ask the
  * coarser "is anything alive nearby" question.
  *
- * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
- * carrying a live position.
+ * THE FoeSpawner SWEEP (:720-728) IS NOT A GAP, recorded. DFU walks
+ * ActiveGameObjectDatabase's FoeSpawner MonoBehaviours because those
+ * objects PERSIST - GameObjectHelper.CreateFoeSpawner (:1314-1318)
+ * mounts one and it retries placement across frames, so a spawner
+ * inside spawnDistance is an enemy that is coming. The port has no
+ * such object: world.js places within a SINGLE call and gives up
+ * (LOOSE_FOE_PLACE_ATTEMPTS = 12, :1913, at :1930 and :1959), and a
+ * foe that placed is already in the pool this walks, so there is
+ * nothing pending to count. Nor were quest spawns ever in that sweep
+ * on either side - DFU's CreateFoe is a QuestAction that calls
+ * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
+ * CreateFoe.cs), which is systems/quest/actions.js:2283-2305 here.
  */
 export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {

@@ -38,29 +38,20 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // reference into src/ - and no game file named (the data folder is
   // named, which is the point of the page; its files are not).
   assert.doesNotMatch(landing, /<script/i, 'the landing page runs no script');
-  assert.doesNotMatch(landing, /<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but its pictures');
-  // U60c: THE PICTURES. Every image on the page is one the doctrine
-  // allow-list admits by name, tracked under public/site/, and made by
-  // tools/siteShots.mjs - the tool that refuses to run with game data.
-  const imgs = [...landing.matchAll(/<img\s[^>]*src="([^"]+)"[^>]*>/g)];
-  assert.ok(imgs.length >= 3, 'the site shows its pictures');
-  const allow = read('test/doctrine.test.js');
-  const shots = read('tools/siteShots.mjs');
-  const tracked = execFileSync('git', ['ls-files', 'public/site'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
-  for (const [tag, src] of imgs) {
-    assert.match(src, /^\.\/site\/[\w-]+\.png$/, `${src}: pictures live under ./site/ and nowhere else`);
-    const file = `public/${src.slice(2)}`;
-    assert.ok(tracked.includes(file), `${file} is tracked`);
-    assert.ok(allow.includes(`['${file}', 'OURS - `), `${file} has an OURS row on the doctrine allow-list`);
-    assert.ok(shots.includes(`'${src.match(/([\w-]+)\.png$/)[1]}'`), `${file} is made by tools/siteShots.mjs`);
-    assert.match(tag, /\swidth="\d+"\s+height="\d+"/, `${src} declares its size (no layout shift)`);
-    assert.match(tag, /\salt="[^"]{20,}"/, `${src} is described`);
-  }
-  // And the tool's guard is what makes the rows true.
-  assert.match(shots, /delete process\.env\.ARENA2_PATH/, 'the tool drops the data folder');
-  assert.match(shots, /probe\.status !== 404[\s\S]*process\.exit\(2\)/, 'the tool aborts if the dev server can serve one game file');
-  assert.match(shots, /locator\('#pick'\)\.count\(\)\)[\s\S]*throw new Error/, 'the tool aborts if the folder pick is on screen');
-  assert.doesNotMatch(landing, /\.(jpe?g|gif|webp|svg|bmp)\b/i, 'no other image file is referenced');
+  // THE DA SITE CLEANUP (Mac, 2026-08-31) retired the pictures whole:
+  // the U60c chain - three menu screens under public/site/, their
+  // doctrine rows, tools/siteShots.mjs and the pins tying them
+  // together - is gone, and the law got SIMPLER: this page carries no
+  // raster at all. Its only drawings are CSS (the night, the gem, the
+  // cup), which is the strongest shape of "a render of game data is
+  // game data" a page about the game can hold.
+  // <img\s, not <img: the Ko-fi comment SAYS "<img>" while explaining
+  // why the cup is drawn in box-shadow instead of being one.
+  assert.doesNotMatch(landing, /<img\s|<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but CSS');
+  assert.doesNotMatch(landing, /\.(png|jpe?g|gif|webp|svg|bmp)\b/i, 'no image file is referenced at all');
+  assert.equal(execFileSync('git', ['ls-files', 'public/site'], { cwd: root, encoding: 'utf8' }).trim(), '',
+    'public/site/ is empty - the retired pictures may not quietly return without re-earning their doctrine rows');
+  assert.ok(!existsSync(join(root, 'tools/siteShots.mjs')), 'the shots tool went with its pictures');
   assert.doesNotMatch(landing, /\/src\//, 'the landing page reaches into no game code');
   assert.doesNotMatch(landing, /\.(BSA|IMG|CIF|COL|RSC|VID|DAT|PAK|SND|XMI|HMI)\b/, 'no ARENA2 file is named');
   // The door: one Play in the gate, one in the phone bar, both to ./play/.
@@ -361,14 +352,23 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
-  // TWO boxes, and both are plaques: Play at the centre and the Ko-fi
-  // mark at the top right - the same shape the About plaque has on the
-  // home face, which is what makes a box read as a plaque here. Nothing
-  // else on the page is boxed.
+  // TWO box SHAPES, and both are plaques: the .plaque rule (worn by
+  // the door's Play/Install pair - DA shipped the downloadable app
+  // and its Install stands beside Play, same shape) and the Ko-fi
+  // mark at the top right - the same shape the About plaque has on
+  // the home face, which is what makes a box read as a plaque here.
+  // Nothing else on the page declares a box.
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
-  assert.equal(boxes, 2, 'Play and Ko-fi, both plaques');
+  assert.equal(boxes, 2, 'the plaque shape and the Ko-fi mark - no third box rule');
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.kofi \{/);
+  // The door's pair, exactly: Play into the browser, Install onto the
+  // desk, in that order, both wearing the one plaque shape.
+  const doorPlaques = [...landing.matchAll(/<a class="plaque" href="([^"]+)">([^<]+)<\/a>/g)].map((m) => [m[2], m[1]]);
+  assert.deepEqual(doorPlaques, [
+    ['Play', './play/'],
+    ['Install', 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest'],
+  ], 'the door carries Play and Install, and nothing else wears the plaque');
   assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
   // The foot is the home face's three zones.
   assert.match(css, /grid-template-columns: 1fr auto 1fr/, 'build left, a figure centre, Source right');
@@ -389,26 +389,19 @@ test('U63: the fi ligature is off - "files" is not "Ales", on the site AND in th
   assert.match(home, /font-variant-ligatures: none/, 'and the pixel home');
 });
 
-test('U63: the pictures show the UI that exists, and were retaken by the tool', () => {
-  // The three shots were of the OLD enhanced menu, which PX1 replaced -
-  // a site showing a screen the game no longer has is wrong, not stale.
-  const shots = [...landing.matchAll(/<img\s[^>]*src="\.\/site\/([\w-]+)\.png"/g)].map((m) => m[1]);
-  assert.deepEqual(shots, ['menu-home', 'menu-phone', 'menu-settings']);
-  const tool = read('tools/siteShots.mjs');
-  for (const s of shots) assert.ok(tool.includes(`shot('${s}'`), `${s} is taken by tools/siteShots.mjs`);
-  assert.match(tool, /waitForSelector\('\.px-menu button'/, 'and it waits for the PIXEL home, not the old rail');
-  assert.ok(!tool.includes('pack-sample'), 'the staged pack shot is gone with the seam that posed it');
-  assert.ok(!read('test/doctrine.test.js').includes('pack-sample'));
-});
+// (U63's pictures test retired with the pictures themselves - the DA
+// site cleanup; the no-raster law above is its successor.)
 
 // ── U64: THE DOMAIN, AND THE HAT ──────────────────────────────────
 test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is the only ask', () => {
   const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
-  // ONE link, and one in the credits with a reason attached - not a
-  // banner, not a badge, and not an <img>: an image would be the page's
-  // only raster, and a raster is the one thing this site does not carry.
+  // ONE link - the corner mark alone. Not a banner, not a badge, and
+  // not an <img>: an image would be the page's only raster, and a
+  // raster is the one thing this site does not carry. (The credits
+  // line came off with the DA cleanup's follow-up, Mac's call - the
+  // mark is the whole ask now.)
   const asks = [...landing.matchAll(/href="(https:\/\/ko-fi\.com\/[\w-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(asks, ['https://ko-fi.com/dfjs', 'https://ko-fi.com/dfjs'], 'the mark, and the credits line');
+  assert.deepEqual(asks, ['https://ko-fi.com/dfjs'], 'the mark, and nothing else');
   assert.match(landing, /<a class="kofi" href="https:\/\/ko-fi\.com\/dfjs" rel="noopener">/);
   assert.doesNotMatch(landing, /<img[^>]*ko-fi/i, 'no badge image');
   // Near the top, out of the wordmark's way, and a thumb's target.

@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morrowind data inspector</title>
+<style>
+  :root { color-scheme: dark; --bg:#14120f; --fg:#e8e0d0; --dim:#9a9083; --line:#3a342c;
+          --ok:#7fb069; --bad:#d1495b; --warn:#e0a458; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.55 ui-monospace,Menlo,Consolas,monospace; }
+  main { max-width:min(100%,900px); margin:0 auto; padding:24px 18px 64px; }
+  h1 { font-size:20px; margin:0 0 4px; letter-spacing:.02em; }
+  h2 { font-size:15px; margin:28px 0 8px; color:var(--fg); border-bottom:1px solid var(--line); padding-bottom:5px; }
+  p.lede { color:var(--dim); margin:0 0 20px; max-width:70ch; }
+  #drop { border:1px dashed var(--line); border-radius:8px; padding:22px; text-align:center; color:var(--dim);
+          background:#191712; cursor:pointer; }
+  #drop.over { border-color:var(--warn); color:var(--fg); }
+  #drop input { display:none; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 4px; }
+  td,th { text-align:left; padding:4px 10px 4px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:normal; }
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .dim{color:var(--dim)}
+  .note { color:var(--dim); font-size:13px; max-width:75ch; margin:6px 0 0; }
+  code { color:var(--warn); }
+  label { color:var(--dim); margin-right:14px; }
+  select { background:#191712; color:var(--fg); border:1px solid var(--line); padding:3px 6px; font:inherit; }
+  .err { color:var(--bad); white-space:pre-wrap; }
+  .draws { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0 2px; }
+  .draw { border:1px solid var(--line); border-radius:6px; padding:8px; background:#191712; }
+  .draw canvas { display:block; background:#0f0d0b; border-radius:3px; }
+  .draw.wide canvas { width:380px; height:380px; }
+  .sw { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+  .draw .cap { color:var(--dim); font-size:12px; margin-top:6px; }
+  .draw .cap b { color:var(--fg); font-weight:normal; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Morrowind data inspector</h1>
+  <p class="lede">
+    Drop your <code>Morrowind.bsa</code> and <code>Morrowind.esm</code> here. This page reads them and tells
+    you what is actually inside &mdash; it draws nothing and it uploads nothing. Everything stays in this
+    browser tab. Close it and it is gone.
+  </p>
+
+  <div id="drop" tabindex="0" role="button">
+    <input type="file" id="file" multiple accept=".bsa,.esm">
+    drop files here, or click to choose
+  </div>
+  <div id="out"></div>
+
+  <p class="note" id="foot"></p>
+</main>
+
+<script type="module">
+import {
+  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS, armorRecords, weaponRecords, clothingRecords, pickWeaponRecord,
+  armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
+  skeletonReport, checkRequiredBones,
+  assembleFirstPersonArm, armPieceRows, poseAssembly, clipReport, clipUnionBounds,
+} from '/src/tools/mwInspect.js';
+import { sampleTrack, resetClip, advanceClip } from '/src/formats/mwAnim.js';
+import { mwItemReport } from '/src/formats/mwItemMap.js';
+import { parseNif } from '/src/formats/mwNifFile.js';
+import { flattenNif } from '/src/formats/mwNifMesh.js';
+import { correctTexturePath } from '/src/formats/mwTexture.js';
+import { decodeDds } from '/src/formats/mwDdsFile.js';
+
+const out = document.getElementById('out');
+const drop = document.getElementById('drop');
+const input = document.getElementById('file');
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+let bsa = null;   // {bytes, index}
+let esm = null;   // {bytes, parts}
+// Errors are STATE, not a one-off insertion. They used to be written
+// straight into #out and then wiped by the very next render() - so a
+// corrupt archive flashed its reason and erased it. The live probe caught
+// that; the node tests could not have, because it is a defect in when the
+// DOM is rewritten rather than in what any function returns.
+let errors = [];
+
+drop.addEventListener('click', () => input.click());
+drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+input.addEventListener('change', () => take([...input.files]));
+for (const ev of ['dragenter', 'dragover']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); });
+}
+for (const ev of ['dragleave', 'drop']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); });
+}
+drop.addEventListener('drop', (e) => take([...(e.dataTransfer?.files || [])]));
+
+async function take(files) {
+  errors = [];
+  for (const f of files) {
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    try {
+      if (/\.bsa$/i.test(f.name)) bsa = { name: f.name, bytes, index: parseBsaIndex(bytes) };
+      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes), armors: armorRecords(bytes), weapons: weaponRecords(bytes), clothes: clothingRecords(bytes) };
+      else errors.push(`${f.name}: not a .bsa or .esm`);
+    } catch (err) {
+      errors.push(`${f.name}: ${err.message}`);
+    }
+  }
+  render();
+}
+
+/** MW-D37: a record -> the mean RGB of its texture, off the attached
+ *  .bsa. ARMO/CLOT sample their first worn part's BODY mesh; WEAP its
+ *  own mesh. Memoised per record id. */
+function textureColourSampler(e) {
+  const files = new Map(bsa.index.files.map((f) => [f.name, f]));
+  const bytesOf = (path) => { const f = files.get(path); return f ? bsa.bytes.subarray(f.offset, f.offset + f.size) : null; };
+  const bodyById = new Map((e.parts || []).map((b) => [String(b.id || '').toLowerCase(), b]));
+  const memo = new Map();
+  return (rec) => {
+    if (memo.has(rec.id)) return memo.get(rec.id);
+    let rgb = null;
+    try {
+      let model = rec.model;
+      const ref = (rec.parts || []).find((r) => r.male || r.female);
+      if (ref) { const b = bodyById.get(ref.male || ref.female); if (b) model = b.model; }
+      const nb = bytesOf(`meshes/${model}`);
+      if (nb) {
+        const batches = flattenNif(parseNif(nb.slice()));
+        const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+        if (file) {
+          const tp = correctTexturePath(file, (p) => files.has(p));
+          const tb = bytesOf(tp);
+          if (tb && /\.dds$/i.test(tp)) {
+            const m0 = decodeDds(tb.slice()).mips[0];
+            let r = 0, g = 0, bl = 0, n = 0;
+            for (let i = 0; i < m0.width * m0.height; i++) {
+              if (m0.rgba[i * 4 + 3] < 128) continue;
+              r += m0.rgba[i * 4]; g += m0.rgba[i * 4 + 1]; bl += m0.rgba[i * 4 + 2]; n++;
+            }
+            if (n) rgb = [r / n, g / n, bl / n];
+          }
+        }
+      }
+    } catch { rgb = null; }
+    memo.set(rec.id, rgb);
+    return rgb;
+  };
+}
+
+function render() {
+  let h = '';
+
+  if (bsa) {
+    const have = new Set(bsa.index.files.map((f) => f.name));
+    h += `<h2>${esc(bsa.name)} &mdash; ${bsa.index.fileCount.toLocaleString()} files</h2>`;
+    h += '<table><tr><th>first-person skeleton</th><th>for</th><th></th></tr>';
+    for (const s of FP_SKELETONS) {
+      const present = have.has(s.path);
+      const ghost = /REVERTED/.test(s.who);
+      const cls = present ? (ghost ? 'warn' : 'ok') : (ghost ? 'dim' : 'bad');
+      const word = present ? 'present' : 'ABSENT';
+      h += `<tr><td><code>${esc(s.path)}</code></td><td class="dim">${esc(s.who)}</td>`
+        + `<td class="${cls}">${word}</td></tr>`;
+    }
+    h += '</table>';
+    const ghostPresent = have.has('meshes/base_anim.1st.nif');
+    h += `<p class="note">${ghostPresent
+      ? 'Note: <code>base_anim.1st.nif</code> IS in this archive. That is not the file OpenMW asks for '
+        + '(it wants <code>xbase_anim.1st.nif</code> for a male non-beast actor), so its presence does not '
+        + 'mean the old code would have worked &mdash; only that the name existed.'
+      : 'Note: <code>base_anim.1st.nif</code> is <b>not in this archive</b>. The reverted first-person rig '
+        + 'asked for exactly that file, which is why it never drew anything. This one line is the whole '
+        + 'reason this page exists.'}</p>`;
+
+    // header of whichever skeletons are actually here
+    const rows = [];
+    for (const s of FP_SKELETONS) {
+      // MW-D7: the .kf too. parseNif reads it like any NIF and the
+      // version / bool-width verdict means exactly the same thing. Left
+      // out, the animation source reads "present" in the table above and
+      // then vanishes from this one, for no reason a player can see.
+      if (!/\.(nif|kf)$/i.test(s.path)) continue;
+      const f = bsa.index.files.find((x) => x.name === s.path);
+      if (!f) continue;
+      const hdr = readNifHeader(bsa.bytes.subarray(f.offset, f.offset + Math.min(f.size, 256)));
+      rows.push(hdr.ok
+        ? `<tr><td><code>${esc(s.path)}</code></td><td class="ok">${esc(hdr.magic)}</td>`
+          + `<td>v${esc(hdr.versionText)}</td><td class="dim">bool = ${hdr.boolBytes} bytes</td></tr>`
+        : `<tr><td><code>${esc(s.path)}</code></td><td class="bad" colspan="3">${esc(hdr.why)}</td></tr>`);
+    }
+    if (rows.length) {
+      h += '<h2>NIF headers</h2><table><tr><th>file</th><th>format</th><th>version</th><th></th></tr>'
+        + rows.join('') + '</table>';
+    }
+    h += '<div id="bones"></div>';
+  }
+
+  if (esm) {
+    const parts = esm.parts;
+    const races = [...new Set(parts.filter((p) => p.skin && p.playable).map((p) => p.race))].sort();
+    const fp = parts.filter((p) => p.firstPerson).length;
+    h += `<h2>${esc(esm.name)} &mdash; ${parts.length.toLocaleString()} body records</h2>`;
+    h += `<p class="note">${fp.toLocaleString()} of them are first-person records &mdash; that is, their `
+      + '<b>record id ends in <code>1st</code></b>. That is what makes a part first-person; it is not a '
+      + 'filename with <code>.1st</code> spliced into it, which is what the reverted code looked for.</p>';
+    if (races.length) {
+      const sel = localStorage.getItem('mwi.race') || (races.includes('nord') ? 'nord' : races[0]);
+      const fem = localStorage.getItem('mwi.female') === '1';
+      h += '<p><label>race <select id="race">'
+        + races.map((r) => `<option${r === sel ? ' selected' : ''}>${esc(r)}</option>`).join('')
+        + '</select></label><label><input type="checkbox" id="fem"'
+        + (fem ? ' checked' : '') + '> female</label></p>';
+      h += '<table><tr><th>arm slot</th><th>first-person record</th><th>verdict</th></tr>';
+      for (const row of armReport(parts, sel, fem)) {
+        const cls = row.firstPerson ? 'ok' : row.thirdPersonFallback ? 'warn' : 'bad';
+        h += `<tr><td>${esc(row.slot)}</td>`
+          + `<td class="dim">${esc(row.firstPerson?.id || row.thirdPersonFallback?.id || '&mdash;')}</td>`
+          + `<td class="${cls}">${esc(row.verdict)}</td></tr>`;
+      }
+      h += '</table>';
+      h += `<p class="note">These four slots &mdash; ${ARM_PARTS.join(', ')} &mdash; are the only parts the `
+        + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
+        + 'fallback rule, not the list of what gets drawn.</p>';
+
+      // MW-D33: THE FACE POOLS, so the curation table can be written by
+      // id. For the selected race and sex: every playable head and hair
+      // in id-sorted order, each with the portrait indices (0-9) that
+      // the modulo walk hands it, and the curated override if the table
+      // names one. Author mwFaceTable.json from this list, by eye.
+      {
+        const pool = (slot) => {
+          const forSlot = parts.filter((p) => p.race === sel && p.slot === slot && p.skin && p.playable && !p.firstPerson);
+          const sexed = forSlot.filter((p) => p.female === !!fem);
+          return (sexed.length ? sexed : forSlot.filter((p) => !p.female)).slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+        };
+        const heads = pool('head'); const hairs = pool('hair');
+        h += `<h2>The face pools &mdash; ${heads.length} heads, ${hairs.length} hairs for ${esc(sel)} ${fem ? 'female' : 'male'}</h2>`;
+        h += '<p class="note">Portrait index = the classic chargen face (0&ndash;9). Without a curated entry in '
+          + '<code>src/formats/mwFaceTable.json</code> the walk gives portrait i the i-th record, wrapping. '
+          + 'To match a portrait by eye: write <code>{"' + esc(sel) + '": {"' + (fem ? 'female' : 'male')
+          + '": {"3": {"head": "&lt;id&gt;", "hair": "&lt;id&gt;"}}}}</code> and rebuild.</p>';
+        for (const [name, list] of [['head', heads], ['hair', hairs]]) {
+          h += `<table><tr><th>${name} record</th><th>mesh</th><th>portrait indices (walk)</th></tr>`;
+          list.forEach((rec, i) => {
+            const idx = [];
+            for (let f = 0; f < 10; f++) if (list.length && (f % list.length) === i) idx.push(f);
+            h += `<tr><td>${esc(rec.id)}</td><td class="dim">${esc(rec.model)}</td><td>${idx.join(', ') || '&mdash;'}</td></tr>`;
+          });
+          h += '</table>';
+        }
+      }
+
+      // MW-D28: THE ITEM MAP against THESE archives - which Daggerfall
+      // armor will wear Morrowind, which keeps its sprite, and why.
+      // Every row of the grid, no summaries: a player scans for red.
+      if (esm.armors) {
+        // MW-D37: the record's worn texture, measured - the MW swatch
+        // beside Daggerfall's dye band, so "does the material map
+        // accurately" is answered by two colours in one row.
+        const colourOf = bsa ? textureColourSampler(esm) : null;
+        const rep = mwItemReport(esm.armors, { weapons: esm.weapons, clothes: esm.clothes, colourOf, pickWeapon: pickWeaponRecord });
+        const missing = rep.filter((r) => !r.found.length);
+        h += `<h2>The item map &mdash; ${(rep.length - missing.length)}/${rep.length} Daggerfall items resolve `
+          + `(${esm.armors.length} ARMO, ${(esm.weapons || []).length} WEAP, ${(esm.clothes || []).length} CLOT records)</h2>`;
+        h += '<p class="note">DF = the colour of Daggerfall\u2019s own material or dye band (ART_PAL). MW = the mean colour of the '
+          + 'Morrowind record\u2019s texture' + (bsa ? '' : ' (attach the .bsa to measure it)') + '. Two swatches that disagree are a row to argue with.</p>';
+        for (const fam of ['weapon', 'armor', 'clothing']) {
+          const fr = rep.filter((r) => r.family === fam);
+          if (!fr.length) continue;
+          h += `<h3>${fam}</h3><table><tr><th>Daggerfall item</th><th>DF</th><th>MW</th><th>Morrowind record(s)</th><th>note</th></tr>`;
+          for (const r of fr) {
+            const cls = r.found.length ? (/^resolved/.test(r.note) ? 'ok' : 'warn') : 'bad';
+            const sw = (c) => (c ? `<span style="display:inline-block;width:1.4em;height:1em;background:${c};border:1px solid #555;vertical-align:middle" title="${c}"></span>` : '<span class="dim">\u2014</span>');
+            h += `<tr><td>${esc(r.item)}</td><td>${sw(r.dfColour)}</td><td>${sw(r.mwColour)}</td>`
+              + `<td class="dim">${esc(r.found.join(', ') || '\u2014')}</td>`
+              + `<td class="${cls}">${esc(r.note)}</td></tr>`;
+          }
+          h += '</table>';
+        }
+        h += '<p class="note">A red row is not an error: that item keeps its classic sprite, and this '
+          + 'table is where you find out BEFORE equipping it.</p>';
+      }
+
+      // MW-D2: and now the question the whole rig design rests on.
+      if (bsa) {
+        const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+        h += '<h2>Are those arm meshes skinned, or rigid?</h2>';
+        h += '<table><tr><th>slot</th><th>mesh</th><th>in archive</th><th>verdict</th><th>records seen</th></tr>';
+        let anySkinned = false; let anyRigid = false; let anyMissing = false;
+        for (const p of armMeshPaths(armReport(parts, sel, fem))) {
+          if (!p.path) { h += `<tr><td>${esc(p.slot)}</td><td colspan="4" class="dim">no record</td></tr>`; continue; }
+          const f = have.get(p.path);
+          if (!f) {
+            anyMissing = true;
+            h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td>`
+              + '<td class="bad">not found</td><td colspan="2" class="dim">&mdash;</td></tr>';
+            continue;
+          }
+          const v = skinVerdict(bsa.bytes.subarray(f.offset, f.offset + f.size));
+          if (!v.ok) {
+            h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td><td class="ok">yes</td>`
+              + `<td class="bad" colspan="2">${esc(v.why)}</td></tr>`;
+            continue;
+          }
+          if (v.skinned) anySkinned = true; else anyRigid = true;
+          const top = v.census.slice(0, 4).map(([n, c]) => `${n}${c > 1 ? '&times;' + c : ''}`).join(', ');
+          h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td><td class="ok">yes</td>`
+            + `<td class="${v.skinned ? 'warn' : 'ok'}">${v.skinned ? 'SKINNED' : 'rigid'}`
+            + `</td><td class="dim">${top}</td></tr>`;
+        }
+        h += '</table>';
+        h += '<div class="draws" id="draws"></div>';
+        h += '<div id="assembly"></div>';
+        h += '<div id="clip"></div>';
+        h += '<p class="note">This is a record-type <b>scan</b>, not a parse: it can tell you a '
+          + '<code>NiSkinInstance</code> is present in the file, and nothing more. It is here because the last '
+          + 'attempted fix assumed these meshes were <b>rigid</b> &mdash; parts hung off a bone &mdash; from '
+          + 'reading the engine\'s two attach paths, and never checked a real one. '
+          + (anySkinned && anyRigid ? '<b>Both kinds are present here, so the rig must handle both.</b>'
+            : anySkinned ? '<b>These are SKINNED. The rigid-parts assumption was wrong.</b>'
+              : anyRigid ? '<b>These are rigid, as assumed.</b>' : '')
+          + (anyMissing ? ' Some meshes were not found in the archive shown &mdash; those parts likely live in an '
+            + 'expansion archive that has not been attached.' : '') + '</p>';
+      }
+    }
+  }
+
+  if (!bsa && !esm) h = '';
+  h = errors.map((e) => `<p class="err">${esc(e)}</p>`).join('') + h;
+  out.innerHTML = h;
+
+  const race = document.getElementById('race');
+  const fem = document.getElementById('fem');
+  if (race) race.addEventListener('change', () => { localStorage.setItem('mwi.race', race.value); render(); });
+  if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
+
+  drawArms();
+  drawAssembly().then(drawClip);
+  reportBones();
+
+  document.getElementById('foot').innerHTML = (bsa || esm)
+    ? 'Every rule this page applies is cited in <code>bible/02-Formats/Morrowind-Rules.md</code>. '
+      + 'It reports what is in your files; it makes no claim that anything will draw.'
+    : '';
+}
+
+// MW-D4: the bones the rules NAME, against the skeleton in your archive.
+// Every attach in the rig resolves a bone by name; if a name is wrong the
+// attach finds nothing and the view comes up empty - which is the exact
+// failure this whole effort keeps circling. So the table below is the
+// difference between "binding will work on your data" and "binding will
+// silently do nothing", and it is worth knowing BEFORE the binder exists.
+async function reportBones() {
+  const host = document.getElementById('bones');
+  if (!host || !bsa) return;
+  const fem = localStorage.getItem('mwi.female') === '1';
+  const want = fem ? 'meshes/base_anim_female.1st.nif' : 'meshes/xbase_anim.1st.nif';
+  const f = bsa.index.files.find((x) => x.name === want)
+    || bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.nif');
+  if (!f) return;
+  const r = await skeletonReport(bsa.bytes.subarray(f.offset, f.offset + f.size));
+  let h = `<h2>Bones in <code>${esc(f.name)}</code></h2>`;
+  if (!r.ok) {
+    host.innerHTML = h + `<p class="err">${esc(r.stage || 'failed')}: ${esc(r.error)}</p>`;
+    return;
+  }
+  const rows = checkRequiredBones(r);
+  const missing = rows.filter((b) => !b.present).length;
+  h += `<p class="note">${r.boneCount} nodes in this skeleton. The rows below are the bones the recorded `
+    + 'rules say a first-person arm attaches to. Lookup is case-insensitive, matching the engine.</p>';
+  h += '<table><tr><th>bone</th><th>needed for</th><th></th></tr>';
+  for (const b of rows) {
+    h += `<tr><td><code>${esc(b.name)}</code></td><td class="dim">${esc(b.why)}</td>`
+      + `<td class="${b.present ? 'ok' : 'bad'}">${b.present ? 'present' : 'MISSING'}</td></tr>`;
+  }
+  h += '</table>';
+  h += `<p class="note">${missing === 0
+    ? '<b>Every bone the rules name is in your skeleton.</b> Binding the arms to it should resolve; '
+      + 'if the rig still draws nothing after that, the fault is downstream of the bone lookup.'
+    : `<b>${missing} of ${rows.length} are missing.</b> A bone the skeleton does not have is an attach that `
+      + 'finds nothing, so these have to be resolved - by a corrected name, or by the part genuinely not '
+      + 'existing for this actor - before a rig is written against them.'}</p>`;
+  host.innerHTML = h;
+}
+
+// MW-D6 extracted these three, because drawAssembly needs all of them and
+// a second copy of any one is how two panels start disagreeing about the
+// same archive. The race default was ALREADY divergent - render() prefers
+// nord then falls back to the first race present, drawArms() hardcoded
+// 'nord' - so a saved race absent from the loaded ESM drew one thing and
+// listed another.
+function selection() {
+  const races = [...new Set(esm.parts.map((p) => p.race).filter(Boolean))].sort();
+  const saved = localStorage.getItem('mwi.race');
+  const race = (saved && races.includes(saved)) ? saved : (races.includes('nord') ? 'nord' : races[0]);
+  return { race, female: localStorage.getItem('mwi.female') === '1', races };
+}
+/** Rule 6's skeleton for the selected actor, as an archive entry. */
+function fpSkeletonEntry() {
+  const want = localStorage.getItem('mwi.female') === '1'
+    ? 'meshes/base_anim_female.1st.nif' : 'meshes/xbase_anim.1st.nif';
+  return bsa.index.files.find((x) => x.name === want)
+    || bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.nif') || null;
+}
+const fileBytes = (f) => bsa.bytes.subarray(f.offset, f.offset + f.size);
+/** Every triangle of one piece, as one path. The caller owns the stroke
+ *  colour, which is the only thing the two panels differ on. */
+function strokePath(g, map, positions, indices) {
+  g.beginPath();
+  for (let i = 0; i + 2 < indices.length; i += 3) {
+    const a = indices[i] * 3; const b = indices[i + 1] * 3; const c = indices[i + 2] * 3;
+    const [ax, ay] = map(positions[a], positions[a + 1], positions[a + 2]);
+    const [bx, by] = map(positions[b], positions[b + 1], positions[b + 2]);
+    const [cx, cy] = map(positions[c], positions[c + 1], positions[c + 2]);
+    g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(cx, cy); g.closePath();
+  }
+  g.stroke();
+}
+
+// MW-D3: run the REAL reader over each arm mesh and draw what comes back.
+// Not the rig - no skeleton, no bones, no pose. Just: does this file parse,
+// and is what comes out shaped like a hand? A wireframe answers that in a
+// way no test output can, and a failure prints its stage and message
+// instead of leaving an empty box.
+async function drawArms() {
+  const host = document.getElementById('draws');
+  if (!host || !bsa || !esm) return;
+  const { race, female } = selection();
+  const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+  for (const p of armMeshPaths(armReport(esm.parts, race, female))) {
+    if (!p.path) continue;
+    const f = have.get(p.path);
+    if (!f) continue;
+    const box = document.createElement('div');
+    box.className = 'draw';
+    host.append(box);
+    const r = await parseMeshForPreview(fileBytes(f));
+    if (!r.ok) {
+      box.innerHTML = `<div class="cap"><b>${esc(p.slot)}</b><br><span class="bad">`
+        + `${esc(r.stage || 'failed')}: ${esc(r.error)}</span></div>`;
+      continue;
+    }
+    const W = 190; const H = 190;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    box.append(cv);
+    const g = cv.getContext('2d');
+    const map = frontViewMapper(r.bounds, W, H);
+    g.strokeStyle = 'rgba(224,164,88,.55)';
+    g.lineWidth = 0.5;
+    for (const sh of r.shapes) strokePath(g, map, sh.positions, sh.indices);
+    box.insertAdjacentHTML('beforeend', `<div class="cap"><b>${esc(p.slot)}</b> `
+      + `&middot; ${r.triangles.toLocaleString()} tris &middot; `
+      + `${r.skinnedShapes ? 'skinned' : 'rigid'}</div>`);
+  }
+}
+
+// MW-D6: DRAW THE ASSEMBLED ARM.
+//
+// MW-D3 above draws each arm mesh ALONE, in its own box, framed by its
+// own bounds - which answers "does this file parse" and cannot answer
+// the only question that matters next: do the parts land in the same
+// place, on the right sides, as one arm. Four separately-correct boxes
+// look exactly like a working arm and exactly like a broken one.
+//
+// So this puts every piece assembleFirstPersonArm returns into ONE frame
+// at ONE scale. Rest pose. No clip, no rig, no camera - rules 29/52/53/54
+// are camera and compositing rules that need a player eye and a world to
+// occlude, neither of which a diagnostic page has.
+//
+// The colours are the diagnosis: rule 12 splits skinned from rigid and
+// rule 13 mirrors only the rigid left, so if a piece is the wrong colour
+// or the wrong side, the picture says which rule went wrong.
+const ARM_INK = {
+  skinned: 'rgba(224,164,88,.75)',
+  rigid: 'rgba(120,190,235,.75)',
+  mirrored: 'rgba(150,225,150,.85)',
+};
+const inkFor = (row) => (row.kind === 'skinned' ? ARM_INK.skinned
+  : row.mirrored ? ARM_INK.mirrored : ARM_INK.rigid);
+
+async function drawAssembly() {
+  const host = document.getElementById('assembly');
+  if (!host || !bsa || !esm) return;
+  const skel = fpSkeletonEntry();
+  if (!skel) {
+    host.innerHTML = '<h2>The assembled arm</h2><p class="err">no first-person skeleton in this archive '
+      + '&mdash; rule 6 names <code>xbase_anim.1st.nif</code> (male) and '
+      + '<code>base_anim_female.1st.nif</code>.</p>';
+    return;
+  }
+  const { race, female } = selection();
+  const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+  const parts = []; const missing = [];
+  for (const pth of armMeshPaths(armReport(esm.parts, race, female))) {
+    if (!pth.path) { missing.push(`${pth.slot}: no record for this actor`); continue; }
+    const f = have.get(pth.path);
+    if (!f) { missing.push(`${pth.slot}: ${pth.path} is not in this archive`); continue; }
+    // NO bones override: the real PART_BONES table, the retail names.
+    parts.push({ slot: pth.slot, bytes: fileBytes(f) });
+  }
+  const r = await assembleFirstPersonArm({ skeletonBytes: fileBytes(skel), parts });
+  // MW-D7: the assembly is now re-posable, so it outlives this draw. The
+  // clip stage takes THIS object - not a second assembly built from the
+  // same bytes - so the two pictures can never be of different arms.
+  arm = r.ok ? r : null;
+  const rows = r.ok ? armPieceRows(r.pieces) : [];
+  window.__mwArm = r.ok ? rows.map((x) => ({ ...x })) : null;   // the probe reads the same rows the table shows
+
+  let h = `<h2>The assembled arm &mdash; <code>${esc(skel.name)}</code>, rest pose</h2>`;
+  h += '<p class="note">Every part bound to the skeleton at its own bone, in ONE frame at ONE scale. '
+    + 'The panels above draw each mesh alone and cannot show whether the parts agree about where they are. '
+    + 'Front view: x across, z up, y discarded &mdash; so parts overlap rather than occlude.</p>';
+
+  if (!r.ok || !r.bounds) {
+    h += `<p class="err">${esc(r.stage || 'nothing assembled')}: ${esc(r.error || 'no geometry')}</p>`;
+  } else {
+    const W = 380; const H = 380;
+    const box = document.createElement('div');
+    box.className = 'draw wide';
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    box.append(cv);
+    const g = cv.getContext('2d');
+    const map = frontViewMapper(r.bounds, W, H);
+    g.lineWidth = 0.6;
+    // ONE mapper over the ASSEMBLY's bounds - a per-piece frame would put
+    // every part in the middle of its own box and prove nothing.
+    r.pieces.forEach((piece, i) => {
+      g.strokeStyle = inkFor(rows[i]);
+      strokePath(g, map, piece.positions, piece.indices);
+    });
+    host.innerHTML = h;
+    host.append(box);
+    h = '';
+    host.insertAdjacentHTML('beforeend',
+      `<p class="note"><span class="sw" style="background:${ARM_INK.skinned}"></span>skinned (rule 15 picked its side by shape name) `
+      + `&nbsp; <span class="sw" style="background:${ARM_INK.rigid}"></span>rigid, right `
+      + `&nbsp; <span class="sw" style="background:${ARM_INK.mirrored}"></span>rigid, MIRRORED (rule 13)</p>`);
+    let t = '<table><tr><th>slot @ bone</th><th>kind</th><th>tris</th><th>x range</th></tr>';
+    for (const row of rows) {
+      t += `<tr><td><code>${esc(row.key)}</code></td>`
+        + `<td class="${row.kind === 'skinned' ? 'warn' : 'ok'}">${esc(row.kind)}`
+        + `${row.mirrored ? ' &middot; <b>MIRRORED</b>' : ''}</td>`
+        + `<td>${row.triangles.toLocaleString()}</td>`
+        + `<td class="dim">${row.bounds ? `${row.bounds.minX.toFixed(2)} &hellip; ${row.bounds.maxX.toFixed(2)}` : '&mdash;'}</td></tr>`;
+    }
+    host.insertAdjacentHTML('beforeend', t + '</table>');
+  }
+
+  // WHY a part is not here is the whole point of the panel: an empty view
+  // that says nothing is the failure this arc exists to end.
+  const why = [...missing, ...(r.notes || [])];
+  if (why.length) {
+    h += '<p class="note">Not in the picture:</p><ul class="note">'
+      + why.map((n) => `<li>${esc(n)}</li>`).join('') + '</ul>';
+  }
+  if (h) host.insertAdjacentHTML('beforeend', h);
+}
+
+// MW-D7: PLAY THE IDLE CLIP THROUGH THE ASSEMBLY.
+//
+// MW-D6 above draws the arm at REST. That picture answers "do the parts
+// land in the right places", and it cannot answer the next question,
+// because a rest pose and a clip that drives nothing look identical.
+// That is not a hypothetical: poseSkeleton hands back node.rest for every
+// bone with no matching track (mwSkin.js:151-154), so a .kf keyed to
+// bones this skeleton does not have poses NOTHING and draws a clean,
+// static, entirely plausible arm. No error. No empty box. So this panel
+// has to say, in words, which tracks bound - and then it has to MOVE.
+//
+// The time law is the recorded one, not a modulo: rule 22 picks the range
+// by walking backwards from the group's last key, rules 23/49 discover the
+// loop window by CROSSING its keys, and rule 50 steps the playhead onto
+// each key rather than over it. mwViewer.js:342-348 does none of that; see
+// the STATUS block, it is MW-D8's first task.
+//
+// NOT here, and deliberately: blend masks and priorities (rules 25/26),
+// the action vocabulary (rule 24 - keys are logged, nothing is dispatched),
+// and every camera and compositing rule (29/52/53/54). There is one clip
+// on one skeleton and no player eye; a mask with no second clip would be
+// code that cannot fail.
+let arm = null;
+let clipTimer = null;
+const CLIP_GROUP = 'Idle';
+
+function stopClip() {
+  if (clipTimer) cancelAnimationFrame(clipTimer);
+  clipTimer = null;
+}
+
+async function drawClip() {
+  stopClip();
+  const host = document.getElementById('clip');
+  if (!host || !bsa) return;
+  const kfFile = bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.kf');
+  const rep = await clipReport({
+    kfBytes: kfFile ? fileBytes(kfFile) : null,
+    skeleton: arm ? arm.skeleton : null,
+    group: CLIP_GROUP,
+  });
+  window.__mwClip = null;
+
+  let h = '<h2>The idle clip</h2>';
+  if (!rep.ok) {
+    host.innerHTML = `${h}<p class="err">${esc(rep.error)}</p>`
+      + '<p class="note">Rule 6 names <code>meshes/xbase_anim.1st.kf</code> as the first-person animation '
+      + 'source. Without it the arm can only be drawn at rest.</p>';
+    return;
+  }
+
+  const c = rep.clip;
+  h += '<table><tr><th>groups this file names</th><td colspan="2"><code>'
+    + (rep.groups.length ? rep.groups.map(esc).join('</code>, <code>') : '&mdash;') + '</code></td></tr>';
+  h += `<tr><th>clip <code>${esc(CLIP_GROUP)}</code></th><td colspan="2" class="${c.ok ? 'ok' : 'bad'}">`
+    + (c.ok ? `${c.startTime.toFixed(2)} &hellip; ${c.stopTime.toFixed(2)}s`
+      : `REFUSED &mdash; ${esc(c.reason)}`) + '</td></tr>';
+  if (c.ok) {
+    h += `<tr><th>loop window</th><td colspan="2">${c.loopStartTime.toFixed(2)} &hellip; `
+      + `${rep.loopStopFinite ? c.loopStopTime.toFixed(2) : '&infin;'}</td></tr>`;
+  }
+  h += '</table>';
+
+  if (c.ok && !rep.loopStopFinite) {
+    h += '<p class="note">The loop window opens at <b>&infin;</b> on purpose (rule 49): with '
+      + '<code>loopFallback</code> off, a clip that never crosses a <code>loop stop</code> key plays once '
+      + 'and stops. The window narrows below only when the playhead actually crosses those keys.</p>';
+  }
+
+  // THE DIVERGENCE, shown rather than argued. parseAnimGroups is the group
+  // LISTING and reads the same keys by different rules; on data that
+  // exercises them the two disagree, and this page has no business hiding
+  // which one it used.
+  if (rep.legacy) {
+    const bad = !(rep.legacy.start != null && rep.legacy.stop != null && rep.legacy.start <= rep.legacy.stop);
+    h += `<p class="note">The group <em>listing</em> (<code>parseAnimGroups</code>) reads the same keys as `
+      + `<code>${esc(CLIP_GROUP)} [${rep.legacy.start} &hellip; ${rep.legacy.stop}]</code>`
+      + (bad ? ' &mdash; <span class="bad">a range that runs backwards</span>' : '')
+      + '. It splits on <code>\\r\\n</code> where rule 44 splits on either character, accepts '
+      + '<code>Group:Marker</code> where rule 21 wants colon-and-one-space, and compares the stop marker '
+      + 'exactly where rule 22 truncates it. The clip above uses the recorded law; the listing is not '
+      + 'being corrected in this slice, it is being shown.</p>';
+  }
+
+  // THE BINDING TABLE - the only thing on this page that can see the
+  // failure the picture cannot.
+  const b = rep.binding;
+  if (b) {
+    const total = b.matched.length + b.unmatchedTracks.length;
+    h += `<p class="note"><b>${b.matched.length} of ${total}</b> tracks in this file bind to a bone in `
+      + 'the skeleton.</p>';
+    if (b.unmatchedTracks.length) {
+      h += '<ul class="note">' + b.unmatchedTracks.map((n) => `<li class="bad"><code>${esc(n)}</code></li>`).join('')
+        + '</ul><p class="err">An unmatched track poses nothing &mdash; the bone holds its rest pose, which '
+        + 'looks exactly like a working idle. That is why this table exists and the picture below does not '
+        + 'suffice.</p>';
+    }
+    if (b.untrackedBones.length) {
+      h += `<p class="note">Bones this clip does not drive: <code>${b.untrackedBones.map(esc).join('</code>, <code>')}`
+        + '</code>. They hold their rest transforms, which is correct &mdash; and is also what the whole '
+        + 'skeleton would do if nothing bound at all.</p>';
+    }
+  }
+
+  h += '<table><tr><th>track</th><th>rotation</th><th>translation</th><th>scale</th><th>interp</th></tr>';
+  const KEY_TYPES = { 1: 'linear', 2: 'quadratic', 3: 'TBC', 4: 'XYZ', 5: 'constant' };
+  for (const t of rep.tracks) {
+    const it = t.channels.rotation ? KEY_TYPES[t.rotationType] : KEY_TYPES[t.translationType];
+    h += `<tr><td><code>${esc(t.bone)}</code></td>`
+      + `<td>${t.channels.rotation < 0 ? 'XYZ' : t.channels.rotation}</td>`
+      + `<td>${t.channels.translation}</td><td>${t.channels.scale}</td>`
+      + `<td class="${it === 'constant' ? 'warn' : 'dim'}">${esc(it || '&mdash;')}</td></tr>`;
+  }
+  h += '</table>';
+  if (rep.tracks.some((t) => t.rotationType === 5 || t.translationType === 5)) {
+    h += '<p class="note"><b>constant</b> keys are sampled here by holding the previous key; the reference '
+      + 'flips at the segment midpoint. That is a different member with no fixture and it is not being '
+      + 'changed in this slice &mdash; the column is here so you can see how much of your file rides it.</p>';
+  }
+
+  host.innerHTML = h;
+  // The report is published BEFORE the early return, so a refusal is
+  // readable too. A probe that can only see the success path cannot
+  // measure the failure this panel exists to make visible.
+  window.__mwClip = {
+    groups: rep.groups,
+    clip: c.ok ? { start: c.startTime, stop: c.stopTime, loopStart: c.loopStartTime } : null,
+    refusal: c.ok ? null : c.reason,
+    loopStopFinite: rep.loopStopFinite,
+    binding: b ? { matched: b.matched.map((m) => m.bone), unmatched: b.unmatchedTracks } : null,
+    legacy: rep.legacy,
+  };
+  if (!c.ok || !arm || !arm.ok) return;
+
+  // --- the moving picture -------------------------------------------------
+  const tracks = rep.trackMap;
+  const accumRoot = rep.accumRoot;
+  const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
+  // ONE mapper, from the union of the WHOLE clip. Recomputed per frame it
+  // would renormalise the picture every time the arm moved, which cancels
+  // out exactly the motion this panel exists to show.
+  const N = 24;
+  const samples = Array.from({ length: N + 1 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / N);
+  const union = clipUnionBounds(arm, poseAt, samples);
+
+  const W = 380; const H = 380;
+  const box = document.createElement('div');
+  box.className = 'draw wide';
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  box.append(cv);
+  host.append(box);
+  const g = cv.getContext('2d');
+  const map = frontViewMapper(union, W, H);
+  const paint = () => {
+    g.clearRect(0, 0, W, H);
+    g.lineWidth = 0.6;
+    const rows = armPieceRows(arm.pieces);
+    arm.pieces.forEach((piece, i) => {
+      g.strokeStyle = inkFor(rows[i]);
+      strokePath(g, map, piece.positions, piece.indices);
+    });
+    return rows;
+  };
+
+  const readout = document.createElement('p');
+  readout.className = 'note';
+  host.append(readout);
+  const log = document.createElement('ul');
+  log.className = 'note';
+  host.append(log);
+
+  const state = resetClip(rep.keys, CLIP_GROUP);
+  let last = null;
+  const fired = [];
+  const onKey = (text, time, mine) => {
+    fired.push({ text, time, mine });
+    const li = document.createElement('li');
+    li.innerHTML = `<code>${time.toFixed(2)}</code> ${esc(text)}`
+      // RULE 47: "sound: " and "soundgen: " are handled BEFORE the group
+      // test and never dropped; anything else of another group is skipped
+      // with "Not ours". Logged, never dispatched - this page has no
+      // weapon, no inventory and no sound.
+      + (mine ? '' : (/^sounds?gen: |^sound: /.test(text)
+        ? ' <span class="dim">&mdash; another group, but rule 47 lets sound keys through</span>'
+        : ' <span class="dim">&mdash; not ours, skipped</span>'));
+    log.append(li);
+    while (log.children.length > 12) log.firstChild.remove();
+  };
+
+  // A frame counter, so a probe can tell the difference between "the arm
+  // is drawn correctly at every time it is asked for" and "the arm is
+  // actually animating". __mwArmAt answers the first question perfectly
+  // well with the rAF loop dead.
+  window.__mwClipFrames = 0;
+  const frame = (now) => {
+    const dt = last == null ? 0 : Math.min((now - last) / 1000, 0.1);
+    last = now;
+    window.__mwClipFrames++;
+    if (state.playing) advanceClip(state, rep.keys, dt, onKey);
+    poseAt(state.time);
+    paint();
+    readout.innerHTML = `t = <code>${state.time.toFixed(2)}</code> of `
+      + `<code>${c.startTime.toFixed(2)}&hellip;${c.stopTime.toFixed(2)}</code>`
+      + ` &middot; loop <code>${state.loopStartTime.toFixed(2)}&hellip;`
+      + `${Number.isFinite(state.loopStopTime) ? state.loopStopTime.toFixed(2) : '&infin;'}</code>`
+      + ` &middot; ${state.playing ? 'playing' : 'finished'}`;
+    clipTimer = requestAnimationFrame(frame);
+  };
+  clipTimer = requestAnimationFrame(frame);
+
+  // Probe hooks. Every one of them runs THE PAGE'S OWN code - the same
+  // poseAt, the same resetClip/advanceClip, the same rows the table shows.
+  // A probe with its own copy would measure the copy.
+  window.__mwArmAt = (t) => { poseAt(t); paint(); return armPieceRows(arm.pieces).map((x) => ({ ...x })); };
+  window.__mwClipTrace = ({ dt = 0.2, steps = 40, loopCount = 2 } = {}) => {
+    const s2 = resetClip(rep.keys, CLIP_GROUP, { loopCount });
+    const out = [];
+    for (let i = 0; i < steps && s2.playing; i++) {
+      const keys = [];
+      advanceClip(s2, rep.keys, dt, (text, time, mine) => keys.push({ text, time, mine }));
+      poseAt(s2.time);
+      const rows = armPieceRows(arm.pieces);
+      const rh = rows.find((r) => r.bone === 'right hand');
+      out.push({
+        time: s2.time,
+        playing: s2.playing,
+        loopCount: s2.loopCount,
+        loopStartTime: s2.loopStartTime,
+        loopStopTime: Number.isFinite(s2.loopStopTime) ? s2.loopStopTime : null,
+        loopStopFinite: Number.isFinite(s2.loopStopTime),
+        firedKeys: keys.map((k) => k.text),
+        rightHandMaxX: rh && rh.bounds ? rh.bounds.maxX : null,
+      });
+    }
+    return out;
+  };
+}
+</script>
+</body>
+</html>

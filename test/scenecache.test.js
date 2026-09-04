@@ -72,18 +72,77 @@ test('P1: the cache DETACHES from the live scene (:84-98)', () => {
   assert.equal(back.lootContainers[0].id, 1, 'and it did not follow the live object');
 });
 
-test('P1: only loot and doors are cached - enemies are NOT (:88-96)', () => {
+test('P1: only loot, doors and the player\'s own piles are cached - enemies are NOT (:88-96)', () => {
   // DFU's own comment says so, and writes empty arrays for the other
   // two stateful types. A shop's occupants are rebuilt every entry.
+  // AUDIT 58: the THIRD array is the player's dropped piles, which are
+  // LootContainerTypes.DroppedLoot rows inside DFU's own
+  // GetLootContainerData (SerializableStateManager.cs:343-354) and a
+  // separate pool in this port - so the store carries three, not two.
   const c = createSceneCache();
   const s = interiorSceneName(1, 2);
   cacheScene(c, s, { lootContainers: [chest(1)], actionDoors: [door(2)], enemies: [{ id: 'rat' }] });
   const back = restoreCachedScene(c, s);
-  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'lootContainers']);
+  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'droppedPiles', 'lootContainers']);
   assert.equal(back.enemies, undefined, 'an enemy list handed in is not carried');
   // an empty cache call is legal and stores empty arrays
   cacheScene(c, s);
-  assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [] });
+  assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [], droppedPiles: [] });
+});
+
+test('AUDIT 58 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {
+  // The producer (worldModes.currentSceneState) built the list and the
+  // consumer (restoreInteriorScene -> restorePiles) read it back, but
+  // the STORE between them destructured only two keys - so
+  // data.droppedPiles was always undefined and restorePiles(undefined)
+  // is a pure CLEAR (droppedLoot.js kills every live pile, then
+  // iterates `saved ?? []`). Drop a sword on a shop floor, walk out,
+  // walk back in: gone. DFU has no such gap - CacheScene stores
+  // GetLootContainerData(), which walks EVERY SerializableLootContainer
+  // with ShouldSave, player-dropped DaggerfallLoot included
+  // (SerializableStateManager.cs:88-96, :343-354).
+  const pile = () => ({ pos: [1, 2, 3], record: 7, items: [{ n: 1 }] });
+  const c = createSceneCache();
+  const shop = interiorSceneName(1, 2);
+  cacheScene(c, shop, { lootContainers: [chest(1)], actionDoors: [], droppedPiles: [pile()] });
+  const back = restoreCachedScene(c, shop);
+  assert.equal(back.droppedPiles.length, 1, 'the floor is cached with the shelves');
+  assert.deepEqual(back.droppedPiles[0].pos, [1, 2, 3]);
+  assert.equal(back.droppedPiles[0].record, 7);
+  assert.deepEqual(back.droppedPiles[0].items, [{ n: 1 }]);
+
+  // the nested record is DEEP-copied, so tearing the scene down after
+  // the cache write cannot reach into it
+  const c2 = createSceneCache();
+  const live = pile();
+  cacheScene(c2, shop, { droppedPiles: [live] });
+  live.pos[0] = 999; live.items[0].n = 42; live.items.length = 0;
+  const kept = restoreCachedScene(c2, shop);
+  assert.deepEqual(kept.droppedPiles[0].pos, [1, 2, 3], 'the pos array is the cache\'s own');
+  assert.deepEqual(kept.droppedPiles[0].items, [{ n: 1 }], 'and so are the items');
+
+  // ...and they reach the SAVE envelope, and come back from it
+  const c3 = createSceneCache();
+  addPermanentScene(c3, shop);
+  cacheScene(c3, shop, { lootContainers: [chest(1)], droppedPiles: [pile()] });
+  const snap = JSON.parse(JSON.stringify(snapshotSceneCache(c3)));
+  assert.equal(snap.scenes[0].droppedPiles.length, 1, 'GetSceneCache writes them (:148-172)');
+  const fresh = restoreSceneCache(createSceneCache(), snap);
+  assert.equal(restoreCachedScene(fresh, shop).droppedPiles[0].record, 7);
+  // a save written before the store carried them stays loadable
+  const legacy = restoreSceneCache(createSceneCache(),
+    { permanentScenes: [], scenes: [{ sceneName: shop, lootContainers: [], actionDoors: [] }] });
+  assert.deepEqual(restoreCachedScene(legacy, shop).droppedPiles, []);
+
+  // a permanent scene keeps its piles across the WORLD MOVE: a pile is
+  // not a CorpseMarker, and the filter tests containerType alone
+  const c4 = createSceneCache();
+  addPermanentScene(c4, shop);
+  cacheScene(c4, shop, { lootContainers: [chest(1), corpse(2)], droppedPiles: [pile()] });
+  clearSceneCache(c4, { start: false });
+  const moved = restoreCachedScene(c4, shop);
+  assert.deepEqual(moved.lootContainers.map((l) => l.id), [1], 'sans corpses');
+  assert.equal(moved.droppedPiles.length, 1, 'what you left on your own floor survives');
 });
 
 test('P1: a NEW GAME clears both; a world move clears only the ordinary (:115-148)', () => {

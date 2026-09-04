@@ -5,6 +5,7 @@ import {
   PICKER_W, PICKER_H, PICKER_X, PICKER_Y, PICKER_RECTS,
   ROWS_DISPLAYED, ROW_SPACING, SELECTED_TEXT_COLOR, ListPickerWindow,
 } from '../src/ui/listPicker.js';
+import { DOUBLE_CLICK_DELAY_MS } from '../src/ui/chargenArt.js';
 import {
   ServiceFlowWindow, buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow,
   DONATE_HOW_MUCH, FREE_HOLIDAY_CURING, CURED_DISEASE, DONATION_FIELD,
@@ -24,7 +25,7 @@ const idOf = (box) => Number(/rsc:(\d+)/.exec(box?.rows?.[0]?.text ?? '')?.[1] ?
 
 const player = (over = {}) => ({
   name: 'Bob', isPlayer: true, level: 2, health: 30, maxHealth: 30,
-  items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 5000 }],
+  goldPieces: 5000, items: [],   // E4: PlayerEntity.GoldPieces, the counter
   skills: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 20])),
   skillUses: Object.fromEntries(Object.values(SKILLS).map((s) => [s, 0])),
   stats: { personality: 50 }, activeEffects: [], fatigue: 3200,
@@ -98,7 +99,16 @@ test('U24 (X11b CORRECTED): the two buttons move the SELECTION by ONE, not a pag
   assert.equal(small.selectedIndex, 1);
 });
 
-test('U24: a click in the list picks the SCROLLED row, not the visible one', () => {
+test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE click uses it', () => {
+  // THIS PIN MOVED, deliberately, and the law it now holds is DFU's.
+  // It used to assert that one click PICKED, because the port's
+  // ListPickerWindow did - and ListBox.cs does not. MouseClick
+  // (:465-505) only moves selectedIndex and raises OnSelectItem;
+  // MouseDoubleClick (:507-512) is what reaches UseSelectedItem and,
+  // through DaggerfallListPickerWindow's ListBox_OnUseSelectedItem
+  // (:136-139), OnItemPicked. The row-resolution half of the old pin -
+  // that the click resolves against the SCROLLED index, not the
+  // visible row - is the same and is kept.
   const items = Array.from({ length: 25 }, (_, i) => `item${i}`);
   const picked = [];
   const w = new ListPickerWindow({ items, onPick: (i, l) => picked.push([i, l]) });
@@ -106,9 +116,29 @@ test('U24: a click in the list picks the SCROLLED row, not the visible one', () 
   w.scrollIndex = 9;
   // row 2 of the visible page, at (glyphHeight + rowSpacing) each
   const rh = 6 + ROW_SPACING;
-  w.click(PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + 2 * rh + 1, font);
+  const at = [PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + 2 * rh + 1];
+  w.click(at[0], at[1], font, 1000);
+  assert.deepEqual(picked, [], 'one click picks nothing');
+  assert.equal(w.selectedIndex, 11, 'it moved the SELECTION to the scrolled row');
+  assert.equal(w.done, false, 'and the window is still up');
+  // a second click far outside doubleClickDelay is another single click
+  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 1);
+  assert.deepEqual(picked, []);
+  // ...and one inside it is the double click, which uses the row
+  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 2);
   assert.deepEqual(picked, [[11, 'item11']]);
   assert.equal(w.done, true);
+});
+
+test('U24 (ROAD-A7): Return is UseSelectedItem, the same door', () => {
+  // ListBox.Update :296-297 - KeyCode.Return calls UseSelectedItem(),
+  // which is exactly what MouseDoubleClick calls.
+  const picked = [];
+  const w = new ListPickerWindow({ items: ['a', 'b', 'c'], onPick: (i, l) => picked.push([i, l]) });
+  w.input('ArrowDown');
+  assert.equal(w.selectedIndex, 1);
+  w.input('Enter');
+  assert.deepEqual(picked, [[1, 'b']]);
 });
 
 test('U24: a click outside the panel cancels', () => {
@@ -117,6 +147,54 @@ test('U24: a click outside the panel cancels', () => {
   assert.equal(w.click(2, 2), true);
   assert.equal(cancelled, 1);
   assert.equal(w.done, true);
+});
+
+test('U24 (ROAD-U): hover, draw and the hit-test share ONE row height - a router\'s boolean is not a font', () => {
+  // ListBox resolves the hovered row (MouseMove :435) and the clicked
+  // row (MouseClick :469) with the SAME expression off the SAME live
+  // font: `y / ((int)(font.GlyphHeight * Scale.y) + rowSpacing)`. The
+  // port split them - the hit-test read a `font` PARAMETER, and the
+  // three routers that mount a bare picker pass the right-button
+  // BOOLEAN in that slot (townTalk.js, worldModes.js,
+  // dungeonContext.js), which is not nullish, so `false?.fnt` fell to
+  // the 6px default while draw and hover used FONT0003's real 7. From
+  // the sixth visible row on you selected a row you had not
+  // highlighted, and the ninth could not be selected at all.
+  const items = Array.from({ length: 20 }, (_, i) => `item${i}`);
+  const w = new ListPickerWindow({ items });
+  w._font = { fnt: { fixedHeight: 7 } };   // FONT0003, as `draw` records it
+  const rh = 7 + ROW_SPACING;              // the DRAWN pitch: 8
+  const vx = PICKER_X + PICKER_RECTS.list[0] + 1;
+  for (let row = 0; row < ROWS_DISPLAYED; row++) {
+    const vy = PICKER_Y + PICKER_RECTS.list[1] + row * rh + 1;
+    w.hover(vx, vy);
+    assert.equal(w.highlightedIndex, row, `hover resolves drawn row ${row}`);
+    // the third argument is the routers' boolean, and the fourth keeps
+    // every click a SINGLE click
+    w.click(vx, vy, false, 1000 + row * (DOUBLE_CLICK_DELAY_MS + 10));
+    assert.equal(w.selectedIndex, w.highlightedIndex, `row ${row}: you select the row you highlight`);
+  }
+  assert.equal(w.selectedIndex, ROWS_DISPLAYED - 1, 'the LAST visible row is reachable at all');
+});
+
+test('U24 (ROAD-U): ScrollToSelected puts the selection on the TOP row, clamped', () => {
+  // ListBox.cs:778-783 is unconditional - `scrollIndex = selectedIndex;
+  // Mathf.Clamp(scrollIndex, 0, (Count-1) - (rowsDisplayed-1));`. The
+  // port held the keep-it-on-screen arms instead (that is
+  // ClampSelectionToVisibleRange, which the arrow keys do inline), so
+  // a Create Item picker reopened at the remembered row 5 opened
+  // scrolled to 0 with the selection six rows down, where DFU opens
+  // scrolled to 5 with it on the first row (CreateItem.cs:75-76).
+  const items = Array.from({ length: 29 }, (_, i) => `row${i}`);   // the Create Item list
+  assert.equal(new ListPickerWindow({ items, selectedIndex: 5 }).scrollIndex, 5);
+  assert.equal(new ListPickerWindow({ items, selectedIndex: 0 }).scrollIndex, 0);
+  // past the clamp the last page holds: 29 - 9 = 20
+  const late = new ListPickerWindow({ items, selectedIndex: 25 });
+  assert.equal(late.scrollIndex, 29 - ROWS_DISPLAYED);
+  assert.equal(late.selectedIndex, 25, 'the SELECTION is untouched - only the window moved');
+  // a list shorter than the window never scrolls (the port's 0 floor,
+  // where Unity's Mathf.Clamp would hand back a negative bound)
+  assert.equal(new ListPickerWindow({ items: ['a', 'b'], selectedIndex: 1 }).scrollIndex, 0);
 });
 
 // ── the training chain ────────────────────────────────────────────
@@ -262,7 +340,7 @@ test('U24: a free-holiday cure happens on OPEN, before any question', () => {
 });
 
 test('U24: saying yes with no gold is told so, and stays sick', () => {
-  const e = player({ items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 1 }] });
+  const e = player({ goldPieces: 1 });
   startDisease(e, 0, 0, () => 0);
   const f = buildCureDiseaseFlow(e, GUILDS.FightersGuild, null, { rows, now: () => 0, quality: 10 });
   f.input('KeyY');

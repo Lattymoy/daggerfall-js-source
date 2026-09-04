@@ -24,6 +24,7 @@
 // built. A menu-side loader would be a duplicate port of a path that
 // already works, which is the shape this project's audits keep finding.
 
+import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
@@ -109,7 +110,8 @@ export async function runMenu(canvas, renderer, status) {
         // DFU's exit quits the application (DaggerfallStartWindow.cs:60).
         // A browser tab cannot close itself unless script opened it, so
         // the button stays drawn - it is painted into PICK03I0 - and
-        // says so instead of pretending. Ledger A.
+        // says so instead of pretending. Ledger A, the MAIN-MENU EXIT
+        // BUTTON row, by name.
         status('exit is not available in a browser');
         console.log('[menu] Exit: no application to quit in a browser (Ledger A)');
         return;
@@ -123,7 +125,7 @@ export async function runMenu(canvas, renderer, status) {
     // The menu is 2D only: drawScreenQuad works in screen space, so
     // the frame just needs a cleared buffer and a bound program.
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       if (!suspended) {
         renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
@@ -166,7 +168,7 @@ export async function runTitle(canvas, renderer, status) {
   const title = new TitleScreen(art);
 
   const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-  const LIGHT = new Float32Array([0, 1, 0]);
+  const LIGHT = UP_Y;
   await new Promise((resolve) => {
     const finish = () => {
       if (title.done) return;
@@ -198,8 +200,9 @@ const CLASSIC_SAVE_FILES = new Set([
 
 /**
  * The browser's stand-in for SaveGames' Directory.GetDirectories walk
- * (Ledger A shape - a browser cannot read the Daggerfall folder on
- * its own): a picker overlay takes the classic Daggerfall folder (or
+ * (Ledger A, the MAIN-MENU EXIT BUTTON row, which carries this half
+ * too - a browser cannot read the Daggerfall folder on its own): a
+ * picker overlay takes the classic Daggerfall folder (or
  * the SAVE0-SAVE5 folders, or a drop) and returns
  * { saveIndex: { FILENAME: bytes } } keyed by the SAVE# path segment.
  * Resolves null on cancel. Nothing persists - like DFU, the "disk" is
@@ -348,7 +351,7 @@ export async function runClassicLoad(canvas, renderer, status) {
     };
     canvas.addEventListener('pointerdown', onPointerDown);
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
       win.draw(renderer, canvas);
@@ -423,7 +426,7 @@ export async function runSaveLoadWindow(canvas, renderer, status) {
     canvas.addEventListener('pointerdown', onPointerDown);
     addEventListener('keydown', onKeyDown);
     const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    const LIGHT = new Float32Array([0, 1, 0]);
+    const LIGHT = UP_Y;
     const frame = () => {
       if (!win.done && font) {
         renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);

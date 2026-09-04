@@ -10,10 +10,12 @@
 //     which touch can never hold - so each scene passes a look(dx,dy)
 //     hook and applies its own 0.0025 factor (TOUCH_LOOK_GAIN rides
 //     on top; phone drags are shorter than mouse sweeps).
-//   - Attack (sword button): mirrors the RMB-drag seam 1:1 -
-//     press -> attack(0,0,true), drags while held -> attack(dx,dy,true),
-//     release -> attack(0,0,false). The drag-gesture strike mapper is
-//     untouched.
+//   - Attack (sword button): a TAP is the whole strike - attackTap()
+//     runs DFU's click-to-attack, which picks the swing direction
+//     itself. The button fed the RMB-drag seam until ClickToAttack
+//     (2026-08-14) took the drag away from it; the hook that seam used
+//     went with it (AUDIT 39 F127) rather than staying as an option
+//     nothing calls.
 //   - Action buttons: synthetic keydown/keyup with BOTH e.key and
 //     e.code set (the input map routes on either). Hold-style keys
 //     (Space jump, KeyE use) press/release; window keys (F5/F6/
@@ -39,8 +41,9 @@ function synth(type, code) {
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held) } - attack omitted
- *              on scenes without combat (fly-cam viewers).
+ * @param hooks { look(dx,dy), attackTap?() } - attackTap omitted on
+ *              scenes without combat (fly-cam viewers), and the sword
+ *              button is not built without it.
  */
 export function attachTouch(canvas, hooks = {}) {
   if (!isTouchDevice()) return null;
@@ -75,12 +78,12 @@ export function attachTouch(canvas, hooks = {}) {
     return b;
   }
 
-  if (hooks.attack) {
+  if (hooks.attackTap) {
     // ClickToAttack (2026-08-14): a tap IS the attack - DFU's click
     // mode picks the random direction; the drag seam needs travel a
-    // fixed button can never provide.
-    button('\u2694', 'right:16px', 'bottom:88px', 64,
-      () => { if (hooks.attackTap) hooks.attackTap(); });
+    // fixed button can never provide. The gate is the hook the button
+    // CALLS, so a host cannot draw a sword that swings nothing.
+    button('\u2694', 'right:16px', 'bottom:88px', 64, () => hooks.attackTap());
   }
   button('E', 'right:96px', 'bottom:16px', 52, () => down('KeyE'), () => up('KeyE'));
   if (hooks.cycleMode) {

@@ -8,6 +8,36 @@ policies one by one.
 
 
 
+
+
+
+
+
+## HN1 DAMAGE NUMBERS (2026-08-31)
+
+Mac: a new feature that folds into the enhanced UI - damage numbers on
+attacking, colour-coded non-crit vs crit, missed text.
+
+THE NUMBERS ARE A READOUT OF THE FORMULA, NOT A SECOND OPINION.
+CalculateAttackDamage reports once per player attack through one
+seam, and the HUD draws exactly what it was told: the damage in the
+HUD's bone; the same damage in brass and larger when Daggerfall's own
+critical strike roll succeeded (classic parity - it lands on the
+chance to hit, never on the damage, and the numbers do not pretend
+otherwise); the tripled backstab, tagged; Miss, Ineffective and a
+0 the armour took, dim. Rising from just above the reticle - the
+point the player is looking at is the point they struck - with a
+little scatter so a flurry fans out. Enhanced only: the enhanced HUD
+registers the hook; the classic path never has one.
+
+
+## U65 THE INTRO (2026-08-30) - RIPPED OUT
+
+Built through five versions in one day (U65, c, d, e: generated Iliac
+flyover, measured beat grid, sync-verified capture) and removed the
+same day at Mac's direction after every version failed his eye. The
+enhanced door opens directly on the menu. History carries the slice.
+
 ## THE BOARD, as of U61 (2026-08-26) — OPEN, not shipped
 
 Logged so the queue survives the session that found it. Every count
@@ -22,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1562 (the factory) and :1904 (a
+                        worldModes.js:1607 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:788, world.js:1388,
-                        exterior.js:873. It is the only window TWO
+                        dungeonContext.js:789, world.js:1389,
+                        exterior.js:1666. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1427, dungeonContext.js:3053. A seam
+    / NOTEBOOK          world.js:1428, dungeonContext.js:3065. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -201,8 +231,8 @@ screen is set in this face, so `font-variant-ligatures: none` went on
 the roots of BOTH pixel faces (`.shell` and `.px-home`) as well as the
 site. Verified by eye at 3x on both, before and after.
 
-THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs`
-now shoots the pixel home, the home on a phone, and the settings shell.
+THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs` (RETIRED whole 2026-08-31, see below)
+then shot the pixel home, the home on a phone, and the settings shell.
 The pack shot is gone: it was reachable only through a test seam (a
 hand-built entity with the doll forced to its no-art schematic), and
 with PX16's inventory it would need a new seam to pose a screen a
@@ -467,13 +497,16 @@ uses - `_setPaperDollPixelsForTests(null)` and a hand-built entity -
 so it is shown with a SAMPLE character, dressed through the pack's
 own controls, and the caption says so: "with a sample character. No
 game files means no doll and no item pictures." A labelled sample is
-not a silent mock. `tools/siteShots.mjs` is the only way the files are
-made: it boots its own vite with ARENA2_PATH unset, PROVES the game's
-data fetch 404s before it takes anything, and throws if the folder
-pick is on screen in a shot; the doctrine allow-list carries one OURS
-row per file naming the tool, and the landing suite pins that every
-<img> on the page is under ./site/, tracked, allow-listed, produced by
-the tool, sized and described. 54, 59 and 51 KB.
+not a silent mock. `tools/siteShots.mjs` (RETIRED) was the only way the files
+were made: it booted its own vite with ARENA2_PATH unset, PROVED the
+game's data fetch 404s before it took anything, and threw if the
+folder pick was on screen; the doctrine allow-list carried one OURS
+row per file naming the tool, and the landing suite pinned every
+<img> on the page tracked, allow-listed, produced, sized and
+described. RETIRED WHOLE with the DA site cleanup (Mac, 2026-08-31):
+the landing page carries no pictures at all now - the pin flipped to
+"no <img>, no raster" - so the three files, their rows and the tool
+went together, and the doctrine got simpler to hold.
 
 FOUND ON THE WAY, NOT FIXED: in the no-art pack the SCHEMATIC does not
 show. U59 says it is the fallback and the doll probe counts its 25
@@ -1532,10 +1565,18 @@ same table this window uses, so every host arm is a NO-OP BY DESIGN and
 says so. `done` stays FALSE until the view is down, because a host
 tears an overlay down when it reports done and a DOM node outlives the
 object reporting it. THE FOUR HOSTS: world WIRED, exterior WIRED,
-worldModes N/A (interiors never run the wizard), dungeonContext FLAGGED
-- it holds the RAW flow as its own overlay and cannot reach the fork,
-so it keeps the classic wizard; since U31 that is the `?dungeon` dev
-scene alone.
+worldModes N/A (interiors never run the wizard), dungeonContext WIRED
+since WAVE D - it held the RAW flow as its own overlay and so could
+reach neither the skin fork nor the fire-once latch, and since U31 that
+was the `?dungeon` dev scene alone, which is why it stayed open. Small
+is not the same as absent: routing it through the seam also stopped it
+letterboxing the wizard TWICE, because its non-native draw arm handed
+the flow a virtual canvas AND a screen offset under art that measures
+itself off the real canvas with `nativeMetrics` - AUDIT 19 F2's defect,
+one more time. The window reports `isChoiceWindow`, which takes the
+host's native arm instead, and its `draw` now honours the letterbox
+scale the host computed rather than dropping it for the constructed
+default.
 
 PROVED IN THE RUNNING GAME by `tools/enhancedIntegrationProbe.mjs`:
 front door, New Game, the world host booting, and the map traced from
@@ -4286,8 +4327,12 @@ a `location.reload()` to the boot flow's front door. On the bare URL
 that lands back on title -> main menu, DFU's unwind exactly; on a
 dev-scene URL (?world with no ?class) it re-offers the wizard fresh,
 which is what SetRaceSelectWindow's Reset() does on re-entry anyway.
-The dungeon host's arm rides tickOverlay (it drives the RAW flow,
-not the window), so the classic-start path cancels too.
+The dungeon host used to POLL `flow.cancelled` from tickOverlay,
+because it drove the RAW flow rather than the window; WAVE D put it on
+the same `onCancel` latch as the other two. That matters beyond
+tidiness: the enhanced skin's DOM view never reaches a host input seam
+at all, so a poll on a flow the host was not driving could never have
+cancelled it.
 
 Mutations: 3 run, 3 killed (the flag dropped back to the no-op; the
 once-latch dropped so onCancel refires; the modal back cancelling
@@ -4334,10 +4379,11 @@ DaggerfallInventoryWindow's whole second inventory:
   restore an empty cart. All five window constructions hand
   `wagonItems`; the dungeon host hands the exit-door proximity.
 
-Prose flags: exitTooFar/cannotHoldAnymore/wagonFullGold keys cited,
-prose ours pending a string source (the established pattern).
-RESIDUE: the wagon weight label ("x / 750" on the remote icon) is a
-drawing note; DFU's on-foot gate rides the transport arc.
+Prose: exitTooFar/cannotHoldAnymore/wagonFullGold are taken VERBATIM
+from Internal_Strings.csv (:847, :829, :815) - the string source is in
+the reference tree, so the old "prose ours pending a source" note was
+stale, not a departure (AUDIT 58).
+RESIDUE: DFU's on-foot gate rides the transport arc.
 
 Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
 transfer gate dropped; the no-loot auto-open dropped; the gold
@@ -5623,7 +5669,9 @@ service, and `guildServiceFlow`'s `Teleport: null` still points here;
 the quest journal's click-through travel (`GotoPlace`) has no journal
 door yet; TextureReplacement's custom region maps and region
 overlays have no door; and the HUD smash-to-black around the trip
-waits on a fade layer the port does not have.
+waited on a fade layer the port did not have - **CLOSED at ROAD-D D4**:
+`src/ui/fadeLayer.js` is FadeBehaviour.cs whole, and `ui/travelPopUp.js`
+fires `hudFade.smashHUDToBlack()` on the frame the counter empties.
 
 ## U42 - THE SPELLBOOK (2026-08-24)
 
@@ -6212,10 +6260,19 @@ inventory window in the exterior host.
 
 **FLAGGED, by name:** `HUDActiveSpells` (the buff/debuff icon rows)
 and `HUDEscortingNPCFaces` (quest-gated) are the rest of that Ledger
-row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` move the
+row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` were
+recorded here as read by nothing, on the reasoning that they move the
 bar for a horse sprite this port does not draw and a viewmodel with no
-such offset seam, so both settings stay read by nothing and are
-recorded that way rather than silently tiered live. The interior
+such offset seam. **ROAD-D D10 SHIPPED BOTH**, and that reasoning was
+already stale when it was written: the horse is systems/riding.js's
+sprite drawn by scenes/world.js and the viewmodel is
+combat/fpsWeapon.js's one bottom-anchored quad. `horseOffsetHeight`
+(TransportManager.cs:304-309, which never asks about docking) and
+`weaponOffsetHeight` (FPSWeapon.cs:146-155, FORCED whenever the bar is
+docked whatever the setting says) live in `src/ui/hudLarge.js`, read by
+`ridingRect` in the world host and by fpsWeapon's default
+`offsetHeight`, and both keys are tiered live in
+`src/systems/settings.js`. Port-Ledger.md strikes the same clause. The interior
 host's char-sheet and inventory panels swallow their click and do
 nothing, because F5 and F6 do not reach interiors either — the same
 arc, named in the same place.
@@ -6947,7 +7004,7 @@ keeps its law), toggleAutomap, toggleSpellbook - the reference's
 four, every one real on this ctx. THE OTHER THREE FLAGGED BY NAME at
 their pause sites: worldModes' interior mounts differ, exterior is
 the test host, and the dungeon HAS NO native inventory door at all
-(ui/input.js:84's own note) so its rose will draw three arms, not a
+(ui/input.js's own note as it then stood) so its rose will draw three arms, not a
 dead fourth - each lands with its own door audit. Held-key safety
 reasoned and kept: the dial captures only keydown, so a W held
 through open/close still delivers its keyup to the host and nothing
@@ -7026,7 +7083,7 @@ each with its own door audit first. THE INTERIOR (worldModes'
 interiorKeyCtx): THREE arms - Skills, Items, Magic - because the
 interior ctx has no automap door, and the rose never draws a dead
 arm. THE DUNGEON: all FOUR - the PX15 flag's 'no native inventory'
-cited input.js:84's HISTORY; toggleInventory sits on the ctx today,
+cited ui/input.js's header as it then stood; toggleInventory sits on the ctx today,
 so the audit corrected the flag rather than obeying it. Its host
 object is an anonymous returned literal, so the doors are reached
 through `this` (routeKey calls ctx.toggleDial() as a method; the
@@ -7693,7 +7750,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2373 as a second book built by hand 342 lines below the
+worldModes.js:2418 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7776,7 +7833,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1641 and
+questJournal.js from charSheetNav:53, world.js:1642 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8034,6 +8091,32 @@ PX28 (Mac: "when hitting tab a second time, it should minimize any UI"
 / "when looting, there's a 2nd popup when you take something, there
 shouldn't be"): TWO SMALL LAWS.
 
+PX28b (Mac: "Tab should also minimize any open UI menus, currently it
+only applies to the radial"): PX28 FIXED THE WRONG HALF. Teaching the
+DIAL to put a window away only works if Tab reaches the dial - and
+`openPixelDial` is reached through the HOST's key routing, while an
+enhanced window is up the WINDOW owns the keyboard, so Tab never got
+there. My verification called `openPixelDial` directly and proved
+only that the arm worked, not that anything would ever pull it.
+
+The fix that cannot miss a window is in the REGISTRY, which already
+knows what is open: ONE keydown listener in the capture phase, alive
+only while the stack is - registering starts it, the last unregister
+stops it, and closing the last one stops it too, or Tab would be eaten
+in a world with nothing open. Nothing was added to any window, and a
+window added later is covered by having registered at all.
+
+NOT through `overlayAction`'s 'back'. Escape means back a LEVEL in a
+window that has them - the wizard's steps, the pack's tooltip - and
+Tab means PUT THIS AWAY. Two different words, kept apart. A text field
+keeps Tab for itself, because the chronicle's composer and the
+spellbook's rename are both fields.
+
+Verified on all five surfaces - spellbook, chronicle, sheet page,
+pack, dial - each closing on Tab with no dial popping up behind it,
+the composer's Tab left alone, and no listener left behind afterwards.
+1 pin, 4 mutations, 4 dead.
+
 TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
 press - openPixelDial's own toggle - but it could not close what it
 had OPENED. Press Tab, press Items, and the pack was up with Tab doing
@@ -8064,6 +8147,217 @@ placement; three were already right.
 
 Pins: 2 (one each). 5 mutations, 5 dead.
 
+PX29 (Mac: "the new chronicle UI appears on the lefthand side when it
+should be centered" / "remove the background from the paperdoll in the
+inventory UI"): TWO MORE.
+
+CENTRED - AND THE SPELLBOOK WAS WRONG TOO. `.px-home` is
+position:fixed inset:0 with no flex of its own; the pause face centres
+its window by putting it in a `.px-stage`, and neither of these two
+windows ever got one. Measured: BOTH sat 260px and 140px off the
+centre, and the spellbook had been that way since PX23. It was
+invisible to me because every screenshot I took of those windows was
+of the ELEMENT, not the viewport - a shot of a window always looks
+centred. This is the FOURTH shared-part fault of this arc (the head,
+the divider, the chips, now the stage), so it is fixed for the FAMILY
+and both shells are pinned as the ones the two windows mount.
+
+PX29b - THE DOLL CHANGE IS REVERTED (Mac: "revert the doll change, you
+removed the entire paperdoll"). It did, and the reason is the part
+worth keeping.
+
+`_pixels` publishes at the END of `refreshPaperDoll` - the file's own
+comment says "the composite swaps in whole when done" - and the mask
+published at the START, before a single layer had been blitted. Any
+pass that returned early left a VALID composite paired with an
+ALL-ZERO mask, and every pixel then read as background: the figure
+vanished entirely. The mechanism was exact; the LIFETIME was wrong.
+
+TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. Whoever tries
+this again should build the mask locally and publish it beside
+`_pixels` in the same statement, or not at all - and the file and the
+pin both say so now, so the next attempt starts from the failure
+rather than repeating it.
+
+I could not have caught this here: there is no ARENA2 in this
+container, so there is no real composite to strip, and I said so when
+I shipped it. That was the right thing to say and the wrong thing to
+ship - a change whose whole effect is invisible to every check I can
+run is a change to hand over as a question, not as a result.
+
+What follows is the record of the attempt, kept because the reasoning
+about DFU's own compositing still holds.
+
+THE DOLL STANDS ON THE PACK'S OWN GLASS (REVERTED). DFU fills the panel with
+`backgroundSubRect` and blits the body and every item over it
+(PaperDollRenderer), so the composite has no notion of "figure" to
+hand out - PX20a could remove the CSS frame but not the art behind the
+character. It can now, and EXACTLY rather than by matching colours:
+every layer after the background goes through ONE `blit`, so a mask
+written there is the figure and nothing else. `paperDollFigurePixels`
+returns the composite with those pixels made TRANSPARENT - never
+recoloured, which would be a second guess about what the ground is -
+and falls back to the whole composite when there is no mask yet.
+
+THE CLASSIC WINDOW IS UNTOUCHED and pinned so: it draws DFU's whole
+composite, background included, because that is what DFU draws. The
+enhanced pack has its own ground to stand a figure on; the classic one
+does not.
+
+Pins: 1 for the centring, which stands. The doll's pin became the
+record of its own revert - the mask gone rather than merely unused,
+the accessor gone, the file's reason kept, and the composite's
+publish-whole law pinned as the thing the mask broke. U59's and PX20's
+went back to the whole composite. 3 mutations, 3 dead.
+
+PX30 (Mac: "I want to develop the new gameplay UI... this reference as
+key... maximum fidelity"): THE HUD. The largest surface a player looks
+at, and the last one still wholly classic on the enhanced skin.
+
+MAC'S REFERENCE IS ESO'S CLEAN UI - a compass across the top, the
+target named beneath it, three vitals along the bottom, the effects
+under those - read back in this arc's own language rather than copied:
+square 2px frames, the Pixelify face, brass and bone, the classic
+shadowed pair for what is urgent, and states that SNAP.
+
+IT RIDES THE ONE HOST-AGNOSTIC CALL. `drawHud` is what all four hosts
+already make, "last, over the viewmodel", so the enhanced HUD rides it
+exactly as the damage flash does and no host can forget it or run it
+twice. It sits ABOVE the `!art` return, like the flash, because it
+reads no ARENA2 and a player whose HUD art failed still has vitals -
+and it RETURNS, so the classic bars, compass and icons do not draw
+underneath. Two HUDs at once is not a skin.
+
+THE COMPASS IS A STRIP, not DFU's box: a quarter of the circle with
+the eight points placed by heading, and a point off the span HIDDEN
+rather than clamped - a marker pinned to the rim says "north is
+exactly there", which is a lie the classic compass takes care not to
+tell either. The wrap is the shortest way round, so a point at 0.98 is
+just LEFT of a player facing 0.02.
+
+THE TARGET IS A DEPARTURE, and needs a source that does not exist:
+Daggerfall tells you nothing about a foe's health, ever. ESO's frame
+follows the reticle; this follows THE BLOW YOU LANDED, which is the
+same question a player is really asking - did I hurt it, how much is
+left - and costs nothing, where a reticle target would want a foe
+raycast every frame. Both damage paths mark it and neither was asked
+for anything new: `fromPlayer` is the flag each already took. It fades
+after six seconds and clears at once when the foe dies.
+
+IT IS A READOUT: pointer-events none, aria-hidden, no overlay
+registration, and Tab does not close it. It is the game's own face,
+which is why it does not go through a door.
+
+AND IT IS UPDATED, NOT REBUILT. A per-frame innerHTML is PX19k's
+entrance replay at sixty times a second, so the DOM is made once and
+each frame writes only what CHANGED - a width, a number, a name. The
+effect row is rebuilt only when the SET changes, or a countdown would
+rebuild it every frame.
+
+FOUND ON THE WAY: the first draft invented its own bundle walk rather
+than using `liveBundles`, the one the classic icons and the Dispel
+picker both read - and the effects row came back empty against a real
+entity. The same lesson as PX23's invented divider and PX24's
+flattened date, a third time: use what exists.
+
+Pins: 4 in a new test/enhancedHud.test.js. 6 mutations, 6 dead.
+Verified live with a struck foe, two effects and a real heading.
+
+PX30b - THE HANDS, AND THE BREATH. The reference's ability bar has no
+Daggerfall equivalent - there are no hotkeyed abilities - but the two
+things it would hold do exist: the spell you have READIED
+(hostMagic's own `readied()`) and the weapon in your hand. Two
+plaques, each drawn ONLY when filled, because an empty one is PX14's
+drawn door and a HUD is the worst place for furniture that says
+nothing. They arrive through drawHud's own options bag, so a host that
+knows neither passes neither.
+
+And the BREATH, above the vitals, on DFU's own two laws imported
+rather than restated: drawn only while holding breath (HUDBreathBar -
+Amount 0 draws nothing) and RED below `(endurance >> 3) + 4`, which is
+`breathShortThreshold` out of the classic HUD, with `maxBreath` out of
+statMods. It is the one bar DFU draws under BOTH huds, which is why it
+belongs on this side too.
+
+Pins: 1 more (5). 4 more mutations, 4 dead.
+
+PX30c (Mac: "is there anyway I can adjust the sizing?" / "for the
+status bars, can we use percentages and organize them within the bar
+itself"): TWO.
+
+THE SCALE IS A SETTING, not a constant - and TWO PINS TAUGHT ME WHERE
+IT LIVES. The first draft put `EnhancedHUDScale` in DFU's settings
+beside `LargeHUDUndockedScale`, which looked right and is not: the
+defaults file is BAKED from DFU's vendored ini and nothing hand-edits
+it (AUDIT 17e F9's lesson), and when I tiered the key instead, the tier
+map's own law - every key in it "is a real DFU setting" - refused it
+too. It is not one. It lives in `systems/uiPrefs.js` now, the port's
+own prefs, with its row in the Enhanced pane where this port's own
+switches already are. A third pin, audit24's one-home, had already made
+me rename the reader `enhancedHudScale`, because the classic HUD
+declares a `hudScale(canvas)` of its own.
+
+It is
+ONE CSS variable the whole sheet reads, so a change moves every bar,
+chip and letter together rather than thirty rules drifting apart -
+measured: the bar row is 598px at 1x and 957px at 1.6x. Clamped to
+0.5-2, and an absent or broken value reads 1 rather than 0, because a
+HUD is not a place to let a typo hide the game.
+
+THE PERCENTAGE IS IN THE BAR. A figure beside a bar is a second thing
+to look at; a percentage ON it is the bar saying what it means. The
+LABEL rides in there too, at the other end, so each bar names itself
+rather than relying on a colour a player has to learn - the fill sits
+behind both and they take the shadow, which is what keeps them legible
+over a full bar and an empty one alike. And never 0% while anything is
+left, which is the quest timer's "never 0 min" law on a bar this time.
+
+Pins: 1 more (6). 5 more mutations, 5 dead. Three of the project's own
+pins shaped this slice rather than merely passing it - the bake, the
+tier map and one-home - which is the system working exactly as it
+should on a change that touched a shared store.
+
+PX30d (Mac: "the stamina percentage is a super large percentage"):
+FATIGUE HAS NO FIELD, IT HAS A LAW. DFU stores fatigue x64 and
+computes its ceiling as (Strength + Endurance) x 64 - there is no
+`maxFatigue` on the entity at all. So `vitals.maxFatigue || 1` divided
+by ONE, and a real player - 90 fatigue at 50/50 - read 576000%.
+
+THE CLASSIC HUD NEVER HAD THIS BUG, and the reason is the lesson.
+`drawHud` composes a snapshot with `maxFatigue(vitals)` in it (S15's
+own line) and the classic bars read THAT; my branch returns BEFORE the
+snapshot is built, so it was reading the raw entity while the classic
+read the law. The fix is the same law from the same module. Health and
+magicka DO have fields and are left reading them, which is why only
+this one bar was wrong.
+
+And the percentage is clamped at BOTH ends now: a bar cannot be more
+than full, and a number that says otherwise is a bug wearing a percent
+sign rather than something a player should have to read. The floor at
+1 stays. Measured: 90% for a real player, 0/100 at the ends, 1% on a
+sliver, and a fatigue over its ceiling reading 100 rather than
+spilling.
+
+Pins: 1 more (7). 3 more mutations, 3 dead.
+
+PX32 (2026-09-03): THE RETICLE. Both classic calls -
+`drawCrosshairAndModeIcon` at hud.js's two sites - sit BELOW the
+enhanced branch's return, so the enhanced skin had no crosshair and no
+mode word at all: a player could not see where they were aiming or
+which mode they were in. The laws are hudCrosshair.js's own, imported
+rather than restated - `GUI/Crosshair` shows a cross; under the styles
+where the icon IS the crosshair the mode's WORD stands at the centre
+instead, Grab alone keeping the plain cross because it is the mode you
+aim in; under the other styles the word sits in the corner, and under
+"none" nowhere. In the pixel language: a square 18px cross in bone
+with the classic shadow, the word in the classic shadowed pair. Not
+scaled by the HUD's scale - a reticle is a point, and the scale is for
+things read at the edges. Driven through every combination of style
+and mode against the classic's rules, all dead-centre. 1 pin, 4
+mutations, 4 dead.
+
+ON THE HORIZON for this HUD: the arrow count.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
@@ -8086,3 +8380,911 @@ C#'s strict-greater boundary: exactly 0.3s still refuses.
 
 Pins: 2 appended to `test/pointerlock.test.js`. Campaign: 4 mutants,
 4 killed.
+
+
+## CR1 - THE CREDITS on the About screen (2026-08-30)
+
+Mac's call, straight after the windmill closed 1:1: "I want to add a
+credits section in the about tab on the main menu, as we integrate
+these I really want to give credit to the mod developer who created
+it." A README in `vendor/` credits an author to whoever reads the repo;
+the About pane credits them to whoever PLAYS, which is the audience a
+modder cares about. The intro (U65) already puts Interkarma's and Nexus
+Mods' marks on the screen for a few seconds; this is the durable page.
+
+`src/ui/credits.js` is ONE table with two groups, kept apart because
+they are owed differently: BUILT ON (The Elder Scrolls II: Daggerfall,
+Bethesda Softworks - every byte from the player's own ARENA2; Daggerfall
+Unity, Gavin Clayton (Interkarma) and contributors - the source this
+port is a 1:1 of, its quests, book index and settings vendored under
+MIT) and MODS (Windmills of Daggerfall 2.0 by Kamer - what it is, the
+terms it is carried under, the contact his manifest gives). `paneAbout`
+renders it after the build card as its own card: a brass group heading,
+the work's title in the shell's pixel face, `by <author>` in brass, a
+line of what, a dim line of terms, a link only where one is real. No
+URL is invented; a contact is what the author's own manifest says.
+
+**The rule, enforced.** `test/credits.test.js` sweeps `vendor/` against
+the table both ways: every folder there has a credit on the screen,
+every credit names a folder that exists, and that folder's README names
+the same author the screen does. A mod row must carry title, author,
+what, terms and a vendor folder, and its terms must say permission -
+the roads were removed whole for lacking it. The renderer knows the
+SHAPE and no work by name. 3 pins; 5 mutants, 5 killed. Eyeballed on
+desktop and a Pixel 5 through the intro's skip: two cards, three works,
+the modder's name beside his mill.
+
+## FROM PLAY (2026-08-29): TOO MUCH RECURSION - the slot that lied about being open
+
+Mac's crash overlay, off the live site:
+
+```
+CRASH (100)
+InternalError: too much recursion
+closeOverlay -> onClose -> _close -> dispose -> closeOverlay
+```
+
+...fifty frames of it, trimmed. **Every close path of the rest window
+reached it in the two exterior hosts** - the ended page on a key and on
+a click, the refusal page, backing out of the selection page, and a host
+closing the slot itself. Not an edge: resting outdoors and closing the
+window crashed the game.
+
+### One loop, two halves, and both were load-bearing
+
+`townTalk`'s overlay slot dropped its occupant like this:
+
+```js
+overlay.dispose?.();
+overlay = null;
+```
+
+which reads fine until you notice that **`dispose()` runs host code, and
+S40 made that reachable on purpose.** DFU's `RestFinishedPopup_OnClose`
+is `PopToHUD(); RaiseSkills();` in that order, and the order is
+load-bearing: the level-up screen `RaiseSkills` can raise needs the
+host's overlay slot, and every host guards its `onLevelUp` with "only if
+the slot is free". So the rest window asks the host to vacate the slot
+from inside its own close, through
+`onClose: () => { if (townTalk.overlay?.isRestWindow) townTalk.closeOverlay?.(); }`.
+
+That door is right. What was wrong is that the host answered it **while
+`overlay` still pointed at the window it was disposing** - so the guard
+read a live slot, and disposed it again, and again.
+
+The window had the matching half. `RestWindow._close` is deliberately
+unguarded on `done`, and the comment defending that is correct as far as
+it goes: clearing a boolean twice is clearing it once, so a guard there
+would be a branch no test could kill. But `_close` also fires `onClose`,
+and firing THAT twice is a second PopToHUD.
+
+### Why only two of the four hosts crashed
+
+`worldModes.js:4693` and `dungeonContext.js:1224` answer the same
+`onClose` by nulling their slot and never disposing - nothing to
+re-enter. Only the two hosts that come through `townTalk.closeOverlay`
+dispose. **The four-hosts rule caught this one by accident**: the two
+safe hosts are safe because they are less careful about GL, not because
+anyone reasoned about re-entry.
+
+### The fix, at both layers
+
+- **The host**: one drain, `townTalk.dropOverlay`, and the law is the
+  ORDER - null the slot, THEN tell the window. A re-entrant close finds
+  an empty slot and returns false, which is *the truth*: the slot really
+  is free by the time the window hears about it, which is the whole
+  point of the door S40 opened. The four clear-points and `closeOverlay`
+  all route through it, `showOverlay` puts the successor in the slot
+  before disposing the outgoing window for the same reason, and a pin
+  forbids any other `dispose` on the slot.
+- **The window**: `_close` keeps its unguarded flag clearing and
+  dispatches `onClose` ONCE, so a window is safe to close from either
+  side and no future host has to know the rule.
+
+Both, because either alone stops this crash and leaves the next window
+to find the other. The pins say so explicitly: the window is tested
+against a host that still disposes before clearing, and the host against
+a window with no dispatch guard at all - which is every other window in
+the tree.
+
+### One pin had to change to stay honest
+
+`closeOverlay` guarded `!overlay` itself, which made the drain's own
+empty-slot guard unreachable - a mutant that deleted it survived. **A
+guard no mutation can kill is a guard no reader can trust**, so the door
+keeps the identity check and the drain owns the empty-slot one.
+
+Four existing pins were re-aimed rather than deleted, and three came out
+stronger for it: the A2 leak pin listed the four clear-points as four
+literals and would have passed a fifth drop added tomorrow - it reads
+the seam and sweeps for strays now; U41 and the two S40 pins asserted
+source shapes that moved, and now assert the behaviour they were always
+about, against the real host.
+
+Pins: 7 in `test/overlayreentry.test.js`, behaviour not sweeps - the
+slot is closure state and the window is a plain class, so the whole loop
+reproduces in Node with no GL and no ARENA2, and `createTownTalk` builds
+without either. Campaign: 8 mutants, 8 killed.
+
+
+## UI1 - THE CLASSIC-UI CLOSE (2026-08-31, open)
+
+Mac: "finishing all the classic UI - I know there's still some that
+remain unported 1:1". The checkable list is DFU's own window folder:
+85 `UserInterfaceWindows/*.cs`, of which 25 are Unity renderer config
+pages, the setup wizards, the FLC player, joystick config or base
+classes with no screen of their own. Of the 60 real windows, 56 are
+cited and ported somewhere in `src/`. FOUR were not:
+
+| Window | Lines | State |
+|---|---|---|
+| DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
+| DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:517` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
+
+### UI1 CLOSED: the use-magic-item window
+
+The port had the DOOR and not the room. `input.js:419` routed
+`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
+gave the large HUD's button its rect, `inputActions.js` bound KeyU -
+and no host implemented the method, so a live binding silently did
+nothing. That is the anti-lie law's other half: a deferred feature
+shows as deferred; a bound key that no-ops claims a feature the port
+does not have.
+
+`ui/useMagicItemWindow.js` is the window whole - it IS a
+DaggerfallListPickerWindow, so the port's ListPickerWindow is the body
+of it. UpdateUsableMagicItems verbatim (pack order; the first
+CastWhenUsed enchantment joins the item, `break`; a potion joins on the
+ELSE arm, so an enchanted item without CastWhenUsed is not listed at
+all); the window opens only when something is usable; AllowCancel
+false; the pick closes first and uses second. The use is the port's one
+seam, `systems/useItem.js` - the inventory's own path, both arms - owned
+by the world host and lent to worldModes and on to the dungeon ctx.
+
+### UI2 CLOSED: the merchant service popup
+
+The port SKIPPED this one rather than deferring it: `staticNpcRoute`
+has answered 'sell' and 'banking' since G8 and `worldModes` jumped
+STRAIGHT to the trade or bank window, so the merchant's own GNRC01I0
+panel - and with it the TALK row - never appeared. DFU never opens
+either window without this in front of it.
+
+`ui/merchantServiceWindow.js` is the window whole, on its ported guild
+sibling's shape: the 130x42 panel that Center/Middle put at (95,79)
+over its own declared Position, the three child rects, the shadowless
+service label centred in its button, ButtonClick heading every handler
+and the CLOSE BEFORE THE ACT that lets the trade window be pushed over
+a closed popup. Hazelnut's custom-merchant-service registry (:75-77,
+:95-97) is a mod hook and is not ported - with an empty registry DFU's
+own answer is the switch. The old direct arms stay below the popup as
+the art-less fallback.
+
+### What is left
+
+`DaggerfallTransportWindow` alone, and it wants its own arc: the window
+is trivial, `TransportManager` is not - `motor.js:517` reads
+`riding: false` with "the transport arc pends". With UI1 and UI2
+closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
+system's last tenth.
+
+## THE ENHANCED PACK: grid, armour tab, height (2026-08-31) - REVERTED
+
+Mac asked for three things on `ui/enhancedInventory.js`: more height, a
+grid, armour its own tab. What shipped BROKE THE PACK and was reverted
+whole (78324c99 + 2fb32c9a). Nothing of it is in the tree; this section
+is what it cost and what to do differently, because the asks are still
+good ones.
+
+**Four wrong turns, in order:**
+
+1. **Read as a parity question.** The first answer argued against
+   departing from DFU. The enhanced UI is the project's OWN design
+   surface; parity does not bind it. Wasted a turn.
+2. **Answered with a new window.** A standalone `pack-proto.html` with
+   its own palette and type - "veered away too far from what's
+   currently ingame".
+3. **Answered with a copy of the window.** The second prototype
+   hand-copied `enhancedStyle.js` into a fixture page. Still a parallel
+   copy: it would drift, and anything liked in it had to be rebuilt in
+   the real module anyway. "Why are you so hell bent on redesigning
+   what's already there?"
+4. **Then changed the real files and broke them.** Height 660 -> 820
+   swallowed the game behind the window; a second pass to 700/62 did
+   not save it. The grid, the split and the height went in TOGETHER, so
+   when it was wrong there was nothing to bisect - the revert had to
+   take all three.
+
+**What to do instead, when this is picked up again:**
+
+- ONE change at a time, each shippable and reversible on its own. The
+  armour split is a data change with no visual risk and should go first
+  and alone; the grid is a layout change and should follow only once
+  the split is confirmed good.
+- Numbers come from the REAL screen. 74px and 820px were both picked
+  against a fixture page and both were wrong in play.
+- `?packgrid=0` was the right instinct and the wrong scope: a switch
+  that leaves the default broken still ships a broken default.
+
+**The findings worth keeping** (they cost nothing to re-derive but are
+easy to miss): a shield IS group Armor in Daggerfall - Buckler 109,
+Round 110, Kite 111, Tower 112 - so armour-plus-shields is ONE
+predicate; the classic window's `TABS`/`filterByTab` must keep DFU's
+four whatever the pack does; and `itemRow`'s click has to be shared
+rather than copied if a cell ever runs it.
+
+## PX31 - THE INVENTORY GETS A COLUMN (2026-08-31)
+
+Mac: "the inventory itself. Its hidden at the bottom and doesnt get
+much breathing room."
+
+MEASURED FIRST, because the reverted 2026-08-31 attempt picked 74px
+and 820px against a fixture page and both were wrong in play. On the
+shipped screen at 1440x900, 1920x1080 and 1280x720 - all three
+IDENTICAL, since `.pack-win` is `min(660px, 94dvh)` and the cap binds
+on every desktop:
+
+| region | px |
+|---|---|
+| window | 1040 x 660 |
+| title bar | 62 |
+| character region | 400 (full 1036 width) |
+| tab strip | 38 |
+| **item list viewport** | **116** |
+
+The list had 17.6% of the window, two tiles deep and 1036 wide. The
+character region is `flex: 0 0 auto` - its own content's height, and
+the worn map inside it is 298 and does not shrink - so every pixel the
+window does not have came out of the list, and the list was the only
+thing in the window that scrolls. A wide window paying for a stacked
+layout vertically.
+
+So the dock becomes a COLUMN at `min-width: 1000px`: the region keeps
+the width it actually uses (the map is `width: min(960px, 100%)` with
+`minmax(0, 1fr)` flanks, so it narrows without a rewrite) and the list
+takes the rest at full height. **List viewport 116 -> 483, three rows
+of tiles -> nine.** The window's height is untouched; raising the 660
+cap is what swallowed the game behind the window and was reverted.
+
+THE PHONE IS NOT THIS PROBLEM and is not touched - a Pixel 5 measures
+a 250px list showing seven rows, because there `94dvh` wins and the
+region is the same 400. The breakpoint is min-width, so stacked stays
+the default and this is the wide-screen departure from it.
+
+**Two things the measurements could not see and the screenshot did:**
+
+1. THE TAB STRIP WRAPPED. `.packtabs` carries `flex-wrap: wrap` from
+   its base rule, latent until the strip was narrow. The four tabs
+   need about 550px on one line and no column here is that wide, so it
+   is a deliberate 2x2 now - same 76px the ragged wrap cost, and
+   `TABS` comes from `nativeInventory` and is DFU's four, always, so
+   two by two is a shape rather than a guess.
+2. 180px OF DEAD GLASS under the transport strip. The region now has
+   height it does not need.
+
+**Three drafts of that second fix, and the lesson is in the last two.**
+The first put `flex: 1` on `.wornmap` in a block sitting ABOVE the
+`.charcol .wornmap` rule it tied with at (0,3,0) - later-in-sheet wins
+a tie, the trap this file already records for `.packtip.packdetail`;
+the block moved rather than growing a specificity hack. The second
+still did nothing, because THE GROWING ELEMENT IS THE WRAPPER: the
+map is a child of `.equipped`, whose own `flex: 1` was correct all
+along and had nothing to fill, since `.equipped` defaults to
+`flex: 0 1 auto`. The third did nothing EITHER, and that one was
+self-inflicted - a second comment paragraph appended after a comment
+that had already closed, so prose sat raw in the stylesheet and the
+parser discarded the rules behind it. Computed styles read off the
+live element found it in one call; three CSS guesses had not. Read the
+element, not the rule you think applies to it.
+
+The map fills now (304 -> 455) and that is more than tidiness: the
+doll is height-driven at `aspect-ratio: 110/184`, so a taller map is a
+BIGGER SPRITE, which is what PX20a asked for and the stacked layout
+could not afford.
+
+**FLAGGED, and it needs Mac's eyes on real data:** this container has
+no ARENA2, so the doll rendered as the `.noart` placeholder, which is
+not aspect-locked. With art the doll cell is `455 * 110/184 = 272`
+wide against `298 * 110/184 = 178` before, which takes the worn flanks
+from 379 to about 157 each. 157 still carries a 34px tile, the family
+word and the name, but it is a real narrowing that only shows with the
+sprite present. If the flanks read cramped in play, the map wants a
+max-height rather than the region wanting width - the dock's 380 is
+what buys the nine rows.
+
+### PX31 addendum - the pin, and the nine probes that could not reach it
+
+PX31 is a MEDIA QUERY and node cannot see one, so its pin is a browser
+probe: `tools/enhancedPackLayoutProbe.mjs`, 13 checks over two desktop
+sizes and a Pixel 5. The checks are GEOMETRIC on purpose - they ask
+where the dock IS and how much the list GOT, not what a rule says, so
+they die when the breakpoint dies rather than when a selector is
+renamed.
+
+**Five mutations, four dead, one argued:**
+
+| # | mutation | result |
+|---|---|---|
+| M1 | breakpoint disabled (1000px -> 10000px) | 6 checks fail |
+| M2 | `.equipped` back to `flex: 0 1 auto` | dead glass 16px -> 167px, fails |
+| M3 | the 2x2 tab grid removed | **SURVIVED FIRST** - see below |
+| M4 | dock column 380 -> 200 | tabs escape their box, fails |
+| M5 | dock keeps `border-top` instead of `border-left` | survives, argued |
+
+M3 IS THE ONE WORTH READING. The first draft asserted four tabs in two
+rows, and removing the grid changed nothing it could see, because
+`flex-wrap` also lands two rows at 380px - the check was pinning the
+WRAP and calling it the grid. Columns are what tell them apart: a grid
+puts every tab on two x positions, a wrap packs them to ragged ones. So
+`tabCols === 2` joined it and the mutant reads 2x3 and dies. A pin
+asserting the thing you already had is the vacuous-pin shape this bible
+keeps catching, and it took a mutation run to see it here too.
+
+M5 is a RECORDED EQUIVALENT with its proof: a border swap has no
+geometric signature by construction, and no measurement probe can see
+it. Its verifier is the screenshot, which is where it was chosen.
+
+**AND THE PROBE FLEET WAS ALREADY DEAD.** Writing the pin meant running
+`enhancedPackProbe.mjs`, which timed out at its FRONT DOOR: it waits on
+`#enhanced-menu .railbtn`, and `railbtn` is the shell rail's class,
+which the boot door has not carried since PX1 replaced it with the
+pixel home. Nine probes had the same line. Every one had been
+unreachable since 2026-08-27 and no gate noticed, because a probe is
+not a gate - AUDIT 17f F4's shape, at fleet scale.
+
+Rooted rather than patched: the door's buttons carry `doorbtn
+door-<id>` now and the probes select on that. Matching on the visible
+words was the obvious fix and is the same bug waiting on a relabel.
+
+Opening the door then showed the rot goes DEEPER in at least two of
+them - `enhancedPackProbe` and `enhancedDollProbe` still assert the U53
+slot map (`.node`, `.node.filled`) that PX19d and PX20a replaced with
+the worn map, so they now reach their checks and fail on a screen that
+no longer exists. **That repair is NOT done and is not PX31's**; it is
+recorded here so the next reader finds it named rather than discovering
+it the way this slice did.
+
+**One measurement corrected, and it is worth knowing.** The phone check
+was first floored at 200px because an early reading said 250 - taken at
+a 393x851 viewport. A real Pixel 5 is 727 tall and the list measures
+126px, two rows. PX31 does not change that number in either direction
+(the breakpoint cannot match at 393px wide), but it means THE PHONE HAS
+A MILDER VERSION OF THE SAME COMPLAINT: the character region is the
+same fixed 400 on a shorter window. Its own slice, when Mac wants it.
+
+## ROAD-G G3 - THE HELD-FIRST LATCH (2026-09-04, corrected by ROAD-GR)
+
+A8 shipped key combos and named one half it did not build, in
+`systems/inputActions.js`, where the retired combo flag used to stand:
+
+> DFU's per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the
+> ORDER two keys went down in, so holding K then Shift does not fire
+> Shift+K. The port's hosts keep a Set with no order, so a combo fires
+> on either order; the day a host grows an ordered held list, the rule
+> is GetUnaryKey's (:1690-1711) and the seam is held().
+
+**No host had to grow anything. A JS Set iterates in INSERTION order**,
+so every host's `keys` had carried the press order since the first
+host, and `held()` - the named seam - was already being handed it. But
+the READ was not what was missing either, and ROAD-GR had to correct
+G3's first answer: DFU's ring is not press-ordered at ALL. `PollInput`
+zeroes `heldKeyCounter` and refills it in `KeyCodeList` order every
+frame (:1801-1809), and `ModifierOnlyHeld` scans the WHOLE of it -
+`for (int i = 0; i < heldKeyCounter; i++)` (:1632-1639) - with no break
+at the modifier. What was missing was the LATCH's MEMORY.
+
+**And the sentence the remainder was written around is DFU's COMMENT,
+not its code.** ModifierOnlyHeld's doc comment says it "checks to make
+sure that either 'K' or 'L' are not being held", but the check it
+writes is `primarySecondaryKeybindDict.ContainsKey(GetComboCode
+(modifier, k))` (:1636) or `modifierHeldFirstDict.ContainsKey(k)`
+(:1637) - and ROAD-Ar R9 already established what that first dict is: a
+PRIMARY<->SECONDARY pairing map, whose only additive arm is
+`MapSecondaryBindings`' both-bound branch. So a SINGLE-bound Shift+K
+fires on either order in DFU, and it does here. R9 read that dict for
+:1684; G3 reads it for :1636, and the two clauses are now the same
+clause.
+
+**What DFU keeps is a latch, and it is STATE.** `modifierHeldFirstDict
+[mod]` (:1695-1708) is RAISED only on a frame where the modifier is
+held AND `ModifierOnlyHeld`'s whole-set scan comes back CLEAN
+(:1699-1701); LOWERED only when the modifier is not held at all
+(:1704-1707); and on the "modifier held, scan DIRTY" path DFU assigns
+NOTHING - there is no else on :1699 - so the flag keeps whatever it
+already said.
+
+**G3 first DERIVED that flag from the Set and called the two
+equivalent. They are not, and ROAD-GR stores the dict.** Both halves of
+the asymmetry come out of those three lines: a disqualifier pressed
+AFTER the modifier cannot LOWER a raised flag - press Shift alone, then
+Ctrl, then K, and Shift+K still fires, which the derivation got right -
+but it also holds a flag that never rose DOWN, which the derivation
+could not see at all. Hold a disqualifying K, press Shift, press L,
+release K: the Set now reads `[Shift, L]` and a walk that stops at the
+modifier calls it clean, while DFU's scan still fails on the HELD L, so
+`modifierHeldFirstDict[Shift]` never rose and Shift+L does not fire.
+The port fired a combo DFU refuses, and suppressed a plain key DFU
+fires, on the same frame. The dict lives on the bindings store now,
+re-seeded one `false` per combo modifier on every binding change
+exactly as `SetupActionKeyDict` re-seeds it (:1354-1358).
+
+**And because it is state, a read has to be driven as FRAMES.**
+`FindKeyboardActions` runs `GetUnaryKey` over EVERY bound code each
+frame (:1826-1832 over `existingKeyDict`, :1327-1341), so every combo
+modifier takes its raise/lower every frame whether or not the player
+asked for that action. The port's reads are per-action and pull-based,
+so `held()` and `actionOf()` sweep the dict on entry with the ring as
+it stands; the write is idempotent in the ring, so sweeping on each
+read gives one frame's answer. The pins drive presses and releases in
+order, because the same Set answers both ways depending on what came
+before it.
+
+`ui/input.js` now carries four things where it carried one:
+
+- `modifierOnlyHeld(store, keys, mod)` - ModifierOnlyHeld (:1626-1644),
+  BOTH clauses, over the WHOLE ring and with no break at the modifier.
+- `pollModifier(store, keys, mod)` - the latch's only writer, :1695-1708
+  including the missing else, and `pollLatch` the per-frame sweep.
+- `heldModifier(store, keys)` - :1818-1821's own pick. PollInput walks
+  `modifierHeldFirstDict` and ASSIGNS, so the LAST held modifier is the
+  only suppressor GetUnaryKey ever consults; the port swept every one
+  of them, which kills a plain key DFU fires.
+- `codeDown` reading both arms off the STORED flag: the combo's hit
+  (:1711) writes then reads it, and the plain key's suppression
+  (:1683-1685) only reads it, exactly as DFU does. `actionOf` gates its
+  combo lookup on the same answer, so the DISPATCH half - Inventory,
+  CharacterSheet, the journals, QuickLoad - obeys the latch too, not
+  only the polled half.
+
+`ModifierOnlyHeld`'s `heldKeys.Length == 1` arm (:1628-1629) is
+deliberately not ported: `heldKeys` is `new KeyCode[6]` (totalHeldKeys,
+:35), so `Length` is 6 forever and the arm is dead in DFU.
+
+**THE FOUR HOSTS RULE APPLIED TO THE RING ITSELF.** `PollInput`
+(:1795-1809) adds every held key before `GameManager.Update` reads a
+single Action, and three of the four Set owners added theirs at the
+BOTTOM of their keydown ladder - so every key that DISPATCHED (F5, R,
+M, V, Escape above ground; the interior host's own KeyM) returned above
+the add and never entered the ring at all. Invisible while nothing read
+the order; load-bearing the moment something did. The add is hoisted in
+`world.js`, `exterior.js` and `interior.js`, and stays BELOW each
+host's overlay gate, because DFU's `Update` returns before `PollInput`
+while a pausing window is up (:487-503) - a key typed into a window
+joins no ring there either. `dungeon.js` already had it first and says
+so; `worldModes.js` reads the outer host's Set and needed nothing.
+
+Pinned in `test/g3_heldorder.test.js` (9 tests, 12 mutations dead) from
+both orders on DFU's own example, from the two shapes the derived latch
+got wrong (a disqualifier RELEASED before the modifier's clean frame
+never arrives, and a modifier held across the whole sequence), plus the
+discovered host sweep. `test/a8_combos.test.js`' two-modifier pair is
+driven as ordered frames for the same reason. The
+held-order remainder is struck from `inputActions.js` and the section C
+clause it belonged to is struck in the Ledger's keybinding-registry
+row. The AXES + JOYSTICK flag beside it is untouched: there is still no
+gamepad layer, that is an owner call, and `regenOpenFlags` answers the
+same 7 it did before.
+
+## ROAD-G G4 - THE LAST DRAG LATCHES ON THE MOUSE-UP SEAM (2026-09-04)
+
+Wave E built the overlay mouse-**UP** seam and wired the shared list
+picker to it. This slice spent the seam: three consumers of
+`ui/verticalScrollBar.js` were still on the wrong edge, or on no edge at
+all, and each of them said so in a comment that cited the remainder as
+though it were still open. A comment that cites a closed remainder is a
+pointer at a stranger - the whole reason `test/citedrift.test.js`
+exists - and here it was doing something worse than misleading a reader:
+it was keeping three departures alive after their blockers had gone.
+
+**THE SPELLBOOK (Ledger C's F159/F170/F180 row).** DFU's scroller is a
+live `VerticalScrollBar` (`DaggerfallSpellBookWindow.cs:363-372`) and
+the port had its DRAW, its two paging arms and no drag, on this stated
+reason: *"no held-button state reaches THIS window from its hosts - they
+hand it single-shot clicks only."* That was per-host, and both halves of
+it had already gone:
+
+- ROAD-A7 gave the hosts' hover seam the DOM event, so `e.buttons & 1` -
+  the port's only reading of `InputManager.GetMouseButton(0)` - reaches
+  any window in an overlay slot.
+- Wave E gave every overlay slot the button-**UP** edge, so a latch has
+  something to end it.
+
+So `ui/spellbookWindow.js` holds the component now instead of calling
+two pure helpers out of it. `press()` is MouseClick's paging AND
+Update's latch (the split is DFU's, across two members of one class);
+`hover` is Update's per-frame arm with both of its quirks kept - `scale
+= Size.y / totalUnits` reading the TOTAL rather than the span, and the
+`(int)` cast truncating TOWARD ZERO, which is a different index from a
+floor on the way back up; `release()` is the else arm; and
+`_syncScrollBar` is `UpdateSelection`'s scroller block (:507, :509-512), so
+the drawn thumb, the paging and the drag read ONE index and cannot part
+the way ROAD-D2 found the trough and the art parted.
+
+The count gate went with it. The old arm asked `_rows.length >
+ROWS_DISPLAYED` before touching the bar; DFU's bar is a child of
+mainPanel whether or not it painted, so a press on a list that FITS
+falls into MouseClick's `>` arm (thumbRect is the zero rect) and
+`SetScrollIndex` clamps it away - the same answer, reached DFU's way,
+and one less arm of `VerticalScrollBar`'s stated outside
+`ui/verticalScrollBar.js`.
+
+**THE SPELL ICON PICKER, found on the way.** Its scroller
+(`SpellIconPickerWindow.cs:39, :91-94`) is the same component, and MC1
+had shipped the CLAMP alone: the rail took no press, the thumb no drag -
+and the window PAINTED a grey trough with a grey block riding on it,
+pixels DFU does not draw at all. `VerticalScrollBar.Draw` returns before
+`DrawScrollBar` whenever the content fits (:135-139) and that scroller
+sets no `BackgroundColor`, so on classic-only content (7 steps in 8
+units) DFU shows the main panel's black. It is the shared component now,
+drawing DFU's three slices or nothing, and both windows that NEST it -
+the spellbook and the spell maker - forward the release the way they
+already forward `hover`, class-scoped, which is wave E's own lesson kept.
+
+**THE WIZARD'S PICKER BAR.** `ui/chargen.js` dropped its latch on the
+NEXT MOVE and the comment beside it named the remainder as the reason.
+`releasePickBar()` is Update's else arm, forwarded by
+`systems/chargenSession.js`'s wrapper - the door every host that runs
+the wizard already calls.
+
+**AND ONE HOST WAS SHORT THE SEAM'S OTHER HALF.** `scenes/interior.js`
+routed its overlay's hover as a bare `(x, y)`: press and release both
+arrived, the held-button FRAME did not, so a window mounted there could
+latch a thumb and never move it. The four-hosts rule's own failure mode,
+and silent, because nothing errors on a latch. The pin sweeps all six
+hover routes rather than trusting an edit.
+
+Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 17 mutations
+killed): the drag's arithmetic dies under the span-scale and the floor;
+the release dies under an emptied `release()` in either window, in the
+wizard's flow and in its wrapper; the rail's press dies under the
+removed branch; the trough's absence dies under the grey rectangle
+coming back; and the host sweep dies under a dropped `, e`. The last of the twelve is
+the one the slice did not set out to write: the hosts answer a pointer
+off their letterboxed panel with `(-1, -1)`, and that pair is a
+fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
+it flinging the town map ~165 world units - so a thumb dragged into the
+black border would have snapped its list to row 0. All three of the
+slice's drag machines skip the frame and keep the latch, because
+`release()` is what ends a drag. The wizard's bar was NOT among them
+when this section was first written - it took the sentinel straight
+into `pickBar.update` and clamped the class list to row 0, and the
+ROAD-G G4 review caught the gap; `ui/chargen.js`'s `hover` carries the
+same `vy >= 0` arm as its two siblings now, and G4-12 drives all three.
+
+## ROAD-G G5 - THE DROP ICONS, AND THE BANK LIST'S SCROLL BAR (2026-09-04)
+
+Two arms AUDIT 58 named as optional and left rather than widen a lane,
+and the record of that leaving is the second thing this slice closes
+(`Audit-58.md`, "Left, deliberately"). They shared no code and one
+reason: both were the LAST unbuilt piece of a widget the same audit had
+just drawn most of.
+
+### (a) THE DROP ICON
+
+`UpdateRemoteTargetIcon` (:865-890) is a four-arm ladder and the port
+drew two of them. The two it skipped are the only two that address a
+WORLD FLAT rather than a container picture:
+
+    else if (dropIconTexture > -1)
+        containerImage = ImageReader.GetImageData(
+            TextureFile.IndexToFileName(dropIconArchive),
+            dropIconIdxs[dropIconArchive][dropIconTexture], 0, true);
+    else if (lootTarget != null && lootTarget.TextureArchive > 0)
+        containerImage = ImageReader.GetImageData(
+            TextureFile.IndexToFileName(lootTarget.TextureArchive),
+            lootTarget.TextureRecord, 0, true);
+
+**The reason they were unreachable was one line wide.** The port's loot
+hook was `{ items() }`. A DaggerfallLoot has three more fields that
+matter here - `playerOwned`, `TextureArchive`, `TextureRecord` - and
+without them the panel cannot know what the pile on the floor looks
+like, `CanChangeDropIcon` (:2140-2144) cannot tell your own pile from a
+shop's shelf, and `OnPop` cannot notice that the icon changed. So the
+hook carries them, through ONE shape (`droppedLoot.droppedLootHooks`)
+that all four hosts take, because a fifth call site shipping half an
+identity is exactly how this class of defect returns.
+
+**What the player can now do that they could not.** Open the pack with
+a pile as the remote target, or with items about to be dropped, and the
+55x34 panel over the right-hand list is the pile's own flat. Left-click
+it and the icon cycles up the archive's list; right-click cycles down;
+MIDDLE-click takes the next archive - clothes, boxes and bottles,
+weapons, books, oddments, treasure - and resets to its first icon. Close
+the window and the pile on the floor is wearing what you picked, and it
+still is after a save, a re-entry, or walking out of the shop and back
+in.
+
+**Three details that are DFU's and read like bugs if you don't know:**
+
+1. **The sound plays before the refusal.** Both the left and right
+   handlers `PlayOneShot(ButtonClick)` and *then* ask
+   `CanChangeDropIcon`, so clicking the panel over a shop shelf clicks
+   and changes nothing. The middle handler plays no sound at all.
+2. **A changed icon does not repaint the pile - it REPLACES it.** OnPop
+   (:689-694): "If icon has changed move items to dropped list so this
+   loot is removed and a new one created." `TransferAll` empties the old
+   container, `releaseEmptied` frees its flat, and the new container is
+   minted with the chosen archive/record and moved to the OLD one's x
+   and z, taking only its own y (:710-714).
+3. **The 216 list here is not `randomTreasureIconIndices`.**
+   `dropIconIdxs[216]` has thirty entries and the roll list has twenty.
+   A pile you never touched can therefore wear a record that the cycling
+   list does not contain, and OnPush's index search then leaves
+   `dropIconTexture` at -1 - which is right, and is why the OnPop
+   comparison treats "no index" as "changed".
+
+**One structural move.** `DaggerfallLootDataTables.cs` is its own source
+file in DFU and is its own module here again
+(`systems/lootDataTables.js`, a leaf that imports nothing). Reading the
+table off `systems/loot.js` put `inventorySession.js` upstream of the
+whole loot generator and, through `potions.js`, built an import cycle
+that broke module initialisation across the tree - 228 test files red at
+once, none of them about loot. `loot.js` re-exports every name, so no
+existing importer moved.
+
+### (b) THE BANK PURCHASE LIST'S SCROLL BAR
+
+`SetupScrollBar` (:303-314) is eleven lines and the port had the rect
+already, sitting unread in `PURCHASE_RECTS`. AUDIT 58 drew the two green
+and red arrows above and below it; the rail between them was dead
+pixels, so a market of twenty houses could be moved one row at a time
+from the buttons and never grabbed.
+
+The widget is ROAD-A7's shared `ui/verticalScrollBar.js` - the thumb art,
+`MouseClick`'s paging arms and `Update`'s drag all live there, and this
+is the fourth window to take it. What the purchase window owns is the
+rect (folded onto the panel origin so hit test and draw share one) and
+the two-way index sync: `PriceListBox_OnScroll` pushes the list's index
+into the bar and `PriceScrollBar_OnScroll` pushes the bar's back out
+(:400-410), which is one `syncScrollBar` here, the shape `listPicker.js`
+already runs. The host seams it needs - `hover` with the DOM event for
+`GetMouseButton(0)`, and `release()` for the button coming up - were
+already routed to this slot by ROAD-E's up-seam work; the window simply
+had neither method.
+
+### PINS
+
+`test/road_g5_dropicons.test.js` (18 tests, 41 mutants driven, 41 dead)
+and four new tests in `test/bankpreview.test.js` (12 mutants driven, 12
+dead). The mutants are written beside the assertions that kill them.
+Nothing here has been seen in a browser: the two panels are GL draws and
+the standing rule since 2026-09-01 is that the owner verifies.
+
+**The review-fix pass (Wave G, lane G5).** Nine findings; six of them
+were pins that held less than their titles claimed, and the seams they
+left open are named here because the counts above changed for them. The
+WINDOW now binds to the seed: `openDropIcon` could be replaced in
+`nativeInventory` by the constant `{216, -1}` with the whole suite
+green, because every window fixture in the file opened on a target whose
+correct seed IS that constant. The two flat arms were interchangeable:
+they differ only in which `(archive, record)` reaches `dropIconImage`,
+and `'image' in x` is true for `{ image: null }` - which is what the
+reader answers with nothing registered, so both key-presence guards are
+identity checks now, over pictures put in through
+`_setDropIconForTests`. `dropIconImage` itself - the whole TEXTURE.###
+reader the slice exists for - had no pin at all and its two shipped test
+seams had no caller; it is pinned on its guard (a guarded ask never
+touches ARENA2), on its MISS cache (asked once, never retried) and on
+the picture a warm record answers, and `drawTargetIconPanel` is pinned
+through a recording renderer drawing that flat ScaleToFit OVER the
+container picture. `closeSession`'s `playerOwned` term (:690) had no
+non-owned fixture: without it every close of a dungeon RDB treasure pile
+TransferAll-empties it onto the floor. And `droppedLoot`'s five archive
+reads were held by two source regexes naming two of them; all five are
+behavioural now, `offsetAll`'s floating-origin rebuild included - under
+that one a pile the player re-iconed reverted to a treasure flat on the
+first recenter.
+
+One LAW moved with them, in `dungeonContext`'s `takeLoot`: a corpse
+reached `UpdateRemoteTargetIcon` with `{ items() }` alone and drew
+`InventoryContainerImages.Ground`. `CreateLootableCorpseMarker`
+(`GameObjectHelper.cs:812-828`) hands `ReverseCorpseTexture`'s
+archive/record to `CreateLootContainer`, which writes them onto the
+container (:697-698), and `EnemyBasics.cs:2227-2231` is
+`archive = corpseTexture >> 16` with no zero row in the table - so a
+corpse ALWAYS satisfies the second arm's guard and DFU draws the body's
+own world flat. The corpse arm feeds that pair now, off the same
+struct-copy-then-row read `spawnCorpse` takes, and carries no
+`playerOwned` (`:833` sets it false), so nothing cycles a body's icon.
+
+## ROAD-G G6 - THE MOUSE / ADVANCED CONTROLS WINDOW (2026-09-04)
+
+`DaggerfallUnityMouseControlsWindow.cs` was one of two DFU windows
+nothing in `src/` cited. TC1 recorded both in Port-Ledger section C's
+keybinding row (`:593`) and adjudicated them: the joystick window an
+owner decision (no gamepad layer anywhere in this port), the
+mouse/advanced window a departure section A already covered, because
+its ten settings are all rows on the port's ONE settings screen. That
+second adjudication is retired by this slice - the window is built, and
+the row's live clause is down to the joystick alone.
+
+**THERE IS NO NATIVE ART, AND THAT IS THE FINDING.** Every other window
+in this arc opens with a CIF or an IMG. This one opens with a flat
+`Panel`: `mainPanelBackgroundColor` black, `Outline.Enabled`, 318x170
+at Center/Middle, which over the 320x200 native panel is exactly
+`(1, 15)`. `SetBackground` (:322-332) offers the colour only as the
+FALLBACK - a mod may supply a texture named
+`advancedControlsMainPanelBackgroundColor` - and the port has no mod
+texture layer, so the colour arm is the only arm. Same shape for the
+ADVANCED tab itself, which DFU paints with an
+`advanced_controls_button` texture out of its own Resources folder
+(DaggerfallControlsWindow.cs:114-120), and for `HSliderThumbLeft/Body/
+Right` and `checkbox_checked/unchecked`. All four are recorded the way
+`ui/travelPopUp.js` records its green checkbox: DFU's own art, not
+Daggerfall's, with a colour arm DFU ships for exactly this case.
+
+**WHAT SHIPPED**
+
+- `src/ui/mouseControlsWindow.js` - the window: the panel and its
+  outline, the title, CONTINUE at Right/Bottom, SIX keybind rows
+  (Escape, AutoRun, ToggleConsole, PrintScreen, QuickSave, QuickLoad -
+  exactly the six DFU leaves off the classic grid, which the grid's own
+  header has recorded as DFU's quirk since I4), FOUR sliders, FIVE
+  checkboxes and the weapon-attack-threshold field, every rect derived
+  from DFU's alignment arithmetic rather than eyeballed.
+- `src/ui/horizontalSlider.js` - `HorizontalSlider.cs` plus
+  `DaggerfallUI.AddSlider`, as a component: the three indicator modes,
+  `DisplayUnits 20` and the `(max-min)+20` total it derives, the float
+  mode's x10-and-round, the trough, the thumb with its 10px floor, the
+  paging click, the truncating drag. `ui/nativeTalk.js` had carried
+  half of `DrawSlider` for the topic bar since AUDIT 58 and now
+  delegates; `SetScrollIndex`'s clamp is `ui/verticalScrollBar.js`'s,
+  because HorizontalSlider.cs's own header says "Reused code from
+  VerticalScrollBar" and it is the same three lines.
+- `onSavedKeyBinds` in `src/systems/inputActions.js` -
+  `InputManager.OnSavedKeyBinds`. It looks like a notification and is
+  really an ORDERING, which is the most interesting thing in the C#:
+  the window does ALL of its setting writes in that handler (:83,
+  :351-371) and its own CONTINUE calls nothing but `CancelWindow`, so
+  the ten values land when the CONTROLS window saves. Port the event
+  and the ordering falls out.
+- `comboFromEvent` and `PromptRemoveKeybindMessage`'s rows moved into
+  `systems/controlsConfig.js`, where the second always belonged - both
+  rebinding windows need them and the grid imports the popup, so they
+  could not stay in the grid.
+
+**TWO DFU QUIRKS KEPT.** `float.TryParse` gates the threshold write:
+`TextBox.Text` is the TYPED text and `DefaultText` is only a display
+fallback (TextBox.cs:342-343), so a player who opens this window and
+never touches the field leaves `WeaponAttackThreshold` exactly as it
+was. And `GetMouseLookSmoothingStrength` returns the index of an EXACT
+match or ZERO - a stored 0.45 reads "None", not nearest.
+
+**ONE DEPARTURE RETIRED ON THE WAY.** `ui/lookSettings.js` clamped
+MouseLookSensitivity at 4.0 against DFU's 0.1..16.0
+(SettingsManager.cs:524), and `ui/settingsLaw.js` mirrored the
+narrowing under its range-equals-clamp law with the note "the port
+clamps at 4.0". Building DFU's slider verbatim would have offered
+travel the consumer ignored, so the clamp was widened to DFU's instead:
+the law now holds because the port agrees with DFU end to end rather
+than because the screen agrees with a narrower port.
+
+**WHAT DID NOT SHIP, and why.** `DaggerfallJoystickControlsWindow.cs`
+stays unbuilt - an owner call, unchanged: the port has no gamepad layer
+at all, the serialized joystick blocks are simply absent from
+`KeyBindData_v1`, and the flag that says so is
+`src/systems/inputActions.js:513`. The JOYSTICK tab still answers with
+its note, and Ledger `:593`'s live clause now names that window alone.
+`weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
+nine controls are built, the tenth is a stub - and
+`StartGameBehaviour.ApplyStartSettings()` has no port counterpart
+because every one of these settings is read at its point of use.
+
+**WHAT ROAD-GR G6 CORRECTED (2026-09-04).** The review found the
+window's whole POINTER PATH unheld and one seam of it broken, plus a
+run of cites into `DaggerfallUnityMouseControlsWindow.cs` that resolved
+to the wrong code.
+
+- **The drag never released.** The popup latches its slider thumb on the
+  press and `ControlsWindow.hover` pumps `advanced.drag(vx)` from every
+  move, but the grid carried no `release()` of its own - and the grid is
+  what sits in the hosts' overlay slot while the popup is up. All four
+  hosts deliver the button-up edge as `overlay.release?.()`
+  (`scenes/townTalk.js` even gates its up route on the member existing),
+  so the edge was a silent no-op and one press glued a slider to the
+  pointer for the rest of the popup's life, with the runaway value then
+  written by the grid's save. `ControlsWindow.release()` forwards it now,
+  the ROAD-E E1 shape `ui/itemMakerWindow.js:202` has carried since
+  Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
+- **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
+  (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
+  steps the slider the pointer is over - the last hovered point stands
+  in for the position the overlay wheel seam does not carry, which is
+  `ui/automapWindow.js`'s own shape - and `ControlsWindow.wheel`
+  forwards it, so all four hosts reach it.
+- **The checkboxes were clickable only on their 7x7 art.** DFU's
+  `Checkbox` is a Panel that hangs the toggle on ITSELF (Checkbox.cs:84)
+  and re-sizes itself every Update to `checkTextureSize.x +
+  checkTextHorzOffset + label.Size.x` (:103-105); that Size is the rect
+  `BaseScreenComponent` hit-tests (:578-579) and dispatches from
+  (:681-684), so in DFU clicking "Protect Friendlies and Neutrals"
+  toggles the box. `checkboxRect` is that width now, with the art alone
+  as the before-first-draw fallback - which is where DFU is too, since
+  Checkbox.Update calls `base.Update()` before assigning Size.
+- **Re-opening the tab skipped CheckDuplicates.** `OnPush() { OnReturn(); }`
+  and `OnReturn() { UpdateKeybindButtons(); CheckDuplicates(); }`
+  (:146-155) run on every push of the cached instance, which is exactly
+  what keeps its colouring current against a clash made on the GRID
+  between two visits. The port re-pushed with nothing but
+  `done = false`; `MouseControlsWindow.onPush()` carries both halves now.
+- **The panel outline was drawn in the text colour** under a comment
+  claiming `BaseScreenComponent` draws it in DaggerfallDefault.
+  `BaseScreenComponent` has no outline colour at all - `Outline.cs:29-31`
+  owns it, and its default is `Color.white`, never overridden here. The
+  border is white, the colour `ui/settingsWindow.js:779` and
+  `ui/spellIconPickerWindow.js` already drew theirs in.
+- **The OnSavedKeyBinds header claimed the port's raise was DFU's.** It
+  is not: DFU raises only after a successful write (InputManager.cs:926,
+  :927, :928, with no try/catch in SaveKeyBinds :871-929), and the port
+  shields the write and raises regardless. That is a deliberate
+  departure - a lost keybind blob must not also cost the ten
+  advanced-controls values - and it reads as one now.
+- **The cites.** Every `:NNN` into `DaggerfallUnityMouseControlsWindow.cs`
+  was off by a varying offset (`:78` -> `:83` for the subscription,
+  `:334-360` -> `:351-371` for the handler, `:253-283` -> `:285-319` for
+  AddTextbox, `:281-291` -> `:322-332` for SetBackground, `:436-439` ->
+  `:403-406` for a caller 25 lines past the end of a 411-line file, and
+  the rest), re-resolved against the reference file line by line. So
+  were `InputManager.cs:923` (the raise is `:928`, declared `:2067`) and
+  `DaggerfallControlsWindow.WaitForKeyPress :383-427` (`:380-424`, which
+  the tree's own surviving comment already had right). And
+  `ui/controlsWindow.js:8-12` - the record two live cites point at - said
+  the six off-grid actions "rebind only by editing the file", which this
+  very lane falsified; it names the ADVANCED window now, in the same
+  five lines so both cites still resolve.
+
+**Pins:** `test/mousecontrols.test.js`, 21 tests, 47 mutations, 47
+dead. `test/ledger.test.js` holds the Ledger row from both sides - the
+struck clause and the module it names must both still be there.
+
+## ROAD-G G7 - THE TWO WINDOWS D1 LEFT BEHIND (2026-09-04)
+
+D1 corrected an invented-accelerator claim across three windows -
+`tavernWindow`, `covenWindow`, `guildServiceWindow` - on the finding
+that `DaggerfallShortcut` does not read a player keybind file at all.
+It reads a TEXT DATABASE, `StreamingAssets/Text/DialogShortcuts.txt`
+(`DaggerfallShortcut.cs:307-326`), which ROAD-A8 had already ported
+whole to `systems/dialogShortcuts.js`. The three D1 windows were the
+ones its sweep found; the records lane found two more carrying the same
+sentence, and they turned out to be OPPOSITE answers.
+
+**`ui/transportWindow.js` - DFU binds all five, so the port does too.**
+`DaggerfallTransportWindow.cs:100-137` hangs `TransportFoot`,
+`TransportHorse`, `TransportCart`, `TransportShip` and `TransportExit`
+on its buttons. The port had typed `KeyF`/`KeyH`/`KeyC`/`KeyS` as
+literals with the comment "the port's own letters (Ledger A - DFU reads
+its keybind table)" - right by accident for the four rows and WRONG at
+the exit, which had no letter at all where DFU binds one, so `E` - the
+letter every other native window in this port answers - did nothing
+here. The ladder is `firstHotkey(TRANSPORT_BUTTONS, code, e)` now, in
+DFU's own button ADD order, and the departure is gone rather than
+recorded.
+
+One law worth naming, because it looks like a port convenience and is
+not: **a disabled row is given no Hotkey at all.** Each ownership test's
+`else` arm sets only the disabled sub-texture (`:105-121`) and never
+assigns the binding, so in DFU the letter for a transport you do not own
+is DEAD, not refused. That is why the enable test rides the BUTTON in
+the switch rather than the `_pick` it calls - moving it onto the pick
+would answer the same for a click and differently for a key.
+
+**`ui/merchantServiceWindow.js` - DFU binds NOTHING, so the letters
+really are ours.** `DaggerfallMerchantServicePopupWindow` adds talk,
+service and exit with a click handler alone (`:88-103`); unlike its
+guild sibling, which hangs `GuildsTalk`,
+`Services.GetServiceShortcutButton(service)` and `GuildsExit`
+(`DaggerfallGuildServicePopupWindow.cs:128-151`), it reads nothing out
+of the table. So this popup is MOUSE-ONLY in DFU, the port's `T`/`S`/`E`
+are an addition with no original to be wrong against, and the honest
+answer was a Port-Ledger section A row rather than a wiring. It has one,
+and the site cites it by name. The keyboard stays: every other native
+window here answers it, and one silent exception reads as a broken
+window rather than as fidelity.
+
+Pinned in `test/tr3_transportwindow.test.js` (three new tests, each
+reading the letter OUT OF `dialogShortcuts` so a change to the vendored
+data moves the pin with the game; 4 mutants, 4 killed) and, for the
+merchant half, by `test/ui2_merchantpopup.test.js`'s existing
+accelerator test plus `test/citedrift.test.js` CD1, which holds the row
+and the by-name citation together.

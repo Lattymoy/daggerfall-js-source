@@ -477,9 +477,10 @@ test('F2: re-entering the screen drops an in-flight animation', () => {
 });
 
 test('F2: the overlay wrapper forwards the clock (the four-hosts seam)', async () => {
-  // dungeonContext holds the RAW flow; the townTalk hosts hold this
-  // wrapper - so the wrapper must pass dt through or chargen animates
-  // in one host and hangs on its deadline in the other two.
+  // Every host that runs the wizard holds this wrapper (wave D put
+  // dungeonContext through it too, where it used to reach flow.tick
+  // directly) - so the wrapper must pass dt through or chargen hangs
+  // on its deadline in all of them.
   const { createChargenWindow } = await import('../src/systems/chargenSession.js');
   const f = flowWithQuestions();
   let ticked = 0;

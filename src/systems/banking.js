@@ -279,6 +279,10 @@ export const ownsShip = (player) => ownedShipType(player) !== SHIP_TYPES.None;
 export const shipCoords = (player) => (ownsShip(player) ? SHIP_COORDS[ownedShipType(player)] : null);
 /** GetShipModelId (:122) - guarded by `ship >= 0`, so None is 0. */
 export const shipModelId = (ship) => (ship >= 0 ? SHIP_MODEL_IDS[ship] : 0);
+/** GetShipCameraDist (:124) - the same `ship >= 0` guard, and the same
+ *  0 for None. D6 gave it a caller: the purchase window's ships arm
+ *  frames each hull from (0, 12, this). */
+export const shipCameraDist = (ship) => (ship >= 0 ? SHIP_CAMERA_DIST[ship] : 0);
 
 /**
  * AssignShipToPlayer (:488-497): set the ship and add BOTH of its
@@ -642,18 +646,30 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
   };
 }
 
-// FLAGGED, with the slices they wait on:
-//  - H1 RETIRED THE HOUSE HALF OF THIS. The building directory and
-//    the permanent-scene set both exist now, so housesForSale,
-//    allocateHouseToPlayer and sellHouse are above and live. What is
-//    still out is the BUY UI, and it is a specific thing rather than
-//    a missing system: DaggerfallBankPurchasePopUp is a 436-line
-//    window that renders the house's own 3D MODEL on a dedicated
-//    camera and layer beside a price list. Until that lands the bank's
-//    BUY HOUSE button refuses - which is also DFU's own answer when
-//    the directory is missing (:433-434) - and the one path that
-//    grants a house without it, KnightlyOrder.ReceiveHouse, is live.
-//  - PurchaseShip/SellShip (:464-506) need the two fixed ship scenes
-//    at map pixels (2,2) and (5,5), which is a streaming-world seam.
-//  - ReadNativeBankData (:580+) reads a classic .SAV BankAccount
-//    record; the classic save reader is its own unported system.
+// CLOSEOUT: two of the three slices this once waited on have landed,
+// and the block is narrowed to the one that has not.
+//  - THE HOUSE HALF IS WHOLE. H1 brought the building directory and
+//    the permanent-scene set, so housesForSale, allocateHouseToPlayer
+//    and sellHouse above are live; H2/H4 brought the BUY UI itself -
+//    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2180
+//    openPurchase with drawBankModelPreview (:1938) as the dedicated
+//    3D model panel, and ui/bankWindow.js:201-209 routes BUY HOUSE's
+//    'pick' into it (a host without the window still falls back to
+//    DFU's own missing-directory answer, :433-434).
+//  - ReadNativeBankData (:584-614) IS PORTED, verbatim quirks and all:
+//    systems/classicSave.js:250 classicBankAccounts, fed the SaveTree
+//    BankAccount record at classicSave.js:755 and mounted by SAV3
+//    (ui/loadClassicWindow.js -> scenes/menu.js -> world.js's
+//    classicLoadBoot).
+//  - D6 CLOSED THE SHIP HALF, and it needed no new scenes seam: the
+//    one thing out was the purchase window's SHIPS ARM, which is
+//    DFU's own null-house-list branch of the SAME popup
+//    (DaggerfallBankingWindow.cs:463 pushes BankPurchasePopup with
+//    `null`; DaggerfallBankPurchasePopUp.cs:181-185 reads that null as
+//    "the two ShipTypes at their flat prices"). ui/bankPurchaseWindow.js
+//    is now both shops off that one discriminator, SHIP_CAMERA_DIST
+//    has its caller (shipCameraDist above, the preview's (0,12,z)
+//    camera), and scenes/worldModes.js openShipPurchase runs
+//    PurchaseShip - so BUY SHIP in a port opens the list instead of
+//    answering NOT_PORT_TOWN.

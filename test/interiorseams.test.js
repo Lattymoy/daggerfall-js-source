@@ -61,7 +61,7 @@ test('IH1 world: isHouseOwned is banking\'s law over the CURRENT region; the bag
 test('IH1 townTalk: ONE name bag - nameOpts() extracted, the directory built FROM it, both exposed', () => {
   const tt = read('src/scenes/townTalk.js');
   assert.match(tt, /function nameOpts\(\) \{/, 'the bag has a name');
-  assert.match(tt, /const opts = nameOpts\(\);\s*\n\s*if \(!opts\) return;\s*\n\s*directory = buildBuildingDirectory\(topics\.exteriorBuildings, topics\.blocks, topics\.doors, opts\)/,
+  assert.match(tt, /const opts = nameOpts\(\);\s*\n\s*if \(!opts\) return;\s*\n\s*directory = buildBuildingDirectory\(topics\.exteriorBuildings, topics\.blocks, opts\)/,
     'rebuildDirectory consumes the SAME bag - no second copy of the regent/bank/palace laws');
   assert.equal((tt.match(/regentRuler:/g) ?? []).length, 1, 'the bag literal exists exactly once');
   assert.match(tt, /\n    nameOpts,\n/, 'the api hands the bag out');

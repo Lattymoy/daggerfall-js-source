@@ -77,8 +77,9 @@ export class BssFile extends BaseImageFile {
       this._readHeader();
       this._readImageData();
     } catch {
-      // Read() catches and returns false (:180-190) - a truncated or
-      // malformed file is a load failure, never an exception.
+      // Read() catches and returns false (:180-190) - a malformed file is a
+      // load failure, never an exception. TRUNCATION IS NOT MALFORMED here:
+      // see _readImageData.
       this._loaded = false;
       return false;
     }
@@ -127,16 +128,20 @@ export class BssFile extends BaseImageFile {
   _readImageData() {
     const { width, height, frameCount } = this._header;
     const stride = width * height;
-    if (stride <= 0 || frameCount <= 0) throw new Error('BssFile: empty header');
-    if (BSS_HEADER_BYTES + frameCount * stride > this._bytes.byteLength) {
-      throw new Error('BssFile: truncated frame data');
-    }
+    // ReadImageData (:210-222) has exactly two failures: `new DFBitmap[
+    // FrameCount]` and `new byte[Width * Height]` both throw on a negative
+    // size. A zero count or a zero frame size loads. And BinaryReader.ReadBytes
+    // hands back a SHORT array at end of stream instead of throwing, so a
+    // truncated file LOADS, with short trailing frames - the reader's job is
+    // not to police the file size.
+    if (frameCount < 0 || stride < 0) throw new Error('BssFile: negative header');
     this.frames = [];
+    const end = this._bytes.byteLength;
     let pos = BSS_HEADER_BYTES;
     for (let i = 0; i < frameCount; i++) {
       this.frames.push({
         width, height,
-        data: this._bytes.subarray(pos, pos + stride),
+        data: this._bytes.subarray(pos, Math.min(pos + stride, end)),
         palette: this.palette,
       });
       pos += stride;

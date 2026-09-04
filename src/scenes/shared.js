@@ -11,12 +11,13 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_SECONDS } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
+import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
@@ -25,15 +26,19 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
+import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
 import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
+import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
+import { setPaintFile } from '../systems/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
@@ -41,7 +46,7 @@ import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusi
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
-import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -51,6 +56,22 @@ export async function fetchBytes(name) {
 }
 
 /**
+ * AUDIT 39 F156 - PAINT.DAT, the third file-backed registry, and it
+ * rides this call for exactly the reason the two below share it: one
+ * boot per host, THE FOUR HOSTS RULE, and a reader with nowhere else
+ * to be threaded (the info panel is handed an item and a TEXT.RSC
+ * reader, nothing more). It had no host at all: `setPaintFile` was
+ * called from no src module and formats/paintFile.js was imported by
+ * none, so every painting in the game showed TEXT.RSC 250 with its
+ * five macros - subject, adjective, both prefixes and the artist -
+ * expanded to the empty string. DFU always resolves it: GetItemInfo's
+ * painting arm returns `item.InitPaintingInfo(paintingTextId)`
+ * (ItemHelper.cs:788-789) over a PaintFileReader the ContentReader
+ * builds unconditionally.
+ *
+ * Its own try block: a bad or absent PAINT.DAT must not take the
+ * magic registries down with it, which is AUDIT 18's lesson below.
+ *
  * G4 - THE TWO MAGIC REGISTRIES, in ONE place. THE FOUR HOSTS RULE:
  * these were set only in dungeonContext's boot, so a magic item
  * minted from the EXTERIOR host - shop loot, a city corpse, and as of
@@ -80,14 +101,28 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
     magicItemTemplates = readMagicDef(await fetch('MAGIC.DEF'));
     setMagicItemTemplates(magicItemTemplates);
   } catch { /* data absent: the loot MI category and the guild shelf stay empty */ }
-  return { spellsByIndex, magicItemTemplates };
+  let paintFile = null;
+  try {
+    paintFile = new PaintFile(await fetch('PAINT.DAT'));
+    setPaintFile(paintFile);
+  } catch { /* data absent: a painting reads record 250 with blank macros */ }
+  return { spellsByIndex, magicItemTemplates, paintFile };
 }
 
-export function parseSeason(params) {
-  const s = (params.get('season') || 'summer').toLowerCase();
+/** A1: ?season IS A DEBUG OVERRIDE NOW, NOT THE SOURCE.
+ *  The texture season is the calendar's (climateSeasonFromMinutes,
+ *  world/climateSwaps.js - the reference's own one-line test at
+ *  ClimateSwaps.cs:382-386 and friends). This reads the URL and
+ *  answers null when nothing pinned it, the ?cull=off shape: a shot or
+ *  a probe can still nail winter in Second Seed, and a real session
+ *  gets winter when Evening Star arrives and not before.
+ *  @returns {number|null} a SEASON value, or null for "ask the clock". */
+export function seasonOverride(params) {
+  const s = (params.get('season') || '').toLowerCase();
   if (s === 'winter') return SEASON.Winter;
   if (s === 'rain') return SEASON.Rain;
-  return SEASON.Summer;
+  if (s === 'summer') return SEASON.Summer;
+  return null;
 }
 
 // U54: ONE HOME - it moved to formats/textureFile.js, beside the
@@ -126,11 +161,15 @@ export function createSkyController(gl, params) {
   // scene, so a flip takes effect when the world next loads. ONE
   // `renderer` field either way: the hosts read clearColor / set
   // fogMix and fogColor on it without knowing which pass it is.
-  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('proceduralSky')
+  // EE1: one switch for the whole outdoors. ?sky=classic stays the URL
+  // door and still forces the panorama, so every probe riding it works.
+  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments')
     ? new EnhancedSkyRenderer(gl) : null;
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
+  const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds
   let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
@@ -201,6 +240,61 @@ export function createSkyController(gl, params) {
   return {
     renderer: enhancedSky ?? sky,
     enhanced: Boolean(enhancedSky),
+    /** GR3 (Mac: "the wind still isn't working ingame"): THE CLOUD
+     *  SHADOW DECK, off the dome. EE5 publishes `cloudShadow` on the
+     *  EnhancedSkyRenderer - cover, softness, WIND, time - "from the
+     *  same state the dome is drawn from, so no host can feed them
+     *  different numbers". Then three readers in world.js read it off
+     *  THIS object - `sky.cloudShadow` - and this object never carried
+     *  it: the dome sits one key down, under `renderer`. So every one
+     *  of them read undefined. The grass took wind [0,0] and a slider
+     *  of 0, the rain fell un-enhanced, and the ground's cloud shadows
+     *  were set to null - three features dead from one missing key,
+     *  and the suite green throughout, because nothing pinned the
+     *  VALUE that reached the shader. GR2 measured a million blades
+     *  placed and never a blade moving.
+     *
+     *  A getter, so it is live: the dome rebuilds the deck every draw
+     *  and this always answers with the current one. null under the
+     *  classic sky, as `wind()` above is null - "no deck is known",
+     *  which is what the three readers' `?? null`/`?? [0, 0]` arms
+     *  were written for. */
+    get cloudShadow() {
+      return enhancedSky?.cloudShadow ?? null;
+    },
+    /** WM2b: THE EASED WIND, and the ONE place anything but the sky can
+     *  read it. `easeWeather` walks this row toward the sim's over
+     *  WEATHER_EASE_SECONDS, and the cloud deck is drawn with it - so a
+     *  consumer that takes the same vector is not merely correlated with
+     *  the sky, it is driven by the same number. The windmills' rotor
+     *  rate is the first (src/world/windmills.js).
+     *
+     *  null until the first enhanced draw, and null forever under the
+     *  classic sky, which has no cloud field and eases nothing. Callers
+     *  treat null as "no wind is known" rather than "the wind is zero" -
+     *  the two differ, and only one of them should stop a mill. */
+    wind() {
+      return weatherRowNow ? weatherRowNow.wind : null;
+    },
+    /** WIND1: the wind's gust multiplier now, shaped by its strength. */
+    gustAt(tsec) { return windModel.gust(tsec); },
+    /** WIND1: 0..1 - the front's height, for anything that wants to
+     *  arrive behind the wind. */
+    frontProgress() { return windModel.frontProgress(); },
+    /** WX2: 0..1 - how far the incoming weather has ARRIVED (1 from the
+     *  front's landing on, and 1 with no front up), for the ground's
+     *  terms and the drops to cross on. Under the classic sky the model
+     *  never ticks and this answers 1: no front, nothing to cross. */
+    frontArrival() { return windModel.arrival(); },
+    /** WX2a (AUDIT 57): the sim's word changed by a JUMP - a load, a
+     *  travel landing, a respawn roll, a stale drain - not by weather
+     *  arriving. The eased row is dropped so the next use() takes the
+     *  new row whole (the first-call law), and the wind builds no front.
+     *  A no-op under the classic sky, which eases nothing. */
+    weatherJump() {
+      weatherRowNow = null;
+      windModel.jump();
+    },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
      *  hide the disc, handed to the light so the two agree. 1 under a
@@ -208,6 +302,14 @@ export function createSkyController(gl, params) {
     sunFactor() {
       const occ = enhancedSky?.state?.sunOcclusion ?? 0;
       return 1 - CLOUD_SHADOW * occ;
+    },
+    /** EV5: the world light's MOON term, derived from the same state
+     *  the dome is drawn with (the masser's direction, phase and
+     *  cloud-dimmed visibility; secunda's ambient lift). null under
+     *  the classic sky - which has no moon state, so the 1:1 lane
+     *  keeps DFU's hard-off night - and null by day. */
+    moonlight() {
+      return enhancedSky?.state ? moonlightTerm(enhancedSky.state) : null;
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
@@ -221,15 +323,51 @@ export function createSkyController(gl, params) {
         // ticks; the sky walks its numbers toward the new row over
         // WEATHER_EASE_SECONDS instead of changing in one frame. The
         // first call takes the row whole - a boot into rain is rain.
-        const want = weatherRow(extra?.weather ?? 'sunny');
+        // EE5: ?weather=<type> is a probe door, like ?window and ?skyframe
+        // are for the panorama - the world render gate uses it to put
+        // the sky under overcast and read the ground beneath.
+        const weatherName = params.get('weather') ?? extra?.weather ?? 'sunny';
+        const want = weatherRow(weatherName);
         const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
         weatherAt = seconds;
-        weatherRowNow = easeWeather(weatherRowNow, want, dt);
+        // WIND1: THE WIND IS ITS OWN STATE, and the sky's row takes it
+        // rather than carrying a fixed vector per weather. The model
+        // ticks on the game clock; a weather change is a FRONT and the
+        // wind leads it - so the clouds' drift below, the ground's
+        // shadows, the grass, the rain and the mills all rise with the
+        // wind before the sky finishes turning, and fall after it
+        // clears. One seam (WM2b), one vector, everything together.
+        //
+        // And the SKY'S OWN EASE follows the front: a mild change still
+        // crosses in the old fourteen seconds, but a violent arrival
+        // takes the front's lead to build, so from the ground the wind
+        // gets up first and the sky darkens behind it - the storm
+        // rolling in. `dt` is stretched or shrunk to make the ease's
+        // own walk land on the front's clock.
+        windModel.tick(extra?.classicMinutes ?? 0, weatherName);
+        // WIND2 (AUDIT 56): the ease stretches for the WHOLE lead, from
+        // the change itself. WIND1 stretched it only while the front's
+        // factor was strictly between 0 and 1 - and at the change the
+        // factor is exactly 0, so the sky crossed in its old fourteen
+        // seconds and THEN the wind rose over three hours: the storm
+        // arrived and the wind followed it, the reverse of what was
+        // asked for and of what the record claimed. `inLead()` is true
+        // from the change until the front's arrival.
+        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_SECONDS / (FRONT_LEAD_MIN * 60 / 12)) : dt;
+        weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
+        weatherRowNow.wind = windModel.vector();
+        // WIND2: the cloud DRIFT is integrated here, once, in real
+        // seconds - the one place the wind and the clock meet. Every deck
+        // reads this offset instead of multiplying wind by time, which
+        // with a wind that moves every frame made the clouds stream.
+        driftXZ[0] += weatherRowNow.wind[0] * dt;
+        driftXZ[1] += weatherRowNow.wind[1] * dt;
         enhancedSky.setState(skyState({
           minuteOfDay,
-          weather: extra?.weather ?? 'sunny',
+          weather: weatherName,
           classicMinutes: extra?.classicMinutes ?? 0,
           seconds,
+          drift: driftXZ,   // WIND2
           row: weatherRowNow,
         }));
         return;
@@ -294,10 +432,15 @@ export function createSkyController(gl, params) {
  *  Every host passed `undefined` here, which took the motor's
  *  hardcoded 50/30/30 default for the whole session.
  *
- *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
- *  entity carries no `speed` key (characters/playerEntity.js), and an
- *  unguarded liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5
- *  instead of the documented SPD-50 stand-in. */
+ *  RECORDED, not a gap: the pre-chargen guard is load-bearing, and
+ *  what it guards is a state DFU never has. The pre-chargen literal
+ *  (characters/playerEntity.js:28) is `stats: { strength: 50,
+ *  agility: 50, luck: 50 }` with no `speed` key, so an unguarded
+ *  liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5 instead
+ *  of the documented SPD-50 stand-in. DFU builds its stats from the
+ *  CharacterDocument and always has a Speed, so for any chargen'd or
+ *  loaded entity the LIVE arm is the only one taken - and that arm is
+ *  :389/:400/:418 verbatim. Nothing diverges here. */
 export function motorStats(entity) {
   return {
     get speed() { return entity.stats?.speed != null ? liveStat(entity, 'speed') : 50; },
@@ -310,8 +453,16 @@ export function motorStats(entity) {
  *  inputs = CalculateClimbingChance's reads (live Climbing, live
  *  Luck, the Khajiit racial arm; the Climbing effect pends - the
  *  `enhanced` seam is here); tally = ClimbingSkillCheck's
- *  TallySkill(Climbing, 1), once per check. The pre-chargen guard
- *  mirrors motorStats (the INTERIM entity carries no stats). */
+ *  TallySkill(Climbing, 1), once per check.
+ *
+ *  RECORDED, not a gap, and the old reason here was wrong: the luck
+ *  ternary below LOOKS like motorStats' `speed` guard and is not one.
+ *  The pre-chargen entity does carry luck (characters/playerEntity.js
+ *  :28 `stats: { strength: 50, agility: 50, luck: 50 }`), so the
+ *  fallback arm is unreachable and both paths hand back 50. Nothing
+ *  diverges from CalculateClimbingChance's GetLiveStatValue(Luck)
+ *  (FormulaHelper.cs:300); the ternary is kept for shape with its
+ *  sibling, not for need. */
 export function climbingDeps(entity, say = null) {
   return {
     inputs: () => ({
@@ -397,6 +548,68 @@ export const lootNearbyRecord = (p) => ({
   itemCount: (p?.items ?? []).length,
 });
 
+/** DT1: the CORPSE containers, as NearbyObject loot records.
+ *
+ *  A killed enemy's corpse marker IS a DaggerfallLoot
+ *  (GameObjectHelper.CreateEnemyCorpseMarker :836-839), so
+ *  UpdateNearbyObjects' `GetActiveLoot()` walk (PlayerGPS.cs:765-776)
+ *  includes it with no scene gate and no item test - an EMPTY corpse
+ *  is in the list, GetLootFlags (:822-836) simply gives it no Treasure
+ *  bit. That is why this maps every corpse rather than filtering on
+ *  items the way the ACTIVATION walks do: a corpse with nothing in it
+ *  is not a detect target, but it is still a nearby object.
+ *
+ *  The two foe pools name the same fact differently: `corpse` is the
+ *  flag exteriorFoes raises beside `corpseMarker`, `corpseBatch` is
+ *  the dungeon's own handle, and a foe that died with NEITHER is the
+ *  cull's "gone, no corpse" arm, which mints no container in DFU
+ *  either. */
+export const corpseNearbyRecords = (foes) => (foes ?? [])
+  .filter((f) => !!f?.entity && !!(f.corpse ?? f.corpseBatch))
+  .map((f) => lootNearbyRecord({
+    pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null,
+    items: f.entity.items ?? [],
+  }));
+
+/** DT1: a furniture container (a shop shelf or a house container) ->
+ *  a NearbyObject loot record. Its position is the model matrix's own
+ *  translation, which is what `loot.transform.position` reads off the
+ *  GameObject DaggerfallInterior.AddFurnitureAction (:780-841) hung
+ *  the DaggerfallLoot on.
+ *
+ *  `items: null` is a container the player has never opened. It counts
+ *  as EMPTY, and that is DFU's answer rather than a port limit:
+ *  AddFurnitureAction adds the component with no items and
+ *  PlayerActivate.cs:881-886 stocks it on FIRST ACCESS, so
+ *  `Items.Count > 0` is false until then and GetLootFlags withholds
+ *  the Treasure bit. */
+export const containerNearbyRecord = (c) => lootNearbyRecord({
+  pos: c?.matrix ? [c.matrix[12], c.matrix[13], c.matrix[14]] : null,
+  items: c?.items ?? [],
+});
+
+/** DT1: THE ONE LOOT WALK behind every host's Detect scan.
+ *
+ *  DFU has exactly one: `foreach (DaggerfallLoot loot in
+ *  ActiveGameObjectDatabase.GetActiveLoot())` (PlayerGPS.cs:765-776),
+ *  no scene gate and no kind gate. The port had FOUR hosts each
+ *  deciding for itself which of its own loot kinds counted, and
+ *  three of the four were short:
+ *
+ *    world.js / exterior.js  dropped piles + corpses (right, at FX1)
+ *    dungeonContext.js       RDB piles ONLY - no corpses, no drops
+ *    worldModes.js interior  NOTHING at all
+ *
+ *  so the same F207 defect survived in the two hosts where Detect
+ *  Treasure is actually cast. Each host now names its own kinds and
+ *  this walk does the rest, which is the only shape in which "every
+ *  active loot container" can be one sentence again. */
+export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {}) => [
+  ...piles.map(lootNearbyRecord),
+  ...containers.map(containerNearbyRecord),
+  ...corpseNearbyRecords(foes),
+];
+
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed. Open wins if both are somehow
  *  armed (it is the one that can still fail on the lock).
@@ -416,12 +629,20 @@ export function doorSpellFor(entity) {
   return {
     kind: open ? 'open' : 'lock',
     holderLevel: entity?.level ?? 1,
-    // FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
-    // 432/20, Open.cs:176-180) bypasses the level test on INTERIOR
-    // doors only - the exterior arm checks the level regardless
-    // (Open.cs:142). The port has no artifact identity yet, so no
-    // item can claim it.
-    skeletonKey: false,
+    // D9: the Skeleton's Key. Open.CheckCastByItem asks the ARMED
+    // BUNDLE's castByItem whether it is the artifact with world
+    // texture 432/20 (Open.cs:176-180) and, if it is, the interior
+    // trigger skips the level test entirely - "Skeleton's Key can open
+    // even magical locks" (:117). The EXTERIOR arm still checks the
+    // level regardless, and says so in as many words
+    // (TriggerExteriorOpenEffect's summary: "for the classic effect,
+    // the player's level is always checked, even for the Skeleton
+    // Key"), so triggerExteriorOpen is not passed this at all.
+    //
+    // What used to be missing was the identity, not the law: the mint
+    // dropped SetArtifact's texture indices and the armed entry
+    // carried no casting item. Both ship at D9, so the key is a key.
+    skeletonKey: castBySkeletonKey(armed.castByItem),
   };
 }
 
@@ -631,9 +852,16 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
     flashPlayerDamage();
-    sound?.(SOUND.FallDamage);
+    // AUDIT 58: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
+    // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
+    // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
+    // FallHardSound (:315-319) - the 0.7 is CHOSEN on these, not an
+    // inherited default: PlayWeaponHitSound in the same component
+    // (:331-337) deliberately passes 1f. The stride already carried it
+    // (footsteps.js:26); its three siblings rang 43% too loud.
+    sound?.(SOUND.FallDamage, FOOTSTEP_VOLUME);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
-    sound?.(SOUND.FallHard);   // BadFallDetected
+    sound?.(SOUND.FallHard, FOOTSTEP_VOLUME);   // BadFallDetected, PlayerFootsteps.cs:315-319
   }
 }
 
@@ -683,7 +911,10 @@ export function ensureAudio(fetch = fetchBytes) {
   const textures = storedTextureNames()
     .then((names) => setTextureReplacements(names, loadTextureFile))
     .catch(() => 0);
-  return Promise.all([sound, songs, replacements, textures]);
+  // MW-IMPORT: same seam, same never-traps rule - no data means the
+  // opt-in layer stays inert, which is its resting state anyway.
+  const morrowind = registerMorrowindData().catch(() => 0);
+  return Promise.all([sound, songs, replacements, textures, morrowind]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
@@ -742,10 +973,40 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  *  used it - and a name that misleads the next reader is the same
  *  defect as a stale comment, which this run has now found four of.
  *  It is DFU's member name instead. */
-export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
-  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
-  for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
-  return raised;
+export const MASTERY_TEXT_ID = 4020;   // youAreNowAMasterOfTextID (PlayerEntity.cs:1361)
+
+export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random,
+  // THE MASTERY BOX (RaiseSkills :1390-1407). `lines` is the host's
+  // TEXT.RSC reader (townTalk.lines), `box` its click-anywhere
+  // presenter. A host that hands neither still gets the fanfare, the
+  // way DFU plays it outside the `tokens != null` gate.
+  lines = null, box = null } = {}) {
+  // ROAD-Ar R12 - THE PRESENTATION RUNS IN THE LOOP, NOT AFTER IT.
+  // RaiseSkills (:1371-1414) pops skillImprove and builds the mastery
+  // box inside the skill loop and posts dfuiOpenCharacterSheetWindow
+  // AFTER it, so DFU's sheet arrives on top of the box and both live.
+  // This used to batch both into a post-loop pass over `raised`, which
+  // put the box after `onLevelUp` - and every host but dungeonContext
+  // presents into ONE overlay slot (the b1-window-stack narrowing), so
+  // the box replaced the freshly-mounted CharSheet. The sheet had
+  // already committed the Level++ and cleared readyToLevelUp in its
+  // constructor but writes `working` back to entity.stats only when it
+  // closes, and it has no dispose - so the level's 4-6 attribute
+  // points were dropped on the floor and never re-offered. Firing in
+  // DFU's order fixes that at the cost the narrowing already records:
+  // on a pass that both masters a skill and levels the player, the box
+  // is the window the single slot loses, not the sheet.
+  //
+  // Interleaved, not batched: DFU pops the skillImprove message and
+  // then, for that same skill, the master box - so a pass that raises
+  // two skills reads in the source's order.
+  return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
+    () => {
+      const rows = plainLines(lines?.(MASTERY_TEXT_ID));
+      if (rows?.length) box?.(rows);
+      audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
+    },
+    (id) => say(`Your ${SKILL_NAMES[id]} skill has improved.`)) ?? [];
 }
 
 /**
@@ -835,9 +1096,9 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  drains through exactly these doors, exhaustion presenter and
      *  all, and a pool that built its own would miss the collapse. */
     get sinks() { return sinks; },
-    tick(dt, activity = { running: false, swimming: false }) {
+    tick(dt, activity = { running: false, swimming: false }, realSeconds = dt) {
       const r = tickPlayerMinutes({
-        entity, classicMinutes: worldMinutes(), dt, sinks, activity,
+        entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
         say, inside: isInside(),
       });
@@ -862,7 +1123,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  worth of fatigue charge it explicitly. */
     advance(minutes) {
       if (!(minutes > 0)) return null;
-      return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND);
+      // T1 (AUDIT 39): the dt below is FABRICATED game time - a jump
+      // costs no REAL seconds, because DFU's RaiseTime does not advance
+      // Time.deltaTime. The third argument is what the two real-time
+      // timers inside the tick (the torch's 20-second burn, refreshMods'
+      // 0.2s) are fed, and a rested night must burn neither.
+      return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND, undefined, 0);
     },
   };
 }
@@ -926,7 +1192,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -947,6 +1213,13 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // is both the headless charter and DFU's own behaviour with no
     // other enemy in the scene.
     candidates,
+    // ROAD-B: PlayerEnterExit.IsPlayerInsideDungeonCastle, the FIRST
+    // statement of EnemySenses.StealthCheck (:619-621) - a
+    // non-hostile enemy in a castle never stealth-detects. It is a
+    // SCENE fact, so it rides the context with the rest of them; only
+    // the dungeon host can answer it true, and only from the block
+    // the player is standing in.
+    insideDungeonCastle,
     playerEntity: playerEntity ?? entity,
   };
 }
@@ -1049,7 +1322,11 @@ export async function endRunToTitleMenu(renderer) {
  * every path out.
  */
 export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {
-  setInfectionHost({
+  // AUDIT 39 (#37): answers the host it replaced. A context that mounts
+  // over an outer one (the dungeon over worldModes) hands this back on
+  // teardown - the leaner set it registers has no FACTION.TXT and no
+  // cemetery, and above ground those are not optional.
+  return setInfectionHost({
     // V2e: DeployFullBlownVampirism's cemetery transfer (:164-175).
     // Only the WORLD host can arrive at another location (the same
     // single-location reality that makes travel's V world-host only),
@@ -1060,6 +1337,15 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // Off the tick's own frame: playVideo OWNS the frame loop for
       // its lifetime, and pushing it from inside a frame body is the
       // re-entrancy DaggerfallUI avoids by pushing a WINDOW.
+      //
+      // AUDIT 39 (#160): and OWNING it means the host stops. The
+      // microtask defers past this frame's body, but the host has
+      // already re-armed itself, so without the hold the world walked,
+      // fought and could die under an unskippable full-screen video.
+      // DFU's vid window pauses the game outright (pauseWhileOpened);
+      // the hold is that pause, and unlike claimFrame it gives the
+      // world back.
+      const releaseFrame = holdFrame();
       Promise.resolve().then(async () => {
         try {
           const { playVideo } = await import('../ui/videoPlayer.js');
@@ -1074,6 +1360,11 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
           if (typeof window !== 'undefined') (window.__infectionVideos ??= []).push({ name, played });
         } catch (e) {
           console.warn(`[infection] ${name} unavailable - skipping the video:`, e?.message ?? e);
+        } finally {
+          // The world is running again BEFORE the lifecycle moves: the
+          // close carries the turn, whose popup lands in a host slot
+          // that only a live loop draws.
+          releaseFrame();
         }
         onClose();
       });
@@ -1136,6 +1427,23 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
 let _frameGeneration = 0;
 export function claimFrame() { return ++_frameGeneration; }
 export const frameAlive = (token) => token === _frameGeneration;
+
+// AUDIT 39 (#160): THE HOLD - claimFrame's other half. A full-screen
+// VID is DFU's DaggerfallVidPlayerWindow, and its inherited
+// pauseWhileOpened stops the game for the window's lifetime
+// (UserInterfaceManager.AddWindow -> PauseGame(true)). claimFrame ENDS
+// a loop, which is right for the two unwinds and wrong for a video the
+// world is meant to survive: the host must neither simulate nor draw
+// while the video owns the canvas, and must still be there afterwards.
+// So the hold is a counter, taken by the seam and released on every
+// path out, and the hosts wait on it instead of dying.
+let _frameHold = 0;
+export function holdFrame() {
+  _frameHold++;
+  let released = false;   // release once, however many paths call it
+  return () => { if (released) return; released = true; _frameHold = Math.max(0, _frameHold - 1); };
+}
+export const frameHeld = () => _frameHold > 0;
 
 export function exitToTitleMenu() {
   claimFrame();   // P0: the old loop dies before the navigation
@@ -1287,6 +1595,10 @@ export const restFullyHealed = (entity) =>
 export function createRestDeps(entity, opts = {}) {
   const {
     say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+    // The mastery box's presenter (RaiseSkills :1390-1407). The rows
+    // come from the host's `endLines`, which is already its TEXT.RSC
+    // reader - one host dep, not a second one that could disagree.
+    box = null,
     place = null, ...rest
   } = opts;
   return {
@@ -1311,7 +1623,13 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
-    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp }),
+    // ROAD-B B5: GameManager.GetPreventedRestMessage, polled by
+    // TickRest every frame of a running rest. It is a GameManager
+    // member, not a host one - the registry is one module singleton -
+    // so it is COMPOSED here beside setResting rather than asked of
+    // four hosts, and the same read feeds each host's open gate.
+    preventedRestMessage: getPreventedRestMessage,
+    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
     dead: () => entity.health <= 0,
@@ -1351,12 +1669,23 @@ export function createRestDeps(entity, opts = {}) {
 // is small, exact and worth testing on its own: which pool is live,
 // and which host's sinks a record from that pool must go through.
 
-/** The foes an enchantment can reach right now.
- *  Interiors answer EMPTY honestly rather than by gate: the port
- *  stands no foe pool inside a building, and DFU's own list holds
- *  enemies and civilian mobiles, neither of which exists there. */
-export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
+/** The foes an enchantment can reach right now - ONE ARM PER LIVE
+ *  MODE, because DFU has one database per scene and every one of the
+ *  three is a scene.
+ *
+ *  AUDIT 58 (hosts-consistency): the INTERIOR arm was `[]`, on a
+ *  stated premise - "the port stands no foe pool inside a building" -
+ *  that stopped being true when the IF slice mounted `interiorFoes`
+ *  and ROAD-B mounted `interiorGuards` beside it. The gap was the
+ *  original EC1 defect, left standing for the third mode: a
+ *  CastWhenStrikes weapon (paralysis, Wizard's Fire, the other classic
+ *  strike spells), the vampiric drain and both artifact affinity scans
+ *  did nothing inside a shop, silently. The interior host answers the
+ *  same "whole active enemy database" question for its own two pools
+ *  (worldModes' insideFoes), so the arm is a pool it already had. */
+export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
   if (mode === 'dungeon') return dungeonCtx?.foes ?? [];
+  if (mode === 'interior') return insidePool?.() ?? [];
   if (mode === 'exterior') return exteriorPool?.() ?? [];
   return [];
 }
@@ -1372,8 +1701,47 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
  *  This took the MODE as well until the campaign called the bluff: no
  *  record is in both pools, so the mode term could not change an
  *  answer, and a mutant dropping it SURVIVED. An unfalsifiable term is
- *  not caution, it is a second law that no test is holding. */
-export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks) {
-  if (dungeonCtx?.foes?.includes(foe)) return dungeonCtx.foeSinksFor(foe);
+ *  not caution, it is a second law that no test is holding.
+ *
+ *  AUDIT 58: the INSIDE pool joins by the same rule, and it is not an
+ *  unfalsifiable term - an interior record sent through the exterior
+ *  door would knock back and kill against the STREET's collider and
+ *  through the street's death chain, which is exactly the failure the
+ *  paragraph above describes for the dungeon. Asked SECOND, after the
+ *  dungeon: `insideFoes()` answers the dungeon's own pool when a
+ *  dungeon is mounted, and that record belongs to the dungeon's
+ *  sinks. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
+  const host = enchantFoeHost(foe, dungeonCtx, insidePool);
+  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe);
+  if (host === 'inside') return insideSinks(foe);
   return exteriorSinks(foe);
+}
+
+/** WHOSE RECORD IS THIS - the membership question by itself, because
+ *  the sinks are not the only door the enchant ctx opens over a foe.
+ *
+ *  AUDIT 58 (review): the Wabbajack's `replaceFoe` REMOVES the struck
+ *  record and stands its replacement, and the host was answering that
+ *  question by not asking it - both reaches were the exterior pool's,
+ *  over a getter that had just been widened to hand out dungeon and
+ *  interior records. A record removed through the wrong pool is
+ *  destroyed with no corpse, no loot and no death chain, and its
+ *  replacement stands in a world the player is not in.
+ *
+ *  Asked in HOST ORDER, dungeon first, and the order is load-bearing
+ *  rather than defensive: `insideFoes()` answers the DUNGEON's own
+ *  pool while a dungeon is mounted, so a membership test that asked
+ *  the inside pool first would hand every dungeon record to the
+ *  interior host's doors.
+ *
+ *  DFU asks nothing, because it has nothing to ask: every enemy is a
+ *  DaggerfallEntityBehaviour in ONE scene, and WabbajackEffect
+ *  (:85-88) re-parents the new career under the struck enemy's own
+ *  transform. The port needs the question only because it keeps one
+ *  pool per host. */
+export function enchantFoeHost(foe, dungeonCtx, insidePool) {
+  if (dungeonCtx?.foes?.includes(foe)) return 'dungeon';
+  if (insidePool?.()?.includes(foe)) return 'inside';
+  return 'exterior';
 }

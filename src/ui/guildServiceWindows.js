@@ -126,6 +126,12 @@ export class ServiceFlowWindow {
     }
     if (t.buttons === 'YesNo') {
       if (code === 'KeyY') this._advance(t.onYes?.() ?? null);
+      // AUDIT 28 W2c: a box that names onEscape takes Escape as
+      // DaggerfallMessageBox's allowCancel does - CloseWindow with NO
+      // button clicked (Update: `if (allowCancel && exitKey)`), which
+      // is neither Yes nor No. The exit-door wagon prompt needs that:
+      // No leaves the dungeon, Escape stays where you are.
+      else if (code === 'Escape' && t.onEscape) this._advance(t.onEscape() ?? null);
       else if (code === 'KeyN' || code === 'Escape') this._advance(t.onNo?.() ?? null);
       return;
     }
@@ -136,6 +142,15 @@ export class ServiceFlowWindow {
     if (t.buttonsMulti) return;
     this._advance(t.onClick?.() ?? null);
   }
+
+  /** ROAD-A7: the picker's hover seam (ListBox.MouseMove's highlight
+   *  and VerticalScrollBar.Update's drag) reaches it through here. */
+  hover(vx, vy, e = null) { if (this.top?.picker) this._picker?.hover(vx, vy, e); }
+
+  /** ROAD-E E1: and the release edge, on the same forwarding rule -
+   *  VerticalScrollBar.Update's else arm (:123-129) needs the button
+   *  coming up, which the hosts now deliver. */
+  release() { this._picker?.release(); }
 
   click(vx, vy) {
     const t = this.top;
@@ -265,9 +280,13 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
 
 /** CureDiseaseService (:54-130). */
 export function buildCureDiseaseFlow(entity, guild, membership, deps) {
-  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', becomingVampireOrWerebeast = false, priceAdjustment = 1000 } = deps;
+  // A4: `becomingVampireOrWerebeast` is no longer a host argument -
+  // cureDiseaseOffer reads TimeToBecomeVampireOrWerebeast off the
+  // entity, exactly as DaggerfallGuildServiceCureDisease.cs:58 reads
+  // it off playerEntity. One less thing for a host to remember.
+  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', priceAdjustment = 1000 } = deps;
   const offer = cureDiseaseOffer(entity, guild, membership, {
-    quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast, priceAdjustment,
+    quality, regionIndex, nowClassicMinutes: now(), priceAdjustment,
   });
   const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
 

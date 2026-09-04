@@ -45,15 +45,28 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *   holidayId                     - getHolidayId's answer (shops close
  *                                   on Suns Rest, :1296-1299)
  *   isHouseOwned(buildingKey)     - DaggerfallBankManager.IsHouseOwned
- *                                   (FLAGGED: banking is a ledger row -
- *                                   an absent seam answers false)
+ *                                   (H1 WIRED IT: banking.js:172 over
+ *                                   playerEntity.houses, handed in at
+ *                                   scenes/worldModes.js:3301, so
+ *                                   :69 - PlayerActivate.cs:1261-1262,
+ *                                   the ladder's first test - now has
+ *                                   a real answer instead of false)
  *   isActiveQuestBuilding(building) - the siteLinks walk (:1315-1329)
  *   guildForBuilding(factionId)   - -> { hallAccessAnytime, isMember }
  *                                   booleans resolved by the host's
  *                                   guild layer (Guild.HallAccessAnytime
  *                                   / IsMember)
  *   ownsShip                      - DaggerfallBankManager.OwnsShip
- *                                   (FLAGGED with banking)
+ *                                   (D6 WIRED IT: banking.js:274 over
+ *                                   playerEntity.ownedShip, handed in
+ *                                   at scenes/worldModes.js's
+ *                                   buildingIsUnlocked call. The key
+ *                                   had been omitted there, so it
+ *                                   defaulted false and the Ship arm
+ *                                   below - PlayerActivate.cs:1307-1308
+ *                                   - could never fire; the bank's
+ *                                   shipyard now sells the ship whose
+ *                                   door it opens)
  */
 export function buildingIsUnlocked(building, {
   hour = 12, holidayId = -1,
@@ -94,8 +107,9 @@ export function buildingIsUnlocked(building, {
   return false;
 }
 
-/** The locked-door popup line ("lockedExteriorDoor" - prose ours,
- *  key cited; the look-at difficulty text follows it from
- *  actionSystem.lookAtLockText, classic's interior-formula oversight
- *  included). */
-export const LOCKED_EXTERIOR_DOOR_TEXT = 'This door is locked.';
+/** The locked-door popup line - `lockedExteriorDoor`, which
+ *  PlayerActivate.cs:527 pops verbatim. The row is one word:
+ *  Internal_Strings.csv:534, "Locked." (the look-at difficulty text
+ *  follows it from actionSystem.lookAtLockText, classic's
+ *  interior-formula oversight included). */
+export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';

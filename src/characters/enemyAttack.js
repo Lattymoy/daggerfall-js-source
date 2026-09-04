@@ -71,7 +71,12 @@ export class EnemyAttack {
    *  (hasBowAttack - mobile flags, not the equipped weapon). */
   constructor({ liveSpeed = 50, playerLevel = 10, reflexes = 2, rolls = Math.random } = {}) {
     this.machine = createWeaponMachine(false);
-    this.liveSpeed = liveSpeed;
+    // AUDIT 39: FixedUpdate reads `entity.Stats.LiveSpeed` on every
+    // pass (:69-72), under the source's own note that the floor exists
+    // "so Drain Speed does not prevent attack ever firing" - so DFU
+    // expects a live drain on a foe to bite. A number captured at
+    // spawn cannot drain; callers that own the entity pass a THUNK.
+    this._liveSpeed = typeof liveSpeed === 'function' ? liveSpeed : () => liveSpeed;
     this.playerLevel = playerLevel;
     this.reflexes = reflexes;
     this.rolls = rolls;   // ENGINE-PRNG: DoRangedAttack's Random.value + the strike/timer picks
@@ -80,12 +85,29 @@ export class EnemyAttack {
     this.firedRanged = false;   // C-slice: WHICH decision started the running swing
   }
 
+  /** EnemyAttack.cs:70 - a READ, not a field, so nothing can freeze it. */
+  get liveSpeed() { return this._liveSpeed(); }
+
   /**
    * @param ai the foe's EnemyAI (senses + yaw + feet)
    * @param playerFeet
    * @returns events from the shared machine ('hit', 'done')
    */
-  update(dt, ai, playerFeet) {
+  update(dt, ai, playerFeet, paused = false) {
+    // ROAD-U: "Unable to attack when playing certain oneshot anims" -
+    // FixedUpdate returns at :59-61 (`mobile.IsPlayingOneShot() &&
+    // mobile.OneShotPauseActionsWhilePlaying()`), ABOVE the melee
+    // countdown on the next line, above the `DFRandom.rand() % speed`
+    // draw in the classic loop and above MeleeAnimation. The port had
+    // the predicate but never reached it from here, so a transforming
+    // Seducer ran its timer down and burned ~32 bytes of the ONE
+    // shared DFRandom stream over the transformation - the desync
+    // class this file already carries as AUDIT 24 characters-2 below.
+    // EnemyAttack.Update (:88-94) is NOT gated on the pause - only on
+    // paralysis - so the machine step below still runs: a swing
+    // already in flight keeps being stepped, and only the DECISION
+    // half stops.
+    if (paused) return machineStep(this.machine, dt, this.liveSpeed);
     this.meleeTimer -= dt;
     if (this.meleeTimer < 0) this.meleeTimer = 0;
     const dist = ai._dist;

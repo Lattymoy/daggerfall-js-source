@@ -19,7 +19,12 @@
 import { SKILLS, skillValue, permanentSkillValue } from './skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from './advancement.js';
 import { FATIGUE_LOSS } from './statMods.js';
-import { goldAmount, deductGold } from './court.js';
+// AUDIT 39 F100: all three windows gate on GetGoldAmount (PlayerEntity.cs
+// :1313-1316 = goldPieces + letters of credit), never on the purse alone -
+// Training.cs:79, CureDisease.cs:122, Donation.cs:60 - and all three then
+// spend through DeductGoldAmount, which deductGold already mirrors. Gating
+// on coins refused a purchase the payment could have made.
+import { totalGoldAmount, deductGold } from './court.js';
 import { getReputation, changeReputation } from './factionRep.js';
 import { diseaseCount } from './diseases.js';
 import { cureAllDiseases } from './effects.js';
@@ -142,7 +147,7 @@ export function trainingOffer(entity, guild, membership, nowClassicMinutes) {
  *  BEFORE the skill picker opens, so a player who cannot pay never
  *  sees the list. */
 export function canAffordTraining(entity, membership) {
-  return goldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);
+  return totalGoldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);
 }
 
 // ── DONATION (DaggerfallGuildServiceDonation.cs) ──────────────────
@@ -168,7 +173,7 @@ export const DONATION_MAX_CHARACTERS = 8;
  *  a partial gift, not a refusal to spend what they have. */
 export function donate(entity, store, divineFactionId, amount, rolls = Math.random) {
   if (!Number.isInteger(amount)) return { kind: 'invalid' };
-  if (goldAmount(entity) < amount) return { kind: 'tooGenerous', textId: TOO_GENEROUS_ID };
+  if (totalGoldAmount(entity) < amount) return { kind: 'tooGenerous', textId: TOO_GENEROUS_ID };
   deductGold(entity, amount);
   const rep = Math.abs(getReputation(store, divineFactionId));
   const chance = Math.trunc((2 * amount) / Math.max(rep, 1)) + 1;
@@ -185,20 +190,33 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
 
 /** CureDiseaseService (:54-113), as a decision.
  *
- *  `numberOfDiseases` is DFU's disease count PLUS ONE if the player is
- *  turning into a vampire or werebeast - FLAGGED: the port has no
- *  vampirism/lycanthropy timer, so `becomingVampireOrWerebeast` is
- *  passed in and is false everywhere today. The moment that arc lands
- *  it feeds this one argument and the price is right.
+ *  `numberOfDiseases` is DFU's disease count PLUS ONE while the player
+ *  is turning into a vampire or werebeast (:57-59). A4 SHIPPED the
+ *  timer that used to be missing here: it is
+ *  PlayerEntity.TimeToBecomeVampireOrWerebeast, classic's "three days
+ *  after infection" stamp, and becomingVampireOrWerebeast below reads
+ *  it off the ENTITY exactly as DFU reads it off playerEntity (:57-59)
+ *  rather than taking it from a host. The field arrives from the
+ *  classic import (formats/characterRecord.js:110, offset 0x1f3 ->
+ *  classicSave.js:189/:722) and round-trips through the save envelope
+ *  (save.js:342 out, :436 back). It
+ *  reaches a character only through AssignCharacter (PlayerEntity.cs
+ *  :856), i.e. a classic import - the port's own infections are
+ *  disease effects and diseaseCount already counts those - so a
+ *  classic character three days from turning pays for one more
+ *  disease than they carry, and the cure clears the turn.
  *
  *  The three FREE holidays are checked before anything is priced, and
  *  they cure whether or not the player could have paid. */
+export const becomingVampireOrWerebeast = (entity) =>
+  (entity?.timeToBecomeVampireOrWerebeast ?? 0) !== 0;
+
 export function cureDiseaseOffer(entity, guild, membership, {
   quality = 0, regionIndex = 0, nowClassicMinutes = 0,
-  becomingVampireOrWerebeast = false, priceAdjustment = 1000,
+  priceAdjustment = 1000,
 } = {}) {
   let numberOfDiseases = diseaseCount(entity);
-  if (becomingVampireOrWerebeast) numberOfDiseases++;
+  if (becomingVampireOrWerebeast(entity)) numberOfDiseases++;
   const holidayId = getHolidayId(nowClassicMinutes, regionIndex);
 
   if (numberOfDiseases > 0 && FREE_CURE_HOLIDAYS.includes(holidayId)) {
@@ -245,14 +263,18 @@ export function cureOfferMessageOffset(costBeforeBargaining, cost) {
  *  Yes arm, so a player who says yes and cannot pay is told so rather
  *  than being stopped earlier - the opposite of training's order. */
 export function payForCure(entity, cost) {
-  if (goldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
+  if (totalGoldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
   deductGold(entity, cost);
   cureAllDiseases(entity);
+  // A4: the turn is cured with the diseases (:126) - the paid arm's
+  // own line, beside CureAllDiseases and before the message.
+  entity.timeToBecomeVampireOrWerebeast = 0;
   return { kind: 'cured', cost };
 }
 
 /** The free-holiday arm's cure (:69-75), which takes no payment. */
 export function cureForFree(entity) {
   cureAllDiseases(entity);
+  entity.timeToBecomeVampireOrWerebeast = 0;   // A4: :72, the same pair on the free arm
   return { kind: 'cured', cost: 0 };
 }

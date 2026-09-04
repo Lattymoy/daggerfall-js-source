@@ -29,6 +29,7 @@ import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { cureOfferMessageOffset } from '../src/systems/guildServiceActions.js';
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from '../src/ui/spellIcons.js';
+import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
@@ -240,10 +241,21 @@ test('U42 list: the scroll clause is INSIDE the movement guard, and nudges by ON
 
 // ── delete ────────────────────────────────────────────────────────
 
-test('U42 delete: the prompt arms, and EITHER answer closes the book', () => {
+test('U42/AUDIT-39r delete: the prompt arms, and either answer dismisses the BOX, not the book', () => {
   // DeleteButton_OnMouseClick (:811-838) + DeleteSpellConfirm
-  // (:840-852). The CloseWindow() sits OUTSIDE the Yes arm, so No
-  // puts you back in the world too - kept, quirk and all.
+  // (:840-852).
+  //
+  // THIS PIN MOVED, DELIBERATELY. It used to read the trailing
+  // CloseWindow() (:851) as "either answer closes the book" and
+  // asserted `done === true` on both arms. That was a misreading:
+  // CloseWindow() there is UserInterfaceWindow.CloseWindow (:127-132)
+  // -> PopWindow -> RemoveWindow (UserInterfaceManager.cs:190-199),
+  // which pops TopWindow, and TopWindow is the YesNo box mb.Show()
+  // pushed - DaggerfallMessageBox.ActivateButton (:479-484) raises
+  // the event without popping itself. The book survives, which is the
+  // only reading under which the Yes arm's own RefreshSpellsList(true)
+  // and UpdateSelection() do anything at all. nativeTrade's _confirm
+  // states the same law in this repo.
   const a = book(spell('A', 5), spell('B', 5));
   a.w.deleteButton();
   assert.equal(a.w.top, 'delete');
@@ -251,13 +263,24 @@ test('U42 delete: the prompt arms, and EITHER answer closes the book', () => {
   assert.equal(a.entity.spells.length, 2, 'nothing deleted yet');
   a.w.confirmDelete(false);
   assert.equal(a.entity.spells.length, 2, 'No deletes nothing');
-  assert.equal(a.w.done, true, '...and still closes the book (:851)');
+  assert.equal(a.w.top, null, '...the box is gone');
+  assert.equal(a.w.done, false, '...and the book is still open');
+  assert.equal(a.w.deleteSpellIndex, -1, 'and the parked row is released with it');
 
   const b = book(spell('A', 5), spell('B', 5));
   b.w.deleteButton();
   b.w.confirmDelete(true);
   assert.deepEqual(b.entity.spells.map((s) => s.name), ['B'], 'Yes removes the SELECTED spell IN PLACE');
-  assert.equal(b.w.done, true);
+  assert.equal(b.w.top, null);
+  assert.equal(b.w.done, false, 'Yes leaves the book open on a refreshed list');
+  assert.equal(b.w.deleteSpellIndex, -1);
+  assert.equal(b.w._rows.length, 1, 'RefreshSpellsList(true) ran on the shortened list');
+  assert.equal(b.w.selectedIndex, 0, 'UpdateSelection: the clamp caught the gone row');
+  // ...and the armed box can be answered twice over, which only a
+  // window that outlives the first answer can do.
+  b.w.deleteButton();
+  b.w.confirmDelete(true);
+  assert.deepEqual(b.entity.spells.map((s) => s.name), []);
 
   const empty = book();
   empty.w.deleteButton();
@@ -586,8 +609,15 @@ test('U42 sounds: OnPush/OnPop per mode, and the page turn plays ONCE', () => {
     w.input('KeyL');
     assert.deepEqual(played, [], 'arming the delete prompt is SILENT');
     w.input('KeyY');
-    assert.deepEqual(played, [SOUND.ButtonClick, SOUND.PageTurn, SOUND.PageTurn],
-      'the box answers, the edit turns a page, and the close turns another');
+    // AUDIT-39r: TWO sounds now, not three. The third was the book's
+    // own OnPop page turn, and the book no longer pops - the
+    // CloseWindow() at :851 pops the message box, whose close sounds
+    // nothing (UserInterfaceWindow.CloseWindow :127-132 raises the
+    // handler and no clip). The box answers, the edit turns a page,
+    // and the book stays open on the refreshed list.
+    assert.deepEqual(played, [SOUND.ButtonClick, SOUND.PageTurn],
+      'the box answers and the edit turns a page - nothing closes');
+    assert.equal(w.done, false, 'the book outlives its own prompt');
   });
   withSounds((played) => {
     const { w } = book(spell('A', 5), spell('B', 5));
@@ -804,8 +834,9 @@ test('U42: the CAST binding toggles the book closed, as does Escape', () => {
 function shop(offered, over = {}) {
   const entity = {
     name: 'Nyra Sunborn', magicka: 20, maxMagicka: 40, spells: [], stats: { personality: 50 },
-    items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-      { group: 'Currency', stackCount: 5000 }],
+    // E4: the purse is PlayerEntity.GoldPieces, a counter.
+    goldPieces: 5000,
+    items: [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }],
   };
   const w = new SpellbookWindow({
     spells: () => entity.spells,
@@ -865,14 +896,14 @@ test('U42 buy: Witches Festival halves the presented cost, with a floor of one',
 test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => {
   // BuyButton_OnMouseClick (:975-1013), in DFU's exact order.
   const noBook = shop([spell('Arc Bolt', 20)]);
-  noBook.entity.items = [{ group: 'Currency', stackCount: 5000 }];
+  noBook.entity.items = [];
   noBook.w.buyButton();
   assert.equal(noBook.w.top, 'noSpellbook');
   assert.ok(noBook.w._boxRows()[0].text.startsWith(`[${NO_SPELLBOOK_TEXT_ID}]`), 'record 1703');
 
   const broke = shop([spell('Arc Bolt', 20)]);
-  broke.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: 1 }];
+  broke.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  broke.entity.goldPieces = 1;
   broke.w.buyButton();
   assert.equal(broke.w.top, 'notEnoughGold');
   assert.ok(broke.w._boxRows()[0].text.startsWith('[454]'), 'record 454');
@@ -882,8 +913,8 @@ test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => 
   const between = shop([spell('Arc Bolt', 20)]);
   const price = between.w.tradePrice();
   assert.ok(price < between.w.presentedCost, 'quality 10 discounts the sticker');
-  between.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: price }];
+  between.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }];
+  between.entity.goldPieces = price;
   between.w.buyButton();
   assert.equal(between.w.top, 'trade', 'exactly the asking price is enough');
 
@@ -937,14 +968,14 @@ test('U42 buy: Yes deducts through DeductGoldAmount, adds the spell, and closes'
   assert.equal(entity.spells.length, 1);
   assert.equal(entity.spells[0].name, 'Arc Bolt');
   assert.notEqual(entity.spells[0], w._rows[0].spell, 'the book gets a COPY, not the shelf record');
-  assert.equal(entity.items.find((i) => i.group === 'Currency').stackCount, 5000 - price);
+  assert.equal(entity.goldPieces, 5000 - price);
   assert.equal(w.done, true);
 
   const no = shop([spell('Arc Bolt', 20)]);
   no.w.buyButton();
   no.w.confirmTrade(false);
   assert.equal(no.entity.spells.length, 0, 'No buys nothing');
-  assert.equal(no.entity.items.find((i) => i.group === 'Currency').stackCount, 5000);
+  assert.equal(no.entity.goldPieces, 5000);
   assert.equal(no.w.done, true, '...and closes anyway');
 });
 
@@ -954,8 +985,8 @@ test('U42 buy: a letter of credit is legal tender at the counter', () => {
   // letter can buy a spell.
   const { entity, w } = shop([spell('Arc Bolt', 20)]);
   entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
-    { group: 'Currency', stackCount: 1 },
     { group: 'UselessItems2', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 5000 }];
+  entity.goldPieces = 1;
   const price = w.tradePrice();
   w.buyButton();
   assert.equal(w.top, 'trade', 'the letter covers the price');
@@ -968,7 +999,7 @@ test('U42 buy: a letter of credit is legal tender at the counter', () => {
   w.confirmTrade(true);
   assert.equal(entity.items.find((i) => i.templateIndex === LETTER_OF_CREDIT_TEMPLATE).value, 5000 - price,
     'the letter carries the whole price');
-  assert.equal(entity.items.find((i) => i.group === 'Currency').stackCount, 1, 'and the coin is untouched');
+  assert.equal(entity.goldPieces, 1, 'and the coin is untouched');
   assert.equal(entity.spells.length, 1, 'the spell is bought');
 });
 
@@ -1055,7 +1086,10 @@ test('U42: BuySpells and BuySpellsMages are no longer FLAGGED nulls', () => {
   // The popup's onService reads what openServiceFlow RETURNS and
   // answers "not available yet" on a null, so this arm hands the
   // window back as the repair arm does rather than mounting silently.
-  assert.ok(/interiorOverlay = bookWin;\n      return bookWin;/.test(modes),
+  // ROAD-F GS1: mountServiceWindow HANDS THE WINDOW BACK, so the
+  // mount and the return are one statement - the law pinned here is
+  // still "mounts AND returns", not the two lines it used to take.
+  assert.ok(/return mountServiceWindow\(bookWin\);/.test(modes),
     'the arm mounts AND returns the window');
 });
 
@@ -1083,4 +1117,60 @@ test('U42: the live probe surface exists on both exterior hosts, and castProbe r
   const reopen = sortLeg.indexOf("await page.keyboard.press('Backspace');");
   const ready = sortLeg.indexOf("await page.keyboard.press('Enter');");
   assert.ok(reopen > 0 && reopen < ready, 'castProbe reopens the book before readying');
+});
+
+// ---------------------------------------------------------------
+// ROAD-D D10: the effect popup's BODY. ShowEffectPopup (:651-660)
+// shows the effect's own SpellBookDescription tokens and nothing
+// else; the ids are per-effect-class properties in DFU
+// (EntityEffect.cs:78, :395-398 for the null default).
+// ---------------------------------------------------------------
+test('D10: SpellBookDescription ids are the effect classes own, and every catalogue row has one', () => {
+  // spot pins straight off the classes, including the two the
+  // Personality/Speed subType order swaps (DrainPersonality is 1225
+  // at subType 5, DrainSpeed 1224 at subType 6)
+  assert.equal(spellBookDescriptionId('4,0'), 1212);    // DamageHealth.cs:41
+  assert.equal(spellBookDescriptionId('7,0'), 1219);    // DrainStrength.cs:41
+  assert.equal(spellBookDescriptionId('7,5'), 1225);    // DrainPersonality
+  assert.equal(spellBookDescriptionId('7,6'), 1224);    // DrainSpeed
+  assert.equal(spellBookDescriptionId('11,4'), 1254);   // TransferEndurance.cs:41
+  assert.equal(spellBookDescriptionId('12,255'), 1303);  // SoulTrap.cs
+  assert.equal(spellBookDescriptionId('44,255'), 1305); // ComprehendLanguages
+  // the two VARIANT families compute theirs from the variant index
+  for (let v = 0; v < 5; v++) assert.equal(spellBookDescriptionId(`8,${v}`), 1227 + v);   // ElementalResistance.cs:94
+  for (let v = 0; v < 4; v++) assert.equal(spellBookDescriptionId(`33,${v}`), 1285 + v);  // PacifyEffect.cs:79
+  // an effect DFU gives no description reads null (EntityEffect's
+  // default is a null token array)
+  assert.equal(spellBookDescriptionId('99,255'), null);
+  // and every registry row the spellbook can print an effect panel
+  // for has an id, so the popup is never empty on real data
+  for (const e of SPELL_MAKER_EFFECTS) {
+    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key), `${e.key} (${e.group}) has a SpellBookDescription`);
+  }
+});
+
+test('D10: clicking an effect panel pops that effect SpellBookDescription record', () => {
+  const entity = { name: 'Nyra Sunborn', magicka: 20, maxMagicka: 40, items: [], stats: { personality: 50 } };
+  const asked = [];
+  const w = new SpellbookWindow({
+    spells: () => [spell('Wildfire', 12)],   // effects[0] is Damage Health, key 4,0
+    entity,
+    castCost: (sp) => sp.cost,
+    rows: (id) => { asked.push(id); return [`record ${id}`]; },
+  });
+  w.selectedIndex = 0;
+  const [ex, ey, ew, eh] = SPELLBOOK_RECTS.effect[0];
+  assert.equal(w.click(PX + ex + 2, PY + ey + 2), true);
+  assert.equal(w.top, 'note');
+  assert.deepEqual(asked, [1212], 'DamageHealth SpellBookDescription, not the group name');
+  assert.deepEqual(w._noteRows, ['record 1212']);
+  assert.ok(ew > 0 && eh > 0);
+  // a host with NO record source keeps the group/subgroup fallback -
+  // an empty parchment would be worse than the name.
+  const bare = new SpellbookWindow({
+    spells: () => [spell('Wildfire', 12)], entity, castCost: (sp) => sp.cost, rows: () => [],
+  });
+  bare.selectedIndex = 0;
+  bare.click(PX + ex + 2, PY + ey + 2);
+  assert.deepEqual(bare._noteRows, ['Damage Health']);
 });

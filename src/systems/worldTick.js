@@ -344,8 +344,22 @@ export function tickPlayerMinutes({
   // inert without a registered quest host anyway, so a host that has
   // not wired the quest machine cannot deliver a letter early.
   inside = false,
+  // T1 (AUDIT 39): REAL seconds, which a clock JUMP has none of. `dt` is
+  // the tick's game-time budget and a jump fabricates it
+  // (minutes / CLASSIC_MINUTES_PER_SECOND, shared.js advance), so the two
+  // real-time timers below - the torch's 20-second burn and refreshMods'
+  // 0.2s - must be fed this instead: DFU's RaiseTime does not advance
+  // Time.deltaTime, so a rested night burns no torch and cannot kill by
+  // a drained stat. Defaults to dt, which is the frame case.
+  realSeconds = dt,
 } = {}) {
   const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+  // AUDIT 39: the clock as it stood when this tick began. A sink can move
+  // the WORLD clock from inside this call (the exhaustion collapse -
+  // PlayerEntity.cs:2429's RaiseTime(1 hour), which the hosts fire out of
+  // sinks.drainFatigue), and `next` above is fixed before any sink runs.
+  // The composition happens at the return; see the note there.
+  const clockAtEntry = worldMinutes();
 
   // THE BROKER, claimed once. The window comes back out in the result so the
   // host can run it on ITS foes - one raise, every manager (wave 32).
@@ -372,12 +386,14 @@ export function tickPlayerMinutes({
   // The port cannot make that a throw, because it has a caller DFU does
   // not: the exhaustion collapse. DFU's is PlayerEntity.cs:2429, a bare
   // `RaiseTime(1 hour)` that returns - the port's hosts implement it as
-  // `playerTicker.advance(60)` (exterior.js:407, world.js:626), fired
-  // from inside sinks.drainFatigue, which re-enters THIS FUNCTION from
-  // inside its own fatigue band. The nested tick wrote the marker an
-  // hour ahead, the outer frame then reset the world clock to its own
-  // smaller value, and the marker was pulled BACK on the next frame -
-  // so the same midnight was crossed, and processed, twice.
+  // `playerTicker.advance(60)` (exterior.js, world.js; the dungeon adds
+  // the hour to its clock ref directly), fired from inside
+  // sinks.drainFatigue, which re-enters THIS FUNCTION from inside its own
+  // fatigue band. The nested tick wrote the marker an hour ahead, the
+  // outer frame then reset the world clock to its own smaller value, and
+  // the marker was pulled BACK on the next frame - so the same midnight
+  // was crossed, and processed, twice. (AUDIT 39 fixed the CLOCK half of
+  // that seam at the return below; this clamp is still the marker's.)
   //
   // S41 is what made that reachable: before it, the only reader of this
   // marker was the 112-day reputation-normalise loop, and the weather
@@ -500,7 +516,11 @@ export function tickPlayerMinutes({
   // scale does not eat it faster - the same reasoning that puts
   // killIfAnyLiveStatZero below on its own real-time cadence rather
   // than in a magic round.
-  tickPlayerTorch(entity, dt, { say, rolls });
+  // AUDIT 39: fed realSeconds, NOT dt. A rested hour reaches this tick as
+  // six fabricated 50-"second" frames, each over the 20-second threshold,
+  // so an 8-hour sleep spent 48 of a Torch's 50 hit points where DFU
+  // (whose RaiseTime never touches Time.deltaTime) spends none.
+  tickPlayerTorch(entity, realSeconds, { say, rolls });
 
   // S41 - THE DAY CHANGE (PlayerEntity.cs:441-450). It sits AFTER the
   // fatigue band because DFU's does: the swimming roll at :412 is
@@ -608,7 +628,7 @@ export function tickPlayerMinutes({
   // here rather than in runMagicRounds because DFU's is not a magic
   // round - it is Update()'s refreshMods timer, and Time.deltaTime is
   // zero under a paused UI, which is why a rest cannot kill you this way.
-  killIfAnyLiveStatZero(entity, sinks, dt);
+  killIfAnyLiveStatZero(entity, sinks, realSeconds);
 
   // AUDIT 23 (entity-1): NO advancement here. DFU's PlayerEntity.Update
   // (:347-538) runs no RaiseSkills; the only call sites in the whole
@@ -616,7 +636,20 @@ export function tickPlayerMinutes({
   // and DaggerfallTravelPopUp.cs:380 (fast travel, unported). The
   // per-minute raise this tick used to run leveled characters mid-walk
   // without ever resting.
-  return { classicMinutes: next, rounds, magicRoundWindow };
+  // AUDIT 39 - THE COLLAPSE'S HOUR SURVIVES THE WRITE-BACK. `next` was
+  // fixed at entry, and every host writes this value back OVER the live
+  // clock (shared.js's ticker, dungeonContext's classicMinutesRef), so an
+  // hour added from INSIDE this tick - the exhaustion collapse's
+  // RaiseTime(1 hour) out of sinks.drainFatigue - was erased the moment
+  // the tick returned: the port recovered the vitals of a rested hour
+  // without spending it, and the backward clock move then re-anchored the
+  // broker marker so that hour's magic rounds ran a second time. DFU has
+  // no such write: PlayerEntity.Update only READS the clock (:367), so
+  // the hour stands there. Composing the two is what makes it stand here.
+  // A jump is only ever forward; a backward move is a load, and a load
+  // does not arrive through this function.
+  const jumped = worldMinutes() - clockAtEntry;
+  return { classicMinutes: jumped > 0 ? next + jumped : next, rounds, magicRoundWindow };
 }
 
 // --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------

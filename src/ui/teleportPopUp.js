@@ -3,10 +3,14 @@
 //
 // This window is what the Mages Guild's TELEPORT service ends at, and
 // both halves of it had been waiting on each other: the travel map
-// (U41) flagged "the guild TELEPORT mode, which waits on the guild
-// arc's teleport service", and guildServiceFlow flagged
-// `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
-// finished systems pointing across a gap nobody closed.
+// (U41) named the guild TELEPORT mode as idling on the guild arc's
+// teleport service, and guildServiceFlow's `Teleport` was a null
+// pointing back at the travel map. Two finished systems across a gap
+// nobody had closed - G5 closes it from BOTH ends, and neither
+// sentence survives: systems/guildServiceFlow.js's service table now
+// reads `Teleport: 'guildServiceTeleport'`, and
+// ui/travelMapWindow.js's activateTeleportationTravel arms the map
+// and raises this window on the destination pick.
 //
 // THE NATIVE-WINDOW RULE, element by element:
 // - the panel is TELE00I0.IMG, which ships 171x57 - exactly
@@ -34,11 +38,20 @@
 // transitions to the exterior FIRST (:140-141) - you cannot teleport
 // out of a building into the middle of nowhere.
 //
-// FLAGGED: the HUD smash-to-black/fade either side of the jump
-// (:136, :149) - the port has no fade layer, the same row the travel
-// popup already carries.
+// THE SMASH AND THE FADE (:137, :150) LANDED IN D4. TeleportAway
+// opens with SmashHUDToBlack and closes with FadeHUDFromBlack, and
+// the port had no fade layer at all to smash - the jump cut from one
+// frame of the old pixel to one frame of the new. ui/fadeLayer.js is
+// FadeBehaviour.cs whole now, and the two halves sit where DFU's
+// method splits across the port's window/host seam: the SMASH is the
+// first statement of this window's `_yes`, exactly as it is
+// TeleportAway's first statement, and the FADE FROM BLACK is the
+// host's (scenes/world.js `teleportTo`), because the port's arrival is
+// asynchronous where TeleportToCoordinates is not - the black has to
+// hold over the streamer's rebuild, which is the frame DFU is hiding.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour
 
 /** TELE00I0's own size, which IS mainPanelRect's (:21). */
 export const TELEPORT_PANEL_W = 171, TELEPORT_PANEL_H = 57;
@@ -96,6 +109,9 @@ export class TeleportPopUpWindow {
    *  re-init, because those are PlayerEnterExit's and StreamingWorld's
    *  and this is a 171x57 panel. */
   _yes() {
+    // :137, TeleportAway's first line - BEFORE the transition, so the
+    // screen is already black when the world tears down.
+    hudFade.smashHUDToBlack();
     this.done = true;
     this.deps.onTeleport?.(this.destination.pixel, this.destination.name);
   }

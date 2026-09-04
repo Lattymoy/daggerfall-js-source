@@ -16,10 +16,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 
 const LETTER = 275;   // LETTER_OF_CREDIT_TEMPLATE (the real template)
+// E4: coins are PlayerEntity.GoldPieces, a counter; only the letters
+// are items.
 const mkPlayer = (coins, letterValue = 0) => ({
   level: 5, gender: 'male', stats: { luck: 50 }, skills: [],
+  goldPieces: coins,
   items: [
-    ...(coins > 0 ? [{ group: 'Currency', templateIndex: 131, stackCount: coins }] : []),
     ...(letterValue > 0 ? [{ templateIndex: LETTER, group: 'MiscItems', value: letterValue }] : []),
   ],
 });
@@ -94,8 +96,13 @@ test('audit26 F066: a closed shop opens the steal-shaped inventory, never the Bu
     'the door-time latch rides the building record (:1120, latched once)');
   const shelf = m.slice(m.indexOf('function openShelf'), m.indexOf('function openMerchantSell'));
   assert.ok(shelf.includes('if (b.insideOpenShop === false) {'), 'the closed arm gates BEFORE the trade window');
-  assert.ok(shelf.includes("host.makeInventory?.({ loot: { items: () => shelf.items } })"),
+  // RE-ANCHORED at ID1 (F041): the host's inventory windows go through
+  // ONE door now (`interiorInventory`, which folds in the drop pool and
+  // the emptied-container free). What this asserts is unchanged - the
+  // shelf is the Remove-mode remote, SetShopShelfStealing's shape.
+  assert.ok(shelf.includes('loot: { items: () => shelf.items },'),
     'and opens the inventory with the shelf as the Remove-mode remote - SetShopShelfStealing\'s shape');
+  assert.ok(shelf.includes('const win = interiorInventory({'), 'through the host\'s one inventory door (ID1)');
   assert.ok(shelf.indexOf('insideOpenShop === false') < shelf.indexOf('openTradeWindow(shelf, b, \'Buy\')'),
     'the gate precedes the Buy window');
 });

@@ -10,10 +10,14 @@ import {
   calculateItemRepairCost, calculateItemRepairTime, updateRepairTimes,
   isBeingRepaired, isBeingRepairedAt, isRepairFinished, leaveForRepair,
   collectRepaired, repairJobsAt, repairRefusal, repairStatusLabel, daysUntil,
+  CANNOT_BE_REPAIRED_TEXT,
 } from '../src/systems/repairService.js';
 import { reducedRepairCost } from '../src/systems/guildServices.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
+import { readFileSync } from 'node:fs';
+
+const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
 const item = (condition, max = 1000, over = {}) => ({
   name: 'Test Item', templateIndex: 102, currentCondition: condition, maxCondition: max, value: 300, ...over,
@@ -80,7 +84,7 @@ test('R1 state machine: leave is idempotent, finish heals through the shop filte
   const here = repairJobsAt(entity, 55, 100 + 1440);
   assert.equal(here.length, 1, 'a job at ANOTHER shop is hidden (:718)');
   assert.equal(it.currentCondition, 1000, 'a finished job heals to max in the filter pass (:720-721)');
-  assert.equal(repairStatusLabel(it, 100 + 1440), 'Repair done');
+  assert.equal(repairStatusLabel(it, 100 + 1440), 'DONE');   // Internal_Strings.csv:817
   collectRepaired(it);
   assert.ok(!isBeingRepaired(it));
 
@@ -97,6 +101,9 @@ test('R1 gates: magic unless AllowMagicRepairs, the isNotRepairable templates, f
   assert.equal(repairRefusal(item(10, 1000, { templateIndex: 247 })), 'notRepairable', 'a torch cannot be repaired');
   assert.equal(repairRefusal(item(1000, 1000)), 'undamaged');
   assert.equal(repairRefusal(item(10, 1000)), null);
+  // the 'notRepairable' refusal's own line is the localization row
+  // DaggerfallTradeWindow.cs:813 hands to MessageBox, verbatim
+  assert.equal(CANNOT_BE_REPAIRED_TEXT, 'This cannot be repaired.', 'Internal_Strings.csv:974');
 });
 
 test('R1 save: otherItems and their repairData ride the quicksave (SerializablePlayer.cs:132/:300)', () => {
@@ -113,4 +120,22 @@ test('R1 save: otherItems and their repairData ride the quicksave (SerializableP
   const w3 = {};
   restorePlayer(w3, snap);
   assert.deepEqual(w3.otherItems, []);
+});
+
+test('R1 repairNote: the note the commit pass writes is the ROW, with DFU\'s two fills (:536-537)', () => {
+  // UpdateRepairTimes writes one note per newly-booked item:
+  //   string.Format(GetLocalizedText("repairNote"), item.LongName,
+  //                 buildingDiscoveryData.displayName)
+  // The row is Internal_Strings.csv:820 - "Left my {0} for repair at
+  // {1}." - so {0} is the ITEM and {1} is the SHOP, in that order.
+  // Both of the port's commit arms (the staged Repair mode and the
+  // one-item repair) write it, so both are pinned.
+  const wm = src('src/scenes/worldModes.js');
+  const notes = wm.match(/questBridge\?\.notebook\?\.addNote\?\.\(`[^`]*`\);/g) ?? [];
+  assert.equal(notes.length, 2, 'both commit arms write the repairNote');
+  for (const n of notes) {
+    assert.match(n, /`Left my \$\{_itemLabel\(it\)\} for repair at \$\{interiorBuilding\?\.name \?\? 'the shop'\}\.`/,
+      'the row verbatim, item into {0} and shop into {1}');
+    assert.ok(!n.includes('to be repaired at'), 'the old paraphrase is gone');
+  }
 });

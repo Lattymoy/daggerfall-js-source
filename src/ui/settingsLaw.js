@@ -6,10 +6,14 @@
 // QualityLevel 4. Ranges are DFU's where DFU states one.
 //
 // THE RANGE-EQUALS-CLAMP LAW (ours, pinned): a control must never
-// offer travel its consumer ignores. MouseLookSensitivity runs to 4.0
-// here, not DFU's 16.0, because lookSettings.js:20 clamps at 4.0 -
-// and its help says so rather than letting the last three quarters of
-// a slider do nothing. Every getter call passes BOTH min and max:
+// offer travel its consumer ignores. It used to be stated over
+// MouseLookSensitivity, which ran to 4.0 here against DFU's 16.0
+// because lookSettings.js clamped at 4.0; ROAD-G G6 built DFU's own
+// sensitivity slider (ui/mouseControlsWindow.js, 0.1..16.0 verbatim)
+// and widened the clamp to match, so that row is DFU's range now and
+// the law is enforced the other way round - by the pin below, which
+// reads each consumer's clamp and refuses a row that offers more.
+// Every getter call passes BOTH min and max:
 // settings.js clamps with Math.min(max, ...), so a min without a max
 // yields NaN.
 //
@@ -25,6 +29,8 @@ import { READOUT } from './settingsCopy.js';
 export const ENUM_LAW = Object.freeze({
   'Video/RandomDungeonTextures': { values: ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], encode: 'index', cite: 'AdvancedSettings:244-252' },
   'Controls/CameraRecoilStrength': { values: ['Off', 'Low', 'Medium', 'High', 'Very High'], encode: 'index', cite: 'AdvancedSettings:244-252' },
+  'Controls/WeaponSwingMode': { values: ['Gesture', 'Click', 'Click or Hold'], encode: 'index', cite: 'WeaponManager:306-323' },   // AUDIT 28 W11
+  'Controls/Handedness': { values: ['Right Hand', 'Left Hand'], encode: 'index', cite: 'SetupGameWizard:461-470 (a checkbox: 1 = left; 2 and 3 are in GetInt\'s range and do nothing)' },   // AUDIT 28 W13
   'MeleeAttacks/MeleeAttackDetection': { values: ['Performance', 'Quality'], encode: 'index', cite: 'AdvancedSettings:277-282' },
   'Video/QualityLevel': { values: ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'Video/MainFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
@@ -35,10 +41,16 @@ export const ENUM_LAW = Object.freeze({
 
 /** {min,max,step,coarse,format,source}. format: pct | mult | a unit. */
 export const NUMBER_LAW = Object.freeze({
+  // AUDIT 28 SELF-AUDIT (F-A1): the key went LIVE in W1 and the screen
+  // still showed a dead readout - a number with no stated range stays
+  // text, and this one's range IS stated: GetInt(1, 100).
+  'GUI/QuestRumorWeight': { min: 1, max: 100, step: 1, coarse: 10, source: 'DFU GetInt(1,100) (SettingsManager:512)' },
+  'GUI/ShopQualityHUDDelay': { min: 1, max: 10, step: 1, coarse: 2, format: 'sec', source: 'DFU GetInt(1,10) (SettingsManager:494)' },
+  'Controls/WeaponAttackThreshold': { min: 0.001, max: 1, step: 0.001, coarse: 0.01, format: 'raw', source: 'DFU GetFloat(0.001,1) (SettingsManager:534)' },   // AUDIT 28 W11
   'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
-  'Controls/MouseLookSensitivity': { min: 0.1, max: 4.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'the port clamps at 4.0 (lookSettings.js)' },
-  'Controls/MouseLookSmoothingFactor': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'ours: the natural range of a stored 0..1 factor' },
+  'Controls/MouseLookSensitivity': { min: 0.1, max: 16.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'DFU GetFloat(0.1,16.0) (SettingsManager:524)' },   // ROAD-G G6: the range is DFU's now, not ours
+  'Controls/MouseLookSmoothingFactor': { min: 0, max: 0.9, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU GetFloat(0,0.9) + SmoothingMax 0.9 (SettingsManager:523, PlayerMouseLook:45)' },   // AUDIT 28 W7: the range is DFU's now, not ours
   'Enhancements/LoiterLimitInHours': { min: 3, max: 12, step: 1, coarse: 3, format: 'hours', source: 'DFU (:342-354)' },
   'Video/FieldOfView': { min: 60, max: 120, step: 5, coarse: 20, format: 'deg', source: 'DFU GetInt(60,120) (SettingsManager:418)' },
   'GUI/ToolTipDelayInSeconds': { min: 0, max: 10, step: 0.5, coarse: 2, format: 'sec', source: 'DFU (:291-297)' },
@@ -79,11 +91,14 @@ export function blockedReason(key) {
 }
 
 const fmtNumber = (n, law) => {
+  if (law.format === 'raw') return String(+n.toFixed(4));   // AUDIT 28 W11: a thousandths ratio (0.005) must not round to "0.01"
   if (law.format === 'pct') return `${Math.round(n * 100)}%`;
   if (law.format === 'mult') return `x${n.toFixed(1)}`;
   const unit = law.format;
   const shown = Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-  return `${shown} ${unit}`;
+  // F-A1's own find: a law with NO unit (QuestRumorWeight is a bare
+  // weight) printed "50 undefined". A bare number reads as itself.
+  return unit ? `${shown} ${unit}` : shown;
 };
 
 /** The WORD a player reads. Never the raw ini string. */

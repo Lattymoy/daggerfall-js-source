@@ -15,7 +15,7 @@
 // fifth time - and the answer is the same answer: ONE seam that builds
 // the window, and each host hands it what only that host knows.
 //
-// THE BUY WINDOW IS NOT THIS. worldModes.js:2373 builds a SpellbookWindow
+// THE BUY WINDOW IS NOT THIS. worldModes.js:2418 builds a SpellbookWindow
 // too and looks like a duplicate from a distance; it is the spell
 // merchant's shop - buyMode, with `offered`, the building's quality,
 // the shop name, the haggling skills and the classic clock. Different
@@ -114,14 +114,26 @@ function enhancedSpellbookOverlay(shared, onClose) {
   };
   mount();
   return {
-    // The overlay contract every enhanced door answers: the DOM owns
-    // its own keys and pointer, so the host's arms are no-ops and the
-    // host asks `done` to know when to drop it.
+    // THE HOST CONTRACT, in the hosts' own words - `input`, not
+    // `onKey`. The hosts dereference these unguarded
+    // (dungeonContext.js `activeOverlay.input(action, e)`,
+    // townTalk.js, worldModes.js) and the DOM view only claims the
+    // keys it uses, so every other key arrives here; a missing arm is
+    // a TypeError thrown inside the host's keydown handler. Same arms
+    // as ui/pauseDoor.js and ui/inventoryDoor.js.
+    isChoiceWindow: true,
     get done() { return done; },
-    draw() {},
-    onKey() { return false; },
-    onPointer() { return false; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* nothing on this screen moves on a clock */ },
+    draw() { /* DOM, not canvas */ },
+    // `close`, `dispose` and `destroy` are the hosts' three words for
+    // the same act - townTalk's showOverlay frees the outgoing window
+    // with `dispose?.()`, and without it the div outlives the object.
     close,
+    dispose: close,
     destroy: close,
   };
 }

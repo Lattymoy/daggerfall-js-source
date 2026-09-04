@@ -25,21 +25,37 @@ const STORE = 'arena2';
 const MUSIC_STORE = 'music';
 /** M-TEX: the same reasoning as the music store, one domain over. */
 const TEXTURE_STORE = 'textures';
-/** R6: DERIVED artifacts - bytes the game GENERATED from the player's
- *  own data, not bytes the player supplied. The road network is the
- *  first: a whole-map bake costs about twenty-six seconds, so it is
- *  computed once and kept.
+/** MW-IMPORT: user-supplied Morrowind data (Morrowind.bsa, expansions,
+ *  Morrowind.esm) for the opt-in 3D asset layer. Same doctrine as
+ *  ARENA2 - actively-sold game data, never in the repo or build, lives
+ *  only in the player's browser. Its lifecycle is its own: attaching
+ *  or clearing it never touches the ARENA2 set. */
+const MW_STORE = 'morrowind';
+/** DERIVED artifacts - bytes the game GENERATED from the player's own
+ *  data, rather than bytes the player supplied. It is a store of its
+ *  own for the reason the others are, plus one more: a derived artifact
+ *  is only valid FOR the data it came from, so it must die with an
+ *  ARENA2 re-pick, and clearStoredData sweeps it - the only injected
+ *  store that recovery touches, deliberately, because handing new data
+ *  an artifact derived from the old folder is worse than rebuilding.
  *
- *  It is a store of its own for the reason the others are, plus one
- *  more: a derived artifact is only valid FOR the data it came from,
- *  so it must die with an ARENA2 re-pick. clearStoredData sweeps it -
- *  the only injected store that recovery touches, and deliberately,
- *  because keeping a road network baked from a folder the player has
- *  just replaced is worse than paying for a rebake. */
+ *  IT CURRENTLY HAS NO CONSUMER. The road network was the first and
+ *  the only one, and its travel and render halves were removed on
+ *  2026-08-29 (Mac's call). ROADS 22-25 brought roads BACK on
+ *  2026-09-02 - Port-Ledger section A, the ROADS 22-25 row - and they
+ *  did NOT come back through this door: the rebuilt network bakes into
+ *  its own IndexedDB database (`src/world/roadsCache.js`, DB
+ *  'daggerfall-roads', with its own GENERATOR_VERSION), so this generic
+ *  store still has no caller. The store, its sweep and its version
+ *  stay: they are
+ *  generic plumbing, the next derived artifact will want exactly this
+ *  contract, and tearing out an IndexedDB store to reclaim nothing
+ *  would churn the schema and four unrelated suites that pin the store
+ *  list. Said out loud here so nobody reads it as live. */
 const DERIVED_STORE = 'derived';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, DERIVED_STORE];
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -96,11 +112,17 @@ const mem = new Map(); // NAME -> Uint8Array
 // splash under the rule the moment it was written. Proven by mutation -
 // drop the name below and F2 fails with "desktop diet drops
 // ANIM0001.VID". Wire a video, and the pin makes you feed it.
-const LEAN = typeof window !== 'undefined' &&
+// AUDIT DA: the desktop shell is NEVER lean, whatever it sniffs - a
+// touch-screen Windows laptop is not a phone, and a player there who
+// fell back to the in-page picker used to ingest the sky-less lean
+// set with no way out of it from the app. The shell's presence
+// (daggerShell, the preload bridge) outranks the touch sniff.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three
   name === 'CLASSES.DAT' ||
+  name === 'PAINT.DAT' ||                   // AUDIT 39 F156: the painting descriptions (40-byte records, 24KB)
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
   name === 'ANIM0002.VID' ||                // V1 the lycanthropy dream (LycanthropyInfection.cs:95)
@@ -108,7 +130,7 @@ export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 8;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles - all auto-wiped
+const MANIFEST_V = 9;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles, v8 = the sets missing PAINT.DAT (AUDIT 39 F156) - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
@@ -245,7 +267,7 @@ export async function clearStoredData() {
   mem.clear();
   const d = await getDb();
   // The ARENA2 set AND every artifact DERIVED from it. The injected
-  // stores (music, textures) are the player's own packs and
+  // stores (music, textures, Morrowind) are the player's own packs and
   // survive - re-picking the game files is not asking to lose them -
   // but a road network baked from the folder being replaced is not a
   // pack, it is an ANSWER ABOUT that folder, and keeping it would hand
@@ -277,16 +299,21 @@ export async function clearStoredData() {
 /** Put the accepted files from a pick into `store`. `accept(name)`
  *  answers whether a file belongs to this domain, so a pack folder
  *  with its readme and cover art in it just works. Returns the count. */
-async function storeAssets(store, files, accept) {
+async function storeAssets(store, files, accept, keyOf = null) {
   const d = await getDb();
   let kept = 0;
   for (const f of files) {
     const base = f.name.slice(f.name.lastIndexOf('/') + 1);
     if (!accept(base)) continue;
+    // MW-D40: a store may key by more than the basename - loose
+    // Morrowind files are only addressable by their RELATIVE path
+    // (meshes/maxhorse/xhorse1.nif), which the directory picker
+    // carries on webkitRelativePath. Default stays the basename law.
+    const key = keyOf ? keyOf(f, base) : base;
     const buf = await f.arrayBuffer();
     await new Promise((res, rej) => {
       const tx = d.transaction(store, 'readwrite');
-      tx.objectStore(store).put(buf, base);
+      tx.objectStore(store).put(buf, key);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -344,13 +371,17 @@ export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
 
-/** R6: one derived artifact, by key. Bytes in, bytes out - this door
- *  knows nothing about what it holds, and the artifact's OWN envelope
- *  (systems/roadBake.js: magic, version, checksum) is what decides
- *  whether what comes back is usable. That is why there is no version
- *  here: a stale or torn record is refused by the reader and rebaked,
- *  which is strictly better than a store-level stamp that can only
- *  answer "different", never "damaged". */
+/** One derived artifact, by key. Bytes in, bytes out - this door knows
+ *  nothing about what it holds, and the artifact's OWN envelope (magic,
+ *  version, checksum, whatever its writer chose) is what decides whether
+ *  what comes back is usable. That is why there is no version here: a
+ *  stale or torn record is refused by its reader and rebuilt, which is
+ *  strictly better than a store-level stamp that can only answer
+ *  "different", never "damaged".
+ *
+ *  No caller: the one consumer this ever had was the removed road bake,
+ *  and the re-integrated roads cache into their own DB - see
+ *  DERIVED_STORE. */
 export async function storeDerived(key, bytes) {
   const d = await getDb();
   await new Promise((res, rej) => {
@@ -363,6 +394,217 @@ export async function storeDerived(key, bytes) {
 }
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
 export const clearDerived = () => clearAssets(DERIVED_STORE);
+
+/** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
+ *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data
+ *  Files/Meshes/maxhorse/Xhorse1.nif"; every engine lookup asks in the
+ *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
+ *  from the FIRST known asset root, lowercased, slashes normalized. A
+ *  path with no known root keys by its basename (a file picked alone). */
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/'];
+export function mwLoosePath(name) {
+  const p = String(name).replace(/\\/g, '/').toLowerCase();
+  for (const root of MW_LOOSE_ROOTS) {
+    const at = p.indexOf(root);
+    if (at !== -1) return p.slice(at);
+  }
+  return p.slice(p.lastIndexOf('/') + 1);
+}
+const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav)$/i;
+
+/** MW-D40: the {has, get} duck the whole MW stack already speaks
+ *  (fpArm resolves everything via `archives.find((a) => a.has(path))`),
+ *  over a Map of canonical loose paths. Pure and node-testable. */
+export function makeLooseArchive(files) {
+  const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+  return {
+    loose: true,
+    names: [...files.keys()],
+    has: (p) => files.has(norm(p)),
+    get: (p) => files.get(norm(p)) ?? null,
+  };
+}
+
+export async function storeMorrowindFiles(files) {
+  // .bsa archives + .esm/.esp records; MwBsaFile magic-checks at read,
+  // so a wrong archive fails loudly there, not silently here.
+  // MW-D40: LOOSE files join - a mod like Pegas Horse Ranch ships
+  // meshes/textures/sounds outside any .bsa, and the engine's own law
+  // is that loose data files override archived ones. Archives and
+  // plugins keep their basename keys (stable for existing attaches);
+  // loose files key by canonical relative path.
+  return storeAssets(MW_STORE, files,
+    (n) => /\.(bsa|esm|esp)$/i.test(n) || MW_LOOSE_EXT.test(n),
+    (f, base) => (MW_LOOSE_EXT.test(base) ? mwLoosePath(f.webkitRelativePath || f.name) : base));
+}
+export const storedMorrowindNames = () => assetNames(MW_STORE);
+// IG2: THE SWAP-SPEED CACHES (Mac: "load times when swapping weapons,
+// clothing, armor is really slow"). The body follows the equip table,
+// so every equip change rebuilds the arms - and every rebuild used to
+// re-read EVERY .bsa blob out of IndexedDB and re-index its directory,
+// plus every .esm, seconds per swap on retail data. The stored set
+// only changes on an ATTACH, and the attach generation below already
+// says so - so the mapped archives and the raw file bytes cache
+// against it. The cost is stated, not hidden: the archives stay
+// resident (about the size of the player's data set), which is exactly
+// what makes a swap near-instant; a new attach drops the old set.
+let _mwArchiveCache = null;   // { gen, archives }
+let _mwFileCache = null;      // { gen, files: Map<name, bytes> }
+export const loadMorrowindFile = async (fileName) => {
+  if (!_mwFileCache || _mwFileCache.gen !== _mwGeneration) _mwFileCache = { gen: _mwGeneration, files: new Map() };
+  if (_mwFileCache.files.has(fileName)) return _mwFileCache.files.get(fileName);
+  const bytes = await assetBytes(MW_STORE, fileName);
+  if (bytes) _mwFileCache.files.set(fileName, bytes);
+  return bytes;
+};
+export const clearStoredMorrowind = () => { _mwArchiveCache = null; _mwFileCache = null; return clearAssets(MW_STORE); };
+
+export const hasStoredMorrowind = async () =>
+  (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
+
+/** Every stored .bsa opened, in override order: expansions and mods
+ *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
+export async function loadMorrowindArchives() {
+  if (_mwArchiveCache && _mwArchiveCache.gen === _mwGeneration) return _mwArchiveCache.archives;
+  const { MwBsaFile } = await import('../formats/mwBsaFile.js');
+  const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
+  const rank = (n) => {
+    const l = n.toLowerCase();
+    if (l.includes('morrowind')) return 3;
+    if (l.includes('tribunal')) return 2;
+    if (l.includes('bloodmoon')) return 1;
+    return 0; // unknown packs override everything
+  };
+  names.sort((a, b) => rank(a) - rank(b));
+  const archives = [];
+  // MW-D40: LOOSE FILES FIRST - the engine's own data-files-over-BSA
+  // law. Every stored non-archive asset joins one {has, get} duck
+  // ranked ahead of every .bsa, so a mod's meshes/textures/sounds
+  // (Pegas Horse Ranch's whole maxhorse tree) resolve through the
+  // exact seam fpArm already speaks, and can also OVERRIDE an
+  // archived file of the same path. Resident like the archives are -
+  // the IG2 cost statement above covers both.
+  const looseNames = (await storedMorrowindNames()).filter((n) => MW_LOOSE_EXT.test(n));
+  if (looseNames.length) {
+    const loose = new Map();
+    for (const n of looseNames) {
+      const bytes = await assetBytes(MW_STORE, n);
+      if (bytes) loose.set(n, bytes);
+    }
+    archives.push(makeLooseArchive(loose));
+  }
+  for (const n of names) {
+    try {
+      archives.push(new MwBsaFile(await loadMorrowindFile(n)));
+    } catch (err) {
+      console.warn(`morrowind archive ${n}: ${err.message}`);
+    }
+  }
+  // The .bsa BYTES now live inside the mapped archives; drop the file
+  // cache's copies so one attach does not hold the set twice.
+  if (_mwFileCache) for (const n of names) _mwFileCache.files.delete(n);
+  _mwArchiveCache = { gen: _mwGeneration, archives };
+  return archives;
+}
+
+/** Sync-readable state for the settings row; -1 until registered. */
+let _mwCount = -1;
+export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/**
+ * MWFIX: the ATTACH GENERATION. The 3D first-person view is built once,
+ * at weapon-rig construction, off a `hasStoredMorrowind()` read - so
+ * attaching data to a running game changed nothing until a reload, and
+ * the bug report's "after uploading does not work at all" is that, not
+ * a bad archive. A monotonic counter is the cheapest honest signal a
+ * live consumer can poll: it moves only when the stored set is
+ * re-counted with a DIFFERENT answer, so a rig comparing integers
+ * rebuilds exactly when there is something new to build from.
+ */
+let _mwGeneration = 0;
+export const morrowindDataGeneration = () => _mwGeneration;
+/**
+ * MW-D40: the generation answers for the WHOLE STORED SET, never the
+ * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
+ * attached beside an archive that is already there leaves the archive
+ * count untouched - and this line is the only writer of the generation
+ * and the only place `_mwEsm`/`_mwArchiveCache`/`_mwFileCache` are
+ * dropped, so counting archives alone left the loose override and the
+ * ESM door dead until the page was reloaded. The sorted names also
+ * move when a re-attach swaps one file for another of the same count,
+ * which a length never does.
+ */
+let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
+const mwFingerprint = (names) => [...names].sort().join('\n');
+
+/** Bootstrap arm (scenes/shared.js): count the stored archives once so
+ *  the settings dialog can report attachment without an async hop. */
+export async function registerMorrowindData() {
+  const names = await storedMorrowindNames();
+  const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
+  const print = mwFingerprint(names);
+  // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
+  // AND LEARNING A SET IS NOT A CHANGE.
+  //
+  // Without the first term this bumped on every host's first boot, for
+  // every player, even with an empty store: -1 !== 0. And the bump is
+  // load-bearing - weaponRig latches the generation SYNCHRONOUSLY at
+  // construction while shared.js's bootstrap runs this asynchronously
+  // and does not wait, so the rig's latch is always taken BEFORE the
+  // count lands. Its first frame then saw a "change" that was really
+  // just the count arriving and called fpArm.unload(), throwing away an
+  // arm the player had already built. Measured in a browser through the
+  // real rig (tools/mwRigProbe.mjs): built, drawing, then reason
+  // "unloaded" on the first frame after boot.
+  //
+  // The generation means THE STORED SET CHANGED. It cannot mean that
+  // until there is a previous set to compare against.
+  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  _mwFingerprint = print;
+  _mwCount = next;
+  return _mwCount;
+}
+
+/**
+ * MW7: the stored Morrowind.esm, parsed - the record file the body
+ * parts live in. It is NOT inside the BSA (it sits beside it in Data
+ * Files, which is why storeMorrowindFiles takes .esm as well as .bsa),
+ * so it has its own door. Answers null when no .esm was attached: the
+ * first-person layer degrades to the classic sprite rather than
+ * failing, exactly as it does for any other missing piece.
+ *
+ * Parsed once and cached - the file is tens of megabytes and the rig
+ * rebuilds on every attach and every toggle.
+ */
+let _mwEsm;
+export async function loadMorrowindEsm() {
+  if (_mwEsm !== undefined) return _mwEsm;
+  const name = (await storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
+  if (!name) return (_mwEsm = null);
+  try {
+    const { parseEsm } = await import('../formats/mwEsmFile.js');
+    _mwEsm = parseEsm(await loadMorrowindFile(name));
+  } catch (err) {
+    console.warn(`morrowind esm ${name}: ${err.message}`);
+    _mwEsm = null;
+  }
+  return _mwEsm;
+}
+
+export async function pickMorrowindFiles() {
+  return pickAssetFolder({
+    title: 'Your Morrowind data',
+    blurb: `<p>Pick your Morrowind <b>Data Files</b> folder (or just
+      <b>Morrowind.bsa</b>). Nothing is uploaded - it is stored in this
+      browser, exactly like the ARENA2 pick.</p>
+      <p style="color:#999">Powers the opt-in 3D asset layer. You need
+      to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
+      they're in the folder. Loose mod files (meshes, textures,
+      sounds - a mod folder like Pegas Horse Ranch's) join too and
+      override the archives, engine-style.</p>`,
+    store: storeMorrowindFiles,
+    register: registerMorrowindData,
+  });
+}
 
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');
@@ -495,6 +737,11 @@ export async function pickTextureFolder() {
     register: async () => setTextureReplacements(await storedTextureNames(), loadTextureFile),
   });
 }
+
+/** MW-D35: the same seam under the name the Morrowind lane's deps
+ *  object carries - buildFpArm reads the classic portrait archive
+ *  through `deps.fetchArena2Bytes`, and a test hands it a fixture. */
+export const fetchArena2Bytes = (name) => getBytes(name);
 
 /** The single data seam every reader goes through (via fetchBytes). */
 export async function getBytes(name) {

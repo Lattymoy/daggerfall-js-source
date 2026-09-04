@@ -48,6 +48,7 @@ import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeL
 import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
 import { randomRangeInclusive } from '../../formats/dfRandom.js';   // Q5: TrainPc's Range(10,21)
 import { makeItemPermanent } from './item.js';
+import { isGoldPieces } from '../inventory.js';   // E4: GetItem's IsOfTemplate(Currency, Gold_pieces) test, one spelling
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
@@ -790,7 +791,11 @@ export class PromptMulti extends ActionTemplate {
  *  forever) / "play sound X N unknown" - a REPEATING action with no
  *  SetComplete; timesPlayed++ rides the interval check while only a
  *  real play (hook answers truthy; C# skips while the audio source is
- *  busy) re-stamps lastTimePlayed. Create resolves the sound through
+ *  busy) re-stamps lastTimePlayed. E6 SHIPPED the other half of that
+ *  skip: the host's door now HAS the busy state DFU reads - one
+ *  `QuestAudioSource` per machine (systems/audio.js, the
+ *  DaggerfallAudioSource the QuestMachine carries) keeping the end
+ *  time of the clip it last started. Create resolves the sound through
  *  Quests-Sounds inside the C#'s try/catch - an unknown name answers
  *  null and the line pends. DEPARTURE (recorded): C# also resolves
  *  SoundReader.GetSoundIndex/GetAudioClip at create and nulls on
@@ -1372,8 +1377,14 @@ export const YOU_RECEIVE_GOLD_PIECES = 'You receive %s gold pieces.';
  *  shows QuestComplete without loot; "give pc anItem notify nnnn" /
  *  "... silently" put the item straight in the inventory - but only
  *  in town, outdoors, between 07:00 and 18:00, after a 40..500-tick
- *  random delay (the Ledger A roll; DFU's OnOfferPending event has no
- *  port-side consumer yet - the guild questor UI is Q4). */
+ *  random delay (the Ledger A roll). AUDIT 58: the moment that delay
+ *  is rolled the action raises OnOfferPending (GivePc.cs:96, the
+ *  static event at :238-244); DaggerfallUI is its one subscriber
+ *  (DaggerfallUI.cs:352) and latches the sender, and the next REST or
+ *  FAST TRAVEL press spends the latch through GiveOffer()
+ *  (:1717-1726, gated in front of both presses at :680 and :612) -
+ *  the item lands at once and the press is consumed. ui/pendingOffer.js
+ *  is that half; the raise is the hooks call below. */
 export class GivePc extends ActionTemplate {
   static typeName = 'GivePc';
   get saveShape() { return [['itemSymbol', 'sym'], ['textId'], ['isNothing'], ['silently']]; }
@@ -1415,6 +1426,11 @@ export class GivePc extends ActionTemplate {
         const roll = this.parentQuest.rolls ?? Math.random;
         this.ticksUntilFire = minDelay + Math.floor(roll() * (maxDelay + 1 - minDelay));
         this.waitingForTown = false;
+        // GivePc.cs:96 - RaiseOnOfferPendingEvent(this), the LAST line
+        // of the arm. DaggerfallUI latches the sender here and the
+        // next rest / fast-travel press hands the item over instead
+        // of opening its window (DaggerfallUI.cs:352, :1717-1735).
+        hooks?.onOfferPending?.(this);
       }
     }
     if (this.ticksUntilFire > 0) { this.ticksUntilFire--; return; }
@@ -1440,7 +1456,9 @@ export class GivePc extends ActionTemplate {
     this.offerImmediately = false;
     this.setComplete();
   }
-  /** The guild questor UI calls this at hand-in (Q4). */
+  /** OfferImmediately (GivePc.cs:142-147). AUDIT 58: its caller is
+   *  DaggerfallUI.GiveOffer() (:1717-1726) - the rest and fast-travel
+   *  presses - not the guild questor UI, which never touches it. */
   offerImmediatelyNow() {
     this.waitingForTown = false;
     this.ticksUntilFire = 0;
@@ -1489,7 +1507,7 @@ export class GetItem extends ActionTemplate {
     const hooks = this.parentQuest.hooks;
     hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
     const dfItem = item.daggerfallUnityItem;
-    if (dfItem && dfItem.group === 'Currency') {
+    if (dfItem && isGoldPieces(dfItem)) {   // GetItem.cs:73 - IsOfTemplate, both terms
       const amount = dfItem.stackCount ?? 0;
       hooks?.addGold?.(amount);
       hooks?.addHUDText?.(YOU_RECEIVE_GOLD_PIECES.replace('%s', String(amount)));
@@ -3006,8 +3024,14 @@ export class ClimateCondition extends ActionTemplate {
     this.climate = -1;       // MapsFile.Climates value, or -1
     this.climateBase = '';   // 'desert'|'mountain'|'temperate'|'swamp', or ''
   }
+  /** C#'s alternative ORDER is load-bearing and must not be sorted
+   *  longest-first: both engines take the leftmost alternative that
+   *  matches at the earliest start, and Test() is unanchored, so
+   *  `climate desert2` binds desert (224) with the trailing '2' left
+   *  unconsumed, and `climate mountainwoods` binds mountain (226).
+   *  Bug-for-bug, verbatim. */
   get pattern() {
-    return /climate (?<climate>desert2|desert|mountainwoods|mountain|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (?<base>base) (?<climatebase>desert|mountain|temperate|swamp)/;
+    return /climate (?<climate>desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (?<base>base) (?<climatebase>desert|mountain|temperate|swamp)/;
   }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -3098,7 +3122,10 @@ export class PayMoney extends ActionTemplate {
   update(_caller) {
     const hooks = this.parentQuest.hooks;
     if (this.amount > 0) {
-      const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getGold?.() ?? 0);
+      // The `money` arm gates on PlayerEntity.GetGoldAmount() - coins
+      // PLUS letters of credit - which is what deductGold then spends.
+      // getGold is the bare GoldPieces read the other actions use.
+      const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getTotalGold?.() ?? 0);
       if (held >= this.amount) {
         if (this.goldOnly) hooks?.deductGoldPieces?.(this.amount);
         else hooks?.deductGold?.(this.amount);
@@ -3112,12 +3139,14 @@ export class PayMoney extends ActionTemplate {
 }
 
 /** JournalNote.cs - the message's tokens into the notebook's NOTES
- *  page (the addNote seam Q3 mounted). */
+ *  page through the TOKEN overload, PlayerNotebook.AddNote(List<Token>)
+ *  (RevealLocation's readmap note is the string one). */
 export class JournalNote extends ActionTemplate {
   static typeName = 'JournalNote';
   get saveShape() { return [['id']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.id = 0;
   }
   get pattern() { return /journal note (?<id>\d+)/; }
@@ -3130,7 +3159,7 @@ export class JournalNote extends ActionTemplate {
   }
   update(_caller) {
     const message = this.parentQuest.getMessage(this.id);
-    if (message) this.parentQuest.hooks?.world?.addNote?.(message.getTextTokens());
+    if (message) this.parentQuest.hooks?.world?.addNoteTokens?.(message.getTextTokens());
     this.setComplete();
   }
 }
@@ -3147,6 +3176,7 @@ export class TrainPc extends ActionTemplate {
   get saveShape() { return [['skill']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.skill = -1;
   }
   get pattern() { return /train pc (?<skillName>\w+)/; }
@@ -3242,6 +3272,7 @@ export class RunQuest extends ActionTemplate {
   get saveShape() { return [['questName'], ['successSymbol'], ['failureSymbol'], ['questStarted'], ['questUId']]; }
   constructor(parentQuest) {
     super(parentQuest);
+    this.allowRearm = false;
     this.questName = '';
     this.successSymbol = null;
     this.failureSymbol = null;
@@ -3280,6 +3311,16 @@ export class RunQuest extends ActionTemplate {
       this._quest = null;
     }
   }
+  /** Dispose: a child still RUNNING when the parent quest is
+   *  tombstoned dies with it - otherwise it ticks on alone, keeping
+   *  its SiteLinks, placed foes and talk topics alive. */
+  dispose() {
+    super.dispose();
+    if (this._quest && !this._quest.questComplete) {
+      this.parentQuest.hooks?.tombstoneQuest?.(this._quest);
+      this._quest = null;
+    }
+  }
 }
 
 /** SpawnCityGuards.cs - PlayerEntity.SpawnCityGuards(immediate),
@@ -3291,12 +3332,18 @@ export class SpawnCityGuardsAction extends ActionTemplate {
     super(parentQuest);
     this.immediateSpawn = false;
   }
-  get pattern() { return /spawncityguards (?<immediate>immediate)|spawncityguards/; }
+  /** Two C# quirks, both load-bearing. The space before the optional
+   *  group is MANDATORY, so a bare `spawncityguards` line matches no
+   *  template at all and the registry drops it. And CreateNew reads
+   *  `match.Groups.Count > 1` - the number of groups IN THE PATTERN,
+   *  always 2, not whether the group participated - so every line
+   *  that DOES match spawns immediately. Verbatim. */
+  get pattern() { return /spawncityguards (immediate)?/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
     const action = new SpawnCityGuardsAction(parentQuest);
-    action.immediateSpawn = !!match.groups?.immediate;
+    action.immediateSpawn = true;
     return action;
   }
   update(_caller) {

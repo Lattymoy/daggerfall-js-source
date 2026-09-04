@@ -4,8 +4,9 @@ import { MOBILE_TYPES } from './mobileTypes.js';
 // THE DAEDRA
 //
 // Frost, Fire, Daedroth, Lord and Seducer. Every one of them is
-// minMetalToHit 5 — daedric weapons or nothing — which is what marks
-// them as a class in the game's own terms rather than in ours.
+// minMetalToHit 5 — WeaponMaterialTypes.Mithril, so mithril or better
+// connects and anything under it misses (Daedric is 9) — which is what
+// marks them as a class in the game's own terms rather than in ours.
 //
 // AND THEY COST ALMOST NOTHING, WHICH IS THE POINT. A Daedroth is a
 // crocodile-headed man: that is the werewolf's mechanism, one group

@@ -25,12 +25,15 @@
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
 
-import { statUp, statDown } from './chargen.js';
-import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
+import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
+import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
+import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { SKILL_NAMES } from '../systems/skills.js';
+import { SKILL_NAMES, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
+import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
+import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -43,7 +46,15 @@ import { SOUND } from '../systems/soundClips.js';
 // U8a: the module-level art cache - hosts preload once at boot; a
 // failed load leaves the text fallback in charge.
 let _art = null;
+// UpDownSpinner's own background (UpDownSpinner.cs:25) - the sheet
+// mounts one while levelling and nowhere else, so a failed load costs
+// the arrows their frame and nothing else.
+let _spinnerArt = null;
 export async function preloadCharSheetArt(deps) {
+  if (!_spinnerArt) {
+    try { _spinnerArt = await loadImg(deps, 'CHAR02I1.IMG'); }
+    catch { _spinnerArt = null; }
+  }
   if (_art) return;
   try { _art = await loadImg(deps, 'INFO00I0.IMG'); }
   catch { console.warn('[charsheet] INFO00I0.IMG unavailable; the text sheet stands in'); }
@@ -57,13 +68,16 @@ export const charSheetArtLoaded = () => !!_art;
 // leather formula) - so a daedric warhammer weighed its iron base.
 // AUDIT 17f: gold used to be the one term with a second constant
 // here (DaggerfallBankManager.goldPieceWeightInKg, 0.0025) because
-// the port's gold stack carried no template index. It carries
-// Currency.Gold_pieces (276) now, whose baseWeight IS 0.0025, so
-// itemWeight serves it like every other stack.
-// U52: EXPORTED. The enhanced sheet shows the same encumbrance the
+// the port's gold stack carried no template index. It carried
+// Currency.Gold_pieces (276) after that, whose baseWeight IS 0.0025.
+// E4 RETIRED THE STACK ALTOGETHER: gold is PlayerEntity.GoldPieces,
+// so the coin term comes back as DFU's own hand-written product -
+// which is the whole of PlayerEntity.CarriedWeight (:184), and lives
+// once, in systems/inventory.js, beside the constant it multiplies.
+// U52: RE-EXPORTED. The enhanced sheet shows the same encumbrance the
 // classic one draws, and a second reduce over e.items in that module
 // would be this comment's own warning happening again one file over.
-export const carriedWeight = (e) => (e.items ?? []).reduce((kg, it) => kg + itemWeight(it), 0);
+export { carriedWeight };
 
 export class LevelUpScreen {
   constructor(entity, rolls = Math.random) {
@@ -71,7 +85,17 @@ export class LevelUpScreen {
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).
-    this.pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    //
+    // AUDIT 39: the OGHMA arm (UpdatePlayerValues :374-383) - the
+    // Infinium's rollout is a FIXED 30 and DFU draws no BonusPool() on
+    // that branch at all. The screen rolled 4..6 unconditionally, so
+    // the book's thirty points were unspendable and applyLevelUp's
+    // oghma arm - the only place that clears the latched flag - was
+    // reached by the next GENUINE level-up, which it then ate (no
+    // Level++, no health roll).
+    this.oghma = !!entity.oghmaLevelUp;
+    this.pool = this.oghma ? OGHMA_BONUS_POOL
+      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
     this._rolledPool = this.pool;
     this.base = { ...entity.stats };
     this.working = { ...entity.stats };
@@ -85,7 +109,18 @@ export class LevelUpScreen {
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
     else if (action === 'down') this.cursor = (this.cursor + 1) % 8;
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
-    else if (action === 'minus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
+    // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
+    // isChoiceWindow, so both hosts hand it overlayAction's answer
+    // (scenes/townTalk.js's keyed arm and ui/input.js:306-307) - and
+    // overlayAction can never answer 'minus', because its typed-
+    // character branch (ui/input.js:229) owns the hyphen. The bare
+    // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
+    // code table (:196) both still produce it. Without this, a
+    // level-up point could be spent from the keyboard and never taken
+    // back, under a screen that prints '+/- assign' at :143 - and
+    // LevelUpScreen has no click of its own to fall back on.
+    // StatsRollout.cs:255's down-spinner is the same door.
+    else if (action === 'minus' || action === 'char:-') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
     else if (action === 'confirm' && this.pool === 0) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
@@ -98,7 +133,9 @@ export class LevelUpScreen {
     const W = canvas.width, H = canvas.height;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.92]);
     const gold = [0.85, 0.72, 0.35, 1], white = [0.9, 0.9, 0.85, 1], hot = [1, 0.95, 0.6, 1], dim = [0.5, 0.5, 0.45, 1];
-    const t = `LEVEL ${this.entity.pendingLevel}!  POOL: ${this.pool}`;
+    // The oghma arm raises no level, so it has no pendingLevel to show
+    // (DFU's sheet prints the level it already has).
+    const t = `LEVEL ${this.entity.pendingLevel ?? this.entity.level}!  POOL: ${this.pool}`;
     drawText(renderer, font, t, (W - measureText(font.fnt, t) * s) / 2, 24 * s, s, gold);
     STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.working[k]}`,
@@ -126,6 +163,54 @@ export const CHARSHEET_RECTS = Object.freeze({
   exit: [50, 179, 39, 19],
 });
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+// ── THE LEVEL-UP ROLLOUT, ON THE SHEET (AUDIT 44 / a11) ─────────────
+//
+// DFU has NO separate level-up window. UpdatePlayerValues
+// (DaggerfallCharacterSheetWindow.cs:369-394) mounts a StatsRollout
+// onto the character sheet itself the moment ReadyToLevelUp is set:
+// the level and health go up THERE, the eight stat labels stop
+// showing live values and start showing the rollout's working ones,
+// and the sheet refuses to close until the pool is spent
+// (CheckIfDoneLeveling :433-455). The port's LevelUpScreen was a
+// second window standing in for that; it stays as the ENHANCED skin's
+// door (ui/charSheetDoor.js), and the classic lane levels here.
+//
+// StatsRollout's character-sheet positioning, verbatim (:88-131):
+//   stat value panels  (141, 17 + 24*i), 28x6   - the sheet's own
+//   stat select buttons(141,  6 + 24*i), 28x20
+//   spinner            (176,  6 + 24*sel), 15x20; up 15x7 at +0,
+//                      value label 15x6 at +7, down 15x7 at +13
+export const STATS_ROLLOUT_SELECT = Object.freeze({ x: 141, y: 6, w: 28, h: 20, step: 24 });
+export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20, step: 24 });
+/** StatsRollout.modifiedStatTextColor - Color.green, the non-freeEdit
+ *  default (:46). The char sheet's rollout is `new StatsRollout(true)`,
+ *  freeEdit OFF, so a moved stat draws green here. */
+export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
+/** SelectStat + the spinner's two arrows, in both key vocabularies -
+ *  the overlayAction names (ui/input.js:243-244) and the raw e.code a
+ *  "native" window is handed. */
+const ROLLOUT_ACTIONS = Object.freeze({
+  up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
+  plus: 'plus', Equal: 'plus', NumpadAdd: 'plus',
+  minus: 'minus', Minus: 'minus', NumpadSubtract: 'minus',
+});
+
+/** AUDIT 58: GetStatDescriptionTextID (TextProvider.cs:582-604) - the
+ *  eight attribute buttons' Tags, and they are TEXT.RSC records 0..7
+ *  in DFCareer.Stats order, which is STAT_KEYS_ORDER's order exactly
+ *  (Strength 0 ... Luck 7). AddAttributePopupButton
+ *  (DaggerfallCharacterSheetWindow.cs:269-274) hangs one on each of
+ *  the eight `(141, 6 + 24*i, 28, 20)` rects (:209-216). */
+export const statDescriptionTextId = (i) => (i >= 0 && i < STAT_KEYS_ORDER.length ? i : -1);
+
+/** Internal_Strings.csv:110 - CheckIfDoneLeveling's refusal (:437-443). */
+export const MUST_DISTRIBUTE_BONUS_POINTS = 'You must distribute all bonus points.';
+/** DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54),
+ *  Color32(219,130,40,255) - what MultiFormatTextLabel paints a
+ *  TextHighlight token with (:362-363), and therefore what a
+ *  recently-raised skill's whole row reads as. */
+export const SKILL_HIGHLIGHT_COLOR = Object.freeze([219 / 255, 130 / 255, 40 / 255, 1]);
 
 /** The four buttons that lead somewhere (:134-204). */
 export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', 'history']);
@@ -166,13 +251,72 @@ export class CharSheet {
    *  target; a town's cannot). A hook the host does not pass is a
    *  window that host cannot open, and the sheet SAYS SO rather than
    *  eating the click - which is what it did for all four until now. */
-  constructor(entity, hooks = {}) {
+  constructor(entity, hooks = {}, rolls = Math.random) {
     this.entity = entity; this.done = false; this.page = 0;
     this.hooks = hooks;
     this.child = null;      // the pushed window, or null
     this.notice = null;     // why a button did nothing, when it could not
     this.isChoiceWindow = true;   // U8a: receive RAW codes through townTalk (digit pages + F5 toggle)
+    // The rollout's state, mounted only while levelling.
+    this.leveling = false;
+    this.oghma = false;
+    this.pool = 0;
+    this.base = null;       // StatsRollout.StartingStats
+    this.working = null;    // StatsRollout.WorkingStats
+    this.cursor = 0;        // StatsRollout.selectedStat
+    this._rolls = rolls;
+    this._mountStatsRollout(rolls);
     refreshPaperDoll(entity);     // compose fresh on open, as the inventory does
+  }
+
+  /** UpdatePlayerValues :369-394, verbatim order: the fanfare, the
+   *  pool (30 flat on the Oghma branch, BonusPool() otherwise), the
+   *  Level++ and the health roll, the rollout's two stat clones, then
+   *  BOTH flags cleared.
+   *
+   *  advancement.applyLevelUp is the port's one home for the middle
+   *  three - AUDIT 39 put the Oghma arm there, and the manifest's own
+   *  warning is that the sheet must hand it the ALREADY-ROLLED pool so
+   *  a second draw never burns a number the screen has shown. The
+   *  distribute hook is empty on purpose: DFU's rollout writes
+   *  PlayerEntity.Stats at CLOSE (:448), not at mount. */
+  _mountStatsRollout(rolls) {
+    const e = this.entity;
+    if (!e?.readyToLevelUp) return;
+    this.leveling = true;
+    audio.playOneShot(SOUND.LevelUp, 1);   // levelUpSound (:46, :373)
+    this.oghma = !!e.oghmaLevelUp;
+    this.pool = this.oghma ? OGHMA_BONUS_POOL
+      : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+    this.base = { ...e.stats };
+    this.working = { ...e.stats };
+    this.cursor = 0;
+    applyLevelUp(e, () => {}, rolls, this.pool);
+  }
+
+  /** DaggerfallStats.IsAllMax (:85-97) over the working stats. */
+  _workingAllMax() {
+    return STAT_KEYS_ORDER.every((k) => this.working[k] === MAX_STAT_VALUE);
+  }
+
+  /** CheckIfDoneLeveling (:433-455). Levelling: an unspent pool
+   *  refuses the close with the mustDistributeBonusPoints box, and a
+   *  spent one writes the working stats home. NOT levelling: closing
+   *  the sheet is what CLEARS the recently-raised highlights - which
+   *  is why a level-up close leaves them standing for the next visit.
+   *  Answers whether the window may close. */
+  _checkIfDoneLeveling() {
+    if (this.leveling) {
+      if (this.pool > 0 && !this._workingAllMax()) {
+        this.child = new ActionTextBox([MUST_DISTRIBUTE_BONUS_POINTS]);
+        return false;
+      }
+      this.leveling = false;
+      Object.assign(this.entity.stats, this.working);   // PlayerEntity.Stats = statsRollout.WorkingStats (:448)
+      return true;
+    }
+    if (this.entity) resetSkillsRecentlyRaised(this.entity);
+    return true;
   }
 
   /** The pushed window's lifetime: a finished child pops, revealing
@@ -220,12 +364,32 @@ export class CharSheet {
     this.notice = null;
     // Both vocabularies: input.js actions (dungeon routing) and raw
     // codes (the exterior hosts' overlay seam).
+    // The mounted rollout owns the spinner keys. StatButton_OnMouseClick
+    // (:925-939) hands the stat buttons to the rollout while levelling
+    // and pops the attribute description otherwise; up/down is the
+    // port's keyboard for SelectStat, plus/minus for the spinner.
+    if (this.leveling) {
+      // BOTH vocabularies, the same reason the page map below carries
+      // both: townTalk hands a "native" window the raw e.code and the
+      // dungeon's routeKey hands it an overlayAction name.
+      const spin = ROLLOUT_ACTIONS[action];
+      const key = STAT_KEYS_ORDER[this.cursor];
+      if (spin === 'up') { this.cursor = (this.cursor + 7) % 8; return; }
+      if (spin === 'down') { this.cursor = (this.cursor + 1) % 8; return; }
+      if (spin === 'plus') { const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; return; }
+      if (spin === 'minus') { const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; return; }
+    }
     const pages = { 1: 1, 2: 2, 3: 3, 4: 4, Digit1: 1, Digit2: 2, Digit3: 3, Digit4: 4 };
     const p = pages[action];
     if (p) { this.page = this.page === p ? 0 : p; return; }
     if (this.page && (action === 'back' || action === 'Escape')) { this.page = 0; return; }
     if (action === 'confirm' || action === 'back' || action === 'sheet'
-      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') this.done = true;
+      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {
+      // CancelWindow / the toggle key / the exit button all run the
+      // same gate (:241, :259, :944) - the sheet does not close while
+      // bonus points are owed.
+      if (this._checkIfDoneLeveling()) this.done = true;
+    }
   }
 
   /** AUDIT 18: the sheet had no click() at all, so its drawn EXIT
@@ -239,7 +403,45 @@ export class CharSheet {
       return true;
     }
     const R = CHARSHEET_RECTS;
-    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }
+    // The rollout's own hit rects, while it is mounted: the eight stat
+    // select buttons (StatsRollout.cs:110-131) and the spinner's two
+    // halves (UpDownSpinner.cs:100-111).
+    if (this.leveling) {
+      const sp = STATS_ROLLOUT_SPINNER, se = STATS_ROLLOUT_SELECT;
+      const spY = sp.y + sp.step * this.cursor;
+      if (inRect([sp.x, spY, sp.w, 7], vx, vy)) { this.input('plus'); return true; }
+      if (inRect([sp.x, spY + 13, sp.w, 7], vx, vy)) { this.input('minus'); return true; }
+      for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+        if (inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) { this.cursor = i; return true; }
+      }
+    }
+    // AUDIT 58: THE EIGHT ATTRIBUTE POPUP BUTTONS' OTHER ARM.
+    // StatButton_OnMouseClick (:925-941) is a two-armed handler: while
+    // levelling the rollout above claims these rects, and OTHERWISE it
+    // plays ButtonClick and pops the stat's own TEXT.RSC description as
+    // a ClickAnywhereToClose box (SetTextTokens((int)sender.Tag,
+    // playerEntity.Stats)). The port had only the levelling arm, so
+    // clicking any of the eight attribute values on a normal sheet did
+    // nothing at all - not even a click - and this method's own "every
+    // DFU button rect is answered or consumed" was false for them.
+    // DFU's macro source for the box is playerEntity.Stats; the port's
+    // `rows` door is the same TEXT.RSC read the rest of the window's
+    // siblings make.
+    {
+      const se = STATS_ROLLOUT_SELECT;
+      for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+        if (!inRect([se.x, se.y + se.step * i, se.w, se.h], vx, vy)) continue;
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        const rows = this.hooks.rows?.(statDescriptionTextId(i)) ?? [];
+        if (rows.length) this.child = new ActionTextBox(rows);
+        return true;
+      }
+    }
+    if (inRect(R.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);   // ExitButton_OnMouseClick :943
+      if (this._checkIfDoneLeveling()) this.done = true;
+      return true;
+    }
     const skills = [R.primarySkills, R.majorSkills, R.minorSkills, R.miscSkills];
     for (let i = 0; i < skills.length; i++) {
       if (inRect(skills[i], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.input(i + 1); return true; }
@@ -292,7 +494,12 @@ export class CharSheet {
     label(e.race ?? 'Breton', 41, 14);
     label(e.career?.name ?? '', 46, 24);
     label(e.level ?? 1, 45, 34);
-    label(e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0, 39, 44);
+    // DaggerfallCharacterSheetWindow.cs:401 is
+    // `goldLabel.Text = PlayerEntity.GetGoldAmount().ToString()`, and
+    // GetGoldAmount (PlayerEntity.cs:1313-1316) is goldPieces PLUS
+    // every letter of credit in the pack - the coin stack alone
+    // under-reports a banked player by the whole letter.
+    label(totalGoldAmount(e), 39, 44);
     label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
     label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance
@@ -303,15 +510,36 @@ export class CharSheet {
     // gives after a disease or a drain spell was absent. `stats` IS
     // the permanent map here (statMods.js:31 clamps permanent + mods).
     STAT_KEYS_ORDER.forEach((k, i) => {
+      // While levelling the sheet's own stat labels go EMPTY (:412)
+      // and the mounted rollout fills the same panels with its working
+      // values, green where they have moved (StatsRollout.UpdateStatLabels
+      // :198-208).
+      if (this.leveling) {
+        label(this.working[k], 141, 17 + i * 24, { align: 'center', w: 28, color: this.working[k] !== this.base[k] ? STAT_MODIFIED_COLOR : undefined });
+        return;
+      }
       const live = liveStat(e, k);
       const permanent = e.stats?.[k] ?? 0;
       const color = live < permanent ? STAT_DRAINED_COLOR
         : live > permanent ? STAT_INCREASED_COLOR : undefined;
       label(live, 141, 17 + i * 24, { align: 'center', w: 28, color });
     });
+    if (this.leveling) this._drawSpinner(renderer, font, m);
     drawPaperDoll(renderer, m, e, PAPERDOLL_ORIGIN[0], PAPERDOLL_ORIGIN[1]);
     if (this.page) this._drawSkillPage(renderer, font, m);
     return undefined;
+  }
+
+  /** UpDownSpinner (:95-119) beside the selected stat: CHAR02I1.IMG
+   *  behind, the bonus pool centred in the 15x6 label between the two
+   *  7px arrow halves. Art-less, the frame is a plain plate - the
+   *  NUMBER is the load-bearing part. */
+  _drawSpinner(renderer, font, m) {
+    const sp = STATS_ROLLOUT_SPINNER;
+    const y = sp.y + sp.step * this.cursor;
+    if (_spinnerArt) drawImg(renderer, _spinnerArt, m, sp.x, y);
+    else drawRect(renderer, m, sp.x, y, sp.w, sp.h, [0.12, 0.10, 0.07, 0.9]);
+    shadowText(renderer, font, String(this.pool), m, sp.x, y + 7, { align: 'center', w: sp.w });
   }
 
   _drawSkillPage(renderer, font, m) {
@@ -323,8 +551,13 @@ export class CharSheet {
       : Object.keys(SKILL_NAMES).map(Number).filter((id) => !inCareer.has(id));
     drawRect(renderer, m, 8, 100, 130, Math.min(96, ids.length * 9 + 14), [0.05, 0.05, 0.09, 0.95]);
     shadowText(renderer, font, `${names[this.page - 1]} skills`, m, 12, 103);
+    // TextProvider.GetSkillSummary (:490-496): a skill raised since
+    // the sheet was last closed formats its WHOLE row as
+    // TextHighlight, which MultiFormatTextLabel draws in
+    // DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54).
     ids.slice(0, 9).forEach((id, i) =>
-      shadowText(renderer, font, `${SKILL_NAMES[id]} ${e.skills?.[id] ?? 0}%`, m, 12, 113 + i * 9, { color: [0.9, 0.9, 0.85, 1] }));
+      shadowText(renderer, font, `${SKILL_NAMES[id]} ${e.skills?.[id] ?? 0}%`, m, 12, 113 + i * 9,
+        { color: getSkillRecentlyIncreased(e, id) ? SKILL_HIGHLIGHT_COLOR : [0.9, 0.9, 0.85, 1] }));
   }
 
   _drawFallback(renderer, canvas, font, s) {
@@ -333,8 +566,18 @@ export class CharSheet {
     const gold = [0.85, 0.72, 0.35, 1], white = [0.9, 0.9, 0.85, 1], dim = [0.6, 0.6, 0.55, 1];
     drawText(renderer, font, `${e.name ?? '?'}  ${e.career?.name ?? ''}  LVL ${e.level}`, 20 * s, 16 * s, s, gold);
     drawText(renderer, font, `HP ${e.health}/${e.maxHealth}   MP ${e.magicka}/${e.maxMagicka}`, 20 * s, 30 * s, s, white);
-    STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
-      `${k.slice(0, 3).toUpperCase()} ${e.stats[k]}`, 20 * s, (48 + i * 10) * s, s, white));
+    // The art-less sheet still LEVELS - it has to, because the close
+    // gate refuses while points are owed and a player who cannot see
+    // the pool cannot spend it.
+    if (this.leveling) {
+      drawText(renderer, font, `POOL: ${this.pool}   +/- assign`, 20 * s, 40 * s, s, gold);
+      STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
+        `${i === this.cursor ? '>' : ' '} ${k.slice(0, 3).toUpperCase()} ${this.working[k]}`,
+        20 * s, (48 + i * 10) * s, s, this.working[k] !== this.base[k] ? STAT_MODIFIED_COLOR : white));
+    } else {
+      STAT_KEYS_ORDER.forEach((k, i) => drawText(renderer, font,
+        `${k.slice(0, 3).toUpperCase()} ${e.stats[k]}`, 20 * s, (48 + i * 10) * s, s, white));
+    }
     const groups = [['P', e.career?.primarySkills ?? []], ['M', e.career?.majorSkills ?? []], ['m', e.career?.minorSkills ?? []]];
     let row = 0;
     for (const [tag, ids] of groups) {

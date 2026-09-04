@@ -59,6 +59,9 @@
 import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
+import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
+import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
@@ -71,7 +74,10 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
-import { itemWeight, isEnchanted, totalWeight, addItem, goldStack } from '../systems/inventory.js';
+import {
+  itemWeight, isEnchanted, totalWeight, addItem, goldStack,
+  goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
+} from '../systems/inventory.js';
 import { goldAmount, deductGold } from '../systems/court.js';
 // U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
 // from the classic window so this pane runs them rather than a second
@@ -159,11 +165,19 @@ export function packModel(deps = {}) {
   for (const [slot, item] of Object.entries(slots ?? {})) {
     if (item) worn.set(Number(slot), item);
   }
-  const carried = items.reduce((kg, it) => kg + itemWeight(it), 0);
+  // E4: PlayerEntity.CarriedWeight (:184) - the item list PLUS the
+  // gold counter's own weight. `deps.items()` and `entity.items` are
+  // the same collection in every host, but the pane is handed the
+  // list rather than the entity, so the total is composed from both
+  // halves the same member does.
+  const carried = items.reduce((kg, it) => kg + itemWeight(it), 0)
+    + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
   return {
     tabs: TABS.map((tab) => ({ tab, items: filterByTab(items, tab) })),
     worn,
-    gold: items.find((it) => it.group === 'Currency')?.stackCount ?? 0,
+    // PlayerEntity.GoldPieces, the COUNTER - gold has not been an item
+    // in the pack since E4, so there is no stack here to find.
+    gold: goldPiecesOf(entity),
     // FormulaHelper.MaxEncumbrance over LIVE strength, the same
     // expression the character sheet and the classic window use.
     encumbrance: { now: Math.trunc(carried), max: entityMaxEncumbrance(entity) },
@@ -272,6 +286,7 @@ export function itemLine(item, identity = undefined) {
   // it replaced went away with it.
   const t = templateByIndex(item.templateIndex);
   return {
+    item,   // MW-D38: the icon door resolves the item itself
     name: item.name ?? t?.name ?? 'Unknown',
     weight: itemWeight(item),
     condition: (item.maxCondition ?? 0) > 0 ? conditionPercentage(item) : null,
@@ -359,6 +374,8 @@ let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
 let tab = TABS[0];
+const _scrollMemo = new Map();   // PX22: scrollTop per tab across repaints
+let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
 let notice = null;
@@ -414,6 +431,29 @@ const refresh = () => {
   model = packModel(deps);
   remote = remoteModel(deps, sessionState());
   worn = equippedModel(deps.entity);
+  // PX25 (Mac: equipping and unequipping does not update the sprite
+  // until the inventory is closed and reopened): THE PACK TELLS THE
+  // RIG. D32 reads the equip table from the weapon rig's frame tick,
+  // and the host's frame does not reach that tick while a window is
+  // up - so the rebuild waited for the close. The pack is the one
+  // place that knows the table just changed while it is open, so it
+  // hands the worn list through the same door, setWorn, whose key
+  // compare makes a no-change a no-op; the build settles, the
+  // subscription (D36) repaints, the figure follows the action.
+  const arm = deps.fpArm;
+  if (arm && typeof arm.setWorn === 'function' && deps.entity) {
+    try { arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM)); } catch { /* the rig's own card carries its reasons */ }
+    // PX26 F2: AND THE HAND. PX25 handed the rig the worn TABLE while a
+    // window is up, and stopped there - so a cloak equipped in the pack
+    // showed at once and a SWORD did not, because the weapon rides its
+    // own door (setWeapon) off the same frame tick the window blocks.
+    // Same read, same door, same key-compare fast path.
+    try {
+      const slots = equipTableOf(deps.entity);
+      arm.setWeapon?.(slots?.[EQUIP_SLOTS.RightHand] ?? null,
+        { hasAmmo: hasDaggerfallArrows(deps.entity.items) });
+    } catch { /* see above */ }
+  }
 };
 
 /** U59: recompose the avatar and repaint when it lands. The
@@ -446,6 +486,7 @@ function wear(item) {
   if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
   refresh();
   refreshFigure();   // U59: the avatar is wearing it now
+  picked = null;     // PX24 (Mac): an action taken CLOSES the tooltip; a refusal above keeps it
   return render();
 }
 
@@ -497,6 +538,7 @@ function use(item, collection = deps.items?.() ?? []) {
   }
   refresh();
   if (act.closesWindow) { onExit(); return; }
+  picked = null;     // PX24: a use, however it reported, closes the tooltip
   render();
 }
 
@@ -505,6 +547,7 @@ function takeOff(slot) {
   unequipSlot(deps.entity, slot);
   refresh();
   refreshFigure();
+  picked = null;     // PX24: the action closes the tooltip
   render();
 }
 
@@ -546,10 +589,13 @@ function stow(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
-  // The item that ARRIVES stays picked - a split leaves the remainder
-  // behind and mints a new record, and following the one that moved is
-  // what lets the player put it straight back.
-  picked = applyTransfer(item, plan, deps.items?.() ?? [], to);
+  // PX24 (Mac: an action taken closes the tooltip): the transfer
+  // happens and the tip goes. The earlier law kept the ARRIVING item
+  // picked so it could be put straight back; the player can pick it
+  // again on the other side, and a tip that stays open after every
+  // press is the quirk being fixed.
+  applyTransfer(item, plan, deps.items?.() ?? [], to);
+  picked = null;
   side = 'remote';
   refresh();
   render();
@@ -566,7 +612,12 @@ function take(item) {
     getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
-  const taken = applyTransfer(item, plan, from, bag);
+  // E4: the pack IS the destination here, so DoTransferItem's gold
+  // interception (:1562-1571) fires and answers null - its `return`
+  // skips the choose-one close below, and there is no arriving record
+  // for the tab to follow.
+  const taken = applyTransfer(item, plan, from, bag, { entity: deps.entity, toPlayer: true });
+  if (taken === null) { picked = null; refresh(); render(); return; }
   // G6 (:1585-1591): ONE is the whole gift. The window closes and the
   // callback runs - the claim and the taking are one event, so this
   // arm must not repaint a screen that is going away.
@@ -578,13 +629,14 @@ function take(item) {
     return;
   }
   // PX28 (Mac: "when looting, there's a 2nd popup when you take
-  // something, there shouldn't be"): SELECTING THE TAKEN ITEM RAISES
-  // THE TOOLTIP, and in the loot-only flow that is a card nobody asked
-  // for, popping over the frame you are reading. With the pack OPEN it
-  // is useful - the thing you just took is selected in your bag, on
-  // the tab it landed in - so the selection is the PACK's behaviour,
-  // not the take's. Looting just takes.
-  picked = packOpen ? taken : null;
+  // something, there shouldn't be"): looting just takes - no card
+  // pops over the frame you are reading. PX24/AUDIT 35 (Mac: the same
+  // when looting containers, bodies, etc.): the pack-open flow used to
+  // keep the TAKEN item selected in the bag, which raised the tooltip
+  // on the other side after every take - the very quirk PX24 closed
+  // for wear, use and stow. An action taken closes the tooltip, on
+  // both sides of the window; the tab still follows the arrival.
+  picked = null;
   if (packOpen) {
     side = 'local';
     // The pack's TAB follows what just arrived, or the player takes a
@@ -611,7 +663,7 @@ function toggleWagon() {
  *  is this pane's; the range refusal and the wagon clamp are not. */
 function dropGold(text) {
   notice = null;
-  const player = deps.entity ?? { items: deps.items?.() ?? [] };
+  const player = deps.entity ?? {};
   const to = remoteTarget(deps, sessionState());
   const plan = planDropGold(text, {
     carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
@@ -633,6 +685,70 @@ function dropGold(text) {
 // the body's own coordinates ARE the schematic now (they need no
 // ARENA2, so a player with no game data still sees their slots), and
 // the paperdoll stands behind them whenever its art can draw.
+
+// ── MW-D36: the model figure ─────────────────────────────────────────
+let _figureYaw = 0;
+let _figureCache = { key: null, url: null };
+let _unsubscribeFigure = null;
+/** The built third-person body as a data URL at the current yaw, or
+ *  null when no body stands. Cached per (yaw, build) so a re-render of
+ *  the window does not re-read the GPU. */
+function modelFigureUrl() {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.figure !== 'function') return null;
+  const st = armMod.status?.();
+  // AUDIT 33 F2: the yaw is QUANTISED to a tenth of a radian, so a drag
+  // re-renders and re-encodes the figure about sixty times per turn
+  // instead of once per pixel, and dragging back lands on cached
+  // frames. The build's settlement clears this cache (subscribe).
+  const yaw = Math.round(_figureYaw / 0.1) * 0.1;
+  const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${yaw.toFixed(1)}`;
+  if (_figureCache.key === key) return _figureCache.url;
+  let img = null;
+  try { img = armMod.figure({ yaw, height: 384 }); } catch { img = null; }
+  let url = null;
+  if (img && img.width && img.height) {
+    const cv = document.createElement('canvas');
+    cv.width = img.width; cv.height = img.height;
+    cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+    url = cv.toDataURL('image/png');
+  }
+  _figureCache = { key, url };
+  return url;
+}
+/** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
+ *  The rig caches the pixels per record; this caches the encoding. */
+const _iconUrls = new Map();
+function modelIconUrl(item, size) {
+  const armMod = deps.fpArm;
+  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
+  let img = null;
+  try { img = armMod.itemIcon(item, { size }); } catch { img = null; }
+  if (!img || !img.width) return null;
+  if (_iconUrls.has(img)) return _iconUrls.get(img);
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
+  const url = cv.toDataURL('image/png');
+  _iconUrls.set(img, url);
+  return url;
+}
+
+/** Drag left/right to turn the figure; a tap does nothing (display only). */
+function attachFigureTurn(img) {
+  let down = null;
+  img.style.touchAction = 'pan-y';
+  img.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; img.setPointerCapture?.(e.pointerId); });
+  img.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
+    const url = modelFigureUrl();
+    if (url) img.src = url;
+  });
+  const up = () => { down = null; };
+  img.addEventListener('pointerup', up);
+  img.addEventListener('pointercancel', up);
+}
 
 /** The avatar, at whatever scale the column gives it. */
 function dollPanel(url) {
@@ -742,15 +858,23 @@ function equippedList() {
   // PX20a: 4x, not 3x - the cell is half again as tall as it was, and
   // a 3x sprite scaled up by object-fit is a blur where every other
   // pixel on this window is exact.
-  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // MW-D36: THE MODEL STANDS WHERE THE DOLL STOOD. When the Morrowind
+  // third-person body is built - dressed by this very equip table,
+  // wearing the matched face - the panel shows THAT, rendered off the
+  // GPU as an image, turnable by drag. Display only, by Mac's call:
+  // unequip stays with the list. No body built = the classic doll,
+  // exactly as before; the classic skin never sees any of this.
+  const figureUrl = modelFigureUrl();
+  const dollUrl = figureUrl || paperDollDataUrl(paperDollPixels(), { scale: 4 });
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
-  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}`);
+  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}${figureUrl ? ' model' : ''}`);
   dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
     const img = document.createElement('img');
     img.src = dollUrl;
-    img.alt = 'Your character';
+    img.alt = figureUrl ? 'Your character, as the Morrowind body wears it' : 'Your character';
+    if (figureUrl) attachFigureTurn(img);
     dollFrame.append(img);
   } else {
     dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
@@ -887,9 +1011,13 @@ function characterCol() {
  * record lands the whole screen repaints and the letters give way.
  */
 function itemTile(line) {
-  const src = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
-    : null;
+  // MW-D38: the Morrowind ground mesh stands in for the sprite when a
+  // body is built and the item resolves through the one map; the
+  // classic icon stands otherwise. Enhanced only, like everything here.
+  const src = modelIconUrl(line.item, 96)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
+      : null);
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');
@@ -933,6 +1061,17 @@ function itemRow(item, from = 'local') {
     if (from === 'remote' && item.questItem) {
       deps.getQuest?.(item.questUID)?.getItem?.(item.questSymbol)?.setPlayerClicked();
     }
+    // IG7 (Mac: "opening a container or body and clicking to loot an
+    // item - the item isn't picked up properly and the tooltip
+    // remains"): a LOOT-SIDE click TAKES, immediately. DFU's remote
+    // list transfers on the click itself
+    // (DaggerfallInventoryWindow.RemoteItemListScroller_OnItemClick's
+    // remove arm); this skin's pick-then-Take card made the first
+    // click look like a broken take with a tooltip stuck open. The
+    // REWARD tray alone keeps the two-step - a single click must not
+    // claim a one-shot choice (G6: taking closes the window and
+    // spends the claim).
+    if (from === 'remote' && remote.kind !== 'reward') { take(item); return; }
     // PX19i: the tooltip's toggle - a second click on the picked item
     // puts it away (the quest-click above already fired either way,
     // exactly as DFU counts a look).
@@ -1018,7 +1157,7 @@ function remoteCol() {
  *  the ceiling written next to it. */
 function goldField() {
   const form = el('form', 'goldfield');
-  const carried = goldAmount(deps.entity ?? { items: deps.items?.() ?? [] });
+  const carried = goldAmount(deps.entity ?? {});
   const input = el('input');
   input.type = 'text';
   input.inputMode = 'numeric';
@@ -1091,9 +1230,10 @@ function detailCol() {
   const c = el('div', 'card');
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
-  const big = line.image
-    ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
-    : null;
+  const big = modelIconUrl(line.item, 192)
+    || (line.image
+      ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
+      : null);
   if (big) {
     const fig = el('div', 'bigicon');
     const img = el('img');
@@ -1180,6 +1320,16 @@ function detailCol() {
 function render() {
   repaints++;
   repaintKeepingScroll(host, () => {
+    // PX22: the list's scroll position survives a repaint, per tab - an
+    // equip, a drop or a tab's own re-render rebuilds the DOM, and a
+    // list that jumped to the top on every action was the second half
+    // of the scrunch complaint.
+    // Keyed by the tab that was RENDERED, not the one about to be: a tab
+    // click changes `tab` before it repaints, and the first draft filed
+    // the old list's scroll under the new tab's name (197 -> 0 on a
+    // round trip, measured).
+    const prevList = host.querySelector('.packlists');
+    if (prevList && _renderedTab) _scrollMemo.set(_renderedTab, prevList.scrollTop);
     host.innerHTML = '';
     // PX16b (Mac: "really study the reference"): the reference's
     // ground is THE GAME - two translucent columns on the left third,
@@ -1334,6 +1484,9 @@ function render() {
     if (packOpen) shell.append(win);
     if (loot) shell.append(loot);
     host.append(shell);
+    const list = host.querySelector('.packlists');
+    if (list && _scrollMemo.has(tab)) list.scrollTop = _scrollMemo.get(tab);
+    _renderedTab = tab;
   });
 }
 
@@ -1362,6 +1515,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   injectEnhancedFonts();
   host = hostEl;
   deps = d;
+  // MW-D36: repaint when the body's build settles, so an equip change
+  // that rebuilt the model asynchronously shows on the panel.
+  if (d.fpArm && typeof d.fpArm.subscribe === 'function') {
+    _unsubscribeFigure?.();
+    _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, url: null }; if (host) render(); });
+  }
   onExit = d.onExit ?? (() => {});
   tab = TABS[0];
   picked = null;
@@ -1424,6 +1583,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;
       lockHandler = null;
+      // MW-D36: the figure's subscription has an owner too.
+      _unsubscribeFigure?.(); _unsubscribeFigure = null;
       hostEl.innerHTML = '';
       host = null;
       deps = {};

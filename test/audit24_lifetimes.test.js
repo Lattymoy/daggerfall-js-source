@@ -55,7 +55,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // spares corpses), so the batch would be unreachable and undead
   // AUDIT 26 F035/F041 grew the header: the door takes a provenance
   // flag (fromPlayer), defaulting true.
-  const dmg = bodyOf(src, 'function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {})');
+  const dmg = bodyOf(src, 'function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})');
   // The window is a PROXIMITY bound, not a law - it exists so the
   // release cannot drift out of the death branch entirely. X5 put the
   // Soul Trap intercept between the two points (the trap can refuse
@@ -72,20 +72,28 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
     'and nothing draws a dead foe, which is what makes the release safe');
 });
 
-test('audit24 lifetimes: a city guard frees its batch on both death paths, and the array is NOT pruned', () => {
+test('audit24 lifetimes: a city guard frees its batch on both death paths, and the array IS pruned', () => {
   const src = read('src/scenes/cityGuards.js');
   assert.match(src, /function releaseGuardBatch\(g\) \{[\s\S]*?destroyBillboardBatch\(g\.batch\)/);
   // AUDIT 26 F035 (+ MT-ii, the same gate from the other end): the
   // header grew its provenance flag.
-  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'),
+  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
   assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
     'and the walk-away path when the crime clears');
-  // the array itself must stay index-stable: lootTargets keys corpses
-  // by their index and takeLoot reads guards[i] straight back, so a
-  // splice would hand the player someone else's purse
-  assert.match(src, /guardCorpse:\$\{i\}/, 'lootTargets keys by array index');
-  assert.doesNotMatch(src, /guards\.splice\(/, 'so nothing may splice guards');
+  // AUDIT 39 MOVED THIS PIN. It read "the array must stay
+  // index-stable, so nothing may splice guards" - which was true of
+  // the keying, not of the law: the records themselves then
+  // accumulated for the whole session, entity, items and AI, and every
+  // per-frame walk over `guards` paid for them. DFU destroys the
+  // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
+  // the killed body. So the key is the guard's own id now, and the
+  // prune is the encounter pool's (exteriorFoes.js:567).
+  assert.match(src, /idOf: \(g\) => g\.id/, 'lootTargets keys by a stable id');
+  assert.doesNotMatch(src, /guardCorpse:\$\{i\}/, 'never by the array index again');
+  assert.match(src, /guards\.find\(\(g\) => g\.id === id\)/, 'and takeLoot resolves the same name');
+  assert.match(src, /for \(let i = guards\.length - 1; i >= 0; i--\) if \(guards\[i\]\.dead && !guards\[i\]\.corpse\) guards\.splice\(i, 1\);/,
+    'the prune spares corpses, exactly as the twin pool does');
 });
 
 test('audit24 lifetimes: a retired dungeon missile leaves the list', () => {
@@ -137,7 +145,14 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
   // `true` - and the prison arm's own comment described the missing
   // line in as many words ("not harmless now that it is [ported]").
   const arrest = read('src/scenes/arrestFlow.js');
-  assert.match(arrest, /playerEntity\.preventNormalizingReputations = true;\s*\n\s*advanceDays\(result\.days\)/,
+  // PIN MOVED (Road to 1:1, a3): the day skip left the verdict. DFU
+  // raises the clock from UpdatePrisonScreen's ZERO (:475), at the end
+  // of the 0.3s-per-day countdown, not at the moment of the sentence -
+  // so the flag now sits inside the prison screen's onEndPrisonTime
+  // beside its TWIN, PreventEnemySpawns (:473), which had no port at
+  // all. The finding is unweakened and stricter: BOTH flags, in DFU's
+  // order, immediately before the one RaiseTime.
+  assert.match(arrest, /playerEntity\.preventEnemySpawns = true;\s*\n\s*playerEntity\.preventNormalizingReputations = true;\s*\n\s*advanceDays\(days\);/,
     'set BEFORE the day skip, as UpdatePrisonScreen sets it before RaiseTime');
   const tick = read('src/systems/worldTick.js');
   assert.match(tick, /if \(entity\.preventNormalizingReputations\) entity\.preventNormalizingReputations = false;/,
@@ -221,6 +236,29 @@ test('audit24: two async races - an abandoned pixel build and an in-flight loot 
   // and every removal path raises that flag - four of them
   assert.equal((loot.match(/\.dead = true;/g) || []).length, 4,
     'collectPixel, releaseEmptied, restoreWorld and restorePiles all mark');
+});
+
+test('AUDIT 39: a third race - two cold callers for one model id must not each build a mesh', () => {
+  // Same shape as buildPixel's (AUDIT EV F-SIM1), one file over: the
+  // COMPLETED cache is not a guard while there are awaits between the
+  // check and the set. getGpuMesh awaited its texture archives, so two
+  // callers for one cold model id - a teleport's buildPixel racing the
+  // pump's, two adjacent pixels sharing a building, a volley of arrows
+  // before the arrow model warms - each ran renderer.createMesh, and
+  // the second `gpuMeshes.set` overwrote the first: a VAO and four
+  // buffers leaked for the session, because nothing destroys a
+  // gpuMeshes entry. The sibling getTexture in the same factory has
+  // held the in-flight map all along.
+  const pipeline = read('src/scenes/dataPipeline.js');
+  assert.match(pipeline, /const meshPromises = new Map\(\);/, 'the in-flight map exists');
+  const fn = pipeline.slice(pipeline.indexOf('async function getGpuMesh('), pipeline.indexOf('async function buildGpuMesh('));
+  assert.match(fn, /if \(gpuMeshes\.has\(modelIdNum\)\) return gpuMeshes\.get\(modelIdNum\);/, 'a finished mesh answers from the cache');
+  assert.match(fn, /if \(!meshPromises\.has\(modelIdNum\)\) \{\s*\n\s*meshPromises\.set\(modelIdNum, buildGpuMesh\(modelIdNum\)/,
+    'and a flying one answers with the SAME promise, set before any await');
+  assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(modelIdNum\)\)/, 'a settled build leaves the map');
+  // the build itself is the only createMesh, and it is unreachable
+  // except through the door above
+  assert.equal((pipeline.match(/buildGpuMesh\(/g) ?? []).length, 2, 'one definition, one caller');
 });
 
 // ---- wave 9: four boot-and-host defects the bug hunt's verify pass confirmed ----

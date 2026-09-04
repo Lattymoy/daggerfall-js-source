@@ -19,7 +19,7 @@
 //     disabled; survivors join the registry.
 
 import { layoutRdbBlock, RDB_SIDE } from './rdbLayout.js';
-import { randomTextureTableClassic } from './dungeonTextures.js';
+import { dungeonTextureTable } from './dungeonTextures.js';   // AUDIT 28 W3c: the whole modes-0-4 fork
 import { DOOR_TYPE } from './meshReader.js';
 import { transformPoint } from './mat4.js';
 
@@ -43,10 +43,14 @@ export function layoutDungeon(dfLocation, blocksFile, getModel) {
     throw new Error(`location has no dungeon: ${dfLocation.name}`);
   }
 
-  const textureTable = randomTextureTableClassic(
-    dfLocation.dungeon.recordElement.header.locationId,
-    dfLocation.climate.worldClimate,
-  );
+  // AUDIT 28 W3c: the whole RandomDungeonTextures fork (modes 0-4 with
+  // the main-story gate on the raw MapId), not the bare classic call -
+  // the setting had sat stored while the port always answered mode 0.
+  const textureTable = dungeonTextureTable({
+    locationId: dfLocation.dungeon.recordElement.header.locationId,
+    mapId: dfLocation.mapTableData?.mapId ?? 0,   // a fixture without a map-table entry is nobody's main story
+    worldClimate: dfLocation.climate.worldClimate,
+  });
 
   const blocks = [];
   let startMarker = null;

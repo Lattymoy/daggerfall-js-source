@@ -192,7 +192,15 @@ test('SAV4: the host wiring source pins - per-character quickslots, the boot arm
   const pause = readFileSync(new URL('../src/ui/pauseWindow.js', import.meta.url), 'utf8');
   assert.match(pause, /openSave: hooks\.saveAs/);
   assert.match(pause, /openLoad: hooks\.loadKey/);
-  assert.match(pause, /if \(this\.hooks\.openLoad\) this\.hooks\.openLoad\(\);\n\s*else this\.hooks\.quickLoad\?\.\(\);/);
+  // PIN MOVED, ROAD-C C1. It read
+  //   `if (this.hooks.openLoad) this.hooks.openLoad(); else this.hooks.quickLoad?.();`
+  // on ONE line, which only held while the LOAD button closed the pause
+  // window unconditionally before dispatching. DFU pushes the slot
+  // window OVER the pause window (:308) and Cancel pops back onto it,
+  // so the close is now the replace-fallback's alone. The half this pin
+  // was actually guarding - a host without loadKey keeps the one-press
+  // quickload - is what stays pinned, in the new shape.
+  assert.match(pause, /if \(this\.hooks\.openLoad\) \{\n\s*if \(!this\.hooks\.saveLoadPushes\) this\._closeWith\(\);\n\s*this\.hooks\.openLoad\(\);\n\s*\} else \{ this\._closeWith\(\); this\.hooks\.quickLoad\?\.\(\); \}/);
 
   const menu = readFileSync(new URL('../src/scenes/menu.js', import.meta.url), 'utf8');
   assert.match(menu, /export const hasSavedGame = \(\) => !!mostRecentRestorable\(\);/);
@@ -290,6 +298,17 @@ test('SAV4 window: load go hands the RIGHT KEY through the (char,name) identity'
     seedSaves(globalThis.localStorage);
     win.refresh(); win._select(1);          // 'Old' = slot key 0
     win.input('Enter');
+    // PIN MOVED, ROAD-C C1. It asserted the load landed on the KEY
+    // PRESS. It does not: SaveLoadEventHandler's load arm raises
+    // `loading` and LoadGame waits out `loadingCountdown` (:313-315,
+    // :516-520) so the "Please wait..." label can DRAW first. The half
+    // this pin exists for - the RIGHT KEY through the (char,name)
+    // identity - is unchanged; it is now read after the two ticks.
+    assert.equal(loaded, null, 'the press only arms the load');
+    assert.equal(win.loading, true);
+    win.update();
+    assert.equal(loaded, null, 'the label gets its frame');
+    win.update();
     assert.equal(loaded, 0);
     assert.equal(win.done, true, 'PopToHUD before the restore');
   });

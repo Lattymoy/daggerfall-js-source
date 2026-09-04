@@ -137,12 +137,12 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   // PlayerActivate.StaticNPCClick:1534 - and TalkManager.cs does not
   // contain the word Listener. Three port comments named TalkManager
   // and marked the wiring "(Q4 wires)", over a reader that ships at
-  // worldModes.js:451.
+  // worldModes.js:452.
   const m = rd('src/systems/quest/machine.js');
   assert.doesNotMatch(m, /TalkManager reads the map/);
   assert.doesNotMatch(m, /TalkManager's Q4 signal/);
   assert.match(m, /PlayerActivate\.StaticNPCClick reads the map/);
-  assert.match(m, /src\/scenes\/worldModes\.js:451/);
+  assert.match(m, /src\/scenes\/worldModes\.js:452/);
   assert.doesNotMatch(rd('bible/06-Systems/Quest-Arc.md').slice(0, 40000), /TalkManager reads the map at\n  Q4/);
   // and the reader really is there
   assert.match(rd('src/scenes/worldModes.js'), /factionListeners\.has\(pn\.factionID\)\) return;/);

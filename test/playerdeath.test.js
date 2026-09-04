@@ -157,7 +157,7 @@ test('DC1: the three direct hosts pass the LIVE eye and capsule and sink cam.pos
     // ORDER: the sink must follow the frame's eye write, or the eye
     // write undoes it. Find the sink, then the nearest eye write above.
     const at = src.indexOf(sink);
-    const eyeWrite = src.lastIndexOf('cam.pos = player.eye;', at);
+    const eyeWrite = src.lastIndexOf('cam.pos = player.eyeAt();', at);   // EV1: the camera reads the interpolated eye now
     assert.ok(eyeWrite !== -1 && at - eyeWrite < 500, `${h}: the sink rides immediately after the per-frame eye write`);
   }
 });
@@ -168,14 +168,20 @@ test('DC1: the standalone dungeon sinks OUTSIDE the overlay-held walk branch, th
   // during the one state it exists for. The sink is its own absolute
   // write off the motionless eye, after the branch closes.
   const scene = code('scenes/dungeon.js');
-  assert.match(scene, /if \(walkMode && \(ctx\.deathDrop \?\? 0\) > 0\) \{\n\s+const _eye = player\.eye;\n\s+cam\.pos = \[_eye\[0\], _eye\[1\] - ctx\.deathDrop, _eye\[2\]\];\n\s+\}/,
+  assert.match(scene, /if \(walkMode && \(ctx\.deathDrop \?\? 0\) > 0\) \{\n\s+const _eye = player\.eyeAt\(\);[^\n]*\n\s+cam\.pos = \[_eye\[0\], _eye\[1\] - ctx\.deathDrop, _eye\[2\]\];\n\s+\}/,
     'the absolute sink write exists');
   const sinkAt = scene.indexOf('ctx.deathDrop ?? 0) > 0');
   const flyBranch = scene.indexOf("} else if (!overlayHeld) {");
   assert.ok(flyBranch !== -1 && sinkAt > flyBranch, 'the sink sits after the held walk/fly branches close');
   // The view matrix is built from cam.pos BELOW the sink, or the sink
   // writes a camera nobody renders.
-  const view = scene.indexOf('const view = lookAt(cam.pos', sinkAt);
+  // MW-D25: the view is built from the camera machine's eye, and the
+  // machine reads cam.pos as its first-person eye - so the sink still
+  // flows into the frame through mwViewFrame's fpEye. Both halves of
+  // that route are asserted, below the sink.
+  const mwvAt = scene.indexOf('mwViewFrame({ fpEye: cam.pos', sinkAt);
+  assert.ok(mwvAt !== -1, 'the sink lands before the machine reads the eye');
+  const view = scene.indexOf('const view = lookAt(mwv.eye', mwvAt);
   assert.ok(view !== -1, 'the sink lands before the frame builds its view');
   // The seam's two halves: the context computes the drop off its own
   // overlay slot, and the scene binds the live motor for the start heights.

@@ -15,9 +15,10 @@ import {
 } from '../src/systems/loot.js';
 import { getRandomBookID } from '../src/systems/books.js';   // IM1: the mint's message roll
 import {
-  goldStack, GOLD_TEMPLATE, addItem, transferAll, itemWeight, totalWeight,
+  goldStack, GOLD_TEMPLATE, addItem, itemWeight, totalWeight, carriedWeight,
   isStackable, ARROW_TEMPLATE, OIL_TEMPLATE,
 } from '../src/systems/inventory.js';
+import { planTake, applyTransfer } from '../src/systems/itemTransfer.js';   // E4: the transfer door
 import { goldAmount } from '../src/systems/court.js';
 import { stockShopShelf, randomizeArmorVariant } from '../src/systems/shopStock.js';
 import { ITEM_TEMPLATES, inventoryItemImage } from '../src/systems/itemTemplates.js';
@@ -38,28 +39,38 @@ const lcg = (s) => { let x = s >>> 0; return () => { x = (x * 1664525 + 10139042
 //    dungeon takeLoot seam) / transferAll (the container seam) ->
 //    goldAmount, which is what every spend reads.
 // ---------------------------------------------------------------
-test('audit18 items: looted gold carries the Currency template and merges into the player stack', () => {
+test('audit18 items: looted gold carries the Currency template, and the transfer door spends it into the counter', () => {
   // key J at level 3, gold roll 0 -> MinGold 50 * 3 = 150, everything else misses.
   const looted = generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99));
-  assert.deepEqual(looted, [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', stackCount: 150 }]);
+  assert.deepEqual(looted,
+    [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', value: 1, stackCount: 150 }]);
   assert.equal(GOLD_TEMPLATE, 276);
 
-  // the container seam (worldModes transferAll)
-  const player = { items: [goldStack(100)] };
-  assert.equal(transferAll(looted, player.items), 1);
-  assert.deepEqual(player.items, [{ group: 'Currency', templateIndex: GOLD_TEMPLATE, name: 'Gold Pieces', stackCount: 250 }]);
-  assert.equal(player.items.filter((i) => i.group === 'Currency').length, 1);
+  // E4: the seam is DoTransferItem (:1562-1571), not a bulk merge -
+  // `PlayerEntity.Items == to` intercepts the pile, adds its
+  // stackCount to GoldPieces, removes it from the loot and RETURNS.
+  const player = { items: [], goldPieces: 100 };
+  const plan = planTake(looted[0], { bag: player.items, entity: null });
+  assert.equal(plan.sound, 'gold', 'and it clinks (:1569), not clicks');
+  assert.equal(applyTransfer(looted[0], plan, looted, player.items, { entity: player, toPlayer: true }), null,
+    'DFU RETURNS out of DoTransferItem - nothing arrives to equip or claim');
+  assert.equal(looted.length, 0, 'from.RemoveItem(item)');
+  assert.equal(player.items.length, 0, 'the pack can never hold Currency');
   assert.equal(goldAmount(player), 250);
 
-  // the corpse/pile seam (dungeonContext takeLoot uses addItem per row)
-  const player2 = { items: [goldStack(100)] };
-  for (const it of generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99))) addItem(player2.items, it);
-  assert.equal(player2.items.length, 1);
-  assert.equal(goldAmount(player2), 250);
-
-  // the row really carries template 276: Gold Pieces weigh 0.0025 kg each
+  // the row really carries template 276: Gold Pieces weigh 0.0025 kg
+  // each, and CarriedWeight bills the counter by hand (:184).
   assert.equal(ITEM_TEMPLATES[GOLD_TEMPLATE].baseWeight, 0.0025);
-  assert.equal(itemWeight(player.items[0]), 0.0025 * 250);
+  assert.equal(itemWeight(goldStack(250)), 0.0025 * 250);
+  assert.equal(carriedWeight(player), 0.0025 * 250);
+
+  // and the WAGON is not the pack: a pile stashed in the cart stays an
+  // item, which is the stack DaggerfallBankManager.cs:343 reads back.
+  const cart = [];
+  const pile = generateItems('J', { level: 3, gender: 'male' }, seq(0, 0.99))[0];
+  applyTransfer(pile, { amount: pile.stackCount }, [pile], cart);
+  assert.equal(cart.length, 1);
+  assert.equal(cart[0].stackCount, 150);
 });
 
 // ---------------------------------------------------------------
@@ -102,8 +113,14 @@ test('audit18 items: IsItemStackable keys on the template isIngredient bit, and 
       isStackable({ group: 'UselessItems2', templateIndex: OIL_TEMPLATE }),
       isStackable({ group: 'Weapons', templateIndex: ARROW_TEMPLATE }),
       isStackable({ group: 'Currency', templateIndex: GOLD_TEMPLATE }),
+      // AUDIT 39 F105 MOVED THESE TWO UP from the negatives below: the
+      // rule's own potion and Books arms are ported now, and the
+      // identity terms that held them back (message, PotionRecipeKey)
+      // live in stacksWith where FindExistingStack keeps them.
+      isStackable({ group: 'UselessItems1', templateIndex: 83 }),            // IsPotion
+      isStackable({ group: 'Books', templateIndex: BOOK_TEMPLATE }),
     ],
-    [true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true],
   );
   // the negatives that stop a blanket true
   assert.deepEqual(
@@ -111,12 +128,11 @@ test('audit18 items: IsItemStackable keys on the template isIngredient bit, and 
       isStackable({ group: 'Armor', templateIndex: 102 }),
       isStackable({ group: 'Weapons', templateIndex: 120 }),
       isStackable({ group: 'UselessItems2', templateIndex: 279 }),          // Parchment
-      isStackable({ group: 'Books', templateIndex: BOOK_TEMPLATE }),        // deliberate: FindExistingStack compares `message`
       isStackable({ group: 'Gems', templateIndex: 1, equipSlot: 0 }),
       isStackable({ group: 'Gems', templateIndex: 1, enchantments: [{ type: 1 }] }),
       isStackable({ group: 'Gems', templateIndex: 1, questItem: true }),
     ],
-    [false, false, false, false, false, false, false],
+    [false, false, false, false, false, false],
   );
   // AddItem/FindExistingStack really merge them now
   const bag = [];
@@ -289,7 +305,12 @@ test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () 
   // before IM1: no title on the panel, nothing for the reader.
   const k = generateRandomLoot(LOOT_MATRICES.K, { level: 1, gender: 'male' },
     seq(0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.04, 0.75, 0.99, 0.99));
-  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, message: getRandomBookID(() => 0.75), variant: 1, name: 'Book', maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
+  // AUDIT 39 F103 added `value` to this row: SetItem writes the
+  // template basePrice on every item (DaggerfallUnityItem.cs:563) and
+  // the loot mint wrote none, so the trade window's cost walk read
+  // undefined and paid 0. Template 277's basePrice is 2500 - the
+  // book-FILE price classic uses is still the file's own loud pend.
+  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, message: getRandomBookID(() => 0.75), variant: 1, name: 'Book', value: 2500, maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');

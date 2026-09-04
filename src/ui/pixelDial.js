@@ -33,12 +33,15 @@
 // open() }. A host missing a window simply passes fewer arms and the
 // rose draws what it has — NEVER a dead arm that lies (a drawn door
 // that opens nothing is the hidden-settings bug wearing ornament).
-// FLAGGED (THE FOUR HOSTS RULE): no host is wired yet — world.js,
-// worldModes.js, exterior.js and dungeonContext.js each need a key
-// (Tab is free in all four key tables by grep) routing to their own
-// toggles; wiring lands as PX15 with the per-host key audit, because
-// a key grab without reading each host's table is how F5 reloaded
-// the page in AUDIT 17e.
+// THE FOUR HOSTS RULE, all four wired (PX15, then PX15b): world.js,
+// worldModes.js, dungeonContext.js and exterior.js each hand their
+// own doors to `openPixelDial` below — the singleton wrapper over
+// mountPixelDial — on Tab, the key the per-host audit found free in
+// all four tables, routed by ui/input.js's `case 'Tab'` arm to
+// `ctx.toggleDial()`. The audit came first for AUDIT 17e's reason: a
+// key grab without reading each host's table is how F5 reloaded the
+// page. PX28 then made Tab put away whatever it had opened before it
+// raises the rose again.
 // ═══════════════════════════════════════════════════════════════════
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -122,7 +125,11 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
   function commit(dir) {
     const entry = byDir[dir ?? selected];
     if (!entry) return;
-    unmount();            // the dial leaves FIRST — the window it opens
+    // THE ONE EXIT: close(), not the bare unmount() — the door's
+    // singleton is cleared by onClose, and a commit that tore the root
+    // down behind its back left _open holding a dead handle, which the
+    // player's next Tab spent raising nothing.
+    close();              // the dial leaves FIRST — the window it opens
     entry.open();         // must not find the dial still eating keys
   }
 

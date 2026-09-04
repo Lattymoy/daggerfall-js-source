@@ -8,7 +8,7 @@
 //
 // Two things were missing and only one of them was obvious.
 //
-// The obvious one: `ctx.toggleRest` (ui/input.js:106, the ONLY
+// The obvious one: `ctx.toggleRest` (ui/input.js:399, the ONLY
 // consumer of the Rest binding) had exactly one implementation in the
 // whole tree, dungeonContext's, so KeyR was dead in three of the four
 // hosts. RestWindow and RestSession have been finished since U7; they

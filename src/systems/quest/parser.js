@@ -40,7 +40,8 @@ export class Parser {
    * @param {string[]} source lines of quest source.
    * @param {number} factionId quest giver faction id (guilds).
    * @param {object} [opts] partialParse skips QRC/QBN; rolls is the
-   *   quest's injectable uniform roll (Ledger A); nowSeconds is the
+   *   quest's injectable uniform roll (THE ENGINE-PRNG RULE, Ledger A);
+   *   nowSeconds is the
    *   world-time seam - it must ride the PARSE because PlaySound's
    *   create stamps lastTimePlayed from the live clock (Q2b); hooks
    *   ride the parse too since Q2b-ii - the Item mint reads player/

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Morrowind Mesh Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
+  #status { position: fixed; top: calc(env(safe-area-inset-top, 8px) + 26px); left: 0; right: 0; text-align: center; color: #b8b8c8; font-size: 12px; pointer-events: none; white-space: pre-line; }
+  #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; align-items: center; }
+  #bar::-webkit-scrollbar { display: none; }
+  #bar button, #bar select, #bar input[type=text], #bar label.filebtn { flex: 0 0 auto; background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 12px 18px; font-size: 14px; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  #bar button:active, #bar label.filebtn:active { background: #2e2e3a; }
+  #bar button.on { background: #3a3a48; color: #fff; }
+  #bar select { max-width: 40vw; }
+  #bar input[type=text] { width: 130px; }
+  #file { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">MORROWIND MESH VIEWER &middot; drop Morrowind.bsa / .esm / .nif / .kf / .dds &middot; drag to rotate &middot; wheel or pinch to zoom</div>
+<div id="status">no data loaded - your files stay in this tab, nothing uploads</div>
+<div id="bar">
+  <label class="filebtn" for="file">open files</label>
+  <input id="file" type="file" multiple accept=".bsa,.esm,.esp,.nif,.kf,.dds,.BSA,.ESM,.ESP,.NIF,.KF,.DDS">
+  <input id="filter" type="text" placeholder="filter meshes">
+  <select id="meshsel"></select>
+  <select id="npcsel" style="display:none"></select>
+  <select id="animsel" style="display:none"></select>
+  <button id="addpart">add part</button>
+  <select id="attachsel" style="display:none"></select>
+  <button id="spin" class="on">auto-spin</button>
+  <button id="reset">reset view</button>
+  <button id="wire">wireframe</button>
+  <button id="twoside">two-sided</button>
+  <button id="bg">bg</button>
+  <button id="facesheet" title="MW-D34: every playable head and hair, textured, on one PNG - the sheet the face table is authored against">face sheet</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- MWAUDIT: SAY SO WHEN THE CDN IS NOT THERE. three.js is fetched at
+     runtime, and the viewer's whole render path is built on it - so
+     offline, on a blocked network, or with the CDN down, every module
+     below threw "THREE is not defined" into the console and the page
+     just sat there reading "no data loaded", which is a lie: the data
+     was never the problem. The port's never-traps rule is that a
+     surface which cannot do its job says why. -->
+<script>
+  if (typeof THREE === 'undefined') {
+    document.getElementById('status').textContent =
+      'three.js did not load - this page fetches it from cdnjs at runtime, so it needs a network. '
+      + 'Your Morrowind files are fine and nothing was uploaded.';
+    document.getElementById('file')?.setAttribute('disabled', 'disabled');
+  }
+</script>
+<script type="module" src="/src/tools/mwViewer.js"></script>
+</body>
+</html>

@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { fillVitalSigns, maxFatigue } from '../src/systems/statMods.js';
+import { playerArrowHitFoe } from '../src/combat/arrowFlight.js';   // WAVE D: F052's arm lives in the ONE body the four hosts call
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
@@ -32,9 +33,12 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // The hurtPlayer(bypassShield) idiom: one door, and the caller says
   // where the blow came from. Defaulting true leaves every player
   // blow and spell exactly as it was.
-  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {})'));
+  // AUDIT 58: the three doors also take bypassShield now, the same
+  // idiom for the same reason - Shield mitigates DAMAGE, and the
+  // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
+  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
 });
 
 test('F035: the Murder crime is gated on the player being the source', () => {
@@ -46,8 +50,16 @@ test('F035: the Murder crime is gated on the player being the source', () => {
   // spelling, exactly as F041 below already does for its own widened
   // arm. The law is unchanged: a watchman who dies falling brands
   // nobody.
-  const gate = cg.indexOf('if (fromPlayer)');
+  // ROAD-G G1 put a SECOND `if (fromPlayer)` in this member - the
+  // aggro pair at the top of damageGuard (DaggerfallEntityBehaviour
+  // .cs:250-261), which is inside the very same source gate (:203) and
+  // is why the braced form is the anchor now: the murder block is the
+  // one that opens a block, the aggro arm is a single statement.
+  const gate = cg.indexOf('if (fromPlayer) {');
   assert.ok(gate > 0, 'the murder assignment still sits behind a fromPlayer gate');
+  const aggro = cg.indexOf('if (fromPlayer) handleAttackFromPlayer(g, playerFeet);');
+  assert.ok(aggro > 0 && aggro < gate,
+    'and the aggro pair shares that gate and precedes it, as :250-261 precedes :265-269');
   assert.ok(cg.slice(gate, gate + 300).includes('setCrimeCommitted(playerEntity, CRIME_MURDER)'),
     'and the Murder assignment is what that gate encloses');
   // ...and the CIVILIAN murder arm, which IS a player weapon hit,
@@ -75,8 +87,28 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   assert.match(dg, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(foeDeps\.PLAYER_TARGET/, 'through the whole C# method');
   assert.match(dg, /\} else if \(!foe\.ai\.isHostile\) \{/, 'with the legacy raise as the no-subsystem fallback');
   const xf = src('scenes/exteriorFoes.js');
-  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
-    'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
+  // ROAD-B MOVED THIS NEEDLE. The two statements are no longer
+  // adjacent: DaggerfallEntityBehaviour.cs:255-258's AREA walk
+  // (`if (!f.ai.isHostile) makeAreaHostile?.()`) now sits between the
+  // gate and the per-foe law, where C# has it. The LAW this pin
+  // guards is unchanged and is what the two assertions still say -
+  // the gate is the player-source one, and the whole C# method runs
+  // inside it - so the needle drops the newline adjacency and pins
+  // the two facts separately, plus the ordering the new statement
+  // must keep.
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{/, 'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
+  // AUDIT 58 MOVED THIS NEEDLE AGAIN, for the same reason ROAD-B did.
+  // WeaponManager.cs:627/:630 are TWO statements after the damage
+  // fork closes (:615), so HandleAttackFromSource's player arm is a
+  // member of its own now (`handleAttackFromPlayer`) that the damage
+  // door and the zero-damage arm both call. The gate is still the
+  // player-source one; the body is where the slice reads it.
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,
+    'the damage door calls it inside the same gate');
+  const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {'));
+  assert.match(xfGate.slice(0, 600), /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
+  assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
+    'and the area walk reads isHostile BEFORE the per-foe law flips it');
   assert.ok(!/f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET[\s\S]{0,400}\n  \}/.test(xf.slice(xf.indexOf('function damageFoe')).split('if (fromPlayer')[0]),
     'and nothing outside the gate raises hostility');
 });
@@ -163,21 +195,53 @@ test('F206: a damaging fall in a dungeon flashes the screen', () => {
 // ── F052 / F053 ───────────────────────────────────────────────────
 
 test('F052: a landed player arrow thuds and splashes, at the real impact point', () => {
-  const d = src('scenes/dungeonContext.js');
-  const arm = d.slice(d.indexOf('// AUDIT 26 F052'));
-  assert.ok(arm.slice(0, 1400).includes('audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });'),
-    'the enemy-side hit sound (:562-567)');
-  assert.ok(arm.slice(0, 1400).includes("hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, [m.pos[0], m.pos[1], m.pos[2]]);"),
-    'and the splash at the MISSILE position - DFU\'s impactPosition (:569-573)');
+  // WAVE D: F052's arm left the dungeon host for the ONE body all four
+  // hosts call (combat/arrowFlight.js's playerArrowHitFoe), so the
+  // payload is pinned there - BEHAVIOURALLY, which is what finally
+  // fixed the position this pin used to assert. The dungeon copy
+  // splashed at the arrow tip on the claim that "the missile's own
+  // position IS DFU's impactPosition". It is not: the player arm of
+  // AssignBowDamageToTarget hands WeaponDamage `hitTransform.position`
+  // (DaggerfallMissile.cs:679-687) - the struck entity's own transform
+  // origin - and WeaponManager.cs:568-571 passes that to
+  // ShowBloodSplash. Only the MELEE callers pass a contact point
+  // (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point).
+  const foe = {
+    entity: {
+      minMetalToHit: -1, armorValues: [0, 0, 0, 0, 0, 0, 0], items: [],
+      basics: { bloodIndex: 3 }, isClass: false, careerIndex: 0, skills: 0,
+      maxHealth: 30, health: 30, stats: { strength: 50, agility: 50, luck: 50 },
+    },
+    ai: { feet: [7, 2, -4], yaw: 0 },
+  };
+  const log = [];
+  let i = 0;
+  const rolls = () => [0, 0.99, 0.05, 0.999, 0.99][i++ % 5];
+  const dmg = playerArrowHitFoe(
+    { weapon: { templateIndex: 130, material: 0, poisonType: -1 }, pos: [1, 1, 1], dir: [0, 0, 1] }, foe, {
+      playerEntity: { isPlayer: true, level: 1, skills: 30, skillUses: [], stats: { strength: 50, agility: 50, luck: 50 } },
+      playerFeet: [0, 0, 9],
+      dealDamage: (f, d) => log.push(['deal', d]),
+      audio: { play3d: (clip, at) => log.push(['sound', [...at]]) },
+      hitEffects: { showBloodSplash: (b, at) => log.push(['blood', b, [...at]]) },
+      say: () => {}, rolls,
+    });
+  assert.ok(dmg > 0, 'the shot lands');
+  // the enemy-side hit sound (:562-567) rings at the target
+  assert.deepEqual(log[0], ['sound', [7, 2, -4]]);
+  // ...and the splash is at that SAME transform origin, NOT [1, 1, 1]
+  assert.deepEqual(log[1], ['blood', 3, [7, 2, -4]]);
+  assert.notDeepEqual(log[1][2], [1, 1, 1], 'the arrow tip is not the impact position');
   // ordering: sound and blood come BEFORE the pain voice and the
-  // knockback, as WeaponDamage has them
-  const sound = arm.indexOf('audio.play3d(hitSoundFor(m.weapon)');
-  const pain = arm.indexOf('enemyPainVoice(f, dmg)');
-  // MT-iv passes the player's feet here: damageFoe's player arm keys
-  // on them, so an arrow KILL reverts a struck ally to its species
-  // the way a sword kill does. Ordering unchanged.
-  const knock = arm.indexOf('damageFoe(f, dmg, lastPlayerFeet, m.dir)');
-  assert.ok(sound > -1 && sound < pain && pain < knock, 'sound, blood, then the voice and the knockback');
+  // knockback, as WeaponDamage has them. MT-iv: the knockback rides
+  // the host's own damage door (damageFoe with the player's feet), so
+  // an arrow KILL reverts a struck ally the way a sword kill does.
+  assert.equal(log[log.length - 1][0], 'deal', 'the pool\'s damage door is last');
+  // and the fourth host is a CALLER of this, not a fourth copy of it
+  const d = src('scenes/dungeonContext.js');
+  assert.match(d, /playerArrowHitFoe\(m, f, \{/);
+  assert.ok(!/showBloodSplash\([^)]*m\.pos/.test(d),
+    'the arrow-tip splash is gone from the host (the impact FLASH still rides m.pos, and should - DoCollision flashes at the collider point)');
 });
 
 test('F053: a missed enemy arrow rings, like a missed enemy swing', () => {

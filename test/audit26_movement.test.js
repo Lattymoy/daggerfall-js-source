@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 
 import { PlayerMotor, GROUNDED_JUMP_GATE_S, OVER_ENCUMBERED_LIMIT, SLOWFALL_VELOCITY } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
+import { carriedWeight, goldStack } from '../src/systems/inventory.js';   // E4: PlayerEntity.CarriedWeight
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -91,7 +92,13 @@ test('F027: an over-encumbered swimmer is dragged down, and the sink REPLACES th
     m.swimming = true;
     return m;
   };
-  const yAfter = (m, input) => { const before = m.pos[1]; m.update(1 / 60, input, 0); return m.pos[1] - before; };
+  // AUDIT 39 (#57): a swim/levitate EDGE raises CancelMovement, and
+  // FixedUpdate spends one whole step on the cancel block (:286-294)
+  // before the mode moves anything - so spend it before measuring.
+  const yAfter = (m, input) => {
+    if (m.cancelMovement) m.update(1 / 60, input, 0);
+    const before = m.pos[1]; m.update(1 / 60, input, 0); return m.pos[1] - before;
+  };
 
   // light: holding UP surfaces
   const light = mk(10);
@@ -113,12 +120,19 @@ test('F027: an over-encumbered swimmer is dragged down, and the sink REPLACES th
 });
 
 test('F027: carried weight is the LIVE pack, wired at every host that builds a motor', () => {
-  // PlayerEntity.CarriedWeight (:184) is the pack plus gold at
-  // 0.0025 kg a piece - which inventory.totalWeight already is,
-  // gold being an item in the port rather than a separate counter.
+  // PlayerEntity.CarriedWeight (:184) is the pack PLUS `goldPieces *
+  // goldPieceWeightInKg`. E4 made gold a counter, so the second term
+  // is real and inventory.carriedWeight is the member - every host
+  // that builds a motor feeds THAT, not a bare list total.
   for (const f of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeon.js']) {
-    assert.ok(src(f).includes('carriedWeight: () => totalWeight(playerEntity.items ?? [])'), `${f} feeds the live pack`);
+    assert.ok(src(f).includes('carriedWeight: () => carriedWeight(playerEntity)'), `${f} feeds the live pack`);
+    assert.ok(!src(f).includes('carriedWeight: () => totalWeight('),
+      `${f} must not bill the pack alone - a purse weighs 0.0025 kg a piece`);
   }
+  // And the member itself is that sum, once.
+  assert.equal(carriedWeight({ items: [], goldPieces: 400 }), 1);
+  assert.equal(carriedWeight({ items: [goldStack(400)] }), 1, 'a pile in a WAGON still weighs by the template');
+  assert.equal(carriedWeight({}), 0, 'C#\'s int field defaults to 0');
 });
 
 // ── F028 / F029 ───────────────────────────────────────────────────

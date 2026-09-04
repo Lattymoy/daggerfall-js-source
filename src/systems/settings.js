@@ -35,8 +35,10 @@
 // settings screen that offers a toggle which changes nothing is a
 // lie. So every key carries a tier and the launcher reads it:
 //   live         a consumer exists; flipping it changes play
-//   stored       round-trips faithfully, no consumer yet (the port's
-//                INTERIM doctrine - named, not silently ignored)
+//   stored       round-trips faithfully, no consumer yet - named on
+//                the surface, never silently ignored. Not an open
+//                site: the tier IS the record, and the launcher
+//                reads it, so there is nothing here to close.
 //   unavailable  meaningless here (resolution, controllers, mod
 //                paths) or the port implements ONE side of the branch
 //                (EnhancedCombatAI, AdvancedClimbing - see the Ledger)
@@ -44,6 +46,7 @@
 // the live set from the code and fails if a tier lies.
 
 import { SETTINGS_DEFAULTS } from './settingsDefaults.js';
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
 
 const STORAGE_KEY = 'dagger.settings.v1';
 
@@ -77,6 +80,88 @@ export const LIVE = Object.freeze({
   // two-step (:641-692) is the ONE branch on it, in ui/restWindow.js -
   // no host reads this key.
   'GUI/IllegalRestWarning': 'src/systems/restSession.js',
+  // BG1: ShopQualityPresentation. 0 shows the classic popup and DEFERS
+  // the door behind it, 1 puts the record's lines on the HUD and does
+  // not defer, 2 says nothing - the branch is
+  // buildingGreeting.shopQualityPresentation and the reader is the
+  // exterior door arm in worldModes. The HOUSE greeting is not behind
+  // it, which is DFU's own split.
+  'GUI/ShopQualityPresentation': 'src/systems/buildingGreeting.js',
+  // AUDIT 28 W1: four keys whose DFU consumer the port had ported
+  // WITH THE SETTING NAMED IN ITS OWN COMMENT and the read left out -
+  // each answered the default and the slider did nothing. The read
+  // lives where DFU's does: TalkManager.WeightedRandomRumor :1452,
+  // EnemyDeath :82, PlayerAmbientLight :89 (plain-dungeon arm only)
+  // and :123 (CalcDaytimeAmbientLight's night colour).
+  'GUI/QuestRumorWeight': 'src/systems/rumorMill.js',
+  'GUI/DisableEnemyDeathAlert': 'src/scenes/corpseMarker.js',
+  'Enhancements/DungeonAmbientLightScale': 'src/world/dungeonLights.js',
+  'Enhancements/NightAmbientLightScale': 'src/scenes/world.js',
+  // AUDIT 28 W2a: the arrow counter (DaggerfallHUD :270-292) - a
+  // default-ON feature the port never drew. The setting is the FIRST
+  // of its three gates; BowLeftHandWithSwitching picks the hand the
+  // bow is looked for in (:275). Both read in hud.arrowCountLabel.
+  'GUI/EnableArrowCounter': 'src/ui/hud.js',
+  'Enhancements/BowLeftHandWithSwitching': 'src/ui/hud.js',
+  // AUDIT 28 W2b: MeleeDamage's friendly protection (WeaponManager
+  // :930-944): the box pass skips allies and the pacified; the vanilla
+  // arm strikes one only when it is alone. Read in friendlyProtected.
+  'MeleeAttacks/MeleeAttackFriendlyProtection': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W2c: the exit-door wagon prompt (PlayerActivate :649-664):
+  // a dungeon exit with a cart in the pack asks TEXT.RSC 38 first.
+  'GUI/DungeonExitWagonPrompt': 'src/scenes/worldModes.js',
+  // AUDIT 28 W2d: HUDFlickerController.NextCycle's first gate (:45) -
+  // the fast flicker under 40% health, the slow throb under 20%.
+  'Enhancements/NearDeathWarning': 'src/ui/hud.js',
+  // AUDIT 28 W3: ArmorShouldShowMaterial (ItemHelper :822-848) - the
+  // four-way helm/shield material display, read at the point of use.
+  'GUI/HelmAndShieldMaterialDisplay': 'src/systems/itemInfo.js',
+  // AUDIT 28 W3: AddRandomEnemies' fork (RDBLayout :512) - the classic
+  // 256-entry lists, or AddRandomRDBEnemy's per-flat pick by power.
+  'Enhancements/AlternateRandomEnemySelection': 'src/characters/dungeonEnemies.js',
+  // AUDIT 28 W3c: UseLocationDungeonTextureTable's fork (DaggerfallDungeon
+  // :174-196): classic / by-climate / randomized, with the main-story gate.
+  'Video/RandomDungeonTextures': 'src/world/dungeonTextures.js',
+  // AUDIT 28 W4: MapsFile.UseSmallerDungeon (:776-797) + Quest.Start's
+  // frozen stamp (Quest.cs:284) - the five-block plus for big dungeons.
+  'Experimental/SmallerDungeons': 'src/world/smallerDungeons.js',
+  // AUDIT 28 W5: PlayerSpeedChanger.CaptureInputSpeedAdjustment
+  // (:75-78) - a press FLIPS the sneak mode instead of holding it.
+  'Controls/ToggleSneak': 'src/player/motor.js',
+  // AUDIT 28 W6: AddHUDText's duration for the shop-quality lines
+  // (PlayerActivate :1382), GetInt 1..10.
+  'GUI/ShopQualityHUDDelay': 'src/scenes/worldModes.js',
+  // AUDIT 28 W7: PlayerMouseLook.ApplySmoothing (:154-166) - the look
+  // filter every host drives; GetFloat 0..0.9 (SettingsManager :523).
+  'Controls/MouseLookSmoothingFactor': 'src/player/lookFilter.js',
+  // AUDIT 28 W8: InputManager's ApplyHorizontalForce/ApplyVerticalForce/
+  // ApplyFriction (:1445-1497) - the axes climb and decay at 9.8/s.
+  'Controls/MovementAcceleration': 'src/player/moveAxes.js',
+  // AUDIT 28 W9: CameraRecoiler (whole) - the reel on a hit; GetInt 0..4.
+  'Controls/CameraRecoilStrength': 'src/player/cameraRecoiler.js',
+  // AUDIT 28 W10: HeadBobber (whole) - the walk bob, the nod, the landing dip.
+  'Controls/HeadBobbing': 'src/player/headBobber.js',
+  // AUDIT 28 W11: WeaponManager.TrackMouseAttack's gate (:808) is the
+  // SETTING (StartGameBehaviour :263), GetFloat 0.001..1 - shipped 0.005;
+  // WeaponSwingMode (:306-350): 0 gesture, 1 click, 2 click or hold.
+  'Controls/WeaponAttackThreshold': 'src/combat/playerWeapon.js',
+  'Controls/WeaponSwingMode': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W12: the bow's draw-and-hold (WeaponManager :341, :353-360)
+  // - press draws, release looses, activate un-draws, 10 s times out.
+  'Controls/BowDrawback': 'src/combat/playerWeapon.js',
+  // AUDIT 28 W13: FPSWeapon.FlipHorizontal (StartGameBehaviour :269) -
+  // left-hand rendering; GetInt 0..3, only 1 does anything in DFU.
+  'Controls/Handedness': 'src/combat/fpsWeapon.js',
+  // UI3: PaperDoll.GetPaperDollBackground (:207-230) - the region's own
+  // backdrop instead of the race's. Ships False, and the port had been
+  // behaving as if it were True.
+  'GUI/EnableGeographicBackgrounds': 'src/ui/paperDoll.js',
+  // UI4: the item info panel is only ADDED when this is on
+  // (DaggerfallInventoryWindow :303-307).
+  'GUI/EnableInventoryInfoPanel': 'src/ui/nativeInventory.js',
+  // UI6: DaggerfallTalkWindow's modern conversation style - the
+  // greeting, questions and answers smaller, narrower and blocked.
+  'GUI/EnableModernConversationStyleInTalkWindow': 'src/ui/nativeTalk.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
@@ -153,6 +238,12 @@ export const LIVE = Object.freeze({
   'GUI/LargeHUDDocked': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedScale': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedAlignment': 'src/ui/hudLarge.js',
+  // ROAD-D D10: the two OFFSETS, live at last - the horse sprite's
+  // (TransportManager.cs:304-309) and the viewmodel's
+  // (FPSWeapon.cs:146-155), both computed in hudLarge.js and read by
+  // scenes/world.js and combat/fpsWeapon.js.
+  'GUI/LargeHUDOffsetHorse': 'src/ui/hudLarge.js',
+  'GUI/LargeHUDUndockedOffsetWeapon': 'src/ui/hudLarge.js',
   // U46: the eight buff/debuff icon layouts. Another key the settings
   // screen offered with nothing on the other end.
   'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
@@ -174,6 +265,11 @@ export const LIVE = Object.freeze({
   // gate on moving a quest item out of the pack, read by the one law
   // both the inventory window and the shop's Sell staging call.
   'GUI/CanDropQuestItems': 'src/systems/itemTransfer.js',   // U56: TransferItem's quest arm moved with the ladder
+  // ROAD-E E3: the developer console. ConsoleUI.ToggleConsole refuses
+  // to open at all when this is off (:51-53), and the port's console
+  // door answers the same way - so the key is LIVE the moment the
+  // command database has a door, which is what E3 built.
+  'Enhancements/LypyL_GameConsole': 'src/systems/consoleCommands.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
@@ -209,9 +305,9 @@ export function tierOf(key) {
 // ---- the store ----
 let _values = null;   // Section -> key -> raw string (overrides only)
 
-const storage = () => {
-  try { return globalThis.localStorage ?? null; } catch { return null; }
-};
+// DA1: the storage seam - localStorage in a browser, the desktop
+// shell's file store (a real settings file under Prefs/) in the app.
+const storage = () => appStorage();
 
 /** Load overrides from storage. A missing, unreadable or corrupt blob
  *  is NOT an error - it means "defaults", which is exactly what DFU
@@ -350,8 +446,18 @@ export function effectiveSettings() {
 /** Drop every override. DFU's wizard has no reset button; ours does,
  *  because a browser player cannot delete an ini by hand. */
 export function resetToDefaults() {
+  const dropped = _values ?? {};
   _values = {};
   saveSettings();
+  // AUDIT 39: Reset is a WRITE, and a write is published - the channel
+  // above exists because a looping song has no next occasion to
+  // re-read the volume, and Reset left one playing at the old level.
+  // Every key that had an override moved, and it moved TO the
+  // default's string, which is the same value setValue's
+  // drop-the-override arm publishes.
+  for (const [section, keys] of Object.entries(dropped)) {
+    for (const key of Object.keys(keys)) _publish(section, key, String(DEFAULTS[section]?.[key] ?? ''));
+  }
 }
 
 /** Test seam: forget the loaded state so the next read re-loads. */

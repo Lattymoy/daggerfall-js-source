@@ -11,7 +11,8 @@ indices verbatim; GetSwingSound pitch table; PlayHitSound families).
 Consumers live in the dungeon: door open/close (DungeonDoor clips on
 the ActionSystem onDoorState seam), player swing on Strike-state
 entry (FPSWeapon shape), landed hits at the struck foe / whiffs
-(Hit2/Parry6), the player taking hits (PlayerFootsteps families),
+(Hit2/Parry6), the player taking hits (PlayerFootsteps families, at
+volumeScale 1 - EnemySounds' 1.1 is the PLAYER-STRIKING side, AUDIT 58),
 enemy attack sounds (50%, humans silent), and the EnemySounds attract
 loop verbatim (radius 16, delay Range(3,10) always stepping, 80/20
 bark/move, humans silent). Enemy Move/Bark/AttackSound columns
@@ -22,7 +23,8 @@ Music: HMI/XMI in MIDI.BSA has NO DFU reader (Unity synthesizes music); the
 playback strategy is this arc's first decision (approved routing, see
 Port-Ledger A). Also owned here: animal audio sources on flats, torch burning
 sounds on dungeon flats (RDBLayout.AddTorchAudioSource) and action sounds
-(action.index carries the sound id), the audio state machine, and iOS
+(action.index carries the sound ID, resolved through the engine's ID door -
+see A2), the audio state machine, and iOS
 AudioContext.resume discipline when a shell exists.
 
 ## A2 (action + ambient sources): SHIPPED (2026-08-16)
@@ -32,13 +34,22 @@ the action-PlaySound half of "Transition + activation sounds".
 Verbatim from RDBLayout/GameObjectHelper/DaggerfallAudioSource/
 DaggerfallAction:
 
-- **Action sounds**: DaggerfallAction.Play plays the RDB soundIndex
-  (action.index > 0) on EVERY Play, movers and effect actions alike -
-  the ActionSystem grew an onActionSound seam; the scene speaks from
-  the mover's live matrix or the effect object's origin through the
-  default min1/max500 3D profile. (The soundIndex doubles as data on
-  some flags - Hurt21's damage bound, CastSpell's spell id - and DFU
-  plays those as sounds too; preserved.)
+- **Action sounds**: DaggerfallAction.Play plays the RDB action's
+  sound field (action.index > 0) on EVERY Play, movers and effect
+  actions alike - the ActionSystem grew an onActionSound seam; the
+  scene speaks from the mover's live matrix or the effect object's
+  origin through the default min1/max500 3D profile. (The field
+  doubles as data on some flags - Hurt21's damage bound, CastSpell's
+  spell id - and DFU plays those as sounds too; preserved.)
+  AUDIT 58: it is a DAGGER.SND record **ID**, not a record index, and
+  the port played it as one. RDBLayout names the parameter
+  `int soundID_and_index` (:951) and DaggerfallAction.cs:42's own
+  comment calls it "the raw sound index", but the wiring settles it:
+  `AddActionAudioSource(go, (uint)action.Index)` (:1075) casts to uint
+  so `SetSound(id)` binds the UINT overload (DaggerfallAudioSource.cs
+  :170-181), the only one of the three that runs GetSoundIndex. The
+  dungeon host's seam now plays through `audio.play3dId`, so every RDB
+  action rings the clip its block asked for.
 - **Torches** (RDBLayout.AddTorchAudioSource + IsTorchFlat): lights
   archive 210 records {0,1,6,16,17,18,19,20} loop Burning (420) with
   LINEAR rolloff at maxDistance 5 and volume 0.7 ("or the burning
@@ -104,7 +115,9 @@ object 5/28, the exterior WeatherAmbientEffects 5/25.
   and play3d/playOneShot now return the clip duration.
 - **RESIDUAL (honest)**: doNotPlayInCastle pends castle-block
   detection (deps.inCastle stays false); the cemetery howl/bird
-  layer (IsCemeteryNearby) pends locations - routed; the RMB
+  layer (IsCemeteryNearby) is wired in BOTH exterior hosts (AUDIT 58 -
+  world.js arms it on the rect edge, exterior.js once at load, since
+  that host never leaves its one location's rect); the RMB
   exterior animal/torch sources still pend (Ledger C row unchanged);
   lightning FLASH sync (PlayLightningEffect) is off in the scene
   serialization, verbatim skip; music still pends Mac's strategy
@@ -195,7 +208,15 @@ as PlayerFootsteps' customAudioSource is. RESIDUE on the struck
 row: the exterior path/water TILE arms (no tile-under-player lookup
 yet - the same flag the fall-damage exemption rides) and the mount
 gate (transport arc). The fall/splash/pain one-shots that share the
-C# file were already home (P14, combat).
+C# file were already home (P14, combat) - but AUDIT 58 found them
+playing at FULL volume: `FootstepVolumeScale` (PlayerFootsteps.cs:30)
+is 0.7 and all THREE non-stride one-shots pass it -
+ApplyPlayerFallDamage (:307-311), HardFallAlert (:315-319) and
+PlayLargeSplash (:323-326) - where PlayWeaponHitSound in the same
+component deliberately passes 1f. The port honoured it on the stride
+alone, so its three siblings rang 43% too loud in every host. They
+carry it now, single-sourced from `systems/footsteps.js`'s
+FOOTSTEP_VOLUME so the four cannot drift apart again.
 
 4 pins (the set decision with the gate and the override order, the
 stride at its boundaries, the ground-loss laws, the four-host

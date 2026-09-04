@@ -37,16 +37,22 @@
 //   a price you cannot afford and tells you so only after you agree
 //   to it (:214-222).
 //
-// FLAGGED, with the slices they wait on:
-// - the TALK button routes to TalkManager.TalkToStaticNPC (:263); the
-//   host supplies that hook, exactly as the guild popup's does.
-// - DFU binds each button to a DaggerfallShortcut hotkey (:103-121)
-//   read from the player's own keybind file. I1 built the registry but
-//   DaggerfallShortcut is a SECOND, separate binding table; the
-//   accelerators here are the port's own (Ledger A).
-// - AddPermanentScene (:246) keeps a rented room's interior loaded
-//   across a save. The port has no permanent-scene set, so a rented
-//   room's CONTENTS are not preserved - the rental is.
+// The three clauses that stood here are all closed (D1):
+// - the TALK button routes to TalkManager.TalkToStaticNPC (:263):
+//   worldModes.js:2343 supplies `onTalk: () => openStaticNpc(pn,
+//   { forceTalk: true })`, which this file consumes at :256 and :265.
+// - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:143
+//   addPermanentScene / :93 removePermanentScene, with this window
+//   handing rentRoom its sceneCache at :223. A rented room's CONTENTS
+//   survive now, not just the rental.
+// - the HOTKEYS: DaggerfallShortcut is indeed a SECOND binding table
+//   next to I1's input registry, but it is a text database and not a
+//   player keybind file (DaggerfallShortcut.cs:307-326 reads
+//   StreamingAssets/Text/DialogShortcuts.txt), and A8 ported it to
+//   systems/dialogShortcuts.js. The four bindings (:106, :111, :117,
+//   :123) are the table's answers now. The correction the flag hid:
+//   its "-- Taverns menu" block (:175-179) puts EXIT on G, not on the
+//   E the port had assumed.
 
 import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -56,6 +62,7 @@ import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import {
   TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
   HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
@@ -77,6 +84,13 @@ export const TAVERN_RECTS = Object.freeze({
   food: [5, 23, 120, 7],
   exit: [5, 32, 120, 7],
 });
+
+/** D1: the window's DaggerfallShortcut.Buttons in ctor ADD order
+ *  (:103-124) - the order Panel.ProcessHotkeySequences asks them in.
+ *  DialogShortcuts.txt:175-179 binds R / T / F / G. */
+export const TAVERN_BUTTONS = Object.freeze([
+  'TavernRoom', 'TavernTalk', 'TavernFood', 'TavernExit',
+]);
 
 /** TextBox.Numeric, MaxCharacters 3, Text "1" (:166-168). Three
  *  characters is not an accident: the ceiling is 350 days, so the
@@ -250,11 +264,22 @@ export class TavernWindow {
 
   input(code, e = null) {
     if (this.flow) { this.flow.input(code, e); return; }
-    // The port's own accelerators (Ledger A - DFU reads DaggerfallShortcut).
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this._close(); return; }
-    if (code === 'KeyR') { this._room(); return; }
-    if (code === 'KeyT') { this.hooks.onTalk?.(); this._close(); return; }
-    if (code === 'KeyF') this._food();
+    // Escape/Enter are the port host's close keys, not DFU buttons.
+    if (code === 'Escape' || code === 'Enter') { this._close(); return; }
+    // D1: the four Hotkeys, from the table, in DFU's button ADD order.
+    const hit = firstHotkey(TAVERN_BUTTONS, code, e);
+    if (hit === null) return;
+    // F145 on the KEYBOARD side: Talk/Food/Exit play ButtonClick in
+    // their OnKeyboardEvent KeyDown arm, and Room - the one button
+    // with no OnKeyboardEvent handler - reaches its OnMouseClick
+    // through the faked click (Button.cs:85-90), sound included.
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    switch (hit) {
+      case 'TavernRoom': this._room(); return;
+      case 'TavernTalk': this.hooks.onTalk?.(); this._close(); return;
+      case 'TavernFood': this._food(); return;
+      default: this._close();   // TavernExit
+    }
   }
 
   click(vx, vy) {

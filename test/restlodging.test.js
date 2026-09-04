@@ -11,7 +11,12 @@ import {
   cannotLoiterLines, loiterLimitHours, BUILDING_TAVERN, BUILDING_SHIP,
   CANNOT_REST_MORE_THAN_99_HOURS_ID, PROMPT_MAX_CHARS, PROMPT_INITIAL,
 } from '../src/systems/restSession.js';
-import { RestWindow } from '../src/ui/restWindow.js';
+import {
+  RestWindow, preloadRestArt, restArtLoaded, restButtonAt, restStopHit, restPanelX,
+  REST_RECTS, REST_COUNTER_RECT, REST_COUNTER_TEXT_RECT, REST_STOP_RECT,
+  REST_COUNTER_X, REST_PANEL_Y, REST_COUNTER_LABEL_Y,
+} from '../src/ui/restWindow.js';   // D3: the native pages
+import { createTownTalk } from '../src/scenes/townTalk.js';   // the 2026-08-29 crash pins drive the real host
 import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
@@ -26,6 +31,7 @@ import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 import { createPlayerTicker } from '../src/scenes/shared.js';
 import { setWorldMinutes } from '../src/systems/worldTick.js';
+import { makeWindowStack } from '../src/ui/windowStack.js';   // ROAD-B B1: the stack the interior door now pushes onto
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -699,7 +705,23 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     assert.match(h, /if \(d\.kind === 'blocked'\) \{/, f);
     assert.match(h, /racialRestBlock\(playerEntity/, f);
     assert.match(h, /racialOverrideBlocks: !!rb/, f);
+    // AUDIT 58: the OPEN GATE HAS TWO TERMS, and the interior host
+    // carried only one. DaggerfallUI.cs:651-656 is
+    // `if (AreEnemiesNearby(true)) { PlayerEntity.SetEnemyAlert(true);
+    // MessageBox(354); }` - raise the alert, THEN show the box. Three
+    // hosts ported both; worldModes showed the box and left
+    // playerEntity.enemyAlertActive down, so an interior refusal never
+    // armed the flag intermittentEnemySpawn rolls on (encounters.js
+    // :101) while the identical refusal outdoors or underground did.
+    assert.match(h, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, /,
+      `${f}: the enemies arm raises the alert before the box`);
+    assert.match(h, /import \{[^}]*setEnemyAlert[^}]*\} from '\.\.\/systems\/encounters\.js'/, f);
+    assert.ok(h.indexOf("if (d.kind === 'enemies') setEnemyAlert(") < h.indexOf("if (d.kind === 'blocked') {"),
+      `${f}: DFU raises the alert first`);
   }
+  // and the interior host uses ITS OWN clock for the stamp - the one
+  // racialRestBlock takes one line above (the 8h decay reads it back)
+  assert.match(wm, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, Math\.floor\(interiorTicker\.classicMinutes\)\);/);
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
@@ -711,8 +733,15 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   // this pin guards (every host runs restDecision, scene-free, before
   // opening) is unchanged and stronger.
   assert.match(wm, /enemiesNearby: interiorEnemiesNearby\(\{ resting: true \}\),[^}]*swimming: false,/s);
-  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/,
-    'and it is the ONE shared scan over this host\'s own pool');
+  // AUDIT 58: over BOTH of this host's pools. It named interiorFoes
+  // alone, so a player could lie down in a tavern with 2-5
+  // Knight_CityWatch spawned into the room by spawnCityGuardsInside
+  // and sleep the night through - the quest pool was empty, so the
+  // gate answered false where DFU's one database answers true.
+  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby\(interiorFoePool\(\), opts\) : false\);/,
+    'and it is the ONE shared scan over this host\'s own DATABASE - both pools');
+  assert.doesNotMatch(wm, /areEnemiesNearby\(interiorFoes\.foes/,
+    'the narrowed scan is deleted, not annotated');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);
@@ -863,13 +892,20 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
   // different rule, not a rough one: guards persist until the crime
   // clears, so one spawned across town blocks sleep forever.
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /areEnemiesNearby\([^)]*\{ resting: true \}\)/, f);
+    // ROAD-G G2 widened this from `[^)]*` - the fixed-city host's pool
+    // is a CALL now (`exteriorFoePool()`), and a class that cannot
+    // cross a nested paren was matching the shape rather than the law.
+    assert.match(src(f), /areEnemiesNearby\([^;]{0,80}?\{ resting: true \}\)/, f);
   }
   assert.match(src('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
   // exterior.js's POOL, not just its call: `[^)]*` happily matches an
   // empty array, and in that host the city watch is the ONLY pool - so
   // an empty one means you sleep through a watch that is beating you.
-  assert.match(src('src/scenes/exterior.js'), /areEnemiesNearby\(cityGuards\.guards, \{ resting: true \}\)/);
+  // ROAD-G G2: and the fixed-city host's pool is its JOIN - it was the
+  // watch alone because that was the only pool in the host, and the
+  // sentence above ("in that host the city watch is the ONLY pool")
+  // stopped being true when the encounter pool was mounted.
+  assert.match(src('src/scenes/exterior.js'), /areEnemiesNearby\(exteriorFoePool\(\), \{ resting: true \}\)/);
   assert.match(src('src/scenes/dungeonContext.js'), /areEnemiesNearby\(foes, \{ resting: true \}\)/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const deps = src(f).slice(src(f).indexOf('const outdoorRestDeps'), src(f).indexOf('const toggleRest'));
@@ -1177,7 +1213,10 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   // ...and EVERY exit clears it. Five doors reach `done`, and a flag
   // cleared on four of them would leave the player permanently
   // resting and burn held enchantments 15x for the session.
-  w.input('back');                       // the selection page's Esc
+  // ROAD-E E1: the selection page's Esc is GetBackButtonUp() (:193),
+  // and the door carries the automap windows' deferral (:703-713)
+  // because this port opens on the press - so both edges.
+  w.input('back'); w.keyup('back');
   assert.equal(w.done, true);
   assert.equal(e.isResting, false);
 
@@ -1216,12 +1255,14 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   w6.input('char:1'); w6.input('char:1'); w6.input('confirm');
   assert.equal(e.isLoitering, false);
 
-  // The consumer is wired: world.js' enchant ctx (which the INTERIOR
-  // mode shares) reads the flag, and the false comment that said it
-  // "stays absent above ground" is gone.
-  const wj = src('src/scenes/world.js');
-  assert.match(wj, /isResting: \(\) => !!playerEntity\.isResting,/);
-  assert.doesNotMatch(wj, /isResting stays absent/);
+  // The consumer is wired: the enchant ctx reads the flag, and the
+  // false comment that said it "stays absent above ground" is gone.
+  // WAVE D: the ctx body is scenes/hostEnchant.js, mounted by both
+  // hosts that can hold an enchanted item - so a rest in a dungeon
+  // burns a held enchantment at CastWhenHeld's resting rate too.
+  const wj = src('src/scenes/hostEnchant.js');
+  assert.match(wj, /isResting = \(\) => !!playerEntity\?\.isResting,/);
+  assert.doesNotMatch(src('src/scenes/world.js'), /isResting stays absent/);
   // ...and the flags are written by the ONE composition, not by four
   // hosts that each have to remember.
   assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{ entity\.isResting = !!b; \},/);
@@ -1236,8 +1277,8 @@ test('S40 ShowStatus: FullRest counts hours PAST, timed and loiter count DOWN', 
   // background per mode: hoursPastTexture + totalHours for FullRest,
   // hoursRemainingTexture + hoursRemaining for TimedRest and Loiter.
   // The port showed hours-past for all three, so a timed rest counted
-  // UP where classic counts DOWN. The backgrounds are still FLAGGED
-  // pending art; the number is not a presentation choice.
+  // UP where classic counts DOWN. D3 landed the backgrounds too, and
+  // the tail of this test now pins both halves of the same mapping.
   const page = (mode, hours) => {
     const w = new RestWindow(winDeps());
     w.input(mode === 'loiter' ? 'char:3' : mode === 'full' ? 'char:2' : 'char:1');
@@ -1259,9 +1300,116 @@ test('S40 ShowStatus: FullRest counts hours PAST, timed and loiter count DOWN', 
   const f = page('full');
   assert.equal(f.session.totalHours, 1);
 
-  // The draw branch reads the right one per mode.
+  // D3: ShowStatus's whole mapping now lives in status() - the texture
+  // AND the number, one arm per rest mode, so the art page and the
+  // text page cannot drift apart. `else if (Loiter)` is the SAME arm
+  // as TimedRest (:337-345): REST02I0 and hoursRemaining, both.
+  assert.deepEqual(t.status(), { panel: 'counter', texture: 'hoursRemaining', hours: 4 });
+  assert.deepEqual(l.status(), { panel: 'counter', texture: 'hoursRemaining', hours: 2 });
+  assert.deepEqual(f.status(), { panel: 'counter', texture: 'hoursPast', hours: 1 });
+  // Selection is mainPanel and nothing else (:319-323).
+  assert.deepEqual(new RestWindow(winDeps()).status(), { panel: 'main' });
+});
+
+test('D3: the three background art names are DFU\'s own constants, loaded together', async () => {
+  // DaggerfallRestWindow.cs:62-64 - baseTextureName / hoursPastTextureName /
+  // hoursRemainingTextureName, three literals with DFU's comments beside
+  // them, and LoadTextures (:307-312) reads all three. The old FLAG said
+  // the names were "pending art-name verification"; there was nothing to
+  // verify.
+  const asked = [];
+  await preloadRestArt({
+    renderer: null, palette: null,
+    fetchBytes: (name) => { asked.push(name); return Promise.reject(new Error('no ARENA2')); },
+  });
+  assert.deepEqual(asked.sort(), ['REST00I0.IMG', 'REST01I0.IMG', 'REST02I0.IMG']);
+  // A failure keeps the WHOLE window textual - a page with only some of
+  // its art is worse than the text chain.
+  assert.equal(restArtLoaded(), false);
+});
+
+test('D3: the panel geometry is DFU\'s UI Rects, and the buttons are their rects', () => {
+  // #region UI Rects (:26-31), verbatim.
+  assert.deepEqual(REST_RECTS.while, [4, 13, 48, 24]);
+  assert.deepEqual(REST_RECTS.healed, [53, 13, 48, 24]);
+  assert.deepEqual(REST_RECTS.loiter, [102, 13, 48, 24]);
+  assert.deepEqual(REST_COUNTER_RECT, [0, 50, 105, 41]);
+  assert.deepEqual(REST_COUNTER_TEXT_RECT, [4, 10, 16, 8]);
+  assert.deepEqual(REST_STOP_RECT, [33, 26, 40, 10]);
+  assert.equal(REST_PANEL_Y, 50);
+  // counterLabel.Position = new Vector2(0, 2) (:167) - the label sits
+  // two pixels down inside the 16x8 panel it is centred in, so the
+  // digits land where the art's hollow is and not on its top edge.
+  assert.equal(REST_COUNTER_LABEL_Y, 2);
   const w = src('src/ui/restWindow.js');
-  assert.match(w, /this\.mode === 'full'\n\s+\? `Hours passed: \$\{this\.session\.totalHours\}`\n\s+: `Hours remaining: \$\{this\.session\.hoursRemaining\}`/);
+  assert.match(w, /REST_PANEL_Y \+ REST_COUNTER_TEXT_RECT\[1\] \+ REST_COUNTER_LABEL_Y,\n\s+\{ align: 'center', w: REST_COUNTER_TEXT_RECT\[2\] \}\);/);
+
+  // HorizontalAlignment.Center replaces the declared x
+  // (BaseScreenComponent :1216-1220) and the missing vertical alignment
+  // keeps the declared y of 50 (:1224-1226). mainPanel's width is
+  // REST00I0's OWN (:142), so the origin is a function of it.
+  assert.equal(restPanelX(150), (320 - 150) / 2);
+  assert.equal(restPanelX(105), REST_COUNTER_X);
+  // ...and the counter panel's own x keeps DFU's half pixel: 105 is odd.
+  assert.equal(REST_COUNTER_X, 107.5);
+
+  // The three selection buttons, panel-relative on a 150-wide panel
+  // (origin x = 85, y = 50).
+  assert.equal(restButtonAt(85 + 4, 50 + 13, 150), 'while');
+  assert.equal(restButtonAt(85 + 51, 50 + 36, 150), 'while', 'the last pixel inside is still the button');
+  assert.equal(restButtonAt(85 + 52, 50 + 13, 150), null, 'and the first one past it is the gap before healed');
+  assert.equal(restButtonAt(85 + 53, 50 + 13, 150), 'healed');
+  assert.equal(restButtonAt(85 + 102, 50 + 13, 150), 'loiter');
+  assert.equal(restButtonAt(85 + 149, 50 + 13, 150), 'loiter', 'loiter runs 102..149');
+  assert.equal(restButtonAt(85 + 150, 50 + 13, 150), null, 'past loiter\'s 48 wide');
+  assert.equal(restButtonAt(85 + 4, 50 + 12, 150), null, 'above the 13');
+  assert.equal(restButtonAt(85 + 4, 50 + 37, 150), null, 'below the 24 tall');
+  // No art means no panel on screen and so no button at all.
+  assert.equal(restButtonAt(89, 63, 0), null);
+  assert.equal(restButtonAt(undefined, undefined, 150), null);
+
+  // stopButtonRect sits on the counter panel's origin, half pixel and all.
+  assert.equal(restStopHit(REST_COUNTER_X + 33, 50 + 26), true);
+  assert.equal(restStopHit(REST_COUNTER_X + 72, 50 + 35), true);
+  assert.equal(restStopHit(REST_COUNTER_X + 73, 50 + 26), false);
+  assert.equal(restStopHit(REST_COUNTER_X + 33, 50 + 25), false);
+  assert.equal(restStopHit(undefined, undefined), false);
+});
+
+test('D3: the native pages are the two DFU panels, and nothing else moved onto art', () => {
+  const w = src('src/ui/restWindow.js');
+  // Setup :137-138 - "Hide world while resting", opaque black, so the
+  // host's HUD goes with the world.
+  assert.match(w, /drawMenuBackdrop\(renderer, canvas\);/);
+  // ShowStatus assigns the counter panel's BackgroundTexture per mode
+  // and DFU's explicit 105x41 Size wins over the IMG's own.
+  assert.match(w, /drawImg\(renderer, _art\[st\.texture\], m, REST_COUNTER_X, REST_PANEL_Y,\n\s+REST_COUNTER_RECT\[2\], REST_COUNTER_RECT\[3\]\);/);
+  // Only mainPanel and counterPanel are art: the other five states are
+  // message boxes pushed OVER this window and keep the text chain.
+  assert.match(w, /if \(!_art \|\| \(this\.state !== 'selection' && this\.state !== 'resting'\)\) return false;/);
+  // The FLAG is gone from both of its sites.
+  assert.doesNotMatch(w, /FLAGGED/);
+});
+
+test('D3: the pointer half is DFU\'s button rects - and art-less it is the whole page', () => {
+  // No ARENA2 in CI, so this exercises the art-less arm: the text page
+  // has no stop button drawn anywhere, so the whole page stays the
+  // button (that page's own idiom, unchanged since S40).
+  const r = new RestWindow(winDeps());
+  r.input('char:1'); r.input('char:2'); r.input('confirm');
+  assert.equal(r.state, 'resting');
+  assert.equal(r.click(0, 0), true, 'the window owns the pointer either way');
+  assert.equal(r.state, 'ended');
+
+  // The ART arm is rect-gated, and the selection arm routes each button
+  // to the letter's handler rather than growing a second copy of it.
+  const w = src('src/ui/restWindow.js');
+  // ROAD-E E1: the mouse click is StopButton_OnMouseClick, ONE call -
+  // it no longer borrows `back`, which is GetBackButtonUp() and lives
+  // on the release now.
+  assert.match(w, /if \(!_art \|\| restStopHit\(vx, vy\)\) this\._stopRest\(\);/);
+  assert.match(w, /const b = restButtonAt\(vx, vy, _art\.base\.w\);/);
+  assert.match(w, /if \(b\) this\.input\(b === 'while' \? 'char:1' : b === 'healed' \? 'char:2' : 'char:3'\);/);
 });
 
 test('S40: an encounter raised BEFORE a mode is picked still breaks the rest', () => {
@@ -1335,7 +1483,7 @@ test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swall
 
   // Every exit vacates - a window that leaves itself in the slot is a
   // window the host paints forever.
-  for (const exit of [(x) => x.input('back'), (x) => x.dispose()]) {
+  for (const exit of [(x) => { x.input('back'); x.keyup('back'); }, (x) => x.dispose()]) {
     const seen = [];
     const v = new RestWindow(winDeps({ onClose: () => seen.push(1) }));
     exit(v);
@@ -1349,7 +1497,29 @@ test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swall
     assert.match(src(f), /onClose: \(\) => \{ if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\); \},/, f);
   }
   // ...and townTalk grew that door, with the caller's identity guard.
-  assert.match(src('src/scenes/townTalk.js'), /closeOverlay\(win = null\) \{\n\s+if \(!overlay \|\| \(win && overlay !== win\)\) return false;/);
+  // The EMPTY-slot half of that guard moved into the one drain at the
+  // 2026-08-29 crash fix, so the door reads the identity and delegates
+  // the rest - asserted by BEHAVIOUR rather than by shape, which is
+  // what this pin was always about (the host must refuse to close a
+  // slot holding someone else's window, and must answer an empty one).
+  const tt = src('src/scenes/townTalk.js');
+  assert.match(tt, /closeOverlay\(win = null\) \{/, 'townTalk lost the PopToHUD door');
+  assert.match(tt, /if \(win && overlay !== win\) return false;/, 'the identity guard');
+  const host = createTownTalk({
+    renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  assert.equal(host.closeOverlay(), false, 'an empty slot reported a close');
+  const mine = { dispose() { this.disposed = true; } };
+  const theirs = {};
+  host.showOverlay(mine);
+  assert.equal(host.closeOverlay(theirs), false, "a window closed someone else's slot");
+  assert.equal(host.overlay, mine);
+  assert.equal(host.closeOverlay(mine), true);
+  assert.equal(mine.disposed, true);
+  assert.equal(host.overlay, null);
 });
 
 test('S40: the window owns the POINTER, so no host grabs look under it', () => {
@@ -1618,18 +1788,24 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
   // It is UNPACED: DFU calls the machine directly, bypassing
   // QuestMachine.Update's ticksPerSecond timer, so the hosts must
   // reach `machine.tick` and not questBridge.tick.
-  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js']) {
+  // QX1: FOUR hosts now, not two-and-a-half. exterior.js used to pass
+  // `tickQuests: null` with a note saying it mounted no bridge at all;
+  // it mounts one, so a rested night in the fixed-city host runs the
+  // same six unpaced machine ticks an hour as every other host.
+  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /tickQuests: \(\) => questBridge\?\.machine\?\.tick\?\.\(\),/, f);
   }
   assert.match(src('src/scenes/dungeonContext.js'),
     /tickQuests: \(\) => opts\.questBridge\?\.machine\?\.tick\?\.\(\),/);
-  // exterior.js mounts no bridge at all, and says so rather than
-  // omitting the key - the construction sweep should see a decision.
-  assert.match(src('src/scenes/exterior.js'), /tickQuests: null,/);
+  // the KEY, not the words: the bridge's own header quotes the retired
+  // decision verbatim, which is the tree's rule for a retirement record.
+  assert.equal(/tickQuests: null,/.test(src('src/scenes/exterior.js')), false,
+    'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
   assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
+  assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });
 
 
@@ -1652,9 +1828,25 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
     slot.input(action);
     if (slot?.done) slot = null;          // the `?.` is the fix
   };
+  // ROAD-E E1: the seam grew a second edge, and it is the SAME hazard -
+  // townTalk.keyup / dungeonContext.overlayKeyUp re-read the slot after
+  // handing the release down, and the rest window's close is now on
+  // that edge (Update :193 is GetKeyUp). So the release drain takes the
+  // same shape and the same `?.`.
+  const drainUp = (action) => {
+    if (!slot) return;
+    slot.keyup(action);
+    if (slot?.done) slot = null;          // the `?.` is the fix, on this edge too
+  };
   slot = new RestWindow(deps);
-  assert.doesNotThrow(() => drain('back'));
+  drain('back');                         // the press that arms the release door (:703-708)
+  assert.doesNotThrow(() => drainUp('back'));
   assert.equal(slot, null, 'and the slot really is clear');
+  // the press half still drains for the windows that close on it
+  slot = new RestWindow(deps);
+  slot.state = 'refused';
+  assert.doesNotThrow(() => drain('back'));
+  assert.equal(slot, null);
 
   // The click seam too, now that the window has one.
   slot = new RestWindow(deps);
@@ -1695,7 +1887,7 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
 });
 
 
-test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
+test('S40/merge -> ROAD-B B1: a rest under a pushed box is SUSPENDED, not replaced', () => {
   // DFU PAUSES a rest while another window is on top - TickRest
   // :362-365, and again at :397-400 with its own comment, "Checking
   // for second time as quest tick above can perfectly align with rest
@@ -1703,34 +1895,74 @@ test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
   // QuestMachine.Tick, which this merge finally ported - so a quest
   // popup landing mid-rest became reachable in the same change.
   //
-  // A single overlay slot cannot stack, so the port cannot pause: the
-  // incoming window REPLACES the rest. What it must not do is replace
-  // it silently, because `_close()` would never run and `IsResting`
-  // would stay raised for the rest of the session - no per-minute
-  // fatigue drain ever again, and held enchantments eating their items
-  // at 60 a round instead of 4.
+  // THIS PIN MOVED, DELIBERATELY, AT ROAD-B B1. It used to read "a
+  // rest REPLACED in the slot still clears its flags", and it was
+  // honest about why: a single overlay slot cannot stack, so the port
+  // could not pause - the incoming window REPLACED the rest, and the
+  // most it could ask for was that the replacement not be SILENT
+  // (`_close()` never running would leave `IsResting` raised for the
+  // session: no per-minute fatigue drain ever again, and held
+  // enchantments eating their items at 60 a round instead of 4).
+  //
+  // mountInterior is PushWindow now (ui/windowStack.js), so the law it
+  // approximated is the law it keeps: the box goes ON TOP, the rest is
+  // suspended WITH its flag and its session, and popping the box hands
+  // it all back. Nothing is abandoned, so there is nothing to leak.
   const e = {
     isPlayer: true, level: 1, health: 5, maxHealth: 10, magicka: 0, maxMagicka: 8,
     fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 20,
     career: {}, skillUses: { [SKILLS.Medical]: 0 },
   };
   let slot = null;
+  const stack = makeWindowStack({ onTop: (w) => { slot = w; } });
   const mount = (w) => {           // worldModes' mountInterior, verbatim shape
     if (!w) return;
-    if (slot && slot !== w) slot.dispose?.();
-    slot = w;
+    stack.reconcile(slot);
+    if (stack.containsWindow(w)) return;
+    stack.pushWindow(w);
   };
   mount(new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] })));
+  const rest = slot;
   slot.input('char:1'); slot.input('confirm');
   assert.equal(e.isResting, true, 'a running rest holds the flag');
-  mount({ isQuestBox: true });     // a quest popup takes the slot
-  assert.equal(e.isResting, false, 'and the replaced window clears it');
+  mount({ isQuestBox: true });     // a quest popup lands on top
+  assert.equal(slot.isQuestBox, true, 'the box is the top window');
+  assert.equal(e.isResting, true, 'and the rest underneath is only PAUSED - DFU never ends it');
+  slot = null;                     // the box closes
+  stack.reconcile(slot);
+  assert.equal(slot, rest, 'the rest window is back');
+  assert.equal(e.isResting, true);
+  // ...and it is still a LIVE rest, not a husk: it ends the way it
+  // would have, through its own session.
+  slot.input('back'); slot.keyup('back');   // ROAD-E E1: Update :193's release arm -> EndRest
+  slot.input('confirm');           // ...and the finished popup closes
+  assert.equal(e.isResting, false, 'and clears the flag when it really closes');
 
-  // The two seams that can do the replacing both dispose.
+  // The seam the quest box goes through is still the door, not a raw
+  // assignment, and the door is a PUSH.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+if \(interiorOverlay && interiorOverlay !== w\) interiorOverlay\.dispose\?\.\(\);/);
+  assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+interiorWindows\.reconcile\(interiorOverlay\);/);
+  assert.match(wm, /interiorWindows\.pushWindow\(w\);/);
   assert.match(wm, /if \(mode === 'interior'\) \{ mountInterior\(win\); return true; \}/,
     'the quest box goes through it, not a raw assignment');
-  assert.match(src('src/scenes/townTalk.js'), /if \(overlay && overlay !== win\) overlay\.dispose\?\.\(\);/,
-    'townTalk has always had this shape - it is where the interior one came from');
+  // townTalk is where the interior seam came from, and it still frees
+  // what it replaces - but since the 2026-08-29 crash fix the SLOT
+  // holds the successor before the outgoing window is told, so an
+  // outgoing window that closes this slot from inside its own dispose
+  // finds the new occupant and leaves it alone. Read as behaviour,
+  // because that ordering is the whole point and a regex cannot see it.
+  const host = createTownTalk({
+    renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  let sawInSlot;
+  const outgoing = { dispose() { this.disposed = true; sawInSlot = host.overlay; } };
+  const successor = { isQuestBox: true };
+  host.showOverlay(outgoing);
+  host.showOverlay(successor);
+  assert.equal(outgoing.disposed, true, 'the replaced window leaked its textures');
+  assert.equal(sawInSlot, successor, 'the outgoing window was told while it still held the slot');
+  assert.equal(host.overlay, successor);
 });

@@ -322,13 +322,18 @@ test('U61: the world host builds through the door, once, and gates on it', () =>
     'BOTH openers gate on the door predicate - a single match let one drop its gate unnoticed (the review)');
   // R3W (2026-08-28): read as MEMBERSHIP of the one bag, not as two
   // adjacent lines. The first draft required `woods,` and
-  // `getPlayerPixel:` to be consecutive, so adding the roads dep
-  // between them failed a pin about the relief - a spelling, not the
-  // law it names.
+  // `getPlayerPixel:` to be consecutive, so a dep added between them
+  // failed a pin about the relief - a spelling, not the law it names.
+  // (The dep that taught this was the road layer's, removed 2026-08-29;
+  // the lesson is the reason this reads as membership.)
   const bag = src.slice(src.indexOf('createTravelMapWindow({'));
   assert.match(bag, /\bwoods,/, 'the relief rides the one dep bag');
-  assert.match(bag, /getPlayerPixel: playerTravelPixel/, '...and so does the player pixel');
-  assert.match(bag, /roads: \(\) => \{/, '...and the road chains for the map layer');
+  // AUDIT 39 F114 moved this pin: the dep is still the one bag's, but
+  // its VALUE is now playerTravelOrigin - TravelTimeCalculator's
+  // GetPlayerTravelPosition (:47-56), which answers the BOARDING pixel
+  // while the player is aboard their own ship. playerTravelPixel stays
+  // PlayerGPS's raw read for the two dozen callers that want it.
+  assert.match(bag, /getPlayerPixel: playerTravelOrigin/, '...and so does the player pixel');
 });
 
 test('U61: the other three hosts still refuse the map, by name', () => {
@@ -397,18 +402,19 @@ test('U61: the trip on the panel is the law\'s own answer, live per toggle', () 
         { sleepModeInn: opts.sleepModeInn, hasShip: false, travelShip: opts.travelShip });
       return { ...t, ...c, days: travelDays(t.minutes) };
     };
-    // R4W: the trip now rides planJourney, so it carries the chosen
-    // `path` and `byRoad` beside the numbers. Compare the NUMBERS -
-    // which is what this pin was ever about - and separately pin the
-    // property that matters: with NO road network the answer is
-    // classic's, exactly.
+    // R4W: the trip carries the walked `path` and a `byRoad` flag
+    // beside the numbers. Compare the NUMBERS - which is what this pin
+    // was ever about - and separately pin the property that matters:
+    // the answer is classic's, exactly. byRoad outlived the road system
+    // (removed 2026-08-29) as a permanent false, because the card reads
+    // it; if it is ever true again something has re-grown a router.
     const numbers = (t) => ({
       minutes: t.minutes, oceanPixels: t.oceanPixels,
       piecesCost: t.piecesCost, totalCost: t.totalCost, days: t.days,
     });
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)),
       'the numbers are calculateTravelTime/TripCost verbatim');
-    assert.equal(st.trip.byRoad, false, 'and with no network the journey is not by road');
+    assert.equal(st.trip.byRoad, false, 'the journey is never by road - there are no roads');
     win._toggleOpt('speedCautious');
     assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)), 'and they follow every toggle');
     win._toggleOpt('travelShip');
@@ -552,11 +558,11 @@ test('U61: the window computes no travel law of its own', () => {
     assert.doesNotMatch(src, new RegExp(forbidden.replace(/[*+()]/g, '\\$&')),
       `the law fragment "${forbidden}" must not be re-derived in the view`);
   }
-  // R4W: planJourney replaced the view's direct walkTravelPath call -
-  // it OWNS the walk now (classic's path is its fallback and its
-  // yardstick), so the view running it is the same law through one
-  // more door, not a law of its own.
-  for (const needle of ['planJourney(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
+  // R4W routed this through planJourney, which OWNED the walk; that
+  // module went with the road system (2026-08-29) and the view calls
+  // walkTravelPath directly again - still systems/travel.js's own
+  // export, still not a law of its own, which is all this pin asks.
+  for (const needle of ['walkTravelPath(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
     'travelMapPopUpState()', 'setTravelMapPopUpState(', 'travelMapFilters()', 'checkLocationDiscovered(']) {
     assert.ok(src.includes(needle), `the view runs the owning module: ${needle}`);
   }
@@ -577,13 +583,68 @@ test('U61: the no-op host arms say why they are empty', () => {
   }
 });
 
-test('U61: the overworld pass restores what it touches', () => {
+// AUDIT 39 F55 MOVED THIS PIN. It read "saves the previous program and
+// restores it", citing the SkyRenderer/PrecipitationRenderer shape -
+// which both of those modules retired in EV6, leaving this pass the
+// last synchronous gl.getParameter(CURRENT_PROGRAM) round-trip in the
+// port, once per travel-map frame, for a program the host rebinds
+// anyway. The law is now the seam law the skies keep: no query, no
+// restore, and the HOST marks the seam.
+test('U61/EV6: the overworld pass brackets its state and marks a foreign seam instead of restoring', () => {
   const src = read('src/render/overworldRenderer.js');
-  assert.match(src, /getParameter\(gl\.CURRENT_PROGRAM\)/, 'saves the previous program');
-  assert.match(src, /gl\.useProgram\(prev\)/, 'and restores it');
+  assert.ok(!src.includes('CURRENT_PROGRAM'), 'the per-frame driver query is gone');
+  assert.ok(!src.includes('gl.useProgram(prev)'), 'and the restore with it');
+  assert.match(read('src/ui/overworldMap.js'), /renderer\.markForeignPass\(\);/,
+    'the host marks the seam, so the renderer\'s shadows rebind after the pass');
   assert.match(src, /disable\(gl\.CULL_FACE\)/, 'brackets the cull the mirrored world passes need');
   assert.match(src, /enable\(gl\.CULL_FACE\)/, 'both ways');
   assert.match(src, /dispose\(\)/, 'every allocation has an owner');
+});
+
+test('AUDIT 58 (f3/render): dispose frees the ROAD chains it minted - every allocation has an owner (AUDIT 17e)', async () => {
+  const { OverworldRenderer } = await import('../src/render/overworldRenderer.js');
+  // the audit26/renderalloc/glstate Proxy-GL precedent, holding the
+  // handles: what is created and not deleted is what leaks
+  const live = { vao: new Set(), buffer: new Set(), program: new Set() };
+  const gl = new Proxy({}, { get: (o, k) => {
+    if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+    if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+    if (k === 'createVertexArray') return () => { const h = {}; live.vao.add(h); return h; };
+    if (k === 'createBuffer') return () => { const h = {}; live.buffer.add(h); return h; };
+    if (k === 'createProgram') return () => { const h = {}; live.program.add(h); return h; };
+    if (k === 'deleteVertexArray') return (h) => { live.vao.delete(h); };
+    if (k === 'deleteBuffer') return (h) => { live.buffer.delete(h); };
+    if (k === 'deleteProgram') return (h) => { live.program.delete(h); };
+    if (k === 'createShader' || k === 'createTexture' || k === 'createFramebuffer') return () => ({});
+    if (typeof k === 'string' && k.toUpperCase() === k) return 1;   // GL enums
+    return () => {};
+  } });
+
+  const ov = new OverworldRenderer(gl);
+  assert.equal(live.vao.size, 0, 'the constructor mints programs, not geometry');
+  assert.equal(live.buffer.size, 0);
+  // ROADS 25 mints ONE VAO and ONE buffer PER CHAIN, and the shipped
+  // network is thousands of them (bible/03-World/Roads.md: 1,508 road
+  // chains and 4,289 track for Hazelnut's arrays) - re-traced by every
+  // travel-map window and orphaned by every close.
+  const chain = () => new Float32Array([0, 0, 0, 1, 0, 1, 2, 0, 2]);
+  ov.setRoads({ trunk: [chain(), chain()], track: [chain()], river: [chain()], stream: [chain()] });
+  assert.equal(live.vao.size, 5, 'one VAO per chain');
+  assert.equal(live.buffer.size, 5, 'and one buffer per chain');
+  // setRoads frees the previous network before minting the next one
+  ov.setRoads({ trunk: [chain()], track: [], river: [], stream: [] });
+  assert.equal(live.vao.size, 1, 'a re-set frees what it replaces');
+  assert.equal(live.buffer.size, 1);
+
+  ov.dispose();
+  assert.deepEqual(
+    { vao: live.vao.size, buffer: live.buffer.size, program: live.program.size },
+    { vao: 0, buffer: 0, program: 0 },
+    'dispose freed the road layer with its siblings - the travel map closes on every journey, '
+    + 'and the gl it drew on is the session\u2019s one shared context');
+  for (const kind of ['stream', 'river', 'track', 'trunk']) {
+    assert.deepEqual(ov._roads[kind], [], `${kind}: and left no handle behind to be re-drawn`);
+  }
 });
 
 test('U61: the veil phases never open a beginFrame - the host\'s live frame is the world below the clouds', () => {

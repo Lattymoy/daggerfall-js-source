@@ -48,8 +48,49 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
     // now, short-circuit-safe ones included - see audit24_wave37.
     assert.ok(s.includes("(modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider"),
       `${f}: missiles hit the walls of the mode the player is in`);
-    assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? (cityGuards\.guards|\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]) : \[\]/.test(s),
-      `${f}: guards (and, in the world host, the X-slice encounter pool) are targets only outside`);
+    if (f === 'world.js') {
+      // AUDIT 58 (review): the world host's arm is NO LONGER A GATE.
+      // This is the only cast engine indoors - worldModes takes this
+      // instance, drives firePending/update on the interior frame and
+      // routes the interior attack click into interceptAttack - and
+      // every target read in the engine (explodeAt's sweep, ByTouch's
+      // pick, the release-frame area arm, the missile impact) goes
+      // through this one thunk. Answering `[]` meant a Fireball cast
+      // in a shop swept nobody and a missile passed through a
+      // watchman the MELEE ray would have hit, while worldModes stood
+      // two live pools in the room. DFU gates nothing here:
+      // OverlapSphereNonAlloc and the touch raycast take whatever is
+      // in the scene. The law the pin holds - the targets follow the
+      // DOOR the player walked through, never the street's pools from
+      // inside a building - is unchanged; what satisfies it grew.
+      assert.ok(s.includes("foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]\n      : _mode() === 'interior' ? _insidePool()\n        : []),"),
+        `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none (dungeonContext owns that engine)`);
+      assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\] : \[\]/.test(s), false,
+        `${f}: the interior scene gate is gone, not merely widened around`);
+      // ...and the sinks follow the RECORD, so a foe handed out by the
+      // interior arm knocks back and dies against that building's
+      // collider and death chain rather than the street's.
+      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+        `${f}: the engine's sinks route by pool membership, the same law the enchant mount takes`);
+    } else {
+      // ROAD-G G2: THE TOWN PAGE TAKES THE SAME THREE-ARM SHAPE. This
+      // pin held `mode === 'exterior' ? cityGuards.guards : []` - the
+      // exact interior scene gate the AUDIT 58 review struck from the
+      // world host beside it - on the premise that this host mounts no
+      // interior foe pool. It does not mount one itself, but it builds
+      // `createWorldModes`, whose interior arm mounts TWO (interiorFoes
+      // and the indoor watch) and answers them at `insideFoes`, and
+      // this is the only cast engine that runs in that mode: a Fireball
+      // cast in a shop entered from ?exterior swept nobody and a
+      // missile passed through a watchman the MELEE ray would have hit.
+      // The exterior arm is BOTH street pools since the encounter mount.
+      assert.ok(s.includes("foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]\n      : _mode() === 'interior' ? _insidePool()\n        : []),"),
+        `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none`);
+      assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s), false,
+        `${f}: the interior scene gate is gone, not merely widened around`);
+      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+        `${f}: and the engine's sinks route by pool membership, the same law the enchant mount takes`);
+    }
     const i = s.indexOf('absorbCtx: () =>');
     const arm = s.slice(i, i + 300);
     assert.ok(arm.includes("=== 'exterior'") && arm.includes('inside: false') && arm.includes('inside: true'),
@@ -62,7 +103,15 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
 test('M5: spell damage reaches guards through the ONE damage door', () => {
   // cityGuards.damageGuard owns corpse + Murder on kill; the engine's
   // foe sinks must route there, not mint a second bookkeeping path.
-  assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet) => damageGuard(g, dmg, playerFeet, null)'),
+  // AUDIT-39r: the pin MOVED, deliberately. The door grew a fourth
+  // parameter because the player's ARROW carries a knock direction and
+  // C15's whole block is gated on it (WeaponManager.cs:576-595 sets
+  // KnockbackDirection on every EnemyClass hit) - the hard-coded null
+  // was this spell caller's shape, and it silently disarmed the shaft.
+  // What this pin is FOR is unchanged and still checked: the engine's
+  // sink reaches damageGuard, the pool's one death/Murder/corpse door,
+  // and a SPELL still passes no direction (the default).
+  assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir)'),
     'cityGuards exports the door');
   for (const f of HOSTS) {
     assert.ok(/hurt: \(n\) => \{ if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos\) : cityGuards\.hurtGuard\(g, n, player\.pos\)\))/.test(src(f)),

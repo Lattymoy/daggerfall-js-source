@@ -36,10 +36,20 @@
 // - DELETE refuses the vampire and lycanthropy tags with their own
 //   messages BEFORE prompting (:821-831) - those spells have no way
 //   back until the curse is cured.
-// - both confirmations CLOSE THE BOOK. DeleteSpellConfirm and
-//   SortSpellsConfirm each end in CloseWindow() outside the Yes arm
-//   (:851, :924), so answering either way puts you back in
-//   the world. Kept.
+// - the DELETE confirmation pops the BOX, not the book. This entry
+//   used to read "both confirmations CLOSE THE BOOK ... Kept", off
+//   the CloseWindow() that sits outside the Yes arm (:851). AUDIT-39r
+//   read the call through: it is the non-virtual
+//   UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+//   RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+//   TopWindow, and TopWindow is the YesNo box mb.Show() pushed -
+//   DaggerfallMessageBox.ActivateButton (:479-484) raises the event
+//   and never pops itself. So the box goes and the book stays, which
+//   is the only reading under which that arm's own
+//   RefreshSpellsList(true) and UpdateSelection() do any work; the
+//   same law is written out in nativeTrade's _confirm.
+//   SortSpellsConfirm (:924) is the identical construct and still
+//   closes the book here - one audit's scope, not two.
 // - SORT is alphabetical, and only if that changed nothing does it
 //   sort by point cost (:911-921).
 // - the swap buttons move the spell AND the selection, then force
@@ -101,12 +111,20 @@
 //   pass both (:262). The port has one castCost hook for both, so
 //   the offer's price rides the player's live skills either way.
 //
-// FLAGGED, idling loudly: the effect popup's body
-// (ShowEffectPopup reads each effect's own SpellBookDescription
-// tokens, which the port's effect table does not carry yet, so the
-// box shows the group/subgroup pair alone); and DFU's
-// double-click-to-buy on the list (the port's list picks straight
-// through, U24's own recorded departure).
+// ROAD-D D10 gave the effect popup its BODY. ShowEffectPopup
+// (:651-660) puts one thing in its click-anywhere box - the effect's
+// own SpellBookDescription tokens - and the port had no per-effect
+// text id, so the box carried the group/subgroup pair instead. The
+// ids are systems/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
+// (EntityEffect.cs:78/:395, overridden by 85 effect classes and
+// computed from the variant index by the two variant families), read
+// through the TEXT.RSC seam this window already had one method down.
+// The group/subgroup line remains the FALLBACK for a host with no
+// record source and for an effect DFU gives no description - never a
+// box with nothing in it.
+//
+// STILL DEPARTED: DFU's double-click-to-buy on the list (the port's
+// list picks straight through, U24's own recorded departure).
 
 import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
@@ -117,9 +135,10 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js';
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
+import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
 import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
@@ -261,6 +280,17 @@ export class SpellbookWindow {
     // the shared defaultToolTip. U37 built that component; this is
     // the second window to hold one.
     this.tip = new ToolTip();
+    // ROAD-G G4: THE SPELLS LIST'S OWN VerticalScrollBar (:363-372),
+    // live rather than drawn. `rect` is mainPanel-local, which is the
+    // space Position/Size are set in (:366-367) and the space
+    // ScreenToLocal hands MouseClick and Update; OnScroll is
+    // SpellsListScrollBar_OnScroll (:794-797), the one line that
+    // copies the bar's index onto the list box.
+    this.scrollBar = new VerticalScrollBar({
+      rect: [...SPELLBOOK_RECTS.scrollBar],
+      displayUnits: ROWS_DISPLAYED,
+      onScroll: (i) => { this.scrollIndex = i; },
+    });
     this.refreshSpellsList(false);
     this.setDefaults();
     // OnPush (:172-176): the book opens with a page turn, the shop
@@ -326,6 +356,20 @@ export class SpellbookWindow {
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
+  /** ROAD-G G4: UpdateSelection's scroller block (:507, :509-512) - Reset
+   *  (:171-176) takes RowsDisplayed, Count and the list's ScrollIndex
+   *  with no event raised, and DFU's two following assignments write
+   *  the two values Reset just wrote. The port keeps ONE index (the
+   *  window's `scrollIndex`, which the wheel, the arrows, the keyboard
+   *  and SelectPrevious/Next all move) and pours it into the component
+   *  before every read, exactly as `listPicker.js`'s syncScrollBar
+   *  does - so the drawn thumb, the paging arms and the drag can never
+   *  disagree about where the list is. */
+  _syncScrollBar() {
+    this.scrollBar.reset(ROWS_DISPLAYED, this._rows.length, this.scrollIndex);
+    return this.scrollBar;
+  }
+
   /** SelectPrevious (ListBox.cs:709-724) and SelectNext (:726-741),
    *  which the two arrow buttons and the keyboard share.
    *
@@ -359,15 +403,48 @@ export class SpellbookWindow {
   /** ListBox.MouseMove (:427-438) and MouseLeave (:459-462): the row
    *  under the pointer is HIGHLIGHTED - a colour swap, not a bar -
    *  and leaving the list clears it to -1. */
-  hover(vx, vy) {
-    if (this.top === 'iconPicker') { this._iconPicker?.hover(vx, vy); return; }   // MC1: the selection follows the pointer
+  hover(vx, vy, e = null) {
+    if (this.top === 'iconPicker') { this._iconPicker?.hover(vx, vy, e); return; }   // MC1: the selection follows the pointer
     const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
     const x = vx - PANEL_X, y = vy - PANEL_Y;
     this._tipHover(x, y, vx, vy);
+    // ROAD-G G4: THE THUMB DRAG (VerticalScrollBar.Update, :101-130).
+    // `e.buttons & 1` is the port's read of GetMouseButton(0) - the
+    // same read `listPicker.js:292` makes - and the host's mousemove
+    // is the frame. The drag continues wherever the cursor goes,
+    // including off the bar and off the panel, because DFU polls a
+    // POSITION and a held button, not a component the pointer is over.
+    // A pushed box owns the frame in DFU (UserInterfaceManager.Update
+    // ticks the TOP window only), so a window with `top` set does not
+    // poll - which is the guard the highlight arm below already keeps.
+    // The (-1,-1) SENTINEL never reaches the drag. Every host answers a
+    // pointer OFF its letterboxed panel with that pair, and it is a
+    // fabricated coordinate rather than a position - ROAD-C c2 flight 2
+    // found it teleporting the town map ~165 world units for the same
+    // reason. Straying into the black border mid-drag would otherwise
+    // fling the list to row 0. The latch itself is not left behind by
+    // the skip: `release()` is what ends it.
+    if (!this.top && vy >= 0 && this._syncScrollBar().update(!!(e?.buttons & 1), y)) {
+      this.scrollIndex = this.scrollBar.scrollIndex;
+    }
     if (this.top || !inRect([lx, ly, lw, lh], x, y)) { this.highlightedIndex = -1; return; }
     const row = Math.floor((y - ly) / this._rowHeight());
     const index = this.scrollIndex + row;
     this.highlightedIndex = (index >= 0 && index < this._rows.length) ? index : -1;
+  }
+
+  /** ROAD-G G4: THE BUTTON COMING UP - Update's `else` arm (:123-129),
+   *  delivered by the overlay mouse-UP seam wave E built rather than
+   *  waited for on the next `hover` whose buttons bit happens to be
+   *  clear. All four hosts route it: `townTalk.pointer('up')` (the
+   *  world and exterior slots), `worldModes`' interior slot,
+   *  `dungeonContext.overlayPointer`'s up arm and `interior.js`'s own
+   *  listener. While the icon picker is up it is the TOP window and
+   *  this one does not tick, so the edge goes there and nowhere else.
+   */
+  release() {
+    if (this.top === 'iconPicker') { this._iconPicker?.release?.(); return; }
+    this.scrollBar.draggingThumb = false;
   }
 
   /** The three icon panels' tooltips. The spell icon's is the static
@@ -472,18 +549,28 @@ export class SpellbookWindow {
     this.top = 'delete';
   }
 
-  /** DeleteSpellConfirm_OnButtonClick (:839-852) - note the
-   *  CloseWindow() OUTSIDE the Yes arm (:851): either answer closes. */
+  /** DeleteSpellConfirm_OnButtonClick (:839-852).
+   *
+   *  AUDIT-39r: the trailing `CloseWindow()` (:851) reads as "either
+   *  answer closes the book" and is not. It is the non-virtual
+   *  UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+   *  RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+   *  TopWindow - and TopWindow is the YesNo box `mb.Show()` pushed,
+   *  because ActivateButton (DaggerfallMessageBox.cs:479-484) only
+   *  raises the event and never pops itself. So the box goes and the
+   *  BOOK STAYS, which is the only reading under which this arm's own
+   *  `RefreshSpellsList(true); UpdateSelection();` do any work. This
+   *  port already writes that law out in nativeTrade's _confirm; the
+   *  book had been reading it backwards since U42. */
   confirmDelete(yes) {
     if (yes && this.deleteSpellIndex !== -1) {
       const list = this.deps.spells?.() ?? [];
       list.splice(this.deleteSpellIndex, 1);
-      this.deleteSpellIndex = -1;
-      this.refreshSpellsList(true);
+      this.refreshSpellsList(true);   // UpdateSelection rides along: the clamp is in here
       this._edit();
     }
+    this.deleteSpellIndex = -1;
     this.top = null;
-    this._close();
   }
 
   /** SwapButton_OnMouseClick (:872-897), both arms including the
@@ -726,26 +813,30 @@ export class SpellbookWindow {
       const [group, subgroup] = this.effectLabels(i);
       if (!group) return true;
       this.top = 'note';
-      this._noteRows = [subgroup ? `${group} ${subgroup}` : group,
-        ...(this._effectDescription(i) ?? [])];
+      // SetTextTokens(effect.SpellBookDescription) and nothing else
+      // (:658) - the group/subgroup line is the port's fallback for a
+      // record the host cannot read, not a header DFU draws.
+      this._noteRows = this._effectDescription(i) ?? [subgroup ? `${group} ${subgroup}` : group];
       return true;
     }
-    // F180: VerticalScrollBar.MouseClick (:142-150) - a trough click
-    // PAGES by displayUnits, above or below the thumb, with the same
-    // thumb geometry draw() computes. (DFU also drags the thumb from
-    // its per-frame Update loop, :101-130; the port's UI seam carries
-    // single-shot clicks only - no held-button state reaches any
-    // overlay window - so the drag stays unported, the listPicker.js
-    // precedent, and the trough + wheel + arrows reach every index
-    // the drag can.)
-    if (this._rows.length > ROWS_DISPLAYED && hitPanel(SPELLBOOK_RECTS.scrollBar, vx, vy)) {
-      const [, sy, , sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      const localY = vy - PANEL_Y - sy;
-      if (localY < ty) this.scrollIndex -= ROWS_DISPLAYED;
-      else if (localY > ty + th) this.scrollIndex += ROWS_DISPLAYED;
-      this._clampScroll();
+    // F180 CLOSED (ROAD-G G4): the press on the bar, WHOLE. DFU splits
+    // it across two members of one component - MouseClick (:142-150)
+    // pages by displayUnits above or below thumbRect, and Update
+    // (:105-113) latches `draggingThumb` when the press lands ON the
+    // thumb - and `VerticalScrollBar.press` is that split, so this
+    // window states neither arm itself. The drag that the latch starts
+    // is `hover`'s per-frame poll below.
+    //
+    // NO COUNT GATE. The old arm asked `_rows.length > ROWS_DISPLAYED`
+    // first; the component does not. A bar on a list that FITS never
+    // drew a thumb (Draw returns at :135-139), so thumbRect keeps the
+    // zero rect, every press falls into MouseClick's `>` arm and
+    // SetScrollIndex clamps it back to 0 - the same answer, reached
+    // DFU's way, and the click is consumed either way because the bar
+    // is a component in the panel whether or not it painted.
+    if (this._syncScrollBar().contains(vx - PANEL_X, vy - PANEL_Y)) {
+      this.scrollBar.press(vx - PANEL_X, vy - PANEL_Y);
+      this.scrollIndex = this.scrollBar.scrollIndex;
       return true;
     }
     // a click in the list selects that row
@@ -762,10 +853,17 @@ export class SpellbookWindow {
     return true;
   }
 
-  /** ShowEffectPopup (:651-660) reads the effect's own
-   *  SpellBookDescription; the port has no per-effect description
-   *  text source yet, so the box carries the name alone and says so. */
-  _effectDescription() { return null; }
+  /** ShowEffectPopup (:651-660): the box is the effect's own
+   *  SpellBookDescription. Null when the effect declares none
+   *  (EntityEffect's default) or the host has no TEXT.RSC seam. */
+  _effectDescription(slot) {
+    const e = spellEffects(this.selected)[slot];
+    if (!e) return null;
+    const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
+    if (id == null) return null;
+    const rows = this._boxText(id);
+    return rows.length ? rows : null;
+  }
 
   _rowHeight() { return (this._font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
@@ -837,14 +935,13 @@ export class SpellbookWindow {
     }
 
     // VerticalScrollBar: Draw() returns early when the list fits
-    // (:135-139), so a book of sixteen spells or fewer has NO thumb.
-    // The geometry is :204-207 verbatim, minimum height included.
-    if (this._rows.length > ROWS_DISPLAYED) {
-      const [sx, sy, sw, sh] = SPELLBOOK_RECTS.scrollBar;
-      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
-      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
-      drawRect(renderer, m, PANEL_X + sx, PANEL_Y + sy + ty, sw, th, SCROLL_THUMB_COLOR);
-    }
+    // (:135-139), so a book of sixteen spells or fewer has NO thumb -
+    // thumbSpan answers null there and drawScrollThumb paints nothing.
+    // The geometry is :204-207 verbatim, minimum height included, and
+    // ROAD-D2 gave it DFU's OWN three art slices (see below).
+    const [sbx, sby, sbw, sbh] = SPELLBOOK_RECTS.scrollBar;
+    drawScrollThumb(renderer, m, [PANEL_X + sbx, PANEL_Y + sby, sbw, sbh],
+      this._syncScrollBar().thumbSpan);   // ROAD-G G4: the LIVE component's own span, so the art and the drag read one number
 
     const spell = this.selected;
     // The name and the spell-point labels carry
@@ -925,9 +1022,22 @@ export class SpellbookWindow {
 /** DaggerfallUI.cs:52's default row colour is nativePanel's
  *  DEFAULT_TEXT_COLOR and :62's dark-red selected row is the list
  *  picker's SELECTED_TEXT_COLOR - both imported, neither rewritten. */
-/** VerticalScrollBar.cs:204-206 - the thumb never shrinks past ten
- *  pixels however long the list gets. Its three-slice art is a
- *  Resources sprite the port has no reader for, so the thumb is
- *  drawn as a flat bar in the panel's own brass - FLAGGED. */
-const SCROLL_THUMB_MIN_H = 10;
-const SCROLL_THUMB_COLOR = Object.freeze([0.42, 0.35, 0.16, 1]);
+/** ROAD-D2 closed this file's thumb note. The "Resources sprite the
+ *  port has no reader for" was stale: ROAD-A7 carried vScrollThumb
+ *  Top/Body/Bottom into the repo as their fifteen literal bytes
+ *  (ui/verticalScrollBar.js:56-58), so the book's thumb is DFU's own
+ *  art - a 77 left edge, a 186 body under a 223 highlight, an all-77
+ *  foot, each strip StretchToFill across the 7-wide rail - drawn by
+ *  drawScrollThumb, and the local 10px floor and the flat brass
+ *  rectangle it used to paint are both gone. THUMB_MIN_H
+ *  (VerticalScrollBar.cs:209) and the whole of :204-221 live in that
+ *  one file; this window states no geometry of its own.
+ *  ROAD-G G4 then closed the last clause of that note. The DRAG
+ *  (Update, :101-130) is BUILT: `this.scrollBar` is a live
+ *  VerticalScrollBar, the press latches through it, `hover`'s
+ *  `e.buttons & 1` is GetMouseButton(0)'s frame and `release()` is the
+ *  else arm. The reason the note gave - "no host hands this window a
+ *  held-button frame" - was true of the port's seam and stopped being
+ *  true twice over: ROAD-A7 gave the hosts' hover the DOM event, and
+ *  wave E gave every overlay slot the button-UP edge. The Ledger's
+ *  F159/F170/F180 row records the closure. */

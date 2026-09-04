@@ -117,7 +117,7 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // the CASTING gate stays: DFU's spell paths hang off the MOTOR's
   // TakeAction, behind CanAct, which HandleNoAction:357-364 drops the
   // moment the target is null.
-  assert.ok(src.includes('!_fParalyzed && f.ai.isHostile) {'), 'no casts while pacified');
+  assert.ok(src.includes('!_fParalyzed && !_fPaused && f.ai.isHostile) {'), 'no casts while pacified');
   // AUDIT 26 F041: the flip asks WHOSE blow it was - it sits inside
   // HandleAttackFromSource's player-source gate, so a fall no longer
   // un-pacifies a language-pacified foe.

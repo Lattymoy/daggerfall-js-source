@@ -20,7 +20,13 @@ export const UNSUPPORTED_IMG_FILENAMES = Object.freeze([
 ]);
 
 // IMG files that define their own palette following the image data.
-const PALETTIZED_FILENAMES = Object.freeze([
+// ReadPalette's switch, verbatim (ImgFile.cs:477-489) - these six and
+// no others. EXPORTED because it is the law the 2026-09-01 incident's
+// site sweep is written against: a consumer of one of these names must
+// mint its own DFPalette (_readPalette writes INTO the instance it is
+// handed), and a consumer of any OTHER IMG must not, because for those
+// `paletteName` is a real palette file the host has already loaded.
+export const PALETTIZED_FILENAMES = Object.freeze([
   'CHGN00I0.IMG',
   'DIE_00I0.IMG',
   'PICK02I0.IMG',

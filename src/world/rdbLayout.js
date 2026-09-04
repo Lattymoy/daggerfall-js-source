@@ -42,6 +42,13 @@
 //   - Action links key on obj.position; model links carry
 //     next/previousObjectOffset, flat links next only (prev -1). Editor
 //     flats always join the link dict; other flats only when they act.
+//   - ROAD-B B4: every serialized action object carries a LoadID, minted
+//     as `(ulong)(blockData.Position + rdbObj.Position)` - the block's
+//     BSA record offset plus the object's own offset inside the block
+//     (RDBLayout.cs:240-242 for action doors, :893-895/:940-942 for
+//     action models). "Based on unique position in gamedata and always
+//     the same" (DaggerfallAction.cs:259), which is exactly why the
+//     Castle Daggerfall foyer hack can name two doors by number.
 // Not built here (routed): enemies fixed/random (Characters arc), treasure
 // piles/loot (Systems arc), torch/animal audio (Audio arc), point-light and
 // water rendering (Rendering arc), door/action behavior (Player arc).
@@ -288,9 +295,17 @@ function* rdbObjects(rdb) {
  * @returns {{placements:Array,actionDoors:Array,flats:Array,markers:Array,
  *   startMarkers:Array,enterMarkers:Array,exitDoors:Array,
  *   actionLinks:Map,waterLevel:number,castleBlock:boolean}}
+ *   Each actionDoors entry carries `loadID` (ROAD-B B4).
  */
 export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   const rdb = dfBlock.rdbBlock;
+  // ROAD-B B4: the LoadID base. RDBLayout.cs:240-242 mints an action
+  // door's id as `(ulong)(blockData.Position + obj.Position)` - the
+  // BSA record offset of the block plus the object's offset inside it.
+  // blocksFile records the former as dfBlock.position (the same
+  // bsaFile.GetRecordPosition DFU stores at BlocksFile.cs:323), and
+  // obj.position is already the chain key every action rides.
+  const blockPosition = dfBlock.position ?? 0;
   const placements = [];
   const actionDoors = [];
   const flats = [];
@@ -334,6 +349,8 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           // nextKey/prevKey against those same keys - so doors join the
           // chain graph (Lock/Unlock/Open/Close ride the door's own action).
           position: obj.position,
+          // ROAD-B B4: RDBLayout.cs:242 - the door's serialized identity.
+          loadID: blockPosition + obj.position,
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
         });
@@ -380,6 +397,19 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       } else if (fr.textureArchive === FIXED_TREASURE_FLATS_ARCHIVE) {
         // Renderer-disabled in DFU, restored in place by AddFixedTreasure
         // (Systems arc). Marker data only.
+        //
+        // AUDIT 39 (#19): these share `markers` with the 199 editor
+        // flats, and they share the RECORD NAMESPACE with them too -
+        // 216/15 and 216/16 exist. DFU never has to discriminate,
+        // because its editorObjects list is archive-199 by construction
+        // (RDBLayout.cs:352) and every enemy/treasure reader iterates
+        // only that. Here the archive is what separates them: a 216
+        // entry carries `archive`, a 199 entry does not, and EVERY
+        // consumer of this array must test it before trusting a record.
+        // A 216 entry also carries none of the enemy fields (rawY,
+        // flags, factionOrMobileId, soundIndex, actionByte) the 199
+        // branch above sets, so a reader that skips the test builds an
+        // enemy out of undefined.
         markers.push({ record: fr.textureRecord, archive: fr.textureArchive, x, y, z, position: obj.position, action });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });

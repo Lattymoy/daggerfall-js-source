@@ -37,14 +37,14 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, getPixelFromPixelID } from '../formats/mapsFile.js';
-import { SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../world/terrainSampler.js';   // AUDIT EV F-DOC7: one home for the byte*8 base term
 import { getPixelColorIndex, checkLocationDiscovered } from './travelMapWindow.js';
 
 // One map pixel = one scene unit; the streamed world's sign convention
 // (scene z = -py, so north is +z) kept so a mind that knows one map
 // knows both.
 export const OVERWORLD_RELIEF = 24;   // vertical exaggeration - skin, documented above
-export const BASE_HEIGHT_SCALE = 8;   // terrainSampler's own base term, byte * 8
+export { BASE_HEIGHT_SCALE };   // AUDIT EV F-DOC7: re-exported from terrainSampler - was a private copy of the 8 here, one silent-divergence hazard
 /** World units per map pixel in the STREAMED world - the divisor that
  *  brings the height law into map-pixel units. */
 const UNITS_PER_PIXEL = 819.2;
@@ -130,7 +130,18 @@ export function overworldTint(climate, byte) {
  *   colors    - Uint8Array, rgb per vertex, slope-shaded
  *   indices   - Uint32Array, two triangles per cell
  */
-export function buildOverworldGrid({ heightBytes, width, height, climateAt }) {
+/** ROADS 7: the thread a road draws on the relief. A packed-earth brown
+ *  for a road, blended hard so it reads at one vertex per 819m; a
+ *  lighter, fainter dirt for a track. Never on water - a road bit over
+ *  water is a routing bug and the map should show the terrain, not hide
+ *  it. Colours are ours, like the rest of this table (:33). */
+export const OVERWORLD_ROAD = [118, 92, 62];
+export const OVERWORLD_TRACK = [150, 128, 96];
+/** ROADS 24: water on the relief - a river's blue, a stream fainter. */
+export const OVERWORLD_RIVER = [58, 96, 150];
+export const OVERWORLD_STREAM = [96, 128, 166];
+
+export function buildOverworldGrid({ heightBytes, width, height, climateAt, pathAt = null }) {
   const positions = new Float32Array(width * height * 3);
   const colors = new Uint8Array(width * height * 3);
   const at = (x, y) => heightBytes[y * width + x];
@@ -160,6 +171,12 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt }) {
         const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
         r *= shade; g *= shade; b *= shade;
+        // ROADS 7/24: the thread. 2 = road, 1 = track, 4 = river, 3 = stream, 0 = nothing.
+        const path = pathAt ? pathAt(px, py) : 0;
+        if (path === 2) { [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85); }
+        else if (path === 1) { [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55); }
+        else if (path === 4) { [r, g, b] = lerp3([r, g, b], OVERWORLD_RIVER, 0.85); }
+        else if (path === 3) { [r, g, b] = lerp3([r, g, b], OVERWORLD_STREAM, 0.6); }
       }
       colors[i * 3] = Math.min(255, r | 0);
       colors[i * 3 + 1] = Math.min(255, g | 0);
@@ -235,9 +252,11 @@ export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocat
  * The ONE mapping from a map pixel to a point on the relief: pixel
  * centre, the height law, the streamed world's sign convention, plus
  * a lift. Every line this map draws goes through here - the route did
- * it inline until the roads needed the same arithmetic, and two copies
- * of a coordinate convention is how a layer ends up half a pixel out
- * from the ground it is drawn on.
+ * it inline until a second layer needed the same arithmetic, and two
+ * copies of a coordinate convention is how a layer ends up half a pixel
+ * out from the ground it is drawn on. That second layer is gone with
+ * the road system; the one mapping stays, because the reason it exists
+ * is the convention, not the caller.
  *
  * Clamped rather than guarded: a path may touch the edge of the data,
  * and the edge byte is the honest answer there.
@@ -246,21 +265,24 @@ export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocat
  *  on a pixel.
  *
  *  This used to index heightBytes with the raw coordinates, which was
- *  fine while every road and route vertex WAS a pixel: the values were
- *  integers and the clamp left them alone. RR1's smoothing put
+ *  fine while every drawn vertex WAS a pixel: the values were integers
+ *  and the clamp left them alone. The road layer's smoothing put
  *  fractional points between pixels, and a fractional array index is
- *  `undefined` - so `overworldHeight(undefined)` was NaN and half of
- *  every smoothed road had no height at all. Measured on a three-pixel
- *  corner: 6 of 12 vertices NaN.
+ *  `undefined` - so the height came back NaN and half of every smoothed
+ *  line had no height at all.
  *
  *  BILINEAR rather than a floor, because that is what the picture does.
  *  buildOverworldGrid puts one vertex per pixel at `px + 0.5`, so the
  *  drawn surface between two pixel centres is the GPU's interpolation
- *  of their heights - a road flooring to its pixel would ride above or
- *  below the very ground it is drawn on, between every pair of
- *  centres. At integer coordinates the weights are zero and this
- *  returns exactly what the old line returned, so nothing that was
- *  already right moves. */
+ *  of their heights - a line flooring to its pixel would ride above or
+ *  below the very ground it is drawn on. At integer coordinates the
+ *  weights are zero, so this returns exactly what the old line did.
+ *
+ *  The smoothing that forced it is gone with the road system and the
+ *  route walks whole pixels, so nothing currently feeds it a fractional
+ *  point. It stays because it is the CORRECT reading of the surface
+ *  being drawn, and the next line that curves will want it rather than
+ *  rediscover the NaN. */
 export function sampleHeightByte(heightBytes, width, height, px, py) {
   const cx = Math.min(width - 1, Math.max(0, px));
   const cy = Math.min(height - 1, Math.max(0, py));
@@ -282,14 +304,123 @@ export function reliefPoint(px, py, { heightBytes, width, height }, lift = 0) {
  *
  *   ground < track < trunk < route
  *
- * A track is the humblest thing on the map; a trunk crosses it at a
- * junction and should read as continuous through it; and the player's
- * own journey has to be legible ON TOP of the network it follows,
- * which is the whole reason the route is drawn in its own colour
- * rather than just highlighting road. Equal lifts z-fight where two
- * classes share a pixel, which they do at every junction.
+ * One layer remains - the player's own journey - and it keeps its lift
+ * because the reason for a lift is the ground, not its neighbours: a
+ * line at zero z-fights the surface it is drawn on.
  */
-export const RELIEF_LIFT = Object.freeze({ track: 0.14, trunk: 0.20, route: 0.35 });
+/** ROADS 25 (Mac: "use the first iteration's design instead of the
+ *  smeared dirt look"): the FIRST road drawing on this map - R1-RH1,
+ *  removed whole in RX - drew the network as LINES lifted over the
+ *  relief, one chain per run between junctions, simplified so the grid
+ *  stairs go and rounded so the corners do. Restored here for four
+ *  classes and fed with Basic Roads' own arrays. The ORDER is the law
+ *  and the numbers are skin: ground < stream < river < track < trunk <
+ *  route. Equal lifts z-fight where two classes share a pixel, which
+ *  they do at every junction. */
+export const RELIEF_LIFT = Object.freeze({ stream: 0.08, river: 0.11, track: 0.14, trunk: 0.20, route: 0.35 });
+
+/** RZ1 - Ramer-Douglas-Peucker, run BEFORE the corner cut. A traced
+ *  chain walks map pixels, so a road running east-north-east is a
+ *  staircase whose steps are an artifact of the grid, not of the road.
+ *  Simplifying first drops those: a 24-pixel staircase collapses to a
+ *  straight line, while a road that genuinely turns keeps its corner
+ *  and sheds the pixels along its legs. The tolerance is just under one
+ *  pixel: a diagonal step sits at most ~0.71 off its line. */
+export const SIMPLIFY_EPSILON = 0.9;
+export function simplifyChain(line, eps = SIMPLIFY_EPSILON) {
+  if (line.length < 3) return line.slice();
+  const a = line[0], b = line[line.length - 1];
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  let idx = -1, dmax = 0;
+  for (let i = 1; i < line.length - 1; i++) {
+    const p = line[i];
+    const d = len === 0 ? Math.hypot(p.x - a.x, p.y - a.y) : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
+    if (d > dmax) { dmax = d; idx = i; }
+  }
+  if (dmax <= eps) return [a, b];
+  return [...simplifyChain(line.slice(0, idx + 1), eps).slice(0, -1), ...simplifyChain(line.slice(idx), eps)];
+}
+
+/** RR1 - Chaikin's corner cut, two passes: every corner becomes two
+ *  points a quarter of the way along each leg, and the line rounds. */
+export function chaikin(line, passes = 2) {
+  let pts = line;
+  for (let n = 0; n < passes; n++) {
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 });
+      out.push({ x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  return pts;
+}
+
+/** ROADS 25: THE TRACER. Basic Roads' arrays are one byte per pixel, an
+ *  8-direction mask of the edges a path leaves through; a drawable
+ *  chain is a run of pixels between two NODES (a junction, a dead end,
+ *  or a bend - anything whose degree is not two). Every edge is walked
+ *  once; a pure loop with no node is walked from any pixel on it. The
+ *  mask layout is the painter's (N=128 clockwise to NW=1). */
+const DIRS = [[128, 0, -1], [64, 1, -1], [32, 1, 0], [16, 1, 1], [8, 0, 1], [4, -1, 1], [2, -1, 0], [1, -1, -1]];
+export function traceChains(mask, width, height) {
+  const degree = (i) => { let n = 0; for (const [b] of DIRS) if (mask[i] & b) n++; return n; };
+  const seen = new Set();   // "i:bit" edges walked
+  const chains = [];
+  const walk = (start, bit) => {
+    const chain = [{ x: start % width, y: (start / width) | 0 }];
+    let i = start; let b = bit;
+    for (;;) {
+      const [, dx, dy] = DIRS.find(([bb]) => bb === b);
+      const key = `${i}:${b}`; if (seen.has(key)) break; seen.add(key);
+      const x = (i % width) + dx, y = ((i / width) | 0) + dy;
+      if (x < 0 || y < 0 || x >= width || y >= height) break;
+      const j = y * width + x;
+      const back = DIRS[(DIRS.findIndex(([bb]) => bb === b) + 4) % 8][0];
+      seen.add(`${j}:${back}`);
+      chain.push({ x, y });
+      if (degree(j) !== 2) break;
+      const next = DIRS.find(([bb]) => (mask[j] & bb) && bb !== back);
+      if (!next) break;
+      i = j; b = next[0];
+    }
+    if (chain.length > 1) chains.push(chain);
+  };
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i] || degree(i) === 2) continue;
+    for (const [b] of DIRS) if ((mask[i] & b) && !seen.has(`${i}:${b}`)) walk(i, b);
+  }
+  for (let i = 0; i < mask.length; i++) {   // pure loops
+    if (!mask[i]) continue;
+    for (const [b] of DIRS) if ((mask[i] & b) && !seen.has(`${i}:${b}`)) walk(i, b);
+  }
+  return chains;
+}
+
+/** Each chain: simplified, rounded, lifted onto the relief. */
+export function roadPoints(lines, ctx, lift) {
+  return lines.map((line) => {
+    const smooth = chaikin(simplifyChain(line));
+    const pts = new Float32Array(smooth.length * 3);
+    smooth.forEach((p, i) => { const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift); pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z; });
+    return pts;
+  });
+}
+
+/** Four classes at their own lifts, ready for the renderer. Any class
+ *  may be absent. */
+export function roadModel({ trunk = [], track = [], river = [], stream = [] }, ctx) {
+  return {
+    stream: roadPoints(stream, ctx, RELIEF_LIFT.stream),
+    river: roadPoints(river, ctx, RELIEF_LIFT.river),
+    track: roadPoints(track, ctx, RELIEF_LIFT.track),
+    trunk: roadPoints(trunk, ctx, RELIEF_LIFT.trunk),
+  };
+}
 
 /**
  * The route line's points over the relief: the law's own pixel walk
@@ -307,174 +438,4 @@ export function routePoints(start, path, ctx) {
   set(0, start.x, start.y);
   path.forEach((p, i) => set(i + 1, p.x, p.y));
   return pts;
-}
-
-// ── R3: THE ROAD LAYER ───────────────────────────────────────────
-
-/**
- * Traced road chains as drawable vertex runs, on the same relief and
- * through the same mapping as the route.
- *
- * One Float32Array per chain rather than one big buffer: the chains
- * are what tracePolylines already split at junctions, and a line strip
- * that silently jumps between two unconnected roads draws a road that
- * is not there.
- */
-/** RR1 (Mac, 2026-08-28) - CHAIKIN'S CORNER CUT, twice.
- *
- *  A traced chain is a walk over MAP PIXELS, so every turn in it is a
- *  multiple of 45 degrees and a road that curves gently across the
- *  province draws as a staircase of hard little corners. Each pass
- *  replaces every interior vertex with two points a quarter and three
- *  quarters along its neighbouring segments, which rounds the corner
- *  without moving the road off its pixels: the curve stays inside the
- *  convex hull of the chain it came from, so a road never bows into a
- *  pixel it does not run through.
- *
- *  The ENDS are kept exactly. A chain's endpoints are where it meets
- *  the next chain at a junction, and moving them would open a gap
- *  between two roads that the tracer split. */
-export function chaikin(line, passes = 2) {
-  let pts = line;
-  for (let n = 0; n < passes; n++) {
-    if (pts.length < 3) return pts;
-    const out = [pts[0]];
-    for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i], b = pts[i + 1];
-      out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 });
-      out.push({ x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
-    }
-    out.push(pts[pts.length - 1]);
-    pts = out;
-  }
-  return pts;
-}
-
-/** RZ1 (Mac, 2026-08-28) - Ramer-Douglas-Peucker, run BEFORE the
- *  corner cut.
- *
- *  Chaikin alone was not enough and the measurement says why: on a
- *  24-pixel staircase it takes the worst turn from 45 degrees down to
- *  14, but the TOTAL turning stays at 630 either way - it spreads the
- *  same wobble over four times as many vertices without ever removing
- *  it. Smoothing rounds corners; it does not decide which corners are
- *  real.
- *
- *  A traced chain walks map pixels, so a road running east-north-east
- *  is a staircase whose steps are an artifact of the grid, not of the
- *  road. Simplifying first drops those: the same staircase collapses
- *  to a straight line (630 degrees to 0, 24 points to 2), while a road
- *  that genuinely turns a corner keeps its 90 degrees exactly and
- *  merely sheds the pixels along its two straight legs.
- *
- *  The tolerance is just under one pixel. A diagonal step stands at
- *  most ~0.71 of a pixel off the line it belongs to, so 0.9 removes
- *  grid stairs and leaves anything that bends by more than a pixel -
- *  which is every turn a road actually takes. */
-export const SIMPLIFY_EPSILON = 0.9;
-
-export function simplifyChain(line, eps = SIMPLIFY_EPSILON) {
-  if (line.length < 3) return line.slice();
-  const a = line[0], b = line[line.length - 1];
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const len = Math.hypot(dx, dy);
-  let idx = -1, dmax = 0;
-  for (let i = 1; i < line.length - 1; i++) {
-    const p = line[i];
-    const d = len === 0
-      ? Math.hypot(p.x - a.x, p.y - a.y)
-      : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
-    if (d > dmax) { dmax = d; idx = i; }
-  }
-  if (dmax <= eps) return [a, b];
-  return [
-    ...simplifyChain(line.slice(0, idx + 1), eps).slice(0, -1),
-    ...simplifyChain(line.slice(idx), eps),
-  ];
-}
-
-export function roadPoints(lines, ctx, lift) {
-  return lines.map((line) => {
-    const smooth = chaikin(simplifyChain(line));
-    const pts = new Float32Array(smooth.length * 3);
-    smooth.forEach((p, i) => {
-      const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift);
-      pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z;
-    });
-    return pts;
-  });
-}
-
-/** Both classes at their own lifts, ready to hand to the renderer. */
-export function roadModel({ trunk = [], track = [] }, ctx) {
-  return {
-    track: roadPoints(track, ctx, RELIEF_LIFT.track),
-    trunk: roadPoints(trunk, ctx, RELIEF_LIFT.trunk),
-  };
-}
-
-// ── DISCOVERY ────────────────────────────────────────────────────
-
-/** How far word of a road travels from a place you have been. Skin -
- *  there is no source law, classic has no roads to be faithful to. */
-export const ROAD_REVEAL_RADIUS = 6;
-
-/**
- * A per-pixel mask of the road anyone would know about: everything
- * within ROAD_REVEAL_RADIUS of somewhere the player has actually
- * found. Chebyshev, because a square is what a square scan gives and
- * the difference is invisible at this radius.
- *
- * Built from the marker model, so it inherits the classic window's own
- * discovery law rather than restating it - the mask can only ever be
- * as generous as checkLocationDiscovered already was.
- */
-export function buildRevealMask(markers, { width, height, radius = ROAD_REVEAL_RADIUS }) {
-  const mask = new Uint8Array(width * height);
-  for (const m of markers) {
-    // markers carry scene coordinates; back to map pixels
-    const cx = Math.round(m.x - 0.5), cy = Math.round(-m.z - 0.5);
-    const x0 = Math.max(0, cx - radius), x1 = Math.min(width - 1, cx + radius);
-    const y0 = Math.max(0, cy - radius), y1 = Math.min(height - 1, cy + radius);
-    for (let y = y0; y <= y1; y++) mask.fill(1, y * width + x0, y * width + x1 + 1);
-  }
-  return mask;
-}
-
-/**
- * Split chains down to the runs the player is allowed to see.
- *
- * PARTIAL, not all-or-nothing: a trunk road running from a town you
- * know to one you have never heard of should fade out somewhere in
- * between, not vanish entirely and not draw the whole way. A run of
- * one pixel is dropped - a single lit pixel is a dot, not a road.
- */
-export function revealLines(lines, mask, width) {
-  const out = [];
-  for (const line of lines) {
-    let run = [];
-    for (const p of line) {
-      if (mask[p.y * width + p.x]) { run.push(p); continue; }
-      if (run.length > 1) out.push(run);
-      run = [];
-    }
-    if (run.length > 1) out.push(run);
-  }
-  return out;
-}
-
-// ── LEVEL OF DETAIL ──────────────────────────────────────────────
-
-/** Camera distance above which tracks stop drawing. Pulled back over
- *  the whole bay every farm lane at once is noise that buries the
- *  trunk network; coming down, the lanes are the interesting part.
- *  Between DIST_MIN 15 and DIST_MAX 1500, this sits nearer the
- *  cruising altitude than the ceiling. */
-export const TRACK_FADE_DIST = 260;
-
-/** What the map should draw at this camera distance. Trunk roads are
- *  always on: they are the shape of the province and reading them from
- *  altitude is the point. */
-export function roadLayersForDistance(dist) {
-  return { trunk: true, track: dist <= TRACK_FADE_DIST };
 }

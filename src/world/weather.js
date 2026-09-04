@@ -40,6 +40,22 @@ export const FOG_SETTINGS = Object.freeze({
   dungeon: { mode: 'exp', density: 0.005, start: 0, end: 0, excludeSky: false },
 });
 
+/** EV4: the DISTANCE HAZE follows the streamed horizon. DFU's linear
+ *  0..2400 fog is tuned for TerrainDistance 3; a raised Land View
+ *  Distance streamed more land and then painted every extra unit of it
+ *  fully fogged, so the setting bought nothing to look at. The scale is
+ *  end * (terrainDistance / 3) - 2400 stays the TD-3 base VERBATIM, a
+ *  lower distance never tightens below DFU's own number (DFU doesn't),
+ *  and only the LINEAR rows move: the exp rows are weather (rain, snow,
+ *  heavy fog), and weather is atmosphere, not draw distance. The table
+ *  above stays byte-identical; this returns the SAME frozen object
+ *  whenever the scale is 1, so the default path is untouched down to
+ *  identity. */
+export function scaleFogForDistance(fog, terrainDistance) {
+  if (fog.mode !== 'linear' || !(terrainDistance > 3)) return fog;
+  return { ...fog, end: fog.end * (terrainDistance / 3) };
+}
+
 const SNOW_FREE_CLIMATES = new Set([224, 225, 227, 229]);
 
 export function isSnowFreeClimate(climateIndex) {
@@ -61,20 +77,26 @@ export function fogForWeather(weather) {
 /**
  * Sky archive offset for the weather (SkyIndex = SkyBase + offset).
  * Rain/fog/thunder pick Rain1/Rain2, snow picks Snow1/Snow2, 50/50.
- * AUDIT 23 (wts-1) - DaggerfallSky.cs:354-357: the DEFAULT arm (sunny/
- * cloudy/overcast = WeatherStyle.Normal) adds the SEASON VALUE to
- * SkyBase ("Season value enum ordered same as sky indices" - Fall 0,
- * Spring 1, Summer 2, Winter 3), so three of four seasons rendered
- * the Fall panorama before this took `season`.
+ *
+ * THE RETURN IS THE WeatherStyle, and 0 IS WeatherStyle.Normal
+ * (DaggerfallUnityEnums: Normal 0, Rain1 4, Rain2 5, Snow1 6, Snow2 7).
+ * Both hosts read it as exactly that: `offset === 0` is what selects
+ * DaggerfallSky.cs:354-357's DEFAULT arm, which adds the CALENDAR
+ * season to SkyBase, and it is also DaggerfallSky.cs:363-367's
+ * `WeatherStyle != Normal -> showNightSky = false`. So the season must
+ * NEVER be folded in here - AUDIT 39 (#15) removed the production-dead
+ * `season` parameter AUDIT 23 (wts-1) added, which would have returned
+ * 1/2/3 in spring/summer/winter and killed the clear night sky. The
+ * season lives at the render sites, where those two laws are spelled.
  */
-export function skyOffsetForWeather(weather, rng, season = 0) {
+export function skyOffsetForWeather(weather, rng) {
   if (weather === 'rain' || weather === 'thunder' || weather === 'fog') {
     return rng.nextFloat() > 0.5 ? 4 : 5;
   }
   if (weather === 'snow') {
     return rng.nextFloat() > 0.5 ? 6 : 7;
   }
-  return season;
+  return 0;
 }
 
 /** Verbatim SetSunlightScale: winter first, precipitation overrides. */

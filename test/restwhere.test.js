@@ -260,8 +260,25 @@ test('rest: the grounded check has ONE home, and every rest host feeds the dispa
     // V2b: the FOURTH question is DFU's own - DaggerfallUI's rest
     // ladder ends at racialOverride.CheckStartRest, and the dispatch
     // carries it as racialOverrideBlocks (fed by racialRestBlock).
-    assert.deepEqual(d.keys, ['enemiesNearby', 'swimming', 'grounded', 'racialOverrideBlocks'],
-      `${h} asks DFU's four questions and asks nothing about the scene`);
+    //
+    // ROAD-B B5 MOVED THIS PIN from four keys to five, deliberately.
+    // DaggerfallUI.cs:651-688 has always asked FIVE things and
+    // restDecision has always had five slots; the third,
+    // GetPreventedRestMessage (:669), had no producer in the port -
+    // the registry itself (GameManager.cs:52, :637-675) was unported -
+    // so every host omitted the key and the arm was dead. B5 ported
+    // the registry, so the key is now part of the dispatch a host owes
+    // and its ABSENCE is the drift worth failing on. The ORDER is
+    // still DFU's ladder read top to bottom.
+    assert.deepEqual(d.keys, ['enemiesNearby', 'swimming', 'grounded', 'preventedMessage', 'racialOverrideBlocks'],
+      `${h} asks DFU's five questions and asks nothing about the scene`);
+    // PIN MOVED (ROAD review-p): the registry is handed over as the
+    // PRODUCER. DFU reads it inside the third `else` (:667-669), after
+    // the enemy and swimming/grounded arms have returned, so a host
+    // that polls it eagerly runs the caller's conditions on presses
+    // DFU never brings them into.
+    assert.match(d.value('preventedMessage'), /getPreventedRestMessage(?!\()/,
+      `${h} reads the ONE registry rather than inventing a condition`);
     assert.match(d.value('grounded'), /startRestGroundedCheck\(/,
       `${h} must feed the dispatch through the one home, not the raw flag`);
   }

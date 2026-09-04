@@ -25,8 +25,8 @@ test('RW1 world: the pends flag is GONE and the reward is a container, not a sil
     'undefined = not my mode; null = the mode owned the ground and could not mint - ?? would fold them');
   assert.match(body, /droppedLoot\.dropPile\(\[dfItem\], dropFeet\(\)/,
     'CreateDroppedLootContainer(PlayerObject) - the pile lands at the player');
-  assert.match(body, /loot: \{ items: \(\) => pile\.items \}/,
-    'the inventory opens with the pile as its REMOTE target');
+  assert.match(body, /loot: droppedLootHooks\(pile\)/,
+    'the inventory opens with the pile as its REMOTE target - G5: with DaggerfallLoot\'s own identity, so the reward pile\'s icon cycles like any other');
   assert.match(body, /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/,
     'DFU frees the emptied container on window close - the drop arm\'s own law');
   assert.match(body, /_onQuestBoxClosed = open;\s*\n\s*else open\?\.\(\);/,
@@ -40,10 +40,22 @@ test('RW1 world: the quest box fires the OnClose latch ONCE and clears it', () =
     'GivePc.cs:173 - messageBox.OnClose += QuestCompleteMessage_OnClose, one-shot');
 });
 
-test('RW1 modes: the dungeon mints through its own ground, everyone else falls through', () => {
+test('RW1 modes (ID1): dungeon and interior mint on their own ground; the exterior falls through', () => {
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /mintRewardPile\(dfItem\) \{\s*\n\s*if \(mode === 'dungeon' && dungeonCtx\?\.offerRewardLoot\) return dungeonCtx\.offerRewardLoot\(dfItem\);\s*\n\s*return undefined;/,
-    'dungeon -> its droppedLoot; undefined -> the world host mints');
+  // NARROWED at ID1: the interior gained its own ground, so "everyone
+  // else falls through" is now EXTERIOR alone. GivePc mints through the
+  // same CreateDroppedLootContainer the inventory drop does
+  // (GivePc.cs:168), so it picks its parent by the same context, and
+  // the port's three arms are now DFU's three.
+  const body = modes.slice(modes.indexOf('mintRewardPile(dfItem) {'));
+  const dungeon = body.indexOf("if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);");
+  const interior = body.indexOf("if (mode === 'interior' && interiorCtx) {");
+  const fallThrough = body.indexOf('return undefined;');
+  assert.ok(dungeon > 0, 'the dungeon arm is there');
+  assert.ok(interior > dungeon, 'then the interior, on its own pool');
+  assert.ok(fallThrough > interior, 'and undefined LAST - the world host mints for the exterior alone');
+  assert.match(body.slice(interior, fallThrough), /interiorDropped\.dropPile\(\[dfItem\], interiorDropFeet\(\)\)/,
+    'the interior pile is minted at the interior ground position');
 });
 
 test('RW1 dungeon: offerRewardLoot mints at the player and answers the open thunk', () => {

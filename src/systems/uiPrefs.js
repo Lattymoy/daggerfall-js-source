@@ -10,22 +10,21 @@
 // whole point is that it is DFU's. Separate shelf, separate key.
 const STORAGE_KEY = 'dagger.ui.v1';
 
+import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
 export const PREF_DEFAULTS = Object.freeze({
+  // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
+  // settings, and two pins said so before I listened: the settings
+  // defaults are BAKED from DFU's vendored ini and nothing hand-edits
+  // them, and the tier map's own law is that every key in it "is a
+  // real DFU setting". This one is not - DFU has no HUD of this shape
+  // to scale - so it belongs in the port's own prefs, beside the other
+  // things only this port has.
+  hudScale: 1,
   // ENHANCED IS THE DEFAULT (Mac, 2026-08-25). Read it through
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
   skin: 'enhanced',
-  // R7: ROADS ON BY DEFAULT (Mac, this session). R6 shipped them off
-  // on the argument that a twenty-six second bake should not be
-  // charged to someone who never asked - and the call here is that a
-  // player arriving at the ENHANCED skin has asked, because that is
-  // what the skin is. An enhancement nobody finds is not shipped.
-  //
-  // What that argument owes the player is the twenty-six seconds being
-  // VISIBLE and PAID ONCE: the world host reports every bake phase on
-  // the boot status line, the artifact is cached from then on, and the
-  // Enhanced screen turns it off in one press.
-  roads: true,
   // RA1 (Mac, 2026-08-28): THE ENHANCED SKY GETS ITS SWITCH. ES1 has
   // been the enhanced skin's default sky since it landed, but the
   // Enhanced pane still listed it "not built" with no control - a
@@ -35,14 +34,31 @@ export const PREF_DEFAULTS = Object.freeze({
   // own painted SKY*.DAT panorama under the same enhanced skin.
   // ?sky=classic stays the URL door and forces the panorama either
   // way (probe pins ride it).
-  proceduralSky: true,
+  // EE1: ENHANCED ENVIRONMENTS. The outdoors as ONE switch - the sky,
+  // the ground's sampling and surfaces, the cloud shadows, the grass,
+  // the weather and the surface field - because they are one system:
+  // the sky lights the ground, the ground holds the weather's water,
+  // the grass stands in what the field says is there. Separate toggles
+  // would let a player build a state none of them was written for.
+  //
+  // It REPLACES proceduralSky, whose job it now contains. The old key
+  // stays ONLY so the migration below can read it: a player who turned
+  // the sky off gets environments off, because that is the choice they
+  // made about the only part of this that existed when they made it.
+  enhancedEnvironments: true,
+  // ENHANCED AI (2026-09-02, Mac): the navmesh-driven enemy motor. OFF
+  // by default and it stays off by default: DFU's classic motor is the
+  // 1:1 law, and this is the port's departure from it, opt-in exactly
+  // as EnhancedCombatAI is DFU's own opt-in departure from classic.
+  enhancedAI: false,
+  proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true
 });
 
 let _prefs = null;
-const storage = () => { try { return globalThis.localStorage ?? null; } catch { return null; } };
+const storage = () => appStorage();   // DA1: localStorage in a browser, the shell's file store in the app
 
 export function loadPrefs() {
   _prefs = { ...PREF_DEFAULTS, open: {} };
@@ -50,7 +66,16 @@ export function loadPrefs() {
     const raw = storage()?.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p && typeof p === 'object') _prefs = { ...PREF_DEFAULTS, ...p, open: { ...(p.open ?? {}) } };
+      if (p && typeof p === 'object') {
+        _prefs = { ...PREF_DEFAULTS, ...p, open: { ...(p.open ?? {}) } };
+        // EE1: a shelf written before Enhanced Environments existed
+        // carries only the old sky answer. It becomes the new key's,
+        // ONCE - only when the new key is absent - so a player who has
+        // since chosen explicitly is never overwritten.
+        if (p.enhancedEnvironments === undefined && p.proceduralSky !== undefined) {
+          _prefs.enhancedEnvironments = !!p.proceduralSky;
+        }
+      }
     }
   } catch (e) {
     console.warn('[uiPrefs] stored screen preferences unreadable; using defaults', e);

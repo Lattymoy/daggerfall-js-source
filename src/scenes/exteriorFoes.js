@@ -14,25 +14,27 @@
 // 13 fixed-list casters do not cast up here yet.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
-import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
+import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
-import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
+import { applySpell, maxFatigue, entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // X3: self-casts land through the effect spine   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
 import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT, fillEmptyTrap } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
-import { MobileUnit } from '../characters/mobileUnit.js';
+import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // A5: the Seducer transform pair + its trigger
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
 import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
-import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
+import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -68,9 +70,37 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // range) passes nothing and its corpses are never collected, which
   // is what DFU does with a pixel that stays in range.
   currentPixelKey = () => null,
+  // ROAD-B: GameManager.MakeEnemiesHostile over the HOST's whole
+  // area, not this pool alone - DaggerfallEntityBehaviour.cs:255-258
+  // fires it when a NON-hostile foe is struck, and DFU's
+  // ActiveGameObjectDatabase is one database for the scene. A host
+  // that owns several pools (the watch and the encounters share a
+  // street) hands in the union; absent, striking a passive foe turns
+  // only that foe, which is the pre-wiring shape.
+  makeAreaHostile = null,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
+  // AUDIT 39 / THE FOUR HOSTS RULE: an IN-FLIGHT spawn's feet. spawnFoe
+  // crosses two real awaits (the career file, a cold texture archive)
+  // before its record joins `foes`, and offsetAll can only shift what
+  // the pool already holds - so a recenter inside that window left the
+  // new foe a map pixel (819.2) from the encounter. The position rides
+  // here until the record exists; `feet` is repointed at the AI's own
+  // array as soon as there is one, because EnemyAI COPIES the position
+  // it is handed.
+  const spawning = [];    // { feet }
+  // AUDIT-39r: THE SWEEP'S EPOCH. clearLive below is
+  // CleanupUntrackedObjects, but emptying an array cannot reach work
+  // that is still crossing an await - a spawn or a corpse mint in
+  // flight when a fast travel or a quickload sweeps resolves
+  // AFTERWARDS and pushes a record built for the world that just went
+  // away, at its departure coordinates. DFU instantiates enemies and
+  // corpse markers synchronously, so it has no such window and needs
+  // no token; the port does. Everything that lands late compares the
+  // epoch it started in against this and hands its GL objects back
+  // instead of joining the new world.
+  let epoch = 0;
 
   const activeCount = () => foes.filter((f) => !f.dead).length;
 
@@ -87,6 +117,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
+    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands
+    spawning.push(pending);
+    const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
       const isClass = mobileType >= 128;
       const career = isClass
@@ -108,17 +141,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // injectable roll), humans only; monsters read the male texture.
       const gender = MobileUnit.resolveGender(forcedGender ?? 'unspecified', basics);
       const behaviour = basics.behaviour ?? 'General';
-      const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw ?? rolls() * Math.PI * 2, {
-        liveSpeed: entity.liveSpeed,
+      const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
         hasBowAttack: hasBowAttack(basics),
-        canCastRangedSpell: () => hasRangedSpell(entity),
+        canCastRangedSpell: () => caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster stood below
+        hasMagickaToCast: () => hasMagickaToCast(entity),   // GetDestination's own term (:539-540)
       });
-      const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });
+      pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // X2-slice: the arrow seam exists (the host's onArrow) - bow
       // foes read the SAME ranged-flags law the dungeon build does,
       // and the C-slice 6..51.2 band drives them above ground.
@@ -132,6 +167,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
       const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the world it was built
+      // for is gone, and pushing it now would land a departure-point
+      // foe in the destination pixel beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; the caller already reads null as "no foe stood".
+      if (gen !== epoch) return null;
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
@@ -143,9 +184,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // reference does). The two quest halves are LIVE GETTERS, never
       // frozen booleans: bindQuestFoeHost runs after this line, and
       // ChangeFoeInfighting flips IsAttackableByAI mid-quest.
+      // A5 adds `concealment`: the closure the illusion gate has read
+      // since MT-i and nothing ever built. BlockedByIllusionEffect
+      // (EnemySenses.cs:658-683) reads `target.Entity.IsInvisible /
+      // IsBlending / IsAShade` for WHATEVER it is looking at - the
+      // player or another enemy - and ConcealmentEffect writes the
+      // flag entity-blind (:63), so a Shadow cast on a rat hides that
+      // rat from the guard hunting it.
       Object.defineProperties(f, {
         isQuestFoe: { get: () => !!f.questBehaviour, enumerable: false },
         questAttackable: { get: () => !!f.questBehaviour?.isAttackableByAI, enumerable: false },
+        concealment: { value: () => concealmentFlags(f.entity), enumerable: false },
       });
       // MT-ii: the cross-pool damage door (the guard pool's twin) - a
       // striker in the OTHER pool reaches this foe's death chain
@@ -158,6 +207,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // struck. (The audit lane's F041 pin caught exactly this on the
       // merge - the two laws meet here.)
       f.hurtFromFoe = (dmg, dir) => damageFoe(f, dmg, null, dir ?? null, { fromPlayer: false });
+      // A5 - SetupDemoEnemy.cs:191-195: "Add special behaviour for
+      // Daedra Seducer mobiles", gated on the mobile ID and nothing
+      // else. RandomEncounters lists the seducer in five outdoor
+      // tables, so this pool stands them too.
+      if (mobileType === MOBILE_DAEDRA_SEDUCER) f.seducer = new SeducerTransformBehaviour(mobile, entity);
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
@@ -166,6 +220,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     } catch (err) {
       console.error(`[encounter] mobileType ${mobileType} failed to spawn:`, err?.message ?? err);
       return null;
+    } finally {
+      // The hand-off is synchronous with `foes.push`, so there is no
+      // frame in which the spawn is in neither list.
+      const i = spawning.indexOf(pending);
+      if (i >= 0) spawning.splice(i, 1);
     }
   }
 
@@ -181,7 +240,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.dead = true;
       f.questBehaviour?.notifyDestroyed();
     },
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    // AUDIT 58: the SetHealth(0) door, not a damage source - like
+    // hurtPlayer's bypassShield it must not be mitigated.
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
     spellsByIndex: () => spellsByIndex?.(),
     foeSinks: (f) => foeSinks(f),
     rolls,
@@ -208,7 +269,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      playCastSound: (element, from) => audio?.play3dId?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       explodeAt: magicHooks?.explodeAt,
       fireMissile: magicHooks?.fireMissile,
@@ -238,12 +300,46 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  reassign), and the player arm additionally reverts a struck
    *  former ally to its species (:204-213). resetAllyTeamOnPlayerAttack
    *  raises IsHostile itself, so a headless stub ai still stands up. */
-  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
+  /** AUDIT 58: HandleAttackFromSource's PLAYER ARM, lifted out of the
+   *  damage door - DFU runs it for every swing that CONNECTED, damage
+   *  or none. WeaponManager.WeaponDamage's `damage > 0` fork closes at
+   *  :615 and :627/:630 (`DecreaseHealth(damage)` then
+   *  `HandleAttackFromSource(PlayerEntityBehaviour)`) run
+   *  unconditionally after it, so a swing that lost the to-hit roll
+   *  still wakes a pacified foe and, through :255-258, its whole area.
+   *  This pool skipped the door entirely at zero damage. */
+  function handleAttackFromPlayer(f, playerFeet = null) {
+    if (!f?.ai) return;
+    // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 sits BEFORE the
+    // call below and is a different law - the whole area turns, this
+    // one foe additionally learns where the blow came from. The
+    // `!isHostile` read must precede the walk, which flips this foe
+    // too.
+    if (!f.ai.isHostile) makeAreaHostile?.();
+    f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
+    resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+  }
+
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
+    markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (fromPlayer && f.ai) {
-      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
-      resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+      handleAttackFromPlayer(f, playerFeet);
     }
-    f.entity.health -= damage;
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);
+    f.entity.health -= healthDamage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
@@ -278,14 +374,25 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
       // pixel is read at the death, not when the texture lands.
       const _corpsePixel = currentPixelKey();
+      const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
-        corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
+        // A5 - EnemyDeath.cs:86-92 reads `mobile.Enemy.CorpseTexture`,
+        // the per-mobile STRUCT COPY: SetSpecialTransformationCompleted
+        // swaps the seducer's unwinged corpse (400/6) for the winged
+        // one (400/5), which the static row cannot carry.
+        corpseTexture: f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture,
         feet: f.ai.feet,
         fallbackSize: scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0)),
         stillDead: () => f.dead,
       }).then((c) => {
         if (!c) return;
+        // AUDIT-39r: the sweep took this pool's world while the marker
+        // was still loading its art. Its pixelKey would be the
+        // departure pixel, which the teleport has already torn down -
+        // so collectPixel could never reach the batch again and it
+        // would draw at the departure position for the session.
+        if (_corpseGen !== epoch) { renderer.destroyBillboardBatch(c.batch); return; }
         f.corpseMarker = c;   // the loot seam reads the GROUND position from here
         // TrackLooseObject's stamp: the streamer's pixel at the death,
         // not the corpse's own position.
@@ -362,7 +469,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // (:247-260) drops CanAct, and EnemyAttack returns at the top of both
       // its Update (:91-94) and its FixedUpdate (:55-57).
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
-      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);
+      applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
+      // ROAD-U: MobileUnit.OneShotPauseActionsWhilePlaying, read where
+      // DFU's components read it - the transforming Seducer takes no
+      // action at all (EnemyMotor.cs:464-466 + :267-269,
+      // EnemyAttack.cs:59-61), not merely no anim intent.
+      const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
+      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);
       // MT-ii: the foe now aims at whatever it SELECTED - the player
       // (the only candidate in an unarmed host) or another enemy.
       const _tgt = _targetFeet(f, playerFeet);
@@ -412,7 +525,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // actively targeting player will continue to raise alert").
       if (isPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt);   // MT-ii: at the SELECTED target (:199-209)
+      if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-ii: at the SELECTED target (:199-209)
       // X3-slice: the S16 casting decision rides beside the attack
       // machine, the dungeon's exact shape - the decision casts
       // INSTANTLY through the ONE shared executor.
@@ -425,7 +538,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // target's live effects for its school picks).
       const _castTargetEntity = isPlayerTarget(f.ai.target) || !f.ai._armedTargeting
         ? playerEntity : (f.ai.target?.entity ?? playerEntity);
-      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
+      // ROAD-U: DoRangedAttack's spell branch and DoTouchSpell both sit
+      // BELOW TakeAction's pause return (EnemyMotor.cs:466), so a
+      // transforming Seducer casts nothing either.
+      if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity);
         if (dec) {
           castSpellFrom(f, dec.spell, _tgt);
@@ -449,6 +565,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
       if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
+      // A5 - DaedraSeducerMobileBehaviour.Update (the dungeon pool's
+      // law, one spelling): a MonoBehaviour Update that runs BEFORE
+      // the anim step consumes the state it raises, keyed on
+      // `enemySenses.Target == PlayerEntityBehaviour`.
+      f.seducer?.update(dt, isPlayerTarget(f.ai.target) || !f.ai._armedTargeting);
+      // EnemyMotor.CanFly (:837-845) reads mobile.Enemy.Behaviour LIVE
+      // - "This can change in the case of a transformed Seducer".
+      if (f.seducer) f.ai.flies = f.mobile.basics.behaviour === 'Flying' || f.mobile.basics.behaviour === 'Spectral';
       f._mout = f.mobile.update(dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,
@@ -473,7 +597,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           ? f.ai.target : null;
         if (_foeTarget) {
           const fdx = _tgt[0] - f.ai.feet[0], fdz = _tgt[2] - f.ai.feet[2];
-          const fwpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+          // EnemyAttack.cs:191-194, the step before the reach fork: a
+          // metal-immune FOE target nulls the weapon and the striker
+          // falls through to its hand-to-hand attack.
+          const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(f.entity.weapon, _foeTarget.entity), ENEMY_BASICS[f.mobileType]);
           const ffwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
           if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
             applyDamageToNonPlayer(f, _foeTarget, {
@@ -486,12 +613,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
               // world.js already uses for spell sinks).
               dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, ffwd) : damageFoe(t, d, null, ffwd)),
               audio, hitEffects,
+              // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
+              // a poisoned foe blade doses the foe it strikes. Without
+              // the hook the formula still cleared the dose.
+              onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+              say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
             });
           } else {
             audio?.play3d?.(enemyMissSound(fwpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const fv = enemyAttackVoice(f);   // :216-226 fires whatever the target
-          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + fv.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
           continue;   // the player arm below is the ELSE
         }
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
@@ -540,7 +672,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // C2-slice (combat-17): the 20% enemy-class attack voice at
         // the damage frame, whatever the outcome.
         const v = enemyAttackVoice(f);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
       // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
       // returns at the top while paralysed (:91-94), so MeleeDamage and
@@ -581,7 +713,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (this path is melee-only, never a bow).
     const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
@@ -599,7 +731,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
         damageFoe(foe, damage, playerFeet, lookDir);
       } else {
         const snd = zeroDamageHitSound({
@@ -608,6 +740,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
+        // AUDIT 58: WeaponManager.cs:630 runs after the damage fork
+        // closes (:615) - a connecting swing enrages what it touched
+        // even at zero damage. Only the aggro half: :627's
+        // DecreaseHealth(0) is a no-op and the knockback/hurt sit
+        // inside DFU's own `damage > 0` arm.
+        handleAttackFromPlayer(foe, playerFeet);
       }
     }
     return any;
@@ -639,6 +777,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const out = [];
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
+      // (:36-43, :56-62): "Handles magical concealment for entities
+      // other than player". A non-player entity whose
+      // IsMagicallyConcealed is true has its renderer DISABLED - any
+      // of the six flags, normal or true power. The entity keeps
+      // acting, it simply is not drawn. (The player's own concealment
+      // has no visual: DFU never disables the first-person view.)
+      if (isMagicallyConcealed(f.entity)) continue;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
@@ -692,6 +838,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    * freed GL objects.
    */
   function destroy() {
+    // AUDIT-39r: the epoch turns FIRST, so anything already in flight
+    // (a spawn between its two awaits, a corpse marker waiting on its
+    // texture) resolves into a world it can see it does not belong to.
+    epoch++;
     for (const f of foes) releaseFoeBatch(f);
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;
@@ -704,6 +854,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (!f.ai) continue;
       f.ai.feet[0] += offset[0]; f.ai.feet[1] += offset[1]; f.ai.feet[2] += offset[2];
     }
+    // AUDIT 39: the spawns still crossing their awaits move too.
+    for (const s of spawning) { s.feet[0] += offset[0]; s.feet[1] += offset[1]; s.feet[2] += offset[2]; }
     for (const c of corpseBatches) {
       c.pos[0] += offset[0]; c.pos[1] += offset[1]; c.pos[2] += offset[2];
       renderer.destroyBatch(c.batch);
@@ -775,12 +927,25 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       weapon: m.weapon, direction: dir, bowAttack: true, rolls, calculateAttackDamage,
       dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, dir) : damageFoe(t, d, null, dir)),
       audio, hitEffects,
+      // AUDIT 58: the poisoned SHAFT doses its foe mark too - the
+      // clear at FormulaHelper.cs:695 fires with or without a hook.
+      onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+      say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
     });
     if (target.entity?.items) {
       addItem(target.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
     }
   }
 
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
+    /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
+     *  :1624-1635), which a teleport reaches too through
+     *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -
+     *  loose enemies survive neither a load nor a fast travel.
+     *  collectPixel frees only CORPSES, so a quickload used to spawn
+     *  the save's copies on top of the live fight. The teardown above
+     *  is exactly that destroy and it is idempotent and reusable; this
+     *  is the name the world host's teleport asks for it by. */
+    clearLive: destroy,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe };
 }

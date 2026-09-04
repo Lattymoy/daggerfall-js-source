@@ -30,6 +30,10 @@ test('spectral: the V^1.9 emission lerp + red eyes, same flip walk', () => {
   // body: V = 128/255; t = V^1.9; channel = round(0 + 128*t)
   const t = Math.pow(128 / 255, 1.9);
   const expect = Math.round(128 * t);
-  assert.deepEqual([...em.colors.slice(4, 8)], [expect, expect, expect, 255]);
+  // AUDIT 39 moved this pin off a flat 255: Color.Lerp interpolates alpha too,
+  // from otherEmission's opaque black toward the albedo's 180.
+  const expectA = Math.round(255 + (180 - 255) * t);
+  assert.deepEqual([...em.colors.slice(4, 8)], [expect, expect, expect, expectA]);
+  assert.ok(expectA < 255 && expectA > 180);
   assert.ok(expect > 0 && expect < 128);   // lerped toward black, not clamped out
 });

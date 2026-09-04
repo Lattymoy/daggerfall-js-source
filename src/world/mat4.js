@@ -14,9 +14,25 @@ export function identity() {
   ]);
 }
 
+/** EV2: the billboard up axis, ONE array for the whole program. It
+ *  was `new Float32Array([0, 1, 0])` at twenty-two call sites, most
+ *  of them per-frame in draw loops. Read-only by convention - every
+ *  consumer treats an up axis as a constant. */
+export const UP_Y = new Float32Array([0, 1, 0]);
+
+/** EV2: multiply's scratch, module-level. The old body allocated a
+ *  fresh Float32Array(16) on EVERY call - even with `out` supplied -
+ *  and multiply runs once per model per frame in the streaming host,
+ *  so the render loop minted ~10^3 typed arrays a frame and the GC
+ *  spikes rode the judder. multiply is never re-entrant (no caller
+ *  calls it from inside it), so one scratch serves; it still exists
+ *  at all because `out` may ALIAS a or b, and writing out in place
+ *  would corrupt the inputs mid-product. */
+const _mulScratch = new Float32Array(16);
+
 /** out = a * b (apply b first, then a). May alias out with a or b. */
 export function multiply(a, b, out = new Float32Array(16)) {
-  const r = new Float32Array(16);
+  const r = _mulScratch;
   for (let col = 0; col < 4; col++) {
     for (let row = 0; row < 4; row++) {
       let sum = 0;
@@ -58,6 +74,21 @@ export function trs(tx, ty, tz, rxDeg, ryDeg, rzDeg, sx = 1, sy = 1, sz = 1) {
     r01 * sy, r11 * sy, r21 * sy, 0,
     r02 * sz, r12 * sz, r22 * sz, 0,
     tx, ty, tz, 1,
+  ]);
+}
+
+/** Rotation matrix (column-major, no translation) from a unit
+ *  quaternion [x, y, z, w] - Unity's component order, the standard
+ *  formula, so a prefab's m_LocalRotation is usable verbatim. */
+export function quatToMat4([x, y, z, w]) {
+  const xx = x * x, yy = y * y, zz = z * z;
+  const xy = x * y, xz = x * z, yz = y * z, wx = w * x, wy = w * y, wz = w * z;
+  // prettier-ignore
+  return new Float32Array([
+    1 - 2 * (yy + zz), 2 * (xy + wz),     2 * (xz - wy),     0,
+    2 * (xy - wz),     1 - 2 * (xx + zz), 2 * (yz + wx),     0,
+    2 * (xz + wy),     2 * (yz - wx),     1 - 2 * (xx + yy), 0,
+    0, 0, 0, 1,
   ]);
 }
 

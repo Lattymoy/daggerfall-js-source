@@ -48,10 +48,13 @@ test('T4: the discovery store - the record lands whole, once, per location', () 
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 66051), true);
   // The DiscoveredBuilding columns this port has sources for
   // (PlayerGPS.cs:92-103 minus the quest extras; R1 grew
-  // lastLockpickAttempt, the exterior anti-grind record).
+  // lastLockpickAttempt, the exterior anti-grind record; ROAD-C c2/S10
+  // grew customUserDisplayName, the town map's rename - PlayerGPS.cs:97
+  // - which is born EMPTY, never undefined, so the plate's
+  // `custom || name` fallback can never read a hole).
   assert.deepEqual(discoveredBuildings('17:Daggerfall'), [{
     buildingKey: 66051, displayName: 'The Odd Blades', factionId: 0, quality: 12, buildingType: 9,
-    lastLockpickAttempt: 0,
+    lastLockpickAttempt: 0, customUserDisplayName: '',
   }]);
   // Already discovered is a no-op (:926-928 - the override arm pends quests).
   assert.equal(discoverBuilding('17:Daggerfall', { ...shelf, name: 'Renamed' }), false);
@@ -110,6 +113,13 @@ test('T4: the townTalk seam is wired - the lazy %hnt gate, the mark, the entity 
   assert.match(src, /if \(h\.reveal\) discoverBuilding\(/, 'the %loc mark side effect fires only on the reveal arm');
   assert.match(src, /honorific: honorificOf\(playerEntity\.gender\)/, '%hnr reads the entity');
   assert.match(src, /race: raceDisplayName\(playerEntity\.race\)/, '%ra reads the entity');
+  // ...and so does the QUEST/talk macro table's one host mount. %ra is
+  // MacroHelper.PlayerRace (:942-945) = BirthRaceTemplate.Name, and
+  // playerEntity.race is the CamelCase KEY, so the seam owes
+  // raceDisplayName or every elf prints "DarkElf".
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /playerRaceName: \(\) => \(playerEntity\.race \? raceDisplayName\(playerEntity\.race\) : null\)/,
+    "the macro table's playerRaceName mount is RaceTemplate.Name, not the key");
 });
 
 test('T4: TEXT.RSC grounds the record ids - 7332 marks the map, 7333 gives directions', { skip: skipReal }, () => {

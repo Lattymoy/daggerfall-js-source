@@ -155,15 +155,39 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
 // clears without setting one.
 // ---------------------------------------------------------------
 test('audit26 F034: renderCharacterSprite borrows the clear colour and returns it', () => {
+  // EV6 moved the MECHANISM, not the law: the restore now reads the
+  // renderer's own _clearColor shadow (kept true by the constructor
+  // and every borrower) instead of a synchronous
+  // gl.getParameter(COLOR_CLEAR_VALUE) round-trip per sprite frame -
+  // the query class EV2 killed in precipitation. The borrow-and-return
+  // shape itself is unchanged: sprite clear set, then restored after
+  // the draw. The clear is also SCISSORED to the sprite's own corner.
   const s = src('src/render/renderer.js');
-  const fn = s.slice(s.indexOf('renderCharacterSprite(mesh'), s.indexOf('renderCharacterSprite(mesh') + 1600);
-  const save = fn.indexOf('const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);');
+  const fn = s.slice(s.indexOf('renderCharacterSprite(mesh'), s.indexOf('renderCharacterSpriteImage(mesh'));
   const set = fn.indexOf('gl.clearColor(0, 0, 0, 0);');
-  const restore = fn.indexOf('gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);');
-  assert.ok(save > 0 && set > save, 'the save comes BEFORE the sprite clear');
-  assert.ok(restore > set, 'and the restore after the draw');
-  // the same idiom the automap preview already used - one house style
-  assert.match(src('src/scenes/worldModes.js'), /const prevClear = gl\.getParameter\(gl\.COLOR_CLEAR_VALUE\);/);
+  const restore = fn.indexOf('gl.clearColor(cc[0], cc[1], cc[2], cc[3]);');
+  assert.ok(set > 0, 'the sprite clear is set');
+  assert.ok(restore > set && fn.indexOf('const cc = this._clearColor;') > set,
+    'and restored from the shadow after the draw');
+  assert.equal(/gl\.getParameter\(/.test(fn), false, 'no synchronous driver query survives in the pass');
+  assert.ok(fn.indexOf('gl.scissor(0, 0, pw, ph);') > 0 && fn.indexOf('gl.scissor(0, 0, pw, ph);') < set + 200,
+    'the clear is scissored to the sprite corner, not the whole RT');
+  // the shadow is born beside the one constructor clearColor it mirrors
+  assert.match(s, /gl\.clearColor\(0\.53, 0\.7, 0\.92, 1\.0\);[^]{0,400}this\._clearColor = new Float32Array\(\[0\.53, 0\.7, 0\.92, 1\.0\]\);/,
+    'the shadow and the real clear colour are set together');
+  // PIN MOVED, ROAD-C c2/S2. The bank model preview used to keep its
+  // OWN borrow idiom out in worldModes.js, and it borrowed with a
+  // synchronous gl.getParameter(COLOR_CLEAR_VALUE) every frame -
+  // exactly the driver-query class EV2 killed in precipitation, done
+  // outside the renderer where the shadow was "not visible". It now
+  // rides renderer.panelFrame, which reads the shadow like every
+  // other borrower and returns it in a finally. The law this pin
+  // guards - a borrowed clear colour is always returned - is now
+  // pinned as BEHAVIOUR in test/roadc_panelframe.test.js rather than
+  // as the text of a second copy.
+  assert.equal(/getParameter\(gl\.COLOR_CLEAR_VALUE\)/.test(src('src/scenes/worldModes.js')), false,
+    'the second copy of the borrow idiom is gone - it goes through the renderer now');
+  assert.match(src('src/scenes/worldModes.js'), /renderer\.panelFrame\(\{/);
   // beginFrame still sets NO colour, which is why the restore is the
   // fix rather than a defensive set there.
   const begin = s.slice(s.indexOf('beginFrame('), s.indexOf('beginFrame(') + 900);

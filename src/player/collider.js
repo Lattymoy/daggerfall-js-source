@@ -133,8 +133,8 @@ export class Collider {
    * Walks XZ grid cells with a 2D DDA per bucket (Moller-Trumbore per
    * triangle, front and back faces).
    */
-  raycast(origin, dir, maxDist) {
-    return this.raycastHit(origin, dir, maxDist).dist;
+  raycast(origin, dir, maxDist, filter = null) {
+    return this.raycastHit(origin, dir, maxDist, filter).dist;
   }
 
   /**
@@ -143,12 +143,25 @@ export class Collider {
    * which surface blocked a sight line (EnemySenses.CanSeeTarget
    * records an action door the ray strikes first, :912-918) - action
    * doors are their own buckets keyed by the action object.
+   *
+   * ROAD-C c2/S1: an OPTIONAL bucket filter - `{ only, skip }`, each
+   * an array/Set of bucket keys - lets a caller narrow the walk
+   * without a second collider. DFU's automap scan excludes the player
+   * collider by name (Automap.cs:1053) and the port's reveal walk
+   * wants the same power without paying for a duplicate dungeon-sized
+   * bucket (which raycastHit AND _resolveSphere would then walk for
+   * movement, senses, activation and arrows). Strictly additive: with
+   * no filter the walk is byte-for-byte what it was.
    */
-  raycastHit(origin, dir, maxDist) {
+  raycastHit(origin, dir, maxDist, filter = null) {
     let best = Infinity;
     let bestKey = null;
     let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
+    const only = filter?.only ? new Set(filter.only) : null;
+    const skip = filter?.skip ? new Set(filter.skip) : null;
     for (const [bkey, bucket] of this._buckets) {
+      if (only && !only.has(bkey)) continue;
+      if (skip && skip.has(bkey)) continue;
       const t = bucket.t();
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];
@@ -311,6 +324,22 @@ export class Collider {
     return { dist: Number.isFinite(best) ? Math.max(0, best - radius) : Infinity, key: bestKey };
   }
 
+  /**
+   * A6 - `Physics.SphereCast`, the contract PlayerMoveScanner is
+   * written against (FindStep :164, FindHeadHit :174). A sphere cast
+   * IS a capsule cast whose axis has zero length, so this is
+   * capsuleCast with p1 == p2 and one axis sample - the same ray
+   * bundle, the same documented approximation, and the same
+   * Unity-faithful `dist`: how far the sphere's CENTRE travels before
+   * the leading cap touches, Infinity on a clear sweep.
+   *
+   * `key` is the bucket that produced the hit, which is what the
+   * scanner's static-geometry and action lookups ask of it.
+   */
+  sphereCast(origin, radius, dir, maxDist) {
+    return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
+  }
+
   _resolveSphere(center, radius, out) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
@@ -398,18 +427,27 @@ export class Collider {
     // the top. height varies with the player's stance (P12 crouch:
     // the PlayerHeightChanger controller heights) - passed per call
     // because foes share this collider instance.
+    // A6: the AXIS can be zero but never negative. Unity clamps a
+    // CharacterController whose height falls below 2 * radius to a
+    // SPHERE of that radius, and PlayerHeightChanger has one stance
+    // that reaches there - controllerSwimHeight 0.30 against radius
+    // 0.35 (:57). Left signed, the "upper" sphere sank 0.40 BELOW the
+    // lower one and the sunk swimmer probed the world under his own
+    // feet. Every other stance (crouch 0.9, stand 1.8, ride 2.6) is
+    // clear of the clamp and is unaffected to the bit.
     const entryY = feet[1];
+    const axis = Math.max(0, height - 2 * CAPSULE_RADIUS);
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
-    const high = [feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]];
+    const high = [feet[0], feet[1] + CAPSULE_RADIUS + axis, feet[2]];
     for (let iter = 0; iter < 3; iter++) {
       this._resolveSphere(low, CAPSULE_RADIUS, out);
       high[0] = low[0];
       high[2] = low[2];
-      high[1] = low[1] + (height - 2 * CAPSULE_RADIUS);
+      high[1] = low[1] + axis;
       this._resolveSphere(high, CAPSULE_RADIUS, out);
       low[0] = high[0];
       low[2] = high[2];
-      low[1] = high[1] - (height - 2 * CAPSULE_RADIUS);
+      low[1] = high[1] - axis;
     }
     feet[0] = low[0];
     feet[1] = low[1] - CAPSULE_RADIUS;
@@ -425,7 +463,7 @@ export class Collider {
     // stairwell ceilings (and killed every jump from the squeezed
     // stand at one frame).
     if (out.hitCeiling && feet[1] > entryY) {
-      const headY = feet[1] + height - CAPSULE_RADIUS;
+      const headY = feet[1] + CAPSULE_RADIUS + axis;   // A6: the clamped axis, same sphere the loop above used
       const probe = [feet[0], headY, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
       this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);

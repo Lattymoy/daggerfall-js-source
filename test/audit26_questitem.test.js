@@ -65,11 +65,20 @@ test('F070: the trade window\'s Repair arm applies the SAME queue law as the liv
   // stretch and the never-decrease clamp real laws rather than dead
   // arms of a one-item list.
   const wm = src('scenes/worldModes.js');
+  // The KEYED flow's call: one new item on top of every job at this shop.
   const calls = wm.match(/updateRepairTimes\(\[\.\.\.repairJobsAt\(playerEntity, bk, now\), it\], \{ commit: true, nowMinutes: now, buildingKey: bk \}\);/g) ?? [];
-  assert.equal(calls.length, 2, 'the keyed choice flow AND the trade arm, identically');
+  assert.equal(calls.length, 1, 'the keyed choice flow still books against the whole queue');
+  // D7 - the NATIVE arm is ConfirmTrade's own shape (:1057-1074): the
+  // window's Repair remoteItems IS PlayerEntity.OtherItems, so `staged`
+  // ALREADY is remoteItemsFiltered and the commit branches ONCE, not
+  // once per item - one UpdateRepairTimes(true) over the whole lot.
+  assert.match(wm, /updateRepairTimes\(\[\.\.\.staged\], \{ commit: true, nowMinutes: now, buildingKey: bk \}\);/,
+    'the trade arm must stretch the whole queue in ONE pass');
   // the instant-repair branch mends in place and does NOT book a job
-  assert.ok(wm.includes("if (getBool('Controls', 'InstantRepairs')) { it.currentCondition = it.maxCondition; continue; }"),
-    'an instant repair skips the queue entirely');
+  assert.ok(wm.includes("it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)"),
+    'the keyed path: an instant repair skips the queue entirely');
+  assert.match(wm, /if \(getBool\('Controls', 'InstantRepairs'\)\) \{\n\s*for \(const it of staged\) it\.currentCondition = it\.maxCondition;\n\s*\} else \{/,
+    'the native path: InstantRepairs is ONE branch over the filtered list, not a per-item continue');
 });
 
 // ── F077 ──────────────────────────────────────────────────────────

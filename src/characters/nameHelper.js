@@ -22,8 +22,9 @@
 //     (the Ledger A engine-PRNG rule); every PART draw stays on
 //     DFRandom.rand(), verbatim order.
 
-import { rand } from '../formats/dfRandom.js';
+import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { RACES } from '../systems/races.js';
 import nameGen from './nameGen.json' with { type: 'json' };
 
 export const BANK_TYPES = Object.freeze({
@@ -49,6 +50,51 @@ const BANK_BY_RACE = Object.freeze({
   Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
+
+/** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
+ *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */
+const RACE_KEY_BY_ORDINAL = Object.freeze(Object.fromEntries(
+  Object.entries(RACES).map(([key, ordinal]) => [ordinal, key])));
+
+/** MacroHelper.GetRandomNameBank (MacroHelper.cs:303-308):
+ *
+ *      DFRandom.Seed = (uint)random.Next();
+ *      Races race = (Races)DFRandom.random_range_inclusive(1, 8);
+ *      return GetNameBank(race);
+ *
+ *  A bank drawn from a RANDOM one of the eight playable races - it
+ *  reads no PlayerGPS and no region at all, which is what separates it
+ *  from GetRandomFullName (:333-341, the region-bank form). The seed is
+ *  System.Random.Next(), i.e. a non-negative Int32, cast to uint.
+ *  Ledger A's engine-PRNG rule puts Math.random on that outer draw. */
+export function getRandomNameBank() {
+  srand((Math.random() * 0x80000000) >>> 0);
+  return getNameBank(RACE_KEY_BY_ORDINAL[randomRangeInclusive(1, 8)]);
+}
+
+/** MacroHelper.GetRandomFullName (MacroHelper.cs:333-341), the
+ *  REGION-bank form - the sibling of getRandomNameBank above, and the
+ *  one the talk MCP's %n fallback and RegentName's no-individual-ruler
+ *  arm both call:
+ *
+ *      NameHelper.BankTypes nameBankType = NameHelper.BankTypes.Breton;
+ *      if (GameManager.Instance.PlayerGPS.CurrentRegionIndex > -1)
+ *          nameBankType = (NameHelper.BankTypes)MapsFile.RegionRaces[...];
+ *      Genders gender = (DFRandom.random_range_inclusive(0, 1) == 1)
+ *          ? Genders.Female : Genders.Male;
+ *      return DaggerfallUnity.Instance.NameHelper.FullName(nameBankType, gender);
+ *
+ *  AUDIT 58: the GENDER IS A COIN FLIP on the DFRandom stream, and it
+ *  is drawn whichever way it lands. The talk MCP hardcoded Male, so
+ *  the fallback stranger was never a woman AND the unspent draw left
+ *  every later value on that stream shifted by one. `regionIndex` is
+ *  PlayerGPS.CurrentRegionIndex; getNameBankOfRegion carries the -1
+ *  guard verbatim. */
+export function getRandomFullName(regionIndex) {
+  const bank = getNameBankOfRegion(regionIndex ?? -1);
+  const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
+  return fullName(bank, gender);
+}
 
 /** Verbatim MapsFile.GetNameBankOfRegion. */
 export function getNameBankOfRegion(regionIndex) {

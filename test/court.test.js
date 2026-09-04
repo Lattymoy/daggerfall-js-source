@@ -91,7 +91,7 @@ test('court: the verbatim penalty math and the guilty plea halving', () => {
   // 1000. legalRep -2 -> 200 + 12 = 212 -> /40 = 5 units. All coins
   // odd -> fine 200, 0 days; player has 100 gold -> fine capped 100,
   // days += (200-100)/40 = 2.
-  const p = { health: 1, legalRep: { 17: -2 }, items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 100 }], skills: 30, stats: { personality: 50 } };
+  const p = { health: 1, legalRep: { 17: -2 }, goldPieces: 100, items: [], skills: 30, stats: { personality: 50 } };
   const court = startCourt(p, 17, CRIMES.Pickpocketing, { rolls: seq(0.99, 0.99), dfRand: () => 1 });
   assert.equal(court.punishmentType, 2, 'both FailedRolls at threshold <= 1 -> fine/prison');
   assert.equal(court.fine, 100);
@@ -103,7 +103,7 @@ test('court: the verbatim penalty math and the guilty plea halving', () => {
 });
 
 test('court: the not-guilty pleas - free, and the never-charged guilty-verdict quirk', () => {
-  const mk = () => ({ health: 1, legalRep: { 17: 0 }, items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 500 }], skills: 60, stats: { personality: 60 } });
+  const mk = () => ({ health: 1, legalRep: { 17: 0 }, goldPieces: 500, items: [], skills: 60, stats: { personality: 60 } });
   // chance = 0 + (60+60)/2 = 60, clamp ok. Roll 10 < 60 -> FREE.
   const p1 = mk();
   const c1 = startCourt(p1, 17, CRIMES.Pickpocketing, { rolls: seq(0.99, 0.99), dfRand: () => 1 });
@@ -143,7 +143,7 @@ test('court: the not-guilty pleas - free, and the never-charged guilty-verdict q
   // are three IDENTICAL lines in this port, and a mutation aimed at one of
   // them silently landed on the other and killed nothing. Pin both.
   const p5 = { health: 1, legalRep: { 17: 0 }, skills: 60, stats: { personality: 60 },
-    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 100000 }] };
+    goldPieces: 100000, items: [] };
   const c5 = { punishmentType: 2, fine: 0, daysInPrison: 0, crime: CRIMES.Murder, regionIndex: 17 };
   assert.equal(pleaGuilty(c5, p5).outcome, 'released');
   assert.equal(legalRepOf(p5, 17), 9, 'the zero-day guilty PLEA credits the sentence too');
@@ -303,8 +303,14 @@ test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', 
   const player = { legalRep: {} };
 
   // Push one faction off zero, then normalize and confirm it moved back.
-  // The faction side goes through changeReputation, so unlike the legal
-  // side it PROPAGATES - that asymmetry is DFU's, not an accident.
+  // AUDIT 58: this comment used to say the faction side PROPAGATES. It
+  // does not - PlayerEntity.cs:2239/:2241 calls the TWO-argument
+  // ChangeReputation and PersistentFactionData.cs:390 defaults propagate
+  // to false, which is what court.js:175-179 records AUDIT 23 as having
+  // corrected. The ONLY asymmetry is direct increment (legal) vs clamped
+  // ChangeReputation (faction); neither side fans out. The pin that can
+  // actually see the flag needs a hierarchy this one-record fixture does
+  // not have, and lives in test/audit58_pins.test.js.
   const id = [...store.dict.keys()][0];
   setReputation(store, id, 20);
   assert.equal(store.dict.get(id).rep, 20);
@@ -401,7 +407,7 @@ test('AUDIT 21 F9: all 76 penalty-table cells, not the 20 a pin happened to reac
 
 test('AUDIT 21 F11: the court clamps, at both ends', () => {
   const mk = (rep) => ({ health: 1, legalRep: { 17: rep }, skills: 60, stats: { personality: 60 },
-    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 100000 }] });
+    goldPieces: 100000, items: [] });
 
   // MUTATION D: Math.min(75, ...) -> Math.min(750, ...) survived, because no
   // pin ever used a legalRep beyond -150 where the cap actually bites.
@@ -460,7 +466,7 @@ test('AUDIT 21 F7: the Execution arm exists on both plea paths', () => {
   // constructs the court directly. An arm that is absent and an arm that is
   // WRONG read the same from the call site; only one is safe to build on.
   const p = () => ({ health: 1, legalRep: { 17: 0 }, skills: 60, stats: { personality: 60 },
-    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 500 }] });
+    goldPieces: 500, items: [] });
   const court = () => ({ punishmentType: 1, fine: 200, daysInPrison: 9, crime: CRIMES.Murder, regionIndex: 17 });
 
   const pg = p(), cg = court();

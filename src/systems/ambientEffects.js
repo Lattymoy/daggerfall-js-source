@@ -30,7 +30,11 @@
 // 100 adds AmbientWaterBubbles flat. doNotPlayInCastle gates the
 // dungeon one-shots (deps.inCastle - LIVE since AUDIT 21 music F3, fed from
 // the block the player stands in; it was read here and written by nobody);
-// the cemetery howl/bird layer pends locations (routed).
+// the cemetery howl/bird layer is WIRED in both exterior hosts
+// (AUDIT 58: world.js's rect edge and exterior.js's once-at-load arm -
+// DFU subscribes OnEnterLocationRect on every instance, :89). The two
+// interior hosts do not arm it and must not: the handler sets it only
+// when `!playerEnterExit.IsPlayerInside` (:518-529).
 
 import { audio as defaultAudio } from './audio.js';
 import { rand } from '../formats/dfRandom.js';
@@ -80,6 +84,13 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    /** WX2: the rain loop's gain, 0..1. Unity's AudioSource plays the
+     *  loop at its serialized volume, and so does this on the classic
+     *  path, which never sets it: 1. Under the enhanced environments the
+     *  host sets it to the front's intensity each frame, so the loop
+     *  fades with the drops instead of stepping on with the sim's word. */
+    this.rainGain = 1;
+    this._rainGainSet = null;
     // F089: the SECOND channel - a graveyard's howl/bird layer, armed
     // by the location rect and ticking its own counter beside the
     // shared one (:57-59, :154-162).
@@ -225,6 +236,13 @@ export class AmbientEffects {
     // loops start lazily for their presets (Update, verbatim)
     if ((this.preset === 'rain' || this.preset === 'storm') && !this._rainLoop) {
       this._rainLoop = this.engine.loop(AMBIENT_RAIN_LOOP, 1);
+      this._rainGainSet = null;   // WX2: a fresh source takes the gain below
+    }
+    // WX2: the gain follows the front. Written only when it moves, and
+    // only to a handle that carries the setter (a stub engine's may not).
+    if (this._rainLoop && this._rainGainSet !== this.rainGain) {
+      this._rainLoop.setVolume?.(this.rainGain);
+      this._rainGainSet = this.rainGain;
     }
     if (this.preset === 'clearNight' && !this._cricketsLoop) {
       this._cricketsLoop = this.engine.loop(AMBIENT_CRICKETS_LOOP, 1);

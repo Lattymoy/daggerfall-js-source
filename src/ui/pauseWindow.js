@@ -52,14 +52,34 @@
 // - the saveSettings LATCH (:73, :212-215): nothing persists until a
 //   control was actually touched, then the whole store saves on close.
 // - closing: CONTINUE (:276-280), or the same Escape that opened it
-//   (:186-190 - DFU keys on GetKeyUp; the port's overlay channel
-//   delivers keydowns, one edge earlier, recorded here).
+//   (:183-188 - DFU keys on GetKeyUp, and ROAD-E E1 built the key-up
+//   route the port lacked, so `keyup` below is that edge. DFU's bare
+//   GetKeyUp is safe only because GameManager.cs:515-518 OPENS the
+//   window on ActionComplete - the release - so the opening release is
+//   already spent; this port opens on the press, so the window arms on
+//   the press it receives and closes on THAT press's release, which is
+//   DaggerfallAutomapWindow.cs:703-713's deferral. The record that
+//   stood here - "the port's overlay channel delivers keydowns, one
+//   edge earlier" - is retired).
 //
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
 // settings home is the launcher menu, and the dropdown pends with the
-// settings arc. The version label draws the PORT's build tag (Ledger
-// A: VersionInfo strings are DFU's identity, not this port's).
+// settings arc.
+//
+// AN APPROVED DEPARTURE, and NOT part of the flag above: THE VERSION
+// LABEL DRAWS THE PORT'S BUILD TAG. DaggerfallPauseOptionsWindow.cs
+// :145-152 right-aligns a versionTextLabel reading
+// VersionInfo.DaggerfallUnityProductName/Status/Version - Daggerfall
+// Unity's own identity, which this port does not have and must not
+// claim - and this file draws `project-dagger <BUILD_TAG>` in the same
+// rect by the same law, so only the STRING is substituted. Ledger A
+// carries it as THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN
+// BUILD TAG, cited BY NAME because a Ledger line number rots; the row
+// is the title screen's branding row applied to the second and last
+// place DFU writes its own name into a game screen. AUDIT 58's records
+// lane wrote that row: the sentence here had claimed the approval for
+// a wave before anyone wrote it down, which is the AUDIT 17m shape.
 
 import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
 import { SaveWindow } from './saveWindow.js';   // SAV4: the slot window rides the pause seam
@@ -147,6 +167,18 @@ export class PauseOptionsWindow {
     this.top = null;              // 'exit' | 'note' - the stacked box
     this._noteRows = null;
     this._box = null;             // laid out at draw (the U23 shape)
+    // The automap windows' latch (automapWindow.js:560,
+    // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
+    // this window needs it for the reason those two do: DFU opens the
+    // pause screen on `ActionComplete(Actions.Escape)` -
+    // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
+    // (InputManager.cs:634-637) - so its opening release is spent before
+    // the window exists and :186's bare `GetKeyUp` is safe there. Every
+    // host here opens on the key DOWN (world.js:4105, exterior.js:2033,
+    // ui/input.js:297) and then routes that same key's release into the
+    // window it just mounted, so the release door closes only a window
+    // whose own press it saw.
+    this.isCloseWindowDeferred = false;
   }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
@@ -169,8 +201,33 @@ export class PauseOptionsWindow {
       return;
     }
     if (this.top) { this.top = null; return; }   // any key clears a note
-    // the same key that opened it closes it (:186-190)
-    if (code === 'Escape') { this._click(); this._closeWith(); }
+    // :703-708's arming edge - the press this window SAW, which the
+    // press that opened it never is.
+    if (code === 'Escape') this.isCloseWindowDeferred = true;
+  }
+
+  /** ROAD-E E1: THE TOGGLE CLOSE, on the edge DFU reads it from. :183-188
+   *  is `if (GetKeyUp(toggleClosedBinding) || GetBackButtonUp())
+   *  CloseWindow();` inside Update - a RELEASE. DFU can read it bare
+   *  because GameManager.cs:515-518 opens the window on the release
+   *  too; this port's hosts open on the press and hand the window that
+   *  same press's release, so the door carries the automap windows'
+   *  `isCloseWindowDeferred` and the Escape that OPENS this window
+   *  still cannot close it. The port had no key-up route when this
+   *  window was built and the site recorded the edge as "one edge
+   *  earlier"; E1 built the route, so the record is now the law. A note
+   *  or the exit box owns the keyboard while it stands, and they take
+   *  the press, exactly as `input` above has them. */
+  keyup(code) {
+    if (this.top) return;
+    if (code !== 'Escape') return;
+    // :709's `&& isCloseWindowDeferred` - the press that opened this
+    // window was consumed by the host and never reached here, so its
+    // release finds nothing armed and closes nothing.
+    if (!this.isCloseWindowDeferred) return;
+    this.isCloseWindowDeferred = false;
+    this._click();   // ContinueButton's sound, which this port's two close doors share
+    this._closeWith();
   }
 
   click(vx, vy) {
@@ -195,17 +252,27 @@ export class PauseOptionsWindow {
         this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
       } else if (this.hooks.openSave) {
         // SAV4: DFU's SAVE GAME opens the slot window (:302), with
-        // this window as its previous. Done-first dispatch (U24).
-        this._closeWith(); this.hooks.openSave();
+        // this window as its previous.
+        // ROAD-C C1: `previous` means it is a PUSH - this window stays
+        // open UNDER the save window and comes back when the save
+        // window pops, so the U24 done-first dispatch is exactly wrong
+        // here and only the replace fallback keeps it. The settings
+        // latch stays armed with it: saveSettings is OnPop's (:212-215)
+        // and a pushed-over window has not popped.
+        if (!this.hooks.saveLoadPushes) this._closeWith();
+        this.hooks.openSave();
       } else { this._closeWith(); this.hooks.quickSave?.(); }
       return true;
     }
     if (inRect(R.load, vx, vy)) {
-      this._click(); this._closeWith();
+      this._click();
       // SAV4: LOAD GAME opens the slot window too (:308); a host
-      // without the loadKey seam keeps the one-press quickload.
-      if (this.hooks.openLoad) this.hooks.openLoad();
-      else this.hooks.quickLoad?.();
+      // without the loadKey seam keeps the one-press quickload. C1: a
+      // push leaves this window standing, same as SAVE above.
+      if (this.hooks.openLoad) {
+        if (!this.hooks.saveLoadPushes) this._closeWith();
+        this.hooks.openLoad();
+      } else { this._closeWith(); this.hooks.quickLoad?.(); }
       return true;
     }
     const bx = vx - panelX(), by = vy - PAUSE_PANEL_Y;
@@ -279,7 +346,8 @@ export class PauseOptionsWindow {
     if (!effBool('GUI', 'LargeHUD')) tick(R.fullScreen);
     if (effBool('Controls', 'HeadBobbing')) tick(R.headBobbing);
     // the version line, right-aligned at the top (:146-152) - the
-    // PORT's identity, not DFU's VersionInfo strings (Ledger A)
+    // PORT's identity, not DFU's VersionInfo strings (Ledger A, THE
+    // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
     const ver = `project-dagger ${BUILD_TAG}`;
     shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2,
       { color: [0.75, 0.75, 0.75, 1] });
@@ -323,21 +391,62 @@ export function openClassicPauseFlow(show, hooks = {}) {
   // the controls grid uses, so all four hosts get it through the one
   // seam. A host without the saveAs/loadKey seams keeps the old
   // one-press quicksave arms (the two overlay-less hosts' posture).
+  //
+  // ROAD-C C1: DFU does not REPLACE the pause window with the save
+  // window - both buttons are `uiManager.PushWindow(... , this, ...)`
+  // (DaggerfallPauseOptionsWindow.cs:302, :308), the pause window
+  // riding underneath as `previous`, and the save window's Cancel is
+  // `CloseWindow()` (:526) which pops back onto it. The port has that
+  // depth now (ui/windowStack.js), so a host that hands over its push
+  // door gets the real shape; the rebuild-on-back below is what a host
+  // without one falls back to, and it is not the same thing - a
+  // rebuilt pause window re-reads the settings store and loses
+  // anything the open one was holding.
+  const push = hooks.pushWindow ?? null;
+  const mount = (win) => { if (push) push(win); else show(win); };
+  // ROAD-S: ...and the OTHER half of that push. The slot window has
+  // three exits, and only ONE of them is CloseWindow: Cancel (:526).
+  // SaveGame (:422) and LoadGame (:428) both end in
+  // `DaggerfallUI.Instance.PopToHUD()`, which is `while
+  // (uiManager.TopWindow != dfHUD) uiManager.PopWindow();`
+  // (DaggerfallUI.cs:829-836) - the WHOLE stack drains and play
+  // resumes. C1 gave the slot window depth and left all three exits as
+  // the single `done`, so a completed save or load popped back onto
+  // THIS window with the motor and the clock still held and the player
+  // had to dismiss the pause menu a second time.
+  //
+  // The hook below is the rest of that drain, and it is `_closeWith`
+  // rather than a bare `done` on purpose: PopToHUD pops this window
+  // too, so its OnPop settings latch (:212-215) fires on the way out
+  // exactly as DFU's does. Each host's own `if (overlay?.done)
+  // dropOverlay()` then takes both levels off its stack - one pop a
+  // frame, which is the port's done-drain law at every other close on
+  // these slots, applied one level deeper rather than four hosts
+  // learning a second word for it.
+  //
+  // Null under the replace fallback: there the pause window closed
+  // when the slot window opened, so `done` alone already lands on the
+  // HUD and a second close would only re-run the latch.
+  let win = null;
   const saveWindowHooks = (extra) => ({
     playerName: hooks.playerName,
-    onBack: () => openClassicPauseFlow(show, hooks),
+    // Under a real push the pop uncovers the pause window itself, so
+    // `done` is the whole of CloseWindow and onBack must NOT rebuild.
+    onBack: push ? null : () => openClassicPauseFlow(show, hooks),
+    popToHUD: push ? () => win?._closeWith() : null,
     ...extra,
   });
-  const win = new PauseOptionsWindow({
+  win = new PauseOptionsWindow({
     ...hooks,
+    saveLoadPushes: !!push,   // C1: does this host's door stack, or replace?
     openControls: controlsArtLoaded()
       ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
       : null,
     openSave: hooks.saveAs
-      ? () => show(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
+      ? () => mount(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
       : null,
     openLoad: hooks.loadKey
-      ? () => show(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
+      ? () => mount(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
       : null,
   });
   show(win);

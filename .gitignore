@@ -16,6 +16,9 @@ back-drafts/
 .claude/worktrees/
 node_modules
 
+# The desktop shell's packaged installers (electron-builder output).
+app/release/
+
 # tools/parity: reproducible from prepare.sh / run.sh. cs/api holds DFU's
 # own sources (kept EXTERNAL per Port-Doctrine); out/ reaches ~2.4GB.
 tools/parity/dfu/
@@ -49,3 +52,8 @@ firsthour-shots/
 # on two slices (git add -A stages nothing ignored and says nothing),
 # a parallel session had to force-add it after CI went red.
 !test/fixtures/mw/fixture.bsa
+
+# Python bytecode from the fixture generators.
+__pycache__/
+*.pyc
+prototype/

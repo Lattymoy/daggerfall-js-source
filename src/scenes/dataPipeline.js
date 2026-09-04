@@ -7,9 +7,12 @@
 import { TextureFile } from '../formats/textureFile.js';
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
+import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
+import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
 
 /** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
 export function createDataPipeline({ renderer, arch, palette }) {
@@ -83,11 +86,20 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // emission mask together from one remap, and replacing half of it
     // would leave a ghost lit by a texture it no longer wears.
     const swap = decodedTexture(archive, record, 0);
-    renderer.uploadTexture(archive, record, swap ?? t.getColor32(bitmap, 0));
+    const color32 = swap ?? t.getColor32(bitmap, 0);
+    renderer.uploadTexture(archive, record, color32);
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+      // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
+      // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
+      // colour emission" -> :448-453 EmissionColor = Color.white). The
+      // `!isWindow` is the C#'s own; the white flag keeps the window
+      // style off it, so a lit lantern draws its own texels instead of
+      // sitting at scene ambient beside the light it casts.
+      renderer.uploadEmissionTexture(archive, record, color32, { white: true });
     }
   };
   // C11 mobile monsters: per-FRAME uploads under a composite record
@@ -115,12 +127,46 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // else leaves the remaining frames classic, which is what a
     // partial pack should do.
     const swapFrame = decodedTexture(archive, record, frame);
-    renderer.uploadTexture(archive, key, swapFrame ?? t.getColor32(bitmap, 0));
+    const color32 = swapFrame ?? t.getColor32(bitmap, 0);
+    renderer.uploadTexture(archive, key, color32);
+    // F49: the auto-emissive arm follows the FRAME - DFU builds a
+    // material per frame, and a torch's every frame is self-lit. The
+    // billboard path looks the mask up under this same composite key.
+    if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+      renderer.uploadEmissionTexture(archive, key, color32, { white: true });
+    }
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
+  const meshPromises = new Map(); // IN-FLIGHT builds, getTexture's shape
   const cpuModels = new Map(); // id -> {positions, indices} for the collider
+  /** AUDIT 39: the COMPLETED cache is not enough on its own. A build
+   *  awaits its texture archives, and two cold callers for one model id
+   *  - a teleport's buildPixel racing the pump's, two adjacent pixels
+   *  sharing a building - each ran createMesh and the second `set`
+   *  overwrote the first, leaking a VAO and its buffers for the
+   *  session (nothing destroys a gpuMeshes entry). The in-flight map is
+   *  the law getTexture above and buildPixel already carry. */
   async function getGpuMesh(modelIdNum) {
     if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
+    if (!meshPromises.has(modelIdNum)) {
+      meshPromises.set(modelIdNum, buildGpuMesh(modelIdNum).finally(() => meshPromises.delete(modelIdNum)));
+    }
+    return meshPromises.get(modelIdNum);
+  }
+  async function buildGpuMesh(modelIdNum) {
+    // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
+    // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
+    // is asked first; ARCH3D only when it has nothing). Model 41601 is
+    // Kamer's machinery, the centrepiece of the room his mill adds, and
+    // no ARCH3D carries it - so it answers from the vendored bake and
+    // then is an ordinary model: cached on the same map under its own
+    // id, textures out of the player's ARENA2, a CPU copy for the
+    // collider, no doors of its own.
+    if (modelIdNum === MACHINERY_MODEL_ID) {
+      const gpu = await uploadPart(modelIdNum, MACHINERY);
+      cpuModels.set(modelIdNum, { positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
+      return gpu;
+    }
     const index = arch.getRecordIndex(modelIdNum);
     if (index === -1) {
       gpuMeshes.set(modelIdNum, null);
@@ -135,7 +181,73 @@ export function createDataPipeline({ renderer, arch, palette }) {
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
+  /** WM2b: THE WINDMILL ROTOR, uploaded once per scene.
+   *
+   *  Not an ARCH3D record, so it cannot come through getGpuMesh - the
+   *  geometry is Kamer's, vendored with permission and baked by
+   *  scripts/bakeWindmill.mjs (see vendor/windmills-kamer/README.md).
+   *  Everything else about it is ordinary: its submeshes name CLASSIC
+   *  (archive, record) pairs, so its textures load and upload through
+   *  exactly the same two calls every other model's do, out of the
+   *  player's own ARENA2.
+   *
+   *  Cached on the same map as the rest under a key no ARCH3D record can
+   *  collide with (ids are positive), so a host may ask per block
+   *  without paying twice, and teardown frees it with everything else.
+   */
+  // Negative keys: no ARCH3D record id can collide with them. The body
+  // is cached PER CLIMATE AND SEASON, because WM2e skins its walls and
+  // roof from Kamer's own variant prefabs and a streamed world crosses
+  // climates - one mesh per skin, however many mills wear it.
+  const ROTOR_KEY = -41600;
+  const bodyKey = (climateBase, isWinter) => -(50000 + climateBase * 2 + (isWinter ? 1 : 0));
+  async function uploadPart(key, model) {
+    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+    for (const sm of model.subMeshes) {
+      await getTexture(sm.textureArchive);
+      uploadRecord(sm.textureArchive, sm.textureRecord);
+    }
+    const gpu = renderer.createMesh(model);
+    gpuMeshes.set(key, gpu);
+    return gpu;
+  }
+
+  /** WM2d: the whole mill - the tower Daggerfall never stands, and the
+   *  sail that turns on it. Both parts, one call, so a host cannot wire
+   *  a rotor to a tower that was never uploaded.
+   *
+   *  WM2e: the tower is skinned for the climate and season it stands in,
+   *  from Kamer's own seventeen variant prefabs. The SAIL is not - it is
+   *  067_1 in every one of them. */
+  async function getWindmillMeshes(climateBase = 300, isWinter = false) {
+    return {
+      body: await uploadPart(bodyKey(climateBase, isWinter), skinnedBody(climateBase, isWinter)),
+      rotor: await uploadPart(ROTOR_KEY, ROTOR),
+    };
+  }
+
+  /** WM4b: THE MACHINERY'S MOVING PARTS - Plank_Gear and Roller, the
+   *  two children of Kamer's 41601 prefab, each its own mesh under its
+   *  own transform (windmillMesh.MACHINERY_CHILDREN). Uploaded once per
+   *  scene under negative keys like the sail, with a CPU copy alongside
+   *  for the part the prefab gives a collider. */
+  const CHILD_MESHES = { PLANK_GEAR, ROLLER };
+  async function getMachineryParts() {
+    const parts = [];
+    for (let i = 0; i < MACHINERY_CHILDREN.length; i++) {
+      const child = MACHINERY_CHILDREN[i];
+      const model = CHILD_MESHES[child.mesh];
+      if (!model) throw new Error(`machinery child ${child.name} names mesh ${child.mesh}, which the bake did not emit`);
+      parts.push({
+        child,
+        gpu: await uploadPart(-(MACHINERY_MODEL_ID * 10 + i + 1), model),
+        cpu: { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: [] },
+      });
+    }
+    return parts;
+  }
+
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels, palette,
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

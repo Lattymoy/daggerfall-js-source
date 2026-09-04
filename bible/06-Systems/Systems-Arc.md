@@ -545,7 +545,15 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
   plays the element cast sound (EntityEffectManager constants: fire
   352, cold 353, poison 350, shock 351, magic 349 - element-indexed
   in enemySpells.SPELL_CAST_SOUND) from the caster at the enemy 3D
-  profile (max 16), then CasterOnly self-assigns through the foe's
+  profile (max 16). AUDIT 58: those five numbers are DAGGER.SND record
+  IDs, not record indices - EntityEffectManager.cs:44-48 names every
+  one of them `...SoundID` and PlayCastSound spends them through
+  `PlayOneShot((uint)castSoundID)` (:1958), the UINT overload
+  (DaggerfallAudioSource.cs:232-238), which resolves the id through
+  SoundReader.GetSoundIndex first. Every consumer goes through the
+  engine's `playOneShotId` / `play3dId`; spent as indices they rang
+  StormLightningThunder and SwingMediumPitch2 instead of the cast.
+  Then CasterOnly self-assigns through the foe's
   own sinks and everything else looses a missile on the shared
   trap-missile shape (aimed at the player mid-capsule at fire time).
   Enemy missiles carry casterLevel + the caster pair, so an enemy
@@ -881,10 +889,14 @@ buy/sell windows are E2.
   too) - the daily UpdateRegionalPrices drift is FLAGGED to the
   calendar/economy sim.
 
-INTERIM loud: MagicItems stock SKIPPED (the loot MI interim); the
-Alchemist's 25% potion recipe pends recipes; books carry the
-template price (classic prices each BOOK FILE); restocking pends
-the shared calendar.
+INTERIM loud: books carry the template price (classic prices each
+BOOK FILE); restocking pends the shared calendar. (AUDIT 39 F106
+struck two clauses from this list because they had SHIPPED and the
+list still swore they had not - the MagicItems stock, F130, and the
+Alchemist's 25% recipe roll, F129. A pend list that names closed work
+is worse than no list: Home.md pins these lines mechanically, so the
+false clause was certified, and it is what kept the ungated MagicItems
+arm from being read as the bug it was.)
 
 Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
 material-value pins, the stock law incl. the rarity gate / gender
@@ -921,14 +933,17 @@ hosts' door path):
   inside interiors/dungeons and every probe frame-sync starved.
 
 FLAGGED loud: selling + the offer/counteroffer haggle UI pend
-(CalculateTradePrice's selling branch is ported + pinned); shop
+(CalculateTradePrice's selling branch is ported, and AUDIT 58 gave it
+the numeric anchors it had never had - it carried only inequalities, so
+its 51*dp and 179*dm coefficients both mutated freely); shop
 OPEN HOURS pend (shelves answer at any hour); Library/Guild/Temple
 bookshelves + owned-house storage pend; restock pends the calendar.
 
-Probed live (tools/shopProbe.mjs): door 37 = "The Adventurer's Book
-Dealer" (Bookseller, quality 6) -> enter -> 4 shelves -> browse
-"1 - Book (2950 gold)" x3 -> Digit1 buys: gold 20000 -> 17050, the
-item in the entity, the window re-lists 2.
+Probed live (tools/shopProbe.mjs, RETIRED at ROAD-E E8 - its drive
+lives on in tools/nativeTradeProbe.mjs): door 37 = "The
+Adventurer's Book Dealer" (Bookseller, quality 6) -> enter -> 4
+shelves -> browse "1 - Book (2950 gold)" x3 -> Digit1 buys: gold
+20000 -> 17050, the item in the entity, the window re-lists 2.
 
 Suite 449/98 (the CalculateTradePrice fixed-point pin).
 
@@ -955,10 +970,10 @@ both directions now); letters of credit (the >maxGold overflow)
 pend banking; Repair/Identify/SellMagic window modes pend their
 systems.
 
-Probed live (tools/shopProbe.mjs, extended): the bookseller round
-trip - buy a Book at 3062, S, sell it back at 2904 (the merchant's
-margin), gold 20000 -> 16938 -> 19842, the item off then back on
-the shelf.
+Probed live (tools/shopProbe.mjs, retired - see above): the
+bookseller round trip - buy a Book at 3062, S, sell it back at
+2904 (the merchant's margin), gold 20000 -> 16938 -> 19842, the
+item off then back on the shelf.
 
 Suite 450/98 (the storeBuysItemType pin).
 
@@ -3181,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:407`, `world.js:626`), fired
+`playerTicker.advance(60)` (`exterior.js:722`, `world.js:627`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4385,9 +4400,16 @@ lie the moment travel used it; a name that misleads the next reader is
 the same defect as a stale comment, and this run has now found four of
 those.
 
-The two flags that genuinely DO still idle - the HUD smash-to-black
-fade and EXIT's key-up deferral - stay named, and a pin asserts they
-stay named, so this slice cannot be read as having closed the whole row.
+The two flags that genuinely still idled at TP1 - the HUD
+smash-to-black fade and EXIT's key-up deferral - stayed named, and a
+pin asserted they stayed named, so this slice could not be read as
+having closed the whole row. **WAVE D's D4 closed both** and inverted
+that pin: the fade is `src/ui/fadeLayer.js` (FadeBehaviour.cs whole)
+fired from `ui/travelPopUp.js` on the frame the counter empties, the
+deferral is travelPopUp's KeyDown-arms / KeyUp-pops
+`isCloseWindowDeferred` over the travelMapWindow keyup seam, and
+`test/travelguild.test.js` now asserts neither flag survives in that
+header.
 
 Pins: 6 in `test/travelguild.test.js`. Campaign: 9 mutants, 9 killed
 after two survived the first run, and the two survivors were different
@@ -4454,21 +4476,41 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1373` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1374` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
-not. `setDefaultEnchantCtx` has exactly **one** caller in the tree, so
-the standalone `?dungeon` host runs every arm that needs a host
+not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
+the standalone `?dungeon` host ran every arm that needs a host
 against no ctx at all - CastWhenUsed's CasterOnly assign and its
 click-to-cast ready, the vampiric-drain and affinity scans, SoulBound's
-break release. Every one is optional-chained, so it is **silent**:
+break release. Every one is optional-chained, so it was **silent**:
 the AUDIT 24 seam shape exactly, a ported law evaporating with a green
 suite. This is the worse of the two failures - the work is real, and
-the ledger could not see it. The flag now lives in the file that owes
-the mount, and the pin asserts its load-bearing claim (one caller,
-`world.js`) so a second host mounting the ctx retires the flag by
-failing. The mount itself is its own slice: the world host's is ~90
-lines of live plumbing - spell-reflection re-targeting, per-foe sinks,
-the say sink - and none of it is host-portable by copy.
+the ledger could not see it. The flag went to the file that owed the
+mount, and the pin asserted its load-bearing claim (one caller,
+`world.js`) so that a second host mounting the ctx would retire the
+flag **by failing**.
+
+**WAVE D closed it, and the pin failed exactly as designed.** The flag
+also said the mount was "~90 lines of live plumbing - spell-reflection
+re-targeting, per-foe sinks, the say sink - and none of it is
+host-portable by copy". The plumbing was real; *not portable* was not.
+Every host-specific term in it - the pools, the sinks, the text
+channel, the two windows, the spawn door - was already a closure over a
+host binding, which is a **parameter** everywhere else in this tree. So
+the body moved to `scenes/hostEnchant.js` and each host hands in its
+own doors, which is also the only way the two mounts can be held to one
+law: a copied mount diverges the first time an arm grows. What is
+deliberately *not* a parameter is the set of seams the port already
+answers once - `playerInSunlight`/`playerInHolyPlace` (which route by
+live mode), `worldMinutes`, the settings store.
+
+The one thing the mount needed that a copy would not have: a **gate**.
+`setDefaultEnchantCtx` is a session singleton and EC1 had already
+routed `world.js`'s mount into this context through `modes.dungeonCtx`
+whenever the live mode is dungeon - so an unconditional second mount
+would simply overwrite that one the moment `worldModes` builds a
+dungeon, last writer wins, silently. `opts.enchantCtx !== false` is the
+`chargen: false` shape exactly: **an outer host already owns it.**
 
 Pins: 7 in `test/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
 One design note from writing it: the population pin (*the guard
@@ -4767,3 +4809,799 @@ killed, after one survivor: the dungeon host's **flier lift** had no
 pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
 above the test point, and a bat woken at rest was standing on the floor
 with nothing to say so.
+
+## LM1 - THE TRANSFORMED MOVE SOUND, AND WHAT THE LEDGER HAD LEFT (2026-08-29)
+
+Asked what was next in the ledger, the honest answer turned out to be
+"almost nothing, and three of its headline claims are stale". The
+re-sweep is recorded in the ledger itself; this is the one row that was
+genuinely open, and the slice that closed it.
+
+`LycanthropyEffect.cs:201-211` + `:586-604`: while transformed, and
+only while transformed, a real-time timer counts down; on expiry the
+beast makes its move noise and the timer re-arms to a fresh
+`Random.Range(4, 20)` seconds. It is what makes walking around as a
+werewolf sound like anything - the port had the attack voices (V4) and
+the wereclaws (V5) and nothing in between.
+
+Three details are load-bearing and each has its own mutant:
+
+- **The timer is armed at three places, and never lazily on the first
+  frame.** `InitMoveSoundTimer` is called at the curse in `Start`
+  (`:67`), after every fire (`:209`), and inside `MorphSelf`'s own
+  `if (!isTransformed)` transform branch (`:521`), right after the
+  compound-race name swap. So a morph into beast form starts a **fresh**
+  4-20s. AUDIT 39 corrected this bullet: it used to name the curse as
+  the only arming site, on the strength of a note in `lycanthropy.js`
+  that read the C# as re-arming only there.
+- **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
+  a rested night queues no howls and time-scaled travel does not
+  either.
+- **The fire test is `< 0`, not `<= 0`.** A timer landing exactly on
+  zero waits one more frame. That is not pedantry: it is what the
+  arithmetic of a 20-second wait at a 0.5-second frame actually does,
+  and my own expectation was wrong about it before the code was.
+
+The whole block sits inside DFU's `if (isTransformed)`, so an
+untransformed lycanthrope does not tick the timer down at all: the wait
+**pauses** while the beast is away. But returning is a `MorphSelf`, and
+that re-arms (`:521`) - so the paused remainder is **replaced**, never
+resumed. Ticked by
+all four hosts; in `worldModes` the arm sits deliberately outside the
+`if (magic)` block, because the beast makes its noise whether or not a
+cast engine was built.
+
+Pins: 8 in `test/lycanmove.test.js`. Campaign: 18 mutants, 18 killed -
+after one survivor that was **the mutant's fault, not the pin's**, and
+is worth writing down:
+
+**AN AMBIGUOUS MUTATION ANCHOR MUTATES THE WRONG CODE.** The gate
+mutant anchored on `if (!entry?.isTransformed) return null;` -
+`lycanthropy.js` has two of those lines, and the harness's
+`replace(old, new, 1)` took the first, which belongs to
+`lycanthropeAttackVoice`. The campaign then reported SURVIVED about a
+function this slice does not cover, and the pin it was supposedly
+testing was fine all along. Applying the same edit by hand with `sed`
+(no count limit) failed the pin immediately, which is what exposed it.
+A "survivor" is a claim about a specific edit; if the anchor is not
+unique, it is a claim about a different edit than the one you wrote.
+
+## DT1 — the Detect scan's loot pool was short in three of four hosts (2026-08-29)
+
+`PlayerGPS.UpdateNearbyObjects` (:747, :765-776) has exactly one loot
+walk:
+
+    foreach (DaggerfallLoot loot in ActiveGameObjectDatabase.GetActiveLoot())
+
+No scene gate, no kind gate, no item test. `GetLootFlags` (:822-836)
+then sets the Treasure bit iff `loot.Items.Count > 0`, so an empty
+container is **in** the list and merely unlit — a different thing from
+being absent, and the distinction matters because the port's
+*activation* walks legitimately do filter on items.
+
+The port had four hosts each deciding for itself which of its own loot
+kinds counted:
+
+| host | fed to the Detect scan |
+|---|---|
+| `world.js` / `exterior.js` | dropped piles + corpses — right, since FX1 (F207) |
+| `dungeonContext.js` | the RDB piles **alone** |
+| `worldModes.js` interior | **nothing at all** |
+
+So FX1's own finding — *"UpdateNearbyObjects walks EVERY active
+DaggerfallLoot with no scene gate"* — survived untouched in the two
+hosts where Detect Treasure is actually cast. Underground the spell
+missed the corpse you had just made and the sack you had just dropped,
+both of which that host's own `lootTargets()` has walked since U26.
+Indoors all three Detect spells were blind, because the feed was handed
+neither pool.
+
+**The interior half had a reason written beside it, and the reason was
+false.** The comment said "both pools are empty until interior loot
+containers ship". Containers shipped at S2b and shelves at E2 —
+`DaggerfallInterior.AddFurnitureAction` (:780-841) is the DFU member,
+hanging a `DaggerfallLoot` on shop shelves at :796-801 and house
+containers at :829-838 — and the foe pool shipped at IF. The sentence
+had been outlived three times over and was still being read as a reason
+not to wire anything.
+
+The fix is one exported walk, `shared.js`'s `nearbyLootRecords`, that
+each host names its own kinds to, so "every active loot container" is
+one sentence again rather than four opinions. Two adapters go with it:
+`containerNearbyRecord` (a furniture model's position is its matrix
+translation, which is what `loot.transform.position` reads) and
+`corpseNearbyRecords`, which absorbs the inline walk the two outdoor
+hosts had each written out.
+
+**An unbrowsed shelf contributes nothing, and that is DFU's answer
+rather than a port limit.** `AddFurnitureAction` adds the component
+empty; `PlayerActivate.cs:881-886` stocks it on *first access*. So
+`Items.Count > 0` is false until the player has opened it and
+`GetLootFlags` withholds the bit. The port's `items: null` is that same
+un-stocked state and maps to a count of zero — present in the list,
+unlit, exactly like DFU's.
+
+The two foe pools spell the same fact differently — `corpse` beside
+`corpseMarker` in `exteriorFoes`, `corpseBatch` in the dungeon — and a
+foe that died with neither is the cull's "gone, no corpse" arm, which
+mints no `CorpseMarker` in DFU either. The walk reads both spellings
+and says so, rather than renaming a field across two pools to make one
+predicate read prettier.
+
+**Four false sentences retired from `worldModes.js` on the way**, found
+by the same sweep and each verified against the tree before deletion:
+the interior detect claim above; "there is nowhere to cash one yet" on
+the letter of credit, which B2 answered with `DepositAll_LOC`
+(`banking.js:461`, the window's own :377-389); "the BANKING arm stays
+FLAGGED below", written nine lines above the live banking arm; and
+"every other arm is FLAGGED by name in
+`guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
+the twenty — 20 rows, 0 nulls, checked by running it.
+
+**Found and NOT taken, recorded at the seam:** a pile the player drops
+*indoors* is still missing, because the interior host mints no ground
+pile of its own — `mintRewardPile` falls interior drops through to the
+world host, whose `dropFeet` reads the exterior player and collider. In
+DFU that drop is a `DaggerfallLoot` in the interior scene like any
+other. The fix is an interior `droppedLoot` pool, not a line in the
+feed; when it lands it joins `piles` and nothing else changes.
+
+Pins: 10 in `test/detectindoors.test.js`. Campaign: 16 mutants, 16
+killed — among them the F207 regression itself (drop `foes` from
+world.js's call and the pin fires), which is the point of moving a
+twice-written walk into one home. `test/nearbyobjects.test.js`'s FX1
+pin was re-anchored on the law rather than the literal (F041's
+precedent): it had quoted the inline corpse map that no longer exists
+anywhere, and what it asserts is unchanged.
+
+**THE LESSON, and it is FS1's with a sharper edge: A REASON NOT TO WIRE
+SOMETHING NEEDS RE-READING EVERY TIME ITS DEPENDENCIES LAND.** "Both
+pools are empty" was true the day it was written. Three slices then
+filled both pools, and none of them came back to this line, because
+none of them were *about* this line. A flag that names what it waits
+for can be swept when that thing ships; a flag that merely asserts a
+present-tense fact — *is* empty, *has* nothing, *cannot* yet — has no
+trigger at all, and goes on being read as a decision long after it
+stopped being one. Prefer the form that names the dependency.
+
+## ID1 — an item dropped indoors landed outside (2026-08-29)
+
+DT1 routed this and did not take it. Reading the DFU member made it
+larger than the detect gap that found it.
+
+`GameObjectHelper.CreateDroppedLootContainer` (:716-775) picks the
+container's **parent by context**:
+
+    if (GameManager.Instance.IsPlayerInside)
+        if (IsPlayerInsideDungeon) parent = playerEnterExit.Dungeon.transform;
+        else                       parent = playerEnterExit.Interior.transform;
+    else                           parent = StreamingTarget.transform;
+
+and only the outdoor arm enrols the container in the streaming world's
+bookkeeping:
+
+    if (!GameManager.Instance.IsPlayerInside)
+        GameManager.Instance.StreamingWorld.TrackLooseObject(loot.gameObject, true);
+
+The port had two of those three arms. `dungeonContext` mounts its own
+pool; `world.js` and `exterior.js` mount the streaming one; the
+**interior arm of `worldModes` mounted none**. So every inventory window
+this host opened came from `host.makeInventory`, whose `onDrop` is the
+world host's — dropping at `dropFeet()`, which reads the *exterior*
+player and raycasts the *exterior* collider, and stamping the pile with
+the map pixel that IS the port's `TrackLooseObject`.
+
+Three things followed from one missing pool:
+
+1. the item did not land where it was dropped;
+2. it could not be picked back up — the interior's E-ray had no pile
+   targets at all;
+3. it was enrolled in P2's out-of-range collection sweep, which DFU
+   never runs on an interior container, so walking far enough
+   **destroyed it**.
+
+`GivePc.cs:168` mints through the same member, so the quest reward pile
+had the identical three arms and the identical missing one.
+
+ID1 mounts the interior pool from the same `createDroppedLoot` factory
+the other two hosts use, on this host's collider, and gives it
+everything a pool needs to be real rather than merely present: the drop
+(at `FindGroundPosition` on the interior collider, with **no pixel key**
+— that argument is `TrackLooseObject`), the E-ray target and its
+activation arm on the dungeon's own `droppedLoot:` key vocabulary, the
+flat animation and draw, the CacheScene/RestoreCachedScene halves so
+walking out of a shop and back in does not empty the floor, both
+teardowns, and the Detect feed's `piles` — which closes the row DT1
+opened.
+
+**One door, one law.** Rather than patch `onDrop` into five call sites,
+every inventory window this host opens now goes through
+`interiorInventory`, which folds in the drop pool and the
+emptied-container free (`DaggerfallInventoryWindow.cs:697-722` mints and
+removes at the *window*, not at the last item). The caller's own
+`onClose` is **composed**, not overwritten: `...extra` last would have
+silently dropped the free, and that is the third mutant in the campaign.
+
+Pins: 10 in `test/interiordrop.test.js`, five of them behavioural
+against the real pool with only the GL stubbed. The sharpest is the
+`TrackLooseObject` gate itself — a keyless drop survives `collectPixel`
+where a keyed one is swept, which is the whole bug in two lines.
+
+Four pins elsewhere were re-anchored on the law rather than the literal
+(F041): audit26 F066, HC1's owner-access arm, U43's mount table, and
+RW1's mode split — whose claim genuinely **narrowed**, because
+"everyone else falls through" is the exterior alone now.
+
+Campaign: 16 mutants, 16 killed — after five survivors that were **all
+the pins' fault**, and each is worth keeping:
+
+- a source pin that quoted the raycast line but not what fed `p0`, so
+  dropping at the origin survived;
+- a cache pin that watched the pile list being **built** and never
+  checked that the scene state **returned** it;
+- a fixture whose icon roll was **constant**, so a restore that rerolled
+  could not be told from one that kept — the roll advances now;
+- no pin at all on the interior detect feed's own `piles`;
+- an anchor that matched twice, caught by the harness's uniqueness
+  check for the third time this run.
+
+**THE LESSON: A POOL THAT EXISTS IN THREE HOSTS IS A LAW; THE FOURTH
+HOST'S ABSENCE IS NOT A DEFAULT, IT IS A DECISION NOBODY MADE.** The
+FOUR HOSTS RULE has always been read as "name all four" — and the
+interior arm here was not named at all, in either direction. Nothing
+said "the interior has no ground pile" and nothing said it should; the
+window simply came from the outer host, and the outer host's handler was
+about somewhere else. A seam inherited from a parent is the one shape
+the rule cannot see, because there is nothing missing to point at.
+
+## PT1 — stealing had no consequence (2026-08-29)
+
+Two flags stood in `worldModes`' interior arm, both routed to "the
+crime arc": the shop-shelf stealing roll beside `SetShopShelfStealing`,
+and the theft basket behind `loot.houseOwned`. FS1's question — *has
+the blocker shipped?* — answers yes on every one they named:
+`TallyCrimeGuildRequirements` at CG2, `SpawnCityGuards` at G1, the crime
+table and V4's SuppressCrime setter, `TallySkill` since the start. What
+was left was the two laws themselves.
+
+**And they are not one law.** The shop-shelf flag promised "the
+shoplifting ROLL and its crime tally". DFU's shop-shelf arm has no roll:
+
+    // DaggerfallInventoryWindow.cs:681-687, at the window's own teardown
+    if (shopShelfStealing && remoteItems.Count < lootTargetStartCount)
+        playerEntity.TallyCrimeGuildRequirements(true, 1);
+
+A count comparison against the shelf as it stood when the window opened,
+a Thieves Guild tally if it shrank, and nothing else. No chance, no
+guards, no crime record — robbing a closed shop earns you credit with
+the Thieves Guild and no trouble at all, which is classic's own answer.
+
+The roll belongs to the *other* arm, `AttemptPrivatePropertyTheft`
+(:1848-1863, reached from :2277-2281):
+
+    TallyCrimeGuildRequirements(true, 1);
+    weightAndNumItems = (int)basket.GetWeight() + basket.Count;
+    chance = CalculateShopliftingChance(player, buildingQuality, weightAndNumItems);
+    if (!Dice100.FailedRoll(chance)) { CrimeCommitted = Theft; SpawnCityGuards(true); }
+    else                             { TallySkill(Pickpocket, 1); }
+
+The tally is the member's first line and does not wait for the roll. The
+guards come for you in someone's house; they do not come for a shelf.
+`loot.houseOwned` (:919) is set in the *stranger* branch alone, so
+`isPrivateProperty` is exactly "rifling furniture that is not yours" —
+your own house or ship opens the same window with the flag off.
+
+**The basket, and why the port does not need one.** DFU accumulates
+`theftBasket` as the player clicks — added on a take, removed on a
+put-back — because the window must *weigh* what was taken. The set it
+ends up holding is exactly "present when the window opened, absent when
+it closed", so a snapshot diff answers the same question from the same
+two facts. Putting one of your own items *into* the container doesn't
+enter it either way.
+
+The `(int)GetWeight() + Count` truncation is load-bearing and pinned as
+such: three 1.25 kg trinkets give 6, one 12.5 kg breastplate gives 13.
+A pocketful of small things is caught by its count; one heavy thing by
+both.
+
+Pins: 10 in `test/theft.test.js`. Campaign: 18 mutants, 18 killed —
+including every *term's direction* in the chance formula, not merely its
+presence, because a formula pin that only proves a term exists is the
+proxy problem in miniature.
+
+**THE NEAR-MISS, and it is SD1's exactly.** The slice set out to give
+`Dice100.FailedRoll` one home: the tree had
+`Math.floor(rolls() * 100) >= chance` written out inline in three places,
+each commented with the member's name. I wrote a fourth export —
+`dice100FailedRoll` — and put it in `formulas.js` one screen below
+`dice100`, which has been there since T3a and *is* the same member
+(`!dice100(chance, roll)` is `FailedRoll`). Reading the neighbouring
+pickpocket call site is what caught it, the same way SD1's duplicate
+module was caught: **the fix for "this member has too many homes" is the
+one place you must not add a home without looking.** The three sites now
+route through the export that already existed.
+
+A pin sweeps for the hand-written comparison so it cannot come back —
+with the **comment bodies stripped first**, because `theft.js`'s own
+header quotes the expression it retired and the raw sweep read the
+quotation as a fourth copy. That is IN1's finding arriving in a
+different arc, and it took the same shape both times.
+
+Four pins elsewhere were re-anchored. Two of them were reaching a
+**fixed character count** into an arm this slice grew — `slice(0, 2000)`
+and `slice(0, ownedLatch + 200)` — which is a bet on how long a piece of
+code stays. Both now assert by index ordering, which is what they meant.
+
+## BG1 — the building greeting: what kind of shop, and who lives here (2026-08-29)
+
+Open a shop door in classic and it tells you what you have walked into
+— *"Incense and soft music soothe your nerves"* for a fine one, *"Rusty
+relics lie wherever they were last tossed"* for a hovel. Open a
+stranger's front door and someone greets you. The port did neither:
+every door in Daggerfall opened onto silence.
+
+`PlayerActivate.cs:585-628` and `PresentShopQuality` (:1332-1391).
+
+**The gate is two variables answering different questions** (:517-518):
+
+    var isBrokenIn = isBash;                      // bashing IS breaking in
+    if (!buildingUnlocked && !isBash && HandleOpenEffectOnExteriorDoor(...))
+        buildingUnlocked = isBrokenIn = true;     // the Open SPELL sets BOTH
+    ... a successful PICK sets isBrokenIn ALONE, never buildingUnlocked
+
+    if (buildingUnlocked && House1..House4 && !TG && !DB && !IsHouseOwned)
+    {
+        if (!isBrokenIn) mb = MessageBox(GetRandomText(256));
+    }
+    else mb = PresentShopQuality(building);
+
+which gives four reachable answers:
+
+| how you got in | what you hear |
+|---|---|
+| walked in during open hours | the householder's greeting, or the shop's quality |
+| the **Open spell** | nothing at all — `buildingUnlocked` true so the else-arm never runs, `isBrokenIn` true so the greeting doesn't either |
+| **picked** the lock | `buildingUnlocked` stayed false, so the else-arm runs: a shop states its quality even to a burglar; a house says nothing |
+| your own house, TG, DB | the else-arm, and the same null |
+
+The port's `opened` was already exactly DFU's `buildingUnlocked`; what
+it lacked was `isBrokenIn`, which is now written where DFU writes it —
+raised by the Open spell *with* `opened`, raised alone by the pick.
+
+**The box defers the door** (:617-623): when a greeting is shown the
+interior transition waits for it to close, which is why the law answers
+a *decision* and the host performs it. The HUD arm (:1379-1386) speaks
+and does not defer.
+
+`ShopQualityPresentation` and `ShopQualityHUDDelay` were already in the
+store with DFU's own vendored defaults — they only needed a reader, so
+the slice flips one from `stored` to `live` rather than inventing a key.
+The read lives in the law, because that is where DFU reads it: the
+switch is inside `PresentShopQuality`, not in the door arm that calls
+it. `buildingGreetingsEnabled` is a static field defaulted true, not a
+settings key, and is a named constant here for the same reason.
+
+Pins: 12 in `test/buildinggreeting.test.js`. Campaign: 20 mutants, 20
+killed — after two survivors, **both real gaps in the pins**:
+
+- no test covered a **locked** building at all, so `buildingUnlocked`
+  could be replaced with `true` and nothing noticed;
+- the **nesting** mutant — rewriting `if (!isBrokenIn) mb = …` as a
+  fall-through — is behaviourally equivalent for every input the host
+  can produce, because a house is never a shop and the fall-through
+  lands on the same null. The pin now states the *contract* the nesting
+  protects (once the house branch is taken the shop arm is unreachable,
+  for any arguments) rather than an observable it does not have.
+
+And a drafted pin failed against the faithful port and was **the
+draft's** error: I expected a magicked *shop* to be silenced too. It is
+not — a shop fails the House1..House4 test whatever `isBrokenIn` says,
+so the else-arm runs and the quality is stated. `isBrokenIn` gates the
+greeting alone.
+
+**The bash flag narrowed rather than closing.** The old sentence
+bundled three things — the two bash arms, their crimes, and the house
+greeting — behind "no weapon-vs-static-door path exists yet". The
+greeting had nothing to do with bashing and has shipped. What is left is
+precisely DFU's `isBash`: `PlayerActivate` reached from a *weapon swing*
+rather than the activation ray, and outdoors this port has no such input
+(`envAttack` runs against an action-object list, and an exterior static
+door is not one). So the flag now says what is missing — the **input**,
+not the six lines of roll, and not the crime road, which CG2 and PT1
+already built. `isBrokenIn` is written starting from the `isBash` that
+does not exist yet, so the day that input lands the arms drop in beside
+it.
+
+**THE LESSON: A FLAG THAT NAMES THREE THINGS IS THREE FLAGS, AND THE
+CHEAPEST OF THEM IS HOLDING THE OTHERS HOSTAGE.** The greeting sat
+unbuilt behind a blocker it never had, because it shared a sentence with
+two arms that genuinely needed one. FS1 taught that a flag's blocker
+should be re-read when its dependencies land; BG1 adds that a flag
+covering more than one claim should be *split* when it is written, or
+the first reader to check the hardest claim will file the whole thing as
+blocked.
+
+## TR - THE TRANSPORT ARC (2026-08-31, open)
+
+Mac: "let's work on the horses and carts". The port has carried the CART
+as an inventory fact since the W-slice - the wagon's 750kg, the
+dungeon-exit prompt, the transfer guards - and the HORSE as an item
+nobody could sit on. `motor.js:517` passed `riding: false` into the
+climbing gate with the note "the transport arc pends", and
+`DaggerfallTransportWindow` is the last of DFU's 60 real windows the
+port does not have (UI-Arc.md's table).
+
+DFU's arc, and how it splits:
+
+| Slice | What | State |
+|---|---|---|
+| **TR1** | TransportManager's MODE half + every law that reads it | **CLOSED** |
+| **TR2** | the riding sprite and its audio | **CLOSED** |
+| **TR3** | the transport window, and the ride made real in the world host | **CLOSED** |
+| **TR4** | the ship: board and disembark | **CLOSED** |
+
+### TR1 CLOSED: the mode
+
+`systems/transport.js` is TransportManager's mode half - the four modes,
+`horseItemIndexes` seeded with Transportation.Horse, HasHorse/HasCart,
+ToggleMount (mounted dismounts; on foot the HORSE is preferred and the
+cart is the fallback; with neither the mode is UNCHANGED, because there
+is no else arm) and the transition dismount (building and dungeon
+interiors only - DFU has no arm for LEAVING one, so you walk out on
+foot).
+
+Everything that reads the mode was already waiting for it:
+`PlayerSpeedChanger`'s two ride bases (dfRideBase walk+225, dfCartBase
+walk+100, neither taking walkSpeed's drag term), GetRunSpeed's riding
+arm - **a canter has no run base of its own**, it is the ride speed
+times the Running multiplier - CanRunUnlessRiding, PlayerEntity's
+"no Running tally from a saddle", ClimbingMotor's "no climbing from a
+saddle", and HeadBobber's Horse style, which AUDIT 28 W10 ported and
+then passed `riding: false` into. The motor carries `transportMode` and
+answers `riding`; the hosts pass it on.
+
+One DFU order kept rather than tidied: GetBaseSpeed tests CROUCH before
+riding, so a crouched rider takes the crouch base. It cannot happen in
+DFU (PlayerHeightChanger refuses to crouch while mounted, which is TR2's
+neighbour) but the order is the law and the port keeps it.
+
+**Nothing mounts yet** - TR3 owns the door. TR1 is the system under it,
+and every one of its laws is live the moment a mode is set.
+
+### TR2 CLOSED: the sprite and the audio
+
+`formats/cfaFile.js` is CfaFile whole - the FIFTH classic image format
+the port reads, after IMG, CIF/RCI, TEXTURE and GFX. One record, N
+frames of one size, RLE end-to-end behind a 14-byte header. One
+arithmetic quirk is kept verbatim and pinned as such: the run length is
+measured in COMPRESSED widths while the buffer is UNCOMPRESSED-sized,
+so where the two differ DFU stops short and the tail stays zero. The
+shipped files agree, and a "fix" would be a guess about art nobody in
+this container can open.
+
+`systems/riding.js` is the Update and OnGUI halves, pure: the 0.125s
+frame clock wrapping 3 to 0 and RESETTING (not pausing) while you
+stand, the loop that stops 0.2s after you do so a step-pause-step does
+not chop the clop, the clop that swaps on the half-speed EDGE rather
+than the state, the volume halved below half speed, the 1.2 running
+pitch (which TR1 makes unreachable while mounted - DFU has the same
+dead branch), the neigh at 1..4s on mounting and 2..39s after, firing
+for a CART too and at a standstill because its block sits outside both
+forks. The draw rect is bottom-centre at ScaleFactorX 0.8 on the
+200-line scale.
+
+Three sound ids joined the roster at DFU's numbers: HorseClop 97,
+HorseAndCart 104, HorseClop2 298.
+
+### TR3 CLOSED: the window, and the ride
+
+`ui/transportWindow.js` is DaggerfallTransportWindow whole - the last
+of DFU's 60 real windows the port did not have. Four rows and an exit
+on MOVE00I0; the three disabled rows are SUB-RECTS of a second image,
+MOVE01I0, whose sheet is declared 122x36, which is why the disabled
+rects sit at (-4,-4) from the button rects: they are sheet coordinates,
+not panel ones. Ownership is read once at Setup; foot is always
+enabled; a disabled row is a dead button that eats its click.
+
+The door is `dfuiOpenTransportWindow` (:690-700) on the T key, which
+`input.js` had routed to `ctx.openTransport` with no host implementing
+it - the same dangling door UI1 found. Grounded only, and AIRBORNE IS
+SILENTLY IGNORED: no message, no window.
+
+**You can ride now.** The world host picks a mode, loads the mount's
+CFA, ticks TR2's animator on the frame and draws the sprite under the
+HUD. The riding loop needed a real audio channel - `audio.setLoop`,
+a named loop with live volume and pitch, which is what Unity's
+`ridingAudioSource` field is; the first cut of this slice
+optional-chained into a method that did not exist, and that is the same
+lie UI1 had just been written to fix.
+
+### THE PARITY AUDIT (2026-08-31, Mac: "a deep comprehensive parity audit on all of this")
+
+TR1-TR3 re-read against TransportManager, PlayerSpeedChanger,
+PlayerMotor and PlayerHeightChanger. Four findings, ALL FOUR against
+this arc's own work, all fixed here:
+
+- **F-E1** OnGUI (:293) refuses to draw at all while the game is
+  paused - `!GameManager.IsGamePaused` sits in the same condition as
+  the Repaint test. An open window HIDES the mount; the first cut
+  froze the frame and kept drawing it.
+- **F-E2** `IsMovingLessThanHalfSpeed`'s else arm compares
+  `GetBaseSpeed()/2`, and TR1 made GetBaseSpeed return the RIDE base.
+  The port's line said "both DFU branches collapse to walk/2 here",
+  which was TRUE UNTIL TR1 SHIPPED AND FALSE AFTER. The case that
+  separates them is a SNEAKING rider: he lands between the two lines,
+  and under the old one he lost the half-speed stealth benefit DFU
+  gives him. TR2's clop swap and volume halving key off the same flag.
+- **F-E3** PlayerHeightChanger has DoMount/DoDismount actions of its
+  own (:159-170, :287-320): `controllerRideHeight` is 2.6 - "a horse
+  plus seated rider (1.6m + 1m)" - against 1.8 standing, so a rider's
+  eye sits at 2.51 and his CAPSULE is the horse's, which is what he
+  clears and bumps. Mounting rises over timerMedium, dismounting falls
+  over timerFast, and mounting CLEARS the crouch (:306) - the very law
+  that makes GetBaseSpeed's crouch-before-riding order unreachable,
+  which TR1 had already recorded and then not implemented.
+- **F-E4** ApplyInputSpeedAdjustment's SNEAK arm subtracts from
+  whatever GetBaseSpeed returned, ride base included. TR1's first cut
+  put the ride arm BESIDE the sneak instead of under it, so a sneaking
+  rider trotted.
+
+The shape is the one every self-audit in AUDIT 28 found: the
+transcription of each DFU function was right, and the seams between
+them were where the faults lived - three of these four are a law that
+was correct before TR1 and that TR1 silently invalidated.
+
+### TR5 CLOSED: the tail, and two dangling doors of this arc's own
+
+TR1 ported `dismountOnTransition` and nothing called it: you could ride
+into a shop and stay mounted. TR3 exported `CANNOT_CHANGE_INDOORS` and
+nothing said it: the T key indoors did nothing at all. Both are the
+shape this session found three times in older code - a live seam that
+claims a feature - and then left twice in its own. Fixed: the two DFU
+transitions dismount through one helper, both interior hosts refuse
+with the line, and the mode change is ONE place (U53) that the T-key
+pick and the interior dismount both take, so the mount's art is dropped
+on every change rather than only on the pick.
+
+### TR4 CLOSED: the ship, and THE ARC WITH IT
+
+It was smaller than scoped: the OWNERSHIP half needed nothing, because
+the bank arc has carried ShipType, the prices, the two map-pixel coords
+and `ownedShip` since H3 - TR4 is simply its first reader. What was
+missing is that "Ship" is not a mode you travel IN (DFU's own comment
+on the enum): it is a TELEPORT that lands back on Foot, with
+`boardShipPosition` as the whole of its state. Boarding remembers where
+you were and lands at a RandomStartMarker; disembarking returns to the
+remembered spot with NO reposition and forgets it; and IsOnShip is a
+remembered boarding AND standing on the ship's own pixel, so a player
+who boards, saves and loads elsewhere is not aboard - DFU's behaviour,
+kept.
+
+FOUND WHILE LANDING IT: SerializablePlayer (:180, :425) persists the
+boarding memory and the port did not. A save taken at sea loaded with
+IsOnShip false, so the next disembark would BOARD again and overwrite
+where the player actually was. `save.js` carries it now; an older
+envelope restores null, which is the never-boarded state rather than a
+broken one.
+
+The terrain-sampler check (:373-379) has no counterpart - the port has
+one sampler and no version, so the fallback it guards can never fire.
+Recorded, not invented.
+
+### THE SECOND PARITY AUDIT (2026-08-31)
+
+TR2 and TR4 re-read against TransportManager's audio and ship arms.
+Two findings and one REFUTATION:
+
+- **F-F1** `shipTransition` answers a `reposition` and the host inferred
+  the landing from `restore` instead of reading it - two encodings of
+  one decision, free to drift. The host reads it now. Recorded with it:
+  StreamingWorld's RandomStartMarker is `PositionPlayerToLocation`,
+  which falls back to the TERRAIN ORIGIN when the pixel carries no
+  location (:1437-1447) - the ship coords are open sea, so the fallback
+  is the arm that runs and the port's default landing stands in for it.
+  FLAGGED for the first session with ARENA2: confirm (2,2) and (5,5)
+  carry no location.
+- **F-F3** DFU's `ridingAudioSource` is `loop = false` (:190) and Update
+  only calls `Play()` when it is not already playing (:273-276) - so
+  assigning `.clip` mid-clop takes effect when the CURRENT one ENDS.
+  TR2 used a true-loop source and restarted it on the swap, chopping
+  the hoofbeat in half. `audio.setLoop` is DFU's shape now: one
+  non-looping source re-armed on `ended`, reading `want` each time.
+- **REFUTED: `Settings.SoundVolume`.** DFU multiplies by it at every
+  riding call site (:197, :271, :282) and the port passes 1 - which is
+  CORRECT here: the SETT-slice applies SoundVolume once on the master
+  bus every source connects through, so multiplying again would
+  double-scale it. Not a finding.
+
+**THE TRANSPORT ARC IS CLOSED.** TR1 mode, TR2 sprite and audio, TR3
+window, TR4 ship, TR5 tail - and with TR3, all sixty of DFU's real
+windows are ported.
+
+(2026-08-31, after closing: MW-D42 hangs an ENHANCED-SKIN 3D horse
+beside the sprite - the player's own Pegas Horse Ranch data, read at
+runtime through the MW lane, never bundled. The arc stays closed: the
+sprite is still the 1:1 lane and every classic path is byte-identical;
+two pins moved by exactly the lines the swap needed (tr3's ride-loop
+clip, tr5's mode-door tail), both recorded in their tests. The whole
+story lives in Morrowind-Rules MW-D40..42. 2026-09-03: MW-D50 vendors
+the mod's horse with the author's consent - vendor/pegas-horse/ - so
+the enhanced ride has it out of the box, the player's own attach
+ranking ahead; nothing on the classic lane moved, no pin moved.)
+
+## TSR - THE TEST ROOM (2026-08-31, Mac's ask)
+
+Mac: "a menu option that leads to a sort of test environment where I
+can pick a prebuilt character and loot armor, weapons, etc." There is
+no DFU original - this is a port tool - but it SHIPS, and until AUDIT
+39 its entire record in the bible was one Testing.md row, which is how
+a shipped systems module ends up unfindable.
+
+THE IDS, corrected here. The room shipped as TR1-TR3 on the day the
+transport arc above closed TR1-TR5, so two arcs claimed the same three
+ids and a grep for "TR2" answered with the riding sprite AND the
+gender bug. The room is **TSR** from now on (renumbered in
+`test/testroom.test.js` and Testing.md's row); the transport arc keeps
+TR. Source comments in `ui/enhancedMenu.js` and `combat/weaponRig.js`
+still carry the old spelling, which this paragraph exists to catch.
+
+**TSR1 - ONE HOME.** `systems/testRoom.js` holds all three parts: the
+six prebuilt characters, the armory they walk in with, and the seeding
+that turns a preset into a live entity. The presets exercise the axes
+the body pipelines actually branch on - both sexes, human and elf and
+BOTH beast races, a real `faceIndex` - because a second copy of a
+preset in any door is how two rooms drift apart. The armory is TOTAL
+where it claims to be: one of every weapon type in steel (each its own
+Morrowind animation class and attach bone), every armor slot with all
+four shields, the material spread that changes the Morrowind record,
+a 60-arrow quiver so the bow draws loaded, and the SEX'S OWN clothing
+templates. Every row mints through the game's own constructors
+(`createWeapon`, `mintCondition`, the arrow arm's classic zero) -
+never a second item table.
+
+**WHAT THE ROOM IS NOT: a new scene.** It boots the same streaming
+world every other door boots, through the same headless-chargen seam
+`?class=` has used since AUDIT 17f. The room is a CHARACTER and a
+PACK, not a place - the point is to see the real rigs wearing real
+equipment through the real equip table, and a bespoke scene would be
+testing itself.
+
+**TSR2 - THE !!GENDER BUG, found building the room.** Gender is the
+string 'male'/'female' everywhere in this port, so the pause card's
+`female: !!playerEntity.gender` was TRUE FOR EVERYONE: every Morrowind
+build asked for the female skeleton and body columns, half-masked by
+the male-record fallback fills. The arms-build opts now live in one
+home (`weaponRig.armBuildOptsOf`) that the card and the room both ride,
+and the pin requires the string compare - a `!!` dies on 'male'.
+
+**TSR3 - THREE DOORS, ONE HOME.** The pane iterates `TEST_PRESETS` and
+fires `test:<id>`; `main.js` sets that param on this choice and DELETES
+it on every other (F12's law - New Game must not re-enter the room);
+the world boot resolves the preset BEFORE branching, so an unknown id
+falls through to the wizard rather than guessing, and builds the arms
+only when Morrowind data is attached.
+
+**TSR4 - RIDE OUT (2026-09-03, Mac: "an option that spawns you into
+the outside world with a mount to test").** The ride is a SPAWN on top
+of a preset, not a seventh character: `TEST_RIDE` names the baseline
+Nord Warrior, and `testEntryById` is the one door the boot resolves a
+`test=` id through - a preset answers `{preset, ride:false}`, `ride`
+answers the baseline with `ride:true`, an unknown id still answers
+null before the branch. The pane's card fires the SAME `test:<id>`
+choice family, so main.js's F12 law is untouched. Three things the
+host owes the ride, each borrowed rather than built: the HORSE is
+`seedTestMount` - the general store's own mint (`mintCondition` over
+the template's name, the shelf's base value), once, so the T window,
+the travel card and the pack all answer `hasHorse` as for a bought
+one; the LANDING is the fast-travel arrival's own edge law
+(`locationLandingFor` with no start markers = `positionPlayerToLocation`'s
+outside point, EXTRA_DISTANCE past the chosen wall, facing in, floored
+the arrival's way with ARRIVAL_REACH/LIFT); the MOUNT is U53's ONE
+transport door, so the classic CFA sprite and the enhanced saddle
+(MW-D42, the vendored horse of MW-D50) come up exactly as a T-key
+mount brings them. THE ORDER IS THE POINT: the horse lands with the
+armory in the async boot, but the landing and the mount are DEFERRED
+to the frame loop's spawn gate (`rideOutWanted`) - whichever of the
+character and the start pixel comes second fires it - so the ride can
+never re-land a player who has no floor yet, and never reads the
+arrival constants before the boot has declared them. A pixel with no
+location keeps the centre landing and still mounts. Pins in
+`testroom.test.js` (TSR4).
+
+## ROAD-G G1 - THE TWO ARTIFACT PAYLOADS THAT WERE REFUSED AT A POOL (2026-09-04)
+
+Two of V3's nine payloads carried a refusal that was never about the
+payload. **The Wabbajack** could not transform a city watchman, because
+`createCityGuards` exposed no removal door - and in the STREET the arm
+handed a struck watchman to the ENCOUNTER pool's `removeFoe`. That was
+not a leak (the remover never looks a record up in `foes`, so it tore
+the watchman down exactly as `removeGuard` does); it was the wrong
+OWNER, with an encounter-pool `notifyDestroyed()` reaching a record
+that carries no quest behaviour. **SoulBound's break release and the
+Sanguine Rose's Daedroth**
+could not be stood inside a building, on a premise ("interiors have no
+foe pool") that had died the day `interiorFoes.spawnFoe` went live.
+
+Both are shipped: `cityGuards.removeGuard` is
+WabbajackEffect.cs:86's `SetActive(false)`, both hosts route the
+transform by POOL MEMBERSHIP through it (the re-stand stays the
+encounter pool's - `careerIDs` is seventeen monsters and no watch,
+:24-44), and `worldModes.standInteriorLooseFoe` is
+CreateFoe.PlaceFoeBuildingInterior (CreateFoe.cs:219-233), reached by
+both hosts that mount the mode machine. The finding, the C# and the
+pool-side laws are recorded in Characters-Arc's ROAD-G G1 section;
+pinned in `test/roadg_pools.test.js` and the rewritten EC1 pins in
+`test/enchantpool.test.js`.
+
+**TSR4a - THE EDGE STANDS IN THE NEXT PIXEL (2026-09-04, Mac: "it
+just spawns me straight into the ground").** Audit of TSR4, shipped
+the day before on reading alone (no ARENA2 in the container). The
+landing law was right and the GATE was wrong: `getLocationTerrainTileOrigin`
+puts an 8x8 city at tile (0,0) (World-Arc), so the capitals fill
+their pixel edge to edge, and `positionPlayerToLocation`'s outside
+point - EXTRA_DISTANCE past the chosen wall - is ten units into the
+NEIGHBOURING pixel. The ride fired at the START pixel's first stand,
+when that neighbour had no collider yet: the floor ray found nothing,
+`floorLanding` answered the raw lifted forty units, the player fell,
+and the neighbour's terrain built over them a moment later. Fast
+travel never met this because a city's arrival uses its START
+MARKERS (inside the walls) - the edge is a village's landing, and a
+village sits inside its pixel; only TL2's marker-in-geometry fallback
+for a capital could take the same road, and it is recorded here
+rather than fixed. The fix is a WAIT, not a different landing: the
+edge is resolved once off the built start pixel, and the ride lands
+only when `heightAt` answers a finite height under the landing point
+(the pixel's built entry is the collider's own presence); while the
+ring is still building (`building || queue.length || inFlight.size`)
+the want stays armed and the frame gate asks again; if the ring has
+drained and there is still no ground there, it mounts where the
+player stands and says so on the console. The player's few frames
+standing at the centre before the neighbour lands are the cost.
+Pinned: the gate's shape in the host, and the arithmetic itself -
+every side of an 8x8 landing lies outside 0..819.2 by exactly one
+EXTRA_DISTANCE, a 1x1 village's inside it (`testroom.test.js` TSR4a).
+
+**TSR4b - THE RIDE WAS BOOTING INTO PRIVATEER'S HOLD (2026-09-04,
+Mac, after TSR4a: "Nope. it either places me in the dungeon or places
+me in the ground").** TSR4a's wait was right and was not the bug Mac
+was seeing. main.js sets `?classic` on EVERY menu door (U31: the new
+game begins where Daggerfall begins), and the classic start is a map
+CELL out of settings - StartCellX/Y 109,158, Privateer's Hold - with
+`StartInDungeon` putting a new character INSIDE it. So the ride's
+start pixel was the Hold's, not a city's, and its exterior landing
+raced the dungeon entry: fire before the entry and the mount lands on
+a pixel the dungeon then takes over ("in the ground"); fire after and
+the player is already underground with the exterior gate still
+armed ("in the dungeon"). Neither is a landing bug - it is the wrong
+boot. The ride is a SPAWN OUTDOORS, a dev boot in U31's own sense
+("every dev boot keeps the region/loc names it has always used"), so
+main.js now drops `classic` for the ride alone - resolved through
+`TEST_RIDE.id` from the one home, never a literal - and the boot
+takes the named start, the city of Daggerfall's exterior, with no
+dungeon arm to race. Every other menu door, the six presets included,
+still begins where Daggerfall begins. Pinned on the route text
+(`testroom.test.js`, the TSR4 wiring pin); `classicstart.test.js`
+and `enhancedMenu.test.js` still see the `params.set('classic', '1')`
+they require.
+
+**TSR4c - THE RAY ONLY SEES MESHES (2026-09-04, Mac, after TSR4b:
+"Now I spawn in mid air after hitting ride out").** With the classic
+start out of the way the ride finally reached its edge landing, and
+the landing floated. `floorLanding` casts its footprint sweep through
+`collider.raycastHit`, which walks the TRIANGLE BUCKETS - the blocks,
+the models, the doors - and nothing else; the exterior collider
+carries the terrain as its `heightAt` callback, "floor beneath
+everything", which `move()` reads and the ray never does. Inside a
+town every landing sits over pavement meshes and the sweep hits. The
+edge landing stands ten units OUTSIDE every block, over bare terrain,
+so every sample missed and the miss arm answered the raw LIFTED by
+extraHeight: forty units up, then the drop. TL1's fast-travel edge
+arrival for a village took the same road and nobody had stood on one
+since. Fixed at the root, in the law: on a miss the landing is the
+collider's own ground when it has one (`Number.isFinite`), and a
+collider without one - interiors, dungeons, every test stub - keeps
+the arm byte for byte. The ride's gate (TSR4a) still waits for that
+ground to exist, since `heightAt` answers -Infinity until the pixel
+is built. Pinned in `enterexit.test.js` (the miss arm both ways, a
+mesh hit still winning, the exterior collider handed the terrain);
+every suite that reads `floorLanding` was run and stands.

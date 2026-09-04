@@ -1,10 +1,10 @@
 // CLIMBING (M3-slice, AUDIT 23 motor-3): DFU ClimbingMotor's CLASSIC
 // path (MIT, Daggerfall Workshop) - the Climbing skill's consumer at
-// last. AdvancedClimbing OFF is the port's law (the same doctrine as
-// EnhancedCombatAI): the corner wraps, rappel/hanging handoffs,
-// WallEject, ceiling releases and the overhang bumps are all gated on
-// that setting and stay with it (RESIDUE). What classic climbing IS
-// (ClimbingMotor.cs):
+// last. AdvancedClimbing OFF is the port's law - Ledger A, THE
+// `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD, by name (the same doctrine
+// as EnhancedCombatAI): the corner wraps, rappel/hanging handoffs, WallEject,
+// ceiling releases and the overhang bumps are all gated on that setting and
+// stay with it (RESIDUE). What classic climbing IS (ClimbingMotor.cs):
 //   - hold Forward against a wall while horizontally stationary
 //     (tolerance 0.12) for 14 system-timer units (x 0.0549254 s);
 //     then a skill check at base 70 starts the climb - and a FAILED
@@ -39,6 +39,9 @@ export const GRASP_WALL_MIN_CHANCE = 40;
 export const START_CLIMB_SKILL_CHECK_FREQUENCY = 14;
 export const START_CLIMB_HORIZONTAL_TOLERANCE = 0.12;
 export const KHAJIIT_CLIMBING_BONUS = 30;   // FormulaHelper.CalculateClimbingChance racial arm
+/** The HUD line ClimbingMotor.cs:603 pushes once an attempt -
+ *  `climbingMode`, Internal_Strings.csv:371, verbatim. */
+export const CLIMBING_MODE_TEXT = 'Climbing mode.';
 
 const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));   // Mathf.Lerp clamps t
 
@@ -156,10 +159,10 @@ export class ClimbingState {
       }
     }
     if (this.isClimbing) {
-      // the climbingMode HUD line, once per attempt (:601-605; the
-      // prose is ours, key climbingMode cited pending a string source)
+      // the climbingMode HUD line, once per attempt (:601-605) -
+      // AddHUDText takes the row verbatim, Internal_Strings.csv:371
       if (this.showModeMessage) {
-        this.deps.say?.('You are in climbing mode.');
+        this.deps.say?.(CLIMBING_MODE_TEXT);
         this.showModeMessage = false;
       }
     } else {

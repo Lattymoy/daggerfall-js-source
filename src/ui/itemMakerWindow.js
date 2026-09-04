@@ -43,17 +43,27 @@
 // sit one pixel left and rows one pixel taller than DFU's. One
 // scroller, corrected once, is worth the pixel (Ledger A).
 //
-// FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
-// strip and an icon picker from the selected-item well; the rename
-// rides the port's own inline field here, and the icon picker waits
-// on the item-icon variant seam.
+// NOT A GAP, recorded. The icon picker was a phantom: DFU's
+// selected-item well opens nothing. SelectedItemButton_OnMouseClick
+// (DaggerfallItemMakerWindow.cs:605-611) nulls selectedItem, clears
+// both enchantment lists and Refresh()es - which _deselect (:243) does
+// exactly - and the only SpellIconPickerWindow consumers in the tree
+// are DaggerfallSpellBookWindow.cs:149 and DaggerfallSpellMakerWindow
+// .cs:194. The RENAME half is a widget departure, not a hole: DFU pops
+// a DaggerfallInputMessageBox (NameItemButon_OnMouseClick, :799-811)
+// where this window types into an inline strip, recorded as Ledger A
+// row TB1 (by NAME - the line number this used to cite rotted) - and
+// the F171 NIT row's one real defect, the character
+// cap, is fixed (MAX_ITEM_NAME = 31, the TextBox default at
+// TextBox.cs:26, which RenameItem itself never narrows).
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
+import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import {
   makeIconDrawer, drawStackLabel, scrollerHit, applyScroll, safeScrollIndex,
+  playScrollerArrowClick,
   LIST_SLOTS, CELL_X,
 } from './itemScroller.js';
 import { typedChar } from './input.js';
@@ -149,6 +159,9 @@ export async function preloadItemMakerArt(deps) {
   try {
     _art = await loadImg(deps, 'ITEM00I0.IMG');
     _tabs = await loadImg(deps, 'ITEM01I0.IMG');
+    // AUDIT 58: both enchantment pickers are SmallFont, 12 rows
+    // (:372, :376), so the FNT has to be warm before one opens.
+    await preloadListPickerSmallFont(deps);
   } catch { console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed'); }
 }
 export const itemMakerArtLoaded = () => !!_art && !!_tabs;
@@ -185,7 +198,8 @@ export class ItemMakerWindow {
    *  ShowScroller (> 7 rows), stepping scrollerStep (8) against the
    *  SetScrollIndex clamp; routed to whichever list the cursor is
    *  over, since DFU's wheel fires per component. */
-  hover(vx, vy) { this._mouse = [vx, vy]; }
+  hover(vx, vy, e = null) { this._mouse = [vx, vy]; this.picker?.hover(vx, vy, e); }   // ROAD-A7: the picker's own hover
+  release() { this.picker?.release(); }   // ROAD-E E1: and the picker's own release, the edge that drops the thumb latch
   wheel(dir) {
     if (!dir) return;
     const [vx, vy] = this._mouse;
@@ -275,6 +289,11 @@ export class ItemMakerWindow {
       items: types.map(enchantmentName),
       onPick: (i) => { this.picker = null; this._pickPrimary(types[i]); },
       onCancel: () => { this.picker = null; },
+      // AUDIT 58: DaggerfallItemMakerWindow.cs::372 builds this picker
+      // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
+      // font and the row count travel together (12 x (5+1) = the
+      // 72px listBox).
+      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
@@ -291,6 +310,11 @@ export class ItemMakerWindow {
       items: options.map((o) => o.label),
       onPick: (i) => { this.picker = null; this._pickSecondary(type, options[i].param); },
       onCancel: () => { this.picker = null; },
+      // AUDIT 58: DaggerfallItemMakerWindow.cs::376 builds this picker
+      // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
+      // font and the row count travel together (12 x (5+1) = the
+      // 72px listBox).
+      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
@@ -405,12 +429,14 @@ export class ItemMakerWindow {
     }
 
     const list = this.items();
-    const hit = scrollerHit(ITEM_RECTS.itemList, vx, vy);
+    // AUDIT 39 F126: the rail pages off the live thumb, so the hit
+    // needs the scroll index and the list length.
+    const hit = scrollerHit(ITEM_RECTS.itemList, vx, vy, safeScrollIndex(this.scroll, list.length), list.length);
     if (hit) {
       if (hit.kind === 'slot') {
         const item = list[safeScrollIndex(this.scroll, list.length) + hit.slot];
         if (item) this._selectItem(item);
-      } else this.scroll = applyScroll(this.scroll, hit.kind, list.length);
+      } else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, list.length); }   // ROAD-A7: the two arrows click
       return true;
     }
     return true;   // the background is the whole screen
@@ -479,6 +505,17 @@ export class ItemMakerWindow {
       this._icon(renderer, m, it, ITEM_RECTS.itemList, i);
       drawStackLabel(renderer, font, m, it, ITEM_RECTS.itemList, i);
     }
+    // ROAD-A7 DELIBERATELY STOPS SHORT HERE. The two windows that draw
+    // the red/green arrows and the art thumb ride ItemListScroller's
+    // DEFAULT rect - itemListPanelRect (9,0,50,152), which is what
+    // itemScroller.js's constants are. This window hands the scroller
+    // its OWN rect (DaggerfallItemMakerWindow.cs:44,
+    // itemListPanelRect = (10,0,50,148)), so the down arrow sits at
+    // 132 rather than 136 and the bar is 113 tall rather than 117.
+    // Drawing the shared art here would put both four pixels wrong.
+    // The scroller needs its rect parameterised before this window can
+    // have them; the ARROW CLICK sound above is rect-independent and
+    // lands today.
     // ...and the WELL, which shows the item being worked on. The
     // shared drawer places an icon by (rect, slot), and the well is
     // one 50x37 cell - close enough to the scroller's 50x38 that slot

@@ -64,12 +64,34 @@ test('AR1: the player capsule is tested FIRST when both overlap', () => {
   assert.deepEqual(log, ['player'], 'one arrow, one landing - the player arm keeps its precedence');
 });
 
-test('AR1: a PLAYER arrow ignores the foe list - its foe impacts resolve at the fire host', () => {
+// AUDIT 39 (#64) RE-PINNED THIS LAW. It used to read "a PLAYER arrow
+// ignores the foe list - its foe impacts resolve at the fire host",
+// and no non-dungeon host resolved one, so a player's shaft damaged
+// nothing above ground or indoors while DFU's ArrowMissile assigns its
+// damage wherever the player is standing. The enemy arm is still the
+// enemy's: a player shaft never takes onFoeHit.
+test('AR1/#64: a player arrow takes the PLAYER arm of the impact, never the enemy one', () => {
   const f = flight();
-  f.fire([0, 0.9, 0], [0, 0, 1], {});   // no enemy marker: the player's shaft
+  f.fire([0, 0.9, 0], [0, 0, 1], { fromPlayer: true, weapon: {} });
   const hits = [];
-  f.update(0.05, { foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }], onFoeHit: (m, t) => hits.push(t.id) });
-  assert.deepEqual(hits, [], 'the visible-flight-only law stands for player arrows');
+  f.update(0.05, {
+    foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }],
+    onFoeHit: (m, t) => hits.push(['enemyArm', t.id]),
+    onPlayerArrowHitFoe: (m, t) => hits.push(['playerArm', t.id]),
+  });
+  assert.deepEqual(hits, [['playerArm', 'bear']]);
+});
+
+test('AR1: an arrow marked neither way still lands nothing - the arms are the SHOOTER\'s', () => {
+  const f = flight();
+  f.fire([0, 0.9, 0], [0, 0, 1], {});
+  const hits = [];
+  f.update(0.05, {
+    foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }],
+    onFoeHit: (m, t) => hits.push(t.id),
+    onPlayerArrowHitFoe: (m, t) => hits.push(t.id),
+  });
+  assert.deepEqual(hits, []);
 });
 
 test('AR1: the contact radius is the missile law - radius + the 0.45 body', () => {
@@ -91,7 +113,7 @@ test('AR1: exteriorFoes lands the hit on BowDamage\'s own payload', () => {
   const src = read('src/scenes/exteriorFoes.js');
   const from = src.indexOf('function arrowHitFoe(m, target) {');
   assert.ok(from > 0);
-  const body = src.slice(from, from + 800);
+  const body = src.slice(from, from + 1200);
   assert.match(body, /weapon: m\.weapon, direction: dir, bowAttack: true/,
     ':303 with bowAttack=true - the melee arm passes false by omission');
   assert.match(body, /dealDamage: \(t, d\) => \(t\.hurtFromFoe \? t\.hurtFromFoe\(d, dir\) : damageFoe\(t, d, null, dir\)\)/,

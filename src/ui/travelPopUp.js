@@ -20,7 +20,9 @@
 //   DEFAULT shadowed style (TextLabel.cs:40-42), not a plain draw.
 // - six option buttons in two columns (:57-62) and BEGIN/EXIT at
 //   the right (:55-56); the hotkeys are DialogShortcuts' own - B
-//   begin, E exit, S speed, T transport, N inn/camp out.
+//   begin, E exit, S speed, T transport, N inn/camp out - and since
+//   A8 they are READ from that table (systems/dialogShortcuts.js)
+//   rather than transcribed into this file.
 //
 // THE FLOW, law for law:
 // - defaults are cautious / SHIP / inns (:85-87). The F-slice window
@@ -54,19 +56,48 @@
 // and RaiseSkills on arrival (:380), both of whose "no seam yet"
 // blockers had retired without the sentence moving.
 //
-// FLAGGED, each idling loudly: the HUD smash-to-black/fade
-// (:242, :381 - no fade layer in the port), and EXIT's key-UP deferral
-// (:482-495: DFU plays the click on key-down and pops the window on
-// key-up, so holding E keeps the popup; the port's overlay seam has
-// no key-up edge, so E closes on the down stroke).
+// D4 CLOSED BOTH OF THIS WINDOW'S LAST TWO SENTENCES.
+//
+// THE SMASH AND THE FADE (:242, :381). ui/fadeLayer.js is
+// FadeBehaviour.cs whole; the smash is where Update puts it - the
+// frame the countdown reaches zero, immediately before
+// performFastTravel - and the fade from black is the last thing
+// performFastTravel does (:381), which is the host's half of that
+// method (scenes/world.js `fastTravelTo`) exactly as the arrival order
+// has been since the F-slice. So the days tick down, the screen
+// smashes black on the last one, and the new pixel fades up.
+//
+// EXIT'S KEY-UP DEFERRAL (:482-495). A DFU Button raises
+// OnKeyboardEvent for BOTH edges of its Hotkey and only falls back to
+// a faked click on key-down when nothing is subscribed
+// (Button.cs:79-92). Four of this window's buttons subscribe. THREE of
+// them - speed, transport, inn/camp - act on KeyDown only (:504-508,
+// :524-528, :544-548), which is what the port already did. EXIT is
+// the one that splits: KeyDown plays ButtonClick and arms
+// `isCloseWindowDeferred`, KeyUP clears the flag, kills doFastTravel
+// and pops the window. So E held down is a popup that stays open with
+// its click already played, and the window closes on the release.
+// `keyup` below is that edge; ui/travelMapWindow.js routes it and the
+// townTalk overlay seam forwards it from the hosts' existing keyup
+// listeners, which had bound the edge and never used it.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { drawText } from './text.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
 import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+
+/** The five Hotkey assignments this window makes, in DFU's own setup
+ *  order (:167, :171, :176, :188, :200) - Panel.ProcessHotkeySequences
+ *  walks a screen's buttons in order and stops at the first hit. */
+const TRAVEL_BUTTONS = Object.freeze([
+  'TravelBegin', 'TravelExit', 'TravelSpeedToggle',
+  'TravelTransportModeToggle', 'TravelInnCampOutToggle',
+]);
 
 /** nativePanelRect and the button rects (:54-62). */
 export const POPUP_RECTS = Object.freeze({
@@ -139,12 +170,18 @@ export class TravelPopUpWindow {
     this.waitTimer = 0;
     this.trip = { piecesCost: 0, totalCost: 0, minutes: 0, oceanPixels: 0 };
     this.lastMousePos = [-1, -1];
+    this.isCloseWindowDeferred = false;   // :83, EXIT's key-up flag
     this.top = null;          // 'diseased' | 'gold' - the two pushed boxes
     this._box = null;
     this.refresh();
   }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+
+  /** GuildManager.GetGuild(KnightlyOrder).FreeTavernRooms() - a host
+   *  that answers nothing pays like everyone else, which is the base
+   *  Guild.FreeTavernRooms (false). */
+  freeTavernRooms() { return !!this.deps.freeTavernRooms?.(); }
 
   /** Refresh -> UpdateTogglePanels + UpdateLabels (:254-258). The
    *  toggle panels are positional state, so only the labels compute. */
@@ -169,6 +206,11 @@ export class TravelPopUpWindow {
       sleepModeInn: this.sleepModeInn,
       hasShip: this.hasShip,
       travelShip: this.travelShip,
+      // TravelTimeCalculator.cs:163 consults the Knightly Order's
+      // FreeTavernRooms right here. Read LIVE, not at OnPush like the
+      // transport trio above: DFU asks GuildManager inside the
+      // formula, so it re-answers on every toggle.
+      freeTavernRooms: this.freeTavernRooms(),
     });
     this.trip = { ...t, ...c };
     this.countdownValueTravelTimeDays = travelDays(this.travelTimeTotalMins);
@@ -203,12 +245,34 @@ export class TravelPopUpWindow {
     this.doFastTravel = true;
   }
 
-  /** ExitButtonOnClickHandler / CancelWindow (:475-480, :435-441). */
+  /** ExitButtonOnClickHandler (:475-480) and CancelWindow (:435-440),
+   *  which are the same three statements in the same order: the click
+   *  sound, doFastTravel off, the window popped. Both are MOUSE-side
+   *  or window-side and act at once. */
   exit() {
     this._click();
+    this._exitNow();
+  }
+
+  /** The half without the sound - ExitButton_OnKeyboardEvent's KeyUp
+   *  arm (:490-494) does not play a second ButtonClick, because its
+   *  KeyDown arm already played the first one. */
+  _exitNow() {
     this.doFastTravel = false;
     this.done = true;
     this.deps.onExit?.();
+  }
+
+  /** ExitButton_OnKeyboardEvent (:482-495), the KeyUP half. DFU's flag
+   *  is `isCloseWindowDeferred`, and the release only closes the window
+   *  when the matching press armed it - a key released over a window
+   *  that was raised while it was already down does nothing. */
+  keyup(code, e = null) {
+    if (this.top) return;   // a pushed message box owns the keyboard
+    if (!this.isCloseWindowDeferred) return;
+    if (firstHotkey(['TravelExit'], typeof code === 'string' ? code : '', e) !== 'TravelExit') return;
+    this.isCloseWindowDeferred = false;
+    this._exitNow();
   }
 
   input(code, e = null) {
@@ -221,15 +285,23 @@ export class TravelPopUpWindow {
     }
     if (this.top === 'gold') { this.top = null; return; }   // ClickAnywhereToClose (:403)
     if (key === 'Escape') { this.exit(); return; }
-    switch (key) {
-      case 'KeyB': this.begin(); return;                                            // TravelBegin
-      case 'KeyE': this.exit(); return;                                             // TravelExit
-      case 'KeyS': this._click(); this.speedCautious = !this.speedCautious; this.refresh(); return;
-      case 'KeyT': this._click(); this.travelShip = !this.travelShip; this.refresh(); return;
-      case 'KeyN': this._click(); this.sleepModeInn = !this.sleepModeInn; this.refresh(); return;
+    // A8: the five buttons' Hotkeys, from the table rather than from
+    // five literals (DaggerfallTravelPopUp.cs:167/171/176/188/200).
+    // The letters do not move - B/E/S/T/N were right - but they are
+    // now the table's answer, so a table edit reaches them and a
+    // modifier held with them is masked out exactly as DFU masks it.
+    switch (firstHotkey(TRAVEL_BUTTONS, key, e)) {
+      case 'TravelBegin': this.begin(); return;
+      // ExitButton_OnKeyboardEvent's KeyDown arm (:484-488): the click
+      // sound plays NOW and the close waits for the release. The
+      // begin button subscribes no keyboard handler at all, so B stays
+      // Button.cs's "legacy support fallback" faked click on key-down.
+      case 'TravelExit': this._click(); this.isCloseWindowDeferred = true; return;
+      case 'TravelSpeedToggle': this._click(); this.speedCautious = !this.speedCautious; this.refresh(); return;
+      case 'TravelTransportModeToggle': this._click(); this.travelShip = !this.travelShip; this.refresh(); return;
+      case 'TravelInnCampOutToggle': this._click(); this.sleepModeInn = !this.sleepModeInn; this.refresh(); return;
       default: break;   // DFU offers no other accelerator on this window
     }
-    void e;
   }
 
   click(vx, vy) {
@@ -284,6 +356,11 @@ export class TravelPopUpWindow {
       return;
     }
     this.doFastTravel = false;
+    // Update's else arm (:240-244): doFastTravel down, SmashHUDToBlack,
+    // THEN performFastTravel - the screen is black before the journey
+    // is resolved, and the host's arrival ends with the fade from
+    // black (:381).
+    hudFade.smashHUDToBlack();
     this.done = true;
     this.deps.onTravel?.(this.endPos, {
       speedCautious: this.speedCautious,

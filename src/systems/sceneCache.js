@@ -77,16 +77,41 @@ export const addPermanentScene = (cache, sceneName) => { cache.permanent.add(sce
 export const containsPermanentScene = (cache, sceneName) => cache.permanent.has(sceneName);
 export const removePermanentScene = (cache, sceneName) => { cache.permanent.delete(sceneName); };
 
+/** The player's own dropped piles, deep-copied. They are the third
+ *  thing a scene holds in this port because the port keeps a pile's
+ *  position and its items in a nested record, where DFU's
+ *  LootContainerData_v1 is flat - so a shallow `{...p}` would share
+ *  the live arrays with the scene the caller is about to tear down. */
+const copyPiles = (piles) => piles.map((p) => ({
+  ...p,
+  pos: [...p.pos],
+  items: (p.items ?? []).map((it) => ({ ...it })),
+}));
+
 /** CacheScene (:84-98). DFU caches exactly TWO kinds of thing for a
  *  scene - loot containers and action doors - and explicitly writes
  *  empty arrays for the other two stateful types, which is its own
  *  comment saying so ("Only cache loot containers & action doors").
  *  Enemies are NOT cached, so a shop's occupants are rebuilt fresh
- *  every entry; that is DFU's behaviour and not an omission here. */
-export function cacheScene(cache, sceneName, { lootContainers = [], actionDoors = [] } = {}) {
+ *  every entry; that is DFU's behaviour and not an omission here.
+ *
+ *  AUDIT 58 (ID1's missing half): `droppedPiles` is the THIRD field
+ *  the interior host builds and this store used to throw away. DFU
+ *  has no third field because it needs none - CacheScene stores
+ *  GetLootContainerData() (SerializableStateManager.cs:88-96), which
+ *  walks EVERY SerializableLootContainers value with ShouldSave
+ *  (:343-354), and a player-dropped DaggerfallLoot of
+ *  LootContainerTypes.DroppedLoot is one of them. The port keeps its
+ *  own dropped-pile pool separate from the interior's shelves, so
+ *  the same law reaches it as a third array rather than more rows in
+ *  the first. Destructuring only two keys made the port's own
+ *  LOOT_CONTAINER_TYPES.DroppedLoot unreachable and cleared the floor
+ *  of every shop on the way out. */
+export function cacheScene(cache, sceneName, { lootContainers = [], actionDoors = [], droppedPiles = [] } = {}) {
   cache.scenes.set(sceneName, {
     lootContainers: lootContainers.map((c) => ({ ...c })),
     actionDoors: actionDoors.map((d) => ({ ...d })),
+    droppedPiles: copyPiles(droppedPiles),
   });
 }
 
@@ -118,6 +143,10 @@ export function clearSceneCache(cache, { start = true } = {}) {
     const data = cache.scenes.get(sceneName);
     if (!data) continue;
     kept.set(sceneName, {
+      // `...data` carries droppedPiles through untouched, which is
+      // right: a player-dropped pile is not a CorpseMarker, and DFU's
+      // filter (:131-140) tests containerType alone - so what you left
+      // on your own floor survives the world moving on.
       ...data,
       // "sans corpses" - a body left in your own house does not
       // survive the world moving on, though the chest beside it does
@@ -139,6 +168,9 @@ export function snapshotSceneCache(cache) {
       sceneName,
       lootContainers: d.lootContainers.map((c) => ({ ...c })),
       actionDoors: d.actionDoors.map((x) => ({ ...x })),
+      // the same array GetSceneCache writes (:148-172) - the piles
+      // are loot containers on DFU's side, so they ride the envelope
+      droppedPiles: copyPiles(d.droppedPiles ?? []),
     })),
   };
 }
@@ -146,12 +178,20 @@ export function restoreSceneCache(cache, snap) {
   cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, {
     lootContainers: (e.lootContainers ?? []).map((c) => ({ ...c })),
     actionDoors: (e.actionDoors ?? []).map((d) => ({ ...d })),
+    // `?? []` keeps a save written before ID1's store shipped loadable
+    droppedPiles: copyPiles(e.droppedPiles ?? []),
   }]));
   cache.permanent = new Set(snap?.permanentScenes ?? []);
   return cache;
 }
 
-// FLAGGED, with the slice it waits on:
-//  - the HOUSE deed's AddPermanentScene still needs the building
-//    directory to know which building was bought; the tavern's rented
-//    room and the ship's two scenes name themselves and are wired.
+// EVERY CALLER OF THIS CACHE IS WIRED. The last one to land was the
+// HOUSE deed's AddPermanentScene, which needed the building directory
+// to know which building was bought: H1/H2 shipped both halves -
+// banking.js:198 calls the hook inside allocateHouseToPlayer with the
+// bought building's own mapId and key, and worldModes.js:2017 supplies
+// it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
+// reached from the bank's buy arm (:2144-2148), the knightly gift
+// (:2752) and :4933, with sellHouse dropping the scene again (:2184). The
+// tavern's rented room (tavern.js:143) and the ship's two scenes
+// (banking.js:291-293) name themselves and were wired before it.

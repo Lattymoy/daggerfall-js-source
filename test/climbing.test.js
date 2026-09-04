@@ -39,7 +39,8 @@ const ctx = (over = {}) => ({
 test('climbing: the start countdown, the fail-retry-per-frame quirk, the grasp reset', () => {
   let tallies = 0;
   let roll = 0.99;   // fails any chance < 100
-  const cs = new ClimbingState({ tally: () => tallies++, inputs: () => ({ climbing: 50, luck: 0 }), rolls: () => roll });
+  const said = [];
+  const cs = new ClimbingState({ tally: () => tallies++, inputs: () => ({ climbing: 50, luck: 0 }), rolls: () => roll, say: (m) => said.push(m) });
   const dt = 1 / 60;
   // hold forward against the wall: no check until 14 units accrue -
   // the timer increments while its ENTRY value is <= DIV*14, so the
@@ -59,6 +60,13 @@ test('climbing: the start countdown, the fail-retry-per-frame quirk, the grasp r
   roll = 0;
   cs.step(dt, ctx());
   assert.equal(cs.isClimbing, true);
+  // ClimbingMotor.cs:601-605 pushes the HUD line once an attempt, and
+  // AddHUDText is handed `climbingMode` verbatim - the ROW's two
+  // words (Internal_Strings.csv:371), written out rather than read
+  // back through the constant the source uses.
+  assert.deepEqual(said, ['Climbing mode.'], 'the climbingMode HUD line, once');
+  cs.step(dt, ctx());
+  assert.deepEqual(said, ['Climbing mode.'], 'and only once per attempt (:601-605)');
   // the airborne GRASP is different: a fail RESETS the timer (:434-437)
   roll = 0.99;
   const grasp = new ClimbingState({ tally: () => {}, inputs: () => ({ climbing: 50, luck: 0 }), rolls: () => roll });

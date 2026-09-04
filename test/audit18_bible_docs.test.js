@@ -75,7 +75,10 @@ test('AUDIT 18: every open-flags citation in Home.md points at the line it quote
   // the BOTH-ways rule below already pins the list and src/ to exact
   // agreement, and a hard number here is one more thing to rot (AUDIT 21
   // found Testing.md still quoting 109 when the list had reached 115).
-  assert.ok(seen >= 100, `only ${seen} open-flag citations parsed - the list or its format changed`);
+  // The floor is a floor: the Road-to-1:1 closeout retired 96 flags in
+  // one afternoon (145 -> 53) and Wave D took it to 17, and a floor set at the old population
+  // would have punished the retirement (CR-35's lesson).
+  assert.ok(seen >= 5, `only ${seen} open-flag citations parsed - the list or its format changed`);
   assert.deepEqual(wrong, [], `stale open-flags citations:\n${wrong.join('\n')}`);
 });
 
@@ -402,4 +405,378 @@ test('U42: every arc page that counts its own modules counts them right', () => 
     assert.equal(Number(m[1]), real,
       `${page} says ${m[1]} modules live under ${dir}/; there are ${real}`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// WM2h: NO CONFLICT MARKER REACHES THE BIBLE, in any file.
+//
+// This has now happened three times. "Repair: the previous merge went out
+// with conflict markers in Testing.md" is in the log; manifest.test.js
+// grew a marker check for THAT ONE FILE because of it; and then markers
+// went out in Port-Ledger.md's windmill row, which another lane had to
+// fix - and the row arrived back here NESTED, a conflict inside a
+// conflict, because the resolution that shipped them was a regex over
+// the markers rather than a reading of the two sides.
+//
+// A per-file guard was the wrong shape: the file that breaks next is the
+// one nobody has broken yet. This is every tracked bible document, and it
+// costs one walk.
+// ---------------------------------------------------------------------------
+
+test('WM2h: no bible document carries a merge conflict marker', () => {
+  const bad = [];
+  for (const f of BIBLE_FILES) {
+    lines(f).forEach((l, i) => {
+      if (/^(<{7}|={7}|>{7})(\s|$)/.test(l)) bad.push(`${f}:${i + 1} ${l.slice(0, 40)}`);
+    });
+  }
+  assert.deepEqual(bad, [], `merge conflict markers in the bible:\n${bad.join('\n')}`);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 39: the tripwire the EV arc said was already here.
+//
+// Enhanced-Visuals-Arc.md's hard-constraints section told every following
+// slice that this file pins Rendering.md's "directional light 0.45 +
+// 0.55*diffuse", and EV5's own record leans on that pin - but no test in the
+// repo held the string. The base term is not a GLSL literal a shader-text
+// sweep could catch either: it is renderer.js's JS defaults, so a retune
+// would leave Rendering.md stating a formula the renderer no longer had with
+// the suite green. Both halves are pinned, so the doc and the defaults can
+// only move together.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 39: Rendering.md\'s "0.45 + 0.55*diffuse" base is the renderer\'s real defaults', () => {
+  const doc = read('bible/07-Rendering/Rendering.md').replace(/\s+/g, ' ');
+  assert.match(doc, /directional light 0\.45 \+ 0\.55\*diffuse/,
+    'Rendering.md lost the base-lighting formula the EV arc treats as pinned');
+  const r = read('src/render/renderer.js');
+  assert.match(r, /this\._ambient = new Float32Array\(\[0\.45, 0\.45, 0\.45\]\);/,
+    "the solid programs' ambient default moved - Rendering.md still says 0.45");
+  assert.match(r, /this\._sunScale = 0\.55;/,
+    "the solid programs' sun scale moved - Rendering.md still says 0.55");
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 39: the index indexes.
+//
+// Home.md declares "Bible is flat under `bible/`. This file is the index",
+// and the two newest audit records (Audit-DA, Audit-EV) were reachable only
+// from the arc pages they close - a reader following the instruction reached
+// AUDIT 38 and stopped. The gate is the same both-ways shape as the
+// open-flags list: a new record must be indexed, and a renamed one cannot
+// leave a dead row behind.
+//
+// CR-39 widened it from RECORDS NAMED "Audit-*" to every record under
+// 01-Overview/, because the prefix was doing the work the law does: the
+// road-to-1:1 campaign ledger and the 2026-09-01 incident record - whose
+// four Standing lessons are binding process law - both slipped in
+// unindexed while this test reported green. What is deliberately NOT
+// indexed is an explicit list, so leaving a record out is a decision
+// somebody writes down rather than a name that happens not to match.
+// ---------------------------------------------------------------------------
+
+/** Records under 01-Overview/ the index deliberately does not name. */
+const UNINDEXED_RECORDS = [
+  'Bible-Review-2026-08-25.md',   // a one-off review OF the bible, not a record of the port
+  'Port-Completion-Analysis.md',  // superseded for volume figures by Port-Status-2026-09.md
+];
+
+// AUDIT 58 (seams): AND EVERY ARC PLAN, wherever it lives. The law
+// above reads ONE directory, so an unindexed arc plan under
+// 07-Rendering/ passed green: `Enhanced-Environments-Arc.md` - the
+// live plan for the ground/sky/grass/weather arc, opened 2026-09-01,
+// the arc four of the most recent audits were written about, and the
+// document doctrine.test.js opens by path to assert the render gate
+// and the upload law - was named nowhere in the index that calls
+// itself the index. Its only prose reachability was one second hop
+// from Rendering.md. That is the same fault the AUDIT 39 header
+// describes (Audit-DA and Audit-EV reachable only from the arc pages
+// they close), one directory over, so the same law covers it: a
+// `*-Arc.md` anywhere under bible/ is named in Home.md, or it is on
+// the written list below.
+/** Arc plans Home.md deliberately reaches another way. */
+const UNINDEXED_ARCS = [
+  // reached by the `11-Multiplayer/` section row - "co-op: the three
+  // locked decisions, the architecture, the arc" - which covers both
+  // Multiplayer.md and its arc as one unstarted section.
+  'bible/11-Multiplayer/Multiplayer-Arc.md',
+];
+
+test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
+  const home = read('bible/Home.md');
+  const records = readdirSync(join(root, 'bible/01-Overview'))
+    .filter((f) => f.endsWith('.md') && !UNINDEXED_RECORDS.includes(f)).sort();
+  const missing = records.filter((f) => !home.includes(f));
+  assert.deepEqual(missing, [],
+    `records the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files either
+  const gone = UNINDEXED_RECORDS.filter((f) => !existsSync(join(root, 'bible/01-Overview', f)));
+  assert.deepEqual(gone, [], `the not-indexed list names files that are gone:\n${gone.join('\n')}`);
+  const named = [...home.matchAll(/`01-Overview\/([A-Za-z0-9._-]+\.md)`/g)].map((m) => m[1]);
+  const dead = [...new Set(named)].filter((f) => !records.includes(f) && !UNINDEXED_RECORDS.includes(f));
+  assert.deepEqual(dead, [], `the index names records that are gone:\n${dead.join('\n')}`);
+
+  // AUDIT 58 (records): ONE ENTRY PER RECORD, the other half of the
+  // law. The both-ways check above is satisfied by a DUPLICATE, and
+  // two of them were live: `Audit-48.md` was indexed twice under two
+  // unrelated descriptions (a same-day number collision overwrote the
+  // earlier record and its row was left pointing at the file that
+  // replaced it), and `Audit-49.md` carried a byte-identical copy of
+  // `Audit-53.md`'s campaign description - so the campaign had two
+  // entries and the lab-grass audit's real subject had none. A reader
+  // following either row reaches a stranger, which is precisely what
+  // an index exists to prevent.
+  const entry = /^- `01-Overview\/([A-Za-z0-9._-]+\.md)` - /;
+  const rows = home.split('\n').map((l) => entry.exec(l)).filter(Boolean).map((m) => m[1]);
+  const twice = rows.filter((f, i) => rows.indexOf(f) !== i);
+  assert.deepEqual([...new Set(twice)], [],
+    `the index carries more than one entry for one record:\n${twice.join('\n')}`);
+});
+
+test('AUDIT 58: Home.md names every arc plan under bible/, wherever it lives', () => {
+  const home = read('bible/Home.md');
+  const arcs = BIBLE_FILES.filter((f) => f.endsWith('-Arc.md'));
+  assert.ok(arcs.length >= 12, `only ${arcs.length} arc plans found - the walk missed some`);
+  const missing = arcs
+    .filter((f) => !UNINDEXED_ARCS.includes(f))
+    .filter((f) => !home.includes(f.split('/').pop()));
+  assert.deepEqual(missing, [],
+    `arc plans the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files, and it may not hide a
+  // record the index DOES name either
+  const gone = UNINDEXED_ARCS.filter((f) => !existsSync(join(root, f)));
+  assert.deepEqual(gone, [], `the not-indexed arc list names files that are gone:\n${gone.join('\n')}`);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 39r: the five passages the fix wave outdated and did not correct.
+//
+// AUDIT 39 rewrote source and moved pins under five bible passages without
+// touching the prose, so each page went on teaching the law its own suite had
+// just reversed - the exact failure mode AUDIT 17m named, where a confident
+// doc hides a live defect from the person checking whether it is known. Each
+// pin below is TWO-WAY in this file's own idiom: it fails if the prose
+// correction is reverted, AND it fails if the source it mirrors moves back.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 39r: three pages teach the move-sound RE-ARM, not the resume', () => {
+  // LycanthropyEffect.cs calls InitMoveSoundTimer at THREE sites - :67
+  // (curse), :209 (post-fire) and :521, inside MorphSelf's transform
+  // branch - so a partial wait is replaced at every morph, never resumed.
+  assert.match(read('src/systems/lycanthropy.js'), /the third call site[\s\S]{0,200}entry\.moveSoundTimer = initMoveSoundTimer\(rolls\);/,
+    'the port lost the morph-side re-arm the three pages now teach');
+
+  const testing = read('bible/09-Testing/Testing.md');
+  assert.ok(!testing.includes('morphing back mid-wait RESUMES rather than restarting'),
+    'Testing.md is teaching the resume again');
+  assert.ok(!testing.includes('THE TIMER IS ARMED AT THE CURSE, in Start (:67), not at the first transform'),
+    'Testing.md is billing the curse as the only arming site again');
+  assert.match(testing, /THE TIMER IS ARMED AT THREE PLACES/);
+
+  const arc = read('bible/06-Systems/Systems-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!arc.includes('returning later **resumes** it'), 'Systems-Arc LM1 is teaching the resume again');
+  assert.match(arc, /The timer is armed at three places/);
+
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /every morph INTO beast form \(:521/,
+    "the ledger's vampirism row dropped the third call site again");
+});
+
+test('AUDIT 39r: the three re-read Testing.md rows agree with the suites they describe', () => {
+  const testing = read('bible/09-Testing/Testing.md');
+
+  // bss: ReadImageData short-reads rather than throwing (BssFile.cs:210-222)
+  assert.ok(!testing.includes('a truncated body is a load failure that leaves no record behind'),
+    'the bss row is refusing files the reference loads again');
+  assert.match(read('test/bss.test.js'), /'a truncated body still loads'/);
+
+  // the guard corpse's key is a minted id, and the walk-away is spliced
+  assert.ok(!testing.includes('the `guards` array stays index-stable because lootTargets keys corpses by index'),
+    'the lifetimes row is teaching index-stability again');
+  const cg = read('src/scenes/cityGuards.js');
+  assert.match(cg, /idOf: \(g\) => g\.id,/);
+  assert.match(cg, /guards\.splice\(i, 1\);/);
+
+  // ImprovesTalents(0) writes the enchantment fold both readers read
+  assert.ok(!testing.includes('x1.5 only with the unported ImprovedAcuteHearing'),
+    'the careerflags row is calling a shipped enchantment a routed gap again');
+  assert.match(read('src/characters/enemySounds.js'), /entityImprovedAcuteHearing\(playerEntity\) \? 1\.5 : 1\.25/);
+});
+
+test('AUDIT 39r: Rendering-Arc\'s sky orientation is skyRenderer\'s, and the save/restore is gone from both', () => {
+  const doc = read('bible/07-Rendering/Rendering-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!doc.includes('azimuth 0 (+X, map east)'),
+    'the arc is back to a 90-degree-wrong reference point (F56)');
+  assert.match(doc, /azimuth 0 \(\+Z, map north\) starts the east half/);
+  assert.ok(!doc.includes('program/state saved and restored around the pass'),
+    'the arc is advertising the save/restore EV6 retired');
+  const sky = read('src/render/skyRenderer.js');
+  assert.match(sky, /Azimuth 0 \(\+Z, map north\) starts the east half/);
+  assert.match(sky, /no program save\/restore/);
+});
+
+test('AUDIT 39r: the foreign-pass count is the real call-site count', () => {
+  // F55 took overworldRenderer's getParameter/useProgram pair and moved
+  // the seam onto the host, making the overworld map the FOURTH pass.
+  assert.ok(!read('src/render/overworldRenderer.js').includes('CURRENT_PROGRAM'),
+    'the overworld pass restores its own program again - it is not a foreign seam then');
+  const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/ui/overworldMap.js']
+    .reduce((n, f) => n + read(f).split('renderer.markForeignPass();').length - 1, 0);
+  assert.equal(hosts, 6, 'six host call sites across the five passes (GR1: the lab\'s grass is the fifth)');
+  const ev = read('bible/07-Rendering/Enhanced-Visuals-Arc.md').replace(/\s+/g, ' ');
+  assert.ok(!ev.includes('three passes change programs behind the renderer\'s back'),
+    'the EV arc is counting three passes again');
+  assert.match(ev, /five passes change programs behind the renderer's back/);
+  assert.match(read('src/render/renderer.js').replace(/\s+/g, ' '),
+    /the five passes \/\/ that change programs behind the renderer's back/);
+});
+
+test('AUDIT 39r: three arc pages stop advertising work the wave closed or disproved', () => {
+  // the 64 is a real bound, not a pre-sizing detail
+  assert.ok(!read('bible/02-Formats/Readers-Arc.md').includes('Structural-only simplification'),
+    'Readers-Arc is calling the record bound structural-only again');
+  assert.match(read('src/formats/cifRciFile.js'), /const MAX_WEAPON_RECORDS = 64;/);
+
+  // the two shopStock pend clauses shipped (F129/F130)
+  const sys = read('bible/06-Systems/Systems-Arc.md');
+  assert.ok(!sys.includes('MagicItems stock SKIPPED'), 'the shopStock pend list names closed work again');
+  assert.ok(!sys.includes("Alchemist's 25% potion recipe pends recipes"));
+  assert.match(read('src/systems/shopStock.js'), /two clauses were struck from this list/);
+
+  // ImprovesTalents(0)/(2) both decode into the fold their readers read
+  assert.match(read('bible/01-Overview/Port-Ledger.md'), /AUDIT 39 RETIRED THAT CLAUSE TOO/);
+  const ench = read('src/systems/enchantments.js');
+  assert.match(ench, /export const entityImprovedAcuteHearing =/);
+  assert.match(ench, /export const entityImprovedAdrenalineRush =/);
+});
+
+test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () => {
+  // The arc pages are not frozen chronicles - this same wave retro-
+  // edited dated paragraphs in both of them the moment a slice made
+  // them false (UI-Arc's "dungeonContext WIRED since WAVE D",
+  // Systems-Arc's FS1 section moved to "had"/"ran"/"was"). Three live
+  // claims were missed, and each has a mechanical answer in the tree,
+  // so pin them the two-way way AUDIT 18 pins everything: the sentence
+  // may not come back, AND the facility that retired it must still be
+  // there.
+  const ui = read('bible/10-UI/UI-Arc.md');
+  const sys = read('bible/06-Systems/Systems-Arc.md');
+
+  // 1. D10 shipped the two large-HUD offsets, and tiered both live.
+  assert.equal(/both settings stay read by nothing/.test(ui), false,
+    'UI-Arc still records the two large-HUD offsets as read by nothing');
+  const hud = read('src/ui/hudLarge.js');
+  assert.match(hud, /export function horseOffsetHeight\(/);
+  assert.match(hud, /export function weaponOffsetHeight\(/);
+  const settings = read('src/systems/settings.js');
+  assert.match(settings, /'GUI\/LargeHUDOffsetHorse': 'src\/ui\/hudLarge\.js'/);
+  assert.match(settings, /'GUI\/LargeHUDUndockedOffsetWeapon': 'src\/ui\/hudLarge\.js'/);
+
+  // 2. D4 built the fade layer, so no page may say the port has none.
+  assert.equal(/fade layer the port does not have/.test(ui), false,
+    'UI-Arc still says the fast-travel smash waits on a fade layer that exists');
+  assert.match(read('src/ui/fadeLayer.js'), /smashHUDToBlack/);
+  assert.match(read('src/ui/travelPopUp.js'), /hudFade\.smashHUDToBlack\(\);/);
+
+  // 3. ...and Systems-Arc's TP1 section cited a pin for a claim that
+  //    pin now REFUTES: travelguild.test.js used to assert both flags
+  //    were still named as open, and now asserts they are gone.
+  assert.equal(/The two flags that genuinely DO still idle/.test(sys), false,
+    'Systems-Arc still says the two D4 flags idle, citing a pin that asserts the opposite');
+  assert.match(read('test/travelguild.test.js'),
+    /no fade layer in the port\/\.test\(unquoted\), false/,
+    'the cited pin is the INVERTED one');
+  assert.match(read('src/ui/travelPopUp.js'), /this\.isCloseWindowDeferred = true;/);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 58 (records lane): THE PAGES THAT POINT AT THEMSELVES.
+//
+// Three defects of one kind, all in the campaign's own status page and
+// all invisible to every gate the tree had. (1) Six citations named
+// `Audit-49.md` as the record of the Road-to-1:1 campaign; two lanes
+// took the number 49 the same day, the campaign record was renumbered
+// to `Audit-53.md`, and the pointers were not moved - so a reader
+// following "the record" of the closing campaign landed on a 64-line
+// grass and weather audit. (2) The page called `Testing.md:4` "the
+// smallest stale record in the tree"; Testing.md:4 is the one record
+// that CANNOT be stale, pinned line and row by `test/manifest.test.js`
+// against a live walk of `test/`. (3) Two half-paragraphs survived
+// their own rewrites and stood as second, contradicting claims - the
+// exact shape `manifest.test.js`'s duplicate guard was written for
+// over one other file.
+//
+// Each pin below reads the claim out of the page and resolves it
+// against the thing it is a claim ABOUT.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 58: the campaign record is cited to the file that holds it, and the page is free of its own residue', () => {
+  const STATUS = 'bible/01-Overview/Port-Status-2026-09-02.md';
+  const ROAD = 'bible/01-Overview/Road-To-1-1.md';
+
+  // 1. THE CAMPAIGN AUDIT. Whichever file the two pages name, that file
+  //    must be the one whose header claims the campaign and whose body
+  //    carries the campaign's figures - and the pages must not name the
+  //    file that does not.
+  const isCampaign = (f) => /the Road-to-1:1 campaign, audited/
+    .test(read(`bible/01-Overview/${f}`).split('\n')[0]);
+  for (const page of [STATUS, ROAD]) {
+    const flat = read(page).replace(/\s+/g, ' ');
+    const cited = [...new Set([...flat.matchAll(/`(Audit-\d+\.md)`/g)].map((m) => m[1]))];
+    const record = cited.filter(isCampaign);
+    assert.equal(record.length, 1,
+      `${page} names ${record.length} files whose header claims the campaign: ${record.join(', ')}`);
+    const body = read(`bible/01-Overview/${record[0]}`);
+    for (const fig of [/145 findings judged across the five rounds: 118 confirmed/,
+      /\*\*\+676 tests/, /61 of 118 are defects in shipped behaviour; 37 are defects/]) {
+      assert.match(body, fig, `${record[0]} does not carry a campaign figure ${page} attributes to it`);
+    }
+    // ...and no OTHER audit file is the one a campaign figure hangs off.
+    const attrib = /`(Audit-\d+\.md)`(?=[^`]{0,80}?(?:118 confirmed|counts \+676|145 findings|measured 43 of 61|37 of 118))/g;
+    for (const m of flat.matchAll(attrib)) {
+      assert.equal(m[1], record[0],
+        `${page} attributes a campaign figure to ${m[1]}, which is not the campaign record`);
+    }
+  }
+  // the number 49 means ONE thing, and it is not the campaign
+  assert.match(read('bible/01-Overview/Audit-49.md').split('\n')[0],
+    /THE LAB'S GRASS AND WEATHER IN THE GAME/);
+  assert.match(read('bible/Home.md'), /`01-Overview\/Audit-49\.md` - CLOSED [0-9-]+: THE LAB'S GRASS AND WEATHER/,
+    "Home.md's row for Audit-49.md is not that record's own subject");
+
+  // 2. TESTING.MD IS PINNED, NOT STALE. Both halves: the page may not
+  //    call it stale, and the pin it now names must still be the pin.
+  const status = read(STATUS);
+  assert.ok(!/smallest stale record in the tree/.test(status),
+    'Port-Status still calls a mechanically-pinned file the tree\'s smallest stale record');
+  assert.ok(!/`Testing\.md:4` is one test behind the runner/.test(status),
+    'the cross-cut table still bills the permanent metric offset as staleness');
+  assert.match(status, /Testing\.md:4`'s Suite line is not a stale record/,
+    'Port-Status no longer says what Testing.md:4 mechanically is');
+  const manifest = read('test/manifest.test.js');
+  assert.match(manifest, /Suite: \(\\d\+\) tests across \(\\d\+\) files\\\./,
+    'manifest.test.js no longer reads the Suite line Port-Status now points at');
+  assert.match(manifest, /src\.match\(\/\^test\\\(\/gm\)/,
+    'the pin no longer counts top-of-line test\\( calls, which is the metric Port-Status names');
+
+  // 3. NO UN-DELETED RESIDUE. A rewritten entry that leaves its
+  //    predecessor below it reads as a second, live claim; the tell is
+  //    a multi-cite clause repeated verbatim, once struck and once not.
+  const doc = read(STATUS).split('\n');
+  const clause = /`\w+\.js:\d+` -> `:\d+`/g;
+  const seen = new Map();
+  doc.forEach((l, i) => {
+    for (const m of l.matchAll(clause)) {
+      const key = m[0];
+      if (seen.has(key) && !l.includes('~~')) {
+        assert.fail(`Port-Status repeats the cite ${key} live at :${i + 1}, after :${seen.get(key)}`);
+      }
+      if (!seen.has(key)) seen.set(key, i + 1);
+    }
+  });
+  // ...and no entry closes twice: an italic run that ends, then
+  // continues un-capitalised, is the pre-rewrite draft left in place.
+  const orphan = doc.findIndex((l, i) => /mutation-checked by putting the token back\.\*$/.test(l)
+    && /^\s+[a-z]/.test(doc[i + 1] ?? ''));
+  assert.equal(orphan, -1, `Port-Status:${orphan + 2} continues an entry that already closed`);
 });

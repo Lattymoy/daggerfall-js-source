@@ -215,6 +215,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    THE ANTI-LIE LAW, borrowed from the char sheet's withheld
    logbook: a thing that does not work yet is shown and says why.
    It is never shown working, and never quietly absent. */
+/* CR1: the credits card - a modder's name beside the work, on the screen. */
+.credits-head { color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 400; margin: 18px 0 8px; }
+.credit { border-top: 1px solid var(--iron); padding: 12px 0 10px; }
+.credit-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.credit-name { font-family: var(--display); font-size: 19px; }
+.credit-by { color: var(--brass); font-size: 13px; }
+.credit-what { margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
+.credit-terms { margin: 6px 0 0; color: var(--dim); font-size: 12px; }
+.credit-link { display: inline-block; margin-top: 6px; color: var(--brass); font-size: 12px; letter-spacing: 0.04em; text-decoration: none; border-bottom: 1px solid var(--iron); }
+.credit-link:hover, .credit-link:focus-visible { border-bottom-color: var(--brass); }
 .empty { border: 1px dashed var(--iron); padding: 26px 22px; margin-bottom: 16px; }
 .empty h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 8px; color: var(--dim); }
 .empty p { color: var(--dim); margin: 0 0 10px; max-width: 58ch; font-size: 14px; }
@@ -263,6 +273,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .row-name { font-size: 14px; }
 .row.blocked .row-name { color: var(--dim); }
+/* AUDIT 39: THE ANNOTATION LINES, which had no rule at all. A note
+   under a label inherits \`body\`'s 15px full-bone, so it drew LARGER
+   and brighter than the 14px .row-name it hangs from - the bare
+   running text the AUDIT UI 2 sweep was written for and cannot see:
+   that sweep compares one shell against another, and a class styled
+   in NO shell has nothing to compare. Base rules, so every shell
+   that draws one gets the same treatment. */
+.row-note, .row-sub { color: var(--dim); font-size: 12.5px; margin-top: 3px; }
+.note { color: var(--dim); font-size: 13px; margin: 10px 0 0; max-width: 58ch; }
 
 /* THE CONTROL IS THE VALUE. A row shows the word a player reads,
    never the ini string - \`4\` reads Beautiful, \`True\` reads On.
@@ -484,7 +503,13 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 /* THE FOUR NAVIGATION BUTTONS, in the thumb's arc on a phone and along
    the foot of the sheet everywhere. A button is drawn only where the
-   host handed a factory - see ui/enhancedCharSheet.js's nav(). */
+   host handed a factory.
+   AUDIT 39: the view that drew them - ui/enhancedCharSheet.js's own
+   sheet - retired with PX27's door, so this block and the .sheet-id /
+   .sheetcol / .meter / .skillrow rules above it now style nothing. The
+   sheet's SHARED parts are still live (.sheet-notice below is drawn by
+   the pack and the spellbook); untangling the rest is a sweep of this
+   file, not of that module. */
 .sheet-nav {
   display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 30px;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
@@ -1380,6 +1405,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+/* CR1: the credited work's title wears the pixel face like every other
+   heading in this shell - the serif is the old skin's, and it was the
+   one serif line on the screen. */
+.shell .credit-name { font-family: inherit; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }
 .shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
@@ -1407,6 +1437,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    carries a cost beside each name (the classic's row is "cost - name",
    and a column reads better than a prefix), and the effects are the
    words the classic prints, one to a line under their own divider. */
+/* PX29 (Mac: "the new chronicle UI appears on the lefthand side when it
+   should be centered"): AND SO DID THE SPELLBOOK. .px-home is
+   position:fixed inset:0 with no flex of its own - the pause face
+   centres its window by putting it in a .px-stage, and these two
+   windows never got one, so both sat hard against the top-left. 260px
+   and 140px off, measured. It was only invisible because every shot I
+   took of them was of the ELEMENT rather than the viewport.
+   The fourth shared-part fault of this arc, so it is fixed for the
+   FAMILY rather than for the window that was reported. */
+.sb-shell, .cr-shell { display: flex; align-items: center; justify-content: center; }
 .sb-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
 .sb-shell .sb-top, .cr-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; padding: 12px 16px;
@@ -1428,6 +1468,134 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; }
+/* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
+   Mac's reference is ESO's Clean UI - a compass across the top, the
+   target named beneath it, three vitals along the bottom and the
+   effects under those - read back in this arc's own language: square
+   2px frames, the Pixelify face, brass and bone, the classic shadowed
+   pair for what is live, and states that SNAP.
+
+   IT IS A READOUT. pointer-events none everywhere, because nothing
+   here is pressed; the game is underneath and stays reachable. */
+.hud { position: fixed; inset: 0; z-index: 4; pointer-events: none;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+  /* PX30c: ONE variable the whole HUD reads, so a scale change moves
+     every bar, chip and letter together rather than thirty rules
+     drifting apart. Set from GUI/EnhancedHUDScale each frame, guarded. */
+  --hud-scale: 1; }
+.hud-top { position: absolute; left: 50%; top: 18px;
+  transform: translateX(-50%) scale(var(--hud-scale)); transform-origin: top center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hud-bottom { position: absolute; left: 50%; bottom: 22px;
+  transform: translateX(-50%) scale(var(--hud-scale)); transform-origin: bottom center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* THE COMPASS. A strip of a quarter of the circle, the points placed
+   by heading and HIDDEN when they fall off it - a marker pinned to the
+   rim would say "north is exactly there", which is a lie. */
+.hud-compass { position: relative; width: min(520px, 60vw); height: 26px;
+  border-bottom: 2px solid rgba(125,116,96,0.55); }
+.hud-strip { position: absolute; inset: 0; overflow: hidden; }
+.hud-point { position: absolute; top: 2px; transform: translateX(-50%);
+  font-size: 12px; letter-spacing: 0.18em; color: #a89f88; }
+.hud-point.hud-cardinal { font-size: 15px; color: #d8cfae; }
+.hud-needle { position: absolute; left: 50%; bottom: -2px; width: 2px; height: 8px;
+  transform: translateX(-50%); background: var(--brass); }
+
+/* THE TARGET. Hidden until you strike something, and it fades. */
+.hud-foe { display: none; flex-direction: column; align-items: center; gap: 4px; }
+.hud-foe.on { display: flex; }
+.hud-foename { font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; }
+.hud-track { position: relative; width: min(320px, 46vw); height: 10px;
+  background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55); }
+.hud-fill { display: block; height: 100%; width: 100%; background: #d98074; }
+.hud-foetrack { width: min(280px, 40vw); height: 8px; }
+
+/* THE VITALS. Magicka, health, fatigue - the reference's own order and
+   DFU's own three, each with its number beside it. */
+/* PX30c: THE NUMBER IS IN THE BAR. A figure beside a bar is a second
+   thing to look at; a percentage ON it is the bar saying what it
+   means, and the label rides in there too so each names itself rather
+   than relying on a colour a player has to learn. Both sit ABOVE the
+   fill and take the shadow, which is what keeps them legible over a
+   full bar and an empty one alike. */
+.hud-bars { display: flex; align-items: center; gap: 14px; }
+.hud-vital { display: flex; align-items: center; }
+.hud-vital .hud-track { width: min(190px, 23vw); height: 20px;
+  display: flex; align-items: center; justify-content: space-between; }
+.hud-vital .hud-fill { position: absolute; inset: 0; width: 100%; }
+.hud-vlabel { position: relative; z-index: 1; padding-left: 8px;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.hud-num { position: relative; z-index: 1; padding-right: 8px;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.hud-health .hud-fill { background: #d98074; }
+.hud-magicka .hud-fill { background: #6f8fd9; }
+.hud-fatigue .hud-fill { background: #74d9a0; }
+
+/* PX30b: THE BREATH, above the vitals - drawn only while held, and
+   red below DFU's own short-on-breath line. */
+.hud-breath { display: none; align-items: center; gap: 8px; }
+.hud-breath.on { display: flex; }
+.hud-breath .hud-track { width: min(140px, 18vw); height: 8px; }
+.hud-breath .hud-fill { background: #f7ef29; }
+.hud-breath.short .hud-fill { background: #8a1f1f; }
+.hud-breathlabel { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #7d7460; }
+
+/* PX30b: WHAT IS IN YOUR HANDS - the readied spell and the weapon, the
+   two things the reference's ability bar would hold if Daggerfall had
+   one. Each only when there is something in it. */
+.hud-hands { display: flex; gap: 10px; }
+.hud-hand { display: none; align-items: baseline; gap: 8px; padding: 3px 10px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.45); }
+.hud-hand.on { display: flex; }
+.hud-handkind { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #7d7460; }
+.hud-handname { font-size: 13px; color: #d8cfae; }
+.hud-readied.on { border-color: var(--brass); }
+.hud-readied .hud-handname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* PX32: THE RETICLE. A square cross in bone with the classic shadow,
+   at the viewport's centre; the mode's word takes its place under the
+   styles where the icon IS the crosshair, and sits in the corner under
+   the others - hudCrosshair.js's own laws. Not scaled by the HUD's
+   scale: a reticle is a point, and the scale is for things read at
+   the edges. */
+.hud-reticle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center; }
+.hud-cross { position: relative; display: block; width: 18px; height: 18px; }
+.hud-cross::before, .hud-cross::after { content: ''; position: absolute; background: #d8cfae;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.hud-cross::before { left: 0; top: 8px; width: 18px; height: 2px; }
+.hud-cross::after { left: 8px; top: 0; width: 2px; height: 18px; }
+.hud-modeword { font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em; text-transform: uppercase;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-modecentre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.hud-modecorner { position: absolute; left: 24px; bottom: 24px; }
+
+/* THE EFFECTS, beneath the bars. An expiring one takes the classic
+   shadowed pair, which is what this UI has always used for urgency. */
+.hud-effects { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  max-width: min(720px, 80vw); }
+.hud-eff { display: flex; align-items: baseline; gap: 8px; padding: 3px 8px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  font-size: 12px; letter-spacing: 0.08em; }
+.hud-eff.item { border-style: dashed; }
+.hud-eff.expiring { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.hud-effrounds { color: var(--brass); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+  .hud-top { top: 10px; }
+  .hud-bottom { bottom: 12px; gap: 8px; }
+  .hud-bars { gap: 10px; }
+  .hud-vital .hud-track { width: 26vw; }
+}
+
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
 .px-sheetdoors { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; }
 .px-sheetdoors .act { min-height: 44px; }
@@ -1450,6 +1618,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
   color: #d8cfae; font: inherit; font-size: 15px; }
 .sb-shell .sb-rename input:focus { outline: none; border-color: var(--brass); }
+/* AUDIT-39r: the delete prompt covers the window it asks about. DFU's
+   DaggerfallMessageBox is a PUSHED window, so the book beneath it is
+   inert; here the book's controls are disabled and this scrim is what
+   makes that visible rather than merely true. */
+.sb-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.sb-shell .sb-ask .sb-acts { justify-content: center; }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the
@@ -1457,7 +1633,6 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    divider, and the history is one page of prose rather than the
    classic's four-lines-and-a-Next-button. */
 .cr-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
-.cr-shell .px-qdetail { overflow-y: auto; }
 .cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
   line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .cr-shell .cr-prose { max-width: 62ch; }
@@ -1803,7 +1978,47 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .pack-shell { transition: none; opacity: 1; backdrop-filter: blur(6px) saturate(85%);
     -webkit-backdrop-filter: blur(6px) saturate(85%); } }
 .pack-shell button { transition: none; border-radius: 0; }
-.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 86dvh);
+/* ── HN1: DAMAGE NUMBERS ──────────────────────────────────────────
+   Rising from just above the reticle, in the HUD's own bone, with the
+   critical strike and the backstab in brass and larger, the miss and
+   the ineffective material dim. The layer takes no pointer events and
+   sits under the windows (z 1), so a number never blocks a click or
+   floats over the pack. */
+#enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.hitnum { position: absolute; left: 50%; top: 42%;
+  transform: translate(calc(-50% + var(--dx, 0px)), 0);
+  /* HN1b (Mac, from a three-face comparison: "the middle") - the numbers
+     are set in the enhanced skin's own face, Pixelify Sans, unsmoothed
+     like every other pixel glyph on the HUD. Cormorant was the serif
+     odd one out; Jacquard 12 crits were unmistakable and unreadable in
+     the half second a number lives. */
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-size: calc(26px * var(--hud-scale, 1)); font-weight: 600;
+  letter-spacing: 0.04em; color: #e6dcb8; text-shadow: 2px 2px 0 rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+  animation: hitnum-rise var(--rise, 950ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; will-change: transform, opacity; }
+.hitnum-crit { font-size: calc(36px * var(--hud-scale, 1)); font-weight: 700; color: #f1c04f; text-shadow: 2px 2px 0 rgba(60,40,0,0.95), 0 0 10px rgba(241,192,79,0.45);
+  animation-name: hitnum-crit; }
+.hitnum-miss, .hitnum-ineffective, .hitnum-absorbed { font-size: calc(20px * var(--hud-scale, 1)); font-weight: 500; color: rgba(168,159,136,0.85); }
+.hitnum-tag { display: block; font-size: calc(12px * var(--hud-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  text-align: center; color: #f1c04f; margin-top: -2px; }
+@keyframes hitnum-rise {
+  0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 10px) scale(0.9); }
+  12%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), 0) scale(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -64px) scale(1); }
+}
+@keyframes hitnum-crit {
+  0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 10px) scale(0.6); }
+  14%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), -4px) scale(1.18); }
+  30%  { transform: translate(calc(-50% + var(--dx, 0px)), -8px) scale(1); }
+  72%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -80px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hitnum, .hitnum-crit { animation-name: hitnum-still; }
+  @keyframes hitnum-still { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+}
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 94dvh);   /* PX22: a short viewport keeps its rows before its margins */
   display: flex; flex-direction: column;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
   transform: translateY(8px); transition: transform 0.22s steps(5, end); }
@@ -1825,11 +2040,26 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    details share the top; the inventory is a BOTTOM DOCK. */
 .pack-shell .pack { flex: 1; min-height: 0; display: flex; flex-direction: column;
   background: transparent; }
-.pack-shell .pack-main { flex: 1; min-height: 0; display: grid;
+/* PX22 (Mac: the more items, the more the main inventory scrunches -
+   Layer 1): THE CHARACTER REGION IS ITS OWN CONTENT'S HEIGHT, and the
+   dock takes whatever remains and SCROLLS INSIDE. Item count now moves
+   nothing but the scrollbar. What stood here let the dock size to its
+   content up to 38% and take that from the character region, and never
+   made the list a clipped viewport - the third row of tiles ran under
+   the footer, the flex min-height trap. The first cut of this fix gave
+   the region a fixed 48% share and the render showed the worn map's
+   last rows cut off under it: the map is taller than a share, so the
+   share is the map's. */
+.pack-shell .pack-main { flex: 0 0 auto; display: grid;
   grid-template-columns: 1fr; }   /* PX19i: the details ride a tooltip; the character takes the width */
-.pack-shell .pack-dock { flex: 0 0 auto; max-height: 38%; display: flex;
+.pack-shell .pack-dock { flex: 1 1 auto; min-height: 100px; display: flex;
   flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
-  background: rgba(0,0,0,0.25); }
+  background: rgba(0,0,0,0.25); }   /* PX22: never less than the tabs and one row */
+.pack-shell .packcats { flex: 0 0 auto; }
+/* PX22: a 40px tab strip, not 64 - the 24px it gives back is the
+   difference between one row of tiles and two at the 660px window. */
+.pack-shell .pack-dock .packtab { min-height: 36px; padding: 2px 14px; }
+
 .pack-shell .packcats { background: transparent; border-right: 0;
   border-bottom: 2px solid rgba(125,116,96,0.3); overflow-x: auto; padding: 0 8px; }
 .pack-shell .packtabs { display: flex; flex-direction: row; gap: 2px; margin: 0; }
@@ -1843,7 +2073,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .packtab.on { color: rgb(243,239,44);
   box-shadow: inset 0 -2px 0 var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
-.pack-shell .packlists { display: block; background: transparent; overflow-y: auto; }   /* the base sheet's two-column grid, off - the loot has its own window */
+.pack-shell .packlists { display: block; background: transparent; overflow-y: auto;
+  flex: 1 1 auto; min-height: 0; }   /* PX22: the dock's scroll viewport - min-height 0 is what makes overflow clip */
 /* The dock's rows are the reference's TILE GRID: square panels, the
    monogram carrying the item, the count in the corner, the name in
    the title and the plaque. The tiles live directly in .packcol -
@@ -1853,6 +2084,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the rest a tagged-template call - the octal lesson's sibling). */
 .pack-shell .pack-dock .packcol { padding: 8px 10px; display: flex; flex-wrap: wrap;
   gap: 6px; align-content: flex-start; }
+/* PX22: the tab strip is ALSO a .packcol and inherited that 8px; it
+   carries its tabs and nothing else, so 0 vertical padding - the 16px
+   is the difference between one row of tiles and two at 660px. */
+.pack-shell .pack-dock .packcol.packcats { padding: 0 8px; }
 .pack-shell .itemrow { position: relative; display: flex; align-items: center;
   justify-content: center; width: 56px; height: 56px; padding: 0; cursor: pointer;
   background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
@@ -1890,7 +2125,78 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    its anchor inside the frame, in the plaque's own dress; the phone
    keeps the .packdetail bottom sheet's physics untouched. */
 .pack-shell .charcol { overflow: hidden; padding: 12px 22px 16px; display: flex;
-  flex-direction: column; justify-content: stretch; }
+  flex-direction: column; justify-content: stretch; min-height: 0; }
+/* PX22: the map is a flex ITEM under the transport strip, at its own
+   compact height - not 100% of a column it shares. The strip drew
+   OVER the map's last two rows in every screenshot before this
+   (Mac's included): the map claimed the whole column and the strip
+   landed on top of it. Rows at 40px keep the figure standing and give
+   the dock a third row of tiles at a 660px window. */
+.pack-shell .charcol .wornmap { height: auto; flex: 0 0 auto;
+  grid-template-rows: repeat(6, minmax(40px, auto)); gap: 8px; }
+/* PX22: COMPACT WORN ROWS - a 34px tile and 4px of padding make a
+   42px row that still carries the family word and the piece's name;
+   the 60px row that stood here was the whole reason the map could not
+   fit above two rows of tiles. The transport plaques match. */
+.pack-shell .charcol .equipped .wornrow { min-height: 40px; padding: 4px 12px; gap: 12px; }
+.pack-shell .charcol .wornrow .tile { width: 34px; height: 34px; }
+.pack-shell .charcol .transport .tplaque { min-height: 44px; padding: 6px 12px; }
+.pack-shell .charcol .transport { margin-top: 10px; }
+/* PX31 (Mac: the inventory is hidden at the bottom and gets no
+   breathing room): AT DESKTOP WIDTHS THE DOCK IS A COLUMN, not a
+   dock. Measured on the shipped screen before this rule at three
+   desktop viewports, all identical because the window is capped at
+   660: title 62, character region 400, tab strip 38, and the item
+   list left with A 116px VIEWPORT - 17.6% of the window, two tiles
+   deep and 1036 wide. The region is fixed to its content (the worn
+   map is 298 tall and does not shrink), so every pixel the window
+   does not have comes out of the list, and the list was the only
+   thing in the window that scrolls.
+   The window is WIDE and the layout was stacked, so the fix is
+   horizontal: the region keeps the width it actually uses (the map
+   is width min(960px,100%) and its flanks are 1fr, so it narrows
+   without a rewrite) and the list takes the rest at FULL HEIGHT.
+   Nothing about the window's height changes - raising the 660 cap
+   is what swallowed the game behind the window on 2026-08-31 and
+   was reverted whole.
+   THE PHONE IS NOT THIS PROBLEM and is not touched: a Pixel 5
+   measured a 250px list showing seven rows, because there the
+   window is 94dvh and the region is the same 400. The breakpoint is
+   min-width, so the stacked layout stays the default and this is
+   the wide-screen departure from it. */
+@media (min-width: 1000px) {
+  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    flex-direction: row; min-height: 0; }
+  .pack-shell .pack-main { min-width: 0; min-height: 0; }
+  /* the border moves with the wall: it was the top of a dock and it
+     is the side of a column. */
+  .pack-shell .pack-dock { min-height: 0; border-top: 0;
+    border-left: 2px solid rgba(125,116,96,0.35); }
+  /* THE TAB STRIP IS A 2x2, DELIBERATELY. The four tabs need about
+     550px on one line and no column here is that wide, so the strip
+     WRAPPED - which cost the same 76px this grid costs and looked
+     like an accident, the counts flung to the right of two ragged
+     rows by their own margin-left:auto. TABS is imported from
+     nativeInventory and is DFU's four, always, so two by two is a
+     shape rather than a guess. */
+  .pack-shell .pack-dock .packcats .packtabs { display: grid;
+    grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  /* THE MAP FILLS THE COLUMN IT WAS GIVEN. Stacked, the region was
+     its content's height and the map was flex 0 0 auto so it would
+     not steal from the list below it. Beside the list it steals
+     nothing, and left at content height it drew 180px of dead glass
+     under the transport strip. Filling is not just tidier: the doll
+     is height-driven at aspect-ratio 110/184, so a taller map is a
+     BIGGER SPRITE, which is what PX20a asked for and what the
+     stacked layout could not afford.
+     THE GROWING ELEMENT IS THE WRAPPER, not the map. .charcol holds
+     .equipped and .transport; the map is a child of .equipped, whose
+     own flex:1 (line ~2194) was correct all along and had nothing to
+     fill because .equipped defaults to flex 0 1 auto. Two rules that
+     both look like the fix and only one of them is it. */
+  .pack-shell .charcol .equipped { flex: 1 1 auto; min-height: 0; }
+  .pack-shell .charcol .wornmap { grid-template-rows: repeat(6, minmax(44px, 1fr)); }
+}
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -
@@ -1970,6 +2276,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; border: 0; background: none; outline: 0;
   overflow: visible; color: rgba(125,116,96,0.6); padding: 2px 0; }
+.pack-shell .wornmap-doll.model img { cursor: ew-resize; image-rendering: auto; object-fit: contain; max-height: 100%; }
 .pack-shell .wornmap-doll.noart { border: 2px solid rgba(125,116,96,0.45);
   background: rgba(0,0,0,0.35); outline: 2px solid rgba(125,116,96,0.25);
   outline-offset: 3px; overflow: hidden; }

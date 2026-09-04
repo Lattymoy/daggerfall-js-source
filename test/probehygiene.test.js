@@ -5,7 +5,7 @@
 // game that charged correctly, because it booted the exterior host
 // WITHOUT a class parameter - so the chargen wizard mounted, took
 // townTalk's overlay slot, and townTalk.keydown (first in that host's
-// keydown ladder, exterior.js:1046-1047) swallowed every
+// keydown ladder, exterior.js:1953-1955) swallowed every
 // page.keyboard.press the probe made. Staging passed, the offer box
 // appeared, and the Yes never arrived, which reads exactly like a
 // broken commit.
@@ -43,7 +43,7 @@ const gotoUrls = (src) => [...src.matchAll(/page\.goto\(\s*[`']([^`']*)[`']/g)].
 
 /** The hosts that mount the chargen wizard when the entity has not
  *  been made: the exterior page and the streaming world page
- *  (exterior.js:532-562 and world.js's copy of the same fork). The
+ *  (exterior.js:964-974 and world.js's copy of the same fork). The
  *  standalone dungeon route runs its own wizard through a different
  *  slot and is covered by the same rule. */
 const MOUNTS_CHARGEN = /exterior|world|nomenu|shot/;
@@ -188,4 +188,58 @@ test('T3: the eyeball-tool allowlist is honest on both sides', () => {
     assert.match(p.src, /page\.screenshot\(|writeFileSync\(/,
       `${f} is exempt as an eyeball tool but writes no file for anyone to look at`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// ROAD-E E8: THE THREE STALE PROBES OF Port-Ledger.md:606, closed.
+//
+// A probe that drives a window the port no longer HAS is the same lie
+// as a probe that cannot fail: it reports a failure the game does not
+// have. All three named in that row drove surfaces that had moved on -
+// two of them to the native windows U8c/U40 and B5-6 built, and one of
+// them into a frozen world.
+// ---------------------------------------------------------------------------
+
+test('E8: no probe drives the keyed browse window the native trade screen replaced', () => {
+  // shopProbe read `overlay.options` for digit rows ("1 - ...") and
+  // died on undefined.some, because U8c/U40 replaced that window with
+  // the native trade screen. Its subject - buy and sell at a shop
+  // shelf - is covered twice over by tradeModeProbe and
+  // nativeTradeProbe, so E8 RETIRED it rather than writing a third.
+  assert.equal(browserProbes.some((p) => p.f === 'shopProbe.mjs'), false,
+    'shopProbe.mjs is retired - its drive lives in nativeTradeProbe.mjs');
+  const survivors = ['tradeModeProbe.mjs', 'nativeTradeProbe.mjs'];
+  for (const f of survivors) {
+    assert.ok(browserProbes.some((p) => p.f === f), `${f} carries the retired probe's subject`);
+  }
+  // and the two that took the subject really do drive BOTH halves
+  const nt = browserProbes.find((p) => p.f === 'nativeTradeProbe.mjs').src;
+  assert.match(nt, /BUY \+ SELL/);
+});
+
+test('E8: the tone probe reads the NATIVE talk window, not a text option row', () => {
+  const tone = browserProbes.find((p) => p.f === 'toneProbe.mjs');
+  assert.ok(tone, 'toneProbe.mjs still exists - it was ported, not retired');
+  // B5-6's window draws the tone as three 6x6 art radios, so there is
+  // no "tone: Normal" row to find and looking for one failed against
+  // a window that was working.
+  assert.equal(/tone: Normal/.test(tone.src), false,
+    'toneProbe still hunts a text option row the native window does not draw');
+  assert.match(tone.src, /greet\.native/, 'it asks whether the ART window is up');
+  assert.match(tone.src, /topicMode/, 'and reads the live where-is walk off the window itself');
+});
+
+test('E8: the streaming where-is probe drains the opening boxes before it waits for a walker', () => {
+  const wi = browserProbes.find((p) => p.f === 'worldWhereIsProbe.mjs');
+  assert.ok(wi, 'worldWhereIsProbe.mjs still exists - it was ported, not retired');
+  // A modal holds the motor: every host returns at its overlay gate
+  // before the frame body, so while the quest arc's boot boxes are up
+  // the town does not tick and NOBODY WALKS. This probe reported NO
+  // LIVE WALKER against a healthy host for exactly that reason;
+  // firstHourProbe learned it first and drains them the same way.
+  const drain = wi.src.indexOf('opening boxes drained');
+  const walker = wi.src.lastIndexOf('NO LIVE WALKER');
+  assert.ok(drain > 0, 'the drain is missing');
+  assert.ok(drain < walker, 'the drain must come BEFORE the walker poll, or it drains nothing in time');
+  assert.match(wi.src, /AN OPENING BOX WILL NOT CLOSE/, 'and it judges the drain rather than hoping');
 });

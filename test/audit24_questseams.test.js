@@ -56,12 +56,17 @@ const PENDING = new Map([
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
   // IH1 MOUNTED isHouseOwned (banking's own law over the current
   // region) and buildingNameOpts (townTalk's one name bag).
-  ['currentRegionCourt', 'GetCourtOfCurrentRegion - the region faction trio'],
-  ['currentRegionFaction', 'GetCurrentRegionFaction - the region faction trio'],
-  ['currentRegionPeople', 'GetPeopleOfCurrentRegion - the region faction trio'],
-  ['currentRegionVampireClan', 'GetCurrentRegionVampireClan - the vampirism arc'],
-  ['playerVampireClan', 'the vampirism racial effect - the vampirism arc'],
-  ['playerVampireClanName', 'rides the vampirism arc above'],
+  // AUDIT 39 (#23) MOUNTED THE SIX ROWS THAT STOOD HERE -
+  // currentRegionCourt, currentRegionFaction, currentRegionPeople,
+  // currentRegionVampireClan, playerVampireClan and
+  // playerVampireClanName. Removing a row means mounting it, and it
+  // did: every producer was already in world.js (talk.js's People and
+  // Courts getters, findFactions over the Province record for the
+  // region faction and its `vam` clan, the curse entry for the PC's).
+  // Unmounted, every quest Person declared `factiontype People/
+  // Courts/Province/Vampire_Clan` - and the Resident1-4 career
+  // default - resolved -1 into _setupFactionTypeNPC's ZERO_FACTION
+  // arm, and %vam printed C#'s error literal at an actual vampire.
   // AUDIT 26 (F092) MOUNTED buildingCompassDirection, the third seam
   // the wave-26 alias hole hid. The excuse that stood here - "no
   // automap layout to transform the player into" - measured the wrong
@@ -70,6 +75,45 @@ const PENDING = new Map([
   // directory and the player already share the location frame that
   // GetAnswerWhereIs' compass has used since T3c. Unmounted, every
   // directional answer expanded %di to '...never mind...'.
+  //
+  // ROAD-E E7 (2026-09-02) completed MacroHelper's table to all 217
+  // rows, and fourteen of the new rows read seams THIS host does not
+  // mount. Two groups, each with a real reason:
+  //
+  // 1. the TALK GLOBALS. MacroHelper's %key/%loc/%fcn/%hnr/%1com are
+  //    static handlers reaching `GameManager.Instance.TalkManager`
+  //    (MacroHelper.cs:1059-1100, :890-893, :957-960). The port's
+  //    TalkManager is the ANSWER PIPELINE, and talkMacros.js's
+  //    talkMacroHooks derives all nine seams off it for the duration
+  //    of one expansion - ONE home for the derivation. Mounting them
+  //    on questWorld as well would give a QUEST message the same
+  //    reach C# has (the singleton is reachable from any MCP) at the
+  //    cost of a second copy of the derivation; no corpus quest
+  //    message carries these symbols, so the port stays
+  //    coverage-ordered and they answer [nullMCP] outside talk.
+  ['talkKeySubjectType', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkKeySubject', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkWorkString', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkCurrentQuestionListItem', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkMarkLocationOnMap', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['markKeySubjectLocationOnMap', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkLocationOfRegionalBuilding', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkHonoric', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  ['talkPCGreetingOrFollowUpText', 'the answer pipeline is the port\'s TalkManager - talkMacros.talkMacroHooks derives it per expansion'],
+  // 2. the COURT four (%cri/%pen/%gtp/%dip) and %map. MacroHelper
+  //    reads DaggerfallUI.Instance.DfCourtWindow and
+  //    PlayerGPS.LocationRevealedByMapItem; the port's court record
+  //    already expands through arrestFlow's VALUE MAP (which resolves
+  //    before the ladder is ever reached, and whose bodies are
+  //    court.js's CRIME_NAMES and penaltyText), and no live map-item
+  //    reveal is held anywhere for %map to read. Both answer
+  //    [nullMCP] until a host mounts them - a table row for a window
+  //    that is not open.
+  ['courtCrimeName', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
+  ['courtPenaltyText', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
+  ['courtFine', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
+  ['courtDaysInPrison', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
+  ['locationRevealedByMapItem', 'PlayerGPS.LocationRevealedByMapItem - no host holds the last map-item reveal'],
 ]);
 
 /** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING

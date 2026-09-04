@@ -18,21 +18,35 @@
 // selected building's own ARCH3D model rotating -1 degree per 0.02s
 // (:163-178's Update), through the host's drawModelPreview door - the
 // WINDOW owns the rotation clock and the camera law (houses at
-// (0,3,-20), Display3dModelSelection :245; the ships arm's
-// (0,12,shipCameraDist) camera is carried for the day a ships list
-// exists), the HOST owns the scissored second camera pass (the
-// automap's beginFrame precedent). No selection, no render - DFU
-// starts with SelectNone and an empty panel.
+// (0,3,-20), Display3dModelSelection :245), the HOST owns the
+// scissored second camera pass (the automap's beginFrame precedent).
+// No selection, no render - DFU starts with SelectNone and an empty
+// panel.
+//
+// D6: THE SHIPS ARM, which is the same window. DFU does not have two
+// popups - it has ONE, and its discriminator is the house list it was
+// constructed with: BuyShipButton pushes it with `null` (:463) and
+// PopulatePriceList reads `housesForSale == null` as "the two
+// ShipTypes at their flat prices" (:181-185), Display3dModelSelection
+// frames them from (0, 12, GetShipCameraDist) instead of (0, 3, -20)
+// (:243-244), and BuyButton dispatches to GeneratePurchaseShipPopup
+// with the SelectedIndex cast straight to a ShipType (:388-389). So
+// the port keeps the null list as the switch: a `houses` hook is the
+// house market, no hook at all is the shipyard.
 //
 // The port's own departure (Ledger A, the bank window's rule): DFU
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
 // here are ours.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgCrop, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
+import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // G5: SetupScrollBar (:303-314)
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { TRANSACTION_RESULT, housePrice } from '../systems/banking.js';
+import {
+  TRANSACTION_RESULT, housePrice,
+  SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
+} from '../systems/banking.js';
 
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
@@ -65,15 +79,50 @@ export const LIST_ROW_H = 8;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
 
+/** AUDIT 58: the two ARROW STRIPS (:51-52) and the sub-rects
+ *  LoadTextures (:355-366) cuts out of them - BANK01I1.IMG is green
+ *  ("more items available") and BANK01I2.IMG red. arrowsFullSize is
+ *  9x80 and the down arrow sits at y=64 (:26-28) - NOT the item
+ *  scroller's 9x152 / y=136, which is a different pair of strips.
+ *  The port drew neither, so this list never told the player it
+ *  scrolled: exactly the defect itemScroller.js:120-123 records
+ *  fixing for the inventory rail. */
+export const PURCHASE_ARROWS_FULL = Object.freeze({ w: 9, h: 80 });
+export const PURCHASE_UP_ARROW_RECT = Object.freeze([0, 0, 9, 16]);
+export const PURCHASE_DOWN_ARROW_RECT = Object.freeze([0, 64, 9, 16]);
+export const PURCHASE_GREEN_ARROWS = 'BANK01I1.IMG';
+export const PURCHASE_RED_ARROWS = 'BANK01I2.IMG';
+
+// ── ROAD-G G5: THE PRICE LIST'S SCROLL BAR ───────────────────────
+// SetupScrollBar (:303-314) puts a VerticalScrollBar at (106,39), 7x48,
+// with DisplayUnits = listDisplayUnits, and Setup wires the two
+// directions of one index: PriceListBox_OnScroll pushes the LIST's
+// index into the bar (:400-405) and PriceScrollBar_OnScroll pushes the
+// BAR's back into the list (:407-410), with TotalUnits refreshed from
+// priceListBox.Count at setup (:299).
+//
+// AUDIT 58's windows lane drew the two ARROWS beside it and left the
+// bar itself - so the rail between them was dead pixels: a market of
+// twenty houses could be paged one row at a time and never grabbed.
+// The widget is ROAD-A7's shared `ui/verticalScrollBar.js`, which owns
+// DFU's thumb art, its paging arms and Update's drag; this window owns
+// only the rect and the two-way index sync.
+
 /** rotSpeed (:68) - the model turns one degree every 0.02 seconds,
  *  NEGATIVE about Y (Update :175). */
 export const PREVIEW_ROT_SPEED = 0.02;
-/** Display3dModelSelection's two cameras (:245-252): houses from
+/** Display3dModelSelection's two cameras (:243-252): houses from
  *  (0, 3, -20); ships from (0, 12, GetShipCameraDist) - the ship
  *  distances are banking.js's SHIP_CAMERA_DIST. Near 0.7, far 100
  *  (SetupDisplayPanel :212-213). */
 export const PREVIEW_HOUSE_CAMERA = Object.freeze({ y: 3, z: -20 });
+export const previewShipCamera = (ship) => ({ y: 12, z: shipCameraDist(ship) });
 export const PREVIEW_NEAR = 0.7, PREVIEW_FAR = 100;
+
+/** PopulatePriceList's ships arm (:181-185): `for (int i = 0; i < 2;
+ *  i++)` - the list IS ShipType order, Small then Large, and the row
+ *  tag is the index, which is what BuyButton casts back (:389). */
+export const SHIP_LIST = Object.freeze([SHIP_TYPES.Small, SHIP_TYPES.Large]);
 
 /** Internal_Strings `bankPurchasePrice`, verbatim. */
 export const priceRow = (price) => `Price : ${price} gold`;
@@ -81,21 +130,38 @@ export const priceRow = (price) => `Price : ${price} gold`;
 const SELECTED_TEXT = [1, 0.85, 0.4, 1];
 
 let _art = null;
+let _arrowArt = null;
 export async function preloadPurchaseArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'BANK01I0.IMG');
   } catch { console.warn('[bank] BANK01I0 unavailable; the purchase window stays closed'); }
+  // AUDIT 58: the arrow strips are their own try - a missing pair
+  // leaves the base image's arrows standing rather than closing the
+  // window, the same degradation preloadScrollerArrowArt takes.
+  if (_arrowArt) return;
+  try {
+    const [green, red] = await Promise.all([
+      loadImg(deps, PURCHASE_GREEN_ARROWS), loadImg(deps, PURCHASE_RED_ARROWS),
+    ]);
+    _arrowArt = { green, red };
+  } catch { console.warn('[bank] BANK01I1/BANK01I2 unavailable; the price list keeps the background arrows'); }
 }
 export const purchaseArtLoaded = () => !!_art;
+export const purchaseArrowArtLoaded = () => !!_arrowArt;
+/** The test seam for both caches. */
+export function _setPurchaseArtForTests(art, arrows = null) { _art = art; _arrowArt = arrows; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry + PURCHASE_PANEL_Y
   && x < rx + PURCHASE_PANEL_X + rw && y < ry + PURCHASE_PANEL_Y + rh;
 
 /**
  * hooks:
- *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market
- *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse)
+ *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market.
+ *                      ABSENT (DFU's null list, :463) IS THE SHIPS ARM.
+ *   buy(item)       -> { result, amount }: the house record for the
+ *                      market (systems/banking.purchaseHouse), the
+ *                      ShipType index for the shipyard (purchaseShip)
  *   showResult(result, amount) -> the BANKING window's GeneratePopup
  *   onClose()
  */
@@ -108,7 +174,39 @@ export class BankPurchaseWindow {
     this.scroll = 0;
     this.yawDeg = 0;              // H4: the preview's rotation, this window's clock
     this._rotAcc = 0;
+    // G5: SetupScrollBar (:303-314). The rect is kept in SCREEN-native
+    // coordinates - the panel origin folded in - so the window's hit
+    // tests and its draw share one origin, the list picker's shape.
+    this.scrollBar = new VerticalScrollBar({
+      rect: [PURCHASE_PANEL_X + PURCHASE_RECTS.scrollBar[0],
+        PURCHASE_PANEL_Y + PURCHASE_RECTS.scrollBar[1],
+        PURCHASE_RECTS.scrollBar[2], PURCHASE_RECTS.scrollBar[3]],
+      displayUnits: LIST_ROWS, totalUnits: 0, scrollIndex: 0,
+    });
   }
+
+  /** The two OnScroll handlers as one sync (:299, :400-410).
+   *  TotalUnits comes off the live list (`priceListBox.Count`), and the
+   *  index flows FROM the bar while the thumb is being dragged and TO
+   *  it the rest of the time - DaggerfallListPickerWindow.Update's
+   *  shape, which is what listPicker.js already runs. */
+  syncScrollBar() {
+    const bar = this.scrollBar;
+    bar.totalUnits = this.items().length;
+    bar.displayUnits = LIST_ROWS;
+    if (bar.draggingThumb) this.scroll = bar.scrollIndex;
+    else bar.setScrollIndexWithoutRaisingScrollEvent(this.scroll);
+  }
+
+  /** VerticalScrollBar.Update (:101-130) off the host's hover seam -
+   *  `e.buttons & 1` is the port's read of GetMouseButton(0). */
+  hover(vx, vy, e = null) {
+    this.syncScrollBar();
+    if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
+  }
+
+  /** Update's else arm (:123-129): the button came up, the latch drops. */
+  release() { this.scrollBar.draggingThumb = false; }
 
   /** H4: Update's rotation clock (:167-177) - one NEGATIVE degree per
    *  0.02s of real time, however many frames that spans. */
@@ -120,27 +218,42 @@ export class BankPurchaseWindow {
     }
   }
 
-  get houses() { return this.hooks.houses?.() ?? []; }
+  /** D6: DFU's discriminator, verbatim - a NULL house list is the
+   *  shipyard (:181). `?? null` rather than `?? []` is the whole
+   *  switch. */
+  get houses() { return this.hooks.houses?.() ?? null; }
+  get isShips() { return this.houses === null; }
+  /** PopulatePriceList (:180-194) - the rows in list order. */
+  items() { return this.houses ?? SHIP_LIST; }
+  /** The one localized row, `bankPurchasePrice` with %s filled: a
+   *  house by its own mesh radius, a ship off the flat table. */
+  priceText(item) {
+    return priceRow(this.isShips ? shipPrice(item) : housePrice(item?.meshRadius ?? 0));
+  }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
   /** The visible slice, and the scroll clamp that keeps it whole. */
   rows() {
-    const all = this.houses;
+    const all = this.items();
     const maxScroll = Math.max(0, all.length - LIST_ROWS);
     if (this.scroll > maxScroll) this.scroll = maxScroll;
+    if (this.scroll < 0) this.scroll = 0;   // scrollIndex is never negative in DFU; no path may leave one standing
     return all.slice(this.scroll, this.scroll + LIST_ROWS)
-      .map((h, i) => ({ house: h, index: this.scroll + i, text: priceRow(housePrice(h.meshRadius ?? 0)) }));
+      .map((it, i) => ({ item: it, index: this.scroll + i, text: this.priceText(it) }));
   }
 
-  /** UpdateListScrollerButtons (:338-346) - the arrows are GREEN only
-   *  while there is somewhere to go, which is what the port draws
-   *  instead of the two arrow textures DFU swaps. */
+  /** UpdateListScrollerButtons (:339-352), verbatim: up is green once
+   *  `index > 0`, down while `index < count - listDisplayUnits`, and a
+   *  list that FITS (`count <= listDisplayUnits`) forces both red -
+   *  which falls out here, because the max scroll is then 0. AUDIT 58
+   *  gave both their first reader in `src/`: draw() picks the green or
+   *  red crop off them. */
   canScrollUp() { return this.scroll > 0; }
-  canScrollDown() { return this.scroll < Math.max(0, this.houses.length - LIST_ROWS); }
+  canScrollDown() { return this.scroll < Math.max(0, this.items().length - LIST_ROWS); }
 
   _scroll(by) {
     const next = this.scroll + by * SCROLL_NUM;
-    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.houses.length - LIST_ROWS)));
+    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.items().length - LIST_ROWS)));
   }
 
   /** BuyButton_OnMouseClick (:380-391), in DFU's exact order - the
@@ -155,16 +268,29 @@ export class BankPurchaseWindow {
   _buy() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     if (this.selected < 0) return;
-    const house = this.houses[this.selected];
-    if (!house) return;
+    // D6: `== null`, not falsiness - ShipType.Small IS 0, and a truthy
+    // test would make the small ship the one row in the game that
+    // cannot be bought.
+    const item = this.items()[this.selected];
+    if (item == null) return;
     this._close();
-    const r = this.hooks.buy?.(house) ?? { result: TRANSACTION_RESULT.NONE };
+    const r = this.hooks.buy?.(item) ?? { result: TRANSACTION_RESULT.NONE };
     this.hooks.showResult?.(r.result, r.amount ?? 0);
   }
 
   click(vx, vy) {
     if (inRect(PURCHASE_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     if (inRect(PURCHASE_RECTS.buy, vx, vy)) { this._buy(); return true; }
+    // G5: the BAR, before the arrows - a press inside thumbRect latches
+    // the drag (Update :108-113), one above or below pages by
+    // DisplayUnits (MouseClick :146-149), and neither is a button, so
+    // neither clicks. The rect is already screen-native.
+    this.syncScrollBar();
+    if (this.scrollBar.contains(vx, vy)) {
+      this.scrollBar.press(vx, vy);
+      this.scroll = this.scrollBar.scrollIndex;
+      return true;
+    }
     if (inRect(PURCHASE_RECTS.upArrow, vx, vy)) { this._scroll(-1); return true; }
     if (inRect(PURCHASE_RECTS.downArrow, vx, vy)) { this._scroll(1); return true; }
     const [lx, ly, lw] = PURCHASE_RECTS.priceList;
@@ -172,7 +298,7 @@ export class BankPurchaseWindow {
       const row = Math.floor((vy - (ly + PURCHASE_PANEL_Y)) / LIST_ROW_H);
       if (row >= 0 && row < LIST_ROWS) {
         const pick = this.scroll + row;
-        if (pick < this.houses.length) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
+        if (pick < this.items().length) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
         return true;
       }
     }
@@ -181,14 +307,23 @@ export class BankPurchaseWindow {
 
   input(code) {
     if (code === 'Escape' || code === 'KeyE') { this._close(); return; }
+    // ListBox.SelectPrevious/SelectNext (ListBox.cs:709-741): the
+    // scroll adjustment lives INSIDE the move guard. Hoisted out, an
+    // ArrowUp on the freshly opened list - SelectNone's -1 - moved
+    // nothing and still assigned `scroll = -1`, and rows() clamps only
+    // downward, so the list collapsed to one unbuyable row at index -1.
     if (code === 'ArrowUp') {
-      if (this.selected > 0) this.selected--;
-      if (this.selected < this.scroll) this.scroll = this.selected;
+      if (this.selected > 0) {
+        this.selected--;
+        if (this.selected < this.scroll) this.scroll = this.selected;
+      }
       return;
     }
     if (code === 'ArrowDown') {
-      if (this.selected < this.houses.length - 1) this.selected++;
-      if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
+      if (this.selected < this.items().length - 1) {
+        this.selected++;
+        if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
+      }
       return;
     }
     if (code === 'Enter' || code === 'KeyB') this._buy();
@@ -201,6 +336,23 @@ export class BankPurchaseWindow {
     const m = nativeMetrics(canvas);
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);
+    // AUDIT 58: SetupScrollButtons (:316-336) puts a 9x16 arrow at
+    // (105,23) and (105,87), and UpdateListScrollerButtons swaps each
+    // between the green and the red strip on every redraw.
+    if (_arrowArt) {
+      for (const [rect, src, green] of [
+        [PURCHASE_RECTS.upArrow, PURCHASE_UP_ARROW_RECT, this.canScrollUp()],
+        [PURCHASE_RECTS.downArrow, PURCHASE_DOWN_ARROW_RECT, this.canScrollDown()],
+      ]) {
+        drawImgCrop(renderer, _arrowArt[green ? 'green' : 'red'], m, src,
+          [PURCHASE_PANEL_X + rect[0], PURCHASE_PANEL_Y + rect[1], rect[2], rect[3]]);
+      }
+    }
+    // G5: the bar's thumb, from DFU's own art. Draw (:136) paints
+    // nothing at all when the list fits, which drawScrollThumb honours
+    // through thumbSpan's null - a two-hull shipyard shows a bare rail.
+    this.syncScrollBar();
+    drawScrollThumb(renderer, m, this.scrollBar.rect, this.scrollBar.thumbSpan);
     const [lx, ly] = PURCHASE_RECTS.priceList;
     for (const r of this.rows()) {
       const y = ly + (r.index - this.scroll) * LIST_ROW_H;
@@ -211,14 +363,18 @@ export class BankPurchaseWindow {
     // H4: the live model, through the host's door - AFTER the chrome,
     // because the pass paints inside the display rect over it. The
     // rect travels in CANVAS pixels (the scissor's frame).
-    const sel = this.houses[this.selected];
-    if (sel?.modelIdNum != null) {
+    // D6: Display3dModelSelection's two arms (:238-252) - the ship's
+    // model id and camera come off its ShipType, the house's off its
+    // own record. SelectNone still shows an empty panel either way.
+    const sel = this.items()[this.selected];
+    const modelIdNum = sel == null ? null : (this.isShips ? shipModelId(sel) : sel.modelIdNum ?? null);
+    if (modelIdNum != null) {
       const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
-      this.hooks.drawModelPreview?.(sel.modelIdNum, {
+      this.hooks.drawModelPreview?.(modelIdNum, {
         x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,
         y: m.oy + (PURCHASE_PANEL_Y + dy) * m.s,
         w: dw * m.s, h: dh * m.s,
-      }, this.yawDeg, PREVIEW_HOUSE_CAMERA);
+      }, this.yawDeg, this.isShips ? previewShipCamera(sel) : PREVIEW_HOUSE_CAMERA);
     }
   }
 }

@@ -281,10 +281,20 @@ export function rebuildEquipState(entity) {
   return slots;
 }
 
-/** INTERIM starting equipment (chargen's starting-gear roll
- *  replaces this): the C8 interim Iron Dagger moves INTO the bag,
- *  equipped, so the worn-weapon FP-rig binding serves it like any
- *  other item. Idempotent per entity. */
+/** The pre-S3d starting seed: the C8 stopgap Iron Dagger moves INTO
+ *  the bag, equipped, so the worn-weapon FP-rig binding serves it
+ *  like any other item. Idempotent per entity.
+ *
+ *  SUPERSEDED, not pending. S3d shipped the real roll -
+ *  systems/startingGear.js:72 assignStartingGear (ItemHelper's
+ *  AssignStartingGear), run on both creation paths at
+ *  chargenSession.js:136 (?class= headless) and :221 (the wizard) -
+ *  and the guard below (`entity.equip || items.length`) makes this a
+ *  no-op for any character that went through either. What is left is
+ *  residue at the two host calls (world.js:1261, exterior.js:865):
+ *  a chargenDone entity whose bag AND equip table are both empty
+ *  still takes a free dagger here. Deleting the calls is a behaviour
+ *  change, so it waits for a slice that owns one. */
 export function seedStartingEquipment(entity) {
   if (entity.equip || (entity.items ?? []).length) return;
   entity.items = entity.items ?? [];
@@ -378,7 +388,15 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   // and strips any held bundle), THEN the Breaks payload - both
   // through hooks so this leaf stays below the enchantment module.
   // SoulBound's break releases the soul.
-  if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
+  // AUDIT 58: BY IDENTITY, not by the port's worn mark.
+  // DaggerfallUnityItem.ItemBreaks calls UnequipItem(owner), which
+  // walks the owner's table and takes off whichever slot holds THIS
+  // item (:1183-1196) - `unequipItem` above IS that walk. The mark
+  // is a port device the player's items carry; a FOE's worn gear is
+  // placed in its table without one (hostCombat.equipEnemy, so its
+  // own corpse's loot is not hidden from every inventory tab), and
+  // the mark-keyed call could never take a broken foe's shield off.
+  if (owner) unequipItem(owner, item);
   _hooks.onItemBroken?.(item, owner, say);
   return true;
 }

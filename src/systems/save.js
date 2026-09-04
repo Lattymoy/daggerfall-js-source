@@ -12,11 +12,11 @@
 // travel-on-load. Versioned envelope; a mismatch refuses loudly.
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
+import { defineLiveMaxMagicka } from './chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
-import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
@@ -27,10 +27,27 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
+import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
+import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
   Object.entries(book ?? {}).map(([k, m]) => [k, { ...m }]));
+
+/** D9: the LOAD side is not a plain copy - GuildManager
+ *  .RestoreMembershipData rebuilds each guild object and hands it
+ *  its row through the guild's OWN RestoreGuildData (:328), and
+ *  KnightlyOrder overrides that method to back-fill its per-rank
+ *  armour bits (KnightlyOrder.cs:283-295). It is the only override
+ *  with a body beyond `flags = data.flags`, so this door is the
+ *  whole of the difference between saving a book and restoring one. */
+const restoreMembershipBook = (book) => {
+  const out = copyMembershipBook(book);
+  const knightly = out[GUILD_GROUPS.KnightlyOrder];
+  if (knightly) restoreKnightlyOrderFlags(knightly);
+  return out;
+};
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -71,7 +88,24 @@ const ENTITY_FIELDS = [
   // dropped it would let a player eat every four in-game hours OR
   // every reload, whichever came first.
   'lastTimePlayerAteOrDrankAtTavern',
+  // A4: MinMetalToHit (SerializablePlayer.cs:135, restored :304, and
+  // DFU assigns it UNCONDITIONALLY - no null arm). The two racial
+  // curses write it (VampirismEffect.cs:125, LycanthropyEffect.cs
+  // :198-200) and CalculateAttackDamage reads it on the TARGET
+  // (FormulaHelper.cs:576) to refuse a weapon of too poor a material.
+  // The port had the write and the read and no envelope between them,
+  // so a vampire who loaded a save could be cut with steel until the
+  // curse's next constant round re-armed the silver requirement. A
+  // save older than this field restores undefined, which the damage
+  // gate reads exactly as C#'s enum default of Iron does: no
+  // requirement at all.
+  'minMetalToHit',
 ];
+
+/** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35
+ *  skills, and `new uint[2]` is both the constructor's value and the
+ *  restore's null arm (SerializablePlayer.cs:292). */
+export const newSkillsRecentlyRaised = () => [0, 0];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
  *  field by field (SerializablePlayer.cs:152-162) and the matching
@@ -107,7 +141,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -127,7 +161,16 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // - opaque here like `world`; the world host composes and consumes
   // it. Null everywhere but interior mode, and a pre-IS1 save
   // restores null (the additive-field shape, version held at 1).
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior };
+  // AUDIT 39: travelMap (SaveLoadManager.cs:871), escortingFaces
+  // (:869) and smallerDungeonsState (PlayerPositionData_v1 :224) are
+  // named here because both hosts already PASS them - composeSessionState
+  // spreads the first two in and the dungeon host adds the third - and
+  // an unnamed option is dropped in silence. Without them every load
+  // took the null arm: the escort portraits of a live quest were
+  // cleared, the travel map's filters and popup choices reset to the
+  // struct defaults, and the SmallerDungeons start-marker warp could
+  // never fire.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, travelMap, escortingFaces, smallerDungeonsState };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -136,11 +179,20 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
-  // (playerEntity's INTERIM skills: 30) - spreading it threw.
+  // (the stand-in entity's flat skills, characters/playerEntity.js:27)
+  // - spreading it threw. RECORDED, and no divergence from
+  // SerializablePlayer: the line below is the working guard, it
+  // round-trips BOTH shapes, and restore reads back whichever it
+  // wrote. The stand-in columns themselves are that file's to retire.
   snap.skills = Array.isArray(entity.skills) ? [...entity.skills] : entity.skills;
   snap.skillUses = [...(entity.skillUses ?? [])];
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
+  // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
+  // (SerializablePlayer.cs:133). Gold left the item list when it
+  // became the counter DFU keeps it in, so the envelope carries it
+  // beside the collections exactly as DFU's does.
+  snap.goldPieces = entity.goldPieces ?? 0;
   // W-slice: the cart's own 750kg collection (PlayerEntity.WagonItems
   // - SerializablePlayer carries wagonItems beside items).
   snap.wagonItems = (entity.wagonItems ?? []).map((it) => ({ ...it }));
@@ -161,6 +213,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));
   snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));
   snap.ownedShip = entity.ownedShip ?? -1;
+  // TR4: SerializablePlayer.cs:180 - the BOARDING MEMORY is saved
+  // beside the deed. Without it a save taken at sea loads with no way
+  // back: IsOnShip needs the memory to answer true, so disembarking
+  // would board again and overwrite where you actually were.
+  snap.boardShipPosition = entity.boardShipPosition ?? null;
   // U39: PlayerEntity.RentedRooms (SerializablePlayer.cs:169, :336).
   // Each record is plain data - name, mapId, buildingKey, bed index,
   // expiry - so a shallow copy per room is the whole envelope.
@@ -222,9 +279,12 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   //
   // DEPARTURE from DFU's FactionData_v2, which serialises the whole
   // dictionary: the port re-reads FACTION.TXT to build the store, so
-  // only the MUTABLE columns need to travel. Three parallel arrays
-  // beside a sorted id list - lossless, and a few KB rather than 366
-  // whole records. Same shape of decision as legalRep above.
+  // only the MUTABLE columns need to travel. Parallel arrays beside a
+  // sorted id list - a few KB rather than 366 whole records. Same
+  // shape of decision as legalRep above. AUDIT 39: "lossless" holds
+  // only while the column list holds EVERY field play writes; it said
+  // three columns and the region sim had grown nine more. Anything
+  // that mutates a faction record belongs in the list below.
   // AUDIT 22 F7: THE LIT LIGHT SOURCE. DFU writes lightSourceUID and
   // relinks through Items.GetItem(uid) on load (SerializablePlayer.cs
   // :151, :320). The port's entity carried a live OBJECT REFERENCE
@@ -275,18 +335,66 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // 750..1250 band and shifted all shop prices mid-session.
   snap.regionPrices = entity.regionPrices ? { ...entity.regionPrices } : null;
   snap.regionConditions = snapshotRegionConditions(entity.regionConditions);   // S42
+  // A4 (Road to 1:1) - THE ENVELOPE STRAGGLERS. Three more members
+  // PlayerEntityData_v1 writes out one at a time and this envelope did
+  // not carry. Each is a COPY or a scalar; each has a live consumer
+  // named at its restore arm below.
+  //
+  // skillsRecentlyRaised (SerializablePlayer.cs:125): the two masks
+  // the skill-raise pass sets (PlayerEntity.cs:1387) and the character
+  // sheet reads to highlight what went up since it was last opened
+  // (TextProvider.cs:492), clearing them as it goes. A mask that does
+  // not survive a save is a mask that only ever reports the raises of
+  // one sitting.
+  snap.skillsRecentlyRaised = entity.skillsRecentlyRaised
+    ? [...entity.skillsRecentlyRaised] : null;
+  // previousVampireClan (:163): CureVampirism stamps the clan the
+  // player USED to belong to (VampirismEffect.cs:309) - the one piece
+  // of a cured vampire's identity that outlives the curse. DFU itself
+  // reads it nowhere yet (the property has no consumer in the tree);
+  // it is carried here because the port already WRITES it
+  // (vampirism.js cureVampirism) and a written field that a save
+  // drops is a divergence whichever way the reference reads it.
+  snap.previousVampireClan = entity.previousVampireClan ?? 0;
+  // timeToBecomeVampireOrWerebeast (:146): classic's "three days
+  // after infection" stamp, which reaches a DFU character only through
+  // AssignCharacter (PlayerEntity.cs:856) - i.e. a classic import.
+  // The temple's Cure Disease service counts it as one more disease
+  // (DaggerfallGuildServiceCureDisease.cs:58) and zeroes it on a cure
+  // (:72, :126), so a save that dropped it charged an imported
+  // character 250 gold too little and left them turning anyway.
+  snap.timeToBecomeVampireOrWerebeast = entity.timeToBecomeVampireOrWerebeast ?? 0;
   return snap;
 }
+
+/** AUDIT 39: rep/flags/power were not the whole mutable set. The
+ *  region simulation rewrites the RELATIONS and the RULER too -
+ *  start/endFactionAllies and start/endFactionEnemies move ally1-3 and
+ *  enemy1-3 (factionRelations.js), setNewRulerData writes
+ *  rulerPowerBonus and rulerNameSeed, setRulerType writes ruler - and
+ *  bootstrapRegionPower runs the conditions body twelve times at
+ *  chargen, so they have already moved before the first save. Dropping
+ *  them reset every relation to FACTION.TXT on load while
+ *  regionConditions restored, which can leave a war flag lit with no
+ *  enemy to end it, and sank every faction's power walk (the shipped
+ *  file's rulerPowerBonus is 0 by construction). */
+export const FACTION_RELATION_COLUMNS = Object.freeze([
+  'ally1', 'ally2', 'ally3', 'enemy1', 'enemy2', 'enemy3',
+  'ruler', 'rulerPowerBonus', 'rulerNameSeed',
+]);
 
 /** The store's mutable columns, id-sorted so the arrays line up. */
 export function snapshotFactionRep(store) {
   const ids = [...store.dict.keys()].sort((a, b) => a - b);
   const rep = [], flags = [], power = [];
+  const out = { ids, rep, flags, power };
+  for (const k of FACTION_RELATION_COLUMNS) out[k] = [];
   for (const id of ids) {
     const f = store.dict.get(id);
     rep.push(f.rep); flags.push(f.flags); power.push(f.power);
+    for (const k of FACTION_RELATION_COLUMNS) out[k].push(f[k]);
   }
-  return { ids, rep, flags, power };
+  return out;
 }
 
 /** Write a snapshot back into a LIVE store. The store is rebuilt from
@@ -298,6 +406,10 @@ export function restoreFactionRep(store, snap) {
     const f = store.dict.get(snap.ids[i]);
     if (!f) continue;
     f.rep = snap.rep[i]; f.flags = snap.flags[i]; f.power = snap.power[i];
+    // AUDIT 39: presence is tested per COLUMN, so a save written before
+    // the relations travelled leaves the FACTION.TXT values standing -
+    // the additive-field shape the rest of the envelope uses.
+    for (const k of FACTION_RELATION_COLUMNS) if (snap[k]) f[k] = snap[k][i];
   }
   return true;
 }
@@ -310,6 +422,13 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     console.warn(`[save] version mismatch (got ${snap?.v}, want ${SAVE_VERSION}); refusing`);
     return null;
   }
+  // AUDIT 39: MaxMagicka is a getter for the life of the entity
+  // (DaggerfallEntity.cs:264) - it cannot be lost on load. The
+  // accessor has to exist BEFORE the ENTITY_FIELDS copy, or
+  // 'maxMagicka' lands as a plain data property and the load path
+  // (which never walks chargen) freezes the ceiling at the saved
+  // number, orphaning every maxMagickaModifier producer. Idempotent.
+  defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   entity.stats = { ...snap.stats };
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
@@ -327,16 +446,24 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
   entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
   entity.ownedShip = snap.ownedShip ?? -1;
+  entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
+  // A4: the three stragglers' restore arms (see the snapshot side).
+  // SerializablePlayer.cs:292 is the ONLY one of the three DFU guards -
+  // `(data...skillsRecentlyRaised != null ? it : new uint[2])` - and a
+  // guard is needed because the value is an ARRAY the raise pass
+  // indexes into; the two scalars restore straight (:315, :331) onto
+  // C#'s own type defaults, 0 and VampireClans.None (which IS 0).
+  entity.skillsRecentlyRaised = snap.skillsRecentlyRaised != null
+    ? [...snap.skillsRecentlyRaised] : newSkillsRecentlyRaised();
+  entity.previousVampireClan = snap.previousVampireClan ?? 0;
+  entity.timeToBecomeVampireOrWerebeast = snap.timeToBecomeVampireOrWerebeast ?? 0;
   entity.racialOverridePending = snap.racialOverridePending ? { ...snap.racialOverridePending } : null;   // V1
-  // AUDIT 17f: a Currency stack saved before gold gained its template
-  // index carries none, and stacksWith compares templateIndex - a
-  // restored save would grow a SECOND gold stack the next time gold
-  // was added, and goldAmount only ever finds the first. The
-  // additive-field upgrade DFU's serializer gives missing members.
-  for (const it of entity.items) {
-    if (it.group === 'Currency' && it.templateIndex == null) Object.assign(it, goldStack(it.stackCount ?? 0));
-  }
+  // E4: `entity.GoldPieces = data.playerEntity.goldPieces`
+  // (SerializablePlayer.cs:302). The pre-E4 MIGRATION that goes with
+  // it runs further down, below the two index-keyed relinks - see
+  // there for why the order matters.
+  entity.goldPieces = snap.goldPieces ?? 0;
   // AUDIT 17e C1: the equip table + armor values are DERIVED state -
   // rebuild them from the freshly restored items (SerializablePlayer
   // .cs:301, :355-368). Must run AFTER items are replaced, or the
@@ -348,6 +475,39 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // this field carries none, which reads as "nothing lit".
   const li = snap.lightSourceIndex ?? -1;
   entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
+  // E4 - THE PRE-E4 MIGRATION, and two things about it are load-bearing.
+  //
+  // WHAT: a save written before gold became a counter carries the
+  // purse as a Currency stack inside `items`, where nothing can spend
+  // it any more. The restore absorbs every such stack into GoldPieces
+  // and drops it - what the transfer door does to a pile that reaches
+  // the pack.
+  //
+  // ONLY FOR SUCH A SAVE. `snap.goldPieces == null` is the test, and
+  // it is not a convenience: DFU CAN put a Currency stack in
+  // PlayerEntity.Items, through GivePc's notify and silently arms
+  // (GivePc.cs:179, :186), which call `Items.AddItem` with no currency
+  // check at all. Such a stack is unspendable in DFU too - GetGoldAmount
+  // reads `goldPieces`, not the list - and it is a quirk the port
+  // INHERITS rather than quietly launders on the next load.
+  //
+  // WHERE: below both index-keyed relinks. `lightSourceIndex` is an
+  // INDEX INTO THE SAVED LIST (the port's recorded stand-in for DFU's
+  // item UIDs, Ledger A), so removing a row before the relink would
+  // slide every later item one place and light the wrong thing - or
+  // nothing.
+  //
+  // (It also subsumes AUDIT 17f's template-index upgrade, whose whole
+  // purpose was to stop a pre-17f stack splitting into two the gold
+  // reader could not add up.)
+  if (snap.goldPieces == null) {
+    for (let i = entity.items.length - 1; i >= 0; i--) {
+      const it = entity.items[i];
+      if (it.group !== 'Currency') continue;
+      entity.goldPieces += it.stackCount ?? 0;
+      entity.items.splice(i, 1);
+    }
+  }
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
@@ -441,8 +601,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // stays one - activeMemberships reads it as the mortal book.
   entity.guildMemberships = snap.guildMemberships
     ? (isMembershipStore(snap.guildMemberships)
-      ? { mortal: copyMembershipBook(snap.guildMemberships.mortal), vampire: copyMembershipBook(snap.guildMemberships.vampire) }
-      : copyMembershipBook(snap.guildMemberships))
+      ? { mortal: restoreMembershipBook(snap.guildMemberships.mortal), vampire: restoreMembershipBook(snap.guildMemberships.vampire) }
+      : restoreMembershipBook(snap.guildMemberships))
     : {};
   // S1: made spells restore from their own carried record (and re-seed
   // the index mint below the lowest one, so a spell made after this
@@ -491,7 +651,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null };
+  // AUDIT 39: the three extras above ride back out too - a save from
+  // before they were carried reads the same null/0 they used to.
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving
@@ -551,14 +713,16 @@ export function restoreSessionState(extras, { questBridge = null, talk = null } 
   return !!extras?.quest;
 }
 
-/** localStorage backend (absent in headless - callers gate).
+/** Storage backend (absent in headless - callers gate): the DA1 seam,
+ *  so the desktop shell's file store answers where a browser answers
+ *  localStorage.
  *  setItem THROWS on real browsers - QuotaExceededError when storage
  *  is full, or a SecurityError under private-browsing modes that
  *  disable storage. An unguarded throw here propagates through the F9
  *  handler and kills the frame (the same unguarded-browser-API class
  *  as the bare requestPointerLock crash). Return false on failure so
  *  the caller reports "save failed" instead of crashing. */
-export function writeQuicksave(snap, storage = globalThis.localStorage) {
+export function writeQuicksave(snap, storage = appStorage()) {
   if (!storage) return false;
   try {
     storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
@@ -584,12 +748,12 @@ export function writeQuicksave(snap, storage = globalThis.localStorage) {
  * front doors call it. A predicate that lives anywhere else is a
  * predicate that drifts from the thing it predicts.
  */
-export function restorableQuicksave(storage = globalThis.localStorage) {
+export function restorableQuicksave(storage = appStorage()) {
   const snap = readQuicksave(storage);
   return snap && snap.v === SAVE_VERSION ? snap : null;
 }
 
-export function readQuicksave(storage = globalThis.localStorage) {
+export function readQuicksave(storage = appStorage()) {
   if (!storage) return null;
   const raw = storage.getItem(QUICKSAVE_KEY);
   if (!raw) return null;

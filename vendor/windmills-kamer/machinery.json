@@ -1,0 +1,82 @@
+{
+  "_comment": [
+    "THE MACHINERY - model 41601, the centrepiece of the room Kamer adds",
+    "to each farm block, read out of Models/Finished/41601.prefab in his",
+    "'Windmills of Daggerfall' v2.0, vendored with the author's permission",
+    "(see README.md).",
+    "",
+    "The prefab is a root GameObject drawing 41601.dae with two children,",
+    "each drawing its own DAE and each carrying one of his two scripts:",
+    "",
+    "  Plank_Gear  Plank_Gear.dae  Spin_Up.cs          Rotate(0, 0, -13*dt, Self)",
+    "  Roller      Roller.dae      SpinTime_Roller.cs  Rotate(13*dt, 0, 0, Self)",
+    "",
+    "The children reference the MESH ASSET of their DAE directly (m_Mesh",
+    "into the file), not the imported node hierarchy, so the DAE's own",
+    "node matrix was never applied in his scene: the mesh is the raw",
+    "vertex data, and the child's transform below is the whole placement.",
+    "That is why the bake reads these two with the node matrix IGNORED",
+    "where the sail and the tower have theirs ASSERTED - the tower is a",
+    "bare mesh too, but its node matrix happens to be the one whose",
+    "composition with Z-up-to-Y-up is the identity, so the assertion",
+    "there is a re-export guard and not a transform.",
+    "",
+    "Positions and quaternions (x, y, z, w) are Unity's, verbatim, in the",
+    "root's space, which is the space the port draws in (mat4's",
+    "handedness law). The rates are degrees per second about the child's",
+    "OWN axis after its rotation - Space.Self - and the signs are his.",
+    "",
+    "loopsSound is Spin_Up.Start: it adds a DaggerfallAudioSource and sets",
+    "SoundClips.ArenaFireDaemon to LoopOnAwake, so the part that carries",
+    "Spin_Up hums; SpinTime_Roller adds none. (A second source in the same",
+    "method is never given a clip - BlowingWindIntro is commented out.)",
+    "",
+    "Materials, in each DAE's triangle order, from the prefab's",
+    "MeshRenderer lists through the .mat files whose names ARE the",
+    "classic (archive, record) pair. Plank_Gear.dae declares nine",
+    "materials and draws one; only the drawn one is bound."
+  ],
+  "body": {
+    "file": "41601.dae",
+    "materials": {
+      "Wall-material": [366, 0],
+      "Wheel-material": [91, 2],
+      "WheelSide-material": [91, 3],
+      "Roof-material": [166, 4],
+      "Wood-material": [67, 1],
+      "Door-material": [332, 0],
+      "Floor-material": [124, 2],
+      "Mill-material": [91, 3]
+    }
+  },
+  "children": [
+    {
+      "name": "Plank_Gear",
+      "file": "Plank_Gear.dae",
+      "materials": { "TEXTURE_067_10-material-material": [67, 1] },
+      "position": [11.02, 4.49, -2.28],
+      "rotation": [0.5, 0.5, -0.5, 0.5],
+      "axis": "z",
+      "degPerSec": -13,
+      "script": "Spin_Up.cs",
+      "loopsSound": true,
+      "collider": false
+    },
+    {
+      "name": "Roller",
+      "file": "Roller.dae",
+      "materials": {
+        "Material_001-material": [67, 1],
+        "Material_002-material": [91, 2],
+        "Material_003-material": [91, 3]
+      },
+      "position": [9.64, -7.14, -2.21],
+      "rotation": [-0.7071068, 0, 0, 0.7071068],
+      "axis": "x",
+      "degPerSec": 13,
+      "script": "SpinTime_Roller.cs",
+      "loopsSound": false,
+      "collider": true
+    }
+  ]
+}

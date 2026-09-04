@@ -86,7 +86,13 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { assetPickerOpen } from '../scenes/dataSource.js';   // MWFIX: the asset picker owns the keyboard while it is open
+import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
+import { TEST_PRESETS, TEST_RIDE } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride
+import { mwRaceId } from '../formats/mwNpc.js';
+import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
+import { dfWornEquipment } from '../formats/mwItemMap.js';
+import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -110,10 +116,13 @@ import { drawPixelGround } from './pixelGround.js';
 // Both are plain modules with no game data; the boot door never
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
+import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { MOD_SETTINGS, modSetting, setModSetting } from '../systems/modSettings.js';   // ROADS 24
+import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -122,13 +131,16 @@ import { overlayAction } from './input.js';   // U51: Escape, through the shared
 // hole in it teaches the player the hole is permanent.
 // R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
 // only. The port's own switches were scattered - the skin under the
-// brand and roads in no interface at all - and a switch a player
-// cannot find is
-// not shipped. It is absent from SECTIONS_PAUSE deliberately: these
+// brand, and the port's own additions in no interface at all - and a
+// switch a player cannot find is not shipped. It is absent from SECTIONS_PAUSE deliberately: these
 // answer "what kind of game am I about to play", which is settled by
 // the time a pause menu opens, and two of them cannot take effect
 // without a reload anyway.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Enhanced', 'Settings', 'Mods', 'About'];
+// TR3 (Mac): TEST ROOM on the boot rail - a prebuilt character and a
+// packed armory, for trying gear on the rigs without playing there.
+// Boot-only for the same reason Continue and New Game are: it answers
+// "which game", which is settled once one is running.
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanced', 'Settings', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -203,7 +215,19 @@ function savedGame() {
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
-    gold: (snap.items ?? []).find((i) => i?.name === 'Gold Pieces')?.stackCount ?? null,
+    // AUDIT 58: THE PURSE IS A COUNTER, NOT AN ITEM. E4 moved gold onto
+    // GoldPieces (`data.playerEntity.goldPieces = entity.GoldPieces`,
+    // SerializablePlayer.cs:133 - systems/save.js's snapshotPlayer
+    // writes snap.goldPieces beside the collections), and restorePlayer
+    // SPLICES every Currency row out of a pre-E4 envelope's item list.
+    // Scanning snap.items for a gold-named row therefore never
+    // matched on any post-E4 save, save.gold was always null, and
+    // stats() drops a null outright - so the Continue and Save cards
+    // silently lost their whole Gold row. Every other reader in the
+    // tree asks the counter (ui/enhancedInventory.js's goldPiecesOf).
+    // Null is kept for a pre-E4 envelope that has no field, which draws
+    // the card without a bogus 0.
+    gold: snap.goldPieces ?? null,
     when: date ? dateString(date) : null,
     hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
     chargenDone: snap.chargenDone !== false,
@@ -323,6 +347,38 @@ function paneNew(body) {
     opts.append(settingRow(key, { compact: true }));
   }
   body.append(opts);
+}
+
+// ── TEST ROOM ────────────────────────────────────────────────────
+// TR3: pick a prebuilt character, walk into the ordinary world with
+// the whole armory in your pack. The presets live in systems/
+// testRoom.js - ONE home the route (main.js) and the boot (world.js)
+// also read; this pane only shows them. Each card is a door: pressing
+// it IS the boot, the same shape Continue's card takes.
+function paneTest(body) {
+  const intro = el('div', 'card');
+  intro.append(el('h3', null, 'The test room'));
+  intro.append(el('p', 'meta',
+    'A prebuilt character in the ordinary world, with one of every weapon, a full suit of '
+    + 'armor across materials, all four shields and a change of clothes already in the pack. '
+    + 'Equip through the inventory as usual; the paperdoll, the sprite weapons and - with '
+    + 'Morrowind data attached - the first- and third-person body all follow the equip table '
+    + 'live. Scroll to switch views. Nothing here is saved over your real game.'));
+  body.append(intro);
+  for (const p of TEST_PRESETS) {
+    const c = el('div', 'card');
+    c.append(el('h3', null, p.label));
+    c.append(el('p', 'meta', p.blurb));
+    c.append(acts([{ label: `Enter as the ${p.label}`, primary: true, onClick: () => onAction(`test:${p.id}`) }]));
+    body.append(c);
+  }
+  // TSR4: the ride - one more door through the SAME `test:<id>` choice,
+  // the entry resolved by testRoom's testEntryById at the boot.
+  const ride = el('div', 'card');
+  ride.append(el('h3', null, TEST_RIDE.label));
+  ride.append(el('p', 'meta', TEST_RIDE.blurb));
+  ride.append(acts([{ label: 'Ride out', primary: true, onClick: () => onAction(`test:${TEST_RIDE.id}`) }]));
+  body.append(ride);
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
@@ -801,20 +857,249 @@ function paneEnhanced(body) {
   // and never called. R3W wired the map and the claim came OUT rather
   // than being left standing as the sky row's was; R4W wired travel
   // and it goes back in. Every clause here is now reachable.
-  live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
-    + 'and travel follows them - the route you watch is the route you are charged for, and never '
-    + 'costs more than the direct road. The first world load bakes the network (about half a '
-    + 'minute, reported as it goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
   // same uiPrefs shelf as roads.
-  live.append(prefRow('proceduralSky', 'Procedural sky',
-    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
-    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
-    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
+  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, which contains it.
+  // The prose names what the switch covers TODAY and grows as slices
+  // land - a row that claims more than the tree has is the fault RA1
+  // fixed here in the other direction.
+  // ENHANCED AI 1: the switch is here from the first slice so the arc's
+  // door exists; the motor only reads it once the bake is proven on a
+  // real dungeon (ENHANCED AI 3). Until then it says so.
+  // AUDIT 59 F3: the row said "not yet driving the motor" two slices
+  // after ENHANCED AI 4 made it drive, and promised towns and
+  // interiors the arc has not reached. It says what ships: dungeons,
+  // the motor live, and that a foe keeps the motor it was born with.
+  live.append(prefRow('enhancedAI', 'Enhanced AI',
+    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
+    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
+    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
+    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
+    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
+  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
+    + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
+    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
+    + 'driven by the wind, rather than across the screen, arriving and clearing with the front - a '
+    + 'sprinkle one day, a downpour the next - instead of switching on and off; and the prototype\u2019s grass, a million '
+    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
+    + 'panorama and its own weather. Takes effect when the world next loads.'));
+
+  // EE13 (Mac: a season test option that spawns you somewhere random, so
+  // the outdoors can be checked without a walk to a season). A season, a
+  // weather, and a town chosen at random by the world's ?spawn=random
+  // door. This is a TEST door, not a setting: it navigates, it stores
+  // nothing, and it names the town in the console so a good one can be
+  // found again.
+  const test = el('div', 'row');
+  const testMain = el('div', 'row-main');
+  testMain.append(el('div', 'row-name', 'Test the outdoors'));
+  testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
+  const testCtl = el('div', 'ctl');
+  const seasonSel = el('select', 'act');
+  // Daggerfall has three ARCHIVE seasons (winter, rain, summer),
+  // and the field has a CALENDAR. A season here is both: the archive
+  // the world dresses in; the day is sent for any test that wants it.
+  const SEASONS = [['winter', 'winter', 0], ['spring', 'rain', 90], ['summer', 'summer', 180], ['fall', 'summer', 300]];
+  for (const [label, , day] of SEASONS) { const o = el('option', '', label); o.value = String(day); seasonSel.append(o); }
+  const weatherSel = el('select', 'act');
+  for (const wn of ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow']) { const o = el('option', '', wn); o.value = wn; weatherSel.append(o); }
+  const go = el('button', 'act primary', 'Spawn');
+  go.type = 'button';
+  go.addEventListener('click', () => {
+    // the menu already lives at /play/: same page, the world's doors set
+    const url = new URL(location.href);
+    url.search = '';
+    const day = Number(seasonSel.value);
+    const archive = SEASONS.find((x) => x[2] === day)?.[1] ?? 'summer';
+    for (const [k, v] of [['world', ''], ['spawn', 'random'], ['season', archive], ['day', String(day)], ['weather', weatherSel.value], ['class', '1'], ['novideo', '']]) url.searchParams.set(k, v);
+    location.href = url.toString().replace(/=(&|$)/g, '$1');
+  });
+  testCtl.append(seasonSel, weatherSel, go);
+  test.append(testMain, testCtl);
+  live.append(test);
   body.append(live);
+
+  // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
+  // SCALE LIVES HERE, not in the settings catalog. `EnhancedHUDScale`
+  // is OURS - DFU has no HUD of this shape to scale - and the catalog
+  // is generated from DFU's own vendored ini by scripts/bakeSettings,
+  // which nothing hand-edits (AUDIT 17e F9's lesson, and the bake pin
+  // caught me adding it there on the first full run). The Enhanced
+  // pane is where this port's own switches already live, and the value
+  // itself is in uiPrefs rather than DFU's settings (see enhancedHud).
+  const sizing = el('div', 'card');
+  sizing.append(el('h3', null, 'HUD size'));
+  const row = el('div', 'row');
+  row.append(el('span', 'row-name', 'Gameplay HUD scale'));
+  const ctl = el('div', 'ctl');
+  const val = el('span', 'val', `${hudScaleNow().toFixed(2)}\u00d7`);
+  const step = (delta, label) => {
+    const b = el('button', 'step', label);
+    b.onclick = () => {
+      const next = Math.round(Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, hudScaleNow() + delta)) * 20) / 20;
+      setPref('hudScale', next);
+      val.textContent = `${next.toFixed(2)}\u00d7`;
+    };
+    return b;
+  };
+  ctl.append(step(-0.05, '\u2039'), val, step(0.05, '\u203a'));
+  row.append(ctl);
+  sizing.append(row);
+  sizing.append(el('p', 'note', 'The compass, the bars and the effect chips together. '
+    + 'Takes effect at once; half size still reads and double fills a phone.'));
+  body.append(sizing);
+
+  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
+  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
+  // the game itself one directory down at /play/, so a bare relative
+  // 'mw-viewer.html' resolves against the running document: from
+  // menu.html at the root it works, and from the game it asks for
+  // /play/mw-viewer.html and 404s.
+  const sitePage = (page) => {
+    const dir = new URL('.', location.href);
+    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
+    return new URL(page, root).href;
+  };
+
+  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has
+  // its M key, but the enhanced skin never routes through it.
+  //
+  // MW-D8: THERE IS NOW SOMETHING BEHIND THE BUTTON, which is the only
+  // thing that ever made one honest. MW-2 refused a 3D toggle because "a
+  // switch for one would be the screen lying about the build" - true then,
+  // when the rig was reverted and nothing had replaced it. The arm exists
+  // now, so a control for it states a fact.
+  //
+  // IT IS A BUTTON WITH A STATUS LINE, not a preference row. MWDIAG's
+  // lesson: five distinct causes were indistinguishable to the reporter
+  // for three fixes running because the reason lived in a console object
+  // nobody read. The reason belongs on the card, next to the button that
+  // produced it.
+  const mw = el('div', 'card');
+  const armState = fpArm.status();
+  mw.append(el('h3', null, 'Morrowind assets'));
+  mw.append(el('p', 'meta',
+    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer, the '
+    + 'data inspector, and the in-game first-person arms. Stored in this browser exactly like '
+    + 'ARENA2; nothing uploads.'));
+  mw.append(el('p', 'meta',
+    'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
+    + 'of what your right hand holds - the weapon follows your equipment as you play. While the '
+    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+  // MW-D50: the horse is vendored now, so the card says where it comes
+  // from and what an attach can still do about it - the reader is the
+  // player deciding whether to attach anything at all.
+  mw.append(el('p', 'meta',
+    'The horse you ride in this skin is Pegas Horse Ranch\'s (MADMAX and Team, carried with permission - see '
+    + 'About); it needs nothing attached. Attach your own copy of the mod here and yours rides instead.'));
+  const count = morrowindDataCount();
+  mw.append(stats([
+    ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
+    ['Arms', armState.active
+      ? `on - ${armState.pieces} pieces from ${armState.skeletonPath}`
+      : armState.reason],
+    ['Weapon', armState.weapon
+      ? `${armState.weapon.name || armState.weapon.id} at ${armState.weapon.bone}`
+        + (armState.weapon.side && armState.weapon.side !== 'unknown'
+          ? ` (${armState.weapon.side} side at rest)` : '')
+      : armState.active ? 'none - empty hands' : '-'],
+    // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
+    // game to see it, and when the wheel refuses, this line is why.
+    // IG6b: the CURRENT arms mode, stated where a state belongs - on
+    // the stats block, not on the button that changes it.
+    ['Arms mode', fpArm.followCamera()
+      ? 'fixed to the screen (classic-style)'
+      : 'Morrowind look-lag'],
+    ['Body', armState.third
+      ? (armState.third.ok
+        ? `${armState.third.pieces} pieces from ${armState.third.skeletonPath} - scroll out for third person (view: ${armState.viewMode})`
+        : `refused - ${armState.third.stage}: ${armState.third.error}`)
+      : '-'],
+  ]));
+  const armActions = [
+    { label: 'Attach data', primary: !count, onClick: async () => {
+      const ds = await import('../scenes/dataSource.js');
+      await ds.pickMorrowindFiles();
+      render();
+    } },
+  ];
+  if (count) {
+    armActions.push(armState.active
+      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); render(); } }
+      : { label: 'Build first-person arms', primary: true, onClick: async () => {
+        // Seconds long and synchronous - the BSA index, the whole ESM
+        // walk and every mesh parse, on the main thread. It happens with
+        // the game paused, once, and the card says so before you press
+        // rather than after the tab stops responding.
+        //
+        // TR2: THE OPTS COME FROM THE ONE HOME (weaponRig's
+        // armBuildOptsOf) - rule 6 picks the skeleton by SEX, rules
+        // 1-3 the body by RACE, the face by the wizard's own
+        // faceIndex, the worn set off the classic equip table, the
+        // weapon off the right hand, ammo off the quiver. The inline
+        // copy this replaces carried `female: !!playerEntity.gender`,
+        // which is TRUE for the string 'male' - every build asked for
+        // the female skeleton; the one home tests the string.
+        const { buildArmsFor } = await import('../combat/weaponRig.js');
+        await buildArmsFor(playerEntity);
+        render();
+      } });
+  }
+  // IG6b: the one Morrowind-feel knob the owner asked for. The label
+  // names the ACTION - the first cut named the mode you were IN, which
+  // reads as "click to enable", and one natural click switched the
+  // owner to look-lag and persisted it; the current mode now sits on
+  // the stats block instead. A click flips live, no rebuild - the rig
+  // reads the flag per frame.
+  if (count) {
+    armActions.push(fpArm.followCamera()
+      ? { label: 'Switch arms to Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(false); render(); } }
+      : { label: 'Switch arms to fixed (classic)', onClick: () => { fpArm.setFollowCamera(true); render(); } });
+  }
+  armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
+  // MW-D: the page that answers what is actually IN the archives - which
+  // is the question four failed fixes never asked.
+  armActions.push({ label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') });
+  mw.append(acts(armActions));
+  // WHY, IN WORDS, WHEN IT DID NOT WORK. An empty box was the reverted
+  // rig's defining behaviour and is the one outcome forbidden here.
+  if (armState.notes && armState.notes.length) {
+    mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
+  }
+  // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
+  // per equipped piece - the parts it dressed, or the reason it kept
+  // its sprite - because "it doesn't show" must never again arrive
+  // with nothing on screen to read.
+  // MW-D35: THE FACE, MATCHED - the measured likeness and its distances,
+  // so "the head doesn't match the portrait" arrives with the numbers.
+  if (armState.face && armState.face.reasons && armState.face.reasons.length) {
+    mw.append(el('p', 'meta', `Face: ${armState.face.reasons.join('; ')}`));
+  }
+  if (armState.worn) {
+    if (!armState.worn.length) {
+      mw.append(el('p', 'meta', 'Worn: nothing equipped in the armor or clothing slots at build time.'));
+    } else {
+      for (const w of armState.worn) {
+        mw.append(el('p', 'meta', w.dressed.length
+          ? `Worn: ${w.label} \u2192 ${w.dressed.join(', ')}`
+          : `Worn: ${w.label} \u2192 classic sprite: ${w.reason}`));
+      }
+    }
+  }
+  // AND WHAT THE DATA ACTUALLY OFFERS. "no record for this actor" is a
+  // dead end for whoever reads it; the race asked for, beside the races
+  // the files carry, is a next step.
+  if (armState.esm) {
+    const e = armState.esm;
+    mw.append(el('p', 'meta',
+      `Read ${e.files.join(', ')} — ${e.bodyRecords.toLocaleString()} body records, `
+      + `${e.firstPerson} of them first-person. Looked for race "${e.raceWanted}": `
+      + (e.raceIsThere ? 'present in your data.' : `NOT among the races your files carry (${e.racesFound.join(', ') || 'none'}).`)));
+  }
+  body.append(mw);
 
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));
@@ -826,7 +1111,30 @@ function paneEnhanced(body) {
 }
 
 function paneMods(body) {
-  body.append(empty('No add-ons installed', 'This port has no mod system, so there is no loader for a mod to load into.'));
+  // ROADS 24: a vendored mod's OWN switches, under the mod's own name,
+  // with the mod's own descriptions - where DFU's modsettings puts them.
+  // The row is a switch like DFU's, writing through modSettings.js.
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
+    const mc = el('div', 'card');
+    mc.append(el('h3', null, mod.title));
+    for (const [key, def] of Object.entries(mod.keys)) {
+      const row = el('div', 'row');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', key.replace(/([a-z])([A-Z])/g, '$1 $2')));
+      main.append(el('div', 'meta', def.description));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      const on = modSetting(vendor, key);
+      const b = el('button', 'act rowact', on ? 'On' : 'Off');
+      if (on) b.classList.add('primary');
+      b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+      ctl.append(b);
+      row.append(ctl);
+      mc.append(row);
+    }
+    mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
+    body.append(mc);
+  }
   const c = el('div', 'card');
   c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
@@ -847,7 +1155,43 @@ function paneAbout(body) {
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
+  body.append(creditsCard());
   body.append(empty('Exit', 'A browser tab cannot close itself. Close it yourself; the quicksave survives.'));
+}
+
+// CR1: THE CREDITS (Mac, 2026-08-30). Rendered from ui/credits.js, the
+// one table every vendored work has a row in; this function knows the
+// shape and nothing about the works. Mods are the point - a modder's
+// name on the screen the player sees, not only in a README - so they
+// take their own heading, with the terms the work is carried under.
+function creditsCard() {
+  const c = el('div', 'card credits');
+  c.append(el('h3', null, 'Credits'));
+  c.append(el('p', 'meta', 'What this port is built on, and the mods carried in it with their authors\' permission.'));
+  const group = (heading, rows) => {
+    c.append(el('h4', 'credits-head', heading));
+    for (const r of rows) {
+      const row = el('div', 'credit');
+      const title = el('div', 'credit-title');
+      title.append(el('span', 'credit-name', r.version ? `${r.title} ${r.version}` : r.title));
+      title.append(el('span', 'credit-by', `by ${r.author}`));
+      row.append(title);
+      row.append(el('p', 'credit-what', r.what));
+      const foot = [];
+      if (r.terms) foot.push(r.terms);
+      if (r.contact) foot.push(`Contact: ${r.contact}.`);
+      if (foot.length) row.append(el('p', 'credit-terms', foot.join(' ')));
+      if (r.link) {
+        const a = el('a', 'credit-link', r.link.replace(/^https?:\/\//, ''));
+        a.href = r.link; a.target = '_blank'; a.rel = 'noopener';
+        row.append(a);
+      }
+      c.append(row);
+    }
+  };
+  group('Built on', CREDITS.builtOn);
+  group('Mods', CREDITS.mods);
+  return c;
 }
 
 // ── SHELL ────────────────────────────────────────────────────────
@@ -928,7 +1272,15 @@ function renderHome() {
   for (const label of sections) {
     if (label === 'About') continue;
     const id = idOf(label);
-    const b = el('button');
+    // PX31: THE DOOR'S BUTTONS CARRY THEIR OWN NAME. Until now they
+    // were classless, and nine probes still reached for `.railbtn` -
+    // the SHELL rail's class, which this door has never had since PX1
+    // replaced it. Every one of them timed out at its front door and
+    // no gate noticed, because a probe is not a gate (AUDIT 17f F4).
+    // Selecting on PROSE would be the same bug waiting on a relabel,
+    // so the hook is structural: doorbtn plus the section id, which
+    // is what a probe actually means when it says New Game.
+    const b = el('button', `doorbtn door-${id}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
@@ -1178,6 +1530,38 @@ function statsStanding(detail) {
  *  log is a side quest. */
 const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
+/** PX28 (Mac: remove the titles - Main Quest, Side Quest - from the
+ *  quest NAMES in the enhanced journal; they already have sections).
+ *
+ *  THE RAIL ALREADY SAYS WHICH KIND A QUEST IS, by the section it sits
+ *  in, so a name that repeats it says the same fact twice - the cut
+ *  PX22 already made to the detail pane's kind tag, finished here on
+ *  the names themselves. A quest pack is free to title its quests
+ *  however it likes and the port does not edit its data: this strips
+ *  the label at the DISPLAY seam only, and only when it is a real
+ *  label - a kind phrase at the FRONT, followed by a separator.
+ *
+ *  What is deliberately NOT stripped:
+ *   - "Clavicus Vile's Quest", "Main Quest Backbone" - the word sits
+ *     at the end, or the phrase runs on into the title with no
+ *     separator, so it IS the name.
+ *   - anything that would leave nothing behind: a quest actually
+ *     called "Main Quest" keeps its name rather than becoming blank.
+ */
+// AUDIT 38 F1: the SEPARATOR between the kind word and the noun is
+// optional too. A pack is as free to write "Sidequest:" or
+// "Main-Quest -" as "Side Quest:", and the first cut required a
+// space, so the joined spellings sailed through with the label still
+// on. The kind and the noun may be joined, spaced or hyphenated; the
+// LABEL still needs its own trailing separator, which is what keeps
+// "Main Quest Backbone" a name.
+const QUEST_KIND_LABEL = /^\s*(?:the\s+)?(?:main|side|guild|daedric|faction|misc(?:ellaneous)?|holiday|class|racial)[\s\-\u2013]*(?:quest|quests|questline|storyline|story)\s*[:\u2013\u2014|\-\u2022]\s*/i;
+export function questTitleOf(name) {
+  const raw = String(name ?? '').trim();
+  const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
+  return cut || raw;
+}
+
 /** PX5: remaining game seconds as words - days+hours above a day,
  *  hours+minutes below it, minutes alone under an hour. */
 function remainWords(s) {
@@ -1255,7 +1639,7 @@ function pauseQuests(body) {
   const railList = (items, cls) => {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
-      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));   // PX28
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
@@ -1292,7 +1676,7 @@ function pauseQuests(body) {
   const detail = el('div', 'px-qdetail');
   if (sel) {
     const head2 = el('div', 'px-qname');
-    head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
     if (sel.entries) {
       // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
@@ -1420,6 +1804,7 @@ function renderInto() {
     else {
       ({
         continue: paneContinue, new: paneNew, load: paneLoad,
+        test: paneTest,
         save: paneSave, exit: paneExit,
         mods: paneMods, about: paneAbout, enhanced: paneEnhanced,
       })[section](body);
@@ -1609,7 +1994,14 @@ export function runEnhancedMenu(doc = document) {
   return new Promise((resolve) => {
     const menu = mountEnhancedMenu(host, {
       onAction: (action) => {
-        if (action === 'delete') return;   // FLAGGED: no save manager yet
+        // SAV4 shipped the save manager (systems/saveSlots.js:276
+        // deleteSave), and this file deletes through it at :387 behind
+        // an ask() confirm. Nothing routes 'delete' out here - every
+        // onAction call site names its own verb and RAIL_ACTS (:162) is
+        // `{ resume: 'resume' }` - so this belt is vacuous, kept only
+        // so a future rail entry cannot resolve the boot promise with a
+        // verb the caller has no window for.
+        if (action === 'delete') return;
         menu.unmount();
         host.remove();
         resolve(action);

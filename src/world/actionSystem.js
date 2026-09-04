@@ -51,6 +51,7 @@ import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
 import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
+import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home, and it is not this file
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -199,8 +200,21 @@ export const TYPE_12_ANSWERS = Object.freeze({
 const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704: 7705 });
 const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
+// ---- ROAD-B B4: CastleDaggerfallMagicDoorsSpecialOpenHack ----
+// DaggerfallAction.cs:256-273, verbatim. The two magically-held foyer
+// doors of Castle Daggerfall are named by LoadID ("based on unique
+// position in gamedata and always the same"), and DFU's own comment
+// says why the check sits inside Receive: "there's no really satisfying
+// way to intercept and change action behaviour directly on these doors".
+// The purpose is narrow - a player TELEPORTED into the dungeon (the
+// recall/anchor arm, not the front door) can land behind the held doors
+// and be shut in; classic leaves you talking to the guard through the
+// crack. So: still show the "magically held" line, but open anyway.
+export const CASTLE_DAGGERFALL_MAP_ID = 1291010263;              // PlayerGPS.CurrentLocation.MapTableData.MapId
+export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331574, 29331622]);
+
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random } = {}) {
+constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random, insideDungeonCastle = () => false, magicDoorsContext = null } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
@@ -217,11 +231,31 @@ export class ActionSystem {
     this._playerLevel = playerLevel;
     this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
+// ROAD-B (b2): PlayerEnterExit.IsPlayerInsideDungeonCastle, read by
+    // AttemptBash's tail (DaggerfallActionDoor.cs:220-221) and by
+    // nothing else in this file. Absent (an interior host, a bare pin)
+    // it answers false, which is what a building interior IS.
+    this._insideDungeonCastle = insideDungeonCastle;
+    // ROAD-B B4: the three ambient reads
+    // CastleDaggerfallMagicDoorsSpecialOpenHack makes off the singletons
+    // (DaggerfallAction.cs:261-263): PlayerEnterExit
+    // .PlayerTeleportedIntoDungeon, PlayerEnterExit.IsPlayerInsideDungeon
+    // and PlayerGPS.CurrentLocation.MapTableData.MapId. Handed in as one
+    // thunk -> { playerTeleportedIntoDungeon, isPlayerInsideDungeon,
+    // currentMapId }, the damage/magicka-sink shape. Unset (an interior
+    // host, a bare pin) the hack cannot fire - which is correct on both:
+    // an interior is not a dungeon, so DFU's second term is false there.
+    this._magicDoorsContext = magicDoorsContext;
     // Scene seams (P10/U6/A2):
     //   resolvePosition(ns, positionKey) -> { pos: [x,y,z], yawDeg }
     //     (teleport destinations - actionless objects live only in
     //     the layout's position index, not this graph)
     //   onTeleport({ pos, yawDeg })  - warp the player
+    //   onTeleportPortal(from, to)   - ROAD-C c2/S8:
+    //     DaggerfallAction.OnTeleportAction (:897-903), the static event
+    //     whose ONE listener in DFU is Automap.OnTeleportAction. Both
+    //     endpoints are `{ pos, yawDeg }` rows off the layout index and
+    //     it fires BEFORE the warp, exactly as :596 does.
     //   onLockedDoor(door)           - the classic look-at-lock text
     //   onActionSound(o)             - Play's soundIndex (Index > 0)
     //   onShowText(textId) / onShowTextInput(textId, submit)
@@ -231,6 +265,7 @@ export class ActionSystem {
     //   onDoorState(o, opening) / onDoorBash(o) - the A1 audio seams
     this.resolvePosition = null;
     this.onTeleport = null;
+    this.onTeleportPortal = null;
     this.onLockedDoor = null;
     this.onActionSound = null;
     this.onShowText = null;
@@ -239,11 +274,22 @@ export class ActionSystem {
     this.onTrespass = null;
     this.onDoorState = null;
     this.onDoorBash = null;
+    // ROAD-B: onMakeEnemiesHostile() - GameManager.MakeEnemiesHostile,
+    // fired by AttemptBash's tail inside a dungeon CASTLE and by the
+    // DoorText trespass check (onTrespass, above, is the same law at a
+    // different site and keeps its own name because DFU's call sites
+    // are two different files).
+    this.onMakeEnemiesHostile = null;
     // R1: onLockpickTally() - TallySkill(Lockpicking, 1) per attempt;
     // onLockpickResult(o, success) - the attempt line + the
     // ActivateLockUnlock sound on success
     this.onLockpickTally = null;
     this.onLockpickResult = null;
+    // WAVE D: onFlatMoved(o) - a MOVE-flag FLAT reached a new pose.
+    // The host owns the billboard, so it owns the draw; this system
+    // owns the tween. Fires on every advance and on a restore settle,
+    // the same shape onDoorState has for the audio seam.
+    this.onFlatMoved = null;
   }
 
   _register(ns, positionKey, o) {
@@ -330,6 +376,15 @@ export class ActionSystem {
       // null next logs and returns, verbatim.
       const dest = this.resolvePosition?.(o.ns, o.nextKey) ?? null;
       if (!dest) { console.warn('[action] Teleport next object null - can\'t teleport'); return; }
+      // ROAD-C c2/S8: RaiseOnTeleportActionEvent(thisAction.gameObject,
+      // thisAction.NextObject) fires HERE (:596), one line BEFORE the
+      // player transform is assigned - the automap's OnTeleportAction is
+      // its only listener and it records the pair as a discovered portal.
+      // The two endpoints are the same static layout rows the warp
+      // itself resolves through, which is what keeps the automap's
+      // string key byte-stable across saves.
+      const from = this.resolvePosition?.(o.ns, o.positionKey) ?? (o.origin ? { pos: o.origin, yawDeg: 0 } : null);
+      if (from) this.onTeleportPortal?.(from, dest);
       this.onTeleport?.(dest);
       return;
     }
@@ -400,6 +455,11 @@ export class ActionSystem {
     const o = {
       key,
       ns,
+      // ROAD-C c2/S8: the object's OWN block-local position byte. The
+      // key already carries it, but a consumer should not have to parse
+      // a key apart to ask the layout index where this object stands -
+      // which is what the Teleport relay's automap report needs.
+      positionKey,
       kind: 'relay',
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
@@ -421,7 +481,8 @@ export class ActionSystem {
    *  reaches it; action is the door's OWN record (fires on player
    *  toggle through the Door trigger gate, verbatim
    *  ExecuteActionOnToggle); startingLockValue seeds
-   *  currentLockValue (P10). */
+   *  currentLockValue (P10); loadID is the serialized identity
+   *  (ROAD-B B4, RDBLayout.cs:242). */
   addDoor(cpu, baseMatrix, opts = {}) {
     const ns = opts.ns ?? 0;
     const key = opts.positionKey != null ? `act:${ns}:${opts.positionKey}` : `door:${this._doorCount++}`;
@@ -457,13 +518,21 @@ export class ActionSystem {
       triggerFlag: a ? (a.triggerFlag ?? TRIGGER_FLAGS.None) : TRIGGER_FLAGS.None,
       startingLockValue: opts.startingLockValue ?? 0,
       currentLockValue: opts.startingLockValue ?? 0,
+      // ROAD-B B4: DaggerfallActionDoor.LoadID / DaggerfallAction.LoadID -
+      // blockData.Position + obj.Position, minted by rdbLayout. Both DFU
+      // components carry the SAME value (RDBLayout.cs:1179 and :967 off
+      // the one `loadID` local), so one field answers for both here. 0 is
+      // DFU's own not-serialized default (interior doors, bare pins).
+      loadID: opts.loadID ?? 0,
       // R1: AttemptLockpicking's retry gate (DaggerfallActionDoor.cs:36
       // FailedSkillLevel) - the skill the player FAILED at; a retry
       // waits for the live skill to differ. DFU's own field comment
       // there marks it "TODO: persist across save and load", but that
       // TODO is stale: SerializableActionDoor DOES round-trip it
-      // (:78 save, :101 restore). The S12 snapshot still skips it -
-      // FLAGGED, a live gap, not parity.
+      // (:78 save, :101 restore). AUDIT 26 F187 carried it into the
+      // S12 snapshot to match - collectSaveData writes it beside the
+      // lock and restoreSaveData reads it back (both below), so a
+      // failed pick no longer forgets itself across a save.
       failedSkillLevel: 0,
       matrix: baseMatrix,
     };
@@ -511,6 +580,88 @@ export class ActionSystem {
     return o;
   }
 
+  /** A MOVE-flag acting FLAT (wave D). DFU gives a flat the SAME
+   *  DaggerfallAction a model gets - AddActionFlatHelper
+   *  (RDBLayout.cs:904-944) calls AddAction, whose Translation /
+   *  Rotation / PositiveX..NegativeZ cases (RDBLayout.cs:998-1055)
+   *  build ActionTranslation and ActionRotation for description "FLT"
+   *  exactly as they do for a model - and a flat IS a transform, so
+   *  iTween.MoveTo carries it. The port sent every move-flag flat to
+   *  addRelay: the CHAIN lived and the MOTION did not.
+   *
+   *  Two things separate this from addAction, and both are DFU's own:
+   *
+   *  - NO MESH, so no collider bucket. AddAction's flat arm attaches a
+   *    BoxCollider with `isTrigger = true` (RDBLayout.cs:977-987) -
+   *    for raycasting, expressly not for standing on - so the object
+   *    carries an `aabb` that TRAVELS with it and never a solid.
+   *    `frameDelta` stays null for the same reason: a trigger is not a
+   *    moving platform.
+   *
+   *  - THE ROTATION IS INVISIBLE AND THAT IS VERBATIM. DFU rotates the
+   *    flat's transform, and DaggerfallBillboard re-faces the camera
+   *    every frame regardless, so a rotating flat looks identical to a
+   *    still one there too. The port holds the rotation in the state
+   *    machine (it is what `t` advances) and shows the translation,
+   *    which is exactly what the engine shows.
+   *
+   *  `origin` is the flat's placed world position - iTween's
+   *  StartingPosition, the point `position: StartingPosition +
+   *  ActionTranslation` is measured from (DaggerfallAction.cs:372). */
+  addMoveFlat(ns, positionKey, action, origin, aabb = null) {
+    const key = `act:${ns}:${positionKey}`;
+    const o = {
+      key,
+      ns,
+      positionKey,
+      kind: 'moveFlat',
+      isFlat: true,
+      actionFlag: action.actionFlag,
+      index: action.index,        // the RDB soundIndex plays on every Play
+      magnitude: action.magnitude,
+      axisRaw: action.axisRaw,
+      // AddActionFlatHelper passes duration 0 (RDBLayout.cs:915), so a
+      // flat Translation/Rotation tween is INSTANT and only the six
+      // PositiveX..NegativeZ flags (which set ActionDuration = 50
+      // themselves) take 2.5s. That quirk is the data's, kept.
+      duration: action.duration / 20,
+      rotation: action.rotation,
+      translation: action.translation,
+      origin: [origin[0], origin[1], origin[2]],
+      offset: [0, 0, 0],
+      pos: [origin[0], origin[1], origin[2]],
+      aabb,
+      baseAabb: aabb ? { min: [...aabb.min], max: [...aabb.max] } : null,
+      activationCount: 0,
+      state: 'start',
+      t: 0,
+      nextKey: action.nextObject,
+      triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
+    };
+    this._register(ns, positionKey, o);
+    return o;
+  }
+
+  /** The moveFlat half of _applyMatrix: the live translation off the
+   *  placed origin, and the trigger box that travels with it. Written
+   *  IN PLACE - the host holds these arrays (the billboard batch reads
+   *  `offset`, the activation scan reads `aabb`) and a fresh object
+   *  every frame would strand both. */
+  _applyFlat(o) {
+    const p = o.t;
+    o.offset[0] = o.translation.x * p;
+    o.offset[1] = o.translation.y * p;
+    o.offset[2] = o.translation.z * p;
+    for (let i = 0; i < 3; i++) {
+      o.pos[i] = o.origin[i] + o.offset[i];
+      if (o.aabb && o.baseAabb) {
+        o.aabb.min[i] = o.baseAabb.min[i] + o.offset[i];
+        o.aabb.max[i] = o.baseAabb.max[i] + o.offset[i];
+      }
+    }
+    this.onFlatMoved?.(o);
+  }
+
   /** DaggerfallAction.IsPlaying: this ACTION's own state, or anything
    *  down the chain. On a door that is `currentState` of the
    *  DaggerfallAction component - the record's Move state, NOT the
@@ -529,12 +680,51 @@ export class ActionSystem {
    *  trigger type must be accepted by the object's TriggerFlag. */
   receive(o, triggerType = 'ActionObject') {
     if (this._isPlaying(o)) return;
+    // ROAD-B B4: DaggerfallAction.cs:183 - the hack runs AFTER the
+    // IsPlaying gate and BEFORE the trigger-flag switch, so it fires
+    // even for a trigger type this object's TriggerFlag would refuse.
+    this._castleDaggerfallMagicDoorsSpecialOpenHack(o);
     if (triggerType !== 'ActionObject') {
       const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
       if (!allowed || !allowed.includes(triggerType)) return;
     }
     o.activationCount = (o.activationCount ?? 0) + 1;   // verbatim: Receive increments, then Plays
     this._play(o);
+  }
+
+  /** ROAD-B B4: DaggerfallAction.CastleDaggerfallMagicDoorsSpecialOpenHack
+   *  (DaggerfallAction.cs:256-273), verbatim and in DFU's own order:
+   *
+   *    if (PlayerEnterExit.PlayerTeleportedIntoDungeon &&
+   *        PlayerEnterExit.IsPlayerInsideDungeon &&
+   *        PlayerGPS.CurrentLocation.MapTableData.MapId == 1291010263 &&
+   *        (loadID == 29331574 || loadID == 29331622))
+   *    {
+   *        DaggerfallActionDoor door = GetComponent<DaggerfallActionDoor>();
+   *        if (door && door.IsLocked && door.IsClosed)
+   *        { door.CurrentLockValue = 0; door.ToggleDoor(); }
+   *    }
+   *
+   *  The numeric tests come first and the component lookup last, which
+   *  is DFU's stated reason for putting the check on this path at all
+   *  ("very fast and doesn't require any scene searches"). `o.kind ===
+   *  'door'` IS the GetComponent - only addDoor mints a hinge-swinging
+   *  object with currentLockValue/state. IsLocked is currentLockValue >
+   *  0 and IsClosed is the SWING state 'start' (DaggerfallActionDoor.cs
+   *  :71-84), not the record's Move state. ToggleDoor() is called with
+   *  its default activatedByPlayer = false, so the unlocked door opens
+   *  without re-running the DoorText hold or the locked-door refusal. */
+  _castleDaggerfallMagicDoorsSpecialOpenHack(o) {
+    const ctx = this._magicDoorsContext?.();
+    if (!ctx) return;
+    if (!ctx.playerTeleportedIntoDungeon) return;
+    if (!ctx.isPlayerInsideDungeon) return;
+    if (ctx.currentMapId !== CASTLE_DAGGERFALL_MAP_ID) return;
+    if (!CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS.includes(o.loadID)) return;
+    if (o.kind !== 'door') return;                        // GetComponent<DaggerfallActionDoor>()
+    if (!(o.currentLockValue > 0 && o.state === 'start')) return;   // IsLocked && IsClosed
+    o.currentLockValue = 0;
+    this.toggleDoor(o);
   }
 
   /** @param selfToggle - true only on the ExecuteActionOnToggle path
@@ -556,9 +746,13 @@ export class ActionSystem {
     if (o.kind === 'relay') { this._runRelay(o); return; }
     if (o.kind === 'door') { this._dispatchDoor(o, selfToggle); return; }
     if (o.duration <= 0) {
-      // Instant flip, still honoring the state cycle.
+      // Instant flip, still honoring the state cycle. (iTween with
+      // time 0 fires its oncomplete SetState on the spot; a FLAT gets
+      // here on every Translation/Rotation, since AddActionFlatHelper
+      // hands AddAction a duration of 0.)
       o.state = o.state === 'start' || o.state === 'reverse' ? 'end' : 'start';
       o.t = o.state === 'end' ? 1 : 0;
+      if (o.kind === 'moveFlat') { this._applyFlat(o); return; }
       this._applyMatrix(o);
       if (o.kind === 'action') {
         this.collider.removeBucket(o.key);
@@ -709,17 +903,40 @@ export class ActionSystem {
    *  the lock. Player bashes fire the door's own record exactly like
    *  ToggleDoor(true) does (AttemptBash calls it). The bash sound
    *  rides the onDoorBash seam (wired in the 2026-08-16c audit); the
-   *  castle MakeEnemiesHostile bit stays routed (crime).
+   *  castle MakeEnemiesHostile bit rides onMakeEnemiesHostile (below).
    *  rollProvider defaults to the system's rolls stream.
    *  A SPECIAL door is not bashable at all: DaggerfallActionDoorSpecial
    *  is a separate component and WeaponManager.WeaponEnvDamage only
    *  reaches AttemptBash through GetComponent<DaggerfallActionDoor>,
    *  which a special door does not have ("player cannot open, bash,
    *  pick, or cast their way through this type of door"). The refusal
-   *  is BEFORE the bash sound - there is no door to hear. */
-  attemptBash(o, roll01 = this._rolls()) {
+   *  is BEFORE the bash sound - there is no door to hear.
+   *
+   *  ROAD-B: ...and the TAIL is no longer "routed". :220-221
+   *
+   *      if (byPlayer && PlayerEnterExit.IsPlayerInsideDungeonCastle)
+   *          GameManager.Instance.MakeEnemiesHostile();
+   *
+   *  sits AFTER all three arms and outside every one of their returns,
+   *  so it runs on a bash-close, on a burst lock, AND on a failed roll
+   *  - taking a swing at a castle's door is what turns the castle on
+   *  you, not succeeding at it. The two early `return false`s above it
+   *  are the port's own compression of arms DFU expresses as
+   *  if/else-if, so the tail has to be lifted above them to keep
+   *  running on every path C# reaches it on; the magically-held door
+   *  is the one that made that visible (DFU falls out of the else-if
+   *  and still calls it).
+   *
+   *  `byPlayer` is DFU's own parameter (:193). Its false caller is
+   *  EnemyAttack.cs:210 - a FOE bashing the door it lost the player
+   *  behind - which this port has no arm for yet; the default is
+   *  therefore true (the player swing, `envAttack`) and the parameter
+   *  exists so the foe arm cannot land without answering it. */
+  attemptBash(o, roll01 = this._rolls(), { byPlayer = true } = {}) {
     if (o.kind !== 'door' || o.special) return false;
     this.onDoorBash?.(o);   // A1 seam (PlayerDoorBash)
+    // :220-221, hoisted above the returns below - see the note.
+    if (byPlayer && this._insideDungeonCastle()) this.onMakeEnemiesHostile?.();
     if (o.state === 'end') {
       this.toggleDoor(o, true);   // bash-close; ToggleDoor(true) fires the record
       return true;
@@ -801,7 +1018,7 @@ export class ActionSystem {
     }
     this.onLockpickTally?.();   // TallySkill(Lockpicking, 1) (:165)
     const chance = interiorLockpickingChance(this._playerLevel(), o.currentLockValue, skill);
-    if (Math.floor(this._rolls() * 100) >= chance) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
+    if (!dice100(chance, this._rolls())) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
       this.onLockpickResult?.(o, false);
       o.failedSkillLevel = skill;   // :171
       return false;
@@ -886,6 +1103,16 @@ export class ActionSystem {
    *  must not stay solid (and was, latently, before P10); movers
    *  rebuild at the restored pose. */
   syncRestored(o) {
+    // A flat carries a SerializableActionObject in DFU exactly as a
+    // model does (RDBLayout.cs:970-973 runs for both), so its record
+    // restores and settles here too - there is just no bucket to
+    // reconcile, only the offset and the trigger box.
+    if (o.kind === 'moveFlat') {
+      if (o.state === 'start') o.t = 0;
+      else if (o.state === 'end') o.t = 1;
+      this._applyFlat(o);
+      return;
+    }
     if (o.kind !== 'door' && o.kind !== 'action') return;
     if (o.kind === 'door' && o.state === 'start') { o.t = 0; }
     if (o.kind === 'door') {
@@ -943,7 +1170,19 @@ export class ActionSystem {
       if (o.kind === 'door') { this._tickDoor(o, dt); continue; }
       if (o.state !== 'forward' && o.state !== 'reverse') { o.frameDelta = null; continue; }
       const dir = o.state === 'forward' ? 1 : -1;
-      o.t = Math.max(0, Math.min(1, o.t + (dir * dt) / o.duration));
+      // A zero-duration tween is instant (and _play never leaves one
+      // in a playing state), so the guard is for the restored-state
+      // path and for a dt of exactly 0, which would otherwise make t
+      // NaN rather than snapping it.
+      o.t = Math.max(0, Math.min(1, o.t + (o.duration > 0 ? (dir * dt) / o.duration : dir)));
+      if (o.kind === 'moveFlat') {
+        this._applyFlat(o);
+        // A trigger box is not a moving platform - DFU's flat collider
+        // is `isTrigger = true` and nothing rides it.
+        o.frameDelta = null;
+        if (o.state === 'forward' ? o.t >= 1 : o.t <= 0) o.state = o.state === 'forward' ? 'end' : 'start';
+        continue;
+      }
       const px = o.matrix[12], py = o.matrix[13], pz = o.matrix[14];
       this._applyMatrix(o);
       // Platform riding (2026-08-14): the frame's translation delta -

@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
 import { KilledFoe, PlayVideo, QUEST_INFO_RESOURCE_TYPE } from '../src/systems/quest/actions.js';
+import { QuestAudioSource } from '../src/systems/audio.js';
 import { Person } from '../src/systems/quest/person.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
@@ -439,6 +440,37 @@ test('PlaySound: a busy source (hook answers false) does not re-stamp; the count
   m2.now = 60; m2.tick();
   m2.now = 120; m2.tick();
   assert.equal(m2.of('playSound').length, 1, 'count 1 means one play');
+});
+
+test('E6: PlaySound over the REAL busy source - the sound due while one rings is dropped', () => {
+  // PlaySound.cs:110-116 end to end: the action's half (the interval,
+  // timesPlayed, the lastTimePlayed stamp) over the source's half (the
+  // clip's end time). Game seconds and real seconds are different
+  // clocks - the interval is measured in the first, the busy window in
+  // the second - which is exactly how DFU has it.
+  let realTime = 0;
+  const engine = { playOneShot: () => 30 };   // a clip 30 REAL seconds long
+  const source = new QuestAudioSource(engine, () => realTime);
+  const m = makeMachine();
+  m.deps.playSound = (id) => {
+    if (source.isPlaying()) return false;
+    source.playOneShot(id);
+    return true;
+  };
+  m.now = 1000;
+  schedule(m, [' play sound vengence every 1 minutes 0 times']);   // interval 60, count 0 = forever
+  m.now = 1060; m.tick();
+  assert.equal(source.isPlaying(), true, 'the first one plays and the source is busy');
+  // The next interval comes due while the clip is still ringing (five
+  // real seconds in): the play is dropped and lastTimePlayed is NOT
+  // re-stamped, so the interval stays elapsed.
+  realTime = 5;
+  m.now = 1120; m.tick();
+  m.now = 1121; m.tick();
+  // ...and the moment the clip ends, the still-due interval fires.
+  realTime = 31;
+  m.now = 1122; m.tick();
+  assert.equal(source.isPlaying(), true, 'the second sound finally rings');
 });
 
 test('PlaySound: an unknown sound name fails create inside the try/catch and the line pends', () => {

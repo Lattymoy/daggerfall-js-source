@@ -94,7 +94,11 @@ test('V3: Mehrunes\' Razor - a failed save adds the target\'s WHOLE health and b
 test('V3: the Mace of Molag Bal - magicka drain with overflow raising max, the dry-target strength arm, the 12-minute decay', () => {
   const mace = SPECIAL_ARTIFACT_HANDLERS.get(ARTIFACTS.MaceOfMolagBal);
   const wielder = P();   // magicka 20 / max 30
-  const target = { health: 30, magicka: 10, stats: { willpower: 0, luck: 0 }, level: 1, skills: {}, activeEffects: [] };
+  // AUDIT 39: the target carries a real STRENGTH now. DrainTargetStrength
+  // goes through DrainEffect.IncreaseMagnitude, whose clamp is relative
+  // to the PERMANENT value, so a fixture with no strength at all pinned
+  // the clamp's degenerate corner instead of the law.
+  const target = { health: 30, magicka: 10, stats: { strength: 30, willpower: 0, luck: 0 }, level: 1, skills: {}, activeEffects: [] };
   // drain: damage 6 but target holds 10 -> 6 drained; 20+6 <= 30, no overflow
   let r = mace.strikes({ entity: wielder, target, damage: 6, nowMinutes: 100, rolls: () => 0.99 });
   assert.equal(target.magicka, 4);
@@ -117,7 +121,7 @@ test('V3: the Mace of Molag Bal - magicka drain with overflow raising max, the d
   mace.strikes({ entity: wielder, target, damage: 5, nowMinutes: 102, rolls: () => seq.shift() ?? 0.5 });
   assert.equal(maceState(wielder).statMods.strength, 4);
   assert.equal(liveStat(wielder, 'strength'), 54, 'the artifact arm reaches liveStat');
-  assert.equal(liveStat(target, 'strength'), 0, 'the target entry drains (fixture had no stats.strength)');
+  assert.equal(liveStat(target, 'strength'), 26, 'the target takes a real DrainStrength incumbent (30 - 4)');
   // decay: 12 game minutes after the last strike, both reset
   mace.magicRound({ entity: wielder, nowMinutes: 102 + MACE_MAX_INCREASE_ROUNDS });
   assert.equal(maceState(wielder).maxMagickaIncrease, 16, 'at the boundary nothing moves (strictly greater)');
@@ -174,19 +178,31 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
   assert.equal(spawned.at(-1), MOBILE_TYPES.Lich);
   // MT-ii: THE DOOR IS MOUNTED, and RETIRING A FLAG DELETES THE
   // SENTENCE - the module header's "no host mounts it" is gone with it.
-  const w = read('src/scenes/world.js');
   // SD1 re-anchored this from the literal spawn line onto the LAW it
   // holds. The old assertion quoted `exteriorFoes.spawnFoe(mobileType,
   // [pf[0] + 2, ...], { allied: true })` - a fixed offset from the
   // player's feet - and SD1 replaced that call with DFU's placement
   // ring, so the pin went red for a change that strengthened exactly
   // what it was defending. F041's precedent: anchor on the gate.
-  assert.ok(w.includes("spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); }"),
-    'world.js mounts the allied spawn');
-  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 1600);
-  assert.ok(/\? d\.spawnLooseFoe\(mobileType, pos, \{ yawRad: yaw, allied \}\)/.test(stander)
-    && /: exteriorFoes\.spawnFoe\(mobileType, pos, \{ yaw, allied \}\)/.test(stander),
+  // WAVE D moved the gate itself: the ctx BODY is scenes/hostEnchant.js
+  // now and both mounting hosts hand it their own pool door, so the
+  // arm is pinned where it lives and each host is pinned to reach it.
+  const he = read('src/scenes/hostEnchant.js');
+  assert.ok(he.includes("spawnAlliedFoe: (mobileType) => { standFoe?.(mobileType, { allied: true }); },"),
+    'the shared ctx mounts the allied spawn');
+  const w = read('src/scenes/world.js');
+  assert.ok(/standLooseFoe: _standLooseFoe,/.test(w), 'world.js hands in its own stander');
+  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 2400);
+  assert.ok(/\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: o\.yawRad, allied: o\.allied \}\)/.test(stander)
+    && /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/.test(stander),
     'through a live pool either way, carrying allied to it');
+  // ROAD-G G1: and a THIRD live pool - a Sanguine Rose broken in a shop
+  // stands its Daedroth through the interior host's own chain.
+  assert.ok(/if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/.test(stander),
+    'the interior arm goes to the pool that owns that building');
+  const dc0 = read('src/scenes/dungeonContext.js');
+  assert.ok(/standLooseFoe: \(mobileType, o = \{\}\) => standLooseFoe\(\{/.test(dc0),
+    'and the dungeon host hands in its own');
   for (const [f, line] of [
     ['src/scenes/exteriorFoes.js', "if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }"],
     ['src/scenes/dungeonContext.js', "if (allied && f.entity) { f.entity.team = 'PlayerAlly'; f.entity.mobileTeam = 'PlayerAlly'; }"],
@@ -268,7 +284,15 @@ test('V3: the Ring of Namira reflects by the attacker\'s TEAM at the attack tail
   const skel = { mobileType: MOBILE_TYPES.SkeletalWarrior, health: 40 };
   onPlayerStruckByEnemy(skel, p, 10);
   assert.equal(skel.health, 20, '10 x 2 reflected');
-  assert.equal(ring.currentCondition, 800 - 20, 'the ring pays the reflection');
+  // AUDIT 58: THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+  // returns durabilityLoss, but FormulaHelper.cs:707 passes
+  // `sourceItem: item` with item still null and :712-716 discards the
+  // PayloadCallbackResults - only EntityEffectManager's dispatchers
+  // (:1041-1042, :1095-1096, :1107-1108) ever read durabilityLoss,
+  // which is why the Mace/Razor/Rose wear down and Namira does not.
+  // MUTANT KILLED: restoring `lowerCondition(ring, reflected, target)`
+  // takes this to 780 and 760.
+  assert.equal(ring.currentCondition, 800, 'the ring takes NO durability loss');
   // Daedra: half, trunc
   const daedra = { mobileType: MOBILE_TYPES.FrostDaedra, health: 40 };
   onPlayerStruckByEnemy(daedra, p, 9);
@@ -277,6 +301,9 @@ test('V3: the Ring of Namira reflects by the attacker\'s TEAM at the attack tail
   const orc = { mobileType: MOBILE_TYPES.Orc, health: 40 };
   onPlayerStruckByEnemy(orc, p, 10);
   assert.equal(orc.health, 30);
+  assert.equal(ring.currentCondition, 800, 'still pristine after four reflected blows');
+  assert.ok(!read('src/systems/artifactEffects.js').includes('lowerCondition(ring'),
+    'the bill is gone, not commented out');
   // no ring, nothing
   const bare = P();
   const orc2 = { mobileType: MOBILE_TYPES.Orc, health: 40 };

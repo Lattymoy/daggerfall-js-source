@@ -16,9 +16,12 @@
 //   reference), min 1 - integer scaling keeps the art crisp.
 
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
+import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
+import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
-import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
+import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
+import { drawHudLarge, dockedLargeHudHeight } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
 // loss trails and gain bars, the smoother, and the one change detector.
@@ -27,6 +30,12 @@ import {
 } from './hudVitals.js';
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
+import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
+import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
+import { lastHealthLost } from './hudVitals.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
+import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
+import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
 import { nativeMetrics } from './nativePanel.js';
 import { ToolTip } from './toolTip.js';
 
@@ -291,8 +300,119 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
 
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
+/** AUDIT 28 W2d: THE NEAR-DEATH WARNING. DaggerfallHUD holds one
+ *  HUDFlickerController (:39) and calls NextCycle every Update (:328);
+ *  the colour it writes is the HUD's PARENT PANEL background - a tint
+ *  under every element - so it draws here as a screen quad before the
+ *  bars, with the detector's HealthLost the vitals rig just computed.
+ *
+ *  D4: THE PANEL IS ui/fadeLayer.js's, and this is now the whole of
+ *  DaggerfallHUD's share of one Unity Panel that has TWO writers.
+ *  FadeBehaviour targets dfHUD.ParentPanel (DaggerfallUI.cs:409) and
+ *  HUDFlickerController is a component OF that panel
+ *  (DaggerfallHUD.cs:163) assigning `Parent.BackgroundColor`
+ *  (HUDFlickerController.cs:81-82). So the order here is DFU's own:
+ *  TickFade advances the fade, NextCycle may overwrite the colour -
+ *  unless one of its two gates says a fade owns the panel this frame
+ *  (:46-47) - and the panel then draws once. Both gates had no reader
+ *  until this slice and were answered false; they are read from the
+ *  fade now, which is what stops a healthy player's Normal arm from
+ *  clearing a smashed-to-black screen on the next frame.
+ *
+ *  `dt` is the caller's PAUSED dt for both: FadeBehaviour.OnGUI steps
+ *  on Time.deltaTime exactly as the flicker does, so a fade started
+ *  before a window opened holds still under it. */
+let _flicker = new HudFlickerController();
+export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
+  hudFade.tickFade(dt);
+  const c = _flicker.nextCycle({
+    health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
+    enabled: getBool('Enhancements', 'NearDeathWarning'),
+    fadeInProgress: hudFade.fadeInProgress,
+    parentAlpha: hudFade.backgroundColor[3],
+  });
+  // `Parent.BackgroundColor = backColor` - the only write; a gated or
+  // Dead cycle answers null and the panel keeps what it holds.
+  if (c) hudFade.backgroundColor = c;
+  return hudFade.draw(renderer, canvas);
+}
+
+/** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,
+ *  Long_Bow 130). */
+export const BOW_TEMPLATES = Object.freeze([129, 130]);
+/** DaggerfallHUD.cs:27-28 - the two label colours. */
+export const REAL_ARROWS_COLOR = Object.freeze([0.6, 0.6, 0.6, 1]);
+export const CONJURED_ARROWS_COLOR = Object.freeze([0.18, 0.32, 0.48, 0.5]);
+
+/**
+ * AUDIT 28 W2: THE ARROW COUNTER (DaggerfallHUD.cs:270-292), a
+ * default-ON DFU feature the port never had. The pure half: answers
+ * what the label says and in what colour, or null when it does not
+ * draw. The gates are DFU's in DFU's order - the setting
+ * (`ShowArrowCount = Settings.EnableArrowCounter`, :155), the weapon
+ * DRAWN, and a bow in the bow hand (`BowLeftHandWithSwitching` picks
+ * which hand, :275). The large HUD's own gate is the caller's, as :273
+ * has it. The count is `GetItem(Weapons, Arrow, allowQuestItem: false,
+ * priorityToConjured: true)` - a conjured stack is counted first and
+ * drawn in the conjured colour - or "0" with no arrows at all.
+ */
+export function arrowCountLabel(entity, weaponSheathed, {
+  enabled = getBool('GUI', 'EnableArrowCounter'),
+  leftHand = getBool('Enhancements', 'BowLeftHandWithSwitching'),
+} = {}) {
+  if (!enabled || weaponSheathed) return null;
+  const slot = leftHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+  const held = entity?.equip?.slots?.[slot] ?? null;
+  if (!held || held.group !== 'Weapons' || !BOW_TEMPLATES.includes(held.templateIndex)) return null;
+  const arrows = getItem(entity?.items ?? [], 'Weapons', ARROW_TEMPLATE, { allowQuestItem: false, priorityToConjured: true });
+  return {
+    text: arrows ? String(arrows.stackCount ?? 1) : '0',
+    color: (arrows && isSummoned(arrows)) ? CONJURED_ARROWS_COLOR : REAL_ARROWS_COLOR,
+  };
+}
+
+/** The draw half: :281-284 - offset LEFT of the compass by its width
+ *  plus the label's width plus 8, centred on the compass's height.
+ *  AUDIT 28 SELF-AUDIT (F-A3): the 8 is RAW screen pixels - :282 adds
+ *  it to a screenRect position after the scaled sizes - so it does not
+ *  ride the HUD scale here either. It first shipped as `8 * s`. */
+function drawArrowCount(renderer, canvas, font, entity, weaponSheathed, compass, s) {
+  if (!font) return;
+  const label = arrowCountLabel(entity, weaponSheathed);
+  if (!label) return;
+  const w = measureText(font.fnt, label.text) * s;
+  const h = (font.fnt?.fixedHeight ?? 6) * s;
+  const x = canvas.width - compass.bw - w - 8;
+  const y = canvas.height - compass.bh / 2 - h / 2;
+  drawText(renderer, font, label.text, x, y, s, label.color);
+}
+
+/**
+ * HUDCompass.DrawCompass (:105-157) at an ARBITRARY top-left corner:
+ * the strip window inset by the 2 px box outline first, the COMPBOX
+ * frame over it. Two windows draw this - the HUD's bottom-right corner
+ * and (ROAD-C c2/S5) the dungeon automap's own (3,172) panel, which
+ * mounts a HUDCompass of its own and hands it the MAP camera
+ * (DaggerfallAutomapWindow.cs:503-508). ONE HOME: the scroll law, the
+ * outline inset and the strip height live here and nowhere else.
+ * `x`/`y` are real canvas pixels; `s` is the caller's scale.
+ * Answers the box's drawn size, which the HUD's arrow label needs.
+ */
+export function drawCompassStrip(renderer, art, x, y, s, heading01) {
+  const box = art.compassBox;
+  const bw = box.w * s, bh = box.h * s;
+  const scroll = compassScroll(heading01);
+  const stripH = art.compass.h * s;
+  renderer.drawScreenQuad(art.compass.tex,
+    { x: x + COMPASS_BOX_OUTLINE * s, y: y + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
+    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
+  renderer.drawScreenQuad(box.tex, { x, y, w: bw, h: bh });
+  return { bw, bh };
+}
+
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null } = {}) {
+  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null,
+    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -301,7 +421,16 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // host that never loaded the HUD art still takes damage.
   playerDamageFlash.tick(dt);
   playerDamageFlash.draw(renderer, canvas);
-  if (!art) return;
+  // PX30: THE ENHANCED HUD RIDES THE ONE HOST-AGNOSTIC CALL, for the
+  // reason the damage flash above rides it - drawHud is what all four
+  // hosts already make, last and over the viewmodel, so no host can
+  // forget it or run it twice. It is a DOM readout, so it returns
+  // before the canvas work below: the classic bars, the classic
+  // compass and the classic icons are the CLASSIC skin's, and drawing
+  // both would be two HUDs at once. What is NOT the classic skin's is
+  // hoisted above that return: the detector below, its tint, and the
+  // escort column - see F131/F133.
+  //
   // VB1: the one vitals snapshot both rigs read - the same fallbacks
   // the plain bars carried since S15. `cursorActive` stands in for
   // DFU's IsGamePaused at the detector (see hudVitals.js's header).
@@ -310,6 +439,45 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     fatigue: vitals.fatigue ?? 0, maxFatigue: maxFatigue(vitals) || 1,   // S15: the (Str+End) x 64 ceiling
     magicka: vitals.magicka ?? 0, maxMagicka: vitals.maxMagicka || 1,
   };
+  // AUDIT 39 F131 - THE DETECTOR IS A GAME-STATE SEAM, NOT A SKIN ONE.
+  // VitalsChangeDetector is its own MonoBehaviour (:66-81) and
+  // CameraRecoiler reads HealthLost/HealthLostPercent off it every
+  // Update whatever HUD is on screen; HUDFlickerController the same.
+  // Run below the skin fork, the detector never ran in the shipping
+  // default, so lastHealthLost() was pinned at 0 and a default-ON
+  // camera recoil and near-death warning were both dead. It runs
+  // above the `!art` return too, like the damage flash: a host whose
+  // HUD art failed still takes damage.
+  const rig = updateHudVitals(!!largeHud?.art, cur, dt, cursorActive);
+  // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
+  // paused game holds at 0 (timeScale) - the tint FREEZES under a
+  // window rather than throbbing on. cursorActive is this HUD's
+  // paused, exactly as the vitals line above treats it.
+  drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d: the parent panel's tint, under everything
+  // Above the `!art` return, like the flash: the enhanced HUD reads no
+  // ARENA2, and a player whose HUD art failed to load still has vitals.
+  if (isEnhanced() && typeof document !== 'undefined') {
+    drawEnhancedHud(vitals, heading01, dt, {
+      hidden: cursorActive,
+      // PX30b: the two things the reference's ability bar would hold.
+      // drawHud already takes an options bag; a host that knows
+      // neither passes neither, and the plaque never draws.
+      readied: readied ?? null,
+      weapon: weapon ?? null,
+      // AUDIT 39 F133: the Detect markers are the whole visible output
+      // of Detect Magic/Enemy/Treasure, so the skin that replaces the
+      // classic compass carries them too.
+      detected: detected ?? null,
+      playerXZ: playerXZ ?? null,
+    });
+    // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
+    // - DaggerfallHUD adds it unconditionally (:183-185) and even the
+    // large-HUD force-off block never names it - so it draws under
+    // this skin as well, from its own canvas layer.
+    drawEscortFaces(renderer, canvas);
+    return;
+  }
+  if (!art) return;
   const skin = vitalsSkin(art);
   const indicators = vitalsIndicatorsEnabled();
   // U45 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
@@ -324,12 +492,21 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     const s2 = hudScale(canvas.width, canvas.height);
     // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
     // the second rig, updated only while this branch is the live HUD.
+    // F131 moved that update above the skin fork; `rig` IS the large
+    // instance here, since the fork asked the same `largeHud?.art`.
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
       ...largeHud,
-      vitalsBars: { rig: updateHudVitals(true, cur, dt, cursorActive), skin, indicators },
+      vitalsBars: { rig, skin, indicators },
     });
+    // ROAD-E E5: ...and it MOVES with the viewport. HUDCrosshair.cs
+    // :43-52 re-centres the reticle into the view a DOCKED bar leaves,
+    // because the world pass is now drawn there (ViewportChanger.cs
+    // :56-62) - a crosshair left on the screen's own middle would sit
+    // below the point the camera is actually pointing at. Undocked the
+    // bar is "just an overlay" and the middle is still the middle.
     drawCrosshairAndModeIcon(renderer, canvas, font,
-      { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
+      { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false,
+        largeHudHeight: dockedLargeHudHeight(lastLargeHudBar) });
     // DaggerfallHUD.cs:203 sets breathBar.Enabled from ShowBreathBar
     // every frame and the force-off block (:214-220) does NOT include
     // it, so the bar survives the large HUD - drawn here after the
@@ -350,7 +527,6 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // between, the art-filled mains on top (Components.Add order,
   // HUDVitals.cs:108-119) - and the skin carries the F149 swap.
   {
-    const rig = updateHudVitals(false, cur, dt, cursorActive);
     let x = HUD_BORDER;
     const rects = {};
     for (const k of VITAL_KEYS) {
@@ -365,16 +541,10 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // DaggerfallHUD.cs:254-257 sets compass.Position to
   // (screenRect.xMax - Size.x, screenRect.yMax - Size.y) and HUDCompass
   // never calls SetMargins - COMPBOX sits FLUSH in the corner.
-  const box = art.compassBox;
-  const bw = box.w * s, bh = box.h * s;
-  const bx = canvas.width - bw;
-  const by = canvas.height - bh;
-  const scroll = compassScroll(heading01);
-  const stripH = art.compass.h * s;
-  renderer.drawScreenQuad(art.compass.tex,
-    { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
-    { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
-  renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  const bx = canvas.width - art.compassBox.w * s;
+  const by = canvas.height - art.compassBox.h * s;
+  const { bw, bh } = drawCompassStrip(renderer, art, bx, by, s, heading01);
+  drawArrowCount(renderer, canvas, font, vitals, weaponSheathed, { bw, bh }, s);
   // X4: DrawTrackedObjects (HUDCompass.cs:198-217), AFTER the box -
   // HUDCompass.Draw() calls DrawCompass() then DrawTrackedObjects(),
   // so markers sit OVER the frame, and above it: DFU's marker y is

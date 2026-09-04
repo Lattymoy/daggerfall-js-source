@@ -128,10 +128,16 @@ screen-space layout does not have. Night swaps to the NITE0?I0.IMG of
 the sky group (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0) duplicated
 across both halves, with LoadVanillaNightSky's right-edge seam fix. Presentation is ours (documented equivalence): one fullscreen
 cylindrical pass - each 512-wide half spans 180 degrees (anglePerPixel
-PI/512, so the strip covers ~77.3 degrees of elevation), azimuth 0 (+X,
-map east) starts the east half - replacing DFU's screen-space scrolled
-quads with identical angular coverage. `src/render/skyRenderer.js`;
-program/state saved and restored around the pass. Wired into the
+PI/512, so the strip covers ~77.3 degrees of elevation), azimuth 0 (+Z,
+map north) starts the east half - the shader's azimuth is
+atan(dir.x, dir.z), which is 0 at +Z, so that half runs north -> east
+-> south and is CENTRED on map east at u = 0.25 - replacing DFU's
+screen-space scrolled quads with identical angular coverage. (F56
+corrected this sentence: it read "+X, map east", a 90-degree-wrong
+reference point for anyone checking the sky against classic.)
+`src/render/skyRenderer.js`; the pass owns its own bindings and the
+HOST marks the foreign seam afterwards - EV6 retired the
+getParameter(CURRENT_PROGRAM) save/restore that used to wrap it. Wired into the
 exterior scene (sky index = climate skyBase) and the streaming world
 (per-pixel skyBase stored at build; panoramas swap async on climate
 boundaries, one frame late). ?skyframe=0..63 (default DFU's 31),

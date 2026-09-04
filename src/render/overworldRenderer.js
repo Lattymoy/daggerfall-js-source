@@ -4,10 +4,14 @@
 //
 // The SkyRenderer/PrecipitationRenderer shape: this class takes the
 // ONE shared gl, compiles its own programs, owns its own VAOs, takes
-// proj/view as ARGUMENTS, saves the previous program and restores it,
-// and brackets every piece of state it changes - so it is safe to run
-// anywhere in a frame (it runs inside the overworld window's own
-// second beginFrame, the automap's precedent).
+// proj/view as ARGUMENTS, and brackets every piece of state it changes
+// - so it is safe to run anywhere in a frame (it runs inside the
+// overworld window's own second beginFrame, the automap's precedent).
+// EV6, like both of those passes: no program save/restore, and no
+// gl.getParameter round-trip to learn what to restore - every draw
+// entry point owns its own binding (the R9 law), and the host marks
+// this pass as a foreign seam (renderer.markForeignPass) so the
+// renderer's state shadows rebind after it.
 //
 // The relief keeps the streamed world's axis labels - east +x,
 // north +z, up +y - and that triple is LEFT-handed (east x up =
@@ -177,11 +181,10 @@ export class OverworldRenderer {
     this._terrain = null;   // { vao, indexCount, buffers[] }
     this._markers = null;   // { vao, count, buffers[] }
     this._route = null;     // { vao, count, buffer }
-    // R3W (2026-08-28): the road layer. ONE SET PER CHAIN, because
-    // overworldModel.roadPoints splits the network at junctions and a
-    // single LINE_STRIP across two unconnected chains would draw a
-    // road that is not there - the model's own reason for the shape.
-    this._roads = { trunk: [], track: [] };
+    // ROADS 25 (R3W restored): the road layer, ONE SET PER CHAIN, because
+    // roadPoints splits the network at junctions and a single LINE_STRIP
+    // across two unconnected chains would draw a road that is not there.
+    this._roads = { stream: [], river: [], track: [], trunk: [] };
     this._cloud = null;     // { vao, buffer }
     this._fsTri = null;     // backdrop fullscreen triangle
 
@@ -309,14 +312,24 @@ export class OverworldRenderer {
     this._route = { vao, count: points.length / 3, buffers: [b] };
   }
 
-  /** The road network as drawable chains, or null to clear it.
-   *  Takes overworldModel.roadModel's output: {trunk, track}, each an
-   *  array of Float32Array vertex runs. */
+  /**
+   * One overworld frame. proj/view are the window's own camera
+   * (mirrorProjectionX'd like every world pass - see header). opts:
+   *   time, cloudY, cloudAlpha - the deck
+   *   markerScale - screen-px multiplier from the zoom
+   *   haze {color:[r,g,b], density} - distance cue
+   *   sky {top, bottom} - backdrop gradient
+   *   rings - [{ center:[x,y,z], size, color:[r,g,b,a], thickness }]
+   */
+  /** ROADS 25: the network as drawable chains, or null to clear it.
+   *  Takes overworldModel.roadModel's output: {stream, river, track,
+   *  trunk}, each an array of Float32Array vertex runs. Kept across
+   *  frames; the map re-sets it when the network or the chips change. */
   setRoads(model) {
     const gl = this.gl;
     this._freeRoads();
     if (!model) return;
-    for (const kind of ['trunk', 'track']) {
+    for (const kind of Object.keys(this._roads)) {
       for (const points of model[kind] ?? []) {
         if (!points || points.length < 6) continue;   // a lone vertex is a dot, not a road
         const vao = gl.createVertexArray();
@@ -333,24 +346,14 @@ export class OverworldRenderer {
   }
 
   _freeRoads() {
-    for (const kind of ['trunk', 'track']) {
+    for (const kind of Object.keys(this._roads)) {
       for (const set of this._roads[kind]) this._freeSet(set);
       this._roads[kind] = [];
     }
   }
 
-  /**
-   * One overworld frame. proj/view are the window's own camera
-   * (mirrorProjectionX'd like every world pass - see header). opts:
-   *   time, cloudY, cloudAlpha - the deck
-   *   markerScale - screen-px multiplier from the zoom
-   *   haze {color:[r,g,b], density} - distance cue
-   *   sky {top, bottom} - backdrop gradient
-   *   rings - [{ center:[x,y,z], size, color:[r,g,b,a], thickness }]
-   */
   draw(proj, view, opts = {}) {
     const gl = this.gl;
-    const prev = gl.getParameter(gl.CURRENT_PROGRAM);
     gl.disable(gl.CULL_FACE);
 
     // backdrop - farthest depth, no write, so terrain draws over it
@@ -376,19 +379,22 @@ export class OverworldRenderer {
 
     // route + markers ride ON the picture, not in it: depth off
     gl.disable(gl.DEPTH_TEST);
-    // R3W: roads FIRST in the overlay group, so the flight route and
-    // the markers stay legible on top of them. Trunk is always drawn;
-    // track fades out with altitude (roadLayersForDistance).
+    // ROADS 25 (R3W restored): roads FIRST in the overlay group, so the
+    // flight route and the markers stay legible on top of them. Water
+    // under the tracks, tracks under the trunk - the lift order, drawn
+    // in the same order. A layer the map has switched off is skipped.
     const layers = opts.roadLayers;
-    if (layers && (this._roads.trunk.length || this._roads.track.length)) {
+    if (layers) {
       gl.useProgram(this.pLine);
       gl.uniformMatrix4fv(this.u.lProj, false, proj);
       gl.uniformMatrix4fv(this.u.lView, false, view);
-      for (const [kind, on, fallback] of [
-        ['track', layers.track, [0.58, 0.49, 0.36, 0.85]],
-        ['trunk', layers.trunk, [0.72, 0.62, 0.45, 1.0]],
+      for (const [kind, fallback] of [
+        ['stream', [0.38, 0.50, 0.65, 0.85]],
+        ['river', [0.23, 0.38, 0.59, 1.0]],
+        ['track', [0.58, 0.49, 0.36, 0.85]],
+        ['trunk', [0.72, 0.62, 0.45, 1.0]],
       ]) {
-        if (!on) continue;
+        if (!layers[kind] || !this._roads[kind].length) continue;
         gl.uniform4fv(this.u.lColor, opts.roadColors?.[kind] ?? fallback);
         for (const set of this._roads[kind]) {
           gl.bindVertexArray(set.vao);
@@ -447,7 +453,6 @@ export class OverworldRenderer {
 
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
-    gl.useProgram(prev);
   }
 
   /** Every allocation has an owner (AUDIT 17e). */
@@ -456,7 +461,17 @@ export class OverworldRenderer {
     this._freeSet(this._terrain); this._terrain = null;
     this._freeSet(this._markers); this._markers = null;
     this._freeSet(this._route); this._route = null;
-    this._freeRoads();   // R3W: every chain has an owner
+    // AUDIT 58 (f3/render): THE ROAD LAYER IS AN ALLOCATION LIKE ANY
+    // OTHER, and it is the largest one here - ROADS 25 mints one VAO and
+    // one buffer PER CHAIN (setRoads, above), and Hazelnut's arrays
+    // trace ~5,800 chains for roads and tracks alone
+    // (bible/03-World/Roads.md). dispose() freed every sibling set and
+    // not this one, so each close of the travel map (overworldMap.js
+    // _teardown -> this._ov?.dispose(), reached by _close() and by
+    // dispose()) orphaned the whole network on the session-long shared
+    // context. _freeRoads() also empties each kind's array, which is
+    // this layer's `= null`.
+    this._freeRoads();
     this._freeSet(this._cloud); this._cloud = null;
     this._freeSet(this._fsTri); this._fsTri = null;
     for (const p of [this.pTerrain, this.pMarker, this.pRing, this.pLine, this.pCloud, this.pBackdrop]) {

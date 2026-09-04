@@ -39,8 +39,8 @@ async function bootSettled(page) {
 
 async function toGamePage(page) {
   await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
-  await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
+  await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+  await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
   await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
   await bootSettled(page);

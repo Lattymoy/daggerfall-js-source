@@ -22,7 +22,8 @@
 //                                scheduleParsedQuest; partialParse
 //                                skips QRC/QBN for the quest picker)
 //   rolls()                    - SelectQuest's pool draw
-//                                (UnityEngine.Random - Ledger A)
+//                                (UnityEngine.Random - THE ENGINE-PRNG
+//                                RULE, Ledger A)
 //   playerNudity               - DaggerfallUnity.Settings.PlayerNudity
 //                                (the adult-quest gate; default false)
 

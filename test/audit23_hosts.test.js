@@ -150,16 +150,31 @@ test('AUDIT 23 hosts-6 + hosts-9: the dungeon host swallows F5/F6 and feeds musi
 
 test('AUDIT 23 wts-1/2: the sky season arm and the weather-scaled ambient', () => {
   // DaggerfallSky.cs:354-357 + PlayerAmbientLight.cs:120-125.
+  // AUDIT 39 (#15) MOVED THE FIRST HALF OF THIS PIN. wts-1 gave
+  // skyOffsetForWeather a `season` argument that no host ever passed,
+  // and passing it would have BROKEN both hosts: the return is the
+  // WeatherStyle, and `offset === 0` is what they read as
+  // WeatherStyle.Normal - the season arm AND showNightSky
+  // (DaggerfallSky.cs:363-367). So the function answers the style only
+  // (0 for every Normal weather), and the season is pinned where it
+  // actually lives, at the render sites below.
   const rng = { nextFloat: () => 0.9 };
-  assert.equal(skyOffsetForWeather('sunny', rng, 3), 3, 'clear weather adds the season');
-  assert.equal(skyOffsetForWeather('cloudy', rng, 1), 1);
-  assert.equal(skyOffsetForWeather('rain', rng, 3), 4, 'precipitation keeps its variant, season ignored');
+  assert.equal(skyOffsetForWeather('sunny', rng), 0, 'clear weather is WeatherStyle.Normal');
+  assert.equal(skyOffsetForWeather('cloudy', rng), 0);
+  assert.equal(skyOffsetForWeather('rain', rng), 4, 'precipitation keeps its variant');
   const noonClear = exteriorAmbient(720, 1, 1);
   const noonStorm = exteriorAmbient(720, 1, 0.25);
   assert.ok(noonStorm[0] < noonClear[0], 'a storming noon is darker than a clear one');
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
     assert.ok(text.includes('seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes))'), `${name}: the sky reads the calendar`);
-    assert.ok(text.includes('exteriorAmbient(minute, 1, weatherSun)'), `${name}: ambient rides the weather scale`);
+    // ...on the Normal-weather arm, and nowhere else: the same test
+    // also drives showNightSky.
+    assert.match(text, /weatherSkyOffset === 0\s*\n?\s*\? seasonValue\(/, `${name}: the season rides the Normal arm`);
+    assert.match(text, /minute, weatherSkyOffset === 0,/, `${name}: and offset 0 is showNightSky`);
+    // AUDIT 28 W1 re-aimed this from the literal line: the night arm
+    // reads NightAmbientLightScale now, so the pin holds the LAW - the
+    // weather scale is the third argument - not the hard-coded 1.
+    assert.match(text, /exteriorAmbient\(minute, .+?, wxNow\.sun\)/, `${name}: ambient rides the weather scale`);   // WX2: the scale on the front (the row's own under classic)
   }
 });
 

@@ -9,8 +9,9 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode
+import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
@@ -18,29 +19,39 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { PlayerMotor } from '../player/motor.js';
+import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle
+import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
+import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive } from './shared.js';
-import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
+import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
-import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
+import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
+import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
+import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
+import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
+import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
+import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -82,7 +93,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject'), foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
       // is created AFTER the context (from startSpawn), so the seam
       // closes over the slot lazily.
@@ -121,31 +132,61 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // other member and takes the start marker.
   const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+  const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
+  const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
+  // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
+  // incoming character does not inherit the outgoing one's reel, and
+  // the reposition the load ends in is OnInitWorld's half of the same
+  // clear. The context owns this host's ONE load door (F12, the pause
+  // menu and the boot ?load arm all reach it), so the hook rides it.
+  const _ctxQuickLoad = ctx.quickLoad;
+  if (typeof _ctxQuickLoad === 'function') {
+    ctx.quickLoad = (...args) => { cameraRecoiler.reset(); return _ctxQuickLoad.apply(ctx, args); };
+  }
+  const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
+  let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
-  // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops
-  // the grounded flag, so the motor re-grounds on the destination
-  // floor next step (the FreezeMotor 0.5s carry-suppression is a
-  // no-op in our motor - velocity is per-frame input, not held).
+  // (DFU DaggerfallAction.Teleport :576-599). spawn() zeroes velY and
+  // drops the grounded flag, so the motor re-grounds on the
+  // destination floor next step.
+  //
+  // A6, the two halves the interim note here got wrong:
+  //  - THE FREEZE IS REAL. `FreezeMotor = 0.5f` (:594) is set before
+  //    the move and FixedUpdate (:296-307) then does NOTHING for half
+  //    a second - no gravity, no input, no probe - and raises
+  //    CancelMovement on the way out. The motor carries it now.
+  //  - THE FACING DOES NOT CHANGE. DFU's next line copies the
+  //    destination's full rotation onto the player, and
+  //    PlayerMouseLook.Update overwrites it the very next frame from
+  //    its own stored Yaw (`characterBody.transform.localEulerAngles =
+  //    new Vector3(0, Yaw, 0)`, :256-259) - so the copy is dead on
+  //    arrival and a teleported player keeps the heading they walked
+  //    in with. Writing the marker's yaw here was the port's own
+  //    departure; the destination's yawDeg stays on the seam (the
+  //    resolvePosition contract) and nothing spends it.
   ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+    player.freezeMotor = TELEPORT_FREEZE_S;
     player.spawn(pos[0], pos[1], pos[2]);
     cam.pos = [...player.eye];
-    cam.yaw = yawDeg * Math.PI / 180;
-    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
+    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] (marker yaw ${yawDeg.toFixed(1)}, not applied - PlayerMouseLook owns the heading)`);
   };
   let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
   let prevUse = false;
+  const activateGate = createActivateGate();   // A8: this host's ActivateCenterObject frame state
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const tryActivate = () => {
     const dir = [
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
@@ -170,21 +211,42 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
   addEventListener('keydown', (e) => {
+    // ROAD-G G3: this host already filled the ring first, which is
+    // InputManager.PollInput's own order (:1795-1809) and now load-
+    // bearing - the Set IS the ring ModifierOnlyHeld scans (:1632-1639,
+    // through ui/input.js's latch). The other three hosts were
+    // moved up to match. Both of this host's keydown listeners run
+    // after it, so routeKey below sees this press placed.
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
-    // R1: F1-F4 switch the interaction mode here too - DFU's
-    // currentMode is global and the standalone dungeon has no townTalk
-    // to carry the keydown. Same keys, same line.
-    const im = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' }[e.code];
+    // R1: the four modes switch here too - DFU's currentMode is global
+    // and the standalone dungeon has no townTalk to carry the keydown.
+    // AUDIT 58 (talk lane), both halves of the law this copy was
+    // missing: (1) the read is the REGISTRY's, because
+    // PlayerActivate.cs:221-228 asks
+    // `InputManager.ActionStarted(Actions.StealMode)` and F1-F4 are
+    // only that action's DEFAULT binding (InputManager.cs:999-1002) -
+    // a literal table made every rebind in the controls grid inert;
+    // (2) a pausing window shuts the read down entirely
+    // (UserInterfaceManager.cs:183-184 -> GameManager.cs:608 ->
+    // InputManager.cs:487-503 returns before currentActions is
+    // populated), so the mode must NOT flip under an open overlay -
+    // the very next line already has the predicate.
+    const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
-      if (im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
+      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
     }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);
   });
-  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // ROAD-E E1: THE KEY-UP ROUTE. This listener drained the held-keys
+  // Set and told the open window nothing, so a window that answers
+  // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
+  // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
+  // routeKey's mirror, on the same ctx.
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -195,7 +257,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     if (ctx.uiOverlayActive) {
       const v = pointToNative(nativeMetrics(canvas), px, py);
-      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
+      // ROAD-C c2/S4: the POINTER seam runs first and always - the
+      // automap chrome is press-HOLD and drag driven, so `down` must
+      // reach it whether or not the click seam consumes the event.
+      // c2/S8: the DOWN route carries the modifiers with it - DFU's
+      // double-click and debug-teleport handlers poll Input.GetKey at
+      // the click, and this seam is the port's only reader of that.
+      if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) return;   // G5: the middle button too
       return;   // a window is up: never grab the pointer behind it
     }
     // U45: the large HUD's eleven panels, BEFORE the relock - a click
@@ -203,12 +272,35 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // ctx it routes into is the SAME one routeKey uses, which is the
     // whole point of pulling routeAction out of it.
     if (routeLargeHudClick(px, py, e.button, ctx, { windowUp: ctx.uiOverlayActive })) return;
+    // ROAD-Ar: the click that GRABS the pointer back is a UI gesture,
+    // not a world click, and it presses and releases Mouse0 into the
+    // gate exactly as a window's close button does - so it takes
+    // SetClickDelay too (PlayerActivate.cs:1050-1054). ONLY on a real
+    // acquisition: with the pointer already locked this click IS the
+    // world's.
+    if (document.pointerLockElement !== canvas) setClickDelay(activateGate);
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
+  });
+  // ROAD-C c2/S4: THE UP ROUTE. A host that routes `down` but not `up`
+  // latches an automap drag that spins the map forever, with nothing
+  // to error on. It listens on the WINDOW, not the canvas, because a
+  // release outside the canvas must still end the drag.
+  addEventListener('pointerup', (e) => {
+    if (!ctx.uiOverlayActive) return;
+    const r = canvas.getBoundingClientRect();
+    const v = pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+    ctx.overlayPointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
   });
   // U-scroll: the wheel reaches an open window (question scroll, list
   // pickers); passive:false so the page never scrolls under the game.
   canvas.addEventListener('wheel', (e) => {
-    if (!ctx.uiOverlayActive) return;
+    if (!ctx.uiOverlayActive) {
+      // MW-D25: with no window up the wheel is the Morrowind camera.
+      if (walkMode && mwViewWheel(e.deltaY)) e.preventDefault();
+      return;
+    }
     e.preventDefault();
     ctx.overlayWheel?.(Math.sign(e.deltaY));
   }, { passive: false });
@@ -216,7 +308,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   bindCursorToggle(canvas, () => ctx.uiOverlayActive, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('mousedown', (e) => { if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  // AUDIT 39r: the button goes into the held-keys set too. InputManager
+  // polls Mouse0/1/2 through the same GetKey dictionary as the keyboard
+  // (:995/:1010/:1017), and this Set was keydown-fed only - so AutoRun
+  // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
+  // un-draw (Mouse0) could never read true. mouseCode owns the
+  // Unity/DOM middle-button crossover; the RELEASE is unconditional.
+  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -230,34 +328,37 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // site not updated - it still passed the old `dir` thunk, which
     // landed in setPlayerPos, so a quickload here restored the
     // character and left them standing wherever they were.
-    if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
+    if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
-  addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
-      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
-    attackTap: () => ctx.playerClickAttack(),
+    attackTap: () => ctx.playerClickAttack(),   // AUDIT 39 F127: the tap is the whole touch strike; the drag hook was never called
   });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     // U37: a window frees the mouse, so an open overlay gets the HOVER
     // (native coords) instead of the look delta.
     trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, before the overlay return
+    trackLargeHudPointer(canvas, e);   // ROAD-Ar: HUDLarge's MouseEnter/MouseLeave (:361-372), for the activate gate's HUD guard
     if (ctx.uiOverlayActive) {
       const r = canvas.getBoundingClientRect();
       const v = pointToNative(nativeMetrics(canvas),
         (e.clientX - r.left) * (canvas.width / r.width),
         (e.clientY - r.top) * (canvas.height / r.height));
-      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e);   // ROAD-A7: e.buttons is the scroll-bar drag's held-button poll
+      if (v) ctx.overlayPointer?.('move', v[0], v[1], 0);      // ROAD-C c2/S4
       return;
     }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);
@@ -272,6 +373,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   renderer.setWindowEmission(windowEmissionRGB('day'));   // F001: SetDungeonTextures keeps GetMaterial's Day default (MaterialReader.cs:456-461)
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
+
+  // E3: the console's door, ungated - the database is one static class
+  // in DFU and every command registered anywhere is reachable from any
+  // scene, which is exactly what a static class means.
+  installConsoleProbe();
 
   if (shotMode) {
     // Probe hooks (parity with the world scene): displace the camera and
@@ -309,6 +415,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__overlayWindow = () => ctx.overlayWindow?.() ?? null;   // U37 probe surface: the live window itself
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
+    // ROAD-C c2/S8: AutoMapConsoleCommands' three verbs - map_revealall,
+    // map_hideall, map_teleportmode. ROAD-E E3 registered them with the
+    // real ConsoleCommandsDatabase (systems/consoleCommands.js), so this
+    // probe is a NAMED door onto it - kept because the probes that drive
+    // this host call it by this name. `window.__console` beside it is the
+    // console's own door, where any registered command is reachable.
+    window.__automapCommand = (name) => ctx.automapCommand?.(name) ?? 'Automap instance not found';
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
     window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);
     // The fist repro (2026-08-18): the entity + the rig's two combat
@@ -373,12 +486,66 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT 39 (#160): a full-screen video owns the canvas for its
+    // lifetime (DFU pauses the game for it). The loop WAITS - it
+    // neither simulates nor draws - and the clock does not accrue.
+    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    if (!(ctx.uiOverlayActive)) {
+      if (rightHeld && walkMode && !ctx.weaponIsBow) lookFilter.settle();
+      else lookFilter.tick(dt, cam);
+    }
+    // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
+    // detector's loss from the vitals rig, same paused gate (:50-51).
+    cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });
+    // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
+    // dip; the position rides player.eye as a world offset, the nod is a
+    // per-frame offset on the look (removed and re-applied each frame).
+    {
+      const bob = headBobber.update(dt, cam, {
+        health: playerEntity.health, paused: ctx.uiOverlayActive, climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
+        velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+      });
+      const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+      player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
+    }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     const overlayHeld = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
     lookGate(overlayHeld);   // a window up frees the cursor; closing re-locks
+    // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
+    // DFU's ActivateCenterObject: the readied spell fires on its
+    // PRESS (EntityEffectManager.cs:250) and the world activation
+    // runs on its RELEASE (PlayerActivate.cs:279), with a readied
+    // non-touch spell blocking the activation outright. The whole
+    // of that law - castPending included - is in
+    // systems/activateGate.js so all four hosts read one copy.
+    // The port's E stays live BESIDE it (DFU binds E to
+    // AbortSpell; a recorded departure, not a gap this slice closes).
+    // ROAD-Ar: the gate ticks EVERY frame, walk branch or not, because
+    // the paused arm is where it learns a window is up and where it
+    // arms RemoveWindow's click delay (:206/:214) for the frame that
+    // window pops. Only the CONSUMERS below stay in the walk branch -
+    // running the gate inside `!overlayHeld` was what left the click
+    // that dismissed a window free to activate the world behind it.
+    const _act = activateFrame(activateGate, {
+      down: held(keys, 'ActivateCenterObject'),
+      hasReadySpell: ctx.spellArmed?.() ?? false,
+      // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
+      // spell leaves doors reachable. rangeType 1 is ByTouch
+      // (spellcast.js:197 ClassicTargetIndexToTargetType).
+      touchSpell: (ctx.readiedSpell?.() ?? null)?.rangeType === 1,
+      hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
+      paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself
+    });
     if (!overlayHeld) ctx.actions.update(dt);
     if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
     if (walkMode && !overlayHeld) {
@@ -413,15 +580,30 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // P12 crouch: toggled on the Crouch edge (DFU's default C -
       // I2 retired the port's X-crouch/C-cast departure).
       const paralyzed = ctx.playerParalyzed?.() ?? false;
+      // A6: FrictionMotor.GroundedMovement's head-dip guard reads
+      // IsParalyzed itself (:90-93) - the zeroed input bag below is
+      // the movement half of the same law, not this one.
+      player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
+      const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs
       const moving = !paralyzed && anyMove(mv);
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
-        forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
-        strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+      // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
+      // movement VECTOR (FrictionMotor :75-81, AcrobatMotor :135-141);
+      // CaptureInputSpeedAdjustment runs in Update behind a levitate gate
+      // and nothing else. Dropping run/sneak/autoRun/back from this bag read
+      // as a RELEASE to the motor's press-edge latches, so a key held
+      // through the paralysis fired a synthetic press on the frame it lifted.
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
+        forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
+        strafe: axes.strafe,
         run: held(keys, 'Run'),
+        // AUDIT 39: PlayerSpeedChanger's AutoRun latch (:82-99) - the
+        // press flips ToggleRun; MoveBackwards is its cancel key.
+        autoRun: held(keys, 'AutoRun'),
+        back: mv.backwards,
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || held(keys, 'FloatUp'),
@@ -447,15 +629,26 @@ export async function bootDungeon(canvas, renderer, params, status) {
           dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
-      cam.pos = player.eye;
-      ctx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
+      cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+      ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
-      const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+// ROAD-Ar: the gate itself ran at :459, above the overlay guard.
+      // This is only where its answer is CONSUMED. R10: the swing below
+      // is the raw right button - DFU's own 'Mouse1'
+      // (InputManager.cs:1010) - but never read through held(), so a
+      // SwingWeapon rebind is inert (recorded departure).
+      if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
+      const useHeld = keys.has('KeyE');   // I2 departure, kept beside A8's Mouse0: DFU binds E to AbortSpell
       const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
       if (zNow && !zPrev) ctx.toggleSheath?.();
       zPrev = zNow;
-      if (useHeld && !prevUse) tryActivate();
+// a12: SwitchHand (H) - ActionComplete's RELEASE edge
+      // (WeaponManager.cs:272), so the latch is inverted against Z's.
+      const hNow = held(keys, 'SwitchHand');
+      if (!hNow && hPrev) ctx.switchHand?.();
+      hPrev = hNow;
+      if (_act.activate || (useHeld && !prevUse)) tryActivate();
       prevUse = useHeld;
       // `held` here USED to be this frame's local overlay boolean; it was
       // renamed overlayHeld (:353) and the name then resolved to the
@@ -476,13 +669,24 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // eye each frame (never cumulative), the way DFU keeps moving the
     // camera while InputManager.IsPaused holds the player.
     if (walkMode && (ctx.deathDrop ?? 0) > 0) {
-      const _eye = player.eye;
+      const _eye = player.eyeAt();   // EV1: a camera path, so the interpolated eye
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
-    const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
-    const view = lookAt(cam.pos, target, [0, 1, 0]);
+    // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
+    // than covering it (ViewportChanger.cs:56-62), and Unity derives a
+    // camera's aspect from its viewport - so the lens takes the bar's
+    // height out of its denominator. This host draws the bar through
+    // dungeonContext's own drawHud, so it carries the law too.
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 800));   // HANDEDNESS (mat4's law)
+    // MW-D25: the walk camera rides the Morrowind machine; the free-fly
+    // scout keeps its own eye (it has no player body to orbit).
+    const mwv = walkMode
+      ? mwViewFrame({ fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+          raycast: (o, d, m) => ctx.collider.raycast(o, d, m) })
+      : { eye: cam.pos, thirdPerson: false };
+    const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];
+    const view = lookAt(mwv.eye, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);
     // AUDIT 26 F183: per FRAME, not once at load - the ambient depends
@@ -490,18 +694,28 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // so it has to follow them across a castle or special-area
     // boundary the way the load-time write never could.
     renderer.setLighting(new Float32Array(ctx.ambient), 0);
+    // ROAD-B (b3): UnderwaterFog.UpdateFog, at PlayerEnterExit.Update's
+    // own cadence (:349-352). The load-time setFog at :331 stays as the
+    // dry state; this is the per-frame one, and DUNGEON_FOG is the same
+    // DungeonFogSettings written there (WeatherManager.cs:77).
+    applyFog(renderer, ctx.underwaterFogSettings?.(cam.pos[1], player.pos, DUNGEON_FOG) ?? DUNGEON_FOG);
     renderer.setPointLights(
-      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
+      // A10: DungeonLightHandler's XZ block range culls first, the
+      // 16-slot shader cap picks from what survives (dungeonLights.js
+      // carries the composition and why that order).
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
+    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+    if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
-    renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED
     // BEFORE THE MODAL RETURN (AUDIT 21 F1's law, which this host
@@ -527,7 +741,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
-    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, { forward: player.moveForward || 0, strafe: player.moveStrafe || 0, running: !!player.isRunning, speed: player.moveSpeed || 0, grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating }, player.bobOffset ? player.bobOffset[1] : 0);   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);

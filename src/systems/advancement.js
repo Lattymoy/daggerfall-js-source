@@ -22,7 +22,7 @@
 //   is mounted.
 
 import { OGHMA_BONUS_POOL } from './artifactEffects.js';   // V3: the sheet's oghmaBonusPool (:44)
-import { SKILLS } from './skills.js';
+import { SKILLS, setSkillRecentlyIncreased } from './skills.js';
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 
 // DaggerfallSkills.GetAdvancementMultiplier, all 35, verbatim.
@@ -78,13 +78,38 @@ export function alreadyMasteredASkill(entity) {
   return entity.career.primarySkills.some((id) => entity.skills[id] === 100);
 }
 
+// ── skillsRecentlyRaised ──────────────────────────────────────────
+// INTEGRATION (A4+A11): both wave-A slices ported PlayerEntity's
+// uint[2] raise mask; the canonical trio lives in skills.js (beside
+// the tally counters the sheet also reads). advancement re-exports
+// A4's spelling so its save-lane consumers keep one import site.
+export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIncreased, resetSkillsRecentlyRaised } from './skills.js';
+
 /**
  * PlayerEntity.RaiseSkills verbatim (the >360-classic-minute gate
  * lives here via entity.lastSkillCheckTime). Returns the raised
- * skill ids. The headless level-up applies immediately (INTERIM,
- * loud - DFU routes through the char sheet).
+ * skill ids.
+ *
+ * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
+ * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
+ * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
+ * live host supplies that message as the hook - world.js:1121/:2386/
+ * :3132, exterior.js:746/:1211, worldModes.js:364/:5478,
+ * dungeonContext.js:1405. The immediate arm below is taken only when
+ * onLevelUp is null: a headless/test path (and the ?class= skip) that
+ * DFU has no counterpart for, so there is nothing to diverge from.
+ *
+ * ROAD-Ar R12 - THE HOOKS FIRE IN DFU'S ORDER, WHICH IS THE WHOLE
+ * POINT OF HAVING THEM. RaiseSkills does the skillImprove popup
+ * (:1388) and the mastery box (:1396-1404) INSIDE the skill loop and
+ * only then, outside it, posts dfuiOpenCharacterSheetWindow (:1413).
+ * A host that presents the raises AFTER raiseSkills returns has
+ * inverted that, and on a single-overlay host the mastery box then
+ * lands on top of the level-up sheet. So `onRaise` exists for the same
+ * reason `onMastery` does: to give the host DFU's moment rather than
+ * a batch after the fact.
  */
-export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onLevelUp = null) {
+export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onLevelUp = null, onMastery = null, onRaise = null) {
   if (!entity.chargenDone) return [];
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
@@ -100,7 +125,22 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     // primary hitting 100 mid-pass blocks later 95+ raises, verbatim.
     if (entity.skills[i] < 100 && (entity.skills[i] < 95 || !alreadyMasteredASkill(entity))) {
       entity.skills[i] += 1;
+      // A4/A11: SetSkillRecentlyIncreased(i) sits between the raise
+      // and SetCurrentLevelUpSkillSum (PlayerEntity.cs:1386-1388) - the
+      // ONE producer of the mark the char sheet highlights until a
+      // non-levelling close clears the mask (CheckIfDoneLeveling :451).
+
+      setSkillRecentlyIncreased(entity, i);
       raised.push(i);
+      // PopupMessage("skillImprove") (:1388) - in the loop, ahead of
+      // the mastery box for that same skill and ahead of the sheet.
+      onRaise?.(i);
+      // RaiseSkills :1390-1407, verbatim shape: a PRIMARY skill that
+      // has just landed on exactly 100 is the mastery. The box's text
+      // and the fanfare are presentation, so they ride the host's
+      // hook (scenes/shared.js raisePlayerSkills) - the LAW is which
+      // skill, and when.
+      if (entity.skills[i] === 100 && entity.career.primarySkills.includes(i)) onMastery?.(i);
     }
   }
   if (raised.length) entity.currentLevelUpSkillSum = levelUpSkillSum(entity);

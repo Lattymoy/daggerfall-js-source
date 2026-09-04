@@ -27,6 +27,26 @@ export const TREASURE_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
 export const PICKPOCKET_DISTANCE = 128 * GLOBAL_SCALE;
 export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
 export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
+/** AUDIT 58 (talk lane): TextManager 'youAreTooFarAway'
+ *  (Master Localization CSV Files/Internal_Strings.csv:22 -
+ *  `youAreTooFarAway,You are too far away...`), the ONE string every
+ *  reach refusal in PlayerActivate speaks: the static-NPC arm
+ *  (PlayerActivate.cs:763), the mobile-NPC arm (:780), the pickpocket
+ *  arm (:790) and the bulletin board (:712). It lives here because it
+ *  is PlayerActivate's, not any one caller's - systems/bulletinBoard.js
+ *  spelled it correctly and scenes/townTalk.js spelled the same key
+ *  'You are too far away.' with a full stop, so one localized key was
+ *  shipping as two different sentences in one session. */
+export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
+/** AUDIT 58 (talk lane): TextManager 'youSee'
+ *  (Internal_Strings.csv:53 - `youSee,You see %s.`), the WHOLE of
+ *  PresentNPCInfo (PlayerActivate.cs:1484-1486): one HUD line naming
+ *  the NPC, with %s replaced by StaticNPC.DisplayName. It is what
+ *  ActivateStaticNPC's Info arm does and the only thing it does
+ *  (:755-757) - the other three modes fall to StaticNPCClick. */
+export const YOU_SEE_TEXT = 'You see %s.';
+/** PresentNPCInfo's one line, macro-replaced (:1486). */
+export const presentNpcInfoText = (displayName) => YOU_SEE_TEXT.replace('%s', displayName ?? '');
 // PlayerActivate.cs:85 - corpses reach FURTHER than everything else
 // (150 classic units, not 128). It is deliberate, not incidental:
 // ActivateLootContainer (:866-874) exempts CorpseMarker from the

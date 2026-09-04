@@ -78,10 +78,19 @@ test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none
     ['src/scenes/exterior.js', /if \(e\.button === 2 && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
   ];
   for (const [host, re] of release) assert.match(src(host), re, `${host}: the release stays ungated`);
-  // ONE expression for "a mode window is up" - the cursor toggle and the
-  // attack seam read the same one rather than each spelling it out.
+  // ONE expression for "a mode window is up" - the attack seam and the
+  // HOSTS' cursor toggle read the same one rather than each spelling it
+  // out. AUDIT 58 (f3/input): the toggle is no longer registered HERE.
+  // bindCursorToggle installs a listener per call over a module-global
+  // flag, and both outdoor hosts build this machine unconditionally, so
+  // a registration here was a SECOND reader of Actions.ActivateCursor
+  // and one Enter netted zero (PlayerMouseLook.cs:190-198 has exactly
+  // one). The expression is published on the returned object instead
+  // and OR'd into the host's single binding - test/cursortoggle.test.js
+  // sweeps the count over every entry host's import closure.
   assert.match(WM, /const modalWindowUp = \(\) => \(mode === 'dungeon' \? !!dungeonCtx\?\.uiOverlayActive : !!interiorOverlay\);/);
-  assert.match(WM, /bindCursorToggle\(canvas, modalWindowUp, actionOf\);/);
+  assert.match(WM, /^ {4}modalWindowUp,$/m, 'published for the host that owns the one binding');
+  assert.doesNotMatch(WM, /bindCursorToggle\(/, 'and registered nowhere in this file');
 });
 
 // ---------------------------------------------------------------------
@@ -131,10 +140,22 @@ test('AUDIT 26 F211 + F064: the forced exit caches the interior and disposes the
     'a recall out of a building discarded every change made inside it');
   assert.ok(force.indexOf('cacheInteriorScene();') < force.indexOf('interiorCtx.destroy()'),
     'the cache is written while the shelves and action objects are still alive');
-  // OnPop: the slot is DISPOSED, never dropped raw
-  assert.match(force, /interiorOverlay\?\.dispose\?\.\(\);/,
-    'the interior slot was nulled raw - a rest window there left isResting raised for the session');
-  assert.ok(force.indexOf('interiorOverlay?.dispose?.();') < force.indexOf('interiorOverlay = null'),
+  // OnPop: the slot is DISPOSED, never dropped raw.
+  //
+  // ROAD-B B1 MOVED THIS PIN one level out, deliberately. The interior
+  // host holds a real window STACK now (ui/windowStack.js), so "the
+  // window it drops" is no longer only the top one: a rest suspended
+  // under a pushed message box is a live occupant with IsResting
+  // raised, and a teardown that disposed the top alone would strand it
+  // with exactly the defect F064 recorded. UserInterfaceManager
+  // .cs:189-196 runs OnPop on every window RemoveWindow removes, and
+  // ChangeWindow (:125-126) removes them all - so the teardown drains
+  // the stack and disposes each one on the way out.
+  assert.match(force, /interiorWindows\.clear\(\(w\) => w\.dispose\?\.\(\)\);/,
+    'the interior stack was dropped raw - a rest window on it left isResting raised for the session');
+  assert.ok(force.indexOf('interiorWindows.reconcile(interiorOverlay);') < force.indexOf('interiorWindows.clear('),
+    'the live slot is read back into the stack first, or the top window is not on it to be disposed');
+  assert.ok(force.indexOf('interiorWindows.clear(') < force.indexOf('interiorOverlay = null'),
     'dispose before the slot is cleared, or _close never runs');
   assert.match(force, /dungeonCtx\.overlayWindow\?\.\(\)\?\.dispose\?\.\(\);/,
     'the dungeon context is destroyed without popping its own window');
@@ -260,6 +281,13 @@ test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the
     'the only addItem in the transaction is Buy\'s - the shelf item that really does change hands');
   assert.doesNotMatch(commit, /for \(const it of staged\) addItem\(playerEntity\.items, it\);/);
   assert.doesNotMatch(commit, /it\.isIdentified = true; addItem\(playerEntity\.items, it\);/);
-  // and the collection the window is handed is named for what it is
-  assert.match(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\)\.filter\(\(it\) => !isEquipped\(it\)\),/);
+  // ...and D7 finished the move F063 started: what the window is
+  // handed is the LIVE collection (DaggerfallTradeWindow.cs:389), not
+  // a filtered view of it, so TransferItem's splice at the click lands
+  // on the real pack. The equipped test went with it, into
+  // FilterLocalItems where DFU keeps it (:693, :697).
+  assert.match(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\),/);
+  assert.match(WM, /isEquipped: \(it\) => isEquipped\(it\),/);
+  assert.doesNotMatch(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\)\.filter\(/,
+    'a filtered view cannot be spliced - the host must not narrow the pack again');
 });

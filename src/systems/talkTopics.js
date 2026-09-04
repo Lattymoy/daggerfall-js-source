@@ -33,6 +33,7 @@ import { RMB_SIDE } from '../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../characters/interiorPeople.js';   // QP1: the one people mapper
+import { buildingSummaries } from '../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
@@ -112,6 +113,24 @@ export const ANSWERS_TO_NON_DIRECTIONS = Object.freeze([
   7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
 ]);
 
+/**
+ * DFU's building count for a block: SubRecords.Length, scanned over the
+ * fixed 32-slot BuildingDataList (RMBLayout.cs:553 and :642).
+ *
+ * AUDIT 39 (#18): read the PARSED record count where it is available,
+ * not the live array's length. The enhanced skin APPENDS a synthetic
+ * subrecord to the parsed block (the windmill's interior), and a bound
+ * that widened with it would hand the first garbage 32-slot entry a
+ * name-pool draw and misalign every named building after it.
+ * numBlockDataRecords is what blocksFile sized subRecords from, so on
+ * an untouched block the two are equal by construction.
+ */
+export function blockBuildingCount(dfBlock) {
+  const rmb = dfBlock?.rmbBlock;
+  if (!rmb) return null;
+  return rmb.fldHeader?.numBlockDataRecords ?? rmb.subRecords?.length ?? null;
+}
+
 /** GetCompleteBuildingData's pool merge over OUR layout shapes.
  *  @param exteriorBuildings dfLocation.exterior.buildings
  *  @param blocks layoutLocation().blocks (y->x order preserved)
@@ -132,7 +151,7 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
     // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
     // full 32-slot header - garbage entries past the subrecord count
     // must never steal pool draws (they misalign every later name).
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!isNamedBuildingType(list[i].buildingType)) continue;
       const item = next(list[i].buildingType);
@@ -198,11 +217,13 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door) {
 /**
  * H2 - EVERY building in a location, each carrying its buildingKey.
  *
- * buildBuildingDirectory answers only the NAMED types, because its job
- * is the talk directory. Houses are not named, so nothing in the port
- * could enumerate them - and H1's houses-for-sale roll was written
- * against `location.exterior.buildings`, the raw DFLocation.BuildingData
- * array, whose records carry nameSeed/factionId/quality/buildingType
+ * buildBuildingDirectory is the talk directory and walks DOORS (AUDIT
+ * 39 #110 retired its named-only gate, so it now carries residences
+ * too, but only where an exterior door put them in reach). Nothing in
+ * the port could enumerate every house - and H1's houses-for-sale roll
+ * was written against `location.exterior.buildings`, the raw
+ * DFLocation.BuildingData array, whose records carry
+ * nameSeed/factionId/quality/buildingType
  * and NO KEY AT ALL. The roll therefore handed out houses with
  * `buildingKey: undefined`, allocateHouseToPlayer wrote it into the
  * registry, and `ownsHouse` tests `> 0` - so the house you were just
@@ -221,7 +242,7 @@ export function locationBuildings(exteriorBuildings, blocks) {
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!list[i]) continue;
       // H2: BuildingSummary.ModelID (RMBLayout.cs:577) - the FIRST 3D
@@ -272,7 +293,7 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];
-    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       const data = list[i];
       if (!data) continue;
@@ -297,29 +318,70 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
   return out;
 }
 
-export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpts) {
-  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
-  const blockOf = (d) => blockInstanceOf(blocks, d);
-  const blockIdx = new Map(blocks.map((b, i) => [b, i]));
-  const dirs = [];
-  const seen = new Set();
-  for (const d of doors) {
-    const inst = blockOf(d);
-    const list = inst ? merged.get(inst) : null;
-    if (!list) continue;
-    const data = list[d.recordIndex];
-    if (!data || !isNamedBuildingType(data.buildingType)) continue;
-    const key = `${blockIdx.get(inst)}_${d.recordIndex}`;
-    if (seen.has(key)) continue;   // one entry per building (multi-door)
-    seen.add(key);
-    const name = generateBuildingName(data.nameSeed, data.buildingType, { ...nameOpts, factionId: data.factionId });
-    if (!name) continue;
-    dirs.push({
-      name, buildingType: data.buildingType, factionId: data.factionId, quality: data.quality, position: d.position,
-      buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, d.recordIndex),   // the knowledge roll's per-building term
-    });
-  }
-  return dirs;
+/**
+ * AUDIT 39 (#110): THE NAMED-ONLY GATES ARE GONE. This list is
+ * TalkManager's listBuildings (GetBuildingList :2778-2797), whose only
+ * gate is `buildingKey != 0` - BuildingNames.GetName answers the EMPTY
+ * STRING for a residence and DFU adds it anyway, because
+ * GetBuildingTypeForBuildingKey has to resolve a quest residence's key
+ * for the Where-is "General" section. Dropping only named types made
+ * that section unreachable by construction: its next gate is
+ * isResidence(), and residences were exactly what this walk removed.
+ * The per-type groups stay clean regardless - House1..6, HouseForSale,
+ * Ship, Special1-4 and Town23/Town4 all sit in AssembleTopicList-
+ * Location's own skip list, and every named-type consumer here filters
+ * by type or by name.
+ *
+ * AUDIT 39r (R10): dropping the named-type gate dropped this walk's
+ * ONLY per-record bound. DFU's loop is
+ * `for (i = 0; i < buildingsInBlock.Length; ++i)` over
+ * RMBLayout.GetBuildingData, sized `SubRecords.Length`
+ * (RMBLayout.cs:552-553) - the record count IS DFU law, and the same
+ * wave gave it to the three sibling walks. `merged.get(inst)` is the
+ * full 32-slot header copy, so an out-of-range recordIndex reads
+ * whatever bytes follow the declared records: rmbLayout's enhanced
+ * windmill APPENDS a subrecord without bumping numBlockDataRecords and
+ * hands its recordIndex to a door, which is a phantom shop in every
+ * consumer of this directory. Bounded here like everywhere else.
+ *
+ * D9: THE WALK IS OVER BUILDINGS NOW, not doors - which is what DFU
+ * does and what the port could not do when this stood open. C#'s
+ * loop is `blocks[index]` -> `RMBLayout.GetBuildingData(block, x, y)`
+ * -> `for i < buildingsInBlock.Length`; a door is never consulted, so
+ * a building with no exterior door (or with its door on a subrecord
+ * the port never spawned) IS in DFU's list and used to be missing
+ * here. world/buildingSummaries.js is exactly that walk - same
+ * merged pool, same blockBuildingCount bound, plus the Position half
+ * (RMBLayout.cs:570-571) that the door used to supply - so this
+ * function is now its projection into BuildingInfo's four columns
+ * and the multi-door dedupe goes with the doors that needed it.
+ *
+ * THE POSITION IS THE BUILDING'S, block-origin included. DFU's
+ * BuildingInfo.position is an ExteriorAutomap MAP coordinate (block
+ * rect + scaled Position - half the location), and its player term is
+ * converted into that same space at :1215-1223; the port has always
+ * answered the compass hint in LOCATION-LOCAL world units instead
+ * (whereIsAnswer subtracts playerPos in the same space), which is the
+ * same direction under a positive scale. Block origin + the
+ * subrecord's Position keeps that convention exactly where the door's
+ * own world position left it.
+ *
+ * `buildingKey != 0` (:2794) needs no arm here: makeBuildingKey maps
+ * the 0 case to its sentinel, so every merged record is a row.
+ */
+export function buildBuildingDirectory(exteriorBuildings, blocks, nameOpts) {
+  const blockAt = new Map((blocks ?? []).map((b) => [`${b.x ?? 0},${b.y ?? 0}`, b]));
+  return buildingSummaries(exteriorBuildings, blocks, nameOpts).map((s) => {
+    const b = blockAt.get(`${s.blockX},${s.blockY}`);
+    return {
+      name: s.name,
+      buildingType: s.buildingType,
+      factionId: s.factionId,
+      quality: s.quality,
+      position: [(b?.originX ?? 0) + s.position[0], s.position[1], (b?.originZ ?? 0) + s.position[2]],
+      buildingKey: s.buildingKey,   // the knowledge roll's per-building term
+    };
+  });
 }
 
 /** DirectionVector2DirectionHintString over (east, north).

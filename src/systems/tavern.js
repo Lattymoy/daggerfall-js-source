@@ -192,9 +192,13 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0 } = {}) {
   return { kind: 'ate', spend: newLife ? 0 : price, heal: 2 * price };
 }
 
-// FLAGGED, with the slices they wait on:
-//  - the TALK button routes to TalkManager.TalkToStaticNPC, which the
-//    talk arc owns (the guild popup's TALK button has the same seam).
+// The three clauses that stood here are all closed:
+//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:265, and the
+//    KeyT arm at :256, fire hooks.onTalk; worldModes.js:2338 supplies
+//    it as openStaticNpc(pn, { forceTalk: true }), which reaches
+//    npcSession.talkToStaticNPC at worldModes.js:1840 - TalkManager.
+//    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
+//    button shares that door at worldModes.js:2351-2362.)
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)

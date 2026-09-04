@@ -118,6 +118,11 @@ test('drawMesh: a GOOD mesh still draws - the guard is not a mute button', () =>
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    // AUDIT 39 F49 added the next line: an auto-emissive record's mask
+    // wears Color.white while a window's wears the window style, so the
+    // draw path picks the emission colour per sub-mesh.
+    emissionWhite: new Set(), _windowEmission: new Float32Array([0, 0, 0]),
+    _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
   Renderer.prototype.drawMesh.call(self, mesh, new Float32Array(16), null);
@@ -136,7 +141,10 @@ test('interior placements skip a model this ARCH3D does not carry', () => {
   // `cpu.positions` off undefined one line later - the only builder in
   // the port that did not skip the placement.
   const ctx = readFileSync(new URL('../src/scenes/interiorContext.js', import.meta.url), 'utf8');
-  const loop = ctx.match(/for \(const p of interior\.placements\)[\s\S]*?\n {2}}/)[0];
+  // RE-BASELINED at ROAD-C c2/S9: the loop enumerates now, because the
+  // automap row's key is the PLACEMENT INDEX and a skipped model must
+  // leave a gap rather than renumber every key after it.
+  const loop = ctx.match(/for \(const \[pi, p\] of interior\.placements\.entries\(\)\)[\s\S]*?\n {2}}/)[0];
   assert.match(loop, /if \(!gpu \|\| !cpu\) \{[\s\S]*?continue;/, 'the placement is skipped');
   assert.ok(!/drawList\.push\(\{ mesh: await getGpuMesh/.test(loop),
     'and the null never reaches the draw list');
@@ -169,6 +177,11 @@ test('drawMesh: a null MATRIX is skipped too - the argument that actually threw'
   const self = Object.assign(Object.create(Renderer.prototype), {
     gl, program: 'P', uModel: 'M', _blackTex: 'black',
     textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+    // AUDIT 39 F49 added the next line: an auto-emissive record's mask
+    // wears Color.white while a window's wears the window style, so the
+    // draw path picks the emission colour per sub-mesh.
+    emissionWhite: new Set(), _windowEmission: new Float32Array([0, 0, 0]),
+    _texGen: 1, stats: { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 },   // EV2: the cache stamp + the counters the draw path keeps
   });
   const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
   const realWarn = console.warn; console.warn = () => {};
@@ -185,7 +198,7 @@ test('the dungeon arrow never enters the draw list without a matrix', () => {
   // ensureArrowModel is async and its ONE caller does not await it, so
   // the push lands in a microtask - after the frame that called it has
   // returned. The host draws dynamicDraws BEFORE it calls drawFoes
-  // (dungeon.js:365 against :391; worldModes.js:951 against :959), so
+  // (dungeon.js:365 against :391; worldModes.js:999 against :1007), so
   // an entry pushed with `matrix: null` was drawn with that null on
   // the very next frame. Firing a bow killed the frame loop.
   const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -220,12 +233,20 @@ test('a model missing from ARCH3D costs the placement, never the building', () =
   // console instead of the doctrine's loud warn.
   const layout = readFileSync(new URL('../src/world/interiorLayout.js', import.meta.url), 'utf8');
   assert.match(layout, /if \(!model\) \{[\s\S]*?continue;/, 'the layout drops a placement it has no model for');
+  // WM3 MOVED THE LOOP, NOT THE LAW. The four copies of the climate/
+  // dungeon remap became one seam (src/world/texRemap.js), so the two
+  // halves of this guard now live in two files: the CALL SITE guards
+  // the receiver with `?.subMeshes`, and the seam guards the value it
+  // is handed. Both halves are pinned, because either one alone
+  // resurrects the TypeError.
+  const seam = readFileSync(new URL('../src/world/texRemap.js', import.meta.url), 'utf8');
+  assert.match(seam, /for \(const sm of subMeshes \?\? \[\]\)/, 'the shared seam survives an undefined submesh list');
   const ctx = readFileSync(new URL('../src/scenes/interiorContext.js', import.meta.url), 'utf8');
-  assert.match(ctx, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'the RECEIVER is guarded, not just the value');
+  assert.match(ctx, /remapSubMeshes\(cpuModels\.get\(id\)\?\.subMeshes,/, 'the RECEIVER is guarded, not just the value');
   assert.match(ctx, /if \(!cpu\) console\.warn/, 'and the seam says so once, where it is discovered');
   // the dungeon's action-door arm had the same three traps
   const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(dungeon, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'ensureRemap guards its receiver');
+  assert.match(dungeon, /remapSubMeshes\(cpuModels\.get\(id\)\?\.subMeshes,/, 'ensureRemap guards its receiver');
   const doorArm = dungeon.match(/for \(const d of b\.layout\.actionDoors\)[\s\S]*?\n {4}}/)[0];
   assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
 });

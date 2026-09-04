@@ -43,7 +43,12 @@ test('IF: the pool is the ONE factory, mounted with the interior collider - not 
   // and the two arms it does carry for the exterior are answered
   // honestly rather than left to misfire
   assert.match(WM, /currentPixelKey: \(\) => null,/, 'a host whose corpses never stream out of range');
-  assert.match(WM, /hitEffects: null,/, 'no blood pool in this host - RECORDED, not silently dropped');
+  // HE1 CLOSED THIS. The line asserted an absence that was recorded
+  // rather than silent - which was the right shape for the absence and
+  // the wrong thing to keep once the pool existed. The other three
+  // hosts have mounted it since AUDIT 24 wave 39; this one does now.
+  assert.match(WM, /hitEffects: interiorHitEffects,/, 'the blood pool, as the other three hosts have');
+  assert.doesNotMatch(WM, /hitEffects: null,/, 'and the recorded absence is deleted, not annotated');
 });
 
 test('IF: the pool lives exactly as long as the interior, and hands its batches back', () => {
@@ -52,7 +57,13 @@ test('IF: the pool lives exactly as long as the interior, and hands its batches 
   // session - so nothing ever had to free its batches. An interior
   // pool is minted per building, so without a teardown every door you
   // left leaked a batch per foe plus every corpse on the floor.
-  assert.match(XF, /function destroy\(\) \{\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
+  // AUDIT-39r: the pin MOVED, deliberately. destroy() gained one line
+  // AHEAD of the frees - the spawn/corpse-mint epoch it bumps, so work
+  // still crossing an await (a spawn between its two, a corpse marker
+  // waiting on its texture) is cancelled instead of landing in the
+  // pool this just emptied. What the pin is FOR is unchanged and still
+  // checked below: every batch is handed back and both lists end empty.
+  assert.match(XF, /function destroy\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+epoch\+\+;\n\s+for \(const f of foes\) releaseFoeBatch\(f\);/);
   assert.match(XF, /for \(const c of corpseBatches\) renderer\.destroyBillboardBatch\(c\.batch\);/);
   assert.match(XF, /corpseBatches\.length = 0;\n\s+foes\.length = 0;/, 'and the lists empty, so a stale handle draws nothing');
   assert.match(XF, /restoreWorld, destroy,/, 'exported');
@@ -81,7 +92,12 @@ test('IF: CreateFoe\'s interior arm is the dungeon arm with one term changed', (
 });
 
 test('IF: enemiesNearby is ONE scan over this host\'s own database, at all three consumers', () => {
-  assert.match(WM, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/);
+  // AUDIT 58 WIDENED THE DATABASE. GameManager.AreEnemiesNearby
+  // (:684-732) is one method over ActiveGameObjectDatabase; this host
+  // has TWO pools, and the scan named only interiorFoes - so the
+  // indoor watch was invisible to the rest gate, the hourly break and
+  // the exhaustion collapse alike.
+  assert.match(WM, /const interiorEnemiesNearby = \(opts = \{\}\) => \(\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby\(interiorFoePool\(\), opts\) : false\);/);
   // rest (S40's resting variant), the rest-window's decision, and the
   // exhaustion collapse - each was a literal `false`
   assert.match(WM, /enemiesNearby: \(\) => interiorEnemiesNearby\(\{ resting: true \}\)/, 'the rest deps');
@@ -89,9 +105,9 @@ test('IF: enemiesNearby is ONE scan over this host\'s own database, at all three
   assert.match(WM, /enemiesNearby: interiorEnemiesNearby\(\)/, 'the exhaustion collapse');
   assert.ok(!WM.includes('enemiesNearby: () => false'), 'no literal survives');
   assert.ok(!WM.includes('this host mounts no foe pool'), 'and neither does its sentence');
-  // an interior with no pool minted still answers false - because
+  // an interior with NEITHER pool minted still answers false - because
   // there is nothing there, not because it cannot look
-  assert.match(WM, /interiorFoes \? areEnemiesNearby/);
+  assert.match(WM, /\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby/);
 });
 
 test('IF: the summoning refusal\'s punishment is real, through one door both callers can use', () => {
@@ -118,8 +134,15 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
   // with no interior pool ("trains nothing, which is what DFU does on
   // a miss") and wrong the moment one exists: a quest foe standing in
   // a building is not a miss.
-  const swing = WM.slice(WM.indexOf('for (const ev of interiorWeapon.frame(dt))'));
-  const body = swing.slice(0, swing.indexOf('interiorWeapon.draw();'));
+  // AUDIT 39 (#34) MOVED THIS ANCHOR: the rig's machine is gated on
+  // overlayHeld now (a swing in flight must not land its hit frame
+  // under an open window), so the loop header carries the gate.
+  // AUDIT 39r MOVED THIS ANCHOR AGAIN: the interior rig now takes the
+  // paralysis flag its two above-ground siblings take (WeaponManager
+  // .cs:235-239 - ShowWeapons(false) and no swing), so both ends of
+  // the slice carry the options bag.
+  const swing = WM.slice(WM.indexOf('for (const ev of (overlayHeld ? [] : interiorWeapon.frame(dt, { paralyzed })))'));
+  const body = swing.slice(0, swing.indexOf('interiorWeapon.draw({ paralyzed })'));
   assert.match(body, /interiorFoes\?\.resolvePlayerHit\(interiorWeapon\.playerWeapon/, 'the pool is asked FIRST');
   assert.match(body, /tallySwingSkills\(playerEntity, interiorWeapon\.playerWeapon\.weapon\);\n\s+continue;/,
     'a connecting swing trains, and does not fall through to the action objects');
@@ -135,10 +158,49 @@ test('IF: an interior swing can now MEET an enemy - the tally and the no-enemy s
 });
 
 test('IF: the pool is ARMED for targeting like every other pool, over its own database', () => {
-  assert.match(WM, /candidates: \(\) => interiorFoes\.foes\.filter\(\(f\) => !f\.dead\)/,
-    'the interior\'s active-enemy database is the pool itself');
-  assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, sensesContext\(/,
+  // ROAD-B MOVED THIS NEEDLE. The interior's active-enemy database is
+  // no longer "the pool itself": SpawnCityGuards' indoor arm mints a
+  // second pool in the same building (the WATCH, at its front door),
+  // and DFU's ActiveGameObjectDatabase is one database per scene - so
+  // the candidate list is the JOIN, exactly as the exterior host joins
+  // its own two pools. The law the pin guards - the pool is armed for
+  // targeting, over its host's whole database, through the ONE senses
+  // builder - is unchanged and is what these still say.
+  // AUDIT 58: the join is WRITTEN ONCE now (interiorFoePool /
+  // interiorEnemyDatabase) and the senses read it, because four other
+  // readers in this host were asking the narrowed question while this
+  // one and insideFoes spelled the join out.
+  assert.match(WM, /candidates: \(\) => interiorEnemyDatabase\(\),/,
+    'the interior\'s active-enemy database is BOTH of its pools');
+  assert.match(WM, /const interiorFoePool = \(\) => \[\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)\];\n\s+const interiorEnemyDatabase = \(\) => interiorFoePool\(\)\.filter\(\(f\) => !f\.dead\);/,
+    'and the join itself has exactly one home');
+  assert.equal((WM.match(/\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)/g) ?? []).length, 1,
+    'the spread is spelled out ONCE - every reader calls the join');
+  // AUDIT 58 (review): "every reader" was wider than what this held.
+  // Two readers were still asking the narrowed question when it was
+  // written: DFU's PLACEMENT OCCUPANCY test - `Physics.OverlapSphere
+  // (testPoint, 0.65f); if (colliders.Length > 0) return;`
+  // (CreateFoe.cs:317-321), ANY collider - which let a quest foe or a
+  // summoned daedra be stood overlapping a watchman, and the interior
+  // arrow's target list (pinned in audit39_worldmodes). Both call the
+  // join now, so the message is true.
+  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 2,
+    'both placements - the quest foe and the daedric punishment wave - test the WHOLE database for occupancy');
+  assert.equal(/\(\) => interiorFoes\.foes, feet\)/.test(WM), false,
+    'and neither is still asking the encounter pool alone');
+  // the only two surviving reaches for a RAW pool list are the join
+  // itself and the magic-round fan-out, which subscribes each pool as
+  // its own subscriber exactly as the exterior host does
+  assert.equal((WM.match(/interiorFoes\?\.foes \?\? \[\]/g) ?? []).length, 2);
+  assert.match(WM, /subscribeFoePools\(interiorTicker, \[\(\) => interiorFoes\?\.foes \?\? \[\], \(\) => interiorGuards\?\.guards \?\? \[\]\], insideFoeSinks\);/,
+    'and the second is the fan-out, one thunk per pool');
+  assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
+assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,
+    'and the pool takes it');
+  // INTEGRATION: b2's branch pinned the NPC4b batches(ctx, dt)
+  // signature it saw at its pre-revert base; that arc is REVERTED, so
+  // the pin holds the plain call the restored tree makes.
   assert.match(WM, /const _foeBatches = interiorFoes\.batches\(\);/, 'and its billboards ride the host\'s draw');
 });
 

@@ -20,14 +20,14 @@ import {
 } from '../src/systems/spellMaker.js';
 import { calculateCastCost } from '../src/systems/spellcost.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
-import { goldStack } from '../src/systems/inventory.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 const player = (gold = 1000, withBook = true) => ({
   name: 'S', health: 10, maxHealth: 10, level: 1, stats: {}, skills: [50], skillUses: [],
-  items: [goldStack(gold), ...(withBook ? [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }] : [])],
+  goldPieces: gold,   // E4: PlayerEntity.GoldPieces
+  items: [...(withBook ? [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }] : [])],
   spells: [],
 });
 // Damage Health (4,0) - magnitude only; Paralyze (0,255) - duration + chance
@@ -139,7 +139,7 @@ test('S1 purchase: buying deducts the gold and inscribes into the book', () => {
   const e = player(500);
   const sp = buildCustomSpell({ slots: [DAMAGE_HEALTH], name: 'Zap' });
   purchaseSpell(e, sp, 120);
-  assert.equal(e.items.find((it) => it.group === 'Currency').stackCount, 380);
+  assert.equal(e.goldPieces, 380);   // E4: DeductGoldAmount on the counter
   assert.equal(e.spells.length, 1);
   assert.equal(e.spells[0], sp, 'AddSpell is a plain push - the record itself lands in the book');
 });

@@ -29,7 +29,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   const s = src('exteriorFoes.js');
   // the cull runs after ai.update so a just-spawned foe's Infinity
   // placeholder never culls it (the live probe caught the inversion)
-  const upd = s.indexOf('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);');
+  const upd = s.indexOf('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);');
   const cull = s.indexOf('> ENCOUNTER_CULL_DISTANCE');
   assert.ok(upd > 0 && cull > upd, 'senses first, cull second');
   // MT-ii advanced BOTH alert gates and the cull's distance. The
@@ -60,7 +60,13 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   const s = src('world.js');
   const i = s.indexOf('function runEncounterTick');
   assert.ok(i > 0);
-  const fn = s.slice(i, i + 1800);
+  // ROAD-B WIDENED THIS WINDOW. It was a character count (i + 1800),
+  // which is not a claim about anything - PlayerEntity.Update:513-516's
+  // guard-conversion sweep landed inside this loop and pushed the
+  // needles below past the count. The window is the FUNCTION now
+  // (audit26_dungeonfoes' idiom for the same body), so the pin says
+  // what it meant: these facts are in runEncounterTick.
+  const fn = s.slice(i, s.indexOf('\n  }\n', i));
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
   // AUDIT 26 F061: the roll branches on the WIDENED TOWN RECT
   // (PlayerGPS.cs:687-699), not "this pixel has a location" - the old

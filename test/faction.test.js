@@ -81,16 +81,25 @@ test('pickpocket: the verbatim chance clamp and the three outcomes', () => {
   const p1 = { level: 1, skills: 50, items: [] };
   const r1 = pickpocketTownsperson(p1, { rolls: seq(0.30, 0.50, 0.99) });
   assert.deepEqual([r1.success, r1.gold], [true, 6]);
-  assert.equal(p1.items.find((i) => i.group === 'Currency').stackCount, 6);
+  assert.equal(p1.goldPieces, 6, 'E4: `player.GoldPieces += pinchedGoldPieces` (:1628)');
+  assert.equal(p1.items.length, 0);
   assert.equal(r1.message, 'You pinched 6 gold pieces.');
+  // ROAD-D D10: DFU raises a real parchment for BOTH success arms
+  // (PlayerActivate.cs:1630 and :1645) and leaves only the failure on
+  // the HUD (:1650 PopupMessage) - the port printed all three as HUD
+  // lines. scenes/townTalk.js:517 routes on this flag.
+  assert.equal(r1.modal, true, 'DaggerfallUI.MessageBox(gotGold)');
   // Success + nothing valuable: the 33 roll PASSES (.10 -> 10 < 33)
   const p2 = { level: 1, skills: 50, items: [] };
   const r2 = pickpocketTownsperson(p2, { rolls: seq(0.30, 0.10), nothingText: () => 'nothing' });
   assert.deepEqual([r2.success, r2.gold, r2.message], [true, 0, 'nothing']);
-  // Failure: crime state lands verbatim (guards FLAGGED to the crime slice)
+  assert.equal(r2.modal, true, 'DaggerfallUI.MessageBox(noGoldFound, true)');
+  // Failure: crime state lands verbatim (the guard SPAWN is the host's,
+  // townTalk.js's onCrime -> SpawnCityGuards, shipped at G1)
   const p3 = { level: 1, skills: 50, items: [] };
   const r3 = pickpocketTownsperson(p3, { rolls: seq(0.99) });
   assert.equal(r3.success, false);
+  assert.equal(r3.modal, false, 'the failure is a HUD PopupMessage - the guards spawn behind it');
   assert.equal(p3.crimeCommitted, 'Pickpocketing');
   // The skill tallies on every attempt
   assert.ok(p1.skillUses?.[15] >= 1 || p1.tallies?.[15] >= 1 || true);

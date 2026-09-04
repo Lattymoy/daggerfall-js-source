@@ -193,10 +193,9 @@ test('talkTopics: the named-building pool merge over the real Daggerfall city', 
   }
   assert.ok(named > 20, `named buildings merged: ${named}`);
   assert.ok(taverns > 3, `taverns present: ${taverns}`);
-  // The directory names real taverns via fake single doors per block
-  const doors = loc.blocks.flatMap((b) =>
-    merged.get(b).map((d, i) => ({ dfBlock: b.dfBlock, recordIndex: i, position: [b.originX + 50, 0, b.originZ + 50] })));
-  const dir = buildBuildingDirectory(dfLocation.exterior.buildings, loc.blocks, doors, {
+  // D9: the directory walks the BUILDINGS themselves now (GetBuildingList's
+  // own loop) - no fake doors needed, and no building is missing for want of one.
+  const dir = buildBuildingDirectory(dfLocation.exterior.buildings, loc.blocks, {
     locationName: 'Daggerfall', regionName: 'Daggerfall', nameBank: 0, regentRuler: 1,
   });
   const tavernNames = dir.filter((d) => d.buildingType === BUILDING_TYPES.Tavern).map((d) => d.name);

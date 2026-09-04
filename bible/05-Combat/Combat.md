@@ -116,6 +116,90 @@ SIX findings, all rooted and pinned:
 6. The standing probe gained silver/steel dye-parity evidence shots
    (gallery: regenerate locally with tools/fpProbe.mjs; it is not committed).
 
+## ROAD-tail (2026-09-02): THE SPELLCASTING HANDS - SHIPPED
+
+The re-measurement found `FPSSpellCasting.cs` (Assets/Scripts/Game,
+324 lines) cited NOWHERE in `src/`. Half of it was already live under
+another name: its `OnReleaseFrame` event is the moment the spell
+actually leaves the caster, and `scenes/hostMagic.js` runs those
+semantics verbatim in `castInput` (the four range arms spend, tally,
+assign or launch, then raise `onCastReadySpell` - "DFU OnReleaseFrame:
+a cast consumes the ready" at :308, :329, :342, :352). The OTHER half
+- the five ELEMENT hand animations classic draws while that happens -
+had no port at all. `combat/fpArm.js` plays a spellcast stance in the
+MORROWIND lane (MW-D39), so the 1:1 skin cast every spell in the game
+with nothing on screen.
+
+`combat/fpsSpellCasting.js` is the port, and it is a separate module
+for the reason DFU's own header gives: spellcasting art "has different
+texture and layout requirements to weapons and [is] never mixed with
+weapons directly on screen at same time". Everything differs from
+`fpsWeapon.js` - a **300**-wide design surface where the weapon uses
+320 (`nativeScreenWidth`, :44 - the trap in this file), one frame per
+CIF record rather than a frame list, TWO hands per frame with the
+right one mirrored (`rightHandAnimRect = Rect(1, 0, -1, 1)`), and a
+`frameIndices` list that opens and closes on the same small frame.
+
+Ported whole: `GetMagicAnimFilename`'s five archives (WeaponBasics.cs
+:187-204 - FIRE/FRST/POIS/SHOK/MJIC00C6.CIF, re-indexed onto the
+port's classic element index, the ordering `missileArchive` 375..379
+already fixed), `PlayOneShot`'s one-shot refusal, `SetCurrentAnims`'
+per-element load and cache, the `AnimateSpellCast` coroutine (seven
+steps at `animSpeed` 0.04, `releaseFrame` 5), `UpdateSpellCast`'s
+small-frame rule (frames 0 and 5 always, fire's frame 4 as well) and
+`AlignLeftHand`/`AlignRightHand` verbatim, and `OnGUI`'s two draws
+under the large HUD's `weaponOffsetHeight` - which is FPSWeapon's own
+rule word for word (":86-95, Same logic as in FPSWeapon"), so it reads
+`ui/hudLarge.js` rather than restating the gate.
+
+THE ART rides the path the weapon sprite already rides: the user's own
+ARENA2 at runtime through `CifRciFile`, ART_PAL.COL, fpsWeapon's
+`frameToColor32` bake (index 0 transparent) and `renderer
+.uploadTexture`. No dye - a spell has no material, which is
+`GetWeaponTexture2D`'s steel arm.
+
+THE ANIMATION IS A SINGLETON, exactly as DFU's is: `FPSSpellCasting`
+is ONE component on the player (`GameManager.cs:322`). That is not
+tidiness, it is the four-hosts rule. `dungeonContext`, `world` and
+`exterior` each raise their own cast moment and each now hand
+`weaponRig.castSpellAnim` the spell's ELEMENT beside its range - but
+`worldModes`' INTERIOR rig has no cast engine of its own (it takes its
+parent host's `magic`), so a spell cast inside a building starts on
+the parent's rig and must draw on the interior's. A per-rig animation
+would have played in one and drawn in the other. All four STEP and
+DRAW it through the one rig surface they already mount.
+
+AND WeaponManager.cs:247's SECOND LEG FINALLY HAS SOMETHING TO READ.
+The show predicate is `HasReadySpell || PlayerSpellCasting
+.IsPlayingAnim`; the rig's comment has claimed both since C9 while the
+code tested only the first, because nothing in the port could answer
+the second. It does now, so the weapon is hidden for the whole cast
+rather than reappearing the instant the spell goes - which is DFU's
+own "never mixed on screen at same time", enforced.
+
+FLAGGED, at the sites: (1) THE RELEASE IS NOT THE SPELL. DFU raises
+`OnReleaseFrame` five frames (0.2s) into the motion and
+`EntityEffectManager.PlayerSpellCasting_OnReleaseFrame` (:2098-2143)
+is what spends and launches, so in the reference the hands are already
+moving when the spell leaves them. This port's cast is SYNCHRONOUS -
+`castInput` resolves everything and then raises the moment - so the
+hands start ON the release rather than 0.2s before it, and
+`SpellCastAnim.tick`'s return is deliberately wired to nothing (a
+second release would fire the cast twice). Closing it means deferring
+hostMagic's cast, which is a magic-lane change, not a render one.
+(2) `TextureReplacement.TryImportCifRci` (:179) is not consulted, the
+same gap `fpsWeapon.js` has for WEAPON*.CIF - the port's replacement
+registry covers archive textures only, so there is no CIF door yet.
+NOT flagged: the `handScale *= 1.01` non-point fudge (:212-217) is
+correctly absent for the reason the 2026-08-17 weapon audit already
+recorded - every image texture binds NEAREST.
+
+NOBODY HAS SEEN IT RUN: no GL and no ARENA2 in this container, so the
+corpus pin (five archives, six records, one frame each, fitting the
+fixed 320x200, and the small-frame claim checked against the ART) is
+`skipReal`-gated and the placement is arithmetic against DFU's own
+formulas. `test/fpsspellcasting.test.js`, 11 pins, 9 mutants, 9 dead.
+
 ## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
 
 The weapon audit's follow-up closes: the classic weapon was
@@ -537,7 +621,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:1488 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:1499 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -578,7 +662,12 @@ pre-chargen INTERIM_WEAPON cannot be minted a condition
 (Object.isExtensible) and a 0-max item cannot break - the first
 swing of a fresh boot would otherwise have thrown a TypeError.
 
-4 pins (conditiondamage.test.js), 3 mutations run, 3 killed.
+4 pins (conditiondamage.test.js), 3 mutations run, 3 killed. AUDIT 58:
+the 20% floor roll's THRESHOLD was not one of them - the drives 0.99
+and 0.1 agree for every value from 11 to 99, so the one number the
+test names in its own title was the one it could not see. It is
+straddled at 0.195/0.205 in audit58_pins.test.js now: 6 pins, 6
+mutations run, 6 killed.
 
 ## C19 (2026-08-20): the C2-slice - audio arms, the poison hook, roll-order parity, COMBAT VOICES - SHIPPED
 
@@ -618,7 +707,15 @@ the 40% pain voice on a landed player hit (heavyDamage = a quarter
 of max health), the CityWatch knight forced male, and the player's
 own 20% attack grunt at the hit frame, never for a bow, reading the
 PLAYER's race and gender. All behind the CombatVoices setting,
-shipping enabled.
+shipping enabled. AUDIT 58: the pitch lift is APPLIED now - it was
+returned on the voice object and dropped at every one of the thirteen
+play sites, because `audio.playOneShot` and `audio.play3d` took no
+pitch. Both carry one (WebAudio's playbackRate is Unity's
+AudioSource.pitch, and a per-shot source dying with its clip IS
+EnemySounds.cs:172-175's save/restore), and each site plays
+`1 + pitchLift`. The vampire override arm keeps its hard 0, which is
+DFU's: PlayAttackVoice lifts only in the `customSound == None` arm
+(FPSWeapon.cs:313-320).
 
 5 pins + 4 backstab fixtures moved to the lazy signature; 5
 mutations run, 5 killed. Suite 1444 across 189, green both modes.
@@ -787,3 +884,128 @@ the entry and got to initialise first. The failure only appeared when
 another module reached it earlier. Import order decides who lands in
 the dead zone, so the test that proves a cycle absent is the whole
 suite - a single load is a green light that means nothing.
+
+## IF1 - THE INFIGHTING AUDIT (2026-08-29)
+
+Mac: *"I noticed in the dungeon, that enemies don't attack each other.
+Can you do an audit on that."*
+
+**The audit's finding is that the machinery is complete and correct at
+every layer that can be measured off the tree.** That is a real result
+and not a shrug - it moves the question from "is it built?" to "which
+of two live-only explanations is it?", and it rules out the six things
+that would otherwise have been guessed at. Each layer is now a pin, so
+a change that breaks one fails in the suite rather than becoming this
+report again.
+
+What was checked, in order, and how:
+
+1. **The settings gate.** `Enhancements/EnemyInfighting` defaults
+   `"True"` in `settingsDefaults.js`, matching DFU's own "Ships True".
+   Off would have explained everything; it is on.
+2. **The data.** All 62 rows of `ENEMY_BASICS` carry a `team`, across
+   20 distinct teams. A row without one falls back to `PlayerEnemy`,
+   and a table where every monster fell back would make the team test
+   `targetEntity.team === selfTeam` true for every pair - silently no
+   infighting anywhere. Not the case.
+3. **The dungeons' own contents.** 43 of 45 encounter tables produce
+   MULTIPLE teams. This is the one that could have ended the audit the
+   other way: had most dungeons drawn from a single team, *no
+   infighting would be DFU-correct* and there would be nothing to fix.
+4. **Selection.** A probe over the real module: a Vermin rat picks an
+   Undead skeleton over a distant player.
+5. **The negative cases.** Same-team falls back to the player (DFU's
+   `if (targetEntity.Team == enemyEntity.Team) continue`), and so does
+   infighting-off (the else-arm rejects every non-player target).
+6. **The cadence.** `runTargetMachine` driven at 1/60s retargets after
+   0.283s - DFU's senses interval, not a stall.
+7. **The dungeon host's wiring, end to end.** Its live pool goes in as
+   `candidates`; `sensesContext` preserves the key rather than dropping
+   it in transit; `_armed` builds the per-foe closure; the motor sets
+   `_armedTargeting` from it; and all three action arms fork on a
+   non-player target - melee through `resolveFoeMeleeVsFoe`, missiles
+   through `hurtFromFoe`, casting through `f.ai.target.entity`.
+
+Two things nearly became the answer and were not, both worth recording
+because both were checked rather than assumed:
+
+- **The static-import grep said the dungeon never imports the target
+  machine.** It does - through `foeDeps`, loaded dynamically precisely
+  so a foe-less dungeon does not pay for `enemyMotor`. The grep was a
+  proxy; the call site is the measurement.
+- **`wouldBeSpawned` looked like a plausible silent gate.** It is
+  computed live per classic update in the motor.
+
+### What the audit could NOT do, and what it ships instead
+
+It could not run the game - a live dungeon is a running browser, which
+no unit test is - so "it works at every layer I can reach" is exactly as
+far as the evidence goes, and a fix invented past that point would be a
+guess dressed as a slice.
+
+So IF1 ships the **instrument**: an F8 census line reading
+
+    foes N  armed A  vsFoe V  deps yes/NO  teams Vermin,Undead,...
+
+off a real dungeon. It separates every remaining hypothesis in one
+keypress:
+
+| reading | meaning |
+|---|---|
+| `deps NO` | the foe subsystem failed to init; nothing else matters |
+| `armed 0` | the target machine is not running in this host |
+| `teams` shows one | one team present - no infighting is CORRECT here |
+| `vsFoe 0`, teams 2+ | selection is running and rejecting; the bug is in the gates |
+| `vsFoe > 0` | they ARE picking each other; the gap is downstream |
+
+Pins: 7 in `test/infighting.test.js`. Campaign: 12 mutants, 12 killed -
+including the census being *defined but never drawn*, which is the
+drawn-door rule applied to a diagnostic. The harness's new
+anchor-uniqueness check earned its keep a second time, refusing
+`'team': 'Undead'` (9 matches) before it could mutate a row the pins do
+not cover.
+
+## HE1 — a blow landed indoors drew no blood (2026-08-29)
+
+`EnemyBlood.ShowBloodSplash` has been ported since AUDIT 24 wave 39 and
+mounted in **three** hosts: `world.js`, `exterior.js` and
+`dungeonContext.js` each build a `createHitEffects` pool and hand it to
+their foe pool. `worldModes`' interior arm passed `hitEffects: null` and
+recorded the absence:
+
+> no hitEffects handle exists in this host — RECORDED, not silently
+> dropped: a blow landed inside a building draws no blood splash until
+> the interior grows the pool the dungeon and the exterior already have.
+
+That is the right shape for an absence, and the wrong thing to keep once
+nothing was blocking it. **Nothing was.** The factory takes
+`{ renderer, getTexture, uploadRecordFrame }` — all three already
+destructured in that scope — and the interior frame already draws
+billboards on the same axis for foes, quest stands, dropped piles and
+the magic engine's own impact pool. So the same blow drew blood one step
+outside a shop door and none inside it, for no reason anyone had chosen.
+
+**And the pool outlives the room.** The other three hosts mount one pool
+per host, whose scene lasts as long as the host does. This host keeps
+*one* pool across every building the player walks through, so a splash
+still animating when the door closes would be drawn in the **next**
+building, in the previous one's coordinates. Both interior teardowns
+clear it.
+
+Pins: 6 in `test/interiorblood.test.js`, the first two behavioural
+against the real pool with a counting renderer — `clear()` frees every
+batch it made rather than merely emptying the list, and a *warming*
+splash (one whose texture has not resolved yet, so it has no batch) is
+retired too, which is precisely the one that would otherwise publish
+into the next room. Campaign: 8 mutants, 8 killed.
+
+**THE SECOND NEAR-MISS OF THE DAY, and it is worth the pair.** I wrote a
+`clear()` for `hitEffects.js` and lint answered `Duplicate key 'clear'`:
+the member had been there all along, for the world host's own teardown.
+HE1 is its second *caller*, not its author. PT1 made the identical
+mistake hours earlier with `Dice100.FailedRoll` — writing a fourth home
+for a member whose home was one screen away — and both were caught by
+something cheap and mechanical rather than by care: a lint rule and a
+neighbouring call site. **When a slice's premise is "this thing has no
+home yet", check before writing the home, because that premise is the
+one most often wrong in a codebase this size.**

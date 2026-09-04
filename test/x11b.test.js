@@ -349,12 +349,12 @@ test('X11c hosts: every window-opening spell is routed by every host that mounts
   // slot picker existed there was nowhere outdoors to put them. All
   // three seams open a WINDOW, so every host with a window stack owes
   // all three.
-  // PR1 added the STANDALONE dungeon host: it cannot mount the trade
-  // window or the bundle picker (DFU has no standalone dungeon scene -
-  // it is the port's own dev route, and bootWorld carries both
-  // windows), but absent seams optional-chained into SILENCE - Identify
-  // refunded and said nothing, Dispel Magic spent the cast on nothing
-  // and said nothing. A seam that cannot mount says so.
+  // PR1 added the STANDALONE dungeon host, whose absent seams had
+  // optional-chained into SILENCE - Identify refunded and said
+  // nothing, Dispel Magic spent the cast on nothing and said nothing -
+  // and made both refuse out loud. DR1 retired the refusal's REASON:
+  // that host mounts BOTH windows now (see the two DR1 pins below), so
+  // what is left of the loud arm is the ART guard every host carries.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
     const s = src(f);
     for (const seam of ['onCreateItem', 'onIdentify', 'onDispelMagic']) {
@@ -370,17 +370,111 @@ test('X11c hosts: every window-opening spell is routed by every host that mounts
   const SPEAKS = {
     'src/scenes/world.js': ["townTalk.say('You cannot concentrate on that right now.')"],
     'src/scenes/exterior.js': ["townTalk.say('You cannot concentrate on that right now.')"],
-    // BOTH arms pinned whole - they share the string's prefix, so a
-    // mutant that silences one arm still leaves the other's call for
-    // a prefix match to find.
+    // DR1: the dungeon host speaks the SAME line, now from the tail of
+    // a real mount rather than instead of one. Both arms pinned per
+    // arm, whole, because they share the string and a mutant that
+    // silenced one would leave the other for a bare `includes`.
     'src/scenes/dungeonContext.js': [
-      "onIdentify: () => hudText.add('You cannot concentrate on that right now.",
-      "onDispelMagic: () => hudText.add('You cannot concentrate on that right now.",
+      "hudText.add('You cannot concentrate on that right now.');\n      }\n    },\n    onDispelMagic:",
+      "if (!openDispelPicker({ chance })) hudText.add('You cannot concentrate on that right now.');",
     ],
   };
   for (const [f, calls] of Object.entries(SPEAKS)) {
     for (const call of calls) assert.ok(src(f).includes(call), `${f} swallows a window cast it cannot mount`);
   }
+  // DR1, the fifth host, named rather than left silent: the standalone
+  // `scenes/interior.js` route owes none of the three, because it
+  // mounts no cast engine at all - there is nothing there to dispatch
+  // an Identify. That is the ONLY reason it is absent from the loop
+  // above, so it is pinned: grow a cast engine there and this reddens.
+  assert.ok(!src('src/scenes/interior.js').includes('createPlayerMagic('),
+    'scenes/interior.js casts now - it owes all three window seams');
+});
+
+// ── DR1: the standalone ?dungeon host mounts both spell windows ──
+test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusal', () => {
+  // What this replaces. PR1 left the arm as
+  //   onIdentify: () => hudText.add('... (the Identify window lives in
+  //                                   the ?world route)')
+  // and the Ledger row behind it said the standalone dungeon host has
+  // no trade window. That was true of where the window was BUILT and
+  // false as a refusal: NativeTradeWindow is an `isChoiceWindow`
+  // native over host-agnostic art, and this context already drives
+  // every seam one needs. Reverting the mount - restoring the
+  // one-line refusal, or dropping the mountSpellWindow call - reddens
+  // each assertion below.
+  const s = src('src/scenes/dungeonContext.js');
+  // 1. the window is CONSTRUCTED here, in Identify mode, as the SPELL
+  //    (Identify.cs:71-76 sets UsingIdentifySpell before the push).
+  assert.ok(s.includes('function openIdentifySpellWindow('), 'the dungeon host builds no Identify window');
+  const b = s.slice(s.indexOf('function openIdentifySpellWindow('),
+    s.indexOf('function openDispelPicker('));
+  assert.ok(b.includes('new NativeTradeWindow('), 'the Identify builder mounts no trade window');
+  assert.ok(/mode: 'Identify'/.test(b) && /usingIdentifySpell: true/.test(b),
+    'the dungeon Identify window is not the SPELL\'s');
+  // 2. D7's live collection, spliceable, and the window's own equipped cut
+  assert.ok(b.includes('packItems: () => (playerEntity.items ??= [])'), 'the pack is not the live collection');
+  assert.ok(b.includes('isEquipped: (it) => isEquipped(it)'), 'FilterLocalItems\' equipped cut is gone');
+  // 3. DoModeAction's SPELL arm, whole (:954-995) - the magicka
+  //    refusal answers FALSE so the lot stays staged (F144), the roll
+  //    is identifySpellPass, the points are spent ONCE, and the tally
+  //    is spoken through THIS host's mouth.
+  assert.ok(b.includes('return false;'), 'the magicka refusal no longer turns the pass back');
+  assert.ok(b.includes('hudText.add(NOT_ENOUGH_SPELL_POINTS_TEXT)'), 'the magicka refusal is silent');
+  assert.ok(b.includes('identifySpellPass(staged, chance, Math.random)'), 'the per-item roll is gone');
+  assert.ok(b.includes('for (const it of pass.identified) it.isIdentified = true;'), 'nothing is identified');
+  assert.ok(b.includes('if (pass.spendMagicka)'), 'the magicka is spent unconditionally');
+  assert.ok(b.includes('hudText.add(identifiedTallyText(pass.successCount, pass.total))'), 'the "N of M" tally is gone');
+  // 4. ...and the SEAM the cast engine dispatches into actually mounts it.
+  const arm = s.slice(s.indexOf('onIdentify: ({ chance, refund } = {}) => {'), s.indexOf('onDispelMagic:'));
+  assert.ok(arm.includes('mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))'),
+    'the dungeon Identify seam no longer mounts the window');
+  assert.ok(arm.includes('!tradeArtLoaded()'), 'the seam no longer guards its art (X11b: a dead seam)');
+  // 5. and the art is warmed at BOOT, or tradeArtLoaded() is false for
+  //    ever and the whole mount is silently dead (X11c's bug, one host over).
+  assert.ok(s.includes('preloadTradeArt({ renderer, fetchBytes, palette });'),
+    'the dungeon host never warms INVE00I0/SHOP00I0 - the Identify seam is silently dead');
+});
+
+test('DR1 dungeon host: Dispel Magic opens the REAL bundle picker there', () => {
+  const s = src('src/scenes/dungeonContext.js');
+  assert.ok(s.includes('function openDispelPicker('), 'the dungeon host builds no bundle picker');
+  const b = s.slice(s.indexOf('function openDispelPicker('), s.indexOf('const magic = createPlayerMagic({'));
+  // the same three laws worldModes.openDispelPicker carries
+  assert.ok(b.includes('if (!listPickerArtLoaded()) return false;'), 'no art guard - the seam would be silently dead');
+  assert.ok(b.includes('dispellableBundles(liveBundles(playerEntity))'), 'the picker no longer lists the live bundles');
+  assert.ok(b.includes("hudText.add('You have no magic to dispel.')"), 'the empty-list line is gone');
+  assert.ok(b.includes('new ListPickerWindow('), 'the picker window is gone');
+  assert.ok(b.includes('dispelBundle(playerEntity, b.bundleId'), 'picking a bundle no longer removes it');
+  // DFU's one asymmetry: the player's OWN casts always come off, and
+  // only something cast AT them gets the roll.
+  assert.ok(b.includes("selfCast: b.bundleType === 'Spell' && b.selfCast !== false"), 'the self-cast asymmetry is gone');
+  assert.ok(b.includes('roll01: Math.random(), chance'), 'the roll no longer weighs the spell\'s chance');
+  assert.ok(b.includes('hudText.add(DISPEL_MAGIC_TEXT[r.alert])'), 'the outcome is no longer spoken');
+  // ...through the host's own mount door
+  assert.ok(b.includes('return mountSpellWindow(new ListPickerWindow('), 'the picker is not mounted');
+  const arm = s.slice(s.indexOf('onDispelMagic: ({ chance } = {}) => {'), s.indexOf('onDispelMagic: ({ chance } = {}) => {') + 260);
+  assert.ok(arm.includes('openDispelPicker({ chance })'), 'the dungeon Dispel Magic seam no longer opens the picker');
+});
+
+test('DR1 dungeon host: both windows go through THIS host\'s PushWindow, and nothing else closes them', () => {
+  // worldModes' mountSpellWindow dungeon arm is `dungeonCtx.showOverlay(win)`,
+  // which IS pushDungeonWindow - so a spell window raised over an open
+  // automap or rest window must land ON TOP and uncover it on close,
+  // never be refused and never clobber the slot. And there is no
+  // closeSpellWindow twin here for the same reason worldModes makes
+  // its dungeon arm a no-op: both windows raise `done` themselves and
+  // tickOverlay drains the slot.
+  const s = src('src/scenes/dungeonContext.js');
+  assert.ok(s.includes('const mountSpellWindow = (win) => pushDungeonWindow(win);'),
+    'the spell windows no longer go through this host\'s PushWindow');
+  // the older `if (activeOverlay) refuse` idiom must NOT come back for
+  // these two - that is the refusal ROAD-B B5 replaced with a push.
+  const idArm = s.slice(s.indexOf('onIdentify:'), s.indexOf('onDispelMagic:'));
+  assert.ok(!idArm.includes('activeOverlay'), 'the Identify seam refuses a busy slot again instead of pushing');
+  // and worldModes still routes ITS dungeon-mode casts into this same door
+  assert.ok(src('src/scenes/worldModes.js').includes('dungeonCtx?.showOverlay ? dungeonCtx.showOverlay(win) : false'),
+    'the hosted route no longer mounts through the dungeon context');
 });
 
 test('X11c: the window art warms at BOOT, not at the first door', () => {

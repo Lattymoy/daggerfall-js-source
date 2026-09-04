@@ -20,8 +20,9 @@
 // Corpus reality (the backlog scan): `key N` books/potions appear on
 // ZERO corpus lines, and the potion arm (class 1 subclass 1) on none
 // either - both ship minimal shapes, cited, rather than fictional
-// completeness. The book message/value halves pend the book catalog
-// (the E1 book-file-pricing ledger row).
+// completeness. A2 closed the book half: the arm is now Item.cs:345
+// verbatim (CreateBook / CreateRandomBook out of systems/books.js),
+// so a quest book carries its id and the book FILE's price.
 
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
@@ -32,6 +33,7 @@ import {
   ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
 } from '../loot.js';
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
+import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
 import { goldStack } from '../inventory.js';
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
@@ -222,16 +224,23 @@ export class Item extends QuestResource {
       // their MAGIC.DEF template via SetArtifact.
       const templates = getMagicItemTemplates();
       result = templates
-        ? createArtifact(templates, itemSubClass)
+        ? createArtifact(templates, itemSubClass,
+          // D9: SetArtifact reads PlayerEntity.Gender for the texture
+          // archive (ItemHelper.cs:521) - the same hook the magic-item
+          // mint above already asks for.
+          { gender: this.parentQuest?.hooks?.playerGender?.() ?? 'male' })
         : { group: 'Artifacts', pendingMagicDef: true, artifactIndex: itemSubClass, name: this.itemName };
     } else if (itemClass === 7) {
-      // Books: by key or random. The book id (message) and price ride
-      // the book catalog - the E1 book-file-pricing ledger row; both
-      // key-form and catalog draw are corpus-dead today.
-      const variants = ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0;
+      // Item.cs:343-345 verbatim: `(itemKey != -1) ?
+      // ItemBuilder.CreateBook(itemKey) : ItemBuilder.CreateRandomBook()`.
+      // A2 closed the E1 book-file-pricing ledger row this arm was
+      // waiting on, so both forms leave through books.js and carry the
+      // BOOK FILE's price. CreateBook answers null for an id no book
+      // file backs; the port keeps the old template mint for that case
+      // rather than handing the quest machine a null resource.
       result = itemKey !== -1
-        ? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey })
-        : mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * variants) });
+        ? (createBook(itemKey) ?? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }))
+        : createRandomBook(rolls);
     } else if (itemClass === 1 && itemSubClass === 1) {
       // Potions: CreatePotion(key)/CreateRandomPotion - the recipe
       // registry is the potion maker's slice; corpus-dead, minimal.

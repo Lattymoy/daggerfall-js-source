@@ -28,6 +28,7 @@ import { widgetFor, formatValue, stepValue, blockedReason } from './settingsLaw.
 import { effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS } from '../systems/settings.js';
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
+import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: the third domain's count
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
@@ -67,7 +68,7 @@ const GROUPS = [
 const inRect = ([x, y, w, h], px, py) => px >= x && py >= y && px < x + w && py < y + h;
 
 export class SettingsWindow {
-  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null, onPickTextures = null } = {}) {
+  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null, onPickTextures = null, onPickMorrowind = null } = {}) {
     this.onLaunch = onLaunch;
     // M-EXT: the music-pack picker. A HOOK and not an import,
     // because the picker lives in scenes/dataSource.js and a ui/
@@ -77,6 +78,11 @@ export class SettingsWindow {
     // that cannot pick files (a test, a headless harness) should get.
     this.onPickMusic = onPickMusic;
     this.onPickTextures = onPickTextures;
+    // Same hook, same reason. It was the one of the three the
+    // constructor never took, so `_detail`'s M row and the KeyM arm
+    // that both read it were dead: the classic skin's screen reported
+    // the archive count while offering no door to change it.
+    this.onPickMorrowind = onPickMorrowind;
     this.dataSourceLabel = dataSourceLabel;
     this.done = false;
     this.isChoiceWindow = true;
@@ -403,6 +409,7 @@ export class SettingsWindow {
       lines.push('');
       lines.push(`Music files supplied: ${replacementCount()}`);
       lines.push(`Texture files supplied: ${textureReplacementCount()}`);
+      lines.push(`Morrowind archives attached: ${morrowindDataCount()}`);
       lines.push('A Daggerfall Unity music pack works AS-IS - its');
       lines.push('song_*.ogg names are already the right ones.');
       lines.push('Otherwise name files after the song they replace,');
@@ -411,9 +418,11 @@ export class SettingsWindow {
         title: labelOf(key), key, lines,
         buttons: [{ id: 'pick', label: 'Enter - Music' },
           ...(this.onPickTextures ? [{ id: 'pickTex', label: 'T - Textures' }] : []),
+          ...(this.onPickMorrowind ? [{ id: 'pickMw', label: 'M - Morrowind' }] : []),
           { id: 'close', label: 'Esc - Close' }],
         onYes: () => this.onPickMusic(),
         onAlt: this.onPickTextures ? () => this.onPickTextures() : null,
+        onAlt2: this.onPickMorrowind ? () => this.onPickMorrowind() : null,
       };
     }
     return { title: labelOf(key), key, lines, buttons: [{ id: 'close', label: 'Close' }] };
@@ -472,6 +481,13 @@ export class SettingsWindow {
       // clickable and doing nothing.
       if (code === 'KeyT' && this.dialog.onAlt) {
         const alt = this.dialog.onAlt;
+        this.dialog = null;
+        alt();
+        this._click();
+        return;
+      }
+      if (code === 'KeyM' && this.dialog.onAlt2) {
+        const alt = this.dialog.onAlt2;
         this.dialog = null;
         alt();
         this._click();
@@ -573,6 +589,7 @@ export class SettingsWindow {
         // button (or the field around them) still declines.
         const b = d.buttons[i];
         if (b && b.id === 'pickTex' && d.onAlt) d.onAlt();
+        else if (b && b.id === 'pickMw' && d.onAlt2) d.onAlt2();
       }
       this._click();
       return true;

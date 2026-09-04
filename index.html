@@ -6,7 +6,7 @@
   <title>Daggerfall JavaScript</title>
   <meta name="description" content="A 1:1 port of The Elder Scrolls II: Daggerfall to the browser. Bring your own ARENA2 folder; nothing is uploaded." />
   <meta property="og:title" content="Daggerfall JavaScript" />
-  <meta property="og:description" content="Daggerfall, in your browser. The 1996 game with its rules intact, drawn from your own game files. Desktop or phone, no install." />
+  <meta property="og:description" content="Daggerfall in your browser, running from your own game files. Works on desktop or phone with no install, or as a downloadable app." />
   <meta property="og:type" content="website" />
   <!--
     THE DOOR IN FRONT OF THE DOOR (U60, restyled U63). The game lives at
@@ -62,6 +62,9 @@
       text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
     }
     .plaque:hover, .plaque:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+    /* The door's pair: Play into the browser, Install onto the desk -
+       same plaque, side by side, wrapping to a stack on a phone. */
+    .doorplaques { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
     /* THE DOOR: the home face's own stage - centered, boxless, the
        wordmark over a rule, one thing to press. */
@@ -137,13 +140,6 @@
     .notyet { max-width: 62ch; margin: 30px auto 0; color: #7d7460; font-size: 14px; border: 2px dashed #3a3226; padding: 16px 18px; }
     .notyet b { color: #d8cfae; font-weight: 400; }
 
-    .shots { display: grid; gap: 22px; }
-    .shots .pair { display: grid; grid-template-columns: minmax(180px, 1fr) 2.2fr; gap: 22px; }
-    figure { margin: 0; }
-    figure img { display: block; width: 100%; height: auto; border: 2px solid #3a3226; }
-    figcaption { color: #7d7460; font-size: 14px; margin-top: 10px; text-align: left; }
-    figcaption b { color: #d8cfae; font-weight: 400; }
-
     .steps { list-style: none; margin: 0 auto; padding: 0; counter-reset: step; text-align: left; max-width: 64ch; }
     .step { display: grid; grid-template-columns: 54px 1fr; gap: 0 16px; padding: 18px 0; border-top: 2px solid #232a33; }
     .step:first-child { border-top: 0; }
@@ -151,14 +147,6 @@
     .step h3 { font-size: 24px; margin-bottom: 6px; }
     .step p { color: #a89f88; font-size: 15px; }
     .sources { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 15px; }
-
-    .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; text-align: left; }
-    .keys h3 { font-size: 24px; margin-bottom: 10px; }
-    .keys table { border-collapse: collapse; width: 100%; font-size: 14px; }
-    .keys td { padding: 6px 0; border-top: 2px solid #232a33; vertical-align: top; color: #a89f88; }
-    .keys tr:first-child td { border-top: 0; }
-    .keys td:last-child { text-align: right; white-space: nowrap; color: #d8cfae; }
-    kbd { font: inherit; font-size: 13px; letter-spacing: 0.08em; border: 2px solid #3a3226; padding: 0 6px 1px; margin-left: 4px; }
 
     .qa { display: grid; grid-template-columns: 240px 1fr; gap: 20px 26px; text-align: left; margin: 0; }
     .qa dt { font-family: 'Jacquard 12', var(--brand); font-size: 24px; line-height: 1.1; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
@@ -169,7 +157,7 @@
     .end a { border: 0; color: #7d7460; }
 
     @media (max-width: 860px) {
-      .cols, .grid, .keys, .shots .pair { grid-template-columns: 1fr; }
+      .cols, .grid { grid-template-columns: 1fr; }
       .qa { grid-template-columns: 1fr; gap: 4px 0; }
       .qa dd { margin-bottom: 16px; }
       .door { padding-bottom: 140px; padding-top: 84px; }   /* the Ko-fi plaque's room */
@@ -192,15 +180,17 @@
     </a>
     <h1 class="wordmark">Daggerfall<small>JavaScript</small></h1>
     <div class="rule"><i class="gem"></i></div>
-    <p class="dek">The 1996 game with its rules intact, on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
-    <p class="gate">It runs on <b>your own copy</b> of Daggerfall. The game is free, but its files aren't ours to hand out, so the first thing you'll be asked for is the ARENA2 folder. Pick it once; it stays in your browser and never leaves your device.</p>
-    <a class="plaque" href="./play/">Play</a>
+    <p class="dek">The 1996 game with its rules intact, running on a renderer built from scratch. Works on desktop or phone, and there's nothing to install unless you want to.</p>
+    <p class="gate">You need <b>your own copy</b> of Daggerfall. The game has been free since 2009, but the files aren't ours to give away. Point it at your ARENA2 folder once and it stays on your device.</p>
+    <div class="doorplaques">
+      <a class="plaque" href="./play/">Play</a>
+      <a class="plaque" href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Install</a>
+    </div>
     <nav class="doorlinks caps" aria-label="Sections">
       <a href="#what">What it is</a>
-      <a href="#look">What it looks like</a>
       <a href="#inside">What's in it</a>
       <a href="#how">How to play</a>
-      <a href="#keys">Controls</a>
+      <a href="#desktop">Desktop app</a>
       <a href="#know">Good to know</a>
       <a href="#credits">Credits</a>
     </nav>
@@ -221,37 +211,15 @@
       <div class="cols">
         <div>
           <h3>Ported 1:1</h3>
-          <p>The rules are Daggerfall's: the file formats, the world assembly, the combat and skill math, quests, items, magic, guilds, the calendar and the courts, translated line by line from Daggerfall Unity's C# with the constants kept byte-exact, quirks and all.</p>
+          <p>The rules come straight from Daggerfall: the file formats, the world, combat math, quests, magic, guilds, even the calendar and the courts. All of it was translated line by line from Daggerfall Unity's C#, and the quirks were kept on purpose.</p>
         </div>
         <div>
           <h3>Rebuilt</h3>
-          <p>The presentation is new: a hand-rolled WebGL2 renderer with no engine underneath it, a procedural sky, a touch layer for phones, and two interfaces - the classic screens laid out from the original art to the pixel, or an enhanced one drawn as pixel art of its own.</p>
+          <p>The presentation is new. The renderer is hand-rolled WebGL2 with no engine underneath, the sky is procedural, phones get touch controls, and you can use the classic screens or an enhanced pixel-art interface.</p>
         </div>
         <div>
           <h3>In progress</h3>
-          <p>Daggerfall Unity is a decade of work and this is a port of it, arc by arc. What has landed and what hasn't is written down. <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="look" aria-labelledby="look-h">
-      <h2 id="look-h">What it looks like</h2>
-      <div class="rule"><i class="gem"></i></div>
-      <p class="lede">The enhanced interface with no game files loaded - the only pictures this site can show, because the classic screens are the original art, which you bring.</p>
-      <div class="shots">
-        <figure>
-          <img src="./site/menu-home.png" width="1280" height="800" alt="The enhanced main menu: a pixel blackletter Daggerfall wordmark over a dithered night sky, with a centered list of Continue, New Game, Load Game, Settings and Mods." loading="lazy" />
-          <figcaption><b>The door.</b> Pixel art, drawn in code - the sky is a dithered gradient with a seeded star field, and this page is standing on the same one.</figcaption>
-        </figure>
-        <div class="pair">
-          <figure>
-            <img src="./site/menu-phone.png" width="786" height="1702" alt="The enhanced menu on a phone: the same wordmark and centered list, sized for a narrow screen." loading="lazy" />
-            <figcaption><b>On a phone.</b> The same screen, laid out for a thumb.</figcaption>
-          </figure>
-          <figure>
-            <img src="./site/menu-settings.png" width="1280" height="800" alt="The enhanced settings: a category rail on the left and a column of named settings with their values." loading="lazy" />
-            <figcaption><b>Settings.</b> Daggerfall Unity's 171 keys, every one a real setting, with what each does beside it.</figcaption>
-          </figure>
+          <p>Daggerfall Unity took a decade to build, and this port is catching up piece by piece. <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
         </div>
       </div>
     </section>
@@ -259,29 +227,29 @@
     <section id="inside" aria-labelledby="inside-h">
       <h2 id="inside-h">What's in it</h2>
       <div class="rule"><i class="gem"></i></div>
-      <p class="lede">As of 27 August 2026. Every line here is something you can walk up to and use; the ledger keeps the finer print.</p>
+      <p class="lede">Everything here is in the game right now. The ledger keeps the finer print.</p>
       <dl class="grid">
-        <div><dt>The world</dt><dd>The whole Iliac Bay, streamed as you walk it: its towns, its wilderness, the weather and the seasons, day and night on the game's own calendar with its holidays. The travel map for the long way round.</dd></div>
-        <div><dt>Towns and people</dt><dd>Streets with people in them who answer questions, give directions, trade rumours and take offence. Shops, taverns, banks, temples, guild halls with their services, and a city watch that arrests you and a court that tries you.</dd></div>
-        <div><dt>Dungeons</dt><dd>The classic dungeons with their doors, locks, teleporters and traps, an automap that fills in as you go, and every monster from the rat to the ancient lich on the same combat rules as the classes that hunt you.</dd></div>
-        <div><dt>Combat</dt><dd>The classic first-person weapons with Daggerfall's own hit and damage formulas: bows both ways, knockback, armour that wears, poisons and diseases that take days, and enemies that shoot, cast, open doors, fight each other and give up.</dd></div>
-        <div><dt>Magic</dt><dd>The spellbook and click-to-cast, the spell maker, the potion maker and the item maker, magic items and the Daedric artifacts, and the spell effects themselves: ninety of the game's ninety-one.</dd></div>
-        <div><dt>Your character</dt><dd>Character creation with the class questions, the custom class builder and the biography, then levelling, skills, reputation with every faction, and an inventory with a wagon behind it.</dd></div>
-        <div><dt>Quests</dt><dd>Quests run on the game's own scripts, 265 of them, offered by questgivers, argued about in the talk window, tracked in the journal and kept across saves.</dd></div>
-        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, and an enhanced set beside it: the menu, the journal, the pack, the character sheet, the world map, the compass rose, and a settings catalog with every key rebindable.</dd></div>
-        <div><dt>Sound and music</dt><dd>The game's sounds and ambience, footsteps that know what floor you are on, and the music: Daggerfall's own MIDI, played by a synth written for this port, or your own tracks in its place.</dd></div>
+        <div><dt>The world</dt><dd>The whole Iliac Bay, streamed as you walk it: towns, wilderness, weather and seasons on the game's own calendar. The travel map covers the long way round.</dd></div>
+        <div><dt>Towns and people</dt><dd>People who answer questions, trade rumours and take offence. Shops, taverns, banks, temples and guild halls, plus a watch that arrests you and a court that tries you.</dd></div>
+        <div><dt>Dungeons</dt><dd>The classic dungeons with their doors, locks, teleporters and traps, an automap that fills in as you go, and every monster from the rat to the ancient lich.</dd></div>
+        <div><dt>Combat</dt><dd>Daggerfall's own hit and damage formulas: bows both ways, knockback, armour that wears, poisons and diseases, and enemies that cast, flee and give up.</dd></div>
+        <div><dt>Magic</dt><dd>The spellbook, the spell, potion and item makers, magic items and the Daedric artifacts. Ninety of the game's ninety-one spell effects are in.</dd></div>
+        <div><dt>Your character</dt><dd>Character creation with the class questions, custom classes and the biography. After that comes levelling, skills, faction reputation, and a wagon behind your pack.</dd></div>
+        <div><dt>Quests</dt><dd>265 quests running on the game's own scripts. They get offered, argued over in the talk window, tracked in the journal, and kept across saves.</dd></div>
+        <div><dt>The screens</dt><dd>Every classic window laid out from the original art, with an enhanced set beside it. The switch is one press at the foot of the menu.</dd></div>
+        <div><dt>Sound and music</dt><dd>The game's sounds, footsteps that know what floor you're on, and its MIDI played by a synth written for this port. Your own tracks work too.</dd></div>
       </dl>
-      <p class="notyet"><b>Not yet:</b> riding a horse or cart, importing save games from classic Daggerfall or Daggerfall Unity, and mods. Saves made here are the port's own.</p>
+      <p class="notyet"><b>Not yet:</b> importing classic or Daggerfall Unity saves, and mods.</p>
     </section>
 
     <section id="how" aria-labelledby="how-h">
       <h2 id="how-h">How to play</h2>
       <div class="rule"><i class="gem"></i></div>
-      <p class="lede">Four steps, and the first three only happen once.</p>
+      <p class="lede">Three steps, and the first two only happen once.</p>
       <ol class="steps">
         <li class="step"><div>
           <h3>Get Daggerfall.</h3>
-          <p>It has been free since 2009. Any of these gives you the files; the zip is the same patched set Daggerfall Unity uses.</p>
+          <p>It has been free since 2009. Any of these gives you the files.</p>
           <ul class="sources">
             <li><a href="https://store.steampowered.com/app/1812390/">Steam</a></li>
             <li><a href="https://www.gog.com/game/the_elder_scrolls_chapter_ii_daggerfall">GOG</a></li>
@@ -289,62 +257,32 @@
           </ul>
         </div></li>
         <li class="step"><div>
-          <h3>Find the ARENA2 folder.</h3>
-          <p>It's inside the game folder. From Steam, look under DF/DAGGER/ARENA2. In DaggerfallGameFiles.zip it's arena2/, and on a phone you can hand the game the whole zip instead.</p>
-        </div></li>
-        <li class="step"><div>
-          <h3>Press Play and pick it.</h3>
-          <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. That is the last time you are asked.</p>
+          <h3>Press Play and pick your ARENA2 folder.</h3>
+          <p>The folder is inside the game install, under DF/DAGGER/ARENA2 on Steam. Choose it or drop it on the page. On a phone you can hand over the whole zip instead. You won't be asked again.</p>
         </div></li>
         <li class="step"><div>
           <h3>Then play.</h3>
-          <p>You wake in Privateer's Hold, as everyone does. The keys are below; on a phone a stick, a look pad, an attack button and a row of buttons appear on their own.</p>
+          <p>You wake in Privateer's Hold, as everyone does. On a phone the touch controls appear on their own.</p>
         </div></li>
       </ol>
     </section>
 
-    <section id="keys" aria-labelledby="keys-h">
-      <h2 id="keys-h">Controls</h2>
+    <section id="desktop" aria-labelledby="desktop-h">
+      <h2 id="desktop-h">On your desktop</h2>
       <div class="rule"><i class="gem"></i></div>
-      <p class="lede">Daggerfall Unity's defaults, and every one of them can be changed in Settings.</p>
-      <div class="keys">
+      <p class="lede">The browser needs no install and never will. The app is for people who want their saves to be files.</p>
+      <div class="cols">
         <div>
-          <h3>Moving</h3>
-          <table>
-            <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td></tr>
-            <tr><td>Look</td><td>Mouse</td></tr>
-            <tr><td>Run</td><td><kbd>Shift</kbd></td></tr>
-            <tr><td>Sneak</td><td><kbd>Alt</kbd></td></tr>
-            <tr><td>Jump</td><td><kbd>Space</kbd></td></tr>
-            <tr><td>Crouch</td><td><kbd>C</kbd></td></tr>
-            <tr><td>Rest</td><td><kbd>R</kbd></td></tr>
-            <tr><td>Travel map</td><td><kbd>V</kbd></td></tr>
-          </table>
+          <h3>Saves you can hold</h3>
+          <p>Every save is a folder of real files on your disk. It survives a cleared browser, you can back it up by copying it, and a save you copy in shows up on the load screen.</p>
         </div>
         <div>
-          <h3>Fighting</h3>
-          <table>
-            <tr><td>Draw weapon</td><td><kbd>Z</kbd></td></tr>
-            <tr><td>Swing</td><td>Right mouse, drag</td></tr>
-            <tr><td>Switch hand</td><td><kbd>H</kbd></td></tr>
-            <tr><td>Cast a spell</td><td><kbd>Backspace</kbd></td></tr>
-            <tr><td>Recast</td><td><kbd>Q</kbd></td></tr>
-            <tr><td>Use magic item</td><td><kbd>U</kbd></td></tr>
-          </table>
+          <h3>Your folder, read in place</h3>
+          <p>The app reads ARENA2 straight from disk. Nothing gets copied into browser storage, every sky set loads, and there's a menu item to re-point it if your install ever moves.</p>
         </div>
         <div>
-          <h3>Around you</h3>
-          <table>
-            <tr><td>Use what you're looking at</td><td>Left mouse</td></tr>
-            <tr><td>Steal / Grab / Info / Talk</td><td><kbd>F1</kbd><kbd>F2</kbd><kbd>F3</kbd><kbd>F4</kbd></td></tr>
-            <tr><td>Character sheet</td><td><kbd>F5</kbd></td></tr>
-            <tr><td>Inventory</td><td><kbd>F6</kbd></td></tr>
-            <tr><td>Compass rose</td><td><kbd>Tab</kbd></td></tr>
-            <tr><td>Journal / Notebook</td><td><kbd>L</kbd><kbd>N</kbd></td></tr>
-            <tr><td>Map</td><td><kbd>M</kbd></td></tr>
-            <tr><td>Quick save / load</td><td><kbd>F9</kbd><kbd>F11</kbd></td></tr>
-            <tr><td>Pause</td><td><kbd>Esc</kbd></td></tr>
-          </table>
+          <h3>Still the same deal</h3>
+          <p>It ships no game data, and the only network call it makes is an optional check for a newer release. <a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Download for Windows, macOS or Linux</a>, or <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Desktop-App.md">build it from source</a>.</p>
         </div>
       </div>
     </section>
@@ -354,22 +292,22 @@
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
         <dt>Which browsers?</dt>
-        <dd>Any current one with WebGL2: Chrome, Edge, Firefox, Safari. On a phone, Safari on iOS or Chrome on Android; the touch controls appear on their own.</dd>
+        <dd>Any current one with WebGL2: Chrome, Edge, Firefox or Safari. Phones get touch controls automatically.</dd>
+
+        <dt>What are the controls?</dt>
+        <dd>Daggerfall Unity's defaults. WASD and mouse, F6 opens the pack, F9 and F11 quick save and load, Esc for everything else. Every key can be rebound in Settings.</dd>
 
         <dt>Where do my files and saves go?</dt>
-        <dd>Into your browser's storage for this site, on your device; there is no account and no server. Clearing the site's data removes the game files and your saves together, so you would pick the folder again.</dd>
+        <dd>Into your browser's storage, on your device. There's no account and no server. The desktop app keeps them as real files instead, and works fully offline.</dd>
 
         <dt>Classic or enhanced?</dt>
-        <dd>Enhanced by default: the same game with its menus, journal, character sheet and inventory drawn as pixel art of their own. The classic screens are all there too - the switch sits at the foot of the menu, one press either way.</dd>
+        <dd>Enhanced by default, but the classic screens are all there. The switch sits at the foot of the menu.</dd>
 
         <dt>Is this Daggerfall Unity?</dt>
-        <dd>No, a port of it. Daggerfall Unity is the reference, and it has years more polish, a mod scene and a community. This is the same rules in a browser tab, on a phone if you like.</dd>
-
-        <dt>Does it work offline?</dt>
-        <dd>The page has to load from the network. After that the game reads everything from your device.</dd>
+        <dd>No, it's a port of it. Daggerfall Unity is the reference and has years more polish plus a mod scene. This is the same rules in a browser tab.</dd>
 
         <dt>Something's wrong.</dt>
-        <dd>Reload first: the site is rebuilt several times a day and a page held open across a rebuild can lose its footing. If it is a real bug, the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> wants it, with what you did and what happened.</dd>
+        <dd>Reload the page first, since the site rebuilds several times a day. If it's a real bug, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> with what you did and what happened.</dd>
       </dl>
     </section>
 
@@ -378,19 +316,16 @@
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
         <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-        <dd>Interkarma and contributors, MIT licence. The C# this port was translated from, and the quest scripts are its own; without it there would be nothing to port.</dd>
+        <dd>Interkarma and contributors, MIT licence. This port was translated from its C#. Without it there would be nothing to port.</dd>
 
         <dt>The Elder Scrolls II: Daggerfall</dt>
-        <dd>Bethesda Softworks, 1996. Daggerfall JavaScript is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
+        <dd>Bethesda Softworks, 1996. This is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
 
         <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
-        <dd>The documentation of Daggerfall's file formats that the readers were checked against.</dd>
-
-        <dt><a href="https://ko-fi.com/dfjs">Ko-fi</a></dt>
-        <dd>The port is free and always will be, and it takes no money to run - it is a static site and your own game files. If you would like to put something in the hat anyway, it goes to the time this takes.</dd>
+        <dd>The format documentation the readers were checked against.</dd>
 
         <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-        <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans, loaded from Google Fonts: the one request this site makes to anyone else.</span></dd>
+        <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts, the one request this site makes to anyone else.</span></dd>
       </dl>
     </section>
 

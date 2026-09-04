@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { srand, rand } from '../src/formats/dfRandom.js';
-import { randomTextureTableClassic, applyTextureTable, DEFAULT_TEXTURE_TABLE } from '../src/world/dungeonTextures.js';
+import { randomTextureTableClassic, applyTextureTable, DEFAULT_TEXTURE_TABLE, dungeonTextureTable, randomTextureTableAlternate, isMainStoryDungeon, ALTERNATE_VALID_ARCHIVES } from '../src/world/dungeonTextures.js';
+import { setValue, resetToDefaults, LIVE } from '../src/systems/settings.js';
 import { layoutRdbBlock, getModelMatrix, isActionDoor, ACTION_FLAGS, TRIGGER_FLAGS, RDB_SIDE } from '../src/world/rdbLayout.js';
 import { collectDungeonLights } from '../src/world/dungeonLights.js';
 import { layoutDungeon } from '../src/world/dungeonLayout.js';
@@ -509,4 +510,56 @@ test('dungeon: RDB corpus - teleporter destinations resolve (P10; 2 verbatim-dea
   assert.equal(checked, 84);
   assert.equal(resolved, 82);
   assert.deepEqual(dead.sort(), ['N0000003.RDB', 'W0000003.RDB']);
+});
+
+test('AUDIT 28 W3c: RandomDungeonTextures - the five modes, the main-story gate, and the alternate table\'s sewer fix-up', () => {
+  // The fork (DaggerfallDungeon.cs:174-196): a main-story dungeon takes
+  // the PLAIN classic table unless the mode is 2 or 4.
+  const args = { locationId: 12345, worldClimate: 231 };
+  const classic0 = randomTextureTableClassic(args.locationId, args.worldClimate, 0);
+  const classic1 = randomTextureTableClassic(args.locationId, args.worldClimate, 1);
+  const privateersHold = 187853213;
+  assert.ok(isMainStoryDungeon(privateersHold));
+  assert.ok(!isMainStoryDungeon(privateersHold + 1));
+  for (const mode of [0, 1, 3]) {
+    assert.deepEqual(dungeonTextureTable({ ...args, mapId: privateersHold, mode }), classic0,
+      `main story at mode ${mode} is the plain classic table`);
+  }
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: 77, mode: 0 }), classic0);
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: 77, mode: 1 }), classic1);
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: 77, mode: 2 }), classic1, 'mode 2 is the climate algorithm for everyone');
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: privateersHold, mode: 2 }), classic1, 'including the main story');
+  const alt = dungeonTextureTable({ ...args, mapId: 77, mode: 4 });
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: privateersHold, mode: 4 }),
+    dungeonTextureTable({ ...args, mapId: privateersHold, mode: 3 }).length === 6 && randomTextureTableAlternate(privateersHold),
+    'mode 4 randomizes the main story too');
+  // The alternate table: seeded on the raw MapId, six draws from the
+  // 24-archive pool, slot 5 forced onto a sewer archive unless it
+  // already is one (% 100 == 68).
+  assert.equal(alt.length, 6);
+  for (const a of alt) assert.ok(ALTERNATE_VALID_ARCHIVES.includes(a), `archive ${a} outside the pool`);
+  assert.equal(alt[5] % 100, 68, 'slot 5 is a sewer archive');
+  assert.deepEqual(randomTextureTableAlternate(77), randomTextureTableAlternate(77), 'deterministic per dungeon');
+  // The fix-up draws ONLY when needed: a rigged rng whose sixth draw is
+  // already a sewer archive is never asked an eighth time.
+  const idx68 = ALTERNATE_VALID_ARCHIVES.indexOf(68);
+  let draws = 0;
+  const rigged = () => { draws++; return idx68; };
+  const t = randomTextureTableAlternate(1, rigged);
+  assert.equal(draws, 6); assert.equal(t[5], 68);
+  let draws2 = 0;
+  const rigged2 = (lo, hi) => { draws2++; return draws2 <= 6 ? 0 : hi - 1; };
+  const t2 = randomTextureTableAlternate(1, rigged2);
+  assert.equal(draws2, 7, 'a non-sewer slot 5 costs one sewer draw');
+  assert.equal(t2[5], 468);
+  // The setting is the default mode source, GetInt clamped 0..4.
+  setValue('Video', 'RandomDungeonTextures', 2);
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: 77 }), classic1, 'read live');
+  setValue('Video', 'RandomDungeonTextures', 9);
+  assert.deepEqual(dungeonTextureTable({ ...args, mapId: 77 }), dungeonTextureTable({ ...args, mapId: 77, mode: 4 }), 'clamped to 4');
+  resetToDefaults();
+  assert.equal(LIVE['Video/RandomDungeonTextures'], 'src/world/dungeonTextures.js');
+  // And the layout goes through the fork, with the RAW MapId.
+  const layout = readFileSync(new URL('../src/world/dungeonLayout.js', import.meta.url), 'utf8');
+  assert.match(layout, /dungeonTextureTable\(\{\s*\n\s*locationId: dfLocation\.dungeon\.recordElement\.header\.locationId,\s*\n\s*mapId: dfLocation\.mapTableData\?\.mapId \?\? 0,/);
 });

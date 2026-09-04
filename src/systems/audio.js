@@ -15,6 +15,21 @@ import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 
+/** The ArrayBuffer decodeAudioData is allowed to detach: THE VIEW'S OWN
+ *  RANGE, not the whole backing store.
+ *
+ *  AUDIT 39: this was `bytes.buffer.slice(0)`, which ignores byteOffset
+ *  and byteLength - a clip served out of an archive as a zero-copy
+ *  subarray (mwBsaFile.get) handed the decoder the ENTIRE .bsa, so the
+ *  decode failed on the archive header, the clip silently never
+ *  registered, and a full copy of the archive was allocated per attempt.
+ *  A plain ArrayBuffer argument passes through untouched (decodeAudioData
+ *  detaches it, which is why a view is copied at all). */
+export function decodableCopy(bytes) {
+  if (!bytes?.buffer) return bytes;
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
+
 /** Unsigned 8-bit PCM -> Float32 samples, verbatim (b - 128) / 128. */
 export function pcm8ToFloat32(bytes) {
   const out = new Float32Array(bytes.length);
@@ -146,9 +161,13 @@ export class AudioEngine {
   }
 
   _buffer(index) {
-    if (!this.snd) return null;
     let b = this.buffers.get(index);
     if (b !== undefined) return b;
+    // MW-D40: a REGISTERED buffer (a mod's own WAV, decoded through
+    // registerSound below) answers by string key; only the classic
+    // integer indexes fall through to DAGGERFALL.SND. An unregistered
+    // string is null - the callers' own missing-clip shape.
+    if (typeof index === 'string' || !this.snd) return null;
     const rec = this.snd.getSound(index);
     if (!rec || !rec.waveData?.length) { this.buffers.set(index, null); return null; }
     const samples = pcm8ToFloat32(rec.waveData);
@@ -158,6 +177,25 @@ export class AudioEngine {
     return b;
   }
 
+  /** MW-D40: the external-sound door. Decodes a user-supplied clip
+   *  (a mod's WAV - the music module has decoded attached files this
+   *  way since MU1) and registers it under a string key that every
+   *  existing entry point (playOneShot, setLoop, loop3d...) then takes
+   *  in place of a DAGGERFALL.SND index - setLoop's swap semantics
+   *  included. Answers false and registers nothing on a clip the
+   *  decoder rejects: the caller keeps its classic fallback. */
+  async registerSound(key, bytes) {
+    try {
+      this._ensureCtx();
+      if (!this.ctx || this.buffers.has(key)) return this.buffers.get(key) != null;
+      const buf = await this.ctx.decodeAudioData(decodableCopy(bytes));
+      this.buffers.set(key, buf);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   _ready() {
     this._ensureCtx();
     return this.enabled && this.ctx && this.ctx.state === 'running';
@@ -165,18 +203,62 @@ export class AudioEngine {
 
   /** DFU PlayOneShot(clip, _, volumeScale): flat (non-positional).
    *  Returns the clip duration in seconds (A3's exclusive ambient
-   *  channel tracks busy time with it), or undefined when not ready. */
-  playOneShot(index, volume = 1) {
+   *  channel tracks busy time with it), or undefined when not ready.
+   *
+   *  AUDIT 58: `pitch` is Unity's AudioSource.pitch, which WebAudio
+   *  spells playbackRate - the same resampling, and the same 1.0
+   *  default. DFU's three combat-voice sites raise it for exactly one
+   *  shot and put it back (EnemySounds.cs:172-175, FPSWeapon.cs:316
+   *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
+   *  shot and dies with it, so setting it here IS the save/restore. */
+  playOneShot(index, volume = 1, pitch = 1) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
+    src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(this._out());
     src.start();
     return buf.duration;
+  }
+
+  /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
+   *  :152-158) is `soundFile.GetRecordIndex(soundID)`: a DAGGER.SND
+   *  record ID resolved to that record's INDEX in the archive. The two
+   *  spaces are UNRELATED - the archive's directory numbers the records
+   *  independently of their order (index 0 carries id 3, id 6 sits at
+   *  index 3), and SoundClips.cs:79-82 says so outright ("these are IDs
+   *  267 through 286 in the sound file").
+   *
+   *  That is why DaggerfallAudioSource carries TWO overloads of every
+   *  entry point - `PlayOneShot(int soundIndex, ...)` (:186-198) taking
+   *  an index and `PlayOneShot(uint soundID, ...)` (:232-238) taking an
+   *  ID and resolving it first - and why a caller's `(uint)` cast is a
+   *  LOAD-BEARING choice, not a widening. Everything named `...SoundID`
+   *  in DFU comes through this door; everything typed SoundClips does
+   *  not. -1 (no archive, or no such id) plays nothing, exactly as
+   *  GetAudioClip(-1) answers null and the index overload drops the
+   *  shot. */
+  soundIndexForId(id) {
+    return this.snd?.getRecordIndex(id) ?? -1;
+  }
+
+  /** PlayOneShot(uint soundID, ...) - DaggerfallAudioSource.cs:232-238. */
+  playOneShotId(id, volume = 1) {
+    const index = this.soundIndexForId(id);
+    return index >= 0 ? this.playOneShot(index, volume) : undefined;
+  }
+
+  /** The positional twin. DFU reaches a 3D source's ID through
+   *  SetSound(uint soundID, ...) (:170-181), which resolves ONCE and
+   *  leaves the source holding an index; the port has no persistent
+   *  source object at these call sites, so it resolves per shot. */
+  play3dId(id, pos, volume = 1, opts = undefined) {
+    const index = this.soundIndexForId(id);
+    return index >= 0 ? this.play3d(index, pos, volume, opts) : undefined;
   }
 
   /** Non-positional looping source (A3: the rain/crickets ambience
@@ -197,7 +279,73 @@ export class AudioEngine {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();
       },
+      /** WX2: the loop's gain, live - the rain loop fades with the front. */
+      setVolume(v) { gain.gain.value = Math.max(0, Math.min(1, v)); },
     };
+  }
+
+  /**
+   * TR2: a NAMED loop with live volume and pitch - Unity's
+   * `ridingAudioSource`, which TransportManager keeps as a field and
+   * re-points at a different clip mid-ride (the clop swap) while
+   * setting `.volume` and `.pitch` every frame. `clip` null stops it.
+   * Re-pointing at the same clip does NOT restart the source, which is
+   * what makes the half-speed swap audible rather than a stutter.
+   */
+  setLoop(name, clip, { volume = 1, pitch = 1 } = {}) {
+    this._loops ??= new Map();
+    const ch = this._loops.get(name);
+    if (clip == null) {
+      if (ch) { ch.stop(); this._loops.delete(name); }
+      return null;
+    }
+    if (ch) {
+      // TR-AUDIT F-F3: the clip is SWAPPED, not restarted. DFU's
+      // ridingAudioSource has `loop = false` (:190) and Update only
+      // calls Play() when it is not already playing (:273-276), so
+      // assigning `.clip` mid-clop takes effect when the CURRENT one
+      // ends. Restarting on the swap chops the hoofbeat in half.
+      ch.want = clip;
+      ch.setVolume(volume);
+      ch.setPitch(pitch);
+      return ch;
+    }
+    const made = this._makeRetriggerLoop(clip, volume, pitch);
+    if (!made) return null;
+    this._loops.set(name, made);
+    return made;
+  }
+
+  /** DFU's shape: a NON-looping source re-armed when it ends, which is
+   *  what `if (!isPlaying) Play()` on a `loop = false` source does. */
+  _makeRetriggerLoop(index, volume, pitch) {
+    if (!this._ready()) return null;
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    gain.connect(this._out());
+    const ch = { want: index, playing: null, rate: pitch, stopped: false,
+      setVolume: (v) => { gain.gain.value = v; },
+      setPitch: (p) => { ch.rate = p; if (ch.playing) ch.playing.playbackRate.value = p; },
+      stop() {
+        ch.stopped = true;
+        if (ch.playing) { try { ch.playing.stop(); } catch { /* already stopped */ } ch.playing = null; }
+        gain.disconnect();
+      } };
+    const arm = () => {
+      if (ch.stopped) return;
+      const buf = this._buffer(ch.want);
+      if (!buf) { ch.playing = null; return; }
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.playbackRate.value = ch.rate;
+      src.connect(gain);
+      src.onended = () => { if (ch.playing === src) { ch.playing = null; arm(); } };
+      src.start();
+      ch.playing = src;
+    };
+    arm();
+    if (!ch.playing) { gain.disconnect(); return null; }
+    return ch;
   }
 
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
@@ -210,12 +358,17 @@ export class AudioEngine {
    *  `maxDistance = AttractRadius` (:57-60), with its own reason -
    *  loop3d already carried that note for torches. Inverse stays the
    *  default so no existing caller changes. */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
+  /** AUDIT 58: `pitch` rides the options bag here (AudioSource.pitch /
+   *  playbackRate), because every 3D combat voice DFU plays is
+   *  pitch-lifted - EnemySounds.cs:172-175 raises the SOURCE's pitch
+   *  around PlayOneShot and restores it after. */
+  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1 } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
+    src.playbackRate.value = pitch;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
     pan.distanceModel = distanceModel;
@@ -234,7 +387,15 @@ export class AudioEngine {
    *  everywhere"). The caller gates range (LoopIfPlayerNear disables
    *  the source outside maxDistance); returns a stop handle or null
    *  when the context/record is not ready. */
-  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5 } = {}) {
+  /** WM4c: `distanceModel` is a parameter here too, LINEAR by default so
+   *  the torches do not move. A DaggerfallAudioSource left at Unity's
+   *  defaults (Kamer's Spin_Up adds one and sets only the clip and
+   *  LoopOnAwake) is LOGARITHMIC, min 1, max 500 - play3d's profile -
+   *  and the mill's loop asks for exactly that. The handle also MOVES:
+   *  the streaming world shifts its origin under a built pixel, and a
+   *  source that stayed at the old numbers would drift away from the
+   *  mill it belongs to. */
+  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5, distanceModel = 'linear' } = {}) {
     if (!this._ready()) return null;
     const buf = this._buffer(index);
     if (!buf) return null;
@@ -243,7 +404,7 @@ export class AudioEngine {
     src.loop = true;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
-    pan.distanceModel = 'linear';
+    pan.distanceModel = distanceModel;
     pan.refDistance = refDistance;
     pan.maxDistance = maxDistance;
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
@@ -252,6 +413,9 @@ export class AudioEngine {
     src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return {
+      move(p) {
+        pan.positionX.value = p[0]; pan.positionY.value = p[1]; pan.positionZ.value = p[2];
+      },
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();
@@ -277,3 +441,67 @@ export class AudioEngine {
 }
 
 export const audio = new AudioEngine();
+
+/**
+ * E6: DaggerfallAudioSource, as much of it as the QUEST MACHINE's own
+ * component needs - `QuestMachine.Instance.GetComponent<
+ * DaggerfallAudioSource>()`, the one source every PlaySound quest
+ * action in every running quest shares (PlaySound.cs:110-116).
+ *
+ * Two methods, both verbatim:
+ *  - PlayOneShot (DaggerfallAudioSource.cs:188-199).
+ *  - IsPlaying (:244-247) - `audioSource.isPlaying`, which is what
+ *    PlaySound's busy-skip reads. A WebAudio one-shot is a fire-and-
+ *    forget BufferSource with no `isPlaying` of its own, so the source
+ *    keeps the END TIME of the clip it last started: the engine's
+ *    playOneShot already answers the clip's duration (it has since A3's
+ *    exclusive ambient channel), so "busy" is "the clip that started
+ *    has not run out yet".
+ *
+ * The clock is real time, which is the clock Unity's isPlaying runs on
+ * - not the game clock PlaySound's interval is measured in. A clip
+ * that never started (no archive, no gesture yet, no such index) leaves
+ * the source idle, exactly as Unity's does when GetAudioClip answers
+ * null.
+ */
+export class QuestAudioSource {
+  constructor(engine = audio, clock = defaultAudioClock) {
+    this._audio = engine;
+    this._clock = clock;
+    this._endsAt = -Infinity;
+  }
+
+  /** IsPlaying (:244-247). */
+  isPlaying() { return this._clock() < this._endsAt; }
+
+  /** PlayOneShot (:188-199). Answers the duration the engine reported,
+   *  or undefined when nothing started. */
+  playOneShot(index, volume = 1) {
+    const dur = this._audio.playOneShot(index, volume);
+    if (typeof dur === 'number' && dur > 0) this._endsAt = this._clock() + dur;
+    return dur;
+  }
+
+  /** AUDIT 58: the ID-space twin, for the ONE caller that has an id
+   *  rather than an index - the quest `play sound` action, whose value
+   *  comes from the Quests-Sounds table's `id` column. PlaySound.cs:74
+   *  -75 resolves it at CREATE (`GetSoundIndex(soundID)`) and :112
+   *  plays the INT overload; the port resolves SND host-side behind
+   *  this hook (Port-Ledger A, "PlaySound's SND RESOLUTION"), so the
+   *  conversion happens here instead - the same table id, the same
+   *  record, one tick later. The busy stamp is unchanged: it lands
+   *  whenever a clip started, and a table id with no record in the
+   *  archive starts nothing, exactly as a null AudioClip does. */
+  playOneShotId(id, volume = 1) {
+    const dur = this._audio.playOneShotId(id, volume);
+    if (typeof dur === 'number' && dur > 0) this._endsAt = this._clock() + dur;
+    return dur;
+  }
+}
+
+/** Real seconds, monotonic - `performance.now()` where there is one. */
+export function defaultAudioClock() {
+  return (typeof performance !== 'undefined' && performance.now)
+    ? performance.now() / 1000
+    : Date.now() / 1000;
+}

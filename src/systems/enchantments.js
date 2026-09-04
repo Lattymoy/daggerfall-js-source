@@ -148,10 +148,13 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 
 // ---- G4: what a LEGACY magic item is WORTH --------------------------
 // ItemBuilder.CreateRegularMagicItem's closing sum (:599-635). This
-// had been FLAGGED at its own site since S4c - "a magic item still
-// sells at its mundane base until the enchantment cost sum is ported"
-// - and M4's catalogue is that sum's missing half, so the flag closes
-// here.
+// had been an open flag at its own site since S4c - "a magic item
+// still sells at its mundane base until the enchantment cost sum is
+// ported" - and M4's catalogue is that sum's missing half, so it
+// closed here and stays closed: legacyEnchantmentValue (:222-238) is
+// the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
+// and the SoulBound/CastWhen arms, and systems/loot.js:259 prices
+// every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
 // `type < ItemDeteriorates` counts, and ItemDeteriorates is 16. Types
@@ -641,9 +644,15 @@ function anyNearbyOfAffinity(ctx, affinityParam, range) {
  *  Strikes. Answers the (possibly modulated) damage; durability losses
  *  land on the item through equip.js's lowerCondition, whose Breaks
  *  edge re-enters here with PAYLOAD.Breaks via the onBreak hook. */
-export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = 0, ctx = null, collection = null } = {}) {
+export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = null, ctx = null, collection = null } = {}) {
   let damageOut = damage;
   ctx = mergeCtx(ctx);   // E2: the host's mounted ctx rides under any per-call one
+  // AUDIT 39: the mounted classic clock, as doEnchantedPayloads reads
+  // it. The stamps written here are read back against the ABSOLUTE
+  // minute (HealthLeech's day/week gate), so a caller with no clock of
+  // its own must get the host's rather than 0 - the strike site passed
+  // a literal 0 and stamped every leech weapon as never used.
+  nowMinutes ??= ctx?.now?.() ?? 0;
   const enchantments = itemEnchantments(item);
   if (!enchantments) return damageOut;
   // E2: UnequipHeldItem's bundle sweep (:1074-1084) runs for EVERY
@@ -676,8 +685,10 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
       // TWO MECHANISMS share the round: a HELD row's MagicRound() is
       // its live bundle's per-round tick (RegensHealth, HealthLeech,
       // ItemDeteriorates... - EntityEffectManager's bundle walk), and
-      // a MagicRound-FLAGGED row's is the payload callback :1767
-      // fires per active magic item (CastWhenHeld's degrade). The
+      // a row carrying the PAYLOAD.MagicRound BIT gets the payload
+      // callback :1762-1769 fires per active magic item
+      // (CastWhenHeld's degrade) - both are DFU's, and the ticked
+      // bundle is :1730-1731's `fromEquippedItem != null`. The
       // port's pump walks equipped items once per round, so ONE gate
       // admits both - the flags stay verbatim per class.
       if ((flags & PAYLOAD.MagicRound) && (row.flags & (PAYLOAD.MagicRound | PAYLOAD.Held))) row.magicRound?.(env);

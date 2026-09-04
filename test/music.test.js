@@ -698,8 +698,13 @@ test('AUDIT 2026-08-25: the SUSTAIN PEDAL, which was being dropped entirely', as
   assert.deepEqual([...sustainIntervals([cc(0, 127), cc(5, 127), cc(10, 0)]).get(0)], [[0, 10]]);
 
   // Left down at the end, it rings to the loop rather than being cut by
-  // an up that never comes.
+  // an up that never comes. Without a song length there is nowhere to
+  // close it but Infinity, which is why the player passes one.
   assert.deepEqual([...sustainIntervals([cc(0, 127)]).get(0)], [[0, Infinity]]);
+  // AUDIT 39: given the song's length, the open pedal closes THERE.
+  assert.deepEqual([...sustainIntervals([cc(0, 127)], 480).get(0)], [[0, 480]]);
+  assert.deepEqual([...sustainIntervals([cc(500, 127)], 480).get(0)], [[500, 500]],
+    'a pedal pressed past the end closes on itself - never a negative ring');
 
   // ONLY CC64 IS THE PEDAL. Every fixture above is made of pedal events,
   // so none of them could tell whether the controller number was checked
@@ -758,7 +763,10 @@ test('AUDIT 2026-08-25: the SUSTAIN PEDAL, which was being dropped entirely', as
   // rather than per lookahead window.
   const src = readFileSync(new URL('../src/systems/songPlayer.js', import.meta.url), 'utf8');
   assert.match(src, /sustainedDuration\(e\.tick, e\.duration \|\| 0, this\._sustain\?\.get\(e\.channel\)\)/);
-  assert.match(src, /this\._sustain = sustainIntervals\(song\.events\);/);
+  // AUDIT 39: the pin moved with the law - the pedal map is built with
+  // the SONG'S LENGTH, so an unlifted pedal closes there instead of at
+  // Infinity (see the pump pin below).
+  assert.match(src, /this\._sustain = sustainIntervals\(song\.events,/);
   const play = src.slice(src.indexOf('  play(song) {'), src.indexOf('  stop() {'));
   assert.match(play, /_sustain = sustainIntervals/, 'built in play(), not in the pump');
 });
@@ -1385,6 +1393,7 @@ test('AUDIT 19: a bend or CC7 during a HELD note reaches it', async () => {
     createGain: () => ({ gain: Object.assign(param(gainWrites), {
       setValueAtTime: (v, t) => gainWrites.push({ v, t }),
       linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {},
+      cancelScheduledValues: () => {},   // AUDIT 39: stop() cancels the channel automation
     }), connect: () => {} }),
     createStereoPanner: null, destination: {},
   };
@@ -1414,6 +1423,107 @@ test('AUDIT 19: a bend or CC7 during a HELD note reaches it', async () => {
   const vol = gainWrites.filter((w) => Math.abs(w.v - volumeGain(40)) < 1e-6);
   assert.ok(vol.length >= 1, 'CC7 never reached the channel gain');
   p.stop();
+});
+
+/** A WebIDL-FAITHFUL AudioContext double: AudioParam methods take
+ *  restricted doubles and AudioScheduledSourceNode.stop() a double, so a
+ *  non-finite time is a TypeError in a real browser and must be one
+ *  here. The suite's older doubles accept anything, which is why the
+ *  hanging-pedal throw below went unseen. */
+function strictCtx() {
+  const finite = (t) => {
+    if (!Number.isFinite(t)) throw new TypeError('non-finite value provided for a restricted double');
+    return t;
+  };
+  const cancels = [];
+  const param = () => ({
+    value: 0,
+    setValueAtTime(v, t) { finite(t); this.value = v; },
+    linearRampToValueAtTime(v, t) { finite(t); },
+    exponentialRampToValueAtTime(v, t) { finite(t); },
+    cancelScheduledValues(t) { finite(t); cancels.push(t); },
+  });
+  const osc = () => ({
+    type: '', frequency: param(), detune: param(),
+    connect: () => {}, start: (t) => finite(t), stop: (t) => { if (t !== undefined) finite(t); },
+  });
+  return {
+    currentTime: 0, sampleRate: 44100, destination: {}, cancels,
+    createOscillator: osc,
+    createGain: () => ({ gain: param(), connect: () => {} }),
+    createBufferSource: () => ({ buffer: null, connect: () => {}, start: (t) => finite(t), stop: (t) => { if (t !== undefined) finite(t); } }),
+    createBiquadFilter: () => ({ type: '', frequency: param(), Q: param(), connect: () => {} }),
+    createBuffer: (ch, n) => ({ getChannelData: () => new Float32Array(n) }),
+    createStereoPanner: null,
+  };
+}
+
+test('AUDIT 39: a pedal left down at the end does not take the pump with it', async () => {
+  const { SongPlayer } = await import('../src/systems/songPlayer.js');
+  // The pedal map used to close an unlifted CC64 at Infinity, so
+  // sustainedDuration returned Infinity for the hanging chord and _voice
+  // handed setValueAtTime/stop a non-finite time. That throws out of the
+  // `for (const e of window)` loop BEFORE `this._cursorTick = toTick`, so
+  // the same window was re-voiced on every pump - a burst of repeated
+  // notes - and the hanging chord never sounded at all, on every loop of
+  // that song.
+  const ctx = strictCtx();
+  const p = new SongPlayer(ctx);
+  const song = {
+    secondsPerTick: 0.001, durationTicks: 400,
+    events: [
+      { tick: 0, type: 'controller', channel: 0, controller: 64, value: 127 },   // pedal down, never lifted
+      { tick: 10, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 20 },
+      { tick: 20, type: 'noteOn', channel: 9, note: 36, velocity: 100, duration: 20 },
+    ],
+  };
+  assert.equal(p.play(song), true);
+  clearInterval(p._timer); p._timer = null;
+  assert.ok(p._cursorTick > 0, 'the cursor advanced - the window was scheduled, not thrown out of');
+  assert.deepEqual([...p._sustain.get(0)], [[0, 400]], 'the pedal closes at the song end');
+  p.stop();
+
+  // ...and the graph is guarded at the boundary too: a note handed a
+  // non-finite length falls back to the same default a missing one gets.
+  const q = new SongPlayer(strictCtx());
+  q._state = { 0: { program: 0, volume: 1, pan: 0, bend: 0 } };
+  q._ensureMaster();
+  assert.doesNotThrow(() => q._voice({ tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100 }, 0, Infinity));
+});
+
+test('AUDIT 39: a song change CANCELS the channel automation it is leaving behind', async () => {
+  const { SongPlayer } = await import('../src/systems/songPlayer.js');
+  const { volumeGain } = await import('../src/systems/gmSynth.js');
+  // _control schedules CC7 at absolute future times up to a full
+  // lookahead ahead, and setValueAtTime only INSERTS an event - it does
+  // not clear later ones. Without a cancel, a CC7 from the song being
+  // left behind fires after the new song's tick-0 CC7 (whose origin is
+  // only currentTime + 0.06) and holds that channel at the old volume.
+  const ctx = strictCtx();
+  const p = new SongPlayer(ctx);
+  const song = (vol) => ({
+    secondsPerTick: 0.001, durationTicks: 400,
+    events: [
+      { tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 10 },
+      { tick: 100, type: 'controller', channel: 0, controller: 7, value: vol },   // inside the first lookahead, scheduled AHEAD
+    ],
+  });
+  p.play(song(20));
+  clearInterval(p._timer); p._timer = null;
+  const g = p._chGains[0];
+  assert.ok(g, 'the channel gain node exists');
+  assert.ok(Math.abs(g.gain.value - volumeGain(20)) < 1e-9, 'the old song scheduled its CC7 ahead');
+
+  ctx.cancels.length = 0;
+  p.play(song(100));
+  clearInterval(p._timer); p._timer = null;
+  assert.ok(ctx.cancels.length >= 1, 'the reset cancelled the pending automation first');
+  assert.equal(p._chGains[0], g, 'the nodes outlive the song - which is why they must be cancelled');
+
+  // stop() leaves none behind either.
+  ctx.cancels.length = 0;
+  p.stop();
+  assert.ok(ctx.cancels.length >= 1, 'a stopped song leaves no automation on the graph');
 });
 
 // ---------------------------------------------------------------------------

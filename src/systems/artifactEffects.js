@@ -34,7 +34,7 @@
 
 import { savingThrow, ELEMENTS, EFFECT_FLAGS } from './spellcast.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { equipTableOf, lowerCondition } from './equip.js';
+import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf } from './statMods.js';
@@ -83,13 +83,47 @@ export function maceState(entity, mint = false) {
   return entry ?? null;
 }
 
+/** ROAD-U: THE ONE ARTIFACT IDENTITY TEST.
+ *  DaggerfallUnityItem.ContainsEnchantment (:1362-1374) over the
+ *  LEGACY array - the item's own record answers "is this the Star",
+ *  which is how DFU asks it (SoulTrap.cs:129
+ *  `amulet.ContainsEnchantment(EnchantmentTypes.SpecialArtifactEffect,
+ *  (short)ArtifactsSubTypes.Azuras_Star)`) and the only way that can
+ *  answer for an item the port did not mint itself. It used to be
+ *  asked of two BOOLEANS - `item.oghmaInfinium` / `item.azurasStar` -
+ *  whose only producer was createArtifact, so an Oghma Infinium or an
+ *  Azura's Star imported from a classic save (classicSave.js's
+ *  classicItemFromRecord, which carries the very same enchantment
+ *  array) read as a plain book and a plain gem: 1009 and 1003 instead
+ *  of 1015 and 1004, and an equipped imported Star captured NO souls
+ *  while isAzurasStarEquipped, one line away at the same death sites,
+ *  correctly said it was worn.
+ *
+ *  The scan stands for DFU's `legacyMagic[0]` index in
+ *  ItemHelper.GetItemInfo (:782, :811) as well: SetArtifact keeps the
+ *  MAGIC.DEF row's None slots where the port's mint filters them out,
+ *  so a fixed index means different slots on the two sides, while a
+ *  scan answers identically on every array either side can hold -
+ *  nothing but an artifact carries type 26 at all. */
+export function hasArtifactSubtype(item, subtype) {
+  const magic = item?.enchantments;
+  if (!magic || magic.length === 0) return false;
+  return magic.some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === subtype);
+}
+
+/** GetItemInfo's Books arm (:782) asks only for the TYPE - any Special
+ *  artifact effect on a book is the Oghma, no param tested. Kept as
+ *  written. */
+export const hasArtifactEffect = (item) => (item?.enchantments ?? [])
+  .some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect);
+
 /** IsRingOfNamira / isWearingHircineRing's shape: an EQUIPPED item
  *  carrying SpecialArtifactEffect with the given subtype param. */
 export function isWearingArtifact(entity, subtype) {
   const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:37)
   if (!slots) return false;
   for (const item of Object.values(slots)) {
-    if (item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === subtype)) return true;
+    if (hasArtifactSubtype(item, subtype)) return true;
   }
   return false;
 }
@@ -258,15 +292,35 @@ const HANDLERS = new Map([
   }],
 ]);
 
-/** DrainTargetStrength (MaceOfMolagBalEffect.cs:214-227): the TARGET
- *  loses strength through the same entry channel. */
+/** DrainTargetStrength (MaceOfMolagBalEffect.cs:186-212): the target
+ *  takes a real DRAIN STRENGTH incumbent - the effect assigns a
+ *  DrainStrength bundle and calls drain.IncreaseMagnitude(amount) - so
+ *  the mace's drain is the ordinary drainAttribute channel, not a
+ *  channel of its own.
+ *
+ *  AUDIT 39: it WAS a bespoke `kind: 'artifact'` entry with an
+ *  unbounded negative statMod, and both halves of DrainEffect went
+ *  missing with it. IncreaseMagnitude never lets a drain take a stat
+ *  below 1 of its permanent value ("DrainEffect alone does not reduce
+ *  attribute to 0 and does not kill"), where the port's
+ *  killIfAnyLiveStatZero kills any entity whose live stat reaches 0 -
+ *  so repeated strikes on a magicka-less foe were an instant kill.
+ *  And healAttributeDamage walks drain/transfer/disease/poison only,
+ *  so a Heal Strength could never repair the old entry.
+ *
+ *  The clamp is DrainEffect.IncreaseMagnitude verbatim, and it is
+ *  spelled out here rather than imported: effects.js owns it, and
+ *  effects.js imports enchantments.js, which imports THIS file - the
+ *  same cycle the header's magicDef note names. */
 function drainStrength(target, amount) {
-  let entry = (target.activeEffects ?? []).find((a) => a.kind === 'artifact' && a.key === 'maceOfMolagBalDrain' && !a.ended);
+  let entry = (target.activeEffects ?? []).find((a) => a.kind === 'drainAttribute' && a.stat === 'strength' && !a.ended);
   if (!entry) {
-    entry = { kind: 'artifact', key: 'maceOfMolagBalDrain', statMods: {} };
+    entry = { kind: 'drainAttribute', stat: 'strength', magnitude: 0, permanent: true };
     (target.activeEffects ??= []).push(entry);
   }
-  entry.statMods.strength = (entry.statMods.strength ?? 0) - amount;
+  const permanentValue = target.stats?.strength ?? 0;
+  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
+  else entry.magnitude += amount;
 }
 
 /** The ONE registry row enchantments.js mounts for type 26: flags are
@@ -283,12 +337,24 @@ export function artifactHook(hookName) {
  * of CalculateAttackDamage when an ENEMY damages the PLAYER
  * (FormulaHelper.cs:702-719): either ring slot carrying subtype 7
  * reflects the damage back by the attacker's TEAM - the animal teams
- * take nothing, Daedra half, Undead double, everyone else full - and
- * the ring pays the reflection in condition. The reflected damage
- * lands directly on the attacker's health, as DFU's CurrentHealth
- * write does. Registered by worldTick (the racial hit hook's shape).
+ * take nothing, Daedra half, Undead double, everyone else full. The
+ * reflected damage lands directly on the attacker's health, as DFU's
+ * CurrentHealth write does. Registered by worldTick (the racial hit
+ * hook's shape).
+ *
+ * AUDIT 58: AND THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+ * does return `durabilityLoss = reflectedDamage`, but this call site
+ * declares `DaggerfallUnityItem item = null;` (FormulaHelper.cs:707),
+ * never assigns it, passes it as `sourceItem` and DISCARDS the
+ * returned PayloadCallbackResults (:712-716). The only readers of
+ * durabilityLoss are EntityEffectManager's payload dispatchers
+ * (:1041-1042, :1095-1096, :1107-1108), which is why the Mace of
+ * Molag Bal, Mehrunes' Razor and the Sanguine Rose wear down and
+ * Namira does not. The port billed the located ring `reflected`
+ * points through lowerCondition, so a run of bounced Undead blows
+ * could BREAK and unequip an artifact DFU keeps pristine.
  */
-export function onPlayerStruckByEnemy(attacker, target, damage, { ctx = null } = {}) {
+export function onPlayerStruckByEnemy(attacker, target, damage) {
   if (!target?.isPlayer || !attacker || damage <= 0) return;
   const slots = equipTableOf(target);
   if (!slots) return;
@@ -308,5 +374,6 @@ export function onPlayerStruckByEnemy(attacker, target, damage, { ctx = null } =
     default: reflected = damage; break;
   }
   attacker.health = (attacker.health ?? 0) - reflected;
-  lowerCondition(ring, reflected, target, ctx?.say ?? null);
+  // NO condition bill: sourceItem is null and the results are dropped
+  // (FormulaHelper.cs:707/:712-716) - see the header.
 }

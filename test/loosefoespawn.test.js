@@ -127,35 +127,54 @@ test('SD1: the dungeon has a BEHAVIOUR-FREE spawn door, and the quest one is bui
 });
 
 test('SD1: the two enchant arms differ exactly as their DFU callers differ', () => {
-  const world = read('src/scenes/world.js');
-  assert.match(world, /spawnFoe: \(mobileType\) => \{ _standLooseFoe\(mobileType, \{ lineOfSightCheck: false \}\); \}/,
+  // WAVE D: the two arms are in the SHARED ctx body, so the difference
+  // between them is stated once for every host that mounts it.
+  const he = read('src/scenes/hostEnchant.js');
+  assert.match(he, /spawnFoe: \(mobileType\) => \{ standFoe\?\.\(mobileType, \{ lineOfSightCheck: false \}\); \}/,
     'SoulBound.cs:100 passes false');
-  assert.match(world, /spawnAlliedFoe: \(mobileType\) => \{ _standLooseFoe\(mobileType, \{ allied: true \}\); \}/,
+  assert.match(he, /spawnAlliedFoe: \(mobileType\) => \{ standFoe\?\.\(mobileType, \{ allied: true \}\); \}/,
     'SanguineRoseEffect.cs:56 takes the default true, and allied');
   // the fixed offset both used is gone
+  const world = read('src/scenes/world.js');
   assert.equal(/spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\]/.test(world), false);
 });
 
 test('SD1: the stander uses the ONE placement law, the live world, and the live pool', () => {
-  const world = read('src/scenes/world.js');
-  const at = world.indexOf('const _standLooseFoe =');
-  const body = world.slice(at, at + 1600);
-  assert.match(body, /collider: d \? d\.collider : collider,/, 'a dungeon is raycast against the DUNGEON\'s geometry');
+  // WAVE D: the placement itself is scenes/hostEnchant.js's, so the
+  // dungeon host stands its released souls through the same law rather
+  // than a copy of it. What stays in each host is the two terms only
+  // that host can answer - which collider, and which pool door.
+  const he = read('src/scenes/hostEnchant.js');
+  const body = he.slice(he.indexOf('export function standLooseFoe'));
   assert.match(body, /playerFeet: \[feet\[0\], feet\[1\] \+ 0\.9, feet\[2\]\],/, 'the cast origin is the controller centre, as tryPlaceFoe has it');
-  assert.match(body, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/, 'fieldOfView() answers RADIANS - the raw value places every foe inside the cone');
-  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => enchantFoes\(\), feet\)/,
-    'the occupancy term reads EC1\'s live pool, so a dungeon foe blocks a dungeon spawn');
+  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => foes, feet\)/,
+    'the occupancy term reads the pool it was handed, so a dungeon foe blocks a dungeon spawn');
   assert.match(body, /spot = placeFoeFreely\(env, \{ minDistance: 4, maxDistance: 20, lineOfSightCheck \}\);/);
-  assert.match(body, /d\n\s*\? d\.spawnLooseFoe\(mobileType, pos, \{ yawRad: yaw, allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mobileType, pos, \{ yaw, allied \}\);/);
   // FinalizeFoe's fork, and the LookAt
   assert.match(body, /const fly = \(ENEMY_BASICS\[mobileType\]\?\.behaviour \?\? 'General'\) === 'Flying';/);
   assert.match(body, /const pos = \[spot\.x, fly \? spot\.y \+ 1\.5 : spot\.y, spot\.z\];/);
   assert.match(body, /const yaw = Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\);/);
-  // an interior still refuses - EC1's answer, until a pool exists there
-  assert.match(body, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/);
   // and the retry is BOUNDED - DFU leaves a MonoBehaviour running free
-  assert.match(world, /const LOOSE_FOE_PLACE_ATTEMPTS = 12;/);
+  assert.match(he, /export const LOOSE_FOE_PLACE_ATTEMPTS = 12;/);
   assert.match(body, /for \(let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i\+\+\)/);
+
+  // the world host: the two terms it owns, and the interior refusal
+  const world = read('src/scenes/world.js');
+  const wb = world.slice(world.indexOf('const _standLooseFoe ='), world.indexOf('const _standLooseFoe =') + 2400);
+  assert.match(wb, /collider: d \? d\.collider : collider,/, 'a dungeon is raycast against the DUNGEON\'s geometry');
+  assert.match(wb, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/, 'fieldOfView() answers RADIANS - the raw value places every foe inside the cone');
+  assert.match(wb, /foes: enchantFoes\(\),/, 'EC1\'s live pool');
+  // ROAD-G G1: the interior no longer refuses - it has a pool, and the
+  // arm routes to the host that owns it before the two-mode gate.
+  assert.match(wb, /if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/,
+    'a building stands its foe through worldModes\' own pool');
+  assert.match(wb, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/,
+    'and a mode with NO pool at all still refuses');
+  // the dungeon host: its own collider, its own motor yaw, its own door
+  const dc = read('src/scenes/dungeonContext.js');
+  const db = dc.slice(dc.indexOf('standLooseFoe: (mobileType, o = {}) => standLooseFoe({'), );
+  assert.match(db.slice(0, 700), /yawRad: _motorYaw,/);
+  assert.match(db.slice(0, 700), /spawn: \(mt, pos, so\) => spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\),/);
 });
 
 test('SD1: EC1\'s refusal flag is retired, and nothing still claims the door is missing', () => {

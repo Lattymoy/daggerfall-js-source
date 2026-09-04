@@ -26,6 +26,7 @@ import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/pape
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
 import { maxEncumbrance } from '../src/combat/formulas.js';
+import { carriedWeight, totalWeight } from '../src/systems/inventory.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
 
@@ -57,8 +58,8 @@ const hero = () => {
   };
   e.items = [
     mk('Longsword'), mk('Dagger'), mk('Buckler', 'Armor'), mk('Cuirass', 'Armor'),
-    { name: 'Gold Pieces', templateIndex: 276, group: 'Currency', stackCount: 1287 },
   ];
+  e.goldPieces = 1287;   // E4: gold is the counter, never a row in the pack
   return e;
 };
 const model = (e) => packModel({ entity: e, items: () => e.items });
@@ -73,8 +74,10 @@ test('U53: the pack reads the four DFU tab pages, and nothing else', () => {
     assert.deepEqual(items, filterByTab(e.items, tab),
       `${tab} must be filterByTab's own answer, not a second filter`);
   }
-  assert.equal(m.count, 5);
-  assert.equal(m.gold, 1287, 'the Currency stack, as every other screen reads it');
+  assert.equal(m.count, 4);
+  assert.equal(m.gold, 1287, 'PlayerEntity.GoldPieces, as every other screen reads it');
+  assert.equal(m.tabs.every((t) => t.items.every((i) => i.group !== 'Currency')), true,
+    'and the list can never show a gold row');
 });
 
 test('U53: encumbrance is the same expression the sheet and the classic window use', () => {
@@ -84,6 +87,16 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
   assert.equal(m.encumbrance.max, maxEncumbrance(liveStat(e, 'strength')));
   assert.notEqual(m.encumbrance.max, maxEncumbrance(e.stats.strength),
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
+  // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
+  // items PLUS the gold counter's weight, and the pane composes it by
+  // hand (enhancedInventory.js:173-174) because it is handed the list
+  // and not the entity - so it must still land on inventory
+  // .carriedWeight's answer.
+  assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
+  // The coin term must be LIVE: hero()'s purse is heavy enough that
+  // the items-only total truncs to a DIFFERENT integer, so the pin
+  // above cannot go vacuous by both sides dropping it at once.
+  assert.notEqual(Math.trunc(carriedWeight(e)), Math.trunc(totalWeight(e.items)));
 });
 
 // ── THE EQUIP CHAIN IS systems/equip.js's, RUN FOR REAL ──────────
@@ -836,6 +849,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   const src = read('src/ui/enhancedInventory.js');
   // one compositor: the pane reads finished pixels and never blits
   assert.match(src, /paperDollPixels\(\)/);
+  assert.doesNotMatch(src, /\bblit\(/, 'and it still never blits');
   assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);   // PX20a: 4x, for a cell twice the size
   const code2 = code('src/ui/enhancedInventory.js');
   for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
@@ -846,7 +860,9 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   // still sees their kit; the DOLL rides behind them only when its
   // art can draw. The pin follows the shape.
   const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
-  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
+  // MW-D36: the model figure stands FIRST when a Morrowind body is
+  // built; the compositor's doll is the fallback behind it, still at 4x.
+  assert.match(fp, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
   assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
@@ -1033,6 +1049,18 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   assert.match(css, /\.loothover \{[\s\S]{0,400}pointer-events: none;/);
   assert.match(hov, /setAttribute\('aria-hidden', 'true'\)/);
   assert.doesNotMatch(hov, /addEventListener|onclick/, 'a readout listens to nothing');
+  // AUDIT 39: AND THE SKIN GATE IS IN THE PLAQUE, ABOVE ensure().
+  // The host gates only the PICK, and calls this every tick on every
+  // skin - so with the gate only there, a classic-skin dungeon's first
+  // tick reached ensure() with a null key and injectEnhancedStyle()
+  // put ENHANCED_CSS's UNSCOPED head rules (`*`, `html, body`, `body`,
+  // `button`, `#app`) onto the classic page. "A player who chose
+  // classic never loads a byte of this" is enhancedStyle.js's own
+  // doctrine, and this is the line that keeps it true.
+  assert.match(hov, /import \{ isEnhanced \} from '\.\.\/systems\/uiSkin\.js';/);
+  const show = hov.slice(hov.indexOf('export function showLootHover'));
+  assert.ok(show.indexOf('if (!isEnhanced()) return;') < show.indexOf('const n = ensure();'),
+    'the skin is asked BEFORE the node is built and the sheet injected');
   // The host runs the SAME pick the take runs, throttled, enhanced only.
   const ctx = read('src/scenes/dungeonContext.js');
   const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3000);
@@ -1114,11 +1142,153 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   // it landed in - so the selection is the PACK's behaviour, not the
   // take's. In the loot-only flow it is a card nobody asked for.
   const src = read('src/ui/enhancedInventory.js');
-  assert.match(src, /picked = packOpen \? taken : null;/);
+  // AUDIT 35: the take clears the pick on BOTH sides now - the pack-open
+  // flow used to keep the taken item selected, which raised the tooltip
+  // after every take (PX24's quirk on the loot side).
+  assert.match(src, /picked = null;\n  if \(packOpen\) \{/, 'the take must clear the pick before the pack-open arm');
+  assert.ok(!/picked = packOpen \? taken : null;/.test(src), 'the taken item must not stay selected');
   assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
   assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
     'the tab-follows-the-item law is unchanged - it just belongs to the pack');
   // The transfer itself is untouched: this slice changes what is SHOWN.
-  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag\);/);
+  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag, \{ entity: deps\.entity, toPlayer: true \}\);/,
+    'E4: `PlayerEntity.Items == to` is the destination test DoTransferItem makes');
   assert.match(src, /if \(plan\.claimsChoice\) \{/, 'G6\'s one-is-the-whole-gift arm still runs first');
+});
+
+test('PX29b: the doll is DFU\'s whole composite - the figure mask is REVERTED', () => {
+  // PX29 wrote a mask of "which pixels are the figure" so the pack
+  // could drop DFU's panel, and it blanked the doll ENTIRELY in play.
+  // The reason is the pin: `_pixels` publishes at the END of
+  // refreshPaperDoll - "the composite swaps in whole when done" - and
+  // the mask published at the START. Any pass that returned early left
+  // a VALID composite paired with an all-zero mask, so every pixel read
+  // as background.
+  const pd = read('src/ui/paperDoll.js');
+  assert.ok(!pd.includes('_figure'), 'the mask is gone, not merely unused');
+  assert.ok(!pd.includes('paperDollFigurePixels'), 'and so is the accessor');
+  assert.match(pd, /PX29, REVERTED \(PX29b\)/, 'and the file records why, for whoever tries it again');
+  // TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. The
+  // composite's own law, which the mask broke by publishing early.
+  assert.match(pd, /_pixels = \{ width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version \};/);
+  // Both windows draw the same composite again.
+  assert.match(read('src/ui/enhancedInventory.js'), /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);
+});
+
+// ═══ PX22: Layer 1 - every region has its share, the list scrolls inside ═
+test('PX22: the character region is its content\u2019s height, the dock scrolls, nothing overlaps', () => {
+  const css = readFileSync('src/ui/enhancedStyle.js', 'utf8');
+  // the dock takes the remainder and is a clipped viewport
+  assert.match(css, /\.pack-shell \.pack-dock \{ flex: 1 1 auto; min-height: 100px;/, 'the dock must take the remainder, never size to its content');
+  assert.doesNotMatch(css, /\.pack-shell \.pack-dock \{[^}]*max-height: 38%/, 'the 38% content-sized dock is the scrunch');
+  assert.match(css, /\.pack-shell \.packlists \{[^}]*overflow-y: auto;\n  flex: 1 1 auto; min-height: 0;/, 'the list must be the scroll viewport (min-height 0)');
+  // the character region is content-sized; the map is a flex item, not 100% of a shared column
+  assert.match(css, /\.pack-shell \.pack-main \{ flex: 0 0 auto;/);
+  assert.match(css, /\.pack-shell \.charcol \.wornmap \{ height: auto; flex: 0 0 auto;/, 'the map must not claim the whole column under the transport strip');
+  // compact rows and a thin tab strip - the 660px window's two rows of tiles
+  assert.match(css, /\.pack-shell \.charcol \.equipped \.wornrow \{ min-height: 40px; padding: 4px 12px;/);
+  assert.match(css, /\.pack-shell \.pack-dock \.packcol\.packcats \{ padding: 0 8px; \}/);
+  assert.match(css, /\.pack-shell \.pack-dock \.packtab \{ min-height: 36px;/);
+  // the window keeps its rows before its margins on a short viewport
+  assert.match(css, /\.pack-win \{[^}]*height: min\(660px, 94dvh\)/);
+});
+
+test('PX22: the list\u2019s scroll position survives a repaint, keyed by the tab that was rendered', () => {
+  const src = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  assert.match(src, /if \(prevList && _renderedTab\) _scrollMemo\.set\(_renderedTab, prevList\.scrollTop\);/,
+    'the memory must be filed under the RENDERED tab - a click changes `tab` before it repaints');
+  assert.match(src, /if \(list && _scrollMemo\.has\(tab\)\) list\.scrollTop = _scrollMemo\.get\(tab\);/);
+  assert.match(src, /_renderedTab = tab;/, 'the rendered tab must be recorded after the paint');
+});
+
+// ═══ PX24: an action taken closes the tooltip ═══════════════════════
+test('PX24: wear, take off, use and stow all clear the pick on success; refusals keep the tip', () => {
+  const src = readFileSync('src/ui/enhancedInventory.js', 'utf8');
+  const fn = (name, next) => src.slice(src.indexOf(`function ${name}(`), src.indexOf(`function ${next}(`));
+  const wear = fn('wear', 'use');
+  // success path clears; the three refusals return before it
+  assert.match(wear, /refreshFigure\(\);[^\n]*\n  picked = null;[^\n]*\n  return render\(\);/, 'wear must clear the pick after equipping');
+  // the refusals return before the clear (broken, forbidden, cannot be worn)
+  assert.equal((wear.match(/return render\(\);/g) || []).length, 4, 'wear\u2019s three refusals plus its success must all render');
+  assert.ok(wear.indexOf('picked = null') > wear.lastIndexOf('cannot be worn'), 'the clear must sit after the last refusal');
+  const off = fn('takeOff', 'chooseDialog');
+  assert.match(off, /picked = null;/, 'takeOff must clear the pick');
+  const use = fn('use', 'takeOff');
+  assert.match(use, /if \(act\.closesWindow\) \{ onExit\(\); return; \}\n  picked = null;/, 'use must clear the pick before its final render');
+  const stow = fn('stow', 'take');
+  assert.match(stow, /applyTransfer\(item, plan, deps\.items\?\.\(\) \?\? \[\], to\);\n  picked = null;/, 'stow must clear the pick after the transfer');
+  assert.ok(!/picked = applyTransfer/.test(stow), 'the arriving item must no longer stay picked');
+});
+
+test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was the "broken take"', () => {
+  // Mac: "When opening a container or body and clicking to loot an
+  // item. The item isn't picked up properly and the tooltip remains."
+  // The first click only SELECTED and raised the tooltip card; taking
+  // needed a second click on its button. DFU's remote list transfers
+  // on the click itself (RemoteItemListScroller_OnItemClick's remove
+  // arm), so the click now calls take() for every loot-like kind. The
+  // REWARD tray alone keeps the two-step: a single click must not
+  // claim G6's one-shot choice.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward'\) \{ take\(item\); return; \}/,
+    'the remote click takes for container, ground and wagon');
+  // ...and it happens AFTER the quest look is counted (AUDIT 26's law:
+  // looking at a quest item in a pile counts, taking it doubly so) and
+  // BEFORE the pick that would raise the card.
+  const click = src.slice(src.indexOf('function itemRow('), src.indexOf('function remoteCol('));
+  const iQuest = click.indexOf('setPlayerClicked');
+  const iTake = click.indexOf("remote.kind !== 'reward'");
+  const iPick = click.indexOf('picked = wasPicked');
+  assert.ok(iQuest > -1 && iQuest < iTake && iTake < iPick,
+    'quest look, then the take, then (reward only) the pick');
+});
+
+// ═══ PX28: the kind label comes off the quest NAME ══════════════════
+test('PX28: a kind label at the front of a quest name is stripped; a name is never emptied', async () => {
+  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  // Mac: the rail already has sections, so a name that repeats the kind
+  // says the same fact twice.
+  assert.equal(questTitleOf("Main Quest: Lysandus' Revenge"), "Lysandus' Revenge");
+  assert.equal(questTitleOf('Side Quest - The Riddle'), 'The Riddle');
+  assert.equal(questTitleOf('Main Quest \u2014 Missing Prince'), 'Missing Prince');
+  assert.equal(questTitleOf('Daedric Quest: Sheogorath'), 'Sheogorath');
+  assert.equal(questTitleOf('Guild Quests | The Heretic'), 'The Heretic');
+  assert.equal(questTitleOf('  Side Quest:   Killing a Giant  '), 'Killing a Giant');
+  // NOT stripped: the word is the name, not a label on it
+  assert.equal(questTitleOf('Main Quest Backbone'), 'Main Quest Backbone', 'no separator - the phrase runs into the title');
+  assert.equal(questTitleOf("Clavicus Vile's Quest"), "Clavicus Vile's Quest", 'the word is at the END');
+  assert.equal(questTitleOf('The Postman'), 'The Postman');
+  // never emptied: a quest actually called "Main Quest" keeps its name
+  assert.equal(questTitleOf('Main Quest'), 'Main Quest');
+  assert.equal(questTitleOf('Side Quest:'), 'Side Quest:');
+  assert.equal(questTitleOf(null), '');
+  // and both places that show a name use it
+  const src = readFileSync('src/ui/enhancedMenu.js', 'utf8');
+  assert.match(src, /document\.createTextNode\(questTitleOf\(q\.name\)\)/, 'the rail row must strip');
+  assert.match(src, /el\('h3', null, questTitleOf\(sel\.name\)\)/, 'the detail head must strip');
+  // the DATA is untouched - the strip is a display seam
+  assert.ok(!/questTitleOf/.test(readFileSync('src/systems/quest/parser.js', 'utf8')), 'the quest parser must not be edited');
+});
+
+test('AUDIT 38 F1: the kind and its noun may be joined, spaced or hyphenated - the LABEL still needs its separator', async () => {
+  const { questTitleOf } = await import('../src/ui/enhancedMenu.js');
+  // a pack writes the label however it likes; PX28's first cut required
+  // a space between the kind and the noun, so the joined spellings
+  // sailed through with the label still on - which is the whole thing
+  // Mac asked to remove.
+  assert.equal(questTitleOf('Sidequest: one word'), 'one word');
+  assert.equal(questTitleOf('MainQuest: joined'), 'joined');
+  assert.equal(questTitleOf('Side-Quest: hyphen'), 'hyphen');
+  assert.equal(questTitleOf('Main\u2013Quest: en dash'), 'en dash');
+  // and the keepers still keep: the trailing separator is what makes a
+  // label a label.
+  assert.equal(questTitleOf('Main Quest Backbone'), 'Main Quest Backbone');
+  assert.equal(questTitleOf('Mainquest Backbone'), 'Mainquest Backbone');
+  assert.equal(questTitleOf("Clavicus Vile's Quest"), "Clavicus Vile's Quest");
+  assert.equal(questTitleOf('Main Quest'), 'Main Quest');
+  // a bare "Quest:" is not a KIND label and stays - it names no kind
+  assert.equal(questTitleOf('Quest: The Postman'), 'Quest: The Postman');
+  // the classic journal is untouched: it strips nothing, ever
+  const classic = readFileSync('src/ui/questJournal.js', 'utf8');
+  assert.ok(!/questTitleOf|QUEST_KIND_LABEL/.test(classic), 'the classic journal must not strip');
 });

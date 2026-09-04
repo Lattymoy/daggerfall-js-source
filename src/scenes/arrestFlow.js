@@ -14,9 +14,21 @@
 //
 // The court sequence: 8050 (Guilty/Not Guilty) -> guilty: halve+pay,
 // serve or walk; not guilty: 8064 (Debate/Lie) -> free (8062) or
-// guilty (8055) with the fine roll. Prison serves through the host's
-// advanceDays; banishment shows 8063. Release clears the crime (the
-// guards despawn on the crime-clear law in cityGuards).
+// guilty (8055) with the fine roll; banishment shows 8063.
+//
+// THE SENTENCE IS SERVED, not summarised. State 3 (:254-262) sets
+// InPrison, switches the panel to PRIS00I0 and hands state 100 a
+// countdown: one day per 0.3 real seconds (ui/prisonScreen.js). Only
+// when the counter empties does UpdatePrisonScreen raise the clock -
+// the whole sentence at once, behind both prevent flags (:471-479) -
+// and only then does ReleaseFromPrison run.
+//
+// RELEASE (:482-491) is five lines and the port now owes all five:
+// PreventEnemySpawns, RaiseTime(240 minutes), the crime clears (the
+// guards despawn on the crime-clear law in cityGuards),
+// PositionPlayerAtLocationEntrance when the arm asked for it, and
+// ClearEnemies. The last two are the host's, through the seams named
+// on createArrestFlow.
 
 import { expandMacroValues } from '../systems/quest/questMacros.js';   // MH1: the ONE macro walk
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -30,7 +42,9 @@ import {
 import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
-import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill
+import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill; F98: every other non-execution exit's
+import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
+import { PrisonScreenWindow, CourtScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)   // ROAD-B B5: Setup's courtPanel, the backdrop the trial stands on
 
 /** ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
  *      DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(240 * 60);
@@ -50,6 +64,36 @@ export function createArrestFlow({
   advanceDays = (days) => advanceWorldMinutes(days * MINUTES_PER_DAY),
   advanceMinutes = (m) => advanceWorldMinutes(m),
   rolls = Math.random,
+  // DaggerfallCourtWindow.OnCourtScreen, whose one subscriber is
+  // CameraRecoiler (:193-197) - the sway is cleared when the court
+  // screen opens. Hosts that own a camera pass their recoiler's reset.
+  onCourtScreen = () => {},
+  // THE JAIL-SKIP TRIO, ReleaseFromPrison's own three lines
+  // (DaggerfallCourtWindow.cs:482-491), each of which needs the host:
+  //
+  //   GameManager.Instance.ClearEnemies()          (:489)
+  //   PositionPlayerAtLocationEntrance()           (:488, when repositioning)
+  //   PlayerEntity.PreventEnemySpawns = true       (:484)
+  //
+  // The third is a plain entity flag and is written here; the first
+  // two are the world's and arrive as seams. A host that hands
+  // neither still gets the flag and the clock - the flow refuses
+  // nothing - which is what the probe hosts and every test do.
+  clearEnemies = () => {},
+  positionPlayerAtLocationEntrance = () => {},
+  // TextManager.GetLocalizedText, for the prison screen's
+  // `daysUntilFreedom` row. Absent, the shipped Internal_Strings
+  // literal stands.
+  localizedText = null,
+  // ROAD-B B5 - InputManager.GetBackButton() (:1075-1078), read every
+  // frame of state 100 (:301-304) to speed the prison countdown up.
+  // It is `Input.GetKey(KeyCode.Escape)`: the RAW key, HELD, neither a
+  // rebindable action nor a thing any window can swallow - which is
+  // why it arrives as its own seam rather than through the overlay's
+  // input(). A host that hands none serves its days at classic speed,
+  // which is what DFU's own "Not in classic" comment says the absence
+  // is worth.
+  backButtonHeld = null,
   // CR1: GuildManager.GetGuild(factionId).IsMember()/Rank for the
   // rescue arms - the member's rank, or null for a non-member. The
   // default is the same guildOfFaction/membershipOf read the quest
@@ -61,10 +105,52 @@ export function createArrestFlow({
     return m ? (m.rank ?? 0) : null;
   },
 }) {
+  /** AUDIT 39 (#21): every DFU consumer of this number reads
+   *  PlayerGPS.CurrentRegionIndex AT THE MOMENT it acts - the crime,
+   *  the surrender, the sentence - so a host that can travel hands a
+   *  getter and the read stays live. A plain number is still accepted
+   *  (the single-location probe host has nowhere to travel to). */
+  const region = () => (typeof regionIndex === 'function' ? regionIndex() : regionIndex);
+
   const text = (id, fallback) => {
     const v = townTalk.texts(id);
     return v?.length && v[0] ? v : [fallback];
   };
+
+  // ---- ROAD-B B5: THE COURTROOM BACKDROP ----
+  //
+  // DaggerfallCourtWindow is ONE window that OPENS on CORT01I0 (Setup
+  // :75-84) and pushes every box of the trial OVER itself
+  // (DaggerfallUI.MessageBox -> uiManager.PushWindow). The port used
+  // townTalk's single overlay slot, so each box REPLACED the last and
+  // there was never a courtroom behind any of them - the FLAG
+  // ui/prisonScreen.js carried in so many words until B1 landed the
+  // stack.
+  //
+  // Two doors, because DFU has two moments: the FIRST box is a real
+  // PushWindow onto the live court window, and each LATER box is
+  // DFU's own `sender.CloseWindow(); MessageBox(next);` - a
+  // one-level replacement that leaves the backdrop beneath, which is
+  // exactly what townTalk.showOverlay does now.
+  let courtScreen = null;
+  function openCourtScreen() {
+    courtScreen = new CourtScreenWindow();
+    townTalk.showOverlay(courtScreen);
+  }
+  /** One box of the trial, over the courtroom. */
+  function courtBox(win, onClosed = null) {
+    if (courtScreen && townTalk.overlay === courtScreen) townTalk.pushOverlay(win, onClosed);
+    else townTalk.showOverlay(win, onClosed);
+  }
+  /** State 100's tail: ReleaseFromPrison ends in CancelWindow (:490),
+   *  which pops the court window itself. The flag is enough - townTalk's
+   *  frame drains a `done` overlay every tick, and the backdrop is not
+   *  the top until the last box has popped off it, so the courtroom
+   *  goes exactly one frame after the final box and not before. The
+   *  reference is KEPT: the terminal arms call release() BEFORE they
+   *  show their box (the AUDIT 21/26/39 ordering), and courtBox still
+   *  has to know that box is the first one over the backdrop. */
+  function closeCourtScreen() { if (courtScreen) courtScreen.done = true; }
 
   function crimeId() {
     const c = playerEntity.crimeCommitted;
@@ -77,11 +163,11 @@ export function createArrestFlow({
     if (crimeId() === 0) return false;
     if (!playerEntity.haveShownSurrenderDialogue) {
       playerEntity.haveShownSurrenderDialogue = true;
-      lowerRepForCrime(playerEntity, regionIndex, crimeId());
+      lowerRepForCrime(playerEntity, region(), crimeId());
       townTalk.showOverlay(new ChoiceWindow({
         lines: text(TEXT_SURRENDER, 'Halt! You are under arrest. Do you surrender?'),
         options: [
-          { code: 'KeyY', label: 'Y - surrender', action: () => { if (surrenderToCityGuards(playerEntity, regionIndex, true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
+          { code: 'KeyY', label: 'Y - surrender', action: () => { if (surrenderToCityGuards(playerEntity, region(), true, { setHealth1: () => { playerEntity.health = 1; } })) startCourtFlow(); } },
           { code: 'KeyN', label: 'N - fight on', action: () => applyDamage() },
         ],
       }));
@@ -89,7 +175,7 @@ export function createArrestFlow({
     }
     // Shown before: a fatal blow forces the surrender attempt
     if (playerEntity.health <= dmg) {
-      const accepted = surrenderToCityGuards(playerEntity, regionIndex, false, { setHealth1: () => { playerEntity.health = 1; } });
+      const accepted = surrenderToCityGuards(playerEntity, region(), false, { setHealth1: () => { playerEntity.health = 1; } });
       if (accepted) { startCourtFlow(); return true; }
     }
     return false;
@@ -137,22 +223,34 @@ export function createArrestFlow({
     // entirely, so the court has its own song. The flag existed nowhere in
     // the port, which left CourtSongs unreachable.
     playerEntity.arrested = true;
-    const court = startCourt(playerEntity, regionIndex, crimeId(), { rolls });
+    onCourtScreen();
+    // Setup runs before any box: the courtroom is up first, and
+    // RaiseOnCourtScreenEvent (:86) fires from inside it - which is
+    // the line above, kept where it already stood.
+    openCourtScreen();
+    const court = startCourt(playerEntity, region(), crimeId(), { rolls });
     // CR1: the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
     // BEFORE the plead box - a rescued player never pleads. The exit
     // is the acquittal's own trio (:191-193): FillVitalSigns,
     // RaiseReputationForDoingSentence, then state 100's release.
     const rescue = court ? guildRescue(court, { guildRankOf, roll: rolls }) : null;
     if (rescue) {
-      clearArrest();
+      // (:191-193) FillVitalSigns, RaiseReputationForDoingSentence,
+      // state = 100 - and state 100 with InPrison false is
+      // ReleaseFromPrison. The release used to be `clearArrest()`
+      // ABOVE this pair, which cost nothing while release was only a
+      // clock jump; now that it carries ClearEnemies and the
+      // reposition, the order is the law's. WITHOUT the reposition:
+      // this is the ONE arm that never sets repositionPlayer.
       fillVitalSigns(playerEntity);
       raiseRepForSentence(playerEntity, court);
-      townTalk.showOverlay(new ChoiceWindow({
+      release({ reposition: false });
+      courtBox(new ChoiceWindow({
         lines: courtLines(rescue.textId, 'Your guild has arranged your release.', court),
       }));
       return;
     }
-    townTalk.showOverlay(new ChoiceWindow({
+    courtBox(new ChoiceWindow({
       lines: [courtMacros(text(TEXT_COURT_START, 'You stand accused. How do you plead?')[0] ?? '', court)],
       options: [
         { code: 'KeyG', label: 'G - guilty', action: () => finish(pleaGuilty(court, playerEntity), court) },
@@ -162,7 +260,7 @@ export function createArrestFlow({
   }
 
   function notGuilty(court) {
-    townTalk.showOverlay(new ChoiceWindow({
+    courtBox(new ChoiceWindow({
       lines: text(TEXT_HOW_CONVINCE, 'How will you convince the court?'),
       options: [
         { code: 'KeyD', label: 'D - debate (Etiquette)', action: () => verdict(court, true) },
@@ -174,7 +272,6 @@ export function createArrestFlow({
   function verdict(court, useDebate) {
     const r = pleaNotGuilty(court, playerEntity, useDebate, { rolls });
     if (r.outcome === 'free') {
-      clearArrest();                   // AUDIT 21 F2: including `arrested`
       // AUDIT 26 F038: the acquittal calls FillVitalSigns explicitly
       // (DaggerfallCourtWindow.cs:191) - a FULL refill of all three
       // pools. Surrender forces health to 1 (PlayerEntity.cs:2321,
@@ -186,35 +283,65 @@ export function createArrestFlow({
       // in its own comment two lines up ("Also does not repair
       // reputation"). We port DFU.
       raiseRepForSentence(playerEntity, court);
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.', court) }));
+      // AUDIT 21 F2: including `arrested`. The bare clearArrest() used
+      // to run ABOVE the pair; DFU's free arm ends `state = 6` (:427),
+      // and state 6 is `repositionPlayer = true; state = 100` (:292-296)
+      // - so the acquitted player IS put down at the entrance, after
+      // the refill and the reputation, not before.
+      release();
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.', court) }));
       return;
     }
     if (r.outcome === 'banished') { finish({ outcome: 'banished' }, court); return; }
-    townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }),
+    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }),
       () => finish(resolveGuiltyVerdict(court, playerEntity), court));
   }
 
   function finish(result, court) {
     if (result.outcome === 'banished') {
-      // SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
       // AUDIT 17e F22: state 4 (Banished) does NOT call
       // RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
       // - being run out of the region repairs nothing.
+      severePunishment(SEVERE_PUNISHMENT_BANISHED);
+      // ":276 - Refill player vitals after banishment, otherwise player
+      // left with 1HP outside city gates", DFU's own comment.
+      fillVitalSigns(playerEntity);
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
       return;
     }
     if (result.outcome === 'executed') {
-      // State 5 (:280-291). SeverePunishmentFlags |= 2 pends with the rest
-      // of the severe-punishment consequences; state 6 then repositions the
-      // player at the location entrance, which is the same reposition the
-      // banishment arm owes. UNREACHABLE - startCourt cannot mint a 1 - but
-      // present, so it cannot be mistaken for verified. See court.js F7.
+      // State 5 (:280-291); state 6 (:292-296) then sets
+      // repositionPlayer, which is the same reposition the banishment
+      // arm sets at :273 - both land through release() below. NO
+      // FillVitalSigns here - state 5 is the one exit DFU does not
+      // refill. UNREACHABLE
+      // - startCourt cannot mint a 1 - but present, so it cannot be
+      // mistaken for verified. See court.js F7.
+      severePunishment(SEVERE_PUNISHMENT_EXECUTED);
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_EXECUTED, 'You have been executed.', court) }));
+      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_EXECUTED, 'You have been executed.', court) }));
       return;
     }
     if (result.outcome === 'prison') {
+      // STATE 3 (DaggerfallCourtWindow.cs:254-262), line for line:
+      //     playerEntity.InPrison = true;
+      //     SwitchToPrisonScreen();
+      //     daysInPrisonLeft = daysInPrison;
+      //     playerEntity.RaiseReputationForDoingSentence();
+      //     repositionPlayer = true;
+      //     state = 100;
+      // and NOTHING else. The days do not pass here. The port used to
+      // credit the sentence, jump the clock, refill and release in one
+      // breath behind a "You serve N days in prison." line of text -
+      // which is the RESULT of the sequence with the sequence itself
+      // deleted. Classic sits you in front of PRIS00I0 and counts the
+      // days down at one every 0.3s; that is the window below, and the
+      // clock jump is its LAST tick, not its first.
+      //
+      // InPrison is what tells state 100 which arm to run: while it is
+      // set, the countdown ticks; the update that clears it releases.
+      playerEntity.inPrison = true;
       // DFU's ORDER, which the port had backwards. State 3 credits the
       // sentence (:259) and only THEN does the countdown elapse the days
       // (:475) - and it sets PreventNormalizingReputations across the skip
@@ -222,17 +349,41 @@ export function createArrestFlow({
       // Harmless while NormalizeReputations was unported; not harmless now
       // that it is.
       raiseRepForSentence(playerEntity, court);
-      // AUDIT 24 (the seven-slice sweep): and here is the line the
-      // comment above has been describing. UpdatePrisonScreen
-      // (DaggerfallCourtWindow.cs:473-474) sets BOTH prevent flags
-      // immediately before RaiseTime; worldTick clears this one at the
-      // end of the same update, exactly as PlayerEntity.cs:528-530
-      // does. Without it a sentence long enough to cross a 112-day
-      // boundary normalized away the reputation it had just credited.
-      playerEntity.preventNormalizingReputations = true;
-      advanceDays(result.days);
-      release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: [`You serve ${result.days} days in prison.`] }));
+      const days = result.days;
+      // SwitchToPrisonScreen (:511-524). DFU swaps the background on
+      // the court window itself; the port lays the prison panel at the
+      // SAME stack level (showOverlay's one-level replacement), so the
+      // found-guilty box it replaces is gone and the courtroom is still
+      // underneath. Same screen, a different owner - named in
+      // ui/prisonScreen.js's header.
+      townTalk.showOverlay(new PrisonScreenWindow({
+        daysInPrison: days,
+        localizedText,
+        speedUp: backButtonHeld,
+        // UpdatePrisonScreen's zero arm (:471-479), in ITS order:
+        // both prevent flags, THEN the one RaiseTime of the whole
+        // sentence, then InPrison clears and the vitals refill.
+        onEndPrisonTime: () => {
+          // AUDIT 24 (the seven-slice sweep) put the normalizing flag
+          // here; :473 is its twin, and the twin had no port at all.
+          // The catch-up spawn loop reads it (encounters.js's
+          // intermittentEnemySpawn, and the host loop that wraps it),
+          // so without it a thirty-day sentence rolled thirty days of
+          // encounters onto the courthouse steps the moment the door
+          // opened.
+          playerEntity.preventEnemySpawns = true;
+          playerEntity.preventNormalizingReputations = true;
+          advanceDays(days);
+          playerEntity.inPrison = false;
+          // (:478) the refill lands when daysInPrisonLeft hits 0,
+          // AFTER the RaiseTime - the day the sentence ends, not the
+          // day it began.
+          fillVitalSigns(playerEntity);
+        },
+      // The window closes into state 100 with InPrison false, which is
+      // ReleaseFromPrison (:318) - and repositionPlayer was set back
+      // at :260, so the release puts the player at the entrance.
+      }), () => release());
       return;
     }
     // AUDIT 18 F6: NO box here. The zero-days arms - the guilty plea
@@ -243,7 +394,34 @@ export function createArrestFlow({
     // which a guilty PLEA never reaches; pushing it here both invented
     // a "sentenced to 0 days in prison" record on the plea path and
     // showed 8055 TWICE on the failed-defense path.
+    //
+    // AUDIT 39 F98: both of those arms DO refill - :249 on state 2 and
+    // :347 on the plea, where DFU names the divergence it is fixing
+    // ("Oversight in classic: Does not refill vital signs when
+    // releasing in this case, so player is left with 1 health").
+    fillVitalSigns(playerEntity);
     release();
+  }
+
+  /** DaggerfallCourtWindow's two severe-punishment writes: state 4
+   *  (Banished) `RegionData[regionIndex].SeverePunishmentFlags |= 1`
+   *  (:272) and state 5 (Execution) `|= 2` (:289). Bit 1 is not a
+   *  record - PlayerEntity.cs:506-511 reads it every catch-up minute
+   *  and rolls a 10% Criminal_Conspiracy guard spawn in that region
+   *  for ever after, which is the whole cost of being banished. The
+   *  port's consumer (encounters.passiveGuardSpawns, fed at
+   *  world.js's minute catch-up) has been live with nothing to read.
+   *  A host whose region store is absent writes nothing rather than
+   *  minting one - DFU's RegionData is allocated at chargen.
+   *
+   *  AUDIT-39r: through region(), like every other consumer. DFU reads
+   *  regionIndex live (DaggerfallCourtWindow.cs:118) and the streaming
+   *  host hands this flow a getter, so keying the store by the raw
+   *  parameter indexed it by a Function and both bits no-oped exactly
+   *  where fast travel makes banishment reachable. */
+  function severePunishment(bit) {
+    const r = playerEntity.regionConditions?.[region()];
+    if (r) r.severePunishmentFlags |= bit;
   }
 
   /** OnPop (DaggerfallCourtWindow.cs:427-441). EVERY court exit funnels
@@ -264,28 +442,52 @@ export function createArrestFlow({
     // the afternoon has moved when you step back outside, and the prison
     // day-skip does not cover it - a zero-day plea still costs four hours.
     //
-    // FLAGGED, still owed to their own slices: PreventEnemySpawns across the
-    // skip, ClearEnemies, and PositionPlayerAtLocationEntrance.
+    // ReleaseFromPrison opens with PreventEnemySpawns (:484) and the
+    // RaiseTime is the SECOND line, not the first. Four hours of
+    // suppressed catch-up: the release itself is a clock jump, and DFU
+    // shields every one of them.
+    playerEntity.preventEnemySpawns = true;
     advanceMinutes(RELEASE_MINUTES);
     playerEntity.arrested = false;
     playerEntity.crimeCommitted = 0;   // ReleaseFromPrison: the crime clears; guards despawn on the crime-clear law
     playerEntity.haveShownSurrenderDialogue = false;
+    playerEntity.inPrison = false;     // OnPop (:438) - the flag never outlives the window
   }
 
-  /** Leaving CUSTODY - the court exit plus the prison vitals floor. An
-   *  acquitted player never went to prison, so they take clearArrest
-   *  alone. AUDIT 26 F038: the old note here called the line below
-   *  "FillVitalSigns' floor" and said it belonged to release - both
-   *  halves were wrong. FillVitalSigns is a FULL refill (health,
-   *  fatigue and magicka to their maxima, DaggerfallEntity.cs
-   *  :442-447) and DFU calls it on the ACQUITTAL and the Thieves
-   *  Guild rescue, never on release: ReleaseFromPrison (:482-490)
-   *  does not touch health at all. The clamp below is the port's own
-   *  safeguard against walking out of a sentence at 0 HP, kept and
-   *  named as such. (The TG rescue's refill rides the guild-rescue
-   *  pend with the rest of that branch.) */
-  function release() {
+  /** Leaving CUSTODY. ReleaseFromPrison (:482-490) does not touch
+   *  health at all, so the clamp below is the port's own safeguard
+   *  against walking out at 0 HP and nothing more.
+   *
+   *  THE REFILL BELONGS TO THE ARMS, NOT HERE. FillVitalSigns is a
+   *  FULL refill - health, fatigue and magicka to their maxima
+   *  (DaggerfallEntity.cs:442-447) - and DFU calls it from every court
+   *  exit EXCEPT the execution: the acquittal (:191), the guild rescue
+   *  (:213), state 2's zero-day release (:249), banishment (:276), the
+   *  guilty plea's zero-day arm (:347) and the end of a prison
+   *  sentence (:478). AUDIT 39 F98: four of those six were missing
+   *  here, and surrender forces health to 1, so a player who pleaded
+   *  guilty, lost their case, served their days or was banished walked
+   *  back outside on exactly 1 HP with fatigue and magicka untouched.
+   *
+   *  THE REPOSITION IS NOT UNIVERSAL. `repositionPlayer` is set by the
+   *  arms that put you back on the street - state 2's zero-day release
+   *  (:248), the prison sentence (:260), banishment (:273), state 6
+   *  after an acquittal or an execution (:294) and the guilty plea's
+   *  zero-day arm (:345) - and the GUILD RESCUE is the one exit that
+   *  never sets it (:191-194 goes straight to state 100). A rescued
+   *  member walks out of the courthouse where they stood; everyone
+   *  else is put down at the location entrance. */
+  function release({ reposition = true } = {}) {
     clearArrest();
+    // ReleaseFromPrison ends in CancelWindow (:490) - the court window
+    // itself pops. EVERY court exit funnels through release(), which is
+    // why the courtroom is closed here and not on one arm.
+    closeCourtScreen();
+    // ReleaseFromPrison's tail, in ITS order (:487-489): the
+    // reposition FIRST, then ClearEnemies - so the sweep runs in the
+    // world the player has just landed in, not the one they left.
+    if (reposition) positionPlayerAtLocationEntrance();
+    clearEnemies();
     playerEntity.health = Math.max(1, playerEntity.health);   // the port's own floor, not DFU's
   }
 
