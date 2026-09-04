@@ -803,7 +803,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:489` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:633-637`, `scenes/world.js:2483`), the
+   (`ui/nativeInventory.js:633-637`, `scenes/world.js:2537`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
@@ -815,8 +815,8 @@ ships, which is the warning the section's own preamble opens with.
     (`ui/bankWindow.js` + the ships arm of `ui/bankPurchaseWindow.js`
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
-    `scenes/world.js:3435` (the arrival clamp anchoring the encounter
-    clock, so the traveled window is not replayed) and `:1910` (the
+    `scenes/world.js:3491` (the arrival clamp anchoring the encounter
+    clock, so the traveled window is not replayed) and `:1964` (the
     ":524-525" clear that lets spawns resume). AUDIT 58 re-resolved this
     pair - both cites had drifted off the lines they name.
 11. **`:544` `PatchRegionIndex` legacy-save fix.** Ported verbatim at

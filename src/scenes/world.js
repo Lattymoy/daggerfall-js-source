@@ -30,6 +30,9 @@ import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: 
 import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
 import { loadVendoredPegas } from '../systems/pegasVendor.js';   // MW-D50: the mod vendored with permission, ranked behind the player's own
+import { createPegasHorses } from '../systems/pegasHorses.js';   // PH1: the mod's horses - creatures in the world
+import { createPegasRider } from '../systems/pegasRider.js';   // PH1: the riding script's host half
+import { mintSaddle, isSaddle } from '../systems/pegasRide.js';   // PH1: the Horse Saddle, for the ride-out door
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
@@ -1288,19 +1291,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   let pegas = null;          // MW-D42: the loaded 3D mount, or null (the sprite lane)
   let pegasSounds = new Set();
   let pegasWanted = false;
+  // MW-D50 / PH1: ONE composition of the Morrowind archives for every
+  // Pegas consumer - the player's own attach ranks ahead of the
+  // vendored set - resolved once and shared by the Daggerfall mount's
+  // mesh (MW-D42) and the mod's own horses (PH1).
+  let _pegasArchives = null;
+  const pegasArchives = () => (_pegasArchives ??= (async () => {
+    const attached = await loadMorrowindArchives();
+    const vendored = await loadVendoredPegas();   // MW-D50: null when the vendor tree carries no horse
+    const archives = vendored ? [...attached, vendored] : attached;   // the player's own copy answers first
+    return archives;
+  })());
+  async function ensurePegasSounds() {
+    if (!pegasSounds.size) pegasSounds = await registerHorseSounds(audio, await pegasArchives());
+    return pegasSounds;
+  }
   async function tryLoadPegas() {
     if (pegasWanted || !isEnhanced()) return;
     pegasWanted = true;
     try {
-      const attached = await loadMorrowindArchives();
-      const vendored = await loadVendoredPegas();   // MW-D50: null when the vendor tree carries no horse
-      const archives = vendored ? [...attached, vendored] : attached;   // the player's own copy answers first
+      const archives = await pegasArchives();
       const horse = loadPegasHorse({ renderer, archives });
       if (!horse.ok) {   // MW-D50: with a vendored set behind it, a miss at any stage is worth a line
         console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
         return;
       }
-      pegasSounds = await registerHorseSounds(audio, archives);
+      pegasSounds = await ensurePegasSounds();
       pegas = horse;
       console.log(`[pegas] the horse is saddled (variant ${horse.variant}, ${pegasSounds.size} mod sounds)${horse.notes.length ? ' - ' + horse.notes.join('; ') : ''}`);
     } catch (err) {
@@ -1318,6 +1334,40 @@ export async function bootWorld(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  // PH1 (Pegas-Arc): the mod's horses in this world and the riding
+  // script's host half. Enhanced skin only - every call site is gated
+  // on isEnhanced(), so the classic lane never reaches either. `say`
+  // is a thunk because townTalk is built further down.
+  const pegasHorses = createPegasHorses({ renderer, archives: pegasArchives });
+  let _pegasThird = false;   // the frame's view, for the ride's free-view / height-menu arms
+  const pegasRider = createPegasRider({
+    player, playerEntity, horses: pegasHorses, renderer, audio,
+    sounds: () => pegasSounds, say: (line) => townTalk?.say?.(line),
+  });
+  // PH1 / TSR4: the ride-out door in the enhanced skin - a common horse
+  // spawned where the rider stands, a Horse Saddle in the pack, the
+  // mount through the script's own gates
+  function pegasRideOut() {
+    const h = pegasHorses.spawn({ pos: [player.pos[0], player.pos[1], player.pos[2]], yawDeg: cam.yaw * 180 / Math.PI });
+    if (!(playerEntity.items ?? []).some(isSaddle)) playerEntity.items.push(mintSaddle());
+    ensurePegasSounds().catch(() => {});
+    pegasRider.mount(h, { sneaking: false, yawDeg: cam.yaw * 180 / Math.PI });
+  }
+  // PH1: the horses stay where they stand across a travel - the mod's
+  // horse is a creature in its cell, not a thing in the pack - so
+  // _teleportToPixel carries them out in natives (the OLD frame, before
+  // state.init re-centres) and puts them back after the destination
+  // stands. A ride in progress ends first: the script's own cell-change
+  // law leaves the horse behind (hr_riding :219-221).
+  function pegasCarryOut() {
+    if (pegasRider.riding) pegasRider.dismount('activate');
+    const carry = pegasHorses.snapshotWorld((pos) => state.worldCoords(pos)).map((sh) => ({ ...sh, y: sh.y - state.compensation[1] }));
+    pegasHorses.destroy();
+    return carry;
+  }
+  function pegasCarryIn(carry) {
+    pegasHorses.restoreWorld(carry, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+  }
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -1643,7 +1693,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     } else if (edge) {
       console.warn('[testroom] ride out: no terrain under the edge landing after the ring built - mounting where you stand');
     }
-    setTransportModeHere(TRANSPORT_MODES.Horse);
+    // PH1: in the enhanced skin the ride is the MOD's - a horse spawned
+    // where you stand, a Horse Saddle in the pack, the mount through the
+    // script's own gates; the classic skin keeps Daggerfall's mount.
+    if (isEnhanced()) pegasRideOut();
+    else setTransportModeHere(TRANSPORT_MODES.Horse);
     console.log(`[testroom] ride out: mounted ${groundThere ? 'outside the location, facing it' : 'where you stand'}`);
   };
   if (testPreset) {
@@ -2955,12 +3009,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       destroyPixel(bx, by);
       state.release(bx, by);
     }
+    const _pegasCarry = pegasCarryOut();   // PH1: the horses ride the travel in natives
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
     let dest;   // `finally`: a throwing build must not leave the poll off
     try { dest = await buildPixel(first.px, first.py); }
     finally { _seasonStraightening = false; }
+    pegasCarryIn(_pegasCarry);   // PH1: back where they stood, in the new frame
     // TeleportToMapPixel STORES the reposition method and calls
     // InitWorld (:1076-1095); Update() applies it only once the terrain
     // update has finished (:266-295). So the RandomStartMarker arm runs
@@ -3594,6 +3650,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // compensation-free height rides per record.
         foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: sf.y - state.compensation[1] })),
         guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
+        // PH1: every Pegas horse the player owns, where it stands, with
+        // its record - the mod saves the horse as a creature in its cell
+        pegasHorses: pegasHorses.snapshotWorld((pos) => state.worldCoords(pos)).map((sh) => ({ ...sh, y: sh.y - state.compensation[1] })),
       },
     });
     const r = saveSlot(playerEntity.name, saveName, snap);
@@ -3674,6 +3733,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // above already tore the old pools down with the pixel.
         exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
         cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // PH1: the horses come back where they stood; a ride in
+        // progress ends first (the load lands the player on foot at the
+        // horse - the script's own load fix, :196-212, then puts the
+        // horse at its recorded spot, which is where the rider is)
+        if (pegasRider.riding) pegasRider.dismount('activate');
+        pegasHorses.destroy();
+        pegasHorses.restoreWorld(w.pegasHorses, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
@@ -6278,6 +6344,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // through the paralysis fired a synthetic press on the frame it lifted.
         // ROAD-Ar (R0): ...and the season hold stops the motor dead,
         // because there is no floor under it while the re-skin runs.
+        // PH1: the riding script's frame, ahead of the motor it drives -
+        // the keys go to the machine, the machine's answer to player.pegas
+        if (pegasRider.riding && !_overlayHeld && !_seasonHeld) {
+          pegasRider.tick({ dt, run: held(keys, 'Run'), sneak: held(keys, 'Sneak'), firstPerson: !_pegasThird, yawDeg: cam.yaw * 180 / Math.PI, waterY: player.waterSurfaceY, paused: gamePaused() });
+        }
         if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
           forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
@@ -6425,7 +6496,11 @@ export async function bootWorld(canvas, renderer, params, status) {
             const qf = pickQuestFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider);
             if (qf) qf.questBehaviour.doClick();
           }
-          if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+          // PH1: a Pegas horse under the ray takes the mount gates, and a
+          // mounted rider's ACTIVATE is the ride's own (the dismount, or
+          // free view under SNEAK - hr_horse_script :223, :753, :897).
+          const pegasTook = isEnhanced() && pegasRider.tryActivate(cam.pos, useFwd, collider, { sneaking: held(keys, 'Sneak') });
+          if (!pegasTook && !townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
             // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
             // The watch and the encounter foes leave the same container
             // type, so which body you open is PlayerActivate's nearest
@@ -6489,6 +6564,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
+      pegasHorses.offsetAll(r.offset);   // PH1: the horses ride the floating origin like every pool
       droppedLoot.offsetAll(r.offset);
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
@@ -6554,6 +6630,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
+    _pegasThird = !!mwv.thirdPerson;   // PH1: the ride reads the view a frame later (its tick runs before this)
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
@@ -6733,6 +6810,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (clip && !pegas.setClip(clip)) pegas.setClip(HORSE_CLIPS.still);   // fall back a gait, never a dead horse
       pegas.advance(clip ? dt : 0);
       renderer.drawCharacter(pegas.mesh, horseModelMatrix(player.pos, cam.yaw));
+    }
+
+    // PH1: the mod's horses - the standing ones at their own feet (their
+    // idle law, their endurance back), the ridden one at the rider -
+    // through the same character pass, enhanced skin only.
+    if (isEnhanced()) {
+      pegasHorses.update(gamePaused() ? 0 : dt);
+      pegasHorses.draw(dt, { paused: gamePaused() });
+      pegasRider.drawRidden(dt, { paused: gamePaused() });
     }
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.

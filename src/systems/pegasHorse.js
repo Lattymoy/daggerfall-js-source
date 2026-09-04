@@ -64,6 +64,10 @@ export const HORSE_SOUNDS = Object.freeze({
   gallop: 'sound/cr/maxhorse/horse_gallop.wav',
   idle: 'sound/cr/maxhorse/horse_idle2.wav',
   roar: 'sound/cr/maxhorse/horse_roar.wav',
+  // PH1: the riding script's other two - idle3 the stop-from-gallop
+  // (hr_horse_script :677), scream the special move's cut-off (:626)
+  idle3: 'sound/cr/maxhorse/horse_idle3.wav',
+  scream: 'sound/cr/maxhorse/horse_scream.wav',
 });
 
 /** MW-D42: the mod's horse is LIFESIZE in Morrowind units (bind span

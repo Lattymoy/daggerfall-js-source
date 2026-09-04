@@ -441,7 +441,12 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  zero it, that flag gates only encumbrance. */
 export function unitWeightInKg(item) {
   const t = templates[item.templateIndex];
-  let base = t ? t.baseWeight : 0;
+  // DFU copies the template weight onto the item (weightInKg) and reads
+  // the ITEM; the port reads the template by index, so an item with no
+  // Daggerfall row (PH1: the mod's Horse Saddle, PegasItems 1001)
+  // carries its own. A Daggerfall item always has its row, so the classic
+  // lane never reaches the fallback.
+  let base = t ? t.baseWeight : (item.weight ?? 0);
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
     base = weightForMaterial(base, item.material);
   }
