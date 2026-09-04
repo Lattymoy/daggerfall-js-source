@@ -256,8 +256,17 @@ test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool 
   // watchman in a shop, standing passive. The two producers are two
   // different questions and this host has to keep them apart too.
   const ex = src('src/scenes/exterior.js');
-  assert.ok(ex.includes('makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),'),
+  // ROAD-G G1 lifted the hand-spelled join to `_liveEnemyDatabase`, so
+  // the quest door and the struck-foe arm cannot walk different
+  // databases in this host either - which is the whole point of DFU
+  // having ONE ActiveGameObjectDatabase.
+  assert.ok(ex.includes('const _liveEnemyDatabase = () => [...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])];'),
+    'the fixed-city host\'s database is the watch joined with the mounted mode\'s pool');
+  assert.ok(ex.includes('const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());'));
+  assert.ok(ex.includes('makeEnemiesHostile: _makeEnemiesHostile,'),
     'the fixed-city host\'s quest door walks the UNNARROWED database');
+  assert.ok(ex.includes('makeAreaHostile: _makeEnemiesHostile,'),
+    'and its guard pool\'s struck-foe arm walks the same one');
   assert.ok(ex.includes('return [...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>'),
     'and questFoeInstances - the one caller that really asks the narrow question - keeps liveQuestFoes');
 });

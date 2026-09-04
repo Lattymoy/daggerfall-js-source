@@ -189,7 +189,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:198 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:1972 supplies
+// bought building's own mapId and key, and worldModes.js:2017 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

@@ -160,12 +160,16 @@ test('SD1: the stander uses the ONE placement law, the live world, and the live 
 
   // the world host: the two terms it owns, and the interior refusal
   const world = read('src/scenes/world.js');
-  const wb = world.slice(world.indexOf('const _standLooseFoe ='), world.indexOf('const _standLooseFoe =') + 1200);
+  const wb = world.slice(world.indexOf('const _standLooseFoe ='), world.indexOf('const _standLooseFoe =') + 2400);
   assert.match(wb, /collider: d \? d\.collider : collider,/, 'a dungeon is raycast against the DUNGEON\'s geometry');
   assert.match(wb, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/, 'fieldOfView() answers RADIANS - the raw value places every foe inside the cone');
   assert.match(wb, /foes: enchantFoes\(\),/, 'EC1\'s live pool');
+  // ROAD-G G1: the interior no longer refuses - it has a pool, and the
+  // arm routes to the host that owns it before the two-mode gate.
+  assert.match(wb, /if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/,
+    'a building stands its foe through worldModes\' own pool');
   assert.match(wb, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/,
-    'an interior refuses; the two modes with a pool do not');
+    'and a mode with NO pool at all still refuses');
   // the dungeon host: its own collider, its own motor yaw, its own door
   const dc = read('src/scenes/dungeonContext.js');
   const db = dc.slice(dc.indexOf('standLooseFoe: (mobileType, o = {}) => standLooseFoe({'), );

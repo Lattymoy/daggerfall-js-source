@@ -270,7 +270,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:4680/4682's verbatim, and talk.js's
+  // expressions are world.js:4707/4682's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -345,7 +345,12 @@ test('QX1 review: the bridge asks IsPlayerInTown(true, true), and the hostility 
   // active enemy database; only questFoeInstances asks the narrowed
   // question. Wired to `liveQuestFoes`, `enemies makehostile` flipped
   // nothing but quest-spawned foes in a mounted mode.
-  assert.match(SRC, /makeEnemiesHostile: \(\) => makeEnemiesHostile\(\[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\)\]\),/);
+  // ROAD-G G1 lifted the hand-spelled join to `_liveEnemyDatabase`, the
+  // one definition this host's quest door AND its guard pool's
+  // struck-foe arm both read - DFU has one ActiveGameObjectDatabase,
+  // not one per caller.
+  assert.match(SRC, /const _liveEnemyDatabase = \(\) => \[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\)\];/);
+  assert.match(SRC, /\n {4}makeEnemiesHostile: _makeEnemiesHostile,/);
   assert.match(SRC, /return \[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.liveQuestFoes\?\.\(\) \?\? \[\]\)\]\.filter\(/,
     'and the NARROWED walk keeps its own caller');
 });

@@ -219,6 +219,7 @@ import { createPotion, getMagicItemTemplates } from '../systems/loot.js';   // M
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
+import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
@@ -636,6 +637,43 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** ROAD-G G1: THE LOOSE-FOE STAND, INDOORS - SoulBound's break
+   *  release and the Sanguine Rose's Daedroth, in a building.
+   *
+   *  world.js's `_standLooseFoe` refused every mode but exterior and
+   *  dungeon, on the premise EC1 wrote down: "interiors have no foe
+   *  pool to stand one in". That premise died when IF mounted
+   *  `interiorFoes` - this host has carried a real encounter pool
+   *  since, and `tryPlaceInteriorQuestFoe` above already stands quest
+   *  foes in it through exactly this law.
+   *
+   *  The placement IS that law: CreateFoe.PlaceFoeBuildingInterior
+   *  (CreateFoe.cs:219-233) is PlaceFoeFreely over the building's own
+   *  transform and nothing else - DFU's own comment says the interior
+   *  spawn nodes are deliberately NOT used ("Always place foes around
+   *  player rather than use spawn points"), so an enchantment's foe
+   *  and a quest's foe are placed by the identical member. What
+   *  differs is only the spawner FIELDS, and those ride
+   *  `standLooseFoe` (minDistance 4 / maxDistance 20, the
+   *  CreateFoeSpawner defaults at GameObjectHelper.cs:1314) exactly as
+   *  they do for the other two hosts' arms.
+   *
+   *  The occupancy test walks BOTH of this host's pools, like every
+   *  other placement in this file: DFU's gate is a bare
+   *  `Physics.OverlapSphere` (CreateFoe.cs:317-321), so a watchman
+   *  standing in the room blocks a spot as surely as a daedra does. */
+  function standInteriorLooseFoe(mobileType, opts = {}) {
+    if (!interiorCtx || !interiorFoes) return null;   // no building mounted: nothing to stand it in
+    return standLooseFoe({
+      collider: interiorCtx.collider,
+      feet: player.pos,
+      yawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      foes: interiorFoePool(),
+      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied }),
+    }, mobileType, opts);
+  }
+
   /** Mint the pool over THIS interior's collider. Called at the mount,
    *  torn down with the context. */
   function makeInteriorFoes(ctx) {
@@ -765,7 +803,7 @@ export function createWorldModes(host) {
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:441-442 and
-   *  cityGuards.js:663-664 each take `entityIsParalyzed` +
+   *  cityGuards.js:710-664 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -797,6 +835,13 @@ export function createWorldModes(host) {
       // interiorFoes' arm, for the same reason: a host whose corpses
       // never leave streaming range hands nothing to TrackLooseObject.
       currentPixelKey: () => null,
+      // ROAD-G G1: interiorFoes' OWN dep, on the pool standing beside
+      // it - DaggerfallEntityBehaviour.cs:255-258 over this host's one
+      // database. A watchman called into a shop and talked down with
+      // Etiquette, then struck, left the daedra in the same room
+      // passive; the encounter pool has walked both since AUDIT 58 and
+      // this one walked nothing at all.
+      makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
       say: (l) => say(l),
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
@@ -5092,7 +5137,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5497's own wave-46 note); the interior
+          // a blow (world.js:5524's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6678,16 +6723,31 @@ export function createWorldModes(host) {
      *  localPosition, under the same parent transform - which is
      *  `interiorFoes`' own remove/spawn pair here.
      *
-     *  THE WATCH IS REFUSED, and that is a departure written down
-     *  rather than a mis-route: DFU transforms any `EnemyEntity`, and
-     *  Knight_CityWatch is one, but `createCityGuards` exposes no
-     *  remove/spawn pair (cityGuards.js:1065's returned surface), so
-     *  the only reaches available would be the encounter pool's -
-     *  which is the very confusion this door exists to end. Leaving
-     *  the watchman standing is the smaller departure. */
+     *  ROAD-G G1: AND THE WATCH TRANSFORMS TOO - the refusal that
+     *  stood here is retired. Its whole premise was that
+     *  `createCityGuards` exposed no remove/spawn pair; the pool
+     *  carries `removeGuard` now (WabbajackEffect.cs:86's
+     *  `SetActive(false)`), so an indoor watchman is REMOVED through
+     *  the pool that owns its billboard and its VAO, exactly as a
+     *  shop's daedra is through interiorFoes'. The RE-STAND is
+     *  interiorFoes either way, and that is not a mis-route: the
+     *  seventeen careerIDs (:24-44) hold no Knight_CityWatch, so
+     *  CreateEnemy always mints an EnemyMonster, and this host's two
+     *  pools share one collider, one frame and one death chain - the
+     *  port's reading of "under the struck enemy's own parent
+     *  transform" (:87). A record from NEITHER pool still answers
+     *  null, which is the membership question this door exists to
+     *  ask. */
+    /** ROAD-G G1: this host's arm of the enchantment SPAWN door - see
+     *  `standInteriorLooseFoe`. A host asks it only in interior mode;
+     *  a dungeon mounted by this same machine answers through
+     *  `dungeonCtx.spawnLooseFoe`, which is that pool's own chain. */
+    insideStandLooseFoe(mobileType, opts = {}) { return standInteriorLooseFoe(mobileType, opts); },
     insideReplaceFoe(foe, mobileType, feet) {
-      if (!foe?._encounter || !interiorFoes) return null;
-      interiorFoes.removeFoe(foe);
+      if (!foe || !interiorFoes) return null;
+      if (foe._encounter) interiorFoes.removeFoe(foe);
+      else if (interiorGuards?.guards.includes(foe)) interiorGuards.removeGuard(foe);
+      else return null;
       return interiorFoes.spawnFoe(mobileType, feet);
     },
     tryPlaceQuestFoe(handle) {

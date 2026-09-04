@@ -148,7 +148,7 @@ These are the items where the port is not merely incomplete but
 and `standFoe` are consumed by `systems/quest/actions.js` (CreateFoe,
 :2024-2101) and `systems/quest/sceneMount.js:177`, and **no host
 supplies any of them**. Every hit in `src/` is a consumer or a
-documented absence - `worldModes.js:232` "standFoe is absent",
+documented absence - `worldModes.js:233` "standFoe is absent",
 `machine.js:162` "ABSENT createFoeGameObjects = the spawn law idles".
 Consequence: no quest that requires killing or meeting a Foe resource
 can be completed, and every `killed`/`injured` trigger is unreachable.
@@ -157,7 +157,7 @@ can be completed, and every `killed`/`injured` trigger is unreachable.
 **2. The dungeon half of the quest scene mount does not exist.**
 `Place.cs:302-360` (ConfigureFromPlayerLocation), `:511-533`
 (AddQuestResourceObjects(SiteTypes.Dungeon)), `:539-556`
-(IsPlayerHere). The interior adapter ships (`worldModes.js:286-298`,
+(IsPlayerHere). The interior adapter ships (`worldModes.js:287-298`,
 ~70 LOC); the dungeon one does not. Persons, Items and Foes placed at
 a dungeon never stand, and `PcAt`/`IsPlayerHere` never see the player
 as inside one - which is where the majority of the quest corpus sends
@@ -191,7 +191,7 @@ topics and organisation info are all *computed and thrown away*.
 **7. The static-NPC conversation is never opened.**
 `TalkManager.cs:2616-2663`. Every non-service static NPC and the guild
 popup's TALK button route here; the port answers "You get no
-response." (`worldModes.js:625`). Again the engine is complete - only
+response." (`worldModes.js:626`). Again the engine is complete - only
 the window mount is missing. (~140 LOC.)
 
 The shape of 4-7 is worth naming on its own: **the port has repeatedly

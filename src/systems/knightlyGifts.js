@@ -5,7 +5,7 @@
 // third is ReceiveHouse, below (:105-151, H1) - and DR2 closed the
 // twentieth, so guildServiceFlow.js's SERVICE_DESTINATION now names a
 // window for every arm of DoGuildService's switch. This file's three
-// are routed at worldModes.js:2600 (Spymaster), :2612 (ReceiveArmor)
+// are routed at worldModes.js:2645 (Spymaster), :2612 (ReceiveArmor)
 // and :2732 (ReceiveHouse).
 //
 // THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a BITFIELD on
@@ -146,7 +146,7 @@ export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
  * H1 - ReceiveHouse (:222-252). SHIPPED HERE: the last of the service
  * destinations that needs no window of its own - the four-refusal
  * ladder is receiveHouseDecision below and the flag write is
- * claimHouse, wired at worldModes.js:2732-2736 through
+ * claimHouse, wired at worldModes.js:2777-2736 through
  * SERVICE_DESTINATION.ReceiveHouse. It is also the only path in the
  * game that grants a house without DaggerfallBankPurchasePopUp -
  * a 436-line window that renders the building's own 3D model beside a

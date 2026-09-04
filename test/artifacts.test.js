@@ -192,10 +192,14 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
     'the shared ctx mounts the allied spawn');
   const w = read('src/scenes/world.js');
   assert.ok(/standLooseFoe: _standLooseFoe,/.test(w), 'world.js hands in its own stander');
-  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 1200);
+  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 2400);
   assert.ok(/\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: o\.yawRad, allied: o\.allied \}\)/.test(stander)
     && /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/.test(stander),
     'through a live pool either way, carrying allied to it');
+  // ROAD-G G1: and a THIRD live pool - a Sanguine Rose broken in a shop
+  // stands its Daedroth through the interior host's own chain.
+  assert.ok(/if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/.test(stander),
+    'the interior arm goes to the pool that owns that building');
   const dc0 = read('src/scenes/dungeonContext.js');
   assert.ok(/standLooseFoe: \(mobileType, o = \{\}\) => standLooseFoe\(\{/.test(dc0),
     'and the dungeon host hands in its own');

@@ -1004,11 +1004,22 @@ export async function bootExterior(canvas, renderer, params, status) {
     loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: cityGuards.guards }),
     feet: detectFeet,
   });
+  // ROAD-G G1: THE AREA, for GameManager.MakeEnemiesHostile - world.js's
+  // `_liveEnemyDatabase` for the host whose exterior pool is the WATCH
+  // alone. ActiveGameObjectDatabase is ONE database for the scene
+  // (GameManager.cs:795), so the walk is the watch above ground PLUS
+  // whatever pool the mode machine has mounted below or inside. The
+  // quest-action door below (`makeEnemiesHostile`) spelled this join out
+  // by hand; it asks this one definition now, so the struck-foe arm and
+  // the quest arm cannot walk different databases.
+  const _liveEnemyDatabase = () => [...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])];
+  const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258 - a struck PASSIVE watchman turns the area
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -1373,7 +1384,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:828/:842) - world.js:2017 hoisted its copy for exactly
+   *  (effects.js:828/:842) - world.js:2018 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -2090,14 +2101,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4726 is the same line.
+    // other. world.js:4753 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4739-4742. */
+     *  %rn/%rt's producer - world.js:4766-4742. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2157,7 +2168,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:4759's line
+     *  mode-aware (worldModes:1258), so this is world.js:4786's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
@@ -2165,7 +2176,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:4767's call verbatim. */
+     *  Bridge-only, no host state - world.js:4794's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211). The INSIDE arms are live on
      *  this route - worldModes.tryPlaceQuestFoe places in a dungeon and
@@ -2234,7 +2245,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:5443's line.
+    // closure S40 gave this host, and world.js:5470's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -2257,7 +2268,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // not only the ones carrying a QuestResourceBehaviour. The narrowed
     // walk (`liveQuestFoes`) has its own caller below - questFoeInstances,
     // which is the one seam that really does ask the narrower question.
-    makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),
+    makeEnemiesHostile: _makeEnemiesHostile,   // ROAD-G G1: the hand-spelled join lifted to `_liveEnemyDatabase` above, where the struck-foe arm reads it too
     clearEnemies: () => cityGuards.clearLive?.(),
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
     // over ONE database - the inside pool unioned in, or SetComplete
@@ -2459,14 +2470,24 @@ export async function bootExterior(canvas, renderer, params, status) {
     const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => cityGuards.guards, _insidePool);
     const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
     /** SD1: SoulBound's break release and the Sanguine Rose's
-     *  Daedroth, through DFU's own placement - but only where this
-     *  session has a pool to stand one IN. That is the dungeon the mode
-     *  machine mounts; above ground this host's only pool is the WATCH,
-     *  which mints watchmen and exposes no free spawn pair, and a
-     *  building has none of its own here at all. Refusing is EC1's
-     *  answer and the honest one until a pool exists - the same refusal
-     *  world.js makes for its interior mode. */
+     *  Daedroth, through DFU's own placement - in whichever of this
+     *  session's worlds has a pool to stand one IN.
+     *
+     *  ROAD-G G1: that is now the INTERIOR as well as the dungeon, and
+     *  by the same door world.js reaches (THE FOUR HOSTS RULE - the
+     *  interior host is the SAME `createWorldModes` instance for both
+     *  routes, so a law it answers belongs to both). The clause this
+     *  replaced said "a building has none of its own here at all",
+     *  which was never about this host: the pool is worldModes'
+     *  (`interiorFoes`, live since IF), and the placement is
+     *  CreateFoe.PlaceFoeBuildingInterior (CreateFoe.cs:219-233).
+     *
+     *  ABOVE GROUND this route still refuses, and that premise is
+     *  intact: its only exterior pool is the WATCH, which mints
+     *  watchmen and nothing else, so there is no chain to stand a
+     *  Daedroth in. */
     const _standLooseFoe = (mobileType, o = {}) => {
+      if (_mode() === 'interior') return modes?.insideStandLooseFoe?.(mobileType, o) ?? null;
       const d = _mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
       if (!d) return null;
       return standLooseFoe({
@@ -2488,11 +2509,20 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  there.
      *
      *  THE EXTERIOR ARM REFUSES, and that is a departure written down
-     *  rather than a mis-route - worldModes.js already wrote the same
-     *  one for the same pool: `createCityGuards` exposes no
-     *  remove/spawn pair, so the only reach available would be another
-     *  host's, which is exactly the confusion this door exists to end.
-     *  Leaving the watchman standing is the smaller departure. */
+     *  rather than a mis-route - but ROAD-G G1 replaced its premise
+     *  with the true one. It is NOT that the guard pool cannot be
+     *  emptied: `cityGuards.removeGuard` is the WabbajackEffect.cs:86
+     *  `SetActive(false)` door now, and world.js's street arm and
+     *  worldModes' indoor one both transform the watch through it.
+     *  It is that CreateEnemy (:87-88) has nowhere to mint the new
+     *  career on THIS route: careerIDs holds seventeen monsters
+     *  (:24-44) and this host mounts no encounter pool at all above
+     *  ground - the same absence its `standLooseFoe` above refuses on,
+     *  and the same one that makes this the fixed-city test route
+     *  rather than the streaming world. Removing the watchman and
+     *  standing nothing would be strictly worse than DFU: the struck
+     *  guard would simply vanish. Leaving it standing is the smaller
+     *  departure, and the reach it would need is a pool, not a door. */
     const _enchantReplaceFoe = (targetEntity, mobileType) => {
       const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
       if (!f) return;

@@ -1809,6 +1809,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258, over the SAME database the encounter pool walks
     // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
     // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
     // The mode host owns them all (it is the one that runs
@@ -2209,7 +2210,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:1905 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4047
+  // that context through modes.dungeonCtx - so worldModes.js:4092
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2290,7 +2291,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
     if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }   // wave 37: `modes?.` above the declaration, guarded on the OBJECT
     if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); return; }
-    exteriorFoes.removeFoe(f);
+    // ROAD-G G1: THE STREET HAS TWO POOLS, and the removal must go
+    // through the one that owns the billboard - `exteriorFoePool` is
+    // the watch AND the encounter foes, and this arm reached the
+    // encounter pool's remover for both. A struck WATCHMAN was simply
+    // not in `foes`, so removeFoe found nothing to release: the
+    // watchman kept standing, kept swinging and kept its VAO while a
+    // second monster stood up beside it. DFU transforms any
+    // EnemyEntity and Knight_CityWatch is one (WabbajackEffect.cs:64).
+    // The RE-STAND is the encounter pool's either way: careerIDs holds
+    // seventeen monsters and no watch (:24-44), so CreateEnemy mints an
+    // EnemyMonster whichever pool the struck record came from - and
+    // both of this host's pools share one collider and one frame, which
+    // is what "under the struck enemy's own parent transform" (:87)
+    // means for a host with no Unity hierarchy.
+    if (cityGuards.guards.includes(f)) cityGuards.removeGuard(f);
+    else exteriorFoes.removeFoe(f);
     exteriorFoes.spawnFoe(mobileType, feet).then(stamp).catch(() => {});
   };
   /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
@@ -2350,8 +2366,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
-    // Interiors have no foe pool to stand one in, so they still refuse
-    // - EC1's answer, and the honest one until a pool exists.
+    // ROAD-G G1: THE INTERIOR ARM, through the pool that exists.
+    // This line used to read `if (mode !== 'exterior' && mode !==
+    // 'dungeon') return null;` on EC1's premise - "interiors have no
+    // foe pool to stand one in" - and that premise died the day
+    // interiorFoes.spawnFoe went live. DFU has no mode gate here at
+    // all: CreateFoe picks a PLACEMENT per area (CreateFoe.cs:195-212)
+    // and PlaceFoeBuildingInterior (:219-233) is PlaceFoeFreely over
+    // the building, the same member the dungeon arm gets. So SoulBound's
+    // break release and the Sanguine Rose's Daedroth stand in a shop
+    // now, through the interior host's own pool, collider and death
+    // chain - never this host's street pool, which is the routing law
+    // `enchantFoeHost` states for the sinks and the Wabbajack.
+    if (mode === 'interior') return modes?.insideStandLooseFoe?.(mobileType, opts) ?? null;
     if (mode !== 'exterior' && mode !== 'dungeon') return null;
     const d = _dungeonPool();
     return standLooseFoe({
@@ -4596,7 +4623,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6310-6322 -
+  // worldModes answers it in BOTH modes (worldModes.js:6355-6322 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

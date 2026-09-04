@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:712-780`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:750-780`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -498,13 +498,47 @@ missing the live Enhanced Environments arc. Both lanes landed after this record 
 Left, deliberately, each recorded at its site or here:
 
 - The three tree findings, above.
-- `createCityGuards` takes no `makeAreaHostile` dep at all, so striking a
+- ~~`createCityGuards` takes no `makeAreaHostile` dep at all, so striking a
   passive WATCHMAN turns nobody - symmetric in `world.js` and in the
-  interior host, and therefore not a one-host fix.
-- The indoor WATCH refuses the Wabbajack: DFU transforms any
+  interior host, and therefore not a one-host fix.~~ **SHIPPED (ROAD-G G1,
+  2026-09-04)**, and as the whole aggro block rather than the one dep:
+  DaggerfallEntityBehaviour.cs:250-261 in C#'s own order - the
+  `!IsHostile` read and `MakeEnemiesHostile()` first, then
+  `MakeEnemyHostileToAttacker` (which flips this guard, so reading after
+  it would make the walk unreachable for the only case it exists for),
+  then the ally TEAM reset - inside `damageGuard`'s existing `fromPlayer`
+  gate (:203) and ahead of the Knight_CityWatch murder tally (:265-269).
+  All THREE minting hosts hand in their own area: `world.js`'s
+  `_makeEnemiesHostile`, `exterior.js`'s (whose hand-spelled quest-door
+  join was lifted to `_liveEnemyDatabase`, so its two arms cannot walk
+  different databases), and `worldModes.js`'s `interiorEnemyDatabase`.
+  Pinned RUNNING against the live pool in `test/roadg_pools.test.js`.
+- ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the
-  code rather than left as a flag.
+  code rather than left as a flag.~~ **SHIPPED (ROAD-G G1, 2026-09-04)**.
+  `cityGuards.removeGuard` is WabbajackEffect.cs:86's `SetActive(false)`
+  - off the scene, batch freed, no corpse and no death chain - and both
+  the indoor arm (`worldModes.insideReplaceFoe`) and the STREET arm
+  (`world.js`'s `enchantReplaceFoe`) route by pool membership through it.
+  The street half was worse than this bullet recorded: that arm handed a
+  struck watchman to the ENCOUNTER pool's `removeFoe`, which could not
+  find it, so the guard kept standing, kept swinging and kept its VAO
+  while its replacement stood up beside it. The re-stand is the encounter
+  pool's either way, because `careerIDs` is seventeen monsters and no
+  watch (:24-44). `exterior.js` still refuses, on the true premise: that
+  route mounts no encounter pool above ground, so CreateEnemy has nowhere
+  to mint the new career - written at the site, not flagged.
+- ~~(not on this list, but the same shape and closed with them)~~ **ROAD-G
+  G1 also retired EC1's last refusal**: `world.js`'s `_standLooseFoe`
+  refused INTERIOR mode on the premise "interiors have no foe pool to
+  stand one in", which died the day `interiorFoes.spawnFoe` went live and
+  nothing went back to read it - so SoulBound's break release and the
+  Sanguine Rose's Daedroth stood NOWHERE in a building. CreateFoe has no
+  mode gate at all (CreateFoe.cs:195-212) and PlaceFoeBuildingInterior
+  (:219-233) is PlaceFoeFreely over the building, the same member the
+  dungeon arm gets; `worldModes.standInteriorLooseFoe` is that member,
+  and both hosts that mount the mode machine reach it.
 - `exterior.js`'s `createPlayerMagic` still carries the interior arm that
   `world.js` lost, so a player-cast spell in a building reached by that
   host sees no foes.
