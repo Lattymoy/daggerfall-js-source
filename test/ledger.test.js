@@ -242,6 +242,24 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it`);
   assert.match(cited, /loadKeyBinds ignores them in a DFU-written file/,
     'the cited range must hold the WHOLE flag, not its first line');
+  // ROAD-G G6 (2026-09-04) BUILT the other one, so this half flipped
+  // from "recorded against section A" to "shipped": the row must strike
+  // the recorded clause, say so, and name the module - and the module
+  // must still be in the tree, which is the two-sided contract the rest
+  // of this test holds every re-swept row to.
+  assert.match(keybind, /~~THE MOUSE\/ADVANCED WINDOW[\s\S]*?~~ \*\*THE MOUSE\/ADVANCED WINDOW SHIPPED WHOLE \(ROAD-G G6, 2026-09-04\) and this row's live clause is NARROWED TO THE JOYSTICK WINDOW ALONE\.\*\*/,
+    'the mouse/advanced clause must be struck and re-stated as shipped, narrowing the row to the joystick');
+  assert.match(keybind, /`ui\/mouseControlsWindow\.js` IS DaggerfallUnityMouseControlsWindow\.cs/,
+    'the shipped clause must name the module it shipped');
+  assert.match(readFileSync(join(ROOT, 'src/ui/mouseControlsWindow.js'), 'utf8'),
+    /export class MouseControlsWindow/,
+    'the Ledger says the mouse/advanced window shipped; the file must still carry it');
+  assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
+    /this\.advanced \?\?= new MouseControlsWindow\(this\.unsaved\);/,
+    'the ADVANCED tab must still reach it, on the grid\'s own staged dicts');
+  assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
+    /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
+    'the Ledger cites the gamepad flag at inputActions.js; the flag must still be there');
   assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
     /The port has no gamepad layer \(Ledger\)\./,
     'the JOYSTICK tab note that sends the reader to this row must still be there');

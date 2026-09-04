@@ -9010,3 +9010,90 @@ and four new tests in `test/bankpreview.test.js` (9 mutants driven, 9
 dead). The mutants are written beside the assertions that kill them.
 Nothing here has been seen in a browser: the two panels are GL draws and
 the standing rule since 2026-09-01 is that the owner verifies.
+
+## ROAD-G G6 - THE MOUSE / ADVANCED CONTROLS WINDOW (2026-09-04)
+
+`DaggerfallUnityMouseControlsWindow.cs` was one of two DFU windows
+nothing in `src/` cited. TC1 recorded both in Port-Ledger section C's
+keybinding row (`:593`) and adjudicated them: the joystick window an
+owner decision (no gamepad layer anywhere in this port), the
+mouse/advanced window a departure section A already covered, because
+its ten settings are all rows on the port's ONE settings screen. That
+second adjudication is retired by this slice - the window is built, and
+the row's live clause is down to the joystick alone.
+
+**THERE IS NO NATIVE ART, AND THAT IS THE FINDING.** Every other window
+in this arc opens with a CIF or an IMG. This one opens with a flat
+`Panel`: `mainPanelBackgroundColor` black, `Outline.Enabled`, 318x170
+at Center/Middle, which over the 320x200 native panel is exactly
+`(1, 15)`. `SetBackground` (:281-291) offers the colour only as the
+FALLBACK - a mod may supply a texture named
+`advancedControlsMainPanelBackgroundColor` - and the port has no mod
+texture layer, so the colour arm is the only arm. Same shape for the
+ADVANCED tab itself, which DFU paints with an
+`advanced_controls_button` texture out of its own Resources folder
+(DaggerfallControlsWindow.cs:114-120), and for `HSliderThumbLeft/Body/
+Right` and `checkbox_checked/unchecked`. All four are recorded the way
+`ui/travelPopUp.js` records its green checkbox: DFU's own art, not
+Daggerfall's, with a colour arm DFU ships for exactly this case.
+
+**WHAT SHIPPED**
+
+- `src/ui/mouseControlsWindow.js` - the window: the panel and its
+  outline, the title, CONTINUE at Right/Bottom, SIX keybind rows
+  (Escape, AutoRun, ToggleConsole, PrintScreen, QuickSave, QuickLoad -
+  exactly the six DFU leaves off the classic grid, which the grid's own
+  header has recorded as DFU's quirk since I4), FOUR sliders, FIVE
+  checkboxes and the weapon-attack-threshold field, every rect derived
+  from DFU's alignment arithmetic rather than eyeballed.
+- `src/ui/horizontalSlider.js` - `HorizontalSlider.cs` plus
+  `DaggerfallUI.AddSlider`, as a component: the three indicator modes,
+  `DisplayUnits 20` and the `(max-min)+20` total it derives, the float
+  mode's x10-and-round, the trough, the thumb with its 10px floor, the
+  paging click, the truncating drag. `ui/nativeTalk.js` had carried
+  half of `DrawSlider` for the topic bar since AUDIT 58 and now
+  delegates; `SetScrollIndex`'s clamp is `ui/verticalScrollBar.js`'s,
+  because HorizontalSlider.cs's own header says "Reused code from
+  VerticalScrollBar" and it is the same three lines.
+- `onSavedKeyBinds` in `src/systems/inputActions.js` -
+  `InputManager.OnSavedKeyBinds`. It looks like a notification and is
+  really an ORDERING, which is the most interesting thing in the C#:
+  the window does ALL of its setting writes in that handler (:78,
+  :334-360) and its own CONTINUE calls nothing but `CancelWindow`, so
+  the ten values land when the CONTROLS window saves. Port the event
+  and the ordering falls out.
+- `comboFromEvent` and `PromptRemoveKeybindMessage`'s rows moved into
+  `systems/controlsConfig.js`, where the second always belonged - both
+  rebinding windows need them and the grid imports the popup, so they
+  could not stay in the grid.
+
+**TWO DFU QUIRKS KEPT.** `float.TryParse` gates the threshold write:
+`TextBox.Text` is the TYPED text and `DefaultText` is only a display
+fallback (TextBox.cs:342-343), so a player who opens this window and
+never touches the field leaves `WeaponAttackThreshold` exactly as it
+was. And `GetMouseLookSmoothingStrength` returns the index of an EXACT
+match or ZERO - a stored 0.45 reads "None", not nearest.
+
+**ONE DEPARTURE RETIRED ON THE WAY.** `ui/lookSettings.js` clamped
+MouseLookSensitivity at 4.0 against DFU's 0.1..16.0
+(SettingsManager.cs:524), and `ui/settingsLaw.js` mirrored the
+narrowing under its range-equals-clamp law with the note "the port
+clamps at 4.0". Building DFU's slider verbatim would have offered
+travel the consumer ignored, so the clamp was widened to DFU's instead:
+the law now holds because the port agrees with DFU end to end rather
+than because the screen agrees with a narrower port.
+
+**WHAT DID NOT SHIP, and why.** `DaggerfallJoystickControlsWindow.cs`
+stays unbuilt - an owner call, unchanged: the port has no gamepad layer
+at all, the serialized joystick blocks are simply absent from
+`KeyBindData_v1`, and the flag that says so is
+`src/systems/inputActions.js:496`. The JOYSTICK tab still answers with
+its note, and Ledger `:593`'s live clause now names that window alone.
+`weaponSensitivitySlider` is commented out in DFU itself (:47, :338) -
+nine controls are built, the tenth is a stub - and
+`StartGameBehaviour.ApplyStartSettings()` has no port counterpart
+because every one of these settings is read at its point of use.
+
+**Pins:** `test/mousecontrols.test.js`, 13 tests, 29 mutations, 29
+dead. `test/ledger.test.js` holds the Ledger row from both sides - the
+struck clause and the module it names must both still be there.

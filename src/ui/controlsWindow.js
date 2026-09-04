@@ -17,9 +17,16 @@
 //   quirk is recorded rather than reproduced (Ledger B would need a
 //   second layout table to lie identically).
 // - the tab row at y=190 (:108-131): JOYSTICK (0), ADVANCED (80 -
-//   DFU's mouse tab), DEFAULT (160), CONTINUE (240), 80x10 each. The
-//   first two answer with a note: no gamepad layer, and the advanced
-//   window rides the settings arc.
+//   DFU's mouse tab), DEFAULT (160), CONTINUE (240), 80x10 each.
+//   ADVANCED opens DaggerfallUnityMouseControlsWindow over this one
+//   (ROAD-G G6, ui/mouseControlsWindow.js), sharing THESE staged dicts
+//   exactly as DFU's two windows share ControlsConfigManager.Instance;
+//   JOYSTICK still answers with a note, because the port has no
+//   gamepad layer at all (Ledger). DFU paints the ADVANCED tab with an
+//   "advanced_controls_button" texture out of its own Resources folder
+//   (:114-120); the port has no DFU asset bundle, so the tab is the
+//   bare CNFG00I0 rect - ui/travelPopUp.js's shape, recorded, and not
+//   a behaviour.
 // - the PRIMARY/SECONDARY toggle at (268,0,50,8) (:135-141), showing
 //   which staged dict the grid edits; switching is refused while the
 //   shown dict carries an internal clash (:337-343).
@@ -48,14 +55,15 @@ import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { ACTIONS, saveKeyBinds, comboCode } from '../systems/inputActions.js';
+import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
 import { bindings } from './input.js';
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
-  INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR,
+  INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, comboFromEvent, removeKeybindPromptRows,
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
+import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -110,25 +118,13 @@ export const controlsArtLoaded = () => !!_art;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
-/** The three virtual modifiers a KeyboardEvent reports, each mapped to
- *  the LEFT physical key - see the narrowing note in input(). The
- *  modifier keys themselves are excluded: pressing Shift alone must
- *  bind Shift, not a Shift+Shift combo. */
-const EVENT_MODIFIERS = Object.freeze([
-  ['ctrlKey', 'ControlLeft', ['ControlLeft', 'ControlRight']],
-  ['shiftKey', 'ShiftLeft', ['ShiftLeft', 'ShiftRight']],
-  ['altKey', 'AltLeft', ['AltLeft', 'AltRight']],
-]);
-export function comboFromEvent(code, e) {
-  if (!e) return null;
-  for (const [flag, mod, own] of EVENT_MODIFIERS) {
-    if (e[flag] && !own.includes(code)) return comboCode(mod, code);
-  }
-  return null;
-}
-
-/** The remove prompt's action face (:302): camel case split. */
-const splitCamel = (s) => s.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
+// ROAD-G G6 MOVED TWO HELPERS INTO systems/controlsConfig.js, where
+// the second one always belonged (PromptRemoveKeybindMessage is
+// ControlsConfigManager's, :290-320) and the first has to live because
+// BOTH rebinding windows capture keys and this one opens the other.
+// `comboFromEvent` keeps its name here so the sites that import it
+// from the grid still resolve.
+export { comboFromEvent };
 
 const TEXT_COLOR = [0.9, 0.9, 0.75, 1];   // DaggerfallDefaultTextColor's role here
 const DIM = [0.6, 0.58, 0.5, 1];
@@ -152,6 +148,13 @@ export class ControlsWindow {
     // exists to show the full text a '...' is standing in for.
     this.tip = new ToolTip();
     this._hover = [-1, -1];
+    // ROAD-G G6: the ADVANCED tab's window, held rather than shown by
+    // the host. DaggerfallUI keeps ONE dfUnityMouseControlsWindow and
+    // PushWindow lays it over this one (DaggerfallUI.cs:569-571), so
+    // it is built once, it stays alive underneath while it is open,
+    // and it edits THIS window's staged dicts.
+    this.advanced = null;
+    this.advancedOpen = false;
   }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
@@ -161,6 +164,11 @@ export class ControlsWindow {
     // slot back to the pause window.
     applyUnsavedKeybinds(bindings(), this.unsaved);
     saveKeyBinds(bindings());
+    // ...and THAT is what writes the advanced window's ten settings:
+    // it does all of its writing in the OnSavedKeyBinds handler
+    // (DaggerfallUnityMouseControlsWindow.cs:78, :334-360), so the
+    // raise above has to happen before the subscription is released.
+    this.advanced?.dispose();
     this.done = true;
     this.hooks.onBack?.();
   }
@@ -168,6 +176,11 @@ export class ControlsWindow {
   _refresh() { this.dupes = checkDuplicates(this.unsaved); }
 
   input(code, e = null) {
+    if (this.advancedOpen) {
+      this.advanced.input(code, e);
+      if (this.advanced.done) this._closeAdvanced();
+      return;
+    }
     if (this.capture) {
       // WaitForKeyPress (:380-424): the next key binds - reserved keys
       // are EMPTY in DFU, so Escape binds too rather than cancelling.
@@ -226,6 +239,7 @@ export class ControlsWindow {
    *  SuppressToolTip decides (:214-216). */
   hover(vx, vy) {
     this._hover = [vx, vy];
+    if (this.advancedOpen) { this.advanced.hover(vx, vy); this.advanced.drag(vx); return; }
     if (this.capture || this.top) { this.tip.hide(); return; }
     const dict = currentDict(this.unsaved);
     for (const b of this.buttons) {
@@ -243,10 +257,27 @@ export class ControlsWindow {
   /** The tooltip's rest clock. `tick` is the name the hosts' overlay
    *  seam already calls (townTalk.frame, dungeonContext.tickOverlay) -
    *  ONE per-frame hook, not a second one beside it. */
-  tick(dt) { this.tip.update(dt); }
+  tick(dt) {
+    if (this.advancedOpen) { this.advanced.tick(dt); return; }
+    this.tip.update(dt);
+  }
+
+  /** OnReturn (DaggerfallControlsWindow.cs:174-179 / the advanced
+   *  window's own :148-152): the grid re-reads the staged dicts and
+   *  re-checks duplicates when the popped window uncovers it. */
+  _closeAdvanced() {
+    this.advancedOpen = false;
+    this.advanced.release();
+    this._refresh();
+  }
 
   /** vx/vy native; `right` marks the remove gesture (:371). */
   click(vx, vy, right = false) {
+    if (this.advancedOpen) {
+      this.advanced.click(vx, vy, right);
+      if (this.advanced.done) this._closeAdvanced();
+      return true;
+    }
     if (this.capture) return true;   // every tab ignores clicks mid-capture (:283 etc.)
     if (this.top) {
       if ((this.top === 'defaults' || this.top === 'remove') && this._box) {
@@ -291,8 +322,13 @@ export class ControlsWindow {
       return true;
     }
     if (inRect(TAB_RECTS.advanced, vx, vy)) {
-      this._click(); this.top = 'note';
-      this._noteRows = ['Advanced mouse settings live in the launcher menu.'];
+      // MouseButton_OnMouseClick (:288-295): the click sound, then
+      // PushWindow(dfUnityMouseControlsWindow) - one cached instance.
+      this._click();
+      this.advanced ??= new MouseControlsWindow(this.unsaved);
+      this.advanced.done = false;   // the cached instance is pushed again, not rebuilt
+      this.advancedOpen = true;
+      this.tip.hide();
       return true;
     }
     return true;
@@ -300,6 +336,9 @@ export class ControlsWindow {
 
   draw(renderer, canvas, font) {
     if (!_art) { this.done = true; return; }
+    // DaggerfallUI draws ONLY the top window (DaggerfallUI.cs:489-492),
+    // so while the advanced popup is up the grid draws nothing at all.
+    if (this.advancedOpen) { this.advanced.draw(renderer, canvas, font); return; }
     const m = nativeMetrics(canvas);
     drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
@@ -329,8 +368,8 @@ export class ControlsWindow {
       // text exactly as PromptRemoveKeybindMessage does (:300-302)
       const rows = this.top === 'dupes' ? ['You have multiple assignments...']
         : this.top === 'defaults' ? ['Are you sure you want to set default controls?']
-          : this.top === 'remove' ? [`Are you sure you want to remove the keybind`,
-            `for ${splitCamel(this._removeAction)} ('${buttonText(currentDict(this.unsaved).get(this._removeAction), true)}')?`]
+          : this.top === 'remove'
+            ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
             : this._noteRows;
       const buttons = (this.top === 'defaults' || this.top === 'remove') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);

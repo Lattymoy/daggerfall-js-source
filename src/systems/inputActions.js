@@ -431,6 +431,37 @@ export function loadOrCreateBindings() {
 export function saveKeyBinds(store) {
   try { storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store))); }
   catch (err) { console.warn('[inputActions] keybind write failed:', err?.name ?? err); }
+  _raiseSavedKeyBinds();
+}
+
+// ── OnSavedKeyBinds (InputManager.cs:923, the event SaveKeyBinds
+//    raises) ──────────────────────────────────────────────────────────
+//
+// ROAD-G G6 needed this and nothing before it did. It looks like a
+// notification and it is really an ORDERING: the advanced-controls
+// window subscribes at Setup
+// (DaggerfallUnityMouseControlsWindow.cs:78) and does ALL of its
+// setting writes in the handler, so its sliders and checkboxes reach
+// the store at the moment the KEYBINDS are saved - which is the
+// CONTROLS window's close, not its own CONTINUE. Port the event and
+// that ordering falls out; hard-wire the call instead and the next
+// window to want it invents a second one.
+//
+// The raise is unconditional, exactly as DFU's is: a write that threw
+// still notifies, because the settings half of the handler has nothing
+// to do with whether localStorage accepted the binding blob.
+const _savedKeyBindListeners = new Set();
+/** Returns the unsubscribe. DFU's static event never unsubscribes -
+ *  its windows are DaggerfallUI singletons - and the port's windows
+ *  are not, so a handle to detach is the port's own half. */
+export function onSavedKeyBinds(fn) {
+  _savedKeyBindListeners.add(fn);
+  return () => _savedKeyBindListeners.delete(fn);
+}
+function _raiseSavedKeyBinds() {
+  for (const fn of [..._savedKeyBindListeners]) {
+    try { fn(); } catch (e) { console.warn('[inputActions] OnSavedKeyBinds listener failed:', e?.message ?? e); }
+  }
 }
 
 // ── the frame model ─────────────────────────────────────────────────

@@ -496,7 +496,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- **`src/systems/inputActions.js:475`** - STILL FLAGGED: axes and
+- **`src/systems/inputActions.js:507`** - STILL FLAGGED: axes and
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching
@@ -724,9 +724,10 @@ route** - plus `:593`, struck at its head but carrying a live PENDING
 clause in its tail, for six rows that owed work when this section was
 written: items 1-6 below (item 7 was the seventh, and DR1 struck it).
 **FOUR still owe it** - items 1, 2, 5 and 6 - since item 4 closed with
-the E-group and item 3 with ROAD-G G4 (2026-09-04). The row COUNTS
-above are unchanged by either: both closures struck a clause inside a
-row, not a row. The measurement this section was first written over read 246
+the E-group and item 3 with ROAD-G G4 (2026-09-04); item 6's clause is
+down to the joystick window since ROAD-G G6 (2026-09-04), and that half
+is an owner decision, not a route. The row COUNTS above are unchanged by
+any of these: each closure struck a clause inside a row, not a row. The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
 work the entries themselves argued for - the closeout tail struck the
 six STALE rows (items 9-14), E8 struck item 8, and E4 added one new
@@ -787,8 +788,19 @@ ships, which is the warning the section's own preamble opens with.
 5. **`:590` the classic `.SAV` reader** -> the phone path: no zip arm in
    the saves picker, a desktop-first charter call.
 6. **`:593` (struck, with a live clause) the keybinding registry** ->
-   the mouse/advanced and joystick sub-windows, the two of DFU's 65
-   game windows the port does not cite.
+   ~~the mouse/advanced and joystick sub-windows, the two of DFU's 65
+   game windows the port does not cite.~~ **NARROWED TO THE JOYSTICK
+   WINDOW ALONE (ROAD-G G6, 2026-09-04.)** The mouse/advanced window is
+   built: `src/ui/mouseControlsWindow.js` is
+   DaggerfallUnityMouseControlsWindow.cs whole - the 318x170 panel, the
+   six keybind rows DFU leaves off the classic grid, the four sliders,
+   the five checkboxes and the threshold field, opened from the
+   controls window's ADVANCED tab on the grid's own staged dicts, with
+   its ten settings landing on the keybind save exactly as DFU's
+   OnSavedKeyBinds ordering puts them there. What is left in the clause
+   is `DaggerfallJoystickControlsWindow.cs`, and that is an OWNER
+   DECISION rather than a route: the port has no gamepad layer at all,
+   and the flag that says so is `src/systems/inputActions.js:507`.
 7. ~~**`:602` the standalone dungeon host has no trade window** -> a
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
@@ -824,7 +836,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:489` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:633-637`, `scenes/world.js:2492`), the
+   (`ui/nativeInventory.js:670-674`, `scenes/world.js:2492`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
