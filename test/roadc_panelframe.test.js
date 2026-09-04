@@ -206,7 +206,7 @@ test('c2/S2 the clear is DFU\'s: Unity default background, BLENDED, never an opa
   assert.equal(Math.round(PANEL_CLEAR_RGBA[3] * 1e6) / 1e6, 0.019608);
 
   // the quad, not a gl.clear: the alpha is under 1 so screenQuadBlends
-  // turns blending ON (renderer.js:520)
+  // turns blending ON (renderer.js:522)
   const log = [];
   const r = recordingRenderer(log);
   r.beginPanelFrame(identity(), identity(), new Float32Array([0, 1, 0]), PANEL);

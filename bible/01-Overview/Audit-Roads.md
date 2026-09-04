@@ -143,7 +143,7 @@ Recorded so it is not re-audited:
   (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per (RETIRED)
   click, ~0.9 s and 33 MB per card visit.
 - **Nothing is drawn for the whole 26-second bake**
-  (`src/scenes/world.js:265`) - the world host has no frame loop yet and
+  (`src/scenes/world.js:266`) - the world host has no frame loop yet and
   `status()` writes only `document.title`.
 - **A landmass with fewer than two hubs gets no road at all**
   (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its (RETIRED)

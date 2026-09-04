@@ -207,7 +207,7 @@ export class EnhancedEnemyAI extends EnemyAI {
       const drop = this.fallDetected;
       this.obstacleDetected = od; this.foundUpwardSlope = us; this.foundDoor = fd; this.fallDetected = false;
       if (drop) continue;
-      this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2]);
+      this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.height);
       break;
     }
     this.path = null; this.repathT = 0;

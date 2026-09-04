@@ -6,7 +6,7 @@
 // (DFU adds them via AddItem, never equips). The exterior hosts
 // guarded with ?.; the dungeon host had the raw deref at BOTH its
 // swing sites - the strike-frame bow test (thrown on EVERY fist
-// swing, reproduced at dungeonContext.js:1488 pre-fix) and the
+// swing, reproduced at dungeonContext.js:1499 pre-fix) and the
 // resolved melee tally.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
