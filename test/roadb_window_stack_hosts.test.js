@@ -210,7 +210,7 @@ test('B1: each modal host builds a stack under its slot and reconciles it', () =
     'so does the interior click seam');
   assert.match(dc, /overlayInput\(action, e = null\) \{[\s\S]{0,1000}dungeonWindows\.reconcile\(activeOverlay\);/,
     'and the dungeon key seam');
-  assert.match(dc, /overlayClick\(vx, vy, right = false\) \{[\s\S]{0,1000}dungeonWindows\.reconcile\(activeOverlay\);/,
+  assert.match(dc, /overlayClick\(vx, vy, right = false, middle = false\) \{[\s\S]{0,1000}dungeonWindows\.reconcile\(activeOverlay\);/,
     'and the dungeon click seam');
   // The getters those handlers feed answer the whole STACK, not just
   // the slot - and ROAD-tail made that answer the stack's own PAUSE

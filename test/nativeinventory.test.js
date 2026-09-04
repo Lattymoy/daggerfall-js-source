@@ -204,7 +204,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
       `${f}: the loot pile must reach the same builder`);
     const loot = src.slice(src.indexOf('townTalk.showOverlay(makeInventoryWindow({'));
-    assert.match(loot.slice(0, 700), /loot: \{ items: \(\) => pile\.items \}/);
+    // G5: DaggerfallLoot's identity travels with the pile through the
+    // ONE shared shape, so a fifth call site cannot ship a partial one.
+    assert.match(loot.slice(0, 700), /loot: droppedLootHooks\(pile\)/);
     assert.match(loot.slice(0, 700), /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
   }
   // the dungeon host has one too, and it is the door's

@@ -66,7 +66,7 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice, makeEnemiesHostile } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
-import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // ID1: the interior's own ground pile; G5: its DaggerfallLoot identity
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 58: DFU's two hit volumes
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
@@ -484,7 +484,10 @@ export function createWorldModes(host) {
    *  COMPOSED rather than overwritten - `...extra` last would have
    *  silently dropped the free. */
   const interiorInventory = ({ onClose, ...extra } = {}) => host.makeInventory?.({
-    onDrop: (items) => interiorDropped.dropPile(items, interiorDropFeet()),
+    // G5: the drop icon and the replaced container's x/z ride the
+    // same OnPop the world hosts take (:698-711).
+    onDrop: (items, icon = null, at = null) =>
+      interiorDropped.dropPile(items, containerDropPos(at, interiorDropFeet()), null, icon),
     ...extra,
     onClose: () => { interiorDropped.releaseEmptied(); onClose?.(); },
   });
@@ -2401,7 +2404,10 @@ export function createWorldModes(host) {
     // floor.
     const droppedPiles = interiorDropped._piles
       .filter((pile) => pile.items.length)
-      .map((pile) => ({ pos: [...pile.pos], record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
+      // G5: the archive travels with the record - LootContainerData_v1
+      // carries the PAIR, and a pile whose icon the player cycled onto
+      // TEXTURE.205 must come back wearing it.
+      .map((pile) => ({ pos: [...pile.pos], archive: pile.archive, record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
     return { lootContainers, actionDoors, droppedPiles };
   }
 
@@ -4246,7 +4252,7 @@ export function createWorldModes(host) {
         // (PlayerActivate's default loot handling), which is the same
         // OnPush law the dungeon and both exterior hosts ride.
         const pile = interiorDropped.pileFor(key);
-        if (pile?.items.length) mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+        if (pile?.items.length) mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
         return true;
       }
       if (key.startsWith('container:')) {
@@ -6356,7 +6362,7 @@ export function createWorldModes(host) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (vd) dungeonCtx.overlayPointer?.('down', vd[0], vd[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
+      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2, e.button === 1);   // G5: the middle button too
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
     // The guard is on the WINDOW, not on its click method: an open
@@ -6392,7 +6398,7 @@ export function createWorldModes(host) {
     // drag that never starts. Down/move/up are all three or none (the
     // c2/S4 rule, and the reason its pin counts routes per host).
     if (v) interiorOverlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2, e.button === 1);   // I4: the remove gesture rides the button; G5: the middle one cycles the drop archive
     if (interiorOverlay?.done) interiorOverlay = null;
     interiorWindows.reconcile(interiorOverlay);   // ROAD-B B1: the click's drain is PopWindow too
     return true;
@@ -7025,7 +7031,7 @@ export function createWorldModes(host) {
         return () => {
           const pile = interiorDropped.dropPile([dfItem], interiorDropFeet());
           if (!pile) return;
-          mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+          mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
         };
       }
       return undefined;   // not this mode's ground - the world host mints

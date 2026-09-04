@@ -85,7 +85,7 @@ import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the b
 import { preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { createInventoryWindow } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
-import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e, mounted here at U26; G5: the pile's DaggerfallLoot identity
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
@@ -1139,7 +1139,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
-  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false } = {}) {
+  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
     // caller assigns the null and no overlay mounts.
@@ -1182,12 +1182,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // U44: no reveal seam - this context has no region index to walk
       revealMap: null,
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
-      loot: lootItems ? { items: () => lootItems } : undefined,
+      // G5: a DROPPED pile hands DaggerfallLoot's whole identity
+      // (playerOwned + TextureArchive/TextureRecord + position); an RDB
+      // treasure pile or a corpse hands its FLAT alone, which is
+      // UpdateRemoteTargetIcon's second arm (:880-884) and is not
+      // player-owned, so CanChangeDropIcon refuses it.
+      loot: lootItems ? { items: () => lootItems, ...(lootHooks ?? {}) } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the
       // first frame has nowhere to land, and DFU's own container mint
       // is at the player's position - so no feet, no pile, loudly.
-      onDrop: (items) => (lastPlayerFeet
-        ? droppedLoot.dropPile(items, [...lastPlayerFeet])
+      // G5: the chosen drop icon and, when a loot target was replaced,
+      // that container's own x/z (:698-711).
+      onDrop: (items, icon = null, at = null) => (lastPlayerFeet
+        ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
       onClose: () => { onEmptied?.(); droppedLoot.releaseEmptied(); surfacePlayer(); },
     });
@@ -2733,8 +2740,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
       // DFU's save (LootContainerData_v1) - without them a boot load
       // vanished drops and a backward load duplicated them.
+      // G5: textureArchive rides beside textureRecord - the PAIR is
+      // what LootContainerData_v1 stores, and a cycled drop icon is
+      // lost without it.
       droppedLoot: droppedLoot._piles.map((p) => ({
-        pos: [...p.pos], record: p.record, items: p.items.map((it) => ({ ...it })),
+        pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
       actions: actions.collectSaveData(),
     };
@@ -4465,13 +4475,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  clickable since U8b. Takes NATIVE (320x200) coords like
      *  townTalk's seam does, and reports whether it consumed the
      *  click so the caller can withhold the pointer lock. */
-    overlayClick(vx, vy, right = false) {
+    overlayClick(vx, vy, right = false, middle = false) {
       // U26: a native window exposes `click`, the keyed ones
       // `clickNative`. Both route here. I4: the right-button flag
-      // rides along for the controls grid's remove gesture.
+      // rides along for the controls grid's remove gesture, G5's middle
+      // flag for the drop-icon panel's third handler (:2104-2113).
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
-      else activeOverlay.click(vx, vy, right);
+      else activeOverlay.click(vx, vy, right, middle);
       // S40: optional. RestWindow grew a `click` and clears this slot
       // from inside it, so this seam reaches a null now - and it did
       // not before, which is why the unguarded read stood.
@@ -4771,10 +4782,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const i = Number(iStr);
       let source = null;
       let onEmptied = null;
+      let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind
       if (kind === 'loot') {
         const p = lootPiles[i];
         if (!p || !p.batch) return 0;
         source = p.items;
+        // The RDB treasure flat IS the remote panel's picture
+        // (:880-884) - archive 216 with the marker's own record - but
+        // it is not playerOwned, so its icon cannot be cycled.
+        lootHooks = { textureArchive: RANDOM_TREASURE_ARCHIVE, textureRecord: p.record };
         // The RDB pile's flat leaves when the window CLOSES on an
         // emptied container, not the instant the last item moves -
         // the same law droppedLoot.releaseEmptied ports.
@@ -4790,11 +4806,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!f?.dead) return 0;
         source = f.entity.items;
       } else if (kind.startsWith('droppedLoot')) {
-        source = droppedLoot.pileFor(key)?.items ?? null;
+        const p = droppedLoot.pileFor(key);
+        source = p?.items ?? null;
+        if (p) lootHooks = droppedLootHooks(p);   // G5: playerOwned - the icon cycles
       }
       if (!source) return 0;
       if (activeOverlay) return source.length;
-      activeOverlay = openInventory(source, onEmptied);
+      activeOverlay = openInventory(source, onEmptied, { lootHooks });
       return source.length;
     },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped

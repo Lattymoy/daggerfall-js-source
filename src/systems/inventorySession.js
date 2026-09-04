@@ -20,6 +20,10 @@
 // player straight on their cart, and the fact that closing MINTS the
 // session's drop pile.
 //
+// ROAD-G G5 added the DROP ICON to that list: which flat the pile you
+// are filling will wear, the three clicks that cycle it, and the fact
+// that changing it on a pile you own re-mints that pile.
+//
 // That last one is here for AUDIT B-C1's reason. Handing off to
 // another window replaces the port's single overlay slot WITHOUT
 // closing the inventory, so the port skipped both effects and a
@@ -27,6 +31,8 @@
 // on the ground. A screen that forgets this does not look broken; it
 // looks like the player misremembered picking something up.
 // ═══════════════════════════════════════════════════════════════════
+
+import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './lootDataTables.js';
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -125,6 +131,101 @@ export function remoteTarget(deps = {}, state = {}) {
   return deps.loot ? deps.loot.items() : state.dropped;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// ROAD-G G5 - THE DROP ICON: which flat the pile you are filling will
+// wear, and the three clicks that change it.
+//
+// AUDIT 58 shipped the two target-icon panels and RECORDED these arms
+// as unreachable, because the port's loot hook was `{ items() }` and
+// carried no flat identity. It carries one now (playerOwned,
+// textureArchive, textureRecord, pos - DaggerfallLoot's own fields),
+// so the whole of UpdateRemoteTargetIcon (:865-890), the three cycling
+// handlers (:2104-2146) and OnPop's icon arm (:689-712) are law here.
+// ═══════════════════════════════════════════════════════════════════
+
+/** RemoteTargetTypes (:213-219), in the enum's own order. */
+export const REMOTE_TARGET_TYPES = Object.freeze({
+  Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3,
+});
+
+/** The port derives `remoteTargetType` from the same three claims
+ *  `remoteTarget` derives the LIST from, and in the same order:
+ *  ShowWagon assigns Wagon (:1047-1055), SetChooseOne's remote list is
+ *  the Merchant one (:259-264 with :595-598), a lootTarget is Loot
+ *  (:609-613) and OnPush's default is Dropped (:601-606). */
+export function remoteTargetType(deps = {}, state = {}) {
+  if (state.usingWagon) return REMOTE_TARGET_TYPES.Wagon;
+  if (state.chooseOne) return REMOTE_TARGET_TYPES.Merchant;
+  return deps.loot ? REMOTE_TARGET_TYPES.Loot : REMOTE_TARGET_TYPES.Dropped;
+}
+
+/** dropIconIdxs[archive][texture] - the RECORD a cycling index names.
+ *  Null for an archive with no list and for the -1 "no chosen icon"
+ *  index, which is what OnPush leaves when nothing was picked. */
+export function dropIconRecord(archive, texture) {
+  const idxs = DROP_ICON_IDXS.get(archive);
+  if (!idxs || texture < 0 || texture >= idxs.length) return null;
+  return idxs[texture];
+}
+
+/** GetNextArchive (:2148-2157), verbatim including its wrap: walk the
+ *  keys, answer the one AFTER the current archive, and fall out of the
+ *  loop to `.Keys.First()` - which is what the LAST archive gets, and
+ *  what an archive that is not a key at all gets. */
+export function nextDropArchive(archive) {
+  let next = false;
+  for (const ai of DROP_ICON_IDXS.keys()) {
+    if (next) return ai;
+    next = (ai === archive);
+  }
+  return DROP_ICON_IDXS.keys().next().value;
+}
+
+/** OnPush's drop-icon seed (:593-631). The chooseOne arm picks the
+ *  combat archive's twelfth icon; everything else starts on the random
+ *  treasure archive with NO chosen icon (-1); and a playerOwned loot
+ *  target with a flat of its own then overrides the archive and hunts
+ *  its record down the list to recover the index the player last
+ *  picked. A record the list does not carry leaves the index where the
+ *  arm above put it - DFU's own fall-through. */
+export function openDropIcon(deps = {}, chooseOne = null) {
+  let archive, texture;
+  if (chooseOne) { archive = DROP_ICON_ARCHIVES.combat; texture = 11; }
+  else { archive = RANDOM_TREASURE_ARCHIVE; texture = -1; }
+  const loot = deps.loot;
+  if (loot && loot.playerOwned && (loot.textureArchive ?? 0) > 0) {
+    archive = loot.textureArchive;
+    const idxs = DROP_ICON_IDXS.get(archive);
+    if (idxs) {
+      for (let i = 0; i < idxs.length; i++) {
+        if (idxs[i] === loot.textureRecord) { texture = i; break; }
+      }
+    }
+  }
+  return { archive, texture };
+}
+
+/** CanChangeDropIcon (:2140-2144): the session's own dropped pile, or
+ *  a loot target the player owns. A shop shelf, a corpse, someone
+ *  else's furniture and the wagon all refuse. */
+export function canChangeDropIcon(deps = {}, state = {}) {
+  const t = remoteTargetType(deps, state);
+  return t === REMOTE_TARGET_TYPES.Dropped
+    || (t === REMOTE_TARGET_TYPES.Loot && !!deps.loot?.playerOwned);
+}
+
+/** The three cycling handlers' arithmetic (:2104-2138). `by` is +1 for
+ *  the left click, -1 for the right; 0 is the MIDDLE click, which
+ *  takes the next archive and resets the icon to its first. */
+export function cycleDropIcon({ archive, texture }, by) {
+  if (by === 0) return { archive: nextDropArchive(archive), texture: 0 };
+  const len = DROP_ICON_IDXS.get(archive)?.length ?? 0;
+  let t = texture + by;
+  if (by > 0 && t >= len) t = 0;
+  if (by < 0 && t < 0) t = len - 1;
+  return { archive, texture: t };
+}
+
 /**
  * WagonButton_OnMouseClick's ladder (:1234-1243), minus its sound -
  * which is the CALLER's, once, whichever arm ran. AUDIT 24 ui: the
@@ -152,6 +253,32 @@ export function planWagonToggle(deps = {}, state = {}) {
  * window is being replaced rather than closed.
  */
 export function closeSession(deps = {}, state = {}) {
-  if (state.dropped?.length) deps.onDrop?.(state.dropped);
+  const loot = deps.loot;
+  const icon = state.dropIcon ?? null;
+  // OnPop's icon arm (:689-694): "If icon has changed move items to
+  // dropped list so this loot is removed and a new one created."
+  // ItemCollection.TransferAll EMPTIES the source, which is what makes
+  // the old pile release and a new one mint at the same spot below.
+  // With NO icon chosen (texture -1) dropIconRecord answers null and
+  // the comparison is true - DFU indexes `[-1]` here and would throw;
+  // an icon that is not in the archive's list cannot be "unchanged".
+  if (loot && loot.playerOwned && (loot.textureArchive ?? 0) > 0 && icon
+    && (loot.textureArchive !== icon.archive
+      || loot.textureRecord !== dropIconRecord(icon.archive, icon.texture))) {
+    const from = loot.items();
+    state.dropped.push(...from);
+    from.length = 0;
+  }
+  if (state.dropped?.length) {
+    // CreateDroppedLootContainer's two calls (:698-705): the chosen
+    // archive/record when one was picked, and the bare call - which
+    // rolls a randomTreasureIconIndices record - when none was. And
+    // (:707-711) a container minted over a loot target keeps that
+    // target's x and z, taking only its own y.
+    const record = icon ? dropIconRecord(icon.archive, icon.texture) : null;
+    deps.onDrop?.(state.dropped,
+      record == null ? null : { archive: icon.archive, record },
+      loot?.pos ?? null);
+  }
   deps.onClose?.();
 }

@@ -138,7 +138,7 @@ import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';  
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
-import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
@@ -2527,7 +2527,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
-    onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
+    // U8e: OnPop mints the world pile; P2: stamped with its map pixel.
+    // G5: `icon` is the drop icon the player cycled to on the remote
+    // panel (null = CreateDroppedLootContainer's -1 roll), and `at` is
+    // the loot target the window replaced - :707-711 keeps that
+    // container's x and z and takes only the new pile's own y.
+    onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(
+      items, containerDropPos(at, dropFeet()), `${playerTravelPixel().x},${playerTravelPixel().y}`, icon),
     ...extra,
   });
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
@@ -5599,7 +5605,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (!pile) return;
           townTalk.showOverlay(makeInventoryWindow({
             onClose: () => droppedLoot.releaseEmptied(),
-            loot: { items: () => pile.items },
+            loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
           }));
         };
       }
@@ -6477,7 +6483,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 // makeInventoryWindow already passes, plus the two below -
                 // which is precisely what its `extra` parameter is for.
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-                loot: { items: () => pile.items },
+                loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));

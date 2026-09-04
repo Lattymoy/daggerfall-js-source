@@ -32,6 +32,7 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
 import { potionRecipeByKey } from './potions.js';   // F103: PotionRecipeKey's price side effect
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -77,12 +78,16 @@ export const ITEM_GROUPS = Object.freeze(Object.fromEntries(
   LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])));
 export { BOOK_TEMPLATE };   // ONE DFU MEMBER, ONE EXPORT: template 277's home is books.js now
 
-// DaggerfallLootDataTables + LootTables.GenerateLoot verbatim data
-// (moved here from the dungeon scene in the 2026-07-06b audit - a
-// scene file is no home for source tables):
-export const RANDOM_TREASURE_ARCHIVE = 216;                    // randomTreasureArchive
+// LootTables.GenerateLoot verbatim data (moved here from the dungeon
+// scene in the 2026-07-06b audit - a scene file is no home for source
+// tables). ROAD-G G5: DaggerfallLootDataTables' own three members went
+// on to `systems/lootDataTables.js` - DFU's own file boundary - so a
+// leaf can read the drop-icon table without importing this generator;
+// they are RE-EXPORTED here, so every importer that reads them off
+// `loot.js` still does.
+export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS };
 export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
-export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
+
 /** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
 export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
 

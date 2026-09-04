@@ -8911,3 +8911,102 @@ fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
 it flinging the town map ~165 world units - so a thumb dragged into the
 black border would have snapped its list to row 0. Both windows skip the
 frame and keep the latch, because `release()` is what ends a drag.
+
+## ROAD-G G5 - THE DROP ICONS, AND THE BANK LIST'S SCROLL BAR (2026-09-04)
+
+Two arms AUDIT 58 named as optional and left rather than widen a lane,
+and the record of that leaving is the second thing this slice closes
+(`Audit-58.md`, "Left, deliberately"). They shared no code and one
+reason: both were the LAST unbuilt piece of a widget the same audit had
+just drawn most of.
+
+### (a) THE DROP ICON
+
+`UpdateRemoteTargetIcon` (:865-890) is a four-arm ladder and the port
+drew two of them. The two it skipped are the only two that address a
+WORLD FLAT rather than a container picture:
+
+    else if (dropIconTexture > -1)
+        containerImage = ImageReader.GetImageData(
+            TextureFile.IndexToFileName(dropIconArchive),
+            dropIconIdxs[dropIconArchive][dropIconTexture], 0, true);
+    else if (lootTarget != null && lootTarget.TextureArchive > 0)
+        containerImage = ImageReader.GetImageData(
+            TextureFile.IndexToFileName(lootTarget.TextureArchive),
+            lootTarget.TextureRecord, 0, true);
+
+**The reason they were unreachable was one line wide.** The port's loot
+hook was `{ items() }`. A DaggerfallLoot has three more fields that
+matter here - `playerOwned`, `TextureArchive`, `TextureRecord` - and
+without them the panel cannot know what the pile on the floor looks
+like, `CanChangeDropIcon` (:2140-2144) cannot tell your own pile from a
+shop's shelf, and `OnPop` cannot notice that the icon changed. So the
+hook carries them, through ONE shape (`droppedLoot.droppedLootHooks`)
+that all four hosts take, because a fifth call site shipping half an
+identity is exactly how this class of defect returns.
+
+**What the player can now do that they could not.** Open the pack with
+a pile as the remote target, or with items about to be dropped, and the
+55x34 panel over the right-hand list is the pile's own flat. Left-click
+it and the icon cycles up the archive's list; right-click cycles down;
+MIDDLE-click takes the next archive - clothes, boxes and bottles,
+weapons, books, oddments, treasure - and resets to its first icon. Close
+the window and the pile on the floor is wearing what you picked, and it
+still is after a save, a re-entry, or walking out of the shop and back
+in.
+
+**Three details that are DFU's and read like bugs if you don't know:**
+
+1. **The sound plays before the refusal.** Both the left and right
+   handlers `PlayOneShot(ButtonClick)` and *then* ask
+   `CanChangeDropIcon`, so clicking the panel over a shop shelf clicks
+   and changes nothing. The middle handler plays no sound at all.
+2. **A changed icon does not repaint the pile - it REPLACES it.** OnPop
+   (:689-694): "If icon has changed move items to dropped list so this
+   loot is removed and a new one created." `TransferAll` empties the old
+   container, `releaseEmptied` frees its flat, and the new container is
+   minted with the chosen archive/record and moved to the OLD one's x
+   and z, taking only its own y (:707-711).
+3. **The 216 list here is not `randomTreasureIconIndices`.**
+   `dropIconIdxs[216]` has thirty entries and the roll list has twenty.
+   A pile you never touched can therefore wear a record that the cycling
+   list does not contain, and OnPush's index search then leaves
+   `dropIconTexture` at -1 - which is right, and is why the OnPop
+   comparison treats "no index" as "changed".
+
+**One structural move.** `DaggerfallLootDataTables.cs` is its own source
+file in DFU and is its own module here again
+(`systems/lootDataTables.js`, a leaf that imports nothing). Reading the
+table off `systems/loot.js` put `inventorySession.js` upstream of the
+whole loot generator and, through `potions.js`, built an import cycle
+that broke module initialisation across the tree - 228 test files red at
+once, none of them about loot. `loot.js` re-exports every name, so no
+existing importer moved.
+
+### (b) THE BANK PURCHASE LIST'S SCROLL BAR
+
+`SetupScrollBar` (:303-314) is eleven lines and the port had the rect
+already, sitting unread in `PURCHASE_RECTS`. AUDIT 58 drew the two green
+and red arrows above and below it; the rail between them was dead
+pixels, so a market of twenty houses could be moved one row at a time
+from the buttons and never grabbed.
+
+The widget is ROAD-A7's shared `ui/verticalScrollBar.js` - the thumb art,
+`MouseClick`'s paging arms and `Update`'s drag all live there, and this
+is the fourth window to take it. What the purchase window owns is the
+rect (folded onto the panel origin so hit test and draw share one) and
+the two-way index sync: `PriceListBox_OnScroll` pushes the list's index
+into the bar and `PriceScrollBar_OnScroll` pushes the bar's back out
+(:400-410), which is one `syncScrollBar` here, the shape `listPicker.js`
+already runs. The host seams it needs - `hover` with the DOM event for
+`GetMouseButton(0)`, and `release()` for the button coming up - were
+already routed to this slot by ROAD-E's up-seam work; the window simply
+had neither method.
+
+### PINS
+
+`test/road_g5_dropicons.test.js` (15 tests, 28 mutants driven, 28 dead)
+and four new tests in `test/bankpreview.test.js` (9 mutants driven, 9
+dead). The mutants are written beside the assertions that kill them.
+Nothing here has been seen in a browser: the two panels are GL draws and
+the standing rule since 2026-09-01 is that the owner verifies.

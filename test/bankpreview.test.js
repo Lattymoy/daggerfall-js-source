@@ -8,13 +8,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { THUMB_MIN_H, THUMB_TOP_ROW, THUMB_BODY_ROW, THUMB_BOTTOM_ROW } from '../src/ui/verticalScrollBar.js';   // G5
 import {
   BankPurchaseWindow, PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y,
   PREVIEW_ROT_SPEED, PREVIEW_HOUSE_CAMERA, PREVIEW_NEAR, PREVIEW_FAR,
   previewShipCamera, SHIP_LIST, priceRow,
   PURCHASE_ARROWS_FULL, PURCHASE_UP_ARROW_RECT, PURCHASE_DOWN_ARROW_RECT,
   PURCHASE_GREEN_ARROWS, PURCHASE_RED_ARROWS,
-  purchaseArrowArtLoaded, _setPurchaseArtForTests,
+  purchaseArrowArtLoaded, _setPurchaseArtForTests, LIST_ROWS,
 } from '../src/ui/bankPurchaseWindow.js';
 import {
   SHIP_MODEL_IDS, SHIP_CAMERA_DIST, SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
@@ -207,4 +208,123 @@ test('A54: the price list draws its GREEN/RED arrows, and the states are DFU\'s'
   } finally {
     _setPurchaseArtForTests(null, null);
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ROAD-G G5 - THE PRICE LIST'S SCROLL BAR (SetupScrollBar :303-314).
+//
+// AUDIT 58's windows lane drew the two arrows above and below it and
+// left the bar itself, so the rail between them was dead pixels: the
+// widget DFU gives this list to be GRABBED could only be paged, one
+// row at a time, from the buttons. The component is ROAD-A7's shared
+// ui/verticalScrollBar.js; what is pinned here is this window's rect,
+// its two-way index sync, and the fact that the rail is now hit.
+//
+// Nine mutants driven, nine dead: (1) the rect -> the list picker's
+// [181,23,5,82]; (2) `displayUnits: LIST_ROWS` -> 1; (3) syncScrollBar
+// stops refreshing TotalUnits from the live list; (4) the press arm
+// deleted from click(); (5) `this.scroll = this.scrollBar.scrollIndex`
+// dropped after the press; (6) syncScrollBar's `if (bar.draggingThumb)`
+// inverted; (7) drawScrollThumb removed from draw(); (8) `release()`
+// stops dropping the latch; (9) `hover` stops running Update.
+// ═══════════════════════════════════════════════════════════════════
+test('G5: SetupScrollBar - the rect is [106,39,7,48] with DisplayUnits = listDisplayUnits', () => {
+  assert.deepEqual([...PURCHASE_RECTS.scrollBar], [106, 39, 7, 48], 'Position (106,39), Size (7,48) (:306-311)');
+  const w = new BankPurchaseWindow({ houses: () => [], onClose: () => {} });
+  assert.deepEqual([...w.scrollBar.rect],
+    [PURCHASE_PANEL_X + 106, PURCHASE_PANEL_Y + 39, 7, 48],
+    'the rect is folded onto the panel origin, so hit test and draw share one');
+  assert.equal(w.scrollBar.displayUnits, LIST_ROWS, 'DisplayUnits = listDisplayUnits (:310)');
+  // ...and it sits BETWEEN the two arrows, touching neither
+  assert.equal(PURCHASE_RECTS.upArrow[1] + PURCHASE_RECTS.upArrow[3], PURCHASE_RECTS.scrollBar[1]);
+  assert.equal(PURCHASE_RECTS.scrollBar[1] + PURCHASE_RECTS.scrollBar[3], PURCHASE_RECTS.downArrow[1]);
+});
+
+test('G5: the rail PAGES by DisplayUnits and the thumb DRAGS - the two arms of the widget', () => {
+  const market = Array.from({ length: 30 }, (_, i) => ({ buildingKey: i, meshRadius: 10 }));
+  const w = new BankPurchaseWindow({ houses: () => market, onClose: () => {} });
+  const [bx, by, bw, bh] = w.scrollBar.rect;
+  w.syncScrollBar();
+  assert.equal(w.scrollBar.totalUnits, 30, 'TotalUnits comes off the live list (:299)');
+  // BELOW the thumb: MouseClick pages DOWN by DisplayUnits (:146-149)
+  assert.equal(w.click(bx + 3, by + bh - 1), true, 'the bar owns the press');
+  assert.equal(w.scroll, LIST_ROWS, 'one page down');
+  assert.equal(w.rows()[0].index, LIST_ROWS, 'and the list moved with it');
+  // ABOVE it: one page back
+  assert.equal(w.click(bx + 3, by), true);
+  assert.equal(w.scroll, 0);
+  // ON the thumb: nothing moves, the DRAG latches (Update :108-113)
+  const span = w.scrollBar.thumbSpan;
+  assert.ok(span && span.h >= THUMB_MIN_H, 'a 30-row list has a thumb, floored at 10px');
+  w.click(bx + 3, by + span.y + 1);
+  assert.equal(w.scroll, 0, 'a press ON the thumb pages nothing - there is no third arm');
+  assert.equal(w.scrollBar.draggingThumb, true, 'it latches instead');
+  // ...and the drag then drives the LIST, through the host's hover seam
+  w.hover(bx + 3, by + span.y + 1 + bh / 3, { buttons: 1 });
+  assert.ok(w.scroll > 0, 'the thumb drags the list');
+  assert.equal(w.rows()[0].index, w.scroll);
+  // the button comes up: the latch drops and a later held move does
+  // NOT resume from the stale anchor
+  const held = w.scroll;
+  w.release();
+  assert.equal(w.scrollBar.draggingThumb, false);
+  w.hover(bx + 3, by + bh - 1, { buttons: 1 });
+  assert.equal(w.scroll, held, 'a released drag is over');
+  // a press one pixel outside the bar is not the bar's
+  assert.equal(w.scrollBar.contains(bx + bw, by + 2), false);
+});
+
+test('G5: the thumb is DRAWN, in DFU\'s own three strips, and vanishes when the list fits', () => {
+  const market = Array.from({ length: 30 }, (_, i) => ({ buildingKey: i, meshRadius: 10 }));
+  const w = new BankPurchaseWindow({ houses: () => market, onClose: () => {} });
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, ...rect, color }) };
+  const font = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 4 }, tex: 'font' };
+  _setPurchaseArtForTests({ tex: 'BANK01I0', w: 225, h: 129 }, null);
+  try {
+    w.draw(renderer, { width: 320, height: 200 }, font);
+    // the thumb is untextured colour bands - five columns per strip,
+    // each one fifth of the 7px rail wide (the screen dim behind the
+    // window is untextured too, and is 320 wide, so width picks them out)
+    const [bx, , bw] = w.scrollBar.rect;
+    const bands = quads.filter((q) => q.tex === null && q.color && q.w <= bw);
+    assert.ok(bands.length >= 10, 'the top and bottom strips at least, five columns each');
+    const greys = new Set(bands.map((b) => Math.round(b.color[0] * 255)));
+    assert.ok(greys.has(THUMB_TOP_ROW[0]), 'the dark left edge is DFU\'s 77');
+    assert.ok(greys.has(THUMB_BODY_ROW[1]) || greys.has(THUMB_TOP_ROW[1]), 'and the body/highlight greys');
+    assert.deepEqual([...THUMB_BOTTOM_ROW], [77, 77, 77, 77, 77]);
+    for (const b of bands) {
+      assert.ok(b.x >= bx - 1e-6 && b.x + b.w <= bx + bw + 1e-6, 'every band stays inside the 7px rail');
+    }
+    // a list that FITS draws NOTHING (Draw :136 returns before DrawScrollBar)
+    quads.length = 0;
+    const two = new BankPurchaseWindow({ onClose: () => {} });   // the shipyard: two rows
+    two.draw(renderer, { width: 320, height: 200 }, font);
+    assert.equal(two.scrollBar.thumbSpan, null);
+    assert.equal(quads.filter((q) => q.tex === null && q.color && q.w <= bw).length, 0,
+      'a two-hull shipyard shows a bare rail');
+  } finally {
+    _setPurchaseArtForTests(null, null);
+  }
+});
+
+test('G5: the index flows FROM the bar while dragging and TO it otherwise (:400-410)', () => {
+  const market = Array.from({ length: 30 }, (_, i) => ({ buildingKey: i, meshRadius: 10 }));
+  const w = new BankPurchaseWindow({ houses: () => market, onClose: () => {} });
+  // PriceListBox_OnScroll: the LIST moves the bar
+  w.wheel(1); w.wheel(1); w.wheel(1);
+  w.syncScrollBar();
+  assert.equal(w.scroll, 3);
+  assert.equal(w.scrollBar.scrollIndex, 3, 'the arrows and the wheel push the index INTO the bar');
+  // PriceScrollBar_OnScroll: the BAR moves the list
+  w.scrollBar.draggingThumb = true;
+  w.scrollBar.scrollIndex = 11;
+  w.syncScrollBar();
+  assert.equal(w.scroll, 11, 'and a dragged thumb pushes it back OUT');
+  // the keyboard still clamps the same list
+  w.scrollBar.draggingThumb = false;
+  for (let i = 0; i < 60; i++) w.input('ArrowDown');
+  w.syncScrollBar();
+  assert.equal(w.scroll, 20, '30 rows in a 10-row window');
+  assert.equal(w.scrollBar.scrollIndex, 20);
 });

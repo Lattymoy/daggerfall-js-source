@@ -30,6 +30,28 @@ import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.
 // systems/loot.js. Re-exported so existing importers keep working.
 export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS };
 
+/** ROAD-G G5: what a player-dropped pile IS to the inventory window -
+ *  DaggerfallLoot's own fields (DaggerfallLoot.cs: playerOwned,
+ *  TextureArchive, TextureRecord), which OnPush reads to recover the
+ *  icon index (:616-631), UpdateRemoteTargetIcon to draw the flat
+ *  (:880-884), CanChangeDropIcon to allow the cycling (:2140-2144) and
+ *  OnPop to notice the icon changed (:689-694). `playerOwned` is TRUE
+ *  because CreateDroppedLootContainer sets it (GameObjectHelper.cs:766)
+ *  and this pool mints nothing else. ONE shape for all four hosts, so
+ *  a fifth call site cannot ship a partial identity. */
+export const droppedLootHooks = (pile) => ({
+  items: () => pile.items,
+  playerOwned: true,
+  textureArchive: pile.archive,
+  textureRecord: pile.record,
+  pos: [...pile.pos],
+});
+
+/** OnPop's re-position (:707-711): a container minted to replace a
+ *  loot target keeps that target's X and Z and takes only its own Y -
+ *  the ground under the player. No target, no move. */
+export const containerDropPos = (at, feet) => (at ? [at[0], feet[1], at[2]] : feet);
+
 /** deps = { renderer, getTexture, uploadRecordFrame, pick? } (pick
  *  is the icon roll seam - UnityEngine.Random.Range over the list). */
 export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pick }) {
@@ -39,9 +61,12 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   const roll = pick ?? (() => Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length));
 
   /** The flat mounts when the archive's record is warm (the
-   *  corpse-batch shape); shared by drop and restore. */
+   *  corpse-batch shape); shared by drop and restore. ROAD-G G5: the
+   *  ARCHIVE is the pile's own now - a player who cycled the drop icon
+   *  onto TEXTURE.204 gets a bundle of clothes on the floor, not a
+   *  treasure pile wearing record 3 of the wrong file. */
   function mount(pile) {
-    getTexture(RANDOM_TREASURE_ARCHIVE).then((t) => {
+    getTexture(pile.archive).then((t) => {
       // AUDIT 24 (the seven-slice sweep): the pile can be removed while
       // this texture is in flight - collectPixel with its map pixel,
       // releaseEmptied when the loot window closes, or either restore
@@ -52,7 +77,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // The dungeon's missile mount has carried exactly this check
       // since its own audit; retire() marks, the continuation reads.
       if (pile.dead) return;
-      uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, pile.record, 0);
+      uploadRecordFrame(pile.archive, pile.record, 0);
       const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
       pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
       // FA1 slice 3: the record is BARE and the frame is a field, so
@@ -60,9 +85,9 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // `#0` into the record was why these sites could not be armed at
       // slice 2 - a frame index appended to a record that already ends
       // in one reads `5#0#2`.
-      pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
+      pile.batch = renderer.createBillboardBatch(pile.archive, pile.record, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
       pile.batch.frame = 0;
-      armFlatAnim(pile.batch, t, RANDOM_TREASURE_ARCHIVE, pile.record, flatAnims, uploadRecordFrame);
+      armFlatAnim(pile.batch, t, pile.archive, pile.record, flatAnims, uploadRecordFrame);
     }).catch(() => {});
   }
 
@@ -72,10 +97,16 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  (StreamingWorld.TrackLooseObject :465-476) so the range sweep
    *  can find it later. Hosts without pixels (the dungeon) pass
    *  nothing. */
-  function dropPile(items, feet, pixelKey = null) {
+  function dropPile(items, feet, pixelKey = null, icon = null) {
     if (!items?.length) return null;
-    const record = RANDOM_TREASURE_ICONS[roll()];
-    const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], record, batch: null, pixelKey };
+    // ROAD-G G5: CreateDroppedLootContainer's two signatures
+    // (GameObjectHelper.cs:717-748) are ONE member with defaults -
+    // `iconArchive = randomTreasureArchive, iconRecord = -1` - and
+    // "Randomise container texture, if not manually set" is the -1
+    // arm. A chosen icon skips the roll; nothing else changes.
+    const archive = icon?.archive ?? RANDOM_TREASURE_ARCHIVE;
+    const record = icon?.record ?? RANDOM_TREASURE_ICONS[roll()];
+    const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], archive, record, batch: null, pixelKey };
     piles.push(pile);
     mount(pile);
     return pile;
@@ -104,7 +135,11 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   function snapshotWorld(toNative) {
     return piles.filter((p) => p.items.length).map((p) => {
       const wc = toNative(p.pos);
-      return { nativeX: wc.x, nativeZ: wc.z, y: p.pos[1], record: p.record, pixelKey: p.pixelKey ?? null, items: p.items.map((it) => ({ ...it })) };
+      // G5: `archive` rides beside `record` because DFU's
+      // LootContainerData_v1 carries BOTH (textureArchive/textureRecord,
+      // SerializableGameObject.cs:396-416) - the pair, never the record
+      // alone.
+      return { nativeX: wc.x, nativeZ: wc.z, y: p.pos[1], archive: p.archive, record: p.record, pixelKey: p.pixelKey ?? null, items: p.items.map((it) => ({ ...it })) };
     });
   }
   function restoreWorld(saved, fromNative, yOffset = 0) {
@@ -113,7 +148,9 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     for (const s of saved ?? []) {
       if (!s.items?.length) continue;
       const [lx, lz] = fromNative(s.nativeX, s.nativeZ);
-      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [lx, s.y + yOffset, lz], record: s.record, batch: null, pixelKey: s.pixelKey ?? null };
+      // `?? RANDOM_TREASURE_ARCHIVE` keeps a save written before G5
+      // loadable: every pile in one was 216.
+      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [lx, s.y + yOffset, lz], archive: s.archive ?? RANDOM_TREASURE_ARCHIVE, record: s.record, batch: null, pixelKey: s.pixelKey ?? null };
       piles.push(pile);
       mount(pile);
     }
@@ -130,7 +167,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     piles.length = 0;
     for (const s of saved ?? []) {
       if (!s.items?.length) continue;
-      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [s.pos[0], s.pos[1], s.pos[2]], record: s.record, batch: null };
+      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [s.pos[0], s.pos[1], s.pos[2]], archive: s.archive ?? RANDOM_TREASURE_ARCHIVE, record: s.record, batch: null };
       piles.push(pile);
       mount(pile);
     }
@@ -180,7 +217,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // the centers are baked into a STATIC_DRAW buffer - rebuild
       if (p.batch) {
         renderer.destroyBillboardBatch(p.batch);
-        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, p.record, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        p.batch = renderer.createBillboardBatch(p.archive, p.record, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
         p.batch.frame = 0;
       }
     }

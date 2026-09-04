@@ -542,9 +542,24 @@ Left, deliberately, each recorded at its site or here:
 - `exterior.js`'s `createPlayerMagic` still carries the interior arm that
   `world.js` lost, so a player-cast spell in a building reached by that
   host sees no foes.
-- `UpdateRemoteTargetIcon`'s drop-icon arms and the bank purchase list's
+- ~~`UpdateRemoteTargetIcon`'s drop-icon arms and the bank purchase list's
   scroll bar - both named in the findings as optional, both left rather
-  than widen a lane.
+  than widen a lane.~~ **SHIPPED (ROAD-G G5, 2026-09-04).** Both arms of
+  `UpdateRemoteTargetIcon` (:875-884), the three cycling handlers with
+  `CanChangeDropIcon` (:2104-2146) over `dropIconIdxs`, and OnPop's
+  re-mint (:689-712) are built: the port's loot hook carries
+  DaggerfallLoot's `playerOwned`/`TextureArchive`/`TextureRecord`/position
+  now, through one shape all four hosts take, and the chosen icon rides
+  the pile through `snapshotWorld`, `restorePiles`, the interior scene
+  cache and the save envelope. `DaggerfallLootDataTables` went back to
+  its own module (`systems/lootDataTables.js`) on the way, because
+  reading its table off `systems/loot.js` built an import cycle through
+  `potions.js`. `DaggerfallBankPurchasePopUp.SetupScrollBar` (:303-314)
+  is drawn and hit-tested in `ui/bankPurchaseWindow.js` on ROAD-A7's
+  shared `VerticalScrollBar`, beside the arrows this audit's windows
+  lane drew. Pinned by `test/road_g5_dropicons.test.js` (15) and four
+  new tests in `test/bankpreview.test.js`; 37 mutants driven, 37 dead.
+  Recorded in `bible/10-UI/UI-Arc.md`.
 - Roughly two dozen stale `exterior.js:NNN` citations across `src/`
   comments, bible pages and test headers, already stale before Wave F
   opened. A separate sweep.

@@ -101,7 +101,7 @@ import { getInteractionMode } from '../player/interactionMode.js';   // U45: the
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
-import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
@@ -1646,7 +1646,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // world host.
     getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
-    onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+    // U8e: OnPop mints the world pile. G5: with the drop icon the
+    // player cycled to (null = CreateDroppedLootContainer's -1 roll)
+    // and, when the window replaced a loot target, that container's
+    // own x/z (:707-711).
+    onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(items, containerDropPos(at, dropFeet()), null, icon),
     ...extra,
   });
   // U42: the CLASSIC spellbook - the same ONE construction the world
@@ -3221,7 +3225,7 @@ export async function bootExterior(canvas, renderer, params, status) {
               // makeInventoryWindow already passes, plus the two below -
               // which is precisely what its `extra` parameter is for.
               onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-              loot: { items: () => pile.items },
+              loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
             }));
           }
           else modes.tryEnter().catch((e) => console.error(e));

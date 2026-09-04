@@ -264,7 +264,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) return;   // G5: the middle button too
       return;   // a window is up: never grab the pointer behind it
     }
     // U45: the large HUD's eleven panels, BEFORE the relock - a click

@@ -40,6 +40,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
+import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // G5: SetupScrollBar (:303-314)
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
@@ -91,6 +92,21 @@ export const PURCHASE_UP_ARROW_RECT = Object.freeze([0, 0, 9, 16]);
 export const PURCHASE_DOWN_ARROW_RECT = Object.freeze([0, 64, 9, 16]);
 export const PURCHASE_GREEN_ARROWS = 'BANK01I1.IMG';
 export const PURCHASE_RED_ARROWS = 'BANK01I2.IMG';
+
+// ── ROAD-G G5: THE PRICE LIST'S SCROLL BAR ───────────────────────
+// SetupScrollBar (:303-314) puts a VerticalScrollBar at (106,39), 7x48,
+// with DisplayUnits = listDisplayUnits, and Setup wires the two
+// directions of one index: PriceListBox_OnScroll pushes the LIST's
+// index into the bar (:400-405) and PriceScrollBar_OnScroll pushes the
+// BAR's back into the list (:407-410), with TotalUnits refreshed from
+// priceListBox.Count at setup (:299).
+//
+// AUDIT 58's windows lane drew the two ARROWS beside it and left the
+// bar itself - so the rail between them was dead pixels: a market of
+// twenty houses could be paged one row at a time and never grabbed.
+// The widget is ROAD-A7's shared `ui/verticalScrollBar.js`, which owns
+// DFU's thumb art, its paging arms and Update's drag; this window owns
+// only the rect and the two-way index sync.
 
 /** rotSpeed (:68) - the model turns one degree every 0.02 seconds,
  *  NEGATIVE about Y (Update :175). */
@@ -158,7 +174,39 @@ export class BankPurchaseWindow {
     this.scroll = 0;
     this.yawDeg = 0;              // H4: the preview's rotation, this window's clock
     this._rotAcc = 0;
+    // G5: SetupScrollBar (:303-314). The rect is kept in SCREEN-native
+    // coordinates - the panel origin folded in - so the window's hit
+    // tests and its draw share one origin, the list picker's shape.
+    this.scrollBar = new VerticalScrollBar({
+      rect: [PURCHASE_PANEL_X + PURCHASE_RECTS.scrollBar[0],
+        PURCHASE_PANEL_Y + PURCHASE_RECTS.scrollBar[1],
+        PURCHASE_RECTS.scrollBar[2], PURCHASE_RECTS.scrollBar[3]],
+      displayUnits: LIST_ROWS, totalUnits: 0, scrollIndex: 0,
+    });
   }
+
+  /** The two OnScroll handlers as one sync (:299, :400-410).
+   *  TotalUnits comes off the live list (`priceListBox.Count`), and the
+   *  index flows FROM the bar while the thumb is being dragged and TO
+   *  it the rest of the time - DaggerfallListPickerWindow.Update's
+   *  shape, which is what listPicker.js already runs. */
+  syncScrollBar() {
+    const bar = this.scrollBar;
+    bar.totalUnits = this.items().length;
+    bar.displayUnits = LIST_ROWS;
+    if (bar.draggingThumb) this.scroll = bar.scrollIndex;
+    else bar.setScrollIndexWithoutRaisingScrollEvent(this.scroll);
+  }
+
+  /** VerticalScrollBar.Update (:101-130) off the host's hover seam -
+   *  `e.buttons & 1` is the port's read of GetMouseButton(0). */
+  hover(vx, vy, e = null) {
+    this.syncScrollBar();
+    if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
+  }
+
+  /** Update's else arm (:123-129): the button came up, the latch drops. */
+  release() { this.scrollBar.draggingThumb = false; }
 
   /** H4: Update's rotation clock (:167-177) - one NEGATIVE degree per
    *  0.02s of real time, however many frames that spans. */
@@ -233,6 +281,16 @@ export class BankPurchaseWindow {
   click(vx, vy) {
     if (inRect(PURCHASE_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     if (inRect(PURCHASE_RECTS.buy, vx, vy)) { this._buy(); return true; }
+    // G5: the BAR, before the arrows - a press inside thumbRect latches
+    // the drag (Update :108-113), one above or below pages by
+    // DisplayUnits (MouseClick :146-149), and neither is a button, so
+    // neither clicks. The rect is already screen-native.
+    this.syncScrollBar();
+    if (this.scrollBar.contains(vx, vy)) {
+      this.scrollBar.press(vx, vy);
+      this.scroll = this.scrollBar.scrollIndex;
+      return true;
+    }
     if (inRect(PURCHASE_RECTS.upArrow, vx, vy)) { this._scroll(-1); return true; }
     if (inRect(PURCHASE_RECTS.downArrow, vx, vy)) { this._scroll(1); return true; }
     const [lx, ly, lw] = PURCHASE_RECTS.priceList;
@@ -290,6 +348,11 @@ export class BankPurchaseWindow {
           [PURCHASE_PANEL_X + rect[0], PURCHASE_PANEL_Y + rect[1], rect[2], rect[3]]);
       }
     }
+    // G5: the bar's thumb, from DFU's own art. Draw (:136) paints
+    // nothing at all when the list fits, which drawScrollThumb honours
+    // through thumbSpan's null - a two-hull shipyard shows a bare rail.
+    this.syncScrollBar();
+    drawScrollThumb(renderer, m, this.scrollBar.rect, this.scrollBar.thumbSpan);
     const [lx, ly] = PURCHASE_RECTS.priceList;
     for (const r of this.rows()) {
       const y = ly + (r.index - this.scroll) * LIST_ROW_H;
