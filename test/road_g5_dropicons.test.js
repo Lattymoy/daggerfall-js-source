@@ -31,6 +31,13 @@ import { createDroppedLoot, droppedLootHooks, containerDropPos } from '../src/sc
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../src/systems/sceneCache.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
+import {
+  dropIconImage, drawTargetIconPanel, preloadContainerIconArt,
+  _resetDropIconsForTests, _setDropIconForTests, _setContainerIconsForTests,
+  CONTAINER_IMAGES, REMOTE_TARGET_ICON_RECT,
+} from '../src/ui/targetIconPanel.js';
+import { nativeMetrics } from '../src/ui/nativePanel.js';
+import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
@@ -155,6 +162,25 @@ const win = (hooks = {}) => new NativeInventoryWindow({ items: () => [], icons: 
 const PANEL = INV_RECTS.remoteTargetIcon;   // [263, 12, 55, 34]
 const AT = [PANEL[0] + 2, PANEL[1] + 2];
 
+test('G5: the WINDOW seeds through openDropIcon (:593-631), not a constant of its own', () => {
+  // MUTANT: `this.dropIcon = openDropIcon(hooks, this.chooseOne);` ->
+  // `this.dropIcon = { archive: 216, texture: -1 };` in
+  // src/ui/nativeInventory.js. RED on both rows below - and ONLY on
+  // them: every other window fixture in this file opens on a target
+  // whose correct seed IS that constant, which is exactly why the
+  // window could be cut loose from the seed with the suite green.
+  assert.deepEqual(win({ chooseOne: { items: [] } }).dropIcon, { archive: 207, texture: 11 },
+    'a reward list reaches the WINDOW on combatArchive icon 11 (:595-599)');
+  assert.deepEqual(
+    win({ loot: { items: () => [], playerOwned: true, textureArchive: 205, textureRecord: 22 } }).dropIcon,
+    { archive: 205, texture: 11 },
+    'and a pile you own recovers its INDEX through the window (:616-631)');
+  // ...and the seed the window recovered is the one the cycling moves
+  const owned = win({ loot: { items: () => [], playerOwned: true, textureArchive: 205, textureRecord: 22 } });
+  withAudio(() => owned.click(AT[0], AT[1]));
+  assert.deepEqual(owned.dropIcon, { archive: 205, texture: 12 }, 'one step up from the recovered index');
+});
+
 test('G5: the remote panel takes all three buttons, and only the two that DFU sounds', () => {
   assert.deepEqual([...PANEL], [263, 12, 55, 34], 'remoteTargetIconRect (:50) stands');
   const w = win();
@@ -189,29 +215,134 @@ test('G5: the click SOUNDS before CanChangeDropIcon is asked, and a shelf change
 });
 
 test('G5: UpdateRemoteTargetIcon\'s ladder (:865-890) - chosen flat, then the target\'s flat, then the container', () => {
-  // MUTANT: put the container arm ahead of the chosen-flat arm. RED on
-  // the first case: a picked icon must beat the Ground picture.
-  const plain = win();
-  assert.equal(plain._remoteTargetIcon().container, 2, 'Ground with nothing picked (InventoryContainerImages.Ground)');
-  assert.equal(plain._remoteTargetIcon().image, undefined);
-  plain.dropIcon = { archive: 211, texture: 3 };
-  const chosen = plain._remoteTargetIcon();
-  assert.equal(chosen.container, undefined, 'the chosen flat replaces the container picture entirely');
-  assert.equal('image' in chosen, true);
-  assert.equal(chosen.label, '', 'the remote label is empty outside wagon mode');
-  // the SECOND arm: a loot target with a flat of its own and no pick
-  const pile = win({ loot: { items: () => [], textureArchive: 216, textureRecord: 22 } });
-  assert.equal('image' in pile._remoteTargetIcon(), true, 'the container\'s own world flat (:880-884)');
-  // ...and a loot target with NO flat still falls to the container image
-  const shelf = win({ loot: { items: () => [] } });
-  assert.equal(shelf._remoteTargetIcon().container, 2);
-  // MUTANT: drop the `rti.image` argument from the draw call. The pin
-  // is the SOURCE, because the panel is a GL draw.
-  assert.match(src('ui/nativeInventory.js'),
-    /drawTargetIconPanel\(renderer, m, font, INV_RECTS\.remoteTargetIcon, rti\.container, rti\.label, rti\.image\);/,
-    'the flat reaches the panel');
-  assert.match(src('ui/targetIconPanel.js'), /const icon = image \?\? _icons\?\.get\(containerType\) \?\? null;/,
-    'and lays out through the SAME ScaleToFit path the container picture takes');
+  // The two flat arms differ ONLY in which (archive, record) they hand
+  // dropIconImage, so the pictures have to be registered or the pair is
+  // interchangeable: `'image' in x` is true for `{ image: null }`, which
+  // is what an unregistered reader answers.
+  _resetDropIconsForTests();
+  const CHOSEN_IMG = { tex: 'chosen', w: 8, h: 8 };
+  const PILE_IMG = { tex: 'pile', w: 8, h: 8 };
+  _setDropIconForTests(211, 57, CHOSEN_IMG);   // dropIconIdxs[211][3] === 57
+  _setDropIconForTests(216, 22, PILE_IMG);
+  try {
+    // MUTANT: put the container arm ahead of the chosen-flat arm. RED on
+    // the first case: a picked icon must beat the Ground picture.
+    const plain = win();
+    assert.equal(plain._remoteTargetIcon().container, 2, 'Ground with nothing picked (InventoryContainerImages.Ground)');
+    assert.equal(plain._remoteTargetIcon().image, undefined);
+    plain.dropIcon = { archive: 211, texture: 3 };
+    const chosen = plain._remoteTargetIcon();
+    assert.equal(chosen.container, undefined, 'the chosen flat replaces the container picture entirely');
+    // MUTANT: `return null;` as dropIconImage's first statement
+    // (src/ui/targetIconPanel.js). RED here - the key-presence check
+    // this replaces was satisfied by `{ image: null }`.
+    assert.equal(chosen.image, CHOSEN_IMG, 'the CHOSEN flat is dropIconIdxs[211][3] = record 57 (:875-879)');
+    assert.equal(chosen.label, '', 'the remote label is empty outside wagon mode');
+    // the SECOND arm: a loot target with a flat of its own and no pick
+    const pile = win({ loot: { items: () => [], textureArchive: 216, textureRecord: 22 } });
+    assert.equal(pile._remoteTargetIcon().image, PILE_IMG, 'the container\'s own world flat (:880-884)');
+    // MUTANT: swap the two flat arms - run the loot-flat arm before the
+    // chosen-flat one. RED only here: this is the ONE state that
+    // separates them, and DFU asks `dropIconTexture > -1` FIRST (:875).
+    const both = win({ loot: { items: () => [], textureArchive: 216, textureRecord: 22 } });
+    both.dropIcon = { archive: 211, texture: 3 };
+    assert.equal(both._remoteTargetIcon().image, CHOSEN_IMG,
+      'the icon you just picked outranks the pile\'s own flat (:875-879 before :880-884)');
+    // ...and a loot target with NO flat still falls to the container image
+    const shelf = win({ loot: { items: () => [] } });
+    assert.equal(shelf._remoteTargetIcon().container, 2);
+    // A CORPSE is the loot kind that reaches arm 2 most often:
+    // CreateLootableCorpseMarker hands ReverseCorpseTexture's
+    // archive/record to CreateLootContainer (GameObjectHelper.cs:812-828,
+    // written on at :697-698), so TextureArchive is never 0 and the body
+    // draws its own flat. MUTANT: the dungeon's corpse arm without its
+    // `lootHooks` (the shipped code before this fix) - `{ items() }`
+    // alone falls to the Ground picture, which is what this row was.
+    const ct = ENEMY_BASICS[0].corpseTexture;
+    assert.deepEqual(ct, { archive: 401, record: 1 }, 'ReverseCorpseTexture (EnemyBasics.cs:2227-2231) is never 0');
+    _setDropIconForTests(ct.archive, ct.record, { tex: 'corpse', w: 8, h: 8 });
+    const body = win({ loot: { items: () => [], textureArchive: ct.archive, textureRecord: ct.record } });
+    assert.deepEqual(body._remoteTargetIcon().image, { tex: 'corpse', w: 8, h: 8 },
+      'a corpse marker draws its OWN world flat, not InventoryContainerImages.Ground');
+    assert.equal(canChangeDropIcon({ loot: { items: () => [], textureArchive: ct.archive } }, {}), false,
+      'and it is not playerOwned (GameObjectHelper.cs:833), so nothing cycles it');
+    // the seam that feeds it: the dungeon's corpse arm derives the pair
+    // from the SAME corpseTexture read spawnCorpse takes
+    const arm = src('scenes/dungeonContext.js');
+    const corpseArm = arm.slice(arm.indexOf("} else if (kind === 'corpse') {"),
+      arm.indexOf("} else if (kind.startsWith('droppedLoot')) {"));
+    assert.match(corpseArm, /const ct = f\.mobile\?\.basics\?\.corpseTexture \?\? ENEMY_BASICS\[f\.mobileType\]\?\.corpseTexture;/,
+      'the corpse arm reads the STRUCT COPY first, as EnemyDeath.cs:86-92 does');
+    assert.match(corpseArm, /if \(ct\) lootHooks = \{ textureArchive: ct\.archive, textureRecord: ct\.record \};/,
+      'and hands the window DaggerfallLoot\'s flat identity');
+    assert.equal(/playerOwned:/.test(corpseArm), false, 'and never sets playerOwned - a corpse is not the player\'s');
+    // MUTANT: drop the `rti.image` argument from the draw call. The pin
+    // is the SOURCE, because the window's panel is a GL draw; what the
+    // panel then DOES with the flat is pinned behaviourally below.
+    assert.match(src('ui/nativeInventory.js'),
+      /drawTargetIconPanel\(renderer, m, font, INV_RECTS\.remoteTargetIcon, rti\.container, rti\.label, rti\.image\);/,
+      'the flat reaches the panel');
+    assert.match(src('ui/targetIconPanel.js'), /const icon = image \?\? _icons\?\.get\(containerType\) \?\? null;/,
+      'and lays out through the SAME ScaleToFit path the container picture takes');
+  } finally { _resetDropIconsForTests(); }
+});
+
+test('G5: dropIconImage IS the picture (:875-884) - guarded, asked once, and it reaches the panel', async () => {
+  _resetDropIconsForTests();
+  let fetches = 0;
+  const deps = {
+    renderer: { uploadTexture: (kind, name) => `tex:${name}` },
+    palette: {},
+    fetchBytes: async (name) => { fetches++; throw new Error(`no ${name}`); },
+  };
+  // preloadContainerIconArt registers the reader's deps before its own
+  // early return; the CIF miss here is the not-fatal arm.
+  await preloadContainerIconArt(deps);
+  fetches = 0;
+  try {
+    // MUTANT: `if (!(archive > 0) || !(record >= 0)) return null;` ->
+    // `if (!(record >= 0)) return null;`. RED here.
+    assert.equal(dropIconImage(0, 5), null, 'archive 0 is no archive');
+    assert.equal(dropIconImage(216, -1), null, 'and -1 is OnPush\'s "nothing picked"');
+    assert.equal(fetches, 0, 'a guarded ask never touches ARENA2');
+    // SYNCHRONOUS by design: the first ask starts the load and answers
+    // null, exactly as paintingImage's cache-in-front does.
+    assert.equal(dropIconImage(216, 22), null);
+    assert.equal(fetches, 1, 'one ask, one read');
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    // MUTANT: drop `_flats.set(key, null)` from the catch. RED here -
+    // a missing archive would be re-read on every draw pass.
+    assert.equal(dropIconImage(216, 22), null);
+    assert.equal(fetches, 1, 'the MISS is asked and answered - never retried');
+    // MUTANT: `return null;` as dropIconImage's first statement. RED here.
+    const IMG = { tex: 'T', w: 40, h: 20 };
+    _setDropIconForTests(205, 19, IMG);
+    assert.equal(dropIconImage(205, 19), IMG, 'a warm record answers its picture');
+    assert.equal(fetches, 1, 'and a HIT never reads again');
+  } finally { _resetDropIconsForTests(); }
+});
+
+test('G5: the flat the window chose is what the 55x34 panel DRAWS, ScaleToFit', () => {
+  // MUTANT: `const icon = image ?? _icons?.get(containerType) ?? null;`
+  // -> `const icon = _icons?.get(containerType) ?? null;`. RED here:
+  // the container picture would be drawn over the chosen flat.
+  _setContainerIconsForTests(new Map([[CONTAINER_IMAGES.Ground, { tex: 'C', w: 11, h: 11 }]]));
+  try {
+    const quads = [];
+    const renderer = { drawScreenQuad: (tex, rect) => quads.push({ tex, ...rect }) };
+    const m = nativeMetrics({ width: 320, height: 200 });
+    const FONT = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 4 }, tex: 'font' };
+    assert.equal(drawTargetIconPanel(renderer, m, FONT, REMOTE_TARGET_ICON_RECT,
+      CONTAINER_IMAGES.Ground, '', { tex: 'F', w: 40, h: 20 }), true);
+    assert.deepEqual(quads.map((q) => q.tex), ['F'], 'the FLAT is drawn, and the container picture is not');
+    // ScaleToFit: min(55/40, 34/20) = 1.375 -> 55x27.5, centred in the rect
+    const [rx, ry, rw, rh] = REMOTE_TARGET_ICON_RECT;
+    assert.equal(quads[0].w, 55 * m.s);
+    assert.equal(quads[0].h, 27.5 * m.s);
+    assert.equal(quads[0].x, m.ox + rx * m.s);
+    assert.equal(quads[0].y, m.oy + (ry + (rh - 27.5) / 2) * m.s);
+    assert.equal(rw, 55); assert.equal(rh, 34);
+  } finally { _setContainerIconsForTests(null); }
 });
 
 // ── OnPop ────────────────────────────────────────────────────────
@@ -235,7 +366,23 @@ test('G5: OnPop (:689-712) - a changed icon re-mints the pile, an unchanged one 
   assert.equal(mint.length, 1);
   assert.equal(mint[0].n, 2, 'both items ride into the new pile');
   assert.deepEqual(mint[0].icon, { archive: 216, record: 23 }, 'minted with the CHOSEN archive/record (:701-705)');
-  assert.deepEqual(mint[0].at, [7, 1, 9], 'and at the old container\'s position (:707-711)');
+  assert.deepEqual(mint[0].at, [7, 1, 9], 'and at the old container\'s position (:710-714)');
+
+  // MUTANT: drop the `loot.playerOwned` half of the guard in
+  // closeSession. RED here. DaggerfallInventoryWindow.cs:690 asks
+  // playerOwned FIRST, and the dungeon's RDB treasure pile is
+  // deliberately not the player's (dungeonContext's takeLoot) while the
+  // session's default seed is {216,-1}, whose record is null - so
+  // without the term the comparison is ALWAYS true and every close of a
+  // treasure pile would TransferAll it onto the floor.
+  const rdbItems = [{ n: 'gem' }, { n: 'gold' }];
+  const rdb = { items: () => rdbItems, textureArchive: 216, textureRecord: 34, pos: [10, 2, 20] };
+  const rdbMint = [];
+  assert.equal(dropIconRecord(216, -1), null, 'no pick means no record to compare against');
+  closeSession({ loot: rdb, onDrop: (d, ic, at) => rdbMint.push({ d, ic, at }), onClose: () => {} },
+    { dropped: [], dropIcon: openDropIcon({ loot: rdb }) });
+  assert.equal(rdbItems.length, 2, 'a pile the player does not own is never re-minted (:690, playerOwned)');
+  assert.deepEqual(rdbMint, [], 'and nothing drops on the floor');
 
   // MUTANT: `record == null ? null : {...}` -> always the object. RED
   // here: with nothing picked DFU takes the BARE CreateDroppedLootContainer
@@ -249,27 +396,39 @@ test('G5: OnPop (:689-712) - a changed icon re-mints the pile, an unchanged one 
   assert.deepEqual(at, [null], 'no loot target, no re-position');
 });
 
-test('G5: containerDropPos (:707-711) keeps the old container\'s X and Z and takes the new Y', () => {
+test('G5: containerDropPos (:710-714) keeps the old container\'s X and Z and takes the new Y', () => {
   // MUTANT: `[at[0], at[1], at[2]]`. RED here.
   assert.deepEqual(containerDropPos([7, 90, 9], [1, 2, 3]), [7, 2, 9]);
   assert.deepEqual(containerDropPos(null, [1, 2, 3]), [1, 2, 3]);
 });
 
 // ── the pile carries it ──────────────────────────────────────────
+/** The pool RECORDS what the renderer and the uploader are handed -
+ *  five sites read the pile's archive and a fixture that throws the
+ *  arguments away can only pin two of them by source text. The flat is
+ *  ANIMATED (four frames) because armFlatAnim returns before it ever
+ *  looks at the archive when the count is 1. */
 const pool = () => {
-  const made = [];
+  const made = [], built = [], uploads = [];
   return {
-    made,
+    made, built, uploads,
     p: createDroppedLoot({
-      renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} },
-      getTexture: async (a) => { made.push(a); return { getSize: () => ({ width: 1, height: 1 }), getScale: () => ({ x: 0, y: 0 }), getFrameCount: () => 1 }; },
-      uploadRecordFrame: () => {},
+      renderer: {
+        createBillboardBatch: (archive, record, size, centers) => {
+          const b = { archive, record, size, centers };
+          built.push(b);
+          return b;
+        },
+        destroyBillboardBatch: () => {},
+      },
+      getTexture: async (a) => { made.push(a); return { getSize: () => ({ width: 1, height: 1 }), getScale: () => ({ x: 0, y: 0 }), getFrameCount: () => 4 }; },
+      uploadRecordFrame: (a, r, f) => uploads.push([a, r, f]),
       pick: () => 0,
     }),
   };
 };
 
-test('G5: a pile carries its ARCHIVE beside its record, from the drop to the flat', () => {
+test('G5: a pile carries its ARCHIVE beside its record, from the drop to the flat', async () => {
   const { p } = pool();
   // MUTANT: `const archive = RANDOM_TREASURE_ARCHIVE;` in dropPile. RED here.
   const rolled = p.dropPile([{ n: 1 }], [0, 0, 0]);
@@ -278,10 +437,33 @@ test('G5: a pile carries its ARCHIVE beside its record, from the drop to the fla
   const picked = p.dropPile([{ n: 2 }], [1, 2, 3], null, { archive: 205, record: 19 });
   assert.equal(picked.archive, 205);
   assert.equal(picked.record, 19, 'a chosen icon skips the roll (GameObjectHelper.cs:743-748)');
-  // MUTANT: `getTexture(RANDOM_TREASURE_ARCHIVE)` in mount(). RED here.
+  // the two SHAPE pins - what the call sites read
   assert.match(src('scenes/droppedLoot.js'), /getTexture\(pile\.archive\)\.then/,
     'the flat warms the PILE\'s archive, not the constant');
   assert.match(src('scenes/droppedLoot.js'), /renderer\.createBillboardBatch\(pile\.archive, pile\.record,/);
+  // ...and the five reads BEHAVIOURALLY, because a regex naming two of
+  // them leaves the other three free to revert to the 216 constant. A
+  // pool of its own, so the only flat in it is the one the player chose.
+  const { p: q, made, built, uploads } = pool();
+  q.dropPile([{ n: 3 }], [1, 2, 3], null, { archive: 205, record: 19 });
+  for (let i = 0; i < 8; i++) await Promise.resolve();   // the warm settles
+  // MUTANT: `getTexture(RANDOM_TREASURE_ARCHIVE)` in mount(). RED here.
+  assert.equal(made.at(-1), 205, 'mount warms the PILE\'s archive');
+  // MUTANT: `uploadRecordFrame(216, pile.record, 0)` in mount(). RED here.
+  assert.deepEqual(uploads[0], [205, 19, 0], 'and the frame it warms is the pile\'s own record');
+  // MUTANT: `renderer.createBillboardBatch(216, ...)` in mount(). RED here.
+  assert.equal(built.at(-1).archive, 205);
+  // MUTANT: `armFlatAnim(pile.batch, t, 216, pile.record, ...)`. RED
+  // here - armFlatAnim uploads EVERY frame under the archive it is
+  // handed (flatAnimation.js) and registers the animator under it.
+  assert.deepEqual(uploads.map(([a]) => a), [205, 205, 205, 205, 205],
+    'the animation frames ride the pile\'s archive too');
+  // MUTANT: `createBillboardBatch(216, p.record, p.size, ...)` in
+  // offsetAll. RED here - a floating-origin recenter must not re-icon a
+  // pile the player chose the flat for.
+  q.offsetAll([-819.2, 0, 0]);
+  assert.equal(built.at(-1).archive, 205, 'the recenter rebuild keeps the pile\'s archive');
+  assert.deepEqual(built.at(-1).centers[0], [1 - 819.2, 2, 3], 'at the shifted centre');
 });
 
 test('G5: the archive survives every envelope a pile rides', () => {

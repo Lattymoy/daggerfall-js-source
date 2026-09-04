@@ -154,7 +154,7 @@ test('droppedLoot P2 (items-2): the world host wiring - collect at teardown, sta
   const s = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.ok(s.includes('droppedLoot.collectPixel(key)'), 'the pixel teardown sweeps its piles');
   // ROAD-G G5 put the drop icon and OnPop's container re-position
-  // (:707-711) through the same door; the PIXEL STAMP is what this pin
+  // (:710-714) through the same door; the PIXEL STAMP is what this pin
   // is about and it still rides both sites.
   assert.ok(/dropPile\(\s*items, containerDropPos\(at, dropFeet\(\)\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`, icon\)/.test(s),
     'the OnPop drop stamps the map pixel');

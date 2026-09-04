@@ -47,7 +47,7 @@ export const droppedLootHooks = (pile) => ({
   pos: [...pile.pos],
 });
 
-/** OnPop's re-position (:707-711): a container minted to replace a
+/** OnPop's re-position (:710-714): a container minted to replace a
  *  loot target keeps that target's X and Z and takes only its own Y -
  *  the ground under the player. No target, no move. */
 export const containerDropPos = (at, feet) => (at ? [at[0], feet[1], at[2]] : feet);

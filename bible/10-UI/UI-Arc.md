@@ -9006,7 +9006,7 @@ in.
    loot is removed and a new one created." `TransferAll` empties the old
    container, `releaseEmptied` frees its flat, and the new container is
    minted with the chosen archive/record and moved to the OLD one's x
-   and z, taking only its own y (:707-711).
+   and z, taking only its own y (:710-714).
 3. **The 216 list here is not `randomTreasureIconIndices`.**
    `dropIconIdxs[216]` has thirty entries and the roll list has twenty.
    A pile you never touched can therefore wear a record that the cycling
@@ -9045,11 +9045,48 @@ had neither method.
 
 ### PINS
 
-`test/road_g5_dropicons.test.js` (15 tests, 28 mutants driven, 28 dead)
-and four new tests in `test/bankpreview.test.js` (9 mutants driven, 9
+`test/road_g5_dropicons.test.js` (18 tests, 41 mutants driven, 41 dead)
+and four new tests in `test/bankpreview.test.js` (12 mutants driven, 12
 dead). The mutants are written beside the assertions that kill them.
 Nothing here has been seen in a browser: the two panels are GL draws and
 the standing rule since 2026-09-01 is that the owner verifies.
+
+**The review-fix pass (Wave G, lane G5).** Nine findings; six of them
+were pins that held less than their titles claimed, and the seams they
+left open are named here because the counts above changed for them. The
+WINDOW now binds to the seed: `openDropIcon` could be replaced in
+`nativeInventory` by the constant `{216, -1}` with the whole suite
+green, because every window fixture in the file opened on a target whose
+correct seed IS that constant. The two flat arms were interchangeable:
+they differ only in which `(archive, record)` reaches `dropIconImage`,
+and `'image' in x` is true for `{ image: null }` - which is what the
+reader answers with nothing registered, so both key-presence guards are
+identity checks now, over pictures put in through
+`_setDropIconForTests`. `dropIconImage` itself - the whole TEXTURE.###
+reader the slice exists for - had no pin at all and its two shipped test
+seams had no caller; it is pinned on its guard (a guarded ask never
+touches ARENA2), on its MISS cache (asked once, never retried) and on
+the picture a warm record answers, and `drawTargetIconPanel` is pinned
+through a recording renderer drawing that flat ScaleToFit OVER the
+container picture. `closeSession`'s `playerOwned` term (:690) had no
+non-owned fixture: without it every close of a dungeon RDB treasure pile
+TransferAll-empties it onto the floor. And `droppedLoot`'s five archive
+reads were held by two source regexes naming two of them; all five are
+behavioural now, `offsetAll`'s floating-origin rebuild included - under
+that one a pile the player re-iconed reverted to a treasure flat on the
+first recenter.
+
+One LAW moved with them, in `dungeonContext`'s `takeLoot`: a corpse
+reached `UpdateRemoteTargetIcon` with `{ items() }` alone and drew
+`InventoryContainerImages.Ground`. `CreateLootableCorpseMarker`
+(`GameObjectHelper.cs:812-828`) hands `ReverseCorpseTexture`'s
+archive/record to `CreateLootContainer`, which writes them onto the
+container (:697-698), and `EnemyBasics.cs:2227-2231` is
+`archive = corpseTexture >> 16` with no zero row in the table - so a
+corpse ALWAYS satisfies the second arm's guard and DFU draws the body's
+own world flat. The corpse arm feeds that pair now, off the same
+struct-copy-then-row read `spawnCorpse` takes, and carries no
+`playerOwned` (`:833` sets it false), so nothing cycles a body's icon.
 
 ## ROAD-G G6 - THE MOUSE / ADVANCED CONTROLS WINDOW (2026-09-04)
 

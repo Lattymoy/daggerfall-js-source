@@ -220,13 +220,16 @@ test('A54: the price list draws its GREEN/RED arrows, and the states are DFU\'s'
 // ui/verticalScrollBar.js; what is pinned here is this window's rect,
 // its two-way index sync, and the fact that the rail is now hit.
 //
-// Nine mutants driven, nine dead: (1) the rect -> the list picker's
+// Twelve mutants driven, twelve dead: (1) the rect -> the list picker's
 // [181,23,5,82]; (2) `displayUnits: LIST_ROWS` -> 1; (3) syncScrollBar
 // stops refreshing TotalUnits from the live list; (4) the press arm
 // deleted from click(); (5) `this.scroll = this.scrollBar.scrollIndex`
 // dropped after the press; (6) syncScrollBar's `if (bar.draggingThumb)`
 // inverted; (7) drawScrollThumb removed from draw(); (8) `release()`
-// stops dropping the latch; (9) `hover` stops running Update.
+// stops dropping the latch; (9) `hover` stops running Update;
+// (10) `update(..., vy)` -> `vx`, the horizontal drag; (11)
+// `!!(e?.buttons & 1)` -> `true`, the ignored mouse button; (12) the
+// thumb drawn at `{ y: 0, h }`, pinned to the top of the rail.
 // ═══════════════════════════════════════════════════════════════════
 test('G5: SetupScrollBar - the rect is [106,39,7,48] with DisplayUnits = listDisplayUnits', () => {
   assert.deepEqual([...PURCHASE_RECTS.scrollBar], [106, 39, 7, 48], 'Position (106,39), Size (7,48) (:306-311)');
@@ -259,10 +262,25 @@ test('G5: the rail PAGES by DisplayUnits and the thumb DRAGS - the two arms of t
   w.click(bx + 3, by + span.y + 1);
   assert.equal(w.scroll, 0, 'a press ON the thumb pages nothing - there is no third arm');
   assert.equal(w.scrollBar.draggingThumb, true, 'it latches instead');
-  // ...and the drag then drives the LIST, through the host's hover seam
+  // ...and the drag then drives the LIST, through the host's hover seam.
+  // The value is the LAW, not merely "it moved": VerticalScrollBar
+  // .Update (:115-121) is `scale = Size.y / totalUnits` and
+  // `unitsMoved = dragDistance.y / scale`.
   w.hover(bx + 3, by + span.y + 1 + bh / 3, { buttons: 1 });
-  assert.ok(w.scroll > 0, 'the thumb drags the list');
-  assert.equal(w.rows()[0].index, w.scroll);
+  assert.equal(w.scroll, 10,
+    'Update (:115-121): scale = 48/30 = 1.6, dragDistance.y = 16, unitsMoved = 10');
+  assert.equal(w.rows()[0].index, 10, 'and the list slice starts there');
+  // MUTANT: `this.scrollBar.update(!!(e?.buttons & 1), vy)` -> `..., vx)`.
+  // RED here: Update reads the VERTICAL delta only (`dragDistance.y`,
+  // :117-119), so a cursor dragged far off the rail in X moves nothing.
+  w.hover(bx + bw + 40, by + span.y + 1 + bh / 3, { buttons: 1 });
+  assert.equal(w.scroll, 10, 'the cursor off the rail in x drags the list nowhere');
+  // MUTANT: `!!(e?.buttons & 1)` -> `true`. RED here: GetMouseButton(0)
+  // came up, so Update takes its ELSE arm (:123-129) and drops the latch
+  // without moving anything - under the mutant this frame drags on to 15.
+  w.hover(bx + 3, by + span.y + 1 + bh / 3 + 8, { buttons: 0 });
+  assert.equal(w.scrollBar.draggingThumb, false, 'the released button drops the latch');
+  assert.equal(w.scroll, 10, 'and that frame moved nothing');
   // the button comes up: the latch drops and a later held move does
   // NOT resume from the stale anchor
   const held = w.scroll;
@@ -282,11 +300,21 @@ test('G5: the thumb is DRAWN, in DFU\'s own three strips, and vanishes when the 
   const font = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 4 }, tex: 'font' };
   _setPurchaseArtForTests({ tex: 'BANK01I0', w: 225, h: 129 }, null);
   try {
+    // BOTTOM the list first: at index 0 the thumb sits at the rail's own
+    // top, and a thumb frozen there would be indistinguishable from one
+    // that walks. Thirty rows, ten displayed - ArrowDown thirty times
+    // leaves scrollIndex at the max, 20.
+    for (let i = 0; i < 30; i++) w.input('ArrowDown');
+    w.syncScrollBar();
+    const span = w.scrollBar.thumbSpan;
+    assert.ok(span.y > 0, 'a bottomed 30-row list moves the thumb OFF the rail top');
+    assert.deepEqual({ ...span }, { y: 32, h: 16 },
+      'thumbY = scrollIndex * (height - thumbHeight) / (totalUnits - displayUnits) = 20 * 32 / 20 (:208-210)');
     w.draw(renderer, { width: 320, height: 200 }, font);
     // the thumb is untextured colour bands - five columns per strip,
     // each one fifth of the 7px rail wide (the screen dim behind the
     // window is untextured too, and is 320 wide, so width picks them out)
-    const [bx, , bw] = w.scrollBar.rect;
+    const [bx, by, bw] = w.scrollBar.rect;
     const bands = quads.filter((q) => q.tex === null && q.color && q.w <= bw);
     assert.ok(bands.length >= 10, 'the top and bottom strips at least, five columns each');
     const greys = new Set(bands.map((b) => Math.round(b.color[0] * 255)));
@@ -296,6 +324,15 @@ test('G5: the thumb is DRAWN, in DFU\'s own three strips, and vanishes when the 
     for (const b of bands) {
       assert.ok(b.x >= bx - 1e-6 && b.x + b.w <= bx + bw + 1e-6, 'every band stays inside the 7px rail');
     }
+    // MUTANT: `drawScrollThumb(..., this.scrollBar.thumbSpan)` ->
+    // `..., { y: 0, h: span.h }`. RED here - the three strips would land
+    // at 75/76/90, the rail's top, instead of walking down it with the
+    // scroll index (VerticalScrollBar.cs:210 thumbY, :216-218 the rects).
+    const ys = [...new Set(bands.map((b) => b.y))].sort((a, b) => a - b);
+    assert.deepEqual(ys, [107, 108, 122]);
+    assert.equal(ys[0], Math.trunc(by + span.y), 'topRect.y is (int)(totalRect.y + thumbY) (:216)');
+    assert.equal(ys[1], ys[0] + 1, 'the body starts at topRect.yMax (:217)');
+    assert.equal(ys[2], ys[1] + Math.trunc(span.h - 2), 'and the bottom on bodyRect.yMax (:218)');
     // a list that FITS draws NOTHING (Draw :136 returns before DrawScrollBar)
     quads.length = 0;
     const two = new BankPurchaseWindow({ onClose: () => {} });   // the shipyard: two rows

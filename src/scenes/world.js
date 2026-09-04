@@ -2537,7 +2537,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // U8e: OnPop mints the world pile; P2: stamped with its map pixel.
     // G5: `icon` is the drop icon the player cycled to on the remote
     // panel (null = CreateDroppedLootContainer's -1 roll), and `at` is
-    // the loot target the window replaced - :707-711 keeps that
+    // the loot target the window replaced - :710-714 keeps that
     // container's x and z and takes only the new pile's own y.
     onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(
       items, containerDropPos(at, dropFeet()), `${playerTravelPixel().x},${playerTravelPixel().y}`, icon),

@@ -571,8 +571,13 @@ Left, deliberately, each recorded at its site or here:
   `potions.js`. `DaggerfallBankPurchasePopUp.SetupScrollBar` (:303-314)
   is drawn and hit-tested in `ui/bankPurchaseWindow.js` on ROAD-A7's
   shared `VerticalScrollBar`, beside the arrows this audit's windows
-  lane drew. Pinned by `test/road_g5_dropicons.test.js` (15) and four
-  new tests in `test/bankpreview.test.js`; 37 mutants driven, 37 dead.
+  lane drew. A corpse marker reaches the second arm too, with
+  `ReverseCorpseTexture`'s own archive/record
+  (`GameObjectHelper.cs:812-828`, written onto the container at
+  :697-698) - the Wave G review-fix closed that arm's one loot kind, and
+  made the pins behind both halves of this row behavioural. Pinned by
+  `test/road_g5_dropicons.test.js` (18) and four new tests in
+  `test/bankpreview.test.js`; 53 mutants driven, 53 dead.
   Recorded in `bible/10-UI/UI-Arc.md`.
 - Roughly two dozen stale `exterior.js:NNN` citations across `src/`
   comments, bible pages and test headers, already stale before Wave F

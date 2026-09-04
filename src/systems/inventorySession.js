@@ -270,10 +270,10 @@ export function closeSession(deps = {}, state = {}) {
     from.length = 0;
   }
   if (state.dropped?.length) {
-    // CreateDroppedLootContainer's two calls (:698-705): the chosen
+    // CreateDroppedLootContainer's two calls (:700-707): the chosen
     // archive/record when one was picked, and the bare call - which
     // rolls a randomTreasureIconIndices record - when none was. And
-    // (:707-711) a container minted over a loot target keeps that
+    // (:710-714) a container minted over a loot target keeps that
     // target's x and z, taking only its own y.
     const record = icon ? dropIconRecord(icon.archive, icon.texture) : null;
     deps.onDrop?.(state.dropped,

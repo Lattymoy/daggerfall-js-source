@@ -1192,7 +1192,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // first frame has nowhere to land, and DFU's own container mint
       // is at the player's position - so no feet, no pile, loudly.
       // G5: the chosen drop icon and, when a loot target was replaced,
-      // that container's own x/z (:698-711).
+      // that container's own x/z (:698-714).
       onDrop: (items, icon = null, at = null) => (lastPlayerFeet
         ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
@@ -4805,6 +4805,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const f = foes[i];
         if (!f?.dead) return 0;
         source = f.entity.items;
+        // CreateLootableCorpseMarker hands ReverseCorpseTexture's
+        // archive/record straight to CreateLootContainer
+        // (GameObjectHelper.cs:812-828), which writes them onto the
+        // container (:697-698) - so a corpse marker ALWAYS has
+        // TextureArchive > 0 and UpdateRemoteTargetIcon draws the
+        // body's OWN world flat (:880-884), never the Ground picture.
+        // The archive is the same struct-copy-then-row read spawnCorpse
+        // takes (EnemyDeath.cs:86-92), and the pair arrives without
+        // playerOwned because :833 sets it false - so CanChangeDropIcon
+        // refuses to cycle a body's icon.
+        const ct = f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture;
+        if (ct) lootHooks = { textureArchive: ct.archive, textureRecord: ct.record };
       } else if (kind.startsWith('droppedLoot')) {
         const p = droppedLoot.pileFor(key);
         source = p?.items ?? null;

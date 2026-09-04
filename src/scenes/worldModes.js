@@ -485,7 +485,7 @@ export function createWorldModes(host) {
    *  silently dropped the free. */
   const interiorInventory = ({ onClose, ...extra } = {}) => host.makeInventory?.({
     // G5: the drop icon and the replaced container's x/z ride the
-    // same OnPop the world hosts take (:698-711).
+    // same OnPop the world hosts take (:698-714).
     onDrop: (items, icon = null, at = null) =>
       interiorDropped.dropPile(items, containerDropPos(at, interiorDropFeet()), null, icon),
     ...extra,

@@ -1652,7 +1652,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // U8e: OnPop mints the world pile. G5: with the drop icon the
     // player cycled to (null = CreateDroppedLootContainer's -1 roll)
     // and, when the window replaced a loot target, that container's
-    // own x/z (:707-711).
+    // own x/z (:710-714).
     onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(items, containerDropPos(at, dropFeet()), null, icon),
     ...extra,
   });
