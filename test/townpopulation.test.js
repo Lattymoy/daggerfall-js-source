@@ -302,6 +302,10 @@ test('politeness gate: the motor obeys it, and both exterior hosts feed it their
     assert.match(src(f), /enemiesNearby: \(\) => areEnemiesNearby\(/, f);
     assert.doesNotMatch(src(f), /_playerStill && pd < 2\.5/, `${f} still hand-rolls the gate`);
   }
-  assert.match(src('src/scenes/exterior.js'), /enemiesNearby: \(\) => areEnemiesNearby\(cityGuards\.guards\)/);
+  // ROAD-G G2: the fixed-city host's pool is the JOIN now (it named
+  // the watch alone, which was its whole database until it mounted an
+  // encounter pool) - a townsperson must not stand chatting beside a
+  // quest foe stood in the street by CreateFoe's exterior arm.
+  assert.match(src('src/scenes/exterior.js'), /enemiesNearby: \(\) => areEnemiesNearby\(exteriorFoePool\(\)\)/);
   assert.match(src('src/scenes/world.js'), /enemiesNearby: \(\) => areEnemiesNearby\(enchantFoes\(\)\)/);
 });

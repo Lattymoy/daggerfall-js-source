@@ -220,8 +220,15 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \{ if \(!cityGuards\.guards\.includes\(f\)\) exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\); \},/);
   assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \{ if \(f\._encounter\) interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\); \},/);
   assert.match(dg, /onAttackFromPlayer: \(t\) => handleAttackFromPlayer\(t, lastPlayerFeet\),/);
-  assert.match(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
-    'the fourth host mounts the watch alone and records the absence as a fact');
+  // ROAD-G G2: the fourth host has a pool with a hostility door now,
+  // so the absence this pin used to hold ("no onAttackFromPlayer here -
+  // this host mounts the WATCH pool alone") is GONE rather than
+  // annotated: its arrow seam runs the same pair world.js's does, and
+  // the watch is still the exclusion because cityGuards' damage door
+  // carries no hostility pair of its own.
+  assert.match(src('scenes/exterior.js'), /onAttackFromPlayer: \(f\) => \{ if \(!cityGuards\.guards\.includes\(f\)\) exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\); \},/);
+  assert.doesNotMatch(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
+    'the retired sentence is deleted, not annotated');
 });
 
 // ---------------------------------------------------------------

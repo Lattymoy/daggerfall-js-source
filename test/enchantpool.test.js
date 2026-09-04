@@ -305,10 +305,13 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.ok(ext.indexOf('var modes = createWorldModes({') < at,
     'the mount comes after `var modes = ...` - a mount above it reads undefined for every mode');
   // the three live reads, through the ONE shared law, over THIS host's
-  // own pools: the watch above ground (it mints no encounter foes), and
-  // worldModes' own two arms for inside and below.
+  // own pools: BOTH street pools above ground (ROAD-G G2 mounted the
+  // encounter pool beside the watch and struck the "it mints no
+  // encounter foes" clause that stood here), and worldModes' own two
+  // arms for inside and below. The exterior arm is the host's ONE
+  // named join, not a second spread - two spreads is two laws.
   assert.match(ext, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/);
-  assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => cityGuards\.guards, _insidePool\);/);
+  assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, exteriorFoePool, _insidePool\);/);
   assert.match(ext, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
   // the same law the world host's mount is held to: NO site inside the
   // ctx literal names a host pool - every foe door is a thunk over
@@ -325,18 +328,32 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);
-  // the Wabbajack's exterior arm REFUSES, and says why - the watch has
-  // no remove/spawn pair, exactly as worldModes wrote down for it.
+  // ROAD-G G2: THE WABBAJACK'S EXTERIOR ARM TRANSFORMS NOW. It refused
+  // and said why - "the watch has no remove/spawn pair" - which was
+  // true of the only pool this host had; the encounter pool mounted
+  // beside it owns both, so an encounter or quest foe struck in the
+  // street is removed and re-stood by the pool that owns its billboard
+  // (WabbajackEffect.cs:85-88). The WATCH is still left standing, and
+  // that departure moved from "no arm" to a named test.
   const rf = ext.slice(ext.indexOf('const _enchantReplaceFoe ='), at);
   assert.match(rf, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/);
   assert.match(rf, /if \(host === 'dungeon'\)/);
   assert.match(rf, /if \(host === 'inside'\)/);
-  assert.equal(/cityGuards\./.test(rf), false, 'and no exterior arm at all - the watch is left standing');
-  // the loose-foe arm refuses where there is no pool to stand one in,
-  // and reaches the dungeon's own chain where there is (SD1).
+  assert.match(rf, /if \(!f\._encounter\) return;/, 'the watch is named by MEMBERSHIP, not by pool identity');
+  assert.match(rf, /exteriorFoes\.removeFoe\(f\);\n\s*exteriorFoes\.spawnFoe\(mobileType, feet\)/);
+  assert.equal(/cityGuards\./.test(rf), false, 'and the arm still never names the watch pool');
+  // the loose-foe arm reaches whichever pool the player is standing in
+  // (SD1) - the dungeon's own chain below, this host's encounter pool
+  // above ground - and INTERIOR still refuses, which is world.js's own
+  // answer for the same mode.
   const sf = ext.slice(ext.indexOf('const _standLooseFoe ='), ext.indexOf('const _enchantReplaceFoe ='));
-  assert.match(sf, /const d = _mode\(\) === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*if \(!d\) return null;/);
-  assert.match(sf, /spawn: \(mt, pos, so\) => d\.spawnLooseFoe\(/);
+  assert.match(sf, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/);
+  // the MODE gate is the ONLY refusal - a `if (!d) return null;` after
+  // it is the pre-ROAD-G G2 body and refuses the whole exterior arm
+  // while leaving every other assertion in this pin green.
+  assert.match(sf, /const d = mode === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*return standLooseFoe\(\{/);
+  assert.match(sf, /collider: d \? d\.collider : collider,/, 'and it rays through the world it is standing in');
+  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied \}\)/);
 });
 
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {

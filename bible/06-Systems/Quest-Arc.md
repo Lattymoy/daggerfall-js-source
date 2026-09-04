@@ -5398,3 +5398,95 @@ fifth was the one nothing exercised. The FOUR HOSTS RULE catches a host
 that is missing a seam; it does not catch a seam that is present and
 half-wired, and this run has now found that shape three times (DT1's
 detect feed, ID1's drop pool, and here).
+
+## ROAD-G G2 — the fixed-city host's three seams (2026-09-04)
+
+`?exterior` is the port's own dev route: one location laid out whole,
+with the same mode machine, the same windows and the same motor as the
+streaming host. QX1 gave it a quest bridge and recorded **one**
+departure — CreateFoe's outdoor placement arm — and that record read as
+a decision when it was a missing producer.
+
+**(a) The cast engine's foe list was an interior scene gate.**
+`createPlayerMagic` here answered `mode === 'exterior' ? guards : []`,
+which is the exact gate the AUDIT 58 review had just struck from the
+world host's twin. This page does not mount an interior foe pool
+itself, but it *builds* `createWorldModes`, whose interior arm mounts
+two (`interiorFoes` and ROAD-B's indoor watch) and answers them at
+`insideFoes` — and this is the only cast engine that runs in that mode:
+worldModes takes the instance, drives `firePending`/`update` on every
+interior frame and routes the interior attack click into
+`interceptAttack`. Every target read in the engine goes through that
+one thunk (explodeAt's sweep, ByTouch's pick, the release-frame area
+arm, the missile impact), so a Fireball cast in a shop reached from
+`?exterior` swept nobody and a missile passed through a watchman the
+melee ray would have hit. DFU gates nothing here —
+`Physics.OverlapSphereNonAlloc` and a raycast take whatever is in the
+scene (DaggerfallMissile.cs:481, :409-455). It takes the world host's
+three-arm shape now, and the SINKS follow the record through the
+pool-membership router (`liveEnchantFoeSinks`) rather than the mode, so
+a foe handed out by the interior arm knocks back and dies against that
+building's collider.
+
+**(b) The outdoor placement arm needed a pool, so the pool is
+mounted.** `tryPlaceFoe` answered `false` above ground without even
+reaching the mode machine, so an `create foe` wave aimed at the street
+pended for ever. The host mounts `createExteriorFoes` — the same
+factory world.js and worldModes take — over its own collider, ticker,
+rig, blood pool and arrow flight, and the arm is
+**PlaceFoeExteriorLocation** (CreateFoe.cs:245-248) exactly:
+`PlaceFoeFreely` with **no band**, the default 5/20 ring, because
+TryPlacement (:203-206) picks that arm precisely when
+`IsPlayerInLocationRect` — and this route stands inside its one city's
+rect for its whole life (`_musicInLocationRect` is `() => true`), so the
+wilderness 8/25 arm (:252-257) **has no reachable branch here at all**.
+The cast origin is the controller centre, the FOV crosses in degrees,
+the occupancy sphere (:317-321, *any* collider) reads the host's whole
+street database, FinalizeFoe lifts a flier 1.5 and leaves a walker on
+the probed floor, and the foe LookAt's the player.
+
+Mounting the pool falsified six sentences that had each recorded the
+one-pool host as a fact, and each was **struck rather than annotated**:
+the Wabbajack's exterior arm ("the watch has no remove/spawn pair" —
+true of the only pool there was), SoulBound's and the Sanguine Rose's
+loose release, the magic-round fan-out ("this host mints no encounter
+foes"), the arrow seam's "no bow-armed pool" and its missing
+`onAttackFromPlayer`, and the rest/collapse/townsfolk-idle reads that
+each named `cityGuards.guards` as the whole database. The join has ONE
+home (`exteriorFoePool`), and the hostility walk one more
+(`_liveEnemyDatabase`), so the next reader cannot grow a seventh copy.
+The quest-resource CLICK arm went in with it — PlayerActivate
+:325-339 has no scene gate, and a quest foe you cannot click is DQ1's
+lesson one host over.
+
+**What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
+spawn* roll (:486-492) still has no caller on this route. It is not
+this pool's dependency — it is a loop that carries the passive-guard
+spawns and the NPC-guard conversion with it (world.js:1888-1972) — and
+it is named at the mount so the absence reads as a fact.
+
+**(c) The find-place seam's absence, narrowed to one sentence.**
+HandleQuestClicks (:449-451) asks three questions before the confirmFind
+dialog. This route mounts no travel map, so `gotoPlace` (:214-217) and
+`canFindPlace` (:1134-1146) — both DfTravelMapWindow members — stay
+unset and no dialog is ever offered, which is the same nothing a
+CanFindPlace miss produces in C#. That is now the *whole* of what is
+recorded. The gate C# asks **first** — is the named place the city you
+are already standing in, in which case DFU does nothing at all — is
+answered: the host had never supplied `currentLocationName`, so the
+window compared against `''` and could never match, and this route
+knows its one city outright.
+
+Pins: 2 new in `test/qx1_exterior_host.test.js` (the placement law RUN
+over the real `placeFoeFreely` with a stubbed world; the find-place arm
+RUN through a real `QuestJournalWindow`), plus the widened pins in
+`hostmagic_wiring`, `enchantpool`, `roadb_hostility`, `audit24_wave32`,
+`audit24_wave46`, `audit26_streaming2`, `audit58_combat`,
+`audit58_saveaudio`, `detectindoors`, `nearbyobjects`, `restlodging`
+and `townpopulation`. Campaign: 9 mutants, 9 killed.
+
+**THE LESSON: A RECORDED ABSENCE OUTLIVES ITS REASON.** Every one of
+the six struck sentences was true when it was written and none was
+re-read when the premise under it moved. A departure row is a claim
+about the tree, and the day a slice mounts what the row said was
+missing, the row becomes the most confident wrong sentence in the file.

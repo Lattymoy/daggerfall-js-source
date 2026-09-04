@@ -263,7 +263,10 @@ test('FX1 (F207): the OUTDOOR feeds carry loot pools - piles and corpses mark ab
   const ROOT2 = join(dirname(fileURLToPath(import.meta.url)), '..');
   for (const [p, foes] of [
     ['src/scenes/world.js', 'exteriorFoePool()'],
-    ['src/scenes/exterior.js', 'cityGuards.guards'],
+    // ROAD-G G2: the fixed-city host mounted a second street pool, so
+    // its corpse containers are the JOIN now - a corpse the walk cannot
+    // see is a container Detect Treasure says is not there.
+    ['src/scenes/exterior.js', 'exteriorFoePool()'],
   ]) {
     const s = readFileSync(join(ROOT2, p), 'utf8');
     assert.ok(s.includes(`nearbyLootRecords({ piles: droppedLoot._piles, foes: ${foes} })`),
