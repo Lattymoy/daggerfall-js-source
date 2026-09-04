@@ -493,7 +493,7 @@ BOOKS 10000->5 alias pinned on two of its four readers, and
 `chooseEnemyWeapon`'s tie-break; and two records - eight `src` files
 declaring a RECORDED DEPARTURE that Port-Ledger section A does not row
 (the doctrine gate satisfied vacuously), and Home.md's Active-arcs index
-missing the live Enhanced Environments arc.
+missing the live Enhanced Environments arc. Both lanes landed after this record was written: the eight laws are pinned in `test/audit58_pins2.test.js` (squashed as 1bd7c60, 27 mutants driven, 27 dead), and the seams lane (242d2f8) shipped the talk listbox's "...never mind..." repair through `_repairCaptions` in `src/ui/nativeTalk.js`, eight owed section A rows (Port-Ledger section A stands at 77 rows, 70 standing) with a second-tier doctrine gate that resolves a RECORDED-departure claim against a row naming the file, and the Enhanced Environments arc's index row with a pin over every `*-Arc.md` in the bible.
 
 Left, deliberately, each recorded at its site or here:
 
