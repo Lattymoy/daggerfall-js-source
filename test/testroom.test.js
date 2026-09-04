@@ -19,6 +19,9 @@ import {
   TEST_PRESETS, TEST_RIDE, testPresetById, testEntryById, testGearRows, testItemOf, applyTestCharacter, seedTestMount,
 } from '../src/systems/testRoom.js';
 import { hasHorse, TRANSPORT_HORSE_TEMPLATE } from '../src/systems/inventorySession.js';
+import { positionPlayerToLocation, EXTRA_DISTANCE } from '../src/world/locationEntrance.js';
+import { RMB_SIDE } from '../src/world/locationLayout.js';
+import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { armBuildOptsOf } from '../src/combat/weaponRig.js';
 import { RACES } from '../src/systems/races.js';
 import { CLASS_CAREERS } from '../src/systems/chargen.js';
@@ -202,6 +205,14 @@ test('TSR4: the mount is the store\'s own horse, once, and the pack answers hasH
 test('TSR4: the pane, the boot and the frame gate - the edge landing, the ONE transport door, never before the first stand', () => {
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /onAction\(`test:\$\{TEST_RIDE\.id\}`\)/, 'the ride card fires the same choice family');
+  // TSR4b: the ride NEVER takes the classic start - that is Privateer's
+  // Hold with StartInDungeon, and an exterior landing racing a dungeon
+  // entry is "either in the dungeon or in the ground". It keeps the
+  // named start (the city's exterior); every other door keeps classic.
+  const main = read('src/main.js');
+  assert.match(main, /const \{ TEST_RIDE \} = await import\('\.\/systems\/testRoom\.js'\);\s*\n\s*if \(params\.get\('test'\) === TEST_RIDE\.id\) params\.delete\('classic'\);\s*\n\s*else params\.set\('classic', '1'\);/,
+    'the ride drops the classic start through the one home\'s id; every other choice still sets it');
+  assert.ok(main.indexOf("params.delete('classic')") > main.indexOf("else params.delete('test');"), 'decided after the test param is settled');
   const world = read('src/scenes/world.js');
   // the horse lands with the armory; the mount is DEFERRED to the frame
   // loop's spawn gate, so it can never run before the player has a floor
@@ -210,14 +221,43 @@ test('TSR4: the pane, the boot and the frame gate - the edge landing, the ONE tr
   const rideAt = world.indexOf('const rideOut = () => {');
   const gateAt = world.indexOf('if (rideOutWanted && playerSpawned) rideOut();');
   assert.ok(rideAt > 0 && gateAt > rideAt, 'defined at the boot, fired from the loop');
-  const body = world.slice(rideAt, world.indexOf('};', rideAt));
+  const body = world.slice(rideAt, world.indexOf('\n  };', rideAt));
   // the landing is the fast-travel arrival's own edge law (no start
   // markers = outside the walls, facing in), floored the arrival's way
   assert.ok(body.includes("locationLandingFor(startPixel.x, startPixel.y, { noMarkers: true })"), 'the edge landing');
   assert.ok(body.includes('floorLanding(collider, edge.pos, ARRIVAL_REACH, ARRIVAL_LIFT)'), 'floored like an arrival');
   assert.ok(body.includes('cam.yaw = edge.yaw;'), 'facing the location, as PositionPlayerToLocation sets it');
+  // TSR4a: the edge can stand in the NEXT pixel (an 8x8 city fills its
+  // own), so the landing WAITS for terrain under the point - heightAt
+  // is -Infinity until that pixel is built - and never floors before it
+  assert.match(body, /if \(rideOutEdge === null\) rideOutEdge = locationLandingFor\(/, 'the edge is resolved once, off the built start pixel');
+  assert.ok(body.includes('const groundThere = !!edge && Number.isFinite(heightAt(edge.pos[0], edge.pos[2]));'), 'terrain under the landing point is the gate');
+  assert.ok(body.includes('if (edge && !groundThere && (building || queue.length || inFlight.size)) return;'), 'waits while the ring is still building');
+  assert.ok(body.indexOf('return;') < body.indexOf('rideOutWanted = false;'), 'the wait keeps the want armed; only a landing (or the dead-man) clears it');
+  assert.ok(body.indexOf('const groundThere') < body.indexOf('floorLanding('), 'the floor ray runs only once the ground is there');
+  assert.ok(body.includes("'[testroom] ride out: no terrain under the edge landing after the ring built - mounting where you stand'"), 'the dead-man release says so');
   // the mount goes through U53's ONE door - tr5 pins that the door is
   // the only motor call, so this cannot be a second one
   assert.ok(body.includes('setTransportModeHere(TRANSPORT_MODES.Horse);'), 'the one transport door');
   assert.ok(!body.includes('player.setTransportMode('), 'never the motor directly');
+});
+
+test('TSR4a: an 8x8 city fills its pixel, so its edge landing stands in the NEXT pixel - the reason the ride waits for ground', () => {
+  // getLocationTerrainTileOrigin (world.js; World-Arc: 8x8 -> (0,0))
+  // puts an eight-block location at the pixel's own origin, and the
+  // arrival's outside point is EXTRA_DISTANCE past the wall - which
+  // is past the pixel too. Every side, deterministically.
+  const origin = [0, 2.0 * 0.025, 0];
+  for (const roll of [0, 0.25, 0.5, 0.75]) {
+    const at = positionPlayerToLocation({ mapWidth: 8, mapHeight: 8, origin, roll: () => roll });
+    const [x, , z] = at.pos;
+    const outside = x < 0 || z < 0 || x >= TERRAIN_SIZE || z >= TERRAIN_SIZE;
+    assert.ok(outside, `${at.side}: (${x.toFixed(1)}, ${z.toFixed(1)}) lies outside the 0..${TERRAIN_SIZE} pixel`);
+    assert.ok(Math.abs(x - TERRAIN_SIZE / 2) <= 4 * RMB_SIDE + EXTRA_DISTANCE + 1e-9
+      && Math.abs(z - TERRAIN_SIZE / 2) <= 4 * RMB_SIDE + EXTRA_DISTANCE + 1e-9, 'and only just - one EXTRA_DISTANCE past the wall');
+  }
+  // a small village stays inside its pixel - the wait costs it nothing
+  const villageOrigin = [Math.trunc((128 - 16) / 2) * (TERRAIN_SIZE / 128), 0, Math.trunc((128 - 16) / 2) * (TERRAIN_SIZE / 128)];
+  const v = positionPlayerToLocation({ mapWidth: 1, mapHeight: 1, origin: villageOrigin, roll: () => 0 });
+  assert.ok(v.pos[0] >= 0 && v.pos[0] < TERRAIN_SIZE && v.pos[2] >= 0 && v.pos[2] < TERRAIN_SIZE);
 });

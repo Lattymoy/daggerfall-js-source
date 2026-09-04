@@ -5532,3 +5532,76 @@ both hosts that mount the mode machine. The finding, the C# and the
 pool-side laws are recorded in Characters-Arc's ROAD-G G1 section;
 pinned in `test/roadg_pools.test.js` and the rewritten EC1 pins in
 `test/enchantpool.test.js`.
+
+**TSR4a - THE EDGE STANDS IN THE NEXT PIXEL (2026-09-04, Mac: "it
+just spawns me straight into the ground").** Audit of TSR4, shipped
+the day before on reading alone (no ARENA2 in the container). The
+landing law was right and the GATE was wrong: `getLocationTerrainTileOrigin`
+puts an 8x8 city at tile (0,0) (World-Arc), so the capitals fill
+their pixel edge to edge, and `positionPlayerToLocation`'s outside
+point - EXTRA_DISTANCE past the chosen wall - is ten units into the
+NEIGHBOURING pixel. The ride fired at the START pixel's first stand,
+when that neighbour had no collider yet: the floor ray found nothing,
+`floorLanding` answered the raw lifted forty units, the player fell,
+and the neighbour's terrain built over them a moment later. Fast
+travel never met this because a city's arrival uses its START
+MARKERS (inside the walls) - the edge is a village's landing, and a
+village sits inside its pixel; only TL2's marker-in-geometry fallback
+for a capital could take the same road, and it is recorded here
+rather than fixed. The fix is a WAIT, not a different landing: the
+edge is resolved once off the built start pixel, and the ride lands
+only when `heightAt` answers a finite height under the landing point
+(the pixel's built entry is the collider's own presence); while the
+ring is still building (`building || queue.length || inFlight.size`)
+the want stays armed and the frame gate asks again; if the ring has
+drained and there is still no ground there, it mounts where the
+player stands and says so on the console. The player's few frames
+standing at the centre before the neighbour lands are the cost.
+Pinned: the gate's shape in the host, and the arithmetic itself -
+every side of an 8x8 landing lies outside 0..819.2 by exactly one
+EXTRA_DISTANCE, a 1x1 village's inside it (`testroom.test.js` TSR4a).
+
+**TSR4b - THE RIDE WAS BOOTING INTO PRIVATEER'S HOLD (2026-09-04,
+Mac, after TSR4a: "Nope. it either places me in the dungeon or places
+me in the ground").** TSR4a's wait was right and was not the bug Mac
+was seeing. main.js sets `?classic` on EVERY menu door (U31: the new
+game begins where Daggerfall begins), and the classic start is a map
+CELL out of settings - StartCellX/Y 109,158, Privateer's Hold - with
+`StartInDungeon` putting a new character INSIDE it. So the ride's
+start pixel was the Hold's, not a city's, and its exterior landing
+raced the dungeon entry: fire before the entry and the mount lands on
+a pixel the dungeon then takes over ("in the ground"); fire after and
+the player is already underground with the exterior gate still
+armed ("in the dungeon"). Neither is a landing bug - it is the wrong
+boot. The ride is a SPAWN OUTDOORS, a dev boot in U31's own sense
+("every dev boot keeps the region/loc names it has always used"), so
+main.js now drops `classic` for the ride alone - resolved through
+`TEST_RIDE.id` from the one home, never a literal - and the boot
+takes the named start, the city of Daggerfall's exterior, with no
+dungeon arm to race. Every other menu door, the six presets included,
+still begins where Daggerfall begins. Pinned on the route text
+(`testroom.test.js`, the TSR4 wiring pin); `classicstart.test.js`
+and `enhancedMenu.test.js` still see the `params.set('classic', '1')`
+they require.
+
+**TSR4c - THE RAY ONLY SEES MESHES (2026-09-04, Mac, after TSR4b:
+"Now I spawn in mid air after hitting ride out").** With the classic
+start out of the way the ride finally reached its edge landing, and
+the landing floated. `floorLanding` casts its footprint sweep through
+`collider.raycastHit`, which walks the TRIANGLE BUCKETS - the blocks,
+the models, the doors - and nothing else; the exterior collider
+carries the terrain as its `heightAt` callback, "floor beneath
+everything", which `move()` reads and the ray never does. Inside a
+town every landing sits over pavement meshes and the sweep hits. The
+edge landing stands ten units OUTSIDE every block, over bare terrain,
+so every sample missed and the miss arm answered the raw LIFTED by
+extraHeight: forty units up, then the drop. TL1's fast-travel edge
+arrival for a village took the same road and nobody had stood on one
+since. Fixed at the root, in the law: on a miss the landing is the
+collider's own ground when it has one (`Number.isFinite`), and a
+collider without one - interiors, dungeons, every test stub - keeps
+the arm byte for byte. The ride's gate (TSR4a) still waits for that
+ground to exist, since `heightAt` answers -Infinity until the pixel
+is built. Pinned in `enterexit.test.js` (the miss arm both ways, a
+mesh hit still winning, the exterior collider handed the terrain);
+every suite that reads `floorLanding` was run and stands.

@@ -315,6 +315,20 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
     const d = collider.raycast(origin, [0, -1, 0], maxDist + 0.2);
     if (Number.isFinite(d)) bestFloorY = Math.max(bestFloorY, origin[1] - d);
   }
-  if (bestFloorY === -Infinity) return pos;        // truly nothing below: leave to gravity
+  if (bestFloorY === -Infinity) {
+    // TSR4c (Mac: "Now I spawn in mid air after hitting ride out"):
+    // THE RAY ONLY SEES MESHES. The exterior collider carries the
+    // terrain as its `heightAt` callback - "floor beneath everything",
+    // read by move() and never by raycastHit - so over bare ground
+    // outside every block the footprint sweep finds nothing, and this
+    // arm answered the raw LIFTED by extraHeight: an edge landing forty
+    // units up, then the drop. TL1's own fast-travel edge arrival took
+    // the same road. The collider's ground is the floor here whenever
+    // it has one; a collider without (interiors, dungeons, the test
+    // stubs) keeps the arm exactly as it was.
+    const ground = collider.heightAt?.(pos[0], pos[2]);
+    if (Number.isFinite(ground)) return [pos[0], ground, pos[2]];
+    return pos;                                    // truly nothing below: leave to gravity
+  }
   return [pos[0], bestFloorY, pos[2]];
 }
