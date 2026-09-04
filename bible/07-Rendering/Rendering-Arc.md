@@ -808,7 +808,35 @@ than the lat-long ones they replaced, so `changes` alone was the wrong
 measure and LEVELS - 8 against 69 - is the decisive one.
 
 ON THE HORIZON: the sky as a setting rather than a URL, lightning on
-the thunder weather, and a season's hand on the palette.
+the thunder weather, and a season's hand on the palette. (DS1 took two
+of the three another way: the sky IS a setting now - the Mods pane's
+Dynamic Skies switch chooses between the dome and the mod - and the
+thunder weather flashes, with the mod's own lightning.)
+
+## DS1 - DYNAMIC SKIES, THE MOD, 1:1 (2026-09-04, Mac's call) - SHIPPED
+
+Mac: "I want to implement this mod 1:1. We received permission from the
+creator. I also want it to be compatible with our current
+implementation." The whole account is `Dynamic-Skies.md` beside this
+file; the ledger row is Port-Ledger A. The short of it: BadLuckBurt and
+carademono's Dynamic Skies 2.3.4 vendored with permission, its C#
+ported with its quirks and its shader translated line for line (in
+DFU's LINEAR colour space, which decides how every colour and texture
+reaches the GLSL), standing beside ES1's dome on the one controller
+seam as the enhanced lane's sky while its own switch is on. Under it the
+ease, the wind, the front, the rain, the grass, the mills and the
+moonlight term keep working; the mod's fog table, light curve, fog
+colour, lightning and pixel snow reach the world where the mod reaches
+it in DFU. Seen on SwiftShader through the lab's new door
+(`sky.html?sky=dynamic`, `tools/dynamicSkiesProbe.mjs`, 11/11): the
+layered clouds over the scattering blue, the disc at sunset over an
+orange sky, the twinkling star field. Pins: 20 in
+`test/dynamicSkies.test.js`. One probe-found fault fixed before landing:
+every weather rendered Sunny, because the mod's own OnWeatherChange
+swallows the event that lands in Init's pending window and DFU's
+OnLoad is what papers over it - the port's first word is a load now.
+The boot probe and the world render gate need ARENA2 and are the next
+machine's to run.
 
 
 ## INCIDENT 2026-09-04 - THE SEE-THROUGH LINES IN DUNGEON WALLS (Mac's report) - SHIPPED

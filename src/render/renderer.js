@@ -52,7 +52,7 @@ uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's 
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
-uniform int uFogMode; // 0 off, 1 linear, 2 exp
+uniform int uFogMode; // 0 off, 1 linear, 2 exp, 3 exp2 (DS1: Unity's ExponentialSquared, which Dynamic Skies' fog presets use)
 uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
@@ -78,6 +78,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -227,6 +228,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -306,6 +308,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -377,6 +380,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -463,6 +467,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
@@ -611,7 +616,7 @@ export function screenQuadBlends(tex, color, opts = {}) {
 
 /** setFog takes a STRING mode and shadows an int; the panel bracket
  *  has to spell the round trip. */
-const FOG_MODE_NAMES = ['off', 'linear', 'exp'];
+const FOG_MODE_NAMES = ['off', 'linear', 'exp', 'exp2'];   // DS1: 3 = Unity's ExponentialSquared
 
 /**
  * ROAD-C c2/S2: Unity's DEFAULT camera background, which is what
@@ -770,6 +775,9 @@ export class Renderer {
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
+    this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
+    this._flashLightScratch = new Float32Array(16 * 4);
+    this._flashColorScratch = new Float32Array(16 * 3);
     this._pointColor = new Float32Array([1, 1, 1]);
     // LT1: per-light colour x intensity (vec3 per light). null = every
     // light wears the shared _pointColor - the exterior lantern path,
@@ -1395,6 +1403,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -2112,9 +2121,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._clockLit = true;
   }
 
-  /** Distance fog for every world pass. mode 'off'|'linear'|'exp'. */
+  /** Distance fog for every world pass. mode 'off'|'linear'|'exp'|'exp2'
+   *  (DS1: 'exp2' is Unity's ExponentialSquared, exp(-(density*d)^2) -
+   *  Dynamic Skies ships its overcast, rainy and snowy fog in it). */
   setFog(mode, density, start, end, color) {
-    this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : 0;
+    this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : mode === 'exp2' ? 3 : 0;
     this._fogDensity = density;
     this._fogRange[0] = start;
     this._fogRange[1] = end;
@@ -2212,6 +2223,35 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._pointLights = data.subarray ? data.subarray(0, 16 * 4) : data;
     if (color) this._pointColor = color;
     this._pointColors = colors ? (colors.subarray ? colors.subarray(0, 16 * 3) : colors) : null;
+  }
+
+  /** DS1: THE LIGHTNING FLASH - Dynamic Skies' LightningFlash point light
+   *  (a Unity point light over the player, colour x intensity, range
+   *  500..1000, on for a fifth of a second). Takes {x, y, z, range,
+   *  color} or null (off, which is every frame the storm is quiet).
+   *  Called AFTER setPointLights on the frame - it composes the flash
+   *  into the arrays that call just stored, as their FIRST entry, so
+   *  the host's own lanterns, candle and torch keep their order behind
+   *  it under the same cap of sixteen; the next setPointLights, on this
+   *  host or any modal frame, stores its own arrays and the flash is
+   *  gone with them - no per-frame state outlives the frame. */
+  setFlashLight(light) {
+    this._flashLight = light ?? null;
+    if (!light) return;
+    const data = this._pointLights, colors = this._pointColors, f = light;
+    const keep = Math.min(15, Math.floor(data.length / 4));
+    const out = this._flashLightScratch;
+    out[0] = f.x; out[1] = f.y; out[2] = f.z; out[3] = f.range;
+    out.set(data.subarray ? data.subarray(0, keep * 4) : data.slice(0, keep * 4), 4);
+    this._pointLights = out.subarray(0, (keep + 1) * 4);
+    const c = this._flashColorScratch;
+    c[0] = f.color[0]; c[1] = f.color[1]; c[2] = f.color[2];
+    if (colors) {
+      c.set(colors.subarray ? colors.subarray(0, keep * 3) : colors.slice(0, keep * 3), 3);
+    } else {
+      for (let i = 0; i < keep; i++) { c[3 + i * 3] = this._pointColor[0]; c[4 + i * 3] = this._pointColor[1]; c[5 + i * 3] = this._pointColor[2]; }
+    }
+    this._pointColors = c.subarray(0, (keep + 1) * 3);
   }
 
   /** LT1: the vec3 array a frame uploads - the host's per-light colours

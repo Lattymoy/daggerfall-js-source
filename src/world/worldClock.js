@@ -58,6 +58,17 @@ const LIGHT_CURVE = [
   [1, 0, 0, 0],
 ];
 
+/** DS1: SunlightManager.LightCurve is a PUBLIC field, and Dynamic Skies
+ *  replaces it (BLBSkybox.SetLightCurve: LightCurve.json, flat-tangent
+ *  keys) - the world's daylight curve, not only the sky's. The rig's own
+ *  keys above stay the default and the law; this is the one door a mod
+ *  has onto them, and null puts the rig's back. */
+let activeLightCurve = LIGHT_CURVE;
+export function setLightCurve(keys) {
+  activeLightCurve = keys && keys.length ? keys : LIGHT_CURVE;
+}
+export function activeLightCurveKeys() { return activeLightCurve; }
+
 /** Unity AnimationCurve.Evaluate: cubic Hermite between keys, clamped. */
 export function evaluateCurve(keys, t) {
   if (t <= keys[0][0]) return keys[0][1];
@@ -102,7 +113,7 @@ export function dayFraction(minuteOfDay) {
 
 /** LightCurve at the (clamped) day fraction - 0 through the night. */
 export function daylightScale(minuteOfDay) {
-  return evaluateCurve(LIGHT_CURVE, Math.max(0, Math.min(1, dayFraction(minuteOfDay))));
+  return evaluateCurve(activeLightCurve, Math.max(0, Math.min(1, dayFraction(minuteOfDay))));
 }
 
 /**

@@ -63,14 +63,17 @@ export function isSnowFreeClimate(climateIndex) {
 }
 
 /** SetWeather's fog choice per weather type. */
-export function fogForWeather(weather) {
+/** DS1: `table` is WeatherManager's five settings - DFU's own by
+ *  default, or the five a mod installed in their place (Dynamic Skies'
+ *  ProcessFogSetting replaces them), in the same shape. */
+export function fogForWeather(weather, table = FOG_SETTINGS) {
   switch (weather) {
-    case 'overcast': return FOG_SETTINGS.overcast;
-    case 'fog': return FOG_SETTINGS.heavy;
+    case 'overcast': return table.overcast;
+    case 'fog': return table.heavy;
     case 'rain':
-    case 'thunder': return FOG_SETTINGS.rainy;
-    case 'snow': return FOG_SETTINGS.snowy;
-    default: return FOG_SETTINGS.sunny; // sunny, cloudy
+    case 'thunder': return table.rainy;
+    case 'snow': return table.snowy;
+    default: return table.sunny; // sunny, cloudy
   }
 }
 
@@ -125,13 +128,18 @@ export function precipitationForWeather(weather) {
 
 /**
  * Fog factor at a distance: 1 = clear, 0 = fully fogged. Linear is
- * Unity's (end - d) / (end - start); exponential is exp(-density * d).
+ * Unity's (end - d) / (end - start); exponential is exp(-density * d);
+ * DS1: 'exp2' is Unity's ExponentialSquared, exp(-(density * d)^2).
  */
 export function fogFactor(settings, distance) {
   if (settings.mode === 'linear') {
     if (settings.density === 0 && settings.end <= settings.start) return 1;
     const f = (settings.end - distance) / (settings.end - settings.start);
     return Math.max(0, Math.min(1, f));
+  }
+  if (settings.mode === 'exp2') {
+    const f = settings.density * distance;
+    return Math.exp(-f * f);
   }
   return Math.exp(-settings.density * distance);
 }

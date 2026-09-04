@@ -121,7 +121,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
-import { MOD_SETTINGS, modSetting, setModSetting } from '../systems/modSettings.js';   // ROADS 24
+import { MOD_SETTINGS, modSetting, setModSetting, isIntKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -885,7 +885,9 @@ function paneEnhanced(body) {
     + 'driven by the wind, rather than across the screen, arriving and clearing with the front - a '
     + 'sprinkle one day, a downpour the next - instead of switching on and off; and the prototype\u2019s grass, a million '
     + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
-    + 'panorama and its own weather. Takes effect when the world next loads.'));
+    + 'panorama and its own weather. Takes effect when the world next loads. The sky itself is Dynamic Skies\u2019 '
+    + '(BadLuckBurt and carademono, carried with permission - see the Mods pane and About) while its own switch is on, '
+    + 'and the port\u2019s dome when it is off.'));   // DS1
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so
   // the outdoors can be checked without a walk to a season). A season, a
@@ -1118,11 +1120,24 @@ function paneMods(body) {
       main.append(el('div', 'meta', def.description));
       row.append(main);
       const ctl = el('div', 'ctl');
-      const on = modSetting(vendor, key);
-      const b = el('button', 'act rowact', on ? 'On' : 'Off');
-      if (on) b.classList.add('primary');
-      b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
-      ctl.append(b);
+      if (isIntKey(def)) {
+        // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
+        // sizes) - the HUD-scale stepper's shape, over the key's own
+        // range, the value beside it.
+        const val = el('span', 'val', String(modSetting(vendor, key)));
+        const step = (delta, label) => {
+          const b = el('button', 'step', label);
+          b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
+          return b;
+        };
+        ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
+      } else {
+        const on = modSetting(vendor, key);
+        const b = el('button', 'act rowact', on ? 'On' : 'Off');
+        if (on) b.classList.add('primary');
+        b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
+        ctl.append(b);
+      }
       row.append(ctl);
       mc.append(row);
     }
