@@ -172,7 +172,7 @@ which **63 are cited in `src/`**.
 
 The two that are not: **`DaggerfallJoystickControlsWindow`** and
 **`DaggerfallUnityMouseControlsWindow`**. Both are recorded pending in
-the same place - `Port-Ledger.md:593`, the struck keybinding-registry
+the same place - `Port-Ledger.md:596`, the struck keybinding-registry
 row, whose surviving clause reads "STILL PENDING: the mouse/advanced and
 joystick sub-windows (both answer with a note - no gamepad layer)". The
 other half of that clause, key combos, shipped at ROAD-A A8 - and its
@@ -504,7 +504,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching
-  sub-windows are recorded pending at `Port-Ledger.md:593`. The flag's
+  sub-windows are recorded pending at `Port-Ledger.md:596`. The flag's
   second bullet - the port's own key departures - was retired as stale
   by I2 and the table now carries DFU's defaults.*
 
@@ -715,7 +715,12 @@ that was a claim once and is a pointer at a stranger now.
   row that already existed but never named them (the engine-PRNG rule,
   which now carries a LIVE ROSTER - the one line a new
   `UnityEngine.Random` site has to touch; the dungeon-seed bullet; the
-  main-menu EXIT row), or had a comment that was simply wrong.*
+  main-menu EXIT row), or had a comment that was simply wrong. THE
+  ROSTER WAS ITSELF A HAND LIST when this was written - nineteen sites
+  short of the tree, on the commit that called it live - so the ROAD-G
+  review retook it against `src/` and pinned the direction it claims:
+  `test/citedrift.test.js` CD1 walks the tracked tree for the rule's own
+  name and reddens on any site the roster does not carry.*
 - ~~`ui/transportWindow.js`'s "the port's own letters".~~ **SHIPPED.**
   *The one of the seventeen that was a live defect rather than a missing
   record: `DaggerfallTransportWindow.cs:100-137` binds all five buttons

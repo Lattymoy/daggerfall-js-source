@@ -1,10 +1,10 @@
 // CLIMBING (M3-slice, AUDIT 23 motor-3): DFU ClimbingMotor's CLASSIC
 // path (MIT, Daggerfall Workshop) - the Climbing skill's consumer at
-// last. AdvancedClimbing OFF is the port's law (the same doctrine as
-// EnhancedCombatAI): the corner wraps, rappel/hanging handoffs,
-// WallEject, ceiling releases and the overhang bumps are all gated on
-// that setting and stay with it (RESIDUE). What classic climbing IS
-// (ClimbingMotor.cs):
+// last. AdvancedClimbing OFF is the port's law - Ledger A, THE
+// `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD, by name (the same doctrine
+// as EnhancedCombatAI): the corner wraps, rappel/hanging handoffs, WallEject,
+// ceiling releases and the overhang bumps are all gated on that setting and
+// stay with it (RESIDUE). What classic climbing IS (ClimbingMotor.cs):
 //   - hold Forward against a wall while horizontally stationary
 //     (tolerance 0.12) for 14 system-timer units (x 0.0549254 s);
 //     then a skill check at base 70 starts the climb - and a FAILED

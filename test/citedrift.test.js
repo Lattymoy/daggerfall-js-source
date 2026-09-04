@@ -32,12 +32,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dfuFile, missingDfu } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(root, rel), 'utf8');
+/** The tracked files under a directory - test/doctrine.test.js's own
+ *  population, so a walk here and a walk there see the same tree. */
+const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8' })
+  .split('\n').filter(Boolean);
 const lines = (rel) => read(rel).split('\n');
 
 const LEDGER = 'bible/01-Overview/Port-Ledger.md';
@@ -182,7 +187,14 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   // port's own letters where DFU binds all five buttons out of
   // `DialogShortcuts.txt`, and ROAD-G G7 wired them instead.
   const G7 = [
-    [/THE `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD/, ['src/player/moveScanner.js']],
+    // ROAD-G G7 (review): the row says "The three sites cite this row BY
+    // NAME" and the pin ran one file of three, so motor.js and
+    // climbing.js kept the bare `Ledger A` this whole block exists to
+    // abolish - and climbing.js' only `Ledger A` was the engine-PRNG
+    // rule's, a different row. All three are named here now, which is
+    // what makes the row's own sentence the thing that runs.
+    [/THE `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD/,
+      ['src/player/moveScanner.js', 'src/player/motor.js', 'src/player/climbing.js']],
     [/THE MERCHANT SERVICE POPUP'S ACCELERATORS ARE THE PORT'S OWN/,
       ['src/ui/merchantServiceWindow.js']],
     [/THE PORT'S CLOCK IS A SCALAR/,
@@ -199,6 +211,22 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
         `${f} cites the Ledger by line number, which is what rots`);
     }
   }
+  // ROAD-G G7 (review): the AdvancedClimbing row named a method
+  // PlayerMoveScanner.cs does not carry - `FindGroundPosition`/
+  // `HitDistance`, which is PlayerMotor/EnemyMotor's ground drop - and
+  // hung the anti-bump cite (:190-194) off the scanner, where it lands
+  // inside `AssignAdjacentSurface`: the OFF-ROAD half of the row's own
+  // dichotomy. The port's site had it right, so the row is resolved
+  // against it - same pair, same span - and the anti-bump cite has to
+  // carry the class it belongs to.
+  const climbRow = rows.find((r) => /THE `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD/.test(r.s));
+  const probe = /`FindStep`\/`StepHitDistance` \((:\d+-\d+)\)/.exec(climbRow.s);
+  assert.ok(probe, 'the AdvancedClimbing row no longer names PlayerMoveScanner\'s classic step probe');
+  assert.match(climbRow.s, /anti-bump term \(AcrobatMotor\.cs:\d+-\d+\)/,
+    'the row hangs the anti-bump cite off PlayerMoveScanner, where it is AssignAdjacentSurface');
+  assert.ok(read('src/player/moveScanner.js').includes(`FindStep / StepHitDistance (${probe[1]})`),
+    'the row\'s step-probe span is not the one the port\'s own site cites');
+
   // ...and the WIDENING itself, pinned as text: the population is
   // invisible from outside the gate, so narrowing it back to the shout
   // has to go red here rather than at the next unrowed cite.
@@ -207,12 +235,40 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   // The engine-PRNG rule keeps a ROSTER because it is a class rule, not
   // a path row - that is the one line a new UnityEngine.Random site has
   // to touch, and it is what the widened gate resolves them against.
+  //
+  // ROAD-G G7 (review): this pin used to read NINE hard-coded names out
+  // of that roster, which is a presence check with no direction - and
+  // the roster it was checking was a hand list, nineteen sites short of
+  // the tree on the commit that called it LIVE. Every one of the missing
+  // sites named the rule verbatim to license an injectable roll, and the
+  // doctrine gate passed them only because their BASENAMES happen to
+  // appear on this page from unrelated rows. So the assertion runs the
+  // other way now: walk src/, keep every file that cites the rule, and
+  // demand the roster carry it. A roster that goes stale reddens HERE.
   const prng = rows.find((r) => /THE ENGINE-PRNG RULE/.test(r.s));
   assert.ok(prng, 'section A has no engine-PRNG rule row');
-  for (const f of ['src/player/cameraRecoiler.js', 'src/systems/riding.js',
-    'src/systems/quest/clock.js', 'src/systems/quest/foe.js', 'src/systems/quest/message.js',
-    'src/systems/quest/parser.js', 'src/systems/quest/person.js', 'src/systems/quest/quest.js',
-    'src/systems/quest/questLists.js']) {
+  const citesPrng = (f) => {
+    // comments WRAP, so the cite is read off the unwrapped prose - the
+    // same flatten the AUDIT 58 loop above uses. `engine- PRNG` is a
+    // hyphen broken across two comment lines (quest/quest.js), and
+    // `engine PRNG` is the older spelling (classQuestions.js).
+    const flat = read(f).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    return /engine-? ?PRNG/i.test(flat) || /UnityEngine\.Random.{0,60}Ledger A/i.test(flat);
+  };
+  const prngSites = tracked('src').filter((f) => f.endsWith('.js') && citesPrng(f));
+  // ...and the population, so a rewording cannot quietly empty the walk
+  // the way `\bDEPARTURE\b` emptied the doctrine gate against the plural.
+  assert.ok(prngSites.length >= 35,
+    `only ${prngSites.length} src/ files cite the engine-PRNG rule - the spelling moved and this walk went quiet`);
+  assert.deepEqual(prngSites.filter((f) => !prng.s.includes(f)), [],
+    'these src/ files cite the engine-PRNG rule and the row\'s LIVE ROSTER does not name them.\n'
+    + 'The roster is the one line the widened doctrine gate resolves a class-rule cite against,\n'
+    + 'so a site missing from it is approved by basename accident, not by this page.');
+  // The AUDIT 21 sites that carry the rule in older words - a bare
+  // `rolls = Math.random` seam, or `Ledger A` on the engine identity -
+  // never match a spelling walk, so they are kept as an explicit floor.
+  for (const f of ['src/systems/chargen.js', 'src/scenes/townTalk.js',
+    'src/systems/answerPipeline.js']) {
     assert.ok(prng.s.includes(f), `the engine-PRNG roster does not name ${f}`);
   }
   // and the dungeon-seed bullet, which is the same shape one row up.
@@ -501,6 +557,12 @@ const SOURCE_CITES = [
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:675`/, EX, /^ {6}fieldOfView\(\),$/],
+  // ROAD-G G7 (review): the entry above reads the exterior number out of
+  // that sentence and nothing else, so the sentence's ANCHOR cite - the
+  // function the other five read - was the one cite in it no pin
+  // touched, and it named line 24 of a 23-line file. It is read here.
+  ['bible/10-UI/Settings-Screen-Spec.md', /`src\/ui\/viewSettings\.js:(\d+)` is `fieldOfView\(\)`/,
+    'src/ui/viewSettings.js', /^export const fieldOfView = \(\) =>/],
   // ...and the Ledger's own, which carry the same rot: a struck row's
   // "Original finding" is a dated snapshot, so where its subject still
   // stands the cite is re-resolved and where the fix DELETED the
@@ -609,6 +671,15 @@ test('CD4: every citation Wave E moved names the line it means', () => {
 });
 
 // ═══ CD5: every `Port-Ledger.md:NNN` cite in the tree resolves ═══
+//
+// ROAD-G G7 (review): the roster below is what the pin actually walks,
+// and it was two files short of the sweep that wrote it. `Port-Status`
+// carries three of these cites and none was read here - two of them had
+// been bumped +3 arithmetically and landed on the `.SAV` reader instead
+// of the keybinding-registry row they quote. And `tools/parity` spells
+// it `Port-Ledger row :NNN`, which the extraction below could not even
+// see, so its cite sat on a section-C row three off from the FaceUV
+// harness row it means. Both spellings are read now.
 const LEDGER_CITES = [
   // file, then the row each `Port-Ledger.md:NNN` in it means, in order
   ['src/systems/passiveSpecials.js', [/ENCHANTING, WHOLE/]],
@@ -616,12 +687,15 @@ const LEDGER_CITES = [
   ['test/probehygiene.test.js', [/THREE PROBES THE T2 SWEEP FOUND STALE/]],
   ['bible/09-Testing/Testing.md', [/THREE PROBES THE T2 SWEEP FOUND STALE/,
     /FaceUVTool's 1,803-UV residual/]],
+  ['bible/01-Overview/Port-Status-2026-09-02.md',
+    [/THE KEYBINDING REGISTRY/, /THE KEYBINDING REGISTRY/, /VidFile: a MID-STREAM PALETTE/]],
+  ['tools/parity/prepare.sh', [/FaceUVTool's 1,803-UV residual/]],
 ];
 
 test('CD5: a `Port-Ledger.md:NNN` cite anywhere in the tree lands on its own row', () => {
   const bad = [];
   for (const [file, anchors] of LEDGER_CITES) {
-    const hits = [...read(file).matchAll(/Port-Ledger\.md:(\d+)/g)];
+    const hits = [...read(file).matchAll(/Port-Ledger(?:\.md:| row :)(\d+)/g)];
     assert.equal(hits.length, anchors.length,
       `${file} carries ${hits.length} Ledger line cites, the pin knows ${anchors.length}`);
     hits.forEach((h, i) => {
