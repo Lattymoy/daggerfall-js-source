@@ -66,7 +66,7 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice, makeEnemiesHostile } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
-import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // ID1: the interior's own ground pile; G5: its DaggerfallLoot identity
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors   // AUDIT 58: DFU's two hit volumes
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39r: the S19 gate is host-agnostic in DFU - the interior arm owes it too
@@ -219,6 +219,7 @@ import { createPotion, getMagicItemTemplates } from '../systems/loot.js';   // M
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
+import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
@@ -483,7 +484,10 @@ export function createWorldModes(host) {
    *  COMPOSED rather than overwritten - `...extra` last would have
    *  silently dropped the free. */
   const interiorInventory = ({ onClose, ...extra } = {}) => host.makeInventory?.({
-    onDrop: (items) => interiorDropped.dropPile(items, interiorDropFeet()),
+    // G5: the drop icon and the replaced container's x/z ride the
+    // same OnPop the world hosts take (:698-714).
+    onDrop: (items, icon = null, at = null) =>
+      interiorDropped.dropPile(items, containerDropPos(at, interiorDropFeet()), null, icon),
     ...extra,
     onClose: () => { interiorDropped.releaseEmptied(); onClose?.(); },
   });
@@ -636,6 +640,43 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** ROAD-G G1: THE LOOSE-FOE STAND, INDOORS - SoulBound's break
+   *  release and the Sanguine Rose's Daedroth, in a building.
+   *
+   *  world.js's `_standLooseFoe` refused every mode but exterior and
+   *  dungeon, on the premise EC1 wrote down: "interiors have no foe
+   *  pool to stand one in". That premise died when IF mounted
+   *  `interiorFoes` - this host has carried a real encounter pool
+   *  since, and `tryPlaceInteriorQuestFoe` above already stands quest
+   *  foes in it through exactly this law.
+   *
+   *  The placement IS that law: CreateFoe.PlaceFoeBuildingInterior
+   *  (CreateFoe.cs:219-233) is PlaceFoeFreely over the building's own
+   *  transform and nothing else - DFU's own comment says the interior
+   *  spawn nodes are deliberately NOT used ("Always place foes around
+   *  player rather than use spawn points"), so an enchantment's foe
+   *  and a quest's foe are placed by the identical member. What
+   *  differs is only the spawner FIELDS, and those ride
+   *  `standLooseFoe` (minDistance 4 / maxDistance 20, the
+   *  CreateFoeSpawner defaults at GameObjectHelper.cs:1314) exactly as
+   *  they do for the other two hosts' arms.
+   *
+   *  The occupancy test walks BOTH of this host's pools, like every
+   *  other placement in this file: DFU's gate is a bare
+   *  `Physics.OverlapSphere` (CreateFoe.cs:317-321), so a watchman
+   *  standing in the room blocks a spot as surely as a daedra does. */
+  function standInteriorLooseFoe(mobileType, opts = {}) {
+    if (!interiorCtx || !interiorFoes) return null;   // no building mounted: nothing to stand it in
+    return standLooseFoe({
+      collider: interiorCtx.collider,
+      feet: player.pos,
+      yawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      foes: interiorFoePool(),
+      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied }),
+    }, mobileType, opts);
+  }
+
   /** Mint the pool over THIS interior's collider. Called at the mount,
    *  torn down with the context. */
   function makeInteriorFoes(ctx) {
@@ -765,7 +806,7 @@ export function createWorldModes(host) {
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:441-442 and
-   *  cityGuards.js:663-664 each take `entityIsParalyzed` +
+   *  cityGuards.js:716-717 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -797,6 +838,13 @@ export function createWorldModes(host) {
       // interiorFoes' arm, for the same reason: a host whose corpses
       // never leave streaming range hands nothing to TrackLooseObject.
       currentPixelKey: () => null,
+      // ROAD-G G1: interiorFoes' OWN dep, on the pool standing beside
+      // it - DaggerfallEntityBehaviour.cs:255-258 over this host's one
+      // database. A watchman called into a shop and talked down with
+      // Etiquette, then struck, left the daedra in the same room
+      // passive; the encounter pool has walked both since AUDIT 58 and
+      // this one walked nothing at all.
+      makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
       say: (l) => say(l),
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
@@ -2356,7 +2404,10 @@ export function createWorldModes(host) {
     // floor.
     const droppedPiles = interiorDropped._piles
       .filter((pile) => pile.items.length)
-      .map((pile) => ({ pos: [...pile.pos], record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
+      // G5: the archive travels with the record - LootContainerData_v1
+      // carries the PAIR, and a pile whose icon the player cycled onto
+      // TEXTURE.205 must come back wearing it.
+      .map((pile) => ({ pos: [...pile.pos], archive: pile.archive, record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
     return { lootContainers, actionDoors, droppedPiles };
   }
 
@@ -4201,7 +4252,7 @@ export function createWorldModes(host) {
         // (PlayerActivate's default loot handling), which is the same
         // OnPush law the dungeon and both exterior hosts ride.
         const pile = interiorDropped.pileFor(key);
-        if (pile?.items.length) mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+        if (pile?.items.length) mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
         return true;
       }
       if (key.startsWith('container:')) {
@@ -4701,7 +4752,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:218's `held` already implements.
+    // which is what dungeon.js:224's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -4753,7 +4804,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:353 is this same gate
+    // the crouch edge still toggled. dungeon.js:359 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -4812,7 +4863,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:270 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:276 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -4945,7 +4996,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:225's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -5092,7 +5143,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5497's own wave-46 note); the interior
+          // a blow (world.js:5524's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -5125,9 +5176,15 @@ export function createWorldModes(host) {
         audio, hitEffects: interiorHitEffects, say: (l) => say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(interiorTicker.classicMinutes) }),
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
-        // zero-damage shaft still enrages its mark and the room. The
-        // interior watch pool's door carries no hostility pair.
-        onAttackFromPlayer: (f) => { if (f._encounter) interiorFoes?.handleAttackFromPlayer(f, player.pos); },
+        // zero-damage shaft still enrages its mark and the room.
+        // ROAD-G G1 (review): the interior WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam splits by pool exactly
+        // as `dealDamage` above it does rather than dropping the
+        // non-encounter half - the zero-damage SWING already reaches
+        // that door (cityGuards.js:960) and the shaft owes the same.
+        onAttackFromPlayer: (f) => (f._encounter
+          ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
+          : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);
@@ -5661,7 +5718,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:279-305 carries, so a probe could take the
+    // scenes/dungeon.js:285-311 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -6156,7 +6213,7 @@ export function createWorldModes(host) {
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
-    // (ui/input.js:226), so the frame poll stays its only keyboard door.
+    // (ui/input.js:351), so the frame poll stays its only keyboard door.
     toggleSheath() { interiorWeapon.toggleSheath(); },
     /** TR5: dfuiOpenTransportWindow's INDOORS arm (DaggerfallUI.cs
      *  :691-694) - inside, the key refuses with a HUD line instead of
@@ -6311,7 +6368,7 @@ export function createWorldModes(host) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (vd) dungeonCtx.overlayPointer?.('down', vd[0], vd[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
+      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2, e.button === 1);   // G5: the middle button too
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
     // The guard is on the WINDOW, not on its click method: an open
@@ -6347,7 +6404,7 @@ export function createWorldModes(host) {
     // drag that never starts. Down/move/up are all three or none (the
     // c2/S4 rule, and the reason its pin counts routes per host).
     if (v) interiorOverlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2, e.button === 1);   // I4: the remove gesture rides the button; G5: the middle one cycles the drop archive
     if (interiorOverlay?.done) interiorOverlay = null;
     interiorWindows.reconcile(interiorOverlay);   // ROAD-B B1: the click's drain is PopWindow too
     return true;
@@ -6678,16 +6735,31 @@ export function createWorldModes(host) {
      *  localPosition, under the same parent transform - which is
      *  `interiorFoes`' own remove/spawn pair here.
      *
-     *  THE WATCH IS REFUSED, and that is a departure written down
-     *  rather than a mis-route: DFU transforms any `EnemyEntity`, and
-     *  Knight_CityWatch is one, but `createCityGuards` exposes no
-     *  remove/spawn pair (cityGuards.js:1065's returned surface), so
-     *  the only reaches available would be the encounter pool's -
-     *  which is the very confusion this door exists to end. Leaving
-     *  the watchman standing is the smaller departure. */
+     *  ROAD-G G1: AND THE WATCH TRANSFORMS TOO - the refusal that
+     *  stood here is retired. Its whole premise was that
+     *  `createCityGuards` exposed no remove/spawn pair; the pool
+     *  carries `removeGuard` now (WabbajackEffect.cs:86's
+     *  `SetActive(false)`), so an indoor watchman is REMOVED through
+     *  the pool that owns its billboard and its VAO, exactly as a
+     *  shop's daedra is through interiorFoes'. The RE-STAND is
+     *  interiorFoes either way, and that is not a mis-route: the
+     *  seventeen careerIDs (:24-44) hold no Knight_CityWatch, so
+     *  CreateEnemy always mints an EnemyMonster, and this host's two
+     *  pools share one collider, one frame and one death chain - the
+     *  port's reading of "under the struck enemy's own parent
+     *  transform" (:87). A record from NEITHER pool still answers
+     *  null, which is the membership question this door exists to
+     *  ask. */
+    /** ROAD-G G1: this host's arm of the enchantment SPAWN door - see
+     *  `standInteriorLooseFoe`. A host asks it only in interior mode;
+     *  a dungeon mounted by this same machine answers through
+     *  `dungeonCtx.spawnLooseFoe`, which is that pool's own chain. */
+    insideStandLooseFoe(mobileType, opts = {}) { return standInteriorLooseFoe(mobileType, opts); },
     insideReplaceFoe(foe, mobileType, feet) {
-      if (!foe?._encounter || !interiorFoes) return null;
-      interiorFoes.removeFoe(foe);
+      if (!foe || !interiorFoes) return null;
+      if (foe._encounter) interiorFoes.removeFoe(foe);
+      else if (interiorGuards?.guards.includes(foe)) interiorGuards.removeGuard(foe);
+      else return null;
       return interiorFoes.spawnFoe(mobileType, feet);
     },
     tryPlaceQuestFoe(handle) {
@@ -6965,7 +7037,7 @@ export function createWorldModes(host) {
         return () => {
           const pile = interiorDropped.dropPile([dfItem], interiorDropFeet());
           if (!pile) return;
-          mountInterior(interiorInventory({ loot: { items: () => pile.items } }));
+          mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
         };
       }
       return undefined;   // not this mode's ground - the world host mints

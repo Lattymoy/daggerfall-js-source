@@ -944,7 +944,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:596). exterior.js and world.js have no submersion
+  (worldModes.js:597). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,

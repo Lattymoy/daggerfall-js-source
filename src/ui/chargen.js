@@ -1059,14 +1059,34 @@ export class ChargenFlow {
 
   /** VerticalScrollBar.Update's per-frame arm (:101-130), on the
    *  hosts' HOVER seam - `e.buttons & 1` is the port's only reading of
-   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:259
-   *  takes. Releasing the button drops the latch on the next move,
-   *  which is the overlay mouse-UP remainder the shared picker already
-   *  records; nothing else here reads the pointer. */
+   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:292
+   *  takes; nothing else here reads the pointer.
+   *
+   *  ROAD-G G4 (review): the (-1, -1) the hosts answer with for a
+   *  pointer OFF the letterboxed panel is a FABRICATED pair, not a
+   *  position (ROAD-C c2 flight 2) - Update drags off
+   *  `ScreenToLocal(MousePosition)` (VerticalScrollBar.cs:105-120), a
+   *  real cursor, so DFU never produces it. Unguarded it is bar-local
+   *  -60 against PICK_SCROLL_RECT and SetScrollIndex clamps the class
+   *  list to row 0. The FRAME is skipped, never the latch:
+   *  `releasePickBar()` is what ends a drag, which is why the two
+   *  sibling machines (`ui/spellbookWindow.js`,
+   *  `ui/spellIconPickerWindow.js`) carry the identical arm. */
   hover(vx, vy, e = null) {
     const p = this.syncPickBar();
     if (!p) return;
-    if (this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
+    if (vy >= 0 && this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
+  }
+
+  /** ROAD-G G4: Update's `else` arm (:123-129), on the overlay mouse-UP
+   *  seam. This was the last consumer still waiting for the NEXT MOVE
+   *  to notice the button was gone - the comment above said so, citing
+   *  the remainder as if it were still open; wave E built the seam and
+   *  `systems/chargenSession.js` forwards it, so the latch now drops on
+   *  the edge that ends it. Nothing else in the wizard latches on a
+   *  press, which is why this is the whole of the arm. */
+  releasePickBar() {
+    if (this.pickBar) this.pickBar.draggingThumb = false;
   }
 
   /** The pick list's minimal scroll (the ListBox law the class list
@@ -1689,7 +1709,7 @@ export class ChargenFlow {
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:152), so the 'reroll' row
+      // typed-character class (ui/input.js:229), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
       // mouse rect (ui/chargenArt.js:1449) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'

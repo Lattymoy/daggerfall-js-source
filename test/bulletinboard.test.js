@@ -225,7 +225,7 @@ test('the probe exterior host stands its boards too - the standing host rule', (
     "no mill in this host - the board opens on the location name alone, C#'s own empty arm");
   // ...AND THE NAME IS NOT FREE. The heading is PlayerGPS
   // .CurrentLocalizedLocationName (:721), which the arm reads off
-  // `buildingDirectory` (worldModes.js:1649) and off nothing else - so
+  // `buildingDirectory` (worldModes.js:1694) and off nothing else - so
   // a host that stands boards without handing one over opens the box
   // on a BLANK parchment, not "the location name alone": the head row
   // composes empty and bulletinBoard.js:97 shifts the starter row off,

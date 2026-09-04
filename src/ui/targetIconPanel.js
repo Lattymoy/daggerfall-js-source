@@ -26,6 +26,7 @@
 import { drawImgCrop, shadowText } from './nativePanel.js';
 import { DEFAULT_TOOLTIP_TEXT_FG } from './toolTip.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { TextureFile, texName } from '../formats/textureFile.js';   // G5: the drop icon is a WORLD FLAT's record
 import { bitmapToColor32 } from './hud.js';
 
 /** InventoryContainerImages (DaggerfallUnityEnums.cs:540-553) - the
@@ -55,11 +56,16 @@ export function targetIconWeightText(weight, max) {
 
 let _icons = null;      // record -> { tex, w, h }
 let _warned = false;
+let _deps = null;       // G5: kept for the TEXTURE.### reader below
 
 /** Warm INVE16I0.CIF. A missing CIF is NOT fatal - the panels simply
  *  keep the base INVE00I0 art under them, exactly as a missing
  *  INVE06I0 leaves the scroller's arrows (itemScroller.js). */
 export async function preloadContainerIconArt(deps) {
+  // G5: the deps are registered BEFORE the early return, or a second
+  // host's preload would leave the drop-icon reader without a renderer
+  // (paintingImage's setPaintingArtDeps shape, one door earlier).
+  if (deps?.renderer && deps?.fetchBytes && deps?.palette) _deps = deps;
   if (_icons) return;
   try {
     const cif = new CifRciFile();
@@ -81,6 +87,55 @@ export const containerIconArtLoaded = () => !!_icons;
 /** The test seam, and the door a fresh renderer closes. */
 export function _setContainerIconsForTests(icons) { _icons = icons; _warned = false; }
 
+// ── G5: THE DROP ICON'S PICTURE ──────────────────────────────────
+// UpdateRemoteTargetIcon's two flat arms (:875-884) do NOT read
+// INVE16I0 at all - they read a WORLD FLAT:
+//
+//     string filename = TextureFile.IndexToFileName(dropIconArchive);
+//     containerImage = ImageReader.GetImageData(filename,
+//         dropIconIdxs[dropIconArchive][dropIconTexture], 0, true);
+//
+// so the panel needs a second picture source. The cache-in-front
+// shape is paintingImage.js's, for the same reason: the draw pass asks
+// every frame, the first ask starts the load, and every failure is
+// cached as a MISS so a missing archive is asked for once.
+const _flats = new Map();      // `${archive}:${record}` -> { tex, w, h } | null
+const _flatsPending = new Set();
+export function _resetDropIconsForTests() { _flats.clear(); _flatsPending.clear(); _deps = null; }
+/** The test seam for a picture that is already "loaded". */
+export function _setDropIconForTests(archive, record, image) { _flats.set(`${archive}:${record}`, image); }
+
+/**
+ * One TEXTURE.### record as the panel's background, or null while it
+ * is still coming (or if it never will). SYNCHRONOUS by design - the
+ * draw pass asks every frame. Frame 0, as GetImageData's third
+ * argument says.
+ */
+export function dropIconImage(archive, record) {
+  if (!(archive > 0) || !(record >= 0)) return null;
+  const key = `${archive}:${record}`;
+  if (_flats.has(key)) return _flats.get(key);
+  if (!_deps || _flatsPending.has(key)) return null;
+  _flatsPending.add(key);
+  (async () => {
+    try {
+      const name = texName(archive);
+      const t = new TextureFile();
+      t.load(await _deps.fetchBytes(name), name, _deps.palette);
+      const bmp = t.getDFBitmap(record, 0);
+      if (!bmp?.width) throw new Error(`record ${record} is empty`);
+      _flats.set(key, {
+        tex: _deps.renderer.uploadTexture('img', `dropicon:${key}`, bitmapToColor32(bmp, _deps.palette)),
+        w: bmp.width, h: bmp.height,
+      });
+    } catch (e) {
+      console.warn(`[inventory] drop icon ${archive}.${record} unavailable:`, e?.message ?? e);
+      _flats.set(key, null);   // asked and answered - never retried
+    } finally { _flatsPending.delete(key); }
+  })();
+  return null;
+}
+
 /**
  * One target-icon panel: the container picture ScaleToFit into the
  * rect, then the shadowed label at panel-relative (1,2).
@@ -90,9 +145,12 @@ export function _setContainerIconsForTests(icons) { _icons = icons; _warned = fa
  * down (the accessory buttons' MaxAutoScale 1 cap is theirs, not
  * this panel's).
  */
-export function drawTargetIconPanel(renderer, m, font, rect, containerType, labelText) {
+export function drawTargetIconPanel(renderer, m, font, rect, containerType, labelText, image = null) {
   const [rx, ry, rw, rh] = rect;
-  const icon = _icons?.get(containerType) ?? null;
+  // G5: `image` is UpdateRemoteTargetIcon's flat arms (:875-884) - the
+  // SAME BackgroundTexture assignment on the SAME ScaleToFit panel, so
+  // it lays out through this one path rather than a second drawer.
+  const icon = image ?? _icons?.get(containerType) ?? null;
   if (icon && icon.w > 0 && icon.h > 0) {
     const fit = Math.min(rw / icon.w, rh / icon.h);
     const w = icon.w * fit, h = icon.h * fit;

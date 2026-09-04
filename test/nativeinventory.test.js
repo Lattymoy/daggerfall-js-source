@@ -204,7 +204,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
       `${f}: the loot pile must reach the same builder`);
     const loot = src.slice(src.indexOf('townTalk.showOverlay(makeInventoryWindow({'));
-    assert.match(loot.slice(0, 700), /loot: \{ items: \(\) => pile\.items \}/);
+    // G5: DaggerfallLoot's identity travels with the pile through the
+    // ONE shared shape, so a fifth call site cannot ship a partial one.
+    assert.match(loot.slice(0, 700), /loot: droppedLootHooks\(pile\)/);
     assert.match(loot.slice(0, 700), /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
   }
   // the dungeon host has one too, and it is the door's
@@ -466,7 +468,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:282-283's "every host
+  // and holds every one of them to ui/input.js:378-379's "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')

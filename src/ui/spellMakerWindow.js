@@ -770,11 +770,12 @@ export class SpellMakerWindow {
 
   /** ROAD-E E1, on the class that OWNS the picker: the button-up drops
    *  the thumb-drag latch (VerticalScrollBar.Update's else arm,
-   *  listPicker.js:123-129), instead of it surviving until the next
-   *  hover whose buttons bit happens to be clear. The call is optional
-   *  on `release` as well as on `picker` because `_openIconPicker`
-   *  (:679) parks a SpellIconPickerWindow here, and that window scrolls
-   *  by index with no drag latch to drop. */
+   *  :123-129), instead of it surviving until the next hover whose
+   *  buttons bit happens to be clear. `_openIconPicker` (:679) parks a
+   *  SpellIconPickerWindow in the same slot, and ROAD-G G4 gave THAT
+   *  window the same component and the same edge - so this one line
+   *  now releases either occupant. The `?.` on `release` stays: the
+   *  slot's contract is that a window may carry no latch at all. */
   release() { this.picker?.release?.(); }
 
   wheel(dir) {

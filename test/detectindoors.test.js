@@ -159,8 +159,14 @@ test('DT1: all four hosts name their kinds to the one walk', () => {
   // the two exterior hosts
   assert.match(feed(w, 'const detectFeed = createDetectFeed'),
     /nearbyLootRecords\(\{ piles: droppedLoot\._piles, foes: exteriorFoePool\(\) \}\)/);
+  // ROAD-G G2: the fixed-city host names `exteriorFoePool()` too - it
+  // mounted a second street pool, and a corpse the Detect walk cannot
+  // see is a container the spell says is not there. The join is raw
+  // (the loot walk NEEDS the dead: a corpse IS the container).
   assert.match(feed(e, 'const detectFeed = createDetectFeed'),
-    /nearbyLootRecords\(\{ piles: droppedLoot\._piles, foes: cityGuards\.guards \}\)/);
+    /nearbyLootRecords\(\{ piles: droppedLoot\._piles, foes: exteriorFoePool\(\) \}\)/);
+  assert.match(e, /const exteriorFoePool = \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\];/,
+    'and the join has ONE home in this host too');
   // and no host keeps a private corpse walk any more
   for (const [name, src] of [['worldModes', wm], ['world', w], ['exterior', e], ['dungeonContext', d]]) {
     assert.doesNotMatch(src, /corpseMarker\?\.pos \?\? \w+\.ai\?\.feet/, `${name} still has an inline corpse walk`);

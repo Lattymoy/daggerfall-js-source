@@ -892,13 +892,20 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
   // different rule, not a rough one: guards persist until the crime
   // clears, so one spawned across town blocks sleep forever.
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /areEnemiesNearby\([^)]*\{ resting: true \}\)/, f);
+    // ROAD-G G2 widened this from `[^)]*` - the fixed-city host's pool
+    // is a CALL now (`exteriorFoePool()`), and a class that cannot
+    // cross a nested paren was matching the shape rather than the law.
+    assert.match(src(f), /areEnemiesNearby\([^;]{0,80}?\{ resting: true \}\)/, f);
   }
   assert.match(src('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
   // exterior.js's POOL, not just its call: `[^)]*` happily matches an
   // empty array, and in that host the city watch is the ONLY pool - so
   // an empty one means you sleep through a watch that is beating you.
-  assert.match(src('src/scenes/exterior.js'), /areEnemiesNearby\(cityGuards\.guards, \{ resting: true \}\)/);
+  // ROAD-G G2: and the fixed-city host's pool is its JOIN - it was the
+  // watch alone because that was the only pool in the host, and the
+  // sentence above ("in that host the city watch is the ONLY pool")
+  // stopped being true when the encounter pool was mounted.
+  assert.match(src('src/scenes/exterior.js'), /areEnemiesNearby\(exteriorFoePool\(\), \{ resting: true \}\)/);
   assert.match(src('src/scenes/dungeonContext.js'), /areEnemiesNearby\(foes, \{ resting: true \}\)/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const deps = src(f).slice(src(f).indexOf('const outdoorRestDeps'), src(f).indexOf('const toggleRest'));

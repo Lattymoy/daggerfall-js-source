@@ -233,11 +233,40 @@ test('doctrine: .gitignore still blocks the game data it claims to block', () =>
 // four files declared "this is a deliberate departure" with no row either.
 // Both are the AUDIT 17m shape - a comment pointing at an approval that does
 // not exist - and the second one had been repeated four times.
+//
+// ROAD-G G7 (records sweep, 2026-09-04) WIDENED THE POPULATION TO THE CITE
+// ITSELF. F7's eleven sites were caught because they happened to shout
+// DEPARTURE; the gate then scanned only that token, so the OTHER half of F7's
+// finding - "a `src/` site cites Ledger A and no row on that page names the
+// file" - went on recurring in silence. Seventeen files were in exactly that
+// state at HEAD: `characters/dungeonEnemies.js`, `world/dungeonTextures.js`,
+// `player/cameraRecoiler.js`, `player/moveScanner.js`, `scenes/menu.js`,
+// `systems/repairService.js`, `systems/riding.js`, seven of
+// `systems/quest/*` (clock, foe, message, parser, person, quest, questLists),
+// `ui/enhancedCharSheet.js`, `ui/merchantServiceWindow.js` and
+// `ui/transportWindow.js`. Each was adjudicated one of three ways and none
+// was waved through: the ROW EXISTED and the cite was silent about it (the
+// engine-PRNG rule, which now carries its live roster; the dungeon-seed
+// bullet; the main-menu EXIT row) - the row was OWED and was written (the
+// `AdvancedClimbing` scaffolding, the merchant popup's accelerators, the
+// port's scalar clock) - or the COMMENT WAS WRONG: `transportWindow.js`
+// claimed "the port's own letters (Ledger A - DFU reads its keybind table)"
+// when DaggerfallTransportWindow.cs:100-137 binds all five buttons out of
+// `DialogShortcuts.txt`, which A8 ported whole, so the letters were wired to
+// the table and the departure ceased to exist.
+//
+// The RESOLUTION here stays the loose one - the Ledger names the file
+// SOMEWHERE - deliberately, and the AUDIT 58 gate below is the strict tier.
+// A class rule (the engine-PRNG rule, the settings surface) covers a
+// population rather than a path, so a per-file section-A row would be the
+// wrong shape for it; what the widened gate demands instead is that the class
+// row keep a ROSTER, which is the one line a new site has to touch.
 // ---------------------------------------------------------------------------
 
-test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its file', () => {
+test('doctrine: every DEPARTURE or Ledger A cite in src/ has a Ledger row naming its file', () => {
   const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
   const unrecorded = [];
+  let scanned = 0;
   for (const f of tracked('src')) {
     if (!f.endsWith('.js')) continue;
     const text = readFileSync(join(root, f), 'utf8');
@@ -247,17 +276,27 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     // "RECORDED DEPARTURES", so nine files that shout the plural - the
     // spell maker among them, which cited a Ledger A row that did not
     // exist - were never scanned at all. The trailing S is now optional.
-    if (!/\bDEPARTURES?\b/.test(text) && !/deliberate departure/i.test(text)) continue;
+    // ROAD-G G7: `Ledger A` joins the two DEPARTURE spellings. A file that
+    // names section A is claiming an approval just as loudly as one that
+    // shouts the word, and that half of F7's finding was never gated.
+    if (!/\bDEPARTURES?\b/.test(text) && !/deliberate departure/i.test(text)
+      && !/Ledger A/.test(text)) continue;
     // The LEDGER must name the file. Citing the Ledger from the source side is
     // NOT enough and deliberately does not count here: F7's eleven sites all
     // cited "the Ledger A engine-PRNG rule" and no such row existed. A claim
     // of approval is not an approval.
+    scanned++;
     const base = f.split('/').pop();
     if (ledger.includes(f) || ledger.includes(base)) continue;
     unrecorded.push(f);
   }
+  // ...and the population itself, so a rewording cannot quietly empty the
+  // gate the way `\bDEPARTURE\b` emptied it against the plural.
+  assert.ok(scanned >= 100,
+    `only ${scanned} files match the DEPARTURE / Ledger A claim - the shapes moved and this gate went quiet`);
   assert.deepEqual(unrecorded, [],
-    'these files declare a DEPARTURE and no Ledger row names them. The Ledger says\n'
+    'these files declare a DEPARTURE, or cite Ledger A, and no Ledger row names\n'
+    + 'them. The Ledger says\n'
     + '"if a departure or gap is not on this page, it does not exist", which is only\n'
     + 'usable as a gate while it is true - a later audit greps the Ledger to decide\n'
     + '"approved or bug?" and gets the wrong answer:\n'

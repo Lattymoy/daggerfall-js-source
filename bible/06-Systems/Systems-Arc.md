@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:409`, `world.js:627`), fired
+`playerTicker.advance(60)` (`exterior.js:722`, `world.js:627`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -5507,6 +5507,31 @@ never re-land a player who has no floor yet, and never reads the
 arrival constants before the boot has declared them. A pixel with no
 location keeps the centre landing and still mounts. Pins in
 `testroom.test.js` (TSR4).
+
+## ROAD-G G1 - THE TWO ARTIFACT PAYLOADS THAT WERE REFUSED AT A POOL (2026-09-04)
+
+Two of V3's nine payloads carried a refusal that was never about the
+payload. **The Wabbajack** could not transform a city watchman, because
+`createCityGuards` exposed no removal door - and in the STREET the arm
+handed a struck watchman to the ENCOUNTER pool's `removeFoe`. That was
+not a leak (the remover never looks a record up in `foes`, so it tore
+the watchman down exactly as `removeGuard` does); it was the wrong
+OWNER, with an encounter-pool `notifyDestroyed()` reaching a record
+that carries no quest behaviour. **SoulBound's break release and the
+Sanguine Rose's Daedroth**
+could not be stood inside a building, on a premise ("interiors have no
+foe pool") that had died the day `interiorFoes.spawnFoe` went live.
+
+Both are shipped: `cityGuards.removeGuard` is
+WabbajackEffect.cs:86's `SetActive(false)`, both hosts route the
+transform by POOL MEMBERSHIP through it (the re-stand stays the
+encounter pool's - `careerIDs` is seventeen monsters and no watch,
+:24-44), and `worldModes.standInteriorLooseFoe` is
+CreateFoe.PlaceFoeBuildingInterior (CreateFoe.cs:219-233), reached by
+both hosts that mount the mode machine. The finding, the C# and the
+pool-side laws are recorded in Characters-Arc's ROAD-G G1 section;
+pinned in `test/roadg_pools.test.js` and the rewritten EC1 pins in
+`test/enchantpool.test.js`.
 
 **TSR4a - THE EDGE STANDS IN THE NEXT PIXEL (2026-09-04, Mac: "it
 just spawns me straight into the ground").** Audit of TSR4, shipped

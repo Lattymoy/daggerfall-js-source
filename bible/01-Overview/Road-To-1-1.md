@@ -23,7 +23,8 @@ re-skin's ground outage, the fast-travel season ordering, the activate
 gate's overlay/clickDelay/touchSpell trio (the critical: a click on an
 open window activated the world behind it), the mastery-box ordering,
 and four test-quality repairs. Recorded stages that belong to Wave B
-(the court backdrop, the combo held-order, the prison accelerator)
+(the court backdrop, ~~the combo held-order~~ **CLOSED at ROAD-G G3
+2026-09-04**, the prison accelerator)
 wait on B1's window stack.
 
 - **A1 season-calendar**: texture season reads the CALENDAR
@@ -207,11 +208,11 @@ E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
 were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:2872`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2899`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:1687`) with the
+guild-service popup above ground (`scenes/worldModes.js:1732`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
@@ -237,6 +238,73 @@ blocker named at the site: no asset in the repo (the PlayerTorch
 prefab), a DFU original that does not exist (the enhanced menu's
 keyboard), or the owner's call (the gamepad layer, the pause
 dropdown's mod rows).
+
+## Wave G - the audit's deliberately-left remainder - CLOSED 2026-09-04
+
+AUDIT 58's record ended with a list of things it had measured and left
+on purpose, each "a separate slice". Wave G ran that list as seven lanes
+on worktrees cut from main, two adversarial review rounds (G1-G4, then
+G5-G7: 77 findings judged, 60 confirmed, 17 refuted) and seven review-fix
+lanes, integrated in order and squashed one commit per lane.
+
+- **G1 the foe pools** - `createCityGuards` takes `makeAreaHostile`, so a
+  struck PASSIVE watchman turns the area in every host that mints guards
+  (GameManager.MakeEnemiesHostile); the watch transforms under the
+  Wabbajack through `removeGuard` and the pool-membership router in both
+  the street and the building; SoulBound's break release and the Sanguine
+  Rose's Daedroth stand INDOORS through the interior pool
+  (PlaceFoeBuildingInterior). The review struck a false "live defect"
+  rationale from seven places and made the guard aggro door reachable
+  from a zero-damage ARROW in all three arrow hosts.
+- **G2 the fixed-city host** - `createPlayerMagic` takes the three-arm
+  pool/sinks shape; CreateFoe's OUTDOOR placement arm ships over an
+  encounter pool this route mounts for the first time; the find-place
+  gate answers when the place is the current location. The review found
+  the cast engine deaf to the quest machine (no OnNewReadySpell /
+  OnCastReadySpell doors) and seven consequential seams unpinned - all
+  held now.
+- **G3 the ordered held-keys ring** - GetUnaryKey / ModifierOnlyHeld
+  ported; the review showed a stateless walk is NOT
+  `modifierHeldFirstDict`, so the dict is ported as per-host STATE
+  (raised only on a clean whole-set frame, lowered only by the modifier's
+  release). The AXES + JOYSTICK half of `systems/inputActions.js` stays
+  FLAGGED: no gamepad layer, an owner call.
+- **G4 the overlay mouse-up seam** - the row's named remainder had
+  already shipped with the E-group; what was left was the last three
+  drag latches (the spellbook, the icon picker and, found by the review,
+  the chargen wizard's picker bar) releasing on the button rather than
+  the next hover, and the spellbook's F159/F170/F180 drag is no longer a
+  departure.
+- **G5 the drop icons and the bank list's scroll bar** -
+  UpdateRemoteTargetIcon's two flat arms, the three cycling handlers over
+  DaggerfallLootDataTables, the icon riding a dropped pile through the
+  cache and the save, and the purchase list's [106,39,7,48] rail. The
+  review fed the CORPSE its own flat (CreateLootableCorpseMarker) and
+  turned six vacuous pins behavioural.
+- **G6 the mouse/advanced controls window** -
+  DaggerfallUnityMouseControlsWindow 1:1 over the controls grid's own
+  staged dicts, HorizontalSlider.cs as a component with one home, the
+  OnSavedKeyBinds ordering, and the sensitivity clamp widened to DFU's
+  0.1..16.0 end to end. The review's two criticals were one seam: the
+  grid forwarded hover but not RELEASE, so the slider latch never
+  dropped. Ledger `:596`'s live clause is the joystick window alone.
+- **G7 the records** - fifty stale `exterior.js:NNN` cites re-resolved
+  by content and pinned as a set (the probe fleet's shared ladder cite
+  resolved at both ends); the doctrine gate widened from the DEPARTURE
+  shout to the `Ledger A` cite, with three owed section A rows written
+  and the engine-PRNG row carrying a LIVE roster the pin measures against
+  the tree; the transport window's five accelerators wired to the table
+  (the exit letter had none).
+
+The open-flag count did not move: **7** before, **7** after, because
+nothing here was on the board - it was the audit's list. What the wave
+left is the owner-gated set the status page already names (the torch
+prefab values, the gamepad layer and its window, the enhanced menu's
+keyboard, the pause dropdown's mod rows, the mod CIF door, the FaceUV
+residual, the .SAV zip arm, the cross-pixel Recall), plus two things the
+lanes wrote down at their sites: the watch's Wabbajack transform on the
+fixed-city route above ground, and PlayerEntity.Update's per-minute
+encounter roll on that route. Suite at the merge: 6,479 tests, 0 failed.
 
 ## The standing watches (not wave work)
 

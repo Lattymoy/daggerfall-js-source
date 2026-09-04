@@ -25,7 +25,9 @@ import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64): a poisoned shaft doses its mark
-import { spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
+import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term; ROAD-G G2: BowDamage's recoverable shaft
+import { calculateAttackDamage } from '../combat/formulas.js';   // ROAD-G G2: enemy-arrow impacts
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // ROAD-G G2: an arrow owes the flash too (AUDIT 24 wave 46)
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -77,9 +79,13 @@ import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString 
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
+// ROAD-G G2: the encounter pool's ONE factory - the same one the
+// streaming world host and the interior host mount. See the mount
+// below for what stands foes in it on this route.
+import { createExteriorFoes } from './exteriorFoes.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
+import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
@@ -95,7 +101,7 @@ import { getInteractionMode } from '../player/interactionMode.js';   // U45: the
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
-import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
@@ -109,6 +115,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
+import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry) - world.js:115's import
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -148,7 +155,9 @@ import { ensureFactionRep, getReputation, changeReputation } from '../systems/fa
 import { findFactions, findFactionByTypeAndRegion, getPeopleOfCurrentRegion, getCourtOfCurrentRegion } from '../systems/talk.js';   // QX1 review: Person.cs's faction-type reads, over the PERSISTENT store
 import { FACTION_TYPES } from '../formats/factionFile.js';   // QX1 review: GetRegionFaction's Province filter
 import { liveVampirism } from '../systems/racialLive.js';   // QX1 review: the PC's clan, off the curse entry
-import { mintQuestFoeWave } from './questFoeHost.js';   // QX1 review/B1: the data side of CreateFoeGameObjects
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // QX1 review/B1: the data side of CreateFoeGameObjects; ROAD-G G2: and the placement side
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // ROAD-G G2: CreateFoe's raycast ring
+import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // ROAD-G G2: FinalizeFoe's Flying lift reads the behaviour flag
 import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
 import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
 import { createQuestBridge, tokensToRows } from './questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
@@ -693,7 +702,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // that can see the player or would have spawned in classic.
         // `activeCount() > 0` was a different question - one unaware
         // guard alive anywhere in town killed the collapse.
-        enemiesNearby: areEnemiesNearby(cityGuards?.guards ?? []),
+        enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   // ROAD-G G2: BOTH street pools, world.js:1343's line
         swimming: !!player.swimming, entity: playerEntity,
         day: !isNight(minuteNow()), inside: false,
       });
@@ -907,6 +916,21 @@ export async function bootExterior(canvas, renderer, params, status) {
   const questJournalHooks = () => (questBridge ? {
     questMessages: () => questBridge.machine.getAllQuestLogMessages() ?? [],
     notebook: () => questBridge.notebook ?? null,
+    // ROAD-G G2 (c): HandleQuestClicks' FIRST world question
+    // (DaggerfallQuestJournalWindow.cs:450) -
+    // `place.SiteDetails.locationName != PlayerGPS.CurrentLocation.Name`.
+    // What DFU does when the named place IS where the player is
+    // standing is NOTHING - no CanFindPlace, no dialog, no travel - and
+    // the window builds that arm (questJournal.js's second gate). This
+    // host had never answered the question at all, so the gate compared
+    // against `''` and could never match; this route stands in ONE city
+    // for its whole life, so PlayerGPS.CurrentLocation.Name is
+    // `dfLocation` outright, exactly as its twenty other PlayerGPS
+    // reads are. The map half is the one this route cannot build - see
+    // makeJournalWindow below - so today the answer changes WHICH gate
+    // refuses rather than whether one does; it is the gate the C# asks
+    // first, and it is a fact this host has.
+    currentLocationName: () => dfLocation.name ?? locationName,
   } : {});
   /** QX1/PX4: the pause journal's rail - one active row per quest that
    *  has written a log entry, its newest-first messages, and the
@@ -990,18 +1014,33 @@ export async function bootExterior(canvas, renderer, params, status) {
   // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
   // component off each enemy; there is one archive and one clock.
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
+  // ROAD-G G2: THIS HOST'S ACTIVE-ENEMY DATABASE, ABOVE GROUND. DFU has
+  // ONE database per scene (PlayerGPS.UpdateNearbyObjects walks
+  // ActiveGameObjectDatabase.GetActiveEnemyBehaviours(), PlayerGPS.cs
+  // :747-777), and this route now stands foes in two pools out in the
+  // street - the watch, and the encounter pool the mount below adds -
+  // so every reader that used to name `cityGuards.guards` alone names
+  // the join. world.js's `exteriorFoePool` is the same expression.
+  const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
+  // ROAD-B/ROAD-G G2: the AREA, for GameManager.MakeEnemiesHostile
+  // (:790-806) - the street's two pools joined with whatever inside
+  // pool the mode machine holds, which is world.js:1802's line.
+  const _liveEnemyDatabase = () => [
+    ...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.insideFoes?.() ?? []),
+  ];
+  const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());
   // X4: the Detect scan - declared before cityGuards so the frame body
   // and the feed share one definition; the thunks are lazy.
   const detectFeet = () => (walkMode ? player.pos : cam.pos);
   const detectFeed = createDetectFeed(playerEntity, {
-    entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [])
+    entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : [])
       .filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     // FX1 (F207): the world piles + guard corpses mark outdoors -
     // UpdateNearbyObjects walks every active loot container with no
     // scene gate (PlayerGPS.cs:747, :766-776).
     // DT1: this host names its loot KINDS and shared.js's
     // nearbyLootRecords does the walk (see world.js's twin).
-    loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: cityGuards.guards }),
+    loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: exteriorFoePool() }),
     feet: detectFeet,
   });
   const cityGuards = createCityGuards({
@@ -1009,6 +1048,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258 - a struck PASSIVE watchman turns the area
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -1023,6 +1063,71 @@ export async function bootExterior(canvas, renderer, params, status) {
       // G2: the verbatim arrest interception - a guard hit on an
       // active crime opens the surrender box instead of the damage
       if (!arrestFlow.onGuardHit(dmg, apply)) apply();
+    },
+  });
+  /** ROAD-G G2: THE ENCOUNTER POOL, ON THE FIXED-CITY HOST TOO - THE
+   *  FOUR HOSTS RULE, and the pool three of this host's laws had no
+   *  place to stand a foe in.
+   *
+   *  `?exterior` mounted the WATCH alone, and three seams recorded that
+   *  absence as a refusal rather than as the missing producer it was:
+   *  CreateFoe's OUTDOOR arm answered false so an `create foe` wave
+   *  aimed at the street never deployed (TryPlacement's failed-placement
+   *  shape, for ever), the Wabbajack's exterior arm refused to transform
+   *  a struck foe, and SoulBound's break release and the Sanguine Rose
+   *  had nowhere to put a Daedroth above ground. It is the SAME factory
+   *  the other two exterior hosts mount - world.js:1842 over the street
+   *  collider, worldModes' `makeInteriorFoes` over a building's - and
+   *  the deps are this host's own.
+   *
+   *  WHAT STANDS A FOE IN IT HERE: CreateFoe's PlaceFoeExteriorLocation
+   *  (CreateFoe.cs:245-248), the Wabbajack's re-stand, and the two
+   *  loose-foe releases. PlayerEntity.Update's per-minute INTERMITTENT
+   *  SPAWN roll (:486-492) still has no caller on this route - that
+   *  loop carries the passive-guard and NPC-guard-conversion arms with
+   *  it (world.js:1888-1972) and is its own slice; this pool does not
+   *  wait on it. */
+  const exteriorFoes = createExteriorFoes({
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
+    playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
+    currentMinute: () => Math.floor(playerTicker.classicMinutes),
+    // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
+    // outdoor corpse to TrackLooseObject, which stamps the streamer's
+    // CURRENT map pixel. This route stands in ONE location that never
+    // leaves range, so there is no pixel to stamp - worldModes' own
+    // interior arm passes the same nothing for the same reason.
+    currentPixelKey: () => null,
+    playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider through the host's one set of doors
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-B: DaggerfallEntityBehaviour.cs:255-258
+    say: (l) => townTalk.say(l),
+    onPlayerHurt: (dmg, wpn) => {
+      if (dmg <= 0) return;
+      hurtPlayer(playerEntity, dmg);
+      audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1
+      // EnemyAttack.SendDamageToPlayer (:404-406) SendMessages
+      // "RemoveHealth" for EVERY attacker, and PlayerFootsteps
+      // .RemoveHealth (:348-364) answers with the 40% pain cry.
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+      surfacePlayer();
+    },
+    // C13/X2-slice: the shoot frame looses a REAL arrow through this
+    // host's own flight, ringing ArrowShoot from the archer. The watch
+    // carries no bow arm; an encounter foe does.
+    onArrow: (from, dir, f) => {
+      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+      audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
+    },
+    // X3-slice: casters - the S16 lists assign once the SPELLS.STD map
+    // lands, and the release seams ride the ONE engine this host has.
+    spellsByIndex: () => spellsByIndex,
+    magicHooks: {
+      explodeAt: (...a) => magic.explodeAt(...a),
+      fireMissile: (from, spell, casterLevel, foe) => {
+        if (!walkMode) return;
+        const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+        const l = Math.hypot(...d) || 1;
+        magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
+      },
     },
   });
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
@@ -1080,11 +1185,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // quest clock is meant to run out. Same expression the other three
     // hosts pass (THE FOUR HOSTS RULE).
     tickQuests: () => questBridge?.machine?.tick?.(),
-    // AreEnemiesNearby's RESTING variant. This host mounts no foe pool
-    // but the city watch, and `activeCount() > 0` - which the first
-    // draft borrowed from the exhaustion arm - would block sleep for
-    // good the moment one guard spawned anywhere in town.
-    enemiesNearby: () => areEnemiesNearby(cityGuards.guards, { resting: true }),
+    // AreEnemiesNearby's RESTING variant, over this host's whole street
+    // database (ROAD-G G2 widened it - it named the watch alone on the
+    // premise that the watch was the only pool here, and a quest foe
+    // stood in the street by CreateFoe's exterior arm would otherwise
+    // have let the player sleep beside it). `activeCount() > 0` - which
+    // the first draft borrowed from the exhaustion arm - would block
+    // sleep for good the moment one guard spawned anywhere in town.
+    enemiesNearby: () => areEnemiesNearby(exteriorFoePool(), { resting: true }),
     place: () => ({
       inTownOutside: _isPlayerInTownStrict(),
       inTownLocation: isPlayerInTown(_musicLocationType()),
@@ -1197,7 +1305,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
   const foeSinks = (g) => ({
-    hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
+    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // ROAD-G G2: route by pool, world.js's line
     heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -1373,7 +1481,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:828/:842) - world.js:2017 hoisted its copy for exactly
+   *  (effects.js:828/:842) - world.js:2018 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -1417,8 +1525,42 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
     surfacePlayer,
-    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
-    foeSinks,
+    // QG1: the ready-spell doors - EntityEffectManager's two events
+    // (hostMagic.js:73-74), which are the ONLY route into the quest
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:776/:782;
+    // actions.js:2688). This host owns its own cast engine and passed
+    // neither key, so on this route - and, because worldModes takes THIS
+    // instance indoors, in every shop entered from it - `cast X spell do`
+    // and `cast X effect do` could never latch and never fire. The other
+    // two engine-owning hosts wire the identical pair (world.js:2105-2106,
+    // dungeonContext.js:1776-1777); `questBridge` is assigned below this
+    // mount, so the chain is optional both ways.
+    onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
+    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
+    // ROAD-G G2 (a): THE THREE-ARM SHAPE, the streaming host's law over
+    // this host's pools. This read was `mode === 'exterior' ? guards :
+    // []`, which is an INTERIOR SCENE GATE - and this is the only cast
+    // engine this page has indoors: worldModes takes this instance,
+    // drives firePending/update on every interior frame and routes the
+    // interior attack click into `magic.interceptAttack`, and every
+    // target read in the engine goes through this one thunk (explodeAt's
+    // sweep, ByTouch's pick, the release-frame area arm, the missile
+    // impact - hostMagic.js). Answering `[]` meant a Fireball cast in a
+    // shop reached from ?exterior swept nobody, a ByTouch spell picked
+    // nobody, and a missile passed through a Knight_CityWatch the MELEE
+    // ray would have hit. DFU gates nothing here: the explosion is
+    // `Physics.OverlapSphereNonAlloc` and the touch pick a raycast
+    // (DaggerfallMissile.cs:481/:409-455) - whatever is in the scene.
+    // The dungeon arm stays empty because dungeonContext builds its OWN
+    // engine and this one never runs in that mode.
+    foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]
+      : _mode() === 'interior' ? _insidePool()
+        : []),
+    // ...and the sinks follow the RECORD, not the mode: a foe handed
+    // out by the interior arm must knock back and die against THAT
+    // building's collider and death chain, so this is the same
+    // pool-membership router the enchant mount takes.
+    foeSinks: (f) => enchantFoeSinks(f),
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
@@ -1432,20 +1574,44 @@ export async function bootExterior(canvas, renderer, params, status) {
     // release the engine parks on frame 5.
     startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
   });
-  // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
+  // AUDIT 24 (wave 32): the broker's foe subscribers - BOTH street pools (ROAD-G G2 mounted the second; the note here said 'the watch (this host mints no encounter foes)').
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
   // these entities owe the same per-minute laws the player does. They got
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
-  subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);
+  subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
   /** AUDIT 24 (wave 36): the senses context every foe pool owes its
    *  foes, built ONCE per frame for all of them. This host used to pass
    *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
    *  read the player's Stealth as 0, tallied it never, and - because
    *  gameMinutes defaulted to 0 - froze each foe's detection on its
    *  first roll for the rest of its life. */
+  // AUDIT 58 (f2/hosts) / ROAD-G G2: the enchant ctx's live reads, at
+  // function scope. THE LAW IS shared.js's (liveEnchantFoes /
+  // liveEnchantFoeSinks / enchantFoeHost): one arm per live mode,
+  // because DFU has one active-enemy database per scene
+  // (PlayerGPS.cs:747-777), and the sinks routed by POOL MEMBERSHIP so
+  // a record never knocks back against the wrong host's collider. This
+  // host's exterior pool is BOTH street pools now - the watch and the
+  // encounter pool ROAD-G G2 mounted; the interior and dungeon arms are
+  // worldModes' own. `modes` is a `var` declared far below, so every
+  // deref here is `modes?.` and every read is a thunk.
+  const _mode = () => (modes?.mode ?? 'exterior');
+  const _insidePool = () => modes?.insideFoes?.() ?? [];
+  const enchantFeet = () => (walkMode ? player.pos : cam.pos);
+  const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, exteriorFoePool, _insidePool);
+  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
     movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    // MT-ii/ROAD-G G2: the target-machine seam - EnemySenses reads ONE
+    // active-enemy database (EnemySenses.cs:741-749), so a watchman and
+    // a foe stood in the street by CreateFoe's exterior arm can see
+    // each other. Absent, every foe on this route took the player-only
+    // path. Passing the GETTER keeps one live view per frame with no
+    // pool importing the other; dead records leave it the frame they
+    // die, as DFU's database yields only ACTIVE behaviours.
+    candidates: () => exteriorFoePool().filter((f) => !f.dead),
+    playerEntity,
   });
   // U32: ONE construction for the town inventory - F6 opens it, and so
   // does the character sheet's INVENTORY button. Two `new` sites would
@@ -1483,7 +1649,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // world host.
     getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
-    onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+    // U8e: OnPop mints the world pile. G5: with the drop icon the
+    // player cycled to (null = CreateDroppedLootContainer's -1 roll)
+    // and, when the window replaced a loot target, that container's
+    // own x/z (:710-714).
+    onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(items, containerDropPos(at, dropFeet()), null, icon),
     ...extra,
   });
   // U42: the CLASSIC spellbook - the same ONE construction the world
@@ -1533,12 +1703,16 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  three hosts reach it - the host hands over what only it knows and
    *  the door picks the skin.
    *
-   *  HandleQuestClicks' find-place seam (:439-466) is deliberately NOT
-   *  here, the same decision the dungeon context records: `?exterior`
-   *  owns no travel map, so there is nowhere to send the player and the
-   *  journal leaves the dialog unoffered rather than raising one that
-   *  goes nowhere. No bridge, no book - the same nothing the sheet's
-   *  LOGBOOK button gives. */
+   *  ROAD-G G2 (c) NARROWED HandleQuestClicks' RECORDED ABSENCE to its
+   *  one true clause: this route mounts no travel map (DfTravelMapWindow
+   *  is world.js's), so `gotoPlace` (:214-217) and its `canFindPlace`
+   *  (:1134-1146) - both members of that window - stay unset and the
+   *  dialog is never offered, which is the same nothing a CanFindPlace
+   *  miss produces in C#. The seam's other gate, the one asking whether
+   *  the place is the city the player is already in, IS answered:
+   *  questJournalHooks above hands over PlayerGPS.CurrentLocation.Name.
+   *  No bridge, no book - the same nothing the sheet's LOGBOOK button
+   *  gives. */
   const makeJournalWindow = (mode) => {
     if (!questBridge) return null;
     // WARM FIRST, THEN ASK. The door's own classic arm IS the art gate
@@ -1655,7 +1829,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
-    // (ui/input.js:226), so the frame poll stays its only keyboard door.
+    // (ui/input.js:351), so the frame poll stays its only keyboard door.
     toggleSheath: () => weaponRig.toggleSheath(),
     // QX1/U43: the two journal keys, which this host had never
     // answered - the doors are the same ONE window the sheet's LOGBOOK
@@ -1791,19 +1965,32 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to step into, so the sentence was second-hand here in the first
     // place - which is how it outlived the arc twice over.
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER. InputManager
+    // .PollInput (:1795-1809) rebuilds `heldKeys` every frame whatever
+    // the dispatch does - `foreach (KeyCode k in KeyCodeList) if
+    // (GetPollKey(k)) AddHeldKey(heldKeys, k)` runs before
+    // GameManager.Update reads a single Action. This add used to sit at
+    // the BOTTOM of the ladder, so every key that DISPATCHED (F5, R, M,
+    // V, Escape) returned above it and never entered the Set at all.
+    // That was invisible while nothing read the ring; it is not now,
+    // because the Set IS the ring ModifierOnlyHeld SCANS (:1632-1639,
+    // through ui/input.js's latch) and a key missing from it is a key
+    // that cannot disqualify a modifier at all. It stays BELOW
+    // the overlay gate: DFU's own Update returns before PollInput while
+    // a pausing window is up (:487-503), so a key typed into a window
+    // joins no ring there either.
+    keys.add(e.code);
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:95-105), and no host passed one - so
+    // held-keys Set (ui/input.js:156-177), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
     // the controls window got the Status box instead and could never
-    // open the inventory. The Set is filled by the `keys.add(e.code)`
-    // below, i.e. by EARLIER presses, so at this point it holds the
-    // modifier and not yet this key - which is exactly what the arm
-    // expects (:102 unions e.code in itself), and it carries the
-    // suppression half too (:1681-1685, "space is jump, LeftShift+
-    // Space opens inventory: we want to ignore jumping").
+    // open the inventory. The Set is the ring filled just above, this
+    // press included, and actionOf reads it through the held-first
+    // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
+    // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
@@ -1855,7 +2042,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     // I2: through the registry, so M is rebindable like every other
     // action rather than a second hardcoded literal.
 
-    keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -2031,12 +2217,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   //   - THE ITEM SEAMS (giveItemToPlayer and its four siblings) and the
   //     videos, faces, disease and cure doors, none of which has a
   //     producer in this file.
-  //   - CreateFoe's OUTDOOR PLACEMENT ARM ONLY (:252-257's 5/20 and
-  //     8/25 rings). This route mints no exterior foe pool, only the
-  //     watch, so an outdoor wave answers false and stays pending -
-  //     TryPlacement's own failed-placement shape. The SEAM itself is
-  //     wired (createFoeGameObjects / tryPlaceFoe / raiseOnEncounterEvent
-  //     below), and its inside arms are live off the mode machine.
+  //   (ROAD-G G2 struck the third entry that stood here - "CreateFoe's
+  //   OUTDOOR PLACEMENT ARM ONLY... this route mints no exterior foe
+  //   pool, only the watch". It mounts one now, and tryPlaceFoe's
+  //   exterior arm is PlaceFoeExteriorLocation verbatim; see below.)
   // Gold, crime, the guard call, the hostility pair, time, reputation,
   // the FACTION STORE (the Person chain's faction-type reads, all over
   // the persistent clone factionRep owns - never the raw FACTION.TXT
@@ -2090,14 +2274,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4726 is the same line.
+    // other. world.js:4895 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4739-4742. */
+     *  %rn/%rt's producer - world.js:4897-4910. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2134,6 +2318,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
+    // QG1: CastSpellDo's two world reads, world.js:4813-4816's pair.
+    // Without them the action self-completes at parse (actions.js:2742/:2749)
+    // and a `cast X spell do` on this route could never be armed, whatever
+    // the ready-spell doors above raise.
+    getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
+    spellHasMatchForClassicEffect: (sp, effect) => (sp?.effects ?? []).some((e) =>
+      ((e.type ?? 0) & 0xff) === ((effect.type ?? 0) & 0xff)
+      && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     legalRepNow: () => legalRepOf(playerEntity, dfLocation.regionIndex),   // %ltn's fourteen bands
     changeLegalRep: (amount) => changeLegalRep(playerEntity, dfLocation.regionIndex, amount),
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], dfLocation.regionIndex, buildingKey),
@@ -2157,7 +2349,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:4759's line
+     *  mode-aware (worldModes:1258), so this is world.js:4786's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
@@ -2165,21 +2357,57 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:4767's call verbatim. */
+     *  Bridge-only, no host state - world.js:4794's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
-    /** CreateFoe.TryPlacement (:183-211). The INSIDE arms are live on
-     *  this route - worldModes.tryPlaceQuestFoe places in a dungeon and
-     *  pends in an interior, the same producer world.js calls.
+    /** CreateFoe.TryPlacement (:183-211), ALL THREE ARMS. The INSIDE
+     *  two are the mode machine's - worldModes.tryPlaceQuestFoe places
+     *  in a dungeon and in a building, the same producer world.js
+     *  calls - and ROAD-G G2 built the third.
      *
-     *  RECORDED DEPARTURE, ONE ARM: the OUTDOOR arm (:252-257's 5/20
-     *  and 8/25 rings) has no producer here - this host mints no
-     *  exterior foe pool, only the watch - so an outdoor wave answers
-     *  false, stays pending and re-attempts every machine tick until
-     *  the player steps into a mounted interior or dungeon, which is
-     *  TryPlacement's own failed-placement shape. */
-    tryPlaceFoe: (handle) => ((modes?.mode ?? 'exterior') === 'exterior'
-      ? false
-      : (modes?.tryPlaceQuestFoe?.(handle) ?? false)),
+     *  THE OUTDOOR ARM IS PlaceFoeExteriorLocation (:245-248), which is
+     *  `PlaceFoeFreely(gameObjects, locationParent.transform)` - the
+     *  DEFAULT 5/20 ring, not the wilderness 8/25 one, because
+     *  TryPlacement (:203-206) picks it exactly when
+     *  `IsPlayerInLocationRect`. This route stands inside its ONE
+     *  city's rect for its whole life (`_musicInLocationRect` is
+     *  `() => true`), so the wilderness arm (:252-257) has no reachable
+     *  branch here at all and the ring is the default one, unqualified.
+     *  Everything else is world.js:4898's arm term for term: the cast
+     *  origin is the controller CENTRE (DFU rays from
+     *  PlayerObject.transform.position, not the feet), the FOV is
+     *  handed over in DEGREES (`fieldOfView()` answers radians), the
+     *  occupancy test is `Physics.OverlapSphere(testPoint, 0.65f)` over
+     *  every live record this host has in the street (:317-321 tests
+     *  ANY collider, so the watch is in it), FinalizeFoe (:341-359)
+     *  lifts a FLYING foe 1.5 off the probed floor and leaves a walker
+     *  on it, and the foe LookAt's the player (:328).
+     *
+     *  A refusal is `false`, which leaves the wave pending and
+     *  re-attempted on the next machine tick - TryPlacement's own
+     *  failed-placement shape, and now a real one (no open spot) rather
+     *  than a host with nowhere to put a foe. */
+    tryPlaceFoe: (handle) => {
+      if ((modes?.mode ?? 'exterior') !== 'exterior') return modes?.tryPlaceQuestFoe?.(handle) ?? false;
+      if (!walkMode) return false;   // the fly camera has no controller capsule to place around
+      const feet = player.pos;
+      const env = placeFoeEnv({
+        collider,
+        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+        playerYawRad: cam.yaw,
+        fovDegrees: fieldOfView() * 180 / Math.PI,
+        isOccupied: entityOccupancy((f) => f.ai?.feet, exteriorFoePool, feet),
+      });
+      const spot = placeFoeFreely(env);
+      if (!spot) return false;
+      const foe = handle.foe;
+      const _fly = (ENEMY_BASICS[foe.foeType]?.behaviour ?? 'General') === 'Flying';
+      exteriorFoes.spawnFoe(foe.foeType, [spot.x, _fly ? spot.y + 1.5 : spot.y, spot.z], {
+        gender: questFoeGender(foe),
+        yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
+        questBehaviour: handle.behaviour,
+      }).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));
+      return true;
+    },
     /** GameManager.RaiseOnEncounterEvent - its one core consumer is the
      *  rest window's AbortRestForEnemySpawn, which worldModes routes
      *  back to THIS file's own slot (its `abortRestForEnemySpawn`). */
@@ -2234,7 +2462,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:5443's line.
+    // closure S40 gave this host, and world.js:5470's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -2251,21 +2479,25 @@ export async function bootExterior(canvas, renderer, params, status) {
     spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
     // ROAD-B: GameManager.cs:790-806 through the ONE law
     // (hostCombat.makeEnemiesHostile) over this route's whole live
-    // database - the watch above ground and the mounted mode's pool.
+    // database - BOTH street pools above ground (ROAD-G G2 mounted the
+    // encounter pool beside the watch) and the mounted mode's pool.
     // The pool term is `insideFoes`, the UNNARROWED walk
     // (worldModes:6492): MakeEnemiesHostile flips every active enemy,
     // not only the ones carrying a QuestResourceBehaviour. The narrowed
     // walk (`liveQuestFoes`) has its own caller below - questFoeInstances,
     // which is the one seam that really does ask the narrower question.
-    makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),
-    clearEnemies: () => cityGuards.clearLive?.(),
+    makeEnemiesHostile: _makeEnemiesHostile,
+    // GameManager.ClearEnemies destroys every active enemy object; the
+    // encounter half is world.js:5401's line and the watch half is this
+    // host's own (cityGuards owns its live list).
+    clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } },
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
     // over ONE database - the inside pool unioned in, or SetComplete
     // never completes and the action re-runs every tick for ever.
     questFoeInstances: (symbol) => {
       const want = symbol?.name ?? null;
       if (want == null) return [];
-      return [...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
+      return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
         !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
     getReputation: (fid) => { const st = _questStore(); return st ? getReputation(st, fid) : 0; },
@@ -2453,29 +2685,38 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  way EC1 routes world.js's, and it is the same BODY - a hand-rolled
    *  second ctx here is the shape FS1 was written about. */
   {
-    const _mode = () => (modes?.mode ?? 'exterior');
-    const _insidePool = () => modes?.insideFoes?.() ?? [];
-    const enchantFeet = () => (walkMode ? player.pos : cam.pos);
-    const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => cityGuards.guards, _insidePool);
-    const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
+    // ROAD-G G2: the four live reads are at FUNCTION scope now, not
+    // inside this block - the cast engine above takes the same pool and
+    // the same pool-membership sinks router (world.js keeps its twins
+    // at function scope for exactly that reason), and two definitions
+    // would be two laws the day one of them moves. See `_mode` /
+    // `_insidePool` / `enchantFeet` / `enchantFoes` / `enchantFoeSinks`
+    // above the cast engine.
     /** SD1: SoulBound's break release and the Sanguine Rose's
-     *  Daedroth, through DFU's own placement - but only where this
-     *  session has a pool to stand one IN. That is the dungeon the mode
-     *  machine mounts; above ground this host's only pool is the WATCH,
-     *  which mints watchmen and exposes no free spawn pair, and a
-     *  building has none of its own here at all. Refusing is EC1's
-     *  answer and the honest one until a pool exists - the same refusal
-     *  world.js makes for its interior mode. */
+     *  Daedroth, through DFU's own placement - in whichever world the
+     *  player is actually standing in. ROAD-G G2 GAVE THE EXTERIOR ARM
+     *  ITS POOL: the sentence that stood here said "above ground this
+     *  host's only pool is the WATCH, which mints watchmen and exposes
+     *  no free spawn pair", so a soul released or a Rose used in the
+     *  street released nothing at all. That premise died with the
+     *  encounter mount above, and world.js:2351-2367 is the shape.
+     *  INTERIOR still refuses - worldModes' interior pool exposes no
+     *  loose-spawn door - which is EC1's answer and world.js's own for
+     *  the same mode. */
     const _standLooseFoe = (mobileType, o = {}) => {
-      const d = _mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
-      if (!d) return null;
+      const mode = _mode();
+      if (_mode() === 'interior') return modes?.insideStandLooseFoe?.(mobileType, o) ?? null;   // ROAD-G G1: a building stands it through the interior pool (CreateFoe.cs:219-233), the same door world.js reaches - THE FOUR HOSTS RULE
+      if (mode !== 'exterior' && mode !== 'dungeon') return null;
+      const d = mode === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
       return standLooseFoe({
-        collider: d.collider,
+        collider: d ? d.collider : collider,
         feet: enchantFeet(),
         yawRad: cam.yaw,
         fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
         foes: enchantFoes(),
-        spawn: (mt, pos, so) => d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied }),
+        spawn: (mt, pos, so) => (d
+          ? d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied })
+          : exteriorFoes.spawnFoe(mt, pos, { yaw: so.yawRad, allied: so.allied })),
       }, mobileType, o);
     };
     /** V3: the Wabbajack's transform, routed by the same POOL
@@ -2487,12 +2728,15 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  from inside the ctx is the defect the AUDIT 58 review found
      *  there.
      *
-     *  THE EXTERIOR ARM REFUSES, and that is a departure written down
-     *  rather than a mis-route - worldModes.js already wrote the same
-     *  one for the same pool: `createCityGuards` exposes no
-     *  remove/spawn pair, so the only reach available would be another
-     *  host's, which is exactly the confusion this door exists to end.
-     *  Leaving the watchman standing is the smaller departure. */
+     *  ROAD-G G2: THE EXTERIOR ARM TRANSFORMS NOW. It refused, and the
+     *  refusal was written down honestly - `createCityGuards` exposes
+     *  no remove/spawn pair, so the only reach available would have
+     *  been another host's. The encounter pool mounted above owns both,
+     *  so an encounter or quest foe struck in the street is removed and
+     *  re-stood by the pool that owns its billboard, exactly as
+     *  world.js:2293-2294 does it. A WATCHMAN is still left standing:
+     *  the street pool cannot remove a record it does not own, which is
+     *  the same departure worldModes records for the indoor watch. */
     const _enchantReplaceFoe = (targetEntity, mobileType) => {
       const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
       if (!f) return;
@@ -2506,7 +2750,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       };
       const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
       if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }
-      if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); }
+      if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); return; }
+      if (!f._encounter) return;   // the WATCH: no remove/spawn pair to route through
+      exteriorFoes.removeFoe(f);
+      exteriorFoes.spawnFoe(mobileType, feet).then(stamp).catch(() => {});
     };
     setDefaultEnchantCtx(createEnchantCtx({
       playerEntity,
@@ -2841,7 +3088,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
       // held overlay is DFU's timeScale 0 - no climb, no friction).
       const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:468's shape - a frozen player takes no stride
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement and the jump only (DecideHeightAction has no check).
       // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -2954,10 +3201,25 @@ export async function bootExterior(canvas, renderer, params, status) {
         // PlayerActivate nearest-hit order); G3: a guard corpse next
         // (loot pickup on the dungeon's S2 shape); doors otherwise.
         const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+        // QG1/ROAD-G G2: the quest-resource click arm runs FIRST and
+        // does not consume the activation (PlayerActivate.cs:325-339 -
+        // the Hit Checks region's opening arm, no return, skipped in
+        // Info mode). It had no place on this route while nothing could
+        // stand a quest foe in the street; CreateFoe's exterior arm
+        // above does, so `clicked foe` has a ray to be seen by.
+        if (getInteractionMode() !== 'info') {
+          const qf = pickQuestFoe(cam.pos, useFwd, exteriorFoePool(), collider);
+          if (qf) qf.questBehaviour.doClick();
+        }
         if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-          const lootKey = pickActivatable(cam.pos, useFwd, cityGuards.lootTargets(), collider);
+          // AUDIT 24 (wave 38)'s law, on this host: BOTH corpse pools go
+          // into ONE pick, because which body you open is
+          // PlayerActivate's nearest hit and not which pool the host
+          // happens to ask first.
+          const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
+          const lootKey = pickActivatable(cam.pos, useFwd, corpseTargets, collider);
           const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
-          if (lootKey) { cityGuards.takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
+          if (lootKey) { (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
           // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
           // because the door handed every LOOT call the classic window,
           // which cannot draw without INVE00I0. The enhanced pane runs
@@ -2974,7 +3236,7 @@ export async function bootExterior(canvas, renderer, params, status) {
               // makeInventoryWindow already passes, plus the two below -
               // which is precisely what its `extra` parameter is for.
               onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-              loot: { items: () => pile.items },
+              loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
             }));
           }
           else modes.tryEnter().catch((e) => console.error(e));
@@ -3245,21 +3507,65 @@ export async function bootExterior(canvas, renderer, params, status) {
     // AUDIT 39 (#64): the player's shaft LANDS. It used to fly, spend
     // its Arrow and tally Archery against a live watchman and inflict
     // nothing - the module's foe arm was gated on `m.enemy` and this
-    // host resolved no player arrow at all. cityGuards owns the damage
-    // door, so a killed watchman still runs the crime and the corpse.
-    // (No enemy arm here: this host mounts no bow-armed pool.)
+    // host resolved no player arrow at all. Each pool owns its own
+    // damage door, so a killed watchman still runs the crime and the
+    // corpse.
+    // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
+    // host mounts no bow-armed pool", which stopped being true with the
+    // encounter mount above, and an archer's shaft would have flown
+    // through the player for ever. world.js:6997-7048 is the shape.
     arrows.update(dt, {
-      foeTargets: cityGuards.guards.filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      // enemy arrows hunt only a WALKING player - the fly camera has no
+      // capsule to hit
+      playerFeet: walkMode ? player.pos : null,
+      onPlayerHit: (m) => {
+        const shooter = m.shooterFoe;
+        tallySkill(playerEntity, SKILLS.Dodging, 1);
+        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+          weapon: m.weapon,
+          onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+          say: (l) => townTalk.say(l),
+        }) : 0;
+        if (dmg > 0) {
+          hurtPlayer(playerEntity, dmg);
+          audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - volumeScale 1 on the player
+          // AUDIT 24 (wave 46): an arrow reaches the player through
+          // BowDamage -> ApplyDamageToPlayer -> SendDamageToPlayer, the
+          // same door as a blow, so it owes the flash and the cry too.
+          flashPlayerDamage();
+          playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+          surfacePlayer();
+        }
+        addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
+      },
+      // AR1: the impact learns the FOES - the shaft an archer looses at
+      // another foe (MT-ii's infighting selection) lands on BowDamage's
+      // non-player arm. Both pools are candidates; the shooter is
+      // excluded inside the flight module.
+      foeTargets: exteriorFoePool().filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
       onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
         playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
-        dealDamage: (f, d) => cityGuards.hurtGuard(f, d, player.pos, m.dir),   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
+        dealDamage: (f, d) => (cityGuards.guards.includes(f)
+          ? cityGuards.hurtGuard(f, d, player.pos, m.dir)   // AUDIT-39r: WeaponManager's KnockbackDirection, the missile's forward
+          : exteriorFoes.damageFoe(f, d, player.pos, m.dir)),
         audio, hitEffects, say: (l) => townTalk.say(l),
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
-        // AUDIT 58: no onAttackFromPlayer here. WeaponManager.cs:630
-        // runs for every shaft that connected, but this host mounts the
-        // WATCH pool alone and cityGuards' damage door carries no
-        // hostility pair to run (its siblings pass their encounter
-        // pool's). Recorded so the absence reads as a fact, not a miss.
+        // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
+        // AFTER the damage fork closes (:615), so a shaft that lost the
+        // roll still enrages what it hit and wakes the area. ROAD-G G1
+        // (review): the WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // as `dealDamage` above it does, instead of excluding the
+        // guards - a zero-damage shaft into a pacified watchman has to
+        // reach the same door the zero-damage SWING already reaches
+        // (cityGuards.js:960). DFU makes no pool distinction:
+        // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
+        // :660-688) calls WeaponDamage, so :630 runs for the shaft as
+        // for the swing.
+        onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
+          ? cityGuards.handleAttackFromPlayer(f, player.pos)
+          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     arrows.draw(renderer, texRemap);
@@ -3292,7 +3598,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         distanceToPlayer: Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]),
         sheathed: weaponRig.playerWeapon.sheathed,
         invisible: isInvisible(playerEntity),
-        enemiesNearby: () => areEnemiesNearby(cityGuards.guards),
+        enemiesNearby: () => areEnemiesNearby(exteriorFoePool()),
       }));
       _livePersons = live.map(({ person }) => ({ person, pos: person.pos }));   // T3b: the activation ray's targets
       const personBatches = [];
@@ -3310,9 +3616,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       // G1: the guards drive + draw on the same flats' axis; the sim
       // freezes with the population under the talk overlay.
+      const _senses = _foeSenses();   // ROAD-G G2: ONE context per frame for BOTH pools
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
-        walkMode ? player.pos : cam.pos, eye, _foeSenses());
+        walkMode ? player.pos : cam.pos, eye, _senses);
       personBatches.push(...guardBatches);
+      // ROAD-G G2: the encounter pool drives and draws on the same
+      // flats' axis, and freezes with the population under an overlay.
+      exteriorFoes.update(townTalk.overlayActive ? 0 : dt,
+        walkMode ? player.pos : cam.pos, eye, _senses);
+      personBatches.push(...exteriorFoes.batches());
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       // AUDIT 24 (wave 39): blood splashes ride the person axis too.
@@ -3398,6 +3710,14 @@ export async function bootExterior(canvas, renderer, params, status) {
         // double-counted, keyed by the display-name rot AUDIT 18
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+          // ROAD-G G2: encounter foes resolve AFTER the watch and
+          // BEFORE civilians - world.js:7106's order, and the order
+          // matters because a watchman standing over a quest foe must
+          // still be the one the swing finds.
+          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
+            surfacePlayer();
+          } else
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, eye, fwd, player.pos, _guardPool(),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);

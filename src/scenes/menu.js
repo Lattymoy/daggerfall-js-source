@@ -110,7 +110,8 @@ export async function runMenu(canvas, renderer, status) {
         // DFU's exit quits the application (DaggerfallStartWindow.cs:60).
         // A browser tab cannot close itself unless script opened it, so
         // the button stays drawn - it is painted into PICK03I0 - and
-        // says so instead of pretending. Ledger A.
+        // says so instead of pretending. Ledger A, the MAIN-MENU EXIT
+        // BUTTON row, by name.
         status('exit is not available in a browser');
         console.log('[menu] Exit: no application to quit in a browser (Ledger A)');
         return;
@@ -199,8 +200,9 @@ const CLASSIC_SAVE_FILES = new Set([
 
 /**
  * The browser's stand-in for SaveGames' Directory.GetDirectories walk
- * (Ledger A shape - a browser cannot read the Daggerfall folder on
- * its own): a picker overlay takes the classic Daggerfall folder (or
+ * (Ledger A, the MAIN-MENU EXIT BUTTON row, which carries this half
+ * too - a browser cannot read the Daggerfall folder on its own): a
+ * picker overlay takes the classic Daggerfall folder (or
  * the SAVE0-SAVE5 folders, or a drop) and returns
  * { saveIndex: { FILENAME: bytes } } keyed by the SAVE# path segment.
  * Resolves null on cancel. Nothing persists - like DFU, the "disk" is

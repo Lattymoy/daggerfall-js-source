@@ -197,9 +197,13 @@ test('MC1 spellbook: the icon panel click opens the picker in cast mode (the buy
   assert.match(s, /if \(hitPanel\(SPELLBOOK_RECTS\.spellIcon, vx, vy\)\) \{\n\s+\/\/ MC1: SpellIconPanel_OnMouseClick pushes the picker \(:954-958\)\n\s+this\._click\(\);\n\s+this\._openIconPicker\(\);/,
     'the panel click pushes the picker');
   assert.equal(/The icon picker is not built yet/.test(s), false, 'the placeholder note is gone');
-  // the modal routing reaches all four surfaces
+  // the modal routing reaches all FIVE surfaces (ROAD-G G4 added the release)
   for (const re of [/if \(this\.top === 'iconPicker'\) return this\._iconPicker\?\.click\(vx, vy\) \?\? true;/,
-    /if \(this\.top === 'iconPicker'\) \{ this\._iconPicker\?\.hover\(vx, vy\); return; \}/,
+    // ROAD-G G4: the hover forward carries the EVENT now (the held
+    // button the picker's scroller drags on), and the picker gained a
+    // fifth surface - the button-UP edge - which forwards the same way.
+    /if \(this\.top === 'iconPicker'\) \{ this\._iconPicker\?\.hover\(vx, vy, e\); return; \}/,
+    /if \(this\.top === 'iconPicker'\) \{ this\._iconPicker\?\.release\?\.\(\); return; \}/,
     /if \(this\.top === 'iconPicker'\) \{ this\._iconPicker\?\.wheel\(dir\); return; \}/,
     /if \(this\.top === 'iconPicker'\) \{ this\._iconPicker\?\.input\(code\); return; \}/]) {
     assert.match(s, re);

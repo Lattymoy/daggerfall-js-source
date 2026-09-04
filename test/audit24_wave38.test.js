@@ -293,12 +293,40 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ONE pick over BOTH pools: the nearest body wins, not the pool the
   // host happens to ask first.
-  const w = rd('src/scenes/world.js');
-  assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/);
-  assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/);
-  assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/);
-  assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
-    'the watch-only pick is gone');
+  // ROAD-G G2 (review): BOTH exterior hosts. The fixed-city host took
+  // this law verbatim when it mounted the encounter pool, and the pin
+  // read world.js alone - so `? exteriorFoes : cityGuards` could be
+  // reduced to `cityGuards` there with the whole suite green.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const w = rd(f);
+    assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/, f);
+    assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
+    assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/, f);
+    assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
+      `${f}: the watch-only pick is gone`);
+  }
+
+  // ...and the ROUTER itself, RUN off the fixed-city host's own line.
+  // Routing a `foeCorpse:` key into the watch pool is not a harmless
+  // miss: cityGuards.js:990-992 turns the key into
+  // `guards.find((g) => g.id === id)` over ids minted by
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:158-181)
+  // tests only `corpseDisabled` and `entity.items` - never death - so
+  // opening an encounter corpse would empty a LIVE watchman's pack.
+  const armSrc = rd('src/scenes/exterior.js').split('\n')
+    .find((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
+  assert.ok(armSrc, 'the fixed-city host no longer carries the corpse-key router');
+  const took = [];
+  const arm = new Function('lootKey', 'exteriorFoes', 'cityGuards', 'townTalk', 'surfacePlayer', armSrc);
+  const run = (k) => arm(k,
+    { takeLoot: (key) => took.push(['encounter', key]) },
+    { takeLoot: (key) => took.push(['watch', key]) },
+    { say: () => {} }, () => {});
+  run('foeCorpse:3');
+  run('guardCorpse:3');
+  run(null);
+  assert.deepEqual(took, [['encounter', 'foeCorpse:3'], ['watch', 'guardCorpse:3']],
+    'the KEY picks the pool - an encounter corpse never reaches a live watchman');
 
   // the target reach is the corpse one, everywhere it is built
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [2, 3, 4] });

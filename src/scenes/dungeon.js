@@ -211,6 +211,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
   addEventListener('keydown', (e) => {
+    // ROAD-G G3: this host already filled the ring first, which is
+    // InputManager.PollInput's own order (:1795-1809) and now load-
+    // bearing - the Set IS the ring ModifierOnlyHeld scans (:1632-1639,
+    // through ui/input.js's latch). The other three hosts were
+    // moved up to match. Both of this host's keydown listeners run
+    // after it, so routeKey below sees this press placed.
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
     // R1: the four modes switch here too - DFU's currentMode is global
@@ -258,7 +264,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) return;   // G5: the middle button too
       return;   // a window is up: never grab the pointer behind it
     }
     // U45: the large HUD's eleven panels, BEFORE the relock - a click

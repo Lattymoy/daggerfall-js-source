@@ -111,9 +111,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:229-230) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:306-307) - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:152) owns the hyphen. The bare
+    // character branch (ui/input.js:229) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -188,7 +188,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:73-74) and the raw e.code a
+ *  the overlayAction names (ui/input.js:243-244) and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',

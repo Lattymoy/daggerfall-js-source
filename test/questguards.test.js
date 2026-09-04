@@ -366,14 +366,31 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   const dc = readSrc('src/scenes/dungeonContext.js');
   assert.match(dc, /onNewReadySpell: \(sp\) => opts\.questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/,
     'the dungeon host\'s own engine raises into the same machine');
+  // ROAD-G G2 (review): THE THIRD ENGINE. `scenes/exterior.js` owns a
+  // cast engine of its own - and worldModes takes THAT instance for the
+  // interior mode - so while it passed neither key every `cast X spell
+  // do` / `cast X effect do` on the fixed-city route, shops included,
+  // was deaf: hostMagic.js is the only raiser and these two keys the
+  // only route into the latches.
+  const ex = readSrc('src/scenes/exterior.js');
+  assert.match(ex, /onNewReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\),/,
+    'the fixed-city host\'s own engine raises NEW into the same machine');
+  assert.match(ex, /onCastReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyCastReadySpell\?\.\(sp\),/,
+    '...and CAST, on the release');
 });
 
 test('QG1 seams: the two world reads stand on questWorld, byte-folded like MakeClassicKey', () => {
-  const world = readSrc('src/scenes/world.js');
-  assert.match(world, /getClassicSpellEffects: \(spellID\) => spellRecordOfIndex\(spellID\)\?\.effects \?\? null/,
-    'the G4 SPELLS.STD registry answers the record');
-  assert.match(world, /\(\(e\.type \?\? 0\) & 0xff\) === \(\(effect\.type \?\? 0\) & 0xff\)/,
-    'HasMatchForClassicEffect folds through the byte cast, both sides');
+  // ROAD-G G2 (review): both hosts that mount a machine over a real
+  // city answer them. Absent, CastSpellDo self-completes at PARSE
+  // (actions.js:2742/:2749) and the task can never fire, whatever the
+  // ready-spell doors raise.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const world = readSrc(f);
+    assert.match(world, /getClassicSpellEffects: \(spellID\) => spellRecordOfIndex\(spellID\)\?\.effects \?\? null/,
+      `${f}: the G4 SPELLS.STD registry answers the record`);
+    assert.match(world, /\(\(e\.type \?\? 0\) & 0xff\) === \(\(effect\.type \?\? 0\) & 0xff\)/,
+      `${f}: HasMatchForClassicEffect folds through the byte cast, both sides`);
+  }
 });
 
 test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not consume', () => {
@@ -389,6 +406,12 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
     // `clicked foe` fired in a dungeon and in the street and nowhere
     // indoors. PlayerActivate.cs:325-338 has no scene gate.
     ['src/scenes/worldModes.js', /pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\)/],
+    // ROAD-G G2 (review): THE FOURTH RAY. This list read as the law and
+    // was only the shape - the fixed-city host had no quest foe to click
+    // while nothing could stand one in its street, and CreateFoe's
+    // outdoor arm (PlaceFoeExteriorLocation) gave it one. Deleting the
+    // arm from that host left the whole table green.
+    ['src/scenes/exterior.js', /pickQuestFoe\(cam\.pos, useFwd, exteriorFoePool\(\), collider\)/],
   ]) {
     const src = readSrc(file);
     assert.match(src, poolExpr, `${file} picks over its live pool`);
@@ -411,6 +434,9 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
   const world = readSrc('src/scenes/world.js');
   assert.ok(world.indexOf('qf.questBehaviour.doClick()') < world.indexOf('townTalk.tryActivate(cam.pos'),
     'PlayerActivate.cs:325-339 - the quest-resource arm opens the ladder and falls through');
+  const ext = readSrc('src/scenes/exterior.js');
+  assert.ok(ext.indexOf('qf.questBehaviour.doClick()') < ext.indexOf('townTalk.tryActivate(cam.pos'),
+    'the fixed-city host opens the ladder and falls through too');
 });
 
 test('QG1 seams: the PromptMulti box contract - click-only, no cancel, records by value', () => {

@@ -85,7 +85,7 @@ import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the b
 import { preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { createInventoryWindow } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
-import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e, mounted here at U26; G5: the pile's DaggerfallLoot identity
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
@@ -1159,7 +1159,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     });
   }
 
-  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false } = {}) {
+  function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
     // transformed lycanthrope opens NO inventory, loot included; the
     // caller assigns the null and no overlay mounts.
@@ -1202,12 +1202,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // U44: no reveal seam - this context has no region index to walk
       revealMap: null,
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
-      loot: lootItems ? { items: () => lootItems } : undefined,
+      // G5: a DROPPED pile hands DaggerfallLoot's whole identity
+      // (playerOwned + TextureArchive/TextureRecord + position); an RDB
+      // treasure pile or a corpse hands its FLAT alone, which is
+      // UpdateRemoteTargetIcon's second arm (:880-884) and is not
+      // player-owned, so CanChangeDropIcon refuses it.
+      loot: lootItems ? { items: () => lootItems, ...(lootHooks ?? {}) } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the
       // first frame has nowhere to land, and DFU's own container mint
       // is at the player's position - so no feet, no pile, loudly.
-      onDrop: (items) => (lastPlayerFeet
-        ? droppedLoot.dropPile(items, [...lastPlayerFeet])
+      // G5: the chosen drop icon and, when a loot target was replaced,
+      // that container's own x/z (:698-714).
+      onDrop: (items, icon = null, at = null) => (lastPlayerFeet
+        ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
       onClose: () => { onEmptied?.(); droppedLoot.releaseEmptied(); surfacePlayer(); },
     });
@@ -1665,7 +1672,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:835,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:880,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2134,7 +2141,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:365 against :391; worldModes.js:951 against :959).
+    // (dungeon.js:713 against :744; worldModes.js:5046 against :5055).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2566,8 +2573,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6403,
-              // exterior.js:2431 and worldModes.js:4627 already ran;
+              // playerArrowHitFoe is the one copy world.js:6430,
+              // exterior.js:3547 and worldModes.js:4627 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2755,8 +2762,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
       // DFU's save (LootContainerData_v1) - without them a boot load
       // vanished drops and a backward load duplicated them.
+      // G5: textureArchive rides beside textureRecord - the PAIR is
+      // what LootContainerData_v1 stores, and a cycled drop icon is
+      // lost without it.
       droppedLoot: droppedLoot._piles.map((p) => ({
-        pos: [...p.pos], record: p.record, items: p.items.map((it) => ({ ...it })),
+        pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
       actions: actions.collectSaveData(),
     };
@@ -4504,13 +4514,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  clickable since U8b. Takes NATIVE (320x200) coords like
      *  townTalk's seam does, and reports whether it consumed the
      *  click so the caller can withhold the pointer lock. */
-    overlayClick(vx, vy, right = false) {
+    overlayClick(vx, vy, right = false, middle = false) {
       // U26: a native window exposes `click`, the keyed ones
       // `clickNative`. Both route here. I4: the right-button flag
-      // rides along for the controls grid's remove gesture.
+      // rides along for the controls grid's remove gesture, G5's middle
+      // flag for the drop-icon panel's third handler (:2104-2113).
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
-      else activeOverlay.click(vx, vy, right);
+      else activeOverlay.click(vx, vy, right, middle);
       // S40: optional. RestWindow grew a `click` and clears this slot
       // from inside it, so this seam reaches a null now - and it did
       // not before, which is why the unguarded read stood.
@@ -4734,7 +4745,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** The TEXT.RSC rows the exit prompt reads (record 38). */
     rscLines,
     // PX15b: THE DIAL - the dungeon ctx carries all four doors (the
-    // PX15 flag's 'no native inventory' cited input.js:84's HISTORY;
+    // PX15 flag's 'no native inventory' cited a ui/input.js header note that no longer stands;
     // toggleInventory above is the door it lacked then and has now).
     toggleDial() {
       // The host object is an anonymous returned literal, so the doors
@@ -4810,10 +4821,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const i = Number(iStr);
       let source = null;
       let onEmptied = null;
+      let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind
       if (kind === 'loot') {
         const p = lootPiles[i];
         if (!p || !p.batch) return 0;
         source = p.items;
+        // The RDB treasure flat IS the remote panel's picture
+        // (:880-884) - archive 216 with the marker's own record - but
+        // it is not playerOwned, so its icon cannot be cycled.
+        lootHooks = { textureArchive: RANDOM_TREASURE_ARCHIVE, textureRecord: p.record };
         // The RDB pile's flat leaves when the window CLOSES on an
         // emptied container, not the instant the last item moves -
         // the same law droppedLoot.releaseEmptied ports.
@@ -4828,12 +4844,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const f = foes[i];
         if (!f?.dead) return 0;
         source = f.entity.items;
+        // CreateLootableCorpseMarker hands ReverseCorpseTexture's
+        // archive/record straight to CreateLootContainer
+        // (GameObjectHelper.cs:812-828), which writes them onto the
+        // container (:697-698) - so a corpse marker ALWAYS has
+        // TextureArchive > 0 and UpdateRemoteTargetIcon draws the
+        // body's OWN world flat (:880-884), never the Ground picture.
+        // The archive is the same struct-copy-then-row read spawnCorpse
+        // takes (EnemyDeath.cs:86-92), and the pair arrives without
+        // playerOwned because :833 sets it false - so CanChangeDropIcon
+        // refuses to cycle a body's icon.
+        const ct = f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture;
+        if (ct) lootHooks = { textureArchive: ct.archive, textureRecord: ct.record };
       } else if (kind.startsWith('droppedLoot')) {
-        source = droppedLoot.pileFor(key)?.items ?? null;
+        const p = droppedLoot.pileFor(key);
+        source = p?.items ?? null;
+        if (p) lootHooks = droppedLootHooks(p);   // G5: playerOwned - the icon cycles
       }
       if (!source) return 0;
       if (activeOverlay) return source.length;
-      activeOverlay = openInventory(source, onEmptied);
+      activeOverlay = openInventory(source, onEmptied, { lootHooks });
       return source.length;
     },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped

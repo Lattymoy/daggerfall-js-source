@@ -94,7 +94,15 @@ test('ROAD-Ar R9: a SINGLE-bound combo suppresses no plain key - DFU\'s own inve
   // which is the state DFU's comment is actually describing.
   setBinding(b, 'F6', 'Inventory', false);
   assert.equal(isPairedCode(b, 'ShiftLeft+Space'), true);
-  assert.equal(held(new Set(['ShiftLeft', 'Space']), 'Jump'), false, 'NOW the jump is ignored');
+  // ROAD-GR: the latch is STORED (:1695-1708) and SetupActionKeyDict
+  // re-seeds it false on every binding change (:1354-1358), so the
+  // suppression bites from the next frame Shift stands CLEAN - it is
+  // not a function of this Set. Poll Shift alone, then add the space.
+  const keys = new Set(['ShiftLeft']);
+  assert.equal(held(keys, 'Jump'), false, 'space is not down yet - and this frame raises the flag');
+  keys.add('Space');
+  assert.equal(held(keys, 'Jump'), false, 'NOW the jump is ignored');
+  assert.equal(held(keys, 'Inventory'), true, 'and the window opens instead');
 });
 
 test('ROAD-Ar R9: MapSecondaryBindings\' else arm - the detach keeps the key and drops its partner', () => {
@@ -215,19 +223,43 @@ test('A8: the runtime read - a combo walks, and its plain half does not', () => 
   assert.equal(held(new Set(['KeyK']), 'Crouch'), true);
   assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), true,
     'Shift+K is bound in the PRIMARY dict only - it pairs nothing, so K still crouches');
-  // double-bind Jump and the pair appears - NOW the suppression bites
+  // double-bind Jump and the pair appears - NOW the suppression bites,
+  // from the next frame the modifier stands clean. ROAD-GR: the flag is
+  // STORED (:1695-1708) and a binding change re-seeds it false
+  // (:1354-1358), so these reads are FRAMES in order, not bare Sets.
   setBinding(b, 'KeyJ', 'Jump', false);
   assert.equal(isPairedCode(b, 'ShiftLeft+KeyK'), true);
-  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), false,
-    'the modifier is down and Shift+K is PAIRED - K alone must not fire');
+  const ring = new Set(['ShiftLeft']);
+  assert.equal(held(ring, 'Jump'), false, 'K is not down - and this frame raises Shift\'s flag');
+  ring.add('KeyK');
+  assert.equal(held(ring, 'Crouch'), false,
+    'the modifier latched and Shift+K is PAIRED - K alone must not fire');
   clearBinding(b, 'Jump', false);
-  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), true, 'and back again');
-  assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Jump'), true, 'the combo fires throughout');
-  // ModifierOnlyHeld's second clause: another combo modifier down kills it
+  assert.equal(held(ring, 'Crouch'), true, 'and back again');
+  assert.equal(held(ring, 'Jump'), true, 'the combo fires throughout');
+  // ModifierOnlyHeld's second clause: another combo modifier held kills
+  // the RAISE - but ROAD-G G3, as ROAD-GR corrected it, gave that clause
+  // the shape it has in DFU. modifierHeldFirstDict[Shift] is a LATCH
+  // (:1695-1708): it goes true on a frame Shift is held with nothing
+  // disqualifying anywhere in the ring, stays true until Shift is
+  // RELEASED - so a Ctrl pressed AFTERWARDS cannot lower it - and stays
+  // FALSE while that Ctrl is held, because :1699 has no else. This pin
+  // used to assert the port's orderless read, false whichever way the
+  // two went down; the answer is the HISTORY's, not the Set's.
   setBinding(b, comboCode('ControlLeft', 'KeyM'), 'AutoMap');
-  assert.equal(held(new Set(['ShiftLeft', 'ControlLeft', 'KeyK']), 'Jump'), false);
+  assert.equal(held(new Set(['ControlLeft', 'ShiftLeft', 'KeyK']), 'Jump'), false,
+    'Ctrl is in the ring, so no frame came back clean - :1636-1637 disqualifies it');
+  const later = new Set(['ShiftLeft']);
+  assert.equal(held(later, 'Jump'), false, 'the clean frame that raises the flag');
+  later.add('ControlLeft');
+  assert.equal(held(later, 'Jump'), false, 'still no K down');
+  later.add('KeyK');
+  assert.equal(held(later, 'Jump'), true,
+    'Shift latched alone; the Ctrl pressed afterwards does not lower the flag (:1704-1707 is the only lowering)');
   // an unrelated key held alongside changes nothing
-  assert.equal(held(new Set(['ShiftLeft', 'KeyK', 'KeyW']), 'Jump'), true);
+  later.delete('ControlLeft');
+  later.add('KeyW');
+  assert.equal(held(later, 'Jump'), true);
   // a store with NO combos answers exactly as it always did
   const plain = freshStore();
   setBindings(plain);

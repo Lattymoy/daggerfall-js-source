@@ -2913,7 +2913,7 @@ export function createFpArm() {
      *
      * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
      * composite - MW-D23's law): this pass composites through the
-     * WORLD's lens, which is mirrorProjectionX (dungeon.js:488 et al.),
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:494 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
      * yaw 0 (motor.js:573) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with

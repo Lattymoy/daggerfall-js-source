@@ -83,10 +83,13 @@ test('MENU T4: the widget law is total, and a blocked row never shows a stored v
 });
 
 test('MENU T5: a slider never offers travel its consumer ignores', () => {
-  // The range-equals-clamp law. MouseLookSensitivity runs to 4.0 here,
-  // not DFU's 16.0, because lookSettings.js clamps at 4.0 - a slider
-  // whose last three quarters did nothing would be the same lie as an
-  // inoperable control.
+  // The range-equals-clamp law: a slider whose last three quarters did
+  // nothing would be the same lie as an inoperable control. It used to
+  // be stated over MouseLookSensitivity, which ran to 4.0 here against
+  // DFU's 16.0 because lookSettings.js clamped there; ROAD-G G6 built
+  // DFU's own sensitivity slider and widened the clamp instead, so
+  // that row is DFU's range now and this pin reads the agreement
+  // rather than a narrowing.
   for (const [key, law] of Object.entries(NUMBER_LAW)) {
     assert.ok(law.min < law.max, `${key}: empty range`);
     assert.ok(law.step > 0 && law.coarse >= law.step, `${key}: bad step`);

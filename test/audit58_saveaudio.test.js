@@ -156,8 +156,13 @@ test('AUDIT 58: the blow that lands ON the player is PlayerFootsteps\' 1, not En
   // every player-taking-hit site, so every blow rang 10% too loud.
   assert.equal(ENEMY_HIT_VOLUME, 1.1, 'EnemySounds.cs:125');
   assert.equal(PLAYER_HIT_VOLUME, 1, 'PlayerFootsteps.cs:334, :342');
+  // ROAD-G G2: the fixed-city host has THREE sites now, the same three
+  // the streaming host has - the watch's damage door, the encounter
+  // pool's, and the enemy ARROW's impact (BowDamage:140-141 routes an
+  // arrow through the same ApplyDamageToPlayer, so it owes the same
+  // volume). It had one because it had one pool and no enemy archer.
   const players = [
-    ['src/scenes/world.js', 3], ['src/scenes/exterior.js', 1],
+    ['src/scenes/world.js', 3], ['src/scenes/exterior.js', 3],
     ['src/scenes/worldModes.js', 3], ['src/scenes/dungeonContext.js', 2],
   ];
   for (const [f, n] of players) {

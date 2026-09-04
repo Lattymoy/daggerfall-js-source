@@ -90,8 +90,8 @@ export function buildArmsFor(entity) {
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:1945), townTalk.say
- *                     (exterior.js:1002, world.js:1726) and
- *                     worldModes' own interior sink (worldModes.js:346,
+ *                     (exterior.js:1102, world.js:1726) and
+ *                     worldModes' own interior sink (worldModes.js:347,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
