@@ -407,9 +407,9 @@ export class Quest {
 
   // ---- the save envelope (Q4-iv; Quest.cs:899-1046) ----
 
-  /** GetSaveData: the C# field set. The port's clock is SECONDS
-   *  (Ledger A) where C# carries DaggerfallDateTime objects; the
-   *  smaller-dungeons setting and the compile version have no port
+  /** GetSaveData: the C# field set. The port's clock is SECONDS (THE
+   *  PORT'S CLOCK IS A SCALAR, Ledger A) where C# carries
+   *  DaggerfallDateTime objects; the smaller-dungeons setting and the compile version have no port
    *  counterparts and serialize at their defaults (recorded).
    *  Questors flatten the Map to {name, symbol, displayName} rows -
    *  the Dictionary<string, QuestorData> shape in plain data. */

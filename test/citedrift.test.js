@@ -31,7 +31,7 @@
 // ---------------------------------------------------------------------------
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -167,6 +167,58 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
       assert.equal(/Port-Ledger\.md:\d+/.test(read(f)), false,
         `${f} cites the Ledger by line number, which is what rots`);
     }
+  }
+
+  // ROAD-G G7 (records sweep): THE SAME SHAPE ONE POPULATION WIDER. The
+  // gate below scanned only files that SHOUT the departure token, so the
+  // other half of AUDIT 21 F7's finding - a `src/` site citing "Ledger A"
+  // where no row on that page names the file - went on recurring
+  // unwatched: seventeen files were in that state at HEAD. Three of them
+  // were genuinely owed a row and it is written; the rest resolved
+  // against a row that already existed (the engine-PRNG rule's live
+  // roster, the dungeon-seed bullet, the main-menu EXIT row) or had a
+  // comment that was simply WRONG - `ui/transportWindow.js` claimed the
+  // port's own letters where DFU binds all five buttons out of
+  // `DialogShortcuts.txt`, and ROAD-G G7 wired them instead.
+  const G7 = [
+    [/THE `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD/, ['src/player/moveScanner.js']],
+    [/THE MERCHANT SERVICE POPUP'S ACCELERATORS ARE THE PORT'S OWN/,
+      ['src/ui/merchantServiceWindow.js']],
+    [/THE PORT'S CLOCK IS A SCALAR/,
+      ['src/systems/repairService.js', 'src/systems/quest/quest.js']],
+  ];
+  for (const [title, files] of G7) {
+    const hit = rows.filter((r) => title.test(r.s) && !struck(r.s));
+    assert.equal(hit.length, 1, `section A carries exactly one unstruck row for ${title}`);
+    for (const f of files) {
+      assert.ok(hit[0].s.includes(f), `the ${title} row does not name ${f}`);
+      const flat = read(f).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+      assert.match(flat, new RegExp(title.source), `${f} does not cite its Ledger A row by name`);
+      assert.equal(/Port-Ledger\.md:\d+/.test(read(f)), false,
+        `${f} cites the Ledger by line number, which is what rots`);
+    }
+  }
+  // ...and the WIDENING itself, pinned as text: the population is
+  // invisible from outside the gate, so narrowing it back to the shout
+  // has to go red here rather than at the next unrowed cite.
+  assert.match(read('test/doctrine.test.js'), /&& !\/Ledger A\/\.test\(text\)\) continue;/,
+    'the doctrine gate no longer scans files that CITE Ledger A');
+  // The engine-PRNG rule keeps a ROSTER because it is a class rule, not
+  // a path row - that is the one line a new UnityEngine.Random site has
+  // to touch, and it is what the widened gate resolves them against.
+  const prng = rows.find((r) => /THE ENGINE-PRNG RULE/.test(r.s));
+  assert.ok(prng, 'section A has no engine-PRNG rule row');
+  for (const f of ['src/player/cameraRecoiler.js', 'src/systems/riding.js',
+    'src/systems/quest/clock.js', 'src/systems/quest/foe.js', 'src/systems/quest/message.js',
+    'src/systems/quest/parser.js', 'src/systems/quest/person.js', 'src/systems/quest/quest.js',
+    'src/systems/quest/questLists.js']) {
+    assert.ok(prng.s.includes(f), `the engine-PRNG roster does not name ${f}`);
+  }
+  // and the dungeon-seed bullet, which is the same shape one row up.
+  const seed = lines(LEDGER).find((l) => /THE DUNGEON SEED IS THE LocationId/.test(l));
+  assert.ok(seed, 'the dungeon-seed approval lost its name');
+  for (const f of ['src/characters/dungeonEnemies.js', 'src/world/dungeonTextures.js']) {
+    assert.ok(seed.includes(f), `the dungeon-seed bullet does not name ${f}`);
   }
 
   // ...and the AUDIT 58 gate itself, pinned as TEXT for the same reason
@@ -387,6 +439,7 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 
 // ═══ CD4: the in-source citations the wave invalidated resolve again ═══
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
+const EX = 'src/scenes/exterior.js';
 const SOURCE_CITES = [
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
@@ -394,6 +447,93 @@ const SOURCE_CITES = [
     'src/scenes/townTalk.js', /native: !!overlay\?\.conversation/],
   ['tools/worldWhereIsProbe.mjs', /townTalk's live slot \(townTalk\.js:(\d+)\)/,
     'src/scenes/townTalk.js', /overlay: !!overlay/],
+
+  // ═══ ROAD-G G7 (2026-09-04): THE `exterior.js` SWEEP ═══
+  //
+  // Thirty-six `exterior.js:NNN` cites stood across `src/` comments,
+  // bible pages and test headers, and they were stale BEFORE Wave F -
+  // the fixed-city host has taken a slice in nearly every wave since
+  // the numbers were written, so a cite that was exact at U44 was six
+  // hundred lines out by HEAD. `playerEntity.js`'s was never right at
+  // all: the commit that introduced it landed on the town-talk topics
+  // table, not on a chargen line. Each is re-resolved BY CONTENT here
+  // and pinned, so the class cannot go quiet again - a wave that moves
+  // the line goes red at the citation instead of at a reader.
+  ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
+    EX, /createChargenFlow\(fetchBytes\)\.then/],
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:1726\)/,
+    EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
+  ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:4627/,
+    EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
+  ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1220/, EX, /^ {4}onLevelUp: \(\) => \{$/],
+  ['src/systems/advancement.js', /exterior\.js:745\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
+  ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:957-959/,
+    EX, /from '\.\.\/systems\/chargenSession\.js'/],
+  ['src/systems/equip.js', /world\.js:1261, exterior\.js:(\d+)\)/,
+    EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
+  ['src/systems/loot.js', /world\.js:1273 and exterior\.js:(\d+)/,
+    EX, /loadMagicRegistries\(fetchBytes\)\.then/],
+  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:257/,
+    EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
+  ['src/systems/startingGear.js', /world\.js:1261 and exterior\.js:(\d+) seed it/,
+    EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
+  ['src/ui/pauseWindow.js', /world\.js:4105, exterior\.js:(\d+),/,
+    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+  ['src/ui/restWindow.js', /world\.js:4085, exterior\.js:(\d+),/,
+    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:626/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:1843/,
+    EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:1843/,
+    EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-1781/,
+    EX, /addEventListener\('keydown', \(e\) => \{/],
+  ['test/probehygiene.test.js', /exterior\.js:(\d+)-973 and world\.js's copy/,
+    EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2030/,
+    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+  ['test/roade_up_seam.test.js', /exterior\.js:2022\/:(\d+)/,
+    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+  ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:627`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-1047\)/,
+    EX, /addEventListener\('keydown', \(e\) => \{/],
+  ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:675`/, EX, /^ {6}fieldOfView\(\),$/],
+  // ...and the Ledger's own, which carry the same rot: a struck row's
+  // "Original finding" is a dated snapshot, so where its subject still
+  // stands the cite is re-resolved and where the fix DELETED the
+  // subject the number is gone and the seam is named instead.
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1145`/,
+    EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3296`, `exterior\.js:(\d+)`/,
+    EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:507`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
+    EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
+  ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-1001` build `createDetectFeed`/,
+    EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:820`, `exterior\.js:(\d+)`/,
+    EX, /const droppedLoot = createDroppedLoot\(/],
+  ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-807`/,
+    EX, /const townTalk = createTownTalk\(\{/],
+  ['bible/01-Overview/Port-Ledger.md', /at HEAD `exterior\.js:(\d+)` answers/,
+    EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
+  ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
+    EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-2784` return on modal frames/,
+    EX, /if \(modes\.frame\(dt, now\)\) \{/],
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:90-114`/,
+    EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
+];
+
+// The DELETED subjects, which no longer have a line to name: the
+// sweep's other half is that a cite whose code the row's own fix
+// removed says so, rather than carrying a number that lands on a
+// stranger. Pinned as the absence.
+const NO_LINE_LEFT = [
+  [/`world\.js:3543-3546` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 
 test('CD4: every citation Wave E moved names the line it means', () => {
@@ -405,6 +545,47 @@ test('CD4: every citation Wave E moved names the line it means', () => {
     if (!want.test(line)) bad.push(`${from} -> ${target}:${m[1]} is ${JSON.stringify(line.slice(0, 60))}`);
   }
   assert.deepEqual(bad, [], 'a comment cites a line that is no longer what it claims');
+
+  // ROAD-G G7: THE PROBE FLEET, which carries ONE cite fourteen times.
+  // Thirteen probe headers quote the same seam - townTalk.keydown first
+  // in the exterior host's keydown ladder, the trap T2 was written about
+  // - and copying a stale number thirteen times is how a wrong line
+  // becomes folklore. They are read as a SET here: one range, resolved
+  // at both ends, so the next reader who moves the ladder fixes all
+  // fourteen at once or goes red.
+  const probeSrc = readdirSync(join(root, 'tools')).filter((f) => f.endsWith('.mjs'))
+    .map((f) => ['tools/' + f, read('tools/' + f)]);
+  const exLines = lines(EX);
+  const ranged = new Set();
+  for (const [f, text] of probeSrc) {
+    for (const m of text.matchAll(/exterior\.js:(\d+)-(\d+)/g)) ranged.add(`${m[1]}-${m[2]}|${f}`);
+  }
+  assert.ok(ranged.size >= 13, `only ${ranged.size} probes cite the keydown ladder - the fleet's header moved`);
+  const spans = new Set([...ranged].map((r) => r.split('|')[0]));
+  assert.equal(spans.size, 1, `the fleet quotes ${spans.size} different ladder ranges: ${[...spans].join(', ')}`);
+  const [lo, hi] = [...spans][0].split('-').map(Number);
+  assert.match(exLines[lo - 1] ?? '', /addEventListener\('keydown', \(e\) => \{/,
+    'the probes\' ladder range no longer starts at the keydown listener');
+  assert.match(exLines[hi - 1] ?? '', /if \(townTalk\.keydown\(e\)\) return;/,
+    'the probes\' ladder range no longer ends at the swallow');
+  // ...and the one single-line cite in the fleet, the shot-ready flag
+  // bootProbe refuses to wait on outside shot mode.
+  const boot = /__shotReady` is set only in shot mode \(exterior\.js:(\d+)/.exec(read('tools/bootProbe.mjs'));
+  assert.ok(boot, 'bootProbe no longer cites the shot-ready flag');
+  assert.match(exLines[Number(boot[1]) - 1] ?? '', /window\.__shotReady = true;/,
+    'bootProbe\'s shot-ready cite names another line');
+
+  // ROAD-G G7: the two Ledger clauses whose subject the fix DELETED
+  // name the seam instead of a line, and the deleted code is really
+  // gone - a "the number is retired" note over live code is the same
+  // lie one step further on.
+  const ledgerText = read(LEDGER);
+  const ex = read(EX);
+  for (const [claim, absent] of NO_LINE_LEFT) {
+    assert.match(ledgerText, claim, 'a Ledger clause stopped naming its deleted seam');
+    assert.equal(ex.includes(absent), false,
+      `the Ledger says this exterior.js code is deleted and it is still there: ${absent}`);
+  }
 
   // The Ledger row that shipped the two ported probes says they are
   // "verified against the SEAMS they read - each named with its live
@@ -463,6 +644,15 @@ const STATUS_SOURCE_CITES = [
     /drawNearDeathFlicker\(renderer, canvas, cur/,
     /if \(isEnhanced\(\) && typeof document/,
     /detected: detected \?\? null,/,
+  ]],
+  // ROAD-G G7: the ONE `src/scenes/exterior.js` row on this page that is
+  // still OPEN. Its identifier was the triage's `:1033`, three whole
+  // slices out of date by HEAD - TP2 narrowed the refusal and moved it,
+  // and nothing re-resolved the row that names it. The STRUCK rows keep
+  // the measurement's numbers, which the page now says outright; an
+  // unstruck row is a live claim and has to name a live line.
+  ['- **`src/scenes/exterior.js:', /exterior\.js:(\d+)/g, 'src/scenes/exterior.js', [
+    /TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE/,
   ]],
 ];
 

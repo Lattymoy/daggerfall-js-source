@@ -56,7 +56,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:789, world.js:1389,
-                        exterior.js:875. It is the only window TWO
+                        exterior.js:1663. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
@@ -9097,3 +9097,54 @@ because every one of these settings is read at its point of use.
 **Pins:** `test/mousecontrols.test.js`, 13 tests, 29 mutations, 29
 dead. `test/ledger.test.js` holds the Ledger row from both sides - the
 struck clause and the module it names must both still be there.
+
+## ROAD-G G7 - THE TWO WINDOWS D1 LEFT BEHIND (2026-09-04)
+
+D1 corrected an invented-accelerator claim across three windows -
+`tavernWindow`, `covenWindow`, `guildServiceWindow` - on the finding
+that `DaggerfallShortcut` does not read a player keybind file at all.
+It reads a TEXT DATABASE, `StreamingAssets/Text/DialogShortcuts.txt`
+(`DaggerfallShortcut.cs:307-326`), which ROAD-A8 had already ported
+whole to `systems/dialogShortcuts.js`. The three D1 windows were the
+ones its sweep found; the records lane found two more carrying the same
+sentence, and they turned out to be OPPOSITE answers.
+
+**`ui/transportWindow.js` - DFU binds all five, so the port does too.**
+`DaggerfallTransportWindow.cs:100-137` hangs `TransportFoot`,
+`TransportHorse`, `TransportCart`, `TransportShip` and `TransportExit`
+on its buttons. The port had typed `KeyF`/`KeyH`/`KeyC`/`KeyS` as
+literals with the comment "the port's own letters (Ledger A - DFU reads
+its keybind table)" - right by accident for the four rows and WRONG at
+the exit, which had no letter at all where DFU binds one, so `E` - the
+letter every other native window in this port answers - did nothing
+here. The ladder is `firstHotkey(TRANSPORT_BUTTONS, code, e)` now, in
+DFU's own button ADD order, and the departure is gone rather than
+recorded.
+
+One law worth naming, because it looks like a port convenience and is
+not: **a disabled row is given no Hotkey at all.** Each ownership test's
+`else` arm sets only the disabled sub-texture (`:105-121`) and never
+assigns the binding, so in DFU the letter for a transport you do not own
+is DEAD, not refused. That is why the enable test rides the BUTTON in
+the switch rather than the `_pick` it calls - moving it onto the pick
+would answer the same for a click and differently for a key.
+
+**`ui/merchantServiceWindow.js` - DFU binds NOTHING, so the letters
+really are ours.** `DaggerfallMerchantServicePopupWindow` adds talk,
+service and exit with a click handler alone (`:88-103`); unlike its
+guild sibling, which hangs `GuildsTalk`,
+`Services.GetServiceShortcutButton(service)` and `GuildsExit`
+(`DaggerfallGuildServicePopupWindow.cs:128-151`), it reads nothing out
+of the table. So this popup is MOUSE-ONLY in DFU, the port's `T`/`S`/`E`
+are an addition with no original to be wrong against, and the honest
+answer was a Port-Ledger section A row rather than a wiring. It has one,
+and the site cites it by name. The keyboard stays: every other native
+window here answers it, and one silent exception reads as a broken
+window rather than as fidelity.
+
+Pinned in `test/tr3_transportwindow.test.js` (three new tests, each
+reading the letter OUT OF `dialogShortcuts` so a change to the vendored
+data moves the pin with the game; 4 mutants, 4 killed) and, for the
+merchant half, by `test/ui2_merchantpopup.test.js`'s existing
+accelerator test plus `test/citedrift.test.js` CD1, which holds the row
+and the by-name citation together.

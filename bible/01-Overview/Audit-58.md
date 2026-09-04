@@ -172,7 +172,7 @@ three (`src/scenes/worldModes.js:750-780`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:38` now, and the pool it answers with is the
+`src/scenes/exterior.js:40` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
 and destroyed the session - against `src/ui/input.js:369-383`'s own law,

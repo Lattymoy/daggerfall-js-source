@@ -21,7 +21,7 @@
 // pitch DOWN in Unity's frame, y is yaw right, both degrees.
 //
 // Random.insideUnitCircle.normalized is Unity's stream; `rolls` stands
-// in (Ledger A). VitalsChangeDetector's HealthLost/HealthLostPercent
+// in - THE ENGINE-PRNG RULE, Ledger A, by name. VitalsChangeDetector's HealthLost/HealthLostPercent
 // are hudVitals' lastHealthLost/lastHealthLostPercent, the values the
 // HUD's own detector computed last frame - DFU's two MonoBehaviours
 // have no fixed Update order either.

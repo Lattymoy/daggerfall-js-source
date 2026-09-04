@@ -9,7 +9,8 @@
 //     classic consumer is AcrobatMotor.ApplyGravity's anti-bump term
 //     (:190-194), which motor.js spends. (RappelMotor's
 //     InitialTooCloseToGround :105-117 reads it too, but rappel is
-//     AdvancedClimbing - Ledger A, off-road.)
+//     AdvancedClimbing - THE `AdvancedClimbing` SCAFFOLDING IS
+//     OFF-ROAD, Ledger A, by name.)
 //   FindHeadHit / HeadHitDistance / HeadRaycastHit (:170-186) - the
 //     upward head probe. Its classic consumer is PlayerCrush.cs;
 //     HangingMotor's read (:194) casts its own sphere and is off-road.
@@ -19,7 +20,8 @@
 //     the classic road calls it and the motor does not spend a ray on
 //     it per step.
 //   FindAdjacentSurface + the AdjacentSurface/AboveBehindWall family
-//     (:188-305) - climb/hang/rappel scaffolding only. Ledger A.
+//     (:188-305) - climb/hang/rappel scaffolding only. THE
+//     `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD, Ledger A.
 //
 // The casts are the collider's engine-side approximations (sphereCast
 // is capsuleCast with a degenerate axis - see the note there), exactly
