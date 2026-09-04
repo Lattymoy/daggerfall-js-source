@@ -254,12 +254,20 @@ test('G4-9: BOTH windows that NEST the picker forward the release, on the class 
   assert.equal(mk.picker.scroller.draggingThumb, false, 'and the maker forwards it from its own class');
 });
 
-test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches either drag', () => {
+test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the three drags', () => {
   // ROAD-C c2 flight 2 found this pair - every host's answer for a
   // pointer OFF its letterboxed panel - driving the town map's chrome as
   // though it were a position. A thumb drag that strays into the black
   // border would be flung to row 0 the same way.
-  // MUTANT: drop the `vy >= 0` guard from either window's hover.
+  //
+  // ROAD-G G4 REVIEW: this slice touched THREE drag machines and the
+  // first cut of this pin drove two. The wizard's picker bar took the
+  // fabricated pair straight into `pickBar.update` - bar-local -60
+  // against PICK_SCROLL_RECT, clamped to row 0 - so the sweep is over
+  // all three now, the flow AND the wrapper every host calls.
+  // MUTANT: drop the `vy >= 0` guard from ANY of the three hovers
+  // (`ui/spellbookWindow.js`, `ui/spellIconPickerWindow.js`,
+  // `ui/chargen.js`).
   const w = book(40);
   w.scrollIndex = 12;
   w.click(...railPoint(50));
@@ -276,6 +284,27 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches either drag', () => {
   p.hover(-1, -1, { buttons: 1 });
   assert.equal(p.scrollIndex, 5, 'and so does the icon picker');
   assert.equal(p.scroller.draggingThumb, true);
+
+  // ...and the WIZARD's bar, the third machine, from an index the fling
+  // is visible from: 18 careers over 9 rows, thumb pressed at bar-local
+  // 30 from classScroll 5, one REAL held move to 40 (which drags to 7),
+  // then the sentinel.
+  const f = new ChargenFlow(careers(), () => 0);
+  f.state = 'class';
+  f.classScroll = 5;
+  assert.equal(f.pressPickBar(PBX + 2, PBY + 30), true);
+  assert.equal(f.pickBar.draggingThumb, true);
+  f.hover(PBX + 2, PBY + 40, { buttons: 1 });
+  assert.equal(f.classScroll, 7, 'a real held move still drags the class list');
+  f.hover(-1, -1, { buttons: 1 });
+  assert.equal(f.classScroll, 7, 'and the wizard ignores the fabricated point');
+  assert.equal(f.pickBar.draggingThumb, true, 'the latch survives the skipped frame here too');
+  // through the door every host actually calls, not just the flow
+  const win = createChargenWindow(f, {});
+  win.hover(-1, -1, { buttons: 1 });
+  assert.equal(f.classScroll, 7, 'the host seam hands the pair down and it is skipped');
+  win.hover(PBX + 2, PBY + 40, { buttons: 1 });
+  assert.equal(f.classScroll, 7, 'and a real frame after it still drags from the LIVE anchor');
 });
 
 // ═══════════════════════════════════════════════════════════════════

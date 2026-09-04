@@ -8897,7 +8897,7 @@ Update's latch (the split is DFU's, across two members of one class);
 = Size.y / totalUnits` reading the TOTAL rather than the span, and the
 `(int)` cast truncating TOWARD ZERO, which is a different index from a
 floor on the way back up; `release()` is the else arm; and
-`_syncScrollBar` is `UpdateSpellsList`'s scroller block (:509-512), so
+`_syncScrollBar` is `UpdateSelection`'s scroller block (:507, :509-512), so
 the drawn thumb, the paging and the drag read ONE index and cannot part
 the way ROAD-D2 found the trough and the art parted.
 
@@ -8934,7 +8934,7 @@ latch a thumb and never move it. The four-hosts rule's own failure mode,
 and silent, because nothing errors on a latch. The pin sweeps all six
 hover routes rather than trusting an edit.
 
-Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 16 mutations
+Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 17 mutations
 killed): the drag's arithmetic dies under the span-scale and the floor;
 the release dies under an emptied `release()` in either window, in the
 wizard's flow and in its wrapper; the rail's press dies under the
@@ -8944,8 +8944,13 @@ the one the slice did not set out to write: the hosts answer a pointer
 off their letterboxed panel with `(-1, -1)`, and that pair is a
 fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
 it flinging the town map ~165 world units - so a thumb dragged into the
-black border would have snapped its list to row 0. Both windows skip the
-frame and keep the latch, because `release()` is what ends a drag.
+black border would have snapped its list to row 0. All three of the
+slice's drag machines skip the frame and keep the latch, because
+`release()` is what ends a drag. The wizard's bar was NOT among them
+when this section was first written - it took the sentinel straight
+into `pickBar.update` and clamped the class list to row 0, and the
+ROAD-G G4 review caught the gap; `ui/chargen.js`'s `hover` carries the
+same `vy >= 0` arm as its two siblings now, and G4-12 drives all three.
 
 ## ROAD-G G5 - THE DROP ICONS, AND THE BANK LIST'S SCROLL BAR (2026-09-04)
 

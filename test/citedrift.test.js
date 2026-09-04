@@ -34,6 +34,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dfuFile, missingDfu } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(root, rel), 'utf8');
@@ -733,4 +734,163 @@ test('CD7: no citation into a port file names a range that runs backwards', () =
     });
   }
   assert.deepEqual(backwards, [], 'a citation names a range whose end precedes its start');
+
+// ═══ CD8: the cites the ROAD-G G4 REVIEW re-resolved ═══
+//
+// G4 swept `ui/listPicker.js:259` - a line the E-group's edits had
+// moved - to `:291` at four sites, and :291 is `this.syncScrollBar();`.
+// The sentence at every one of those sites names the port's ONE reading
+// of `InputManager.GetMouseButton(0)`, which is the line AFTER it. The
+// same slice left three `ui/listPicker.js` cites standing in the Ledger
+// row it re-wrote (a double-click test that is 70 lines further down, a
+// "two-way index sync" that is the constructor body, a `release()` that
+// is a keyboard arm), re-resolved a `release()` cite correctly on the
+// Port-Status copy of the identical claim, and wrote four host cites in
+// `systems/chargenSession.js`'s hover docstring that name a pointerdown
+// arm, a quicksave return, an `attachTouch` call and a line of PX26
+// prose. A near-miss is the worst kind of citation - it survives the
+// glance that would catch a wild one - so each is resolved BY CONTENT
+// here rather than by eye.
+//
+// The C# halves cannot be resolved from inside this repo when the
+// reference tree is absent (Port-Doctrine keeps DFU an EXTERNAL
+// reference), so they are pinned in two parts: the NAME, which is a
+// text claim this suite can always hold, and the LINE, resolved through
+// `dfuRoot.mjs` whenever a checkout is there.
+const DFU_BOOK = 'Assets/Scripts/Game/UserInterfaceWindows/DaggerfallSpellBookWindow.cs';
+const DFU_ICONS = 'Assets/Scripts/Game/UserInterfaceWindows/SpellIconPickerWindow.cs';
+const dfuLines = (rel) => readFileSync(dfuFile(rel), 'utf8').split('\n');
+
+test('CD8: the ROAD-G G4 review\'s re-resolved cites name the lines they mean', () => {
+  const lp = lines('src/ui/listPicker.js');
+  const bad = [];
+
+  // (1) THE BUTTON READ, cited from four files. `:291` is the sync
+  // call; the GetMouseButton(0) poll the sentences name is `:292`.
+  for (const f of ['src/ui/chargen.js', 'src/ui/chargenArt.js',
+    'src/ui/spellbookWindow.js', 'test/chargenpointer.test.js']) {
+    const hits = [...read(f).matchAll(/listPicker\.js:(\d+)(?!-)/g)];
+    assert.equal(hits.length, 1, `${f} carries ${hits.length} single-line listPicker cites, the pin knows 1`);
+    const line = lp[Number(hits[0][1]) - 1] ?? '';
+    if (!/this\.scrollBar\.update\(!!\(e\?\.buttons & 1\), vy\)/.test(line)) {
+      bad.push(`${f} -> listPicker.js:${hits[0][1]} is ${JSON.stringify(line.slice(0, 60))}`);
+    }
+  }
+
+  // (2) THE LEDGER'S OWN LISTBOX ROW, which carries three of them.
+  const row = lines(LEDGER).find((l) => /DFU's ListBox SELECTS on the first click/.test(l));
+  assert.ok(row, 'the Ledger\'s ListBox row is gone');
+
+  const dbl = /`ui\/listPicker\.js:(\d+)-(\d+)` runs the real MouseClick/.exec(row);
+  assert.ok(dbl, 'the ListBox row no longer cites the double-click test');
+  assert.match(lp[Number(dbl[1]) - 1] ?? '', /index >= 0 && index < this\.items\.length/,
+    'the double-click cite does not start at the row guard');
+  const dblSpan = lp.slice(Number(dbl[1]) - 1, Number(dbl[2])).join('\n');
+  assert.match(dblSpan, /DOUBLE_CLICK_DELAY_MS/, 'the cited range holds no DOUBLE_CLICK_DELAY_MS test');
+  assert.match(dblSpan, /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/,
+    'the cited range never reaches _use()');
+
+  const sync = /with `listPicker\.js:(\d+)-(\d+)` \(`syncScrollBar`\)/.exec(row);
+  assert.ok(sync, 'the ListBox row no longer cites the two-way index sync');
+  assert.match(lp[Number(sync[1]) - 1] ?? '', /^ {2}syncScrollBar\(\) \{$/,
+    'the sync cite does not start at syncScrollBar');
+  const syncSpan = lp.slice(Number(sync[1]) - 1, Number(sync[2])).join('\n');
+  assert.match(syncSpan, /this\.scrollIndex = bar\.scrollIndex;/, 'the cited range misses the FROM-the-bar arm');
+  assert.match(syncSpan, /bar\.setScrollIndexWithoutRaisingScrollEvent\(this\.scrollIndex\);/,
+    'the cited range misses the TO-the-bar arm');
+
+  const rel = /`ListPickerWindow\.release\(\)`, `listPicker\.js:(\d+)`/.exec(row);
+  assert.ok(rel, 'the ListBox row no longer cites the picker\'s release()');
+  assert.match(lp[Number(rel[1]) - 1] ?? '', /^ {2}release\(\) \{ this\.scrollBar\.draggingThumb = false; \}$/,
+    'the release() cite names another line');
+
+  // (3) THE WIZARD SESSION'S FOUR HOST CITES, in the docstring over the
+  // seam G4 extended. Comments WRAP, so they are read off flat prose.
+  const flat = read('src/systems/chargenSession.js')
+    .replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+  const talk = /townTalk\.js:(\d+)-(\d+), the route itself :(\d+)\)/.exec(flat);
+  assert.ok(talk, 'the hover docstring no longer cites townTalk\'s hover seam');
+  const tt = lines('src/scenes/townTalk.js');
+  assert.match(tt[Number(talk[1]) - 1] ?? '', /^ {2}function hover\(e\) \{$/,
+    'the townTalk range does not start at the hover seam');
+  assert.match(tt[Number(talk[2]) - 1] ?? '', /^ {2}\}$/, 'the townTalk range does not end at the seam\'s close');
+  assert.match(tt[Number(talk[3]) - 1] ?? '', /overlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/,
+    'the townTalk route cite is not the route');
+  const ctx = /`overlayHover` \(:(\d+)\)/.exec(flat);
+  assert.ok(ctx, 'the hover docstring no longer cites dungeonContext\'s overlayHover');
+  assert.match(lines('src/scenes/dungeonContext.js')[Number(ctx[1]) - 1] ?? '',
+    /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/,
+    'the overlayHover cite names another line');
+  const feeds = /dungeon\.js:(\d+) and worldModes\.js:(\d+) both feed/.exec(flat);
+  assert.ok(feeds, 'the hover docstring no longer names the two hosts that feed it');
+  assert.match(lines('src/scenes/dungeon.js')[Number(feeds[1]) - 1] ?? '',
+    /ctx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/, 'the dungeon.js feed cite names another line');
+  assert.match(lines('src/scenes/worldModes.js')[Number(feeds[2]) - 1] ?? '',
+    /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/,
+    'the worldModes.js feed cite names another line (the interior slot\'s own hover is a different route)');
+
+  assert.deepEqual(bad, [], 'a ROAD-G G4 cite names a line it does not describe');
+});
+
+test('CD8b: the C# members ROAD-G G4 names EXIST, and at the lines it cites', () => {
+  // `UpdateSpellsList` is not a member of DaggerfallSpellBookWindow -
+  // nor of anything else in the reference tree - and the block the
+  // three sites describe is inside `UpdateSelection` (:507). The port's
+  // behaviour was right; the name resolved to a stranger, in a repo
+  // whose own rule is that a line number is a claim like any other.
+  // MUTANT: put either wrong cite back.
+  const SITES = [
+    'src/ui/spellbookWindow.js',
+    'bible/01-Overview/Port-Ledger.md',
+    'bible/10-UI/UI-Arc.md',
+  ];
+  for (const f of SITES) {
+    const text = read(f);
+    assert.equal(/UpdateSpellsList/.test(text), false, `${f} still names a member DFU does not have`);
+    assert.match(text.replace(/\s+/g, ' '), /UpdateSelection`?'s scroller block \(:507, :509-512\)/,
+      `${f} does not cite UpdateSelection's scroller block`);
+  }
+  const icons = read('src/ui/spellIconPickerWindow.js');
+  const icon = /Scroller_OnScroll's UpdateSelectedIcon \(:(\d+)\)/.exec(icons);
+  assert.ok(icon, 'the icon picker no longer cites Scroller_OnScroll\'s UpdateSelectedIcon');
+  // The LITERAL, held here because the reference tree is external and
+  // this half of the pin has to work without it: :248 is the
+  // ScrollIndex copy, :249 is the call the sentence's argument rests
+  // on. The line is RESOLVED below wherever a checkout exists.
+  assert.equal(icon[1], '249', 'the UpdateSelectedIcon cite moved off the call it names');
+
+  // ...and the numbers themselves, whenever the reference tree is
+  // there. PY1's rule: DFU is an external reference, so this half
+  // SKIPS without a checkout rather than failing.
+  if (missingDfu(DFU_BOOK, DFU_ICONS)) return;
+  const book = dfuLines(DFU_BOOK);
+  assert.match(book[506] ?? '', /protected virtual void UpdateSelection\(\)/,
+    'DaggerfallSpellBookWindow.cs:507 is no longer UpdateSelection');
+  assert.match(book.slice(508, 512).join('\n'), /spellsListScrollBar\.Reset\(/,
+    ':509-512 is no longer the scroller block');
+  assert.match(dfuLines(DFU_ICONS)[Number(icon[1]) - 1] ?? '', /UpdateSelectedIcon\(\);/,
+    'the icon picker\'s UpdateSelectedIcon cite names another line');
+});
+
+test('CD8c: the sentinel guard the docs claim is on ALL THREE drag machines', () => {
+  // The rationale this pin corrects was written as fact in three
+  // places - the Ledger row, UI-Arc's G4 section and Testing.md's row
+  // all said the (-1,-1) sentinel was kept out of "both drag machines"
+  // while the slice had shipped THREE, and the wizard's was the one
+  // without the arm. A wording that outlives the code it describes is
+  // the same defect as a stale line number, so both halves are held:
+  // the guard is live in all three windows, and no page says "both".
+  // MUTANT: drop the guard from `ui/chargen.js`, or restore the "both
+  // drag machines" wording.
+  const GUARDED = [
+    ['src/ui/spellbookWindow.js', /!this\.top && vy >= 0 && this\._syncScrollBar\(\)\.update\(/],
+    ['src/ui/spellIconPickerWindow.js', /if \(vx >= 0 && vy >= 0\) this\._syncScroller\(\)\.update\(/],
+    ['src/ui/chargen.js', /if \(vy >= 0 && this\.pickBar\.update\(/],
+  ];
+  for (const [f, re] of GUARDED) assert.match(read(f), re, `${f}'s drag takes the fabricated (-1,-1)`);
+  for (const f of [LEDGER, 'bible/10-UI/UI-Arc.md', 'bible/09-Testing/Testing.md']) {
+    assert.equal(/both drag machines/i.test(read(f)), false, `${f} still says the sentinel is kept out of BOTH`);
+  }
+  assert.match(read(LEDGER), /sentinel kept out of ALL THREE drag machines/,
+    'the Ledger row no longer states the count it was corrected to');
 });

@@ -1059,12 +1059,23 @@ export class ChargenFlow {
 
   /** VerticalScrollBar.Update's per-frame arm (:101-130), on the
    *  hosts' HOVER seam - `e.buttons & 1` is the port's only reading of
-   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:291
-   *  takes; nothing else here reads the pointer. */
+   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:292
+   *  takes; nothing else here reads the pointer.
+   *
+   *  ROAD-G G4 (review): the (-1, -1) the hosts answer with for a
+   *  pointer OFF the letterboxed panel is a FABRICATED pair, not a
+   *  position (ROAD-C c2 flight 2) - Update drags off
+   *  `ScreenToLocal(MousePosition)` (VerticalScrollBar.cs:105-120), a
+   *  real cursor, so DFU never produces it. Unguarded it is bar-local
+   *  -60 against PICK_SCROLL_RECT and SetScrollIndex clamps the class
+   *  list to row 0. The FRAME is skipped, never the latch:
+   *  `releasePickBar()` is what ends a drag, which is why the two
+   *  sibling machines (`ui/spellbookWindow.js`,
+   *  `ui/spellIconPickerWindow.js`) carry the identical arm. */
   hover(vx, vy, e = null) {
     const p = this.syncPickBar();
     if (!p) return;
-    if (this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
+    if (vy >= 0 && this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
   }
 
   /** ROAD-G G4: Update's `else` arm (:123-129), on the overlay mouse-UP

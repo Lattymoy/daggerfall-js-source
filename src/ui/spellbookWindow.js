@@ -356,7 +356,7 @@ export class SpellbookWindow {
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
-  /** ROAD-G G4: UpdateSpellsList's scroller block (:509-512) - Reset
+  /** ROAD-G G4: UpdateSelection's scroller block (:507, :509-512) - Reset
    *  (:171-176) takes RowsDisplayed, Count and the list's ScrollIndex
    *  with no event raised, and DFU's two following assignments write
    *  the two values Reset just wrote. The port keeps ONE index (the
@@ -410,7 +410,7 @@ export class SpellbookWindow {
     this._tipHover(x, y, vx, vy);
     // ROAD-G G4: THE THUMB DRAG (VerticalScrollBar.Update, :101-130).
     // `e.buttons & 1` is the port's read of GetMouseButton(0) - the
-    // same read `listPicker.js:291` makes - and the host's mousemove
+    // same read `listPicker.js:292` makes - and the host's mousemove
     // is the frame. The drag continues wherever the cursor goes,
     // including off the bar and off the panel, because DFU polls a
     // POSITION and a held button, not a component the pointer is over.

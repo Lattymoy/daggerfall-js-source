@@ -215,7 +215,7 @@ export class SpellIconPickerWindow {
     // ROAD-G G4: Update's drag arm (VerticalScrollBar.cs:101-121) -
     // `e.buttons & 1` is GetMouseButton(0) and the host's mousemove is
     // the frame. It runs BEFORE the pointer is re-read, because
-    // Scroller_OnScroll's UpdateSelectedIcon (:248) reads the scrolling
+    // Scroller_OnScroll's UpdateSelectedIcon (:249) reads the scrolling
     // panel's LAST mouse position, not this move's.
     // ...but never on the hosts' (-1,-1) SENTINEL, which is a
     // fabricated pair for "off the letterboxed panel" and not a

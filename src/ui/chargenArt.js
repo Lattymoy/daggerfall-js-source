@@ -755,7 +755,7 @@ function drawClassConfirm(renderer, m, font, flow) {
  *  otherwise. `press()` is MouseClick's trough paging (:142-150) and
  *  Update's drag latch (:105-113); `flow.hover` is Update's per-frame
  *  arm, polling the host's `e.buttons & 1` for
- *  InputManager.GetMouseButton(0) exactly as ui/listPicker.js:291
+ *  InputManager.GetMouseButton(0) exactly as ui/listPicker.js:292
  *  does. The held-button frame the flag named is that hover seam, and
  *  every host that runs the wizard already routes it
  *  (townTalk.hover for world.js and exterior.js, overlayHover for
