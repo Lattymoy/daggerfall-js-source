@@ -64,7 +64,9 @@
 // (:599-641), edge driven in the reference too, so those ten were
 // always parity.
 //
-// DEPARTURES THAT STAND (recorded, Port-Ledger):
+// RECORDED DEPARTURES THAT STAND. Ledger A carries the pair as THE
+// TOWN MAP'S PLATE LABEL AND ROTATION ARROW ARE THE PORT'S OWN PIXELS
+// (AUDIT 58, seams lane), cited by name because a line number rots:
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
 //    DaggerfallFont Texture2D, so TextScale is halved for the port's
 //    16px-cell glyphs (the A2 legibility pick, kept).

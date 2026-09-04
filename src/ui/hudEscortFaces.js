@@ -22,7 +22,10 @@
 // border textures, so the setting does nothing and the faces are
 // unconditional. The port draws them unconditionally too.
 //
-// RECORDED DEPARTURE (async art): DFU loads each face texture
+// RECORDED DEPARTURE (async art), which Ledger A carries as ART LANDS
+// ASYNC, AND A MISSING RECORD COSTS THE PICTURE RATHER THAN THE
+// SESSION (AUDIT 58, seams lane) - by name, because a line number
+// rots: DFU loads each face texture
 // synchronously inside RefreshFaces and THROWS when one is missing.
 // The port is data-gated like the rest of the HUD - textures load
 // async, a face draws from the frame its art lands, and a missing

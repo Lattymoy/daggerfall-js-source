@@ -17,9 +17,13 @@
 // spell block included; the law is systems/activateGate.js and all
 // four hosts read that one copy.
 //
-// TWO DEPARTURES STAND, both deliberate and neither a missing slice:
-// the port's E still activates beside Mouse0 (DFU binds E to
+// TWO RECORDED DEPARTURES STAND, both deliberate and neither a missing
+// slice: the port's E still activates beside Mouse0 (DFU binds E to
 // AbortSpell), and the SWING is still read off the raw right button.
+// Ledger A carries them as E ACTIVATES BESIDE MOUSE0, AND THE SWING IS
+// ROUTED OFF THE RAW BUTTON (AUDIT 58, seams lane) - by name, because a
+// line number rots, and because section A's only other mention of this
+// file is the STRUCK C2 hotkey-repeat row, which approves nothing.
 //
 // ROAD-Ar R10 rewrote that second sentence. It used to read "Mouse2
 // still swings (DFU's SwingWeapon is Mouse1)" and recorded a mismatch

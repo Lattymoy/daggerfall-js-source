@@ -482,6 +482,27 @@ const UNINDEXED_RECORDS = [
   'Port-Completion-Analysis.md',  // superseded for volume figures by Port-Status-2026-09.md
 ];
 
+// AUDIT 58 (seams): AND EVERY ARC PLAN, wherever it lives. The law
+// above reads ONE directory, so an unindexed arc plan under
+// 07-Rendering/ passed green: `Enhanced-Environments-Arc.md` - the
+// live plan for the ground/sky/grass/weather arc, opened 2026-09-01,
+// the arc four of the most recent audits were written about, and the
+// document doctrine.test.js opens by path to assert the render gate
+// and the upload law - was named nowhere in the index that calls
+// itself the index. Its only prose reachability was one second hop
+// from Rendering.md. That is the same fault the AUDIT 39 header
+// describes (Audit-DA and Audit-EV reachable only from the arc pages
+// they close), one directory over, so the same law covers it: a
+// `*-Arc.md` anywhere under bible/ is named in Home.md, or it is on
+// the written list below.
+/** Arc plans Home.md deliberately reaches another way. */
+const UNINDEXED_ARCS = [
+  // reached by the `11-Multiplayer/` section row - "co-op: the three
+  // locked decisions, the architecture, the arc" - which covers both
+  // Multiplayer.md and its arc as one unstarted section.
+  'bible/11-Multiplayer/Multiplayer-Arc.md',
+];
+
 test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const home = read('bible/Home.md');
   const records = readdirSync(join(root, 'bible/01-Overview'))
@@ -511,6 +532,21 @@ test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const twice = rows.filter((f, i) => rows.indexOf(f) !== i);
   assert.deepEqual([...new Set(twice)], [],
     `the index carries more than one entry for one record:\n${twice.join('\n')}`);
+});
+
+test('AUDIT 58: Home.md names every arc plan under bible/, wherever it lives', () => {
+  const home = read('bible/Home.md');
+  const arcs = BIBLE_FILES.filter((f) => f.endsWith('-Arc.md'));
+  assert.ok(arcs.length >= 12, `only ${arcs.length} arc plans found - the walk missed some`);
+  const missing = arcs
+    .filter((f) => !UNINDEXED_ARCS.includes(f))
+    .filter((f) => !home.includes(f.split('/').pop()));
+  assert.deepEqual(missing, [],
+    `arc plans the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files, and it may not hide a
+  // record the index DOES name either
+  const gone = UNINDEXED_ARCS.filter((f) => !existsSync(join(root, f)));
+  assert.deepEqual(gone, [], `the not-indexed arc list names files that are gone:\n${gone.join('\n')}`);
 });
 
 // ---------------------------------------------------------------------------

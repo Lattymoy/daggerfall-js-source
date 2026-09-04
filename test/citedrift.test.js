@@ -130,6 +130,58 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
   assert.match(pause, /const ver = `project-dagger \$\{BUILD_TAG\}`;/,
     'the substituted string is not the one the Ledger row records');
 
+  // AUDIT 58 (seams): THE SAME SHAPE, EIGHT MORE TIMES. `grep` over
+  // section A for each of these basenames returned nothing while every
+  // one of them declared its departure ALREADY RECORDED; the doctrine
+  // gate reported approval because a STRUCK section-C row mentioned the
+  // basename somewhere on the page. Each row below now exists, unstruck,
+  // inside section A, names the file it approves, and is cited BY NAME
+  // from that file - no bare Ledger line number left to rot. The gate
+  // that would have caught all eight is pinned as text in
+  // test/doctrine.test.js, the way the plural shout is pinned above.
+  const SEAMS = [
+    [/THE MUSIC REPLACEMENT FOLDER IS A USER PICK, AND ITS EXTENSIONS ARE A SET/,
+      ['src/systems/musicReplacement.js']],
+    [/THE FUZZY FIND COMPUTES IN DOUBLES AND COLLATES ORDINALLY/,
+      ['src/systems/editDistance.js']],
+    [/TRAVEL WEATHER IS APPLIED ON EVERY ARRIVAL, NOT FROZEN AFTER THE FIRST LOAD/,
+      ['src/systems/weatherSim.js']],
+    [/THE CONVERSATION SAVE STORES `dictQuestInfo` AS PLAIN DATA/,
+      ['src/systems/topicTree.js']],
+    [/THE COLOR PICKER'S FOUR HOST SEAMS/, ['src/ui/colorPicker.js']],
+    [/ART LANDS ASYNC, AND A MISSING RECORD COSTS THE PICTURE RATHER THAN THE SESSION/,
+      ['src/ui/hudEscortFaces.js', 'src/ui/nativeTalk.js']],
+    [/THE TOWN MAP'S PLATE LABEL AND ROTATION ARROW ARE THE PORT'S OWN PIXELS/,
+      ['src/ui/exteriorAutomapWindow.js']],
+    [/E ACTIVATES BESIDE MOUSE0, AND THE SWING IS ROUTED OFF THE RAW BUTTON/,
+      ['src/ui/input.js']],
+  ];
+  for (const [title, files] of SEAMS) {
+    const hit = rows.filter((r) => title.test(r.s) && !struck(r.s));
+    assert.equal(hit.length, 1, `section A carries exactly one unstruck row for ${title}`);
+    for (const f of files) {
+      assert.ok(hit[0].s.includes(f), `the ${title} row does not name ${f}`);
+      const flat = read(f).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+      assert.match(flat, new RegExp(title.source),
+        `${f} does not cite its Ledger A row by name`);
+      assert.equal(/Port-Ledger\.md:\d+/.test(read(f)), false,
+        `${f} cites the Ledger by line number, which is what rots`);
+    }
+  }
+
+  // ...and the AUDIT 58 gate itself, pinned as TEXT for the same reason
+  // the plural shout is: its population is invisible from outside it, so
+  // a later edit that drops the strike filter, drops the section bound,
+  // or widens the search back to the whole page has to go red HERE
+  // rather than three waves later at a reader.
+  const gate = read('test/doctrine.test.js');
+  assert.match(gate, /const A_BOUNDS = \['## A\. Approved departures from DFU', '## A-note \(H1\)'\];/,
+    'the AUDIT 58 gate no longer bounds its search to section A');
+  assert.match(gate, /\.filter\(\(l\) => !\/\^\\\|\\s\*\(\\\*\\\*\)\?~~\/\.test\(l\)\)/,
+    'the AUDIT 58 gate no longer filters STRUCK rows out - a struck row is not an approval');
+  assert.match(gate, /const RECORDED_CLAIM =/,
+    'the AUDIT 58 gate no longer recognises a RECORDED-departure claim');
+
   // Port-Status counts section A; the count moves when a row is added.
   const m = /section A carries \*\*(\d+) rows, (\d+) struck - (\d+) standing/.exec(read(STATUS));
   assert.ok(m, 'Port-Status no longer states section A\'s tally');

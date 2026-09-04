@@ -18,7 +18,9 @@
 // equal relevances come back in ASCENDING text order (:37-46,
 // :219-248 dumps the heap in reverse).
 //
-// RECORDED DEPARTURES:
+// RECORDED DEPARTURES. Ledger A carries them as THE FUZZY FIND
+// COMPUTES IN DOUBLES AND COLLATES ORDINALLY (AUDIT 58, seams lane),
+// cited by name because a line number rots:
 // - C# computes in float32; JS has one number type. The port
 //   follows the house convention (no Math.fround anywhere in
 //   src/), so a tie that float32 rounding would break can land

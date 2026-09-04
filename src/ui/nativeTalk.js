@@ -57,6 +57,9 @@ import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversa
 import { measureText } from './text.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+// AUDIT 58 (seams): the resolvingError literal SetListboxTopics repairs
+// an empty caption with (Internal_Strings.csv:582, '...never mind...').
+import { RESOLVING_ERROR } from '../systems/rumorMill.js';
 
 export const TALK_RECTS = Object.freeze({
   tellMeAbout: [4, 4, 107, 10],
@@ -305,8 +308,11 @@ export function talkStripSource(name, arts = { base: _art, categories: _categori
 // which is the panel's size (:158-159) - no fit is involved.
 //
 // RECORDED DEPARTURE (async art), the same one hudEscortFaces.js
-// carries: DFU loads the record synchronously and CLOSES THE WINDOW
-// when it fails (:375-379). The port's art is fetched through the
+// carries and the same Ledger A row: ART LANDS ASYNC, AND A MISSING
+// RECORD COSTS THE PICTURE RATHER THAN THE SESSION (AUDIT 58, seams
+// lane), cited by name because a line number rots. DFU loads the
+// record synchronously and CLOSES THE WINDOW when it fails
+// (:375-379). The port's art is fetched through the
 // host's async seam, so the portrait draws from the frame it lands
 // and a missing record costs the portrait (warned once), never the
 // conversation.
@@ -434,7 +440,7 @@ export class NativeTalkWindow {
    *  halves fold in here because this port's four page-openers are
    *  the one door SetListboxTopics is reached through. */
   _setListboxTopics(rows, mode) {
-    this.topics = rows;
+    this.topics = this._repairCaptions(rows);
     this.topicMode = mode;
     this.scroll = 0;
     this.topicHScroll = 0;               // UpdateScrollBarsTopic :816
@@ -442,6 +448,57 @@ export class NativeTalkWindow {
     this.selected = -1;                                // ClearItems -> SelectNone
     if (!rows.length) { this._updateQuestion(-1); return; }   // the trailing UpdateQuestion(-1)
     this._selectIndex(0);
+  }
+
+  /** AUDIT 58 (seams): THE CAPTION REPAIR, which this window did not
+   *  have. SetListboxTopics repairs EVERY row before it adds it
+   *  (DaggerfallTalkWindow.cs:863-872):
+   *
+   *      if (item.caption == null) {        // old save data
+   *        item.caption = item.key;         // "just try to take key"
+   *        if (item.caption == String.Empty)
+   *          item.caption = GetLocalizedText("resolvingError");
+   *      } else if (item.caption == String.Empty) {
+   *        item.caption = GetLocalizedText("resolvingError");
+   *      }
+   *
+   *  `resolvingError` is `...never mind...` (Internal_Strings.csv:582),
+   *  so DFU never draws a blank row: an unlabelled row is still
+   *  SELECTABLE and still answerable, and a player cannot tell it from
+   *  a gap in the list. The port drew the caption verbatim and had no
+   *  substitution anywhere, so those rows came out zero-width.
+   *
+   *  Empty captions are reachable from the port's own assembler:
+   *  topicTree.js's `captionString` starts '' (:578) and the NotSet
+   *  arm never overwrites it, the Location arm's null test takes an
+   *  EMPTY buildingName as the caption (:588-589, and quest/place.js
+   *  builds dungeon and town siteDetails with `buildingName: ''`), and
+   *  the Thing arm only fills it once the Item resource has minted its
+   *  daggerfallUnityItem (:602).
+   *
+   *  DFU's ListItem is a CLASS (TalkManager.cs:159), so the repair is
+   *  a WRITE-BACK that outlives the draw - the tree's own row stays
+   *  repaired for every later reader. Mirrored here: the row's label
+   *  and, where the row wraps one, its ListItem's caption.
+   *
+   *  This is the ONE door - all four page setters reach the listbox
+   *  through `_setListboxTopics`, and `_updateQuestion` reads the same
+   *  repaired label when it builds the player-says line. */
+  _repairCaptions(rows) {
+    for (const row of rows) {
+      const was = row.label ?? row.name;
+      let caption = was;
+      if (caption == null) {
+        caption = row.listItem?.key ?? '';
+        if (caption === '') caption = RESOLVING_ERROR;
+      } else if (caption === '') {
+        caption = RESOLVING_ERROR;
+      }
+      if (caption === was) continue;
+      row.label = caption;
+      if (row.listItem) row.listItem.caption = caption;
+    }
+    return rows;
   }
 
   /** ListBox.MouseClick (:465-505) -> SelectIndex -> OnSelectItem. */

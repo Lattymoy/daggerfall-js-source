@@ -13,7 +13,9 @@
 // still plays when the answer is no - a replacement is an override,
 // never a requirement.
 //
-// TWO DEPARTURES, both recorded in the Ledger:
+// TWO RECORDED DEPARTURES. Ledger A carries them as THE MUSIC
+// REPLACEMENT FOLDER IS A USER PICK, AND ITS EXTENSIONS ARE A SET
+// (AUDIT 58, seams lane) - by name, because a line number rots:
 //
 // 1. EXTENSIONS. DFU seeks `.ogg` alone. A browser decodes whatever
 //    its codec set covers and the packs people actually have are mp3
