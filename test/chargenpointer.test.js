@@ -190,7 +190,7 @@ test('ROAD-E2: a press ON the thumb moves nothing and latches the drag', () => {
 
 test('ROAD-E2: the drag needs the held button, and letting go drops the latch', () => {
   // Update polls InputManager.GetMouseButton(0) (:105); `e.buttons`
-  // is the port's only reading of it, exactly as ui/listPicker.js:259
+  // is the port's only reading of it, exactly as ui/listPicker.js:292
   // takes it for the shared picker.
   const f = listFlow();
   f.state = 'class';

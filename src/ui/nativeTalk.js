@@ -55,6 +55,7 @@ import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversationStyleInTalkWindow
 import { measureText } from './text.js';
+import { sliderThumb } from './horizontalSlider.js';   // ROAD-G G6: HorizontalSlider.cs' one home
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 // AUDIT 58 (seams): the resolvingError literal SetListboxTopics repairs
@@ -159,16 +160,12 @@ export const clampTopicHScroll = (px, widthContent, panelW) =>
   Math.max(0, Math.min(Math.max(0, widthContent - panelW), px));
 
 /** HorizontalSlider.DrawSlider's thumb (:313-316), which
- *  HorizontalSlider.MouseClick (:170-178) pages against: a trough-wide
- *  thumb scaled by displayUnits/totalUnits with a 10px floor, slid
- *  across the remaining travel. Null when there is nothing to scroll -
- *  Draw returns before the thumb exists (:161-162). */
-export function topicSliderThumb([tx, ty, tw, th], scrollIndex, totalUnits, displayUnits) {
-  if (totalUnits <= displayUnits) return null;
-  const thumbW = Math.max(10, tw * (displayUnits / totalUnits));
-  const thumbX = scrollIndex * (tw - thumbW) / (totalUnits - displayUnits);
-  return [tx + thumbX, ty, thumbW, th];
-}
+ *  HorizontalSlider.MouseClick (:170-178) pages against. ROAD-G G6 gave
+ *  HorizontalSlider.cs its own home (ui/horizontalSlider.js) when the
+ *  mouse-controls window needed the WHOLE component; this stays as the
+ *  topic bar's name for it and delegates, so the arithmetic has one
+ *  home rather than two copies of one C# method. */
+export const topicSliderThumb = sliderThumb;
 
 /** ListBox.Draw's PixelWise branch (ListBox.cs:329-355): rows lay
  *  out from the listbox origin at y = -scrollIndex, striding

@@ -25,8 +25,8 @@ test('RW1 world: the pends flag is GONE and the reward is a container, not a sil
     'undefined = not my mode; null = the mode owned the ground and could not mint - ?? would fold them');
   assert.match(body, /droppedLoot\.dropPile\(\[dfItem\], dropFeet\(\)/,
     'CreateDroppedLootContainer(PlayerObject) - the pile lands at the player');
-  assert.match(body, /loot: \{ items: \(\) => pile\.items \}/,
-    'the inventory opens with the pile as its REMOTE target');
+  assert.match(body, /loot: droppedLootHooks\(pile\)/,
+    'the inventory opens with the pile as its REMOTE target - G5: with DaggerfallLoot\'s own identity, so the reward pile\'s icon cycles like any other');
   assert.match(body, /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/,
     'DFU frees the emptied container on window close - the drop arm\'s own law');
   assert.match(body, /_onQuestBoxClosed = open;\s*\n\s*else open\?\.\(\);/,

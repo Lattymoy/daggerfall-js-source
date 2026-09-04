@@ -21,7 +21,7 @@ const rd = (p) => readFileSync(join(root, p), 'utf8');
 const LOCAL_SLOT0 = [192, 48 + 20];
 const MODE_ACTION = [226 + 15, 134 + 7];
 
-/** THE HOST'S OWN SHAPE (scenes/worldModes.js:1202): packItems hands
+/** THE HOST'S OWN SHAPE (scenes/worldModes.js:1247): packItems hands
  *  back a FRESH filtered array on every call, so the window's staging
  *  is a SELECTION over a pack it cannot splice. */
 const selectionHooks = (mode, pack) => {

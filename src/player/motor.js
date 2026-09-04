@@ -153,8 +153,8 @@ export const SWIM_RIDE_EYE_HEIGHT = 0.50;
 
 /** DaggerfallAction.Teleport (:594) - the ONE classic writer of
  *  PlayerMotor.FreezeMotor. (ClimbingMotor.RestoreClimbingState :882
- *  writes 1f, but its whole block is `if (AdvancedClimbing &&
- *  data.isClimbing)` - Ledger A, off-road.) */
+ *  writes 1f, but its block is `if (AdvancedClimbing && data.isClimbing)`
+ *  - Ledger A, THE `AdvancedClimbing` SCAFFOLDING IS OFF-ROAD, by name.) */
 export const TELEPORT_FREEZE_S = 0.5;
 
 /** AcrobatMotor.ApplyGravity's antiBumpFactor (:181). */
@@ -1040,9 +1040,9 @@ export class PlayerMotor {
     //     blast radius. `scanner.findHeadHit(centre)` is the whole call
     //     the day it lands.
     //   SetHitSomethingInFront - BOTH of its consumers are
-    //     AdvancedClimbing (ClimbingMotor :357's
-    //     ClimbQuitMoveUnderToHang and the :679 advanced block), which
-    //     is Ledger A and deliberately off-road.
+    //     AdvancedClimbing (ClimbingMotor :357's ClimbQuitMoveUnderToHang
+    //     and the :679 advanced block), which is THE `AdvancedClimbing`
+    //     SCAFFOLDING IS OFF-ROAD, Ledger A, by name.
     // Spending nine DDA rays a step on a field nothing reads is the
     // one thing worse than not having them, so the methods are ported,
     // tested against the law, and called by their consumers.

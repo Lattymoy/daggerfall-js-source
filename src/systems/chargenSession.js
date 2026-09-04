@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:97/:782-784 both import and run
+// 126/:1364-1366 and exterior.js:107/:958-960 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -391,11 +391,22 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1027-1039),
-    // dungeonContext.js through `overlayHover` (:4292), which
-    // dungeon.js:328 and worldModes.js:6064 both feed. Hovering never
+    // exterior.js through `townTalk.hover` (townTalk.js:1076-1087,
+    // the route itself :1085), dungeonContext.js through `overlayHover`
+    // (:4613), which dungeon.js:351 and worldModes.js:6506 both feed.
+    // (ROAD-G G4 review: all four were stale - re-resolved by content,
+    // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.
     hover(vx, vy, e = null) { if (!_fired) flow.hover?.(vx, vy, e); },
+    // ROAD-G G4: THE OTHER EDGE, on the same rule. The hover seam above
+    // is GetMouseButton(0)'s per-frame poll; this is the frame it turns
+    // false (VerticalScrollBar.Update's else arm, :123-129), and every
+    // host that routes the hover routes it - `townTalk.pointer('up')`
+    // reaches a window that has only `release()`, `worldModes`' interior
+    // slot and `dungeonContext.overlayPointer`'s up arm call it beside
+    // their pointer route, and `interior.js` has its own listener.
+    // Releasing never advances the flow, so no done check.
+    release() { if (!_fired) flow.releasePickBar?.(); },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },

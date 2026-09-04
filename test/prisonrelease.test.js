@@ -424,6 +424,13 @@ test('host: ReleaseFromPrison\'s last two lines are wired to the world', () => {
   // the seams the flow asks for
   assert.match(world, /clearEnemies: \(\) => \{ for \(const f of \[\.\.\.exteriorFoes\.foes\]\) \{ if \(!f\.dead\) exteriorFoes\.removeFoe\(f\); \} \}/,
     'GameManager.ClearEnemies over the encounter pool');
+  // ROAD-G G2 (review): the fixed-city host owns the same sweep -
+  // ClearEnemies is host-agnostic in DFU, and this one mounts a WATCH
+  // beside the encounter pool, so both go. It was reducible to the
+  // watch line alone with the suite green.
+  assert.match(read('src/scenes/exterior.js'),
+    /clearEnemies: \(\) => \{ cityGuards\.clearLive\?\.\(\); for \(const f of \[\.\.\.exteriorFoes\.foes\]\) \{ if \(!f\.dead\) exteriorFoes\.removeFoe\(f\); \} \},/,
+    'the fixed-city host sweeps BOTH of its street pools');
   assert.match(world, /positionPlayerAtLocationEntrance: \(\) => positionPlayerAtLocationEntrance\(\)/);
   // PositionPlayerAtLocationEntrance (:452-463): the HasLocation guard,
   // the same-pixel teleport, and RandomStartMarker's law.

@@ -23,7 +23,8 @@
 //     neigh block (:274-278) is outside the horse-only arm.
 //
 // Unity's Random.Range(int, int) is max-EXCLUSIVE, so the two windows
-// are 2..39 and 1..4 whole seconds; `rolls` stands in (Ledger A).
+// are 2..39 and 1..4 whole seconds; `rolls` stands in - THE ENGINE-PRNG
+// RULE, Ledger A, by name.
 
 import { CfaFile } from '../formats/cfaFile.js';
 import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses

@@ -73,9 +73,23 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
       assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
         `${f}: the engine's sinks route by pool membership, the same law the enchant mount takes`);
     } else {
-      assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s),
-        `${f}: guards are targets only outside`);
-      assert.ok(s.includes('\n    foeSinks,\n'), `${f}: and the engine takes this host's one set of doors`);
+      // ROAD-G G2: THE TOWN PAGE TAKES THE SAME THREE-ARM SHAPE. This
+      // pin held `mode === 'exterior' ? cityGuards.guards : []` - the
+      // exact interior scene gate the AUDIT 58 review struck from the
+      // world host beside it - on the premise that this host mounts no
+      // interior foe pool. It does not mount one itself, but it builds
+      // `createWorldModes`, whose interior arm mounts TWO (interiorFoes
+      // and the indoor watch) and answers them at `insideFoes`, and
+      // this is the only cast engine that runs in that mode: a Fireball
+      // cast in a shop entered from ?exterior swept nobody and a
+      // missile passed through a watchman the MELEE ray would have hit.
+      // The exterior arm is BOTH street pools since the encounter mount.
+      assert.ok(s.includes("foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]\n      : _mode() === 'interior' ? _insidePool()\n        : []),"),
+        `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none`);
+      assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s), false,
+        `${f}: the interior scene gate is gone, not merely widened around`);
+      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+        `${f}: and the engine's sinks route by pool membership, the same law the enchant mount takes`);
     }
     const i = s.indexOf('absorbCtx: () =>');
     const arm = s.slice(i, i + 300);

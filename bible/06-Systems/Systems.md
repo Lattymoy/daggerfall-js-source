@@ -5,6 +5,7 @@ and the spell/effect library, chargen, biography, items and equip, loot,
 containers, talk, crime and the court, rest and recovery, diseases, poisons,
 the Cure family, concealment, FreeAction) plus the economy sub-arc E1-E3
 (shop templates and stock, the shelf mount, selling, the guild bookshelf, the health status box). 141 modules live under
+(shop templates and stock, the shelf mount, selling, the guild bookshelf, the health status box). 139 modules live under
 `src/systems/`. Items still routed here are collected in
 `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

@@ -91,7 +91,17 @@ export class MerchantServiceWindow {
   _exit() { this._click(); this._close(); }
 
   input(code) {
-    // The port's own accelerators (Ledger A - DFU reads its keybinds).
+    // ROAD-G G7: these three letters ARE the port's own, and the
+    // reason written here was wrong. DFU does not "read its keybinds"
+    // for this window - it binds NOTHING: unlike its guild sibling,
+    // which hangs GuildsTalk/GuildsExit and Services.GetServiceShortcut-
+    // Button on its three buttons (DaggerfallGuildServicePopupWindow.cs
+    // :128-151), DaggerfallMerchantServicePopupWindow adds all three
+    // with a click handler ALONE (:88-103) and no `Hotkey` anywhere in
+    // the file. So there is no table entry to read and no letter to be
+    // wrong against: keyboard access here is an ADDITION, recorded at
+    // Ledger A, THE MERCHANT SERVICE POPUP'S ACCELERATORS ARE THE
+    // PORT'S OWN, cited by name.
     if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this._exit(); return; }
     if (code === 'KeyT') { this._talk(); return; }
     if (code === 'KeyS') this._service();

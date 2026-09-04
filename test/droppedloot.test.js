@@ -153,8 +153,13 @@ test('droppedLoot P2 (items-2): the world-save halves round-trip in NATIVES, rec
 test('droppedLoot P2 (items-2): the world host wiring - collect at teardown, stamps at drop, the envelope', () => {
   const s = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.ok(s.includes('droppedLoot.collectPixel(key)'), 'the pixel teardown sweeps its piles');
-  assert.ok(/dropPile\(items, dropFeet\(\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`\)/.test(s),
-    'both drop sites stamp the map pixel');
+  // ROAD-G G5 put the drop icon and OnPop's container re-position
+  // (:710-714) through the same door; the PIXEL STAMP is what this pin
+  // is about and it still rides both sites.
+  assert.ok(/dropPile\(\s*items, containerDropPos\(at, dropFeet\(\)\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`, icon\)/.test(s),
+    'the OnPop drop stamps the map pixel');
+  assert.ok(/dropPile\(\[dfItem\], dropFeet\(\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`\)/.test(s),
+    'and so does the quest-reward one');
   assert.ok(s.includes('piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))'), 'the F9 envelope carries the piles in natives');
   assert.ok(s.includes('droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1])'),
     'the F11 load re-mints them after the teleport');

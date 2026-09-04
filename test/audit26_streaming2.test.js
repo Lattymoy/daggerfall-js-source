@@ -72,9 +72,13 @@ test('audit26 F059: every host feeds its foe POOLS into the collapse', () => {
   // foes, the same pair its rest deps ask.
   assert.match(src('src/scenes/world.js'),
     /enemiesNearby: areEnemiesNearby\(\[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.\(exteriorFoes\?\.foes \?\? \[\]\)\]\)/);
-  // exterior.js has one pool (no encounter spawner in that host).
+  // ROAD-G G2: exterior.js carries BOTH pools too. It really did hold
+  // one - the watch - until the fixed-city host mounted the encounter
+  // pool CreateFoe's outdoor arm needed, and the collapse must see
+  // every pool the host has or it kills the player beside a foe that
+  // the STRICT variant counts.
   assert.match(src('src/scenes/exterior.js'),
-    /enemiesNearby: areEnemiesNearby\(cityGuards\?\.guards \?\? \[\]\)/);
+    /enemiesNearby: areEnemiesNearby\(\[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.\(exteriorFoes\?\.foes \?\? \[\]\)\]\)/);
   // the dungeon host asks the same ONE home rather than a second copy
   // of the law inline.
   assert.match(src('src/scenes/dungeonContext.js'), /const enemiesNearby = areEnemiesNearby\(foes\);/);

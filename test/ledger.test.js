@@ -227,10 +227,36 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   assert.ok(keybind, 'section C still carries the keybinding-registry row');
   assert.match(keybind, /DaggerfallJoystickControlsWindow\.cs/,
     'the joystick window has no Ledger row while controlsWindow.js sends the player to one');
-  assert.match(keybind, /systems\/inputActions\.js:465-468/,
-    'the joystick row must point at the flag that carries the owner decision');
   assert.match(keybind, /DaggerfallUnityMouseControlsWindow\.cs \(411\)[\s\S]*?THE SETTINGS SURFACE/,
     "the mouse/advanced window must be recorded against section A's settings-surface row");
+  // ROAD-G G3: the joystick clause cites the gamepad flag BY LINE, and
+  // G3 moved that flag twelve lines down when it retired the held-order
+  // remainder above it. A hard-coded `:465-468` here would have gone
+  // green on a row naming a stranger, which is exactly CD's lesson, so
+  // the cite is READ OUT of the row and RESOLVED against the file.
+  const cite = /systems\/inputActions\.js:(\d+)-(\d+)/.exec(keybind);
+  assert.ok(cite, 'the joystick row must point at the flag that carries the owner decision');
+  const ia = readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8').split('\n');
+  const cited = ia.slice(Number(cite[1]) - 1, Number(cite[2])).join('\n');
+  assert.match(cited, /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
+    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it`);
+  assert.match(cited, /loadKeyBinds ignores them in a DFU-written file/,
+    'the cited range must hold the WHOLE flag, not its first line');
+  // ROAD-G G6 (2026-09-04) BUILT the other one, so this half flipped
+  // from "recorded against section A" to "shipped": the row must strike
+  // the recorded clause, say so, and name the module - and the module
+  // must still be in the tree, which is the two-sided contract the rest
+  // of this test holds every re-swept row to.
+  assert.match(keybind, /~~THE MOUSE\/ADVANCED WINDOW[\s\S]*?~~ \*\*THE MOUSE\/ADVANCED WINDOW SHIPPED WHOLE \(ROAD-G G6, 2026-09-04\) and this row's live clause is NARROWED TO THE JOYSTICK WINDOW ALONE\.\*\*/,
+    'the mouse/advanced clause must be struck and re-stated as shipped, narrowing the row to the joystick');
+  assert.match(keybind, /`ui\/mouseControlsWindow\.js` IS DaggerfallUnityMouseControlsWindow\.cs/,
+    'the shipped clause must name the module it shipped');
+  assert.match(readFileSync(join(ROOT, 'src/ui/mouseControlsWindow.js'), 'utf8'),
+    /export class MouseControlsWindow/,
+    'the Ledger says the mouse/advanced window shipped; the file must still carry it');
+  assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
+    /this\.advanced \?\?= new MouseControlsWindow\(this\.unsaved\);/,
+    'the ADVANCED tab must still reach it, on the grid\'s own staged dicts');
   assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
     /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
     'the Ledger cites the gamepad flag at inputActions.js; the flag must still be there');
