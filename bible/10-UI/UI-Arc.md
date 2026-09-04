@@ -9103,7 +9103,7 @@ the row's live clause is down to the joystick alone.
 in this arc opens with a CIF or an IMG. This one opens with a flat
 `Panel`: `mainPanelBackgroundColor` black, `Outline.Enabled`, 318x170
 at Center/Middle, which over the 320x200 native panel is exactly
-`(1, 15)`. `SetBackground` (:281-291) offers the colour only as the
+`(1, 15)`. `SetBackground` (:322-332) offers the colour only as the
 FALLBACK - a mod may supply a texture named
 `advancedControlsMainPanelBackgroundColor` - and the port has no mod
 texture layer, so the colour arm is the only arm. Same shape for the
@@ -9135,8 +9135,8 @@ Daggerfall's, with a colour arm DFU ships for exactly this case.
 - `onSavedKeyBinds` in `src/systems/inputActions.js` -
   `InputManager.OnSavedKeyBinds`. It looks like a notification and is
   really an ORDERING, which is the most interesting thing in the C#:
-  the window does ALL of its setting writes in that handler (:78,
-  :334-360) and its own CONTINUE calls nothing but `CancelWindow`, so
+  the window does ALL of its setting writes in that handler (:83,
+  :351-371) and its own CONTINUE calls nothing but `CancelWindow`, so
   the ten values land when the CONTROLS window saves. Port the event
   and the ordering falls out.
 - `comboFromEvent` and `PromptRemoveKeybindMessage`'s rows moved into
@@ -9164,14 +9164,77 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:496`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:513`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
-`weaponSensitivitySlider` is commented out in DFU itself (:47, :338) -
+`weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
 `StartGameBehaviour.ApplyStartSettings()` has no port counterpart
 because every one of these settings is read at its point of use.
 
-**Pins:** `test/mousecontrols.test.js`, 13 tests, 29 mutations, 29
+**WHAT ROAD-GR G6 CORRECTED (2026-09-04).** The review found the
+window's whole POINTER PATH unheld and one seam of it broken, plus a
+run of cites into `DaggerfallUnityMouseControlsWindow.cs` that resolved
+to the wrong code.
+
+- **The drag never released.** The popup latches its slider thumb on the
+  press and `ControlsWindow.hover` pumps `advanced.drag(vx)` from every
+  move, but the grid carried no `release()` of its own - and the grid is
+  what sits in the hosts' overlay slot while the popup is up. All four
+  hosts deliver the button-up edge as `overlay.release?.()`
+  (`scenes/townTalk.js` even gates its up route on the member existing),
+  so the edge was a silent no-op and one press glued a slider to the
+  pointer for the rest of the popup's life, with the runaway value then
+  written by the grid's save. `ControlsWindow.release()` forwards it now,
+  the ROAD-E E1 shape `ui/itemMakerWindow.js:202` has carried since
+  Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
+- **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
+  (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
+  steps the slider the pointer is over - the last hovered point stands
+  in for the position the overlay wheel seam does not carry, which is
+  `ui/automapWindow.js`'s own shape - and `ControlsWindow.wheel`
+  forwards it, so all four hosts reach it.
+- **The checkboxes were clickable only on their 7x7 art.** DFU's
+  `Checkbox` is a Panel that hangs the toggle on ITSELF (Checkbox.cs:84)
+  and re-sizes itself every Update to `checkTextureSize.x +
+  checkTextHorzOffset + label.Size.x` (:103-105); that Size is the rect
+  `BaseScreenComponent` hit-tests (:578-579) and dispatches from
+  (:681-684), so in DFU clicking "Protect Friendlies and Neutrals"
+  toggles the box. `checkboxRect` is that width now, with the art alone
+  as the before-first-draw fallback - which is where DFU is too, since
+  Checkbox.Update calls `base.Update()` before assigning Size.
+- **Re-opening the tab skipped CheckDuplicates.** `OnPush() { OnReturn(); }`
+  and `OnReturn() { UpdateKeybindButtons(); CheckDuplicates(); }`
+  (:146-155) run on every push of the cached instance, which is exactly
+  what keeps its colouring current against a clash made on the GRID
+  between two visits. The port re-pushed with nothing but
+  `done = false`; `MouseControlsWindow.onPush()` carries both halves now.
+- **The panel outline was drawn in the text colour** under a comment
+  claiming `BaseScreenComponent` draws it in DaggerfallDefault.
+  `BaseScreenComponent` has no outline colour at all - `Outline.cs:29-31`
+  owns it, and its default is `Color.white`, never overridden here. The
+  border is white, the colour `ui/settingsWindow.js:779` and
+  `ui/spellIconPickerWindow.js` already drew theirs in.
+- **The OnSavedKeyBinds header claimed the port's raise was DFU's.** It
+  is not: DFU raises only after a successful write (InputManager.cs:926,
+  :927, :928, with no try/catch in SaveKeyBinds :871-929), and the port
+  shields the write and raises regardless. That is a deliberate
+  departure - a lost keybind blob must not also cost the ten
+  advanced-controls values - and it reads as one now.
+- **The cites.** Every `:NNN` into `DaggerfallUnityMouseControlsWindow.cs`
+  was off by a varying offset (`:78` -> `:83` for the subscription,
+  `:334-360` -> `:351-371` for the handler, `:253-283` -> `:285-319` for
+  AddTextbox, `:281-291` -> `:322-332` for SetBackground, `:436-439` ->
+  `:403-406` for a caller 25 lines past the end of a 411-line file, and
+  the rest), re-resolved against the reference file line by line. So
+  were `InputManager.cs:923` (the raise is `:928`, declared `:2067`) and
+  `DaggerfallControlsWindow.WaitForKeyPress :383-427` (`:380-424`, which
+  the tree's own surviving comment already had right). And
+  `ui/controlsWindow.js:8-12` - the record two live cites point at - said
+  the six off-grid actions "rebind only by editing the file", which this
+  very lane falsified; it names the ADVANCED window now, in the same
+  five lines so both cites still resolve.
+
+**Pins:** `test/mousecontrols.test.js`, 21 tests, 47 mutations, 47
 dead. `test/ledger.test.js` holds the Ledger row from both sides - the
 struck clause and the module it names must both still be there.
 

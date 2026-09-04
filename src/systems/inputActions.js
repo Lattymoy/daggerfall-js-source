@@ -458,22 +458,28 @@ export function saveKeyBinds(store) {
   _raiseSavedKeyBinds();
 }
 
-// ── OnSavedKeyBinds (InputManager.cs:923, the event SaveKeyBinds
-//    raises) ──────────────────────────────────────────────────────────
+// ── OnSavedKeyBinds (InputManager.cs:2067 declared, raised at :928
+//    inside SaveKeyBinds) ────────────────────────────────────────────
 //
 // ROAD-G G6 needed this and nothing before it did. It looks like a
 // notification and it is really an ORDERING: the advanced-controls
 // window subscribes at Setup
-// (DaggerfallUnityMouseControlsWindow.cs:78) and does ALL of its
+// (DaggerfallUnityMouseControlsWindow.cs:83) and does ALL of its
 // setting writes in the handler, so its sliders and checkboxes reach
 // the store at the moment the KEYBINDS are saved - which is the
 // CONTROLS window's close, not its own CONTINUE. Port the event and
 // that ordering falls out; hard-wire the call instead and the next
 // window to want it invents a second one.
 //
-// The raise is unconditional, exactly as DFU's is: a write that threw
-// still notifies, because the settings half of the handler has nothing
-// to do with whether localStorage accepted the binding blob.
+// DEPARTURE in the ORDER, and it is the port's shield that makes it.
+// DFU raises only after a SUCCESSFUL write - File.WriteAllText (:926),
+// UpdateBindingCache (:927), RaiseSavedKeyBindsEvent (:928) - and
+// SaveKeyBinds (:871-929) has no try/catch, so a throwing write
+// propagates and the event never fires. The port shields the write
+// (AUDIT DA above) and raises regardless, because the settings half of
+// the handler has nothing to do with whether localStorage accepted the
+// binding blob, and a lost keybind blob must not also cost the ten
+// advanced-controls values.
 const _savedKeyBindListeners = new Set();
 /** Returns the unsubscribe. DFU's static event never unsubscribes -
  *  its windows are DaggerfallUI singletons - and the port's windows

@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- **`src/systems/inputActions.js:507`** - STILL FLAGGED: axes and
+- **`src/systems/inputActions.js:513`** - STILL FLAGGED: axes and
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching

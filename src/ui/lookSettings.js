@@ -21,7 +21,7 @@ export const LOOK_BASE = 0.0025;
  *  ROAD-G G6 WIDENED THE CLAMP TO DFU'S OWN. It read 0.1..4.0 - the
  *  port's narrowing, which ui/settingsLaw.js then had to mirror under
  *  its range-equals-clamp law. DaggerfallUnityMouseControlsWindow.cs
- *  :121 builds the sensitivity slider over 0.1..16.0 and
+ *  :124 builds the sensitivity slider over 0.1..16.0 and
  *  SettingsManager.cs:524 clamps the key at exactly that, so the
  *  narrowing was a departure with nothing holding it up; the slider is
  *  verbatim now and the two consumers agree with it. */

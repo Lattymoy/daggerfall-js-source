@@ -236,7 +236,7 @@ function formatButtonText(text, full) {
  *  the LEFT physical key. The modifier keys themselves are excluded:
  *  pressing Shift alone must bind Shift, not a Shift+Shift combo. DFU
  *  takes TWO key-downs and lets ANY key be the modifier
- *  (DaggerfallControlsWindow.WaitForKeyPress :383-427); a browser
+ *  (DaggerfallControlsWindow.WaitForKeyPress :380-424); a browser
  *  KeyboardEvent reports three flags and no side, so this door offers
  *  the LEFT side of the three - which is what every DFU default binds.
  *  The storage, the duplicate law and the runtime read take any pair. */

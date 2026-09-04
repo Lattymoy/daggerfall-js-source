@@ -12,38 +12,44 @@
 // is a flat rect with an outline whose colour is
 // `mainPanelBackgroundColor` (:29) unless a MOD supplies a texture
 // named "advancedControlsMainPanelBackgroundColor" (SetBackground
-// :281-291, TextureReplacement). The port has no mod texture layer, so
+// :322-332, TextureReplacement). The port has no mod texture layer, so
 // the colour arm is the only arm - recorded exactly as
 // ui/travelPopUp.js records the same shape for its green checkbox, and
 // not a departure of behaviour.
 //
 // THE NATIVE-WINDOW RULE, element by element (all rects panel-relative
 // unless said otherwise):
-// - the panel is 318x170 (:83) at HorizontalAlignment.Center /
+// - the panel is 318x170 (:89) at HorizontalAlignment.Center /
 //   VerticalAlignment.Middle, which over the 320x200 native panel is
 //   (1, 15) - MOUSE_PANEL below. Outline on, background black (:29).
-// - the title at y=4, centred (:96-101).
-// - CONTINUE is 80x10 bottom-right (:104-110) = (238,160), on
+// - the title at y=4, centred (:99-104).
+// - CONTINUE is 80x10 bottom-right (:107-113) = (238,160), on
 //   continueButtonBackgroundColor (0.5, 0, 0, 1) (:31).
-// - SIX KEYBIND ROWS (:113-118), each an 85x15 panel at its anchor
+// - SIX KEYBIND ROWS (:116-121), each an 85x15 panel at its anchor
 //   holding a 40x10 label panel (right-aligned label, middle) and a
 //   43x10 button pinned Right/Middle - so the button sits at
 //   (+42, +2.5) inside the row and the label's right edge at +40
-//   (:174-208). These are EXACTLY the six actions DFU leaves off the
+//   (:173-213). These are EXACTLY the six actions DFU leaves off the
 //   classic grid (ui/controlsWindow.js:8-12 records that omission as
 //   DFU's own quirk, kept) - this window is where DFU rebinds them.
-// - FOUR SLIDERS (:120-133), each a 70x45 panel: a centred label at
+// - FOUR SLIDERS (:123-132), each a 70x45 panel: a centred label at
 //   y=0 and the trough at (0,6), 70x4, with the indicator 2 past its
 //   right edge (DaggerfallUI.cs:1106-1124, ported in
 //   ui/horizontalSlider.js). Mouse Look Smoothing (150,70) over the
 //   six strength names; Mouse Look Sensitivity (20,70) as a FLOAT
 //   slider 0.1..16.0; Weapon Swing Mode (150,90); Hit Detection
 //   (20,145).
-// - FIVE CHECKBOXES (:122-131), 7x7 (Checkbox.cs, checkbox_unchecked
-//   is 7x7) with the label 2 across and 1 down (:26-27): Invert Look-Y
-//   (20,120), Movement Acceleration (20,130), Bows (150,120), Toggle
-//   Sneak (150,130), Protect Friendlies (150,145).
-// - the THRESHOLD FIELD (:135, :253-283): a 100x20 panel at (20,90),
+// - FIVE CHECKBOXES (:125-133), whose ART is 7x7 (Checkbox.cs,
+//   checkbox_unchecked is 7x7) with the label 2 across and 1 down
+//   (:26-27): Invert Look-Y (20,120), Movement Acceleration (20,130),
+//   Bows (150,120), Toggle Sneak (150,130), Protect Friendlies
+//   (150,145). The CLICK TARGET is not the art: Checkbox is a Panel
+//   that hangs the toggle on ITSELF (Checkbox.cs:84) and re-sizes
+//   itself every Update to art + offset + label (Checkbox.cs:103-105),
+//   which is the rect BaseScreenComponent hit-tests (:578-579,
+//   :681-684) - so clicking "Protect Friendlies and Neutrals" toggles
+//   the box, and `checkboxRect` below is that width.
+// - the THRESHOLD FIELD (:135, :285-319): a 100x20 panel at (20,90),
 //   its label at y=0 and a 30x6 box at y=10, MaxCharacters 5.
 //
 // THE STRINGS are DFU's own Internal_Settings table (Assets/
@@ -55,9 +61,9 @@
 // (:63, :65), which is the same pair of words.
 //
 // THE ORDERING THAT LOOKS LIKE A BUG AND IS THE LAW. Setup subscribes
-// `OnUpdateValues` to InputManager.OnSavedKeyBinds (:78) and does ALL
-// of its setting writes there (:334-360). CONTINUE only calls
-// CancelWindow (:369-376). So the sliders, the checkboxes and the
+// `OnUpdateValues` to InputManager.OnSavedKeyBinds (:83) and does ALL
+// of its setting writes there (:351-371). CONTINUE only calls
+// CancelWindow (:373-380). So the sliders, the checkboxes and the
 // field reach the store when the KEYBINDS are saved - which is the
 // CONTROLS window's close (DaggerfallControlsWindow.cs:163-171), not
 // this window's own. systems/inputActions.js carries that event now
@@ -66,16 +72,16 @@
 //
 // TWO QUIRKS INSIDE THAT HANDLER, both kept:
 //  - the THRESHOLD is only written when `float.TryParse` succeeds
-//    (:353-355). TextBox.Text is the TYPED text and DefaultText is
+//    (:364-366). TextBox.Text is the TYPED text and DefaultText is
 //    only a display fallback (TextBox.cs:342-343), so a player who
 //    never touches the field leaves Text empty, TryParse fails, and
 //    WeaponAttackThreshold keeps whatever it had. Opening this window
 //    cannot silently rewrite it.
-//  - `weaponSensitivitySlider` is commented out in DFU (:47, :338).
+//  - `weaponSensitivitySlider` is commented out in DFU (:42, :355).
 //    Nine controls are built; the tenth is a stub. Not ported.
 //
 // WHAT THE PORT DRAWS DIFFERENTLY, and why neither is a behaviour:
-//  - DFU's parent panel is ScreenDimColor = Color.clear (:81,
+//  - DFU's parent panel is ScreenDimColor = Color.clear (:86,
 //    DaggerfallPopupWindow.cs:82) and DaggerfallUI draws ONLY the top
 //    window (DaggerfallUI.cs:489-492), so its 3D camera keeps painting
 //    behind the popup. The port's overlay slot does not repaint the
@@ -83,11 +89,20 @@
 //    backdrop's black - the same black ui/controlsWindow.js already
 //    lays down under CNFG00I0.
 //  - DFU sets TextScale 0.9 on the keybind labels and the slider
-//    indicators (:193, :1119). The port draws the classic bitmap font
+//    indicators (:195, :1119). The port draws the classic bitmap font
 //    at integer scale; 0.9 is an SDF-era shrink with no counterpart
 //    here, so the labels draw at 1.
 //
-// GameManager.Instance.StartGameBehaviour.ApplyStartSettings() (:359)
+// THE INPUT EDGES THE HOSTS DELIVER, and where they land. DFU polls
+// held-button state every frame (HorizontalSlider.Update :130-146,
+// dropped by the else arm at :148-154) and routes the wheel through
+// MouseScrollUp/Down (:180-190). The port has neither poll, so the
+// hosts' overlay seam carries both: `release()` ends the thumb latch
+// and `wheel(dir)` steps the slider under the pointer. Both arrive on
+// ui/controlsWindow.js, which is what sits in the overlay slot while
+// this window is up, and it forwards them the way it forwards hover.
+//
+// GameManager.Instance.StartGameBehaviour.ApplyStartSettings() (:370)
 // has no port counterpart and needs none: every one of these ten
 // settings is read at its point of use, so a write is already live.
 
@@ -101,8 +116,8 @@ import {
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, removeKeybindPromptRows, comboFromEvent,
 } from '../systems/controlsConfig.js';
 import {
-  makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderThumb,
-  indicatorText, SLIDER_HEIGHT, SLIDER_INDICATOR_OFFSET, TROUGH_COLOR, TINT,
+  makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderScroll,
+  sliderThumb, indicatorText, SLIDER_HEIGHT, SLIDER_INDICATOR_OFFSET, TROUGH_COLOR, TINT,
 } from './horizontalSlider.js';
 import { ToolTip } from './toolTip.js';
 import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } from '../systems/settings.js';
@@ -120,24 +135,24 @@ const effInt = (sec, key, min, max) =>
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
-/** mainPanelSize (:83) at Center/Middle over the 320x200 native panel. */
+/** mainPanelSize (:89) at Center/Middle over the 320x200 native panel. */
 export const MOUSE_PANEL = Object.freeze([1, 15, 318, 170]);
 /** mainPanelBackgroundColor / continueButtonBackgroundColor /
  *  keybindButtonBackgroundColor (:29-31). */
 export const PANEL_COLOR = Object.freeze([0, 0, 0, 1]);
 export const KEYBIND_BG = Object.freeze([0.2, 0.2, 0.2, 1]);
 export const CONTINUE_BG = Object.freeze([0.5, 0, 0, 1]);
-/** continueButton (:104-110): 80x10, Right/Bottom inside the panel. */
+/** continueButton (:107-113): 80x10, Right/Bottom inside the panel. */
 export const CONTINUE_RECT = Object.freeze([238, 160, 80, 10]);
-/** titleLabel.Position.y (:98); x is centred away. */
+/** titleLabel.Position.y (:101); x is centred away. */
 export const TITLE_Y = 4;
 
-/** SetupKeybindButton's panel/label/button geometry (:174-208). */
+/** SetupKeybindButton's panel/label/button geometry (:173-213). */
 export const ROW_SIZE = Object.freeze({ w: 85, h: 15 });
 export const ROW_LABEL = Object.freeze({ w: 40, h: 10 });
 export const ROW_BUTTON = Object.freeze({ w: 43, h: 10, x: 42, y: 2.5 });
 
-/** The six SetupKeybindButton calls (:113-118), in DFU's order, with
+/** The six SetupKeybindButton calls (:116-121), in DFU's order, with
  *  the Internal_Settings face each action wears here. */
 export const KEYBIND_ROWS = Object.freeze([
   { action: 'Escape', label: 'Escape', x: 20, y: 20 },
@@ -148,7 +163,7 @@ export const KEYBIND_ROWS = Object.freeze([
   { action: 'QuickLoad', label: 'QuickLoad', x: 210, y: 40 },
 ]);
 
-/** CreateSlider's panel (:224-247): 70x45, label centred at the top,
+/** CreateSlider's panel (:228-249): 70x45, label centred at the top,
  *  trough at (0,6) 70 wide. */
 export const SLIDER_PANEL = Object.freeze({ w: 70, h: 45, troughY: 6 });
 
@@ -168,7 +183,7 @@ export const WEAPON_SWING_MODES = Object.freeze(['Vanilla', 'Click', 'Hold']);
 /** Internal_Settings_en.asset, id 392878225761951744. */
 export const MELEE_DETECTION_MODES = Object.freeze(['Performance', 'Quality']);
 
-/** The four CreateSlider calls (:120-133), and the label each carries. */
+/** The four CreateSlider calls (:123-132), and the label each carries. */
 export const SLIDERS = Object.freeze([
   { id: 'mouseSmoothing', label: 'Mouse Look Smoothing', x: 150, y: 70 },
   { id: 'mouseSensitivity', label: 'Mouse Look Sensitivity', x: 20, y: 70 },
@@ -176,9 +191,10 @@ export const SLIDERS = Object.freeze([
   { id: 'meleeAttackDetection', label: 'Hit Detection', x: 20, y: 145 },
 ]);
 
-/** The five AddOption calls (:122-131). Checkbox.cs's texture is 7x7
+/** The five AddOption calls (:125-133). Checkbox.cs's texture is 7x7
  *  and its label sits TextHorzOffset 2 / TextVertOffset 1 across
- *  (:26-27, :140). */
+ *  (:26-27, :140) - the ART, not the component rect, which is
+ *  `MouseControlsWindow.checkboxRect` (Checkbox.cs:103-105). */
 export const CHECK_SIZE = 7;
 export const CHECK_TEXT_OFFSET = Object.freeze([2, 1]);
 export const CHECKBOXES = Object.freeze([
@@ -189,13 +205,13 @@ export const CHECKBOXES = Object.freeze([
   { id: 'meleeAttackFriendlyProtection', label: 'Protect Friendlies and Neutrals', x: 150, y: 145, section: 'MeleeAttacks', key: 'MeleeAttackFriendlyProtection' },
 ]);
 
-/** AddTextbox (:135, :253-283). */
+/** AddTextbox (:135, :285-319). */
 export const THRESHOLD = Object.freeze({
   label: 'Mouse Weapon Attack Threshold',
   x: 20, y: 90, panelW: 100, panelH: 20,
   box: [0, 10, 30, 6], maxCharacters: 5,
 });
-/** SettingsManager.cs:534 - the clamp OnUpdateValues re-applies (:355). */
+/** SettingsManager.cs:534 - the clamp OnUpdateValues re-applies (:366). */
 export const THRESHOLD_RANGE = Object.freeze([0.001, 1.0]);
 /** SettingsManager.cs:524 - the sensitivity slider's own range. */
 export const SENSITIVITY_RANGE = Object.freeze([0.1, 16.0]);
@@ -235,15 +251,21 @@ export class MouseControlsWindow {
     this.hooks = hooks;
     this.done = false;
     this.isChoiceWindow = true;
-    this.capture = null;      // waitingForInput (:56)
+    this.capture = null;      // waitingForInput (:57)
     this.top = null;          // 'remove'
     this._removeAction = null;
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved);
     this.tip = new ToolTip();
     this._drag = null;
+    // The overlay wheel seam carries no position (ui/automapWindow.js's
+    // shape), so the LAST hovered point is what the wheel acts on.
+    this._mouse = [0, 0];
+    // Checkbox.cs:103-105 needs the label's measured width, which only
+    // draw() has a font for; the first draw fills this in.
+    this._font = null;
 
-    // Setup's reads (:120-135), each through the getter DFU's
+    // Setup's reads (:123-135), each through the getter DFU's
     // SettingsManager uses for that key.
     this.sliders = {
       mouseSmoothing: makeSlider({
@@ -265,14 +287,14 @@ export class MouseControlsWindow {
     };
     this.checks = {};
     for (const c of CHECKBOXES) this.checks[c.id] = getBool(c.section, c.key);
-    // DefaultText is the STORED value's face; Text starts empty (:277).
+    // DefaultText is the STORED value's face; Text starts empty (:308).
     this.threshold = {
       text: '',
       defaultText: String(getFloat('Controls', 'WeaponAttackThreshold', ...THRESHOLD_RANGE)),
       focus: false,
     };
 
-    // :78 - the whole of this window's write path.
+    // :83 - the whole of this window's write path.
     this._unsub = onSavedKeyBinds(() => this.applyValues());
   }
 
@@ -285,7 +307,16 @@ export class MouseControlsWindow {
 
   _refresh() { this.dupes = checkDuplicates(this.unsaved); }
 
-  /** OnUpdateValues (:334-360). */
+  /** OnPush -> OnReturn (:146-155): UpdateKeybindButtons +
+   *  CheckDuplicates. DaggerfallUI keeps ONE instance and PushWindow
+   *  lays it over the grid again (DaggerfallUI.cs:569-571), so every
+   *  push re-reads the shared dicts. The labels already draw from a
+   *  live `currentDict`, so the term that has to re-run here is the
+   *  duplicate check - a clash the GRID made between two visits must
+   *  colour in this window too, and one it cleared must stop. */
+  onPush() { this.done = false; this._refresh(); }
+
+  /** OnUpdateValues (:351-371). */
   applyValues() {
     setValue('Controls', 'MouseLookSensitivity', sliderGetValue(this.sliders.mouseSensitivity).toFixed(1));
     setValue('Controls', 'MouseLookSmoothingFactor',
@@ -305,7 +336,7 @@ export class MouseControlsWindow {
   }
 
   _close() {
-    // ContinueButton_OnMouseClick (:369-376): CancelWindow, nothing else.
+    // ContinueButton_OnMouseClick (:373-380): CancelWindow, nothing else.
     this.done = true;
     this.hooks.onBack?.();
   }
@@ -317,6 +348,21 @@ export class MouseControlsWindow {
   static sliderTroughRect(s) {
     return [s.x, s.y + SLIDER_PANEL.troughY, SLIDER_PANEL.w, SLIDER_HEIGHT];
   }
+  /** Checkbox.cs:103-105 - the component's own Size, recomputed every
+   *  Update as `checkTextureSize.x + checkTextHorzOffset + label.Size.x`
+   *  by `Mathf.Max(checkTextureSize.y, label.Size.y)`. That is the rect
+   *  BaseScreenComponent hit-tests (:578-579) and dispatches the click
+   *  from (:681-684), so the LABEL is clickable and the 7x7 art is only
+   *  the art. Before the first draw there is no font to measure with,
+   *  and DFU is in the same place - Checkbox.Update calls base.Update()
+   *  BEFORE assigning Size (:93-105), so its first frame hit-tests the
+   *  previous Size too - hence the art-sized fallback. */
+  static checkboxRect(c, fnt) {
+    if (!fnt) return [c.x, c.y, CHECK_SIZE, CHECK_SIZE];
+    return [c.x, c.y,
+      CHECK_SIZE + CHECK_TEXT_OFFSET[0] + measureText(fnt, c.label),
+      Math.max(CHECK_SIZE, fnt.fixedHeight ?? 6)];
+  }
   static thresholdBoxRect() {
     return [THRESHOLD.x + THRESHOLD.box[0], THRESHOLD.y + THRESHOLD.box[1],
       THRESHOLD.box[2], THRESHOLD.box[3]];
@@ -325,7 +371,7 @@ export class MouseControlsWindow {
   input(code, e = null) {
     if (this.capture) {
       // WaitForKeyPress is DaggerfallControlsWindow's own static
-      // (:436-439 calls it), so the capture law - and the port's
+      // (:403-406 calls it), so the capture law - and the port's
       // narrowing of its two-key gesture onto the event's modifier
       // flags - is the grid's, unchanged.
       const combo = comboFromEvent(code, e);
@@ -356,7 +402,7 @@ export class MouseControlsWindow {
       return;
     }
     if (code === 'Escape') {
-      // AllowCancel is false only while waiting for input (:325-329);
+      // AllowCancel is false only while waiting for input (:341-345);
       // otherwise Escape is CancelWindow, the same exit as CONTINUE.
       this._click();
       this._close();
@@ -364,6 +410,7 @@ export class MouseControlsWindow {
   }
 
   hover(vx, vy) {
+    this._mouse = [vx, vy];
     if (this.capture || this.top) { this.tip.hide(); return; }
     const dict = currentDict(this.unsaved);
     for (const row of KEYBIND_ROWS) {
@@ -380,7 +427,7 @@ export class MouseControlsWindow {
 
   tick(dt) { this.tip.update(dt); }
 
-  /** The thumb drag (HorizontalSlider.cs:130-153) - held while the
+  /** The thumb drag (HorizontalSlider.cs:130-146) - held while the
    *  pointer is down, released by the host's pointer-up. */
   drag(vx) {
     if (!this._drag) return;
@@ -388,7 +435,27 @@ export class MouseControlsWindow {
     sliderDrag(s, SLIDER_PANEL.w, vx - this._drag.fromX, this._drag.fromIndex);
   }
 
+  /** HorizontalSlider.cs:148-154's else arm: the frame the button is
+   *  no longer held, `draggingThumb` goes false. The port has no
+   *  held-button poll, so this IS that arm - and it only runs because
+   *  ui/controlsWindow.js forwards the hosts' `release()` into it. */
   release() { this._drag = null; }
+
+  /** MouseScrollUp/Down (HorizontalSlider.cs:180-190): one unit a
+   *  notch, and only on the slider the pointer is over - DFU routes a
+   *  scroll to `mouseOverComponent` alone (BaseScreenComponent.cs:
+   *  578-579). The overlay wheel seam carries no position, so the last
+   *  hovered point stands in for it. */
+  wheel(dir) {
+    if (this.capture || this.top) return;
+    const [vx, vy] = this._mouse;
+    for (const spec of SLIDERS) {
+      if (inRect(toNative(MouseControlsWindow.sliderTroughRect(spec)), vx, vy)) {
+        sliderScroll(this.sliders[spec.id], dir);
+        return;
+      }
+    }
+  }
 
   click(vx, vy, right = false) {
     if (this.capture) return true;
@@ -428,14 +495,16 @@ export class MouseControlsWindow {
       }
     }
     for (const c of CHECKBOXES) {
-      if (inRect(toNative([c.x, c.y, CHECK_SIZE, CHECK_SIZE]), vx, vy)) {
+      // the whole Checkbox component - art + gap + label
+      // (Checkbox.cs:103-105) - not the 7x7 art alone
+      if (inRect(toNative(MouseControlsWindow.checkboxRect(c, this._font?.fnt)), vx, vy)) {
         // Checkbox_OnMouseClick (:160-165)
         this.checks[c.id] = !this.checks[c.id];
         return true;
       }
     }
     if (inRect(toNative(MouseControlsWindow.thresholdBoxRect()), vx, vy)) {
-      this.threshold.focus = true;   // UseFocus (:281)
+      this.threshold.focus = true;   // UseFocus (:312)
       return true;
     }
     this.threshold.focus = false;
@@ -448,15 +517,19 @@ export class MouseControlsWindow {
   }
 
   draw(renderer, canvas, font) {
+    this._font = font;   // Checkbox.cs:103-105's label width, for click()
     const m = nativeMetrics(canvas);
     drawMenuBackdrop(renderer, canvas);   // see the header: the port's stand-in for a clear parent panel
     const [px, py, pw, ph] = MOUSE_PANEL;
     drawRect(renderer, m, px, py, pw, ph, PANEL_COLOR);
-    // Outline.Enabled (:87) - a one-pixel border in the panel colour's
-    // own outline, which BaseScreenComponent draws in DaggerfallDefault.
+    // Outline.Enabled (:94): Outline.cs:29-31 - thickness 1, Sides.All
+    // and Color.WHITE. This window never assigns Outline.Color, and
+    // Panel's focus arms (Panel.cs:202, :211) need UseFocus, which
+    // mainPanel does not set - so white is the only colour it can be,
+    // the same white the TextBox border below takes from :310-311.
     for (const [ox, oy, ow, oh] of [[px, py, pw, 1], [px, py + ph - 1, pw, 1],
       [px, py, 1, ph], [px + pw - 1, py, 1, ph]]) {
-      drawRect(renderer, m, ox, oy, ow, oh, TEXT_COLOR);
+      drawRect(renderer, m, ox, oy, ow, oh, WHITE);
     }
     const at = (x, y) => [m.ox + (MOUSE_PANEL[0] + x) * m.s, m.oy + (MOUSE_PANEL[1] + y) * m.s];
     const put = (text, x, y, color = TEXT_COLOR) => {
@@ -508,7 +581,10 @@ export class MouseControlsWindow {
       if (this.checks[c.id]) {
         drawRect(renderer, m, MOUSE_PANEL[0] + c.x + 2, MOUSE_PANEL[1] + c.y + 2, CHECK_SIZE - 4, CHECK_SIZE - 4, TEXT_COLOR);
       }
-      put(c.label, c.x + CHECK_SIZE + CHECK_TEXT_OFFSET[0], c.y + CHECK_TEXT_OFFSET[1]);
+      // the hit rect's own width term, minus the label: ONE home for
+      // Checkbox.cs:103-105's arithmetic
+      const [, , cw] = MouseControlsWindow.checkboxRect(c, font.fnt);
+      put(c.label, c.x + cw - measureText(font.fnt, c.label), c.y + CHECK_TEXT_OFFSET[1]);
     }
 
     // the threshold field

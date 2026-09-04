@@ -21,27 +21,60 @@ import {
   SLIDER_INDICATOR_OFFSET, THUMB_MIN_W, TINT, TROUGH_COLOR,
 } from '../src/ui/horizontalSlider.js';
 import { ControlsWindow, gridButtons, TAB_RECTS } from '../src/ui/controlsWindow.js';
-import { createUnsavedKeybinds, currentDict } from '../src/systems/controlsConfig.js';
+import {
+  createUnsavedKeybinds, currentDict, setUnsavedBinding, removeKeybindPromptRows,
+} from '../src/systems/controlsConfig.js';
+import { createTownTalk } from '../src/scenes/townTalk.js';
 import { createBindings, resetDefaults, saveKeyBinds, onSavedKeyBinds } from '../src/systems/inputActions.js';
 import {
   getBool, getFloat, getInt, setValue, effectiveSettings, _resetForTests,
 } from '../src/systems/settings.js';
 import { NUMBER_LAW } from '../src/ui/settingsLaw.js';
+import { measureText } from '../src/ui/text.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const code = (f) => readFileSync(join(root, 'src', f), 'utf8');
 const freshStore = () => { const b = createBindings(); resetDefaults(b); return b; };
 const freshWindow = () => { _resetForTests(); return new MouseControlsWindow(createUnsavedKeybinds(freshStore())); };
 
+const FONT = { fnt: { fixedWidth: 6, fixedHeight: 6, glyphWidth: () => 5 }, tex: 'atlas' };
+const CANVAS = {
+  width: 320,
+  height: 200,
+  getBoundingClientRect: () => ({ left: 0, top: 0, width: 320, height: 200 }),
+};
+/** A renderer that records its quads, so a COLOUR is assertable. */
+const recorder = () => {
+  const quads = [];
+  return {
+    quads,
+    screenOffset: [0, 0],
+    uploadTexture: () => ({}),
+    drawScreenQuad(tex, rect, uv, color) { quads.push({ rect, color }); },
+  };
+};
+/** One draw, which is what fills the font-dependent hit rects. */
+const drawOnce = (w) => { w.draw(recorder(), CANVAS, FONT); return w; };
+
+/** The sensitivity slider's thumb, in native coordinates. */
+function thumbAt(w, id = 'mouseSensitivity') {
+  const spec = SLIDERS.find((s) => s.id === id);
+  const rect = toNative(MouseControlsWindow.sliderTroughRect(spec));
+  const s = w.sliders[id];
+  const thumb = sliderThumb([0, 0, SLIDER_PANEL.w, SLIDER_HEIGHT], s.scrollIndex, s.totalUnits, s.displayUnits);
+  assert.ok(thumb, 'the sensitivity slider has a thumb');
+  return { rect, x: rect[0] + thumb[0] + 1, y: rect[1] + 1 };
+}
+
 test('G6: the panel is DFU\'s 318x170 at Center/Middle, and every child rect is verbatim', () => {
-  // mainPanelSize (:83) centred over the 320x200 native panel.
+  // mainPanelSize (:89) centred over the 320x200 native panel.
   assert.deepEqual([...MOUSE_PANEL], [1, 15, 318, 170]);
   assert.equal(MOUSE_PANEL[0], Math.round((320 - 318) / 2));
   assert.equal(MOUSE_PANEL[1], Math.round((200 - 170) / 2));
-  // continueButton: 80x10, Right/Bottom (:104-110)
+  // continueButton: 80x10, Right/Bottom (:107-113)
   assert.deepEqual([...CONTINUE_RECT], [318 - 80, 170 - 10, 80, 10]);
   assert.equal(TITLE_Y, 4);
-  // the keybind row (:174-208): an 85x15 panel, a 40x10 label panel
+  // the keybind row (:173-213): an 85x15 panel, a 40x10 label panel
   // and a 43x10 button pinned Right/Middle inside it.
   assert.deepEqual({ ...ROW_SIZE }, { w: 85, h: 15 });
   assert.deepEqual({ ...ROW_LABEL }, { w: 40, h: 10 });
@@ -50,12 +83,12 @@ test('G6: the panel is DFU\'s 318x170 at Center/Middle, and every child rect is 
     'Escape@20,20', 'AutoRun@20,40', 'ToggleConsole@115,20',
     'PrintScreen@115,40', 'QuickSave@210,20', 'QuickLoad@210,40',
   ]);
-  // CreateSlider's panel (:224-247) and the four anchors (:120-133)
+  // CreateSlider's panel (:228-249) and the four anchors (:123-132)
   assert.deepEqual({ ...SLIDER_PANEL }, { w: 70, h: 45, troughY: 6 });
   assert.deepEqual(SLIDERS.map((s) => `${s.id}@${s.x},${s.y}`),
     ['mouseSmoothing@150,70', 'mouseSensitivity@20,70',
       'weaponSwingMode@150,90', 'meleeAttackDetection@20,145']);
-  // the five AddOption calls (:122-131), and Checkbox.cs's 7x7 art
+  // the five AddOption calls (:125-133), and Checkbox.cs's 7x7 ART
   assert.deepEqual(CHECKBOXES.map((c) => `${c.id}@${c.x},${c.y}`), [
     'invertMouseVertical@20,120', 'movementAcceleration@20,130',
     'bowDrawback@150,120', 'toggleSneak@150,130',
@@ -63,7 +96,7 @@ test('G6: the panel is DFU\'s 318x170 at Center/Middle, and every child rect is 
   ]);
   assert.equal(CHECK_SIZE, 7);
   assert.deepEqual([...CHECK_TEXT_OFFSET], [2, 1]);
-  // AddTextbox (:253-283)
+  // AddTextbox (:285-319)
   assert.equal(THRESHOLD.x, 20);
   assert.equal(THRESHOLD.y, 90);
   assert.deepEqual([...THRESHOLD.box], [0, 10, 30, 6]);
@@ -182,14 +215,14 @@ test('G6: OnUpdateValues writes all nine controls, and TryParse gates the tenth'
   assert.equal(getBool('Controls', 'ToggleSneak'), true);
   assert.equal(getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection'), false);
 
-  // THE QUIRK (:353-355 over TextBox.cs:342-343): an untouched box
+  // THE QUIRK (:364-366 over TextBox.cs:342-343): an untouched box
   // reports the EMPTY string - DefaultText is display only - so
   // float.TryParse fails and the threshold is left exactly as it was.
   assert.equal(getFloat('Controls', 'WeaponAttackThreshold', ...THRESHOLD_RANGE), before);
   assert.equal(tryParseFloat(''), null);
   assert.equal(tryParseFloat('  0.25 '), 0.25);
   assert.equal(tryParseFloat('0.2x'), null);
-  // ...and a typed value IS written, through Mathf.Clamp (:355)
+  // ...and a typed value IS written, through Mathf.Clamp (:366)
   w.threshold.text = '9';
   w.applyValues();
   assert.equal(getFloat('Controls', 'WeaponAttackThreshold', ...THRESHOLD_RANGE), THRESHOLD_RANGE[1]);
@@ -200,7 +233,7 @@ test('G6: OnUpdateValues writes all nine controls, and TryParse gates the tenth'
 });
 
 test('G6: Setup reads all ten values out of the store', () => {
-  // Every control shows what is STORED when the window opens (:120-135)
+  // Every control shows what is STORED when the window opens (:123-135)
   // - a window that opened on its own defaults would quietly reset the
   // player's settings the next time the grid saved.
   _resetForTests();
@@ -215,7 +248,7 @@ test('G6: Setup reads all ten values out of the store', () => {
   assert.equal(w.sliders.mouseSmoothing.scrollIndex, 4, 'GetMouseLookSmoothingStrength(0.6)');
   assert.equal(w.sliders.weaponSwingMode.scrollIndex, 1);
   assert.equal(w.sliders.meleeAttackDetection.scrollIndex, 1);
-  assert.equal(w.threshold.defaultText, '0.02', 'DefaultText is the stored value (:277)');
+  assert.equal(w.threshold.defaultText, '0.02', 'DefaultText is the stored value (:308)');
   assert.equal(w.threshold.text, '', 'Text starts EMPTY - DefaultText is display only');
   for (const c of CHECKBOXES) assert.equal(w.checks[c.id], true, c.id);
   w.dispose();
@@ -223,7 +256,7 @@ test('G6: Setup reads all ten values out of the store', () => {
 
 test('G6: the values land on the KEYBIND SAVE, which is the controls window\'s close', () => {
   // Setup subscribes OnUpdateValues to InputManager.OnSavedKeyBinds
-  // (:78) and CONTINUE only calls CancelWindow (:369-376), so the
+  // (:83) and CONTINUE only calls CancelWindow (:373-380), so the
   // ordering is DFU's: nothing this window holds reaches the store
   // until the grid saves.
   _resetForTests();
@@ -259,6 +292,33 @@ test('G6: the event has ONE home and every listener is shielded', () => {
   offA(); offB();
   saveKeyBinds(freshStore());
   assert.deepEqual(seen, ['b'], 'unsubscribed listeners stop firing');
+
+  // ...and the RAISE OUTLIVES A FAILED WRITE, which is the port's own
+  // departure and is now written as one. DFU raises only after a
+  // successful write - File.WriteAllText (InputManager.cs:926),
+  // UpdateBindingCache (:927), RaiseSavedKeyBindsEvent (:928), with no
+  // try/catch anywhere in SaveKeyBinds (:871-929) - so a throwing write
+  // propagates and the event never fires. The port shields the write
+  // (AUDIT DA) and raises regardless, because a lost keybind blob must
+  // not also cost the ten advanced-controls values.
+  const prevLs = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const prevWarn = console.warn;
+  try {
+    console.warn = () => {};
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: { getItem: () => null, removeItem() {}, setItem() { throw new Error('quota'); } },
+    });
+    const after = [];
+    const off = onSavedKeyBinds(() => after.push('raised'));
+    saveKeyBinds(freshStore());
+    assert.deepEqual(after, ['raised'], 'a write that threw still notifies - the port\'s departure');
+    off();
+  } finally {
+    console.warn = prevWarn;
+    if (prevLs) Object.defineProperty(globalThis, 'localStorage', prevLs);
+    else delete globalThis.localStorage;
+  }
 });
 
 test('G6: the ADVANCED tab opens it over the grid, on the SAME staged dicts', () => {
@@ -287,6 +347,14 @@ test('G6: the ADVANCED tab opens it over the grid, on the SAME staged dicts', ()
   cw.click(TAB_RECTS.advanced[0] + 1, TAB_RECTS.advanced[1] + 1);
   assert.equal(cw.advanced, first);
   assert.equal(cw.advancedOpen, true);
+  // ...and the re-push CLEARS `done` (OnPush, :146-149), so the next
+  // click INTO the popup is a click and not the stale close left over
+  // from the last CONTINUE.
+  const cbox = toNative(MouseControlsWindow.checkboxRect(CHECKBOXES[0], null));
+  const wasChecked = cw.advanced.checks[CHECKBOXES[0].id];
+  cw.click(cbox[0] + 1, cbox[1] + 1);
+  assert.equal(cw.advancedOpen, true, 'a re-pushed window stays up');
+  assert.equal(cw.advanced.checks[CHECKBOXES[0].id], !wasChecked);
   cw.advanced.dispose();
 });
 
@@ -320,15 +388,15 @@ test('G6: the checkboxes, the field focus and the capture take pointer input', (
 
   const field = toNative(MouseControlsWindow.thresholdBoxRect());
   w.click(field[0] + 1, field[1] + 1);
-  assert.equal(w.threshold.focus, true, 'UseFocus (:281)');
+  assert.equal(w.threshold.focus, true, 'UseFocus (:312)');
   w.input('Digit1', { key: '1' });
   w.input('Period', { key: '.' });
   for (const ch of '2345') w.input('Key', { key: ch });
-  assert.equal(w.threshold.text, '1.234', 'MaxCharacters 5 (:275)');
+  assert.equal(w.threshold.text, '1.234', 'MaxCharacters 5 (:306)');
   w.input('Backspace');
   assert.equal(w.threshold.text, '1.23');
 
-  // a RIGHT click on a bound row prompts to remove it (:377-386)
+  // a RIGHT click on a bound row prompts to remove it (:393-401)
   const btn = toNative(MouseControlsWindow.rowButtonRect(KEYBIND_ROWS[4]));
   w.click(btn[0] + 1, btn[1] + 1, true);
   assert.equal(w.top, 'remove');
@@ -348,4 +416,270 @@ test('G6: HorizontalSlider.cs has ONE home, and the topic bar uses it', () => {
   // DFU itself took it from ("Reused code from VerticalScrollBar").
   assert.match(code('ui/horizontalSlider.js'),
     /export \{ clampScrollIndex \} from '\.\/verticalScrollBar\.js';/);
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// ROAD-GR G6: THE POINTER PATH. The lane pinned the slider as a
+// COMPONENT and the write path end to end, and left the window's own
+// pointer wiring - the drag's direction, the release edge, the grid's
+// forwarding, the right-click guard, the unbound-row refusal, the
+// cached re-push and the wheel - held by nothing.
+// ─────────────────────────────────────────────────────────────────────
+
+test('G6: the checkbox click target is DFU\'s Checkbox rect - art + gap + LABEL, bounded by the label', () => {
+  // Checkbox is a Panel that hangs the toggle on ITSELF (Checkbox.cs:84)
+  // and re-sizes itself every Update to `checkTextureSize.x +
+  // checkTextHorzOffset + label.Size.x` by `Mathf.Max(art, label)`
+  // (Checkbox.cs:103-105). That Size IS the rect BaseScreenComponent
+  // hit-tests (:578-579) and dispatches the click from (:681-684), so
+  // in DFU clicking the WORDS toggles the box. AddOption sets only
+  // Position (:274-283), so nothing else ever sizes it.
+  const w = drawOnce(freshWindow());
+  const c = CHECKBOXES[4];   // 'Protect Friendlies and Neutrals', the widest
+  const rect = MouseControlsWindow.checkboxRect(c, FONT.fnt);
+  assert.equal(rect[2], CHECK_SIZE + CHECK_TEXT_OFFSET[0] + measureText(FONT.fnt, c.label));
+  assert.equal(rect[3], Math.max(CHECK_SIZE, FONT.fnt.fixedHeight));
+  const native = toNative(rect);
+
+  // the middle of the LABEL, well clear of the 7x7 art
+  const was = w.checks[c.id];
+  w.click(native[0] + CHECK_SIZE + CHECK_TEXT_OFFSET[0] + 3, native[1] + 2);
+  assert.equal(w.checks[c.id], !was, 'the label is inside the Checkbox rect');
+  // ...and the rect is BOUNDED by the label's own width - one pixel
+  // past its right edge is outside the component, not inside an
+  // open-ended strip.
+  w.click(native[0] + native[2] + 1, native[1] + 2);
+  assert.equal(w.checks[c.id], !was, 'past the label is outside the component');
+  // the art still answers, as it always did
+  w.click(native[0] + 1, native[1] + 1);
+  assert.equal(w.checks[c.id], was);
+
+  // Before the first draw there is no font to measure with - and DFU is
+  // in the same place, because Checkbox.Update calls base.Update()
+  // BEFORE assigning Size (:93-105), so its first frame hit-tests the
+  // previous Size too. The fallback is the art alone.
+  const fresh = freshWindow();
+  const artOnly = toNative(MouseControlsWindow.checkboxRect(c, null));
+  assert.deepEqual(artOnly, toNative([c.x, c.y, CHECK_SIZE, CHECK_SIZE]));
+  const before = fresh.checks[c.id];
+  fresh.click(artOnly[0] + CHECK_SIZE + CHECK_TEXT_OFFSET[0] + 3, artOnly[1] + 2);
+  assert.equal(fresh.checks[c.id], before, 'no font, no measured label');
+  w.dispose();
+  fresh.dispose();
+});
+
+test('G6: the main panel\'s outline is Outline.cs\'s WHITE, not the text colour', () => {
+  // `mainPanel.Outline.Enabled = true` (:94) is all this window sets;
+  // it never assigns Outline.Color, and Panel's focus arms
+  // (Panel.cs:202, :211) need UseFocus, which mainPanel does not set.
+  // So the border keeps Outline.cs:29-31's defaults - thickness 1,
+  // Sides.All, Color.white - the same white the TextBox border takes
+  // explicitly at :310-311.
+  const r = recorder();
+  const w = freshWindow();
+  w.draw(r, CANVAS, FONT);
+  const [px, py, pw, ph] = MOUSE_PANEL;
+  const strips = [[px, py, pw, 1], [px, py + ph - 1, pw, 1],
+    [px, py, 1, ph], [px + pw - 1, py, 1, ph]];
+  for (const [x, y, sw, sh] of strips) {
+    const q = r.quads.find((v) => v.rect.x === x && v.rect.y === y
+      && v.rect.w === sw && v.rect.h === sh);
+    assert.ok(q, `the outline strip ${x},${y},${sw},${sh} is drawn`);
+    assert.deepEqual([...q.color], [1, 1, 1, 1], 'Outline.cs:30 - Color.white');
+  }
+  w.dispose();
+});
+
+test('G6: the thumb drag runs off the pointer, and the host\'s UP edge is what ends it', () => {
+  // HorizontalSlider.Update drags only inside `GetMouseButton(0)`
+  // (:130-146) and its else arm drops `draggingThumb` the frame the
+  // button comes up (:148-154). The port has no held-button poll, so
+  // `release()` IS that else arm.
+  const w = freshWindow();
+  setScrollIndex(w.sliders.mouseSensitivity, 80);
+  const t = thumbAt(w);
+  w.click(t.x, t.y);
+  assert.ok(w._drag, 'a press inside the thumb latches the drag');
+  assert.equal(w._drag.fromIndex, 80);
+
+  // the DIRECTION: rightward raises the index, leftward lowers it
+  w.drag(t.x + 20);
+  const up = w.sliders.mouseSensitivity.scrollIndex;
+  assert.ok(up > 80, `a rightward drag raises the index (got ${up})`);
+  w.drag(t.x - 20);
+  const down = w.sliders.mouseSensitivity.scrollIndex;
+  assert.ok(down < 80, `a leftward drag lowers it (got ${down})`);
+
+  // the RELEASE, and the consequence that is the whole point of it
+  w.release();
+  assert.equal(w._drag, null);
+  w.drag(t.x + 40);
+  assert.equal(w.sliders.mouseSensitivity.scrollIndex, down,
+    'a released drag moves nothing');
+  w.dispose();
+});
+
+test('G6: the GRID forwards the pointer edges into the popup - the move, the UP and the wheel', () => {
+  const cw = new ControlsWindow({});
+  cw.click(TAB_RECTS.advanced[0] + 1, TAB_RECTS.advanced[1] + 1);
+  const adv = cw.advanced;
+  setScrollIndex(adv.sliders.mouseSensitivity, 80);
+  const t = thumbAt(adv);
+  cw.click(t.x, t.y);
+  assert.ok(adv._drag, 'the grid hands the press through');
+
+  // the MOVE arm: the grid's hover pumps drag(vx)
+  cw.hover(t.x + 20, t.y);
+  const dragged = adv.sliders.mouseSensitivity.scrollIndex;
+  assert.ok(dragged > 80, 'a move with the button down drags the thumb');
+
+  // THE UP ARM. The four hosts deliver the button-up edge as
+  // `overlay.release?.()`, and ControlsWindow is what sits in that slot
+  // while the popup is up - so without a release member of its own the
+  // edge is a silent no-op and one press glues the slider to the
+  // pointer for the rest of the session.
+  assert.equal(typeof cw.release, 'function', 'the grid must carry the up edge');
+  cw.release();
+  assert.equal(adv._drag, null);
+  cw.hover(t.x + 60, t.y);
+  assert.equal(adv.sliders.mouseSensitivity.scrollIndex, dragged,
+    'a move after the button came up moves nothing');
+
+  // the WHEEL arm: MouseScrollUp/Down (HorizontalSlider.cs:180-190),
+  // one unit a notch, on the slider the pointer is over.
+  const trough = t.rect;
+  cw.hover(trough[0] + 3, trough[1] + 1);
+  cw.wheel(-1);
+  assert.equal(adv.sliders.mouseSensitivity.scrollIndex, dragged - 1, 'wheel UP steps -1');
+  cw.wheel(1);
+  cw.wheel(1);
+  assert.equal(adv.sliders.mouseSensitivity.scrollIndex, dragged + 1, 'wheel DOWN steps +1');
+  // ...and off every trough it moves nothing
+  cw.hover(toNative([0, 0, 1, 1])[0], toNative([0, 0, 1, 1])[1]);
+  cw.wheel(-1);
+  assert.equal(adv.sliders.mouseSensitivity.scrollIndex, dragged + 1,
+    'the wheel only reaches the slider under the pointer');
+  adv.dispose();
+});
+
+test('G6 LIVE: the real townTalk host delivers the up edge into the popup\'s thumb latch', () => {
+  // The gate at the top of the host's pointer route admits phase 'up'
+  // only for a window that HAS a release member, so this is the pin
+  // that holds the seam end to end rather than the method's existence.
+  const tt = createTownTalk({
+    renderer: { uploadTexture: () => ({}) },
+    canvas: CANVAS,
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  const cw = new ControlsWindow({});
+  tt.showOverlay(cw);
+  tt.pointerdown({ clientX: TAB_RECTS.advanced[0] + 1, clientY: TAB_RECTS.advanced[1] + 1, button: 0 });
+  assert.equal(cw.advancedOpen, true, 'the host press opened the ADVANCED window');
+  const adv = cw.advanced;
+  setScrollIndex(adv.sliders.mouseSensitivity, 80);
+  const t = thumbAt(adv);
+  tt.pointerdown({ clientX: t.x, clientY: t.y, button: 0 });
+  assert.ok(adv._drag, 'the host press latched the thumb');
+  assert.equal(tt.pointer('up', { clientX: t.x, clientY: t.y, button: 0 }), true,
+    'the host owns the release for a window that carries one');
+  assert.equal(adv._drag, null, 'and the host release let it go');
+  const held = adv.sliders.mouseSensitivity.scrollIndex;
+  tt.hover({ clientX: t.x + 40, clientY: t.y });
+  assert.equal(adv.sliders.mouseSensitivity.scrollIndex, held,
+    'a button-up move across the screen no longer drags the slider');
+  adv.dispose();
+});
+
+test('G6: right-click reaches ONLY the keybind rows, and refuses an unbound one', () => {
+  // DaggerfallUnityMouseControlsWindow registers OnRightMouseClick on
+  // the keybind buttons ALONE (:203) - no checkbox, slider or TextBox
+  // in this window carries one.
+  const w = drawOnce(freshWindow());
+  const c = CHECKBOXES[0];
+  const cbox = toNative(MouseControlsWindow.checkboxRect(c, FONT.fnt));
+  const wasChecked = w.checks[c.id];
+  w.click(cbox[0] + 1, cbox[1] + 1, true);
+  assert.equal(w.checks[c.id], wasChecked, 'a right click does not toggle a checkbox');
+
+  const field = toNative(MouseControlsWindow.thresholdBoxRect());
+  w.click(field[0] + 1, field[1] + 1, true);
+  assert.equal(w.threshold.focus, false, 'a right click does not focus the field');
+
+  const spec = SLIDERS.find((s) => s.id === 'weaponSwingMode');
+  const trough = toNative(MouseControlsWindow.sliderTroughRect(spec));
+  const wasIndex = w.sliders.weaponSwingMode.scrollIndex;
+  w.click(trough[0] + SLIDER_PANEL.w - 1, trough[1] + 1, true);
+  assert.equal(w.sliders.weaponSwingMode.scrollIndex, wasIndex, 'a right click does not page a slider');
+
+  // ...and PromptRemoveKeybindMessage refuses an UNBOUND slot outright
+  // (ControlsConfigManager.cs:290-292: `if (button.Label.Text ==
+  // KeyCode.None.ToString()) return;`).
+  setUnsavedBinding(w.unsaved, 'AutoRun', null);
+  const row = KEYBIND_ROWS.find((r) => r.action === 'AutoRun');
+  const btn = toNative(MouseControlsWindow.rowButtonRect(row));
+  w.click(btn[0] + 1, btn[1] + 1, true);
+  assert.equal(w.top, null, 'an unbound row raises no remove prompt');
+  assert.equal(w._removeAction, null);
+  // the control: a BOUND row does raise it, so the refusal is about the
+  // binding and not about the rect
+  const bound = KEYBIND_ROWS.find((r) => r.action === 'QuickSave');
+  const bbtn = toNative(MouseControlsWindow.rowButtonRect(bound));
+  w.click(bbtn[0] + 1, bbtn[1] + 1, true);
+  assert.equal(w.top, 'remove');
+  w.input('KeyN');
+  w.dispose();
+});
+
+test('G6: re-opening the ADVANCED window re-checks duplicates - OnPush -> OnReturn (:146-155)', () => {
+  // DFU caches ONE instance and PushWindow lays it over the grid again
+  // (DaggerfallUI.cs:569-571), so OnPush -> OnReturn ->
+  // UpdateKeybindButtons + CheckDuplicates is what keeps the cached
+  // window's colouring current against edits made on the GRID. The two
+  // windows edit one ControlsConfigManager, so a clash made on either
+  // side has to colour on both.
+  const cw = new ControlsWindow({});
+  cw.click(TAB_RECTS.advanced[0] + 1, TAB_RECTS.advanced[1] + 1);   // visit 1
+  const cont = toNative(CONTINUE_RECT);
+  cw.click(cont[0] + 1, cont[1] + 1);                                // back to the grid
+  assert.equal(cw.advancedOpen, false);
+
+  // a clash made on the GRID, between the two visits, through its own UI
+  const escCode = currentDict(cw.unsaved).get('Escape');
+  const b0 = cw.buttons[0];
+  const b0Code = currentDict(cw.unsaved).get(b0.action);
+  cw.click(b0.x + 1, b0.y + 1);
+  cw.input(escCode);
+  assert.ok(cw.dupes.internal.has(escCode), 'the grid paints the clash');
+  assert.equal(cw.advanced.dupes.internal.has(escCode), false,
+    'the cached popup still holds its construction-time snapshot');
+
+  cw.click(TAB_RECTS.advanced[0] + 1, TAB_RECTS.advanced[1] + 1);   // visit 2
+  assert.ok(cw.advanced.dupes.internal.has(escCode),
+    'the re-push re-runs CheckDuplicates over the shared dicts');
+  assert.deepEqual([...cw.advanced.dupes.internal].sort(), [...cw.dupes.internal].sort());
+
+  // ...and the MIRROR: a clash CLEARED on the grid stops colouring here
+  cw.click(cont[0] + 1, cont[1] + 1);
+  cw.click(b0.x + 1, b0.y + 1);
+  cw.input(b0Code);
+  assert.equal(cw.dupes.internal.has(escCode), false, 'the grid cleared it');
+  cw.click(TAB_RECTS.advanced[0] + 1, TAB_RECTS.advanced[1] + 1);
+  assert.equal(cw.advanced.dupes.internal.has(escCode), false,
+    'a cleared clash stops colouring in the popup too');
+  assert.equal(cw.advanced.dupes.ok, true);
+  cw.advanced.dispose();
+});
+
+test('G6: the remove prompt splits the action\'s camel case, as PromptRemoveKeybindMessage does', () => {
+  // ControlsConfigManager.cs:298-302 formats the "removeKeybind" record
+  // with the action name split at its capitals and the FULL button text
+  // of the code being removed. An identity `splitCamel` was invisible
+  // to the whole suite.
+  const rows = removeKeybindPromptRows('AutoRun', 'KeyR');
+  assert.equal(rows.length, 2);
+  assert.match(rows[1], /Auto Run/, 'the camel case is SPLIT, not passed through');
+  assert.equal(/AutoRun/.test(rows[1]), false);
+  assert.match(rows[1], /'R'/, 'and the code is the FULL button text');
 });

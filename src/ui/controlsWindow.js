@@ -8,8 +8,8 @@
 // - NINE GROUPS of 47x7 buttons stacked at +11 (:184-201), covering
 //   Actions[2..40) - 38 of the 44: Escape and ToggleConsole are not
 //   offered, and QuickSave/QuickLoad/PrintScreen/AutoRun sit past
-//   the grid's end. DFU's own quirk, kept: those six rebind only by
-//   editing the file.
+//   the grid's end. DFU's own quirk, kept - and, as in DFU, those
+//   six rebind in the ADVANCED window (ui/mouseControlsWindow.js).
 // - the group anchors are the FIRST-SETUP values (:146-152). DFU's
 //   UpdateKeybindButtons re-anchors every group one pixel up-left
 //   (:243-251 - 56,12 against 57,13), so its labels shift by (1,1)
@@ -166,7 +166,7 @@ export class ControlsWindow {
     saveKeyBinds(bindings());
     // ...and THAT is what writes the advanced window's ten settings:
     // it does all of its writing in the OnSavedKeyBinds handler
-    // (DaggerfallUnityMouseControlsWindow.cs:78, :334-360), so the
+    // (DaggerfallUnityMouseControlsWindow.cs:83, :351-371), so the
     // raise above has to happen before the subscription is released.
     this.advanced?.dispose();
     this.done = true;
@@ -254,6 +254,22 @@ export class ControlsWindow {
     this.tip.hide();
   }
 
+  /** ROAD-E E1: the pointer-up edge, forwarded. HorizontalSlider's
+   *  drag body runs only inside `GetMouseButton(0)` and its else arm
+   *  (HorizontalSlider.cs:148-154) drops `draggingThumb` the frame the
+   *  button comes up; the port has no held-button poll, so the hosts
+   *  deliver that edge as `overlay.release?.()` and a nesting window
+   *  has to pass it on (ui/itemMakerWindow.js:202's shape). The popup
+   *  latches its thumb on the press and `hover` above pumps the drag
+   *  from every move, so this is the only edge that ends it. */
+  release() { this.advanced?.release(); }
+
+  /** The wheel seam (U-scroll): the hosts deliver it as
+   *  `overlay.wheel?.(Math.sign(deltaY))`, and while the popup is up
+   *  it is the popup's - MouseScrollUp/Down (HorizontalSlider.cs:
+   *  180-190) over the slider the pointer is on. */
+  wheel(dir) { if (this.advancedOpen) this.advanced.wheel(dir); }
+
   /** The tooltip's rest clock. `tick` is the name the hosts' overlay
    *  seam already calls (townTalk.frame, dungeonContext.tickOverlay) -
    *  ONE per-frame hook, not a second one beside it. */
@@ -262,9 +278,10 @@ export class ControlsWindow {
     this.tip.update(dt);
   }
 
-  /** OnReturn (DaggerfallControlsWindow.cs:174-179 / the advanced
-   *  window's own :148-152): the grid re-reads the staged dicts and
-   *  re-checks duplicates when the popped window uncovers it. */
+  /** OnReturn (DaggerfallControlsWindow.cs:173-178 / the advanced
+   *  window's own OnPush :146-149 and OnReturn :151-155): the grid
+   *  re-reads the staged dicts and re-checks duplicates when the
+   *  popped window uncovers it. */
   _closeAdvanced() {
     this.advancedOpen = false;
     this.advanced.release();
@@ -326,7 +343,12 @@ export class ControlsWindow {
       // PushWindow(dfUnityMouseControlsWindow) - one cached instance.
       this._click();
       this.advanced ??= new MouseControlsWindow(this.unsaved);
-      this.advanced.done = false;   // the cached instance is pushed again, not rebuilt
+      // OnPush -> OnReturn (DaggerfallUnityMouseControlsWindow.cs:146-155):
+      // the pushed window re-reads the shared dicts and re-checks
+      // duplicates, so a clash the GRID made between two visits colours
+      // in the popup too. The cached instance is pushed again, not
+      // rebuilt, so `done` is cleared there rather than by a constructor.
+      this.advanced.onPush();
       this.advancedOpen = true;
       this.tip.hide();
       return true;
