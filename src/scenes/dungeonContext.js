@@ -4871,6 +4871,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // B1: OnDestroy for every quest foe standing in this dungeon -
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();
+      // AUDIT 59 F2: the nav worker leaves with the context. Every
+      // dungeon entry made a new NavClient (one worker) and nothing
+      // terminated it, so each visit left a live worker behind once
+      // F1 let one exist. A bake still in flight resolves onto a dead
+      // context's `chf`, which nothing reads - harmless by NT1's latch.
+      enhancedNav.client?.dispose();
+      enhancedNav.client = null;
       for (const b of billboardBatches) renderer.destroyBatch(b);
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
       // corpses each own a live billboard batch that is NOT in

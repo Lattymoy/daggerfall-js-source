@@ -54,7 +54,21 @@ export class NavClient {
     this._nextId = 1;
     if (WorkerCtor) {
       try {
-        const w = new WorkerCtor(new URL('./navWorker.js', import.meta.url), { type: 'module' });
+        // AUDIT 59 F1: THE WORKER NEVER SHIPPED. Vite bundles a module
+        // worker only from the literal spelling `new Worker(new
+        // URL('./x.js', import.meta.url), { type: 'module' })` - the
+        // same rule terrainGenClient.js:10 records for the terrain
+        // worker. `new WorkerCtor(...)` is not that spelling, so the
+        // production build carried no nav worker chunk at all: the URL
+        // 404'd, onerror rejected the pending bake, the catch below
+        // answered null, and EVERY real bake ran bakeHere on the main
+        // thread - one to seven seconds frozen on dungeon entry with
+        // the switch on (measured: 3.0s for a 10k-triangle level, 6.9s
+        // for 31k). A test double still comes in through WorkerCtor;
+        // the real one is spelled the way the bundler reads.
+        const w = WorkerCtor === globalThis.Worker
+          ? new Worker(new URL('./navWorker.js', import.meta.url), { type: 'module' })
+          : new WorkerCtor('./navWorker.js', { type: 'module' });
         w.onmessage = (ev) => { const m = ev.data ?? {}; const p = this._pending.get(m.id); if (!p) return; this._pending.delete(m.id); if (m.t === 'error') p.reject(new Error(m.message)); else p.resolve(m); };
         w.onerror = (e) => { for (const p of this._pending.values()) p.reject(new Error(e?.message ?? 'nav worker failed')); this._pending.clear(); this._worker = null; };
         this._worker = w;

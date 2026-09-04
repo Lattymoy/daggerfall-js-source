@@ -868,11 +868,16 @@ function paneEnhanced(body) {
   // ENHANCED AI 1: the switch is here from the first slice so the arc's
   // door exists; the motor only reads it once the bake is proven on a
   // real dungeon (ENHANCED AI 3). Until then it says so.
+  // AUDIT 59 F3: the row said "not yet driving the motor" two slices
+  // after ENHANCED AI 4 made it drive, and promised towns and
+  // interiors the arc has not reached. It says what ships: dungeons,
+  // the motor live, and that a foe keeps the motor it was born with.
   live.append(prefRow('enhancedAI', 'Enhanced AI',
-    'Enemies find their way: a navmesh baked from each dungeon, town and interior, so they path around '
-    + 'pillars, through doors and down corridors instead of walking into walls the way classic Daggerfall\'s '
-    + 'do. Senses, decisions and attacks stay classic; only the way an enemy moves changes. '
-    + 'Off keeps the 1:1 classic motor. (Landing slice by slice; not yet driving the motor.)'));
+    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
+    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
+    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
+    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
+    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
     + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '

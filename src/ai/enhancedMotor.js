@@ -56,20 +56,21 @@
 //
 // ── ADAPTATION 3: THE ROUTE SUPPLIES X AND Z; THE Y IS CLASSIC'S ──
 //
-// findPath's waypoints carry y = surfH(chf.colliders, ...) ONLY when the
-// chf has colliders, and otherwise y = 0. The port's live chf never
-// does: it is hydrated on the main thread from a worker bake or the
-// IndexedDB cache (3b), and hydrateBakedNav carries a constant floor,
-// not the collider list. So every waypoint sat at y = 0 wherever the
-// dungeon actually was. A walker ignores y. A flyer or swimmer moves
-// along _dir3(destination), a 3D heading pitched toward y = 0 - down
-// into the floor-lift clause, or up into the ceiling - and its
-// out-of-sight stop check, hypot(dx, 0 - feet.y, dz), never comes
-// inside stopDistance, so it never arrives. Mac's report: foes that
-// disappear, and one in a ceiling.
+// findPath's waypoints carry y = surfH(chf.colliders, ...) when the chf
+// has colliders, and y = 0 otherwise. AUDIT 59 F4 corrected the premise
+// this adaptation was written on: the live chf DOES carry colliders -
+// navClient's hydrateHere re-cuts the boxes and hands them to
+// hydrateBakedNav, and the 3b pin reads the hydrated floor through
+// them - so a waypoint's y is surfH's answer: the real floor where a
+// box top exists, and the PHANTOM floor (minY - 10) wherever none
+// does, a doorway's threshold or a cell the erosion trimmed. That is
+// still a y the motor must not steer at: a flyer or swimmer moves
+// along _dir3(destination), and a heading pitched at a floor ten
+// metres down, or at a corner's box top under a flyer, dives or climbs
+// and never comes inside stopDistance on hypot(dx, dy, dz). Mac's
+// report on 4b-pre: foes that disappear, and one in a ceiling.
 //
-// The nav has no vertical information to offer here - its heights are
-// a flat floor - so it is not asked. A corner takes the FOE'S OWN y
+// So the route's vertical is not asked for. A corner takes the FOE'S OWN y
 // (level along the corridor, which for a walker is a no-op and for a
 // flyer is the only honest guess) and the goal takes the GOAL'S real y,
 // the predicted target position's, which is precisely the y classic's

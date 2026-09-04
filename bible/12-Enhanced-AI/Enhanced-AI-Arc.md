@@ -258,3 +258,21 @@ default, in the Enhanced tab, the classic motor the 1:1 law. Nothing
 here was seen in a real dungeon on the way back either - the
 container has no ARENA2 - so 4b-pre's own last line still stands: the
 first playtest is Mac's, with the switch on and then off.
+
+### AUDIT 59 - before the merge (2026-09-04)
+
+`01-Overview/Audit-59.md`. The arc read against the production build
+and the host's lifecycle for the first time. THE WORKER NEVER SHIPPED
+(F1): Vite bundles a module worker only from the literal `new
+Worker(new URL(...), { type: 'module' })`, and 3b spelled it through a
+variable - so every real bake, in every playtest so far, ran on the
+main thread: 1.1 s / 3.0 s / 6.9 s at 2k / 10k / 31k triangles,
+measured on synthetic levels. That freeze on dungeon entry is what
+the switch cost until now. Also: the worker was never terminated on
+exit (F2), the row still said "not yet driving the motor" (F3), and
+adaptation 3's premise was wrong while its law was right (F4) - the
+hydrated chf DOES carry colliders, so waypoints carry surfH's y, the
+real floor or the phantom one, and the motor still must not steer at
+either. Two flags with numbers: the main-thread hydrate (0.2-0.7 s,
+avoidable once the 3b pin stops reading hydrated heights) and doors
+baked closed (4b). Nothing ran in a real dungeon.
