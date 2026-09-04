@@ -4109,14 +4109,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:322) and
+     *  on. Here routeAction's arm is optional (ui/input.js:418) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:226), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:351), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
@@ -4264,19 +4264,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shop door as outside it (test/modalkeys.test.js red-proofs the
     // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER. InputManager
+    // .PollInput (:1795-1809) rebuilds `heldKeys` every frame whatever
+    // the dispatch does - `foreach (KeyCode k in KeyCodeList) if
+    // (GetPollKey(k)) AddHeldKey(heldKeys, k)` runs before
+    // GameManager.Update reads a single Action. This add used to sit at
+    // the BOTTOM of the ladder, so every key that DISPATCHED (F5, R, M,
+    // V, Escape) returned above it and never entered the Set at all.
+    // That was invisible while the Set was unordered; it is not now,
+    // because the Set IS the order the combo latch reads
+    // (`modifierHeldFirst`, ui/input.js) and a key missing from the
+    // ring is a key that cannot have gone down first. It stays BELOW
+    // the overlay gate: DFU's own Update returns before PollInput while
+    // a pausing window is up (:487-503), so a key typed into a window
+    // joins no ring there either.
+    keys.add(e.code);
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:95-105), and no host passed one - so
+    // held-keys Set (ui/input.js:156-177), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
     // the controls window got the Status box instead and could never
-    // open the inventory. The Set is filled by the `keys.add(e.code)`
-    // below, i.e. by EARLIER presses, so at this point it holds the
-    // modifier and not yet this key - which is exactly what the arm
-    // expects (:102 unions e.code in itself), and it carries the
-    // suppression half too (:1681-1685, "space is jump, LeftShift+
-    // Space opens inventory: we want to ignore jumping").
+    // open the inventory. The Set is the ring filled just above, this
+    // press included, and actionOf reads it as the press ORDER (G3);
+    // it carries the suppression half too (:1681-1685, "space is jump,
+    // LeftShift+Space opens inventory: we want to ignore jumping").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
@@ -4338,7 +4351,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       hudCtx.quickLoad();
       return;
     }
-    keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -6276,7 +6288,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:468's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the

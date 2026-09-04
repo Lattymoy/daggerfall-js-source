@@ -101,7 +101,7 @@ test('F198: the health box decision, arm by arm', () => {
   assert.deepEqual(healthStatusRows({ activeEffects: [{ ...plague, ended: true }] }, rows), rows(18));
 });
 
-test('F198: all four hosts hand the Status action a showStatus - the seam input.js:184 requires', () => {
+test('F198: all four hosts hand the Status action a showStatus - the seam input.js:416 requires', () => {
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const src = code(h);
     assert.match(src, /showStatus/, `${h} provides showStatus`);

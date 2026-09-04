@@ -1689,7 +1689,7 @@ export class ChargenFlow {
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:152), so the 'reroll' row
+      // typed-character class (ui/input.js:229), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
       // mouse rect (ui/chargenArt.js:1449) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'

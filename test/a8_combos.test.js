@@ -223,9 +223,19 @@ test('A8: the runtime read - a combo walks, and its plain half does not', () => 
   clearBinding(b, 'Jump', false);
   assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Crouch'), true, 'and back again');
   assert.equal(held(new Set(['ShiftLeft', 'KeyK']), 'Jump'), true, 'the combo fires throughout');
-  // ModifierOnlyHeld's second clause: another combo modifier down kills it
+  // ModifierOnlyHeld's second clause: another combo modifier down kills
+  // it - but ROAD-G G3 gave that clause the ORDER it has in DFU, and the
+  // order is the whole clause. modifierHeldFirstDict[Shift] is a LATCH
+  // (:1697-1708): it goes true on the frame Shift is held with nothing
+  // disqualifying beside it and stays true until Shift is RELEASED, so a
+  // Ctrl pressed AFTERWARDS cannot lower it. This pin used to assert the
+  // port's orderless read - false whichever way the two went down - and
+  // that answer is DFU's for exactly one of the two orders.
   setBinding(b, comboCode('ControlLeft', 'KeyM'), 'AutoMap');
-  assert.equal(held(new Set(['ShiftLeft', 'ControlLeft', 'KeyK']), 'Jump'), false);
+  assert.equal(held(new Set(['ControlLeft', 'ShiftLeft', 'KeyK']), 'Jump'), false,
+    'Ctrl went down FIRST, so Shift never latched - :1636-1637 disqualifies it');
+  assert.equal(held(new Set(['ShiftLeft', 'ControlLeft', 'KeyK']), 'Jump'), true,
+    'Shift went down first and latched; the later Ctrl does not lower the flag');
   // an unrelated key held alongside changes nothing
   assert.equal(held(new Set(['ShiftLeft', 'KeyK', 'KeyW']), 'Jump'), true);
   // a store with NO combos answers exactly as it always did

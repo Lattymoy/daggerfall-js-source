@@ -171,7 +171,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:282-283) is "every host that registers a keydown
+    // (ui/input.js:378-379) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
     // returns before its own preventDefault - worldModes.js:6170 sits
@@ -181,8 +181,17 @@ export async function bootInterior(canvas, renderer, params, status) {
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
     if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
-    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
+    // hosts now carry. InputManager.PollInput (:1795-1809) adds every
+    // held key before GameManager.Update reads an Action, and this add
+    // sat BELOW the KeyM arm - so the one key this host dispatches was
+    // the one key that never entered the Set. Harmless while the Set was
+    // unordered; not now, because the Set IS the press order the combo
+    // latch reads (`modifierHeldFirst`, ui/input.js). It stays below the
+    // overlay gate, where DFU's Update returns before PollInput
+    // (:487-503).
     keys.add(e.code);
+    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });

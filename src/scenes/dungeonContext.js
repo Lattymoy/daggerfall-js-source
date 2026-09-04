@@ -4695,7 +4695,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** The TEXT.RSC rows the exit prompt reads (record 38). */
     rscLines,
     // PX15b: THE DIAL - the dungeon ctx carries all four doors (the
-    // PX15 flag's 'no native inventory' cited input.js:84's HISTORY;
+    // PX15 flag's 'no native inventory' cited a ui/input.js header note that no longer stands;
     // toggleInventory above is the door it lacked then and has now).
     toggleDial() {
       // The host object is an anonymous returned literal, so the doors

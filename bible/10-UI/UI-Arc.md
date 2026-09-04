@@ -7004,7 +7004,7 @@ keeps its law), toggleAutomap, toggleSpellbook - the reference's
 four, every one real on this ctx. THE OTHER THREE FLAGGED BY NAME at
 their pause sites: worldModes' interior mounts differ, exterior is
 the test host, and the dungeon HAS NO native inventory door at all
-(ui/input.js:84's own note) so its rose will draw three arms, not a
+(ui/input.js's own note as it then stood) so its rose will draw three arms, not a
 dead fourth - each lands with its own door audit. Held-key safety
 reasoned and kept: the dial captures only keydown, so a W held
 through open/close still delivers its keyup to the host and nothing
@@ -7083,7 +7083,7 @@ each with its own door audit first. THE INTERIOR (worldModes'
 interiorKeyCtx): THREE arms - Skills, Items, Magic - because the
 interior ctx has no automap door, and the rose never draws a dead
 arm. THE DUNGEON: all FOUR - the PX15 flag's 'no native inventory'
-cited input.js:84's HISTORY; toggleInventory sits on the ctx today,
+cited ui/input.js's header as it then stood; toggleInventory sits on the ctx today,
 so the audit corrected the flag rather than obeying it. Its host
 object is an anonymous returned literal, so the doors are reached
 through `this` (routeKey calls ctx.toggleDial() as a method; the
@@ -8525,7 +8525,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:192` routed
+The port had the DOOR and not the room. `input.js:419` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -8752,3 +8752,81 @@ a 393x851 viewport. A real Pixel 5 is 727 tall and the list measures
 (the breakpoint cannot match at 393px wide), but it means THE PHONE HAS
 A MILDER VERSION OF THE SAME COMPLAINT: the character region is the
 same fixed 400 on a shorter window. Its own slice, when Mac wants it.
+
+## ROAD-G G3 - THE ORDERED HELD-KEYS RING (2026-09-04)
+
+A8 shipped key combos and named one half it did not build, in
+`systems/inputActions.js`, where the retired combo flag used to stand:
+
+> DFU's per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the
+> ORDER two keys went down in, so holding K then Shift does not fire
+> Shift+K. The port's hosts keep a Set with no order, so a combo fires
+> on either order; the day a host grows an ordered held list, the rule
+> is GetUnaryKey's (:1690-1711) and the seam is held().
+
+**No host had to grow anything. A JS Set iterates in INSERTION order**,
+so every host's `keys` had carried the press order since the first
+host, and `held()` - the named seam - was already being handed it. What
+was missing was the READ.
+
+**And the sentence the remainder was written around is DFU's COMMENT,
+not its code.** ModifierOnlyHeld's doc comment says it "checks to make
+sure that either 'K' or 'L' are not being held", but the check it
+writes is `primarySecondaryKeybindDict.ContainsKey(GetComboCode
+(modifier, k))` (:1636) or `modifierHeldFirstDict.ContainsKey(k)`
+(:1637) - and ROAD-Ar R9 already established what that first dict is: a
+PRIMARY<->SECONDARY pairing map, whose only additive arm is
+`MapSecondaryBindings`' both-bound branch. So a SINGLE-bound Shift+K
+fires on either order in DFU, and it does here. R9 read that dict for
+:1684; G3 reads it for :1636, and the two clauses are now the same
+clause.
+
+**What DFU actually keeps is a latch, and the port derives it rather
+than storing it.** `modifierHeldFirstDict[mod]` (:1697-1708) goes TRUE
+on any frame the modifier is held with nothing disqualifying beside it
+and FALSE the moment the modifier is not held at all; nothing else
+lowers it, which is why a Ctrl pressed AFTER the Shift cannot. So a
+modifier is held-first exactly when no key STILL DOWN before it
+disqualifies it - a walk of the Set that stops at the modifier, and no
+per-frame state at all. Release the K you were holding and DFU's next
+frame raises the flag with Shift still down; so does the walk, because
+K has left the Set. That equivalence is the whole slice.
+
+`ui/input.js` now carries three things where it carried one:
+
+- `modifierHeldFirst(store, keys, mod)` - the latch, through
+  ModifierOnlyHeld (:1626-1644), BOTH clauses.
+- `heldModifier(store, keys)` - :1818-1821's own pick. PollInput walks
+  `modifierHeldFirstDict` and ASSIGNS, so the LAST held modifier is the
+  only suppressor GetUnaryKey ever consults; the port swept every one
+  of them, which kills a plain key DFU fires.
+- `codeDown` reading both arms through them: the combo's hit (:1711)
+  and the plain key's suppression (:1683-1685). `actionOf` gates its
+  combo lookup on the same answer, so the DISPATCH half - Inventory,
+  CharacterSheet, the journals, QuickLoad - obeys the order too, not
+  only the polled half.
+
+`ModifierOnlyHeld`'s `heldKeys.Length == 1` arm (:1628-1629) is
+deliberately not ported: `heldKeys` is `new KeyCode[6]` (totalHeldKeys,
+:35), so `Length` is 6 forever and the arm is dead in DFU.
+
+**THE FOUR HOSTS RULE APPLIED TO THE RING ITSELF.** `PollInput`
+(:1795-1809) adds every held key before `GameManager.Update` reads a
+single Action, and three of the four Set owners added theirs at the
+BOTTOM of their keydown ladder - so every key that DISPATCHED (F5, R,
+M, V, Escape above ground; the interior host's own KeyM) returned above
+the add and never entered the ring at all. Invisible while nothing read
+the order; load-bearing the moment something did. The add is hoisted in
+`world.js`, `exterior.js` and `interior.js`, and stays BELOW each
+host's overlay gate, because DFU's `Update` returns before `PollInput`
+while a pausing window is up (:487-503) - a key typed into a window
+joins no ring there either. `dungeon.js` already had it first and says
+so; `worldModes.js` reads the outer host's Set and needed nothing.
+
+Pinned in `test/g3_heldorder.test.js` (7 tests, 9 mutations dead) from
+both orders on DFU's own example, plus the discovered host sweep. The
+held-order remainder is struck from `inputActions.js` and the section C
+clause it belonged to is struck in the Ledger's keybinding-registry
+row. The AXES + JOYSTICK flag beside it is untouched: there is still no
+gamepad layer, that is an owner call, and `regenOpenFlags` answers the
+same 7 it did before.

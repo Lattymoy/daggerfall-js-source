@@ -23,7 +23,8 @@ re-skin's ground outage, the fast-travel season ordering, the activate
 gate's overlay/clickDelay/touchSpell trio (the critical: a click on an
 open window activated the world behind it), the mastery-box ordering,
 and four test-quality repairs. Recorded stages that belong to Wave B
-(the court backdrop, the combo held-order, the prison accelerator)
+(the court backdrop, ~~the combo held-order~~ **CLOSED at ROAD-G G3
+2026-09-04**, the prison accelerator)
 wait on B1's window stack.
 
 - **A1 season-calendar**: texture season reads the CALENDAR

@@ -175,7 +175,9 @@ The two that are not: **`DaggerfallJoystickControlsWindow`** and
 the same place - `Port-Ledger.md:590`, the struck keybinding-registry
 row, whose surviving clause reads "STILL PENDING: the mouse/advanced and
 joystick sub-windows (both answer with a note - no gamepad layer)". The
-other half of that clause, key combos, shipped at ROAD-A A8.
+other half of that clause, key combos, shipped at ROAD-A A8 - and its
+last remainder, the ORDERED held-keys ring (InputManager.cs:1818,
+ModifierOnlyHeld), at ROAD-G G3, so the clause is struck in the row.
 
 Two windows the campaign built are the reason this figure moved at all.
 The superseded page listed "the multi-slot save/load window and the
@@ -494,7 +496,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- **`src/systems/inputActions.js:465`** - STILL FLAGGED: axes and
+- **`src/systems/inputActions.js:475`** - STILL FLAGGED: axes and
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching

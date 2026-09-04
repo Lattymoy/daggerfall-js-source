@@ -455,12 +455,22 @@ export function endFrame(state) {
 // combos and that the runtime held-order logic pended a slice; the
 // pack, the modifier set, the autofill guard and the duplicate check
 // are above and in controlsConfig.js, and the held-order read is in
-// ui/input.js. What is NOT here, and is the honest remainder: DFU's
-// per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the ORDER
-// two keys went down in, so holding K then Shift does not fire
-// Shift+K. The port's hosts keep a Set with no order, so a combo fires
-// on either order; the day a host grows an ordered held list, the rule
-// is GetUnaryKey's (:1690-1711) and the seam is held().
+// ui/input.js.
+//
+// ROAD-G G3 RETIRED THE HELD-ORDER REMAINDER A8 LEFT BEHIND. It said
+// DFU's per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the
+// ORDER two keys went down in - holding K then Shift does not fire
+// Shift+K - and that the port's hosts keep "a Set with no order". The
+// second half was never true: a JS Set iterates in INSERTION order, so
+// every host's `keys` carried the press order all along and only the
+// READ was missing. It is built now, at the seam this note named:
+// `modifierHeldFirst` in ui/input.js is modifierHeldFirstDict
+// (:1697-1708) derived from the ring through ModifierOnlyHeld
+// (:1626-1644), `heldModifier` is :1818-1821, and both arms of
+// GetUnaryKey - the combo's hit and the plain key's suppression - go
+// through them. The four hosts that own a Set now fill it BEFORE their
+// dispatch ladder, as PollInput does (:1795-1809). Pinned from both
+// orders in test/a8_combos.test.js and test/combohosts.test.js.
 //
 // STILL FLAGGED:
 //  - AXES + JOYSTICK (AxisActions, JoystickUIActions): no gamepad

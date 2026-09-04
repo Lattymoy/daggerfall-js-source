@@ -227,13 +227,21 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   assert.ok(keybind, 'section C still carries the keybinding-registry row');
   assert.match(keybind, /DaggerfallJoystickControlsWindow\.cs/,
     'the joystick window has no Ledger row while controlsWindow.js sends the player to one');
-  assert.match(keybind, /systems\/inputActions\.js:465-468/,
-    'the joystick row must point at the flag that carries the owner decision');
   assert.match(keybind, /DaggerfallUnityMouseControlsWindow\.cs \(411\)[\s\S]*?THE SETTINGS SURFACE/,
     "the mouse/advanced window must be recorded against section A's settings-surface row");
-  assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
-    /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
-    'the Ledger cites the gamepad flag at inputActions.js; the flag must still be there');
+  // ROAD-G G3: the joystick clause cites the gamepad flag BY LINE, and
+  // G3 moved that flag twelve lines down when it retired the held-order
+  // remainder above it. A hard-coded `:465-468` here would have gone
+  // green on a row naming a stranger, which is exactly CD's lesson, so
+  // the cite is READ OUT of the row and RESOLVED against the file.
+  const cite = /systems\/inputActions\.js:(\d+)-(\d+)/.exec(keybind);
+  assert.ok(cite, 'the joystick row must point at the flag that carries the owner decision');
+  const ia = readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8').split('\n');
+  const cited = ia.slice(Number(cite[1]) - 1, Number(cite[2])).join('\n');
+  assert.match(cited, /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
+    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it`);
+  assert.match(cited, /loadKeyBinds ignores them in a DFU-written file/,
+    'the cited range must hold the WHOLE flag, not its first line');
   assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
     /The port has no gamepad layer \(Ledger\)\./,
     'the JOYSTICK tab note that sends the reader to this row must still be there');
