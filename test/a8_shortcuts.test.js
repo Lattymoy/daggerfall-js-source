@@ -142,7 +142,7 @@ test('A8: the table is DialogShortcuts.txt, row for row', () => {
 
 test('A8: the adapter reads BOTH host alphabets', () => {
   // a native window is handed the raw code; the dungeon overlay seam
-  // is handed ui/input.js's 'char:<k>' action (input.js:70-76)
+  // is handed ui/input.js's 'char:<k>' action (input.js:228-229)
   assert.equal(normalizeCode('KeyF'), 'KeyF');
   assert.equal(normalizeCode('char:f'), 'KeyF');
   assert.equal(normalizeCode('char:F'), 'KeyF');

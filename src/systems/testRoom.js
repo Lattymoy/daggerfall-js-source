@@ -58,12 +58,12 @@ export const testPresetById = (id) => TEST_PRESETS.find((p) => p.id === id) ?? n
  *  the baseline preset, a horse already in the pack, the landing at the
  *  location's EDGE (the fast-travel arrival law - outside the walls,
  *  facing in), and the mode set through the one transport door. The
- *  classic skin shows the CFA mount; the enhanced skin the Pegas horse
- *  (MW-D50). One entry, so the pane, the route and the boot all agree
+ *  both skins show the CFA mount. One entry, so the pane, the route and
+ *  the boot all agree
  *  what `test=ride` is. */
 export const TEST_RIDE = Object.freeze({
   id: 'ride', label: 'Ride out', preset: 'nord-warrior',
-  blurb: 'The Nord Warrior on a horse, outside the town - the riding sprite in the classic skin, the Pegas horse in the enhanced. Press T to dismount.',
+  blurb: 'The Nord Warrior on a horse, outside the town - the riding sprite. Press T to dismount.',
 });
 
 /** The one door for a `test=` id: a preset (ride false), the ride

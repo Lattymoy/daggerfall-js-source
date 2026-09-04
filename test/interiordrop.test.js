@@ -121,8 +121,12 @@ test('ID1: an emptied pile is freed at the WINDOW close, not at the last item', 
 test('ID1: the interior host mounts its own pool, with no pixel key', () => {
   const m = wm();
   assert.match(m, /const interiorDropped = createDroppedLoot\(\{ renderer, getTexture, uploadRecordFrame \}\);/);
-  assert.match(m, /onDrop: \(items\) => interiorDropped\.dropPile\(items, interiorDropFeet\(\)\),/,
-    'two arguments - the third IS TrackLooseObject');
+  // ROAD-G G5 widened this door: the icon and the replaced container's
+  // x/z ride OnPop too. The pixel key is still NULL - that third
+  // argument IS TrackLooseObject, and an interior has no map pixel.
+  assert.match(m, /interiorDropped\.dropPile\(items, containerDropPos\(at, interiorDropFeet\(\)\), null, icon\),/,
+    'the pixel key stays null - that argument IS TrackLooseObject');
+  assert.match(m, /onDrop: \(items, icon = null, at = null\) =>/, 'and OnPop hands both halves through');
   // FindGroundPosition, on the INTERIOR collider
   const feet = m.slice(m.indexOf('const interiorDropFeet = ()'), m.indexOf('const interiorInventory'));
   assert.match(feet, /const p0 = \[\.\.\.player\.pos\];/, 'it starts at the PLAYER');
@@ -174,6 +178,6 @@ test('ID1: the quest reward mints on the ground the player is standing on', () =
   const interior = arm.slice(arm.indexOf("if (mode === 'interior' && interiorCtx) {"), arm.indexOf('return undefined;'));
   assert.match(interior, /return \(\) => \{/, 'a thunk, like the dungeon and world arms - the mint is deferred');
   assert.match(interior, /interiorDropped\.dropPile\(\[dfItem\], interiorDropFeet\(\)\)/);
-  assert.match(interior, /mountInterior\(interiorInventory\(\{ loot: \{ items: \(\) => pile\.items \} \}\)\)/,
-    'and opens on the pile, the same remote-target law every container rides');
+  assert.match(interior, /mountInterior\(interiorInventory\(\{ loot: droppedLootHooks\(pile\) \}\)\)/,
+    'and opens on the pile, the same remote-target law every container rides - G5: with the pile\'s DaggerfallLoot identity, so its icon can be cycled');
 });

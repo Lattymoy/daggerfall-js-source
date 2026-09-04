@@ -1029,7 +1029,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // arm the automap chrome's press-hold machine twice.
     if (v) {
       if (overlay.pointer) overlay.pointer('down', v[0], v[1], e.button ?? 0);
-      else overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
+      else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1);   // I4: the remove gesture rides the button; G5: the middle one cycles the drop archive
     }
     if (overlay?.done) dropOverlay();
     return true;   // an open native window owns the pointer either way

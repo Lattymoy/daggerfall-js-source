@@ -503,7 +503,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       // Flipped back (or destroyed) while the archive was loading, or
       // drawn as a voxel body already: no billboard.
       if (_rigFor || !pn.lateStood || pn.lateBatch) return;
-      uploadRecord(pn.textureArchive, pn.textureRecord);
+      uploadRecord(pn.textureArchive, pn.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1 (MaterialReader.cs:352)
       pn.lateBatch = renderer.createBillboardBatch(pn.textureArchive, pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
       armFlatAnim(pn.lateBatch, t, pn.textureArchive, pn.textureRecord, flatAnims, uploadRecordFrame);
       billboardBatches.push(pn.lateBatch);

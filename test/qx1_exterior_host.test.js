@@ -42,7 +42,10 @@ import { ensureFactionRep, changeReputation } from '../src/systems/factionRep.js
 import { findFactions, findFactionByTypeAndRegion, getPeopleOfCurrentRegion, getCourtOfCurrentRegion } from '../src/systems/talk.js';
 import { FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { liveVampirism } from '../src/systems/racialLive.js';
-import { mintQuestFoeWave } from '../src/scenes/questFoeHost.js';
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '../src/scenes/questFoeHost.js';
+import { placeFoeFreely } from '../src/systems/quest/sceneMount.js';
+import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { QuestJournalWindow, JOURNAL_RECTS } from '../src/ui/questJournal.js';
 import { isPlayerInTown } from '../src/systems/nearbyObjects.js';
 
 const SRC = readFileSync(new URL('../src/scenes/exterior.js', import.meta.url), 'utf8');
@@ -80,6 +83,15 @@ const factionFileDict = () => new Map([
   [913, { id: 913, name: 'The Vraseth', type: FACTION_TYPES.VampireClan, rep: 0, region: -1, sgroup: 6, ggroup: GUILD_GROUPS.Vampires, flags: 0, vam: 0, power: 10 }],
 ]);
 
+/** ROAD-G G2: open ground at y = 0 with nothing standing on it - the
+ *  exterior collider's ANALYTIC floor (`heightAt`), which is the surface
+ *  placeFoeEnv's straight-down probe is written for. */
+const OPEN_GROUND = {
+  raycastHit: () => ({ dist: Infinity, normal: null }),
+  heightAt: () => 0,
+  sphereOverlaps: () => false,
+};
+
 const QW_PARAMS = [
   // the module bindings the lifted block closes over
   'ensureFactionRep', 'findFactions', 'FACTION_TYPES', 'findFactionByTypeAndRegion',
@@ -90,6 +102,14 @@ const QW_PARAMS = [
   'currentWeather', '_musicInLocationRect', '_locPixel', 'legalRepOf', 'changeLegalRep',
   'isHouseOwned', 'playerEntity', 'generateBuildingName', 'modes', 'discoverLocation',
   'REGION_RACES', 'dungeonLocationFor', 'questBridge',
+  // ROAD-G G2: CreateFoe's OUTDOOR placement arm - the law modules the
+  // lifted block calls, and the host state it places around. APPENDED,
+  // because these names must line up with the argument list below.
+  'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
+  'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
+  // ...and the G4 spell registry CastSpellDo reads through this host's
+  // own `getClassicSpellEffects` (world.js:4815's seam).
+  'spellRecordOfIndex',
 ];
 
 /**
@@ -131,6 +151,20 @@ function mountQuestWorld(opts = {}) {
     () => asked.push(['discover']), REGION_RACES_STUB,
     opts.dungeonLocationFor ?? ((loc, deps) => ({ sized: loc, machine: deps?.questMachine ?? null })),
     questBridge,
+    // ROAD-G G2: the placement law is the REAL one - only the world it
+    // rays through is a stub, so a host that mis-orders the ring, the
+    // FOV or the lift is red here rather than beside here.
+    placeFoeEnv, placeFoeFreely, entityOccupancy, questFoeGender, ENEMY_BASICS,
+    opts.fieldOfView ?? (() => 75 * Math.PI / 180),   // fieldOfView() answers RADIANS
+    opts.walkMode ?? true,
+    opts.player ?? { pos: [100, 0, 100] },
+    opts.cam ?? { yaw: 0, pos: [100, 0.9, 100] },
+    opts.collider ?? OPEN_GROUND,
+    opts.exteriorFoes ?? { foes: [], spawnFoe: () => Promise.resolve(null) },
+    opts.exteriorFoePool ?? (() => []),
+    // ARG-CARRYING again: the record is BUILT from the id it was asked
+    // for, so a seam that hard-codes a spell cannot pass.
+    opts.spellRecordOfIndex ?? ((id) => (id === 0 ? null : { effects: [{ type: id & 0xff, subType: (id >> 8) & 0xff }] })),
   );
   return { world, asked, playerEntity, factionDict, dfLocation, townTalk };
 }
@@ -270,7 +304,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:4680/4682's verbatim, and talk.js's
+  // expressions are world.js:4734/4734's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -304,13 +338,21 @@ test('QX1 review: the CreateFoe spawn seams and the site mount are wired to this
   // machine's and are live here...
   assert.equal(world.tryPlaceFoe(wave[0]), true);
   assert.deepEqual(placed, [wave[0]]);
-  // ...and the OUTDOOR arm has no producer on this route, so it
-  // answers false WITHOUT reaching the mode machine - the wave stays
-  // pending and re-attempts, TryPlacement's own failed-placement shape.
-  const outside = mountQuestWorld({ modes: { ...modes, mode: 'exterior', tryPlaceQuestFoe: () => { throw new Error('the exterior arm must not reach the mode machine'); } } });
-  assert.equal(outside.world.tryPlaceFoe(wave[0]), false);
-  assert.equal(mountQuestWorld({ modes: null }).world.tryPlaceFoe(wave[0]), false,
-    'and with no mode machine at all the default is the exterior arm');
+  // ...and the OUTDOOR arm STANDS A FOE now (ROAD-G G2). It used to
+  // answer false without even reaching the mode machine, because this
+  // host mounted no exterior foe pool: an `create foe` wave aimed at
+  // the street pended for ever. It must still not reach the mode
+  // machine - the mode machine has no exterior arm - and it must
+  // reach THIS host's own pool.
+  const stood = [];
+  const outside = mountQuestWorld({
+    modes: { ...modes, mode: 'exterior', tryPlaceQuestFoe: () => { throw new Error('the exterior arm must not reach the mode machine'); } },
+    exteriorFoes: { foes: [], spawnFoe: (...a) => { stood.push(a); return Promise.resolve(null); } },
+  });
+  assert.equal(outside.world.tryPlaceFoe(wave[0]), true);
+  assert.equal(stood.length, 1, 'the foe is stood in this host\'s own pool');
+  assert.equal(mountQuestWorld({ modes: null }).world.tryPlaceFoe(wave[0]), true,
+    'and with no mode machine at all the default is still the exterior arm');
 
   // GameManager.RaiseOnEncounterEvent - AbortRestForEnemySpawn's door,
   // which worldModes routes back to THIS host's own rest overlay.
@@ -322,11 +364,288 @@ test('QX1 review: the CreateFoe spawn seams and the site mount are wired to this
     'no mode machine, no site to mount - the optional call, not a throw');
 });
 
+// ───────── ROAD-G G2 (b): CreateFoe's OUTDOOR placement arm ─────────
+
+test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, the FOV cone, LookAt, the Flying lift', () => {
+  const foe = { symbol: { name: '_foe_' }, parentQuest: { uid: 7 }, foeType: 10, gender: 1, spawnCount: 1 };
+  const behaviour = { questUID: 7 };
+  const handle = { foe, behaviour };
+  const player = { pos: [100, 0, 100] };
+  const cam = { yaw: 0 };
+  const stood = [];
+  const mk = (over = {}) => mountQuestWorld({
+    modes: null, player, cam,
+    exteriorFoes: { foes: [], spawnFoe: (...a) => { stood.push(a); return Promise.resolve(null); } },
+    ...over,
+  }).world;
+
+  // TryPlacement (:203-206) picks PlaceFoeExteriorLocation when
+  // IsPlayerInLocationRect, and this route stands in its ONE city's
+  // rect for its whole life - so the ring is PlaceFoeFreely's DEFAULT
+  // 5/20 (:245-248 passes no band) and the wilderness 8/25 arm
+  // (:252-257) has no reachable branch on this host at all.
+  const world = mk();
+  for (let i = 0; i < 200; i++) assert.equal(world.tryPlaceFoe(handle), true);
+  assert.equal(stood.length, 200);
+  for (const [type, pos, opts] of stood) {
+    assert.equal(type, 10, 'the foe resource\'s own mobile type');
+    const d = Math.hypot(pos[0] - 100, pos[2] - 100);
+    assert.ok(d >= 5 - 1e-9 && d <= 20 + 1e-9, `the 5/20 ring, got ${d}`);
+    // MUTANT: hand placeFoeFreely `{ minDistance: 8, maxDistance: 25 }`
+    // - the wilderness band - and this bound is red.
+    assert.ok(d <= 20, 'never the wilderness 8/25 band');
+    // The bearing is outside the camera FOV, both sides (:274-281):
+    // the cone is fovDegrees + Range(0,4), so nothing lands ahead.
+    const bearing = Math.abs(Math.atan2(pos[0] - 100, pos[2] - 100) * 180 / Math.PI);
+    assert.ok(bearing >= 75, `outside the 75 degree cone, got ${bearing}`);
+    // MUTANT: pass fieldOfView() unconverted (radians into a degrees
+    // slot) and every foe lands dead ahead - this bound is red.
+    // ...and the cone's FAR side, which is what makes it a cone
+    // ANCHORED ON THE PLAYER rather than a bearing that is merely not
+    // ahead: sceneMount.js:233-235 draws `fovDegrees + Range(0,4)`, so
+    // the closed band is [75, 79). REVIEW: `bearing >= 75` alone was
+    // one-sided, and `playerYawRad: cam.yaw + Math.PI` - a cone
+    // anchored behind the player, foes at 103 degrees - passed it.
+    assert.ok(bearing <= 79, `inside the cone + the Range(0,4) skirt, got ${bearing}`);
+    assert.equal(pos[1], 1.25, 'a WALKER keeps the probed floor + the separation the law stands it at');
+    // LookAt player (:328), and the Foe resource\'s own gender wins
+    // over the pool\'s coin (questFoeGender).
+    const want = Math.atan2(100 - pos[0], 100 - pos[2]);
+    assert.ok(Math.abs(opts.yaw - want) < 1e-9, 'the foe faces the player');
+    assert.equal(opts.gender, 'female', 'the Foe resource\'s gender, not the pool\'s roll');
+    assert.equal(opts.questBehaviour, behaviour, 'and the QuestResourceBehaviour binds at the stand');
+  }
+
+  // FinalizeFoe (:341-359): a FLYING foe is lifted 1.5 off the test
+  // point; a walker is not. Mobile 1 is Flying in ENEMY_BASICS.
+  assert.equal(ENEMY_BASICS[1].behaviour, 'Flying', 'the fixture is a flier');
+  stood.length = 0;
+  assert.equal(mk().tryPlaceFoe({ foe: { ...foe, foeType: 1 }, behaviour }), true);
+  assert.equal(stood[0][1][1], 1.25 + 1.5, 'the flier lifts 1.5');
+
+  // TryPlacement returns FALSE when there is no open spot - the wave
+  // stays pending and re-attempts on the next machine tick, which is
+  // C#\'s own failed-placement shape and now a real refusal rather
+  // than a host with nowhere to put a foe.
+  stood.length = 0;
+  const walled = mk({ collider: { raycastHit: () => ({ dist: Infinity, normal: null }), heightAt: () => -100, sphereOverlaps: () => false } });
+  assert.equal(walled.tryPlaceFoe(handle), false, 'no floor within maxFloorDistance, no placement');
+  assert.equal(stood.length, 0);
+
+  // ...and the floor probe measures from the CONTROLLER CENTRE, not
+  // from the feet - DFU rays from `PlayerObject.transform.position`
+  // (CreateFoe.cs:282-283), which the host ships as `feet[1] + 0.9`.
+  // A floor 3.5 below the feet is 4.4 below the centre, past
+  // PLACE_FOE_DEFAULTS.maxFloorDistance = 4 (sceneMount.js:203), so the
+  // shipped origin refuses where a feet origin would place. REVIEW: the
+  // header claimed this term and the stub's flat plane could not see
+  // it - `playerFeet: [feet[0], feet[1], feet[2]]` passed the pin.
+  const ledge = mk({ collider: { raycastHit: () => ({ dist: Infinity, normal: null }), heightAt: () => -3.5, sphereOverlaps: () => false } });
+  assert.equal(ledge.tryPlaceFoe(handle), false,
+    'the 4m floor probe measures from the controller CENTRE, not the feet (CreateFoe.cs:283)');
+  assert.equal(stood.length, 0);
+
+  // ...and the OCCUPANCY test is DFU\'s `Physics.OverlapSphere(
+  // testPoint, 0.65f)` (:317-321), ANY collider - so this host\'s
+  // WHOLE street database is in it, the watch included, not the
+  // encounter pool alone.
+  assert.match(SRC, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, exteriorFoePool, feet\),/);
+  const occupied = mk({ exteriorFoePool: () => [{ ai: { feet: [100, 0, 100] } }, { ai: { feet: [0, 0, 0] } }] });
+  let refusals = 0;
+  for (let i = 0; i < 60; i++) if (!occupied.tryPlaceFoe(handle)) refusals++;
+  assert.equal(refusals, 0, 'a foe standing at the player\'s own feet does not block the whole ring');
+  // THE REAL BITE, and it has to be a refusal: bodies on EVERY spot in
+  // the ring, and the arm answers false without standing anything.
+  // REVIEW: this assertion used to be `typeof ... === 'boolean'` under
+  // this same comment - tryPlaceFoe returns a boolean on every path, so
+  // it could not fail for any mutant, and deleting the occupancy term
+  // from questFoeHost.js:141 outright left this file green. An
+  // unfalsifiable term is not caution; it is a second law no test is
+  // holding. entityOccupancy (questFoeHost.js:149-161) hits when the
+  // centre distance is under r + 0.45 with r = 0.65, and it compares
+  // `feet[1] + 0.9` against the test point's y (floor + the 1.25
+  // separation), so bodies at feet y 0.35 sit exactly on the probe
+  // plane and a 1.4 grid (worst case 0.99 to the nearest node) covers
+  // every candidate the 5/20 ring can draw.
+  const bodies = [];
+  for (let x = 78; x <= 122; x += 1.4) for (let z = 78; z <= 122; z += 1.4) bodies.push({ ai: { feet: [x, 0.35, z] } });
+  const dense = mk({ exteriorFoePool: () => bodies });
+  stood.length = 0;
+  for (let i = 0; i < 60; i++) assert.equal(dense.tryPlaceFoe(handle), false, 'a body on the chosen spot refuses it');
+  assert.equal(stood.length, 0);
+
+  // The fly camera has no controller capsule to place around, so the
+  // arm refuses rather than raying from a camera the player is not in.
+  assert.equal(mk({ walkMode: false }).tryPlaceFoe(handle), false);
+});
+
+// ─── ROAD-G G2 review: the seams the lane shipped and nothing held ───
+
+test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into THIS host\'s machine', () => {
+  // hostMagic.js:73-74 declares `onNewReadySpell` / `onCastReadySpell`
+  // and is the ONLY raiser in the tree (SetReadySpell raises NEW right
+  // after `readiedSpell = sp`; `done()` raises CAST on every release
+  // path, before the ready clears). machine.js:776/:782 fan them out,
+  // and CastSpellDo / CastEffectDo latch on nothing else
+  // (actions.js:2688 - C# subscribes them in its constructor). This
+  // host owns its own cast engine, and worldModes takes THIS instance
+  // for the interior mode, so while the mount passed neither key every
+  // `cast X spell do` / `cast X effect do` on this route - and in every
+  // shop entered from it - was permanently deaf. world.js:2107-2108 and
+  // dungeonContext.js:1787-1788 wire the identical pair.
+  const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
+    '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
+  // ...and they are keys of the ENGINE MOUNT, not of some other bag:
+  // a pair moved out of `createPlayerMagic` raises nothing.
+  const mountAt = SRC.indexOf('  const magic = createPlayerMagic({');
+  assert.ok(mountAt > 0 && SRC.indexOf(doorSrc) > mountAt
+    && SRC.indexOf(doorSrc) < SRC.indexOf('\n  });', mountAt),
+  'the two doors sit inside the createPlayerMagic literal');
+
+  const mk = (bridge) => new Function('questBridge', `return { ${doorSrc} };`)(bridge);
+  const seen = [];
+  const bundle = { effects: [{ type: 5, subType: 1 }] };
+  const doors = mk({
+    machine: {
+      notifyNewReadySpell: (sp) => seen.push(['new', sp]),
+      notifyCastReadySpell: (sp) => seen.push(['cast', sp]),
+    },
+  });
+  doors.onNewReadySpell(bundle);
+  doors.onCastReadySpell(bundle);
+  assert.deepEqual(seen, [['new', bundle], ['cast', bundle]],
+    'both doors reach the machine, carrying the readied bundle');
+  // The bridge is a `var` assigned BELOW this mount, so the chain has
+  // to be optional both ways - a raise before the bridge exists (and
+  // one on a machine with no such door) is a no-op, never a throw.
+  mk(null).onNewReadySpell(bundle);
+  mk({ machine: {} }).onCastReadySpell(bundle);
+  assert.equal(seen.length, 2);
+});
+
+test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell reads', () => {
+  // Without these the action self-completes at PARSE
+  // (actions.js:2742/:2749 - no effects, so C#'s template completes and
+  // the task can never fire), which would have left `cast X spell do`
+  // dead on this route even with the doors above wired. world.js:4815's
+  // pair, byte-folded on both sides exactly as MakeClassicKey folds.
+  const { world } = mountQuestWorld();
+  assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
+    'the G4 registry answers the record for the id it was ASKED for');
+  assert.equal(world.getClassicSpellEffects(0), null, 'and no record is null, not a throw');
+  assert.equal(world.spellHasMatchForClassicEffect(
+    { effects: [{ type: 0x205, subType: 0x301 }] }, { type: 5, subType: 1 }), true,
+  'HasMatchForClassicEffect folds through the byte cast, both sides');
+  assert.equal(world.spellHasMatchForClassicEffect(
+    { effects: [{ type: 5, subType: 2 }] }, { type: 5, subType: 1 }), false);
+  assert.equal(world.spellHasMatchForClassicEffect(null, { type: 5, subType: 1 }), false,
+    'no readied bundle is no match');
+});
+
+test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, the one senses context, the enemy-arrow target', () => {
+  // THE SEAMS THE LANE SHIPPED AND NOTHING HELD. Each of these four
+  // lines could be deleted or narrowed with the whole suite still
+  // green: the pool never ticking, never drawing, its foes seeing only
+  // the player, and every enemy shaft passing through him.
+  const frame = slice('      const _senses = _foeSenses();',
+    '      droppedLoot.tickFlats(dt);');
+  assert.ok(frame.includes('exteriorFoes.update(townTalk.overlayActive ? 0 : dt,'),
+    'the mounted pool DRIVES on the frame, and freezes under the talk overlay');
+  assert.ok(frame.includes('personBatches.push(...exteriorFoes.batches());'),
+    '...and DRAWS on the same flats\' axis the watch does');
+  assert.ok(frame.indexOf('cityGuards.update(') < frame.indexOf('exteriorFoes.update('),
+    'the watch drives first - world.js\'s order');
+  assert.equal((frame.match(/, eye, _senses\);/g) ?? []).length, 2,
+    'ONE senses context per frame, shared by BOTH pools');
+
+  // EnemySenses.cs:741-749 reads ONE active-enemy database, so the
+  // watch and a CreateFoe-stood quest foe can see each other; narrowed
+  // to `exteriorFoes.foes` (or dropped) every foe on this route takes
+  // the player-only path again.
+  const senses = slice('  const _foeSenses = () => sensesContext(', '  // U32: ONE construction');
+  assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
+    'the senses walk the UNNARROWED street database, live records only');
+
+  // world.js:7002-7053's arrow shape: an enemy shaft hunts a WALKING
+  // player (the fly camera has no capsule), and both live pools are
+  // impact candidates. `playerFeet: null` is every enemy arrow passing
+  // through the player - the whole enemy arm the lane shipped.
+  const shafts = slice('    arrows.update(dt, {', '    arrows.draw(renderer, texRemap);');
+  assert.match(shafts, /playerFeet: walkMode \? player\.pos : null,/,
+    'the enemy shaft hunts the walking player');
+  assert.match(shafts, /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/,
+    'and the impact learns the live street pool');
+});
+
+// ───────── ROAD-G G2 (c): HandleQuestClicks\' find-place seam ─────────
+
+test('ROAD-G G2: the journal knows which city it is standing in, and the map half is the one recorded absence', () => {
+  // HandleQuestClicks (:448-450) asks THREE questions before the
+  // dialog and the third is
+  // `place.SiteDetails.locationName != PlayerGPS.CurrentLocation.Name`.
+  // What DFU does when the place IS the current location is NOTHING -
+  // CanFindPlace is not even reached. This host had never answered the
+  // question, so the gate compared against `''` and could never match;
+  // it stands in ONE city for its whole life and can answer it outright.
+  const body = slice('  const questJournalHooks = () => (questBridge ? {',
+    "  if (!playerEntity.chargenDone && params.has('class')) {");
+  const hooks = (bridge, dfLocation) => new Function('questBridge', 'dfLocation', 'locationName',
+    `${body} return questJournalHooks;`)(bridge, dfLocation, 'the ?loc fallback')();
+  const bridge = { machine: { getAllQuestLogMessages: () => [] }, notebook: null };
+
+  assert.equal(hooks(bridge, dfLocationStub()).currentLocationName(), 'Daggerfall',
+    'PlayerGPS.CurrentLocation.Name IS the loaded city');
+  assert.equal(hooks(bridge, {}).currentLocationName(), 'the ?loc fallback',
+    'and a location with no name of its own falls back to the one the route was asked for');
+
+  // THE ARM, RUN, through the real window: with the host's answer the
+  // city the player is standing in is NOT offered, and a different one
+  // still is. MUTANT: drop `currentLocationName` from the hooks and the
+  // first of these two offers a find dialog for the city under foot.
+  const FONT = { fnt: { fixedWidth: 6, fixedHeight: 7, glyphWidth: () => 5 } };
+  const openOn = (locationName) => {
+    const place = { isPlace: true, siteDetails: { locationName, regionName: 'Daggerfall', regionIndex: 17, mapId: 1 } };
+    const win = new QuestJournalWindow({
+      // the host's OWN hooks first, then the one entry under test -
+      // this bridge's log walk is empty by construction
+      ...hooks(bridge, dfLocationStub()),
+      questMessages: () => [{
+        getTextTokens: () => [{ text: 'Meet me at _place_ tonight.', formatting: 'text' }],
+        parentQuest: { getResource: ({ name }) => (name === 'place' ? place : null) },
+      }],
+      canFindPlace: () => true,
+      gotoPlace: () => {},   // the map this route does NOT have, supplied here so the gate under test is the only one that can refuse
+    });
+    win._font = FONT;
+    win.click(JOURNAL_RECTS.log[0] + 4, JOURNAL_RECTS.log[1] + 1);
+    return win.findBox;
+  };
+  assert.equal(openOn('Daggerfall'), null, ':450 - the place the player is already standing in is not offered');
+  assert.ok(openOn('Wayrest'), '...and a place elsewhere still is');
+
+  // THE ONE RECORDED ABSENCE, narrowed to the map: DfTravelMapWindow is
+  // world.js's window, so `gotoPlace` (:214-217) and its `canFindPlace`
+  // (:1134-1146) - both members of THAT window - are the only halves
+  // this route leaves unset, which is the same nothing a CanFindPlace
+  // miss produces in C#.
+  assert.doesNotMatch(SRC, /gotoPlace:/, 'this route hangs no travel map on the journal');
+  assert.doesNotMatch(SRC, /canFindPlace:/);
+  assert.match(SRC, /this route mounts no travel map \(DfTravelMapWindow\n\s*\*\s*is world\.js's\)/,
+    'and the absence is recorded in one sentence naming the map, at the seam');
+});
+
 test('QX1 review: the bridge asks IsPlayerInTown(true, true), and the hostility walk is the UNNARROWED database', () => {
   // GivePc.cs:84 and its siblings pass BOTH optional flags, so a quest
   // item handed over inside a shop pends instead of landing in the
   // pack. The seam is the closure S40 gave this host, not the bare
   // location-type test - which has its own, different caller below.
+  // ROAD-G G2: the hostility door is `_makeEnemiesHostile` now, the
+  // host's ONE named walk over its whole live database - this pin held
+  // an inline spread that named the watch alone above ground, which
+  // stopped being the whole database when the encounter pool landed.
+  // roadb_hostility.test.js holds the join itself; here it is the
+  // door, and the narrow walk beside it that must NOT follow.
+  assert.match(SRC, /\n {4}makeEnemiesHostile: _makeEnemiesHostile,\n/);
   assert.match(SRC, /\n {4}isPlayerInTown: \(\) => _isPlayerInTownStrict\(\),\n/,
     'the bridge ctx takes the STRICT closure');
   assert.match(SRC, /\n {4}inTownLocation: \(\) => isPlayerInTown\(_musicLocationType\(\)\),\n/,
@@ -345,9 +664,9 @@ test('QX1 review: the bridge asks IsPlayerInTown(true, true), and the hostility 
   // active enemy database; only questFoeInstances asks the narrowed
   // question. Wired to `liveQuestFoes`, `enemies makehostile` flipped
   // nothing but quest-spawned foes in a mounted mode.
-  assert.match(SRC, /makeEnemiesHostile: \(\) => makeEnemiesHostile\(\[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\)\]\),/);
-  assert.match(SRC, /return \[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.liveQuestFoes\?\.\(\) \?\? \[\]\)\]\.filter\(/,
-    'and the NARROWED walk keeps its own caller');
+  assert.match(SRC, /const _liveEnemyDatabase = \(\) => \[\n\s*\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\),\n\s*\];/);
+  assert.match(SRC, /return \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards, \.\.\.\(modes\?\.liveQuestFoes\?\.\(\) \?\? \[\]\)\]\.filter\(/,
+    'and the NARROWED walk keeps its own caller - both street pools, but only the behaviour carriers');
 });
 
 test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses read the same walk', () => {
@@ -370,8 +689,8 @@ test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses rea
   // expression, driven against a machine.
   const body = slice('  const questJournalHooks = () => (questBridge ? {',
     "  if (!playerEntity.chargenDone && params.has('class')) {");
-  const mount = (bridge) => new Function('questBridge',
-    `${body} return { questJournalHooks, pauseQuestLog, pauseQuestMessages };`)(bridge);
+  const mount = (bridge) => new Function('questBridge', 'dfLocation', 'locationName',
+    `${body} return { questJournalHooks, pauseQuestLog, pauseQuestMessages };`)(bridge, dfLocationStub(), 'Daggerfall');
 
   // No bridge yet (a sheet opened during chargen): the hooks are the
   // EMPTY object, so the LOGBOOK button is withheld rather than opened
@@ -404,7 +723,10 @@ test('QX1: the pause window\'s Quests tab reads the machine, and BOTH pauses rea
 
   assert.deepEqual(live.pauseQuestMessages(), ['entry-a', 'entry-b'],
     'the flat F5 seam is GetAllQuestLogMessages, not a refusal');
-  assert.deepEqual(Object.keys(live.questJournalHooks()).sort(), ['notebook', 'questMessages']);
+  // ROAD-G G2 added the third: HandleQuestClicks' current-location
+  // question, which this route answers outright.
+  assert.deepEqual(Object.keys(live.questJournalHooks()).sort(),
+    ['currentLocationName', 'notebook', 'questMessages']);
   assert.deepEqual(live.questJournalHooks().questMessages(), ['entry-a', 'entry-b']);
 
   const log = live.pauseQuestLog();

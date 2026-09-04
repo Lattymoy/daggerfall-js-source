@@ -215,13 +215,22 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
     assert.equal((s.match(/handleAttackFromPlayer\(/g) ?? []).length >= 3, true, `${f}: declared, called by the damage door, called by the zero arm`);
   }
   assert.match(dg, /WeaponManager\.WeaponDamage's damage\n\s+\*\s+fork closes at :615/, 'the law is cited where it lives');
-  // THE FOUR HOSTS: the arrow seam is wired wherever there is a pool
-  // with a hostility door to run it.
-  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \{ if \(!cityGuards\.guards\.includes\(f\)\) exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\); \},/);
-  assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \{ if \(f\._encounter\) interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\); \},/);
+  // THE FOUR HOSTS: the arrow seam is wired wherever there is a pool,
+  // and ROAD-G G1 (review) made the WATCH one of them - every host
+  // ROUTES by pool now instead of excluding the guards, because
+  // cityGuards carries the hostility pair itself (cityGuards.js
+  // :543-548) and DFU runs :630 for the shaft as for the swing
+  // (DaggerfallMissile.cs:660-688 -> WeaponManager.cs:630).
+  assert.match(src('scenes/world.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\)\),/);
+  assert.match(src('scenes/worldModes.js'), /onAttackFromPlayer: \(f\) => \(f\._encounter\n\s+\? interiorFoes\?\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: interiorGuards\?\.handleAttackFromPlayer\(f, player\.pos\)\),/);
   assert.match(dg, /onAttackFromPlayer: \(t\) => handleAttackFromPlayer\(t, lastPlayerFeet\),/);
-  assert.match(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
-    'the fourth host mounts the watch alone and records the absence as a fact');
+  // ROAD-G G2: the fourth host has a pool with a hostility door now,
+  // so the absence this pin used to hold ("no onAttackFromPlayer here -
+  // this host mounts the WATCH pool alone") is GONE rather than
+  // annotated: its arrow seam runs the same router world.js's does.
+  assert.match(src('scenes/exterior.js'), /onAttackFromPlayer: \(f\) => \(cityGuards\.guards\.includes\(f\)\n\s+\? cityGuards\.handleAttackFromPlayer\(f, player\.pos\)\n\s+: exteriorFoes\.handleAttackFromPlayer\(f, player\.pos\)\),/);
+  assert.doesNotMatch(src('scenes/exterior.js'), /AUDIT 58: no onAttackFromPlayer here/,
+    'the retired sentence is deleted, not annotated');
 });
 
 // ---------------------------------------------------------------

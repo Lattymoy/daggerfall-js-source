@@ -9,6 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
@@ -90,6 +91,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  renderer.setClearColor(INTERIOR_CLEAR);   // INCIDENT 2026-09-04: inside clears to BLACK (CameraClearManager.cs:24-25)
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
@@ -211,6 +213,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
   addEventListener('keydown', (e) => {
+    // ROAD-G G3: this host already filled the ring first, which is
+    // InputManager.PollInput's own order (:1795-1809) and now load-
+    // bearing - the Set IS the ring ModifierOnlyHeld scans (:1632-1639,
+    // through ui/input.js's latch). The other three hosts were
+    // moved up to match. Both of this host's keydown listeners run
+    // after it, so routeKey below sees this press placed.
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
     // R1: the four modes switch here too - DFU's currentMode is global
@@ -258,7 +266,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // double-click and debug-teleport handlers poll Input.GetKey at
       // the click, and this seam is the port's only reader of that.
       if (v) ctx.overlayPointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
-      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2, e.button === 1)) return;   // G5: the middle button too
       return;   // a window is up: never grab the pointer behind it
     }
     // U45: the large HUD's eleven panels, BEFORE the relock - a click

@@ -4,8 +4,9 @@
 // Repair mode (the scheduler at :514-568, the gates at :808-818, the
 // collection laws at :601-612/:705-728) - MIT, Daggerfall Workshop.
 //
-// CLOCK SUBSTITUTION (recorded; the Ledger A class): DFU's repair
-// data runs on WORLD SECONDS (DaggerfallDateTime.ToSeconds). The
+// CLOCK SUBSTITUTION (recorded: THE PORT'S CLOCK IS A SCALAR, Ledger A,
+// by name): DFU's repair data runs on WORLD SECONDS
+// (DaggerfallDateTime.ToSeconds). The
 // port's one clock is the CLASSIC MINUTE (worldTick.worldMinutes), so
 // every time here is minutes - `damage * MinutesPerDay / 1000` where
 // DFU has `damage * SecondsPerDay / 1000`, identical at the clock's

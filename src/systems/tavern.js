@@ -194,11 +194,11 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0 } = {}) {
 
 // The three clauses that stood here are all closed:
 //  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:265, and the
-//    KeyT arm at :256, fire hooks.onTalk; worldModes.js:2293 supplies
+//    KeyT arm at :256, fire hooks.onTalk; worldModes.js:2338 supplies
 //    it as openStaticNpc(pn, { forceTalk: true }), which reaches
-//    npcSession.talkToStaticNPC at worldModes.js:1795 - TalkManager.
+//    npcSession.talkToStaticNPC at worldModes.js:1840 - TalkManager.
 //    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
-//    button shares that door at worldModes.js:2303-2314.)
+//    button shares that door at worldModes.js:2351-2362.)
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)

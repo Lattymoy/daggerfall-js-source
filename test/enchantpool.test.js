@@ -169,9 +169,26 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
     'it asks the SAME membership law the sinks ask');
   assert.match(body, /if \(host === 'dungeon'\) \{ modes\?\.dungeonCtx\.replaceFoe\?\.\(targetEntity, mobileType\); return; \}/);
   assert.match(body, /if \(host === 'inside'\) \{ Promise\.resolve\(modes\?\.insideReplaceFoe\?\.\(f, mobileType, feet\)\)\.then\(stamp\)\.catch\(\(\) => \{\}\); return; \}/);
-  // the exterior arm survives EXACTLY as it was - this is a router, not
-  // a rewrite of the path that already worked
-  assert.match(body, /exteriorFoes\.removeFoe\(f\);\n\s+exteriorFoes\.spawnFoe\(mobileType, feet\)\.then\(stamp\)\.catch\(\(\) => \{\}\);/);
+  // ROAD-G G1: the exterior arm is a router TOO now, because the street
+  // is two pools. `exteriorFoePool` is the watch AND the encounter
+  // foes, and this arm handed both to the encounter pool's remover.
+  // That was not a leak - removeFoe never looks the record up in `foes`
+  // (exteriorFoes.js:247-252) and both pools share the host's one
+  // renderer - but the teardown of a watchman is the WATCH's to own,
+  // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
+  // encounter-pool term a guard has no business reaching, so the
+  // removal is routed by pool membership. The RE-STAND stays
+  // the encounter pool's for either - WabbajackEffect's careerIDs are
+  // seventeen monsters and no Knight_CityWatch, so CreateEnemy always
+  // mints an EnemyMonster (WabbajackEffect.cs:24-44, :87-88).
+  assert.match(body, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s+else exteriorFoes\.removeFoe\(f\);\n\s+exteriorFoes\.spawnFoe\(mobileType, feet\)\.then\(stamp\)\.catch\(\(\) => \{\}\);/,
+    'the removal goes through the pool that owns the billboard; the re-stand is the encounter pool either way');
+  // and the pool really exposes the door the router needs - the
+  // SetActive(false) shape, no corpse and no death chain
+  const cg = read('src/scenes/cityGuards.js');
+  assert.match(cg, /function removeGuard\(g\) \{\n\s+if \(!g \|\| g\.dead\) return;\n\s+releaseGuardBatch\(g\);\n\s+g\.dead = true;/,
+    'WabbajackEffect.cs:86 - the struck watchman is REMOVED, not killed');
+  assert.match(cg, /snapshotWorld, restoreWorld, removeGuard,/, 'and it is on the pool\'s public surface');
   // and the two DFU laws are still on the way in, once
   assert.match(body, /if \(f\.questBehaviour && !f\.questBehaviour\.isFoeDead\) return;/, 'WabbajackEffect.cs:70-73');
   assert.match(body, /nf\.entity\.wabbajackActive = true;/, 'WabbajackEffect.cs:68');
@@ -181,12 +198,17 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
 
   // the interior host's arm, over its own remove/spawn pair
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /insideReplaceFoe\(foe, mobileType, feet\) \{\n\s+if \(!foe\?\._encounter \|\| !interiorFoes\) return null;\n\s+interiorFoes\.removeFoe\(foe\);\n\s+return interiorFoes\.spawnFoe\(mobileType, feet\);\n\s+\},/,
-    'the interior arm removes and re-stands through THIS building\'s pool');
-  // ...and the departure it carries is written down: createCityGuards
-  // exposes no remove/spawn pair, so an indoor watchman is left
-  // standing rather than mis-routed through the encounter pool.
-  assert.match(wm, /THE WATCH IS REFUSED, and that is a departure written down/);
+  assert.match(wm, /insideReplaceFoe\(foe, mobileType, feet\) \{\n\s+if \(!foe \|\| !interiorFoes\) return null;\n\s+if \(foe\._encounter\) interiorFoes\.removeFoe\(foe\);\n\s+else if \(interiorGuards\?\.guards\.includes\(foe\)\) interiorGuards\.removeGuard\(foe\);\n\s+else return null;\n\s+return interiorFoes\.spawnFoe\(mobileType, feet\);\n\s+\},/,
+    'the interior arm removes through whichever of THIS building\'s two pools owns the record');
+  // ROAD-G G1: and the refusal that used to stand here is RETIRED, not
+  // reworded. Its whole premise was "createCityGuards exposes no
+  // remove/spawn pair"; the pool carries removeGuard now, so the watch
+  // transforms like any other EnemyEntity (WabbajackEffect.cs:64).
+  assert.equal(/THE WATCH IS REFUSED/.test(wm), false,
+    'the written refusal is gone, because the thing it refused on exists');
+  // a record from NEITHER pool is still refused - that is the
+  // membership question the door exists to ask
+  assert.match(wm, /AND THE WATCH TRANSFORMS TOO - the refusal that/);
   // the dungeon host's arm is reachable from the hosted route at all
   assert.match(read('src/scenes/dungeonContext.js'), /\n    replaceFoe: replaceFoeInPool,   \/\/ AUDIT 58/);
 });
@@ -286,10 +308,13 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.ok(ext.indexOf('var modes = createWorldModes({') < at,
     'the mount comes after `var modes = ...` - a mount above it reads undefined for every mode');
   // the three live reads, through the ONE shared law, over THIS host's
-  // own pools: the watch above ground (it mints no encounter foes), and
-  // worldModes' own two arms for inside and below.
+  // own pools: BOTH street pools above ground (ROAD-G G2 mounted the
+  // encounter pool beside the watch and struck the "it mints no
+  // encounter foes" clause that stood here), and worldModes' own two
+  // arms for inside and below. The exterior arm is the host's ONE
+  // named join, not a second spread - two spreads is two laws.
   assert.match(ext, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/);
-  assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => cityGuards\.guards, _insidePool\);/);
+  assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, exteriorFoePool, _insidePool\);/);
   assert.match(ext, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
   // the same law the world host's mount is held to: NO site inside the
   // ctx literal names a host pool - every foe door is a thunk over
@@ -306,18 +331,32 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);
-  // the Wabbajack's exterior arm REFUSES, and says why - the watch has
-  // no remove/spawn pair, exactly as worldModes wrote down for it.
+  // ROAD-G G2: THE WABBAJACK'S EXTERIOR ARM TRANSFORMS NOW. It refused
+  // and said why - "the watch has no remove/spawn pair" - which was
+  // true of the only pool this host had; the encounter pool mounted
+  // beside it owns both, so an encounter or quest foe struck in the
+  // street is removed and re-stood by the pool that owns its billboard
+  // (WabbajackEffect.cs:85-88). The WATCH is still left standing, and
+  // that departure moved from "no arm" to a named test.
   const rf = ext.slice(ext.indexOf('const _enchantReplaceFoe ='), at);
   assert.match(rf, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/);
   assert.match(rf, /if \(host === 'dungeon'\)/);
   assert.match(rf, /if \(host === 'inside'\)/);
-  assert.equal(/cityGuards\./.test(rf), false, 'and no exterior arm at all - the watch is left standing');
-  // the loose-foe arm refuses where there is no pool to stand one in,
-  // and reaches the dungeon's own chain where there is (SD1).
+  assert.match(rf, /if \(!f\._encounter\) return;/, 'the watch is named by MEMBERSHIP, not by pool identity');
+  assert.match(rf, /exteriorFoes\.removeFoe\(f\);\n\s*exteriorFoes\.spawnFoe\(mobileType, feet\)/);
+  assert.equal(/cityGuards\./.test(rf), false, 'and the arm still never names the watch pool');
+  // the loose-foe arm reaches whichever pool the player is standing in
+  // (SD1) - the dungeon's own chain below, this host's encounter pool
+  // above ground - and INTERIOR still refuses, which is world.js's own
+  // answer for the same mode.
   const sf = ext.slice(ext.indexOf('const _standLooseFoe ='), ext.indexOf('const _enchantReplaceFoe ='));
-  assert.match(sf, /const d = _mode\(\) === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*if \(!d\) return null;/);
-  assert.match(sf, /spawn: \(mt, pos, so\) => d\.spawnLooseFoe\(/);
+  assert.match(sf, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/);
+  // the MODE gate is the ONLY refusal - a `if (!d) return null;` after
+  // it is the pre-ROAD-G G2 body and refuses the whole exterior arm
+  // while leaving every other assertion in this pin green.
+  assert.match(sf, /const d = mode === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*return standLooseFoe\(\{/);
+  assert.match(sf, /collider: d \? d\.collider : collider,/, 'and it rays through the world it is standing in');
+  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied \}\)/);
 });
 
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {
@@ -335,21 +374,48 @@ test('EC1: the DETECT feed keeps its own exterior pool - one change, two consume
     'the consumer that made the split necessary is still the one that needs it');
 });
 
-test('EC1: the two SPAWN arms never stand a foe in a world the player is not in', () => {
-  // EC1 made both arms REFUSE in a dungeon, because the only spawner
-  // they could reach was the exterior one. SD1 gave them the dungeon's
-  // own door an hour later, so the refusal is now the INTERIOR one -
-  // the mode that still has no foe pool to stand anything in. The law
-  // EC1 was holding is the same; what satisfies it grew.
+test('EC1/ROAD-G G1: the two SPAWN arms stand a foe in the world the player IS in, through that world\'s own pool', () => {
+  // THE LAW EC1 WAS HOLDING, RESTATED FOR THE THIRD TIME AND FINALLY
+  // POSITIVE. EC1 made both arms REFUSE in a dungeon, because the only
+  // spawner they could reach was the exterior one; SD1 gave them the
+  // dungeon's own door an hour later and the refusal narrowed to the
+  // INTERIOR. ROAD-G G1 closes that last one: the premise EC1 wrote -
+  // "interiors have no foe pool to stand one in" - died the day
+  // `interiorFoes.spawnFoe` went live, and nothing had gone back to
+  // read it. So SoulBound's break release and the Sanguine Rose's
+  // Daedroth stood NOWHERE in a building for as long as the pool
+  // existed.
+  //
+  // DFU has no mode gate here at all. CreateFoe picks a PLACEMENT per
+  // area (CreateFoe.cs:195-212) and every branch places:
+  // PlaceFoeBuildingInterior (:219-233) is PlaceFoeFreely over the
+  // building's own transform - DFU's own comment refuses the interior
+  // spawn nodes for exactly this case ("Always place foes around
+  // player rather than use spawn points") - and PlaceFoeDungeonInterior
+  // (:238-241) is the identical call over the dungeon's. The port's
+  // gate was never DFU's; what a mode must have is a POOL, and each of
+  // the three now stands its foe through its own.
   const world = read('src/scenes/world.js');
   const at = world.indexOf('const _standLooseFoe =');
-  const body = world.slice(at, at + 1600);
-  assert.match(body, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/,
-    'an interior refuses; the two modes with a pool do not');
-  // and neither arm can reach the exterior pool from a dungeon any more
+  const body = world.slice(at, at + 2400);
+  assert.match(body, /if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/,
+    'a building stands its foe through the INTERIOR host - never this host\'s street pool, which is what enchantFoeHost routes for the sinks');
   assert.match(body, /d\n\s*\? d\.spawnLooseFoe\(/, 'a dungeon stands its foe through the DUNGEON\'s chain');
+  assert.match(body, /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/,
+    'and the street through its own encounter pool');
+  // The gate that remains is not a mode gate but a POOL gate, and it
+  // still refuses: a mode this host does not know is not a world with
+  // a spawner in it.
+  assert.match(body, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/,
+    'a mode with no pool at all still refuses');
   assert.equal(/spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\]/.test(world), false,
     'and the fixed player-feet offset both arms used is gone (SD1)');
+  // THE FOUR HOSTS RULE: the fixed-city route mounts the SAME mode
+  // machine, so it takes the same arm - it refused interiors on a
+  // clause ("a building has none of its own here at all") that was
+  // never about this host.
+  assert.ok(read('src/scenes/exterior.js').includes("if (_mode() === 'interior') return modes?.insideStandLooseFoe?.(mobileType, o) ?? null;"),
+    'and so does ?exterior');
 });
 
 test('EC1/FS1: dungeonContext mounts the ctx, and only when no outer host owns it', () => {

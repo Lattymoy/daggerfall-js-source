@@ -63,7 +63,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-  const uploadRecord = (archive, record) => {
+  const uploadRecord = (archive, record, { opaque = false } = {}) => {
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -86,8 +86,17 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // emission mask together from one remap, and replacing half of it
     // would leave a ghost lit by a texture it no longer wears.
     const swap = decodedTexture(archive, record, 0);
-    const color32 = swap ?? t.getColor32(bitmap, 0);
-    renderer.uploadTexture(archive, record, color32);
+    // INCIDENT (2026-09-04, the see-through lines in dungeon walls): a
+    // MODEL texture is opaque. DaggerfallMesh.cs:141/:169 fetch a mesh's
+    // material through MaterialReader.GetMaterial(archive, record) whose
+    // alphaIndex defaults to -1 (MaterialReader.cs:352) - no cutout
+    // index at all - and DaggerfallDefault.shader never clips. Only the
+    // billboard path (GetMaterialAtlas / GetMaterial(..., 0)) makes
+    // palette index 0 transparent. This one door served both, so every
+    // index-0 mortar run in a wall texture became a slit the model
+    // shader discarded, and the room behind it showed through.
+    const color32 = swap ?? t.getColor32(bitmap, opaque ? -1 : 0);
+    renderer.uploadTexture(archive, record, color32, { opaque });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
@@ -175,7 +184,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     const dfMesh = arch.getMesh(index);
     for (const sm of dfMesh.subMeshes) await getTexture(sm.textureArchive);
     const model = dfMeshToModel(dfMesh, getTextureSize);
-    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1
     const gpu = renderer.createMesh(model);
     cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
     gpuMeshes.set(modelIdNum, gpu);
@@ -205,7 +214,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     if (gpuMeshes.has(key)) return gpuMeshes.get(key);
     for (const sm of model.subMeshes) {
       await getTexture(sm.textureArchive);
-      uploadRecord(sm.textureArchive, sm.textureRecord);
+      uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });
     }
     const gpu = renderer.createMesh(model);
     gpuMeshes.set(key, gpu);

@@ -2663,3 +2663,191 @@ One pre-existing pin was REPAIRED rather than advanced, the same class
 of fragility MT-iv found in `ch3`: FA1's corpse-batch pin matched
 `for (const c of corpseBatches)` and took the first hit, which the new
 teardown loop became - it anchors on the REBUILD it actually names now.
+
+## ROAD-G G1 - THE FOE POOLS' THREE REMAINDERS (2026-09-04)
+
+Audit 58 left three findings recorded at their sites rather than
+flagged, and they turned out to be one finding written three times: a
+law the port already owned, refused at ONE pool because that pool had
+never been handed the door its siblings had. In every case the refusal
+was still standing on a premise that had died in some earlier slice,
+with nothing sending anyone back to re-read it.
+
+### (a) The watch could be struck and turn nobody
+
+`GameManager.MakeEnemiesHostile` (GameManager.cs:790-806) walks the
+whole `ActiveGameObjectDatabase` whenever a NON-hostile enemy is struck
+by the player - `if (!enemyMotor.IsHostile) GameManager.Instance
+.MakeEnemiesHostile();` (DaggerfallEntityBehaviour.cs:255-258) - and
+Knight_CityWatch is an `EnemyClass`, one of the two EntityTypes that
+walk (:250). Both encounter pools have carried the whole block since
+ROAD-B. `createCityGuards` carried **no half of it and no dep for it**,
+so a watchman talked down by Etiquette or Streetwise (the C-slice
+pacification) or restored peaceful by the pool's own `hostile: false`
+arm could be cut down and the room would not look up.
+
+The block is built as a block, in C#'s own order, because the order IS
+the law:
+
+1. the `!IsHostile` READ and the area walk (:255-258) - and the read
+   must precede the second call, which raises this guard's own flag; a
+   later read would make the walk unreachable for the only case it
+   exists for;
+2. `MakeEnemyHostileToAttacker(PlayerEntityBehaviour)` (:259), seeded
+   with where the blow came from;
+3. the ally TEAM reset (:204-213), which reads the STATIC row rather
+   than the instance's own copy.
+
+All three sit inside `damageGuard`'s existing `fromPlayer` gate - DFU's
+`sourceEntityBehaviour == PlayerEntityBehaviour` (:203), which is
+F035's law - and AHEAD of the Knight_CityWatch murder tally, exactly as
+:250-261 sits ahead of :265-269 in the one C# member. The zero-damage
+arm reaches it too, because WeaponManager's `damage > 0` fork closes at
+:615 and `HandleAttackFromSource` runs at :630 regardless; the comment
+in that arm which said the pair was "a separate, unported half" is
+retired rather than reworded.
+
+**The lane shipped that for the MELEE arms only, and the review caught
+it.** A player ARROW reaches a pool through two separate seams:
+`dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
+and `onAttackFromPlayer`, which it calls unconditionally
+(`arrowFlight.js:195`) precisely because that is where :630 lives. All
+three hosts that resolve a player arrow EXCLUDED the guards from the
+second seam, on a sentence — "the watch pool's damage door carries no
+hostility pair of its own" — that this lane's own `handleAttackFromPlayer`
+had just falsified. So a zero-damage shaft into a watchman talked down
+by Etiquette turned nobody, while the identical shaft into an encounter
+foe beside him turned the whole area and the identical zero-damage
+SWING into the same watchman turned it too. DFU makes no such
+distinction: `AssignBowDamageToTarget`'s player arm
+(DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
+:630 runs for the shaft exactly as for the swing. The pool's door is
+PUBLIC now (beside `removeGuard` on the returned surface, as the
+encounter pool has always exported its own at `exteriorFoes.js:957`)
+and all three seams ROUTE by pool membership, mirroring the
+`dealDamage` router directly above each of them. A DAMAGING shaft now
+runs the pair twice for a guard - once inside `damageGuard`, once
+through the seam - which is exactly the shape the encounter pool has
+carried since ROAD-B, and it is idempotent: the `!isHostile` read is
+already false on the second pass and both remaining calls re-assign the
+same values.
+
+THE FOUR HOSTS RULE decided the wiring: three hosts mint watchmen and
+each hands in its OWN area, because DFU's database is one per SCENE and
+not one per pool. `world.js` passes `_makeEnemiesHostile` (the two
+street pools joined with whatever inside the player stands in);
+`exterior.js` had spelled that same join out by hand at its quest door,
+so the join was lifted to `_liveEnemyDatabase` and both arms read the
+one definition; `worldModes.js`'s indoor watch walks
+`interiorEnemyDatabase`, which is that building's two pools.
+
+### (b) The Wabbajack could not touch the one enemy that arrests you
+
+`WabbajackEffect` transforms any `EnemyEntity` (WabbajackEffect.cs:64)
+and a watchman is one, but the guard pool exposed no removal door, so
+both hosts wrote the refusal into the code and left the watchman
+standing. `removeGuard` is that door now - WabbajackEffect.cs:86's
+`targetEntity.gameObject.SetActive(false)`: off the scene, billboard
+batch freed, and deliberately NOT a death (no corpse, no loot, no
+crime).
+
+The STREET half was an OWNERSHIP hole, not a leak. `world.js`'s
+exterior arm reached `exteriorFoes.removeFoe` unconditionally over a
+pool that is the watch AND the encounter foes - and that remover never
+looks a record up in `foes` and shares the host's one renderer, so a
+struck watchman got exactly what `removeGuard` gives it (batch freed,
+`dead = true`, no corpse, skipped and then spliced by the next
+`update()` pass). What was wrong is that the watch's teardown was the
+encounter pool's to define, with `removeFoe`'s
+`questBehaviour?.notifyDestroyed()` reaching a record that has no quest
+behaviour to notify. Both hosts route by POOL MEMBERSHIP now, the same law
+`enchantFoeHost` states for the sinks. The RE-STAND stays the encounter
+pool's in both, and that is not a mis-route: `careerIDs` is seventeen
+monsters with no Knight_CityWatch in it (:24-44), so `CreateEnemy`
+always mints an EnemyMonster, and each host's two pools share one
+collider, one frame and one death chain - the port's reading of "under
+the struck enemy's own parent transform" (:87).
+
+`exterior.js` still refuses, and its comment now carries the premise
+that is actually true: not that the pool cannot be emptied, but that
+the fixed-city route mounts no encounter pool above ground at all, so
+there is nowhere to mint the new career. Removing the watchman and
+standing nothing would be strictly worse than DFU.
+
+### (c) A released soul had nowhere to stand in a building
+
+`world.js`'s `_standLooseFoe` refused every mode but exterior and
+dungeon, on EC1's own words - "interiors have no foe pool to stand one
+in". That premise died the day `interiorFoes.spawnFoe` went live and
+nothing went back to read it, so SoulBound's break release and the
+Sanguine Rose's Daedroth stood NOWHERE in a shop for as long as the
+pool existed.
+
+DFU has no mode gate here at all: `CreateFoe` picks a PLACEMENT per
+area (CreateFoe.cs:195-212) and every branch places.
+`PlaceFoeBuildingInterior` (:219-233) is `PlaceFoeFreely` over the
+building's own transform and nothing else - DFU's own comment refuses
+the interior spawn nodes for exactly this case ("Always place foes
+around player rather than use spawn points") - which is the same member
+`tryPlaceInteriorQuestFoe` has stood quest foes through since IF.
+`worldModes.standInteriorLooseFoe` is that member, over this building's
+collider, with the occupancy test walking BOTH of its pools (DFU's gate
+is a bare `Physics.OverlapSphere`, :317-321, so a watchman blocks a
+spot as surely as a daedra does). Both hosts that mount the mode
+machine take the arm, because it is the SAME machine for both routes.
+
+Pins: 8 in `test/roadg_pools.test.js`, five of them RUN against the
+live pool with records pushed onto its own public `guards` array (no
+ARENA2 needed, which is what made the aggro block observable at all);
+`test/enchantpool.test.js`'s EC1 spawn-arms pin was rewritten from a
+refusal into the positive law, and its Wabbajack pin now routes the
+watch. 21 mutants driven, 20 dead; the one survivor is EQUIVALENT and named: `removeGuard`'s `g.dead` early return is shadowed by `releaseGuardBatch`'s own null-batch guard, so dropping it changes nothing observable.
+
+## INCIDENT 2026-09-04 - THE BATS IN THE CEILING (Mac's report) - SHIPPED
+
+Mac: "In the first dungeon I notice some bat enemies stuck in the
+ceiling." Three laws, all in one new home, `characters/enemyAnchor.js`.
+
+**1. Where the marker is.** `RDBLayout.cs:1537` stands the enemy
+TRANSFORM on the flat marker, and the mobile billboard hangs on it
+with `localPosition` zero (`DaggerfallMobileUnit.cs:407-410` for a
+Flying or Aquatic unit): the marker is the sprite's CENTRE. The port's
+motor keeps FEET and its billboard shader bottom-anchors, so a bat
+whose feet were put on the marker stood half a sprite too high - into
+the ceiling of Privateer's Hold. `:1546-1548` ground-aligns everything
+but a FLYING unit, so only a flyer takes the centre-to-feet drop
+(`feetFromCentre`); C12 had read the motor's `CanFly =
+Flying|Spectral` at the layout, and a ghost grounds there. The
+exterior pool has the same law one step removed: `FinalizeFoe`
+(`CreateFoe.cs:341-359`) lifts a flyer's transform 1.5 and
+`CreateEnemy` skips its ground align (`GameObjectHelper.cs:1227`), so
+`spawnFoe` fetches the texture BEFORE the AI stands and drops a
+flyer's feet half its idle sprite under the lifted point - with the
+AUDIT-39r epoch guard still between the await and the stand.
+
+**2. The capsule.** `SetupDemoEnemy.cs:103-115`: the controller's
+height is the idle sprite's, HALVED for a flyer ("in frame 0 wings are
+in high position, assume body is the lower half", bottom-justified so
+the bottom edge stays) and never under 1.6 ("stops very short
+characters like rats from being walked upon"). Every foe had worn the
+player's 1.8 - both spawn hosts passed no `height` - and the motor's
+six `collider.move` sites (and the enhanced motor's follow) never
+passed the height they had, so the collider swept the player's
+capsule for a bat and a giant alike. `enemyControllerHeight` sizes it,
+both hosts pass it, every move carries `this.height`.
+
+**3. The draw.** A walker keeps its feet aligned across records
+(`:402-406`, the sprite lifted by half the growth); a flyer or swimmer
+keeps its centre (`:407-410`). The port's shader bottom-anchors, so
+`spriteOriginY` gives a walker its feet and a flyer or swimmer
+`feet + (idleH - recordH) / 2`; both draws use it through a per-foe
+scratch origin so a wing-beat record grows around the centre instead
+of up from the feet.
+
+Pins: 6 in `test/incident_ceiling_bats.test.js` - the three laws as
+values against DFU's numbers, a live `EnemyAI` over a real floored
+Collider recording the height every move carries, a sweep of every
+`collider.move` in both motors, and the two spawn hosts' shapes. No
+ARENA2 in the container: the bats' height, the halved capsule's feel
+at doors, and flyers and swimmers in every host want Mac's eyes on the
+live site.

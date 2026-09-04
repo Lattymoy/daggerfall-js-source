@@ -7,6 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { INTERIOR_CLEAR, SKY_CLEAR } from '../render/renderer.js';
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -27,9 +28,6 @@ import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y }
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
-import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
-import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
-import { loadVendoredPegas } from '../systems/pegasVendor.js';   // MW-D50: the mod vendored with permission, ranked behind the player's own
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
@@ -138,7 +136,7 @@ import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';  
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
-import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
+import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
@@ -1279,35 +1277,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     ridingAnimator.mount(mode);
     ridingArt = null;
-    // MW-D42: a HORSE in the enhanced skin saddles the Pegas horse once
-    // per session - the player's own attached copy (MW-D40's loose door)
-    // ranks ahead of the set vendored with permission (MW-D50). A failed
-    // load or the classic skin leave `pegas` null; the CFA sprite rides.
-    if (mode === TRANSPORT_MODES.Horse) tryLoadPegas();
   };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
-  let pegas = null;          // MW-D42: the loaded 3D mount, or null (the sprite lane)
-  let pegasSounds = new Set();
-  let pegasWanted = false;
-  async function tryLoadPegas() {
-    if (pegasWanted || !isEnhanced()) return;
-    pegasWanted = true;
-    try {
-      const attached = await loadMorrowindArchives();
-      const vendored = await loadVendoredPegas();   // MW-D50: null when the vendor tree carries no horse
-      const archives = vendored ? [...attached, vendored] : attached;   // the player's own copy answers first
-      const horse = loadPegasHorse({ renderer, archives });
-      if (!horse.ok) {   // MW-D50: with a vendored set behind it, a miss at any stage is worth a line
-        console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
-        return;
-      }
-      pegasSounds = await registerHorseSounds(audio, archives);
-      pegas = horse;
-      console.log(`[pegas] the horse is saddled (variant ${horse.variant}, ${pegasSounds.size} mod sounds)${horse.notes.length ? ' - ' + horse.notes.join('; ') : ''}`);
-    } catch (err) {
-      console.warn('[pegas] load failed; the sprite rides:', err?.message);
-    }
-  }
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
@@ -1828,6 +1799,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
+    makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258, over the SAME database the encounter pool walks
     // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
     // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
     // The mode host owns them all (it is the one that runs
@@ -2225,10 +2197,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1905 mounts the same one, gated on
+  // and dungeonContext.js:1916 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4047
+  // that context through modes.dungeonCtx - so worldModes.js:4092
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2309,7 +2281,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
     if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }   // wave 37: `modes?.` above the declaration, guarded on the OBJECT
     if (host === 'inside') { Promise.resolve(modes?.insideReplaceFoe?.(f, mobileType, feet)).then(stamp).catch(() => {}); return; }
-    exteriorFoes.removeFoe(f);
+    // ROAD-G G1: THE STREET HAS TWO POOLS, and the removal must go
+    // through the one that owns the billboard - `exteriorFoePool` is
+    // the watch AND the encounter foes, and this arm reached the
+    // encounter pool's remover for both. That was not a leak: removeFoe
+    // (exteriorFoes.js:247-252) never looks the record up in `foes`, and
+    // both pools share this host's one renderer, so a struck WATCHMAN
+    // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
+    // batch freed, `dead = true`, no corpse, skipped by the next AI pass
+    // (cityGuards.js:718) and spliced out at the end of it (:889).
+    // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
+    // teardown of its own records so the two can diverge safely, and
+    // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
+    // :241) is an encounter-pool term a watchman has no business
+    // reaching. DFU transforms any EnemyEntity and Knight_CityWatch is
+    // one (WabbajackEffect.cs:64).
+    // The RE-STAND is the encounter pool's either way: careerIDs holds
+    // seventeen monsters and no watch (:24-44), so CreateEnemy mints an
+    // EnemyMonster whichever pool the struck record came from - and
+    // both of this host's pools share one collider and one frame, which
+    // is what "under the struck enemy's own parent transform" (:87)
+    // means for a host with no Unity hierarchy.
+    if (cityGuards.guards.includes(f)) cityGuards.removeGuard(f);
+    else exteriorFoes.removeFoe(f);
     exteriorFoes.spawnFoe(mobileType, feet).then(stamp).catch(() => {});
   };
   /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
@@ -2369,8 +2363,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
-    // Interiors have no foe pool to stand one in, so they still refuse
-    // - EC1's answer, and the honest one until a pool exists.
+    // ROAD-G G1: THE INTERIOR ARM, through the pool that exists.
+    // This line used to read `if (mode !== 'exterior' && mode !==
+    // 'dungeon') return null;` on EC1's premise - "interiors have no
+    // foe pool to stand one in" - and that premise died the day
+    // interiorFoes.spawnFoe went live. DFU has no mode gate here at
+    // all: CreateFoe picks a PLACEMENT per area (CreateFoe.cs:195-212)
+    // and PlaceFoeBuildingInterior (:219-233) is PlaceFoeFreely over
+    // the building, the same member the dungeon arm gets. So SoulBound's
+    // break release and the Sanguine Rose's Daedroth stand in a shop
+    // now, through the interior host's own pool, collider and death
+    // chain - never this host's street pool, which is the routing law
+    // `enchantFoeHost` states for the sinks and the Wabbajack.
+    if (mode === 'interior') return modes?.insideStandLooseFoe?.(mobileType, opts) ?? null;
     if (mode !== 'exterior' && mode !== 'dungeon') return null;
     const d = _dungeonPool();
     return standLooseFoe({
@@ -2519,7 +2524,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
-    onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
+    // U8e: OnPop mints the world pile; P2: stamped with its map pixel.
+    // G5: `icon` is the drop icon the player cycled to on the remote
+    // panel (null = CreateDroppedLootContainer's -1 roll), and `at` is
+    // the loot target the window replaced - :710-714 keeps that
+    // container's x and z and takes only the new pile's own y.
+    onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(
+      items, containerDropPos(at, dropFeet()), `${playerTravelPixel().x},${playerTravelPixel().y}`, icon),
     ...extra,
   });
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
@@ -4101,14 +4112,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:322) and
+     *  on. Here routeAction's arm is optional (ui/input.js:418) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:226), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:351), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
@@ -4256,19 +4267,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shop door as outside it (test/modalkeys.test.js red-proofs the
     // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER. InputManager
+    // .PollInput (:1795-1809) rebuilds `heldKeys` every frame whatever
+    // the dispatch does - `foreach (KeyCode k in KeyCodeList) if
+    // (GetPollKey(k)) AddHeldKey(heldKeys, k)` runs before
+    // GameManager.Update reads a single Action. This add used to sit at
+    // the BOTTOM of the ladder, so every key that DISPATCHED (F5, R, M,
+    // V, Escape) returned above it and never entered the Set at all.
+    // That was invisible while nothing read the ring; it is not now,
+    // because the Set IS the ring ModifierOnlyHeld SCANS (:1632-1639,
+    // through ui/input.js's latch) and a key missing from it is a key
+    // that cannot disqualify a modifier at all. It stays BELOW
+    // the overlay gate: DFU's own Update returns before PollInput while
+    // a pausing window is up (:487-503), so a key typed into a window
+    // joins no ring there either.
+    keys.add(e.code);
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:95-105), and no host passed one - so
+    // held-keys Set (ui/input.js:156-177), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
     // the controls window got the Status box instead and could never
-    // open the inventory. The Set is filled by the `keys.add(e.code)`
-    // below, i.e. by EARLIER presses, so at this point it holds the
-    // modifier and not yet this key - which is exactly what the arm
-    // expects (:102 unions e.code in itself), and it carries the
-    // suppression half too (:1681-1685, "space is jump, LeftShift+
-    // Space opens inventory: we want to ignore jumping").
+    // open the inventory. The Set is the ring filled just above, this
+    // press included, and actionOf reads it through the held-first
+    // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
+    // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
@@ -4330,7 +4354,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       hudCtx.quickLoad();
       return;
     }
-    keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -4436,7 +4459,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:184, "a right-click on a window is the window's...
+  // (dungeon.js:186, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -4615,7 +4638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6310-6322 -
+  // worldModes answers it in BOTH modes (worldModes.js:6367-6379 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5579,7 +5602,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (!pile) return;
           townTalk.showOverlay(makeInventoryWindow({
             onClose: () => droppedLoot.releaseEmptied(),
-            loot: { items: () => pile.items },
+            loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
           }));
         };
       }
@@ -5936,7 +5959,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:84, so the
+  // only reader of `load` in the whole tree is dungeon.js:85, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6269,7 +6292,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:462's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:470's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6458,7 +6481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 // makeInventoryWindow already passes, plus the two below -
                 // which is precisely what its `extra` parameter is for.
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-                loot: { items: () => pile.items },
+                loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));
@@ -6683,6 +6706,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setClearColor((modes?.mode ?? 'exterior') !== 'exterior' ? INTERIOR_CLEAR : SKY_CLEAR);   // INCIDENT 2026-09-04: CameraClearManager.cs:51-57 - inside clears to BLACK, outside to the sky
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
@@ -6721,22 +6745,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
-    // MW-D42: THE HORSE UNDER YOU, world-space with the character
-    // pass's full lighting - the CFA sprite's 1:1 lane yields only
-    // while this actually stands (the draw below checks pegas again).
-    // Gait rides the same motor flags the sprite's animator reads;
-    // airborne holds the stride (horseGaitClip answers null). Paused
-    // HIDES, the sprite's own F-E1 law - no advance, no draw.
-    if (pegas && player.transportMode === TRANSPORT_MODES.Horse
-      && !gamePaused()) {
-      const clip = horseGaitClip({
-        standingStill: player.standing, grounded: player.grounded,
-        movingLessThanHalfSpeed: player.movingLessThanHalfSpeed,
-      });
-      if (clip && !pegas.setClip(clip)) pegas.setClip(HORSE_CLIPS.still);   // fall back a gait, never a dead horse
-      pegas.advance(clip ? dt : 0);
-      renderer.drawCharacter(pegas.mesh, horseModelMatrix(player.pos, cam.yaw));
-    }
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
@@ -7062,10 +7070,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
         // AUDIT 58: WeaponManager.cs:630's HandleAttackFromSource sits
         // AFTER the damage fork closes (:615), so a shaft that lost the
-        // roll still enrages what it hit and wakes the area. The watch
-        // pool's damage door carries no hostility pair of its own, so
-        // only the encounter pool has one to run.
-        onAttackFromPlayer: (f) => { if (!cityGuards.guards.includes(f)) exteriorFoes.handleAttackFromPlayer(f, player.pos); },
+        // roll still enrages what it hit and wakes the area. ROAD-G G1
+        // (review): the WATCH carries the pair now
+        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // as `dealDamage` above it does, instead of excluding the
+        // guards - a zero-damage shaft into a pacified watchman has to
+        // reach the same door the zero-damage SWING already reaches
+        // (cityGuards.js:960). DFU makes no pool distinction:
+        // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
+        // :660-688) calls WeaponDamage, so :630 runs for the shaft as
+        // for the swing.
+        onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
+          ? cityGuards.handleAttackFromPlayer(f, player.pos)
+          : exteriorFoes.handleAttackFromPlayer(f, player.pos)),
       }),
     });
     arrows.draw(renderer);
@@ -7193,34 +7210,19 @@ export async function bootWorld(canvas, renderer, params, status) {
           running: player.isRunning,
           soundVolume: 1,
         });
-        // MW-D42: with the 3D horse standing, the mod's own hooves and
-        // voice replace the classic clips - key by key, only where a
-        // registered buffer actually landed (a partial attach degrades
-        // sound by sound). The setLoop SWAP semantics (F-F3) carry
-        // string keys unchanged through the MW-D40 door.
-        const pegasUp = pegas && player.transportMode === TRANSPORT_MODES.Horse;
-        if (r.neigh) {
-          audio.playOneShot(pegasUp && pegasSounds.has('pegas:roar') ? 'pegas:roar' : SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
-        }
-        const pegasClipKey = r.clip === 'HorseClop2' ? 'pegas:gallop' : 'pegas:trot';
-        const rideClip = pegasUp && pegasSounds.has(pegasClipKey) ? pegasClipKey : SOUND[r.clip];
-        audio.setLoop('riding', r.playing ? rideClip : null, { volume: r.volume, pitch: r.pitch });
+        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
+        audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
         // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
         // game is paused - `!GameManager.IsGamePaused` sits in the same
         // condition as the Repaint test. Under an open window DFU shows
         // no mount; the first cut froze the frame and kept drawing it.
         if (ridingArt && isRiding(player.transportMode) && !ridePaused) {
-          // MW-D42: the CFA sprite is the 1:1 lane - it yields only
-          // while the 3D horse actually stands under you (the cart,
-          // the classic skin, and every failed load keep it).
-          if (!pegasUp) {
-            // ROAD-D D10: horseOffsetHeight (TransportManager.cs
-            // :304-309) - the bar the LAST drawHud drew, lifted out
-            // from under the mount. Docking is not asked here; DFU's
-            // horse arm never asks it.
-            const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
-            renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
-          }
+          // ROAD-D D10: horseOffsetHeight (TransportManager.cs
+          // :304-309) - the bar the LAST drawHud drew, lifted out
+          // from under the mount. Docking is not asked here; DFU's
+          // horse arm never asks it.
+          const rect = ridingRect(canvas, ridingArt, horseOffsetHeight());
+          renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
         }
       }
       drawHud(renderer, canvas, hudArt, playerEntity,

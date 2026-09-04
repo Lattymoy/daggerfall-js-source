@@ -8,7 +8,8 @@
 // needs resolved Places: that arm rides deps.travelSeconds and until
 // Q3 wires it the clock stores travelTimePending=true and 0 seconds,
 // loudly (never a silent wrong number). Random draws are
-// UnityEngine.Random -> injectable uniform roll (Ledger A).
+// UnityEngine.Random -> injectable uniform roll (THE ENGINE-PRNG RULE,
+// Ledger A).
 // The tick half (enable/stop, TriggerTask on zero) ships with the
 // machine (Q2).
 

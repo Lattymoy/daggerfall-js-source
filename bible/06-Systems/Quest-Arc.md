@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:451). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:452). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1452,7 +1452,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:858's
+and both hosts mint a fresh one at every click - worldModes.js:903's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2901,7 +2901,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:451`. A pending marker over shipped
+already ships, at `worldModes.js:452`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -4857,7 +4857,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:198`, the standalone host, has always had the right shape:
+`dungeon.js:200`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5398,3 +5398,133 @@ fifth was the one nothing exercised. The FOUR HOSTS RULE catches a host
 that is missing a seam; it does not catch a seam that is present and
 half-wired, and this run has now found that shape three times (DT1's
 detect feed, ID1's drop pool, and here).
+
+## ROAD-G G2 — the fixed-city host's three seams (2026-09-04)
+
+`?exterior` is the port's own dev route: one location laid out whole,
+with the same mode machine, the same windows and the same motor as the
+streaming host. QX1 gave it a quest bridge and recorded **one**
+departure — CreateFoe's outdoor placement arm — and that record read as
+a decision when it was a missing producer.
+
+**(a) The cast engine's foe list was an interior scene gate.**
+`createPlayerMagic` here answered `mode === 'exterior' ? guards : []`,
+which is the exact gate the AUDIT 58 review had just struck from the
+world host's twin. This page does not mount an interior foe pool
+itself, but it *builds* `createWorldModes`, whose interior arm mounts
+two (`interiorFoes` and ROAD-B's indoor watch) and answers them at
+`insideFoes` — and this is the only cast engine that runs in that mode:
+worldModes takes the instance, drives `firePending`/`update` on every
+interior frame and routes the interior attack click into
+`interceptAttack`. Every target read in the engine goes through that
+one thunk (explodeAt's sweep, ByTouch's pick, the release-frame area
+arm, the missile impact), so a Fireball cast in a shop reached from
+`?exterior` swept nobody and a missile passed through a watchman the
+melee ray would have hit. DFU gates nothing here —
+`Physics.OverlapSphereNonAlloc` and a raycast take whatever is in the
+scene (DaggerfallMissile.cs:481, :409-455). It takes the world host's
+three-arm shape now, and the SINKS follow the record through the
+pool-membership router (`liveEnchantFoeSinks`) rather than the mode, so
+a foe handed out by the interior arm knocks back and dies against that
+building's collider.
+
+**(b) The outdoor placement arm needed a pool, so the pool is
+mounted.** `tryPlaceFoe` answered `false` above ground without even
+reaching the mode machine, so an `create foe` wave aimed at the street
+pended for ever. The host mounts `createExteriorFoes` — the same
+factory world.js and worldModes take — over its own collider, ticker,
+rig, blood pool and arrow flight, and the arm is
+**PlaceFoeExteriorLocation** (CreateFoe.cs:245-248) exactly:
+`PlaceFoeFreely` with **no band**, the default 5/20 ring, because
+TryPlacement (:203-206) picks that arm precisely when
+`IsPlayerInLocationRect` — and this route stands inside its one city's
+rect for its whole life (`_musicInLocationRect` is `() => true`), so the
+wilderness 8/25 arm (:252-257) **has no reachable branch here at all**.
+The cast origin is the controller centre (pinned: a floor 3.5 below the
+feet is 4.4 below the centre, past `maxFloorDistance` 4, so the shipped
+origin refuses where a feet origin places), the FOV crosses in degrees
+and the cone is held on **both** sides — `fovDegrees + Range(0,4)`, so
+`[75, 79)` and nothing anchored anywhere but the player passes —
+the occupancy sphere (:317-321, *any* collider) reads the host's whole
+street database, FinalizeFoe lifts a flier 1.5 and leaves a walker on
+the probed floor, and the foe LookAt's the player.
+
+Mounting the pool falsified six sentences that had each recorded the
+one-pool host as a fact, and each was **struck rather than annotated**:
+the Wabbajack's exterior arm ("the watch has no remove/spawn pair" —
+true of the only pool there was), SoulBound's and the Sanguine Rose's
+loose release, the magic-round fan-out ("this host mints no encounter
+foes"), the arrow seam's "no bow-armed pool" and its missing
+`onAttackFromPlayer`, and the rest/collapse/townsfolk-idle reads that
+each named `cityGuards.guards` as the whole database. The join has ONE
+home (`exteriorFoePool`), and the hostility walk one more
+(`_liveEnemyDatabase`), so the next reader cannot grow a seventh copy.
+The quest-resource CLICK arm went in with it — PlayerActivate
+:325-339 has no scene gate, and a quest foe you cannot click is DQ1's
+lesson one host over.
+
+**What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
+spawn* roll (:486-492) still has no caller on this route. It is not
+this pool's dependency — it is a loop that carries the passive-guard
+spawns and the NPC-guard conversion with it (world.js:1806-1890) — and
+it is named at the mount so the absence reads as a fact.
+
+**(c) The find-place seam's absence, narrowed to one sentence.**
+HandleQuestClicks (:448-450) asks three questions before the confirmFind
+dialog. This route mounts no travel map, so `gotoPlace` (:214-217) and
+`canFindPlace` (:1134-1146) — both DfTravelMapWindow members — stay
+unset and no dialog is ever offered, which is the same nothing a
+CanFindPlace miss produces in C#. That is now the *whole* of what is
+recorded. The gate C# asks **first** — is the named place the city you
+are already standing in, in which case DFU does nothing at all — is
+answered: the host had never supplied `currentLocationName`, so the
+window compared against `''` and could never match, and this route
+knows its one city outright.
+
+**(d) The cast engine was DEAF to the machine — the review's find.**
+This host owns a cast engine of its own, and `worldModes` takes *that
+instance* for the interior mode, so it covers the shops entered from
+`?exterior` too. It passed neither of `EntityEffectManager`'s two
+ready-spell events (`hostMagic.js:73-74`), and those two doors are the
+*only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
+(`machine.js:776`/`:782`; C# subscribes them in the action's
+constructor). Every `cast X spell do` and `cast X effect do` on this
+whole route could therefore never latch and never fire. The pair the
+other two engine-owning hosts wire (`world.js:2023-2024`,
+`dungeonContext.js:1787-1788`) is wired here now, and with it
+`CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
+byte-folded `spellHasMatchForClassicEffect` (`world.js:4719-4722`),
+absent which the action self-completes at *parse*
+(`actions.js:2742`/`:2749`) and the task can never arm at all.
+
+Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
+the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
+**both** sides and the controller-centre cast origin held by a ledge the
+feet origin would reach; the occupancy sphere held by a real REFUSAL
+rather than a `typeof`; the find-place arm RUN through a real
+`QuestJournalWindow`; the two ready-spell doors RUN into a stub machine;
+the two classic-spell world reads RUN; and the frame seams — the pool's
+tick, its draw, the one shared senses context, the enemy-arrow target —
+windowed at the source). **The review corrected this paragraph:** it
+used to name `audit24_wave32`, `audit24_wave46`, `audit26_streaming2`,
+`audit58_combat`, `audit58_saveaudio`, `detectindoors`, `nearbyobjects`,
+`restlodging` and `townpopulation` as holding the consequential seams,
+and those widened greps hold *other* expressions — `subscribeFoePools`,
+the Detect feed, the rest/collapse reads, the politeness gate and
+`onAttackFromPlayer` — while seven shipped seams had no pin at all and
+two more were held only by a doc-cite test's line arithmetic. The seven
+are pinned now where the tree keeps that kind of law: the corpse-key
+router in `audit24_wave38` (widened to both exterior hosts, and RUN —
+a `foeCorpse:` key routed into the watch pool empties a *live*
+watchman's pack), the three-pool swing order and the arrow targets in
+`flagsweep` FS1, `ClearEnemies` in `prisonrelease`, the quest-foe click
+ray in `questguards` QG1 (its table's fourth host, plus the
+non-consuming order), and the pool's tick/draw/senses/arrow seams in
+`qx1_exterior_host`. Campaign: 9 mutants, 9 killed; the review adds 19
+more, 19 killed.
+
+**THE LESSON: A RECORDED ABSENCE OUTLIVES ITS REASON.** Every one of
+the six struck sentences was true when it was written and none was
+re-read when the premise under it moved. A departure row is a claim
+about the tree, and the day a slice mounts what the row said was
+missing, the row becomes the most confident wrong sentence in the file.

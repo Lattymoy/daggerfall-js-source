@@ -224,14 +224,18 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // out of its host and CALLED here: a pool wired tomorrow is covered
   // tomorrow, and an unwired one is a red test the same day.
   // (The flash is the third of the three and rides in the POOLS for
-  // these two hosts - cityGuards.js:423 and exteriorFoes.js:373 both
+  // these two hosts - cityGuards.js:434 and exteriorFoes.js:383 both
   // flash on the same `dmg > 0` that calls onPlayerHurt - which is why
   // it is not inside the handlers run below.)
   const zero = () => 0;
   const hit = hitSoundFor(null, zero);                                   // PlayWeaponlessHitSound's family
   const cry = raceGenderPainSound(RACES.Breton, 'female', true, zero);   // 10 >= MaxHealth/4
   assert.notEqual(hit, cry, 'the hit sound and the cry are different clips');
-  for (const [file, doors] of [['src/scenes/world.js', 2], ['src/scenes/exterior.js', 1]]) {
+  // ROAD-G G2: the town host holds TWO doors now, not one - the watch
+  // and the encounter pool it mounted beside it. That is the exact
+  // movement this pin's own preamble predicts, and the count is only
+  // here to catch a DELETED door; both are run below either way.
+  for (const [file, doors] of [['src/scenes/world.js', 2], ['src/scenes/exterior.js', 2]]) {
     const handlers = playerHurtHandlers(file);
     assert.equal(handlers.length, doors, `${file}: one damage door per enemy pool`);
     handlers.forEach((h, i) => {

@@ -18,7 +18,7 @@
 
 import {
   ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, resetDefaults,
-  isCombo, getCombo,
+  isCombo, getCombo, comboCode,
 } from './inputActions.js';
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
@@ -221,4 +221,47 @@ function formatButtonText(text, full) {
     return text.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim().toUpperCase();
   }
   return ELONGATED_TEXT;
+}
+
+// ── the two helpers both rebinding windows need (ROAD-G G6) ─────────
+//
+// They were private to ui/controlsWindow.js until the ADVANCED tab's
+// destination - ui/mouseControlsWindow.js, the other window that
+// captures keys and prompts to remove them - needed the same two. The
+// grid imports the WINDOW, so the shared halves cannot live in the
+// grid without a cycle, and PromptRemoveKeybindMessage is
+// ControlsConfigManager's own method anyway (:290-320).
+
+/** The three virtual modifiers a KeyboardEvent reports, each mapped to
+ *  the LEFT physical key. The modifier keys themselves are excluded:
+ *  pressing Shift alone must bind Shift, not a Shift+Shift combo. DFU
+ *  takes TWO key-downs and lets ANY key be the modifier
+ *  (DaggerfallControlsWindow.WaitForKeyPress :380-424); a browser
+ *  KeyboardEvent reports three flags and no side, so this door offers
+ *  the LEFT side of the three - which is what every DFU default binds.
+ *  The storage, the duplicate law and the runtime read take any pair. */
+const EVENT_MODIFIERS = Object.freeze([
+  ['ctrlKey', 'ControlLeft', ['ControlLeft', 'ControlRight']],
+  ['shiftKey', 'ShiftLeft', ['ShiftLeft', 'ShiftRight']],
+  ['altKey', 'AltLeft', ['AltLeft', 'AltRight']],
+]);
+export function comboFromEvent(code, e) {
+  if (!e) return null;
+  for (const [flag, mod, own] of EVENT_MODIFIERS) {
+    if (e[flag] && !own.includes(code)) return comboCode(mod, code);
+  }
+  return null;
+}
+
+/** The remove prompt's action face (:302): camel case split. */
+export const splitCamel = (s) => s.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
+
+/** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
+ *  record formatted with the camel-split action name and the FULL
+ *  button text of the code being removed. */
+export function removeKeybindPromptRows(action, code) {
+  return [
+    'Are you sure you want to remove the keybind',
+    `for ${splitCamel(action)} ('${buttonText(code, true)}')?`,
+  ];
 }

@@ -156,6 +156,30 @@ export function comboModifiers(store) {
   return out;
 }
 
+/** modifierHeldFirstDict (:1354-1358, the field at :101). ROAD-GR:
+ *  this is STATE, not a per-frame derivation of the held-keys ring.
+ *  SetupActionKeyDict CLEARS it and seeds one `false` per combo
+ *  MODIFIER after every binding change (:1354-1358), so the port
+ *  rebuilds it on `rev` exactly as comboModifiers and pairedCodes
+ *  rebuild theirs - a rebind starts every flag down, as DFU's does.
+ *
+ *  GetUnaryKey is its only writer (:1695-1708) and ui/input.js is the
+ *  only caller: the flag is RAISED on a frame whose whole held set is
+ *  clean (:1699-1701), LOWERED when the modifier is not held
+ *  (:1704-1707), and LEFT ALONE on the "held but dirty" path - which
+ *  is where the order rule actually lives. The dict is also DFU's own
+ *  "is this a combo modifier" test at :1637; comboModifiers above is
+ *  that same key set. */
+export function modifierHeldFirstDict(store) {
+  const rev = store.rev ?? 0;
+  if (store._heldFirstRev === rev && store._heldFirst) return store._heldFirst;
+  const dict = new Map();
+  for (const m of comboModifiers(store)) dict.set(m, false);   // :1355-1358
+  store._heldFirstRev = rev;
+  store._heldFirst = dict;
+  return dict;
+}
+
 /** primarySecondaryKeybindDict (:1345-1347, :1370-1396). ROAD-Ar R9:
  *  this is NOT a "bound in either dict" membership set, which is what
  *  the port read it as. It is a PRIMARY<->SECONDARY PAIRING map:
@@ -431,6 +455,43 @@ export function loadOrCreateBindings() {
 export function saveKeyBinds(store) {
   try { storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store))); }
   catch (err) { console.warn('[inputActions] keybind write failed:', err?.name ?? err); }
+  _raiseSavedKeyBinds();
+}
+
+// ── OnSavedKeyBinds (InputManager.cs:2067 declared, raised at :928
+//    inside SaveKeyBinds) ────────────────────────────────────────────
+//
+// ROAD-G G6 needed this and nothing before it did. It looks like a
+// notification and it is really an ORDERING: the advanced-controls
+// window subscribes at Setup
+// (DaggerfallUnityMouseControlsWindow.cs:83) and does ALL of its
+// setting writes in the handler, so its sliders and checkboxes reach
+// the store at the moment the KEYBINDS are saved - which is the
+// CONTROLS window's close, not its own CONTINUE. Port the event and
+// that ordering falls out; hard-wire the call instead and the next
+// window to want it invents a second one.
+//
+// DEPARTURE in the ORDER, and it is the port's shield that makes it.
+// DFU raises only after a SUCCESSFUL write - File.WriteAllText (:926),
+// UpdateBindingCache (:927), RaiseSavedKeyBindsEvent (:928) - and
+// SaveKeyBinds (:871-929) has no try/catch, so a throwing write
+// propagates and the event never fires. The port shields the write
+// (AUDIT DA above) and raises regardless, because the settings half of
+// the handler has nothing to do with whether localStorage accepted the
+// binding blob, and a lost keybind blob must not also cost the ten
+// advanced-controls values.
+const _savedKeyBindListeners = new Set();
+/** Returns the unsubscribe. DFU's static event never unsubscribes -
+ *  its windows are DaggerfallUI singletons - and the port's windows
+ *  are not, so a handle to detach is the port's own half. */
+export function onSavedKeyBinds(fn) {
+  _savedKeyBindListeners.add(fn);
+  return () => _savedKeyBindListeners.delete(fn);
+}
+function _raiseSavedKeyBinds() {
+  for (const fn of [..._savedKeyBindListeners]) {
+    try { fn(); } catch (e) { console.warn('[inputActions] OnSavedKeyBinds listener failed:', e?.message ?? e); }
+  }
 }
 
 // ── the frame model ─────────────────────────────────────────────────
@@ -455,12 +516,29 @@ export function endFrame(state) {
 // combos and that the runtime held-order logic pended a slice; the
 // pack, the modifier set, the autofill guard and the duplicate check
 // are above and in controlsConfig.js, and the held-order read is in
-// ui/input.js. What is NOT here, and is the honest remainder: DFU's
-// per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the ORDER
-// two keys went down in, so holding K then Shift does not fire
-// Shift+K. The port's hosts keep a Set with no order, so a combo fires
-// on either order; the day a host grows an ordered held list, the rule
-// is GetUnaryKey's (:1690-1711) and the seam is held().
+// ui/input.js.
+//
+// ROAD-G G3 RETIRED THE HELD-ORDER REMAINDER A8 LEFT BEHIND. It said
+// DFU's per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the
+// ORDER two keys went down in - holding K then Shift does not fire
+// Shift+K - and that the port's hosts keep "a Set with no order". The
+// second half was never true, and neither was the first: DFU's ring is
+// not press-ordered either (PollInput refills it in KeyCodeList order
+// every frame, :1801-1809) and ModifierOnlyHeld scans the WHOLE of it
+// (:1632-1639). The order lives in the LATCH, which is why the READ
+// alone was never enough. It is built now, at the seam this note
+// named: modifierHeldFirstDict is STORED (modifierHeldFirstDict above,
+// on the store, seeded as :1354-1358 seeds it), ui/input.js writes it
+// exactly where GetUnaryKey does (:1695-1708 - raised only on a clean
+// whole-set scan, lowered only by the modifier's release, left alone
+// in between), `heldModifier` is :1818-1821, and both arms of
+// GetUnaryKey - the combo's hit and the plain key's suppression - read
+// that stored flag. The four hosts that own a Set now fill it BEFORE their
+// dispatch ladder, as PollInput does (:1795-1809). Pinned from both
+// orders in test/g3_heldorder.test.js - the ring fill is its host
+// sweep, discovered from `const keys = new Set();` - and in
+// test/a8_combos.test.js' two-modifier pair. (test/combohosts.test.js
+// is AUDIT 58's sweep of the Set ARGUMENT and carries neither claim.)
 //
 // STILL FLAGGED:
 //  - AXES + JOYSTICK (AxisActions, JoystickUIActions): no gamepad

@@ -52,7 +52,7 @@ function makeCtx(over = {}) {
  *  host hands in as ctx.hooks (the quest machine's macroContext). */
 const HOOKS = {
   playerName: () => 'Wobbles Ironfoot',
-  // the host mount's own expression (world.js:5232), so the pin sees
+  // the host mount's own expression (world.js:5261), so the pin sees
   // the CamelCase entity key travel through RaceTemplate.Name and not
   // a pre-spaced literal
   playerRaceName: () => raceDisplayName('DarkElf'),

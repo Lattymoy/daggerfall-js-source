@@ -211,13 +211,16 @@ test('I4: the window wiring - one flow factory, the right-click seam, both panel
   // click method - so the call is optional-chained here too and the
   // pin follows it. What it is really watching is that the right
   // button reaches the window at all, and it still does.
-  assert.match(code('scenes/townTalk.js'), /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2\)/);
-  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2\)/);
+  // ROAD-G G5 put the MIDDLE button beside it, for the inventory's
+  // drop-icon panel (RemoteTargetIconPanel_OnMiddleMouseClick,
+  // DaggerfallInventoryWindow.cs:2104-2113) - so both flags are pinned.
+  assert.match(code('scenes/townTalk.js'), /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);
+  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);
   // ...and the guard is on the window in BOTH, which is the defect
   // routed 62 named: a window with no click handler must still eat
   // the pointer, or the host grabs pointer lock behind the menu.
   assert.match(code('scenes/townTalk.js'), /if \(!overlay\) return false;/);
-  assert.match(code('scenes/dungeonContext.js'), /overlayClick\(vx, vy, right = false\)/);
+  assert.match(code('scenes/dungeonContext.js'), /overlayClick\(vx, vy, right = false, middle = false\)/);
   // and a right-click on an OPEN window is never also a swing
   assert.match(code('scenes/dungeon.js'), /e\.button === 2 && !ctx\.uiOverlayActive/);
 });

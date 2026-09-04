@@ -69,7 +69,7 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 58: Pla
 // over their lists (DaggerfallInventoryWindow.cs:424-439, :857-890).
 import {
   CONTAINER_IMAGES, LOCAL_TARGET_ICON_RECT, REMOTE_TARGET_ICON_RECT,
-  preloadContainerIconArt, drawTargetIconPanel, targetIconWeightText,
+  preloadContainerIconArt, drawTargetIconPanel, targetIconWeightText, dropIconImage,
 } from './targetIconPanel.js';
 // U56: TransferItem's ladder - the guards, their order, and the split.
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
@@ -80,6 +80,9 @@ import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAG
 // this window decide.
 import {
   openState, remoteTarget, planWagonToggle, closeSession,
+  // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
+  // the cycling arithmetic and dropIconIdxs' record lookup.
+  openDropIcon, canChangeDropIcon, cycleDropIcon, dropIconRecord,
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
@@ -302,9 +305,14 @@ function makeAccessoryIconDrawer(icons, identityOf = null) {
 }
 
 /** hooks = { items() -> the player bag, icons: { getTexture,
- *  uploadRecord, textures }, loot?: { items() -> the ground pile }
- *  (a loot target opened the window), onDrop?(items) (the session's
- *  dropped pile needs a world flat), onClose() }. */
+ *  uploadRecord, textures }, loot?: { items() -> the ground pile,
+ *  and G5's three DaggerfallLoot fields - playerOwned,
+ *  textureArchive, textureRecord - plus `pos`, the container's world
+ *  position OnPop mints the replacement pile at } (a loot target
+ *  opened the window), onDrop?(items, icon, at) (the session's
+ *  dropped pile needs a world flat; `icon` is the chosen
+ *  {archive, record} or null for the random roll, `at` the loot
+ *  target's position or null for the player's feet), onClose() }. */
 export class NativeInventoryWindow {
   constructor(hooks) {
     this.hooks = hooks;
@@ -333,6 +341,10 @@ export class NativeInventoryWindow {
     // closing WITHOUT taking claims nothing.
     this.chooseOne = open.chooseOne;
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
+    // G5: OnPush's drop-icon seed (:593-631) - the archive the remote
+    // panel shows and the INDEX into that archive's dropIconIdxs list,
+    // -1 when nothing has been picked.
+    this.dropIcon = openDropIcon(hooks, this.chooseOne);
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     this._accessoryIcon = makeAccessoryIconDrawer(hooks.icons, () => hooks.entity);   // the twelve worn slots
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
@@ -372,19 +384,25 @@ export class NativeInventoryWindow {
       label: targetIconWeightText(this._carriedWeight(), entityMaxEncumbrance(this.hooks.entity ?? {})),
     };
   }
-  /** UpdateRemoteTargetIcon (:865-890). The label is EMPTY except in
-   *  wagon mode, where it is WagonWeight / ItemHelper.WagonKgLimit
-   *  (PlayerEntity.cs:185 - WagonItems.GetWeight()). The picture is the
-   *  wagon's, else the loot target's own container image, else Ground
-   *  - which is what RemoteTargetTypes.Dropped always resolves to.
+  /** UpdateRemoteTargetIcon (:865-890), the WHOLE ladder. The label is
+   *  EMPTY except in wagon mode, where it is WagonWeight /
+   *  ItemHelper.WagonKgLimit (PlayerEntity.cs:185 - WagonItems
+   *  .GetWeight()). Then, in DFU's order:
    *
-   *  DFU has two arms between those: dropIconTexture > -1 and a
-   *  lootTarget with a TextureArchive, both of which address a WORLD
-   *  FLAT rather than a container picture. Neither is reachable here -
-   *  the port's loot hook is `{ items() }` and carries no flat
-   *  identity - so this ladder is the part of :865-890 the tree's data
-   *  can answer, and the drop-icon cycling (:2104-2146) rides that
-   *  same missing identity. */
+   *  - dropIconTexture > -1 (:875-879): the CHOSEN flat -
+   *    `TextureFile.IndexToFileName(dropIconArchive)` at
+   *    `dropIconIdxs[dropIconArchive][dropIconTexture]`.
+   *  - a lootTarget with a TextureArchive (:880-884): that container's
+   *    OWN world flat - the pile or treasure marker you are standing
+   *    over, not a picture of a chest.
+   *  - otherwise (:885-889) the container image: the loot target's
+   *    ContainerImage, else Ground, which is what
+   *    RemoteTargetTypes.Dropped always resolves to.
+   *
+   *  ROAD-G G5 built the first two. AUDIT 58 left them recorded because
+   *  the port's loot hook was `{ items() }` and carried no flat
+   *  identity; it carries DaggerfallLoot's own three fields now
+   *  (playerOwned, TextureArchive, TextureRecord). */
   _remoteTargetIcon() {
     if (this.usingWagon) {
       return {
@@ -393,10 +411,29 @@ export class NativeInventoryWindow {
       };
     }
     const loot = this.hooks.loot;
+    const chosen = dropIconRecord(this.dropIcon.archive, this.dropIcon.texture);
+    if (chosen != null) {
+      return { image: dropIconImage(this.dropIcon.archive, chosen), label: '' };
+    }
+    if (loot && (loot.textureArchive ?? 0) > 0) {
+      return { image: dropIconImage(loot.textureArchive, loot.textureRecord), label: '' };
+    }
     return {
       container: loot ? (loot.containerImage?.() ?? CONTAINER_IMAGES.Ground) : CONTAINER_IMAGES.Ground,
       label: '',
     };
+  }
+
+  /** The three cycling handlers (:2104-2138) behind ONE door, because
+   *  they differ only in the step and in whether a click sound plays.
+   *  DFU's order is the pin: the LEFT and RIGHT handlers play
+   *  SoundClips.ButtonClick BEFORE CanChangeDropIcon is even asked, so
+   *  a shop shelf's panel still clicks and changes nothing, while the
+   *  MIDDLE handler (:2104-2113) plays no sound at all. */
+  _cycleDropIcon(by) {
+    if (by !== 0) audio.playOneShot(SOUND.ButtonClick, 1);
+    if (!canChangeDropIcon(this.hooks, this)) return;
+    this.dropIcon = cycleDropIcon(this.dropIcon, by);
   }
   _remote() {
     return remoteTarget(this.hooks, {
@@ -871,12 +908,22 @@ export class NativeInventoryWindow {
     }
   }
 
-  click(vx, vy) {
+  /** G5: `right` is I4's flag and `middle` is this slice's - the
+   *  remote target icon panel is the one component in the window with
+   *  THREE separate click handlers (:437-439), so the middle button
+   *  has to reach it or a third of the law is unreachable. */
+  click(vx, vy, right = false, middle = false) {
     if (this.topBox) {
       if (!this.topBox.field) this._dismissBox();   // a field takes keys, not clicks
       return true;
     }
     const R = INV_RECTS;
+    // G5: the drop-icon panel (:437-439). LEFT cycles the icon UP,
+    // RIGHT cycles it DOWN and MIDDLE takes the next archive.
+    if (inRect(R.remoteTargetIcon, vx, vy)) {
+      this._cycleDropIcon(middle ? 0 : (right ? -1 : 1));
+      return true;
+    }
     if (inRect(R.exit, vx, vy)) { this._close(); return true; }
     for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
     for (const mode of MODES) {
@@ -984,7 +1031,7 @@ export class NativeInventoryWindow {
     const lti = this._localTargetIcon();
     drawTargetIconPanel(renderer, m, font, INV_RECTS.localTargetIcon, lti.container, lti.label);
     const rti = this._remoteTargetIcon();
-    drawTargetIconPanel(renderer, m, font, INV_RECTS.remoteTargetIcon, rti.container, rti.label);
+    drawTargetIconPanel(renderer, m, font, INV_RECTS.remoteTargetIcon, rti.container, rti.label, rti.image);
     // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
     // (RefreshArmourValues - (100 - av)/5 per body part, plus the
     // enchantment armorMod; the drained/increased label COLOURS are

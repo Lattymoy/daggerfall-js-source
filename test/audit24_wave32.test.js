@@ -117,9 +117,16 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   const w = rd('src/scenes/world.js');
   assert.ok(w.includes('subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);'),
     'the streaming host subscribes both of its pools');
+  // ROAD-G G2: ...AND THE TOWN HOST'S SECOND POOL. This asked for the
+  // WATCH ALONE, which was the whole of `?exterior`'s foe database
+  // until the fixed-city host mounted an encounter pool of its own -
+  // and an unsubscribed pool is exactly the defect this test exists
+  // for: a quest foe stood in the street by CreateFoe's exterior arm
+  // would have carried a Continuous Damage bundle that never took a
+  // round, a poison that never fired and a paralysis that never lifted.
   const x = rd('src/scenes/exterior.js');
-  assert.ok(x.includes('subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);'),
-    'the town host subscribes its watch');
+  assert.ok(x.includes('subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);'),
+    'the town host subscribes BOTH of its street pools');
   // AUDIT 58 (review): AND THE INTERIOR HOST, which this test's title
   // has always claimed and never checked. It mounts two pools
   // (interiorFoes since IF, interiorGuards since ROAD-B), ran NO
@@ -137,7 +144,15 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
     assert.equal((src.match(/const foeSinks = \(g\) => \(\{/g) ?? []).length, 1, `${name}: one foeSinks`);
   }
-  assert.ok(x.includes('\n    foeSinks,\n'), 'exterior.js: the cast engine takes the same one');
+  // ROAD-G G2: the town host's cast engine takes it through the SAME
+  // pool-membership router the world host's does, and for the same
+  // reason - it mounts two street pools now, and its interior mode has
+  // live foes whose records must knock back and die against THAT
+  // building's collider rather than the street's.
+  assert.ok(x.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+    'exterior.js: the cast engine routes through the membership router');
+  assert.ok(x.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));'),
+    '...which is built over the host\'s ONE set of doors');
   // AUDIT 58 (review): the world host's cast engine takes it through
   // the POOL-MEMBERSHIP router instead, because its interior mode has
   // live foes now and a record from a building must knock back and die

@@ -838,3 +838,65 @@ OnLoad is what papers over it - the port's first word is a load now.
 The boot probe and the world render gate need ARENA2 and are the next
 machine's to run.
 
+
+## INCIDENT 2026-09-04 - THE SEE-THROUGH LINES IN DUNGEON WALLS (Mac's report) - SHIPPED
+
+Mac: "Dungeon interiors have some sort of see through line in its
+walls. Like it's not fully connected." The geometry was connected.
+Four laws had drifted from DFU, and each one made the same one-texel
+line worse.
+
+**1. The mesh material was uploaded as a cutout.** The pipeline had one
+upload door, `uploadRecord`, and it called `getColor32(bitmap, 0)` -
+palette index 0 transparent - for models and flats alike, while the
+model shader ended `if (tex.a < 0.5) discard;`. DFU builds a mesh's
+material through `MaterialReader.GetMaterial(archive, record)` whose
+`alphaIndex` defaults to -1 (`MaterialReader.cs:352`, reached from
+`DaggerfallMesh.cs:141/:169`): NO cutout index, and
+`DaggerfallDefault.shader` never clips. Only the billboard path
+(`GetMaterialAtlas`, `GetMaterial(..., 0)`) makes index 0 transparent.
+The mortar runs of a wall texture are index 0 in the classic art, so
+every one of them became a slit the model shader discarded, and the
+room behind showed through. Now: `uploadRecord(archive, record, {
+opaque })` decodes at -1 for a mesh and 0 for a flat, every sub-mesh
+site (the pipeline's model and part uploads, `texRemap`'s climate
+swap, `interiorContext`'s swap) asks for the opaque material, the
+renderer keys it `archive_record#opaque` (DFU caches materials per
+alphaIndex) and `_drawMeshBundle` looks there first with a fall-back
+to the cutout upload, and the model fragment shader carries no alpha
+clip. The billboard shader keeps its discard.
+
+**2. The clear colour.** Every host cleared to the Iliac Bay's sky
+blue, so what showed through a slit was a bright line.
+`CameraClearManager.cs:23-25/:51-57` clears an interior to solid
+BLACK and an exterior to depth only behind the sky. `setClearColor`
+(idempotent through the renderer's Float32 shadow, which the panel
+bracket restores from) with `SKY_CLEAR` / `INTERIOR_CLEAR`: the
+dungeon and interior hosts set black at boot, world and exterior set
+by mode before the frame.
+
+**3. No mip chain.** `TextureReader` builds one on every classic
+texture (`:31 mipMaps = true`, `:264 Apply(true)`) and samples it
+point (`MaterialReader.cs:104/:437`, FilterMode.Point = nearest texel,
+nearest mip). Without the chain a one-texel line keeps full contrast
+at any distance and shimmers as the camera moves; with it the line
+dissolves into the wall a few metres out, which is what DFU shows.
+`uploadTexture` now generates the chain and sets
+`NEAREST_MIPMAP_NEAREST` for every non-smooth upload; the smooth (UI)
+upload keeps its single LINEAR level.
+
+**4. One cache key for both.** With flats and meshes sharing
+`archive_record`, whichever asked first decided the pixels the other
+drew with. The `#opaque` key ends that.
+
+Pins: 7 in `test/incident_dungeon_seams.test.js` (the alphaIndex
+values, the pipeline's doors, the shader clip, the two-key cache and
+the draw's preference, the mip chain and filters off the recorded GL
+calls, the clear colour's idempotence and the four hosts). Two EV2
+pins moved to the `#opaque` key and the texture-replacement pin to the
+door's new signature. NO ARENA2 IN THE CONTAINER: the diagnosis is by
+reading against DFU, and the four surfaces want Mac's eyes on the live
+site - dungeon walls up close and at distance, the black backdrop
+behind any remaining crack, the look of every classic texture at
+distance now that a mip chain sits under it, and the exterior sky
+still clearing blue.

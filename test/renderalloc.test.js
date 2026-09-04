@@ -103,7 +103,9 @@ test('EV2: drawMesh resolves each sub-mesh texture ONCE per generation, not per 
   // a fake uploaded texture, and a counting Map in front of the real one
   let lookups = 0;
   const realGet = Map.prototype.get.bind(r.textures);
-  r.textures.set('7_3', { fake: true });
+  // INCIDENT 2026-09-04: a MESH material is the opaque upload (alphaIndex
+  // -1, MaterialReader.cs:352), keyed `#opaque`; the draw looks there first.
+  r.textures.set('7_3#opaque', { fake: true });
   r.textures.get = (k) => { lookups++; return realGet(k); };
   const mesh = {
     vao: {},
@@ -150,7 +152,7 @@ test('EV2 HOTFIX: a FROZEN model draws and caches - createMesh copies the sub-me
   assert.notEqual(mesh.subMeshes[0], BODY.subMeshes[0], 'the gpu mesh owns copies, not the bake\'s constants');
   let lookups = 0;
   const realGet = Map.prototype.get.bind(r.textures);
-  for (const sm of BODY.subMeshes) r.textures.set(`${sm.textureArchive}_${sm.textureRecord}`, { fake: true });
+  for (const sm of BODY.subMeshes) r.textures.set(`${sm.textureArchive}_${sm.textureRecord}#opaque`, { fake: true });   // the mesh material key (INCIDENT 2026-09-04)
   r.textures.get = (k) => { lookups++; return realGet(k); };
   r.drawMesh(mesh, identity());
   r.drawMesh(mesh, identity());

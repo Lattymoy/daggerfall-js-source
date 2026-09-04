@@ -47,7 +47,7 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *   isHouseOwned(buildingKey)     - DaggerfallBankManager.IsHouseOwned
  *                                   (H1 WIRED IT: banking.js:172 over
  *                                   playerEntity.houses, handed in at
- *                                   scenes/worldModes.js:3256, so
+ *                                   scenes/worldModes.js:3301, so
  *                                   :69 - PlayerActivate.cs:1261-1262,
  *                                   the ladder's first test - now has
  *                                   a real answer instead of false)

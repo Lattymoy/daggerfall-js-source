@@ -91,7 +91,9 @@ void main() {
   if (amMode >= 3) { if (vWorldPos.y <= uClipY) discard; }
   else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
-  if (tex.a < 0.5) discard;
+  // INCIDENT 2026-09-04: no alpha clip here - DaggerfallDefault.shader is
+  // RenderType Opaque with no clip(); the mortar runs of a wall texture
+  // are palette index 0 and were being discarded as cutouts.
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
@@ -590,6 +592,11 @@ export const MW_ARM_PIXEL = 3;
 export function asBytes(view) {
   return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
 }
+
+/** The two clear colours: the sky behind an exterior frame, and
+ *  CameraClearManager's black behind an interior one. */
+export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
+export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 
 export function textureParams(gl, opts = {}) {
   return opts.smooth
@@ -1692,7 +1699,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}`;
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1712,7 +1719,15 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const { wrap, filter } = textureParams(gl, opts);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    // INCIDENT 2026-09-04: every classic texture DFU builds carries a mip
+    // chain (TextureReader.cs:31 `mipMaps = true`, :264 Apply(true)) and
+    // samples it POINT (MaterialReader.cs:104/:437, FilterMode.Point =
+    // nearest texel, nearest mip). Without the chain a one-texel line
+    // keeps full contrast at every distance and shimmers as the camera
+    // moves; with it the line dissolves into the wall a few metres out,
+    // which is what DFU shows. The smooth (UI) upload keeps LINEAR.
+    if (!opts.smooth) gl.generateMipmap?.(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, opts.smooth ? filter : (gl.NEAREST_MIPMAP_NEAREST ?? filter));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
@@ -1790,6 +1805,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // bundle built without it simply cannot be wireframed (drawMeshWire
     // draws nothing), which is the honest answer for a hand-built one.
     return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
+  }
+
+  /** INCIDENT 2026-09-04: CameraClearManager.cs:23-25/:51-57 - inside,
+   *  the camera clears to solid BLACK (cameraClearInterior =
+   *  CameraClearFlags.Color, cameraClearColor = Color.black); outside
+   *  it clears depth only behind the sky. The port cleared every host
+   *  to the Iliac Bay's sky blue, so any crack in a dungeon read as a
+   *  glowing line instead of nothing. Idempotent: the shadow decides. */
+  setClearColor(rgba) {
+    const cc = this._clearColor;   // a Float32Array: compare at its precision, or a 0.53 never matches itself
+    if (cc[0] === Math.fround(rgba[0]) && cc[1] === Math.fround(rgba[1]) && cc[2] === Math.fround(rgba[2]) && cc[3] === Math.fround(rgba[3])) return;
+    cc[0] = rgba[0]; cc[1] = rgba[1]; cc[2] = rgba[2]; cc[3] = rgba[3];
+    this.gl.clearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
   }
 
   beginFrame(proj, view, lightDir) {
@@ -2739,7 +2767,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         // being re-minted on every one of those misses.
         const key = sm._evKey ?? (sm._evKey = `${sm.textureArchive}_${sm.textureRecord}`);
         const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
-        tex = this.textures.get(resolved);
+        tex = this.textures.get(resolved + '#opaque') ?? this.textures.get(resolved);   // the mesh material (alphaIndex -1) first
         if (tex) {
           sm._evTex = tex;
           sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;

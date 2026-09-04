@@ -34,12 +34,20 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** DaggerfallUI.cs:693's localized key, and the English DFU ships. */
 export const CANNOT_CHANGE_INDOORS = 'You cannot change transportation indoors.';
 
 export const TRANSPORT_BASE_IMG = 'MOVE00I0.IMG';
 export const TRANSPORT_DISABLED_IMG = 'MOVE01I0.IMG';
+
+/** The five DaggerfallShortcut buttons, in DFU's own ADD order
+ *  (:98-137) - Panel.ProcessHotkeySequences walks its buttons in that
+ *  order and returns on the first Handled (:215-235). */
+export const TRANSPORT_BUTTONS = Object.freeze([
+  'TransportFoot', 'TransportHorse', 'TransportCart', 'TransportShip', 'TransportExit',
+]);
 
 /** Panel-child rects (:20-23) and the disabled SHEET rects (:16-18). */
 export const TRANSPORT_RECTS = Object.freeze({
@@ -104,14 +112,34 @@ export class TransportWindow {
     this._close();
   }
 
-  input(code) {
+  input(code, e = null) {
+    // Escape/Enter are the port host's close keys, not DFU buttons
+    // (AllowCancel is false here, so DFU closes only on the Transport
+    // key's release - the toggle the port host owns).
     if (code === 'Escape' || code === 'Enter') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return; }
-    // DaggerfallShortcut's TransportFoot/Horse/Cart/Ship/Exit bindings;
-    // the port's own letters (Ledger A - DFU reads its keybind table).
-    if (code === 'KeyF') { this._pick(TRANSPORT_MODES.Foot); return; }
-    if (code === 'KeyH' && this.enabled.horse) { this._pick(TRANSPORT_MODES.Horse); return; }
-    if (code === 'KeyC' && this.enabled.cart) { this._pick(TRANSPORT_MODES.Cart); return; }
-    if (code === 'KeyS' && this.enabled.ship) this._pick(TRANSPORT_MODES.Ship);
+    // ROAD-G G7: the five Hotkeys, FROM THE TABLE, in DFU's button ADD
+    // order (:98-137). The comment that stood here claimed "the port's
+    // own letters (Ledger A - DFU reads its keybind table)" and both
+    // halves were false: DaggerfallShortcut reads a TEXT DATABASE,
+    // `StreamingAssets/Text/DialogShortcuts.txt` (DaggerfallShortcut.cs
+    // :307-326), which A8 ported whole to `systems/dialogShortcuts.js` -
+    // the same correction D1 made for the tavern, coven and guild
+    // popups, and this window and the merchant popup were the two the
+    // sweep left behind. The invented letters were right by accident
+    // for F/H/C/S and WRONG for the exit, which has no letter here at
+    // all where DFU binds TransportExit.
+    // A DISABLED ROW GETS NO HOTKEY IN DFU: the else arm sets only the
+    // disabled sub-texture (:105-121), so the binding is never assigned
+    // and the letter does nothing - which is why the enable test rides
+    // the button here rather than the pick.
+    switch (firstHotkey(TRANSPORT_BUTTONS, code, e)) {
+      case 'TransportFoot': this._pick(TRANSPORT_MODES.Foot); return;
+      case 'TransportHorse': if (this.enabled.horse) this._pick(TRANSPORT_MODES.Horse); return;
+      case 'TransportCart': if (this.enabled.cart) this._pick(TRANSPORT_MODES.Cart); return;
+      case 'TransportShip': if (this.enabled.ship) this._pick(TRANSPORT_MODES.Ship); return;
+      case 'TransportExit': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return;
+      default: break;   // DFU hangs no other accelerator on this window
+    }
   }
 
   click(vx, vy) {

@@ -15,7 +15,7 @@
 // fifth time - and the answer is the same answer: ONE seam that builds
 // the window, and each host hands it what only that host knows.
 //
-// THE BUY WINDOW IS NOT THIS. worldModes.js:2373 builds a SpellbookWindow
+// THE BUY WINDOW IS NOT THIS. worldModes.js:2418 builds a SpellbookWindow
 // too and looks like a duplicate from a distance; it is the spell
 // merchant's shop - buyMode, with `offered`, the building's quality,
 // the shop name, the haggling skills and the classic clock. Different

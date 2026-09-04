@@ -136,20 +136,31 @@ test('F170: clicks and draw both map through the live offset', () => {
 
 test('F180: the spellbook trough pages by displayUnits on click', () => {
   // VerticalScrollBar.MouseClick (:142-150): above the thumb pages
-  // up, below pages down; the drag stays unported - no held-button
-  // state reaches an overlay window (the listPicker.js precedent).
+  // up, below pages down.
   //
   // ROAD-D2 moved the arithmetic itself into ui/verticalScrollBar.js,
   // where the thumb art already lived, so the trough and the paint can
   // never disagree: this pins the DELEGATION (and road_d2's own pins
   // drive the two arms through the live window).
+  //
+  // ROAD-G G4 took the delegation one step further and the last clause
+  // of this pin with it. The window used to call the two PURE helpers
+  // (thumbSpan + scrollBarClick) and own the drag's absence - "the drag
+  // stays unported - no held-button state reaches an overlay window (the
+  // listPicker.js precedent)", which had been false since ROAD-A7. It
+  // holds a live `VerticalScrollBar` now, and `press()` IS MouseClick's
+  // two arms plus Update's latch, so what is pinned is that the window
+  // states neither arm itself. The paging behaviour is driven end to end
+  // in test/road_d2_scrollbar_thumbs.test.js and the drag and its
+  // release in test/roadg_g4_dragrelease.test.js.
   const s = src('ui/spellbookWindow.js');
-  const arm = s.slice(s.indexOf('F180:'));
-  assert.ok(arm.includes('const span = thumbSpan(sh, this._rows.length, ROWS_DISPLAYED, this.scrollIndex);'),
-    'the same span the draw uses');
-  assert.ok(arm.includes('this.scrollIndex = scrollBarClick(vy - PANEL_Y - sy, span,'),
-    'and MouseClick\'s two arms, paging by DisplayUnits through SetScrollIndex\'s clamp');
-  assert.ok(arm.includes('this.scrollIndex, this._rows.length, ROWS_DISPLAYED);'));
+  const arm = s.slice(s.indexOf('F180 CLOSED'));
+  assert.ok(arm.includes('if (this._syncScrollBar().contains(vx - PANEL_X, vy - PANEL_Y)) {'),
+    'the press is tested against the component\'s own rect');
+  assert.ok(arm.includes('this.scrollBar.press(vx - PANEL_X, vy - PANEL_Y);'),
+    'and MouseClick\'s two arms + Update\'s latch are the component\'s press()');
+  assert.equal(/scrollBarClick|thumbSpan\(/.test(s), false,
+    'the window states none of the bar\'s own arithmetic any more');
 });
 
 // ── F160 ──────────────────────────────────────────────────────────

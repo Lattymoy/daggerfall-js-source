@@ -6,6 +6,7 @@
 // there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -70,6 +71,7 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   status(`laying out ${blockName}:${recordIndex}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  renderer.setClearColor(INTERIOR_CLEAR);   // INCIDENT 2026-09-04: inside clears to BLACK (CameraClearManager.cs:24-25)
   // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
   // buildDungeonContext, so every sound in this host was a silent
   // no-op until a dungeon was entered (DFU's sound reader is global
@@ -171,18 +173,27 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:282-283) is "every host that registers a keydown
+    // (ui/input.js:378-379) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:6125 sits
+    // returns before its own preventDefault - worldModes.js:6170 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
     if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
-    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
+    // hosts now carry. InputManager.PollInput (:1795-1809) adds every
+    // held key before GameManager.Update reads an Action, and this add
+    // sat BELOW the KeyM arm - so the one key this host dispatches was
+    // the one key that never entered the Set. Harmless while nothing
+    // read the ring; not now, because the Set IS the ring
+    // ModifierOnlyHeld scans (:1632-1639, ui/input.js). It stays below the
+    // overlay gate, where DFU's Update returns before PollInput
+    // (:487-503).
     keys.add(e.code);
+    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });
@@ -211,7 +222,15 @@ export async function bootInterior(canvas, renderer, params, status) {
   addEventListener('pointermove', (e) => {
     if (!overlay) return;
     const v = nativeAt(e);
-    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1]); }
+    // ROAD-G G4: THE EVENT RIDES THE HOVER, in this host too. Every
+    // other host has handed its overlay slot the DOM mousemove since
+    // ROAD-A7 (`e.buttons & 1` is the port's read of
+    // InputManager.GetMouseButton(0), which VerticalScrollBar.Update
+    // polls every frame, :105); this one dropped it, so a window
+    // mounted HERE could latch a thumb drag on the press and never
+    // move it. The four-hosts rule again: a seam three hosts carry and
+    // the fourth does not is a latch nothing errors on.
+    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1], e); }
   });
   addEventListener('pointerup', (e) => {
     if (!overlay) return;
@@ -306,7 +325,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:520 and worldModes.js:4450/:4546 gate the same
+    // driver. dungeon.js:522 and worldModes.js:4501/:4597 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

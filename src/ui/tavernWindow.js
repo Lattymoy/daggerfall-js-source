@@ -39,7 +39,7 @@
 //
 // The three clauses that stood here are all closed (D1):
 // - the TALK button routes to TalkManager.TalkToStaticNPC (:263):
-//   worldModes.js:2298 supplies `onTalk: () => openStaticNpc(pn,
+//   worldModes.js:2343 supplies `onTalk: () => openStaticNpc(pn,
 //   { forceTalk: true })`, which this file consumes at :256 and :265.
 // - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:143
 //   addPermanentScene / :93 removePermanentScene, with this window

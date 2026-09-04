@@ -67,13 +67,5 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['dynamic-skies']),
       link: 'https://github.com/drcarademono/dynamic-skies',
     }),
-    Object.freeze({
-      title: 'Pegas Horse Ranch',
-      version: '3.1',
-      author: 'MADMAX and Team',
-      what: 'The horse under you when you ride in the enhanced skin: the rigged, animated Morrowind horse (the model is Cait\'s, per the mod\'s own credits), its coat and its hoof and voice clips, drawn in the world with the scene\'s lighting. Classic skin keeps Daggerfall\'s own riding sprite; your own attached copy of the mod overrides the vendored one.',
-      terms: 'Vendored verbatim with the author\'s permission - written consent, confirmed 2026-09-03; the readme\'s own condition, "kept original and intact", is met - no file is modified.',
-      vendor: Object.freeze(['pegas-horse']),
-    }),
   ]),
 });

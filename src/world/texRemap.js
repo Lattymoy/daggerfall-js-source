@@ -41,7 +41,7 @@ export async function remapSubMeshes(subMeshes, texRemap, remapArchive, { getTex
     if (texRemap.has(key)) continue;
     const t = await getTexture(swapped);
     if (sm.textureRecord >= t.recordCount) continue;
-    uploadRecord(swapped, sm.textureRecord);
+    uploadRecord(swapped, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1 (MaterialReader.cs:352)
     texRemap.set(key, `${swapped}_${sm.textureRecord}`);
   }
 }

@@ -41,11 +41,11 @@ test('TR5: ONE place changes the mode, and both the pick and the dismount take i
   const world = read('src/scenes/world.js');
   assert.match(world, /const setTransportModeHere = \(mode\) => \{\s*\n\s*player\.setTransportMode\(mode\);/);
   assert.match(world, /ridingAnimator\.mount\(mode\);\s*\n\s*ridingArt = null;/, 'the art is dropped on every change');
-  // MW-D42 grew the one door a tail: mounting a horse in the enhanced
-  // skin fires the (once-per-session, never-throwing) Pegas load. The
-  // door is still the ONE place - the count pin below holds that.
-  assert.match(world, /if \(mode === TRANSPORT_MODES\.Horse\) tryLoadPegas\(\);\s*\n\s*\};/,
-    'the enhanced saddle hangs off the same door');
+  // The door ENDS on the art drop. MW-D42 once hung an enhanced-skin
+  // 3D-horse load off this tail; that horse was removed whole
+  // (2026-09-04), and nothing may grow back here unnoticed.
+  assert.match(world, /ridingArt = null;\s*\n\s*\};/,
+    'nothing hangs off the door after the art drop');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
   // not a mode - so the pick reaches setTransportModeHere past it.
   assert.match(world, /if \(mode === TRANSPORT_MODES\.Ship\) \{ boardOrDisembark\(\); return; \}\s*\n\s*setTransportModeHere\(mode\);/, 'the T-key pick');

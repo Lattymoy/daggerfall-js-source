@@ -50,8 +50,16 @@ test('F035: the Murder crime is gated on the player being the source', () => {
   // spelling, exactly as F041 below already does for its own widened
   // arm. The law is unchanged: a watchman who dies falling brands
   // nobody.
-  const gate = cg.indexOf('if (fromPlayer)');
+  // ROAD-G G1 put a SECOND `if (fromPlayer)` in this member - the
+  // aggro pair at the top of damageGuard (DaggerfallEntityBehaviour
+  // .cs:250-261), which is inside the very same source gate (:203) and
+  // is why the braced form is the anchor now: the murder block is the
+  // one that opens a block, the aggro arm is a single statement.
+  const gate = cg.indexOf('if (fromPlayer) {');
   assert.ok(gate > 0, 'the murder assignment still sits behind a fromPlayer gate');
+  const aggro = cg.indexOf('if (fromPlayer) handleAttackFromPlayer(g, playerFeet);');
+  assert.ok(aggro > 0 && aggro < gate,
+    'and the aggro pair shares that gate and precedes it, as :250-261 precedes :265-269');
   assert.ok(cg.slice(gate, gate + 300).includes('setCrimeCommitted(playerEntity, CRIME_MURDER)'),
     'and the Murder assignment is what that gate encloses');
   // ...and the CIVILIAN murder arm, which IS a player weapon hit,

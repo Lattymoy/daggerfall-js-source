@@ -11,7 +11,7 @@
 // judgement call; it is DELEGATING, and the delegation is checkable:
 // the named file must carry a flag. world.js sent the reader to a
 // flag in systems/healthStatus.js that ST1 had shipped away, and
-// world.js:1373 sent them to one in dungeonContext.js that had never
+// world.js:1375 sent them to one in dungeonContext.js that had never
 // been written at all - which is the worse of the two, because the
 // work is real and the ledger could not see it.
 import { test } from 'node:test';
@@ -151,18 +151,30 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   const world = read('src/scenes/world.js');
   assert.equal(/melee strike frames resolve to nothing/.test(world), false);
   assert.equal(/targets pend the RMB animal\/exterior-foe arc/.test(world), false);
-  // a swing resolves against three pools, in this order
-  const at = world.indexOf('const guardHitSound = (g) =>');
-  const body = world.slice(at, at + 1400);
-  const order = ['cityGuards.resolvePlayerHit(', 'exteriorFoes.resolvePlayerHit(', 'cityGuards.resolveCivilianHit('];
-  let cursor = -1;
-  for (const call of order) {
-    const next = body.indexOf(call);
-    assert.ok(next > cursor, `${call} resolves, and after the one before it`);
-    cursor = next;
+  // A swing resolves against three pools, in this order - on EVERY host
+  // that owns a street. ROAD-G G2 (review): this walk read world.js
+  // alone, and the fixed-city host took the same three-pool swing
+  // verbatim; replacing its encounter arm with four comment lines (so
+  // no cite could move) left the swing as watch -> civilians with the
+  // shipped comment still claiming world.js:7111's order, green.
+  for (const [file, foeTargets] of [
+    ['src/scenes/world.js', /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],
+    ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],
+  ]) {
+    const s = read(file);
+    const at = s.indexOf('const guardHitSound = (g) =>');
+    assert.ok(at > 0, `${file}: the swing block is found`);
+    const body = s.slice(at, at + 1600);
+    const order = ['cityGuards.resolvePlayerHit(', 'exteriorFoes.resolvePlayerHit(', 'cityGuards.resolveCivilianHit('];
+    let cursor = -1;
+    for (const call of order) {
+      const next = body.indexOf(call);
+      assert.ok(next > cursor, `${file}: ${call} resolves, and after the one before it`);
+      cursor = next;
+    }
+    // and the arrow carries that host's live pools as targets
+    assert.match(s, foeTargets, `${file} carries its live street pools as arrow targets`);
   }
-  // and the arrow carries both live pools as targets
-  assert.match(world, /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/);
   // the one clause that survived is the one that is still true
   assert.match(world, /open world still has no ACTION OBJECTS in melee reach/);
 });
@@ -211,13 +223,13 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // it went on asserting "setDefaultEnchantCtx has exactly one caller
   // in the tree" - and "the flag now exists where the work does",
   // pointing at a flag this wave retired - after the second mount
-  // shipped. dungeonContext.js:1587 and hostEnchant.js:8 both say
+  // shipped. dungeonContext.js:1598 and hostEnchant.js:8 both say
   // "had"; the sentence a reader meets first must too.
   assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1905 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1916 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

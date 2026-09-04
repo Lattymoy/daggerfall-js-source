@@ -76,7 +76,7 @@ done
 #                 The audit-18 F4 pin (test/audit18.test.js:190) carries
 #                 expected values dumped from exactly this build; before
 #                 E8 the edit lived only in a scratchpad tree, so the
-#                 "re-runnable" claim on Port-Ledger row :483 was not true
+#                 "re-runnable" claim on Port-Ledger row :515 was not true
 #                 of anything in the repo. It is now.
 echo "== applying the harness patches =="
 for f in Arch3dFile BlocksFile DFBlock SpellRecord DaggerfallSpellReader FaceUVTool; do

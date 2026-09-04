@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 import {
   TransportWindow, TRANSPORT_RECTS, TRANSPORT_DISABLED_RECTS, DISABLED_SHEET,
   transportPanelOrigin, drawTransportDisabledRow, CANNOT_CHANGE_INDOORS,
-  TRANSPORT_BASE_IMG, TRANSPORT_DISABLED_IMG,
+  TRANSPORT_BASE_IMG, TRANSPORT_DISABLED_IMG, TRANSPORT_BUTTONS,
 } from '../src/ui/transportWindow.js';
 import { TRANSPORT_MODES } from '../src/systems/transport.js';
+import { BUTTONS, shortcutBinding } from '../src/systems/dialogShortcuts.js';   // G7: the letters' one home
 
 // TR3 - THE TRANSPORT WINDOW (DaggerfallTransportWindow, whole): the
 // last of DFU's 60 real windows the port did not have, and the door
@@ -128,13 +129,90 @@ test('TR3: the host door - grounded and outdoors only, and the mount is loaded a
   const spriteAt = world.indexOf('renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);');
   const hudAt = world.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,');
   assert.ok(spriteAt > 0 && hudAt > spriteAt, 'the mount draws under the HUD');
-  // The loop is a REAL channel, not an optional-chained no-op.
-  // MW-D42 moved this pin deliberately: with the enhanced 3D horse
-  // standing, the mod's own hoof clips ride the channel through the
-  // MW-D40 string-key door - and the CLASSIC clip stays the literal
-  // fallback in the same expression, so the 1:1 lane is untouched.
-  assert.match(world, /audio\.setLoop\('riding', r\.playing \? rideClip : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
-  assert.match(world, /const rideClip = pegasUp && pegasSounds\.has\(pegasClipKey\) \? pegasClipKey : SOUND\[r\.clip\];/);
+  // The loop is a REAL channel, not an optional-chained no-op, and the
+  // clip is the CLASSIC one, literally: the enhanced 3D horse that once
+  // swapped mod clips into this expression was removed whole (2026-09-04).
+  assert.match(world, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
   assert.match(read('src/systems/audio.js'), /setLoop\(name, clip, \{ volume = 1, pitch = 1 \} = \{\}\) \{/);
   assert.equal(typeof CANNOT_CHANGE_INDOORS, 'string');
+});
+
+// ---------------------------------------------------------------------
+// ROAD-G G7 (records sweep, 2026-09-04): THE LETTERS COME FROM THE
+// TABLE.
+//
+// The comment that stood over this window's `input()` said "the port's
+// own letters (Ledger A - DFU reads its keybind table)", and BOTH
+// halves were false. DaggerfallShortcut does not read a keybind file:
+// it reads a TEXT DATABASE, `StreamingAssets/Text/DialogShortcuts.txt`
+// (DaggerfallShortcut.cs:307-326), which ROAD-A8 ported whole to
+// `systems/dialogShortcuts.js` - so there was a source, and the claim
+// of approval stood in for one. DaggerfallTransportWindow.cs:100-137
+// binds ALL FIVE of its buttons out of it. D1 made exactly this
+// correction for the tavern, coven and guild popups and found the
+// invented letters wrong in three places; this window and the merchant
+// service popup were the two that pass left behind, and the merchant
+// popup turned out to be the other answer - DFU binds it NOTHING, so
+// its letters really are the port's own and now have a section-A row.
+//
+// Here the letters were right by accident for F/H/C/S and the EXIT had
+// no letter at all where DFU binds `TransportExit`, so a player who
+// learned E from every other native window pressed it into a window
+// that ignored it.
+// ---------------------------------------------------------------------
+test('G7: the five transport accelerators are the DialogShortcuts table, in DFU\'s ADD order', () => {
+  assert.deepEqual([...TRANSPORT_BUTTONS],
+    ['TransportFoot', 'TransportHorse', 'TransportCart', 'TransportShip', 'TransportExit'],
+    'the roster is DaggerfallTransportWindow.cs:98-137\'s own button ADD order');
+  // Every one of them is a real row of the ported table, and it is the
+  // TABLE that decides the letter - not a literal in the window.
+  for (const b of TRANSPORT_BUTTONS) {
+    assert.ok(BUTTONS.includes(b), `${b} is not a DaggerfallShortcut button`);
+    assert.ok(shortcutBinding(b).code, `${b} has no binding in the ported table`);
+  }
+  const src = read('src/ui/transportWindow.js');
+  assert.match(src, /firstHotkey\(TRANSPORT_BUTTONS, code, e\)/,
+    'the window no longer asks the table for its letters');
+  // and no hand-typed row letter survives in the file: a literal here
+  // is the defect, whatever it happens to spell.
+  assert.equal(/code === 'Key[A-Z]'/.test(src), false,
+    'a transport row is answering a hand-typed letter again');
+});
+
+test('G7: each table letter fires its own row, and TransportExit closes with no mode', () => {
+  const key = (b) => shortcutBinding(b).code;
+  const drive = (b, over = {}) => {
+    const log = [];
+    win({ hasHorse: true, hasCart: true, shipAvailable: true, ...over }, log).input(key(b), null);
+    return log;
+  };
+  assert.deepEqual(drive('TransportFoot'), [`mode:${TRANSPORT_MODES.Foot}`, 'close']);
+  assert.deepEqual(drive('TransportHorse'), [`mode:${TRANSPORT_MODES.Horse}`, 'close']);
+  assert.deepEqual(drive('TransportCart'), [`mode:${TRANSPORT_MODES.Cart}`, 'close']);
+  assert.deepEqual(drive('TransportShip'), [`mode:${TRANSPORT_MODES.Ship}`, 'close']);
+  // The arm the invented letters never had. `E` is the table's, and it
+  // closes WITHOUT setting a mode (:135-138 is the plain exit).
+  assert.equal(key('TransportExit'), 'KeyE');
+  assert.deepEqual(drive('TransportExit'), ['close']);
+});
+
+test('G7: a DISABLED row is given no Hotkey in DFU, so its letter does nothing', () => {
+  // The else arm of each ownership test sets only the disabled
+  // sub-texture (:105-121) - the binding is never assigned, so the
+  // letter is dead rather than refused. Same observable, and it is the
+  // reason the enable test rides the BUTTON here and not the pick.
+  const key = (b) => shortcutBinding(b).code;
+  for (const [b, over] of [
+    ['TransportHorse', { hasHorse: false }],
+    ['TransportCart', { hasCart: false }],
+    ['TransportShip', { shipAvailable: false }],
+  ]) {
+    const log = [];
+    win({ hasHorse: true, hasCart: true, shipAvailable: true, ...over }, log).input(key(b), null);
+    assert.deepEqual(log, [], `${b}'s letter acted on a row DFU leaves unbound`);
+  }
+  // ...and Foot and Exit are never disabled, so their letters always answer.
+  const log = [];
+  win({ hasHorse: false, hasCart: false, shipAvailable: false }, log).input(key('TransportFoot'), null);
+  assert.deepEqual(log, [`mode:${TRANSPORT_MODES.Foot}`, 'close']);
 });

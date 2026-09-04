@@ -60,7 +60,7 @@ import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack } from '../characters/enemyTargets.js';   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
@@ -136,6 +136,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // dungeons (the standalone exterior) answers null, which is that
   // host's flags all false.
   enterExitFlags = () => null,
+  // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
+  // area, the encounter pool's dep to the line (exteriorFoes.js:81).
+  // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
+  // enemy is struck by the player, and Knight_CityWatch is an
+  // EnemyClass - one of the two EntityTypes that walk (:250). This
+  // pool had no dep at all, so striking a PACIFIED watchman (the
+  // Etiquette/Streetwise stand-down, or a restored `hostile: false`)
+  // turned nobody, where C# walks the whole active database. A host
+  // that owns several pools hands in the union, because DFU's
+  // ActiveGameObjectDatabase is ONE database for the scene.
+  makeAreaHostile = null,
   playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
@@ -510,6 +521,38 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.batch = null;
   }
 
+  /** ROAD-G G1: DaggerfallEntityBehaviour.HandleAttackFromSource's
+   *  aggro block for an EnemyClass/EnemyMonster target
+   *  (DaggerfallEntityBehaviour.cs:250-261), lifted out of the damage
+   *  door exactly as the encounter pool lifts it (exteriorFoes.js's
+   *  handleAttackFromPlayer). Two statements and a third that is the
+   *  player arm's entity-side half:
+   *    - `if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile()`
+   *      (:255-258) - the WHOLE active database, not this foe;
+   *    - `MakeEnemyHostileToAttacker(PlayerEntityBehaviour)` (:259) -
+   *      this foe's own target/give-up bookkeeping, seeded with where
+   *      the blow came from;
+   *    - the ally TEAM reset (:204-213), which lives on the entity.
+   *  The `!isHostile` read MUST precede the walk: the second call
+   *  raises this guard's own flag, so reading after it would make the
+   *  walk unreachable for the only case that needs it - a watchman
+   *  talked down by Etiquette/Streetwise, or one restored peaceful by
+   *  cityGuards' own `hostile: false` arm. DFU runs this for every
+   *  blow that CONNECTED, damage or none (WeaponManager.cs:615, :630),
+   *  and ALL THREE of this pool's arms reach the door: the melee swing
+   *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
+   *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:195)
+   *  because `dealDamage` is inside its own `dmg > 0` fork - so the
+   *  door is PUBLIC (the returned surface below), exactly as the
+   *  encounter pool's is (exteriorFoes.js:957). */
+  function handleAttackFromPlayer(g, playerFeet = null) {
+    if (!g?.ai) return;
+    if (!g.ai.isHostile) makeAreaHostile?.();
+    g.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);
+    resetAllyTeamOnPlayerAttack(g.ai, g.entity, GUARD_MOBILE_TYPE);
+  }
+
   /** AUDIT 26 F035 + MT-ii: `fromPlayer` is this door's provenance
    *  flag, the hurtPlayer(bypassShield) idiom. DFU assigns the Murder
    *  crime inside HandleAttackFromSource's `sourceEntityBehaviour ==
@@ -526,6 +569,16 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
+    // ROAD-G G1: HandleAttackFromSource's MOBILE-ENEMY AGGRO BLOCK
+    // (DaggerfallEntityBehaviour.cs:250-261), which this door carried
+    // none of while both encounter pools carried it whole. The order is
+    // C#'s: the `!IsHostile` read and the whole-area walk come FIRST
+    // (:255-258), because the second call flips this guard too, and
+    // both stand AHEAD of the Knight_CityWatch murder tally below
+    // (:265-269) - one member, three statements, in that sequence.
+    // Inside DFU's `source == Player` gate (:203), so a watchman killed
+    // by a rat or by a fall turns nothing, which is F035's law.
+    if (fromPlayer) handleAttackFromPlayer(g, playerFeet);
     // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
     // player's. DFU's hook is inside the ABSTRACT BASE's
     // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
@@ -905,9 +958,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // knockback (:575-582) is inside the damage arm, and
         // weaponKnockbackSpeed(0, w) returns the 15/ratio floor.
         // Knight_CityWatch is EnemyClass, so DaggerfallEntityBehaviour
-        // .cs:250-260's hostility pair covers it - this door carries
-        // none yet (the two encounter pools' do), so the call is the
-        // structure and the pair is a separate, unported half.
+        // .cs:250-261's hostility pair covers it - ROAD-G G1 built that
+        // pair into damageGuard itself (handleAttackFromPlayer above),
+        // so this arm reaches it through the door like the damaging one
+        // does, which is exactly why DFU's :630 sits outside the
+        // `damage > 0` fork.
         damageGuard(foe, 0, playerFeet, null);
       }
     }
@@ -1100,7 +1155,23 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
     }
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
+  /** ROAD-G G1: WabbajackEffect.cs:86 - `targetEntity.gameObject
+   *  .SetActive(false)`, the struck enemy taken off the scene with no
+   *  corpse, no loot and no death chain, so the transform's new career
+   *  can be CreateEnemy'd in its place (:87-88). This is the encounter
+   *  pool's `removeFoe` to the line (exteriorFoes.js's questPoolOps),
+   *  and the pair it belongs to is the HOST's: the new career is never
+   *  a Knight_CityWatch (WabbajackEffect's careerIDs are seventeen
+   *  monsters), so the re-stand goes through the host's own encounter
+   *  pool - the same parent transform, which is what "under the struck
+   *  enemy's parent" means here. Without this door the watch was the
+   *  one EnemyEntity in the port the Wabbajack could not touch. */
+  function removeGuard(g) {
+    if (!g || g.dead) return;
+    releaseGuardBatch(g);
+    g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
+  }
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.
@@ -1115,6 +1186,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // direction - Knight_CityWatch is EnemyClass, so the first arm
     // fires. A caller with no direction (a spell) still passes none.
     hurtGuard: (g, dmg, playerFeet, knockDir = null) => damageGuard(g, dmg, playerFeet, knockDir),
-    _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
+    // ROAD-G G1 (review): the seam forwards the OPTIONS bag too, so the
+    // `fromPlayer` gate (F035's law, DaggerfallEntityBehaviour.cs:203)
+    // has a negative arm a test can drive. `hurtGuard` above forwards
+    // none, and the real `fromPlayer: false` callers - the cross-pool
+    // `hurtFromFoe` minted at spawn (:264) and the fall arm inside
+    // update() - both need ARENA2 to reach.
+    _damage: (i, dmg, opts) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null, opts); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }
