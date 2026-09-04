@@ -8830,3 +8830,84 @@ clause it belonged to is struck in the Ledger's keybinding-registry
 row. The AXES + JOYSTICK flag beside it is untouched: there is still no
 gamepad layer, that is an owner call, and `regenOpenFlags` answers the
 same 7 it did before.
+
+## ROAD-G G4 - THE LAST DRAG LATCHES ON THE MOUSE-UP SEAM (2026-09-04)
+
+Wave E built the overlay mouse-**UP** seam and wired the shared list
+picker to it. This slice spent the seam: three consumers of
+`ui/verticalScrollBar.js` were still on the wrong edge, or on no edge at
+all, and each of them said so in a comment that cited the remainder as
+though it were still open. A comment that cites a closed remainder is a
+pointer at a stranger - the whole reason `test/citedrift.test.js`
+exists - and here it was doing something worse than misleading a reader:
+it was keeping three departures alive after their blockers had gone.
+
+**THE SPELLBOOK (Ledger C's F159/F170/F180 row).** DFU's scroller is a
+live `VerticalScrollBar` (`DaggerfallSpellBookWindow.cs:363-372`) and
+the port had its DRAW, its two paging arms and no drag, on this stated
+reason: *"no held-button state reaches THIS window from its hosts - they
+hand it single-shot clicks only."* That was per-host, and both halves of
+it had already gone:
+
+- ROAD-A7 gave the hosts' hover seam the DOM event, so `e.buttons & 1` -
+  the port's only reading of `InputManager.GetMouseButton(0)` - reaches
+  any window in an overlay slot.
+- Wave E gave every overlay slot the button-**UP** edge, so a latch has
+  something to end it.
+
+So `ui/spellbookWindow.js` holds the component now instead of calling
+two pure helpers out of it. `press()` is MouseClick's paging AND
+Update's latch (the split is DFU's, across two members of one class);
+`hover` is Update's per-frame arm with both of its quirks kept - `scale
+= Size.y / totalUnits` reading the TOTAL rather than the span, and the
+`(int)` cast truncating TOWARD ZERO, which is a different index from a
+floor on the way back up; `release()` is the else arm; and
+`_syncScrollBar` is `UpdateSpellsList`'s scroller block (:509-512), so
+the drawn thumb, the paging and the drag read ONE index and cannot part
+the way ROAD-D2 found the trough and the art parted.
+
+The count gate went with it. The old arm asked `_rows.length >
+ROWS_DISPLAYED` before touching the bar; DFU's bar is a child of
+mainPanel whether or not it painted, so a press on a list that FITS
+falls into MouseClick's `>` arm (thumbRect is the zero rect) and
+`SetScrollIndex` clamps it away - the same answer, reached DFU's way,
+and one less arm of `VerticalScrollBar`'s stated outside
+`ui/verticalScrollBar.js`.
+
+**THE SPELL ICON PICKER, found on the way.** Its scroller
+(`SpellIconPickerWindow.cs:39, :91-94`) is the same component, and MC1
+had shipped the CLAMP alone: the rail took no press, the thumb no drag -
+and the window PAINTED a grey trough with a grey block riding on it,
+pixels DFU does not draw at all. `VerticalScrollBar.Draw` returns before
+`DrawScrollBar` whenever the content fits (:135-139) and that scroller
+sets no `BackgroundColor`, so on classic-only content (7 steps in 8
+units) DFU shows the main panel's black. It is the shared component now,
+drawing DFU's three slices or nothing, and both windows that NEST it -
+the spellbook and the spell maker - forward the release the way they
+already forward `hover`, class-scoped, which is wave E's own lesson kept.
+
+**THE WIZARD'S PICKER BAR.** `ui/chargen.js` dropped its latch on the
+NEXT MOVE and the comment beside it named the remainder as the reason.
+`releasePickBar()` is Update's else arm, forwarded by
+`systems/chargenSession.js`'s wrapper - the door every host that runs
+the wizard already calls.
+
+**AND ONE HOST WAS SHORT THE SEAM'S OTHER HALF.** `scenes/interior.js`
+routed its overlay's hover as a bare `(x, y)`: press and release both
+arrived, the held-button FRAME did not, so a window mounted there could
+latch a thumb and never move it. The four-hosts rule's own failure mode,
+and silent, because nothing errors on a latch. The pin sweeps all six
+hover routes rather than trusting an edit.
+
+Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 16 mutations
+killed): the drag's arithmetic dies under the span-scale and the floor;
+the release dies under an emptied `release()` in either window, in the
+wizard's flow and in its wrapper; the rail's press dies under the
+removed branch; the trough's absence dies under the grey rectangle
+coming back; and the host sweep dies under a dropped `, e`. The last of the twelve is
+the one the slice did not set out to write: the hosts answer a pointer
+off their letterboxed panel with `(-1, -1)`, and that pair is a
+fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
+it flinging the town map ~165 world units - so a thumb dragged into the
+black border would have snapped its list to row 0. Both windows skip the
+frame and keep the latch, because `release()` is what ends a drag.

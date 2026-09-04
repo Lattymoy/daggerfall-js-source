@@ -396,6 +396,15 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // dungeon.js:328 and worldModes.js:6109 both feed. Hovering never
     // advances the flow, so no done check.
     hover(vx, vy, e = null) { if (!_fired) flow.hover?.(vx, vy, e); },
+    // ROAD-G G4: THE OTHER EDGE, on the same rule. The hover seam above
+    // is GetMouseButton(0)'s per-frame poll; this is the frame it turns
+    // false (VerticalScrollBar.Update's else arm, :123-129), and every
+    // host that routes the hover routes it - `townTalk.pointer('up')`
+    // reaches a window that has only `release()`, `worldModes`' interior
+    // slot and `dungeonContext.overlayPointer`'s up arm call it beside
+    // their pointer route, and `interior.js` has its own listener.
+    // Releasing never advances the flow, so no done check.
+    release() { if (!_fired) flow.releasePickBar?.(); },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },

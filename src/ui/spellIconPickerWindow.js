@@ -26,6 +26,20 @@
 // the panel's looser 0..ScrollSteps clamp is unreachable and the port
 // keeps the one index with the scroller's clamp.
 //
+// ROAD-G G4 FINISHED THE SCROLLER. `scroller` is a VerticalScrollBar
+// (:39, :91-94) and MC1 shipped the clamp alone: the rail took no
+// press, the thumb could not be dragged, and the window PAINTED a grey
+// trough with a grey block on it - pixels DFU never draws, because
+// VerticalScrollBar.Draw returns before DrawScrollBar whenever the
+// content fits (:135-139) and this scroller sets no BackgroundColor at
+// all (:91-94), so classic-only content shows the main panel's black
+// and nothing else. It is `ui/verticalScrollBar.js` now, whole: the
+// press splits across MouseClick's paging and Update's latch, the drag
+// runs off the host's held button and the button coming UP drops it
+// through `release()` - the seam wave E built, forwarded here by both
+// consumers (`spellbookWindow.js`, `spellMakerWindow.js`) the way they
+// already forward `hover`.
+//
 // THE CLIP QUIRK, kept: ScrollingPanel.Draw draws a child only when
 // its scroll-adjusted top-left POINT sits inside the panel rect
 // (:326-348) - DFU compares child-relative coordinates against a
@@ -39,6 +53,7 @@ import { nativeMetrics, drawRect } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { drawSpellIcon, SPELL_ICON_COUNT } from './spellIcons.js';
 import { drawText } from './text.js';
+import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-G G4: the scroller is DFU's component, not a painted rectangle
 
 // #region UI Rects (:27-31), verbatim - the main panel is centred.
 export const ICON_PICKER_PANEL_SIZE = Object.freeze([274, 180]);
@@ -117,6 +132,16 @@ export class SpellIconPickerWindow {
     // scroller.DisplayUnits = InteriorHeight / iconSpacing (:169)
     this.displayUnits = Math.trunc(ICON_PICKER_SCROLL_PANEL[3] / ICON_SPACING);
     this.scrollIndex = 0;
+    // ROAD-G G4: the component (:39, :91-94). `rect` is MAIN-panel
+    // local, the space Position/Size are set in; OnScroll is
+    // Scroller_OnScroll (:246-250), which copies the index onto the
+    // scrolling panel and re-derives the hovered icon. The two unit
+    // counts are poured in before every read (`_syncScroller`) because
+    // this window keeps ONE index, as the note above records.
+    this.scroller = new VerticalScrollBar({
+      rect: [...ICON_PICKER_SCROLLER],
+      onScroll: (i) => this._setScroll(i),
+    });
     this.selectedIcon = null;
     this._pointer = null;   // last pointer position, panel-relative
     this.closed = false;
@@ -137,6 +162,24 @@ export class SpellIconPickerWindow {
     const [sx, sy, sw, sh] = ICON_PICKER_SCROLL_PANEL;
     const x = vx - px - sx, y = vy - py - sy;
     return (x >= 0 && y >= 0 && x < sw && y < sh) ? [x, y] : null;
+  }
+
+  /** ROAD-G G4: native (vx, vy) -> MAIN-panel-relative, the space the
+   *  scroller's rect lives in. No null arm: DFU's Update polls a
+   *  position wherever it is, so a drag that leaves the window keeps
+   *  scrolling. */
+  _mainPoint(vx, vy) {
+    const [px, py] = SpellIconPickerWindow.panelOrigin();
+    return [vx - px, vy - py];
+  }
+
+  /** The two unit counts, poured into the component before any read -
+   *  DisplayUnits and TotalUnits are set once in DFU (:169-170) and
+   *  `scrollSteps` is a live field here. Reset (:171-176) raises no
+   *  event, which is what makes it safe to call on every frame. */
+  _syncScroller() {
+    this.scroller.reset(this.displayUnits, this.scrollSteps, this.scrollIndex);
+    return this.scroller;
   }
 
   /** VerticalScrollBar.SetScrollIndex (:187-199): clamp to
@@ -168,10 +211,30 @@ export class SpellIconPickerWindow {
     this.selectedIcon = over ? { key: null, index: over.index } : null;
   }
 
-  hover(vx, vy) {
+  hover(vx, vy, e = null) {
+    // ROAD-G G4: Update's drag arm (VerticalScrollBar.cs:101-121) -
+    // `e.buttons & 1` is GetMouseButton(0) and the host's mousemove is
+    // the frame. It runs BEFORE the pointer is re-read, because
+    // Scroller_OnScroll's UpdateSelectedIcon (:248) reads the scrolling
+    // panel's LAST mouse position, not this move's.
+    // ...but never on the hosts' (-1,-1) SENTINEL, which is a
+    // fabricated pair for "off the letterboxed panel" and not a
+    // position (ROAD-C c2 flight 2's finding, in the space it was found
+    // in: the NATIVE point, before this window's panel origin comes
+    // off). `release()` is what ends the latch, so skipping the frame
+    // strands nothing.
+    const [mx, my] = this._mainPoint(vx, vy);
+    if (vx >= 0 && vy >= 0) this._syncScroller().update(!!(e?.buttons & 1), my);
+    // ScrollingPanel_OnMouseMove (:264-267): the panel's own move
+    // handler, which does not fire while the cursor is off it.
     this._pointer = this._panelPoint(vx, vy);
     this._updateSelectedIcon();
   }
+
+  /** ROAD-G G4: the button coming up - Update's `else` arm (:123-129).
+   *  Both consumers forward it beside `hover`; unforwarded, a released
+   *  thumb resumes from its stale anchor on the next move. */
+  release() { this.scroller.draggingThumb = false; }
 
   /** OnMouseScrollUp/Down (:252-262): one scroller step per notch. */
   wheel(dir) { this._setScroll(this.scrollIndex + Math.sign(dir)); }
@@ -180,6 +243,12 @@ export class SpellIconPickerWindow {
    *  ONLY when the click landed on an icon - a miss keeps the window
    *  up. Answers true always; the picker is modal. */
   click(vx, vy) {
+    // ROAD-G G4: the scroller is a sibling component of the scrolling
+    // panel (:94), so a press on the rail is ITS press - MouseClick's
+    // two paging arms outside the thumb, Update's latch on it - and
+    // never the panel's click. `press` is that split.
+    const [mx, my] = this._mainPoint(vx, vy);
+    if (this._syncScroller().contains(mx, my)) { this.scroller.press(mx, my); return true; }
     this._pointer = this._panelPoint(vx, vy);
     this._updateSelectedIcon();
     if (this.selectedIcon) this._close();
@@ -236,14 +305,14 @@ export class SpellIconPickerWindow {
         drawRect(renderer, m, ox + ow, oy, 1, oh, OUTLINE);
       }
     }
-    // the scroller (:90-94): the trough, and a thumb sized by
-    // display/total - full-height while nothing can scroll.
+    // ROAD-G G4: the scroller (:91-94) draws what VerticalScrollBar
+    // draws and nothing else - the three thumb slices of DrawScrollBar
+    // (:204-222), and NOTHING AT ALL while the content fits, because
+    // Draw returns at :135-139 and the component sets no
+    // BackgroundColor. The grey trough and grey block MC1 painted here
+    // were the port's own pixels; on classic-only content (7 steps in
+    // 8 units) DFU shows the main panel's black.
     const [cx, cy, cw, ch] = ICON_PICKER_SCROLLER;
-    drawRect(renderer, m, px + cx, py + cy, cw, ch, [0.2, 0.2, 0.2, 1]);
-    const frac = Math.min(1, this.displayUnits / Math.max(1, this.scrollSteps));
-    const th = ch * frac;
-    const maxScroll = Math.max(0, this.scrollSteps - this.displayUnits);
-    const ty = maxScroll > 0 ? (this.scrollIndex / maxScroll) * (ch - th) : 0;
-    drawRect(renderer, m, px + cx, py + cy + ty, cw, th, [0.6, 0.6, 0.6, 1]);
+    drawScrollThumb(renderer, m, [px + cx, py + cy, cw, ch], this._syncScroller().thumbSpan);
   }
 }

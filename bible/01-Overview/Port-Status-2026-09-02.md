@@ -721,8 +721,12 @@ vampirism/lycanthropy).
 
 That accounts for 17 of the 21, leaving **4 unstruck rows that carry a
 route** - plus `:593`, struck at its head but carrying a live PENDING
-clause in its tail, for **six rows that still owe work: items 1-6
-below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
+clause in its tail, for six rows that owed work when this section was
+written: items 1-6 below (item 7 was the seventh, and DR1 struck it).
+**FOUR still owe it** - items 1, 2, 5 and 6 - since item 4 closed with
+the E-group and item 3 with ROAD-G G4 (2026-09-04). The row COUNTS
+above are unchanged by either: both closures struck a clause inside a
+row, not a row. The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
 work the entries themselves argued for - the closeout tail struck the
 six STALE rows (items 9-14), E8 struck item 8, and E4 added one new
@@ -752,13 +756,28 @@ ships, which is the warning the section's own preamble opens with.
    its `Ctrl-U` default since A8. Nothing in `ui/chargen.js`,
    `ui/chargenArt.js` or `systems/customClass.js` consumes it. This is
    the smallest open row in the section.
-3. **`:494` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
+3. ~~**`:494` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
    the thumb drag and the picker's double-click law; the port has no
    overlay mouse-up seam, so the latch drops on the first hover after
-   the button comes up (`ListPickerWindow.release()`,
-   `ui/listPicker.js:263`, exists and is unwired). The spellbook's own
-   drag stays the F159/F170/F180 departure; the closeout narrowed its
-   superseded REASON without removing the departure.
+   the button comes up (`ListPickerWindow.release()`, exists and is
+   unwired). The spellbook's own drag stays the F159/F170/F180
+   departure; the closeout narrowed its superseded REASON without
+   removing the departure.~~ **CLOSED IN TWO HALVES.** The SEAM shipped
+   with the E-group (2026-09-02): `townTalk.pointer('up')` reaches a
+   window that has only `release()`, and the same edge lands in
+   `worldModes`' interior slot, `dungeonContext.overlayPointer`'s up arm
+   and `scenes/interior.js`; `ListPickerWindow.release()`
+   (`ui/listPicker.js:309`) is wired, and this entry's own citation was
+   already a line stale when it was written - which is the drift
+   `test/citedrift.test.js` exists for. The LAST CONSUMERS shipped with
+   **ROAD-G G4 (2026-09-04)**: the spellbook's thumb drag is built, so
+   the F159/F170/F180 departure is struck rather than narrowed again -
+   its stated reason ("no held-button state reaches THIS window from its
+   hosts") had been retired twice, by A7's hover event and by this row's
+   own seam - and with it the spell icon picker's inert rail and invented
+   grey trough, the chargen picker bar's late release, and the one host
+   that routed a bare `(x, y)` hover with no DOM event
+   (`scenes/interior.js`). Pinned by `test/roadg_g4_dragrelease.test.js`.
 4. ~~**`:537` the quest machine** -> `playSound`'s busy-skip, the one
    recorded delta, because the port's one-shot engine has no busy
    state.~~ **CLOSED (E-group, 2026-09-02):** `systems/audio.js` grew

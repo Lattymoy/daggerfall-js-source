@@ -220,7 +220,15 @@ export async function bootInterior(canvas, renderer, params, status) {
   addEventListener('pointermove', (e) => {
     if (!overlay) return;
     const v = nativeAt(e);
-    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1]); }
+    // ROAD-G G4: THE EVENT RIDES THE HOVER, in this host too. Every
+    // other host has handed its overlay slot the DOM mousemove since
+    // ROAD-A7 (`e.buttons & 1` is the port's read of
+    // InputManager.GetMouseButton(0), which VerticalScrollBar.Update
+    // polls every frame, :105); this one dropped it, so a window
+    // mounted HERE could latch a thumb drag on the press and never
+    // move it. The four-hosts rule again: a seam three hosts carry and
+    // the fourth does not is a latch nothing errors on.
+    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1], e); }
   });
   addEventListener('pointerup', (e) => {
     if (!overlay) return;

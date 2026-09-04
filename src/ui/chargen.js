@@ -1059,14 +1059,23 @@ export class ChargenFlow {
 
   /** VerticalScrollBar.Update's per-frame arm (:101-130), on the
    *  hosts' HOVER seam - `e.buttons & 1` is the port's only reading of
-   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:259
-   *  takes. Releasing the button drops the latch on the next move,
-   *  which is the overlay mouse-UP remainder the shared picker already
-   *  records; nothing else here reads the pointer. */
+   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:291
+   *  takes; nothing else here reads the pointer. */
   hover(vx, vy, e = null) {
     const p = this.syncPickBar();
     if (!p) return;
     if (this.pickBar.update(!!(e?.buttons & 1), vy)) p.set(this.pickBar.scrollIndex);
+  }
+
+  /** ROAD-G G4: Update's `else` arm (:123-129), on the overlay mouse-UP
+   *  seam. This was the last consumer still waiting for the NEXT MOVE
+   *  to notice the button was gone - the comment above said so, citing
+   *  the remainder as if it were still open; wave E built the seam and
+   *  `systems/chargenSession.js` forwards it, so the latch now drops on
+   *  the edge that ends it. Nothing else in the wizard latches on a
+   *  press, which is why this is the whole of the arm. */
+  releasePickBar() {
+    if (this.pickBar) this.pickBar.draggingThumb = false;
   }
 
   /** The pick list's minimal scroll (the ListBox law the class list
