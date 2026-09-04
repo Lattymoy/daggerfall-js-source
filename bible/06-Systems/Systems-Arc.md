@@ -5535,3 +5535,26 @@ standing at the centre before the neighbour lands are the cost.
 Pinned: the gate's shape in the host, and the arithmetic itself -
 every side of an 8x8 landing lies outside 0..819.2 by exactly one
 EXTRA_DISTANCE, a 1x1 village's inside it (`testroom.test.js` TSR4a).
+
+**TSR4b - THE RIDE WAS BOOTING INTO PRIVATEER'S HOLD (2026-09-04,
+Mac, after TSR4a: "Nope. it either places me in the dungeon or places
+me in the ground").** TSR4a's wait was right and was not the bug Mac
+was seeing. main.js sets `?classic` on EVERY menu door (U31: the new
+game begins where Daggerfall begins), and the classic start is a map
+CELL out of settings - StartCellX/Y 109,158, Privateer's Hold - with
+`StartInDungeon` putting a new character INSIDE it. So the ride's
+start pixel was the Hold's, not a city's, and its exterior landing
+raced the dungeon entry: fire before the entry and the mount lands on
+a pixel the dungeon then takes over ("in the ground"); fire after and
+the player is already underground with the exterior gate still
+armed ("in the dungeon"). Neither is a landing bug - it is the wrong
+boot. The ride is a SPAWN OUTDOORS, a dev boot in U31's own sense
+("every dev boot keeps the region/loc names it has always used"), so
+main.js now drops `classic` for the ride alone - resolved through
+`TEST_RIDE.id` from the one home, never a literal - and the boot
+takes the named start, the city of Daggerfall's exterior, with no
+dungeon arm to race. Every other menu door, the six presets included,
+still begins where Daggerfall begins. Pinned on the route text
+(`testroom.test.js`, the TSR4 wiring pin); `classicstart.test.js`
+and `enhancedMenu.test.js` still see the `params.set('classic', '1')`
+they require.

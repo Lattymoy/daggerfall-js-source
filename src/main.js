@@ -123,7 +123,17 @@ async function boot() {
     // that once entered the room would re-enter it on New Game.
     if (typeof choice === 'string' && choice.startsWith('test:')) params.set('test', choice.slice(5));
     else params.delete('test');
-    params.set('classic', '1');
+    // TSR4b (Mac: "it either places me in the dungeon or places me in
+    // the ground"): the classic start is Privateer's Hold - a map cell
+    // out of settings, and StartInDungeon puts a new character INSIDE
+    // it - and the ride was booting there too, racing the dungeon
+    // entry with an exterior landing. The ride is a SPAWN OUTDOORS, a
+    // dev boot in the U31 sense: it keeps the named start (the city's
+    // exterior) and never asks for the classic path. Every other menu
+    // door still begins where Daggerfall begins.
+    const { TEST_RIDE } = await import('./systems/testRoom.js');
+    if (params.get('test') === TEST_RIDE.id) params.delete('classic');
+    else params.set('classic', '1');
     return bootWorld(canvas, renderer, params, status);
   }
   await ensureData();

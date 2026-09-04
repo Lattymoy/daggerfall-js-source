@@ -205,6 +205,14 @@ test('TSR4: the mount is the store\'s own horse, once, and the pack answers hasH
 test('TSR4: the pane, the boot and the frame gate - the edge landing, the ONE transport door, never before the first stand', () => {
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /onAction\(`test:\$\{TEST_RIDE\.id\}`\)/, 'the ride card fires the same choice family');
+  // TSR4b: the ride NEVER takes the classic start - that is Privateer's
+  // Hold with StartInDungeon, and an exterior landing racing a dungeon
+  // entry is "either in the dungeon or in the ground". It keeps the
+  // named start (the city's exterior); every other door keeps classic.
+  const main = read('src/main.js');
+  assert.match(main, /const \{ TEST_RIDE \} = await import\('\.\/systems\/testRoom\.js'\);\s*\n\s*if \(params\.get\('test'\) === TEST_RIDE\.id\) params\.delete\('classic'\);\s*\n\s*else params\.set\('classic', '1'\);/,
+    'the ride drops the classic start through the one home\'s id; every other choice still sets it');
+  assert.ok(main.indexOf("params.delete('classic')") > main.indexOf("else params.delete('test');"), 'decided after the test param is settled');
   const world = read('src/scenes/world.js');
   // the horse lands with the armory; the mount is DEFERRED to the frame
   // loop's spawn gate, so it can never run before the player has a floor
