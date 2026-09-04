@@ -184,6 +184,7 @@ directory by `test/audit18_bible_docs.test.js`:
   still pins the sim and a pinned boot is never a front; the stub audio
   handles. Still unseen: all of it, in a browser, with ARENA2.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
+- `dynamicSkiesRenderer.js` - DS1: Dynamic Skies' own skybox (BLBProceduralSkybox, translated line for line), the enhanced lane's sky while the vendored mod's switch is on; the same draw contract as `enhancedSky.js`.
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing
   the two moons, stars and weather-driven clouds. Behind the enhanced
@@ -255,5 +256,7 @@ lightning. R10 retired groundMesh.js - all ground
 (exterior + terrain) runs the verbatim tilemap shader.
 
 See `Enhanced-Environments-Arc.md` for the Enhanced Environments arc plan (second attempt): its laws, its slices in order, and the gate each one must pass.
+
+See `Dynamic-Skies.md` for DS1: BadLuckBurt and carademono's Dynamic Skies mod, vendored 1:1 with permission and standing beside the dome as the enhanced lane's sky (2026-09-04).
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.

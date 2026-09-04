@@ -167,7 +167,7 @@ import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the Ques
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -438,7 +438,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // scale is 1 at DFU's default 3, so the classic path is untouched);
   // the exp weather rows pass through scaleFogForDistance unchanged.
   const fogDistance = getInt('Experimental', 'TerrainDistance', 1, 4);
-  let weatherFog = scaleFogForDistance(fogForWeather(weather), fogDistance);
+  let weatherFog = scaleFogForDistance(fogForWeather(weather, sky.fogSettings), fogDistance);   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies is the sky
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
@@ -453,6 +453,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // EVERY frame that rain, storm or snow drew, one step above the pass
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
+  if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
@@ -478,7 +479,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
-    weatherFog = scaleFogForDistance(fogForWeather(w), fogDistance);   // EV4
+    weatherFog = scaleFogForDistance(fogForWeather(w, sky.fogSettings), fogDistance);   // EV4; DS1: the mod's table
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
@@ -6073,6 +6074,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
@@ -6650,7 +6652,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
     // heavy rain fogs to Color.gray, not to the sky tint.
     const fogNow = wxNow.fog;   // WX2: the row on the front (the table's own row, classic and settled)
-    const fogColor = outdoorFogColor(fogNow, sky.renderer.clearColor);
+    const fogColor = sky.fogColorFor(fogNow);   // DS1: the mod's own RenderSettings.fogColor while it is the sky; SetSkyFogColor over the horizon otherwise, as before
     renderer.setFog(fogNow.mode,
       fogNow.density, fogNow.start, fogNow.end, fogColor);
     sky.renderer.fogColor = fogColor;
@@ -6681,6 +6683,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);

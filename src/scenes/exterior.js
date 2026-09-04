@@ -109,7 +109,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -303,7 +303,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   if (weatherOverride) setWeather(weatherOverride);
   const weatherSeed = weatherRng(Number(params.get('wseed')) || 1);
   let weather = weatherOverride ?? currentWeather();
-  let weatherFog = fogForWeather(weather);
+  let weatherFog = fogForWeather(weather, sky.fogSettings);   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies is the sky
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
@@ -318,6 +318,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // EVERY frame that rain, storm or snow drew, one step above the pass
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
+  if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
@@ -332,7 +333,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
-    weatherFog = fogForWeather(w);
+    weatherFog = fogForWeather(w, sky.fogSettings);   // DS1
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
@@ -2686,6 +2687,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
   // AUDIT 58 (F089's other host): AmbientEffectsPlayer.Start subscribes
   // PlayerGPS.OnEnterLocationRect on EVERY instance (:89), and the
   // handler arms IsCemeteryNearby when the entered location is a
@@ -3123,7 +3125,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
     // heavy rain fogs to Color.gray, not to the sky tint.
     const fogNow = wxNow.fog;   // WX2: the row on the front (the table's own row, classic and settled)
-    const fogColor = outdoorFogColor(fogNow, sky.renderer.clearColor);
+    const fogColor = sky.fogColorFor(fogNow);   // DS1: the mod's own RenderSettings.fogColor while it is the sky; SetSkyFogColor over the horizon otherwise, as before
     renderer.setFog(fogNow.mode,
       fogNow.density, fogNow.start, fogNow.end, fogColor);
     sky.renderer.fogColor = fogColor;
@@ -3140,6 +3142,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch
       CITY_LIGHT_COLOR_F32
     );
+    renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24

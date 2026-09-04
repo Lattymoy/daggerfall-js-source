@@ -97,6 +97,11 @@ export class AmbientEffects {
     this.cemeteryNearby = false;
     this._cemeteryWait = 0;
     this._cemeteryCounter = 0;
+    /** DS1: AmbientEffectsPlayer.OnPlayEffect (:508-516) - raised from
+     *  PlayEffects after every one-shot it plays (both arms, :285 and
+     *  :304; the cemetery layer never raises it). (clip, playerPos) ->
+     *  void. Dynamic Skies' LightningFlashListener is its one reader. */
+    this.onPlayEffect = null;
     this._startWaiting();
   }
 
@@ -221,9 +226,11 @@ export class AmbientEffects {
     const index = Math.floor(this.rng() * sounds.length);   // Next(0, length)
     if (this.preset === 'storm') {
       this._playSomewhereOnHorizon(sounds[index], deps.playerPos ?? [0, 0, 0]);
+      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null);   // DS1: RaiseOnPlayEffectEvent (:285)
     } else {
       if (deps.inCastle) return;   // doNotPlayInCastle
       this._playSomewhereAround(sounds[index], deps.playerPos ?? [0, 0, 0]);
+      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null);   // DS1: RaiseOnPlayEffectEvent (:304)
     }
   }
 

@@ -204,6 +204,61 @@ export const LAB_BOX = 42;
 export const LAB_COUNTS = Object.freeze({ rain: 26000, storm: 26000, snow: 20000 });
 export const LAB_FALL = Object.freeze({ rain: 22.0, storm: 22.0, snow: 1.6 });
 
+// ═══════════════════════════════════════════════════════════════════
+// DS1: DYNAMIC SKIES' PIXEL SNOW (BLBSkybox.InitSnow, :1183-1228). The
+// mod hands DFU's Snow_Particles renderer a new material - Legacy
+// Shaders/Particles/Alpha Blended Premultiply over PixelSnow.png (64x64,
+// white with a dot of alpha) - sets startRotation 0, switches rotation
+// over lifetime off, and clamps the renderer's minParticleSize /
+// maxParticleSize: viewport FRACTIONS every flake's screen size is held
+// between (the mod's defaults 0.001 and 0.003 - one to three pixels of
+// a 1080p frame). The port's flakes are the lab's - the same instances,
+// fall, wind, tumble and wrap - so this is the lab's vertex stage with
+// the clamp on the quad, and the mod's fragment: out = tex * color *
+// color.a under Blend One OneMinusSrcAlpha, the particle colour white.
+// The texture is white everywhere with alpha only at its dot, so under
+// that blend a flake is a white square of the clamped size, which is
+// what the mod draws. Its own program: the lab's above is pinned byte
+// for byte against grass-proto.html and stays so.
+export const PIXEL_SNOW_VS = LAB_HEAD + `layout(location=0) in vec2 aCorner;
+layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
+uniform mat4 uVP; uniform vec3 uEye;
+uniform float uTime, uBox, uFall;
+uniform vec2 uWindV, uWindOff;
+uniform float uProjY, uAspect, uMinSize, uMaxSize;
+out vec2 vUv;
+void main(){
+  float vSeed = aSeed.w;
+  vec3 p = aSeed.xyz;
+  float fall = uFall * (0.72 + fract(vSeed*7.3)*0.6);
+  float gust = 0.75 + fract(vSeed*3.7)*0.5;
+  p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
+  p.y -= uTime * fall;
+  p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
+  float sz = 0.035 + fract(vSeed*11.7)*0.045;
+  float w1 = sin(uTime*1.1 + vSeed*24.0), w2 = cos(uTime*0.7 + vSeed*11.0);
+  p += vec3(w1, 0.0, w2) * (0.55 + length(uWindV) * 0.35);
+  vec4 c = uVP * vec4(p, 1.0);
+  // ParticleSystemRenderer.minParticleSize / maxParticleSize: the flake's
+  // projected height as a fraction of the viewport, clamped; the quad is
+  // square on the screen and does not turn (startRotation 0, no rotation
+  // over lifetime)
+  float frac = clamp(0.5 * sz * uProjY / max(c.w, 1e-4), uMinSize, uMaxSize);
+  float h = frac * 2.0;
+  c.xy += vec2((aCorner.x-0.5) * h / uAspect, (aCorner.y-0.5) * h) * c.w;
+  vUv = aCorner;
+  gl_Position = c;
+}`;
+export const PIXEL_SNOW_FS = LAB_HEAD + `in vec2 vUv;
+uniform sampler2D uTex;
+out vec4 o;
+void main(){
+  // Legacy Shaders/Particles/Alpha Blended Premultiply: tex * color * color.a
+  vec4 t = texture(uTex, vUv);
+  vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+  o = t * color * color.a;
+}`;
+
 /** out = a * b, column-major 4x4 - the lab's uVP is proj * view */
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
@@ -252,6 +307,13 @@ export class PrecipitationRenderer {
     this.windV = new Float32Array(2);
     this.labProgram = null;
     if (opts.enhanced) this._buildLab();
+    /** DS1: Dynamic Skies' pixel snow, when the mod's switch is on -
+     *  {minParticleSize, maxParticleSize, textureUrl}; null is DFU's
+     *  own snow (the lab's flakes). */
+    this.pixelSnow = null;
+    this.pixelTex = null;
+    this.pixelProgram = null;
+    if (opts.pixelSnow) this.setPixelSnow(opts.pixelSnow);
 
     // One buffer sized for the LARGEST set this program can draw, and
     // the smaller profile draws a prefix of it. Per-particle quad (4
@@ -356,12 +418,88 @@ export class PrecipitationRenderer {
     this.labVao = vao;
   }
 
+  /** DS1: InitSnow - the pixel snow replacement. The texture decodes
+   *  in its own time; until it lands the lab's own flakes draw. */
+  setPixelSnow(cfg) {
+    this.pixelSnow = cfg;
+    if (!cfg?.textureUrl || typeof Image === 'undefined') return;
+    const img = new Image();
+    img.onload = () => {
+      const gl = this.gl;
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      // PixelSnow.png as imported: Point, no mips, Repeat
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      this.pixelTex = t;
+    };
+    img.onerror = () => console.warn(`Dynamic Skies: PixelSnow did not load from ${cfg.textureUrl}`);
+    img.src = cfg.textureUrl;
+  }
+
+  _buildPixelSnow() {
+    const gl = this.gl;
+    if (!this.labProgram) this._buildLab();   // the same instances and VAO
+    const pp = gl.createProgram();
+    gl.attachShader(pp, compileShader(gl, gl.VERTEX_SHADER, PIXEL_SNOW_VS));
+    gl.attachShader(pp, compileShader(gl, gl.FRAGMENT_SHADER, PIXEL_SNOW_FS));
+    gl.linkProgram(pp);
+    if (!gl.getProgramParameter(pp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pp));
+    this.pixelProgram = pp;
+    this.pixel = {};
+    for (const u of ['uVP', 'uEye', 'uTime', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uProjY', 'uAspect', 'uMinSize', 'uMaxSize', 'uTex']) this.pixel[u] = gl.getUniformLocation(pp, u);
+  }
+
+  /** DS1: the lab's snow, drawn as the mod's pixel snow: the same count,
+   *  fall, wind and travel; the mod's blend and texture; the size clamp. */
+  drawPixelSnow(proj, view, camPos, timeSeconds) {
+    const gl = this.gl;
+    if (!this.pixelProgram) this._buildPixelSnow();
+    const full = Math.round(LAB_COUNTS.snow * Math.min(1, Math.max(0, this.intensity)));
+    const count = this.countCap ? Math.min(full, this.countCap) : full;
+    if (count <= 0) return;
+    if (!this._vp) this._vp = new Float32Array(16);
+    mat4Multiply(this._vp, proj, view);
+    gl.useProgram(this.pixelProgram);
+    const P = this.pixel;
+    gl.uniformMatrix4fv(P.uVP, false, this._vp);
+    gl.uniform3fv(P.uEye, camPos);
+    gl.uniform1f(P.uTime, timeSeconds);
+    gl.uniform1f(P.uBox, LAB_BOX);
+    gl.uniform1f(P.uFall, LAB_FALL.snow);
+    gl.uniform2fv(P.uWindV, this.windV);
+    gl.uniform2fv(P.uWindOff, this.windOff);
+    gl.uniform1f(P.uProjY, proj[5]);
+    gl.uniform1f(P.uAspect, proj[5] / proj[0]);
+    gl.uniform1f(P.uMinSize, this.pixelSnow.minParticleSize);
+    gl.uniform1f(P.uMaxSize, this.pixelSnow.maxParticleSize);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.pixelTex);
+    gl.uniform1i(P.uTex, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // Alpha Blended Premultiply
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(this.labVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, count);
+    gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+  }
+
   /** mode 'rain'|'storm'|'snow'; storm shares the rain look. */
   /** WX1: the lab's draw, term for term - blend src-alpha, depth write
    *  off, the eye's right and WORLD up (a flake faces the camera about Y
    *  only), the lab's box, fall and counts, the wind's rate and its
    *  integrated travel. */
   drawLab(mode, proj, view, camPos, camRight, timeSeconds) {
+    if (mode === 'snow' && this.pixelSnow && this.pixelTex) return this.drawPixelSnow(proj, view, camPos, timeSeconds);   // DS1
     const gl = this.gl;
     if (!this.labProgram) this._buildLab();
     const kind = mode === 'snow' ? 1 : 0;

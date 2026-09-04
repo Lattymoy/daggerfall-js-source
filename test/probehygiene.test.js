@@ -191,7 +191,7 @@ test('T3: the eyeball-tool allowlist is honest on both sides', () => {
 });
 
 // ---------------------------------------------------------------------------
-// ROAD-E E8: THE THREE STALE PROBES OF Port-Ledger.md:603, closed.
+// ROAD-E E8: THE THREE STALE PROBES OF Port-Ledger.md:604, closed.
 //
 // A probe that drives a window the port no longer HAS is the same lie
 // as a probe that cannot fail: it reports a failure the game does not
