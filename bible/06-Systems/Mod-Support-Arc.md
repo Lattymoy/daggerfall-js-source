@@ -2,9 +2,16 @@
 
 Mac uploaded `WindMills.rar`, a Daggerfall Unity mod by Kamer, and asked
 "how hard would it be to implement this", then "I want to find a way to
-get this mod to work". This page is the record of the study. NOTHING IS
-IMPLEMENTED YET - this is a plan, and the session paused on usage before
-any of it was written.
+get this mod to work". This page is the record of the study.
+
+SUPERSEDED (2026-09-04 merge): main already carries the windmill - W2a
+vendored Kamer's models with the author's permission
+(vendor/windmills-kamer/, src/world/windmillMesh.js baked by
+scripts/bakeWindmill.mjs, pinned by test/windmillmesh.test.js) - built
+by another session while this study was being written. The plan below
+was never started and stands as the study: the format findings (the
+FullSerializer dialect, the measured axis rule, the prefab decode) are
+still true of the mod's files.
 
 ## What the port already has
 

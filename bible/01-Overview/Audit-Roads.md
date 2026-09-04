@@ -1,5 +1,16 @@
 # AUDIT ROADS - the deep audit of the road system (2026-08-29)
 
+SUPERSEDED BEFORE IT WAS ACTIONED. This audit ran against the port's
+own road generator (systems/roads.js, roadBake.js, roadTravel.js,
+world/roadTiles.js). By the time it landed, main had already replaced
+that system whole - ROADS 22, Hazelnut's Basic Roads vendored with
+permission (vendor/roads-hazelnut/, the src/world/roadNetwork.js /
+roadPainter.js / roadsProducer.js / roadsCache.js set). Every module
+below marked RETIRED is gone from the tree; the findings stand as the
+record of what the old generator got wrong, and the one lesson that
+survives the swap is the coverage one - a seam pin that drives only the
+symmetric cases is not a pin.
+
 Mac asked for "a deep audit and ensure this is perfect" on the road
 system after the R5 revert and the RG1 gate-connection landing. This page
 is the record. NOTHING HERE IS FIXED YET - the session paused on usage
@@ -17,7 +28,7 @@ below.
 
 ## The one that explains what Mac saw
 
-**A diagonal pixel seam severs the road** (`src/world/roadTiles.js:213`).
+**A diagonal pixel seam severs the road** (`src/world/roadTiles.js:213`). (RETIRED)
 
 At every diagonal step across a map-pixel boundary the two painted bands
 **touch at a single corner point and share no edge**. The 32 m trunk
@@ -31,7 +42,7 @@ zig-zagging. It survived every iteration of the geometry work because of
 the finding directly below.
 
 **The seam pin only ever tested the two cases that cannot disagree**
-(`test/roadtiles.test.js:95` and `:118`). Both build their tilemaps with
+(`test/roadtiles.test.js:95` and `:118`). Both build their tilemaps with (RETIRED)
 `blank()`, so neither pixel carries a location and both sides necessarily
 run the same branch. N-S and E-W are exactly the two orientations where
 the geometry is symmetric. The diagonal case - half of all crossings -
@@ -41,25 +52,25 @@ restates the port is not a pin.**
 Two more test-coverage breaks in the same family:
 
 - **No pin says a pixel carrying road bits must paint road**
-  (`test/roadtiles.test.js:136`). The suite has the negative pin ("a
+  (`test/roadtiles.test.js:136`). The suite has the negative pin ("a (RETIRED)
   pixel with no road is left completely alone") and never the positive
   one, so smoothing holes ship green.
 - **Nothing counts how many roads a tile carries**
-  (`test/roadtiles.test.js:198`). This is how the two-roads bug shipped.
+  (`test/roadtiles.test.js:198`). This is how the two-roads bug shipped. (RETIRED)
   NOTE the verifier's correction: do NOT add the naive band-count pin -
   it goes red on 13% of legitimate location pixels. The double must be
   caught another way.
 
 ## The other four breaks
 
-- **`ROADS_V` was never bumped** (`src/systems/roadBake.js:49`) for two
+- **`ROADS_V` was never bumped** (`src/systems/roadBake.js:49`) for two (RETIRED)
   commits that changed the network. The file states the law in its own
   words - bump it "whenever a change would make an old artifact wrong
   rather than merely stale" - and RC1 and RC3 both did exactly that. Any
   player who baked before those fixes keeps the pre-fix roads for ever.
   One-character fix; the verifier downgraded the severity but kept it.
 - **RC3's forest join runs mainland x island failed searches**
-  (`src/systems/roads.js:647`). `unroutable` is keyed on the HUB PAIR, so
+  (`src/systems/roads.js:647`). `unroutable` is keyed on the HUB PAIR, so (RETIRED)
   every cross-component pair is routed once before the loop gives up -
   and a route to an unreachable goal is not cheap, it drains the start's
   entire connected component. One unreachable town turns the 26-second
@@ -124,21 +135,21 @@ Recorded so it is not re-audited:
   towns the same map is deliberately hiding. This is the R3W
   orphaned-layer defect again, in a new module.
 - **The land-only rule tests only the CLIMATE byte**
-  (`src/systems/roadTravel.js:227`), so routes cross - and prefer -
+  (`src/systems/roadTravel.js:227`), so routes cross - and prefer - (RETIRED)
   pixels the map itself paints as open sea. Three code paths in this
   project answer "is this pixel water" and one answers differently. The
   verifier: fix the COMMENT first, it is the actual defect.
 - **Every option toggle re-runs a full-map A***
-  (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per
+  (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per (RETIRED)
   click, ~0.9 s and 33 MB per card visit.
 - **Nothing is drawn for the whole 26-second bake**
-  (`src/scenes/world.js:271`) - the world host has no frame loop yet and
+  (`src/scenes/world.js:265`) - the world host has no frame loop yet and
   `status()` writes only `document.title`.
 - **A landmass with fewer than two hubs gets no road at all**
-  (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its
+  (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its (RETIRED)
   "cheapest version" fallback is broken two ways.
 - **`layPath` collapses `field.minStep` to `ROAD_REUSE_COST`**
-  (`src/systems/roads.js:474`). The code is CORRECT - the collapse is
+  (`src/systems/roads.js:474`). The code is CORRECT - the collapse is (RETIRED)
   required for admissibility, re-confirmed against the reference
   Dijkstra - but 24 against a terrain floor of 241 costs the heuristic
   90% of its strength for the rest of the bake, refuting the header's
@@ -146,11 +157,11 @@ Recorded so it is not re-audited:
   `ROAD_REUSE_COST`** - it is the shape knob for stage 4, not a speed
   knob: raising it to 200 takes loops 96 -> 0 and turns the network into
   a literal tree.
-- **Dead fixtures** (`test/roadwiring.test.js:346`): the revert deleted
+- **Dead fixtures** (`test/roadwiring.test.js:346`): the revert deleted (RETIRED)
   the tests but left seven bindings, and eslint only lints `src/`.
   `stitchChain` was the ONLY multi-pixel stitching harness in the suite -
   which is precisely why the diagonal tear had nowhere to be caught.
-- **Two pins are spelling greps** (`test/roadwiring.test.js:86` and
+- **Two pins are spelling greps** (`test/roadwiring.test.js:86` and (RETIRED)
   `:99`): they assert literal strings occur in order in a source file, so
   any respelling reintroduces the defect with the suite green.
 

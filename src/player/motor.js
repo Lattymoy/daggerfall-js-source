@@ -515,11 +515,6 @@ export class PlayerMotor {
    *  holds the crouched rest: DFU's DoDismount fallback lerps stale
    *  prev/target fields there, which is the same scaffolding. */
   _eyeLevel() {
-    // PH1 (Pegas-Arc decision 4): in the mod's saddle the motor IS the
-    // horse's body and the rider sits `pheight` above its origin at
-    // their own eye - the ride hands the height in, the script's
-    // `setpos z` for the rider (hr_horse_script :661, :692).
-    if (this.pegas) return this.pegas.eyeHeight;
     const t = Math.min(this.heightTimer / (this.heightTimerMax ?? HEIGHT_TIMER_FAST), 1);
     // A6: DoSinking/DoUnsinking (:352-434) are height actions of their
     // own too, and unlike the crouch pair their ENDS depend on the
@@ -825,12 +820,6 @@ export class PlayerMotor {
    *  that accumulates less than one physics step must not swallow the
    *  press (AUDIT 18 - at 120 Hz that dropped every other crouch). */
   update(dt, input, yaw, pitch = 0) {
-    // PH1: in the mod's saddle the ride owns the keys - RUN toggles the
-    // horse, SNEAK the gait, JUMP nothing (hr_horse_script :607-859) -
-    // and the horse walks its own facing at the script's speed. The
-    // motor takes that as its input bag; the collider still owns the
-    // floor, the walls and the step, which is the whole point.
-    if (this.pegas) input = { forward: this.pegas.forward, strafe: 0, run: false, autoRun: false, back: false, sneak: false, jump: false, up: false, down: false, crouch: false };
     this.jumped = false;
     this.landedFallDistance = 0;
     const frameDt = Math.min(dt, MAX_FRAME_DT);
@@ -1147,9 +1136,7 @@ export class PlayerMotor {
       this.jumping = false;
       if (this.falling) {
         this.falling = false;
-        // PH1: hr_ridingspell's Slow Fall 300 is on the RIDER - a landing in
-        // the mod's saddle reports no distance, so the host applies no damage
-        this.landedFallDistance = (this.pegas && this.pegas.fallDamage === false) ? 0 : this.fallStart - this.pos[1];
+        this.landedFallDistance = this.fallStart - this.pos[1];
       }
     } else if (!this.falling) {
       this.falling = true;
@@ -1193,7 +1180,6 @@ export class PlayerMotor {
         : (this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed));
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
-    if (this.pegas) speed = this.pegas.speed;   // PH1: the script's speed (trot 10 a frame, gallop horsespeed) in m/s
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
     // MW-D26: the frame's movement INPUT and applied speed, reported
@@ -1280,20 +1266,12 @@ export class PlayerMotor {
     // ApplyGravity: slowfall is a CONSTANT 2.1 m/s fall speed with
     // fallStart re-anchored every tick (expiry mid-fall only bills
     // the rest of the drop); otherwise integrate normally.
-    if (this.pegas && this.pegas.verticalVelocity != null) {
-      // PH1: the jump's rise (hr_horse_script :812-821, under
-      // Levitate) - the horse climbs at the script's rate, gravity off
-      this.velY = this.pegas.verticalVelocity;
-      this.grounded = false;
-      this.fallStart = this.pos[1];
-    } else if (!this.grounded) {
+    if (!this.grounded) {
       if (this.slowFalling && this.falling) {
         this.fallStart = this.pos[1];
         this.velY = -SLOWFALL_VELOCITY;   // F032: DFU's step, not ours
       } else {
-        // PH1: Slow Fall as OpenMW reads it - the ride's own scale (1
-        // on foot; 0.75 under the jump's Slow Fall 50)
-        this.velY -= GRAVITY * dt * (this.pegas ? this.pegas.gravityScale : 1);
+        this.velY -= GRAVITY * dt;
       }
     } else this.velY = Math.min(this.velY, 0);
     // A6 - ANTI-BUMP, the step probe's one classic consumer

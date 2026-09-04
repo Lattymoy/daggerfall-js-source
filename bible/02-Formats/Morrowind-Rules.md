@@ -6176,6 +6176,14 @@ the music module has since MU1; setLoop's F-F3 swap semantics carry
 keys unchanged); a rejected clip registers nothing and the classic
 fallback stands. mwd40_loosefiles.test.js.
 
+REMOVED 2026-09-04 (Mac: "completely remove the morrowind 3d horse
+implementation"): everything below from MW-D41 through MW-D50, and
+PH1's riding script, was cut whole - the five systems/pegas*.js
+modules, the vendored mod, the world.js/motor.js overlay, the Horse
+Saddle, the tests. The MW-D40 doors above (loose files, the external
+sound register) STAY: the first-person layer uses them. The classic CFA
+ride is the only mount in both skins. The sections below are history.
+
 MW-D41: THE PEGAS HORSE ASSEMBLY (systems/pegasHorse.js). THE LICENSE
 IS THE ARCHITECTURE (superseded 2026-09-03 by MW-D50 below: the
 author's written consent is in hand, the files are vendored verbatim,

@@ -1,5 +1,9 @@
 # AUDIT 60 - PH1, THE PEGAS HORSE, BEFORE IT MERGES (2026-09-04)
 
+REMOVED 2026-09-04, later the same day - Mac: "completely remove the
+morrowind 3d horse implementation". The feature this audit cleared was
+cut whole; this page stands as history.
+
 Mac: "let's go ahead and do a comprehensive audit on it before we
 continue." PH1 was written on another account and pushed to a branch;
 this audit ran on that branch merged with today's main.
