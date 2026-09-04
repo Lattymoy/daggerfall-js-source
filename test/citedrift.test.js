@@ -516,9 +516,9 @@ const SOURCE_CITES = [
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
   // range that cannot exist (`exterior.js:1034-1001`).
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-1044` build `createDetectFeed`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-1045` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:1034-(\d+)` build `createDetectFeed`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:1035-(\d+)` build `createDetectFeed`/,
     EX, /^ {2}\}\);$/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:820`, `exterior\.js:(\d+)`/,
     EX, /const droppedLoot = createDroppedLoot\(/],
@@ -528,9 +528,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-2805` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3031` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:2986-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3007-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:90-114`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
@@ -734,6 +734,7 @@ test('CD7: no citation into a port file names a range that runs backwards', () =
     });
   }
   assert.deepEqual(backwards, [], 'a citation names a range whose end precedes its start');
+});
 
 // ═══ CD8: the cites the ROAD-G G4 REVIEW re-resolved ═══
 //
