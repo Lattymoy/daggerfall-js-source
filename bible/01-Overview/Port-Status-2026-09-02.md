@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:1416`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:1406`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a

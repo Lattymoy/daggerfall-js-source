@@ -1042,16 +1042,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     loot: () => nearbyLootRecords({ piles: droppedLoot._piles, foes: exteriorFoePool() }),
     feet: detectFeet,
   });
-  // ROAD-G G1: THE AREA, for GameManager.MakeEnemiesHostile - world.js's
-  // `_liveEnemyDatabase` for the host whose exterior pool is the WATCH
-  // alone. ActiveGameObjectDatabase is ONE database for the scene
-  // (GameManager.cs:795), so the walk is the watch above ground PLUS
-  // whatever pool the mode machine has mounted below or inside. The
-  // quest-action door below (`makeEnemiesHostile`) spelled this join out
-  // by hand; it asks this one definition now, so the struck-foe arm and
-  // the quest arm cannot walk different databases.
-  const _liveEnemyDatabase = () => [...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])];
-  const _makeEnemiesHostile = () => makeEnemiesHostile(_liveEnemyDatabase());
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
