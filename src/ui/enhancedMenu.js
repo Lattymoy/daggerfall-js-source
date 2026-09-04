@@ -865,6 +865,14 @@ function paneEnhanced(body) {
   // The prose names what the switch covers TODAY and grows as slices
   // land - a row that claims more than the tree has is the fault RA1
   // fixed here in the other direction.
+  // ENHANCED AI 1: the switch is here from the first slice so the arc's
+  // door exists; the motor only reads it once the bake is proven on a
+  // real dungeon (ENHANCED AI 3). Until then it says so.
+  live.append(prefRow('enhancedAI', 'Enhanced AI',
+    'Enemies find their way: a navmesh baked from each dungeon, town and interior, so they path around '
+    + 'pillars, through doors and down corridors instead of walking into walls the way classic Daggerfall\'s '
+    + 'do. Senses, decisions and attacks stay classic; only the way an enemy moves changes. '
+    + 'Off keeps the 1:1 classic motor. (Landing slice by slice; not yet driving the motor.)'));
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
     + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
