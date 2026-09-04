@@ -156,6 +156,30 @@ export function comboModifiers(store) {
   return out;
 }
 
+/** modifierHeldFirstDict (:1354-1358, the field at :101). ROAD-GR:
+ *  this is STATE, not a per-frame derivation of the held-keys ring.
+ *  SetupActionKeyDict CLEARS it and seeds one `false` per combo
+ *  MODIFIER after every binding change (:1354-1358), so the port
+ *  rebuilds it on `rev` exactly as comboModifiers and pairedCodes
+ *  rebuild theirs - a rebind starts every flag down, as DFU's does.
+ *
+ *  GetUnaryKey is its only writer (:1695-1708) and ui/input.js is the
+ *  only caller: the flag is RAISED on a frame whose whole held set is
+ *  clean (:1699-1701), LOWERED when the modifier is not held
+ *  (:1704-1707), and LEFT ALONE on the "held but dirty" path - which
+ *  is where the order rule actually lives. The dict is also DFU's own
+ *  "is this a combo modifier" test at :1637; comboModifiers above is
+ *  that same key set. */
+export function modifierHeldFirstDict(store) {
+  const rev = store.rev ?? 0;
+  if (store._heldFirstRev === rev && store._heldFirst) return store._heldFirst;
+  const dict = new Map();
+  for (const m of comboModifiers(store)) dict.set(m, false);   // :1355-1358
+  store._heldFirstRev = rev;
+  store._heldFirst = dict;
+  return dict;
+}
+
 /** primarySecondaryKeybindDict (:1345-1347, :1370-1396). ROAD-Ar R9:
  *  this is NOT a "bound in either dict" membership set, which is what
  *  the port read it as. It is a PRIMARY<->SECONDARY PAIRING map:
@@ -492,16 +516,23 @@ export function endFrame(state) {
 // DFU's per-frame `heldKeys` ring (:1818, ModifierOnlyHeld) tracks the
 // ORDER two keys went down in - holding K then Shift does not fire
 // Shift+K - and that the port's hosts keep "a Set with no order". The
-// second half was never true: a JS Set iterates in INSERTION order, so
-// every host's `keys` carried the press order all along and only the
-// READ was missing. It is built now, at the seam this note named:
-// `modifierHeldFirst` in ui/input.js is modifierHeldFirstDict
-// (:1697-1708) derived from the ring through ModifierOnlyHeld
-// (:1626-1644), `heldModifier` is :1818-1821, and both arms of
-// GetUnaryKey - the combo's hit and the plain key's suppression - go
-// through them. The four hosts that own a Set now fill it BEFORE their
+// second half was never true, and neither was the first: DFU's ring is
+// not press-ordered either (PollInput refills it in KeyCodeList order
+// every frame, :1801-1809) and ModifierOnlyHeld scans the WHOLE of it
+// (:1632-1639). The order lives in the LATCH, which is why the READ
+// alone was never enough. It is built now, at the seam this note
+// named: modifierHeldFirstDict is STORED (modifierHeldFirstDict above,
+// on the store, seeded as :1354-1358 seeds it), ui/input.js writes it
+// exactly where GetUnaryKey does (:1695-1708 - raised only on a clean
+// whole-set scan, lowered only by the modifier's release, left alone
+// in between), `heldModifier` is :1818-1821, and both arms of
+// GetUnaryKey - the combo's hit and the plain key's suppression - read
+// that stored flag. The four hosts that own a Set now fill it BEFORE their
 // dispatch ladder, as PollInput does (:1795-1809). Pinned from both
-// orders in test/a8_combos.test.js and test/combohosts.test.js.
+// orders in test/g3_heldorder.test.js - the ring fill is its host
+// sweep, discovered from `const keys = new Set();` - and in
+// test/a8_combos.test.js' two-modifier pair. (test/combohosts.test.js
+// is AUDIT 58's sweep of the Set ARGUMENT and carries neither claim.)
 //
 // STILL FLAGGED:
 //  - AXES + JOYSTICK (AxisActions, JoystickUIActions): no gamepad

@@ -185,9 +185,9 @@ export async function bootInterior(canvas, renderer, params, status) {
     // hosts now carry. InputManager.PollInput (:1795-1809) adds every
     // held key before GameManager.Update reads an Action, and this add
     // sat BELOW the KeyM arm - so the one key this host dispatches was
-    // the one key that never entered the Set. Harmless while the Set was
-    // unordered; not now, because the Set IS the press order the combo
-    // latch reads (`modifierHeldFirst`, ui/input.js). It stays below the
+    // the one key that never entered the Set. Harmless while nothing
+    // read the ring; not now, because the Set IS the ring
+    // ModifierOnlyHeld scans (:1632-1639, ui/input.js). It stays below the
     // overlay gate, where DFU's Update returns before PollInput
     // (:487-503).
     keys.add(e.code);

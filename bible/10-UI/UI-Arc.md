@@ -8753,7 +8753,7 @@ a 393x851 viewport. A real Pixel 5 is 727 tall and the list measures
 A MILDER VERSION OF THE SAME COMPLAINT: the character region is the
 same fixed 400 on a shorter window. Its own slice, when Mac wants it.
 
-## ROAD-G G3 - THE ORDERED HELD-KEYS RING (2026-09-04)
+## ROAD-G G3 - THE HELD-FIRST LATCH (2026-09-04, corrected by ROAD-GR)
 
 A8 shipped key combos and named one half it did not build, in
 `systems/inputActions.js`, where the retired combo flag used to stand:
@@ -8766,8 +8766,13 @@ A8 shipped key combos and named one half it did not build, in
 
 **No host had to grow anything. A JS Set iterates in INSERTION order**,
 so every host's `keys` had carried the press order since the first
-host, and `held()` - the named seam - was already being handed it. What
-was missing was the READ.
+host, and `held()` - the named seam - was already being handed it. But
+the READ was not what was missing either, and ROAD-GR had to correct
+G3's first answer: DFU's ring is not press-ordered at ALL. `PollInput`
+zeroes `heldKeyCounter` and refills it in `KeyCodeList` order every
+frame (:1801-1809), and `ModifierOnlyHeld` scans the WHOLE of it -
+`for (int i = 0; i < heldKeyCounter; i++)` (:1632-1639) - with no break
+at the modifier. What was missing was the LATCH's MEMORY.
 
 **And the sentence the remainder was written around is DFU's COMMENT,
 not its code.** ModifierOnlyHeld's doc comment says it "checks to make
@@ -8781,29 +8786,55 @@ fires on either order in DFU, and it does here. R9 read that dict for
 :1684; G3 reads it for :1636, and the two clauses are now the same
 clause.
 
-**What DFU actually keeps is a latch, and the port derives it rather
-than storing it.** `modifierHeldFirstDict[mod]` (:1697-1708) goes TRUE
-on any frame the modifier is held with nothing disqualifying beside it
-and FALSE the moment the modifier is not held at all; nothing else
-lowers it, which is why a Ctrl pressed AFTER the Shift cannot. So a
-modifier is held-first exactly when no key STILL DOWN before it
-disqualifies it - a walk of the Set that stops at the modifier, and no
-per-frame state at all. Release the K you were holding and DFU's next
-frame raises the flag with Shift still down; so does the walk, because
-K has left the Set. That equivalence is the whole slice.
+**What DFU keeps is a latch, and it is STATE.** `modifierHeldFirstDict
+[mod]` (:1695-1708) is RAISED only on a frame where the modifier is
+held AND `ModifierOnlyHeld`'s whole-set scan comes back CLEAN
+(:1699-1701); LOWERED only when the modifier is not held at all
+(:1704-1707); and on the "modifier held, scan DIRTY" path DFU assigns
+NOTHING - there is no else on :1699 - so the flag keeps whatever it
+already said.
 
-`ui/input.js` now carries three things where it carried one:
+**G3 first DERIVED that flag from the Set and called the two
+equivalent. They are not, and ROAD-GR stores the dict.** Both halves of
+the asymmetry come out of those three lines: a disqualifier pressed
+AFTER the modifier cannot LOWER a raised flag - press Shift alone, then
+Ctrl, then K, and Shift+K still fires, which the derivation got right -
+but it also holds a flag that never rose DOWN, which the derivation
+could not see at all. Hold a disqualifying K, press Shift, press L,
+release K: the Set now reads `[Shift, L]` and a walk that stops at the
+modifier calls it clean, while DFU's scan still fails on the HELD L, so
+`modifierHeldFirstDict[Shift]` never rose and Shift+L does not fire.
+The port fired a combo DFU refuses, and suppressed a plain key DFU
+fires, on the same frame. The dict lives on the bindings store now,
+re-seeded one `false` per combo modifier on every binding change
+exactly as `SetupActionKeyDict` re-seeds it (:1354-1358).
 
-- `modifierHeldFirst(store, keys, mod)` - the latch, through
-  ModifierOnlyHeld (:1626-1644), BOTH clauses.
+**And because it is state, a read has to be driven as FRAMES.**
+`FindKeyboardActions` runs `GetUnaryKey` over EVERY bound code each
+frame (:1826-1832 over `existingKeyDict`, :1327-1341), so every combo
+modifier takes its raise/lower every frame whether or not the player
+asked for that action. The port's reads are per-action and pull-based,
+so `held()` and `actionOf()` sweep the dict on entry with the ring as
+it stands; the write is idempotent in the ring, so sweeping on each
+read gives one frame's answer. The pins drive presses and releases in
+order, because the same Set answers both ways depending on what came
+before it.
+
+`ui/input.js` now carries four things where it carried one:
+
+- `modifierOnlyHeld(store, keys, mod)` - ModifierOnlyHeld (:1626-1644),
+  BOTH clauses, over the WHOLE ring and with no break at the modifier.
+- `pollModifier(store, keys, mod)` - the latch's only writer, :1695-1708
+  including the missing else, and `pollLatch` the per-frame sweep.
 - `heldModifier(store, keys)` - :1818-1821's own pick. PollInput walks
   `modifierHeldFirstDict` and ASSIGNS, so the LAST held modifier is the
   only suppressor GetUnaryKey ever consults; the port swept every one
   of them, which kills a plain key DFU fires.
-- `codeDown` reading both arms through them: the combo's hit (:1711)
-  and the plain key's suppression (:1683-1685). `actionOf` gates its
+- `codeDown` reading both arms off the STORED flag: the combo's hit
+  (:1711) writes then reads it, and the plain key's suppression
+  (:1683-1685) only reads it, exactly as DFU does. `actionOf` gates its
   combo lookup on the same answer, so the DISPATCH half - Inventory,
-  CharacterSheet, the journals, QuickLoad - obeys the order too, not
+  CharacterSheet, the journals, QuickLoad - obeys the latch too, not
   only the polled half.
 
 `ModifierOnlyHeld`'s `heldKeys.Length == 1` arm (:1628-1629) is
@@ -8823,8 +8854,12 @@ while a pausing window is up (:487-503) - a key typed into a window
 joins no ring there either. `dungeon.js` already had it first and says
 so; `worldModes.js` reads the outer host's Set and needed nothing.
 
-Pinned in `test/g3_heldorder.test.js` (7 tests, 9 mutations dead) from
-both orders on DFU's own example, plus the discovered host sweep. The
+Pinned in `test/g3_heldorder.test.js` (9 tests, 12 mutations dead) from
+both orders on DFU's own example, from the two shapes the derived latch
+got wrong (a disqualifier RELEASED before the modifier's clean frame
+never arrives, and a modifier held across the whole sequence), plus the
+discovered host sweep. `test/a8_combos.test.js`' two-modifier pair is
+driven as ordered frames for the same reason. The
 held-order remainder is struck from `inputActions.js` and the section C
 clause it belonged to is struck in the Ledger's keybinding-registry
 row. The AXES + JOYSTICK flag beside it is untouched: there is still no

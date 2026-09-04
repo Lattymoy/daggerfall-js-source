@@ -4284,10 +4284,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // GameManager.Update reads a single Action. This add used to sit at
     // the BOTTOM of the ladder, so every key that DISPATCHED (F5, R, M,
     // V, Escape) returned above it and never entered the Set at all.
-    // That was invisible while the Set was unordered; it is not now,
-    // because the Set IS the order the combo latch reads
-    // (`modifierHeldFirst`, ui/input.js) and a key missing from the
-    // ring is a key that cannot have gone down first. It stays BELOW
+    // That was invisible while nothing read the ring; it is not now,
+    // because the Set IS the ring ModifierOnlyHeld SCANS (:1632-1639,
+    // through ui/input.js's latch) and a key missing from it is a key
+    // that cannot disqualify a modifier at all. It stays BELOW
     // the overlay gate: DFU's own Update returns before PollInput while
     // a pausing window is up (:487-503), so a key typed into a window
     // joins no ring there either.
@@ -4300,9 +4300,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
     // the controls window got the Status box instead and could never
     // open the inventory. The Set is the ring filled just above, this
-    // press included, and actionOf reads it as the press ORDER (G3);
-    // it carries the suppression half too (:1681-1685, "space is jump,
-    // LeftShift+Space opens inventory: we want to ignore jumping").
+    // press included, and actionOf reads it through the held-first
+    // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
+    // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same

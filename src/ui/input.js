@@ -42,7 +42,7 @@
 // are in the registry and the ladder simply does not answer them.
 import {
   loadOrCreateBindings, actionForCode,
-  getCombo, comboCode, comboModifiers, isPairedCode,
+  getCombo, comboCode, comboModifiers, isPairedCode, modifierHeldFirstDict,
 } from '../systems/inputActions.js';
 
 // The registry singleton - built on first read, so the module can be
@@ -70,36 +70,56 @@ export function setBindings(b) { _bindings = b; }
  * exactly as DFU leaves it. The port used a union membership test and
  * killed the plain key in cases DFU never does.
  *
- * ROAD-G G3 CLOSED THE ORDER HALF, and it was never a Set problem: a
- * JS Set ITERATES IN INSERTION ORDER, so every host's `keys` has
- * carried the press order all along and nothing here read it. What was
- * missing is the LATCH DFU derives from its ring -
- * `modifierHeldFirstDict` (:1697-1708): the flag goes TRUE on any frame
- * the modifier is held with nothing disqualifying beside it
- * (ModifierOnlyHeld, :1626-1644) and FALSE the moment the modifier is
- * not held at all, and `hit` is that flag AND the combo'd key
- * (:1711). Press K and THEN Shift and the flag never rises, because K
- * was already in the ring when Shift arrived - so Shift+K does not
- * fire, which is the behaviour the port had no way to produce.
+ * ROAD-G G3 CLOSED THE ORDER HALF, and ROAD-GR corrected HOW. The
+ * order does not live in the ring's iteration at all: DFU's `heldKeys`
+ * is not even press-ordered, because PollInput zeroes `heldKeyCounter`
+ * and refills it in KeyCodeList order every frame (:1801-1809), and
+ * ModifierOnlyHeld scans the WHOLE of it - `for (int i = 0; i <
+ * heldKeyCounter; i++)` (:1632-1639) - with no break at the modifier.
+ * What carries the order is the LATCH, `modifierHeldFirstDict`, and it
+ * is STATE, not a function of the current frame (:1695-1708):
+ *   - RAISED only on a frame where the modifier is held AND that
+ *     whole-set scan comes back clean (:1699-1701);
+ *   - LOWERED only when the modifier is not held at all (:1704-1707);
+ *   - and on the "modifier held, scan DIRTY" path DFU assigns nothing
+ *     at all - there is no else on :1699 - so the flag keeps whatever
+ *     it already said.
+ * `hit` is that flag AND the combo'd key (:1711).
  *
- * The port reads the latch out of the Set instead of storing it, and
- * the two agree because DFU's flag is cleared by the modifier's
- * RELEASE and by nothing else: a modifier is "held first" exactly when
- * no key still down BEFORE it disqualifies it. Release the K you were
- * holding and DFU's next frame raises the flag with Shift still down;
- * so does this walk, because K has left the Set. That is the whole
- * equivalence, and it is why no per-frame state is kept here.
+ * Both halves of the asymmetry fall out of those three lines. A
+ * disqualifier that arrives AFTER the modifier cannot lower a flag
+ * already up: press Shift alone, then Ctrl, then K, and Shift+K still
+ * fires. But it DOES hold a flag that never rose DOWN: hold a
+ * disqualifying K, press Shift, press L, release K, and DFU's scan
+ * still fails on the held L, so Shift+L never fires however the Set
+ * now reads. G3 first DERIVED the flag by walking the Set to the
+ * modifier and stopping there, and called the two equivalent; they are
+ * not, and that second shape is where the derivation fired a combo DFU
+ * refuses. The dict is STORED now - on the bindings store the seam
+ * already takes, rebuilt on `rev` exactly as SetupActionKeyDict clears
+ * it and re-seeds one false per combo modifier after every binding
+ * change (:1354-1358).
  *
- * ModifierOnlyHeld's FIRST clause lands with it (:1636 - a held key
- * PAIRED with this modifier disqualifies it, not just another
- * modifier), and so does `heldModifier` (:1818-1821): DFU picks ONE
- * modifier for the plain-key suppression - the LAST held one in
+ * And "disqualifying" is R9-narrow (:1636-1637): a held key PAIRED
+ * with this modifier - i.e. the combo'd action is DOUBLE-bound - or a
+ * combo modifier itself. Press K and THEN Shift and the flag never
+ * rises WHEN THAT K DISQUALIFIES; a SINGLE-bound Shift+K disqualifies
+ * nothing and fires on either order, in DFU and here. "Either 'K' or
+ * 'L' are not being held" (:1623-1624) is DFU's COMMENT, not its code,
+ * and the pins are written against the code, both ways round
+ * (test/g3_heldorder.test.js).
+ *
+ * FindKeyboardActions runs GetUnaryKey over EVERY bound code each
+ * frame (:1826-1832 over existingKeyDict, :1327-1341), so every combo
+ * modifier takes its raise/lower every frame - not only the ones a
+ * caller happens to ask about. The port's reads are per-action and
+ * pull-based, so `held` and `actionOf` sweep the dict on entry with
+ * the ring as it stands; the write is idempotent in the ring, so
+ * sweeping on each read gives one frame's answer.
+ *
+ * `heldModifier` (:1818-1821) lands with it: DFU picks ONE modifier
+ * for the plain-key suppression - the LAST HELD one in
  * modifierHeldFirstDict's enumeration - where the port swept them all.
- *
- * ModifierOnlyHeld's `heldKeys.Length == 1` arm (:1628-1629) is not
- * ported because it is dead in DFU: `heldKeys` is `new KeyCode[6]`
- * (totalHeldKeys, :35), so `Length` is 6 forever and the `> 1` arm is
- * the only one that runs.
  */
 /** heldModifier (:1818-1821). PollInput walks modifierHeldFirstDict and
  *  keeps the LAST held modifier it sees, so a second one down does not
@@ -110,32 +130,70 @@ function heldModifier(store, keys) {
   return hm;
 }
 
-/** modifierHeldFirstDict[mod] (:1697-1708) read off the ordered Set,
- *  through ModifierOnlyHeld (:1626-1644). The walk stops AT the
- *  modifier: only keys that went down before it can disqualify it, and
- *  a key that has since been released is not in the Set to be seen. */
-function modifierHeldFirst(store, keys, mod) {
-  if (!keys.has(mod)) return false;                 // :1705-1707 - the else arm, flag down
+/** ModifierOnlyHeld (:1626-1644) over the host's held-keys Set. The
+ *  scan is the WHOLE ring, as `for (int i = 0; i < heldKeyCounter;
+ *  i++)` (:1632-1639) is: ANY held key that disqualifies does so
+ *  wherever it sits, and there is no break at the modifier. The order
+ *  is the latch's, not this scan's.
+ *
+ *  ModifierOnlyHeld's `heldKeys.Length == 1` arm (:1628-1629) is not
+ *  ported because it is dead in DFU: `heldKeys` is `new KeyCode[6]`
+ *  (totalHeldKeys, :35, :100), so `Length` is 6 forever and the `> 1`
+ *  arm is the only one that runs. */
+function modifierOnlyHeld(store, keys, mod) {
   const mods = comboModifiers(store);
   for (const k of keys) {
-    if (k === mod) return true;                     // :1699-1701 - nothing disqualifying went first
+    if (k === mod) continue;                        // :1635 - `modifier != k`
     // :1636-1637, both clauses: a key PAIRED with this modifier, or any
     // other modifier. A key that is neither - 'W' for forward - is
     // ignored, exactly as the C# comment says.
-    if (isPairedCode(store, comboCode(mod, k)) || mods.has(k)) return false;
+    if (isPairedCode(store, comboCode(mod, k)) || mods.has(k)) return false;   // :1638
   }
-  return false;                                     // :1643, unreachable while keys.has(mod)
+  return true;                                      // :1641
+}
+
+/** GetUnaryKey's combo arm, :1695-1708 - the ONLY writer of the latch,
+ *  and the whole of DFU's order rule. The missing else on the dirty
+ *  scan is deliberate and load-bearing: a modifier held with a
+ *  disqualifier beside it keeps whatever the dict already said, so a
+ *  flag that never rose stays down while that key is held. */
+function pollModifier(store, keys, mod) {
+  const dict = modifierHeldFirstDict(store);
+  if (keys.has(mod)) {                                              // :1695 - the modifier reads HELD
+    if (modifierOnlyHeld(store, keys, mod)) dict.set(mod, true);    // :1699-1701
+  } else {
+    dict.set(mod, false);                                           // :1704-1707
+  }
+  return dict.get(mod) === true;
+}
+
+/** modifierHeldFirstDict[(int)mod] as its two READERS ask it - `hit`
+ *  (:1711) and the plain-key suppression (:1683-1685). Neither writes;
+ *  the write is pollModifier, which the frame sweep below has already
+ *  run for every combo modifier against this ring. */
+const modifierHeldFirst = (store, mod) => modifierHeldFirstDict(store).get(mod) === true;
+
+/** FindKeyboardActions' per-frame sweep (:1826-1832 over
+ *  existingKeyDict, :1327-1341) at the port's pull-based seam: every
+ *  combo modifier takes its raise/lower against the ring as it stands,
+ *  before any reader looks at a flag. Idempotent in the ring, so a
+ *  host that polls held() twelve times a frame still gets one frame's
+ *  answer, and a host that polls no combo'd action at all still gives
+ *  the modifier its clean frame - which is where the flag rises. */
+function pollLatch(store, keys) {
+  for (const m of comboModifiers(store)) pollModifier(store, keys, m);
 }
 
 function codeDown(store, keys, code) {
   const c = getCombo(code);
   if (c) {
     const [mod, key] = c;
-    // :1697-1711. The modifier arm reads HELD (getKeyMethod) whatever
+    // :1695-1711. The modifier arm reads HELD (getKeyMethod) whatever
     // edge the caller asked for; only the combo'd key takes `method`,
     // and it takes it with checkModHeldFirst FALSE - a combo never
-    // suppresses its own key.
-    if (!modifierHeldFirst(store, keys, mod)) return false;
+    // suppresses its own key. The assignment comes BEFORE the read,
+    // exactly as :1695-1708 sits above :1711.
+    if (!pollModifier(store, keys, mod)) return false;
     return keys.has(key);
   }
   if (!keys.has(code)) return false;
@@ -143,8 +201,10 @@ function codeDown(store, keys, code) {
   // want to ignore jumping if we were holding shift PRIOR to pressing
   // space". The `prior` is the latch, and it is why pressing space and
   // then shift still jumps.
+  // It READS the stored flag - `modifierHeldFirstDict[(int)heldModifier]`
+  // (:1683) - and never recomputes one from this frame's Set.
   const hm = heldModifier(store, keys);
-  if (hm != null && modifierHeldFirst(store, keys, hm)
+  if (hm != null && modifierHeldFirst(store, hm)
     && isPairedCode(store, comboCode(hm, code))) return false;
   return true;
 }
@@ -164,13 +224,19 @@ export function actionOf(e, keys = null) {
     // so the union must NOT rebuild a Set that already contains it -
     // that would be the same order, but the guard says why.
     const down = keys.has(e.code) ? keys : new Set([...keys, e.code]);
+    // ...and the frame's raise/lower runs over the whole ring before a
+    // flag is read, as FindKeyboardActions' sweep does (:1826-1832).
+    pollLatch(b, down);
     for (const m of comboModifiers(b)) {
       if (!keys.has(m)) continue;
       const cc = comboCode(m, e.code);
       const a = actionForCode(b, cc);
       // ...and the combo only ANSWERS when GetUnaryKey says it hits:
-      // the modifier must have been held FIRST (:1697-1711). Hold K,
-      // then Shift, and this press of K reports its plain action.
+      // the modifier's latch must be UP (:1695-1711). Hold K, then
+      // Shift, and this press of K reports its plain action WHEN THAT
+      // K DISQUALIFIES the modifier - paired with it, i.e. the combo'd
+      // action is double-bound, or a modifier itself; otherwise
+      // nothing kept the flag down and the combo answers.
       if (a && codeDown(b, down, cc)) return a;
     }
     if (!codeDown(b, down, e.code)) return null;
@@ -183,13 +249,16 @@ export function actionOf(e, keys = null) {
  *  This is InputManager.GetKey's dual-dict fallthrough (:1084) over
  *  the port's `keys` Set idiom - and since A8, through the combo arm
  *  above, so a rebound "Shift + W" walks and a bare W under a held
- *  Shift does not. ROAD-G G3: that arm now reads the Set's INSERTION
- *  ORDER, which is the ring's - so "Shift + W" walks only when the
- *  Shift went down FIRST, and a W already held when the Shift arrives
- *  keeps walking forward. This is the seam the held-order remainder
- *  named, and it is the same one line for line in all four hosts. */
+ *  Shift does not. ROAD-G G3, as ROAD-GR corrected it: that arm reads
+ *  the LATCH, so a DOUBLE-bound "Shift + W" walks only from a frame
+ *  where the Shift stood clean, and a W already held when the Shift
+ *  arrives keeps walking forward; SINGLE-bound, :1636 has nothing to
+ *  bite on and it walks on either order (test/g3_heldorder.test.js).
+ *  This is the seam the held-order remainder named, and it is the same
+ *  one line for line in all four hosts. */
 export function held(keys, action) {
   const b = bindings();
+  pollLatch(b, keys);           // the frame's raise/lower, before any read (:1826-1832)
   for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code)) return true;
   for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code)) return true;
   return false;

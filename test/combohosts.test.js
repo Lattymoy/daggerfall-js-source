@@ -49,10 +49,10 @@ function keyCtx() {
 test('AUDIT 58 (f3/input): the OUTDOOR ladders’ read - Shift+I opens the inventory, bare I still opens Status', () => {
   store();
   try {
-    // world.js / exterior.js run their own ladder off actionOf. The Set
-    // holds the modifier and NOT yet this key (keys.add(e.code) runs
-    // below the ladder), which is what the arm expects - :102 unions
-    // e.code in itself.
+    // world.js / exterior.js run their own ladder off actionOf. Either
+    // shape reaches the same arm: ROAD-G G3 hoisted `keys.add(e.code)`
+    // ABOVE the ladder in all four hosts, so the Set usually holds this
+    // key already, and actionOf unions e.code in when it does not.
     assert.equal(actionOf({ code: 'KeyI' }, new Set(['ShiftLeft'])), 'Inventory',
       'the rebound combo reaches the dispatch');
     assert.equal(actionOf({ code: 'KeyI' }, new Set()), 'Status',

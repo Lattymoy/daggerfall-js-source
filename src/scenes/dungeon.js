@@ -213,8 +213,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     // ROAD-G G3: this host already filled the ring first, which is
     // InputManager.PollInput's own order (:1795-1809) and now load-
-    // bearing - the Set IS the press order the combo latch reads
-    // (`modifierHeldFirst`, ui/input.js). The other three hosts were
+    // bearing - the Set IS the ring ModifierOnlyHeld scans (:1632-1639,
+    // through ui/input.js's latch). The other three hosts were
     // moved up to match. Both of this host's keydown listeners run
     // after it, so routeKey below sees this press placed.
     keys.add(e.code);

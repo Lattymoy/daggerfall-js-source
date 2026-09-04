@@ -1972,10 +1972,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // GameManager.Update reads a single Action. This add used to sit at
     // the BOTTOM of the ladder, so every key that DISPATCHED (F5, R, M,
     // V, Escape) returned above it and never entered the Set at all.
-    // That was invisible while the Set was unordered; it is not now,
-    // because the Set IS the order the combo latch reads
-    // (`modifierHeldFirst`, ui/input.js) and a key missing from the
-    // ring is a key that cannot have gone down first. It stays BELOW
+    // That was invisible while nothing read the ring; it is not now,
+    // because the Set IS the ring ModifierOnlyHeld SCANS (:1632-1639,
+    // through ui/input.js's latch) and a key missing from it is a key
+    // that cannot disqualify a modifier at all. It stays BELOW
     // the overlay gate: DFU's own Update returns before PollInput while
     // a pausing window is up (:487-503), so a key typed into a window
     // joins no ring there either.
@@ -1988,9 +1988,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
     // the controls window got the Status box instead and could never
     // open the inventory. The Set is the ring filled just above, this
-    // press included, and actionOf reads it as the press ORDER (G3);
-    // it carries the suppression half too (:1681-1685, "space is jump,
-    // LeftShift+Space opens inventory: we want to ignore jumping").
+    // press included, and actionOf reads it through the held-first
+    // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
+    // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
@@ -2274,14 +2274,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4753 is the same line.
+    // other. world.js:4895 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4791-4794. */
+     *  %rn/%rt's producer - world.js:4897-4910. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
