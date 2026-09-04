@@ -168,7 +168,7 @@ test('ROAD-G G1(a): every host that mints guards hands in its own area walk', ()
     'the streaming world: both street pools joined with whatever inside the player stands in');
 
   const ex = read('src/scenes/exterior.js');
-  assert.match(ex, /const _liveEnemyDatabase = \(\) => \[\.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\)\];/);
+  assert.match(ex, /const _liveEnemyDatabase = \(\) => \[\n\s*\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards, \.\.\.\(modes\?\.insideFoes\?\.\(\) \?\? \[\]\),\n\s*\];/);   // ROAD-G G2 widened the join to the encounter pool it mounted
   const exMount = ex.slice(ex.indexOf('const cityGuards = createCityGuards({'), ex.indexOf('const _guardPool = ()'));
   assert.match(exMount, /makeAreaHostile: _makeEnemiesHostile,/, 'the fixed-city route: its watch plus the mounted mode');
 
