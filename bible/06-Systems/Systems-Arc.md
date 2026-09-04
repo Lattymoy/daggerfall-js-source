@@ -5507,3 +5507,31 @@ never re-land a player who has no floor yet, and never reads the
 arrival constants before the boot has declared them. A pixel with no
 location keeps the centre landing and still mounts. Pins in
 `testroom.test.js` (TSR4).
+
+**TSR4a - THE EDGE STANDS IN THE NEXT PIXEL (2026-09-04, Mac: "it
+just spawns me straight into the ground").** Audit of TSR4, shipped
+the day before on reading alone (no ARENA2 in the container). The
+landing law was right and the GATE was wrong: `getLocationTerrainTileOrigin`
+puts an 8x8 city at tile (0,0) (World-Arc), so the capitals fill
+their pixel edge to edge, and `positionPlayerToLocation`'s outside
+point - EXTRA_DISTANCE past the chosen wall - is ten units into the
+NEIGHBOURING pixel. The ride fired at the START pixel's first stand,
+when that neighbour had no collider yet: the floor ray found nothing,
+`floorLanding` answered the raw lifted forty units, the player fell,
+and the neighbour's terrain built over them a moment later. Fast
+travel never met this because a city's arrival uses its START
+MARKERS (inside the walls) - the edge is a village's landing, and a
+village sits inside its pixel; only TL2's marker-in-geometry fallback
+for a capital could take the same road, and it is recorded here
+rather than fixed. The fix is a WAIT, not a different landing: the
+edge is resolved once off the built start pixel, and the ride lands
+only when `heightAt` answers a finite height under the landing point
+(the pixel's built entry is the collider's own presence); while the
+ring is still building (`building || queue.length || inFlight.size`)
+the want stays armed and the frame gate asks again; if the ring has
+drained and there is still no ground there, it mounts where the
+player stands and says so on the console. The player's few frames
+standing at the centre before the neighbour lands are the cost.
+Pinned: the gate's shape in the host, and the arithmetic itself -
+every side of an 8x8 landing lies outside 0..819.2 by exactly one
+EXTRA_DISTANCE, a 1x1 village's inside it (`testroom.test.js` TSR4a).

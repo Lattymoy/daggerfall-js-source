@@ -1616,17 +1616,35 @@ export async function bootWorld(canvas, renderer, params, status) {
   // pixel with no location keeps the centre landing) and mounts through
   // the ONE transport door, so the classic sprite and the enhanced
   // saddle (MW-D42/50) come up exactly as a T-key mount brings them.
+  //
+  // TSR4a (Mac: "it just spawns me straight into the ground"): THE EDGE
+  // CAN STAND IN THE NEXT PIXEL. An 8x8 city's tile origin is (0,0)
+  // (World-Arc) - it fills its pixel - and the edge landing is
+  // EXTRA_DISTANCE past the wall, ten units into the neighbour. At the
+  // start pixel's first stand that neighbour has no collider yet, so
+  // the floor ray found nothing, the raw stood forty units up, and the
+  // player fell through the terrain that built under them a moment
+  // later. So the ride WAITS for terrain under the landing point -
+  // heightAt answers -Infinity until that pixel is built - and lands
+  // only then; if the ring has drained and there is still nothing
+  // there, it mounts where the player stands and says so.
   let rideOutWanted = false;
+  let rideOutEdge = null;   // resolved once the start pixel stands (its locOrigin exists by then); false = no location
   const rideOut = () => {
+    if (rideOutEdge === null) rideOutEdge = locationLandingFor(startPixel.x, startPixel.y, { noMarkers: true }) ?? false;
+    const edge = rideOutEdge;
+    const groundThere = !!edge && Number.isFinite(heightAt(edge.pos[0], edge.pos[2]));
+    if (edge && !groundThere && (building || queue.length || inFlight.size)) return;   // the neighbour is still coming - next frame
     rideOutWanted = false;
-    const edge = locationLandingFor(startPixel.x, startPixel.y, { noMarkers: true });
-    if (edge) {
+    if (groundThere) {
       const pos = floorLanding(collider, edge.pos, ARRIVAL_REACH, ARRIVAL_LIFT);
       player.spawn(pos[0], pos[1], pos[2]);
       cam.yaw = edge.yaw;
+    } else if (edge) {
+      console.warn('[testroom] ride out: no terrain under the edge landing after the ring built - mounting where you stand');
     }
     setTransportModeHere(TRANSPORT_MODES.Horse);
-    console.log(`[testroom] ride out: mounted ${edge ? 'outside the location, facing it' : 'at the pixel centre (no location on this pixel)'}`);
+    console.log(`[testroom] ride out: mounted ${groundThere ? 'outside the location, facing it' : 'where you stand'}`);
   };
   if (testPreset) {
     (async () => {
