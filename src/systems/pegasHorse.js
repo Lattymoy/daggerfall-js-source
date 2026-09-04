@@ -9,13 +9,18 @@
 // SoundGen keys, Walkforward/Runforward with loop markers, turns,
 // hits, attacks).
 //
-// THE LICENSE IS THE ARCHITECTURE. The mod's readme forbids modifying
-// its files or building them into another mod - so NOTHING here is
-// baked, bundled, or shipped. This module reads the PLAYER'S OWN copy
-// at runtime through the same archives seam every Morrowind feature
-// uses (MW-D40's loose-file door), exactly as the port reads the
-// player's own ARENA2. No files attached = no horse = the classic CFA
-// sprite rides on untouched.
+// THE FILES ARE VENDORED WITH PERMISSION (MW-D50, 2026-09-03). MW-D41
+// shipped this module reading ONLY the player's own copy at runtime,
+// on the readme's "no use in another mod without my written consent";
+// Mac then confirmed the author's consent, so vendor/pegas-horse/
+// carries the files VERBATIM (the readme's other condition - "kept
+// original and intact" - see its README) and the horse rides for every
+// enhanced player out of the box. The runtime door stays: the player's
+// own attached copy (MW-D40's loose door) ranks AHEAD of the vendored
+// set, the engine's data-files-over-archive law, so a coat or a newer
+// build the player attaches wins. The assembly and the drive below are
+// unchanged - everything still resolves through the one archives seam,
+// and this module never knows which set answered.
 //
 // EVERYTHING BELOW RIDES THE PROVEN MW STACK - parse, flatten,
 // skeleton, clip, pose, CPU skin, pack - through the exact call
@@ -38,6 +43,7 @@ import { correctTexturePath, decodeTextureImage, wrapModes } from '../formats/mw
 import { MW_UNITS_PER_METER } from '../formats/mwFirstPerson.js';
 import { packFpArm, NIF_TO_PASS } from '../combat/fpArm.js';
 import { trs, multiply } from '../world/mat4.js';
+import { makeLooseArchive } from '../scenes/dataSource.js';   // MW-D50: the vendored set speaks the same duck
 
 /** The mod's own paths, in the canonical data-files frame the MW-D40
  *  loose store keys by. Twenty coat variants ship; 1 is the default. */
@@ -97,6 +103,58 @@ export async function registerHorseSounds(audioEngine, archives) {
     if (await audioEngine.registerSound(`pegas:${name}`, arc.get(path))) got.add(`pegas:${name}`);
   }
   return got;
+}
+
+/** MW-D50: every loose path one coat variant rides on, in fetch
+ *  order - the mesh and the clips the assembly cannot stand without,
+ *  then the hoof/voice clips it degrades without. The coat is NOT
+ *  here: its name lives inside the .nif (horseCoatPath reads it). */
+export function horseFiles(variant = 1) {
+  return [horseMeshPath(variant), horseKfPath(variant), ...Object.values(HORSE_SOUNDS)];
+}
+
+/** MW-D50: the coat the mesh names, resolved through the same
+ *  correction the assembly applies (the MW texture-path law), or null
+ *  when the bytes do not parse, the skinned shape names no texture, or
+ *  `exists` knows no file for it. Never throws - a set that lacks the
+ *  coat still stands (lit white, MW-D41's degrade). */
+export function horseCoatPath(nifBytes, exists) {
+  try {
+    const batch = flattenNif(parseNif(nifBytes.slice())).find((b) => b.skinned && b.positions && b.indices);
+    const file = batch && batch.material && batch.material.textureFile;
+    return file ? (correctTexturePath(file, exists) || null) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * MW-D50: the vendored set as ONE loose archive - the {has, get} duck
+ * the assembly already speaks, so loadPegasHorse cannot tell it from
+ * the player's own attach. `manifest` is the canonical paths the
+ * vendor tree carries; `fetchBytes(path)` answers their bytes (null or
+ * a throw for a miss). Only the files ONE variant needs are fetched -
+ * mesh, clips, its coat, the sounds - never the whole tree. Answers
+ * null when the mesh or the clips are missing or fail to arrive (no
+ * horse is possible) and skips any optional file that fails, so a
+ * partial vendor tree degrades exactly as a partial attach does.
+ */
+export async function assembleVendoredArchive({ manifest, fetchBytes, variant = 1 }) {
+  const canon = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+  const have = new Set([...(manifest ?? [])].map(canon));
+  const has = (p) => have.has(canon(p));
+  const take = async (p) => {
+    if (!has(p)) return null;
+    try { return (await fetchBytes(p)) ?? null; } catch { return null; }
+  };
+  const [mesh, kf] = await Promise.all([take(horseMeshPath(variant)), take(horseKfPath(variant))]);
+  if (!mesh || !kf) return null;
+  const files = new Map([[horseMeshPath(variant), mesh], [horseKfPath(variant), kf]]);
+  const coat = horseCoatPath(mesh, has);
+  const optional = [...(coat ? [coat] : []), ...Object.values(HORSE_SOUNDS)];
+  const got = await Promise.all(optional.map(take));
+  optional.forEach((p, i) => { if (got[i]) files.set(p, got[i]); });
+  return makeLooseArchive(files);
 }
 
 /**

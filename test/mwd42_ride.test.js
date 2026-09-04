@@ -63,7 +63,7 @@ test('MW-D42: the host wiring - one door, the body-pass draw site, the yielding 
   // itself); the load is once-per-session and never throws
   assert.ok(world.includes('if (mode === TRANSPORT_MODES.Horse) tryLoadPegas();'));
   assert.ok(world.includes('if (pegasWanted || !isEnhanced()) return;'), 'once, enhanced only');
-  assert.ok(world.includes('const archives = await loadMorrowindArchives();'), 'the player\'s own data, MW-D40 loose door included');
+  assert.ok(world.includes('const attached = await loadMorrowindArchives();'), 'the player\'s own data, MW-D40 loose door included (MW-D50 ranks the vendored set behind it; mwd50 pins the order)');
   // the draw: beside the body pass, gait from the motor's own flags,
   // paused hides (the sprite\'s F-E1 law), placement through the one law
   const drawAt = world.indexOf('renderer.drawCharacter(pegas.mesh, horseModelMatrix(player.pos, cam.yaw));');

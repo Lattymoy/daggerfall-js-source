@@ -29,6 +29,7 @@ import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda ri
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { loadPegasHorse, registerHorseSounds, horseGaitClip, horseModelMatrix, HORSE_CLIPS } from '../systems/pegasHorse.js';   // MW-D42: the enhanced ride
 import { loadMorrowindArchives } from './dataSource.js';   // MW-D40: the player's own MW data, loose files included
+import { loadVendoredPegas } from '../systems/pegasVendor.js';   // MW-D50: the mod vendored with permission, ranked behind the player's own
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
@@ -141,7 +142,7 @@ import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
-import { testPresetById, applyTestCharacter } from '../systems/testRoom.js';   // TR3: the Test Room's one home
+import { testEntryById, applyTestCharacter, seedTestMount } from '../systems/testRoom.js';   // TR3: the Test Room's one home; TSR4: the ride
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key   // AUDIT 58: BuildingDirectory.buildingKey0, the key both ship interiors are filed under
@@ -1277,13 +1278,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
     ridingAnimator.mount(mode);
     ridingArt = null;
-    // MW-D42: mounting a HORSE in the enhanced skin saddles the
-    // player's own Pegas horse, once per session, if their attached
-    // Morrowind data carries the mod (MW-D40's loose door). Absent
-    // data, a failed parse, or the classic skin all leave `pegas`
-    // null and the CFA sprite rides exactly as before - the mod's
-    // assets are the PLAYER'S, read at runtime like ARENA2, never
-    // bundled (the license is the architecture; see pegasHorse.js).
+    // MW-D42: a HORSE in the enhanced skin saddles the Pegas horse once
+    // per session - the player's own attached copy (MW-D40's loose door)
+    // ranks ahead of the set vendored with permission (MW-D50). A failed
+    // load or the classic skin leave `pegas` null; the CFA sprite rides.
     if (mode === TRANSPORT_MODES.Horse) tryLoadPegas();
   };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
@@ -1294,10 +1292,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (pegasWanted || !isEnhanced()) return;
     pegasWanted = true;
     try {
-      const archives = await loadMorrowindArchives();
+      const attached = await loadMorrowindArchives();
+      const vendored = await loadVendoredPegas();   // MW-D50: null when the vendor tree carries no horse
+      const archives = vendored ? [...attached, vendored] : attached;   // the player's own copy answers first
       const horse = loadPegasHorse({ renderer, archives });
-      if (!horse.ok) {
-        if (horse.stage !== 'data') console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
+      if (!horse.ok) {   // MW-D50: with a vendored set behind it, a miss at any stage is worth a line
+        console.warn(`[pegas] no 3D horse (${horse.stage}): ${horse.error ?? ''}`);
         return;
       }
       pegasSounds = await registerHorseSounds(audio, archives);
@@ -1605,10 +1605,29 @@ export async function bootWorld(canvas, renderer, params, status) {
   // resolves BEFORE the branch so an unknown id really does fall
   // through to the wizard rather than stranding the interim entity:
   // the never-traps law, at the front door.
-  const testPreset = !playerEntity.chargenDone && params.has('test') ? testPresetById(params.get('test')) : null;
+  const testEntry = !playerEntity.chargenDone && params.has('test') ? testEntryById(params.get('test')) : null;
+  const testPreset = testEntry?.preset ?? null;
   if (!playerEntity.chargenDone && params.has('test') && !testPreset) {
     console.warn(`[testroom] no preset "${params.get('test')}" - the wizard stands`);
   }
+  // TSR4: RIDE OUT. Runs from the frame loop's spawn gate and never
+  // before the player stands: re-lands at the location's EDGE (the
+  // fast-travel arrival's own law - outside the walls, facing in; a
+  // pixel with no location keeps the centre landing) and mounts through
+  // the ONE transport door, so the classic sprite and the enhanced
+  // saddle (MW-D42/50) come up exactly as a T-key mount brings them.
+  let rideOutWanted = false;
+  const rideOut = () => {
+    rideOutWanted = false;
+    const edge = locationLandingFor(startPixel.x, startPixel.y, { noMarkers: true });
+    if (edge) {
+      const pos = floorLanding(collider, edge.pos, ARRIVAL_REACH, ARRIVAL_LIFT);
+      player.spawn(pos[0], pos[1], pos[2]);
+      cam.yaw = edge.yaw;
+    }
+    setTransportModeHere(TRANSPORT_MODES.Horse);
+    console.log(`[testroom] ride out: mounted ${edge ? 'outside the location, facing it' : 'at the pixel centre (no location on this pixel)'}`);
+  };
   if (testPreset) {
     (async () => {
       const preset = testPreset;
@@ -1620,6 +1639,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       surfacePlayer();
       questInitAtGameStart();
       console.log(`[testroom] ${preset.label}: ${added} armory items in the pack`);
+      // TSR4: the horse in the pack now; the landing and the mount wait
+      // for the first stand (the frame loop's spawn gate calls rideOut).
+      if (testEntry.ride) { seedTestMount(playerEntity); rideOutWanted = true; }
       // The Morrowind rigs, WITHOUT the trip to the pause card - the
       // room exists to look at them. Only when the data is attached;
       // without it the classic sprite stands exactly as everywhere
@@ -6193,6 +6215,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         player.spawn(stand[0], stand[1], stand[2]);
         playerSpawned = true;
       }
+      if (rideOutWanted && playerSpawned) rideOut();   // TSR4: after the first stand, whichever of the two came second
       if (playerSpawned) {
         const jumpHeld = held(keys, 'Jump');
         const crouchHeld = held(keys, 'Crouch');   // P12 host parity (audit F4); I2: DFU's default C

@@ -27,9 +27,10 @@ import { RACES } from './races.js';
 import { applyHeadlessChargen } from './chargenSession.js';
 import { addItem } from './inventory.js';
 import { equipItem } from './equip.js';
-import { mintCondition, templateByIndex } from './itemTemplates.js';
+import { mintCondition, templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { WEAPONS_ENUM, ARMOR_ENUM, createWeapon, ARROW_TEMPLATE } from '../combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
+import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
  *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
@@ -51,6 +52,44 @@ export const TEST_PRESETS = Object.freeze([
 ]);
 
 export const testPresetById = (id) => TEST_PRESETS.find((p) => p.id === id) ?? null;
+
+/** TSR4 (2026-09-03, Mac: "an option that spawns you into the outside
+ *  world with a mount to test"). The ride is a SPAWN, not a character:
+ *  the baseline preset, a horse already in the pack, the landing at the
+ *  location's EDGE (the fast-travel arrival law - outside the walls,
+ *  facing in), and the mode set through the one transport door. The
+ *  classic skin shows the CFA mount; the enhanced skin the Pegas horse
+ *  (MW-D50). One entry, so the pane, the route and the boot all agree
+ *  what `test=ride` is. */
+export const TEST_RIDE = Object.freeze({
+  id: 'ride', label: 'Ride out', preset: 'nord-warrior',
+  blurb: 'The Nord Warrior on a horse, outside the town - the riding sprite in the classic skin, the Pegas horse in the enhanced. Press T to dismount.',
+});
+
+/** The one door for a `test=` id: a preset (ride false), the ride
+ *  entry (its preset, ride true), or null - an unknown id resolves to
+ *  NOTHING so the boot falls through to the wizard, never a guess. */
+export function testEntryById(id) {
+  if (id === TEST_RIDE.id) return { preset: testPresetById(TEST_RIDE.preset), ride: true };
+  const preset = testPresetById(id);
+  return preset ? { preset, ride: false } : null;
+}
+
+/** TSR4: put a horse in the pack, minted the way the general store's
+ *  shelf mints one (shopStock's add: mintCondition over the template's
+ *  own name and base value) - so the T window, the travel card and the
+ *  pack all answer hasHorse the way they would for a bought one. Once:
+ *  a pack that already carries a horse is left alone. */
+export function seedTestMount(entity) {
+  if (hasHorse(entity.items)) return false;
+  const horse = mintCondition({
+    group: 'Transportation', templateIndex: TRANSPORT_HORSE_TEMPLATE,
+    name: templateByIndex(TRANSPORT_HORSE_TEMPLATE)?.name ?? 'Horse', flags: 0,
+  });
+  horse.value = itemBaseValue(horse);
+  addItem(entity.items, horse);
+  return true;
+}
 
 /**
  * THE ARMORY. One of every weapon TYPE the game has (each maps to its

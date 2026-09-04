@@ -87,7 +87,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
-import { TEST_PRESETS } from '../systems/testRoom.js';   // TR3: the one home the pane shows
+import { TEST_PRESETS, TEST_RIDE } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
@@ -372,6 +372,13 @@ function paneTest(body) {
     c.append(acts([{ label: `Enter as the ${p.label}`, primary: true, onClick: () => onAction(`test:${p.id}`) }]));
     body.append(c);
   }
+  // TSR4: the ride - one more door through the SAME `test:<id>` choice,
+  // the entry resolved by testRoom's testEntryById at the boot.
+  const ride = el('div', 'card');
+  ride.append(el('h3', null, TEST_RIDE.label));
+  ride.append(el('p', 'meta', TEST_RIDE.blurb));
+  ride.append(acts([{ label: 'Ride out', primary: true, onClick: () => onAction(`test:${TEST_RIDE.id}`) }]));
+  body.append(ride);
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
@@ -969,6 +976,12 @@ function paneEnhanced(body) {
     'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
     + 'of what your right hand holds - the weapon follows your equipment as you play. While the '
     + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+  // MW-D50: the horse is vendored now, so the card says where it comes
+  // from and what an attach can still do about it - the reader is the
+  // player deciding whether to attach anything at all.
+  mw.append(el('p', 'meta',
+    'The horse you ride in this skin is Pegas Horse Ranch\'s (MADMAX and Team, carried with permission - see '
+    + 'About); it needs nothing attached. Attach your own copy of the mod here and yours rides instead.'));
   const count = morrowindDataCount();
   mw.append(stats([
     ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
