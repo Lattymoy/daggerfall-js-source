@@ -187,19 +187,23 @@ export function weatherForClimate(climateIndex) {
   const zone = CLIMATE_INDICES[climateIndex - CLIMATES.Ocean];
   // A bogus climate answers the CURRENT weather unchanged - DFU's
   // :432-434 would throw IndexOutOfRange; the defensive arm is the
-  // port's, recorded (tickWeather then reports no change).
+  // port's (tickWeather then reports no change), and it rides the
+  // same Ledger A row as the arrival law above.
   return zone == null ? _current : _climateWeathers[zone];
 }
 
 /** StreamingWorld_OnInitWorld's application half (WeatherManager.cs:
  *  524-543 -> SetWeatherFromWeatherClimateArray): a world re-init
  *  (fast travel arrival) applies the destination climate's ARRAY
- *  slot - no fresh roll. DEPARTURE (recorded): DFU suppresses this
+ *  slot - no fresh roll. RECORDED DEPARTURE: DFU suppresses this
  *  for the rest of a session once any save has loaded
  *  (startedFromLoadedSaveGame stays true), which exists to keep the
  *  boot-time init from clobbering a loaded sky; the port applies on
  *  every arrival instead of freezing travel weather forever after
- *  the first load. Answers true when the weather changed. */
+ *  the first load. Ledger A carries it as TRAVEL WEATHER IS APPLIED
+ *  ON EVERY ARRIVAL, NOT FROZEN AFTER THE FIRST LOAD (AUDIT 58,
+ *  seams lane), cited by name because a line number rots. Answers
+ *  true when the weather changed. */
 export function applyClimateWeather(climateIndex) {
   const changed = applyFromArray(climateIndex);
   if (changed) _jumps++;   // WX2a: a world re-init is the PLAYER arriving, not the weather

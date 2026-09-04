@@ -360,6 +360,15 @@ chains (his data: 1,508 road chains, 4,289 track). The chips choose
 layers at draw time, so a toggle re-uploads nothing. Lift order, which
 is draw order: stream < river < track < trunk < route.
 
+**AUDIT 58 (f3/render): the layer has an owner.** One VAO and one
+buffer per chain is ~5,800 of each on his arrays, minted fresh by every
+travel-map window - and `OverworldRenderer.dispose()`, whose own
+heading is "Every allocation has an owner (AUDIT 17e)", freed every
+sibling set and not this one, so every close of the map orphaned the
+whole network on the session's one shared GL context. `_freeRoads()`
+is called from `dispose()` now, pinned in overworldmap.test.js against
+a handle-holding Proxy-GL.
+
 ## Audit 51 (2026-09-02) - parity by oracle
 
 `01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte
@@ -367,6 +376,15 @@ for byte over 651 cases; the smoother is SmoothRoadsJob but for a
 corrected transpose; the arrays are his to the byte. ROADS 22's claim
 that the mod paints no ring is corrected there: it paves the rect's
 padding, roads only.
+
+AUDIT 58 (f2/hosts, 2026-09-03) corrected WHICH index that transpose is
+on. The tilemap is `x + y*tDim` and the heightmap is `y + x*hDim`
+(TerrainSampler.cs:123 against TerrainHelper.cs:170) - the mod's
+transpose is on the SAMPLE base, and the "correction" recorded here was
+made on the tile read, where `y*tDim + x` is literally his
+`Idx(x, y, tDim)`. So the divergence was written down as closed while
+the defect it named ran in both lanes: no road bed was smoothed and an
+east-west strip of open ground was blurred in its place.
 
 ## Audit 45 (2026-09-01)
 

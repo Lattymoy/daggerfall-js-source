@@ -31,6 +31,14 @@ export function charSheetHooks({
   // that owns a travel map can answer it, and one that does not leaves
   // all three unset so the journal simply never offers the dialog.
   currentLocationName = null, canFindPlace = null, gotoPlace = null,
+  // AUDIT 58: the sheet's own TEXT.RSC door. StatButton_OnMouseClick
+  // (DaggerfallCharacterSheetWindow.cs:925-941) pops records 0..7 - the
+  // eight attribute descriptions - as ClickAnywhereToClose boxes, and
+  // every host already holds this exact expression for the inventory
+  // window's item text. Host-agnostic in shape, host-supplied in fact,
+  // which is why it comes through the ONE hook builder rather than
+  // three copies: THE FOUR HOSTS rule.
+  rows = null,
 } = {}) {
   // Both new windows share LGBK00I0.IMG, so one warm covers both. Fire
   // and forget, exactly as preloadCharSheetArt does: art that has not
@@ -59,5 +67,9 @@ export function charSheetHooks({
       })
       : undefined,
     history: () => new PlayerHistoryWindow(entity),
+    // AUDIT 58: the attribute popups' text. A host with no TEXT.RSC
+    // leaves it unset and the eight buttons still CLICK and consume,
+    // which is what DFU's own empty-record path shows.
+    rows: rows ?? undefined,
   };
 }

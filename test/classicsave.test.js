@@ -31,6 +31,14 @@ import {
 } from '../src/formats/saveGames.js';
 import { BsaFile } from '../src/formats/bsaFile.js';
 import { stripTransformedRace, toCharacterDocument, TRANSFORMED_RACES } from '../src/systems/classicSave.js';
+// AUDIT 58: AssignShipToPlayer's permanent half on the classic-import path
+import { assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../src/systems/banking.js';
+import {
+  createSceneCache, addPermanentScene, containsPermanentScene, worldSceneName, interiorSceneName,
+  cacheScene, restoreCachedScene, clearSceneCache,
+} from '../src/systems/sceneCache.js';
+import { BUILDING_KEY_0 } from '../src/systems/talkTopics.js';
+import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from '../src/systems/infection.js';
 
@@ -1575,4 +1583,66 @@ test('SAV3: the wiring source pins - menu arm, boot arm order, chargen gate, mai
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   // SET on classicload, DELETE on anything else (the F12 law's shape).
   assert.match(main, /if \(action === 'classicload'\) params\.set\('classicload', '1'\);\n\s*else params\.delete\('classicload'\);/);
+});
+
+/** The smallest player snapshot restorePlayer accepts, for the ship
+ *  arm below - built by the real snapshotter so it cannot drift. */
+const MIN_SNAP = snapshotPlayer({
+  name: 'Rin', stats: {}, skills: [], skillUses: [], items: [],
+  spells: [], activeEffects: [], sceneCache: createSceneCache(),
+}, {});
+
+test('AUDIT 58 (SAV3): the classic import runs AssignShipToPlayer WHOLE - the deed AND both permanent scenes', () => {
+  // StartGameBehaviour.StartFromClassicSave:616 calls
+  // DaggerfallBankManager.AssignShipToPlayer(saveVars.PlayerOwnedShip),
+  // and that member is TWO statements (:488-497): `ownedShip =
+  // shipType` AND both of the ship's scenes onto the permanent list.
+  // The converter carries only the deed (`ownedShip`, with
+  // `sceneCache: null`), and restorePlayer mints an EMPTY permanent set
+  // from that null - so an imported ship's two scenes were ordinary and
+  // the first world move threw away everything left aboard, where a
+  // ship BOUGHT in the same session kept it.
+  const entity = { stats: {}, items: [] };
+  restorePlayer(entity, { ...MIN_SNAP, ownedShip: SHIP_TYPES.Small, sceneCache: null });
+  assert.equal(entity.sceneCache.permanent.size, 0, 'the null cache mints an EMPTY permanent set');
+
+  const addBoth = (s) => {
+    addPermanentScene(entity.sceneCache, worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
+    addPermanentScene(entity.sceneCache, interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
+  };
+  assignShipToPlayer(entity, entity.ownedShip, { addPermanentScene: addBoth });
+
+  const exterior = worldSceneName(2, 2);                                  // shipCoords[0]
+  const interior = interiorSceneName(1050578, BUILDING_KEY_0);            // shipInteriorSceneNames[0]
+  assert.equal(entity.ownedShip, SHIP_TYPES.Small, 'the deed still lands');
+  assert.ok(containsPermanentScene(entity.sceneCache, exterior), 'the ship pixel is permanent');
+  assert.ok(containsPermanentScene(entity.sceneCache, interior), 'and so is its interior');
+
+  // ...which is the whole point: the world move keeps what was left
+  // aboard (SerializableStateManager.ClearSceneCache(false)).
+  cacheScene(entity.sceneCache, interior, { droppedPiles: [{ pos: [0, 0, 0], record: 1, items: [{ n: 1 }] }] });
+  clearSceneCache(entity.sceneCache, { start: false });
+  assert.equal(restoreCachedScene(entity.sceneCache, interior).droppedPiles.length, 1,
+    'the chest in the hold survives the world moving on');
+
+  // None imports nothing - DFU's `if (shipType != ShipType.None)`.
+  const poor = { stats: {}, items: [] };
+  restorePlayer(poor, { ...MIN_SNAP, ownedShip: SHIP_TYPES.None, sceneCache: null });
+  assignShipToPlayer(poor, poor.ownedShip, { addPermanentScene: addBoth });
+  assert.equal(poor.sceneCache.permanent.size, 0);
+
+  // and the HOST really runs it on the import path - classicLoadBoot
+  // has no headless boot, so the wiring is source-pinned.
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const boot = world.slice(world.indexOf('async function classicLoadBoot()'));
+  const body = boot.slice(0, boot.indexOf('const toggleTravelMap'));
+  assert.match(body, /assignShipToPlayer\(playerEntity, playerEntity\.ownedShip, \{/,
+    'the import goes through the port\'s AssignShipToPlayer, not a raw field write');
+  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, worldSceneName\(SHIP_COORDS\[s\]\.x, SHIP_COORDS\[s\]\.y\)\)/);
+  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[s\], BUILDING_KEY_0\)\)/);
+  // DFU's ORDER: NewCharacterCleanup's ClearSceneCache(true) (:468)
+  // runs first, the ship's scenes are added after (:616) - here that
+  // means after restorePlayer has minted the cache.
+  assert.ok(body.indexOf('restorePlayer(playerEntity, bundle.snap') < body.indexOf('assignShipToPlayer(playerEntity'),
+    'the scenes are added AFTER the cache is minted, never before');
 });

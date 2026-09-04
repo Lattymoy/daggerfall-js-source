@@ -33,6 +33,7 @@ import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/ho
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { swallowBrowserKey } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -165,6 +166,17 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   const keys = new Set();
   addEventListener('keydown', (e) => {
+    // U47: FIRST, before any early return - one list, in ui/input.js.
+    // AUDIT 58 (f2/hosts): this host was the FIFTH keydown and the U47
+    // rollout enumerated four, so F5 in the ?interior route reloaded
+    // the page and destroyed the session - the exact failure AUDIT 17e
+    // F41 recorded for the others - and F11 went fullscreen. The law
+    // (ui/input.js:282-283) is "every host that registers a keydown
+    // calls this FIRST", and it is NOT conditional on the host having
+    // a destination for the key. First, because every arm below
+    // returns before its own preventDefault - worldModes.js:6125 sits
+    // ahead of its arms for the same reason.
+    swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
@@ -294,7 +306,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:520 and worldModes.js:4442/:4546 gate the same
+    // driver. dungeon.js:520 and worldModes.js:4450/:4546 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

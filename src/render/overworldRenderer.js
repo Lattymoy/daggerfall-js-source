@@ -461,6 +461,17 @@ export class OverworldRenderer {
     this._freeSet(this._terrain); this._terrain = null;
     this._freeSet(this._markers); this._markers = null;
     this._freeSet(this._route); this._route = null;
+    // AUDIT 58 (f3/render): THE ROAD LAYER IS AN ALLOCATION LIKE ANY
+    // OTHER, and it is the largest one here - ROADS 25 mints one VAO and
+    // one buffer PER CHAIN (setRoads, above), and Hazelnut's arrays
+    // trace ~5,800 chains for roads and tracks alone
+    // (bible/03-World/Roads.md). dispose() freed every sibling set and
+    // not this one, so each close of the travel map (overworldMap.js
+    // _teardown -> this._ov?.dispose(), reached by _close() and by
+    // dispose()) orphaned the whole network on the session-long shared
+    // context. _freeRoads() also empties each kind's array, which is
+    // this layer's `= null`.
+    this._freeRoads();
     this._freeSet(this._cloud); this._cloud = null;
     this._freeSet(this._fsTri); this._fsTri = null;
     for (const p of [this.pTerrain, this.pMarker, this.pRing, this.pLine, this.pCloud, this.pBackdrop]) {

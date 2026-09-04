@@ -30,6 +30,7 @@ import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
@@ -851,9 +852,16 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
     // trigger. A fall flashes the screen; a poison does not.
     flashPlayerDamage();
-    sound?.(SOUND.FallDamage);
+    // AUDIT 58: at FootstepVolumeScale, not full. ApplyPlayerFallDamage
+    // is `PlayOneShot((int)FallDamageSound, 0, FootstepVolumeScale)`
+    // (PlayerFootsteps.cs:307-311) and HardFallAlert the same for
+    // FallHardSound (:315-319) - the 0.7 is CHOSEN on these, not an
+    // inherited default: PlayWeaponHitSound in the same component
+    // (:331-337) deliberately passes 1f. The stride already carried it
+    // (footsteps.js:26); its three siblings rang 43% too loud.
+    sound?.(SOUND.FallDamage, FOOTSTEP_VOLUME);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
-    sound?.(SOUND.FallHard);   // BadFallDetected
+    sound?.(SOUND.FallHard, FOOTSTEP_VOLUME);   // BadFallDetected, PlayerFootsteps.cs:315-319
   }
 }
 
@@ -1661,12 +1669,23 @@ export function createRestDeps(entity, opts = {}) {
 // is small, exact and worth testing on its own: which pool is live,
 // and which host's sinks a record from that pool must go through.
 
-/** The foes an enchantment can reach right now.
- *  Interiors answer EMPTY honestly rather than by gate: the port
- *  stands no foe pool inside a building, and DFU's own list holds
- *  enemies and civilian mobiles, neither of which exists there. */
-export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
+/** The foes an enchantment can reach right now - ONE ARM PER LIVE
+ *  MODE, because DFU has one database per scene and every one of the
+ *  three is a scene.
+ *
+ *  AUDIT 58 (hosts-consistency): the INTERIOR arm was `[]`, on a
+ *  stated premise - "the port stands no foe pool inside a building" -
+ *  that stopped being true when the IF slice mounted `interiorFoes`
+ *  and ROAD-B mounted `interiorGuards` beside it. The gap was the
+ *  original EC1 defect, left standing for the third mode: a
+ *  CastWhenStrikes weapon (paralysis, Wizard's Fire, the other classic
+ *  strike spells), the vampiric drain and both artifact affinity scans
+ *  did nothing inside a shop, silently. The interior host answers the
+ *  same "whole active enemy database" question for its own two pools
+ *  (worldModes' insideFoes), so the arm is a pool it already had. */
+export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
   if (mode === 'dungeon') return dungeonCtx?.foes ?? [];
+  if (mode === 'interior') return insidePool?.() ?? [];
   if (mode === 'exterior') return exteriorPool?.() ?? [];
   return [];
 }
@@ -1682,8 +1701,47 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
  *  This took the MODE as well until the campaign called the bluff: no
  *  record is in both pools, so the mode term could not change an
  *  answer, and a mutant dropping it SURVIVED. An unfalsifiable term is
- *  not caution, it is a second law that no test is holding. */
-export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks) {
-  if (dungeonCtx?.foes?.includes(foe)) return dungeonCtx.foeSinksFor(foe);
+ *  not caution, it is a second law that no test is holding.
+ *
+ *  AUDIT 58: the INSIDE pool joins by the same rule, and it is not an
+ *  unfalsifiable term - an interior record sent through the exterior
+ *  door would knock back and kill against the STREET's collider and
+ *  through the street's death chain, which is exactly the failure the
+ *  paragraph above describes for the dungeon. Asked SECOND, after the
+ *  dungeon: `insideFoes()` answers the dungeon's own pool when a
+ *  dungeon is mounted, and that record belongs to the dungeon's
+ *  sinks. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
+  const host = enchantFoeHost(foe, dungeonCtx, insidePool);
+  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe);
+  if (host === 'inside') return insideSinks(foe);
   return exteriorSinks(foe);
+}
+
+/** WHOSE RECORD IS THIS - the membership question by itself, because
+ *  the sinks are not the only door the enchant ctx opens over a foe.
+ *
+ *  AUDIT 58 (review): the Wabbajack's `replaceFoe` REMOVES the struck
+ *  record and stands its replacement, and the host was answering that
+ *  question by not asking it - both reaches were the exterior pool's,
+ *  over a getter that had just been widened to hand out dungeon and
+ *  interior records. A record removed through the wrong pool is
+ *  destroyed with no corpse, no loot and no death chain, and its
+ *  replacement stands in a world the player is not in.
+ *
+ *  Asked in HOST ORDER, dungeon first, and the order is load-bearing
+ *  rather than defensive: `insideFoes()` answers the DUNGEON's own
+ *  pool while a dungeon is mounted, so a membership test that asked
+ *  the inside pool first would hand every dungeon record to the
+ *  interior host's doors.
+ *
+ *  DFU asks nothing, because it has nothing to ask: every enemy is a
+ *  DaggerfallEntityBehaviour in ONE scene, and WabbajackEffect
+ *  (:85-88) re-parents the new career under the struck enemy's own
+ *  transform. The port needs the question only because it keeps one
+ *  pool per host. */
+export function enchantFoeHost(foe, dungeonCtx, insidePool) {
+  if (dungeonCtx?.foes?.includes(foe)) return 'dungeon';
+  if (insidePool?.()?.includes(foe)) return 'inside';
+  return 'exterior';
 }

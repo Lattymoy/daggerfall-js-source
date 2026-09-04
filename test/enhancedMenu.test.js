@@ -483,3 +483,43 @@ test('EE13: the Enhanced pane offers a season/weather test that spawns in a rand
   assert.match(w, /\[0, 1, 2\]\.includes\(l\.mapTableData\?\.locationType\)/, 'a city, a hamlet or a village - a place with ground and people');
   assert.match(w, /console\.info\(`\[world\] random spawn: /, 'the town is named, so a good one can be found again');
 });
+
+// ── AUDIT 58: THE SAVE CARD'S GOLD ROW ───────────────────────────
+//
+// E4 moved the purse off the item list and onto the GoldPieces counter
+// (`data.playerEntity.goldPieces = entity.GoldPieces`,
+// SerializablePlayer.cs:133): snapshotPlayer writes snap.goldPieces
+// beside the collections, and restorePlayer SPLICES every Currency row
+// out of a pre-E4 envelope. The front door kept scanning snap.items
+// for a "Gold Pieces" row, which no post-E4 envelope has - so
+// save.gold was always null, and stats() drops a null value outright
+// rather than drawing it blank. Both cards that show the numbers -
+// Continue and Save - silently lost their whole Gold row.
+test('A54: the save card reads the purse off the COUNTER, not the item list', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const at = src.indexOf('function savedGame()');
+  const body = src.slice(at, src.indexOf('\n}', at));
+  assert.match(body, /gold: snap\.goldPieces \?\? null,/, 'the envelope\'s own counter');
+  assert.doesNotMatch(body, /Gold Pieces/, 'and never a scan of snap.items');
+  assert.doesNotMatch(src, /Gold Pieces/,
+    'nowhere else in the door either - the name of an item row is not a purse');
+});
+
+test('A54: and the envelope really does carry it there (E4)', async () => {
+  const { snapshotPlayer } = await import('../src/systems/save.js');
+  const entity = {
+    name: 'Uthar', level: 3, health: 20, maxHealth: 20,
+    goldPieces: 1234, items: [{ group: 'Weapons', templateIndex: 113, name: 'Dagger' }],
+    stats: {}, skills: [],
+  };
+  const snap = JSON.parse(JSON.stringify(snapshotPlayer(entity, {})));
+  assert.equal(snap.goldPieces, 1234, 'SerializablePlayer.cs:133');
+  assert.equal((snap.items ?? []).find((i) => i?.name === 'Gold Pieces'), undefined,
+    'no Currency row - which is exactly why the old find() never matched');
+  // the reading the card makes, spelled out
+  assert.equal(snap.goldPieces ?? null, 1234);
+  // ...and a pre-E4 envelope with no field still draws the card
+  const old = { ...snap };
+  delete old.goldPieces;
+  assert.equal(old.goldPieces ?? null, null, 'null, not a bogus 0');
+});

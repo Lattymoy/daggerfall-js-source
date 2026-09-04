@@ -264,6 +264,94 @@ test('doctrine: every DEPARTURE declared in src/ has a Ledger row naming its fil
     + unrecorded.join('\n'));
 });
 
+// ═══ AUDIT 58 (seams): a RECORDED departure resolves against a
+// section-A row that NAMES THE FILE ════════════════════════════════
+//
+// The gate above asks only whether Port-Ledger.md mentions the file
+// ANYWHERE. That is the whole 922-line page, struck rows included, and
+// it is how nine files went on declaring an approval nobody had
+// written: `musicReplacement.js` was satisfied by a live section-C mod
+// row, `weatherSim.js` by the STRUCK "~~THE WEATHER ODDS TABLE~~"
+// row, `colorPicker.js` and `nativeTalk.js` by struck CLOSED rows,
+// `input.js` by the struck C2 hotkey row that retires a blocker and
+// approves nothing. test/citedrift.test.js named this vacuity in its
+// own header when CD1 closed it for the TB1 family and the pause
+// window; the other eight were left standing.
+//
+// The two tiers are deliberate. THE PLAIN TOKEN keeps the loose test,
+// because dozens of files say "DEPARTURE" while citing a RULE row that
+// covers a class rather than a path - the engine-PRNG rule, the
+// settings-surface row - and narrowing that population would redden
+// working citations. THE CLAIM - a file that shouts its departure is
+// already RECORDED - is what must resolve, and it resolves the way an
+// approval has to: an UNSTRUCK row inside section A that names the
+// file. A claim of approval is not an approval; a struck row is not
+// one either.
+const A_BOUNDS = ['## A. Approved departures from DFU', '## A-note (H1)'];
+/** The claim shapes: "RECORDED DEPARTURE(S)", "DEPARTURE (recorded",
+ *  "DEPARTURE (Ledger A shape)", "DEPARTURES, both recorded". */
+const RECORDED_CLAIM =
+  /\bRECORDED DEPARTURES?\b|\bDEPARTURES?\b[^.\n]{0,40}\((?:recorded|Ledger A shape)|\bDEPARTURES?, both recorded\b/;
+
+test('AUDIT 58: a file claiming a RECORDED departure has an unstruck section-A row naming it', () => {
+  const doc = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8').split('\n');
+  const lo = doc.findIndex((l) => l.startsWith(A_BOUNDS[0]));
+  const hi = doc.findIndex((l) => l.startsWith(A_BOUNDS[1]));
+  assert.ok(lo >= 0 && hi > lo, 'Port-Ledger has no section A');
+  // section A's table rows, minus the header and the struck ones -
+  // citedrift's own `awk '/^\|/ && !/^\|---/'` and `struck` helpers.
+  const approved = doc.slice(lo, hi)
+    .filter((l) => /^\|/.test(l) && !/^\|---/.test(l) && !/^\| What \|/.test(l))
+    .filter((l) => !/^\|\s*(\*\*)?~~/.test(l))
+    .join('\n');
+  assert.ok(approved.length > 1000, 'section A resolved to nothing - the bounds moved');
+
+  const claimed = [];
+  const unrowed = [];
+  for (const f of tracked('src')) {
+    if (!f.endsWith('.js')) continue;
+    // comments WRAP, so the claim is read off the unwrapped prose
+    const flat = readFileSync(join(root, f), 'utf8')
+      .replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    if (!RECORDED_CLAIM.test(flat)) continue;
+    claimed.push(f);
+    const base = f.split('/').pop();
+    if (!approved.includes(f) && !approved.includes(base)) unrowed.push(f);
+  }
+  assert.ok(claimed.length >= 18,
+    `only ${claimed.length} files match the RECORDED-departure claim - the shapes moved and this gate went quiet`);
+  assert.deepEqual(unrowed, [],
+    'these files say their departure is already RECORDED and no unstruck section-A row\n'
+    + 'names them. "If a departure or gap is not on this page, it does not exist" is only\n'
+    + 'usable while it is true, and a STRUCK section-C row is not an approval:\n'
+    + unrowed.join('\n'));
+});
+
+// ═══ AUDIT 58 (f3/render): a gate knob that reads nothing is a door
+// that can neither fail nor act ═════════════════════════════════════
+test('AUDIT 58: every URL knob the world render gate hands the page has a live reader in src/', () => {
+  const g = readFileSync(join(root, 'tools/worldRenderGate.mjs'), 'utf8');
+  // EE3's --ground survived the ground arc's REVERT (8256ae2, "no
+  // reader of tileArrayFor, enhancedGround or groundMode remains
+  // anywhere"): the gate went on appending &ground=<mode> to a URL
+  // nothing parsed and printing "ground=<mode>" in its PASS line, so a
+  // run could claim it had gated a mode that no longer exists.
+  const line = g.split('\n').find((l) => l.startsWith('const dials = '));
+  assert.ok(line, 'the gate builds its extra query knobs in one place');
+  const knobs = [...line.matchAll(/&(\w+)=\$\{/g)].map((m) => m[1]);
+  assert.ok(knobs.length >= 4, `the knobs are still here: ${knobs.join(', ')}`);
+  const src = tracked('src').filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+  for (const k of knobs) {
+    assert.ok(src.includes(`get('${k}')`) || src.includes(`get("${k}")`),
+      `--${k} hands the page ?${k}=<v> and nothing in src/ reads it: a knob with no reader `
+      + 'gates nothing, and the gate\u2019s own pass line then claims it did');
+  }
+  assert.ok(!/ground=/.test(line) && !/GROUND/.test(g), 'the reverted ground knob is gone from the URL and the pass line');
+  assert.match(g, /world render gate ok \(\$\{MODE\}, \$\{MINUTES\} min\)/,
+    'the pass line names only what the run actually set');
+});
+
 // ═══ EE0: the world render gate exists, and reads the compositor's frame ═══
 test('EE0: the world render gate boots the real exterior and judges real pixels', () => {
   const g = readFileSync('tools/worldRenderGate.mjs', 'utf8');

@@ -204,10 +204,17 @@ test('D7: the host opens the native Repair screen when the art is up, keyed when
   const wm = src('scenes/worldModes.js');
   const at = wm.indexOf('function openRepairService(ctx = {}) {');
   assert.ok(at > 0, 'openRepairService is gone');
-  const body = wm.slice(at, at + 500);
+  const body = wm.slice(at, at + 1100);
   assert.match(body, /if \(b && tradeArtLoaded\(\) && _shopFont\) \{/, 'no native arm');
   assert.match(body, /openTradeWindow\(shelf, b, 'Repair'/, 'the native arm must open the trade window in Repair mode');
   assert.match(body, /showRepairList\(0, ctx\);/, 'the keyed list must stay as the no-ARENA2 fallback');
+  // ROAD-F GS1: both arms HAND BACK the window they mounted, because
+  // the guild's Repair service reads the return value (it used to
+  // re-read the interior slot, which above ground is always null) -
+  // and the native arm's `b` gate is what makes the keyed list the
+  // outdoor answer, there being no building record in the street.
+  assert.match(body, /return mountServiceWindow\(openTradeWindow\(/, 'the native arm swallows its window');
+  assert.match(body, /return showRepairList\(0, ctx\);/, 'the keyed arm swallows its window');
   // and the window is handed the two collections the mode needs
   assert.match(wm, /otherItems: \(\) => \(playerEntity\.otherItems \?\?= \[\]\),/);
   assert.match(wm, /repairItems: \(\) => repairJobsAt\(playerEntity, b\.buildingKey \?\? 0, Math\.floor\(worldMinutes\(\)\)\),/);

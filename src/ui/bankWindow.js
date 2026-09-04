@@ -289,13 +289,24 @@ export class BankWindow {
   /** UpdateLabels (:239-250). The inventory line appends the WAGON's
    *  gold in parentheses when the cart carries any - one label, two
    *  purses, which is how a player sees at a glance what a deposit
-   *  can actually reach. */
+   *  can actually reach.
+   *
+   *  AUDIT 58: and the line itself is `playerEntity.GetGoldAmount()`
+   *  (:241) - coins PLUS every letter of credit in the pack
+   *  (PlayerEntity.cs:1313-1316) - not the bare coin counter. This
+   *  window read the coins alone, on the one screen whose DEPOSIT
+   *  LETTERS button (:377-389, banking.depositAllLetters) hands the
+   *  bank exactly the paper the label was denying the player held. */
   labels() {
     const a = this.accounts, r = this.region;
     const wagon = this.hooks.wagonGold?.() ?? 0;
+    // bankPurse supplies both quantities (worldModes.js): `totalGold`
+    // is GetGoldAmount, `gold` the coins the deposit/withdraw arms
+    // move. A host that wires only the coin reader still draws.
+    const purse = this.hooks.player.totalGold?.() ?? this.hooks.player.gold();
     return {
       account: String(accountTotal(a, r)),
-      inventory: wagon > 0 ? `${this.hooks.player.gold()} (+${wagon})` : String(this.hooks.player.gold()),
+      inventory: wagon > 0 ? `${purse} (+${wagon})` : String(purse),
       loanDue: String(loanedTotal(a, r)),
       loanBy: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '',
     };

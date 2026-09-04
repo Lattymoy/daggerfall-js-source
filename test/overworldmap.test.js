@@ -601,6 +601,52 @@ test('U61/EV6: the overworld pass brackets its state and marks a foreign seam in
   assert.match(src, /dispose\(\)/, 'every allocation has an owner');
 });
 
+test('AUDIT 58 (f3/render): dispose frees the ROAD chains it minted - every allocation has an owner (AUDIT 17e)', async () => {
+  const { OverworldRenderer } = await import('../src/render/overworldRenderer.js');
+  // the audit26/renderalloc/glstate Proxy-GL precedent, holding the
+  // handles: what is created and not deleted is what leaks
+  const live = { vao: new Set(), buffer: new Set(), program: new Set() };
+  const gl = new Proxy({}, { get: (o, k) => {
+    if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+    if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+    if (k === 'createVertexArray') return () => { const h = {}; live.vao.add(h); return h; };
+    if (k === 'createBuffer') return () => { const h = {}; live.buffer.add(h); return h; };
+    if (k === 'createProgram') return () => { const h = {}; live.program.add(h); return h; };
+    if (k === 'deleteVertexArray') return (h) => { live.vao.delete(h); };
+    if (k === 'deleteBuffer') return (h) => { live.buffer.delete(h); };
+    if (k === 'deleteProgram') return (h) => { live.program.delete(h); };
+    if (k === 'createShader' || k === 'createTexture' || k === 'createFramebuffer') return () => ({});
+    if (typeof k === 'string' && k.toUpperCase() === k) return 1;   // GL enums
+    return () => {};
+  } });
+
+  const ov = new OverworldRenderer(gl);
+  assert.equal(live.vao.size, 0, 'the constructor mints programs, not geometry');
+  assert.equal(live.buffer.size, 0);
+  // ROADS 25 mints ONE VAO and ONE buffer PER CHAIN, and the shipped
+  // network is thousands of them (bible/03-World/Roads.md: 1,508 road
+  // chains and 4,289 track for Hazelnut's arrays) - re-traced by every
+  // travel-map window and orphaned by every close.
+  const chain = () => new Float32Array([0, 0, 0, 1, 0, 1, 2, 0, 2]);
+  ov.setRoads({ trunk: [chain(), chain()], track: [chain()], river: [chain()], stream: [chain()] });
+  assert.equal(live.vao.size, 5, 'one VAO per chain');
+  assert.equal(live.buffer.size, 5, 'and one buffer per chain');
+  // setRoads frees the previous network before minting the next one
+  ov.setRoads({ trunk: [chain()], track: [], river: [], stream: [] });
+  assert.equal(live.vao.size, 1, 'a re-set frees what it replaces');
+  assert.equal(live.buffer.size, 1);
+
+  ov.dispose();
+  assert.deepEqual(
+    { vao: live.vao.size, buffer: live.buffer.size, program: live.program.size },
+    { vao: 0, buffer: 0, program: 0 },
+    'dispose freed the road layer with its siblings - the travel map closes on every journey, '
+    + 'and the gl it drew on is the session\u2019s one shared context');
+  for (const kind of ['stream', 'river', 'track', 'trunk']) {
+    assert.deepEqual(ov._roads[kind], [], `${kind}: and left no handle behind to be re-drawn`);
+  }
+});
+
 test('U61: the veil phases never open a beginFrame - the host\'s live frame is the world below the clouds', () => {
   const src = read('src/ui/overworldMap.js');
   const draw = src.slice(src.indexOf('  draw(renderer, canvas)'), src.indexOf('  dispose()'));

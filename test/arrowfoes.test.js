@@ -113,7 +113,7 @@ test('AR1: exteriorFoes lands the hit on BowDamage\'s own payload', () => {
   const src = read('src/scenes/exteriorFoes.js');
   const from = src.indexOf('function arrowHitFoe(m, target) {');
   assert.ok(from > 0);
-  const body = src.slice(from, from + 800);
+  const body = src.slice(from, from + 1200);
   assert.match(body, /weapon: m\.weapon, direction: dir, bowAttack: true/,
     ':303 with bowAttack=true - the melee arm passes false by omission');
   assert.match(body, /dealDamage: \(t, d\) => \(t\.hurtFromFoe \? t\.hurtFromFoe\(d, dir\) : damageFoe\(t, d, null, dir\)\)/,

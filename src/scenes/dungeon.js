@@ -9,7 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode
+import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
@@ -213,13 +213,23 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
-    // R1: F1-F4 switch the interaction mode here too - DFU's
-    // currentMode is global and the standalone dungeon has no townTalk
-    // to carry the keydown. Same keys, same line.
-    const im = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' }[e.code];
+    // R1: the four modes switch here too - DFU's currentMode is global
+    // and the standalone dungeon has no townTalk to carry the keydown.
+    // AUDIT 58 (talk lane), both halves of the law this copy was
+    // missing: (1) the read is the REGISTRY's, because
+    // PlayerActivate.cs:221-228 asks
+    // `InputManager.ActionStarted(Actions.StealMode)` and F1-F4 are
+    // only that action's DEFAULT binding (InputManager.cs:999-1002) -
+    // a literal table made every rebind in the controls grid inert;
+    // (2) a pausing window shuts the read down entirely
+    // (UserInterfaceManager.cs:183-184 -> GameManager.cs:608 ->
+    // InputManager.cs:487-503 returns before currentActions is
+    // populated), so the mode must NOT flip under an open overlay -
+    // the very next line already has the predicate.
+    const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
-      if (im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
+      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
     }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
@@ -312,7 +322,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // site not updated - it still passed the old `dir` thunk, which
     // landed in setPlayerPos, so a quickload here restored the
     // character and left them standing wherever they were.
-    if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
+    if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse

@@ -137,7 +137,7 @@ export function clearPreventRestConditions() { preventRestConditions.clear(); }
  * inside dungeonContext, so above ground a player could open the rest
  * window while swimming, while falling, and with a foe in the street.
  *
- * FOUR THINGS IN ORDER, and the order is the law:
+ * FIVE THINGS IN ORDER, and the order is the law:
  *
  * 1. ENEMIES OUTRANK THE WATER, because DFU's is an if/else-if chain -
  *    and it matters, because only this arm RAISES THE ALERT (:654-655),
@@ -159,17 +159,27 @@ export function clearPreventRestConditions() { preventRestConditions.clear(); }
  *    RegisterPreventRestCondition turns a null message into "" so a
  *    caller can block rest without wording it, and the dispatch falls
  *    back to 355 rather than showing a blank box. null is NOT "".
- * 4. A RACIAL OVERRIDE REFUSES SILENTLY - RacialOverrideEffect
+ * 4. A PENDING QUEST OFFER TAKES THE PRESS (AUDIT 58). `else if
+ *    (!GiveOffer())` (:680) is a RUNG this ladder was missing: when a
+ *    `give pc _item_ notify`/`silently` offer has become eligible,
+ *    DaggerfallUI hands the item over on the spot and swallows the
+ *    press - the rest window does not open, and the NEXT press rests
+ *    normally (DaggerfallUI.cs:1717-1726; ui/pendingOffer.js is the
+ *    latch). It is a PRODUCER for the same reason the registry above
+ *    is: GiveOffer has a side effect, so "when it runs" is the law -
+ *    only on a press the first three arms did not answer.
+ * 5. A RACIAL OVERRIDE REFUSES SILENTLY - RacialOverrideEffect
  *    .CheckStartRest, "allow custom race to block rest (e.g. vampire
  *    not sated)" - and it is LAST, so a swimming vampire is told about
  *    the water, which is the arm they can act on.
  *
  * Answers { kind: 'rest' | 'enemies' | 'cannot' | 'prevented' |
- * 'blocked' } with the textId or message the caller speaks.
+ * 'offer' | 'blocked' } with the textId or message the caller speaks;
+ * 'offer' has nothing to say - the press is simply spent.
  */
 export function restDecision({
   enemiesNearby = false, swimming = false, grounded = true,
-  preventedMessage = null, racialOverrideBlocks = false,
+  preventedMessage = null, giveOffer = null, racialOverrideBlocks = false,
 } = {}) {
   if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
   if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
@@ -183,6 +193,9 @@ export function restDecision({
       // :667-669 shows the string GetPreventedRestMessage returned.
       : { kind: 'prevented', message: prevented };
   }
+  // :680's `else if (!GiveOffer())` - inside the third else, after the
+  // prevented-rest message and BEFORE the racial override.
+  if (typeof giveOffer === 'function' ? giveOffer() : !!giveOffer) return { kind: 'offer' };
   if (racialOverrideBlocks) return { kind: 'blocked' };
   return { kind: 'rest' };
 }

@@ -220,8 +220,17 @@ test('ROAD-B: both exterior/interior foe pools take the area walk on a struck pa
   assert.ok(i > 0 && j > i, 'the area walk precedes the per-foe law, and reads isHostile before it');
   assert.ok(f.includes('makeAreaHostile = null,'), 'the dep defaults absent (the pre-wiring shape)');
   const wm = src('src/scenes/worldModes.js');
-  assert.ok(wm.includes('makeAreaHostile: () => makeEnemiesHostile(interiorFoes?.foes ?? []),'),
-    'a building interior is its own area');
+  // AUDIT 58: the area is the interior's WHOLE database, not one of
+  // its two pools. This was the only makeAreaHostile in the tree that
+  // walked half a database where GameManager.MakeEnemiesHostile
+  // (:793-806) walks all of ActiveGameObjectDatabase - so striking a
+  // passive foe in a shop left the watchmen in the same room passive.
+  assert.ok(wm.includes('makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),'),
+    'a building interior is its own area - BOTH of its pools');
+  assert.ok(!wm.includes('makeEnemiesHostile(interiorFoes?.foes ?? [])'),
+    'and the narrowed walk is gone, not annotated');
+  assert.ok(wm.includes('const interiorEnemyDatabase = () => interiorFoePool().filter((f) => !f.dead);'),
+    'the database is the live half of the ONE join');
 });
 
 test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool included', () => {
@@ -238,4 +247,17 @@ test('ROAD-B: the world host walks the WHOLE active enemy database, inside pool 
     'the inline copy is gone');
   const wm = src('src/scenes/worldModes.js');
   assert.ok(/insideFoes\(\) \{/.test(wm), 'and the mode machine answers the inside half');
+
+  // ...AND SO DOES THE FIXED-CITY HOST. QX1 gave `?exterior` a quest
+  // bridge and wired its MakeEnemiesHostile door to `liveQuestFoes` -
+  // the walk narrowed to QuestResourceBehaviour carriers - so
+  // `enemies makehostile` flipped nothing but quest-spawned foes in a
+  // mounted mode and left the dungeon's own population, and every
+  // watchman in a shop, standing passive. The two producers are two
+  // different questions and this host has to keep them apart too.
+  const ex = src('src/scenes/exterior.js');
+  assert.ok(ex.includes('makeEnemiesHostile: () => makeEnemiesHostile([...cityGuards.guards, ...(modes?.insideFoes?.() ?? [])]),'),
+    'the fixed-city host\'s quest door walks the UNNARROWED database');
+  assert.ok(ex.includes('return [...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>'),
+    'and questFoeInstances - the one caller that really asks the narrow question - keeps liveQuestFoes');
 });

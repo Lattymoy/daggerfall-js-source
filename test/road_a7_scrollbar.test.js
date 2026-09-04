@@ -12,7 +12,7 @@ import {
   drawScrollThumb, THUMB_MIN_H, THUMB_TOP_ROW, THUMB_BODY_ROW, THUMB_BOTTOM_ROW, THUMB_COLUMNS,
 } from '../src/ui/verticalScrollBar.js';
 import {
-  ListPickerWindow, PICKER_X, PICKER_Y, PICKER_RECTS, ROWS_DISPLAYED,
+  ListPickerWindow, PICKER_X, PICKER_Y, PICKER_RECTS, ROWS_DISPLAYED, SMALL_FONT_PICKER_ROWS,
   rowTextColor, rowShadowOffset,
   SELECTED_TEXT_COLOR, HIGHLIGHTED_TEXT_COLOR, HIGHLIGHTED_SELECTED_TEXT_COLOR,
 } from '../src/ui/listPicker.js';
@@ -336,4 +336,57 @@ test('ROAD-A7: the painting box asks for the picture and sizes the parchment rou
     'the picture is MEASURED into the layout, not stamped over it');
   // the little panel takes the title-only read
   assert.match(code, /itemInfoPanelRows\(this\.infoItem/);
+});
+
+// ── AUDIT 58: DaggerfallListPickerWindow's TWO CONSTRUCTOR ARGS ──
+//
+// `DaggerfallListPickerWindow(uiManager, previous, DaggerfallFont font
+// = null, int rowsDisplayed = 0)` (:52-56) feeds listBox.Font (:40-44)
+// and listBox.RowsDisplayed (:46-50). THREE windows pass
+// `DaggerfallUI.SmallFont, 12` - DaggerfallItemMakerWindow.cs:372 and
+// :376, DaggerfallPotionMakerWindow.cs:113 - because FONT0002's
+// fixedHeight is 5 against FONT0003's 7, so 12 x (5+1) = 72 fills the
+// same 138x72 listBox nine FONT0003 rows fill. The port took neither
+// argument and read the module constant everywhere, so those three
+// lists showed nine rows of the wrong font, clamped their scroll at
+// len-9, paged the bar by 9 and hit-tested rows 0..8 only.
+test('A54 picker: font + rowsDisplayed move the slice, the clamp, the bar and the hit grid', () => {
+  const items = Array.from({ length: 20 }, (_, i) => `item${i}`);
+  const small = { fnt: { fixedHeight: 5, fixedWidth: 4, glyphWidth: () => 3 }, tex: 'small' };
+  const host = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 4 }, tex: 'host' };
+
+  // a BARE picker keeps ListBox's own defaults (ListBox.cs:36-37)
+  const bare = new ListPickerWindow({ items });
+  assert.equal(bare.rowsDisplayed, ROWS_DISPLAYED);
+  assert.equal(bare.rowsDisplayed, 9);
+  assert.equal(bare.pickerFont, null, 'null Font means DaggerfallUI.DefaultFont - the host\'s');
+  assert.equal(bare.rowHeight(host), 8, 'FONT0003: 7 + rowSpacing 1');
+  bare.scrollIndex = 99; bare._clampScroll();
+  assert.equal(bare.scrollIndex, 20 - 9);
+  bare.syncScrollBar();
+  assert.equal(bare.scrollBar.displayUnits, 9);
+
+  // ...and the SmallFont/12 picker the three crafting windows build
+  const w = new ListPickerWindow({ items, font: small, rowsDisplayed: SMALL_FONT_PICKER_ROWS });
+  assert.equal(SMALL_FONT_PICKER_ROWS, 12);
+  assert.equal(w.rowsDisplayed, 12);
+  assert.equal(w.rowHeight(w.pickerFont), 6, 'FONT0002: 5 + rowSpacing 1 - and 12 x 6 = the 72px listBox');
+  w.scrollIndex = 99; w._clampScroll();
+  assert.equal(w.scrollIndex, 20 - 12, 'the clamp is len - RowsDisplayed');
+  w.syncScrollBar();
+  assert.equal(w.scrollBar.displayUnits, 12, 'VerticalScrollBar.DisplayUnits (:98) follows it');
+
+  // the HIT GRID rides the window's own font and row count: row 11 of
+  // a 12-row SmallFont list is selectable, and it is at 11 x 6 px, not
+  // 11 x 8 - a bare picker rejects the same point outright.
+  const [lx, ly] = PICKER_RECTS.list;
+  w.scrollIndex = 0;
+  w.click(PICKER_X + lx + 1, PICKER_Y + ly + 11 * 6 + 1, host);
+  assert.equal(w.selectedIndex, 11, 'row 11 selects item11 at the SmallFont pitch');
+  bare.scrollIndex = 0; bare.selectedIndex = 0;
+  bare.click(PICKER_X + lx + 1, PICKER_Y + ly + 11 * 8 + 1, host);
+  assert.equal(bare.selectedIndex, 0, 'and a 9-row picker has no row 11 at all');
+
+  // rowsDisplayed 0 is DFU's "keep the ListBox default" (:46-50)
+  assert.equal(new ListPickerWindow({ items, rowsDisplayed: 0 }).rowsDisplayed, 9);
 });

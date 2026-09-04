@@ -482,6 +482,27 @@ const UNINDEXED_RECORDS = [
   'Port-Completion-Analysis.md',  // superseded for volume figures by Port-Status-2026-09.md
 ];
 
+// AUDIT 58 (seams): AND EVERY ARC PLAN, wherever it lives. The law
+// above reads ONE directory, so an unindexed arc plan under
+// 07-Rendering/ passed green: `Enhanced-Environments-Arc.md` - the
+// live plan for the ground/sky/grass/weather arc, opened 2026-09-01,
+// the arc four of the most recent audits were written about, and the
+// document doctrine.test.js opens by path to assert the render gate
+// and the upload law - was named nowhere in the index that calls
+// itself the index. Its only prose reachability was one second hop
+// from Rendering.md. That is the same fault the AUDIT 39 header
+// describes (Audit-DA and Audit-EV reachable only from the arc pages
+// they close), one directory over, so the same law covers it: a
+// `*-Arc.md` anywhere under bible/ is named in Home.md, or it is on
+// the written list below.
+/** Arc plans Home.md deliberately reaches another way. */
+const UNINDEXED_ARCS = [
+  // reached by the `11-Multiplayer/` section row - "co-op: the three
+  // locked decisions, the architecture, the arc" - which covers both
+  // Multiplayer.md and its arc as one unstarted section.
+  'bible/11-Multiplayer/Multiplayer-Arc.md',
+];
+
 test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const home = read('bible/Home.md');
   const records = readdirSync(join(root, 'bible/01-Overview'))
@@ -495,6 +516,37 @@ test('AUDIT 39: Home.md names every record under bible/01-Overview/', () => {
   const named = [...home.matchAll(/`01-Overview\/([A-Za-z0-9._-]+\.md)`/g)].map((m) => m[1]);
   const dead = [...new Set(named)].filter((f) => !records.includes(f) && !UNINDEXED_RECORDS.includes(f));
   assert.deepEqual(dead, [], `the index names records that are gone:\n${dead.join('\n')}`);
+
+  // AUDIT 58 (records): ONE ENTRY PER RECORD, the other half of the
+  // law. The both-ways check above is satisfied by a DUPLICATE, and
+  // two of them were live: `Audit-48.md` was indexed twice under two
+  // unrelated descriptions (a same-day number collision overwrote the
+  // earlier record and its row was left pointing at the file that
+  // replaced it), and `Audit-49.md` carried a byte-identical copy of
+  // `Audit-53.md`'s campaign description - so the campaign had two
+  // entries and the lab-grass audit's real subject had none. A reader
+  // following either row reaches a stranger, which is precisely what
+  // an index exists to prevent.
+  const entry = /^- `01-Overview\/([A-Za-z0-9._-]+\.md)` - /;
+  const rows = home.split('\n').map((l) => entry.exec(l)).filter(Boolean).map((m) => m[1]);
+  const twice = rows.filter((f, i) => rows.indexOf(f) !== i);
+  assert.deepEqual([...new Set(twice)], [],
+    `the index carries more than one entry for one record:\n${twice.join('\n')}`);
+});
+
+test('AUDIT 58: Home.md names every arc plan under bible/, wherever it lives', () => {
+  const home = read('bible/Home.md');
+  const arcs = BIBLE_FILES.filter((f) => f.endsWith('-Arc.md'));
+  assert.ok(arcs.length >= 12, `only ${arcs.length} arc plans found - the walk missed some`);
+  const missing = arcs
+    .filter((f) => !UNINDEXED_ARCS.includes(f))
+    .filter((f) => !home.includes(f.split('/').pop()));
+  assert.deepEqual(missing, [],
+    `arc plans the index does not name:\n${missing.join('\n')}`);
+  // the allow-list may not outlive its files, and it may not hide a
+  // record the index DOES name either
+  const gone = UNINDEXED_ARCS.filter((f) => !existsSync(join(root, f)));
+  assert.deepEqual(gone, [], `the not-indexed arc list names files that are gone:\n${gone.join('\n')}`);
 });
 
 // ---------------------------------------------------------------------------
@@ -635,4 +687,96 @@ test('WAVE D: two ACTIVE arc pages stop describing work this wave shipped', () =
     /no fade layer in the port\/\.test\(unquoted\), false/,
     'the cited pin is the INVERTED one');
   assert.match(read('src/ui/travelPopUp.js'), /this\.isCloseWindowDeferred = true;/);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 58 (records lane): THE PAGES THAT POINT AT THEMSELVES.
+//
+// Three defects of one kind, all in the campaign's own status page and
+// all invisible to every gate the tree had. (1) Six citations named
+// `Audit-49.md` as the record of the Road-to-1:1 campaign; two lanes
+// took the number 49 the same day, the campaign record was renumbered
+// to `Audit-53.md`, and the pointers were not moved - so a reader
+// following "the record" of the closing campaign landed on a 64-line
+// grass and weather audit. (2) The page called `Testing.md:4` "the
+// smallest stale record in the tree"; Testing.md:4 is the one record
+// that CANNOT be stale, pinned line and row by `test/manifest.test.js`
+// against a live walk of `test/`. (3) Two half-paragraphs survived
+// their own rewrites and stood as second, contradicting claims - the
+// exact shape `manifest.test.js`'s duplicate guard was written for
+// over one other file.
+//
+// Each pin below reads the claim out of the page and resolves it
+// against the thing it is a claim ABOUT.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 58: the campaign record is cited to the file that holds it, and the page is free of its own residue', () => {
+  const STATUS = 'bible/01-Overview/Port-Status-2026-09-02.md';
+  const ROAD = 'bible/01-Overview/Road-To-1-1.md';
+
+  // 1. THE CAMPAIGN AUDIT. Whichever file the two pages name, that file
+  //    must be the one whose header claims the campaign and whose body
+  //    carries the campaign's figures - and the pages must not name the
+  //    file that does not.
+  const isCampaign = (f) => /the Road-to-1:1 campaign, audited/
+    .test(read(`bible/01-Overview/${f}`).split('\n')[0]);
+  for (const page of [STATUS, ROAD]) {
+    const flat = read(page).replace(/\s+/g, ' ');
+    const cited = [...new Set([...flat.matchAll(/`(Audit-\d+\.md)`/g)].map((m) => m[1]))];
+    const record = cited.filter(isCampaign);
+    assert.equal(record.length, 1,
+      `${page} names ${record.length} files whose header claims the campaign: ${record.join(', ')}`);
+    const body = read(`bible/01-Overview/${record[0]}`);
+    for (const fig of [/145 findings judged across the five rounds: 118 confirmed/,
+      /\*\*\+676 tests/, /61 of 118 are defects in shipped behaviour; 37 are defects/]) {
+      assert.match(body, fig, `${record[0]} does not carry a campaign figure ${page} attributes to it`);
+    }
+    // ...and no OTHER audit file is the one a campaign figure hangs off.
+    const attrib = /`(Audit-\d+\.md)`(?=[^`]{0,80}?(?:118 confirmed|counts \+676|145 findings|measured 43 of 61|37 of 118))/g;
+    for (const m of flat.matchAll(attrib)) {
+      assert.equal(m[1], record[0],
+        `${page} attributes a campaign figure to ${m[1]}, which is not the campaign record`);
+    }
+  }
+  // the number 49 means ONE thing, and it is not the campaign
+  assert.match(read('bible/01-Overview/Audit-49.md').split('\n')[0],
+    /THE LAB'S GRASS AND WEATHER IN THE GAME/);
+  assert.match(read('bible/Home.md'), /`01-Overview\/Audit-49\.md` - CLOSED [0-9-]+: THE LAB'S GRASS AND WEATHER/,
+    "Home.md's row for Audit-49.md is not that record's own subject");
+
+  // 2. TESTING.MD IS PINNED, NOT STALE. Both halves: the page may not
+  //    call it stale, and the pin it now names must still be the pin.
+  const status = read(STATUS);
+  assert.ok(!/smallest stale record in the tree/.test(status),
+    'Port-Status still calls a mechanically-pinned file the tree\'s smallest stale record');
+  assert.ok(!/`Testing\.md:4` is one test behind the runner/.test(status),
+    'the cross-cut table still bills the permanent metric offset as staleness');
+  assert.match(status, /Testing\.md:4`'s Suite line is not a stale record/,
+    'Port-Status no longer says what Testing.md:4 mechanically is');
+  const manifest = read('test/manifest.test.js');
+  assert.match(manifest, /Suite: \(\\d\+\) tests across \(\\d\+\) files\\\./,
+    'manifest.test.js no longer reads the Suite line Port-Status now points at');
+  assert.match(manifest, /src\.match\(\/\^test\\\(\/gm\)/,
+    'the pin no longer counts top-of-line test\\( calls, which is the metric Port-Status names');
+
+  // 3. NO UN-DELETED RESIDUE. A rewritten entry that leaves its
+  //    predecessor below it reads as a second, live claim; the tell is
+  //    a multi-cite clause repeated verbatim, once struck and once not.
+  const doc = read(STATUS).split('\n');
+  const clause = /`\w+\.js:\d+` -> `:\d+`/g;
+  const seen = new Map();
+  doc.forEach((l, i) => {
+    for (const m of l.matchAll(clause)) {
+      const key = m[0];
+      if (seen.has(key) && !l.includes('~~')) {
+        assert.fail(`Port-Status repeats the cite ${key} live at :${i + 1}, after :${seen.get(key)}`);
+      }
+      if (!seen.has(key)) seen.set(key, i + 1);
+    }
+  });
+  // ...and no entry closes twice: an italic run that ends, then
+  // continues un-capitalised, is the pre-rewrite draft left in place.
+  const orphan = doc.findIndex((l, i) => /mutation-checked by putting the token back\.\*$/.test(l)
+    && /^\s+[a-z]/.test(doc[i + 1] ?? ''));
+  assert.equal(orphan, -1, `Port-Status:${orphan + 2} continues an entry that already closed`);
 });

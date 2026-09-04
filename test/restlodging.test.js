@@ -705,7 +705,23 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     assert.match(h, /if \(d\.kind === 'blocked'\) \{/, f);
     assert.match(h, /racialRestBlock\(playerEntity/, f);
     assert.match(h, /racialOverrideBlocks: !!rb/, f);
+    // AUDIT 58: the OPEN GATE HAS TWO TERMS, and the interior host
+    // carried only one. DaggerfallUI.cs:651-656 is
+    // `if (AreEnemiesNearby(true)) { PlayerEntity.SetEnemyAlert(true);
+    // MessageBox(354); }` - raise the alert, THEN show the box. Three
+    // hosts ported both; worldModes showed the box and left
+    // playerEntity.enemyAlertActive down, so an interior refusal never
+    // armed the flag intermittentEnemySpawn rolls on (encounters.js
+    // :101) while the identical refusal outdoors or underground did.
+    assert.match(h, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, /,
+      `${f}: the enemies arm raises the alert before the box`);
+    assert.match(h, /import \{[^}]*setEnemyAlert[^}]*\} from '\.\.\/systems\/encounters\.js'/, f);
+    assert.ok(h.indexOf("if (d.kind === 'enemies') setEnemyAlert(") < h.indexOf("if (d.kind === 'blocked') {"),
+      `${f}: DFU raises the alert first`);
   }
+  // and the interior host uses ITS OWN clock for the stamp - the one
+  // racialRestBlock takes one line above (the 8h decay reads it back)
+  assert.match(wm, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, Math\.floor\(interiorTicker\.classicMinutes\)\);/);
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
@@ -717,8 +733,15 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   // this pin guards (every host runs restDecision, scene-free, before
   // opening) is unchanged and stronger.
   assert.match(wm, /enemiesNearby: interiorEnemiesNearby\(\{ resting: true \}\),[^}]*swimming: false,/s);
-  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/,
-    'and it is the ONE shared scan over this host\'s own pool');
+  // AUDIT 58: over BOTH of this host's pools. It named interiorFoes
+  // alone, so a player could lie down in a tavern with 2-5
+  // Knight_CityWatch spawned into the room by spawnCityGuardsInside
+  // and sleep the night through - the quest pool was empty, so the
+  // gate answered false where DFU's one database answers true.
+  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby\(interiorFoePool\(\), opts\) : false\);/,
+    'and it is the ONE shared scan over this host\'s own DATABASE - both pools');
+  assert.doesNotMatch(wm, /areEnemiesNearby\(interiorFoes\.foes/,
+    'the narrowed scan is deleted, not annotated');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);
@@ -1758,18 +1781,24 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
   // It is UNPACED: DFU calls the machine directly, bypassing
   // QuestMachine.Update's ticksPerSecond timer, so the hosts must
   // reach `machine.tick` and not questBridge.tick.
-  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js']) {
+  // QX1: FOUR hosts now, not two-and-a-half. exterior.js used to pass
+  // `tickQuests: null` with a note saying it mounted no bridge at all;
+  // it mounts one, so a rested night in the fixed-city host runs the
+  // same six unpaced machine ticks an hour as every other host.
+  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /tickQuests: \(\) => questBridge\?\.machine\?\.tick\?\.\(\),/, f);
   }
   assert.match(src('src/scenes/dungeonContext.js'),
     /tickQuests: \(\) => opts\.questBridge\?\.machine\?\.tick\?\.\(\),/);
-  // exterior.js mounts no bridge at all, and says so rather than
-  // omitting the key - the construction sweep should see a decision.
-  assert.match(src('src/scenes/exterior.js'), /tickQuests: null,/);
+  // the KEY, not the words: the bridge's own header quotes the retired
+  // decision verbatim, which is the tree's rule for a retirement record.
+  assert.equal(/tickQuests: null,/.test(src('src/scenes/exterior.js')), false,
+    'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
   assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
+  assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });
 
 

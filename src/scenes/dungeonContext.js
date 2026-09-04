@@ -34,7 +34,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -104,7 +104,11 @@ import {
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
+import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
+import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // DR1: DoModeAction's spell arm (:954-995)
+import { isEquipped } from '../systems/equip.js';   // DR1: FilterLocalItems' `!item.IsEquipped` (:693)
+import { totalGoldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip - AUDIT 58: PlayerEntity.GetGoldAmount (:1313-1316), coins PLUS letters
 import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
@@ -113,6 +117,7 @@ import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../syste
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
+import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
@@ -128,10 +133,11 @@ import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
-  SOUND, hitSoundFor, swingSoundFor,
+  SOUND, hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME,   // AUDIT 58: DFU's two hit volumes
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD,
 } from '../systems/soundClips.js';
+import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30) - the stride's 0.7, which its three one-shots carry too
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
@@ -566,6 +572,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       REACTIONS, sampleClip,
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
+      dropWeaponIfTargetImmune: formulas.dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
@@ -896,7 +903,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.questBehaviour?.notifyDestroyed();
       dropCandidate(f);
     },
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    // AUDIT 58: this is the SetHealth(0) door, not a damage source -
+    // like hurtPlayer's bypassShield it must not be mitigated, or a
+    // quest that removes a foe would be eaten by its own Shield.
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
     spellsByIndex: () => spellsByIndex,
     foeSinks: (f) => foeSinks(f),
     rolls: Math.random,
@@ -1061,7 +1071,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // only ever asked for SCBG04I0, so the constant existed with no
   // caller until now.
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
-  preloadListPickerArt({ renderer, fetchBytes, palette });   // X11b: PICK00I0 for the Create Item picker - without this the seam is silently dead
+  preloadListPickerArt({ renderer, fetchBytes, palette });   // X11b: PICK00I0 for the Create Item picker AND (DR1) the Dispel Magic bundle picker - without this the seam is silently dead
+  // DR1: INVE00I0 + SHOP00I0 + FONT0004 + the mode panels, warmed at
+  // BOOT for the same reason X11c moved worldModes' warm off the
+  // first door: the Identify WINDOW is a SPELL's, and a caster who
+  // has never opened a shop still owns the spell. Without the warm
+  // `tradeArtLoaded()` answers false for ever and the seam is
+  // silently dead - the exact shape the PICK00I0 line above guards.
+  preloadTradeArt({ renderer, fetchBytes, palette });
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
     .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
@@ -1218,12 +1235,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     loot: () => nearbyLootRecords({ piles: [...lootPiles, ...droppedLoot._piles], foes }),
     feet: () => lastPlayerFeet ?? [0, 0, 0],
   });
-  // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
+  // A2: DaggerfallAction.Play's sound - the RDB sound field fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
+  // AUDIT 58: it is a sound ID, not a record index. RDBLayout names
+  // the parameter `int soundID_and_index` (:951) and stores it as
+  // action.Index (:964), whose own comment calls it "the raw sound
+  // index from daggerfall" (DaggerfallAction.cs:42) - but the wiring
+  // is unambiguous: AddActionAudioSource casts it to uint
+  // (RDBLayout.cs:1075) so that `c.SetSound(id)` binds the UINT
+  // overload (DaggerfallAudioSource.cs:170-181), which is the only one
+  // of the three that runs GetSoundIndex. Played as an index, every
+  // RDB action in every dungeon rang a different clip from the one the
+  // block asked for.
   actions.onActionSound = (o) => {
     const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
-    if (p) audio.play3d(o.index, p);
+    if (p) audio.play3dId(o.index, p);
   };
   // AttemptBash's PlayerDoorBash (clip 7) from the door - the A1 seam
   // family (2026-08-16 audit: the hook existed unwired since the bash
@@ -1614,6 +1641,126 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // a PARAMETER everywhere else in this tree. So the body moved to
   // scenes/hostEnchant.js and both hosts hand in their own doors; a
   // copied mount would have diverged the first time an arm grew.
+  /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
+   *  they go through. `mountSpellWindow` is worldModes'
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:835,
+   *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
+   *  calls here - this file's own pushDungeonWindow, which IS
+   *  UserInterfaceManager.PushWindow. So a spell window raised over an
+   *  open automap or rest window lands ON TOP and uncovers it on
+   *  close, rather than being refused or clobbering the slot.
+   *
+   *  There is no closeSpellWindow twin, for the same reason worldModes
+   *  makes its dungeon arm a deliberate no-op (:857): both windows
+   *  raise `done` from inside their own pick/cancel/close
+   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
+   *  NativeTradeWindow's close, ui/nativeTrade.js:450), and
+   *  tickOverlay drains the slot and reconciles the stack. A second
+   *  clear here would only race that drain. */
+  const mountSpellWindow = (win) => pushDungeonWindow(win);
+
+  /** DR1: IDENTIFY'S WINDOW, in the standalone `?dungeon` host.
+   *  Identify.cs:71-76 refunds the cost, then pushes a
+   *  DaggerfallTradeWindow in Identify mode with UsingIdentifySpell
+   *  set and IdentifySpellCost = cost.spellPointCost - so the magicka
+   *  the window charges on the Identify click IS the number the effect
+   *  just gave back, which is what makes the round trip free when the
+   *  player closes the window without identifying anything. That is
+   *  worldModes.openIdentifyWindow's law (:6215-6226) and this is the
+   *  same construction over THIS host's bindings.
+   *
+   *  The hook set is the one Identify mode actually reads, and the
+   *  omissions are DFU's own mode gates, not port residue:
+   *    shelfItems/otherItems/repairItems/nowMinutes/allowMagicRepairs/
+   *    isBeingRepaired - Buy and Repair only (remoteList :256-259,
+   *      _takeItemFromRepair :388, _clear :430)
+   *    accepts/enchanted - localListAccepts' Sell and SellMagic arms
+   *      (tradeModes.js:348-350); Identify returns true unfiltered
+   *    weight - sellProceeds, on the Sell confirm alone (:490)
+   *    priceCtx - read by tradeCost's PAID Identify arm (:263-265) and
+   *      by _modeAction's ShowTradePopup ELSE (:456-466). Neither can
+   *      run on this mount: `usingIdentifySpell` is true, so the cost
+   *      walk takes DFU's "Identify spell remains free" line
+   *      (:479-481) and _modeAction returns at :458 before it reads a
+   *      price context. There is no merchant underground to sell the
+   *      paid service anyway - that is DFU's shape too, not a gap. */
+  function openIdentifySpellWindow({ chance, cost }) {
+    return new NativeTradeWindow({
+      mode: 'Identify',
+      usingIdentifySpell: true,
+      // D7: the LIVE collection (:389 `localItems = PlayerEntity.Items`),
+      // spliceable, because a click TRANSFERS out of it.
+      packItems: () => (playerEntity.items ??= []),
+      isEquipped: (it) => isEquipped(it),
+      // AUDIT 58: goldLabel is GetGoldAmount
+      // (DaggerfallTradeWindow.cs:488) on EVERY mount of this window,
+      // the dungeon's Identify included - coins plus letters of credit
+      // (PlayerEntity.cs:1313-1316). Label-only here, since the spell
+      // arm returns before ShowTradePopup's gold gate (:1116), but the
+      // strip is the same strip and reads the same quantity.
+      gold: () => totalGoldAmount(playerEntity),
+      rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],
+      cityName: () => '',        // a dungeon has no city name to quote back
+      shopName: '',              // ...and no shop; Identify.cs pushes no building
+      icons: { getTexture, uploadRecord, textures: renderer.textures },
+      entity: playerEntity,
+      // The same bridge read openInventory takes: QuestMachine.GetQuest
+      // for TransferItem's quest gate (DaggerfallInventoryWindow.cs:1489)
+      // and ResolveItemLongName's letter arm. The standalone page mounts
+      // no bridge and answers null - DFU's own fall-through.
+      getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+      // DoModeAction's SPELL arm (DaggerfallTradeWindow.cs:954-995),
+      // the same body worldModes.commitTrade runs (:1527-1556). The
+      // magicka refusal turns back the WHOLE pass and answers FALSE,
+      // which leaves the lot staged for a caster who steps away and
+      // comes back with the points (F144); the pass spends the points
+      // ONCE for the whole list whatever the rolls say; and there is
+      // no Mercantile tally, because the spell never reaches
+      // ConfirmTrade.
+      commit: (_mode, staged) => {
+        if (cost > (playerEntity.magicka ?? 0)) {
+          hudText.add(NOT_ENOUGH_SPELL_POINTS_TEXT);
+          surfacePlayer();
+          return false;
+        }
+        const pass = identifySpellPass(staged, chance, Math.random);
+        for (const it of pass.identified) it.isIdentified = true;
+        if (pass.spendMagicka) {
+          playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - cost);
+        }
+        hudText.add(identifiedTallyText(pass.successCount, pass.total));
+        surfacePlayer();
+        return true;
+      },
+    });
+  }
+
+  /** DR1: DISPEL MAGIC'S BUNDLE PICKER, the same window
+   *  worldModes.openDispelPicker (:6129-6152) builds - DFU pushes a
+   *  DaggerfallListPickerWindow over the player's live bundles by
+   *  name, picking one removes it and cancelling wastes the cast (no
+   *  refund, unlike Identify). The one asymmetry is DFU's: the
+   *  player's OWN casts always come off, and only something cast AT
+   *  them gets the roll. */
+  function openDispelPicker({ chance }) {
+    if (!listPickerArtLoaded()) return false;
+    const bundles = dispellableBundles(liveBundles(playerEntity));
+    if (!bundles.length) { hudText.add('You have no magic to dispel.'); return true; }
+    return mountSpellWindow(new ListPickerWindow({
+      items: bundles.map((b) => b.name || '(unnamed)'),
+      onPick: (i) => {
+        const b = bundles[i];
+        if (!b) return;
+        const r = dispelBundle(playerEntity, b.bundleId, {
+          selfCast: b.bundleType === 'Spell' && b.selfCast !== false,
+          roll01: Math.random(), chance,
+        });
+        if (r.alert) hudText.add(DISPEL_MAGIC_TEXT[r.alert]);
+      },
+      onCancel: () => {},   // the cast is spent; the drain closes the slot
+    }));
+  }
+
   const magic = createPlayerMagic({
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is
@@ -1683,17 +1830,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const f of gone) questPoolOps.removeFoe(f);
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
-    // PR1: the two window seams this host cannot mount, LOUD (the
-    // onTeleport INTERIM shape). Absent, the engine's dispatch
-    // optional-chained into silence: Identify refunded its cost and
-    // said NOTHING, Dispel Magic spent the cast on nothing and said
-    // NOTHING - the anti-lie law's exact shape. The full trade window
-    // and the bundle picker live on the worldModes host; DFU has no
-    // standalone dungeon scene at all (this is the port's own dev
-    // route), so the shipped bootWorld path carries both windows and
-    // this host says why it cannot.
-    onIdentify: () => hudText.add('You cannot concentrate on that right now. (the Identify window lives in the ?world route)'),
-    onDispelMagic: () => hudText.add('You cannot concentrate on that right now. (the Dispel Magic picker lives in the ?world route)'),
+    // DR1: THE TWO WINDOW SEAMS, MOUNTED. PR1 made them refuse out
+    // loud in what it called "the onTeleport INTERIM shape", which was
+    // the right answer to the SILENCE it found (absent, both
+    // optional-chained past the engine's dispatch: Identify refunded
+    // its cost and said NOTHING, Dispel Magic spent the cast on
+    // nothing and said NOTHING). But the refusal's REASON - "the
+    // window lives on the worldModes host" - was true of where the
+    // window was BUILT, not of what this host can mount. Both windows
+    // are `isChoiceWindow` natives over host-agnostic art, and this
+    // context already owns every seam one
+    // needs: pushDungeonWindow to raise it, tickOverlay to tick and
+    // drain it, overlayClick / overlayPointer / overlayHover /
+    // overlayWheel / overlayKeyUp to drive it, and drawOverlay's
+    // native arm to paint it. The art is warmed at boot beside
+    // PICK00I0. So they open here, and complete here.
+    //
+    // Both go through mountSpellWindow, which is worldModes'
+    // mountSpellWindow dungeon arm - the same door, one host down.
+    // The refusal that remains is the ART one, the X11b idiom: no
+    // INVE00I0/SHOP00I0 (or no PICK00I0) means no window, and a seam
+    // that cannot mount says so rather than swallowing the cast.
+    onIdentify: ({ chance, refund } = {}) => {
+      if (!tradeArtLoaded()
+        || !mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))) {
+        hudText.add('You cannot concentrate on that right now.');
+      }
+    },
+    onDispelMagic: ({ chance } = {}) => {
+      if (!openDispelPicker({ chance })) hudText.add('You cannot concentrate on that right now.');
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     now: () => classicMinutesRef.value,   // V2a: MorphSelf's once-a-day clock
     collider,
@@ -1704,6 +1870,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinks,
     absorbCtx: () => ({ inside: true, day: false }),
   });
+  /** V3: the Wabbajack's transform over this host's own pool. The
+   *  old foe leaves through questPoolOps.removeFoe (which is
+   *  GameObject.Destroy - no corpse, no loot, no death, and it
+   *  notifies the quest resource) and the new type stands at its
+   *  feet with the damage taken carried over. A quest foe still in
+   *  use is left alone - QuestResourceBehaviour's own check.
+   *
+   *  AUDIT 58 (review): lifted out of the ctx literal below and put
+   *  on the api, because that literal is mounted ONLY on the
+   *  standalone route (`opts.enchantCtx !== false`) while the hosted
+   *  route leaves world.js's mount as the session singleton - so a
+   *  dungeon record reaching that mount's replaceFoe had nowhere but
+   *  the street pool to go. One body, both routes. */
+  function replaceFoeInPool(targetEntity, mobileType) {
+    const f = foes.find((x) => !x.dead && x.entity === targetEntity);
+    if (!f) return;
+    if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+    const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
+    const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+    questPoolOps.removeFoe(f);
+    Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
+      if (!nf?.entity) return;
+      nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+      nf.entity.health -= missing;        // carry over damage (:94)
+    }).catch(() => {});
+  }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
   // `chargen: false` shape exactly - AN OUTER HOST ALREADY OWNS IT.
   // setDefaultEnchantCtx is a session singleton, and EC1 already made
@@ -1750,25 +1942,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // sheet construction, free-slot guard included - the Oghma opens
       // that, never a second bag built here.
       openCharacterSheet: () => api.toggleCharSheet(),
-      // V3: the Wabbajack's transform over this host's own pool. The
-      // old foe leaves through questPoolOps.removeFoe (which is
-      // GameObject.Destroy - no corpse, no loot, no death, and it
-      // notifies the quest resource) and the new type stands at its
-      // feet with the damage taken carried over. A quest foe still in
-      // use is left alone - QuestResourceBehaviour's own check.
-      replaceFoe: (targetEntity, mobileType) => {
-        const f = foes.find((x) => !x.dead && x.entity === targetEntity);
-        if (!f) return;
-        if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-        const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
-        const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
-        questPoolOps.removeFoe(f);
-        Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
-          if (!nf?.entity) return;
-          nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
-          nf.entity.health -= missing;        // carry over damage (:94)
-        }).catch(() => {});
-      },
+      replaceFoe: replaceFoeInPool,
     }));
   }
   // AUDIT 24: `chargen: false` says an OUTER host already owns the
@@ -1921,7 +2095,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeDeps.castEnemySpell(f, spell, {
       noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-      playCastSound: (element, from) => audio.play3d(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
+      playCastSound: (element, from) => audio.play3dId(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       explodeAt: magic.explodeAt,
       hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       fireMissile: (from, spell2, casterLevel, foe) =>
@@ -2186,7 +2361,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // C2-slice (combat-17): the player's 20% attack grunt fires once
     // per hit frame, never for a bow (this path is melee-only).
     const grunt = playerAttackGrunt(playerEntity, false, Math.random);   // explicit: this path's resolveHit rides Math.random too (no injected seam here)
-    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
@@ -2206,10 +2381,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         });
         if (snd?.at === 'enemy') audio.play3d(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio.playOneShot(snd.sound, 1.1);
+        // AUDIT 58: ...and the swing still ENRAGES what it touched.
+        // WeaponManager.cs:630's HandleAttackFromSource sits after the
+        // damage fork closes (:615), so a connecting swing that lost
+        // the roll wakes a pacified foe and the whole room with it.
+        // Only the aggro half runs here: :627's DecreaseHealth(0)
+        // changes nothing, and the knockback/hurt the damage door also
+        // carries lives INSIDE WeaponManager's `damage > 0` arm.
+        handleAttackFromPlayer(foe, playerFeet);
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
-      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
+      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });   // rides the foe's source shape
       // WeaponManager.cs:569-573 - the splash sits right beside the hit
       // sound and takes the struck foe's OWN BloodIndex. DFU has a
       // raycast impactPosition here; the port resolves melee by yaw
@@ -2220,7 +2403,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
-      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
     // combat-14: the no-entity fallback - only a swing that connected
@@ -2361,8 +2544,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6359,
-              // exterior.js:2290 and worldModes.js:4619 already ran;
+              // playerArrowHitFoe is the one copy world.js:6403,
+              // exterior.js:2431 and worldModes.js:4627 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2388,6 +2571,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
                 onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
+                // AUDIT 58: WeaponManager.cs:630 runs for every shaft that
+                // CONNECTED, damage or none.
+                onAttackFromPlayer: (t) => handleAttackFromPlayer(t, lastPlayerFeet),
               });
               retireMissile(m);
               break;
@@ -2411,6 +2597,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 calculateAttackDamage: foeDeps.calculateAttackDamage,
                 dealDamage: (tt, d) => tt.hurtFromFoe?.(d, m.dir),
                 audio, hitEffects,
+                // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
+                // a poisoned foe blade doses the foe it strikes, on DFU's
+                // own target (the struck entity). Without the hook the
+                // formula still cleared the dose, so the blade was spent
+                // and nothing was poisoned.
+                onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+                say: (l) => hudText.add(l),   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
               });
             }
             // :145-147 - the recovered Arrow goes into the TARGET's
@@ -2444,7 +2637,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // PlayWeaponHitSound's family, NOT PlayArrowSound - which
             // has no sender anywhere in the DFU tree and is dead.
             if (dmg > 0) {
-              audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+              audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
               flashPlayerDamage();
               playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
             } else if (m.shooterFoe) {
@@ -2643,9 +2836,42 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
+  /** AUDIT 58: HandleAttackFromSource's PLAYER ARM, lifted out of the
+   *  damage door because DFU runs it on a CONNECTING swing whether or
+   *  not the swing dealt anything. WeaponManager.WeaponDamage's damage
+   *  fork closes at :615; :627 `enemyEntity.DecreaseHealth(damage)`
+   *  and :630 `HandleAttackFromSource(PlayerEntityBehaviour)` are two
+   *  unconditional statements after it, so a swing that lost the
+   *  to-hit roll (calculateSuccessfulHit clamps 3..97 - a miss is
+   *  always possible) still enrages what it touched. The port routed
+   *  the pair through damageFoe alone, and every player-attack
+   *  resolver skipped damageFoe at zero damage: a foe talked down by
+   *  tryLanguagePacification stayed pacified and the room slept on.
+   *  DaggerfallEntityBehaviour.cs:249-261's body is unchanged below. */
+  function handleAttackFromPlayer(foe, playerFeet = null) {
+    if (!foe?.ai) return;
+    // ROAD-B: ...and the AREA turns with it.
+    // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
+    //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
+    //     enemyMotor.MakeEnemyHostileToAttacker(player);
+    // - so striking one sleeping/passive foe wakes the WHOLE room,
+    // and only the struck one learns where you are. The port had the
+    // second call and not the first, which is why a passive RDB
+    // guard could be picked off one at a time in a room full of
+    // them. The `!isHostile` read has to happen BEFORE the walk,
+    // because the walk flips this foe too.
+    if (!foe.ai.isHostile) makeEnemiesHostile(foes);
+    if (foeDeps) {
+      foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
+      foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
+    } else if (!foe.ai.isHostile) {
+      foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);   // wave 36: seeded with where the attack came from
+    }
+  }
+
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
-  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {}) {
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
     markFoeStruck(foe, { fromPlayer });   // PX30: the enhanced HUD's target frame
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
@@ -2660,25 +2886,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // must, and a foe hurt before the subsystem loaded still stands
     // up through the legacy arm.
     if (fromPlayer && foe.ai) {
-      // ROAD-B: ...and the AREA turns with it.
-      // DaggerfallEntityBehaviour.cs:249-261 is TWO calls in order -
-      //     if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile();
-      //     enemyMotor.MakeEnemyHostileToAttacker(player);
-      // - so striking one sleeping/passive foe wakes the WHOLE room,
-      // and only the struck one learns where you are. The port had the
-      // second call and not the first, which is why a passive RDB
-      // guard could be picked off one at a time in a room full of
-      // them. The `!isHostile` read has to happen BEFORE the walk,
-      // because the walk flips this foe too.
-      if (!foe.ai.isHostile) makeEnemiesHostile(foes);
-      if (foeDeps) {
-        foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
-        foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
-      } else if (!foe.ai.isHostile) {
-        foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);   // wave 36: seeded with where the attack came from
-      }
+      handleAttackFromPlayer(foe, playerFeet);
     }
-    foe.entity.health -= damage;
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(foe.entity, damage);
+    foe.entity.health -= healthDamage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
       // EnemyEntity.SetHealth override does (:157-177) - before the
@@ -2755,7 +2979,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  melee damage frame, whatever the outcome (MeleeDamage's tail). */
   function foeAttackVoice(f) {
     const v = enemyAttackVoice(f);
-    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
   }
 
   /** MT-iv: MeleeDamage's TWO-ARM SPLIT (EnemyAttack.cs:199-209) -
@@ -2769,7 +2993,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!foeDeps || !f.ai._armedTargeting || !t || foeDeps.isPlayerTarget(t)) return false;
     const tf = t.ai.feet;
     const fdx = tf[0] - f.ai.feet[0], fdz = tf[2] - f.ai.feet[2];
-    const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    // EnemyAttack.cs:191-194 - the metal drop runs BEFORE the reach
+    // fork and before the weapon-vs-weaponless swap, so a Ghost or a
+    // Lich takes the striker's hand-to-hand attack instead of the
+    // silent report(0) the material gate hands enemies.
+    const wpn = foeDeps.chooseEnemyWeapon(foeDeps.dropWeaponIfTargetImmune(f.entity.weapon, t.entity), ENEMY_BASICS[f.mobileType]);
     const fwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
     if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, fdx, fdz, foeDeps.MELEE_HIT_YAW_DEG))) {
       applyDamageToNonPlayer(f, t, {
@@ -2777,6 +3005,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         calculateAttackDamage: foeDeps.calculateAttackDamage,
         dealDamage: (tt, d) => tt.hurtFromFoe?.(d, fwd),
         audio, hitEffects,
+        // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate - a
+        // poisoned foe blade doses the foe it strikes, on DFU's own
+        // target. Without the hook the formula still cleared the dose.
+        onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+        say: (l) => hudText.add(l),   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
       });
     } else {
       audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -2820,7 +3053,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
       say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
-    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
+    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
     // C2-slice (combat-9): a connected attack that LOST the roll
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -3831,6 +4064,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
     spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
+    replaceFoe: replaceFoeInPool,   // AUDIT 58 (review): the hosted route's enchant mount routes the Wabbajack here by pool membership
     drawFoes,
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
@@ -3948,6 +4182,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // inside the third `else`, after the other two arms have
         // returned.
         preventedMessage: getPreventedRestMessage,
+        // AUDIT 58: DaggerfallUI.cs:680's `else if (!GiveOffer())` -
+        // a pending `give pc ... notify` offer takes this press and
+        // the rest window stays shut (ui/pendingOffer.js).
+        giveOffer,
         racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
@@ -3955,6 +4193,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // enemies arm (DaggerfallUI.cs:655, not the rest window's
         // :655), which is what arms this host's rest-encounter roll.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+        // AUDIT 58: the offer took the press - the item was handed
+        // over inside GiveOffer() and there is nothing to say.
+        if (d.kind === 'offer') return;
         if (d.kind === 'blocked') {
           const lines2 = rscLines(rb.textId);   // V2b: the unfed vampire's own box
           if (lines2) activeOverlay = new ActionTextBox(lines2);
@@ -3984,7 +4225,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
     reportActivity({ running = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
-      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
+      // AUDIT 58: PlayLargeSplash is PlayOneShot(SplashLargeSound, 0,
+      // FootstepVolumeScale) - PlayerFootsteps.cs:323-326.
+      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge, FOOTSTEP_VOLUME);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
       _activity.climbing = climbing;   // AUDIT 26 F083: ClimbingFatigueLoss's live flag
@@ -4009,9 +4252,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (fell > FALL_DAMAGE_THRESHOLD) {
         hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
         flashPlayerDamage();
-        audio.playOneShot(SOUND.FallDamage);
+        audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:307-311
       } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
-        audio.playOneShot(SOUND.FallHard);
+        audio.playOneShot(SOUND.FallHard, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:315-319
       }
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
@@ -4115,7 +4358,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:772) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:773) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with
@@ -4417,6 +4660,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
+        rows: (id, pick) => textRsc?.variantLinesById(id, pick ?? Math.random) ?? [],   // AUDIT 58: the eight attribute popups' TEXT.RSC records 0..7
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
         ...questJournalHooks(),

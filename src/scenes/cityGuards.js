@@ -45,6 +45,7 @@
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
@@ -68,6 +69,7 @@ import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // AUD
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
+  dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194, the foe-vs-foe metal drop
   enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
   enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
 } from '../combat/formulas.js';
@@ -523,8 +525,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
-  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
-    g.entity.health -= damage;
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(g.entity, damage);
+    g.entity.health -= healthDamage;
     if (g.entity.health <= 0) {
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
@@ -740,7 +756,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           ? g.ai.target : null;
         if (_foeTarget) {
           const fdx = _tgt[0] - g.ai.feet[0], fdz = _tgt[2] - g.ai.feet[2];
-          const fwpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+          // EnemyAttack.cs:191-194 runs BEFORE the reach fork: a target
+          // that refuses this metal drops the weapon and the watchman
+          // swings hand-to-hand (dropWeaponIfTargetImmune), which is the
+          // only place MinMetalToHit is live - the player has none.
+          const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(g.entity.weapon, _foeTarget.entity), ENEMY_BASICS[GUARD_MOBILE_TYPE]);
           const ffwd = [Math.sin(g.ai.yaw), 0, Math.cos(g.ai.yaw)];   // transform.forward (:208)
           if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
             applyDamageToNonPlayer(g, _foeTarget, {
@@ -748,12 +768,18 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
               calculateAttackDamage,
               dealDamage: (t, d) => t.hurtFromFoe?.(d, ffwd),
               audio, hitEffects,
+              // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
+              // the watch's poisoned blade doses the monster it strikes.
+              // Without the hook the formula still cleared the dose, so
+              // the blade was spent against the player too.
+              onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+              say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
             });
           } else {
             audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const gv = enemyAttackVoice(g);   // :216-226 fires whatever the target
-          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
+          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + gv.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
           continue;
         }
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
@@ -789,7 +815,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // C2-slice (combat-17): the 20% attack voice - the watch is
         // the Knight_CityWatch class, whose voice is FORCED male.
         const v = enemyAttackVoice(g);
-        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16 });
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
@@ -840,7 +866,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (melee-only path).
     const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
     { const v = lycanthropeAttackVoice(playerEntity, rand); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing
@@ -859,7 +885,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
-        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
         damageGuard(foe, damage, playerFeet, lookDir);
       } else {
         // WeaponManager.cs:609-615: a connecting swing that dealt
@@ -871,6 +897,18 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
+        // AUDIT 58: ...and the swing still reaches the damage door.
+        // WeaponManager.cs:627/:630 - DecreaseHealth(damage) and
+        // HandleAttackFromSource - run AFTER the `damage > 0` fork
+        // closes (:615), so a connecting swing that lost the roll is
+        // not a nothing. The ray is NOT passed: WeaponManager's
+        // knockback (:575-582) is inside the damage arm, and
+        // weaponKnockbackSpeed(0, w) returns the 15/ratio floor.
+        // Knight_CityWatch is EnemyClass, so DaggerfallEntityBehaviour
+        // .cs:250-260's hostility pair covers it - this door carries
+        // none yet (the two encounter pools' do), so the call is the
+        // structure and the pair is a separate, unported half.
+        damageGuard(foe, 0, playerFeet, null);
       }
     }
     // WeaponManager.cs:419-436: a connecting swing tallies the weapon

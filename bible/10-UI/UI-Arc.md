@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1562 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:788, world.js:1388,
-                        exterior.js:873. It is the only window TWO
+                        dungeonContext.js:789, world.js:1389,
+                        exterior.js:875. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1427, dungeonContext.js:3053. A seam
+    / NOTEBOOK          world.js:1428, dungeonContext.js:3065. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -4379,10 +4379,11 @@ DaggerfallInventoryWindow's whole second inventory:
   restore an empty cart. All five window constructions hand
   `wagonItems`; the dungeon host hands the exit-door proximity.
 
-Prose flags: exitTooFar/cannotHoldAnymore/wagonFullGold keys cited,
-prose ours pending a string source (the established pattern).
-RESIDUE: the wagon weight label ("x / 750" on the remote icon) is a
-drawing note; DFU's on-foot gate rides the transport arc.
+Prose: exitTooFar/cannotHoldAnymore/wagonFullGold are taken VERBATIM
+from Internal_Strings.csv (:847, :829, :815) - the string source is in
+the reference tree, so the old "prose ours pending a source" note was
+stale, not a departure (AUDIT 58).
+RESIDUE: DFU's on-foot gate rides the transport arc.
 
 Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
 transfer gate dropped; the no-loot auto-open dropped; the gold
@@ -7832,7 +7833,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1641 and
+questJournal.js from charSheetNav:53, world.js:1642 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8459,7 +8460,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:4640` and `dungeonContext.js:1223` answer the same
+`worldModes.js:4648` and `dungeonContext.js:1224` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two

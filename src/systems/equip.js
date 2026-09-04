@@ -291,7 +291,7 @@ export function rebuildEquipState(entity) {
  *  chargenSession.js:136 (?class= headless) and :221 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:1260, exterior.js:739):
+ *  residue at the two host calls (world.js:1261, exterior.js:741):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -388,7 +388,15 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   // and strips any held bundle), THEN the Breaks payload - both
   // through hooks so this leaf stays below the enchantment module.
   // SoulBound's break releases the soul.
-  if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
+  // AUDIT 58: BY IDENTITY, not by the port's worn mark.
+  // DaggerfallUnityItem.ItemBreaks calls UnequipItem(owner), which
+  // walks the owner's table and takes off whichever slot holds THIS
+  // item (:1183-1196) - `unequipItem` above IS that walk. The mark
+  // is a port device the player's items carry; a FOE's worn gear is
+  // placed in its table without one (hostCombat.equipEnemy, so its
+  // own corpse's loot is not hidden from every inventory tab), and
+  // the mark-keyed call could never take a broken foe's shield off.
+  if (owner) unequipItem(owner, item);
   _hooks.onItemBroken?.(item, owner, say);
   return true;
 }

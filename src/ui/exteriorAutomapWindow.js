@@ -64,7 +64,9 @@
 // (:599-641), edge driven in the reference too, so those ten were
 // always parity.
 //
-// DEPARTURES THAT STAND (recorded, Port-Ledger):
+// RECORDED DEPARTURES THAT STAND. Ledger A carries the pair as THE
+// TOWN MAP'S PLATE LABEL AND ROTATION ARROW ARE THE PORT'S OWN PIXELS
+// (AUDIT 58, seams lane), cited by name because a line number rots:
 //  - the plate label is the port's FNT text, not DFU's yellow-reloaded
 //    DaggerfallFont Texture2D, so TextScale is halved for the port's
 //    16px-cell glyphs (the A2 legibility pick, kept).
@@ -1002,10 +1004,16 @@ export class ExteriorAutomapWindow {
    *    the TOOLTIP keeps the canonical one (:882-885);
    *  - a discovered RESIDENCE shows a plate only when an active quest
    *    marked it (:682-709), which is the `questName` the host stamped
-   *    on the row at open through stampResidenceQuestNames above - and
-   *    a host with no quest machine at all (scenes/exterior.js) leaves
-   *    it unset, which is the same answer DFU gives with no active
-   *    quests: no plate;
+   *    on the row at open through stampResidenceQuestNames above. BOTH
+   *    exterior hosts stamp (scenes/world.js and, since QX1,
+   *    scenes/exterior.js); a residence no active quest marked simply
+   *    leaves questName unset, which is DFU's own empty-set answer: no
+   *    plate. `?exterior` supplies only two of the three source arms -
+   *    `isBuildingQuestResource` is TalkManager's and that route runs
+   *    no topic tree - and residenceQuestName's next line skips the
+   *    only assignment without it, so that host's stamp resolves '' for
+   *    every residence, which is still DFU's answer where no NPC can
+   *    mark;
    *  - an UNdiscovered building shows a plate only under
    *    revealUndiscoveredBuildings, from the BuildingNames table
    *    (:712-719);

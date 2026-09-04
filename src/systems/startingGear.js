@@ -2,7 +2,7 @@
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
 // (equip.js:288), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:1260 and exterior.js:739 seed it
+// two hosts gate it to - world.js:1261 and exterior.js:741 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -31,6 +31,7 @@ import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the co
 import { equipItem } from './equip.js';
 import { itemBaseValue, templateByIndex, mintCondition } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
+import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
 import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
 
 // ItemEnums template indices
@@ -117,7 +118,17 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
     add({ group: 'Weapons', templateIndex: STARTING_WEAPON_BY_CLASS[i], material: STARTING_MATERIAL_BY_CLASS[i] });
     if (i === ARCHER_CLASS_INDEX) {
       add({ group: 'Weapons', templateIndex: BATTLE_AXE, material: 1 });
-      add({ group: 'Weapons', templateIndex: ARROW, material: 0, stackCount: ARCHER_ARROWS });
+      // AUDIT 58: the pile is minted through the ONE home of
+      // CreateWeapon's arrow arm, not hand-built. DFU builds it as
+      // `ItemBuilder.CreateWeapon(Weapons.Arrow, WeaponMaterialTypes.Iron)`
+      // then writes the stack after (ItemHelper.cs:1342-1344), and that
+      // arm sets `currentCondition = 0` - "not sure if this is
+      // necessary, but classic does it" (ItemBuilder.cs:359-364).
+      // Hand-minting it here ran mintCondition instead, which paid the
+      // pile full condition; createWeapon's own Range(1, 21) stack draw
+      // is spent as DFU spends it and then overwritten, same as
+      // ItemHelper does.
+      add({ ...createWeapon(ARROW, 0, rolls), stackCount: ARCHER_ARROWS });
     }
   }
 

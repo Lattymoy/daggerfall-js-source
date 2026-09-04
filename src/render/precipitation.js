@@ -7,6 +7,20 @@
 // a per-particle sine. Depth-tested against the world, no depth writes,
 // alpha blended, drawn after all other passes. Deliberately unfogged
 // (the volume hugs the camera inside any fog's near field).
+//
+// AUDIT 58 (f3/render): TWO PROFILES ARE TWO PROGRAMS, not one shader
+// with a switch. EE8 mixed an enhanced arm into the stages below under
+// `uEnh`; WX1 then gave the enhanced lane the lab's own program and
+// returned from draw() into it before any of that arm could be reached
+// (`if (this.enhanced) return this.drawLab(...)`, below) - so every
+// `uEnh` term was dead: uploaded as 0 on every frame the classic lane
+// drew, and never once as 1. The mixed arms, the enhanced profiles and
+// the 26,000-particle buffer they sized are gone with the branch that
+// could have reached them; the stages below are the classic pass byte
+// for byte as it stood before EE8, and the enhanced look is WX1's
+// program (drawLab), untouched. The classic lane pays for the classic
+// cap alone - the lab's program and its 26,000 instances are built for
+// the lane that draws them, and for no other.
 
 const PRECIP_VS = `#version 300 es
 layout(location=0) in vec3 aSeed;   // 0..1 per particle
@@ -22,44 +36,26 @@ uniform float uDrift; // sine drift amplitude (snow)
 uniform vec2 uSlant;  // constant xz wind per unit fall (rain)
 uniform vec2 uSize;
 uniform int uSnow;
-// EE8 (Enhanced Environments): the enhanced profile's terms. uWindOff is
-// the wind's travel INTEGRATED on the CPU - never speed multiplied by
-// uptime, because uptime is tens of seconds and the smallest change in
-// a gusting wind would then move every drop by metres at once. uEnh is
-// 0 for the classic profile, and every term it gates is byte-for-byte
-// what this pass always did when it is.
-uniform vec2 uWindOff;
-uniform float uEnh;
 out float vFade;
-out float vT;
 void main() {
   // Base position advances with time and wraps inside the volume, then
   // recenters on the camera.
   float phase = aSeed.x * 37.0 + aSeed.z * 91.0;
-  // a per-particle GUST, so the enhanced sheet is not one rigid direction
-  float gust = mix(1.0, 0.75 + fract(phase * 0.371) * 0.5, uEnh);
-  float fallY = aSeed.y * uBox.y - uTime * uFall * gust;
-  vec2 travel = mix(uTime * uSlant, uWindOff * gust, uEnh);
+  float fallY = aSeed.y * uBox.y - uTime * uFall;
   vec3 local = vec3(
-    mod(aSeed.x * uBox.x + travel.x + (uSnow == 1 ? sin(uTime * 0.7 + phase) * uDrift : 0.0), uBox.x),
+    mod(aSeed.x * uBox.x + uTime * uSlant.x + (uSnow == 1 ? sin(uTime * 0.7 + phase) * uDrift : 0.0), uBox.x),
     mod(fallY, uBox.y),
-    mod(aSeed.z * uBox.z + travel.y + (uSnow == 1 ? cos(uTime * 0.6 + phase * 1.3) * uDrift : 0.0), uBox.z)
+    mod(aSeed.z * uBox.z + uTime * uSlant.y + (uSnow == 1 ? cos(uTime * 0.6 + phase * 1.3) * uDrift : 0.0), uBox.z)
   );
   vec3 center = uCamPos - uBox * 0.5 + local;
 
   // Rain streaks align with the fall direction; snow squares face the
-  // camera about Y (billboard convention). EE8: in the enhanced profile
-  // the fall direction is the ACTUAL velocity - the integrated wind's
-  // rate against the fall - so a driven drop leans with the wind and its
-  // streak is LONGER, because its length is its speed.
-  vec2 windRate = mix(uSlant, uSlant * gust, uEnh);
-  vec3 fallDir = normalize(vec3(windRate.x, -uFall * gust, windRate.y));
+  // camera about Y (billboard convention).
+  vec3 fallDir = normalize(vec3(uSlant.x, -uFall, uSlant.y));
   vec3 upAxis = uSnow == 1 ? vec3(0.0, 1.0, 0.0) : -fallDir;
-  float len = uSize.y * mix(1.0, length(vec3(windRate.x, uFall * gust, windRate.y)) / max(1.0, uFall), uEnh * float(uSnow == 0));
   vec3 world = center
     + uCamRight * (aCorner.x * uSize.x)
-    + upAxis * (aCorner.y * len);
-  vT = aCorner.y + 0.5;
+    + upAxis * (aCorner.y * uSize.y);
   // Fade particles near the volume edge to hide the wrap.
   vec3 edge = abs(local / uBox - 0.5) * 2.0;
   vFade = 1.0 - smoothstep(0.85, 1.0, max(edge.x, edge.z));
@@ -68,27 +64,11 @@ void main() {
 
 const PRECIP_FS = `#version 300 es
 precision highp float;
-// EE8: uSnow is read here now, and a uniform shared by two stages must
-// carry the SAME precision in both. The vertex stage's ints are highp by
-// default and a fragment stage's are mediump, so without this line the
-// program refuses to link: "Precisions of uniform 'uSnow' differ" - and
-// the exterior rendered no frame at all under rain. Found by the world
-// gate, named by the browser console.
-precision highp int;
 in float vFade;
-in float vT;
 uniform vec4 uColor;
-uniform int uSnow;
-uniform float uEnh;
 out vec4 outColor;
 void main() {
-  // EE8: an enhanced rain drop is bright at its HEAD and fades along
-  // its tail - the eye reads the bright end as the leading one, which
-  // is what makes a streak fall rather than rise. The classic profile
-  // keeps its flat colour.
-  float head = uSnow == 1 ? 1.0 : smoothstep(0.0, 0.35, vT) * 1.15;
-  float a = uColor.a * vFade * mix(1.0, head, uEnh);
-  outColor = vec4(uColor.rgb, a);
+  outColor = vec4(uColor.rgb, uColor.a * vFade);
 }`;
 
 export const PRECIP_MAX_PARTICLES = 1000; // Rain_Particles_Splash maxNumParticles (AUDIT 23: the sibling named Rain_Particles carries 10000; this cap anchors the splash object)
@@ -110,16 +90,12 @@ const SNOW = {
   size: [0.07, 0.07],
   color: [1, 1, 1, 0.85],
 };
-// EE8: THE ENHANCED PROFILES, from the Enhanced Environments lab. The
-// classic ones above anchor DFU's own cap; these are the lab's volume:
-// a denser fall, and a wind that DRIVES it - the slant here is the base
-// the weather's own wind multiplies, so a gale leans the rain hard and a
-// calm barely tilts it. Presentation is ours (Port-Doctrine); only the
-// classic cap is anchored, and classic keeps it.
-export const PRECIP_ENHANCED_MAX = 26000;
-const RAIN_ENH = { ...RAIN, count: 26000, box: [42, 26, 42], size: [0.014, 0.42], color: [0.62, 0.68, 0.78, 0.30] };
-const STORM_ENH = { ...RAIN_ENH, count: PRECIP_ENHANCED_MAX, size: [0.014, 0.5], color: [0.58, 0.64, 0.74, 0.34] };
-const SNOW_ENH = { ...SNOW, count: 18000, box: [42, 26, 42], drift: 0.9, size: [0.06, 0.06] };
+// AUDIT 58 (f3/render): EE8's RAIN_ENH/STORM_ENH/SNOW_ENH profiles and
+// their PRECIP_ENHANCED_MAX = 26000 stood here. Their only reader was
+// the ternary in draw() below, downstream of WX1's early return into
+// drawLab - unreachable from the day WX1 landed. The lab's volume is
+// LAB_COUNTS, on the lab's own program; DFU's cap above is the classic
+// one, and it is the only one this program draws.
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -238,66 +214,53 @@ function mat4Multiply(out, a, b) {
   return out;
 }
 
+/** One compile, shared by the classic program and the lab's. */
+function compileShader(gl, type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(sh));
+  }
+  return sh;
+}
+
 export class PrecipitationRenderer {
-  constructor(gl) {
+  /** AUDIT 58 (f3/render): `opts.enhanced` is the LANE, not the frame -
+   *  the host passes `sky.enhanced` (scenes/shared.js's createSkyController
+   *  return), which is fixed for a scene, while the per-frame
+   *  `precip.enhanced` field below rides the deck. The lane builds WX1's
+   *  program here, so a shader fault is still a constructor fault the boot
+   *  probe sees; the classic lane never compiles it and never uploads its
+   *  26,000 instances. */
+  constructor(gl, opts = {}) {
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(sh));
-      }
-      return sh;
-    };
     const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, PRECIP_VS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, PRECIP_FS));
+    gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, PRECIP_VS));
+    gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, PRECIP_FS));
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(prog));
     }
     this.program = prog;
-    for (const u of ['uProj', 'uView', 'uCamPos', 'uCamRight', 'uTime', 'uBox', 'uFall', 'uDrift', 'uSlant', 'uSize', 'uSnow', 'uColor', 'uWindOff', 'uEnh']) {
+    for (const u of ['uProj', 'uView', 'uCamPos', 'uCamRight', 'uTime', 'uBox', 'uFall', 'uDrift', 'uSlant', 'uSize', 'uSnow', 'uColor']) {
       this[u] = gl.getUniformLocation(prog, u);
     }
 
-    // WX1: the LAB's program beside the classic one - its own shaders,
-    // its own instance layout, its own VAO. Built here so a shader fault
-    // is a constructor fault, which the boot probe sees.
-    {
-      const lp = gl.createProgram();
-      gl.attachShader(lp, compile(gl.VERTEX_SHADER, LAB_WX_VS));
-      gl.attachShader(lp, compile(gl.FRAGMENT_SHADER, LAB_WX_FS));
-      gl.linkProgram(lp);
-      if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
-      this.labProgram = lp;
-      this.lab = {};
-      for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff']) this.lab[u] = gl.getUniformLocation(lp, u);
-      // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
-      // own xorshift so the scatter is the lab's scatter
-      const n = LAB_COUNTS.rain;
-      const inst = new Float32Array(n * 4);
-      let s2 = 0x9e3779b9;
-      const rnd = () => { s2 ^= s2 << 13; s2 ^= s2 >>> 17; s2 ^= s2 << 5; s2 >>>= 0; return s2 / 4294967296; };
-      for (let i = 0; i < n; i++) { inst[i * 4] = rnd() * LAB_BOX; inst[i * 4 + 1] = rnd() * LAB_BOX; inst[i * 4 + 2] = rnd() * LAB_BOX; inst[i * 4 + 3] = rnd(); }
-      const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
-      const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
-      const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb); gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
-      gl.bindVertexArray(null);
-      this.labVao = vao;
-      /** the wind's instantaneous rate, m/s, for the streak's lean and the
-       *  flake's throw - the lab's uWindV */
-      this.windV = new Float32Array(2);
-    }
+    /** the wind's instantaneous rate, m/s, for the streak's lean and the
+     *  flake's throw - the lab's uWindV */
+    this.windV = new Float32Array(2);
+    this.labProgram = null;
+    if (opts.enhanced) this._buildLab();
 
-    // One buffer sized for the LARGEST set - EE8's enhanced storm - and
-    // every profile draws a prefix of it. Per-particle quad (4 verts).
-    const n = PRECIP_ENHANCED_MAX;
+    // One buffer sized for the LARGEST set this program can draw, and
+    // the smaller profile draws a prefix of it. Per-particle quad (4
+    // verts). AUDIT 58 (f3/render): this was PRECIP_ENHANCED_MAX =
+    // 26,000 - a 26,000-iteration build and ~2.7 MB of buffers for a
+    // program whose only reachable counts are RAIN's 1000 (DFU's
+    // Rain_Particles_Splash cap) and SNOW's 800. The lab's 26,000 are
+    // instances of the LAB's buffer, in _buildLab.
+    const n = Math.max(RAIN.count, SNOW.count);
     const verts = new Float32Array(n * 4 * 5);
     const indices = new Uint32Array(n * 6);
     const corners = [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]];
@@ -324,12 +287,19 @@ export class PrecipitationRenderer {
     }
     /** EE8: the profile. false = classic (DFU's cap, byte for byte);
      *  true = the lab's volume, driven by the weather's wind. Set by the
-     *  host from the Enhanced Environments switch. */
-    this.enhanced = false;
+     *  host each frame from the sky's deck; it opens at the lane's own
+     *  answer so a renderer built for the enhanced lane is never asked
+     *  to draw the lab's program before it owns one. */
+    this.enhanced = !!opts.enhanced;
     /** EE8: the wind's travel, integrated by the host in world units. */
     this.windOff = new Float32Array(2);
-    /** EE8: an optional cap on the enhanced count (?rain=<n>), for gates. */
-    this.countCap = null;
+    /** EE8: an optional cap on the enhanced count (?rain=<n>), for gates.
+     *  AUDIT 58 (f3/render): taken at CONSTRUCTION, from the host's own
+     *  boot params - it is a page dial and cannot change during a load,
+     *  and both hosts were re-parsing `location.search` for it on every
+     *  frame that rain drew, in the pass whose header claims zero
+     *  per-frame CPU. */
+    this.countCap = opts.countCap ?? null;
     /** WX2: the front's intensity, 0..1 - the fraction of the profile's
      *  drops on screen. 1 is the whole profile (WX1's volume). The hosts
      *  walk it on the front under the enhanced environments; the classic
@@ -350,6 +320,42 @@ export class PrecipitationRenderer {
     gl.bindVertexArray(null);
   }
 
+  /** WX1: the LAB's program beside the classic one - its own shaders,
+   *  its own instance layout, its own VAO. The enhanced lane builds it
+   *  in the constructor, so a shader fault is a constructor fault the
+   *  boot probe sees; drawLab builds it on demand, so a renderer that
+   *  is handed the deck without the lane's flag still draws the lab's
+   *  rain rather than throwing. AUDIT 58 (f3/render): it used to be
+   *  built unconditionally - the classic skin compiled two stages it
+   *  can never bind and uploaded 26,000 instances it can never draw. */
+  _buildLab() {
+    const gl = this.gl;
+    const lp = gl.createProgram();
+    gl.attachShader(lp, compileShader(gl, gl.VERTEX_SHADER, LAB_WX_VS));
+    gl.attachShader(lp, compileShader(gl, gl.FRAGMENT_SHADER, LAB_WX_FS));
+    gl.linkProgram(lp);
+    if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
+    this.labProgram = lp;
+    this.lab = {};
+    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff']) this.lab[u] = gl.getUniformLocation(lp, u);
+    // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
+    // own xorshift so the scatter is the lab's scatter
+    const n = LAB_COUNTS.rain;
+    const inst = new Float32Array(n * 4);
+    let s2 = 0x9e3779b9;
+    const rnd = () => { s2 ^= s2 << 13; s2 ^= s2 >>> 17; s2 ^= s2 << 5; s2 >>>= 0; return s2 / 4294967296; };
+    for (let i = 0; i < n; i++) { inst[i * 4] = rnd() * LAB_BOX; inst[i * 4 + 1] = rnd() * LAB_BOX; inst[i * 4 + 2] = rnd() * LAB_BOX; inst[i * 4 + 3] = rnd(); }
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
+    const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb); gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
+    gl.bindVertexArray(null);
+    this.labVao = vao;
+  }
+
   /** mode 'rain'|'storm'|'snow'; storm shares the rain look. */
   /** WX1: the lab's draw, term for term - blend src-alpha, depth write
    *  off, the eye's right and WORLD up (a flake faces the camera about Y
@@ -357,6 +363,7 @@ export class PrecipitationRenderer {
    *  integrated travel. */
   drawLab(mode, proj, view, camPos, camRight, timeSeconds) {
     const gl = this.gl;
+    if (!this.labProgram) this._buildLab();
     const kind = mode === 'snow' ? 1 : 0;
     // WX2: the lab's own scaling - `Math.round(wx.n * wsky.fall)` in
     // grass-proto.html's frame() - the profile times the front's
@@ -392,14 +399,13 @@ export class PrecipitationRenderer {
 
   draw(mode, proj, view, camPos, camRight, timeSeconds) {
     if (this.enhanced) return this.drawLab(mode, proj, view, camPos, camRight, timeSeconds);
-    const cfg = this.enhanced
-      ? (mode === 'snow' ? SNOW_ENH : mode === 'storm' ? STORM_ENH : RAIN_ENH)
-      : (mode === 'snow' ? SNOW : RAIN);
-    // EE8: ?rain=<n> caps the enhanced volume - a software rasteriser
-    // cannot gate 26,000 quads inside its timeout, and a capped run still
-    // exercises every enhanced term. Production is the profile's count.
-    const cap = this.enhanced ? this.countCap : null;
-    const count = cap ? Math.min(cfg.count, cap) : cfg.count;
+    // AUDIT 58 (f3/render): below this line `this.enhanced` is FALSE, and
+    // every arm that asked it again was dead - the enhanced profiles it
+    // chose, and the countCap it read (?rain=<n> caps the LAB's volume,
+    // drawLab above, which is the only volume big enough to need it).
+    // What is left is the classic profile, at DFU's cap.
+    const cfg = mode === 'snow' ? SNOW : RAIN;
+    const count = cfg.count;
     const gl = this.gl;
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -418,8 +424,6 @@ export class PrecipitationRenderer {
     gl.uniform2fv(this.uSize, cfg._gpu.size);
     gl.uniform1i(this.uSnow, mode === 'snow' ? 1 : 0);
     gl.uniform4fv(this.uColor, cfg._gpu.color);
-    gl.uniform2fv(this.uWindOff, this.windOff);      // EE8
-    gl.uniform1f(this.uEnh, this.enhanced ? 1 : 0);  // EE8
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);

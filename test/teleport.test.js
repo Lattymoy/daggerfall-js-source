@@ -74,9 +74,38 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   const fn = wm.slice(i, wm.indexOf('},', i));
   assert.ok(fn.includes("mode = 'exterior';"), 'the forced exit lands the mode');
   assert.ok(fn.includes('player.collider = baseCollider();'), 'and restores the exterior collider');
-  // the other hosts refuse LOUDLY (INTERIM doctrine), never silently
-  for (const host of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
-    const h = readFileSync(new URL(`../${host}`, import.meta.url), 'utf8');
-    assert.ok(h.includes('onTeleport: () =>') && h.includes('Recall pends'), `${host} says the interim line`);
-  }
+  // TP2: the FIXED-CITY host raises the same 4000 box now, off its own
+  // prompt - it used to say "Recall pends here" for the whole spell,
+  // which was true of one arm and false as a refusal.
+  const ex = readFileSync(new URL('../src/scenes/exterior.js', import.meta.url), 'utf8');
+  // TP2 REVIEW: BOTH SITES, ANCHORED. `exterior.js` carries the same
+  // `onTeleport: () => teleportPrompt(),` line TWICE - once on its own
+  // spell engine and once in the bag it hands DOWN to the mode machine
+  // - and a bare `includes` is satisfied by either, so nulling the
+  // modes one (which is what keeps a MOUNTED dungeon off the standalone
+  // host's refusal, worldModes -> dungeonContext) passed the suite.
+  const bag = (src, open) => {
+    const i = src.indexOf(open);
+    assert.notEqual(i, -1, `exterior.js no longer opens ${open}`);
+    const end = src.indexOf('\n  });', i);
+    assert.ok(end > i, `exterior.js's ${open} bag is not closed the way this pin reads it`);
+    return src.slice(i, end);
+  };
+  assert.ok(bag(ex, 'const magic = createPlayerMagic({').includes('onTeleport: () => teleportPrompt(),'),
+    'the fixed-city host routes its own arrivals to the prompt');
+  assert.ok(bag(ex, 'var modes = createWorldModes({').includes('onTeleport: () => teleportPrompt(),'),
+    'and hands the SAME prompt down to the modes it mounts - without it the mounted dungeon keeps its standalone refusal');
+  assert.ok(ex.includes("lines: ['Do you want to Teleport or Set an Anchor?'],"), 'and speaks record 4000');
+  // ...and the 4001 refusal is the RECORD, in DFU's own box shape -
+  // not a HUD line paraphrasing it (Internal_RSC.csv:4821).
+  assert.ok(ex.includes('new ActionTextBox(plainLines(townTalk.lines(ANCHOR_MUST_BE_SET))'),
+    'the fixed-city host raises record 4001 through the same TEXT.RSC door its other boxes read');
+  assert.ok(ex.includes("?? ['An Anchor must be set before you can Teleport.']"),
+    '...with the record\'s own words as the no-TEXT.RSC fallback');
+  assert.equal(/You must set an anchor first/.test(ex), false, 'the paraphrase is gone');
+  assert.equal(/Recall pends here/.test(ex), false, 'the whole-spell refusal is gone');
+  // the STANDALONE dungeon still refuses LOUDLY (INTERIM doctrine),
+  // never silently - it has no outer host to hand the plan's arms to.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  assert.ok(dc.includes('onTeleport: () =>') && dc.includes('Recall pends'), 'dungeonContext says the interim line');
 });

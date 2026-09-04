@@ -67,7 +67,18 @@ export class TerrainGenClient {
         if (m.t === 'roads') {
           // ROADS 7: the arrays come back for the map (and, as it happens,
           // for the fallback - the lazy build stands down when they do).
-          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks };
+          // AUDIT 58 F3 (R1): this is the FOURTH rebuild of the network
+          // object, and the one on the OURS path - the worker posts `net`
+          // back only from the settlements arm (terrainGenWorker.js's
+          // `back`, a deliberate two-field slice, for the map). It took
+          // the two fields and dropped the switches, and once it has run
+          // `_roadsFallback()` early-returns, so the one rebuild that
+          // carries them could never re-establish them: a same-thread
+          // build after a worker job error or a worker death then ran
+          // `smoothRoadHeights` with SmoothRoads off. The switches come
+          // from `_switches` - the same object the worker is running, and
+          // the shape terrainGenWorker.js and _roadsFallback() both use.
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}) };
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }
@@ -121,10 +132,15 @@ export class TerrainGenClient {
 
   setRoadsData(net, onStats = null) {
     this._settlements = null;
-    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water };
+    // AUDIT 58 F3: `smooth` rides his data too. It was dropped by all three
+    // rebuilds of the network object below while `water` survived them, so the
+    // Mods pane's SmoothRoads switch reached the kernel only on the fallback
+    // path and read `undefined` - i.e. ON - on the path the game takes.
+    // `!== false` keeps the kernel's default-on gate for a caller that omits it.
+    this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false };
     this._roadsStats = onStats;
     if (this._worker) {
-      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water };
+      const copy = { roads: net.roads.slice(), tracks: net.tracks.slice(), rivers: net.rivers ? net.rivers.slice() : null, streams: net.streams ? net.streams.slice() : null, water: !!net.water, smooth: net.smooth !== false };
       const xfer = [copy.roads.buffer, copy.tracks.buffer]; if (copy.rivers) xfer.push(copy.rivers.buffer); if (copy.streams) xfer.push(copy.streams.buffer);
       this._worker.postMessage({ t: 'roads', net: copy, stats: net.stats ?? null }, xfer);
     } else if (onStats) onStats(net.stats ?? { source: 'basic-roads' });

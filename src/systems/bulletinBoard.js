@@ -18,7 +18,7 @@
 // activation ray (RayDistance), so the gate is a SEPARATE test from
 // the pick, exactly as C# tests hit.distance after the raycast.
 
-import { MOBILE_NPC_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { MOBILE_NPC_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 
 /** PlayerActivate.cs:709-710 - `hit.distance > MobileNPCActivationDistance`. */
@@ -28,14 +28,14 @@ export const BULLETIN_BOARD_ACTIVATION_DISTANCE = MOBILE_NPC_ACTIVATION_DISTANCE
  *  mid-screen refusal :712 - the string as the table spells it,
  *  ellipsis and all.
  *
- *  STRAY, noted not fixed: scenes/townTalk.js speaks the SAME
- *  localized key at three sites (the mobile-NPC reach gate and the
- *  two pickpocket ones) as 'You are too far away.' with a full stop,
- *  and test/audit23_ui.test.js pins that spelling literally. One key,
- *  two strings. Aligning them means moving that pin, which belongs to
- *  whoever owns townTalk - this file spells it as DFU's table does
- *  and leaves the note. */
-export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
+ *  AUDIT 58 (talk lane) CLOSED THE STRAY THIS NOTE RECORDED: the
+ *  string is ONE key, so it is now one constant, in PlayerActivate's
+ *  own module (player/activate.js). scenes/townTalk.js's three reach
+ *  refusals spoke the same key as 'You are too far away.' with a full
+ *  stop; they import this same value now, and test/audit23_ui.test.js's
+ *  literal pins moved with them. Re-exported here because this file's
+ *  own consumers (and its pin) name it. */
+export { TOO_FAR_AWAY_TEXT };
 
 const text = (s) => ({ formatting: TOKEN_TEXT, text: s, x: 0, y: 0 });
 const justifyCenter = () => ({ formatting: RSC.JustifyCenter, text: '', x: 0, y: 0 });

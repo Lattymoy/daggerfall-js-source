@@ -24,6 +24,9 @@ import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import {
   exteriorNpcFlags, staticNpcData, NPC_CONTEXT, ZERO_NPC_DATA,
 } from '../src/characters/staticNpc.js';
+import { staticNpcRoute } from '../src/systems/guildServiceFlow.js';
+import { npcServiceKind } from '../src/systems/guildServices.js';
+import { GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 import { RACES } from '../src/systems/races.js';
 
@@ -269,4 +272,121 @@ test('E3: the wiring - world.js runs the pass at layout and stands only the ACTI
   // is built one statement after its start pixel)
   assert.ok(w.includes('for (const p of built.values()) await standPixelNpcs(p);'),
     'the start pixel would carry no bootstrap behaviours at all');
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ROAD-F GS1: the OTHER gap AUDIT 26 flagged at this seam - the GUILD
+// SERVICE popup above ground.
+//
+// StaticNPCClick pushes it on `Services.HasGuildService` ALONE
+// (PlayerActivate.cs:1552-1568): the BuildingDiscoveryData beside it
+// supplies the guild GROUP, and :1543-1546 has already answered
+// GuildGroups.None for a player who is not inside a building. So a
+// street NPC carrying a guild-service faction opens the popup in C#,
+// into DFU's ONE UserInterfaceManager stack. The port has three slots,
+// one per mode, and this whole chain wrote the interior one - which
+// only the interior and dungeon frames draw, tick, key and click.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Lift `mountServiceWindow` out of the shipped host and run it.
+ *  Nothing is retyped: the arms that execute here are the ones in
+ *  src/scenes/worldModes.js, so removing one runs in these assertions
+ *  (the roadb_host_pause idiom, applied to a slot picker). */
+function liftMountDoor({ mode, townTalk = null, dungeonCtx = null }) {
+  const wm = src('src/scenes/worldModes.js');
+  const from = wm.indexOf('  function mountServiceWindow(win) {');
+  assert.ok(from > 0, 'the guild chain has no replace-mode door');
+  const to = wm.indexOf('\n  }\n', from);
+  const body = wm.slice(from, to + 4);
+  const make = new Function('mode', 'townTalk', 'dungeonCtx', `
+    let interiorOverlay = null;
+    ${body}
+    return { mount: mountServiceWindow, interior: () => interiorOverlay };
+  `);
+  return make(mode, townTalk, dungeonCtx);
+}
+
+test('ROAD-F GS1: an outdoor street NPC with a guild-service faction routes to the popup', () => {
+  // The ROUTING has answered this since G8 and it is DFU's own order:
+  // HasGuildService is asked before the building is, and a player who
+  // is not inside one carries GuildGroups.None into the group pick, so
+  // the NPC's own ggroup decides (PlayerActivate.cs:1552-1560).
+  const route = staticNpcRoute({
+    npcFactionId: 850,                                   // FG_Repair
+    npcFaction: { id: 850, ggroup: GUILD_GROUPS.FightersGuild, sgroup: 0, type: 0 },
+    buildingFaction: null, buildingType: -1, insideBuilding: false,
+  });
+  assert.equal(route.kind, 'guildService', 'a street guild NPC does not route to the popup at all');
+  assert.equal(route.guildGroup, GUILD_GROUPS.FightersGuild, "the NPC's own guild group must decide outdoors");
+  assert.equal(route.buildingFactionId, 0, 'there is no building faction in the street');
+  assert.equal(npcServiceKind(850), 'Repair', 'the service the popup would offer');
+});
+
+test('ROAD-F GS1: the popup mounts in the slot the CURRENT mode draws - the outdoor arm', () => {
+  // EXTERIOR: townTalk's slot, the one both outdoor hosts draw, tick,
+  // key, click and pause on - and the one the outdoor talk window, the
+  // outdoor quest offer and the outdoor refusals already go into.
+  const townTalk = { overlay: null, showOverlay(w) { this.overlay = w; } };
+  const out = liftMountDoor({ mode: 'exterior', townTalk });
+  const popup = { name: 'GuildServiceWindow' };
+  assert.equal(out.mount(popup), popup, 'the door does not hand the window back');
+  assert.equal(townTalk.overlay, popup,
+    'the guild popup never reaches the outdoor slot - above ground it would be set and never seen');
+  assert.equal(out.interior(), null, 'the outdoor mount wrote the interior slot, which no outdoor frame draws');
+
+  // INTERIOR: the interior slot, unchanged - and REPLACING, which is
+  // the whole reason mountSpellWindow could not serve. Every site in
+  // this chain is a dispatch out of the popup already in the slot, and
+  // DFU's own dispatch is CloseWindow-then-PushWindow.
+  const inside = liftMountDoor({ mode: 'interior' });
+  inside.mount(popup);
+  const flow = { name: 'ServiceFlowWindow' };
+  assert.equal(inside.mount(flow), flow, 'the interior arm refuses an occupied slot - that is mountSpellWindow');
+  assert.equal(inside.interior(), flow, 'the dispatch did not replace the popup');
+
+  // DUNGEON: that context's own slot, as mountSpellWindow's does.
+  const dungeonCtx = { overlay: null, showOverlay(w) { this.overlay = w; return true; } };
+  const down = liftMountDoor({ mode: 'dungeon', dungeonCtx });
+  down.mount(popup);
+  assert.equal(dungeonCtx.overlay, popup, 'the dungeon arm is gone');
+  assert.equal(down.interior(), null, 'the dungeon mount wrote the interior slot');
+
+  // ...and a null window mounts nothing anywhere (the art-less arms
+  // hand one back).
+  assert.equal(liftMountDoor({ mode: 'exterior', townTalk }).mount(null), null, 'a null window is mounted');
+});
+
+test('ROAD-F GS1: the whole guild chain goes through the door, not the interior slot', () => {
+  const wm = src('src/scenes/worldModes.js');
+  // The chain, function by function, from the popup down to the leaf
+  // windows it dispatches to. Each span must be free of a hand-written
+  // interior-slot write, which above ground is a slot nothing draws.
+  const spans = [
+    ['openWitchesCoven', 'function openWitchesCoven(', 'function openGuildService('],
+    ['openGuildService', 'function openGuildService(', "/** U42: the CLASSIC spellbook in CAST mode"],
+    ['openServiceFlow', 'function openServiceFlow(destination,', "/** ConfirmJoinGuild's welcome box"],
+    ['_welcomeHooks', 'const _welcomeHooks = (guild, rows, self)', '// ---- R1/D7: THE REPAIR SERVICE'],
+    ['the repair subtree', 'function openRepairService(ctx = {})', 'function showShelfList('],
+  ];
+  for (const [name, from, to] of spans) {
+    const a = wm.indexOf(from); const b = wm.indexOf(to);
+    assert.ok(a > 0 && b > a, `${name} changed shape`);
+    const span = wm.slice(a, b);
+    assert.ok(!/\binteriorOverlay\s*=/.test(span), `${name} still writes the interior slot by hand`);
+    assert.ok(!/interiorOverlay ===/.test(span), `${name} still guards on the interior slot by identity`);
+  }
+  // ...and it goes through THIS door, with closeSpellWindow - already
+  // mode-general - as the close half, so the chain needed one new door
+  // and not two.
+  const chain = wm.slice(wm.indexOf('function openWitchesCoven('), wm.indexOf('function showShelfList('));
+  assert.ok(chain.includes('mountServiceWindow('), 'the chain mounts nothing through the replace-mode door');
+  assert.ok(chain.includes('closeSpellWindow('), 'the chain closes nothing through the mode-general close');
+  // guildServiceRepair used to answer `return interiorOverlay`: above
+  // ground that reads null, so the popup printed "not available yet"
+  // over the list it had just opened. The opener hands its window back.
+  const repair = wm.slice(wm.indexOf("if (destination === 'guildServiceRepair')"), wm.indexOf("if (destination === 'guildServicePotionMaker'"));
+  assert.ok(/return openRepairService\(/.test(repair), 'the repair service still re-reads a slot to answer the popup');
+  const opener = wm.slice(wm.indexOf('function openRepairService(ctx = {})'), wm.indexOf('function showRepairList('));
+  assert.ok(/return mountServiceWindow\(openTradeWindow\(/.test(opener) && /return showRepairList\(0, ctx\);/.test(opener),
+    'openRepairService does not hand back the window it mounted');
 });

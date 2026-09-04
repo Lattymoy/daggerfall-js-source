@@ -18,7 +18,12 @@
 // Every slice of the arc runs it before committing. A slice that
 // touches a shader runs it AND tools/bootProbe.mjs.
 //
-//   ARENA2_PATH=/path/to/ARENA2 node tools/worldRenderGate.mjs [--minutes N] [--mode classic|enhanced]
+//   ARENA2_PATH=/path/to/ARENA2 node tools/worldRenderGate.mjs [--minutes N]
+//       [--mode classic|enhanced] [--world] [--weather <type>] [--grass off]
+//       [--season <name>] [--rain <n>] [--small] [--save]
+//
+// Every knob above is read by the page it is handed to; see the note on
+// the knob list below.
 //
 // Standalone: it starts its own vite server on 5223, like the other
 // world probes, so nothing else needs to be running.
@@ -29,7 +34,16 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const MINUTES = Number(arg('minutes', 720));        // noon by default: the sun is up and the ground is lit
 const MODE = arg('mode', 'enhanced');
-const GROUND = arg('ground', null);          // EE3: ?ground=classic|tiles|drawn, the kill switch
+// AUDIT 58 (f3/render): EE3's `--ground` knob stood here and passed
+// `&ground=<mode>` to a page that has not read it since 8256ae2 ("REVERT
+// the Enhanced Environments ground arc": "no reader of tileArrayFor,
+// enhancedGround or groundMode remains anywhere"), and then printed
+// `ground=<mode>` in the pass line - a door that could neither fail nor
+// act, claiming it had gated a ground mode that no longer exists. Every
+// knob below still has a live reader: ?weather (scenes/shared.js's
+// weatherName), ?grass (world.js's labGrass), ?season (shared.js's
+// seasonOverride), ?rain (both hosts' precipOpts.countCap). Do not
+// re-add a knob without one.
 const WEATHER = arg('weather', null);        // EE5: ?weather=<type>, the probe door
 const WORLD = process.argv.includes('--world');   // EE7: the WORLD host (?world), where the grass lives
 const GRASS = arg('grass', null);            // EE7: ?grass=off, the kill switch
@@ -66,8 +80,8 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 // of this gate before today rendered the ENHANCED skin and called it
 // classic - the numbers only differed by weather. Now it is the skin.
 const skin = MODE === 'classic' ? '&skin=classic' : '';
-const ground = (GROUND ? `&ground=${GROUND}` : '') + (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '') + (RAIN ? `&rain=${RAIN}` : '');
-await page.goto(`http://localhost:${PORT}/play/?${WORLD ? 'world' : 'exterior'}&shot&novideo&nofoes${skin}${ground}`);
+const dials = (WEATHER ? `&weather=${WEATHER}` : '') + (GRASS ? `&grass=${GRASS}` : '') + (SEASON ? `&season=${SEASON}` : '') + (RAIN ? `&rain=${RAIN}` : '');
+await page.goto(`http://localhost:${PORT}/play/?${WORLD ? 'world' : 'exterior'}&shot&novideo&nofoes${skin}${dials}`);
 
 // wait for the world to actually render frames
 const until = Date.now() + 150000;   // EE8: the exterior boots in ~90s here; a shader that will not link never advances a frame, and the gate must say so inside a harness call
@@ -155,4 +169,4 @@ if (process.argv.includes('--save')) {
 await browser.close();
 await server.close();
 if (fails.length) { console.error(`\nworld render gate: ${fails.length} failure(s)`); process.exit(1); }
-console.log(`\nworld render gate ok (${MODE}${GROUND ? ', ground=' + GROUND : ''}, ${MINUTES} min)`);
+console.log(`\nworld render gate ok (${MODE}, ${MINUTES} min)`);

@@ -72,6 +72,30 @@ export function getRandomNameBank() {
   return getNameBank(RACE_KEY_BY_ORDINAL[randomRangeInclusive(1, 8)]);
 }
 
+/** MacroHelper.GetRandomFullName (MacroHelper.cs:333-341), the
+ *  REGION-bank form - the sibling of getRandomNameBank above, and the
+ *  one the talk MCP's %n fallback and RegentName's no-individual-ruler
+ *  arm both call:
+ *
+ *      NameHelper.BankTypes nameBankType = NameHelper.BankTypes.Breton;
+ *      if (GameManager.Instance.PlayerGPS.CurrentRegionIndex > -1)
+ *          nameBankType = (NameHelper.BankTypes)MapsFile.RegionRaces[...];
+ *      Genders gender = (DFRandom.random_range_inclusive(0, 1) == 1)
+ *          ? Genders.Female : Genders.Male;
+ *      return DaggerfallUnity.Instance.NameHelper.FullName(nameBankType, gender);
+ *
+ *  AUDIT 58: the GENDER IS A COIN FLIP on the DFRandom stream, and it
+ *  is drawn whichever way it lands. The talk MCP hardcoded Male, so
+ *  the fallback stranger was never a woman AND the unspent draw left
+ *  every later value on that stream shifted by one. `regionIndex` is
+ *  PlayerGPS.CurrentRegionIndex; getNameBankOfRegion carries the -1
+ *  guard verbatim. */
+export function getRandomFullName(regionIndex) {
+  const bank = getNameBankOfRegion(regionIndex ?? -1);
+  const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
+  return fullName(bank, gender);
+}
+
 /** Verbatim MapsFile.GetNameBankOfRegion. */
 export function getNameBankOfRegion(regionIndex) {
   if (regionIndex > -1) return REGION_RACES[regionIndex];

@@ -463,10 +463,17 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   const n = smoothRoadHeights(samples, tilemap);
   assert.ok(n > 0, 'some corners were smoothed');
   // under the road (column 63/64, plus the edge tiles' corners 62..66): flatter
-  const spread = (x0, x1, s) => { let lo = Infinity, hi = -Infinity; for (let y = 10; y < 118; y++) for (let x = x0; x <= x1; x++) { const v = s[y * H + x]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
+  // AUDIT 58 (f2/hosts): read back through the SAMPLER's layout,
+  // sample(x, y) = s[x * hDim + y] (terrainSampler.js:139, DFU's
+  // JobA.Idx(y, x, hDim) at TerrainSampler.cs:123) - NOT the tilemap's
+  // x + y*tDim, which is what this pin used to use and what let the
+  // smoother's transposed corner base agree with itself.
+  const spread = (x0, x1, s) => { let lo = Infinity, hi = -Infinity; for (let y = 10; y < 118; y++) for (let x = x0; x <= x1; x++) { const v = s[x * H + y]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
   assert.ok(spread(63, 64, samples) < spread(63, 64, before), `the road bed is flatter (${spread(63, 64, samples).toFixed(1)} vs ${spread(63, 64, before)})`);
-  // far from the road: byte-identical
-  for (let y = 0; y < H; y++) for (let x = 0; x < 50; x++) assert.equal(samples[y * H + x], before[y * H + x], `off-road sample ${x},${y} moved`);
+  // far from the road: byte-identical, in BOTH directions - the second
+  // loop is the mirrored east-west strip the transposed base blurred.
+  for (let x = 0; x < 50; x++) for (let y = 0; y < H; y++) assert.equal(samples[x * H + y], before[x * H + y], `off-road sample ${x},${y} moved`);
+  for (let x = 0; x < 50; x++) for (let y = 60; y < 68; y++) assert.equal(samples[x * H + y], before[x * H + y], `the mirrored strip at sample ${x},${y} moved`);
   // no path tiles: nothing happens
   const plain = mk(); const copy = Float32Array.from(plain);
   assert.equal(smoothRoadHeights(plain, new Uint8Array(T * T)), 0);
@@ -759,7 +766,11 @@ test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls 
   assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
   assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
   const worker = fs.readFileSync('src/world/terrainGenWorker.js', 'utf8');
-  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water \};/, 'the worker takes his arrays ready-made, water included');
+  // AUDIT 58 F3: `smooth` joins `water` on this arm - it was the one
+  // switch the three rebuilds of the network object dropped, so the
+  // Mods pane's SmoothRoads was inert on the path the game takes.
+  // The behavioural half lives in test/modsettings.test.js.
+  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water, smooth: m\.net\.smooth !== false \};/, 'the worker takes his arrays ready-made, water and smoothing included');
   const host = fs.readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /loadModRoads\(\)\.then\(\(his\) => \{\s*\n\s*if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
   assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'ours as the fallback, with the switches');

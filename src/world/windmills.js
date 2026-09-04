@@ -5,14 +5,20 @@
 // it never moves. Turning it is an ENHANCED-ONLY DEPARTURE (Ledger A),
 // the 1:1 lane sees Daggerfall's own farms, and with the enhanced skin
 // off not one byte of this module is reached. (The roads were the same
-// shape and set the precedent; they were removed whole on 2026-08-29,
-// which is why this is now the only departure of its kind.)
+// shape and set the precedent. They were removed whole on 2026-08-29
+// and then, on Hazelnut's own permission, RE-INTEGRATED on 2026-09-02 -
+// Port-Ledger section A, the ROADS 22-25 row, which supersedes the
+// struck removal row above it. So roads are a live departure again, and
+// the two are no longer the same shape: roads ship ALWAYS ON IN BOTH
+// LANES by Mac's call, where this module is enhanced-only.)
 //
 // ── WHAT THIS OWES KAMER, AND WHAT IT TOOK ───────────────────────
 //
 // "Windmills of Daggerfall" (Kamer, DFU mod, v2.0). WM1 shipped this
 // module treating the mod as a reference only, on the roads' precedent
-// (that arc is gone now; the reasoning it set is what mattered here)
+// (that arc is live again - bible/03-World/Roads.md - and it ended up
+// vendoring his data with permission, which is the same conclusion
+// this module reached; the reasoning it set is what mattered here)
 // ("instead of taking their mod, I want us to develop our own and
 // better") - and that was the wrong call to keep once Mac confirmed
 // THE AUTHOR HAD GIVEN PERMISSION. An invitation is not a lift.

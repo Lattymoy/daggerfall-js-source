@@ -48,8 +48,35 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
     // now, short-circuit-safe ones included - see audit24_wave37.
     assert.ok(s.includes("(modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider"),
       `${f}: missiles hit the walls of the mode the player is in`);
-    assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? (cityGuards\.guards|\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]) : \[\]/.test(s),
-      `${f}: guards (and, in the world host, the X-slice encounter pool) are targets only outside`);
+    if (f === 'world.js') {
+      // AUDIT 58 (review): the world host's arm is NO LONGER A GATE.
+      // This is the only cast engine indoors - worldModes takes this
+      // instance, drives firePending/update on the interior frame and
+      // routes the interior attack click into interceptAttack - and
+      // every target read in the engine (explodeAt's sweep, ByTouch's
+      // pick, the release-frame area arm, the missile impact) goes
+      // through this one thunk. Answering `[]` meant a Fireball cast
+      // in a shop swept nobody and a missile passed through a
+      // watchman the MELEE ray would have hit, while worldModes stood
+      // two live pools in the room. DFU gates nothing here:
+      // OverlapSphereNonAlloc and the touch raycast take whatever is
+      // in the scene. The law the pin holds - the targets follow the
+      // DOOR the player walked through, never the street's pools from
+      // inside a building - is unchanged; what satisfies it grew.
+      assert.ok(s.includes("foes: () => (_mode() === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes]\n      : _mode() === 'interior' ? _insidePool()\n        : []),"),
+        `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none (dungeonContext owns that engine)`);
+      assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\] : \[\]/.test(s), false,
+        `${f}: the interior scene gate is gone, not merely widened around`);
+      // ...and the sinks follow the RECORD, so a foe handed out by the
+      // interior arm knocks back and dies against that building's
+      // collider and death chain rather than the street's.
+      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+        `${f}: the engine's sinks route by pool membership, the same law the enchant mount takes`);
+    } else {
+      assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s),
+        `${f}: guards are targets only outside`);
+      assert.ok(s.includes('\n    foeSinks,\n'), `${f}: and the engine takes this host's one set of doors`);
+    }
     const i = s.indexOf('absorbCtx: () =>');
     const arm = s.slice(i, i + 300);
     assert.ok(arm.includes("=== 'exterior'") && arm.includes('inside: false') && arm.includes('inside: true'),

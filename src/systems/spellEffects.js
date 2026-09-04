@@ -15,8 +15,11 @@
 //
 // EXCLUSIONS, each verified rather than assumed:
 //  - MorphSelf (29,255) carries a classic key but AllowedCraftingStations
-//    = None, so the Spell Maker never offers it. That is why 29 is the
-//    gap in the sequence.
+//    = None, so the Spell Maker never offers it. U42 put it in the
+//    REGISTRY all the same (the spellbook names effects through
+//    GetEffectTemplate, not through the maker's catalogue), marked
+//    `craftable: false` - so 29 is no longer a gap in the sequence, it
+//    is a row the two picker lists filter out.
 //  - MageLight is DFU's own demo custom effect - no classic key at all.
 //  - Heal Spell Points is PotionMaker-only and sets no classic key.
 //  - Charm (34) is CHANCE ONLY here: SupportDuration is commented out
@@ -87,7 +90,18 @@ const ROWS = [
   // "<effect not found>" while it was absent. `craftable: false`
   // keeps it out of the two picker lists, which is what
   // AllowedCraftingStations = None means (MorphSelf.cs:30).
-  [29, 255, 'Morph Self', '', [D], false],
+  // AUDIT 58: NO support flag. MorphSelf.SetProperties
+  // (MorphSelf.cs:24-33) assigns Key, ClassicKey, AllowedTargets,
+  // AllowedElements, AllowedCraftingStations, ShowSpellIcon and
+  // MagicSkill and NOTHING else, so BaseEntityEffect's ctor defaults
+  // (EntityEffect.cs:293-297) leave all three Support* false. It is a
+  // ZERO-COMPONENT effect - which is exactly why
+  // CalculateEffectCosts reaches the `!activeComponents` fudge for it
+  // (FormulaHelper.cs:2330-2334) and why SetDuration leaves
+  // roundsRemaining at 0 (EntityEffect.cs:920-932). The port's own
+  // cost row agrees (spellcost.js, `'29,255': row(SKILLS.Illusion, {})`),
+  // as does the identically shaped Teleport row below.
+  [29, 255, 'Morph Self', '', [], false],
   [30, 255, 'Water Breathing', '', [D]],
   [31, 255, 'Water Walking', '', [D]],
   [33, 0, 'Pacify', 'Animal', [C]],
@@ -154,13 +168,42 @@ export const PORTED_KEYS = new Set([
   '43,255',                                                         // Teleport (the inline arm)
 ]);
 
+/** AUDIT 58: EntityEffect.DisplayName (EntityEffect.cs:385-387) is
+ *  `GetDisplayName()` by default, which manufactures
+ *  `string.Format("{0} {1}", groupName, subGroupName)` -
+ *  UNPARENTHESISED - and whose own comment says "Effects can override
+ *  DisplayName property to set a custom display name"
+ *  (EntityEffect.cs:906-918). SIX effect classes do, all six in
+ *  Illusion, all six at :41, all six identical:
+ *  `public override string DisplayName => string.Format("{0} ({1})",
+ *  GroupName, SubGroupName);` - InvisibilityNormal.cs, InvisibilityTrue.cs,
+ *  ChameleonNormal.cs, ChameleonTrue.cs, ShadowNormal.cs, ShadowTrue.cs
+ *  (a grep for `override string DisplayName` over Assets/Scripts finds
+ *  exactly these six). DisplayName's one reader is the Spell Maker's
+ *  filled effect slot, `UpdateSlotText(slot,
+ *  effectEditor.EffectTemplate.DisplayName)`
+ *  (DaggerfallSpellMakerWindow.cs:461), so those six slots read
+ *  "Invisibility (Normal)" where the port printed "Invisibility Normal".
+ *  Nothing else changes: the two pickers take SubGroupName/GetGroupNames
+ *  (:947, :732) and the spellbook takes GroupName/SubGroupName into two
+ *  labels (DaggerfallSpellBookWindow.cs:646-647). */
+const PAREN_DISPLAY_NAME = new Set([
+  '13,0', '13,1',   // InvisibilityNormal / InvisibilityTrue
+  '23,0', '23,1',   // ChameleonNormal / ChameleonTrue
+  '24,0', '24,1',   // ShadowNormal / ShadowTrue
+]);
+
 /** Every effect the Spell Maker offers: { key, type, subType, group,
  *  subgroup, name, duration, chance, magnitude, ported }. */
 export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
   const out = [];
   const push = (type, subType, group, subgroup, supports, craftable = true) => out.push(Object.freeze({
     key: `${type},${subType}`, type, subType, group, subgroup,
-    name: subgroup ? `${group} ${subgroup}` : group,     // DisplayName = "{GroupName} {SubGroupName}"
+    // DisplayName: GetDisplayName's default arm, or the six
+    // concealment classes' `"{0} ({1})"` override (see above).
+    name: subgroup
+      ? (PAREN_DISPLAY_NAME.has(`${type},${subType}`) ? `${group} (${subgroup})` : `${group} ${subgroup}`)
+      : group,
     duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
     ported: PORTED_KEYS.has(`${type},${subType}`),
     // AllowedCraftingStations != None. A false row is in the REGISTRY

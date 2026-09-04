@@ -9,6 +9,7 @@ import {
 } from '../src/systems/worldTick.js';
 import { createPlayerTicker, subscribeFoePools } from '../src/scenes/shared.js';
 import { STAT_KEYS_ORDER } from '../src/systems/statMods.js';
+import { entityIsParalyzed } from '../src/systems/effects.js';   // AUDIT 58: what the interior pools read every frame and never aged
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const bleed = (rounds) => ({
@@ -119,11 +120,38 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   const x = rd('src/scenes/exterior.js');
   assert.ok(x.includes('subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);'),
     'the town host subscribes its watch');
+  // AUDIT 58 (review): AND THE INTERIOR HOST, which this test's title
+  // has always claimed and never checked. It mounts two pools
+  // (interiorFoes since IF, interiorGuards since ROAD-B), ran NO
+  // fan-out at all - `runMagicRoundsFor` never named worldModes, so
+  // neither did tickActiveEffects or updatePoisons - and both pools
+  // READ the effect list every frame. Nothing ended one: a Continuous
+  // Damage bundle on a foe in a shop never took a round, a poison
+  // never fired, and a paralysed foe stayed paralysed for the life of
+  // the interior. AUDIT 58 opened the enchant door that lands those
+  // payloads there, so the gap stopped being latent.
+  const m = rd('src/scenes/worldModes.js');
+  assert.ok(m.includes('subscribeFoePools(interiorTicker, [() => interiorFoes?.foes ?? [], () => interiorGuards?.guards ?? []], insideFoeSinks);'),
+    'the interior host subscribes BOTH of its pools, on the window its own ticker claims');
   // ...through ONE set of doors per entity, the same set the cast engine takes
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
     assert.equal((src.match(/const foeSinks = \(g\) => \(\{/g) ?? []).length, 1, `${name}: one foeSinks`);
-    assert.ok(src.includes('    foeSinks,\n'), `${name}: and the cast engine takes the same one`);
   }
+  assert.ok(x.includes('\n    foeSinks,\n'), 'exterior.js: the cast engine takes the same one');
+  // AUDIT 58 (review): the world host's cast engine takes it through
+  // the POOL-MEMBERSHIP router instead, because its interior mode has
+  // live foes now and a record from a building must knock back and die
+  // against THAT building's collider - `enchantFoeSinks` still answers
+  // `foeSinks` for every exterior record, so it is the same one set of
+  // doors, asked the one question that can tell them apart.
+  assert.ok(w.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+    'world.js: and its cast engine takes that same set through the router');
+  assert.ok(w.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool,'),
+    'and the router is the shared law over this host\'s own foeSinks');
+  assert.ok(m.includes('const insideFoeSinks = (foe) => ({'),
+    'the interior host\'s doors are a module-local the ticker can reach, not a method on the frame-time literal');
+  assert.ok(m.includes('insideFoeSinksFor(foe) { return insideFoeSinks(foe); },'),
+    'and the enchant ctx asks that ONE definition rather than a second copy');
   // the dungeon host owns its foe list inside a closure the ticker never sees,
   // so it runs the fan-out inline - on the window the tick CLAIMED, not on
   // arithmetic of its own (which had neither catch-up nor the 2880 cap).
@@ -131,6 +159,42 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   assert.ok(d.includes('runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f) });'),
     'the dungeon frame body rides the claimed window');
   assert.ok(!/for \(let r = _prevMinute;/.test(d), 'and its old private minute loop is gone');
+});
+
+test('AUDIT 58: an interior foe\'s bundle AGES AND EXPIRES on its host\'s ticker - both pools, null-safe', () => {
+  // The behavioural half of the pin above. The interior host's fan-out
+  // is the same one call, so what is checked here is what the missing
+  // call cost: an effect that is READ every frame (exteriorFoes.js and
+  // cityGuards.js each take entityIsParalyzed + the motor flags off the
+  // pool's records) and never AGED is permanent by construction -
+  // tickActiveEffects is the only thing in the tree that decrements
+  // roundsRemaining or drops an expired entry.
+  const p = { health: 500, maxHealth: 500, level: 1, skills: {}, stats: {}, activeEffects: [] };
+  setWorldMinutes(5000);
+  resetMagicRoundMarker(5000);
+  const ticker = createPlayerTicker(p, {});
+  // the two pools this host mounts, and both of them are null until a
+  // building is entered and null again the moment it is left
+  let interiorFoes = null;
+  let interiorGuards = null;
+  subscribeFoePools(ticker, [() => interiorFoes?.foes ?? [], () => interiorGuards?.guards ?? []], (f) => sinksFor(f.entity));
+  ticker.tick(10 / CLASSIC_MINUTES_PER_SECOND);   // no pool yet: the frame must survive it
+
+  const shopFoe = { dead: false, entity: { health: 40, maxHealth: 40, level: 1, skills: {}, stats: {}, activeEffects: [bleed(3)] } };
+  const watchman = { dead: false, entity: { health: 40, maxHealth: 40, level: 1, skills: {}, stats: {}, activeEffects: [{ kind: 'paralyze', roundsRemaining: 2 }] } };
+  interiorFoes = { foes: [shopFoe] };
+  interiorGuards = { guards: [watchman] };
+  assert.equal(entityIsParalyzed(watchman.entity), true, 'the CastWhenStrikes paralysis has landed');
+
+  ticker.tick(2 / CLASSIC_MINUTES_PER_SECOND);
+  assert.equal(shopFoe.entity.activeEffects[0].roundsRemaining, 1, 'the Continuous Damage took its rounds');
+  assert.equal(shopFoe.entity.health, 38, '...and they hurt through the pool\'s own sinks');
+  assert.equal(watchman.entity.activeEffects[0].roundsRemaining, 0, 'and the watch is on the same window - one database');
+
+  // ...and the entries END, which is the half a frozen host never reached
+  ticker.tick(2 / CLASSIC_MINUTES_PER_SECOND);
+  assert.equal(shopFoe.entity.activeEffects.length, 0, 'the bundle expired instead of running for the life of the interior');
+  assert.equal(entityIsParalyzed(watchman.entity), false, 'and the paralysed watchman can act again');
 });
 
 test('audit24 wave32: paralysis reaches the exterior pools', () => {

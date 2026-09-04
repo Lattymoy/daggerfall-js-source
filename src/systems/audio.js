@@ -203,18 +203,62 @@ export class AudioEngine {
 
   /** DFU PlayOneShot(clip, _, volumeScale): flat (non-positional).
    *  Returns the clip duration in seconds (A3's exclusive ambient
-   *  channel tracks busy time with it), or undefined when not ready. */
-  playOneShot(index, volume = 1) {
+   *  channel tracks busy time with it), or undefined when not ready.
+   *
+   *  AUDIT 58: `pitch` is Unity's AudioSource.pitch, which WebAudio
+   *  spells playbackRate - the same resampling, and the same 1.0
+   *  default. DFU's three combat-voice sites raise it for exactly one
+   *  shot and put it back (EnemySounds.cs:172-175, FPSWeapon.cs:316
+   *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
+   *  shot and dies with it, so setting it here IS the save/restore. */
+  playOneShot(index, volume = 1, pitch = 1) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
+    src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(this._out());
     src.start();
     return buf.duration;
+  }
+
+  /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
+   *  :152-158) is `soundFile.GetRecordIndex(soundID)`: a DAGGER.SND
+   *  record ID resolved to that record's INDEX in the archive. The two
+   *  spaces are UNRELATED - the archive's directory numbers the records
+   *  independently of their order (index 0 carries id 3, id 6 sits at
+   *  index 3), and SoundClips.cs:79-82 says so outright ("these are IDs
+   *  267 through 286 in the sound file").
+   *
+   *  That is why DaggerfallAudioSource carries TWO overloads of every
+   *  entry point - `PlayOneShot(int soundIndex, ...)` (:186-198) taking
+   *  an index and `PlayOneShot(uint soundID, ...)` (:232-238) taking an
+   *  ID and resolving it first - and why a caller's `(uint)` cast is a
+   *  LOAD-BEARING choice, not a widening. Everything named `...SoundID`
+   *  in DFU comes through this door; everything typed SoundClips does
+   *  not. -1 (no archive, or no such id) plays nothing, exactly as
+   *  GetAudioClip(-1) answers null and the index overload drops the
+   *  shot. */
+  soundIndexForId(id) {
+    return this.snd?.getRecordIndex(id) ?? -1;
+  }
+
+  /** PlayOneShot(uint soundID, ...) - DaggerfallAudioSource.cs:232-238. */
+  playOneShotId(id, volume = 1) {
+    const index = this.soundIndexForId(id);
+    return index >= 0 ? this.playOneShot(index, volume) : undefined;
+  }
+
+  /** The positional twin. DFU reaches a 3D source's ID through
+   *  SetSound(uint soundID, ...) (:170-181), which resolves ONCE and
+   *  leaves the source holding an index; the port has no persistent
+   *  source object at these call sites, so it resolves per shot. */
+  play3dId(id, pos, volume = 1, opts = undefined) {
+    const index = this.soundIndexForId(id);
+    return index >= 0 ? this.play3d(index, pos, volume, opts) : undefined;
   }
 
   /** Non-positional looping source (A3: the rain/crickets ambience
@@ -314,12 +358,17 @@ export class AudioEngine {
    *  `maxDistance = AttractRadius` (:57-60), with its own reason -
    *  loop3d already carried that note for torches. Inverse stays the
    *  default so no existing caller changes. */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
+  /** AUDIT 58: `pitch` rides the options bag here (AudioSource.pitch /
+   *  playbackRate), because every 3D combat voice DFU plays is
+   *  pitch-lifted - EnemySounds.cs:172-175 raises the SOURCE's pitch
+   *  around PlayOneShot and restores it after. */
+  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1 } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
+    src.playbackRate.value = pitch;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
     pan.distanceModel = distanceModel;
@@ -429,6 +478,22 @@ export class QuestAudioSource {
    *  or undefined when nothing started. */
   playOneShot(index, volume = 1) {
     const dur = this._audio.playOneShot(index, volume);
+    if (typeof dur === 'number' && dur > 0) this._endsAt = this._clock() + dur;
+    return dur;
+  }
+
+  /** AUDIT 58: the ID-space twin, for the ONE caller that has an id
+   *  rather than an index - the quest `play sound` action, whose value
+   *  comes from the Quests-Sounds table's `id` column. PlaySound.cs:74
+   *  -75 resolves it at CREATE (`GetSoundIndex(soundID)`) and :112
+   *  plays the INT overload; the port resolves SND host-side behind
+   *  this hook (Port-Ledger A, "PlaySound's SND RESOLUTION"), so the
+   *  conversion happens here instead - the same table id, the same
+   *  record, one tick later. The busy stamp is unchanged: it lands
+   *  whenever a clip started, and a table id with no record in the
+   *  archive starts nothing, exactly as a null AudioClip does. */
+  playOneShotId(id, volume = 1) {
+    const dur = this._audio.playOneShotId(id, volume);
     if (typeof dur === 'number' && dur > 0) this._endsAt = this._clock() + dur;
     return dur;
   }

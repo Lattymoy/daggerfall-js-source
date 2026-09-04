@@ -19,7 +19,17 @@
 //   Topic scroll arrows: up (102,69,9,16) down (102,161,9,16), each
 //   worth +/-5 PIXELS of scroll (ButtonTopicUp/Down_OnMouseClick,
 //   :1418-1428) - both listboxes are VerticalScrollModes.PixelWise,
-//   so the scroll index is a pixel offset, never a row count.
+//   so the scroll index is a pixel offset, never a row count;
+//   left (4,177,16,9) right (86,177,16,9) with horizontalSliderTopic
+//   (22,178) 62x5 between them (:207-208, :765-767), one pixel a
+//   click and a DisplayUnits page on the trough - the topic list is
+//   HorizontalScrollModes.PixelWise too, so a long topic PANS.
+//
+// AUDIT 58 (talk lane): the button labels are baked in TALK01I0, but
+// their STATE is not - TALK02I0 (the grayed categories) and TALK03I0
+// (the highlighted modes) supply the six 107x10 strips DFU assigns to
+// the six buttons on every mode change (:34-35, :436-490, :944-949,
+// :967-968, :1022-1088). See TALK_STRIP_SOURCES below.
 //
 // Interaction: clicks/taps through the hit rects (the phone path).
 // ROAD-D D10 shipped the SELECTION model the window is built around:
@@ -38,7 +48,7 @@
 // (listTopicTellMeAbout / Person / Thing and the Work question);
 // each stays a consumed no-op on a host with no engine mounted.
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { bitmapToColor32 } from './hud.js';
 import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
@@ -47,6 +57,9 @@ import { getBool } from '../systems/settings.js';   // UI6: EnableModernConversa
 import { measureText } from './text.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+// AUDIT 58 (seams): the resolvingError literal SetListboxTopics repairs
+// an empty caption with (Internal_Strings.csv:582, '...never mind...').
+import { RESOLVING_ERROR } from '../systems/rumorMill.js';
 
 export const TALK_RECTS = Object.freeze({
   tellMeAbout: [4, 4, 107, 10],
@@ -69,6 +82,19 @@ export const TALK_RECTS = Object.freeze({
   conversationUp: [303, 64, 9, 16],
   conversationDown: [303, 176, 9, 16],
   topicDown: [102, 161, 9, 16],
+  // AUDIT 58 (talk lane): the HORIZONTAL pair and the slider between
+  // them - rectButtonTopicLeft/Right (:207-208) and
+  // horizontalSliderTopic's Position/Size (:766-767). listboxTopic is
+  // HorizontalScrollMode.PixelWise with a RectRestrictedRenderArea over
+  // its own 94x104 box (:543-546), and in that mode ListBox.cs:556-557
+  // sets the row label's MaxWidth to -1: a long topic is CLIPPED by the
+  // render area and read by PANNING, never truncated. The port had no
+  // rect, no state and no input path for any of the three, and cut each
+  // row to the box instead - miscited as "ListBox.AddItem sets MaxWidth
+  // = Size.x", which is the CharWise branch this listbox is not.
+  topicLeft: [4, 177, 16, 9],
+  topicRight: [86, 177, 16, 9],
+  topicSlider: [22, 178, 62, 5],
 });
 // ListBox verbatim (the 17d UI audit): row height = FONT0003's
 // fixedHeight 7 + RowSpacing (topic 0, conversation 4); the NPC
@@ -125,6 +151,25 @@ export const CONVERSATION_ARROW_SCROLL = 5;
 export const clampScrollPixels = (px, contentH, panelH) =>
   Math.max(0, Math.min(Math.max(0, contentH - panelH), px));
 
+/** HorizontalSlider.SetScrollIndex (HorizontalSlider.cs:279-291) -
+ *  the same clamp the vertical bar takes, over WIDTHS: DisplayUnits is
+ *  listboxTopic.Size.x (94) and TotalUnits is listboxTopic.WidthContent
+ *  (ListBox.cs:699-707, the widest row's TextWidth). */
+export const clampTopicHScroll = (px, widthContent, panelW) =>
+  Math.max(0, Math.min(Math.max(0, widthContent - panelW), px));
+
+/** HorizontalSlider.DrawSlider's thumb (:313-316), which
+ *  HorizontalSlider.MouseClick (:170-178) pages against: a trough-wide
+ *  thumb scaled by displayUnits/totalUnits with a 10px floor, slid
+ *  across the remaining travel. Null when there is nothing to scroll -
+ *  Draw returns before the thumb exists (:161-162). */
+export function topicSliderThumb([tx, ty, tw, th], scrollIndex, totalUnits, displayUnits) {
+  if (totalUnits <= displayUnits) return null;
+  const thumbW = Math.max(10, tw * (displayUnits / totalUnits));
+  const thumbX = scrollIndex * (tw - thumbW) / (totalUnits - displayUnits);
+  return [tx + thumbX, ty, thumbW, th];
+}
+
 /** ListBox.Draw's PixelWise branch (ListBox.cs:329-355): rows lay
  *  out from the listbox origin at y = -scrollIndex, striding
  *  TextHeight + rowSpacing, and a row is skipped only when it falls
@@ -146,14 +191,109 @@ export function layoutPixelRows(heights, scrollPx, panelH, rowSpacing = 0) {
  *  the TOP, and a long one is pinned to its last row. */
 export const conversationScroll = (contentH, panelH) => Math.max(0, contentH - panelH);
 
+// ---- AUDIT 58 (talk lane): THE SIX BUTTON STRIPS ------------------
+// DaggerfallTalkWindow.cs:34-35 names two more images beside the base
+// panel - talkCategoriesImgName = "TALK02I0.IMG" and
+// highlightedOptionsImgName = "TALK03I0.IMG" - and :436-490 cuts SIX
+// 107x10 strips out of the three sheets, which SetTalkModeTellMeAbout
+// (:944-949), SetTalkModeWhereIs (:967-968) and the four
+// SetTalkCategory* arms (:1022-1025, :1043-1046, :1064-1067,
+// :1085-1088) assign to the six buttons' BackgroundTexture on every
+// mode change. The port loaded TALK01I0 alone and drew nothing over
+// it, so which of Tell-me-about / Where-is was active and which of
+// Location/People/Things/Work were reachable never appeared - and,
+// worse, four of the six were drawn in the WRONG state on every frame,
+// because the base art IS the grayed MODE rows and the highlighted
+// CATEGORY rows (see the sources below). One frame after Setup, DFU
+// shows Where-is highlighted with People/Things/Work grayed; the port
+// showed the opposite of both.
+export const TALK_CATEGORIES_IMG = 'TALK02I0.IMG';    // :34
+export const TALK_HIGHLIGHT_IMG = 'TALK03I0.IMG';     // :35
+/** WHERE each of the six strips is cut from. Unity's GetPixels is
+ *  BOTTOM-LEFT origin, so every C# `y` below is converted to the
+ *  top-down row this port's textures use:
+ *   - the two GRAYED MODE strips and the four HIGHLIGHTED CATEGORY
+ *     strips come out of textureBackground (TALK01I0) itself, at
+ *     `200 - <rect.y> - 10` (:437-438, :459-462) - i.e. at exactly the
+ *     button's own rect, which is why blitting them is the identity
+ *     and why the untouched base art reads as "both modes grayed, all
+ *     four categories lit";
+ *   - the two HIGHLIGHTED MODE strips are TALK03I0's halves (:440-441:
+ *     GetPixels at height/2 is the TOP half = Tell me about, at 0 the
+ *     BOTTOM half = Where is);
+ *   - the four GRAYED CATEGORY strips are TALK02I0's quarters
+ *     (:443-446: height*3/4 -> Location, *2/4 -> People, /4 -> Thing,
+ *     0 -> Work, i.e. top-down in that order). */
+export const TALK_STRIP_SOURCES = Object.freeze({
+  tellMeAboutGrayedOut: { art: 'base', rect: TALK_RECTS.tellMeAbout },
+  whereIsGrayedOut: { art: 'base', rect: TALK_RECTS.whereIs },
+  categoryLocationHighlighted: { art: 'base', rect: TALK_RECTS.categoryLocation },
+  categoryPeopleHighlighted: { art: 'base', rect: TALK_RECTS.categoryPeople },
+  categoryThingsHighlighted: { art: 'base', rect: TALK_RECTS.categoryThings },
+  categoryWorkHighlighted: { art: 'base', rect: TALK_RECTS.categoryWork },
+  tellMeAboutHighlighted: { art: 'highlighted', band: 0, bands: 2 },
+  whereIsHighlighted: { art: 'highlighted', band: 1, bands: 2 },
+  categoryLocationGrayedOut: { art: 'categories', band: 0, bands: 4 },
+  categoryPeopleGrayedOut: { art: 'categories', band: 1, bands: 4 },
+  categoryThingsGrayedOut: { art: 'categories', band: 2, bands: 4 },
+  categoryWorkGrayedOut: { art: 'categories', band: 3, bands: 4 },
+});
+/** SetTalkCategory's switch (:973-994) - `case Location: default:`, so
+ *  anything that is not one of the other three IS Location. */
+export const TALK_CATEGORIES = Object.freeze(['location', 'people', 'things', 'work']);
+/**
+ * Which strip each of the six buttons wears, from the window's own
+ * state. SetTalkModeTellMeAbout grays ALL FOUR categories (:946-949)
+ * whatever the remembered one is; SetTalkModeWhereIs re-runs
+ * SetTalkCategory(selectedTalkCategory) (:970), which lights exactly
+ * one of them.
+ */
+export function talkButtonStrips(talkOption, category = 'location') {
+  const whereIs = talkOption === 'whereIs';
+  const cat = whereIs ? (TALK_CATEGORIES.includes(category) ? category : 'location') : null;
+  const catStrip = (name, key) => (cat === key
+    ? `category${name}Highlighted` : `category${name}GrayedOut`);
+  return {
+    tellMeAbout: whereIs ? 'tellMeAboutGrayedOut' : 'tellMeAboutHighlighted',
+    whereIs: whereIs ? 'whereIsHighlighted' : 'whereIsGrayedOut',
+    categoryLocation: catStrip('Location', 'location'),
+    categoryPeople: catStrip('People', 'people'),
+    categoryThings: catStrip('Things', 'things'),
+    categoryWork: catStrip('Work', 'work'),
+  };
+}
+
 let _art = null;
+let _categoriesArt = null;   // TALK02I0
+let _highlightArt = null;    // TALK03I0
 export async function preloadTalkArt(deps) {
   _portraitDeps = deps;   // ROAD-D D10: SetNPCPortrait reads through the same host seam
   if (_art) return;
   try { _art = await loadImg(deps, 'TALK01I0.IMG'); }
   catch { console.warn('[talk] TALK01I0.IMG unavailable; the text talk chain stands in'); }
+  // The two strip sheets ride the same seam. DFU CloseWindow()s when
+  // either is missing (:442-448, :455-457); this port's art is fetched
+  // asynchronously (the recorded departure the portrait carries below),
+  // so a missing sheet costs the six overlays - the base art still
+  // draws the six buttons - and never the conversation.
+  try { _categoriesArt = await loadImg(deps, TALK_CATEGORIES_IMG); }
+  catch { console.warn(`[talk] ${TALK_CATEGORIES_IMG} unavailable; the category buttons keep the base art`); }
+  try { _highlightArt = await loadImg(deps, TALK_HIGHLIGHT_IMG); }
+  catch { console.warn(`[talk] ${TALK_HIGHLIGHT_IMG} unavailable; the mode buttons keep the base art`); }
 }
 export const talkArtLoaded = () => !!_art;
+
+/** One strip as an { img, rect } source, or null when its sheet has
+ *  not landed (the never-trap above). */
+export function talkStripSource(name, arts = { base: _art, categories: _categoriesArt, highlighted: _highlightArt }) {
+  const src = TALK_STRIP_SOURCES[name];
+  if (!src) return null;
+  const img = arts[src.art];
+  if (!img) return null;
+  if (src.rect) return { img, rect: [...src.rect] };
+  const h = Math.round(img.h / src.bands);
+  return { img, rect: [0, src.band * h, img.w, h] };
+}
 
 // ---- ROAD-D D10: THE NPC PORTRAIT (SetNPCPortrait, :360-385) -------
 // DFU has ONE talk window and texturePortrait is its field, set from
@@ -168,8 +308,11 @@ export const talkArtLoaded = () => !!_art;
 // which is the panel's size (:158-159) - no fit is involved.
 //
 // RECORDED DEPARTURE (async art), the same one hudEscortFaces.js
-// carries: DFU loads the record synchronously and CLOSES THE WINDOW
-// when it fails (:375-379). The port's art is fetched through the
+// carries and the same Ledger A row: ART LANDS ASYNC, AND A MISSING
+// RECORD COSTS THE PICTURE RATHER THAN THE SESSION (AUDIT 58, seams
+// lane), cited by name because a line number rots. DFU loads the
+// record synchronously and CLOSES THE WINDOW when it fails
+// (:375-379). The port's art is fetched through the
 // host's async seam, so the portrait draws from the frame it lands
 // and a missing record costs the portrait (warned once), never the
 // conversation.
@@ -244,6 +387,14 @@ export class NativeTalkWindow {
     // never read back up.
     this.conversationScroll = null;
     this._conversationContentH = 0;
+    // AUDIT 58: horizontalSliderTopic.ScrollIndex, in PIXELS
+    // (listboxTopic.HorizontalScrollIndex, :1364). UpdateScrollBarsTopic
+    // zeroes it with every page (:816), so _setListboxTopics does.
+    // _topicWidthContent is ListBox.WidthContent measured at the last
+    // draw - the same shape _conversationContentH takes, because a
+    // width in glyphs is not knowable without the font.
+    this.topicHScroll = 0;
+    this._topicWidthContent = 0;
     this._mouse = [0, 0];            // for the wheel's per-panel routing
     this._category = null;
     // MERGE (the S-A lane's shape): selectedTalkCategory persists -
@@ -289,12 +440,65 @@ export class NativeTalkWindow {
    *  halves fold in here because this port's four page-openers are
    *  the one door SetListboxTopics is reached through. */
   _setListboxTopics(rows, mode) {
-    this.topics = rows;
+    this.topics = this._repairCaptions(rows);
     this.topicMode = mode;
     this.scroll = 0;
+    this.topicHScroll = 0;               // UpdateScrollBarsTopic :816
+    this._topicWidthContent = 0;
     this.selected = -1;                                // ClearItems -> SelectNone
     if (!rows.length) { this._updateQuestion(-1); return; }   // the trailing UpdateQuestion(-1)
     this._selectIndex(0);
+  }
+
+  /** AUDIT 58 (seams): THE CAPTION REPAIR, which this window did not
+   *  have. SetListboxTopics repairs EVERY row before it adds it
+   *  (DaggerfallTalkWindow.cs:863-872):
+   *
+   *      if (item.caption == null) {        // old save data
+   *        item.caption = item.key;         // "just try to take key"
+   *        if (item.caption == String.Empty)
+   *          item.caption = GetLocalizedText("resolvingError");
+   *      } else if (item.caption == String.Empty) {
+   *        item.caption = GetLocalizedText("resolvingError");
+   *      }
+   *
+   *  `resolvingError` is `...never mind...` (Internal_Strings.csv:582),
+   *  so DFU never draws a blank row: an unlabelled row is still
+   *  SELECTABLE and still answerable, and a player cannot tell it from
+   *  a gap in the list. The port drew the caption verbatim and had no
+   *  substitution anywhere, so those rows came out zero-width.
+   *
+   *  Empty captions are reachable from the port's own assembler:
+   *  topicTree.js's `captionString` starts '' (:578) and the NotSet
+   *  arm never overwrites it, the Location arm's null test takes an
+   *  EMPTY buildingName as the caption (:588-589, and quest/place.js
+   *  builds dungeon and town siteDetails with `buildingName: ''`), and
+   *  the Thing arm only fills it once the Item resource has minted its
+   *  daggerfallUnityItem (:602).
+   *
+   *  DFU's ListItem is a CLASS (TalkManager.cs:159), so the repair is
+   *  a WRITE-BACK that outlives the draw - the tree's own row stays
+   *  repaired for every later reader. Mirrored here: the row's label
+   *  and, where the row wraps one, its ListItem's caption.
+   *
+   *  This is the ONE door - all four page setters reach the listbox
+   *  through `_setListboxTopics`, and `_updateQuestion` reads the same
+   *  repaired label when it builds the player-says line. */
+  _repairCaptions(rows) {
+    for (const row of rows) {
+      const was = row.label ?? row.name;
+      let caption = was;
+      if (caption == null) {
+        caption = row.listItem?.key ?? '';
+        if (caption === '') caption = RESOLVING_ERROR;
+      } else if (caption === '') {
+        caption = RESOLVING_ERROR;
+      }
+      if (caption === was) continue;
+      row.label = caption;
+      if (row.listItem) row.listItem.caption = caption;
+    }
+    return rows;
   }
 
   /** ListBox.MouseClick (:465-505) -> SelectIndex -> OnSelectItem. */
@@ -352,6 +556,8 @@ export class NativeTalkWindow {
     this.topics = [];
     this.topicMode = 'work';
     this.scroll = 0;
+    this.topicHScroll = 0;               // ClearListboxTopics + UpdateScrollBarsTopic (:1090-1093)
+    this._topicWidthContent = 0;
     this.selected = -1;
     this.question = q;   // the player-says panel shows it; OKAY asks
     return true;
@@ -380,7 +586,21 @@ export class NativeTalkWindow {
   _pickIndex(idx) {
     const it = this.topics[idx];
     if (!it) return;
-    this.selected = idx;
+    // AUDIT 58 (talk lane): this is `listboxTopic.SelectedIndex = index`
+    // (:1307) and NOTHING more. The assignment raises OnSelectItem
+    // (ListBox.cs:761-771), whose handler is guarded -
+    // `if (index != selectionIndexLastUsed) UpdateQuestion(index);`
+    // (:1381-1387) - so on an ALREADY selected row, which is every
+    // double-click and every OKAY press (both enter here with
+    // `this.selected` already standing), UpdateQuestion is SKIPPED and
+    // the pair at :1331 logs the standing currentQuestion: the very
+    // sentence the player-says panel is showing. The port re-ran
+    // _updateQuestion here unconditionally, and GetQuestionText is
+    // ExpandRandomTextRecord - a fresh RANDOM variant of 7212/7225 per
+    // call (systems/answerPipeline.js -> talkMacros.js:328-332) - so
+    // the conversation recorded a different sentence from the one on
+    // screen. _selectIndex IS that guarded handler.
+    this._selectIndex(idx);
     if (this.topicMode === 'categories') {
       this._category = it;
       audio.playOneShot(SOUND.ButtonClick, 1);   // the ItemGroup arm's own click (:1329)
@@ -394,11 +614,33 @@ export class NativeTalkWindow {
       // B5-6: the flat pages (Tell me about, People) ask through the
       // SAME pair - their rows carry listItems and the hooks already
       // speak them.
-      this._updateQuestion(idx);
       this._pushQA(this.question, this.hooks.answer(it));
       this._updateQuestion(idx);   // :1333 - "and get new question text for textlabel"
     }
   }
+  /** AUDIT 58 (talk lane): ButtonTone{Polite,Normal,Blunt}_OnClickHandler
+   *  (DaggerfallTalkWindow.cs:1501-1532), whole. All three handlers are
+   *  the same four statements: assign the tone, RETURN on the
+   *  toneLastUsed guard (:1505), UpdateCheckboxes, then
+   *  `UpdateQuestion(listboxTopic.SelectedIndex)` - so the question is
+   *  RE-DRAWN from GetQuestionText(listItem, selectedTalkTone) at the
+   *  NEW tone. The port's four call sites set the tone and returned, so
+   *  (a) the player-says panel kept the old tone's sentence until the
+   *  selection moved, and (b) on the WORK page - whose question is
+   *  stored once by _openWork and pushed verbatim by _askWork - the
+   *  logged question stayed at the OLD tone's record while
+   *  getAnswerText recomputed the reaction tier at the NEW one. DFU's
+   *  UpdateQuestion takes its Work arm FIRST (:1224-1231), rebuilding
+   *  the fake Work ListItem before any index check, which is why the
+   *  Work page refreshes here too. UpdateCheckboxes (:916-930) is the
+   *  flat panelTone fill, which draw() already paints live from
+   *  hooks.tone(). */
+  _setTone(t) {
+    if (t === this.hooks.tone()) return;   // TalkToneToIndex(selectedTalkTone) == toneLastUsed (:1505)
+    this.hooks.setTone(t);
+    this._updateQuestion(this.selected);
+  }
+
   /** VerticalScrollBar.ScrollIndex +/- dPx, clamped. */
   /** F159: the conversation twin of _scrollBy - the clamp is
    *  SetScrollIndex against the content measured at the last draw. */
@@ -422,13 +664,19 @@ export class NativeTalkWindow {
   _scrollBy(dPx) {
     this.scroll = clampScrollPixels(this.scroll + dPx, this.topics.length * TOPIC_ROW_H, TALK_RECTS.topicList[3]);
   }
+
+  /** ButtonTopicLeft/Right_OnMouseClick (:1430-1440) - one slider unit,
+   *  and the slider is pixel-unit here, so one PIXEL. */
+  _scrollTopicH(dPx) {
+    this.topicHScroll = clampTopicHScroll(this.topicHScroll + dPx, this._topicWidthContent, TALK_RECTS.topicList[2]);
+  }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
   /** Keyboard accelerators (the session's established keys). */
   input(code) {
     if (code === 'Escape' || code === 'KeyE' || code === 'Enter') { this._close(); return; }
     if (code === 'KeyW') { this._openCategories(); return; }
-    if (code === 'KeyT') { this.hooks.setTone((this.hooks.tone() + 1) % 3); return; }
+    if (code === 'KeyT') { this._setTone((this.hooks.tone() + 1) % 3); return; }
     if (code === 'KeyN') { this._scrollBy(TALK_RECTS.topicList[3]); return; }   // ours: a full page
     if (code === 'KeyP') { this._scrollBy(-TALK_RECTS.topicList[3]); return; }
     const d = /^Digit([1-9])$/.exec(code);
@@ -463,11 +711,28 @@ export class NativeTalkWindow {
       if (this._talkOption !== 'whereIs') return true;   // greyed out: silent, per the gate above
       audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true;
     }
-    if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(0); return true; }
-    if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(1); return true; }
-    if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
+    // The ButtonClick is played BEFORE the toneLastUsed guard (:1503),
+    // so a re-click of the standing tone still sounds and changes nothing.
+    if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(0); return true; }
+    if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(1); return true; }
+    if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(2); return true; }
     if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
     if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
+    // AUDIT 58: the horizontal pair, one slider unit a click (:1433, :1439).
+    if (inRect(R.topicLeft, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(-1); return true; }
+    if (inRect(R.topicRight, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(1); return true; }
+    // ...and the trough, which pages by DisplayUnits on whichever side
+    // of the thumb was hit (HorizontalSlider.MouseClick :170-178). The
+    // slider plays no ButtonClick of its own - it is a slider, not a
+    // Button.
+    if (inRect(R.topicSlider, vx, vy)) {
+      const thumb = topicSliderThumb(R.topicSlider, this.topicHScroll, this._topicWidthContent, R.topicList[2]);
+      if (thumb) {
+        if (vx < thumb[0]) this._scrollTopicH(-R.topicList[2]);
+        else if (vx > thumb[0] + thumb[2]) this._scrollTopicH(R.topicList[2]);
+      }
+      return true;
+    }
     // F159: the conversation arrows (:1442-1452) - 5 pixels a click.
     if (inRect(R.conversationUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(-CONVERSATION_ARROW_SCROLL); return true; }
     if (inRect(R.conversationDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true; }
@@ -529,6 +794,16 @@ export class NativeTalkWindow {
     // which is Color.clear - the letterbox is NOT painted.
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
+    // AUDIT 58: the six button BackgroundTextures, over the base art
+    // and under everything else - DFU assigns all six on every mode
+    // change (:944-949, :967-968, :1022-1088), so all six are blitted
+    // from state here. The `base` ones are the identity (their source
+    // rect IS the button's rect); the differing ones are TALK03I0's
+    // halves and TALK02I0's quarters.
+    for (const [button, strip] of Object.entries(talkButtonStrips(this._talkOption, this._lastCategory))) {
+      const src = talkStripSource(strip);
+      if (src) drawImgCrop(renderer, src.img, m, src.rect, TALK_RECTS[button]);
+    }
     // panelPortrait (:417-418) - the BackgroundTexture at its own
     // 64x64 over the art's frame, before the labels.
     if (_portrait) drawImg(renderer, _portrait, m, PORTRAIT_RECT[0], PORTRAIT_RECT[1], PORTRAIT_RECT[2], PORTRAIT_RECT[3]);
@@ -545,18 +820,31 @@ export class NativeTalkWindow {
     // panelTone: the flat 6x6 toggleColor fill at the active position
     const toneRect = [R.tonePolite, R.toneNormal, R.toneBlunt][this.hooks.tone()];
     drawRect(renderer, m, toneRect[0], toneRect[1], toneRect[2], toneRect[3], TALK_TOGGLE_COLOR);
-    // topic rows, truncated to the listbox width (ListBox.AddItem sets
-    // MaxWidth = Size.x), laid out at the listbox origin
-    const fit = (t, w) => { let s = t; while (s.length > 1 && measureText(font.fnt, s) > w) s = s.slice(0, -1); return s; };
+    // AUDIT 58 (talk lane): the topic rows PAN, they are not cut. This
+    // listbox is HorizontalScrollModes.PixelWise (:545), where
+    // ListBox.cs:556-557 sets the row label's MaxWidth to -1 - no
+    // truncation at all - and ListBox.Draw lays each row at
+    // `x = -horizontalScrollIndex` (:344-352) inside the
+    // RectRestrictedRenderArea the listbox declares over its own box
+    // (:546). The old code cut every row to 94px with a local fit(),
+    // citing the CharWise branch, so a topic wider than the box lost
+    // its tail permanently and no input path could reveal it.
+    // WidthContent (ListBox.cs:699-707) is the widest row, measured
+    // here because the font is only in hand at draw time; the arrows
+    // and the slider clamp against it.
+    const labels = this.topics.map((it) => it.label ?? it.name ?? '');
+    this._topicWidthContent = labels.reduce((w, t) => Math.max(w, measureText(font.fnt, t)), 0);
+    this.topicHScroll = clampTopicHScroll(this.topicHScroll, this._topicWidthContent, R.topicList[2]);
     // ROAD-D D10: DecideTextColor (ListBox.cs:360-380) - the SELECTED
     // row draws in selectedTextColor and, because
     // selectedShadowPosition is Vector2.zero (:41), carries NO shadow.
     // This listbox has no hover highlight: the talk window never
     // assigns highlightedIndex's colours the way the picker does.
+    renderer.setScreenScissor(m.ox + R.topicList[0] * m.s, m.oy + R.topicList[1] * m.s, R.topicList[2] * m.s, R.topicList[3] * m.s);
     layoutPixelRows(this.topics.map(() => TOPIC_ROW_H), this.scroll, R.topicList[3]).forEach(({ index, y }) => {
-      const it = this.topics[index];
-      shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2]), m, R.topicList[0], R.topicList[1] + y, topicRowStyle(index === this.selected));
+      shadowText(renderer, font, labels[index], m, R.topicList[0] - this.topicHScroll, R.topicList[1] + y, topicRowStyle(index === this.selected));
     });
+    renderer.clearScreenScissor();
     // conversation - AUDIT 17e F11/F18. Two laws were wrong here:
     // UI6: the modern conversation style, read once for the whole
     // conversation block (DFU sets it per label, from the same flag).

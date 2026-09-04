@@ -52,11 +52,16 @@ import { getBool } from './settings.js';   // GUI/CanDropQuestItems
 
 /** ItemHelper.WagonKgLimit (:56). */
 export const WAGON_KG_LIMIT = 750;
-/** Internal_Strings, recovered - these ship in Unity-side
- *  localization rather than TEXT.RSC, so the prose is the port's and
- *  the BEHAVIOUR is DFU's. */
-export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more.';
-export const CANNOT_CARRY_TEXT = 'You cannot carry any more.';
+/** Internal_Strings.csv:828-829, verbatim - these ship in Unity-side
+ *  localization rather than TEXT.RSC, and the rows are in the
+ *  reference tree, the way the sibling row "cannotRemoveItem"
+ *  (csv:827) is already taken verbatim at createItem.js's
+ *  CANNOT_REMOVE_ITEM_TEXT. The keys are asked for at
+ *  DaggerfallInventoryWindow.cs:1431 (cannotHoldAnymore, inside
+ *  WagonCanHoldAmount) and :1420 (cannotCarryAnymore, inside
+ *  CanCarryAmount). */
+export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more stuff.';
+export const CANNOT_CARRY_TEXT = 'You cannot carry any more stuff.';
 
 /** Why a transfer did not happen, and whether the player is told.
  *  EVERY refusal is silent in the SOUND sense - DFU's guards all
@@ -126,8 +131,10 @@ export function questTransferRefused(item, { fromLocal, toWagon = false, getQues
   return false;
 }
 
-/** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
-export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
+/** key "wagonFullGold" - the drop-gold clamp's box, Internal_Strings.csv:815
+ *  verbatim ("Your wagon could only hold {0} gold pieces."), formatted
+ *  with wagonCanHold at DaggerfallInventoryWindow.cs:1303. */
+export const wagonFullGoldText = (n) => `Your wagon could only hold ${n} gold pieces.`;
 
 /**
  * DropGoldPopup_OnGotUserInput (:1269-1303). The GOLD arm of the same

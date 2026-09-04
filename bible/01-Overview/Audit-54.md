@@ -21,14 +21,14 @@ Nine sweeps. Two findings. Neither is in a path a player has seen.
 
 | # | Sweep | Result |
 |---|---|---|
-| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:337 is the classic renderer inside the factory, not the controller) |
+| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:338 is the classic renderer inside the factory, not the controller) |
 | 1b | The same for `magic` (createPlayerMagic's return), `precip` and `labGrass` (class members), `hudCtx` (each host's literal), across all four hosts | **clean**, once shorthand keys (`readySpell,`) were counted - the first pass reported five misses that were my regex |
 | 2 | Every shader uniform in src/render: declared but never set, set but never declared | 167 declarations, **clean** |
 | 2b | Declared AND set, but never READ by any shader body | **F1** |
 | 3 | Every optional-chain read in scenes+ui whose property name is defined NOWHERE in the tree (the general form of GR3's fault) | 528 reads, 28 candidates, **all 28 shorthand keys** the scan missed (`fnt,` in makeFont, `compassBox,` in the HUD art, `flatPosition,` on the quest marker). Clean |
 | 4 | `window.__X` probe surfaces a tool or test reads that src never sets | 155 read, 36 unset - **every one probe-local**, set by the tool's own `page.evaluate`. Not findings; a limit of the scan |
 | 5 | `getPref` keys against PREF_DEFAULTS, both directions | 7 keys, all defaulted; `proceduralSky` unread by design (a documented migration key); **F2** |
-| 6 | GR3's other two revived consumers: does the value chain past the new getter go anywhere | **yes, both** - the terrain shader reads all five deck uniforms (`uShadowAmt/uCloudCover/uCloudSoft/uCloudTime/uCloudWind`, renderer.js:420-496) and `precip.enhanced` gates the lab rain path and `uEnh` (precipitation.js:384-412) |
+| 6 | GR3's other two revived consumers: does the value chain past the new getter go anywhere | **yes, both** - the terrain shader reads all five deck uniforms (`uShadowAmt/uCloudCover/uCloudSoft/uCloudTime/uCloudWind`, renderer.js:420-496) and `precip.enhanced` gates the lab rain path (`drawLab`). **Corrected by f3/render, below:** this row also claimed it gates `uEnh`, and that was FALSE - `draw()` returns into `drawLab` on its first line, so `uEnh` was uploaded as 0 on every frame the classic lane drew and never once as 1. Sweep 2b's own question, asked one level up: a uniform declared, set and READ by a shader body that no draw can reach |
 | 7 | Every enhanced door has a host that calls it | pinned since AUDIT UI 2; holds |
 | 8 | Line-cited Ledger rows resolve to the rows they name | pinned (CD1-5); holds after WIND1's renumbering |
 | 9 | The suite on today's tree | 6,225 green, with WIND1 on its branch |
@@ -58,6 +58,61 @@ control that changes it. That is a dead setting in the classic lane;
 recorded here for that lane rather than touched, since the classic UI
 is untouched by this arc and the fix is a control, not a plumbing
 change.
+
+## The fix lanes
+
+**f3 - render and perf (2026-09-03).** Four defects, all in paths the
+enhanced arcs left behind them, none of them a classic-lane pixel:
+
+- **The travel map's road chains had no owner.** `OverworldRenderer.dispose()`
+  is headed "Every allocation has an owner (AUDIT 17e)" and freed the
+  terrain, the markers, the route, the cloud deck and the backdrop - and
+  not the ROADS 25 road layer, which is the largest of them: one VAO and
+  one buffer PER CHAIN, ~5,800 chains for roads and tracks alone on
+  Hazelnut's arrays, re-traced by every travel-map window and orphaned on
+  the session-long shared context by every close. `_freeRoads()` existed
+  and had exactly two callers, both inside `setRoads`. It is called from
+  `dispose()` now, and overworldmap.test.js drives the renderer on a
+  handle-holding Proxy-GL: five chains in, zero live handles out.
+
+- **WX1 orphaned EE8's precipitation profile, and the classic lane paid
+  for it.** WX1 gave the enhanced lane the lab's own program and made
+  `draw()` return into it on its first line - which left every later
+  `this.enhanced` test in that function unreachable: the RAIN_ENH /
+  STORM_ENH / SNOW_ENH profiles could not be chosen, `?rain=<n>` could
+  not cap anything there, and `uEnh` (with every `mix(..., uEnh)` term it
+  gated in both classic stages) was pinned at 0 forever. The cost was not
+  only tidiness: the classic program's buffers were still sized
+  `PRECIP_ENHANCED_MAX` = 26,000 - a 26,000-iteration build and ~2.7 MB
+  of GPU buffers for a program whose only reachable counts are 1000
+  (DFU's `Rain_Particles_Splash` cap) and 800 - and the lab's program plus
+  its 26,000-instance VAO were compiled and uploaded in the constructor on
+  the CLASSIC skin, where `drawLab` can never run. The dead arms and the
+  orphaned profiles are gone, the classic stages are their pre-EE8 text
+  byte for byte, the classic buffer is `Math.max(RAIN.count, SNOW.count)`,
+  and the lab's program is built for the lane that draws it - the enhanced
+  hosts pass `sky.enhanced` at construction, so a shader fault is still a
+  constructor fault the boot probe sees. The enhanced look is untouched:
+  it was always `drawLab`.
+
+- **The world render gate's `--ground` knob read nothing.** EE3's kill
+  switch outlived the ground arc's revert (8256ae2: "no reader of
+  tileArrayFor, enhancedGround or groundMode remains anywhere"). The gate
+  still appended `&ground=<mode>` to the URL and still printed
+  `ground=<mode>` in its PASS line - a door that could neither fail nor
+  act, and that would have claimed it gated a mode that no longer exists.
+  Removed; doctrine.test.js now counts the knobs out of the gate's own
+  URL line and requires a live reader in `src/` for each.
+
+- **Both exterior hosts re-parsed the page URL every frame that rain
+  drew.** `precip.countCap = Number(new URLSearchParams(location.search).get('rain'))`
+  sat inside the per-frame precipitation block in world.js and
+  exterior.js - a URLSearchParams construction and a full query-string
+  parse per frame, for a gate-only dial that cannot change during a page
+  load, one step above the pass EV2 swept four small Float32Arrays out of
+  for exactly this reason; and it ran in the CLASSIC lane, which then
+  discarded the value. Both hosts read it once at boot off the `params`
+  they already carry, and hand it (with the lane) to the constructor.
 
 ## What this audit could not do
 

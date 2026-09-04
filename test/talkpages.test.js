@@ -59,6 +59,51 @@ test('B5: Tell me about opens the flat engine list and a pick asks through the s
   assert.equal(w.conversation[2].text, 'Any news?: an answer');
 });
 
+// ═══ AUDIT 58 (seams): SetListboxTopics REPAIRS every row it adds ═══
+//
+// DaggerfallTalkWindow.cs:863-872 runs, for EVERY row, before AddItem:
+// a null caption falls back to the row's KEY, and an empty caption -
+// originally, or after that fallback - becomes the localized
+// `resolvingError`, which Internal_Strings.csv:582 spells
+// `...never mind...`. The port drew the caption verbatim and carried
+// no substitution anywhere, so a row the tree hands it with an empty
+// caption came out as a zero-width, unlabelled - but selectable, and
+// still answerable - gap in the list.
+//
+// The caption is reachable empty from the port's own assembler:
+// topicTree's `captionString` starts '' and the NotSet arm never
+// overwrites it, the Location arm's null test takes an EMPTY
+// buildingName as the caption (quest/place.js builds dungeon and town
+// siteDetails with `buildingName: ''`), and the Thing arm fills it
+// only once the Item resource has minted its daggerfallUnityItem.
+//
+// The literal is DFU's, not the port's constant: change
+// rumorMill.js's RESOLVING_ERROR and this pin still demands
+// `...never mind...`.
+test('AUDIT 58: an empty or null caption draws "...never mind...", never a blank row', () => {
+  const hooks = mkHooks();
+  // the tree's own ListItem - a CLASS in DFU (TalkManager.cs:159), so
+  // the repair is a write-back the next reader sees
+  const place = { questionType: 4, key: '_dungeon_', caption: '' };
+  hooks.tellMeAboutTopics = () => [
+    { label: '', listItem: place },                        // Place on a dungeon site: buildingName ''
+    { label: null, listItem: { key: '_qgiver_' } },        // null caption -> "just try to take key"
+    { label: null, listItem: { key: '' } },                // null caption AND empty key
+    { label: 'Any news?', listItem: { questionType: 1 } }, // untouched
+  ];
+  const w = new NativeTalkWindow('greeting', hooks);
+  assert.ok(w.click(...at(TALK_RECTS.tellMeAbout)));
+  assert.deepEqual(w.topics.map((r) => r.label),
+    ['...never mind...', '_qgiver_', '...never mind...', 'Any news?'],
+    'the caption repair (DaggerfallTalkWindow.cs:863-872) did not run over every row');
+  assert.equal(place.caption, '...never mind...',
+    'DFU writes the repaired caption BACK onto the ListItem - it is a class, not a struct');
+  // ...and UpdateQuestion builds the player-says line off the REPAIRED
+  // label, because SetListboxTopics repairs before SelectIndex(0).
+  assert.match(w.question, /never mind/,
+    'the player-says label was built off the unrepaired empty caption');
+});
+
 test('B5: People is the flat person list; Things opens EMPTY (classic never implemented it)', () => {
   const w = new NativeTalkWindow('greeting', mkHooks());
   assert.ok(w.click(...at(TALK_RECTS.categoryPeople)));
@@ -148,7 +193,12 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
     'the Talk button is not the Spymaster');
   assert.match(modes, /talkAsSpymaster: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: true \}\)/,
     'and the 402 greeting\'s dismissal is');
-  assert.match(modes, /interiorOverlay = null;\s*\/\/ the popup yields to the conversation/);
+  // ROAD-F GS1: the sentence moved above the statement when the
+  // outdoor arm was recorded beside it - openTalkWindow goes through
+  // townTalk's showOverlay, which IS CloseWindow-then-Push, so only
+  // the INTERIOR slot needs clearing by hand.
+  assert.match(modes, /\/\/ The popup yields to the conversation, as DFU's CloseWindow-/);
+  assert.match(modes, /^\s*interiorOverlay = null;$/m);
   // ONE window-opener - the mobile path and the static path share it
   assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null \} = \{\}\)/);
   // ROAD-D D10: the mobile arm carries its portrait too - always

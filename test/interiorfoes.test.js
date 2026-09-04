@@ -92,7 +92,12 @@ test('IF: CreateFoe\'s interior arm is the dungeon arm with one term changed', (
 });
 
 test('IF: enemiesNearby is ONE scan over this host\'s own database, at all three consumers', () => {
-  assert.match(WM, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/);
+  // AUDIT 58 WIDENED THE DATABASE. GameManager.AreEnemiesNearby
+  // (:684-732) is one method over ActiveGameObjectDatabase; this host
+  // has TWO pools, and the scan named only interiorFoes - so the
+  // indoor watch was invisible to the rest gate, the hourly break and
+  // the exhaustion collapse alike.
+  assert.match(WM, /const interiorEnemiesNearby = \(opts = \{\}\) => \(\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby\(interiorFoePool\(\), opts\) : false\);/);
   // rest (S40's resting variant), the rest-window's decision, and the
   // exhaustion collapse - each was a literal `false`
   assert.match(WM, /enemiesNearby: \(\) => interiorEnemiesNearby\(\{ resting: true \}\)/, 'the rest deps');
@@ -100,9 +105,9 @@ test('IF: enemiesNearby is ONE scan over this host\'s own database, at all three
   assert.match(WM, /enemiesNearby: interiorEnemiesNearby\(\)/, 'the exhaustion collapse');
   assert.ok(!WM.includes('enemiesNearby: () => false'), 'no literal survives');
   assert.ok(!WM.includes('this host mounts no foe pool'), 'and neither does its sentence');
-  // an interior with no pool minted still answers false - because
+  // an interior with NEITHER pool minted still answers false - because
   // there is nothing there, not because it cannot look
-  assert.match(WM, /interiorFoes \? areEnemiesNearby/);
+  assert.match(WM, /\(interiorFoes \|\| interiorGuards\)\n\s+\? areEnemiesNearby/);
 });
 
 test('IF: the summoning refusal\'s punishment is real, through one door both callers can use', () => {
@@ -161,8 +166,34 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
   // its own two pools. The law the pin guards - the pool is armed for
   // targeting, over its host's whole database, through the ONE senses
   // builder - is unchanged and is what these still say.
-  assert.match(WM, /candidates: \(\) => \[\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)\]\.filter\(\(f\) => !f\.dead\)/,
+  // AUDIT 58: the join is WRITTEN ONCE now (interiorFoePool /
+  // interiorEnemyDatabase) and the senses read it, because four other
+  // readers in this host were asking the narrowed question while this
+  // one and insideFoes spelled the join out.
+  assert.match(WM, /candidates: \(\) => interiorEnemyDatabase\(\),/,
     'the interior\'s active-enemy database is BOTH of its pools');
+  assert.match(WM, /const interiorFoePool = \(\) => \[\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)\];\n\s+const interiorEnemyDatabase = \(\) => interiorFoePool\(\)\.filter\(\(f\) => !f\.dead\);/,
+    'and the join itself has exactly one home');
+  assert.equal((WM.match(/\.\.\.\(interiorFoes\?\.foes \?\? \[\]\), \.\.\.\(interiorGuards\?\.guards \?\? \[\]\)/g) ?? []).length, 1,
+    'the spread is spelled out ONCE - every reader calls the join');
+  // AUDIT 58 (review): "every reader" was wider than what this held.
+  // Two readers were still asking the narrowed question when it was
+  // written: DFU's PLACEMENT OCCUPANCY test - `Physics.OverlapSphere
+  // (testPoint, 0.65f); if (colliders.Length > 0) return;`
+  // (CreateFoe.cs:317-321), ANY collider - which let a quest foe or a
+  // summoned daedra be stood overlapping a watchman, and the interior
+  // arrow's target list (pinned in audit39_worldmodes). Both call the
+  // join now, so the message is true.
+  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 2,
+    'both placements - the quest foe and the daedric punishment wave - test the WHOLE database for occupancy');
+  assert.equal(/\(\) => interiorFoes\.foes, feet\)/.test(WM), false,
+    'and neither is still asking the encounter pool alone');
+  // the only two surviving reaches for a RAW pool list are the join
+  // itself and the magic-round fan-out, which subscribes each pool as
+  // its own subscriber exactly as the exterior host does
+  assert.equal((WM.match(/interiorFoes\?\.foes \?\? \[\]/g) ?? []).length, 2);
+  assert.match(WM, /subscribeFoePools\(interiorTicker, \[\(\) => interiorFoes\?\.foes \?\? \[\], \(\) => interiorGuards\?\.guards \?\? \[\]\], insideFoeSinks\);/,
+    'and the second is the fan-out, one thunk per pool');
   assert.match(WM, /const _interiorSenses = \(\) => sensesContext\(playerEntity, interiorTicker\.classicMinutes, \{/,
     'through the ONE senses builder');
 assert.match(WM, /interiorFoes\.update\(overlayHeld \? 0 : dt, player\.pos, cam\.pos, _interiorSenses\(\)\)/,

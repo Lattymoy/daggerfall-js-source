@@ -450,6 +450,30 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
+/** AUDIT 58: EnemyAttack.MeleeDamage's FIRST step, which no foe-vs-foe
+ *  arm ran - "Switch to hand-to-hand if enemy is immune to weapon"
+ *  (EnemyAttack.cs:191-194):
+ *
+ *      DaggerfallUnityItem weapon = entity.ItemEquipTable.GetItem(EquipSlots.RightHand);
+ *      if (weapon != null && targetEntity != null
+ *          && targetEntity.MobileEnemy.MinMetalToHit > (WeaponMaterialTypes)weapon.NativeMaterialValue)
+ *          weapon = null;
+ *
+ *  `targetEntity` is non-null only when senses.Target is ANOTHER
+ *  ENEMY (EnemyAttack.cs:188-189), so the drop is live exactly and
+ *  only foe-vs-foe - and the player has no MinMetalToHit, which is
+ *  why the player arm never needed it. It runs BEFORE the reach fork
+ *  (:199-206) and before CalculateAttackDamage's own weapon-vs-
+ *  weaponless average swap, so the striker falls through to its
+ *  hand-to-hand attack and deals REAL damage where the port returned
+ *  report(0) forever (the material gate at :499 below, which this
+ *  makes unreachable on a foe-vs-foe swing, is silent for enemies).
+ *  The nulled weapon is also what PlayMissSound sees (:214). */
+export function dropWeaponIfTargetImmune(weapon, targetEntity) {
+  if (!weapon || !targetEntity) return weapon ?? null;
+  return (targetEntity.minMetalToHit ?? -1) > weapon.material ? null : weapon;
+}
+
 /** FormulaHelper.DamageEquipment (:1080-1118) +
  *  ApplyConditionDamageThroughPhysicalHit (:1123-1138), verbatim
  *  (C-slice, AUDIT 23 combat-1). Runs at CalculateAttackDamage's

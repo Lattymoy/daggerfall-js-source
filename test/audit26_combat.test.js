@@ -33,9 +33,12 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // The hurtPlayer(bypassShield) idiom: one door, and the caller says
   // where the blow came from. Defaulting true leaves every player
   // blow and spell exactly as it was.
-  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {})'));
-  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {})'));
+  // AUDIT 58: the three doors also take bypassShield now, the same
+  // idiom for the same reason - Shield mitigates DAMAGE, and the
+  // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
+  assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/exteriorFoes.js').includes('function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
+  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {})'));
 });
 
 test('F035: the Murder crime is gated on the player being the source', () => {
@@ -86,7 +89,15 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // the two facts separately, plus the ordering the new statement
   // must keep.
   assert.match(xf, /if \(fromPlayer && f\.ai\) \{/, 'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
-  const xfGate = xf.slice(xf.indexOf('if (fromPlayer && f.ai) {'));
+  // AUDIT 58 MOVED THIS NEEDLE AGAIN, for the same reason ROAD-B did.
+  // WeaponManager.cs:627/:630 are TWO statements after the damage
+  // fork closes (:615), so HandleAttackFromSource's player arm is a
+  // member of its own now (`handleAttackFromPlayer`) that the damage
+  // door and the zero-damage arm both call. The gate is still the
+  // player-source one; the body is where the slice reads it.
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*handleAttackFromPlayer\(f, playerFeet\);/,
+    'the damage door calls it inside the same gate');
+  const xfGate = xf.slice(xf.indexOf('function handleAttackFromPlayer(f, playerFeet = null) {'));
   assert.match(xfGate.slice(0, 600), /f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/, 'through the whole C# method');
   assert.ok(xfGate.indexOf('makeAreaHostile?.()') < xfGate.indexOf('makeEnemyHostileToAttacker'),
     'and the area walk reads isHostile BEFORE the per-foe law flips it');

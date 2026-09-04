@@ -23,7 +23,7 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 200)); });
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:1046-1047) - swallows every
+// keydown ladder (exterior.js:1048-1049) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&world&play&tod=12:00&class=16');
@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
 const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
 
-// The drain. `overlay` is townTalk's live slot (townTalk.js:1144), so
+// The drain. `overlay` is townTalk's live slot (townTalk.js:1183), so
 // this asks the host what is up rather than guessing at names.
 let drained = 0;
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {

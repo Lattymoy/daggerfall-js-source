@@ -25,7 +25,7 @@ import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, re
 import { calculateAttackDamage } from './formulas.js';
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemyMotor.js';
-import { hitSoundFor } from '../systems/soundClips.js';
+import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem } from '../systems/inventory.js';
 
 export const ARROW_MODEL_ID = 99800;
@@ -133,7 +133,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2220), so the copy that survived
+ * now calls it (dungeonContext.js:2232), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -162,6 +162,15 @@ export class ArrowFlight {
 export function playerArrowHitFoe(m, foe, {
   playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
   audio = null, hitEffects = null, say = null, onInflictPoison = null,
+  // AUDIT 58: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
+  // the damage fork - it runs for every shaft that CONNECTED, so a
+  // zero-damage arrow enrages what it hit and, through
+  // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
+  // ride `dealDamage` with a 0: that door carries the pools' knockback,
+  // and WeaponManager's knockback (:575-582) is inside the `damage > 0`
+  // arm - weaponKnockbackSpeed(0, w) would return the 15/ratio FLOOR
+  // and shove a foe DFU leaves standing.
+  onAttackFromPlayer = null,
   rolls = Math.random,
 } = {}) {
   if (!foe || foe.dead || !playerEntity) return 0;
@@ -175,12 +184,15 @@ export function playerArrowHitFoe(m, foe, {
   });
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   if (dmg > 0) {
-    audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, 1.1, { maxDistance: 16 });
+    audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, [at[0], at[1], at[2]]);
     const pain = enemyPainVoice(foe, dmg, rolls);
-    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16 });
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
   }
+  // :627/:630's unconditional pair, whatever the fork above did - and
+  // BEFORE the arrow is added back (BowDamage's own order).
+  onAttackFromPlayer?.(foe);
   if (foe.entity?.items) {
     addItem(foe.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
   }

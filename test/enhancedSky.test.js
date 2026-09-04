@@ -509,63 +509,104 @@ test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader 
   assert.match(shared, /const weatherName = params\.get\('weather'\) \?\? extra\?\.weather \?\? 'sunny';/);
 });
 
-// ═══ EE8: the weather particles - the lab's volume over the existing pass ═══
-test('EE8: the enhanced profile is gated, driven by the sky\u2019s own wind INTEGRATED, and classic is untouched', () => {
+// ═══ EE8/AUDIT 58: two profiles, two programs - and the classic lane
+// pays for the classic one only ═══════════════════════════════════
+test('AUDIT 58 (f3/render): the classic precipitation program carries no enhanced arm, and no enhanced buffer', () => {
   const p = read('src/render/precipitation.js');
-  // one shader, two profiles: every enhanced term is a mix(..., uEnh)
-  // so uEnh = 0 is byte-for-byte the classic pass
-  assert.match(p, /float gust = mix\(1\.0, 0\.75 \+ fract\(phase \* 0\.371\) \* 0\.5, uEnh\);/, 'a per-particle gust, gated');
-  assert.match(p, /vec2 travel = mix\(uTime \* uSlant, uWindOff \* gust, uEnh\);/, 'the travel is the INTEGRATED wind, gated');
-  assert.match(p, /vec3 fallDir = normalize\(vec3\(windRate\.x, -uFall \* gust, windRate\.y\)\);/, 'the streak lies along the true velocity');
-  assert.match(p, /float head = uSnow == 1 \? 1\.0 : smoothstep\(0\.0, 0\.35, vT\) \* 1\.15;/, 'a drop is bright at its head');
-  // the fault the world gate found: a uniform shared by two stages must
-  // carry one precision, or the program does not link and no frame draws
-  const fi = p.indexOf('const PRECIP_FS = `'); const fs = p.slice(fi, p.indexOf('`;', fi));
-  assert.match(fs, /precision highp int;/, 'uSnow is highp in the vertex stage and must be highp here');
-  // the profiles, the cap, and the buffer sized for the largest
-  assert.match(p, /export const PRECIP_ENHANCED_MAX = 26000;/);
-  assert.match(p, /const n = PRECIP_ENHANCED_MAX;/, 'one buffer, every profile a prefix of it');
-  assert.match(p, /const count = cap \? Math\.min\(cfg\.count, cap\) : cfg\.count;/, '?rain=<n> caps the enhanced volume for a gate');
-  assert.match(p, /gl\.drawElements\(gl\.TRIANGLES, count \* 6, gl\.UNSIGNED_INT, 0\);/);
-  assert.match(p, /this\.enhanced = false;/, 'classic by default');
-  // both hosts: the profile rides the switch, and the wind is the SKY's,
-  // integrated by dt - never speed multiplied by uptime
+  // the module minus its prose - the header RECORDS what was removed,
+  // by name, and the record must not read as the thing itself
+  const code = p.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // THE DEAD ARMS. WX1's draw() returns into the lab's own program on
+  // its first line, so every `this.enhanced` test after it was a branch
+  // that could not be taken and every `uEnh` term was a mix by zero.
+  assert.match(p, /if \(this\.enhanced\) return this\.drawLab\(mode, proj, view, camPos, camRight, timeSeconds\);/,
+    'the enhanced lane leaves for its own program on the first line');
+  const draw = p.slice(p.indexOf('  draw(mode, proj, view, camPos, camRight, timeSeconds) {'));
+  const body = draw.slice(draw.indexOf('return this.drawLab'))
+    .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');   // the prose may name what the code no longer asks
+  assert.ok(!/this\.enhanced/.test(body),
+    'nothing below that line may ask again - the answer is always false');
+  assert.ok(!/this\.countCap/.test(body), '?rain caps the LAB\u2019s volume, in drawLab');
+  // the classic stages are the classic stages: no uEnh, no uWindOff, and
+  // no uniform the fragment stage shares with the vertex stage (the
+  // precision fault the world gate found came in with EE8's uSnow and
+  // goes out with it)
+  const vs = p.slice(p.indexOf('const PRECIP_VS = `'), p.indexOf('const PRECIP_FS = `'));
+  const fs = p.slice(p.indexOf('const PRECIP_FS = `'), p.indexOf('export const PRECIP_MAX_PARTICLES'));
+  for (const [name, stage] of [['PRECIP_VS', vs], ['PRECIP_FS', fs]]) {
+    assert.ok(!/uEnh|uWindOff/.test(stage), `${name}: the enhanced uniforms are gone`);
+    assert.ok(!/\bmix\(/.test(stage), `${name}: and every mix() that gated on them`);
+  }
+  assert.ok(!/uniform int/.test(fs), 'the fragment stage reads no int uniform, so the two stages cannot disagree on its precision');
+  assert.ok(!/uEnh/.test(code), 'no location is looked up for it and nothing is uploaded to it');
+  // THE ORPHANED PROFILES, and the buffer they sized. The classic
+  // program can only ever draw RAIN (DFU's cap) or SNOW.
+  assert.ok(!/PRECIP_ENHANCED_MAX|RAIN_ENH|STORM_ENH|SNOW_ENH/.test(code),
+    'the enhanced profiles went with the branch that chose them');
+  assert.match(p, /const n = Math\.max\(RAIN\.count, SNOW\.count\);/,
+    'the classic buffer is sized by what the classic program can draw');
+  assert.match(p, /export const PRECIP_MAX_PARTICLES = 1000;/, 'and that is DFU\u2019s own cap');
+  // BOTH HOSTS: the dials are read once, at boot, off the params they
+  // already carry - never by re-parsing location.search inside frame()
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile follows the enhanced sky`);
-    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: integrated, by dt (WX1: the lab's own law)`);
-    assert.ok(!/windOff\[0\] = .*uTime|windOff\[0\] = .*now \//.test(h), `${host}: never wind times uptime`);
+    assert.match(h, /const precipOpts = \{ enhanced: sky\.enhanced, countCap: Number\(params\.get\('rain'\)\) \|\| null \};/,
+      `${host}: the lane and the cap, read once at boot`);
+    assert.match(h, /new PrecipitationRenderer\(renderer\.gl, precipOpts\)/, `${host}: and handed to every construction`);
+    const frame = h.slice(h.indexOf('  function frame(now)'));
+    assert.ok(!/URLSearchParams/.test(frame),
+      `${host}: no URL parse inside the frame loop - EV2 swept smaller garbage than this out of the pass below it`);
+    assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the deck still rides the frame`);
   }
 });
 
-// ═══ EE8: the weather's volume, on the pass the game already has ════
-test('EE8: the enhanced precipitation rides the switch, drives on integrated wind, and classic is byte for byte', () => {
-  const p = read('src/render/precipitation.js');
-  // the profile is a GATE, not a fork: every enhanced term is mixed by
-  // uEnh, and at 0 the pass is what it always was
-  assert.match(p, /uniform float uEnh;/);
-  assert.match(p, /float gust = mix\(1\.0, 0\.75 \+ fract\(phase \* 0\.371\) \* 0\.5, uEnh\);/, 'a per-particle gust, enhanced only');
-  assert.match(p, /vec2 travel = mix\(uTime \* uSlant, uWindOff \* gust, uEnh\);/, 'classic travels by time, enhanced by the INTEGRATED wind');
-  assert.match(p, /vec3 fallDir = normalize\(vec3\(windRate\.x, -uFall \* gust, windRate\.y\)\);/, 'the streak lies along the actual velocity');
-  assert.match(p, /float head = uSnow == 1 \? 1\.0 : smoothstep\(0\.0, 0\.35, vT\) \* 1\.15;/, 'a drop is bright at its head, so the eye reads it falling');
-  // THE BUG THE GATE FOUND: a uniform read by two stages must carry the
-  // same precision in both, or the program refuses to link and the
-  // exterior renders no frame under rain
-  const fsStart = p.indexOf('precision highp int;');
-  assert.ok(fsStart > 0 && p.indexOf('uniform int uSnow;', fsStart) > 0, 'uSnow is highp in the fragment stage as it is in the vertex stage');
-  // the profiles, and the buffer sized for the largest
-  assert.match(p, /export const PRECIP_ENHANCED_MAX = 26000;/);
-  assert.match(p, /const n = PRECIP_ENHANCED_MAX;/, 'one buffer, every profile a prefix of it');
-  assert.match(p, /this\.enhanced = false;/, 'OFF by default, so classic cannot inherit the volume');
-  assert.match(p, /this\.windOff = new Float32Array\(2\);/);
-  // both hosts: enhanced iff there is an enhanced sky, and the wind is
-  // the sky's own, integrated - never speed multiplied by uptime
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = read(host);
-    assert.match(h, /precip\.enhanced = !!sky\?\.cloudShadow;/, `${host}: the profile rides the switch`);
-    assert.match(h, /precip\.windOff\[0\] \+= dir\[0\] \* slider \* gust \* 0\.16 \* dtp;/, `${host}: the wind is INTEGRATED (WX1: the lab's own law)`);
-    assert.ok(!/windOff\[0\] = .*now/.test(h), `${host}: never wind times uptime`);
-  }
+test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab program; the enhanced lane builds the lab\u2019s 26,000', async () => {
+  const { PrecipitationRenderer, LAB_COUNTS } = await import('../src/render/precipitation.js');
+  // the audit26/renderalloc/glstate Proxy-GL precedent, counting what
+  // the constructor actually mints and uploads
+  const spy = () => {
+    const seen = { programs: 0, shaders: [], uploads: [] };
+    const gl = new Proxy({}, { get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createProgram') return () => { seen.programs++; return {}; };
+      if (k === 'createShader') return () => ({});
+      if (k === 'shaderSource') return (sh, src) => { seen.shaders.push(src); };
+      if (k === 'createBuffer' || k === 'createVertexArray') return () => ({});
+      if (k === 'bufferData') return (target, data) => { seen.uploads.push(data.length); };
+      if (typeof k === 'string' && k.toUpperCase() === k) return 1;   // GL enums
+      return () => {};
+    } });
+    return { gl, seen };
+  };
+
+  const classic = spy();
+  const cp = new PrecipitationRenderer(classic.gl);
+  assert.equal(classic.seen.programs, 1, 'the classic lane compiles ONE program - the lab\u2019s is not its to build');
+  assert.equal(cp.labProgram, null, 'and holds no lab program');
+  assert.ok(!classic.seen.shaders.some((src) => src.includes('uWindV')), 'none of the lab\u2019s stages were compiled');
+  // 1000 particles: 1000 * 4 verts * 5 floats, and 1000 * 6 indices
+  assert.deepEqual(classic.seen.uploads.sort((a, b) => a - b), [6000, 20000],
+    'the classic buffers are sized for DFU\u2019s cap, not for the lab\u2019s 26,000');
+
+  const enhanced = spy();
+  const ep = new PrecipitationRenderer(enhanced.gl, { enhanced: true, countCap: 4000 });
+  assert.equal(enhanced.seen.programs, 2, 'the enhanced lane builds the lab\u2019s program in the CONSTRUCTOR - a shader fault stays a constructor fault');
+  assert.ok(ep.labProgram, 'and keeps it');
+  assert.ok(enhanced.seen.uploads.includes(LAB_COUNTS.rain * 4),
+    'with the lab\u2019s own 26,000 instances - the enhanced look is unchanged');
+  assert.equal(ep.enhanced, true, 'the lane opens enhanced');
+  assert.equal(ep.countCap, 4000, 'and ?rain=<n> arrives at construction, not per frame');
+
+  // a renderer built classic that is handed the deck still draws the
+  // lab's rain - it builds the program on demand rather than throwing
+  const late = spy();
+  const lp = new PrecipitationRenderer(late.gl);
+  assert.equal(late.seen.programs, 1);
+  lp.enhanced = true;
+  lp.draw('rain', new Float32Array(16), new Float32Array(16), new Float32Array(3), new Float32Array(3), 1);
+  assert.equal(late.seen.programs, 2, 'the lab\u2019s program is built on first use');
+  assert.ok(late.seen.uploads.includes(LAB_COUNTS.rain * 4));
 });
 
 // ═══ WX1: the weather is the lab's, byte for byte ═══════════════════

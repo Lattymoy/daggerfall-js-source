@@ -65,8 +65,21 @@
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
 // settings home is the launcher menu, and the dropdown pends with the
-// settings arc. The version label draws the PORT's build tag (Ledger
-// A: VersionInfo strings are DFU's identity, not this port's).
+// settings arc.
+//
+// AN APPROVED DEPARTURE, and NOT part of the flag above: THE VERSION
+// LABEL DRAWS THE PORT'S BUILD TAG. DaggerfallPauseOptionsWindow.cs
+// :145-152 right-aligns a versionTextLabel reading
+// VersionInfo.DaggerfallUnityProductName/Status/Version - Daggerfall
+// Unity's own identity, which this port does not have and must not
+// claim - and this file draws `project-dagger <BUILD_TAG>` in the same
+// rect by the same law, so only the STRING is substituted. Ledger A
+// carries it as THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN
+// BUILD TAG, cited BY NAME because a Ledger line number rots; the row
+// is the title screen's branding row applied to the second and last
+// place DFU writes its own name into a game screen. AUDIT 58's records
+// lane wrote that row: the sentence here had claimed the approval for
+// a wave before anyone wrote it down, which is the AUDIT 17m shape.
 
 import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
 import { SaveWindow } from './saveWindow.js';   // SAV4: the slot window rides the pause seam
@@ -161,7 +174,7 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:4068, exterior.js:1453,
+    // host here opens on the key DOWN (world.js:4105, exterior.js:1462,
     // ui/input.js:297) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
@@ -333,7 +346,8 @@ export class PauseOptionsWindow {
     if (!effBool('GUI', 'LargeHUD')) tick(R.fullScreen);
     if (effBool('Controls', 'HeadBobbing')) tick(R.headBobbing);
     // the version line, right-aligned at the top (:146-152) - the
-    // PORT's identity, not DFU's VersionInfo strings (Ledger A)
+    // PORT's identity, not DFU's VersionInfo strings (Ledger A, THE
+    // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
     const ver = `project-dagger ${BUILD_TAG}`;
     shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2,
       { color: [0.75, 0.75, 0.75, 1] });

@@ -12,6 +12,9 @@ import {
   BankPurchaseWindow, PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y,
   PREVIEW_ROT_SPEED, PREVIEW_HOUSE_CAMERA, PREVIEW_NEAR, PREVIEW_FAR,
   previewShipCamera, SHIP_LIST, priceRow,
+  PURCHASE_ARROWS_FULL, PURCHASE_UP_ARROW_RECT, PURCHASE_DOWN_ARROW_RECT,
+  PURCHASE_GREEN_ARROWS, PURCHASE_RED_ARROWS,
+  purchaseArrowArtLoaded, _setPurchaseArtForTests,
 } from '../src/ui/bankPurchaseWindow.js';
 import {
   SHIP_MODEL_IDS, SHIP_CAMERA_DIST, SHIP_TYPES, shipPrice, shipModelId, shipCameraDist,
@@ -134,4 +137,74 @@ test('H4: the host pass - scissor brackets beginFrame\'s clear, viewport follows
     'the ONE mirror rides the projection (mat4\'s law - this pass culls); Unity\'s default 60-degree lens');
   assert.ok(fn.includes('getGpuMesh(modelIdNum).then('), 'the mesh loads through the pipeline\'s own async door');
   assert.ok(wm.includes('drawModelPreview: drawBankModelPreview'), 'and the window is handed the door');
+});
+
+// ── AUDIT 58: THE PRICE LIST'S TWO ARROWS ────────────────────────
+//
+// DaggerfallBankPurchasePopUp cuts a green and a red 9x16 arrow out of
+// BANK01I1.IMG / BANK01I2.IMG (:51-52, LoadTextures :355-366) against
+// arrowsFullSize 9x80, puts them at (105,23) and (105,87)
+// (SetupScrollButtons :316-336), and swaps each on every redraw
+// (UpdateListScrollerButtons :339-352). The port loaded neither strip
+// and drew nothing there, so canScrollUp/canScrollDown were computed,
+// pinned by tests, and read by NO pixel - the player was never told
+// the list scrolls.
+test('A54: the price list draws its GREEN/RED arrows, and the states are DFU\'s', () => {
+  // the sub-rects are the popup's own, and NOT the item scroller's
+  // 9x152 / y=136 pair
+  assert.deepEqual(PURCHASE_ARROWS_FULL, { w: 9, h: 80 }, 'arrowsFullSize (:28)');
+  assert.deepEqual([...PURCHASE_UP_ARROW_RECT], [0, 0, 9, 16], 'upArrowRect (:26)');
+  assert.deepEqual([...PURCHASE_DOWN_ARROW_RECT], [0, 64, 9, 16], 'downArrowRect (:27)');
+  assert.equal(PURCHASE_GREEN_ARROWS, 'BANK01I1.IMG');
+  assert.equal(PURCHASE_RED_ARROWS, 'BANK01I2.IMG');
+  // and the buttons sit where SetupScrollButtons puts them
+  assert.deepEqual([...PURCHASE_RECTS.upArrow], [105, 23, 9, 16]);
+  assert.deepEqual([...PURCHASE_RECTS.downArrow], [105, 87, 9, 16]);
+
+  const market = Array.from({ length: 14 }, (_, i) => ({ buildingKey: i, meshRadius: 10, modelIdNum: 1000 + i }));
+  const w = new BankPurchaseWindow({ houses: () => market, onClose: () => {} });
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, rect, uv) => quads.push({ tex, ...rect, uv }) };
+  const font = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 4 }, tex: 'font' };
+  const art = { tex: 'BANK01I0', w: 225, h: 129 };
+  const arrows = { green: { tex: 'GREEN', w: 9, h: 80 }, red: { tex: 'RED', w: 9, h: 80 } };
+  _setPurchaseArtForTests(art, arrows);
+  try {
+    const canvas = { width: 320, height: 200 };
+    const at = (tex) => quads.filter((q) => q.tex === tex);
+    // top of a 14-row list in a 10-row window: nothing above (RED up),
+    // four rows below (GREEN down)
+    w.draw(renderer, canvas, font);
+    assert.equal(at('RED').length, 1, 'the up arrow is red at the top');
+    assert.equal(at('GREEN').length, 1, 'and the down arrow green');
+    assert.equal(at('RED')[0].y, at('GREEN')[0].y - 64 * 1, 'the two sit 64 native px apart (23 -> 87)');
+    // the down crop reads the strip's SECOND arrow (y=64 of 80)
+    assert.ok(Math.abs(at('GREEN')[0].uv.v0 - 64 / 80) < 1e-9, 'downArrowRect y=64 against a 9x80 strip');
+    assert.equal(at('RED')[0].uv.v0, 0, 'upArrowRect y=0');
+
+    // scrolled to the end: green above, red below
+    quads.length = 0;
+    for (let i = 0; i < 20; i++) w.wheel(1);
+    assert.equal(w.canScrollUp(), true);
+    assert.equal(w.canScrollDown(), false);
+    w.draw(renderer, canvas, font);
+    assert.ok(Math.abs(at('GREEN')[0].uv.v0) < 1e-9, 'the GREEN one is now the UP arrow');
+    assert.ok(Math.abs(at('RED')[0].uv.v0 - 64 / 80) < 1e-9, 'and the RED one the DOWN arrow');
+
+    // a list that FITS forces both red (`count <= listDisplayUnits`)
+    quads.length = 0;
+    const two = new BankPurchaseWindow({ onClose: () => {} });   // the shipyard: two rows
+    two.draw(renderer, canvas, font);
+    assert.equal(at('RED').length, 2, 'both arrows red when the list does not scroll');
+    assert.equal(at('GREEN').length, 0);
+
+    // a missing strip is not fatal - the base image's arrows stand
+    quads.length = 0;
+    _setPurchaseArtForTests(art, null);
+    assert.equal(purchaseArrowArtLoaded(), false);
+    w.draw(renderer, canvas, font);
+    assert.equal(at('GREEN').length + at('RED').length, 0, 'no arrow pass, and no throw');
+  } finally {
+    _setPurchaseArtForTests(null, null);
+  }
 });

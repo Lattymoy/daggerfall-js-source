@@ -197,7 +197,14 @@ directory by `test/audit18_bible_docs.test.js`:
   for the window that drives it).
 - `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
 - `windowEmission.js` - R2 window emission.
-- `precipitation.js` - R13 rain/snow + storm lightning.
+- `precipitation.js` - R13 rain/snow + storm lightning. TWO PROFILES,
+  TWO PROGRAMS (AUDIT 58 f3/render): the classic pass is DFU's cap on
+  its own shader, byte for byte as it stood before EE8, and the
+  enhanced lane is WX1's lab program, entered on `draw()`'s first
+  line. EE8's mixed `uEnh` arms - unreachable from the day WX1 landed
+  - and the 26,000-particle buffer they sized are gone; the lab's
+  program is built for the lane that draws it (`sky.enhanced`, at
+  construction), never on the classic skin.
 - `flatAnimation.js` - FA1 the ANIMATED FLATS: DaggerfallBillboard's
   AnimateBillboard loop verbatim (the wrap test before the draw, the increment
   after it) on a FIXED 1/fps step, the three speeds (general 5, ANIMALS 5,

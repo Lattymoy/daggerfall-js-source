@@ -55,7 +55,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // spares corpses), so the batch would be unreachable and undead
   // AUDIT 26 F035/F041 grew the header: the door takes a provenance
   // flag (fromPlayer), defaulting true.
-  const dmg = bodyOf(src, 'function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {})');
+  const dmg = bodyOf(src, 'function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {})');
   // The window is a PROXIMITY bound, not a law - it exists so the
   // release cannot drift out of the death branch entirely. X5 put the
   // Soul Trap intercept between the two points (the trap can refuse
@@ -77,7 +77,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   assert.match(src, /function releaseGuardBatch\(g\) \{[\s\S]*?destroyBillboardBatch\(g\.batch\)/);
   // AUDIT 26 F035 (+ MT-ii, the same gate from the other end): the
   // header grew its provenance flag.
-  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'),
+  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
   assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
     'and the walk-away path when the crime clears');

@@ -11,7 +11,13 @@ import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 import { preloadTradeArt, tradeArtLoaded } from '../src/ui/nativeTrade.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// AUDIT 58: the window's two money reads are GetGoldAmount
+import { letterOfCredit } from '../src/systems/inventory.js';
+import { goldAmount, totalGoldAmount, deductGold } from '../src/systems/court.js';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const hooks = (mode = 'Buy') => {
   const shelf = [{ templateIndex: 277, name: 'Book A', value: 40 }, { templateIndex: 277, name: 'Book B', value: 40 }];
@@ -380,4 +386,60 @@ test('U40: the offer box expands %cpn, %cn and %a - the LIVE PROBE read all thre
   const price = Number(/than (\d+) gold/.exec(text)[1]);
   assert.equal(price, w.box.price);
   assert.notEqual(price, w.box.cost, 'the haggle really did move it');
+});
+
+test('AUDIT 58: the window asks GetGoldAmount - coins PLUS letters of credit - in BOTH places, and every host wires it', () => {
+  // DaggerfallTradeWindow reads PlayerEntity.GetGoldAmount() twice:
+  // the cost strip's gold label (:488) and ShowTradePopup's refusal
+  // (:1116 `WindowMode != Sell && WindowMode != SellMagic &&
+  // PlayerEntity.GetGoldAmount() < tradePrice`). GetGoldAmount is
+  // `goldPieces + items.GetCreditAmount()` (PlayerEntity.cs:1313-1316).
+  // The hosts had wired the COINS-ONLY reader, so a character whose
+  // money is all paper was refused every purchase - while the payment
+  // on the far side of that same gate, deductGold, spends letters.
+  const entity = { goldPieces: 0, items: [letterOfCredit(5000)] };
+  assert.equal(goldAmount(entity), 0, 'the counter alone is DFU\'s bare goldPieces');
+  assert.equal(totalGoldAmount(entity), 5000, 'GetGoldAmount sees the letter');
+
+  const buy = (read) => {
+    const h = hooks('Buy');
+    h.gold = () => read(entity);
+    h.commit = (m, staged, price) => { deductGold(entity, price); };
+    const w = new NativeTradeWindow(h);
+    w.click(...REMOTE_SLOT0);
+    w.click(226 + 15, 134 + 7);        // the mode action - ShowTradePopup
+    return w;
+  };
+
+  // the coins-only reading is the refusal: two records concatenated,
+  // no Yes/No at all
+  const poor = buy(goldAmount);
+  assert.equal(poor.box.buttons, null, 'coins-only refuses the deal outright');
+
+  // GetGoldAmount's reading is an OFFER, and the letter pays for it
+  const rich = buy(totalGoldAmount);
+  assert.equal(rich.box.buttons, 'YesNo');
+  const price = rich.box.price;
+  assert.ok(price > 0 && price < 5000);
+  rich.box.onYes();
+  assert.equal(entity.goldPieces, 0, 'there were never any coins to take');
+  assert.equal(entity.items[0].value, 5000 - price,
+    'deductGold broke the letter - the gate and the payment agree now');
+
+  // ...and the two hosts that mount this window both wire the total.
+  // Same law, same spelling, both doors (worldModes' shop/guild mount
+  // and the dungeon's Identify-spell mount).
+  const src = (p) => readFileSync(join(root, p), 'utf8');
+  const wm = src('src/scenes/worldModes.js');
+  const trade = wm.slice(wm.indexOf('function openTradeWindow('), wm.indexOf('function commitTrade('));
+  assert.ok(trade.length > 0, 'found the mount');
+  assert.match(trade, /gold: \(\) => totalGoldAmount\(playerEntity\),/,
+    'DaggerfallTradeWindow.cs:488/:1116 read GetGoldAmount');
+  assert.doesNotMatch(trade, /gold: \(\) => goldAmount\(playerEntity\),/,
+    'the coins-only reader must not feed the label or the gate');
+  const dc = src('src/scenes/dungeonContext.js');
+  assert.match(dc, /gold: \(\) => totalGoldAmount\(playerEntity\),/,
+    'the dungeon Identify mount draws the same strip');
+  assert.doesNotMatch(dc, /gold: \(\) => goldAmount\(playerEntity\),/,
+    'and not the coins-only reader');
 });

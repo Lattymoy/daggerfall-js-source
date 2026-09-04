@@ -13,7 +13,14 @@
 //   - the settlement list's fingerprint: its length and a sum over its
 //     pixels and types - which is MAPS.BSA's content, as far as roads
 //     are concerned. A different archive is a different key.
-//   - the heightmap's length, which is WOODS.WLD's.
+//   - the heightmap's length, which is WOODS.WLD's. The length STANDS IN
+//     for the height CONTENT, and AUDIT 58 F4 broke that stand-in: the
+//     boot repair SmoothLocationNeighbourhood rewrites those bytes in
+//     place (scenes/world.js runs it, then syncHeightMapBytes) at a byte
+//     length it cannot change, and the ours-network bake routes and
+//     water-tests over exactly those heights (roadsProducer's heightAt /
+//     isWater). So a change to the boot repair - its introduction
+//     included - is a generator-shape change and takes the hand bump.
 //
 // The store is injectable so the law can be pinned in node, where there
 // is no IndexedDB: same inputs hit, any change misses, a version bump
@@ -24,8 +31,10 @@
 import { ROAD_DIALS } from './roadNetwork.js';
 
 /** Bump when the generator changes shape. The dials are in the key on
- *  their own, so a tuned number does not need this. */
-export const GENERATOR_VERSION = 19;
+ *  their own, so a tuned number does not need this.
+ *  19 -> 20, AUDIT 58 F4: the location smoothing rewrote the heightmap
+ *  content the bake reads, and no other key term can see it. */
+export const GENERATOR_VERSION = 20;
 
 const DB = 'daggerfall-roads', STORE = 'networks';
 

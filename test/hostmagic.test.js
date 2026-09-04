@@ -51,7 +51,7 @@ const mkFoe = (x, z) => ({
  *  resolves the cast on the spot. */
 function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands = null } = {}) {
   const world = {
-    player, foes, said: [], sounds: [], hurtPlayer: 0, foeHurt: new Map(),
+    player, foes, said: [], sounds: [], castSoundIds: [], hurtPlayer: 0, foeHurt: new Map(),
     batchesMade: 0, batchesFreed: 0, surfaced: 0,
     // AUDIT 39: the two uploaders are DIFFERENT KEYS - `${a}_${r}` and
     // `${a}_${r}#${f}` - so which one a pool is handed is observable.
@@ -62,7 +62,14 @@ function rig({ player = mkPlayer(), foes = [], raycast = () => Infinity, hands =
       createBillboardBatch: (archive, record, size, centres) => { world.batchesMade++; return { archive, record, size, centres, origin: null }; },
       destroyBillboardBatch: () => { world.batchesFreed++; },
     },
-    audio: { playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id) },
+    // AUDIT 58: the cast sound goes through the ID door (PlayCastSound's
+    // `(uint)castSoundID`, EntityEffectManager.cs:1958), so the fake
+    // device carries the ID entry points the host actually calls.
+    audio: {
+      playOneShot: (id) => world.sounds.push(id), play3d: (id) => world.sounds.push(id),
+      playOneShotId: (id) => { world.castSoundIds.push(id); world.sounds.push(id); },
+      play3dId: (id) => { world.castSoundIds.push(id); world.sounds.push(id); },
+    },
     getTexture: async () => ({ getSize: () => [16, 16], getScale: () => [0, 0] }),
     uploadRecord: (a, r) => world.records.push(`${a}_${r}`),
     uploadRecordFrame: (a, r, f) => world.frames.push(`${a}_${r}#${f}`),

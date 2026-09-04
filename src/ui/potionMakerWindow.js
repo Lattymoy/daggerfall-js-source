@@ -33,7 +33,7 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
+import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
 import { isEnchanted } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148)
@@ -82,10 +82,12 @@ export const INGREDIENT_SCROLL_UP = Object.freeze([5, 30, 9, 16]);
 export const INGREDIENT_SCROLL_DOWN = Object.freeze([5, 30 + 142 - 16, 9, 16]);
 
 /** "potionMixed" / "potionFailed" / "noRecipes" / "reqIngredients" -
- *  Internal_Strings, recovered. */
-export const POTION_MIXED = 'You have successfully mixed a potion.';
-export const POTION_FAILED = 'The ingredients you have combined are useless.';
-export const NO_RECIPES = 'You do not know any potion recipes.';
+ *  Internal_Strings.csv:852-855, verbatim. The keys are asked for at
+ *  DaggerfallPotionMakerWindow.cs:381 (noRecipes), :325 (potionMixed),
+ *  :332 (potionFailed) and :300 (reqIngredients). */
+export const POTION_MIXED = 'Your potion has been mixed.';
+export const POTION_FAILED = 'Those ingredients did not concoct an effective potion.';
+export const NO_RECIPES = 'You have no recipes.';
 export const REQ_INGREDIENTS = 'You do not have the ingredients required.';
 
 let _art = null;
@@ -93,6 +95,8 @@ export async function preloadPotionArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'MASK00I0.IMG');
+    // AUDIT 58: the recipe picker is SmallFont, 12 rows (:113).
+    await preloadListPickerSmallFont(deps);
   } catch { console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed'); }
 }
 export const potionArtLoaded = () => !!_art;
@@ -240,6 +244,9 @@ export class PotionMakerWindow {
       items: known.map((r) => r.name),
       onPick: (i) => { this._fillFrom(known[i]); this.picker = null; },
       onCancel: () => { this.picker = null; },
+      // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
+      // picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)`.
+      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 

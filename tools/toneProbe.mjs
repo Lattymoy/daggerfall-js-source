@@ -11,7 +11,7 @@
 // a window that was working. The DRIVE is unchanged, because the keys
 // are: KeyT is the tone cycle (nativeTalk.js:431), KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
-// What moved is what is READ: `native` (townTalk.js:1146, true only
+// What moved is what is READ: `native` (townTalk.js:1185, true only
 // when the art window is up), `tone`, and the ABSENCE of
 // `overlayOptions` - which is the positive statement that the window
 // under the keys is the native one and not the keyed fallback.
@@ -24,7 +24,7 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:1046-1047) - swallows every
+// keydown ladder (exterior.js:1048-1049) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&play&exterior&time=12:00&class=16');

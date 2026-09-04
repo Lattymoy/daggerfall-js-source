@@ -34,7 +34,7 @@
 
 import { savingThrow, ELEMENTS, EFFECT_FLAGS } from './spellcast.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { equipTableOf, lowerCondition } from './equip.js';
+import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf } from './statMods.js';
@@ -337,12 +337,24 @@ export function artifactHook(hookName) {
  * of CalculateAttackDamage when an ENEMY damages the PLAYER
  * (FormulaHelper.cs:702-719): either ring slot carrying subtype 7
  * reflects the damage back by the attacker's TEAM - the animal teams
- * take nothing, Daedra half, Undead double, everyone else full - and
- * the ring pays the reflection in condition. The reflected damage
- * lands directly on the attacker's health, as DFU's CurrentHealth
- * write does. Registered by worldTick (the racial hit hook's shape).
+ * take nothing, Daedra half, Undead double, everyone else full. The
+ * reflected damage lands directly on the attacker's health, as DFU's
+ * CurrentHealth write does. Registered by worldTick (the racial hit
+ * hook's shape).
+ *
+ * AUDIT 58: AND THE RING PAYS NOTHING. RingOfNamiraEffect.cs:62-65
+ * does return `durabilityLoss = reflectedDamage`, but this call site
+ * declares `DaggerfallUnityItem item = null;` (FormulaHelper.cs:707),
+ * never assigns it, passes it as `sourceItem` and DISCARDS the
+ * returned PayloadCallbackResults (:712-716). The only readers of
+ * durabilityLoss are EntityEffectManager's payload dispatchers
+ * (:1041-1042, :1095-1096, :1107-1108), which is why the Mace of
+ * Molag Bal, Mehrunes' Razor and the Sanguine Rose wear down and
+ * Namira does not. The port billed the located ring `reflected`
+ * points through lowerCondition, so a run of bounced Undead blows
+ * could BREAK and unequip an artifact DFU keeps pristine.
  */
-export function onPlayerStruckByEnemy(attacker, target, damage, { ctx = null } = {}) {
+export function onPlayerStruckByEnemy(attacker, target, damage) {
   if (!target?.isPlayer || !attacker || damage <= 0) return;
   const slots = equipTableOf(target);
   if (!slots) return;
@@ -362,5 +374,6 @@ export function onPlayerStruckByEnemy(attacker, target, damage, { ctx = null } =
     default: reflected = damage; break;
   }
   attacker.health = (attacker.health ?? 0) - reflected;
-  lowerCondition(ring, reflected, target, ctx?.say ?? null);
+  // NO condition bill: sourceItem is null and the results are dropped
+  // (FormulaHelper.cs:707/:712-716) - see the header.
 }

@@ -40,8 +40,13 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   assert.ok(tt.includes('if (!best || bestDist > RAY_DISTANCE) return false;'), 'the ray reach is the only silent bound');
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's
   // currentMode is global) - the gates read it live, same law
-  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }"));
-  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }"));
+  // AUDIT 58 (talk lane) MOVED THIS PIN: the refusal is the localized
+  // key 'youAreTooFarAway' (Internal_Strings.csv:22) and there is one
+  // constant for it now (player/activate.js), so the literal these two
+  // lines used to carry - a full stop where the table spells an
+  // ellipsis - is gone from the source.
+  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
+  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
 });
 
 test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured space keeps it', () => {

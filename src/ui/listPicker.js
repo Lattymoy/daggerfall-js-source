@@ -32,6 +32,8 @@
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
+import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
+import { makeFont } from './text.js';
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
 export const PICKER_W = 200, PICKER_H = 128;
@@ -46,7 +48,9 @@ export const PICKER_RECTS = Object.freeze({
   scrollBar: [181, 23, 5, 82],
 });
 
-/** ListBox.cs :36-37. */
+/** ListBox.cs :36-37 - the DEFAULT row count, and the value
+ *  RowsDisplayed keeps when the constructor is handed 0
+ *  (DaggerfallListPickerWindow.cs:46-50). */
 export const ROWS_DISPLAYED = 9;
 export const ROW_SPACING = 1;
 
@@ -86,6 +90,28 @@ export async function preloadListPickerArt(deps) {
 }
 export const listPickerArtLoaded = () => !!_art;
 
+/** AUDIT 58: DaggerfallUI.SmallFont (FONT0002, DaggerfallUI.cs:155)
+ *  against the FONT0003 DefaultFont (:156). Three windows build this
+ *  picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)` -
+ *  DaggerfallItemMakerWindow.cs:372 and :376, DaggerfallPotionMaker
+ *  Window.cs:113 - and the two arguments travel together: FONT0002's
+ *  fixedHeight is 5 against FONT0003's 7, so 12 x (5 + 1) = 72 is
+ *  exactly the listBox height (:83-84), which is why twelve rows fit
+ *  where nine of FONT0003 do. Its own guard: a missing FNT costs the
+ *  picker its row count, not its window. */
+let _smallFont = null;
+export async function preloadListPickerSmallFont(deps) {
+  if (_smallFont) return;
+  try { _smallFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0002.FNT')), 'FONT0002'); }
+  catch (e) { console.warn('[picker] FONT0002.FNT unavailable; the SmallFont pickers fall back to the host font', e); }
+}
+export const listPickerSmallFont = () => _smallFont;
+/** advPickerItemCount's arithmetic, and the row count all three
+ *  SmallFont call sites pass: 12 x (FONT0002's fixedHeight 5 +
+ *  rowSpacing 1) = 72 = the listBox height (:83-84). */
+export const SMALL_FONT_PICKER_ROWS = 12;
+export function _setListPickerSmallFontForTests(f) { _smallFont = f; }
+
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PICKER_X && y >= ry + PICKER_Y
   && x < rx + PICKER_X + rw && y < ry + PICKER_Y + rh;
 
@@ -108,13 +134,20 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PICKER_X && y >= ry + PICKE
 export class ListPickerWindow {
   constructor({
     items = [], onPick = null, onCancel = null, backdrop = 'menu',
-    allowCancel = true, selectedIndex = 0,
+    allowCancel = true, selectedIndex = 0, font = null, rowsDisplayed = 0,
   } = {}) {
     this.items = items;
     this.onPick = onPick;
     this.onCancel = onCancel;
     this.backdrop = backdrop;
     this.allowCancel = allowCancel;
+    // AUDIT 58: the two arguments DaggerfallListPickerWindow's
+    // constructor takes (:52-56), in its own guarded forms - `Font`
+    // (:40-44) falls back to DaggerfallUI.DefaultFont, which here is
+    // whatever font the HOST hands draw(); `RowsDisplayed` (:46-50)
+    // keeps the ListBox default unless the value is > 0.
+    this.pickerFont = font || null;
+    this.rowsDisplayed = rowsDisplayed > 0 ? rowsDisplayed : ROWS_DISPLAYED;
     this.done = false;
     this.isChoiceWindow = true;
     this.scrollIndex = 0;
@@ -129,7 +162,7 @@ export class ListPickerWindow {
     this.scrollBar = new VerticalScrollBar({
       rect: [PICKER_X + PICKER_RECTS.scrollBar[0], PICKER_Y + PICKER_RECTS.scrollBar[1],
         PICKER_RECTS.scrollBar[2], PICKER_RECTS.scrollBar[3]],
-      totalUnits: this.items.length, displayUnits: ROWS_DISPLAYED, scrollIndex: this.scrollIndex,
+      totalUnits: this.items.length, displayUnits: this.rowsDisplayed, scrollIndex: this.scrollIndex,
     });
     this._lastRowClick = null;
   }
@@ -140,7 +173,7 @@ export class ListPickerWindow {
   syncScrollBar() {
     const bar = this.scrollBar;
     bar.totalUnits = this.items.length;
-    bar.displayUnits = ROWS_DISPLAYED;
+    bar.displayUnits = this.rowsDisplayed;
     if (bar.draggingThumb) {
       this.scrollIndex = bar.scrollIndex;
       this._clampScroll();
@@ -170,7 +203,7 @@ export class ListPickerWindow {
   /** ListBox.ScrollIndex's own bound: [0, Count - RowsDisplayed], and
    *  never below 0 for a list shorter than the window. */
   _clampScroll() {
-    const max = Math.max(0, this.items.length - ROWS_DISPLAYED);
+    const max = Math.max(0, this.items.length - this.rowsDisplayed);
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
@@ -190,7 +223,7 @@ export class ListPickerWindow {
     this.selectedIndex = next;
     // EntryWise scrolling: only enough to keep the selection on screen
     if (dir < 0 && this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
-    if (dir > 0 && this.selectedIndex > this.scrollIndex + ROWS_DISPLAYED - 1) this.scrollIndex++;
+    if (dir > 0 && this.selectedIndex > this.scrollIndex + this.rowsDisplayed - 1) this.scrollIndex++;
     this._clampScroll();
   }
 
@@ -223,7 +256,7 @@ export class ListPickerWindow {
     // keep the selection visible, which is ClampSelectionToVisibleRange's
     // job in DFU (commented out there, done here so the keyboard works)
     if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
-    if (this.selectedIndex >= this.scrollIndex + ROWS_DISPLAYED) this.scrollIndex = this.selectedIndex - ROWS_DISPLAYED + 1;
+    if (this.selectedIndex >= this.scrollIndex + this.rowsDisplayed) this.scrollIndex = this.selectedIndex - this.rowsDisplayed + 1;
     this._clampScroll();
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(this.scrollIndex + Number(d[1]) - 1);
@@ -296,15 +329,19 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:904, worldModes.js:5770, dungeonContext.js:4064),
+      // (townTalk.js:904, worldModes.js:5779, dungeonContext.js:4076),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you
       // highlighted was not the row you selected, and the 9th was
       // unselectable outright.
-      const rh = this.rowHeight(this._font ?? (font?.fnt ? font : null));
+      // AUDIT 58: the window's OWN font outranks the host's, because
+      // DFU's listBox.Font was assigned from the constructor argument
+      // (:40-44) - the row pitch, the hit grid and the glyphs all have
+      // to move together or the 12-row SmallFont pickers mis-select.
+      const rh = this.rowHeight(this.pickerFont ?? this._font ?? (font?.fnt ? font : null));
       const row = Math.floor((vy - PICKER_Y - PICKER_RECTS.list[1]) / rh);
-      if (row >= 0 && row < ROWS_DISPLAYED) {
+      if (row >= 0 && row < this.rowsDisplayed) {
         const index = this.scrollIndex + row;
         // ROAD-A7: DFU's real law at last. ListBox.MouseClick
         // (:465-505) only SELECTS - it sets selectedIndex and raises
@@ -342,6 +379,10 @@ export class ListPickerWindow {
     // go away here or it would hold the host for ever showing nothing -
     // so this bypasses AllowCancel deliberately, and says so.
     if (!_art) { this.done = true; this.onCancel?.(); return; }
+    // AUDIT 58: `listBox.Font = (value != null) ? value :
+    // DaggerfallUI.DefaultFont` (:40-44) - the host's font is the
+    // DEFAULT, not the override.
+    font = this.pickerFont ?? font;
     this._font = font;
     const m = nativeMetrics(canvas);
     if (this.backdrop !== 'none') drawMenuBackdrop(renderer, canvas);
@@ -349,7 +390,7 @@ export class ListPickerWindow {
     this._clampScroll();
     const [lx, ly] = PICKER_RECTS.list;
     const rh = this.rowHeight(font);
-    this.items.slice(this.scrollIndex, this.scrollIndex + ROWS_DISPLAYED).forEach((label, r) => {
+    this.items.slice(this.scrollIndex, this.scrollIndex + this.rowsDisplayed).forEach((label, r) => {
       const i = this.scrollIndex + r;
       const selected = i === this.selectedIndex;
       // DecideTextColor (:360-380): selected, hovered, both, or plain.

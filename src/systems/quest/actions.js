@@ -1377,8 +1377,14 @@ export const YOU_RECEIVE_GOLD_PIECES = 'You receive %s gold pieces.';
  *  shows QuestComplete without loot; "give pc anItem notify nnnn" /
  *  "... silently" put the item straight in the inventory - but only
  *  in town, outdoors, between 07:00 and 18:00, after a 40..500-tick
- *  random delay (the Ledger A roll; DFU's OnOfferPending event has no
- *  port-side consumer yet - the guild questor UI is Q4). */
+ *  random delay (the Ledger A roll). AUDIT 58: the moment that delay
+ *  is rolled the action raises OnOfferPending (GivePc.cs:96, the
+ *  static event at :238-244); DaggerfallUI is its one subscriber
+ *  (DaggerfallUI.cs:352) and latches the sender, and the next REST or
+ *  FAST TRAVEL press spends the latch through GiveOffer()
+ *  (:1717-1726, gated in front of both presses at :680 and :612) -
+ *  the item lands at once and the press is consumed. ui/pendingOffer.js
+ *  is that half; the raise is the hooks call below. */
 export class GivePc extends ActionTemplate {
   static typeName = 'GivePc';
   get saveShape() { return [['itemSymbol', 'sym'], ['textId'], ['isNothing'], ['silently']]; }
@@ -1420,6 +1426,11 @@ export class GivePc extends ActionTemplate {
         const roll = this.parentQuest.rolls ?? Math.random;
         this.ticksUntilFire = minDelay + Math.floor(roll() * (maxDelay + 1 - minDelay));
         this.waitingForTown = false;
+        // GivePc.cs:96 - RaiseOnOfferPendingEvent(this), the LAST line
+        // of the arm. DaggerfallUI latches the sender here and the
+        // next rest / fast-travel press hands the item over instead
+        // of opening its window (DaggerfallUI.cs:352, :1717-1735).
+        hooks?.onOfferPending?.(this);
       }
     }
     if (this.ticksUntilFire > 0) { this.ticksUntilFire--; return; }
@@ -1445,7 +1456,9 @@ export class GivePc extends ActionTemplate {
     this.offerImmediately = false;
     this.setComplete();
   }
-  /** The guild questor UI calls this at hand-in (Q4). */
+  /** OfferImmediately (GivePc.cs:142-147). AUDIT 58: its caller is
+   *  DaggerfallUI.GiveOffer() (:1717-1726) - the rest and fast-travel
+   *  presses - not the guild questor UI, which never touches it. */
   offerImmediatelyNow() {
     this.waitingForTown = false;
     this.ticksUntilFire = 0;

@@ -16,14 +16,48 @@
 // holds over Testing.md's suite count.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
 import { SERVICE_DESTINATION } from '../src/systems/guildServiceFlow.js';
+import { GENERATOR_VERSION } from '../src/world/roadsCache.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LEDGER = readFileSync(join(ROOT, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
+
+/** The `{` positions still OPEN at `upto`, outermost first - the blocks
+ *  a statement is nested inside. A hand scanner rather than a parse: it
+ *  skips line and block comments and single/double/backtick strings,
+ *  which is everything world.js puts braces inside of. */
+function enclosingBraces(src, upto) {
+  const stack = [];
+  let i = 0, mode = 0, quote = '';
+  while (i < upto) {
+    const c = src[i], d = src[i + 1];
+    if (mode === 1) { if (c === '\n') mode = 0; i++; continue; }
+    if (mode === 2) { if (c === '*' && d === '/') { mode = 0; i += 2; continue; } i++; continue; }
+    if (mode === 3) {
+      if (c === '\\') { i += 2; continue; }
+      if (c === quote) mode = 0;
+      i++; continue;
+    }
+    if (c === '/' && d === '/') { mode = 1; i += 2; continue; }
+    if (c === '/' && d === '*') { mode = 2; i += 2; continue; }
+    if (c === '"' || c === "'" || c === '`') { mode = 3; quote = c; i++; continue; }
+    if (c === '{') stack.push(i);
+    else if (c === '}') stack.pop();
+    i++;
+  }
+  return stack;
+}
+
+/** The whole line an index falls on. */
+function lineAt(src, at) {
+  const from = src.lastIndexOf('\n', at) + 1;
+  const to = src.indexOf('\n', at);
+  return src.slice(from, to === -1 ? src.length : to);
+}
 
 /** Read a "- <label>: **N**" bullet out of the gated block. */
 function figure(label) {
@@ -203,4 +237,126 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
     /The port has no gamepad layer \(Ledger\)\./,
     'the JOYSTICK tab note that sends the reader to this row must still be there');
+});
+
+test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A row, and the removal row stops saying nothing ships', () => {
+  // The file's only roads row said the system was "REMOVED WHOLE" and
+  // "Nothing of this departure ships". Five modules, 2 MB of vendored
+  // third-party data and an ungated call in the classic lane say
+  // otherwise. Both halves are pinned two ways: rip the row out and the
+  // doc half fails; rip the wiring out and the tree half does.
+  const A = LEDGER.slice(
+    LEDGER.indexOf('## A. Approved departures from DFU'),
+    LEDGER.indexOf('## A-note (H1)'),
+  );
+  assert.ok(A.length > 1000, 'section A was not found');
+  assert.ok(!/Nothing of this departure ships/.test(A),
+    'the struck ROADS row still asserts that nothing of it ships');
+  assert.match(A, /~~ROADS \(R1-R7, RA1, RF1\)~~/, 'the removal row is still there, struck');
+
+  const row = A.split('\n').find((l) => l.startsWith('| **ROADS 22-25'));
+  assert.ok(row, 'section A carries no approved-departure row for the re-integrated road system');
+  assert.match(row, /Supersedes the struck row above/, 'the new row cites the removal row it supersedes');
+  assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data');
+  assert.match(row, /FALLBACK/, 'and says the port’s own network is what falls back');
+  assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
+  assert.match(row, /Roads\.md:194/, 'and cites Mac’s always-on call');
+  assert.match(row, /`systems\/travel\.js` stays the verbatim port/, 'and what stayed removed');
+  // AUDIT 58 R1 (d): the bake's cache version is a DERIVABLE figure like
+  // every other in this file - the row states it, roadsCache.js IS it.
+  const ver = /GENERATOR_VERSION (\d+)/.exec(row);
+  assert.ok(ver, 'the row no longer names the bake\u2019s cache version');
+  assert.equal(Number(ver[1]), GENERATOR_VERSION, 'the row\u2019s GENERATOR_VERSION drifted from roadsCache.js');
+
+  // The tree half: the row's claims are true of this checkout.
+  const rootFile = (p) => readFileSync(join(ROOT, p), 'utf8');
+  for (const f of ['roadData.bytes', 'trackData.bytes', 'riverData.bytes', 'streamData.bytes']) {
+    assert.equal(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)).length, 500000, `${f} is his 500,000-byte array`);
+  }
+  for (const m of ['roadNetwork.js', 'roadPainter.js', 'roadsProducer.js', 'roadsCache.js']) {
+    assert.ok(rootFile(`src/world/${m}`).length > 0, `src/world/${m} ships`);
+  }
+  const host = rootFile('src/scenes/world.js');
+  // AUDIT 58 R1 (b): THE GATE IS THE STATEMENT ABOVE, NOT THE CALL LINE.
+  // This read the two `terrainGen.setRoads*` LINES and rejected
+  // `isEnhanced` inside them, which is not how a gate is written: wrapping
+  // the whole block (`if (isEnhanced()) loadModRoads().then(...)`, or an
+  // `if (isEnhanced()) { ... }` around it) left the 1:1 lane with no roads
+  // at all - not his arrays, not ours, no rebuildRoadless - with this pin
+  // and the whole suite green. So the wiring's ENCLOSING SCOPE is what is
+  // pinned: it must be a bare statement in bootWorld's own body, at
+  // brace depth one, with nothing conditional between.
+  const start = host.indexOf('\n  loadModRoads().then((his) => {\n');
+  assert.ok(start > 0, 'the road wiring is not a bare two-space statement - something prefixes or re-indents it');
+  const scopes = enclosingBraces(host, start);
+  assert.equal(scopes.length, 1, `the road wiring sits inside ${scopes.length} blocks, not just the scene builder\u2019s body`);
+  assert.match(lineAt(host, scopes[0]), /^export async function bootWorld\(/,
+    'the road wiring\u2019s only enclosing scope is no longer bootWorld itself');
+  const block = host.slice(start, host.indexOf('\n  });', start));
+  assert.ok(!/isEnhanced/.test(block), `the road wiring is ungated: ${block.trim().slice(0, 80)}`);
+  const wiring = block.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l));
+  assert.equal(wiring.length, 2, 'both road wires are in that block');
+  assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, 2,
+    'and world.js holds no third wire outside it');
+
+  // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
+  // `world.js:327-330` - four lines of the ROADS 3/22 comment block - from
+  // the day it was written, and the pin above re-derived the no-gate fact
+  // without ever reading the number, so the one pointer a reader is sent to
+  // could name anything. The cite is now sliced and checked.
+  const cite = /`src\/scenes\/world\.js:(\d+)-(\d+)`/.exec(row);
+  assert.ok(cite, 'the row no longer cites the wiring by line');
+  const citedLines = host.split('\n').slice(Number(cite[1]) - 1, Number(cite[2]));
+  const cited = citedLines.join('\n');
+  assert.match(cited, /terrainGen\.setRoadsData\(/, 'the cited range misses his-data wire');
+  assert.match(cited, /terrainGen\.setRoads\(settlementsOf/, 'the cited range misses the fallback wire');
+  assert.ok(!/isEnhanced/.test(cited), 'the cited range carries a gate');
+  // ...and it is the WHOLE block, first line to last: a range that merely
+  // happens to still contain the wires is how the old number stayed
+  // plausible for a whole wave.
+  assert.equal(citedLines.at(0), '  loadModRoads().then((his) => {', 'the cite does not start at the wiring statement');
+  assert.equal(citedLines.at(-1), '  });', 'the cite does not end at the block\u2019s close');
+  assert.match(rootFile('src/world/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
+  const travel = rootFile('src/systems/travel.js');
+  assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');
+  assert.match(rootFile('src/ui/overworldMap.js'), /byRoad: false,/, 'and byRoad is still the permanent false the trip card reads');
+
+  // ...and the two pages that repeated the stale claim were corrected.
+  const status = rootFile('bible/01-Overview/Port-Status-2026-09-02.md');
+  assert.ok(!/\*\*Removed whole:\*\* the road system/.test(status), 'the status page still says removed whole');
+  assert.match(status, /Removed, then re-integrated/, 'and says what actually happened');
+  assert.ok(!/Basic Roads' design credited, none of its data/.test(rootFile('bible/Home.md')),
+    'Home.md still says none of his data ships');
+
+  // AUDIT 58 (records): F5 swept the BIBLE and stopped there, so two
+  // `src/` headers went on reasoning from the retired premise - and
+  // both used it to say something about themselves. windmills.js
+  // called itself "the only departure of its kind" because the roads
+  // "were removed whole", and dataSource.js gave the removal as the
+  // reason its derived store has no consumer. The store really has
+  // none, and windmills really is enhanced-only; only the REASONS were
+  // false. So the sweep is a sweep: no src/ site may rest on the
+  // premise, and each one's own true claim is pinned beside it.
+  /** A header read as PROSE: comment markers off, wraps closed. */
+  const prose = (p2) => rootFile(p2).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+  for (const f of ['src/world/windmills.js', 'src/scenes/dataSource.js']) {
+    const flat = prose(f);
+    assert.ok(!/road system was removed whole/.test(flat),
+      `${f} still rests on "the road system was removed whole"`);
+    assert.ok(!/the only departure of its kind/.test(flat),
+      `${f} still calls itself the only departure of its kind - roads are one again`);
+    assert.match(flat, /ROADS 22-25/, `${f} does not cite the row that retired the premise`);
+  }
+  const mills = prose('src/world/windmills.js');
+  assert.match(mills, /ENHANCED-ONLY DEPARTURE \(Ledger A\)/, 'windmills is still enhanced-only, and must still say so');
+  assert.match(mills, /ALWAYS ON IN BOTH LANES/, 'and must say how the roads row differs from it');
+  const ds = rootFile('src/scenes/dataSource.js');
+  assert.match(ds, /IT CURRENTLY HAS NO CONSUMER\./, 'the derived store’s true claim went with the false reason');
+  assert.match(prose('src/scenes/dataSource.js'), /roadsCache\.js/, 'and must say where the rebuilt roads cache instead');
+  const walk = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`)
+      : e.name.endsWith('.js') ? [`${dir}/${e.name}`] : []));
+  const consumers = walk('src').filter((f) => f !== 'src/scenes/dataSource.js'
+    && /storeDerived\(/.test(rootFile(f)));
+  assert.deepEqual(consumers, [], 'the derived store has a consumer now - dataSource.js’s header says it has none');
 });

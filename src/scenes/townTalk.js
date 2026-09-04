@@ -1,10 +1,11 @@
 // T3b: the town interaction seam (DFU PlayerActivate + TalkManager,
 // MIT Daggerfall Workshop), shared by BOTH exterior motor hosts (the
 // standing host rule). One module owns: the interaction modes
-// (Steal/Grab/Info/Talk on the classic F1-F4 binds, "Interaction is
-// now in %s mode."), the activation ray against live townsfolk
+// (Steal/Grab/Info/Talk through the registry's StealMode/GrabMode/
+// InfoMode/TalkMode actions - the classic F1-F4 are their DEFAULTS -
+// with "Interaction is now in %s mode."), the activation ray against live townsfolk
 // (mobile NPC distance 256 units = 6.4; pickpocket 128 = 3.2 with
-// "You are too far away" beyond it), the reaction roll through the
+// the localized 'youAreTooFarAway' beyond it), the reaction roll through the
 // region's People faction, the mobile talk session (greeting window
 // or the 7205 refusal box as a HUD line), and pickpocketing.
 //
@@ -39,13 +40,21 @@ import { makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
-import { overlayAction } from '../ui/input.js';
+import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
+// AUDIT 58 (talk lane): the reach refusal is ONE localized key -
+// TextManager 'youAreTooFarAway' (Internal_Strings.csv:22), spoken by
+// ActivateMobileNPC at PlayerActivate.cs:780 and :790 - so it is one
+// constant, in PlayerActivate's own module. These three sites spelled
+// it with a full stop while systems/bulletinBoard.js spelled the same
+// key with the table's ellipsis, so one session showed the player two
+// sentences for one string.
+import { TOO_FAR_AWAY_TEXT } from '../player/activate.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -66,9 +75,12 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // currentMode is GLOBAL - the dungeon door ladder reads it too);
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
-import { MODES, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
-const MODE_KEYS = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' };
+// AUDIT 58 (talk lane): the four modes ride the keybinding registry
+// now - MODE_ACTIONS lives beside the mode it sets
+// (player/interactionMode.js), because PlayerActivate.cs:221-228 reads
+// InputManager ACTIONS and F1-F4 are only their defaults.
 export const PERSON_HIT_RADIUS = 0.45;   // MobilePersonNPC controller radius
 export const PERSON_HIT_HEIGHT = 1.8;
 
@@ -89,7 +101,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null }) {
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -305,12 +317,6 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   function keydown(e) {
-    const m = MODE_KEYS[e.code];
-    if (m) {
-      e.preventDefault();
-      setMode(m);
-      return true;
-    }
     if (overlay) {
       e.preventDefault();
       // E says goodbye too - the touch layer's E button opens AND
@@ -343,6 +349,39 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // free before RaiseSkills can want it for a level-up screen -
       // and the unguarded re-read threw on the key that closes it.
       if (overlay?.done) dropOverlay();
+      return true;
+    }
+    // AUDIT 58 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
+    // DFU switches the interaction mode in PlayerActivate.Update
+    // (PlayerActivate.cs:221-228), and a pausing window shuts that read
+    // down entirely: UserInterfaceManager.AddWindow -> PauseGame(true)
+    // (UserInterfaceManager.cs:183-184) sets InputManager.IsPaused
+    // (GameManager.cs:608), and InputManager.Update returns before
+    // `currentActions` is populated (InputManager.cs:487-503) - so
+    // ActionStarted is false, NO mode change happens, and the key
+    // reaches the top window's Button hotkeys instead. This branch used
+    // to be the FIRST statement of this function, above the `overlay`
+    // block: F1-F4 flipped the mode and printed the HUD line under any
+    // open window, and in this host's own slot the press was consumed
+    // as well - so the inventory's four tab hotkeys
+    // (DaggerfallInventoryWindow.cs:474-491, systems/dialogShortcuts.js
+    // InventoryWeapons/Magic/Clothing/Ingredients) and the exterior
+    // automap's three view modes could never fire.
+    //   The gate is the HOST's "any window is up", not this file's own
+    // slot: worldModes keeps a second slot (its interior/dungeon
+    // overlay) that `overlay` above cannot see, and a key eaten here
+    // never reaches it either. The hosts pass their `modes.overlayHeld`
+    // in; a host that mounts no mode machine passes nothing and the
+    // predicate is false.
+    if (otherOverlayActive?.()) return false;
+    // ...and the code -> mode read is the REGISTRY's (actionOf), so a
+    // player who moves StealMode off F1 moves the key, and an F1 they
+    // have re-pointed at Inventory falls through this ladder to the
+    // host's own `actionOf` and opens the pack.
+    const m = MODE_ACTIONS[actionOf(e)];
+    if (m) {
+      e.preventDefault();
+      setMode(m);
       return true;
     }
     return false;
@@ -533,18 +572,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     }
     // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
     // itself reaches RayDistance (76.8); each MODE's distance gates
-    // inside with "You are too far away." (Info/Grab/Talk 6.4, Steal
+    // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal
     // 3.2 alone). The old 6.4 pre-gate answered a person down a long
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE) return false;
-    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
     // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
     // (PlayerActivate.cs:785-795), so an already-attempted townsperson
     // produces NO output at any range - the port gated distance first
     // and printed a line DFU never shows.
     if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
-        && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
+        && bestDist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
@@ -555,7 +594,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // F048's nesting, so the already-attempted arm is SILENT here
       // too, whatever the range.
       if (target.person.pickpocketAttempted) return;
-      if (dist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return; }
+      if (dist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return; }
       target.person.pickpocketAttempted = true;
       const r = pickpocketTownsperson(playerEntity, {
         rolls,

@@ -3,8 +3,10 @@
 // Daggerfall Workshop) - never hand-copied; regenerate from source.
 // SLOT_RULES: per-group templateIndex -> a fixed slot or a paired
 // first-open rule (GetFirstSlot). WEAPON_HANDS: Either / Both per
-// weapon template (bows carry DFU's BowLeftHandWithSwitching setting;
-// its default FALSE = Both, the classic behaviour we port - noted).
+// weapon template. The two bow rows (129/130) are the extraction's
+// record of DFU's OFF answer only: ItemEquipTable.cs:633-635 returns
+// LeftOnly when BowLeftHandWithSwitching is on, and AUDIT 58 put that
+// branch in getItemHands (equipTable.js), which READS the setting.
 // SHIELD_INDICES: LeftOnly in GetItemHands.
 
 export const ITEM_GROUPS = Object.freeze({
