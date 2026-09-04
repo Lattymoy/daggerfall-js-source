@@ -217,3 +217,36 @@ test('TL2: a marker whose floor is a roof falls back to the edge landing', async
   // caller's explicit localPos stand where they were told.
   assert.match(w, /walkMode && landing && pos\[1\]/);
 });
+
+// ── TSR4c: THE RAY ONLY SEES MESHES; THE GROUND IS THE COLLIDER'S ──
+// Mac: "Now I spawn in mid air after hitting ride out." Over bare
+// terrain outside every block the footprint sweep finds nothing - the
+// exterior collider carries the terrain as its heightAt callback, read
+// by move() and never by the ray - and the miss arm answered the raw
+// LIFTED by extraHeight: forty units up, then the drop.
+test('TSR4c: a miss over a collider that has a ground answers the ground, not the lifted raw', async () => {
+  const { floorLanding } = await import('../src/player/enterExit.js');
+  const miss = { raycast: () => Infinity };
+  // no ground at all (a stub, an interior, a dungeon): the old arm, byte
+  // for byte - the lifted raw stands and gravity is the fallback
+  assert.deepEqual(floorLanding(miss, [3, 2, 4]), [3, 2, 4]);
+  assert.deepEqual(floorLanding(miss, [3, 2, 4], 240, 40), [3, 42, 4], 'lifted, as TL1 left it');
+  assert.deepEqual(floorLanding({ ...miss, heightAt: () => -Infinity }, [3, 2, 4], 240, 40), [3, 42, 4], 'a Collider\'s default ground is no ground');
+  // a ground under the point: the landing is ON it, lift or no lift,
+  // above the raw or below it
+  const ground = { ...miss, heightAt: (x, z) => 10 + x * 0 + z * 0 };
+  assert.deepEqual(floorLanding(ground, [3, 2, 4], 240, 40), [3, 10, 4], 'the ground above the raw');
+  assert.deepEqual(floorLanding({ ...miss, heightAt: () => -25 }, [3, 2, 4], 240, 40), [3, -25, 4], 'the ground below it');
+  assert.deepEqual(floorLanding({ ...miss, heightAt: () => 1.5 }, [3, 2, 4]), [3, 1.5, 4], 'the boot stand, no lift');
+  // a mesh hit still wins the way it always did - the ground is only
+  // asked when every sample missed
+  const hit = { raycast: (o) => o[1] - 5, heightAt: () => 10 };
+  assert.deepEqual(floorLanding(hit, [3, 2, 4], 240, 40), [3, 5, 4], 'a mesh under the ray floors there');
+  // the real Collider exposes exactly that callback, and the exterior
+  // host hands it the terrain
+  const { Collider } = await import('../src/player/collider.js');
+  assert.equal(new Collider(() => 7).heightAt(0, 0), 7);
+  const { readFileSync } = await import('node:fs');
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(world, /const collider = new Collider\(heightAt\);/, 'the exterior collider\'s ground IS the terrain');
+});

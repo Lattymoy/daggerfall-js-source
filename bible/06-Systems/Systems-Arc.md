@@ -5558,3 +5558,25 @@ still begins where Daggerfall begins. Pinned on the route text
 (`testroom.test.js`, the TSR4 wiring pin); `classicstart.test.js`
 and `enhancedMenu.test.js` still see the `params.set('classic', '1')`
 they require.
+
+**TSR4c - THE RAY ONLY SEES MESHES (2026-09-04, Mac, after TSR4b:
+"Now I spawn in mid air after hitting ride out").** With the classic
+start out of the way the ride finally reached its edge landing, and
+the landing floated. `floorLanding` casts its footprint sweep through
+`collider.raycastHit`, which walks the TRIANGLE BUCKETS - the blocks,
+the models, the doors - and nothing else; the exterior collider
+carries the terrain as its `heightAt` callback, "floor beneath
+everything", which `move()` reads and the ray never does. Inside a
+town every landing sits over pavement meshes and the sweep hits. The
+edge landing stands ten units OUTSIDE every block, over bare terrain,
+so every sample missed and the miss arm answered the raw LIFTED by
+extraHeight: forty units up, then the drop. TL1's fast-travel edge
+arrival for a village took the same road and nobody had stood on one
+since. Fixed at the root, in the law: on a miss the landing is the
+collider's own ground when it has one (`Number.isFinite`), and a
+collider without one - interiors, dungeons, every test stub - keeps
+the arm byte for byte. The ride's gate (TSR4a) still waits for that
+ground to exist, since `heightAt` answers -Infinity until the pixel
+is built. Pinned in `enterexit.test.js` (the miss arm both ways, a
+mesh hit still winning, the exterior collider handed the terrain);
+every suite that reads `floorLanding` was run and stands.
