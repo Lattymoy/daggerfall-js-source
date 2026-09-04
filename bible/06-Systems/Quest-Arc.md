@@ -5440,7 +5440,11 @@ TryPlacement (:203-206) picks that arm precisely when
 `IsPlayerInLocationRect` — and this route stands inside its one city's
 rect for its whole life (`_musicInLocationRect` is `() => true`), so the
 wilderness 8/25 arm (:252-257) **has no reachable branch here at all**.
-The cast origin is the controller centre, the FOV crosses in degrees,
+The cast origin is the controller centre (pinned: a floor 3.5 below the
+feet is 4.4 below the centre, past `maxFloorDistance` 4, so the shipped
+origin refuses where a feet origin places), the FOV crosses in degrees
+and the cone is held on **both** sides — `fovDegrees + Range(0,4)`, so
+`[75, 79)` and nothing anchored anywhere but the player passes —
 the occupancy sphere (:317-321, *any* collider) reads the host's whole
 street database, FinalizeFoe lifts a flier 1.5 and leaves a walker on
 the probed floor, and the foe LookAt's the player.
@@ -5466,7 +5470,7 @@ spawns and the NPC-guard conversion with it (world.js:1888-1972) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
-HandleQuestClicks (:449-451) asks three questions before the confirmFind
+HandleQuestClicks (:448-450) asks three questions before the confirmFind
 dialog. This route mounts no travel map, so `gotoPlace` (:214-217) and
 `canFindPlace` (:1134-1146) — both DfTravelMapWindow members — stay
 unset and no dialog is ever offered, which is the same nothing a
@@ -5477,13 +5481,47 @@ answered: the host had never supplied `currentLocationName`, so the
 window compared against `''` and could never match, and this route
 knows its one city outright.
 
-Pins: 2 new in `test/qx1_exterior_host.test.js` (the placement law RUN
-over the real `placeFoeFreely` with a stubbed world; the find-place arm
-RUN through a real `QuestJournalWindow`), plus the widened pins in
-`hostmagic_wiring`, `enchantpool`, `roadb_hostility`, `audit24_wave32`,
-`audit24_wave46`, `audit26_streaming2`, `audit58_combat`,
-`audit58_saveaudio`, `detectindoors`, `nearbyobjects`, `restlodging`
-and `townpopulation`. Campaign: 9 mutants, 9 killed.
+**(d) The cast engine was DEAF to the machine — the review's find.**
+This host owns a cast engine of its own, and `worldModes` takes *that
+instance* for the interior mode, so it covers the shops entered from
+`?exterior` too. It passed neither of `EntityEffectManager`'s two
+ready-spell events (`hostMagic.js:73-74`), and those two doors are the
+*only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
+(`machine.js:776`/`:782`; C# subscribes them in the action's
+constructor). Every `cast X spell do` and `cast X effect do` on this
+whole route could therefore never latch and never fire. The pair the
+other two engine-owning hosts wire (`world.js:2105-2106`,
+`dungeonContext.js:1776-1777`) is wired here now, and with it
+`CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
+byte-folded `spellHasMatchForClassicEffect` (`world.js:4813-4816`),
+absent which the action self-completes at *parse*
+(`actions.js:2742`/`:2749`) and the task can never arm at all.
+
+Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
+the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
+**both** sides and the controller-centre cast origin held by a ledge the
+feet origin would reach; the occupancy sphere held by a real REFUSAL
+rather than a `typeof`; the find-place arm RUN through a real
+`QuestJournalWindow`; the two ready-spell doors RUN into a stub machine;
+the two classic-spell world reads RUN; and the frame seams — the pool's
+tick, its draw, the one shared senses context, the enemy-arrow target —
+windowed at the source). **The review corrected this paragraph:** it
+used to name `audit24_wave32`, `audit24_wave46`, `audit26_streaming2`,
+`audit58_combat`, `audit58_saveaudio`, `detectindoors`, `nearbyobjects`,
+`restlodging` and `townpopulation` as holding the consequential seams,
+and those widened greps hold *other* expressions — `subscribeFoePools`,
+the Detect feed, the rest/collapse reads, the politeness gate and
+`onAttackFromPlayer` — while seven shipped seams had no pin at all and
+two more were held only by a doc-cite test's line arithmetic. The seven
+are pinned now where the tree keeps that kind of law: the corpse-key
+router in `audit24_wave38` (widened to both exterior hosts, and RUN —
+a `foeCorpse:` key routed into the watch pool empties a *live*
+watchman's pack), the three-pool swing order and the arrow targets in
+`flagsweep` FS1, `ClearEnemies` in `prisonrelease`, the quest-foe click
+ray in `questguards` QG1 (its table's fourth host, plus the
+non-consuming order), and the pool's tick/draw/senses/arrow seams in
+`qx1_exterior_host`. Campaign: 9 mutants, 9 killed; the review adds 19
+more, 19 killed.
 
 **THE LESSON: A RECORDED ABSENCE OUTLIVES ITS REASON.** Every one of
 the six struck sentences was true when it was written and none was

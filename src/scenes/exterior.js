@@ -115,6 +115,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
+import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry) - world.js:115's import
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -1524,6 +1525,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
     surfacePlayer,
+    // QG1: the ready-spell doors - EntityEffectManager's two events
+    // (hostMagic.js:73-74), which are the ONLY route into the quest
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:776/:782;
+    // actions.js:2688). This host owns its own cast engine and passed
+    // neither key, so on this route - and, because worldModes takes THIS
+    // instance indoors, in every shop entered from it - `cast X spell do`
+    // and `cast X effect do` could never latch and never fire. The other
+    // two engine-owning hosts wire the identical pair (world.js:2105-2106,
+    // dungeonContext.js:1776-1777); `questBridge` is assigned below this
+    // mount, so the chain is optional both ways.
+    onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
+    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
     // ROAD-G G2 (a): THE THREE-ARM SHAPE, the streaming host's law over
     // this host's pools. This read was `mode === 'exterior' ? guards :
     // []`, which is an INTERIOR SCENE GATE - and this is the only cast
@@ -2305,6 +2318,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
+    // QG1: CastSpellDo's two world reads, world.js:4813-4816's pair.
+    // Without them the action self-completes at parse (actions.js:2742/:2749)
+    // and a `cast X spell do` on this route could never be armed, whatever
+    // the ready-spell doors above raise.
+    getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
+    spellHasMatchForClassicEffect: (sp, effect) => (sp?.effects ?? []).some((e) =>
+      ((e.type ?? 0) & 0xff) === ((effect.type ?? 0) & 0xff)
+      && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     legalRepNow: () => legalRepOf(playerEntity, dfLocation.regionIndex),   // %ltn's fourteen bands
     changeLegalRep: (amount) => changeLegalRep(playerEntity, dfLocation.regionIndex, amount),
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], dfLocation.regionIndex, buildingKey),

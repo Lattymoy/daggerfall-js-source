@@ -195,7 +195,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:4085, exterior.js:2012, ui/input.js:303), and that same
+    // (world.js:4085, exterior.js:2025, ui/input.js:303), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs

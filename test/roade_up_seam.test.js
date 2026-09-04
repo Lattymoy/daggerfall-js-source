@@ -513,8 +513,8 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
 // runs, and DaggerfallRestWindow.cs:187-196 / DaggerfallPauseOptions-
 // Window.cs:183-188 can read a bare `GetKeyUp` and be safe.
 //
-// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:4105/:4108,
-// exterior.js:2012/:2020, ui/input.js:297/:303) and then routes that
+// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:4092/:4068,
+// exterior.js:2025/:2033, ui/input.js:297/:303) and then routes that
 // same key's release into the window it just mounted (world.js:4129 ->
 // townTalk.keyup). The bare `GetKeyUp` therefore is NOT safe here, and
 // the shape DFU uses for exactly this case - a window whose open edge
