@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1607 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:793, world.js:1392,
-                        exterior.js:1755. It is the only window TWO
+                        dungeonContext.js:793, world.js:1479,
+                        exterior.js:1795. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1431, dungeonContext.js:3081. A seam
+    / NOTEBOOK          world.js:1518, dungeonContext.js:3081. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7833,7 +7833,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1645 and
+questJournal.js from charSheetNav:53, world.js:1732 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9422,7 +9422,7 @@ Three absences, one chain:
    modal pass now hands its lens back (`host.onModalView(proj, view,
    eye)`, `src/scenes/worldModes.js:5013`), and the host records it
    and places the lock dot through it, exactly as the exterior pass
-   does through its own (`src/scenes/world.js:5831`, `:1355`).
+   does through its own (`src/scenes/world.js:5920`, `:1355`).
 2. NO LADDER INDOORS ARMED THE LOCK. The exterior ladder's arm (TI1)
    lived in world.js; tryExitDungeon and tryExit had the quest click
    and nothing after it for a living foe. Both take the host's
@@ -9436,8 +9436,8 @@ Three absences, one chain:
    live foe to the tap's RAY inside a 0.12-rad cone, the smallest angle
    winning, a nearer body winning the tie, line of sight through the
    collider to the CHEST. ONE arm for every ladder: `tapLock`
-   (`src/scenes/world.js:1352`, `src/scenes/exterior.js:1897`), taken by the
-   exterior ladder (`src/scenes/world.js:6618`, `src/scenes/exterior.js:3379`)
+   (`src/scenes/world.js:1439`, `src/scenes/exterior.js:1937`), taken by the
+   exterior ladder (`src/scenes/world.js:6707`, `src/scenes/exterior.js:3419`)
    and handed to the mode machine; the standalone dungeon host locks by
    the same cone (`src/scenes/dungeon.js:213`). The quest click keeps its
    box; a lock is not a click.
@@ -9469,8 +9469,8 @@ The two root causes:
    had ever activated anything on a phone: not the lock, not a door,
    not a pile of loot. A TOUCH pointer never acquires the lock and has
    no re-acquiring click to swallow, so the guard returns before the
-   delay for `e.pointerType === 'touch'` (`src/scenes/world.js:4510`,
-   `src/scenes/exterior.js:2230`, `src/scenes/dungeon.js:301`).
+   delay for `e.pointerType === 'touch'` (`src/scenes/world.js:4599`,
+   `src/scenes/exterior.js:2270`, `src/scenes/dungeon.js:301`).
 2. THE CLASSIFIER. A right-half tap existed only while the PATH'S
    LENGTH stayed under 12 px, and a thumb resting on a phone jitters
    2-6 px per touchmove - ten or twenty of them in a 200 ms press - so
@@ -9498,19 +9498,19 @@ And the rest, each confirmed twice:
 - A lock made the whole right half a swipe, and the weapon boots
   SHEATHED, so a locked player could neither look nor swing. The
   recogniser's predicate is now "locked AND a weapon in hand", read
-  from the mode that owns the weapon (`src/scenes/world.js:4597`;
+  from the mode that owns the weapon (`src/scenes/world.js:4686`;
   `weaponDrawn()` on the mode machine, `src/scenes/worldModes.js:6972`).
 - Nothing ever unlocked: the host lock outlived every context, and a
   dungeon exit left it facing a torn-down foe's frozen coordinates. A
-  mode change drops it (`src/scenes/world.js:6275`) and so does a
+  mode change drops it (`src/scenes/world.js:6364`) and so does a
   teleport (:3027).
 - The ray was cast from `cam.pos` and the cone measured from
   `player.eye` - two origins, a translated ray, a slice of the cone
   spent walking. The tap now remembers the eye its lens was built
-  from (`_tapOrigin`, `src/scenes/world.js:6285`) and the modal
+  from (`_tapOrigin`, `src/scenes/world.js:6374`) and the modal
   ladders measure from it (`src/scenes/worldModes.js:4161`, :4584).
 - A second tap inside the first's two frames re-armed over the held
-  key and lost both; it is dropped now (`src/scenes/world.js:4594`). The
+  key and lost both; it is dropped now (`src/scenes/world.js:4683`). The
   dot kept drawing a stale chest under a dungeon window, and the touch
   layer only knew the exterior's overlay slot: `overlayHeld` counts
   too (:4600), and a paused frame nulls the chest. The nav row's

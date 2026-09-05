@@ -259,4 +259,6 @@ See `Enhanced-Environments-Arc.md` for the Enhanced Environments arc plan (secon
 
 See `Dynamic-Skies.md` for DS1: BadLuckBurt and carademono's Dynamic Skies mod, vendored 1:1 with permission and standing beside the dome as the enhanced lane's sky (2026-09-04).
 
+See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mod, ported 1:1 with permission - the woodland's autumn, spring and winter on the nature flats, its textures read from the player's own copy of the mod (2026-09-05).
+
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.

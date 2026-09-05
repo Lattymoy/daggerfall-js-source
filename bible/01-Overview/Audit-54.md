@@ -21,7 +21,7 @@ Nine sweeps. Two findings. Neither is in a path a player has seen.
 
 | # | Sweep | Result |
 |---|---|---|
-| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:338 is the classic renderer inside the factory, not the controller) |
+| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:339 is the classic renderer inside the factory, not the controller) |
 | 1b | The same for `magic` (createPlayerMagic's return), `precip` and `labGrass` (class members), `hudCtx` (each host's literal), across all four hosts | **clean**, once shorthand keys (`readySpell,`) were counted - the first pass reported five misses that were my regex |
 | 2 | Every shader uniform in src/render: declared but never set, set but never declared | 167 declarations, **clean** |
 | 2b | Declared AND set, but never READ by any shader body | **F1** |

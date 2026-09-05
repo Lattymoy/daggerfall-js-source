@@ -588,15 +588,15 @@ was never true. Two endings, sorted by the adversarial review below:
    `buildPixel` itself after the pixel published), took the start
    pixel's doors with it, so `startInDungeon` found no DUNGEON_ENTRANCE
    and the boot "started outside" - onto a spawn gate
-   (`src/scenes/world.js:6416`) that waits for a start pixel nobody
+   (`src/scenes/world.js:6505`) that waits for a start pixel nobody
    would rebuild. A dead boot: the camera frozen thirty units up over
    a hole, every input dead.
 
 The fix is the season re-skin's own shape (ROAD-Ar R0). The arrival
-only raises a flag (`rebuildRoadless`, `src/scenes/world.js:381`); the
-sweep is `tickRoadsSweep` (`src/scenes/world.js:1294-1312`), called
+only raises a flag (`rebuildRoadless`, `src/scenes/world.js:411`); the
+sweep is `tickRoadsSweep` (`src/scenes/world.js:1381-1399`), called
 ONCE, on the exterior frame between two builds, before `pump()` takes
-the next (`src/scenes/world.js:6731`): it waits out the same publish
+the next (`src/scenes/world.js:6820`): it waits out the same publish
 hazard `tickSeason` does, arms the R0 hold BEFORE the ground goes,
 tears down only the roadless pixels, and puts them back at the FRONT
 of the queue, nearest-first. In a dungeon or a building the exterior
@@ -618,7 +618,7 @@ six defects were fixed on the same day:
   model". The gate never fires in that ordering (above), and the boot
   camera for a location pixel is not the pixel centre at all: it
   stands 120 units past the location's footprint
-  (`src/scenes/world.js:4130`), on bare terrain. Corrected here, in
+  (`src/scenes/world.js:4219`), on bare terrain. Corrected here, in
   the source comment and in the pin's header.
 - THE DUNGEON STAND NEVER SPENT THE BOOT GATE. Every landing in this
   host sets `playerSpawned` except the classic dungeon start:
@@ -627,14 +627,14 @@ six defects were fixed on the same day:
   armed through the whole dungeon visit and fired on the first
   exterior frame after the exit, re-flooring the player at the
   camera's x/z over PositionPlayerToDungeonExit's own landing. Now
-  `if (entered) playerSpawned = true;` (`src/scenes/world.js:6116`) -
+  `if (entered) playerSpawned = true;` (`src/scenes/world.js:6205`) -
   a boot gate, spent by the boot that stood the player underground.
 - THE SECOND ROADS MISS CRASHED THE BUILD. `buildPixelNow`'s retry arm
   tore the pixel down and then read `_stride` off the entry it had just
   deleted - the ROADS 25a crash back by another door, reachable
   whenever `hasRoads` is true with no network behind it (a failed bake
   leaves every pixel roadless for the session). The second miss now
-  keeps the pixel as painted (`src/scenes/world.js:1017`); a world
+  keeps the pixel as painted (`src/scenes/world.js:1087`); a world
   without roads is ROADS 3's promise, no world is not.
 - THE HOLD COVERED ONE PIXEL WHILE THE RING WAS STILL HOLES. The sweep
   tore down every roadless pixel but held the motor only until the
@@ -642,15 +642,15 @@ six defects were fixed on the same day:
   step from a neighbour still torn down. R0's season re-skin had the
   same shape. Both now take ONE plan, `src/world/pixelRebuild.js`
   (`planPixelRebuild`: the rebuild order, the hold key, the ring), and
-  the release (`src/scenes/world.js:6395-6413`) waits for the
+  the release (`src/scenes/world.js:6484-6502`) waits for the
   player's pixel AND every swept pixel within one of it (`_holdRing`,
-  `src/scenes/world.js:1254`).
+  `src/scenes/world.js:1341`).
 - THE HOLD WAS KEYED ON THE EYE, THE RE-FLOOR READ THE FEET. `state
   .current` is derived from the interpolated eye plus the head-bob;
   `heightAt(player.pos)` resolves the feet's pixel; at a seam they
   differ, so the arm could name a pixel the release never reads. Both
   tearers now key the hold on `feetPixelKey()`
-  (`src/scenes/world.js:1258`), the inverse map `heightAt` uses.
+  (`src/scenes/world.js:1345`), the inverse map `heightAt` uses.
 - THE RE-FLOOR COULD LIFT ONTO A ROOF. `floorLanding` answers the
   HIGHEST mesh a five-ray footprint finds, so a release under any
   overhang stood the player on it - the wedge R0 was written against.

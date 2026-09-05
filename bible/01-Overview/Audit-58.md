@@ -35,7 +35,7 @@ briefly shared a name.
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
 `F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:135`,
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
-`src/world/roadsCache.js:17`, `src/scenes/world.js:83`,
+`src/world/roadsCache.js:17`, `src/scenes/world.js:85`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
 `test/audit58_terrainhelper.test.js`, `test/ledger.test.js:242`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
@@ -253,7 +253,7 @@ string was RECOVERED from the reference, standing over a string somebody
 wrote, is the anti-lie law's exact failure mode, and it shipped with a
 pin. **The classic inventory and trade windows never drew the two
 target-icon panels** (`DaggerfallInventoryWindow.cs:49-50`, `:424-439`,
-`:857-890`), so the classic lane had no encumbrance readout at all - the
+`:858-890`), so the classic lane had no encumbrance readout at all - the
 rects were named in a header comment and nothing else. A repair-shop
 merchant skipped `DaggerfallMerchantRepairPopupWindow` entirely; the bank
 purchase list's arrows were never drawn; `ListPickerWindow` hardcoded 9

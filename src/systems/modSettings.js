@@ -32,6 +32,12 @@ export const MOD_SETTINGS = Object.freeze({
       MaxParticles: Object.freeze({ default: 20, min: 15, max: 20, description: 'Maximum number of snow flake particles (multiplied by 1000). Read and logged by the mod, never applied - carried as it ships.' }),
     }),
   }),
+  'seasons-iliac-bay': Object.freeze({
+    title: 'Seasons of the Iliac Bay',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: true, description: 'RosyTheRascal\u2019s seasonal nature flats: autumn, spring and winter repaints of the woodland, hills, haunted and mountain trees, rocks and plants, drawn at the mod\u2019s 3.1x size. The textures come from your own copy of the mod (its .dfmod, or its Textures folders) through the Your own textures pick; without them the classic flats draw. Off leaves the classic flats in every season.' }),
+    }),
+  }),
   'roads-hazelnut': Object.freeze({
     title: 'Basic Roads',
     keys: Object.freeze({

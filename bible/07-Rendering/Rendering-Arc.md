@@ -839,6 +839,23 @@ The boot probe and the world render gate need ARENA2 and are the next
 machine's to run.
 
 
+## SIB1 - SEASONS OF THE ILIAC BAY, THE MOD, 1:1 (2026-09-05, Mac's call) - SHIPPED
+
+Mac: "The next mod I want to implement 1:1 is this. also have
+permission." RosyTheRascal's Seasons of the Iliac Bay 1.1: autumn,
+spring and winter repaints of the woodland, hills, haunted and mountain
+nature flats at 3.1x. The whole account is `Seasons-Iliac-Bay.md`
+beside this file; the row is Ledger A SIB1. The script (a compiled DLL,
+read off the IL) is ported to `systems/seasonsIliacBay.js`; the
+textures are re-shaded classic flats and stay OUT of the repository by
+the doctrine's own sentence - they come from the player's own copy of
+the mod, the `.dfmod` itself through a UnityFS reader written for it
+(`formats/unityBundle.js`, validated 374/374 against a reference
+extraction) or the mod's folders, through the texture pick. Both
+climate hosts take the seasonal record per flat; the streaming host
+answers the mod's batch refresh with the winter flip's own re-skin
+sweep, filtered to pixels built under an older install.
+
 ## INCIDENT 2026-09-04 - THE SEE-THROUGH LINES IN DUNGEON WALLS (Mac's report) - SHIPPED
 
 Mac: "Dungeon interiors have some sort of see through line in its
