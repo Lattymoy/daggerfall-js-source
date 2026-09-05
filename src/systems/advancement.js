@@ -93,8 +93,8 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
  * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
  * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
- * live host supplies that message as the hook - world.js:1119/:2400/
- * :3132, exterior.js:750/:1215, worldModes.js:364/:5480,
+ * live host supplies that message as the hook - world.js:1119/:2403/
+ * :3132, exterior.js:750/:1289, worldModes.js:364/:5480,
  * dungeonContext.js:1418. The immediate arm below is taken only when
  * onLevelUp is null: a headless/test path (and the ?class= skip) that
  * DFU has no counterpart for, so there is nothing to diverge from.

@@ -1911,7 +1911,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     let _updatedGuards = false;
     for (let l = 0; l < span; l++) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
-      const hit = intermittentEnemySpawn({
+      // :488-491 - "Don't spawn encounters while player is swimming in
+      // water or on ship (same as classic)" (ROAD-G TAIL: the gate had no
+      // reader; the port has no ship state to ask).
+      const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({
         gameMinutes: _lastEncMinutes + l + 1, inside: false,
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -

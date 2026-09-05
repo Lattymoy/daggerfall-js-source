@@ -208,8 +208,8 @@ E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
 were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:2856`, the two ship pixels): the owner supplied the
-(`scenes/world.js:2829`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2859`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2832`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
@@ -306,6 +306,31 @@ residual, the .SAV zip arm, the cross-pixel Recall), plus two things the
 lanes wrote down at their sites: the watch's Wabbajack transform on the
 fixed-city route above ground, and PlayerEntity.Update's per-minute
 encounter roll on that route. Suite at the merge: 6,479 tests, 0 failed.
+
+## The tail - 2026-09-05
+
+The two things the Wave G lanes wrote down at their sites are closed:
+
+- **The watch's Wabbajack transform on the fixed-city route.**
+  `exterior.js`'s enchant arm returned for a struck watchman ("no
+  remove/spawn pair to route through"); it takes the world host's
+  route now - the guard pool removes its own record, the encounter
+  pool re-stands (`WabbajackEffect.cs:64`, Knight_CityWatch is an
+  EnemyEntity).
+- **PlayerEntity.Update's per-minute loop on that route.**
+  `runEncounterTick` in `exterior.js`, the world host's twin: per
+  elapsed minute the intermittent roll (placed through DFU's ring with
+  the arm's band, a flyer lifted 1.5), the two passive-guard rolls
+  levying Criminal_Conspiracy through the witness arm, the
+  once-per-Update NPC-guard conversion, the suppression flag gating
+  and clearing; driven from the frame in exterior mode and from the
+  rest advance. On the way: `:488-491`'s "no spawn while swimming"
+  had no reader in either host - both skip the roll now (the port has
+  no ship state to ask for the other half).
+
+Pins in `test/exteriorfoes.test.js` (the loop's shape, both swimming
+gates, both callers, the watch route); `test/restwhere.test.js` names
+both homes of the catch-up. Open flags: 7.
 
 ## The standing watches (not wave work)
 

@@ -300,7 +300,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   // dungeons and shops entered from here inherited the hole.
   const ext = read('src/scenes/exterior.js');
   assert.match(ext, /import \{ setDefaultEnchantCtx \} from '\.\.\/systems\/enchantments\.js';/);
-  assert.match(ext, /import \{ createEnchantCtx, standLooseFoe \} from '\.\/hostEnchant\.js';/);
+  assert.match(ext, /import \{ createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS \} from '\.\/hostEnchant\.js';/);   // ROAD-G TAIL: + the catch-up loop's placement budget
   const at = ext.indexOf('setDefaultEnchantCtx(createEnchantCtx({');
   assert.ok(at > 0, 'the host mounts the SHARED body, not a second copy of it');
   // ...and it mounts AFTER the mode machine exists, so the fold routes
@@ -342,9 +342,13 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/);
   assert.match(rf, /if \(host === 'dungeon'\)/);
   assert.match(rf, /if \(host === 'inside'\)/);
-  assert.match(rf, /if \(!f\._encounter\) return;/, 'the watch is named by MEMBERSHIP, not by pool identity');
+  // ROAD-G TAIL: the watch transforms on this route too - removed by ITS pool, by membership
+  assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
   assert.match(rf, /exteriorFoes\.removeFoe\(f\);\n\s*exteriorFoes\.spawnFoe\(mobileType, feet\)/);
-  assert.equal(/cityGuards\./.test(rf), false, 'and the arm still never names the watch pool');
+  // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
+  // (world.js:2306's shape) - the removal, never the re-stand
+  assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');
+  assert.equal(/cityGuards\.spawn/.test(rf), false, 'the re-stand is the encounter pool\'s');
   // the loose-foe arm reaches whichever pool the player is standing in
   // (SD1) - the dungeon's own chain below, this host's encounter pool
   // above ground - and INTERIOR still refuses, which is world.js's own
