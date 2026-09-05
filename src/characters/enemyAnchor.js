@@ -56,9 +56,17 @@ export function centreFromFeet(feet, idleH) {
  *  feet plus half the idle sprite (the bat never moved), the rebuilt
  *  spawn is kept and the old position is not written back. A flyer
  *  that had moved restores verbatim, as DFU's SerializableEnemy does. */
-export function keepRebuiltSpawn(sf, feet, idleH, behaviour) {
-  if (sf.anchor != null || behaviour !== 'Flying' || idleH === undefined || !sf.feet) return false;
+export function keepRebuiltSpawn(sf, feet, idleH, behaviour, marker = null) {
+  if (sf.anchor != null || !sf.feet) return false;
   const eps = 1e-3;
+  // REVIEW 2026-09-05 (PR #57 review): the pre-fix spawn stood a SPECTRAL's
+  // feet at its marker too (C12's CanFly = Flying|Spectral), and a ghost
+  // never grounds by gravity - so an un-stamped ghost still AT its raw
+  // marker keeps the floor-landed rebuild. The marker rides the record.
+  if (behaviour === 'Spectral') {
+    return !!marker && Math.abs(sf.feet[0] - marker[0]) < eps && Math.abs(sf.feet[1] - marker[1]) < eps && Math.abs(sf.feet[2] - marker[2]) < eps;
+  }
+  if (behaviour !== 'Flying' || idleH === undefined) return false;
   return Math.abs(sf.feet[0] - feet[0]) < eps && Math.abs(sf.feet[2] - feet[2]) < eps
     && Math.abs(sf.feet[1] - (feet[1] + idleH / 2)) < eps;
 }

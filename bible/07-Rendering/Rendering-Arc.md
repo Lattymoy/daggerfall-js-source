@@ -937,3 +937,14 @@ Refuted (3): `releaseTexture` and the `#opaque` variant (it never
 cached the variant it was accused of leaking), the video's per-frame
 chain as a separate finding (folded into the gate above), and the
 exterior automap layout upload (string-keyed - covered by the gate).
+
+### REVIEW 2 - the round over PR #57 (2026-09-05)
+
+One rendering finding survived: the inventory and item-scroller icons
+come from TEXTURE.nnn item archives (numeric) through the same
+`uploadRecord` door, so the world-art gate mipped them where DFU's
+`ImageReader.GetTexture` builds UI art with no chain (`:59`), and a
+minified icon on a small canvas would have sampled a box-filtered
+level. The door takes `mips: false`, the renderer keys that variant
+`#ui` beside the bare (mipped) key of the same record, `releaseTexture`
+frees every variant, and the two icon drawers ask for and read it.

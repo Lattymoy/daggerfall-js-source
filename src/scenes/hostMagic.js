@@ -595,7 +595,7 @@ export function createPlayerMagic({
       }
       for (const f of foes()) {
         if (f.dead) continue;
-        const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
+        const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + (f.ai.height ?? 1.8) / 2 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the foe's own capsule centre
         if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());

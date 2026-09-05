@@ -1699,7 +1699,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? '#ui' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1751,7 +1751,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // fixing the cache bug by creating a leak.
     const base = record === undefined ? archive : `${archive}_${record}`;
     let freed = false;
-    for (const key of [base, `${base}#smooth`]) {
+    for (const key of [base, `${base}#smooth`, `${base}#opaque`, `${base}#ui`]) {   // REVIEW 2026-09-05: every variant
       const tex = this.textures.get(key);
       if (!tex) continue;
       this.gl.deleteTexture(tex);
