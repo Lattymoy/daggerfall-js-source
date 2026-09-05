@@ -606,9 +606,31 @@ export async function pickMorrowindFiles() {
   });
 }
 
+/**
+ * SIB1: THE ONE DECISION for a file the texture pick sees - the stored
+ * key it takes, or null. A DFU-named PNG (`003_5-0.png`) keys by its
+ * basename, as it always has; Seasons of the Iliac Bay's own files -
+ * its `.dfmod`, or a PNG under one of its eleven `Textures/` folders -
+ * key by the RELATIVE PATH that says what they are (the picker's
+ * webkitRelativePath; a browser File's `name` is the bare basename, so
+ * a folder decision made on the name alone answers null for every mod
+ * PNG). Exported so the pin can drive it with File-like objects.
+ */
+export function textureStoreKey(file, { textureEntry, seasonsAssetKey }) {
+  const base = String(file?.name ?? '');
+  if (textureEntry(base)) return base;
+  return seasonsAssetKey(file?.webkitRelativePath || base);
+}
+
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');
-  return storeAssets(TEXTURE_STORE, files, (n) => !!textureEntry(n));
+  const { seasonsAssetKey } = await import('../systems/seasonsIliacBayAssets.js');
+  const deps = { textureEntry, seasonsAssetKey };
+  const keyed = [...files].map((f) => [f, textureStoreKey(f, deps)]).filter(([, k]) => k);
+  const keyOf = new Map(keyed);
+  // The list is already decided above; storeAssets' own accept sees the
+  // basename only and must not re-decide.
+  return storeAssets(TEXTURE_STORE, keyed.map(([f]) => f), () => true, (f) => keyOf.get(f));
 }
 export const storedTextureNames = () => assetNames(TEXTURE_STORE);
 export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
@@ -725,6 +747,7 @@ export async function pickMusicFolder() {
 
 export async function pickTextureFolder() {
   const { setTextureReplacements } = await import('../systems/textureReplacement.js');
+  const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
   return pickAssetFolder({
     title: 'Your own textures',
     blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
@@ -732,9 +755,17 @@ export async function pickTextureFolder() {
       browser.</p>
       <p style="color:#999">A <b>Daggerfall Unity texture pack works
       as-is</b>: its <b>003_5-0.png</b> names are already the ones this
-      looks for. Anything you skip keeps the classic art.</p>`,
+      looks for. Anything you skip keeps the classic art.</p>
+      <p style="color:#999"><b>Seasons of the Iliac Bay</b> works from
+      the same pick: a folder holding its <b>.dfmod</b>, or its
+      <b>Textures</b> folders, gives the woodland its autumn, spring
+      and winter.</p>`,
     store: storeTextureFiles,
-    register: async () => setTextureReplacements(await storedTextureNames(), loadTextureFile),
+    register: async () => {
+      const names = await storedTextureNames();
+      const n = setTextureReplacements(names, loadTextureFile);
+      return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
+    },
   });
 }
 

@@ -168,7 +168,7 @@ const _decoded = new Map();   // textureKey -> { width, height, data }
 
 /** The browser decode. Injectable because node has none of this, and
  *  the pins drive the cache rather than the DOM. */
-async function decodePng(bytes) {
+export async function decodePng(bytes) {
   const blob = new Blob([bytes], { type: 'image/png' });
   const bmp = await createImageBitmap(blob);
   const canvas = new OffscreenCanvas(bmp.width, bmp.height);

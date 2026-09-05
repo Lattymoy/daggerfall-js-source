@@ -67,5 +67,14 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['dynamic-skies']),
       link: 'https://github.com/drcarademono/dynamic-skies',
     }),
+    Object.freeze({
+      title: 'Seasons of the Iliac Bay',
+      version: '1.1',
+      author: 'RosyTheRascal',
+      what: 'The turning of the year on the woodland, hills, haunted and mountain flats: autumn, spring and winter repaints of the trees, rocks and plants, drawn at the mod\'s own size. The mod\'s script (its seasons, archives and checks) is ported; its textures are read from your own copy of the mod at play time and are not in this repository.',
+      terms: 'Ported with the author\'s permission (2026-09-05); see vendor/seasons-iliac-bay/README.md.',
+      contact: "Lysandus' Tomb Discord server",
+      vendor: Object.freeze(['seasons-iliac-bay']),
+    }),
   ]),
 });
