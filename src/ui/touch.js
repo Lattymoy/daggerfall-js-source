@@ -10,7 +10,9 @@
 //     `keys` Set, the input map, and reportInput all see ordinary
 //     keys. 8-way digital - a test-build call, not a motor change.
 //   - The right half is ONE surface with three meanings, classified
-//     by ui/touchGestures.js BEFORE anything is routed:
+//     by ui/touchGestures.js BEFORE anything is routed (TI1b: a drag is
+//     the look unless the finger was HELD first or the host is locked
+//     on - speed never decides it):
 //       LOOK  - a drag; the host's look(dx,dy) applies its own factor
 //               (scenes gate mousemove on pointer lock, which touch can
 //               never hold). TOUCH_LOOK_GAIN rides on top: phone drags
@@ -25,7 +27,12 @@
 //       TAP   - the host's tap(x,y): the activation along the ray
 //               THROUGH THE FINGER, DFU's free-cursor arm
 //               (PlayerActivate.cs:303 ScreenPointToRay) - which also
-//               locks a foe under it (player/lockOn.js).
+//               locks a foe under it (player/lockOn.js). A tap is a tap
+//               on EITHER half (TI1b): a still, short touch on the
+//               stick's half engaged no key anyway, so it is answered
+//               as the tap it was - a foe left of centre is lockable.
+//     All coordinates are CANVAS-relative (getBoundingClientRect), the
+//     space the host's unproject and the dot both speak.
 //   - Lock-on dot: the host projects the locked foe's chest and calls
 //     setLockDot(x, y) (or null); the layer only places a mark.
 //   - Buttons, the five that have no gesture: the DIAL (Tab, the door
@@ -40,7 +47,7 @@
 //
 // Activates only when the device reports touch; desktop is untouched.
 
-import { createGestureRecognizer } from './touchGestures.js';
+import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
 import { overlayOpen } from './enhancedOverlays.js';
 
 const TOUCH_LOOK_GAIN = 2.0;
@@ -90,8 +97,9 @@ export function attachTouch(canvas, hooks = {}) {
   ui.appendChild(dot);
   function setLockDot(x, y) {
     if (x == null) { dot.style.display = 'none'; return; }
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
+    const r = canvas.getBoundingClientRect();   // canvas px -> the fixed overlay's viewport px
+    dot.style.left = `${x + r.left}px`;
+    dot.style.top = `${y + r.top}px`;
     dot.style.display = 'block';
   }
 
@@ -156,9 +164,10 @@ export function attachTouch(canvas, hooks = {}) {
   }, NAV_POLL_MS);
 
   // ---- canvas touch: stick (left half) + the classified right half ----
-  let stickId = null, stickOrigin = null;
+  let stickId = null, stickOrigin = null, stickStart = 0, stickTravel = 0;
   let lookId = null;
   const gesture = createGestureRecognizer({ locked: () => !!hooks.locked?.() });
+  const local = (tch) => { const r = canvas.getBoundingClientRect(); return [tch.clientX - r.left, tch.clientY - r.top, r.width]; };
 
   function setStickKeys(dx, dy, mag) {
     const on = (code, v) => (v ? down(code) : up(code));
@@ -183,16 +192,17 @@ export function attachTouch(canvas, hooks = {}) {
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     for (const t of e.changedTouches) {
-      if (t.clientX < innerWidth / 2 && stickId === null) {
+      const [x, y, w] = local(t);
+      if (x < w / 2 && stickId === null) {
         stickId = t.identifier;
-        stickOrigin = [t.clientX, t.clientY];
+        stickOrigin = [x, y]; stickStart = e.timeStamp; stickTravel = 0;
         stick.style.left = `${t.clientX - STICK_RADIUS}px`;
         stick.style.top = `${t.clientY - STICK_RADIUS}px`;
         stick.style.display = 'block';
         nub.style.transform = 'translate(0,0)';
       } else if (lookId === null) {
         lookId = t.identifier;
-        route(gesture.begin(t.clientX, t.clientY, e.timeStamp));
+        route(gesture.begin(x, y, e.timeStamp));
       }
     }
   }, { passive: false });
@@ -201,14 +211,17 @@ export function attachTouch(canvas, hooks = {}) {
     e.preventDefault();
     for (const t of e.changedTouches) {
       if (t.identifier === stickId) {
-        let dx = t.clientX - stickOrigin[0], dy = t.clientY - stickOrigin[1];
+        const [x, y] = local(t);
+        let dx = x - stickOrigin[0], dy = y - stickOrigin[1];
         const len = Math.hypot(dx, dy);
+        stickTravel = Math.max(stickTravel, len);
         const mag = Math.min(1, len / STICK_RADIUS);
         if (len > STICK_RADIUS) { dx *= STICK_RADIUS / len; dy *= STICK_RADIUS / len; }
         nub.style.transform = `translate(${dx}px,${dy}px)`;
         setStickKeys(dx / STICK_RADIUS, dy / STICK_RADIUS, mag);
       } else if (t.identifier === lookId) {
-        route(gesture.move(t.clientX, t.clientY, e.timeStamp));
+        const [x, y] = local(t);
+        route(gesture.move(x, y, e.timeStamp));
       }
     }
   }, { passive: false });
@@ -220,6 +233,12 @@ export function attachTouch(canvas, hooks = {}) {
         stickId = null;
         stick.style.display = 'none';
         for (const c of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft']) up(c);
+        // TI1b: a still, short touch on this half is a TAP - it moved no
+        // key (the stick's dead zone) and it is how a foe left of centre
+        // gets locked.
+        if (e.type !== 'touchcancel' && stickTravel < TAP_PX && (e.timeStamp - stickStart) <= TAP_MS) {
+          hooks.tap?.(stickOrigin[0], stickOrigin[1]);
+        }
       } else if (t.identifier === lookId) {
         lookId = null;
         route(e.type === 'touchcancel' ? gesture.cancel() : gesture.end(e.timeStamp));

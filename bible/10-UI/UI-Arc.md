@@ -9375,3 +9375,34 @@ product; each gesture rule with its mutant (drop the buffer, ignore
 the lock predicate, feed only the last delta); the lock's yaw sign
 through a real LookFilter, the wrap's short way, both breaks; pickFoe
 against pickQuestFoe in one assertion; and the layer and hosts by text.
+
+### TI1b - THE PHONE IN HAND (2026-09-05, same day)
+
+Mac: "its better but the righthand side of the screen needs to work for
+touch to look around. currently its bugged. also tap to lock on doesnt
+work."
+
+THE LOOK. The first cut told a swipe from a look by SPEED - 48 px
+inside 180 ms - and a look-pan clears that in the first thirty
+milliseconds. Nearly every look became a swipe, and a swipe with the
+weapon sheathed is nothing: the right half looked dead. Speed cannot
+separate the two gestures; a HOLD can. `ui/touchGestures.js` now: a
+drag that starts moving is the LOOK, live from its first move past the
+tap radius (the sub-radius motion paid in one lump); a finger held
+still for 160 ms and THEN dragged is the SWIPE - the press-and-stroke
+DFU's own swing mode 0 asks of the mouse; locked on, any drag is the
+swipe, as before. The flick constants are gone. Pinned with the exact
+pan that failed (60 px in 30 ms must be a look) and its mutant
+(classify by speed).
+
+THE LOCK. The split was the window's, and it was absolute: a touch on
+the left half became the stick, so a tap on a foe standing left of
+centre never reached the tap path at all. A still, short touch on the
+stick's half engages no key (the stick's dead zone), so it is now
+answered as the tap it was. Every touch point is canvas-relative
+(getBoundingClientRect) - the space the host's unproject and the dot
+speak - and the dot is placed back in the overlay's space. The whole
+chain - tap, the one-frame press through the REAL activate gate, the
+ray, the pick, the lock, and the dot projecting back under the finger,
+then the second tap unlocking - is now executed end to end in
+`test/touchinput.test.js`, with a foe deliberately left of centre.
