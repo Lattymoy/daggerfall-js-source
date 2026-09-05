@@ -82,7 +82,7 @@ const state = await page.evaluate(async () => {
 console.log(JSON.stringify({ ...state, crashes: crashes.slice(0, 6), notes: notes.slice(0, 6) }, null, 2));
 
 // ...and what "it booted" actually means. THE READY FLAG IS NOT IT:
-// `__shotReady` is set only in shot mode (exterior.js:3779 and its
+// `__shotReady` is set only in shot mode (exterior.js:3829 and its
 // siblings all gate on `shotMode`), and this probe's default query is
 // `nomenu&class=1&novideo` - so the first draft of this check failed a
 // dungeon that had plainly booted, titled "Privateer's Hold - 5

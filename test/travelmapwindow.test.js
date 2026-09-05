@@ -894,7 +894,7 @@ test('U41: a POISONED traveller is warned through the window\'s own popup', () =
 
 test('U41: a right-click on the map is the map\'s, never a swing', () => {
   // the travel map makes RMB a routine gesture (its zoom), so the two
-  // exterior hosts need the dungeon host's gate (dungeon.js:184)
+  // exterior hosts need the dungeon host's gate (dungeon.js:196)
   for (const host of ['world', 'exterior']) {
     const src = readFileSync(new URL(`../src/scenes/${host}.js`, import.meta.url), 'utf8');
     const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('e.button === 2'));

@@ -1,39 +1,59 @@
-// Mobile touch layer (2026-08-13, Mac-directed mobile test build).
-// One module, zero engine changes: it SPEAKS THE DESKTOP INPUT
-// LANGUAGE instead of adding a second input system.
+// Mobile touch layer (2026-08-13, Mac-directed mobile test build;
+// TI1 2026-09-05, Mac: "swipe based combat... touch based to
+// interact... touch to lock on to enemy... a button to bring up the
+// radial UI... remove all the unneeded buttons from mobile").
+// One module, zero engine changes in the 1:1 lane: it SPEAKS THE
+// DESKTOP INPUT LANGUAGE instead of adding a second input system.
 //
 //   - Virtual stick (left half): synthesizes real KeyboardEvents for
 //     KeyW/KeyA/KeyS/KeyD (+ShiftLeft past 80% throw), so the scenes'
 //     `keys` Set, the input map, and reportInput all see ordinary
 //     keys. 8-way digital - a test-build call, not a motor change.
-//   - Look (right half drag): scenes gate mousemove on pointer lock,
-//     which touch can never hold - so each scene passes a look(dx,dy)
-//     hook and applies its own 0.0025 factor (TOUCH_LOOK_GAIN rides
-//     on top; phone drags are shorter than mouse sweeps).
-//   - Attack (sword button): a TAP is the whole strike - attackTap()
-//     runs DFU's click-to-attack, which picks the swing direction
-//     itself. The button fed the RMB-drag seam until ClickToAttack
-//     (2026-08-14) took the drag away from it; the hook that seam used
-//     went with it (AUDIT 39 F127) rather than staying as an option
-//     nothing calls.
-//   - Action buttons: synthetic keydown/keyup with BOTH e.key and
-//     e.code set (the input map routes on either). Hold-style keys
-//     (Space jump, KeyE use) press/release; window keys (F5/F6/
-//     Backspace/C/Esc/arrows/Enter) tap. The ⌨ button toggles the
-//     overlay-nav row for the classic windows.
+//   - The right half is ONE surface with three meanings, classified
+//     by ui/touchGestures.js BEFORE anything is routed:
+//       LOOK  - a drag; the host's look(dx,dy) applies its own factor
+//               (scenes gate mousemove on pointer lock, which touch can
+//               never hold). TOUCH_LOOK_GAIN rides on top: phone drags
+//               are shorter than mouse sweeps.
+//       SWIPE - a flick, or any drag while locked on: the host's
+//               attack(dx,dy,held) - the RMB-drag seam the mouse uses
+//               (WeaponManager.TrackMouseAttack through
+//               weaponRig.attackInput), so the swing direction is DFU's
+//               own 15-degree radial pick over the finger's trail, and
+//               the host's cast gate sits in front of it exactly as it
+//               sits in front of the mouse.
+//       TAP   - the host's tap(x,y): the activation along the ray
+//               THROUGH THE FINGER, DFU's free-cursor arm
+//               (PlayerActivate.cs:303 ScreenPointToRay) - which also
+//               locks a foe under it (player/lockOn.js).
+//   - Lock-on dot: the host projects the locked foe's chest and calls
+//     setLockDot(x, y) (or null); the layer only places a mark.
+//   - Buttons, the five that have no gesture: the DIAL (Tab, the door
+//     every combat host routes to the compass rose - PX15), JUMP
+//     (Space, held), the weapon SHEATHE (Z, held), the interaction MODE
+//     cycle (T3-touch, hosts with one), and the MENU (Escape). Synthetic
+//     keydown/keyup with BOTH e.key and e.code set (the input map
+//     routes on either). The nav row for the CLASSIC windows (arrows,
+//     Enter, Escape, +/-, a name prompt) shows itself while a classic
+//     overlay is up and no enhanced one is - an enhanced window is DOM
+//     and takes the finger directly.
 //
 // Activates only when the device reports touch; desktop is untouched.
+
+import { createGestureRecognizer } from './touchGestures.js';
+import { overlayOpen } from './enhancedOverlays.js';
 
 const TOUCH_LOOK_GAIN = 2.0;
 const STICK_RADIUS = 56;        // px, visual + clamp
 const RUN_THROW = 0.8;          // stick throw fraction -> ShiftLeft
+const NAV_POLL_MS = 150;        // the classic-overlay nav row's watch
 
 export function isTouchDevice() {
   return typeof window !== 'undefined' &&
     ('ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0);
 }
 
-const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyE: 'e', KeyC: 'c', Space: ' ', ShiftLeft: 'Shift', F5: 'F5', F6: 'F6', F9: 'F9', F11: 'F11', Backspace: 'Backspace', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', Minus: '-', Equal: '=' };
+const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyZ: 'z', Space: ' ', ShiftLeft: 'Shift', Tab: 'Tab', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', Equal: '=', Minus: '-' };
 function synth(type, code) {
   window.dispatchEvent(new KeyboardEvent(type, { code, key: KEY_NAMES[code] ?? code, bubbles: true }));
 }
@@ -41,9 +61,12 @@ function synth(type, code) {
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attackTap?() } - attackTap omitted on
- *              scenes without combat (fly-cam viewers), and the sword
- *              button is not built without it.
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?() }
+ *   - attack/tap/dial omitted on scenes without them (the fly-cam
+ *     interior): a drag then only looks, a tap does nothing, and no
+ *     dial button is drawn - a drawn door that opens nothing is the
+ *     lie this repo names.
+ * @returns { el, setLockDot(x,y)|setLockDot(null), dispose() } or null off touch
  */
 export function attachTouch(canvas, hooks = {}) {
   if (!isTouchDevice()) return null;
@@ -61,6 +84,17 @@ export function attachTouch(canvas, hooks = {}) {
   stick.appendChild(nub);
   ui.appendChild(stick);
 
+  // ---- the lock-on dot (TI1) ----
+  const dot = document.createElement('div');
+  dot.style.cssText = 'position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.75),0 0 6px rgba(0,0,0,.6);display:none';
+  ui.appendChild(dot);
+  function setLockDot(x, y) {
+    if (x == null) { dot.style.display = 'none'; return; }
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+    dot.style.display = 'block';
+  }
+
   // ---- buttons ----
   const held = new Set();      // codes currently synthesized DOWN
   const down = (code) => { if (!held.has(code)) { held.add(code); synth('keydown', code); } };
@@ -70,7 +104,7 @@ export function attachTouch(canvas, hooks = {}) {
   function button(label, x, y, w, onDown, onUp) {
     const b = document.createElement('div');
     b.textContent = label;
-    b.style.cssText = `position:absolute;${x};${y};width:${w}px;height:44px;line-height:44px;text-align:center;color:#ddd;background:rgba(20,20,20,.55);border:1px solid rgba(255,255,255,.3);border-radius:8px;pointer-events:auto`;
+    b.style.cssText = `position:absolute;${x};${y};width:${w}px;height:44px;line-height:44px;text-align:center;color:#ddd;background:rgba(20,20,20,.55);border:1px solid rgba(255,255,255,.25);border-radius:8px;pointer-events:auto`;
     b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); b.style.background = 'rgba(90,90,90,.7)'; onDown(); }, { passive: false });
     b.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); b.style.background = 'rgba(20,20,20,.55)'; onUp && onUp(); }, { passive: false });
     b.addEventListener('touchcancel', () => { b.style.background = 'rgba(20,20,20,.55)'; onUp && onUp(); });
@@ -78,14 +112,12 @@ export function attachTouch(canvas, hooks = {}) {
     return b;
   }
 
-  if (hooks.attackTap) {
-    // ClickToAttack (2026-08-14): a tap IS the attack - DFU's click
-    // mode picks the random direction; the drag seam needs travel a
-    // fixed button can never provide. The gate is the hook the button
-    // CALLS, so a host cannot draw a sword that swings nothing.
-    button('\u2694', 'right:16px', 'bottom:88px', 64, () => hooks.attackTap());
-  }
-  button('E', 'right:96px', 'bottom:16px', 52, () => down('KeyE'), () => up('KeyE'));
+  // TI1: the five. The dial button exists only where a host routes
+  // Tab to the rose - the same gate-by-hook rule the sword button had.
+  if (hooks.dial) button('◆', 'left:16px', 'top:16px', 48, () => tap('Tab'));
+  button('≡', hooks.dial ? 'left:72px' : 'left:16px', 'top:16px', 48, () => tap('Escape'));   // the menu: the pause window, save and load inside it
+  button('↑↑', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
+  button('Z', 'right:96px', 'bottom:16px', 52, () => down('KeyZ'), () => up('KeyZ'));   // ReadyWeapon: sheathe toggle (held-style so the per-frame edge reads it)
   if (hooks.cycleMode) {
     // T3-touch: NextInteractionMode (Steal > Grab > Info > Talk wrap,
     // verbatim order) - the phone's path to the F1-F4 modes. The
@@ -93,19 +125,9 @@ export function attachTouch(canvas, hooks = {}) {
     const modeBtn = button('grab', 'right:160px', 'bottom:16px', 64,
       () => { modeBtn.textContent = hooks.cycleMode(); });
   }
-  button('Z', 'right:96px', 'bottom:88px', 52, () => down('KeyZ'), () => up('KeyZ'));   // ReadyWeapon: sheathe toggle (audit 2026-08-17; held-style so the per-frame edge sees it)
-  button('\u2191\u2191', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
-  button('F5', 'left:16px', 'top:16px', 48, () => tap('F5'));
-  button('F6', 'left:72px', 'top:16px', 48, () => tap('F6'));
-  button('\u2630', 'left:128px', 'top:16px', 48, () => tap('Backspace'));   // CastSpell: opens the spellbook (GameManager.cs:550-553)
-  // I2 retired the C cast button with the C-cast key: a readied spell
-  // casts on the attack tap (hostMagic.interceptAttack), same as desktop.
-  // Save/load (2026-08-14): phones had NO path to F9/F11 - a reload
-  // meant chargen from scratch. Same synthetic-key seam as the rest.
-  button('SV', 'left:240px', 'top:16px', 48, () => tap('F9'));              // quicksave
-  button('LD', 'left:296px', 'top:16px', 48, () => tap('F11'));             // quickload
 
-  // Overlay-nav row (classic windows navigate on arrows/Enter/Esc)
+  // Overlay-nav row (classic windows navigate on arrows/Enter/Esc) -
+  // shown by itself while a classic overlay holds the game.
   const nav = document.createElement('div');
   nav.style.cssText = 'position:absolute;right:16px;top:16px;display:none;pointer-events:none';
   ui.appendChild(nav);
@@ -114,9 +136,9 @@ export function attachTouch(canvas, hooks = {}) {
     nav.appendChild(b);
     b.style.right = `${dx}px`;
   };
-  navBtn('\u2191', 'ArrowUp', 262); navBtn('\u2193', 'ArrowDown', 212);
-  navBtn('+', 'Equal', 162); navBtn('\u2212', 'Minus', 112);
-  navBtn('\u23ce', 'Enter', 62); navBtn('\u2715', 'Escape', 12);
+  navBtn('↑', 'ArrowUp', 262); navBtn('↓', 'ArrowDown', 212);
+  navBtn('+', 'Equal', 162); navBtn('−', 'Minus', 112);
+  navBtn('⏎', 'Enter', 62); navBtn('✕', 'Escape', 12);
   // Text entry (chargen name): prompt() -> per-char synthetic
   // keydowns through overlayAction's 'char:' route.
   {
@@ -127,11 +149,16 @@ export function attachTouch(canvas, hooks = {}) {
     });
     nav.appendChild(b);
   }
-  button('\u2328', 'right:16px', 'top:70px', 44, () => { nav.style.display = nav.style.display === 'none' ? 'block' : 'none'; });
+  const navTimer = setInterval(() => {
+    const classicUp = !!hooks.overlayActive?.() && !overlayOpen();
+    nav.style.display = classicUp ? 'block' : 'none';
+    if (hooks.overlayActive?.()) dot.style.display = 'none';
+  }, NAV_POLL_MS);
 
-  // ---- canvas touch: stick (left half) + look/attack drag (right half) ----
+  // ---- canvas touch: stick (left half) + the classified right half ----
   let stickId = null, stickOrigin = null;
-  let lookId = null, lookLast = null;
+  let lookId = null;
+  const gesture = createGestureRecognizer({ locked: () => !!hooks.locked?.() });
 
   function setStickKeys(dx, dy, mag) {
     const on = (code, v) => (v ? down(code) : up(code));
@@ -143,6 +170,14 @@ export function attachTouch(canvas, hooks = {}) {
     on('KeyA', !dead && dx < 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
     on('KeyD', !dead && dx > 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
     on('ShiftLeft', !dead && mag >= RUN_THROW);
+  }
+
+  function route(events) {
+    for (const ev of events) {
+      if (ev.type === 'look') hooks.look?.(ev.dx * TOUCH_LOOK_GAIN, ev.dy * TOUCH_LOOK_GAIN);
+      else if (ev.type === 'swipe') hooks.attack?.(ev.dx, ev.dy, ev.held);
+      else if (ev.type === 'tap') hooks.tap?.(ev.x, ev.y);
+    }
   }
 
   canvas.addEventListener('touchstart', (e) => {
@@ -157,7 +192,7 @@ export function attachTouch(canvas, hooks = {}) {
         nub.style.transform = 'translate(0,0)';
       } else if (lookId === null) {
         lookId = t.identifier;
-        lookLast = [t.clientX, t.clientY];
+        route(gesture.begin(t.clientX, t.clientY, e.timeStamp));
       }
     }
   }, { passive: false });
@@ -173,12 +208,7 @@ export function attachTouch(canvas, hooks = {}) {
         nub.style.transform = `translate(${dx}px,${dy}px)`;
         setStickKeys(dx / STICK_RADIUS, dy / STICK_RADIUS, mag);
       } else if (t.identifier === lookId) {
-        const dx = (t.clientX - lookLast[0]) * TOUCH_LOOK_GAIN;
-        const dy = (t.clientY - lookLast[1]) * TOUCH_LOOK_GAIN;
-        lookLast = [t.clientX, t.clientY];
-        // (click mode 2026-08-14: look-drags no longer feed the
-        // attack seam - the tap IS the attack)
-        if (hooks.look) hooks.look(dx, dy);
+        route(gesture.move(t.clientX, t.clientY, e.timeStamp));
       }
     }
   }, { passive: false });
@@ -192,11 +222,16 @@ export function attachTouch(canvas, hooks = {}) {
         for (const c of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft']) up(c);
       } else if (t.identifier === lookId) {
         lookId = null;
+        route(e.type === 'touchcancel' ? gesture.cancel() : gesture.end(e.timeStamp));
       }
     }
   };
   canvas.addEventListener('touchend', endTouch, { passive: false });
   canvas.addEventListener('touchcancel', endTouch, { passive: false });
 
-  return ui;
+  return {
+    el: ui,
+    setLockDot,
+    dispose() { clearInterval(navTimer); ui.remove(); },
+  };
 }

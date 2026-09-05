@@ -112,11 +112,13 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:6450 and scenes/exterior.js:3214, the only two
-// hosts that carry the call, each over a useFwd built from cam.yaw
-// and cam.pitch one line above it), not a pixel unprojected through
-// the projection matrix, so a reduced viewport would not move a
-// single pick. (That cite pointed sixty-odd lines past the call, into
+// scenes/world.js:6501 and scenes/exterior.js:3259, the only two
+// hosts that carry the call, each over a useFwd that is the camera's
+// own forward from cam.yaw and cam.pitch - or, since TI1, the touch
+// tap's ray, which IS a pixel unprojected, but through the frame's
+// own projection AND the same largeHudViewportRect the world pass
+// draws into (player/tapRay.js), so a reduced viewport moves no pick
+// on either device. (That cite pointed sixty-odd lines past the call, into
 // the AUDIT 18 arrow-streaming block, for a whole wave - a withdrawal
 // is only as good as its evidence, so test/hudlarge.test.js RESOLVES
 // the line numbers here rather than trusting them.) E5 shipped the

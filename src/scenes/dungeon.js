@@ -29,7 +29,7 @@ import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: Da
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
-import {
+import { pickFoe,   // TI1: the lock-on pick
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
@@ -38,6 +38,8 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
+import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
+import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -146,6 +148,16 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
+  // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
+  // truth beside rightHeld (the settle law reads both); a tap arms a
+  // ONE-frame Mouse0 press (_tapArmed counts it down at the frame's
+  // top) and _tapDir carries the finger's ray for the release frame,
+  // which is when A8's gate fires the activation. player/lockOn.js
+  // holds the lock; _lockChest is this frame's dot target.
+  let swipeHeld = false;
+  let _tapArmed = 0, _tapPoint = null, _tapDir = null;
+  let _lastProj = null, _lastView = null, _lockChest = null;
+  const lockOn = createLockOn();
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
@@ -188,11 +200,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
   let zPrev = false;   // ReadyWeapon (Z) edge state
   let hPrev = false;   // a12: SwitchHand (H) edge - RELEASED, not pressed (WeaponManager.cs:272)
   const tryActivate = () => {
-    const dir = [
+    const dir = _tapDir ?? [   // TI1: the tap's ray, else the centre
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
       Math.sin(cam.pitch),
       Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const eye = walkMode ? player.eye : cam.pos;
+    // TI1: a tap on a live foe is the LOCK (player/lockOn.js), toggled,
+    // and the activation ends there.
+    if (_tapDir) {
+      const _lockFoe = pickFoe(eye, dir, ctx.foes, ctx.collider, LOCK_PICK_DISTANCE);
+      if (_lockFoe) { lockOn.toggle(_lockFoe); return null; }
+    }
     const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, ctx.collider);
@@ -331,11 +349,27 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
-  attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
+  const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attackTap: () => ctx.playerClickAttack(),   // AUDIT 39 F127: the tap is the whole touch strike; the drag hook was never called
+    // TI1: the swipe is the RMB drag - the context's own entry, with
+    // its cast gate and sheathed check inside (dungeonContext.js
+    // playerAttackInput), on a finger.
+    attack: (dx, dy, held) => {
+      swipeHeld = held && walkMode;
+      if (walkMode) ctx.playerAttackInput(dx, dy, held);
+    },
+    // TI1: the tap is a one-frame press of the activate action along
+    // the finger's ray - A8's gate fires it on the release. A finger in
+    // the docked bar's strip is no world tap at all.
+    tap: (x, y) => {
+      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
+    },
+    locked: () => lockOn.locked,
+    dial: true,
+    overlayActive: () => !!ctx.uiOverlayActive,
   });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
@@ -498,9 +532,19 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
     if (!(ctx.uiOverlayActive)) {
-      if (rightHeld && walkMode && !ctx.weaponIsBow) lookFilter.settle();
+      if ((rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      _lockChest = lockOn.tick(dt, cam, walkMode ? player.eye : cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
+    // TI1: the tap's one-frame press. Armed 2 on the tap (the key is
+    // already down): this frame counts to 1 and the gate sees the
+    // press; next frame counts to 0, the key lifts, the ray is built
+    // through the frame the finger saw, and the gate fires the
+    // activation on that release. The frame after clears the ray.
+    if (_tapArmed > 0 && --_tapArmed === 0) {
+      keys.delete('Mouse0');
+      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, walkMode ? player.eye : cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });
@@ -687,6 +731,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
       : { eye: cam.pos, thirdPerson: false };
     const target = [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];
     const view = lookAt(mwv.eye, target, [0, 1, 0]);
+    _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
+    if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
+      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+      touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
+    }
 
     ctx.flicker.tick(dt);
     // AUDIT 26 F183: per FRAME, not once at load - the ambient depends
