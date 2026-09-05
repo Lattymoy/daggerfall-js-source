@@ -837,10 +837,11 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // The host keeps it on the pixel entry...
   assert.match(world, /const \{ samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads \} = await terrainGen\.generate\(/);
   assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);
-  // ...and when the network lands, tears down every pixel built without
-  // one so the stream rebuilds it - on BOTH arrival paths, since the
-  // mod-data path returns early.
-  assert.match(world, /function rebuildRoadless\(\) \{[\s\S]{0,300}if \(!p\.withRoads\) \{ destroyPixel\(p\.px, p\.py, \{ collectLoose: false \}\); roadless\+\+; \}/);
+  // ...and when the network lands, every pixel built without one is
+  // swept and rebuilt - on BOTH arrival paths, since the mod-data path
+  // returns early. ROADS 26 moved the sweep itself onto the frame; the
+  // arrival's call is the flag that arms it.
+  assert.match(world, /function rebuildRoadless\(\) \{ _roadsSweepPending = true; \}/);
   assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
   assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
   // A pixel IN FLIGHT when the network landed arrives roadless after the
@@ -855,4 +856,54 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.match(read('src/world/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);
   // The map was ALREADY rebuilt on arrival (ROADS 7); the terrain now is too.
   assert.match(read('bible/03-World/Roads.md'), /keys its grid cache on the network it was drawn with/);
+});
+
+// ── ROADS 26: THE SWEEP IS THE FRAME'S, AND IT PUTS THE PIXELS BACK ──
+// Mac: "when using the test section, you can sometimes spawn outside of
+// the dungeon in the world, in the ground." The ROADS 25 sweep ran the
+// moment the network's fetch resolved - anywhere in the boot walk - and
+// destroyPixel takes a pixel's doors with it, so a network landing
+// between the start pixel's first build and the classic start's arm
+// left startInDungeon no DUNGEON_ENTRANCE to find; the player "started
+// outside", at the pixel centre, inside the entrance model. And the
+// sweep never put a pixel back: the streamer still held its key as
+// loaded, so the torn-down pixel was a hole until the ring walked away.
+test('ROADS 26: the arrival raises a flag; the frame sweeps between builds, holds the motor, and re-queues nearest-first', async () => {
+  const { readFileSync } = await import('node:fs');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  const world = read('src/scenes/world.js');
+  // The `.then` only raises the flag: no teardown is reachable from a
+  // promise that can resolve inside the boot walk.
+  assert.match(world, /let _roadsSweepPending = false;\s*\n\s*function rebuildRoadless\(\) \{ _roadsSweepPending = true; \}/);
+  const chainAt = world.indexOf('\n  loadModRoads().then((his) => {\n');
+  assert.ok(chainAt > 0);
+  const chain = world.slice(chainAt, world.indexOf('\n  });', chainAt));
+  assert.ok(!chain.includes('destroyPixel'), 'nothing in the arrival chain tears a pixel down');
+  // The sweep is the frame's - between two builds, before the pump takes the next.
+  assert.match(world, /tickRoadsSweep\(\);[^\n]*\n\s*pump\(\);/, 'swept before the pump, on the exterior frame');
+  const sweepAt = world.indexOf('function tickRoadsSweep()');
+  assert.ok(sweepAt > 0);
+  const sweep = world.slice(sweepAt, world.indexOf('\n  }', sweepAt));
+  assert.ok(sweep.includes('if (!_roadsSweepPending || building) return;'), 'the same publish hazard tickSeason waits out');
+  assert.ok(sweep.includes('.filter((p) => !p.withRoads)'), 'only the pixels painted without a network');
+  // R0's hold, armed BEFORE the ground goes, when the player's own pixel is among the swept.
+  const arm = sweep.indexOf('if (walkMode && playerSpawned && keys.includes(here)) _seasonHoldKey = here;');
+  const tear = sweep.indexOf('destroyPixel(px, py, { collectLoose: false });');
+  assert.ok(arm > 0 && tear > arm, 'the hold is armed while the player still has a pixel to name');
+  // ...and the pixels go BACK - nearest-first, at the FRONT of the queue.
+  assert.ok(sweep.indexOf('.sort(nearestFirst)') > tear, 'sorted after the teardown, nearest-first');
+  assert.ok(sweep.includes('queue.unshift(...rebuild);'), 'ahead of the ring, not behind it');
+  // WHY the sweep must re-queue itself: the streamer holds a torn-down
+  // key as loaded and never offers it again.
+  const { StreamingWorldState } = await import('../src/world/streamingWorld.js');
+  const s = new StreamingWorldState(1);
+  assert.equal(s.init(100, 100).length, 9);
+  assert.ok(s.loaded.has('100,100'));
+  assert.deepEqual(s._loadList(), [], 'a key held as loaded is never in the load list again - a swept pixel nobody re-queues is a hole');
+  // The release re-floors when the ground came back HIGHER (SmoothRoads
+  // flattens the tiles under a road); on or above it, exactly where it was.
+  assert.match(world, /const ty = heightAt\(fx, fz\);\s*\n\s*const re = Number\.isFinite\(ty\) && ty > fy \? floorLanding\(collider, \[fx, ty \+ 0\.5, fz\], 2\) : \[fx, fy, fz\];\s*\n\s*player\.spawn\(re\[0\], re\[1\], re\[2\]\);/);
+  // The classic start's arm is untouched - it reads the start pixel the
+  // boot built, doors and all, because nothing sweeps under it any more.
+  assert.match(world, /status\('entering the dungeon'\);\s*\n\s*const entered = await modes\.startInDungeon\(\);/);
 });

@@ -296,8 +296,11 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
   assert.ok(arm > 0 && arm < teardown,
     'the hold must be armed while the player still has a pixel to name');
-  assert.match(world, /if \(_seasonHoldKey !== null && \(built\.has\(_seasonHoldKey\) \|\| \(!building && !queue\.length\)\)\) \{\s*\n\s*player\.spawn\(player\.pos\[0\], player\.pos\[1\], player\.pos\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
-    'the release must wait for the pixel and re-anchor the fall (and never wedge)');
+  // ROADS 26: the re-anchoring spawn re-floors when the ground came back
+  // HIGHER (the road network's SmoothRoads under a roads sweep); a
+  // season's identical ground re-anchors exactly where it was.
+  assert.match(world, /if \(_seasonHoldKey !== null && \(built\.has\(_seasonHoldKey\) \|\| \(!building && !queue\.length\)\)\) \{[\s\S]{0,800}?const re = Number\.isFinite\(ty\) && ty > fy \? floorLanding\(collider, \[fx, ty \+ 0\.5, fz\], 2\) : \[fx, fy, fz\];\s*\n\s*player\.spawn\(re\[0\], re\[1\], re\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
+    'the release must wait for the pixel and re-anchor the fall - onto ground that came back higher, else exactly where it was (and never wedge)');
   assert.match(world, /const _seasonHeld = _seasonHoldKey !== null;/);
   assert.match(world, /if \(!_overlayHeld && !_seasonHeld\) player\.update\(dt,/,
     'the motor must not integrate gravity while the ground is being rebuilt');

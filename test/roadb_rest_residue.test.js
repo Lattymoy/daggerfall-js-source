@@ -475,7 +475,7 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     // ROAD-E E1: :193 is GetKeyUp(toggleClosedBinding), so the PRESS
     // arms nothing and the RELEASE closes. A BARE release is inert,
     // though, and that is not a detail: the press that OPENS this
-    // window is the host's (world.js:4106 opens on the key down, where
+    // window is the host's (world.js:4150 opens on the key down, where
     // GameManager.cs:534-537 opens on `ActionComplete` - the release -
     // so DFU's opening release is already spent), so the door carries
     // DaggerfallAutomapWindow.cs:703-713's deferral and closes only on

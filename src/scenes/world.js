@@ -351,15 +351,28 @@ export async function bootWorld(canvas, renderer, params, status) {
   // building, so the first pixels - the ones around the spawn - were
   // painted with no network and then kept. The map rebuilt itself on
   // arrival; the terrain never did. Every pixel painted without a
-  // network is torn down here, and the stream rebuilds it with one.
+  // network is torn down and rebuilt with one.
   // Called on BOTH arrival paths - the mod's data and our own network.
-  function rebuildRoadless() {
-    let roadless = 0;
-    for (const [, p] of [...built]) {
-      if (!p.withRoads) { destroyPixel(p.px, p.py, { collectLoose: false }); roadless++; }
-    }
-    if (roadless) console.log(`[roads] ${roadless} pixel(s) built before the network landed - rebuilt with roads`);
-  }
+  //
+  // ROADS 26 (Mac: "when using the test section, you can sometimes
+  // spawn outside of the dungeon in the world, in the ground"): THE
+  // SWEEP RAN WHENEVER THE FETCH RESOLVED, and that is anywhere in the
+  // boot walk. Three things followed. destroyPixel takes a pixel's
+  // doors with it, so a network landing between the start pixel's
+  // first build and the classic start's arm left doorTargets() with no
+  // DUNGEON_ENTRANCE - startInDungeon answered false and the player
+  // "started outside", at the pixel centre, inside Privateer's Hold's
+  // entrance model. The sweep never put the pixel BACK: the streamer
+  // still held its key as loaded, so _loadList skipped it for ever and
+  // the torn-down pixel was a hole until the ring walked away and
+  // returned. And a network landing under a standing player took the
+  // collider out from under them. So the arrival only RAISES the flag;
+  // the sweep itself is the frame's (tickRoadsSweep, beside the season
+  // poll it is the twin of): outside any boot walk, with the R0 hold
+  // armed before the ground goes and the pixels re-queued nearest-first
+  // - what tickSeason does for a season turn.
+  let _roadsSweepPending = false;
+  function rebuildRoadless() { _roadsSweepPending = true; }
   loadModRoads().then((his) => {
     if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
@@ -1260,6 +1273,37 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     queue.push(...rebuild);
     console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${rebuild.length} pixels`);
+  }
+
+  /** ROADS 26: the roadless sweep, the FRAME's - rebuildRoadless above
+   *  only raises the flag. Nearest-first is the load list's own order
+   *  (StreamingWorldState._loadList), the same sort tickSeason runs. */
+  const nearestFirst = (p, q) => {
+    const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+    const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
+    if (ca !== cb) return ca - cb;
+    return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
+      - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
+  };
+  function tickRoadsSweep() {
+    if (!_roadsSweepPending || building) return;   // the publish hazard tickSeason waits out, verbatim
+    _roadsSweepPending = false;
+    const keys = [...built.values()].filter((p) => !p.withRoads).map((p) => `${p.px},${p.py}`);
+    if (!keys.length) return;
+    // The hold is armed BEFORE the ground goes, on the pixel the
+    // streamer says the player stands on - when it is one of the swept.
+    const here = `${state.current.x},${state.current.y}`;
+    if (walkMode && playerSpawned && keys.includes(here)) _seasonHoldKey = here;
+    for (const key of keys) {
+      const [px, py] = key.split(',').map(Number);
+      destroyPixel(px, py, { collectLoose: false });
+    }
+    // ...and back at the FRONT of the queue: the ring behind can wait,
+    // the pixel under the player cannot. The streamer still holds every
+    // key as loaded, so nothing else would ever offer them again.
+    const rebuild = keys.map((key) => { const [px, py] = key.split(',').map(Number); return { px, py }; }).sort(nearestFirst);
+    queue.unshift(...rebuild);
+    console.log(`[roads] ${rebuild.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
@@ -6293,7 +6337,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the outage off the fall ledger. player.spawn IS the re-anchor
       // (fallStart = y, falling cleared) - _teleportToPixel's own tail.
       if (_seasonHoldKey !== null && (built.has(_seasonHoldKey) || (!building && !queue.length))) {
-        player.spawn(player.pos[0], player.pos[1], player.pos[2]);
+        // ROADS 26: the ground can come back HIGHER than it left - the
+        // network's SmoothRoads flattens the tiles under a road - and
+        // re-anchoring at the old feet would leave them under the new
+        // surface, where a body falls for ever. The terrain's own height
+        // decides; feet on or above it (a bridge, a building's floor, a
+        // season's identical ground) re-anchor exactly where they were.
+        const [fx, fy, fz] = player.pos;
+        const ty = heightAt(fx, fz);
+        const re = Number.isFinite(ty) && ty > fy ? floorLanding(collider, [fx, ty + 0.5, fz], 2) : [fx, fy, fz];
+        player.spawn(re[0], re[1], re[2]);
         _seasonHoldKey = null;
       }
       const _seasonHeld = _seasonHoldKey !== null;
@@ -6613,6 +6666,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
     }
+    tickRoadsSweep();   // ROADS 26: between two builds - `building` is false here whenever the last one published
     pump();
 
     // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
