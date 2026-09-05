@@ -1900,7 +1900,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // flag cleared before the loop that reads it is no flag at all.
     //
     // The three writers are the clock JUMPS - fast travel, the
-    // vampirism transformation, and the jail skip (both its arms:
+    // vampirism transformation (infection.js deployInfection,
+    // VampirismInfection.cs:157 - REVIEW 2026-09-05: it raised the
+    // clock and never set the flag), and the jail skip (both its arms:
     // DaggerfallCourtWindow.cs:473 across the sentence, :484 on every
     // release). A thirty-day sentence would otherwise walk thirty days
     // of encounter rolls the instant the courthouse door opened.
@@ -1911,8 +1913,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     let _updatedGuards = false;
     for (let l = 0; l < span; l++) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
-      const hit = intermittentEnemySpawn({
-        gameMinutes: _lastEncMinutes + l + 1, inside: false,
+      // :488-491 - "Don't spawn encounters while player is swimming in
+      // water or on ship (same as classic)" (ROAD-G TAIL: the gate had no
+      // reader; the port has no ship state to ask).
+      // REVIEW 2026-09-05 (PR #59): IsPlayerInside (:564) - the loop runs
+      // in every mode and rolls nothing inside a building or an un-rested
+      // dungeon, so indoor minutes are skipped, not banked for the door.
+      const _m = modes?.mode ?? 'exterior';
+      const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({
+        gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
         // in the wilderness ring of a town's pixel the wilderness
@@ -1965,7 +1974,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // player could walk straight past.
       if (!_updatedGuards) {
         _updatedGuards = true;
-        cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })
+        if (_m !== 'dungeon') cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })   // :768-770 - no location object in a dungeon
           .catch((e) => console.error('[guards]', e));
       }
     }
@@ -6952,10 +6961,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
       walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
     // X-slice: the encounter pool drives + draws beside the watch;
-    // the cadence loop rolls the elapsed minutes (exterior mode only).
+    // the cadence loop rolls the elapsed minutes in EVERY mode (REVIEW
+    // 2026-09-05: the loop's own inside arm skips indoor minutes).
+    const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
+    if (!townTalk.overlayActive) runEncounterTick(_pf);
     if ((modes?.mode ?? 'exterior') === 'exterior') {
-      const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
-      if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
       livePersonBatches.push(...exteriorFoes.batches());
     }

@@ -272,17 +272,23 @@ test('infection: the registered host supplies the video, the clock and the popup
   const raised = [], said = [];
   setInfectionHost({
     playVideo: (name, onClose) => onClose(),
-    raiseTime: (s) => raised.push(s),
+    raiseTime: (s) => { raised.push(s); flagAtRaise.push(pRef.preventEnemySpawns); },
     messageBox: (id) => said.push(id),
     clanOf: () => VAMPIRE_CLANS.Montalion,
     hourNow: () => 22,
   });
+  const flagAtRaise = [];
+  let pRef = null;
   try {
-    const p = P();
+    const p = P(); pRef = p;
     startInfection(p, INFECTION.Vampirism, { day: 0, regionIndex: 1 });
     runInfections(p, 1);            // dream, watched
     runInfections(p, 4);            // death, watched -> the turn
     assert.deepEqual(raised, [vampireTurnRaiseSeconds(22)]);
+    // REVIEW 2026-09-05 (PR #59): VampirismInfection.cs:157 - PreventEnemySpawns
+    // is raised BEFORE the clock, so the catch-up loop skips the fortnight
+    assert.deepEqual(flagAtRaise, [true], 'the spawn-suppression flag is up when the clock jumps');
+    assert.equal(p.preventEnemySpawns, true);
     assert.deepEqual(said, [DEATH_IS_NOT_ETERNAL_TEXT_ID]);
     assert.equal(p.racialOverridePending.clan, VAMPIRE_CLANS.Montalion);
   } finally { setInfectionHost(null); }
