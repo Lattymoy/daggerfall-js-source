@@ -224,7 +224,7 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // out of its host and CALLED here: a pool wired tomorrow is covered
   // tomorrow, and an unwired one is a red test the same day.
   // (The flash is the third of the three and rides in the POOLS for
-  // these two hosts - cityGuards.js:434 and exteriorFoes.js:383 both
+  // these two hosts - cityGuards.js:441 and exteriorFoes.js:389 both
   // flash on the same `dmg > 0` that calls onPlayerHurt - which is why
   // it is not inside the handlers run below.)
   const zero = () => 0;

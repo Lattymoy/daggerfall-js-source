@@ -218,7 +218,7 @@ replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:1731`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:1733`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals

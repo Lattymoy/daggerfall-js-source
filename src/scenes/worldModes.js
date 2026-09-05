@@ -64,7 +64,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';   // ROAD-B: AttemptEx
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice, makeEnemiesHostile } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
-import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
+import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // ID1: the interior's own ground pile; G5: its DaggerfallLoot identity
 import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
@@ -805,8 +805,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:186-187), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:451-452 and
-   *  cityGuards.js:716-717 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:457-458 and
+   *  cityGuards.js:723-724 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1091,10 +1091,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1347 states), so the same visual
+   *  the C11 law dungeonContext.js:1349 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1265, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1267, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5039,6 +5039,7 @@ export function createWorldModes(host) {
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),
           magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 the Light effect's candle; T1 the torch
         new Float32Array(DUNGEON_LIGHT_COLOR));
+      renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
       mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
@@ -5103,6 +5104,7 @@ export function createWorldModes(host) {
     // CheckForNewlyDiscoveredMeshes runs on IsPlayerInsideBuilding
     // exactly as it runs in a dungeon (Automap.cs:1155).
     if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd);
+    renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
@@ -5178,10 +5180,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:543-548), so this seam splits by pool exactly
+        // (cityGuards.js:550-555), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:960) and the shaft owes the same.
+        // that door (cityGuards.js:967) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.handleAttackFromPlayer(f, player.pos)
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),

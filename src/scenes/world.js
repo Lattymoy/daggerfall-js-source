@@ -7,7 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { INTERIOR_CLEAR, SKY_CLEAR } from '../render/renderer.js';
+import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -2197,7 +2197,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1916 mounts the same one, gated on
+  // and dungeonContext.js:1918 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4092
@@ -2271,7 +2271,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
     if (!f) return;
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-    const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+    const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     const stamp = (nf) => {
       if (!nf?.entity) return;
@@ -2285,11 +2285,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:247-252) never looks the record up in `foes`, and
+    // (exteriorFoes.js:253-258) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
+    // got exactly what removeGuard (cityGuards.js:1170-1174) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:718) and spliced out at the end of it (:889).
+    // (cityGuards.js:725) and spliced out at the end of it (:889).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -4638,7 +4638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6367-6379 -
+  // worldModes answers it in BOTH modes (worldModes.js:6369-6381 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6706,7 +6706,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
-    renderer.setClearColor((modes?.mode ?? 'exterior') !== 'exterior' ? INTERIOR_CLEAR : SKY_CLEAR);   // INCIDENT 2026-09-04: CameraClearManager.cs:51-57 - inside clears to BLACK, outside to the sky
+    renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
@@ -7072,11 +7072,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // (cityGuards.js:550-555), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:960). DFU makes no pool distinction:
+        // (cityGuards.js:967). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

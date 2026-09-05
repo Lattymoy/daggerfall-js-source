@@ -816,7 +816,7 @@ emit a negative zero.
 **2026-08-18 - AUDIT 17k, the parity pass over U16 + U17 + U18, and
 THE FIST CRASH.** Mac's report first: attacking with a fist crashed
 the game. Root-caused live (tools/fistProbe.mjs reproduced it at
-`dungeonContext.js:1510` before the fix): bare hands are a NULL weapon
+`dungeonContext.js:1512` before the fix): bare hands are a NULL weapon
 since U8h bound the rig to `equip.slots[RightHand]` - and the DEFAULT
 state, because starting weapons land in the bag unequipped (DFU adds
 them via AddItem, never equips) - and the DUNGEON host read

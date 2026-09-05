@@ -102,7 +102,7 @@ export class ArrowFlight {
       if (foeImpact && foeTargets) {
         for (const t of foeTargets) {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
-          const dx = t.feet[0] - m.pos[0], dy = t.feet[1] + 0.9 - m.pos[1], dz = t.feet[2] - m.pos[2];
+          const dx = t.feet[0] - m.pos[0], dy = t.feet[1] + (t.ref?.ai?.height ?? 1.8) / 2 - m.pos[1], dz = t.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the target's own capsule centre
           if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             foeImpact(m, t.ref);
             m.dead = true;
@@ -133,7 +133,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2243), so the copy that survived
+ * now calls it (dungeonContext.js:2245), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into

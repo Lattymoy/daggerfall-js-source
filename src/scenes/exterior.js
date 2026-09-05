@@ -5,7 +5,7 @@
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
 import { getFloat } from '../systems/settings.js';   // AUDIT 28 W1: NightAmbientLightScale
-import { INTERIOR_CLEAR, SKY_CLEAR } from '../render/renderer.js';
+import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { Arch3dFile } from '../formats/arch3dFile.js';
@@ -1535,7 +1535,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
     // two engine-owning hosts wire the identical pair (world.js:2023-2024,
-    // dungeonContext.js:1787-1788); `questBridge` is assigned below this
+    // dungeonContext.js:1789-1790); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
     onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
@@ -1721,7 +1721,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (chronicleDoor.js:68 `if (!questJournalArtLoaded()) return null`),
     // so a readiness test placed AHEAD of the preload that satisfies it
     // made the classic skin answer null for ever - the warm behind the
-    // gate could never run. dungeonContext.js:1134-1136 is the shape:
+    // gate could never run. dungeonContext.js:1136-1138 is the shape:
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
@@ -2743,7 +2743,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
       if (!f) return;
       if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-      const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+      const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
       const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
       const stamp = (nf) => {
         if (!nf?.entity) return;
@@ -3405,7 +3405,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch
       CITY_LIGHT_COLOR_F32
     );
-    renderer.setClearColor(_mode() !== 'exterior' ? INTERIOR_CLEAR : SKY_CLEAR);   // INCIDENT 2026-09-04: CameraClearManager.cs:51-57 - inside clears to BLACK, outside to the sky
+    renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
@@ -3560,11 +3560,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // (cityGuards.js:550-555), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:960). DFU makes no pool distinction:
+        // (cityGuards.js:967). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

@@ -223,13 +223,13 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // it went on asserting "setDefaultEnchantCtx has exactly one caller
   // in the tree" - and "the flag now exists where the work does",
   // pointing at a flag this wave retired - after the second mount
-  // shipped. dungeonContext.js:1598 and hostEnchant.js:8 both say
+  // shipped. dungeonContext.js:1600 and hostEnchant.js:8 both say
   // "had"; the sentence a reader meets first must too.
   assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1916 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:1918 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

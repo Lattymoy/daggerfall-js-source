@@ -1726,8 +1726,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // keeps full contrast at every distance and shimmers as the camera
     // moves; with it the line dissolves into the wall a few metres out,
     // which is what DFU shows. The smooth (UI) upload keeps LINEAR.
-    if (!opts.smooth) gl.generateMipmap?.(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, opts.smooth ? filter : (gl.NEAREST_MIPMAP_NEAREST ?? filter));
+    // REVIEW 2026-09-05: the chain is WORLD art's - a TEXTURE.nnn archive
+    // (numeric). UI art comes through ImageReader.GetTexture with
+    // mipChain false (ImageReader.cs:59), the automaps and the video
+    // likewise; those string-keyed uploads keep a single NEAREST level.
+    const mips = !opts.smooth && (opts.mips ?? (typeof archive === 'number'));
+    if (mips) gl.generateMipmap?.(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
@@ -2293,7 +2298,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // REVIEW 2026-09-05: the emission map carries the same chain as the
+    // albedo (TextureReader.cs:316/:328/:340 new Texture2D(..., MipMaps),
+    // :306 reuses the mipped albedo) and is point-sampled over it
+    // (MaterialReader.cs:448/:104). The shader subtracts one from the
+    // other (:108-109): both samples must come from the same mip level.
+    gl.generateMipmap?.(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
