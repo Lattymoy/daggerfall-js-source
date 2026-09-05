@@ -384,16 +384,19 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
 test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell like its other three doors', () => {
   // WeaponManager.cs:244-263 hands the click to the ready spell before
   // it handles any attack; touch.js:98 already promises the tap casts.
-  assert.ok(EXTERIOR.includes("attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },"),
-    'the tap is the world host\'s shape now');
+  // TI1 (2026-09-05): the tap-to-attack button is gone - the touch
+  // SWIPE is the attack now, and it carries the same gate in front of
+  // the drag seam, held-edge only (a release must reach the rig).
+  assert.ok(EXTERIOR.includes("if (held && magic.interceptAttack(true)) return;   // M2: an armed cast eats the swing"),
+    'the swipe defers to a readied spell');
   // INTEGRATION MOVED THIS PIN 4 -> 3 (#127 removed the dead drag
   // hook) and ROAD A8 MOVED IT BACK to 4: the pointer-parity layout's
   // Mouse0 cast arm (`_act.cast`) is the new fourth door - a LIVE one,
   // unlike the drag hook it numerically replaces. The four doors are
-  // mousemove, mousedown, the TAP and the frame's cast dispatch.
+  // mousemove, mousedown, the SWIPE (TI1) and the frame's cast dispatch.
   for (const [name, s] of HOSTS) {
     assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 4,
-      `${name}: mousemove, mousedown, the TAP and the cast dispatch`);
+      `${name}: mousemove, mousedown, the swipe and the cast dispatch`);
   }
 });
 

@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:227 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:245 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });

@@ -337,7 +337,7 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
     const e = window.__playerEntity;
     const t0 = performance.now();
     const start = e.lightSource?.currentCondition ?? -1;
-    // The host clamps its frame delta at 0.1s (dungeon.js:357), and
+    // The host clamps its frame delta at 0.1s (dungeon.js:391), and
     // under swiftshader a frame takes far longer than that - so the
     // torch burns in CLAMPED frame time, roughly a third of the wall
     // clock here. That is the host's own guard, not the torch's, and

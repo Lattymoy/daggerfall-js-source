@@ -86,7 +86,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createExteriorFoes } from './exteriorFoes.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door
+import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
@@ -97,6 +97,8 @@ import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dyin
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
+import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
+import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -650,7 +652,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     re-running the pass idempotently when its bridge lands - and it
   //     can only do that because it keeps the NPC flats OUT of the
   //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
-  //     continue;`, world.js:798) and stands them in batches of their
+  //     continue;`, world.js:800) and stands them in batches of their
   //     own over the ACTIVE set. THIS host builds one batch per
   //     (archive, record) for the WHOLE city, up front, with every
   //     street NPC's center already inside it (the batch loop above), and
@@ -704,7 +706,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // that can see the player or would have spawned in classic.
         // `activeCount() > 0` was a different question - one unaware
         // guard alive anywhere in town killed the collapse.
-        enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   // ROAD-G G2: BOTH street pools, world.js:1315's line
+        enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   // ROAD-G G2: BOTH street pools, world.js:1327's line
         swimming: !!player.swimming, entity: playerEntity,
         day: !isNight(minuteNow()), inside: false,
       });
@@ -1026,7 +1028,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
   // ROAD-B/ROAD-G G2: the AREA, for GameManager.MakeEnemiesHostile
   // (:790-806) - the street's two pools joined with whatever inside
-  // pool the mode machine holds, which is world.js:1720's line.
+  // pool the mode machine holds, which is world.js:1732's line.
   const _liveEnemyDatabase = () => [
     ...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.insideFoes?.() ?? []),
   ];
@@ -1078,7 +1080,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  shape, for ever), the Wabbajack's exterior arm refused to transform
    *  a struck foe, and SoulBound's break release and the Sanguine Rose
    *  had nowhere to put a Daedroth above ground. It is the SAME factory
-   *  the other two exterior hosts mount - world.js:1760 over the street
+   *  the other two exterior hosts mount - world.js:1772 over the street
    *  collider, worldModes' `makeInteriorFoes` over a building's - and
    *  the deps are this host's own.
    *
@@ -1087,7 +1089,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  loose-foe releases. PlayerEntity.Update's per-minute INTERMITTENT
    *  SPAWN roll (:486-492) still has no caller on this route - that
    *  loop carries the passive-guard and NPC-guard-conversion arms with
-   *  it (world.js:1806-1890) and is its own slice; this pool does not
+   *  it (world.js:1818-1902) and is its own slice; this pool does not
    *  wait on it. */
   const exteriorFoes = createExteriorFoes({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
@@ -1483,7 +1485,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:828/:842) - world.js:1936 hoisted its copy for exactly
+   *  (effects.js:828/:842) - world.js:1948 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -1534,7 +1536,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
-    // two engine-owning hosts wire the identical pair (world.js:2023-2024,
+    // two engine-owning hosts wire the identical pair (world.js:2035-2036,
     // dungeonContext.js:1789-1790); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
@@ -1789,6 +1791,16 @@ export async function bootExterior(canvas, renderer, params, status) {
   const cameraRecoiler = new CameraRecoiler();   // AUDIT 28 W9: CameraRecoilStrength
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
+  // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
+  // truth beside rightHeld (the settle law reads both); a tap arms a
+  // ONE-frame Mouse0 press (_tapArmed counts it down at the frame's
+  // top) and _tapDir carries the finger's ray for the release frame,
+  // which is when A8's gate fires the activation. player/lockOn.js
+  // holds the lock; _lockChest is this frame's dot target.
+  let swipeHeld = false;
+  let _tapArmed = 0, _tapPoint = null, _tapDir = null;
+  let _lastProj = null, _lastView = null, _lockChest = null;
+  const lockOn = createLockOn();
   const keys = new Set();
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
@@ -2157,7 +2169,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:186, "a right-click on a window is the window's...
+  // (dungeon.js:198, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -2170,18 +2182,35 @@ export async function bootExterior(canvas, renderer, params, status) {
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
   addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
-  attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
+  const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-// AUDIT 39 (#127 dropped the dead attack(dx,dy,held) drag hook -
-    // touch.js never called it; the tap IS the whole touch strike).
-    // AUDIT 39 (#130): the tap takes the M2 gate the other attack
-    // entries take - an armed cast eats the click
-    // (WeaponManager.cs:244-263 defers to HasReadySpell before it
-    // handles any attack), and touch.js:98 already promises the tap casts.
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },
+    // TI1: the swipe is the RMB drag - the mousemove arm above, on a
+    // finger: this host's rig on the street, the modal rig through
+    // worldModes indoors, the M2 cast gate in front of both.
+    attack: (dx, dy, held) => {
+      if (!walkMode) { swipeHeld = false; return; }
+      if (modeNow() === 'exterior') {
+        swipeHeld = held;
+        if (held && magic.interceptAttack(true)) return;   // M2: an armed cast eats the swing
+        weaponRig.attackInput(dx, dy, held);
+      } else {
+        swipeHeld = false;
+        modes?.attackInput?.(dx, dy, held);
+      }
+    },
+    // TI1: the tap is a one-frame press of the activate action along
+    // the finger's ray - A8's gate fires it on the release. A finger in
+    // the docked bar's strip is no world tap at all.
+    tap: (x, y) => {
+      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
+    },
+    locked: () => lockOn.locked,
+    dial: true,
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    overlayActive: () => townTalk.overlayActive,
   });
 
   // ---- QX1: THE QUEST BRIDGE - THE MACHINE OVER THIS ONE CITY ----
@@ -2276,14 +2305,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4801 is the same line.
+    // other. world.js:4836 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4803-4816. */
+     *  %rn/%rt's producer - world.js:4838-4851. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2320,7 +2349,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
-    // QG1: CastSpellDo's two world reads, world.js:4719-4722's pair.
+    // QG1: CastSpellDo's two world reads, world.js:4754-4757's pair.
     // Without them the action self-completes at parse (actions.js:2742/:2749)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
@@ -2351,7 +2380,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:4692's line
+     *  mode-aware (worldModes:1258), so this is world.js:4727's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
@@ -2359,7 +2388,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:4700's call verbatim. */
+     *  Bridge-only, no host state - world.js:4735's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211), ALL THREE ARMS. The INSIDE
      *  two are the mode machine's - worldModes.tryPlaceQuestFoe places
@@ -2374,7 +2403,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  city's rect for its whole life (`_musicInLocationRect` is
      *  `() => true`), so the wilderness arm (:252-257) has no reachable
      *  branch here at all and the ring is the default one, unqualified.
-     *  Everything else is world.js:4804's arm term for term: the cast
+     *  Everything else is world.js:4839's arm term for term: the cast
      *  origin is the controller CENTRE (DFU rays from
      *  PlayerObject.transform.position, not the feet), the FOV is
      *  handed over in DEGREES (`fieldOfView()` answers radians), the
@@ -2464,7 +2493,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:5376's line.
+    // closure S40 gave this host, and world.js:5411's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -2490,7 +2519,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // which is the one seam that really does ask the narrower question.
     makeEnemiesHostile: _makeEnemiesHostile,
     // GameManager.ClearEnemies destroys every active enemy object; the
-    // encounter half is world.js:5307's line and the watch half is this
+    // encounter half is world.js:5342's line and the watch half is this
     // host's own (cityGuards owns its live list).
     clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } },
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
@@ -2520,6 +2549,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // V2c: createWorldModes also registers setPassiveSpecialsHost (the
   // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
+    activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     canvas, renderer, player, cam, keys, latch, blocks,
     // S40: IsPlayerInTown() with both flags at their defaults - the
     // location TYPE alone (PlayerGPS.cs:504-527), which is what
@@ -2701,7 +2731,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  host's only pool is the WATCH, which mints watchmen and exposes
      *  no free spawn pair", so a soul released or a Rose used in the
      *  street released nothing at all. That premise died with the
-     *  encounter mount above, and world.js:2269-2285 is the shape.
+     *  encounter mount above, and world.js:2281-2297 is the shape.
      *  INTERIOR still refuses - worldModes' interior pool exposes no
      *  loose-spawn door - which is EC1's answer and world.js's own for
      *  the same mode. */
@@ -2736,7 +2766,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  been another host's. The encounter pool mounted above owns both,
      *  so an encounter or quest foe struck in the street is removed and
      *  re-stood by the pool that owns its billboard, exactly as
-     *  world.js:2211-2212 does it. A WATCHMAN is still left standing:
+     *  world.js:2223-2224 does it. A WATCHMAN is still left standing:
      *  the street pool cannot remove a record it does not own, which is
      *  the same departure worldModes records for the indoor watch. */
     const _enchantReplaceFoe = (targetEntity, mobileType) => {
@@ -2962,9 +2992,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
     if (!gamePaused()) {
-      if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
+    // TI1: the tap's one-frame press. Armed 2 on the tap (the key is
+    // already down): this frame counts to 1 and the gate sees the
+    // press; next frame counts to 0, the key lifts, the ray is built
+    // through the frame the finger saw, and the gate fires the
+    // activation on that release. The frame after clears the ray.
+    if (_tapArmed > 0 && --_tapArmed === 0) {
+      keys.delete('Mouse0');
+      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
@@ -3091,7 +3131,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
       // held overlay is DFU's timeScale 0 - no climb, no friction).
       const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:470's shape - a frozen player takes no stride
+      const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:504's shape - a frozen player takes no stride
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement and the jump only (DecideHeightAction has no check).
       // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -3203,7 +3243,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // T3b: a townsperson under the ray wins the activation (the
         // PlayerActivate nearest-hit order); G3: a guard corpse next
         // (loot pickup on the dungeon's S2 shape); doors otherwise.
-        const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+        const useFwd = _tapDir ?? [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];   // TI1: the tap's ray, else the centre
         // QG1/ROAD-G G2: the quest-resource click arm runs FIRST and
         // does not consume the activation (PlayerActivate.cs:325-339 -
         // the Hit Checks region's opening arm, no return, skipped in
@@ -3214,7 +3254,12 @@ export async function bootExterior(canvas, renderer, params, status) {
           const qf = pickQuestFoe(cam.pos, useFwd, exteriorFoePool(), collider);
           if (qf) qf.questBehaviour.doClick();
         }
-        if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+        // TI1: a tap on a live foe is the LOCK (player/lockOn.js),
+        // toggled, and the activation ends there - the ladder has no
+        // arm for a living enemy but the quest one above, which ran.
+        const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, exteriorFoePool(), collider, LOCK_PICK_DISTANCE) : null;
+        if (_lockFoe) lockOn.toggle(_lockFoe);
+        else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
           // AUDIT 24 (wave 38)'s law, on this host: BOTH corpse pools go
           // into ONE pick, because which body you open is
           // PlayerActivate's nearest hit and not which pool the host
@@ -3290,6 +3335,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       Math.max(2000, extentX * 4)
     ));
     const view = lookAt(eye, target, [0, 1, 0]);
+    _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
+    if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
+      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+      touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
+    }
     if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3: the same matrices the draws ride
 
     // World clock (R5): sun direction/intensity and ambient follow the time
@@ -3518,7 +3568,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:6870-6921 is the shape.
+    // through the player for ever. world.js:6926-6977 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -3716,7 +3766,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:6979's order, and the order
+          // BEFORE civilians - world.js:7035's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

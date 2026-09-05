@@ -4857,7 +4857,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:200`, the standalone host, has always had the right shape:
+`dungeon.js:218`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5466,7 +5466,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:1806-1890) — and
+spawns and the NPC-guard conversion with it (world.js:1818-1902) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5490,10 +5490,10 @@ ready-spell events (`hostMagic.js:73-74`), and those two doors are the
 (`machine.js:776`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:2023-2024`,
+other two engine-owning hosts wire (`world.js:2035-2036`,
 `dungeonContext.js:1789-1790`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:4719-4722`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:4754-4757`),
 absent which the action self-completes at *parse*
 (`actions.js:2742`/`:2749`) and the task can never arm at all.
 

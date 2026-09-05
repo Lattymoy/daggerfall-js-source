@@ -18,7 +18,7 @@ page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]',
 // T2: `class=16` SKIPS THE CHARGEN WIZARD, and without it this probe
 // has been lying since the day it was written. The wizard holds
 // townTalk's overlay slot, and townTalk.keydown runs FIRST in this
-// host's keydown ladder (exterior.js:1955-1957) - so every
+// host's keydown ladder (exterior.js:1967-1969) - so every
 // page.keyboard.press below was swallowed by a character-creation
 // screen the probe never knew was up. The mouse surfaces
 // (__tradeSlot, __tradeClick) address the trade window directly and
