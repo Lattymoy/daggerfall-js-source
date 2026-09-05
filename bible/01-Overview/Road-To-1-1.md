@@ -208,8 +208,8 @@ E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
 were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:2859`, the two ship pixels): the owner supplied the
-(`scenes/world.js:2832`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2865`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2838`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
@@ -331,6 +331,17 @@ The two things the Wave G lanes wrote down at their sites are closed:
 Pins in `test/exteriorfoes.test.js` (the loop's shape, both swimming
 gates, both callers, the watch route); `test/restwhere.test.js` names
 both homes of the catch-up. Open flags: 7.
+
+Its review (two lenses, two refuters each; 3 confirmed, 0 refuted):
+the vampirism turn raised the clock and never set PreventEnemySpawns
+(`VampirismInfection.cs:157` sets it BEFORE the raise) - `deployInfection`
+sets it now, one home for both hosts; both loops ran in exterior mode
+only, so a tavern sleep or a dungeon visit was BANKED and replayed as
+outdoor rolls at the door - they run in every mode and hand
+`IsPlayerInside`/`IsPlayerInsideDungeon` to the roll, which skips the
+indoor minutes as DFU does, with the conversion sweep held in a
+dungeon (`:768-770`, no location object); and the watch-route pins had
+matched the comment, not the arm - they count the arm's returns now.
 
 ## The standing watches (not wave work)
 

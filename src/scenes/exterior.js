@@ -1170,7 +1170,17 @@ export async function bootExterior(canvas, renderer, params, status) {
   // rolls, then the once-per-Update NPC-guard conversion sweep - all
   // inside `if (!preventEnemySpawns)`, cleared at the tail. The fixed
   // city has no fast travel and no ship; the clock jumps that raise the
-  // flag here are the jail skip and the vampirism turn.
+  // flag here are the jail skip (arrestFlow) and the vampirism turn
+  // (infection.js deployInfection, VampirismInfection.cs:157).
+  // REVIEW 2026-09-05 (PR #59): the loop runs in EVERY mode, as DFU's
+  // Update does - IntermittentEnemySpawn reads IsPlayerInside (:564)
+  // and rolls nothing inside a building or an un-rested dungeon, so an
+  // 8-hour tavern sleep is SKIPPED rather than banked and replayed as
+  // outdoor night rolls at the door; the passive-guard rolls reach the
+  // indoor watch through _spawnGuards' inside arm; the conversion
+  // sweep asks the street population, which a dungeon has none of
+  // (MakeNPCGuardsIntoEnemiesIfGuardsSpawned :768-770 returns on a
+  // null location object).
   let _lastEncMinutes = null;
   function runEncounterTick(playerFeet) {
     const now = Math.floor(playerTicker.classicMinutes);
@@ -1180,8 +1190,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (let l = 0; l < span; l++) {
       // :488-491 - "Don't spawn encounters while player is swimming in
       // water or on ship (same as classic)". This host has no ship.
+      const _m = _mode();
       const hit = player.swimming ? null : intermittentEnemySpawn({
-        gameMinutes: _lastEncMinutes + l + 1, inside: false,
+        gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
         inLocationRect: _musicInLocationRect(),   // F061: the WIDENED TOWN RECT - this host lives inside it
         climateIndex: locClimateIndex,
         playerLevel: playerEntity.level,
@@ -1200,7 +1211,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // :513-516 - at most ONCE per Update however many minutes catch up
       if (!_updatedGuards) {
         _updatedGuards = true;
-        cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })
+        if (_m !== 'dungeon') cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })   // :768-770 - no location object in a dungeon
           .catch((e) => console.error('[guards]', e));
       }
     }
@@ -1255,7 +1266,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     topWindow: () => townTalk.overlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
-    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos); },   // ROAD-G TAIL: the catch-up loop rides the rest's minutes, as world.js:2667 has it
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos); },   // ROAD-G TAIL: the catch-up loop rides the rest's minutes, as world.js:2673 has it
     // QX1: TickRest's per-hour QuestMachine.Instance.Tick (:379),
     // through THIS host's own bridge. It used to be `null` with a note
     // saying "grep questBridge in this file returns nothing" - true
@@ -1559,7 +1570,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:828/:842) - world.js:1951 hoisted its copy for exactly
+   *  (effects.js:828/:842) - world.js:1957 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -1610,7 +1621,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
-    // two engine-owning hosts wire the identical pair (world.js:2038-2039,
+    // two engine-owning hosts wire the identical pair (world.js:2044-2045,
     // dungeonContext.js:1789-1790); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
@@ -2379,14 +2390,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:4839 is the same line.
+    // other. world.js:4845 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:4841-4854. */
+     *  %rn/%rt's producer - world.js:4847-4860. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2423,7 +2434,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
-    // QG1: CastSpellDo's two world reads, world.js:4757-4760's pair.
+    // QG1: CastSpellDo's two world reads, world.js:4763-4766's pair.
     // Without them the action self-completes at parse (actions.js:2742/:2749)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
@@ -2454,7 +2465,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:4730's line
+     *  mode-aware (worldModes:1258), so this is world.js:4736's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
@@ -2462,7 +2473,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:4738's call verbatim. */
+     *  Bridge-only, no host state - world.js:4744's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211), ALL THREE ARMS. The INSIDE
      *  two are the mode machine's - worldModes.tryPlaceQuestFoe places
@@ -2477,7 +2488,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  city's rect for its whole life (`_musicInLocationRect` is
      *  `() => true`), so the wilderness arm (:252-257) has no reachable
      *  branch here at all and the ring is the default one, unqualified.
-     *  Everything else is world.js:4842's arm term for term: the cast
+     *  Everything else is world.js:4848's arm term for term: the cast
      *  origin is the controller CENTRE (DFU rays from
      *  PlayerObject.transform.position, not the feet), the FOV is
      *  handed over in DEGREES (`fieldOfView()` answers radians), the
@@ -2567,7 +2578,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:5414's line.
+    // closure S40 gave this host, and world.js:5420's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -2593,7 +2604,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // which is the one seam that really does ask the narrower question.
     makeEnemiesHostile: _makeEnemiesHostile,
     // GameManager.ClearEnemies destroys every active enemy object; the
-    // encounter half is world.js:5345's line and the watch half is this
+    // encounter half is world.js:5351's line and the watch half is this
     // host's own (cityGuards owns its live list).
     clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } },
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
@@ -2805,7 +2816,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  host's only pool is the WATCH, which mints watchmen and exposes
      *  no free spawn pair", so a soul released or a Rose used in the
      *  street released nothing at all. That premise died with the
-     *  encounter mount above, and world.js:2284-2300 is the shape.
+     *  encounter mount above, and world.js:2290-2306 is the shape.
      *  INTERIOR still refuses - worldModes' interior pool exposes no
      *  loose-spawn door - which is EC1's answer and world.js's own for
      *  the same mode. */
@@ -2840,7 +2851,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  been another host's. The encounter pool mounted above owns both,
      *  so an encounter or quest foe struck in the street is removed and
      *  re-stood by the pool that owns its billboard, exactly as
-     *  world.js:2226-2227 does it. ROAD-G TAIL: a WATCHMAN transforms
+     *  world.js:2232-2233 does it. ROAD-G TAIL: a WATCHMAN transforms
      *  too, through removeGuard. (The sentence that stood here:) it was left standing:
      *  the street pool cannot remove a record it does not own, which is
      *  the same departure worldModes records for the indoor watch. */
@@ -3645,7 +3656,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:6929-6980 is the shape.
+    // through the player for ever. world.js:6935-6987 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -3754,7 +3765,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...guardBatches);
       // ROAD-G G2: the encounter pool drives and draws on the same
       // flats' axis, and freezes with the population under an overlay.
-      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the cadence loop rolls the elapsed minutes (exterior mode only)
+      if (!townTalk.overlayActive) runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the cadence loop rolls the elapsed minutes - in EVERY mode (REVIEW 2026-09-05: indoor minutes are skipped by the loop's own inside arm, not banked)
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, _senses);
       personBatches.push(...exteriorFoes.batches());
@@ -3844,7 +3855,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7038's order, and the order
+          // BEFORE civilians - world.js:7045's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

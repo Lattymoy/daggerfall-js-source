@@ -276,6 +276,12 @@ export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = 
     // Raise game time to an evening two weeks later (:159-161),
     // BEFORE the popup, because the popup is what the player reads on
     // the far side of the fortnight.
+    // VampirismInfection.cs:157 - PreventEnemySpawns = true BEFORE the
+    // raise "so player isn't bombarded by spawned enemies after transform
+    // time": the next Update's catch-up loop (PlayerEntity.cs:482) skips
+    // the fortnight and clears the flag at its tail (:524-525). REVIEW
+    // 2026-09-05 (PR #59): the port raised the clock and never set it.
+    if (entity) entity.preventEnemySpawns = true;
     raiseTime?.(vampireTurnRaiseSeconds(hourNow()));
     // Transfer player to a random cemetery (:164-175), between the
     // raise and the popup - DFU's own order. The arm is the HOST's

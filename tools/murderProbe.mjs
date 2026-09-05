@@ -9,7 +9,7 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:2041-2043) - swallows every
+// keydown ladder (exterior.js:2052-2054) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&play&exterior&time=12:00&class=16');
