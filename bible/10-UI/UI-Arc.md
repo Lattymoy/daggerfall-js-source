@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1607 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:792, world.js:1311,
+                        dungeonContext.js:793, world.js:1311,
                         exterior.js:1668. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1350, dungeonContext.js:3076. A seam
+    / NOTEBOOK          world.js:1350, dungeonContext.js:3081. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8460,7 +8460,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:4693` and `dungeonContext.js:1235` answer the same
+`worldModes.js:4693` and `dungeonContext.js:1237` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two

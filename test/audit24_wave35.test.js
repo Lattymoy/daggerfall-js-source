@@ -296,10 +296,14 @@ test('audit24 wave35: the aim bump is applied ONCE, in GetDestination', () => {
   flyer.lastKnownTargetPos = [0, 0, 12];
   flyer.predictedTargetPos = flyer.lastKnownTargetPos;
   flyer._getDestination([0, 0, 12]);
-  assert.ok(Math.abs(flyer.destination[1] - 1.8) < 1e-9, 'a flyer aims at the target FACE, once');
+  // REVIEW 2026-09-05 (PR #55 review): DFU's face aim is the target's
+  // transform (feet + 0.9) plus half its capsule (0.9) = feet + 1.8,
+  // measured from THIS foe's transform - centreOffset (0.9 for a foe
+  // that names no sprite) above its feet. In feet-space: 1.8 - 0.9.
+  assert.ok(Math.abs(flyer.destination[1] - (1.8 - flyer.centreOffset)) < 1e-9, 'a flyer aims at the target FACE, once');
   const d = flyer._dir3(flyer.destination);
-  const expect = Math.hypot(0, 1.8, 12);
-  assert.ok(Math.abs(d[1] - 1.8 / expect) < 1e-9, 'and _dir3 adds nothing of its own');
+  const expect = Math.hypot(0, 1.8 - flyer.centreOffset, 12);
+  assert.ok(Math.abs(d[1] - (1.8 - flyer.centreOffset) / expect) < 1e-9, 'and _dir3 adds nothing of its own');
 
   const walker = new EnemyAI(world({}), [0, 0, 0], 0, { liveSpeed: 50 });
   walker.inSight = true;

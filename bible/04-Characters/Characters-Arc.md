@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:957`)
+encounter pool has always exported its own at `exteriorFoes.js:963`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once
@@ -2851,3 +2851,65 @@ Collider recording the height every move carries, a sweep of every
 ARENA2 in the container: the bats' height, the halved capsule's feel
 at doors, and flyers and swimmers in every host want Mac's eyes on the
 live site.
+
+### REVIEW 2026-09-05 - the adversarial round over PR #55
+
+Six finder lenses over the merged diff, two refuters per finding; 23
+confirmed, folding to seven on this half. The thread through them:
+DFU's `transform.position` is the sprite CENTRE, `idleH/2` above the
+capsule bottom whatever the capsule became (the BOTTOM justification
+keeps the sprite bottom on the feet), and the first cut had moved
+the spawn to that law but left everything that MEASURES against the
+transform at `height/2`.
+
+- **The motor.** `_getDestination` aimed a flyer's FEET at the
+  player's face (DFU aims its transform), so a pursuing bat rose half
+  a sprite back toward the ceiling; the grounded arm's
+  `(targetHeight - originalHeight)/2` was applied to a feet-space
+  point (zero while every foe wore 1.8, wrong for a rat's 1.6 or a
+  giant's 2.6); `_centre()` - every obstacle, fall, path and shoot
+  probe DFU casts from `transform.position` - was `height/2`. New
+  constructor option `centreOffset` (default `height/2`, so a caller
+  naming no sprite is unchanged; the hosts pass `idleH/2`);
+  `_getDestination` builds DFU's destination in transform-space and
+  converts ONCE (`- centreOffset`), the detour destination is
+  feet-space like every other, the swimmer's water test and the
+  flyer's floor ray read the transform, `canHearTarget` takes the
+  offset.
+- **The watch.** `cityGuards` was the third `new EnemyAI` host and
+  still wore the player's capsule; the texture is read before the AI
+  (the epoch guard still ahead of any allocation), the capsule sized
+  from the sprite, `idleH` carried.
+- **Re-stands.** `WabbajackEffect.cs:90` hands `CreateEnemy` the
+  struck foe's `transform.localPosition`; all three hosts handed
+  FEET, which the spawn chain now reads as a marker (sprite centre), so
+  a Wabbajack roll into an imp or bat stood it half a sprite under
+  the floor. `centreFromFeet` (the inverse of `feetFromCentre`) at
+  every arm.
+- **The exterior save.** `snapshotWorld` holds FEET and `restoreWorld`
+  re-entered `spawnFoe`, which now dropped the flyer AGAIN - half a
+  sprite per load, cumulatively. `spawnFoe` takes `feetGiven`; the
+  restore passes it (the snapshot shape is unchanged, so older saves
+  stay valid). And the drop itself was an absolute overwrite from the
+  caller's `pos` after the texture await, discarding any `offsetAll`
+  recentre in flight - it is a delta on the live pending array now.
+- **Old dungeon saves.** A save written before the law holds every
+  idle bat's feet AT the marker and `applyWorld` wrote them back
+  over the corrected spawn - the reported symptom would have survived
+  every load of the owner's own save. Entries are stamped `anchor:
+  1`; an un-stamped Flying entry whose feet are exactly the rebuilt
+  feet plus half the idle sprite keeps the rebuilt spawn
+  (`keepRebuiltSpawn`), anything that had moved restores verbatim as
+  `SerializableEnemy` does.
+- **Hit laws.** The player's swing reach/in-view point, the arrow
+  contact and the dungeon missile contact tested `feet + 0.9` - the
+  PLAYER's half-capsule - on every foe; five sites now read the foe's
+  own `height/2` (the audio origins keep 0.9: a sound source, not a
+  hit law).
+
+Pins: 3 more in `test/incident_ceiling_bats.test.js` (the inverse and
+the save judgement as values; a live 3.2-idle bat with a 1.6 capsule
+measuring its centre at 1.6 and aiming 0.2 in feet-space, a rat +0.35,
+a walker level; every host/re-stand/hit-site shape), and the two
+wave-34/35 motor pins moved to the transform-space law they had
+encoded the feet-space reading of.

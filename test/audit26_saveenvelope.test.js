@@ -137,7 +137,7 @@ test('audit26 F216/F217: both exterior pools snapshot in natives and restore thr
     assert.ok(ef.includes(`${field}:`), `the foe record carries ${field}`);
   }
   assert.match(ef, /function restoreWorld\(saved, fromNative, yOffset = 0\)/);
-  assert.match(ef, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender \}\)/,
+  assert.match(ef, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true \}\)/,   // REVIEW 2026-09-05: the snapshot holds FEET
     'the restore re-mints through the pool\'s ONE spawn chain, then overlays the saved truth');
   const cg = rd('src/scenes/cityGuards.js');
   assert.match(cg, /function snapshotWorld\(toNative\)/);

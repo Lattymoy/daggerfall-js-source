@@ -900,3 +900,40 @@ site - dungeon walls up close and at distance, the black backdrop
 behind any remaining crack, the look of every classic texture at
 distance now that a mip chain sits under it, and the exterior sky
 still clearing blue.
+
+### REVIEW 2026-09-05 - the adversarial round over PR #55
+
+Six finder lenses over the merged diff, two refuters per finding; 23
+confirmed, folding to four on this half:
+
+- **The late-stood interior person never drew.** `interiorContext`'s
+  `standPerson` upload had been sent through the mesh door too, and
+  that site is a FLAT (`DaggerfallBillboard.cs:289-293`, alphaIndex 0)
+  - `drawBillboards` reads the bare key only, so a person stood by the
+  `UpdateNpcPresence` re-roll whose record no build-time batch had
+  uploaded was invisible. Reverted; the pin that had forced it (the
+  interior has no mesh door of its own - its swap rides
+  `remapSubMeshes`) now says the opposite, and a Proxy-GL pin shows an
+  opaque-only upload issuing no draw.
+- **The world-hosted dungeon never cleared black.** `world.js`'s and
+  `exterior.js`'s `setClearColor` sit AFTER their `modes.frame` early
+  return, so in dungeon and interior modes the line was dead and the
+  classic-start Privateer's Hold still cleared sky blue (only the
+  standalone `?dungeon` host went black). `worldModes` now sets
+  `INTERIOR_CLEAR` immediately before each of its two `beginFrame`s;
+  the streaming hosts' call is the exterior's `SKY_CLEAR` only.
+- **The mip chain reached UI art.** `ImageReader.GetTexture` builds
+  with `mipChain false` (`ImageReader.cs:59`); the chain is now gated
+  on a numeric TEXTURE.nnn archive (`{ mips }` overrides), so the
+  string-keyed IMG/CIF/font/automap/video uploads keep one NEAREST
+  level and the video no longer regenerates a chain per frame.
+- **Emission maps had no chain** while the albedo they are subtracted
+  from did (`TextureReader.cs:316/:328/:340` build them mipped,
+  `MaterialReader.cs:448` samples them point): at distance the
+  shader's `albedo - emission` mixed a coarse mip with a level-0 texel
+  and a window shimmered. `uploadEmissionTexture` mips too.
+
+Refuted (3): `releaseTexture` and the `#opaque` variant (it never
+cached the variant it was accused of leaking), the video's per-frame
+chain as a separate finding (folded into the gate above), and the
+exterior automap layout upload (string-keyed - covered by the gate).
