@@ -109,7 +109,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
-import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -133,7 +133,7 @@ import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
-import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
+import { createLockOn, LOCK_PICK_DISTANCE, pickFoeNearRay } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
@@ -1341,6 +1341,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _tapArmed = 0, _tapPoint = null, _tapDir = null;
   let _lastProj = null, _lastView = null, _lockChest = null;
   const lockOn = createLockOn();
+  /** TI1c: THE LOCK'S ARM, one for every ladder - the exterior's below
+   *  and the modal ones through worldModes (host.tapLock). The cone
+   *  pick, not the box hit: a thumb misses a sprite the mouse would
+   *  strike. Answers whether the tap was the lock. */
+  const tapLock = (eye, dir, foes, collider) => {
+    const foe = pickFoeNearRay(eye, dir, foes, collider, LOCK_PICK_DISTANCE);
+    if (foe) lockOn.toggle(foe);
+    return !!foe;
+  };
+  /** TI1c: the dot over the locked foe's chest through THIS frame's
+   *  lens - the exterior pass and the modal pass each hand theirs in. */
+  const placeLockDot = (proj, view) => {
+    if (!touch) return;
+    const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+    touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
+  };
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
   // C9 fix: shotMode must be declared BEFORE walkMode reads it - the
@@ -4731,7 +4747,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6369-6381 -
+  // worldModes answers it in BOTH modes (worldModes.js:6384-6396 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5800,6 +5816,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
+    tapLock,   // TI1c: the lock's arm for the modal ladders - the cone pick the exterior ladder takes
+    onModalView: (proj, view) => { _lastProj = proj; _lastView = view; placeLockDot(proj, view); },   // TI1c: the modal pass's lens - the tap ray and the dot ride it as they ride the exterior pass's
     // V2e: worldModes re-registers the infection host on entry, so the
     // cemetery arm rides the bag or it dies at that re-registration.
     transferToCemetery: transferToCemeteryArm,
@@ -6583,8 +6601,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // TI1: a tap on a live foe is the LOCK (player/lockOn.js),
           // toggled, and the activation ends there - the ladder has no
           // arm for a living enemy but the quest one above, which ran.
-          const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE) : null;
-          if (_lockFoe) lockOn.toggle(_lockFoe);
+          if (_tapDir && tapLock(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider)) { /* TI1c: the tap was the lock */ }
           else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
             // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
             // The watch and the encounter foes leave the same container
@@ -6717,10 +6734,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
     _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
-    if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
-      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
-      touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
-    }
+    placeLockDot(proj, view);   // TI1c: through the exterior pass's lens - the modal pass hands its own in (onModalView)
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
     // A1: DaggerfallLocation.Update's season poll (:118-130), on the

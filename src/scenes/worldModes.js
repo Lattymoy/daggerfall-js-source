@@ -4176,6 +4176,8 @@ export function createWorldModes(host) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
+    // TI1c: the lock, over the same two pools - see tryExitDungeon.
+    if (host.activateDir?.() && host.tapLock?.(eye, dir, interiorFoePool(), interiorCtx.collider)) return true;
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
     const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
@@ -4589,6 +4591,12 @@ export function createWorldModes(host) {
       const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
+    // TI1c: a TAP on a live foe is the LOCK, and the activation ends
+    // there - the host owns the lock (player/lockOn.js) and its cone
+    // pick (host.tapLock); a mouse click's centre ray never locks.
+    // After the quest click, which does not consume, as the exterior
+    // ladder orders its own arm.
+    if (host.activateDir?.() && host.tapLock?.(eye, dir, dungeonCtx.foes, dungeonCtx.collider)) return true;
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
@@ -4992,6 +5000,13 @@ export function createWorldModes(host) {
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
+    // TI1c (Mac: "touch to lock on still doesn't work"): THE MODAL PASS
+    // HANDS ITS LENS BACK. The host's tap ray unprojects through the
+    // last frame's proj/view, and only the exterior pass ever recorded
+    // them - a classic start opens INSIDE Privateer's Hold, so the
+    // finger's ray was null for the whole dungeon and no tap could
+    // lock, or even aim. The lock dot rides the same call.
+    host.onModalView?.(proj, view, mwv.eye);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
@@ -5145,7 +5160,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5523's own wave-46 note); the interior
+          // a blow (world.js:5539's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();

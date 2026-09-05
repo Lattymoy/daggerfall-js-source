@@ -30,7 +30,7 @@ import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: Da
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
-import { pickFoe,   // TI1: the lock-on pick
+import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
@@ -39,7 +39,7 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
-import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
+import { createLockOn, LOCK_PICK_DISTANCE, pickFoeNearRay } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
@@ -210,7 +210,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // TI1: a tap on a live foe is the LOCK (player/lockOn.js), toggled,
     // and the activation ends there.
     if (_tapDir) {
-      const _lockFoe = pickFoe(eye, dir, ctx.foes, ctx.collider, LOCK_PICK_DISTANCE);
+      const _lockFoe = pickFoeNearRay(eye, dir, ctx.foes, ctx.collider, LOCK_PICK_DISTANCE);   // TI1c: the cone, not the box
       if (_lockFoe) { lockOn.toggle(_lockFoe); return null; }
     }
     const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)

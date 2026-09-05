@@ -13,7 +13,7 @@ import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 import { invert4, ndcFromScreen, rayDirFromScreen, projectToScreen, worldRectPx } from '../src/player/tapRay.js';
 import { createGestureRecognizer, TAP_PX, TAP_MS, HOLD_MS } from '../src/ui/touchGestures.js';
 import { createActivateGate, activateFrame } from '../src/systems/activateGate.js';
-import { createLockOn, wrapAngle, chestPoint, CHEST_FRACTION, LOCK_BREAK_DISTANCE } from '../src/player/lockOn.js';
+import { createLockOn, wrapAngle, chestPoint, CHEST_FRACTION, LOCK_BREAK_DISTANCE, pickFoeNearRay, LOCK_PICK_ANGLE } from '../src/player/lockOn.js';
 import { LookFilter } from '../src/player/lookFilter.js';
 import { pickFoe, pickQuestFoe } from '../src/player/activate.js';
 
@@ -205,21 +205,71 @@ test('TI1b end to end: a tap on a foe LOCKS it through the real gate, ray and pi
     if (act.activate) {
       activatedOn = n;
       const useFwd = tapDir ?? fwd;
-      const hit = pickFoe(eye, useFwd, [foe], null, 24);
+      // TI1c: the lock's own pick - the cone; the quest click's box
+      // would need the ray to strike the 0.9-unit body
+      const hit = pickFoeNearRay(eye, useFwd, [foe], null, 24);
       if (hit) lock.toggle(hit);
     }
   };
-  tap(tapAt.x, tapAt.y);
+  // TI1c: the thumb lands OFF the chest - 0.11 rad to the right, which
+  // at six metres is two thirds of a metre: past the quest click's
+  // 0.45-unit box, inside the lock's 0.12-rad cone.
+  const toChest = [chest[0] - eye[0], chest[1] - eye[1], chest[2] - eye[2]];
+  const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
+  const missDir = rotY(toChest, -0.11);
+  const tapMiss = projectToScreen([eye[0] + missDir[0], eye[1] + missDir[1], eye[2] + missDir[2]], W, H, proj, view);
+  assert.ok(tapMiss.front && Math.abs(tapMiss.x - tapAt.x) > 20, `the miss is a real thumb's width on screen: ${Math.abs(tapMiss.x - tapAt.x).toFixed(0)}px`);
+  tap(tapMiss.x, tapMiss.y);
   frameStep(1); assert.equal(lock.locked, false, 'frame N: the press is seen, nothing fires yet');
   frameStep(2); assert.equal(activatedOn, 2, 'frame N+1: the release fires the activation');
   assert.equal(lock.target, foe, 'and the foe under the finger is locked');
+  const missRay = rayDirFromScreen(tapMiss.x, tapMiss.y, W, H, proj, view, eye);
+  assert.equal(pickFoe(eye, missRay, [foe], null, 24), null, 'the box pick misses that finger - which is why the lock has its own');
   frameStep(3); assert.equal(tapPoint, null, 'frame N+2: the ray is cleared');
   // the dot: the chest projects back to where the finger landed
   const dot = projectToScreen(lock.tick(1 / 60, { yaw, pitch }, eye, new LookFilter()), W, H, proj, view);
-  assert.ok(Math.abs(dot.x - tapAt.x) < 0.5 && Math.abs(dot.y - tapAt.y) < 0.5, 'the dot lands under the finger');
+  assert.ok(Math.abs(dot.x - tapAt.x) < 0.5 && Math.abs(dot.y - tapAt.y) < 0.5, 'the dot lands on the CHEST, not where the thumb missed');
   // a second tap on the same foe unlocks
-  tap(tapAt.x, tapAt.y); frameStep(4); frameStep(5);
+  tap(tapMiss.x, tapMiss.y); frameStep(4); frameStep(5);
   assert.equal(lock.locked, false, 'tapped again: unlocked');
+});
+
+test('TI1c pickFoeNearRay: the cone - the smallest angle wins, the nearer body wins a tie, dead, walled and far are skipped, and the box is not required (mutant: any clause)', () => {
+  const eye = [0, 1.7, 0];
+  const ahead = [0, 0, 1];   // +z is forward at yaw 0
+  const at = (x, z) => foeAt(x, 0, z);
+  // a foe 8 m ahead, its chest 1.08 up: the straight ray passes 0.6 m
+  // over its feet and 0.03 rad off its chest - inside the cone
+  const a = at(0, 8);
+  assert.equal(pickFoeNearRay(eye, ahead, [a], null), a, 'inside the cone');
+  // a finger's miss: 0.1 rad right of the chest still locks, 0.2 does not
+  const chestA = chestPoint(a); const dz = chestA[2] - eye[2], dy = chestA[1] - eye[1];
+  const rayOff = (rad) => { const s = Math.sin(rad), c = Math.cos(rad); const len = Math.hypot(dz, dy); return [(dz * s) / len, dy / len, (dz * c) / len]; };
+  assert.equal(pickFoeNearRay(eye, rayOff(0.1), [a], null), a, 'a tenth of a radian off: locked');
+  assert.equal(pickFoeNearRay(eye, rayOff(0.2), [a], null), null, 'a fifth off: outside the cone');
+  assert.ok(LOCK_PICK_ANGLE > 0.1 && LOCK_PICK_ANGLE < 0.2, 'the cone is between those');
+  // ...and the same 0.1-rad ray MISSES the quest click's box: the two picks are different laws
+  assert.equal(pickFoe(eye, rayOff(0.1), [a], null, 24), null, 'the box pick needs the strike');
+  // two foes: the smaller angle wins even when the other is nearer
+  const b = at(1.5, 5);   // nearer, but ~0.3 rad off the straight ray
+  assert.equal(pickFoeNearRay(eye, ahead, [b, a], null), a, 'angle, not distance, picks');
+  // a tie in angle: the nearer body
+  const near = at(0, 6), far = at(0, 12);
+  const toNear = chestPoint(near); const tn = [toNear[0] - eye[0], toNear[1] - eye[1], toNear[2] - eye[2]];
+  const farChest = chestPoint(far); farChest[1] = eye[1] + tn[1] * (12 / 6);   // put far's chest on the same ray
+  far.ai.feet[1] = farChest[1] - far.ai.height * 0.6;
+  assert.equal(pickFoeNearRay(eye, tn, [far, near], null), near, 'same angle: the nearer');
+  // dead, far, and walled are all skipped
+  const dead = at(0, 8); dead.dead = true;
+  assert.equal(pickFoeNearRay(eye, ahead, [dead], null), null, 'a corpse is no target');
+  assert.equal(pickFoeNearRay(eye, ahead, [at(0, 30)], null), null, 'beyond LOCK_PICK_DISTANCE');
+  const wall = { raycast: () => 3 };   // something 3 m out, between eye and chest
+  assert.equal(pickFoeNearRay(eye, ahead, [a], wall), null, 'no line of sight to the chest');
+  const openWall = { raycast: () => 20 };
+  assert.equal(pickFoeNearRay(eye, ahead, [a], openWall), a, 'a wall behind the foe blocks nothing');
+  // a null pool and an unnormalised ray are fine
+  assert.equal(pickFoeNearRay(eye, [0, 0, 5], null, null), null);
+  assert.equal(pickFoeNearRay(eye, [0, 0, 5], [a], null), a, 'the ray is normalised inside');
 });
 
 // ---- the DOM layer and the hosts, by text ----
@@ -262,6 +312,33 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
   assert.match(read('src/scenes/exterior.js'), /const useFwd = _tapDir \?\? \[/, 'exterior: the tap ray replaces the centre ray');
   assert.match(read('src/scenes/dungeon.js'), /const dir = _tapDir \?\? \[/, 'dungeon: the tap ray replaces the centre ray');
   assert.match(read('src/scenes/worldModes.js'), /const eyeDir = \(\) => host\.activateDir\?\.\(\) \?\?/, 'the modal ladders take the tap ray through eyeDir');
+  // TI1c (Mac: "touch to lock on still doesn't work" - inside Privateer's
+  // Hold, the test room): the modal modes had no lock at all. The lens
+  // is handed back so the tap ray exists indoors, the lock arm sits in
+  // both modal ladders after the quest click, and every ladder takes
+  // the ONE cone pick through the host's tapLock.
+  const modes = read('src/scenes/worldModes.js');
+  assert.match(modes, /const view = lookAt\(mwv\.eye, [^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*host\.onModalView\?\.\(proj, view, mwv\.eye\);/, 'the modal pass hands its lens back, right after the view');
+  const dungeonLadder = modes.slice(modes.indexOf('function tryExitDungeon()'));
+  const dQuest = dungeonLadder.indexOf('const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);');
+  const dLock = dungeonLadder.indexOf('if (host.activateDir?.() && host.tapLock?.(eye, dir, dungeonCtx.foes, dungeonCtx.collider)) return true;');
+  const dTargets = dungeonLadder.indexOf('const targets = dungeonCtx.exitDoors.map(');
+  assert.ok(dQuest > 0 && dLock > dQuest && dTargets > dLock, 'dungeon: quest click, then the lock, then the targets');
+  const interiorLadder = modes.slice(modes.indexOf('function tryExit()'), modes.indexOf('function tryExitDungeon()'));
+  const iQuest = interiorLadder.indexOf('const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);');
+  const iLock = interiorLadder.indexOf('if (host.activateDir?.() && host.tapLock?.(eye, dir, interiorFoePool(), interiorCtx.collider)) return true;');
+  const iTargets = interiorLadder.indexOf('const targets = interiorCtx.doors.map(');
+  assert.ok(iQuest > 0 && iLock > iQuest && iTargets > iLock, 'interior: quest click, then the lock, then the targets');
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const t = read(h);
+    assert.match(t, /const tapLock = \(eye, dir, foes, collider\) => \{\s*\n\s*const foe = pickFoeNearRay\(eye, dir, foes, collider, LOCK_PICK_DISTANCE\);\s*\n\s*if \(foe\) lockOn\.toggle\(foe\);\s*\n\s*return !!foe;/, `${h}: the one lock arm, on the cone pick`);
+    assert.match(t, /activateDir: \(\) => _tapDir,[^\n]*\n\s*tapLock,[^\n]*\n\s*onModalView: \(proj, view\) => \{ _lastProj = proj; _lastView = view; placeLockDot\(proj, view\); \},/, `${h}: both handed to the mode machine`);
+    assert.match(t, /if \(_tapDir && tapLock\(cam\.pos, useFwd, /, `${h}: the exterior ladder takes the same arm`);
+    assert.match(t, /_lastProj = proj; _lastView = view;[^\n]*\n\s*placeLockDot\(proj, view\);/, `${h}: the exterior pass places the dot through its own lens`);
+    assert.doesNotMatch(t, /\bpickFoe\(/, `${h}: the box pick is gone from the lock`);
+  }
+  assert.match(read('src/scenes/dungeon.js'), /pickFoeNearRay\(eye, dir, ctx\.foes, ctx\.collider, LOCK_PICK_DISTANCE\)/, 'the standalone host locks by the cone too');
+  assert.doesNotMatch(read('src/scenes/dungeon.js'), /\bpickFoe\(/, 'and not by the box');
   const interior = read('src/scenes/interior.js');
   assert.doesNotMatch(interior, /attack:|tap:|dial:|attackTap/, 'the fly-cam interior draws no sword, no dial');
 });

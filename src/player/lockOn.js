@@ -57,6 +57,46 @@ export function chestPoint(foe) {
  * (every host's useFwd), so the yaw TO a point is atan2(dx, dz) and the
  * pitch atan2(dy, horizontal) - the errors below are in those terms.
  */
+/** TI1c: the lock's own pick tolerance - about seven degrees, a thumb's
+ *  miss on a phone at arm's length. */
+export const LOCK_PICK_ANGLE = 0.12;
+
+/**
+ * TI1c (Mac: "touch to lock on still doesn't work"): THE LOCK'S OWN
+ * PICK. activate.js's pickFoe is the quest click's law - the ray must
+ * strike the foe's 0.9-unit box - which is the mouse's precision: a
+ * sprite six metres off is twenty pixels wide under a thumb, and a
+ * miss by a finger's width locked nothing. The lock takes the nearest
+ * live foe to the tap's RAY inside a small cone instead: the smallest
+ * angle wins, a nearer body wins the tie, and the line of sight runs
+ * through the collider to the CHEST - the point the lock faces. The
+ * quest click keeps its box; a lock is not a click.
+ * @returns the foe, or null
+ */
+export function pickFoeNearRay(eye, dir, foes, collider, distance = LOCK_PICK_DISTANCE, maxAngle = LOCK_PICK_ANGLE) {
+  const dl = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+  const d = [dir[0] / dl, dir[1] / dl, dir[2] / dl];
+  let best = null, bestAngle = Infinity, bestDist = Infinity;
+  for (const f of foes ?? []) {
+    if (!f || f.dead) continue;
+    const chest = chestPoint(f);
+    if (!chest) continue;
+    const v = [chest[0] - eye[0], chest[1] - eye[1], chest[2] - eye[2]];
+    const len = Math.hypot(v[0], v[1], v[2]);
+    if (len === 0 || len > distance) continue;
+    const cos = (v[0] * d[0] + v[1] * d[1] + v[2] * d[2]) / len;
+    const angle = Math.acos(Math.max(-1, Math.min(1, cos)));
+    if (angle > maxAngle) continue;
+    const better = angle < bestAngle - 1e-6 || (Math.abs(angle - bestAngle) <= 1e-6 && len < bestDist);
+    if (!better) continue;
+    const toward = [v[0] / len, v[1] / len, v[2] / len];
+    const wall = collider?.raycast?.(eye, toward, len) ?? Infinity;
+    if (Number.isFinite(wall) && wall < len - 0.05) continue;
+    best = f; bestAngle = angle; bestDist = len;
+  }
+  return best;
+}
+
 export function createLockOn({
   breakDistance = LOCK_BREAK_DISTANCE,
   gain = LOCK_FACE_GAIN,
