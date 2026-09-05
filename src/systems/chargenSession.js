@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:109/:960-962 both import and run
+// 126/:1364-1366 and exterior.js:110/:962-964 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -393,7 +393,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the wizard already routes a mousemove here: world.js and
     // exterior.js through `townTalk.hover` (townTalk.js:1076-1087,
     // the route itself :1085), dungeonContext.js through `overlayHover`
-    // (:4613), which dungeon.js:385 and worldModes.js:6506 both feed.
+    // (:4638), which dungeon.js:387 and worldModes.js:6508 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

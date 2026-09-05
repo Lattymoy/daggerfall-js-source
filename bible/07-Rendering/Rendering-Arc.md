@@ -808,5 +808,132 @@ than the lat-long ones they replaced, so `changes` alone was the wrong
 measure and LEVELS - 8 against 69 - is the decisive one.
 
 ON THE HORIZON: the sky as a setting rather than a URL, lightning on
-the thunder weather, and a season's hand on the palette.
+the thunder weather, and a season's hand on the palette. (DS1 took two
+of the three another way: the sky IS a setting now - the Mods pane's
+Dynamic Skies switch chooses between the dome and the mod - and the
+thunder weather flashes, with the mod's own lightning.)
 
+## DS1 - DYNAMIC SKIES, THE MOD, 1:1 (2026-09-04, Mac's call) - SHIPPED
+
+Mac: "I want to implement this mod 1:1. We received permission from the
+creator. I also want it to be compatible with our current
+implementation." The whole account is `Dynamic-Skies.md` beside this
+file; the ledger row is Port-Ledger A. The short of it: BadLuckBurt and
+carademono's Dynamic Skies 2.3.4 vendored with permission, its C#
+ported with its quirks and its shader translated line for line (in
+DFU's LINEAR colour space, which decides how every colour and texture
+reaches the GLSL), standing beside ES1's dome on the one controller
+seam as the enhanced lane's sky while its own switch is on. Under it the
+ease, the wind, the front, the rain, the grass, the mills and the
+moonlight term keep working; the mod's fog table, light curve, fog
+colour, lightning and pixel snow reach the world where the mod reaches
+it in DFU. Seen on SwiftShader through the lab's new door
+(`sky.html?sky=dynamic`, `tools/dynamicSkiesProbe.mjs`, 11/11): the
+layered clouds over the scattering blue, the disc at sunset over an
+orange sky, the twinkling star field. Pins: 20 in
+`test/dynamicSkies.test.js`. One probe-found fault fixed before landing:
+every weather rendered Sunny, because the mod's own OnWeatherChange
+swallows the event that lands in Init's pending window and DFU's
+OnLoad is what papers over it - the port's first word is a load now.
+The boot probe and the world render gate need ARENA2 and are the next
+machine's to run.
+
+
+## INCIDENT 2026-09-04 - THE SEE-THROUGH LINES IN DUNGEON WALLS (Mac's report) - SHIPPED
+
+Mac: "Dungeon interiors have some sort of see through line in its
+walls. Like it's not fully connected." The geometry was connected.
+Four laws had drifted from DFU, and each one made the same one-texel
+line worse.
+
+**1. The mesh material was uploaded as a cutout.** The pipeline had one
+upload door, `uploadRecord`, and it called `getColor32(bitmap, 0)` -
+palette index 0 transparent - for models and flats alike, while the
+model shader ended `if (tex.a < 0.5) discard;`. DFU builds a mesh's
+material through `MaterialReader.GetMaterial(archive, record)` whose
+`alphaIndex` defaults to -1 (`MaterialReader.cs:352`, reached from
+`DaggerfallMesh.cs:141/:169`): NO cutout index, and
+`DaggerfallDefault.shader` never clips. Only the billboard path
+(`GetMaterialAtlas`, `GetMaterial(..., 0)`) makes index 0 transparent.
+The mortar runs of a wall texture are index 0 in the classic art, so
+every one of them became a slit the model shader discarded, and the
+room behind showed through. Now: `uploadRecord(archive, record, {
+opaque })` decodes at -1 for a mesh and 0 for a flat, every sub-mesh
+site (the pipeline's model and part uploads, `texRemap`'s climate
+swap, `interiorContext`'s swap) asks for the opaque material, the
+renderer keys it `archive_record#opaque` (DFU caches materials per
+alphaIndex) and `_drawMeshBundle` looks there first with a fall-back
+to the cutout upload, and the model fragment shader carries no alpha
+clip. The billboard shader keeps its discard.
+
+**2. The clear colour.** Every host cleared to the Iliac Bay's sky
+blue, so what showed through a slit was a bright line.
+`CameraClearManager.cs:23-25/:51-57` clears an interior to solid
+BLACK and an exterior to depth only behind the sky. `setClearColor`
+(idempotent through the renderer's Float32 shadow, which the panel
+bracket restores from) with `SKY_CLEAR` / `INTERIOR_CLEAR`: the
+dungeon and interior hosts set black at boot, world and exterior set
+by mode before the frame.
+
+**3. No mip chain.** `TextureReader` builds one on every classic
+texture (`:31 mipMaps = true`, `:264 Apply(true)`) and samples it
+point (`MaterialReader.cs:104/:437`, FilterMode.Point = nearest texel,
+nearest mip). Without the chain a one-texel line keeps full contrast
+at any distance and shimmers as the camera moves; with it the line
+dissolves into the wall a few metres out, which is what DFU shows.
+`uploadTexture` now generates the chain and sets
+`NEAREST_MIPMAP_NEAREST` for every non-smooth upload; the smooth (UI)
+upload keeps its single LINEAR level.
+
+**4. One cache key for both.** With flats and meshes sharing
+`archive_record`, whichever asked first decided the pixels the other
+drew with. The `#opaque` key ends that.
+
+Pins: 7 in `test/incident_dungeon_seams.test.js` (the alphaIndex
+values, the pipeline's doors, the shader clip, the two-key cache and
+the draw's preference, the mip chain and filters off the recorded GL
+calls, the clear colour's idempotence and the four hosts). Two EV2
+pins moved to the `#opaque` key and the texture-replacement pin to the
+door's new signature. NO ARENA2 IN THE CONTAINER: the diagnosis is by
+reading against DFU, and the four surfaces want Mac's eyes on the live
+site - dungeon walls up close and at distance, the black backdrop
+behind any remaining crack, the look of every classic texture at
+distance now that a mip chain sits under it, and the exterior sky
+still clearing blue.
+
+### REVIEW 2026-09-05 - the adversarial round over PR #55
+
+Six finder lenses over the merged diff, two refuters per finding; 23
+confirmed, folding to four on this half:
+
+- **The late-stood interior person never drew.** `interiorContext`'s
+  `standPerson` upload had been sent through the mesh door too, and
+  that site is a FLAT (`DaggerfallBillboard.cs:289-293`, alphaIndex 0)
+  - `drawBillboards` reads the bare key only, so a person stood by the
+  `UpdateNpcPresence` re-roll whose record no build-time batch had
+  uploaded was invisible. Reverted; the pin that had forced it (the
+  interior has no mesh door of its own - its swap rides
+  `remapSubMeshes`) now says the opposite, and a Proxy-GL pin shows an
+  opaque-only upload issuing no draw.
+- **The world-hosted dungeon never cleared black.** `world.js`'s and
+  `exterior.js`'s `setClearColor` sit AFTER their `modes.frame` early
+  return, so in dungeon and interior modes the line was dead and the
+  classic-start Privateer's Hold still cleared sky blue (only the
+  standalone `?dungeon` host went black). `worldModes` now sets
+  `INTERIOR_CLEAR` immediately before each of its two `beginFrame`s;
+  the streaming hosts' call is the exterior's `SKY_CLEAR` only.
+- **The mip chain reached UI art.** `ImageReader.GetTexture` builds
+  with `mipChain false` (`ImageReader.cs:59`); the chain is now gated
+  on a numeric TEXTURE.nnn archive (`{ mips }` overrides), so the
+  string-keyed IMG/CIF/font/automap/video uploads keep one NEAREST
+  level and the video no longer regenerates a chain per frame.
+- **Emission maps had no chain** while the albedo they are subtracted
+  from did (`TextureReader.cs:316/:328/:340` build them mipped,
+  `MaterialReader.cs:448` samples them point): at distance the
+  shader's `albedo - emission` mixed a coarse mip with a level-0 texel
+  and a window shimmered. `uploadEmissionTexture` mips too.
+
+Refuted (3): `releaseTexture` and the `#opaque` variant (it never
+cached the variant it was accused of leaking), the video's per-frame
+chain as a separate finding (folded into the gate above), and the
+exterior automap layout upload (string-keyed - covered by the gate).

@@ -89,8 +89,8 @@ export function buildArmsFor(entity) {
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:1945), townTalk.say
- *                     (exterior.js:1104, world.js:2044) and
+ *                     (dungeonContext.js:1958), townTalk.say
+ *                     (exterior.js:1106, world.js:2046) and
  *                     worldModes' own interior sink (worldModes.js:347,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below

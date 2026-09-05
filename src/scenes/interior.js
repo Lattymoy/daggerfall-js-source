@@ -6,6 +6,7 @@
 // there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -70,6 +71,7 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   status(`laying out ${blockName}:${recordIndex}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  renderer.setClearColor(INTERIOR_CLEAR);   // INCIDENT 2026-09-04: inside clears to BLACK (CameraClearManager.cs:24-25)
   // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
   // buildDungeonContext, so every sound in this host was a silent
   // no-op until a dungeon was entered (DFU's sound reader is global
@@ -174,7 +176,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:378-379) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:6170 sits
+    // returns before its own preventDefault - worldModes.js:6172 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -323,7 +325,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:564 and worldModes.js:4501/:4597 gate the same
+    // driver. dungeon.js:566 and worldModes.js:4501/:4597 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

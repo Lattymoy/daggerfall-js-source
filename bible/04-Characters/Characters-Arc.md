@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:940`)
+encounter pool has always exported its own at `exteriorFoes.js:963`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once
@@ -2802,3 +2802,114 @@ ARENA2 needed, which is what made the aggro block observable at all);
 `test/enchantpool.test.js`'s EC1 spawn-arms pin was rewritten from a
 refusal into the positive law, and its Wabbajack pin now routes the
 watch. 21 mutants driven, 20 dead; the one survivor is EQUIVALENT and named: `removeGuard`'s `g.dead` early return is shadowed by `releaseGuardBatch`'s own null-batch guard, so dropping it changes nothing observable.
+
+## INCIDENT 2026-09-04 - THE BATS IN THE CEILING (Mac's report) - SHIPPED
+
+Mac: "In the first dungeon I notice some bat enemies stuck in the
+ceiling." Three laws, all in one new home, `characters/enemyAnchor.js`.
+
+**1. Where the marker is.** `RDBLayout.cs:1537` stands the enemy
+TRANSFORM on the flat marker, and the mobile billboard hangs on it
+with `localPosition` zero (`DaggerfallMobileUnit.cs:407-410` for a
+Flying or Aquatic unit): the marker is the sprite's CENTRE. The port's
+motor keeps FEET and its billboard shader bottom-anchors, so a bat
+whose feet were put on the marker stood half a sprite too high - into
+the ceiling of Privateer's Hold. `:1546-1548` ground-aligns everything
+but a FLYING unit, so only a flyer takes the centre-to-feet drop
+(`feetFromCentre`); C12 had read the motor's `CanFly =
+Flying|Spectral` at the layout, and a ghost grounds there. The
+exterior pool has the same law one step removed: `FinalizeFoe`
+(`CreateFoe.cs:341-359`) lifts a flyer's transform 1.5 and
+`CreateEnemy` skips its ground align (`GameObjectHelper.cs:1227`), so
+`spawnFoe` fetches the texture BEFORE the AI stands and drops a
+flyer's feet half its idle sprite under the lifted point - with the
+AUDIT-39r epoch guard still between the await and the stand.
+
+**2. The capsule.** `SetupDemoEnemy.cs:103-115`: the controller's
+height is the idle sprite's, HALVED for a flyer ("in frame 0 wings are
+in high position, assume body is the lower half", bottom-justified so
+the bottom edge stays) and never under 1.6 ("stops very short
+characters like rats from being walked upon"). Every foe had worn the
+player's 1.8 - both spawn hosts passed no `height` - and the motor's
+six `collider.move` sites (and the enhanced motor's follow) never
+passed the height they had, so the collider swept the player's
+capsule for a bat and a giant alike. `enemyControllerHeight` sizes it,
+both hosts pass it, every move carries `this.height`.
+
+**3. The draw.** A walker keeps its feet aligned across records
+(`:402-406`, the sprite lifted by half the growth); a flyer or swimmer
+keeps its centre (`:407-410`). The port's shader bottom-anchors, so
+`spriteOriginY` gives a walker its feet and a flyer or swimmer
+`feet + (idleH - recordH) / 2`; both draws use it through a per-foe
+scratch origin so a wing-beat record grows around the centre instead
+of up from the feet.
+
+Pins: 6 in `test/incident_ceiling_bats.test.js` - the three laws as
+values against DFU's numbers, a live `EnemyAI` over a real floored
+Collider recording the height every move carries, a sweep of every
+`collider.move` in both motors, and the two spawn hosts' shapes. No
+ARENA2 in the container: the bats' height, the halved capsule's feel
+at doors, and flyers and swimmers in every host want Mac's eyes on the
+live site.
+
+### REVIEW 2026-09-05 - the adversarial round over PR #55
+
+Six finder lenses over the merged diff, two refuters per finding; 23
+confirmed, folding to seven on this half. The thread through them:
+DFU's `transform.position` is the sprite CENTRE, `idleH/2` above the
+capsule bottom whatever the capsule became (the BOTTOM justification
+keeps the sprite bottom on the feet), and the first cut had moved
+the spawn to that law but left everything that MEASURES against the
+transform at `height/2`.
+
+- **The motor.** `_getDestination` aimed a flyer's FEET at the
+  player's face (DFU aims its transform), so a pursuing bat rose half
+  a sprite back toward the ceiling; the grounded arm's
+  `(targetHeight - originalHeight)/2` was applied to a feet-space
+  point (zero while every foe wore 1.8, wrong for a rat's 1.6 or a
+  giant's 2.6); `_centre()` - every obstacle, fall, path and shoot
+  probe DFU casts from `transform.position` - was `height/2`. New
+  constructor option `centreOffset` (default `height/2`, so a caller
+  naming no sprite is unchanged; the hosts pass `idleH/2`);
+  `_getDestination` builds DFU's destination in transform-space and
+  converts ONCE (`- centreOffset`), the detour destination is
+  feet-space like every other, the swimmer's water test and the
+  flyer's floor ray read the transform, `canHearTarget` takes the
+  offset.
+- **The watch.** `cityGuards` was the third `new EnemyAI` host and
+  still wore the player's capsule; the texture is read before the AI
+  (the epoch guard still ahead of any allocation), the capsule sized
+  from the sprite, `idleH` carried.
+- **Re-stands.** `WabbajackEffect.cs:90` hands `CreateEnemy` the
+  struck foe's `transform.localPosition`; all three hosts handed
+  FEET, which the spawn chain now reads as a marker (sprite centre), so
+  a Wabbajack roll into an imp or bat stood it half a sprite under
+  the floor. `centreFromFeet` (the inverse of `feetFromCentre`) at
+  every arm.
+- **The exterior save.** `snapshotWorld` holds FEET and `restoreWorld`
+  re-entered `spawnFoe`, which now dropped the flyer AGAIN - half a
+  sprite per load, cumulatively. `spawnFoe` takes `feetGiven`; the
+  restore passes it (the snapshot shape is unchanged, so older saves
+  stay valid). And the drop itself was an absolute overwrite from the
+  caller's `pos` after the texture await, discarding any `offsetAll`
+  recentre in flight - it is a delta on the live pending array now.
+- **Old dungeon saves.** A save written before the law holds every
+  idle bat's feet AT the marker and `applyWorld` wrote them back
+  over the corrected spawn - the reported symptom would have survived
+  every load of the owner's own save. Entries are stamped `anchor:
+  1`; an un-stamped Flying entry whose feet are exactly the rebuilt
+  feet plus half the idle sprite keeps the rebuilt spawn
+  (`keepRebuiltSpawn`), anything that had moved restores verbatim as
+  `SerializableEnemy` does.
+- **Hit laws.** The player's swing reach/in-view point, the arrow
+  contact and the dungeon missile contact tested `feet + 0.9` - the
+  PLAYER's half-capsule - on every foe; five sites now read the foe's
+  own `height/2` (the audio origins keep 0.9: a sound source, not a
+  hit law).
+
+Pins: 3 more in `test/incident_ceiling_bats.test.js` (the inverse and
+the save judgement as values; a live 3.2-idle bat with a 1.6 capsule
+measuring its centre at 1.6 and aiming 0.2 in feet-space, a rat +0.35,
+a walker level; every host/re-stand/hit-site shape), and the two
+wave-34/35 motor pins moved to the transform-space law they had
+encoded the feet-space reading of.

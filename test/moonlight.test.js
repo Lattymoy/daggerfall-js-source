@@ -93,7 +93,9 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   assert.ok(r.includes('this._moonScale = 0;\n    this._moonColor'), 'constructor default is no moon');
   // the seam: only the enhanced sky has moon state to answer with
   const shared = readFileSync('src/scenes/shared.js', 'utf8');
-  assert.match(shared, /moonlight\(\)\s*\{\s*return enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : null;/,
+  // DS1: the mod's moons feed the same term (dynamicMoons); the dome's
+  // arm and the classic null are as they were.
+  assert.match(shared, /moonlight\(\)\s*\{\s*if \(enhancedSky\?\.state\) return moonlightTerm\(enhancedSky\.state\);[\s\S]*?return dynamicMoons \? moonlightTerm\(dynamicMoons\) : null;/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
   // both exterior hosts drive it; no interior host ever does
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

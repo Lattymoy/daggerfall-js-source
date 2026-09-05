@@ -183,9 +183,9 @@ export function blockedByIllusionEffect(seesThrough, { invisible = false, blendi
  *  collider's ray includes closed action doors (they are collider
  *  buckets), which DFU's static-only mask lets sound pass - a
  *  closed door muffles here. */
-export function canHearTarget(collider, feet, height, targetFeet, dist) {
+export function canHearTarget(collider, feet, height, targetFeet, dist, centreOffset = height / 2) {
   if (dist >= HEARING_RADIUS) return false;
-  const center = [feet[0], feet[1] + height / 2, feet[2]];
+  const center = [feet[0], feet[1] + centreOffset, feet[2]];   // EnemySenses.cs:942 casts from transform.position
   const ex = targetFeet[0] - center[0], ey = targetFeet[1] + 0.9 - center[1], ez = targetFeet[2] - center[2];
   const el = Math.hypot(ex, ey, ez) || 1;
   const hit = collider.raycast(center, [ex / el, ey / el, ez / el], el);
@@ -326,7 +326,7 @@ export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null, hasMagickaToCast = null } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, isHostile = true, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null, hasMagickaToCast = null, centreOffset = null } = {}) {
     this.collider = collider;
     /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
      *  cannot resolve a collider bucket key to an action object - the
@@ -346,6 +346,15 @@ export class EnemyAI {
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
+    // REVIEW 2026-09-05 (PR #55): where DFU's transform.position sits
+    // above the capsule bottom. SetupDemoEnemy justifies the controller
+    // BOTTOM, so the transform stays at the sprite CENTRE - idleH/2 over
+    // the feet - whatever the capsule's height became (halved for a
+    // flyer, floored at 1.6 for a rat). Every probe DFU casts from
+    // transform.position and every destination it measures against it
+    // read this, not height/2. The default keeps a caller that names
+    // no sprite (the tests' 1.8 capsule) exactly where it was.
+    this.centreOffset = centreOffset ?? height / 2;
     // CH3 (AUDIT 23 characters-8): EnemyMotor.ApplyFallDamage's
     // tracking pair - LastGroundedY refreshes while grounded, and a
     // landing after a past-threshold drop reports the distance for
@@ -580,7 +589,7 @@ export class EnemyAI {
     // hearing only once the target is already detected and unseen -
     // "classic stealth mechanics would be interfered with by hearing"
     const inEarshot = (this.detected && !this.inSight)
-      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist)
+      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist, this.centreOffset)
       : false;
     // AUDIT 24 (wave 35): the TARGET-POSITION MEMORY, which the port did
     // not have at all - EnemySenses.cs:451-495. Sight or earshot writes
@@ -756,7 +765,7 @@ export class EnemyAI {
   /** The controller CENTRE - DFU's `transform.position` for a
    *  CharacterController, which every probe below is written from. The
    *  port stores FEET. */
-  _centre() { return [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]]; }
+  _centre() { return [this.feet[0], this.feet[1] + this.centreOffset, this.feet[2]]; }   // transform.position (REVIEW 2026-09-05: centreOffset, not height/2)
 
   /**
    * EnemySenses.PredictNextTargetPos (:541-616), the position the two
@@ -1048,11 +1057,14 @@ export class EnemyAI {
         if (count > DETOUR_SWEEP_MAX_TRIES) break;
       } while (this.obstacleDetected || this.fallDetected);
     }
-    const c = this._centre();
+    // REVIEW 2026-09-05: `transform.position + testMove * reach`, kept
+    // in FEET-space like every other destination on this class (the
+    // motion direction subtracts feet, DFU's subtracts the transform -
+    // the same difference only if the centre offset cancels).
     this.detourDestination = [
-      c[0] + testMove[0] * DETOUR_REACH,
-      c[1] + testMove[1] * DETOUR_REACH,
-      c[2] + testMove[2] * DETOUR_REACH,
+      this.feet[0] + testMove[0] * DETOUR_REACH,
+      this.feet[1] + testMove[1] * DETOUR_REACH,
+      this.feet[2] + testMove[2] * DETOUR_REACH,
     ];
     if (this.avoidObstaclesTimer <= 0) this.avoidObstaclesTimer = DETOUR_TIMER;
     this.lastTimeWasStuck = this._clock;
@@ -1141,56 +1153,62 @@ export class EnemyAI {
     // are feet-space, which is the same difference.
     const prevDist = Math.hypot(prev[0] - this.feet[0], prev[1] - this.feet[1], prev[2] - this.feet[2]);
     const predicted = this.predictedTargetPos ?? playerFeet;
-    const predictedCentre = [predicted[0], predicted[1] + tHeight / 2, predicted[2]];
+    // REVIEW 2026-09-05 (PR #55 review): GetDestination works in
+    // TRANSFORM-space end to end - the target's transform is its capsule
+    // centre (feet + tHeight/2, the player's controller has no centre
+    // offset) and this foe's transform sits centreOffset (idleH/2) above
+    // its feet. The port keeps FEET, so the destination is built in
+    // DFU's space below and converted ONCE at the end: destination -
+    // feet then equals DFU's destination - transform for every consumer
+    // that subtracts feet (_dir3, the stop distance, prevDist). Before
+    // this, the face-aim added the whole target height to FEET, so a
+    // bat pursued with its feet at the player's head - its sprite half
+    // a sprite above DFU's - which is the ceiling incident's second
+    // half, and the grounded arm's (tHeight - height)/2 was applied to
+    // a feet-space point (zero while every foe wore 1.8, wrong the day
+    // a rat's 1.6 or a giant's 2.6 arrived).
+    const tc = tHeight / 2;
+    const predictedCentre = [predicted[0], predicted[1] + tc, predicted[2]];
+    let dest;
     // ...or the foe is a shooter with the target in sight, in which case
     // it heads for the target whether the path is clear or not (:539-540
     // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
     if (this._clearPathToPosition(predictedCentre, prevDist)
       || (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))) {
-      const d = [predicted[0], predicted[1], predicted[2]];
+      dest = [predicted[0], predicted[1] + tc, predicted[2]];   // senses.PredictedTargetPos, the target's transform
       // Flyers, levitators and the slaughterfish aim for the target FACE
-      // (:543-544) - `targetController.height * 0.5f`, the TARGET's
-      // capsule, on top of a destination DFU takes at the target's
-      // CENTRE. `d` is feet-space here, so the port folds the two
-      // cases together: the face-aimers get the whole target height
-      // (feet + h = centre + h/2 = top), a plain swimmer gets half
-      // (feet + h/2 = centre, DFU's no-add case). The predicate is
-      // DFU's own `flies || IsLevitating || (swims && Slaughterfish)`
-      // and is read LIVE - `levitating` changes with the effect.
-      if (this.flies || this.levitating || this.swims) {
-        d[1] += (this.flies || this.levitating || this.isFaceAimingSwimmer)
-          ? tHeight : tHeight / 2;
-      }
-      this.destination = d;
+      // (:543-544) - `targetController.height * 0.5f` on top of the
+      // target's centre. The predicate is DFU's own `flies ||
+      // IsLevitating || (swims && Slaughterfish)` and is read LIVE -
+      // `levitating` changes with the effect. A plain swimmer takes the
+      // centre as it is (DFU's no-add case).
+      if (this.flies || this.levitating || this.isFaceAimingSwimmer) dest[1] += tc;
       this.searchMult = 0;
     } else {
       // The SEARCH (:549-557): walk past the last known position along
       // the direction the target was last moving, further each pass, and
       // only while the search position is still inside the stop distance.
+      // LastKnownTargetPos is the target's transform (its centre).
       const diff = this.lastPositionDiff;
       const dl = Math.hypot(diff[0], diff[1], diff[2]);
       const n = dl > 1e-9 ? [diff[0] / dl, diff[1] / dl, diff[2] / dl] : [0, 0, 0];
       const base = this.lastKnownTargetPos ?? playerFeet;
       const search = [
         base[0] + n[0] * this.searchMult,
-        base[1] + n[1] * this.searchMult,
+        base[1] + tc + n[1] * this.searchMult,
         base[2] + n[2] * this.searchMult,
       ];
-      const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);
+      const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);   // (searchPosition - transform.position).magnitude
       if (this.searchMult <= SEARCH_MULT_MAX && sd <= this.stopDistance) this.searchMult++;
-      this.destination = search;
+      dest = search;
     }
     // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
     // enemies' vector can aim up towards the target, which could
     // interfere with distance-to-target calculations". The delta is
     // `(targetController.height - originalHeight) / 2`: the TARGET's
-    // capsule against this foe's own. It was written as
-    // CAPSULE_HEIGHT (the player's) against `this.height` with a
-    // comment saying the line was "written for the day they differ" -
-    // MT-ii is that day, and a rat hunting a giant is the case.
-    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) {
-      this.destination = [this.destination[0], this.destination[1] - (tHeight - this.height) / 2, this.destination[2]];
-    }
+    // capsule against this foe's own (MT-ii: a rat hunting a giant).
+    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) dest[1] -= (tHeight - this.height) / 2;
+    this.destination = [dest[0], dest[1] - this.centreOffset, dest[2]];   // transform-space -> feet-space, once
   }
 
   /**
@@ -1508,11 +1526,11 @@ export class EnemyAI {
       const mx = d[0] * sp * dt, myRaw = d[1] * sp * dt, mz = d[2] * sp * dt;
       if (this.swims) {
         const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
-        const center = this.feet[1] + this.height / 2;
+        const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
         if (waterY !== null && center < waterY) {
           let my = myRaw;
           if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
-          this.collider.move(this.feet, mx, my, mz);
+          this.collider.move(this.feet, mx, my, mz, this.height);
         }
       } else if (this.flies || this.levitating) {
         // :293-298 - `else if (flies || IsLevitating) controller.Move(...)`,
@@ -1524,12 +1542,12 @@ export class EnemyAI {
         // knocked-back levitator sails and does not drop.
         if (this.flies && !this.levitating) this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
         else this.velY = 0;   // no gravity arm claims a levitator: the port's accumulator must not carry one either
-        const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
+        const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz, this.height);
         if (r.grounded) this.velY = 0;
         this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
       } else {
         this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
-        const r = this.collider.move(this.feet, mx, this.velY * dt, mz);
+        const r = this.collider.move(this.feet, mx, this.velY * dt, mz, this.height);
         if (r.grounded) this.velY = 0;
         this._trackFall(r.grounded);
       }
@@ -1547,7 +1565,7 @@ export class EnemyAI {
     if (this.swims) {
       if (paralyzed || !this.moving) return;
       const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
-      const center = this.feet[1] + this.height / 2;
+      const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
       if (waterY === null || center >= waterY) return;
       const d = this._dir3(this.destination);
       // AttemptMove's probe (wave 34). A swimmer keeps its y in
@@ -1557,7 +1575,7 @@ export class EnemyAI {
       if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); return; }
       let my = d[1] * this.speed * dt;
       if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
-      this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt);
+      this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt, this.height);
       return;
     }
 
@@ -1601,7 +1619,7 @@ export class EnemyAI {
       // into the branch condition above.
       if (this.flies && this.avoidObstaclesTimer <= 0 && d[1] < 0) {
         const hit = this.collider.raycast(
-          [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]], [0, -1, 0],
+          this._centre(), [0, -1, 0],   // FindGroundPosition rays from transform.position (:224)
           this.height / 2 + FLYER_FLOOR_CLEARANCE);
         if (Number.isFinite(hit)) d[1] = FLYER_FLOOR_LIFT;
       }
@@ -1609,7 +1627,7 @@ export class EnemyAI {
       this._obstacleCheck(d);
       this._fallCheck(d);
       if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); this.lastGroundedY = this.feet[1]; return; }
-      this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt);
+      this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt, this.height);
       this.lastGroundedY = this.feet[1];   // the altitude-control anchor, post-move
       return;
     }
@@ -1650,7 +1668,7 @@ export class EnemyAI {
         dzm = dir2d[2] * this.speed * dt;
       }
     }
-    const r = this.collider.move(this.feet, dxm, dy, dzm);
+    const r = this.collider.move(this.feet, dxm, dy, dzm, this.height);
     if (r.grounded) this.velY = 0;
     this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;

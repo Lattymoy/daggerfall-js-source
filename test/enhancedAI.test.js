@@ -148,7 +148,7 @@ test('ENHANCED AI 3 (ARENA2): Privateer\u2019s Hold bakes, and a path crosses it
   // own path, bake from its collider anchored at the entry, and assert a
   // path from the entry to the first hall exists and stays inside the mesh.
   // Written now so the moment the data lands the pin runs; the loader
-  // call is the one dungeonContext.js:426 feeds.
+  // call is the one dungeonContext.js:427 feeds.
   assert.ok(true);
 });
 

@@ -18,7 +18,7 @@
 // with you, every time, in every building and every dungeon reached
 // from the town.
 //
-// dungeon.js:216 - the standalone host - has always had the right
+// dungeon.js:218 - the standalone host - has always had the right
 // shape: attack, then return. It has no modal sibling to share the
 // drag with, which is why it never needed a mode in the test.
 import { test } from 'node:test';
@@ -118,7 +118,7 @@ test('audit24 wave45: worldModes owns the drag indoors - that half was always ri
 });
 
 test('audit24 wave45: the standalone dungeon host keeps its own shape, and it is the correct one', () => {
-  // dungeon.js:214-220 - attack, then return, with no mode in the test
+  // dungeon.js:216-222 - attack, then return, with no mode in the test
   // at all, because nothing else is listening there. It is the
   // reference the two streaming hosts have now been brought to.
   const d = rd('src/scenes/dungeon.js');

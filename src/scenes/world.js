@@ -7,6 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -166,7 +167,7 @@ import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the Ques
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather } from '../systems/weatherFront.js';   // WX2: the front reaches the ground
-import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
+import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -437,7 +438,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // scale is 1 at DFU's default 3, so the classic path is untouched);
   // the exp weather rows pass through scaleFogForDistance unchanged.
   const fogDistance = getInt('Experimental', 'TerrainDistance', 1, 4);
-  let weatherFog = scaleFogForDistance(fogForWeather(weather), fogDistance);
+  let weatherFog = scaleFogForDistance(fogForWeather(weather, sky.fogSettings), fogDistance);   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies is the sky
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
@@ -452,6 +453,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // EVERY frame that rain, storm or snow drew, one step above the pass
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
+  if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
   let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
   // GR1: the lab's grass - one scatter of the lab's 1,200,000 candidates in a
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
@@ -477,7 +479,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
-    weatherFog = scaleFogForDistance(fogForWeather(w), fogDistance);   // EV4
+    weatherFog = scaleFogForDistance(fogForWeather(w, sky.fogSettings), fogDistance);   // EV4; DS1: the mod's table
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
@@ -2207,7 +2209,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1905 mounts the same one, gated on
+  // and dungeonContext.js:1918 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4092
@@ -2281,7 +2283,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
     if (!f) return;
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-    const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+    const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     const stamp = (nf) => {
       if (!nf?.entity) return;
@@ -2295,11 +2297,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:237-242) never looks the record up in `foes`, and
+    // (exteriorFoes.js:253-258) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
+    // got exactly what removeGuard (cityGuards.js:1170-1174) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:718) and spliced out at the end of it (:889).
+    // (cityGuards.js:725) and spliced out at the end of it (:889).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -4469,7 +4471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:196, "a right-click on a window is the window's...
+  // (dungeon.js:198, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -4671,7 +4673,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6367-6379 -
+  // worldModes answers it in BOTH modes (worldModes.js:6369-6381 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5993,7 +5995,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:86, so the
+  // only reader of `load` in the whole tree is dungeon.js:87, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6131,6 +6133,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
@@ -6335,7 +6338,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:502's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:504's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6728,7 +6731,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
     // heavy rain fogs to Color.gray, not to the sky tint.
     const fogNow = wxNow.fog;   // WX2: the row on the front (the table's own row, classic and settled)
-    const fogColor = outdoorFogColor(fogNow, sky.renderer.clearColor);
+    const fogColor = sky.fogColorFor(fogNow);   // DS1: the mod's own RenderSettings.fogColor while it is the sky; SetSkyFogColor over the horizon otherwise, as before
     renderer.setFog(fogNow.mode,
       fogNow.density, fogNow.start, fogNow.end, fogColor);
     sky.renderer.fogColor = fogColor;
@@ -6759,6 +6762,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
+    renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
+    renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);
@@ -7123,11 +7128,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // (cityGuards.js:550-555), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:960). DFU makes no pool distinction:
+        // (cityGuards.js:967). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

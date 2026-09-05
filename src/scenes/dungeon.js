@@ -9,6 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
@@ -92,6 +93,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  renderer.setClearColor(INTERIOR_CLEAR);   // INCIDENT 2026-09-04: inside clears to BLACK (CameraClearManager.cs:24-25)
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(

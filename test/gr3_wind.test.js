@@ -19,7 +19,10 @@ test('GR3: the sky CONTROLLER exposes the cloud-shadow deck the hosts read', () 
   const shared = read('src/scenes/shared.js');
   const i = shared.indexOf('export function createSkyController');
   const ret = shared.slice(shared.indexOf('  return {', i), shared.indexOf('\n  };', shared.indexOf('  return {', i)));
-  assert.match(ret, /get cloudShadow\(\) \{\s*\n\s*return enhancedSky\?\.cloudShadow \?\? null;/,
+  // DS1: under Dynamic Skies the deck is the controller's own (the
+  // eased row's wind, no shadow amount); under the port's dome it is
+  // still the dome's, live; null under classic as before.
+  assert.match(ret, /get cloudShadow\(\) \{\s*\n\s*return enhancedSky\?\.cloudShadow \?\? dynamicDeck;/,
     'a LIVE getter off the dome - the deck is rebuilt every draw');
   assert.match(read('src/render/enhancedSky.js'), /this\.cloudShadow = \{\s*\n\s*cover:/, 'and the dome still publishes it');
   // The three readers, all on the controller, all now answered.

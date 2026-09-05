@@ -503,7 +503,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       // Flipped back (or destroyed) while the archive was loading, or
       // drawn as a voxel body already: no billboard.
       if (_rigFor || !pn.lateStood || pn.lateBatch) return;
-      uploadRecord(pn.textureArchive, pn.textureRecord);
+      uploadRecord(pn.textureArchive, pn.textureRecord);   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
       pn.lateBatch = renderer.createBillboardBatch(pn.textureArchive, pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
       armFlatAnim(pn.lateBatch, t, pn.textureArchive, pn.textureRecord, flatAnims, uploadRecordFrame);
       billboardBatches.push(pn.lateBatch);

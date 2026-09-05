@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:237-242) and both pools share the host's
+//      `foes` (exteriorFoes.js:253-258) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -155,7 +155,7 @@ test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s la
   // it. The gate is DFU's `sourceEntityBehaviour ==
   // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
   // the whole aggro block at :250-261: a watchman struck by a rat
-  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:264) or
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:271) or
   // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
   // and nothing else, :1398-1401) must turn NOBODY.
   //
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:940), so every host can reach it.
+  // (exteriorFoes.js:963), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -311,10 +311,10 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:237-242) never looks a record up in `foes` and
+  // (exteriorFoes.js:253-258) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:718 and spliced
+  // `dead = true`, no corpse, skipped by cityGuards.js:725 and spliced
   // at :889 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry

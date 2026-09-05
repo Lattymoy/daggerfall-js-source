@@ -214,10 +214,15 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   // been building it for a day.
   // EE1: the pref is enhancedEnvironments now; the seam's LAW - enhanced
   // skin only, URL hatch, the player's own switch - is unchanged.
-  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
+  // DS1: the lane is ONE test now, and two passes stand on it - the
+  // port's own dome, or Dynamic Skies (vendored 1:1, its own switch in
+  // the Mods pane) - so the pin reads the lane, then the dome behind it.
+  assert.match(shared, /const enhancedLane = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('enhancedEnvironments'\);/,
     'the enhanced sky is the skin\'s, behind the URL hatch and the player\'s own switch');
-  assert.match(shared, /renderer: enhancedSky \?\? sky,/, 'ONE renderer field: the hosts do not know which pass they hold');
-  assert.match(shared, /\(enhancedSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\)/);
+  assert.match(shared, /const enhancedSky = enhancedLane && !dynamicOn \? new EnhancedSkyRenderer\(gl\) : null;/,
+    'the port\'s dome stands on the lane, unless the mod does');
+  assert.match(shared, /renderer: enhancedSky \?\? dynamicSky \?\? sky,/, 'ONE renderer field: the hosts do not know which pass they hold');
+  assert.match(shared, /\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\)/);
   // The classic pass keeps its verbatim laws - this arc adds beside it.
   const classic = read('src/render/skyRenderer.js');
   assert.match(classic, /export function buildDaySkyPanorama/);

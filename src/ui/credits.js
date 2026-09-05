@@ -57,5 +57,15 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['roads-hazelnut']),
       link: 'https://github.com/ajrb/dfunity-mods',
     }),
+    Object.freeze({
+      title: 'Dynamic Skies',
+      version: '2.3.4',
+      author: 'BadLuckBurt and carademono',
+      what: 'The sky under the enhanced environments: a procedural skybox (built on Feral Pug\'s extension of Unity\'s procedural sky) with its sun and atmosphere, two textured cloud layers per weather, twinkling stars, Masser and Secunda on their orbits and DFU\'s phases, its own fog colours and distances, a longer sunrise and sunset, a lightning flash under thunder, and pixel snow. Carried 1:1 - the shader, the presets and the textures are the mod\'s own. The classic lane keeps Daggerfall\'s painted sky.',
+      terms: 'Vendored with the authors\' permission (2026-09-04); see vendor/dynamic-skies/README.md.',
+      contact: "Lysandus' Tomb Discord server",
+      vendor: Object.freeze(['dynamic-skies']),
+      link: 'https://github.com/drcarademono/dynamic-skies',
+    }),
   ]),
 });

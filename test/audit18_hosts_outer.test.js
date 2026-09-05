@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:243 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:245 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });
@@ -526,10 +526,18 @@ test('audit18 hosts: outdoorFogColor is SetSkyFogColor, threshold included', () 
 test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law', () => {
   for (const host of EXTERIOR_HOSTS) {
     const s = src(host);
-    assert.match(s, /const fogColor = outdoorFogColor\(fogNow, sky\.renderer\.clearColor\)/,   // WX2: the row on the front
+    // DS1: the law answers through the sky controller now - `fogColorFor`
+    // is outdoorFogColor over the sky's own horizon under every sky but
+    // Dynamic Skies, whose own RenderSettings.fogColor it hands back
+    // instead (the mod switches DaggerfallSky off, so nothing else
+    // writes it). The pin below on the controller keeps the law itself.
+    assert.match(s, /const fogColor = sky\.fogColorFor\(fogNow\)/,   // WX2: the row on the front
       `${host} passes the sky colour unconditionally - a blizzard fogs to a blue tint`);
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }
+  const shared = src('src/scenes/shared.js');
+  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*if \(dynamic\?\.fogColor\) return dynamic\.fogColor;\s*\n\s*return outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);/,
+    'the controller answers SetSkyFogColor over the sky it holds, or the mod\u2019s own colour');
 });
 
 // ---------------------------------------------------------------------

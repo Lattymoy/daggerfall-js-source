@@ -24,6 +24,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
@@ -732,6 +733,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const D = foeDeps;
       const pos = D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
+      const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+      const t = await getTexture(archive);
+      const idleH = idleSpriteHeight(t);   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:104 - the capsule reads the idle sprite
       // E3a: the real entity - career from CLASS{ID-128}.CFG, level =
       // player level, HP/skills/LiveSpeed verbatim (SetEnemyCareer)
       const careerIndex = e.mobileType - 128;
@@ -764,6 +768,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // charged on sight instead of standing down until struck.
         isHostile: e.reaction !== 'passive',
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
+        height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115, not the player's capsule
+        centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre, whatever the capsule became
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
@@ -779,11 +785,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // this from an equipped bow meant no enemy could ever fire one,
       // because AssignEnemyStartingEquipment never rolls a bow).
       attack.rangedAttack = hasBowAttack(basics);
-      const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
-      const t = await getTexture(archive);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH });
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -809,12 +813,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const D = foeDeps;
       const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const t = await getTexture(archive);
-      // C12: flyers (CanFly = Flying|Spectral) hover at the spawn
-      // marker - no floor landing; walkers and swimmers ground (a
-      // fish lands on its pool bed and swims up on pursuit).
+      // INCIDENT 2026-09-04 (Mac: "bat enemies stuck in the ceiling").
+      // RDBLayout.cs:1537 stands the enemy TRANSFORM on the marker and
+      // :1546-1548 ground-aligns everything but a FLYING unit - a
+      // Spectral grounds too (C12 read CanFly = Flying|Spectral here,
+      // which is the motor's law, not the layout's). The transform is
+      // the sprite's CENTRE (DaggerfallMobileUnit.cs:409, localPosition
+      // zero for a flyer), and the port's motor keeps FEET: a bat's
+      // feet sit half its idle sprite under the marker, else its head
+      // is in the ceiling. Walkers and swimmers ground (a fish lands
+      // on its pool bed and swims up on pursuit).
       const behaviour = basics.behaviour ?? 'General';
-      const canFly = behaviour === 'Flying' || behaviour === 'Spectral';
-      const pos = canFly ? [e.x, e.y, e.z] : D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
+      const idleH = idleSpriteHeight(t);
+      const pos = behaviour === 'Flying' ? feetFromCentre([e.x, e.y, e.z], idleH) : D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
@@ -836,6 +847,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         isHostile: e.reaction !== 'passive',          // AUDIT 39: RDBLayout.AddEnemy :1519-1521 -> EnemyMotor.cs:122
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
+        height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115 - sprite height, halved for a flyer, never under 1.6
+        centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre, whatever the capsule became
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
@@ -855,7 +868,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // per frame (the batch geometry is a unit quad; size is a
       // uniform, origin a live translation - zero rebuilds).
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH });
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -1916,7 +1929,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const f = foes.find((x) => !x.dead && x.entity === targetEntity);
     if (!f) return;
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-    const at = f.ai?.feet ? [...f.ai.feet] : (lastPlayerFeet ?? [0, 0, 0]);
+    const at = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : (lastPlayerFeet ?? [0, 0, 0]);   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre), which the spawn chain reads as a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     questPoolOps.removeFoe(f);
     Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {
@@ -2141,7 +2154,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:762 against :793; worldModes.js:5046 against :5055).
+    // (dungeon.js:764 against :795; worldModes.js:5047 against :5056).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2377,7 +2390,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const f of foes) if (!f.dead) f._backFacing = foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet);
     const live = foes.filter((f) => !f.dead);
     const canSee = (f) => {
-      const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];   // foe center (mid-capsule)
+      const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2, f.ai.feet[2]];   // foe center (mid-capsule) - ITS capsule (REVIEW 2026-09-05), the 0.9 was the player's
       const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
       const dist = Math.hypot(dx, dy, dz);
       const l = dist || 1;
@@ -2568,13 +2581,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (m.fromPlayer) {
           for (const f of foes) {
             if (f.dead) continue;
-            const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
+            const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the foe's own capsule centre
             if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6375,
-              // exterior.js:3597 and worldModes.js:4627 already ran;
+              // playerArrowHitFoe is the one copy world.js:6378,
+              // exterior.js:3602 and worldModes.js:4627 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2738,7 +2751,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return {
       foes: foes.map((f) => ({
         health: f.entity.health, dead: !!f.dead,
-        feet: [...f.ai.feet], yaw: f.ai.yaw,
+        feet: [...f.ai.feet], yaw: f.ai.yaw, anchor: 1,   // REVIEW 2026-09-05: feet under the enemyAnchor law (a pre-fix save carries no stamp)
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
         // CH4 (the senses verify pass): SerializableEnemy carries
         // isHostile + hasEncounteredPlayer (:113-114, restored at
@@ -2777,7 +2790,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!f) return;
       f.entity.health = sf.health;
       f.entity.items = sf.items.map((it) => ({ ...it }));
-      f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
+      // REVIEW 2026-09-05: a save written before the enemyAnchor law holds
+      // every idle bat's feet AT its marker; the rebuilt spawn stands
+      // correctly and the old feet would put it back into the ceiling.
+      if (!keepRebuiltSpawn(sf, f.ai.feet, f.idleH, f.mobile?.basics?.behaviour ?? 'General')) { f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2]; }
       f.ai.yaw = sf.yaw;
       // CH4: the senses/resource halves restore when the save carries
       // them (:182-183 motor.IsHostile / senses.HasEncounteredPlayer,
@@ -3765,7 +3781,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (f.mobileArchive === 475 && out.record >= 20 && out.record <= 24) { sz.w *= 1.35; sz.h *= 1.35; }
         f.batch.record = rkey;
         f.batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };   // negative width = FlipLeftRight (UVs ride the corners)
-        f.batch.origin = f.ai.feet;   // the billboard shader bottom-anchors
+        // INCIDENT 2026-09-04: the billboard shader bottom-anchors. A
+        // walker's origin is its feet (DaggerfallMobileUnit.cs:402-406
+        // keeps them aligned across records); a flyer or swimmer keeps
+        // its CENTRE (:407-410), so its origin is centre - recordH/2.
+        const _bh = f.mobile.basics.behaviour ?? 'General';
+        if ((_bh === 'Flying' || _bh === 'Aquatic') && f.idleH !== undefined) {
+          const o = f._origin ?? (f._origin = [0, 0, 0]);
+          o[0] = f.ai.feet[0]; o[1] = spriteOriginY(f.ai.feet[1], f.idleH, sz.h, _bh); o[2] = f.ai.feet[2];
+          f.batch.origin = o;
+        } else f.batch.origin = f.ai.feet;
         _mobileBatches.push(f.batch);
         continue;
       }
@@ -4407,7 +4432,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:773) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:779) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with

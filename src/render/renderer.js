@@ -52,7 +52,7 @@ uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's 
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
-uniform int uFogMode; // 0 off, 1 linear, 2 exp
+uniform int uFogMode; // 0 off, 1 linear, 2 exp, 3 exp2 (DS1: Unity's ExponentialSquared, which Dynamic Skies' fog presets use)
 uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
@@ -78,6 +78,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -90,7 +91,9 @@ void main() {
   if (amMode >= 3) { if (vWorldPos.y <= uClipY) discard; }
   else if (vWorldPos.y > uClipY) discard;
   vec4 tex = texture(uTex, vUV);
-  if (tex.a < 0.5) discard;
+  // INCIDENT 2026-09-04: no alpha clip here - DaggerfallDefault.shader is
+  // RenderType Opaque with no clip(); the mortar runs of a wall texture
+  // are palette index 0 and were being discarded as cutouts.
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
@@ -225,6 +228,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -304,6 +308,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -375,6 +380,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -461,6 +467,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
@@ -586,6 +593,11 @@ export function asBytes(view) {
   return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
 }
 
+/** The two clear colours: the sky behind an exterior frame, and
+ *  CameraClearManager's black behind an interior one. */
+export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
+export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
+
 export function textureParams(gl, opts = {}) {
   return opts.smooth
     ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
@@ -604,7 +616,7 @@ export function screenQuadBlends(tex, color, opts = {}) {
 
 /** setFog takes a STRING mode and shadows an int; the panel bracket
  *  has to spell the round trip. */
-const FOG_MODE_NAMES = ['off', 'linear', 'exp'];
+const FOG_MODE_NAMES = ['off', 'linear', 'exp', 'exp2'];   // DS1: 3 = Unity's ExponentialSquared
 
 /**
  * ROAD-C c2/S2: Unity's DEFAULT camera background, which is what
@@ -763,6 +775,9 @@ export class Renderer {
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
+    this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
+    this._flashLightScratch = new Float32Array(16 * 4);
+    this._flashColorScratch = new Float32Array(16 * 3);
     this._pointColor = new Float32Array([1, 1, 1]);
     // LT1: per-light colour x intensity (vec3 per light). null = every
     // light wears the shared _pointColor - the exterior lantern path,
@@ -1388,6 +1403,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 1) {
     return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
   }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
 void main() {
@@ -1683,7 +1699,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}`;
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -1703,7 +1719,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const { wrap, filter } = textureParams(gl, opts);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    // INCIDENT 2026-09-04: every classic texture DFU builds carries a mip
+    // chain (TextureReader.cs:31 `mipMaps = true`, :264 Apply(true)) and
+    // samples it POINT (MaterialReader.cs:104/:437, FilterMode.Point =
+    // nearest texel, nearest mip). Without the chain a one-texel line
+    // keeps full contrast at every distance and shimmers as the camera
+    // moves; with it the line dissolves into the wall a few metres out,
+    // which is what DFU shows. The smooth (UI) upload keeps LINEAR.
+    // REVIEW 2026-09-05: the chain is WORLD art's - a TEXTURE.nnn archive
+    // (numeric). UI art comes through ImageReader.GetTexture with
+    // mipChain false (ImageReader.cs:59), the automaps and the video
+    // likewise; those string-keyed uploads keep a single NEAREST level.
+    const mips = !opts.smooth && (opts.mips ?? (typeof archive === 'number'));
+    if (mips) gl.generateMipmap?.(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
@@ -1781,6 +1810,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // bundle built without it simply cannot be wireframed (drawMeshWire
     // draws nothing), which is the honest answer for a hand-built one.
     return { vao, subMeshes: model.subMeshes.map((sm) => ({ ...sm })), buffers, triIndices: model.indices };
+  }
+
+  /** INCIDENT 2026-09-04: CameraClearManager.cs:23-25/:51-57 - inside,
+   *  the camera clears to solid BLACK (cameraClearInterior =
+   *  CameraClearFlags.Color, cameraClearColor = Color.black); outside
+   *  it clears depth only behind the sky. The port cleared every host
+   *  to the Iliac Bay's sky blue, so any crack in a dungeon read as a
+   *  glowing line instead of nothing. Idempotent: the shadow decides. */
+  setClearColor(rgba) {
+    const cc = this._clearColor;   // a Float32Array: compare at its precision, or a 0.53 never matches itself
+    if (cc[0] === Math.fround(rgba[0]) && cc[1] === Math.fround(rgba[1]) && cc[2] === Math.fround(rgba[2]) && cc[3] === Math.fround(rgba[3])) return;
+    cc[0] = rgba[0]; cc[1] = rgba[1]; cc[2] = rgba[2]; cc[3] = rgba[3];
+    this.gl.clearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
   }
 
   beginFrame(proj, view, lightDir) {
@@ -2084,9 +2126,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._clockLit = true;
   }
 
-  /** Distance fog for every world pass. mode 'off'|'linear'|'exp'. */
+  /** Distance fog for every world pass. mode 'off'|'linear'|'exp'|'exp2'
+   *  (DS1: 'exp2' is Unity's ExponentialSquared, exp(-(density*d)^2) -
+   *  Dynamic Skies ships its overcast, rainy and snowy fog in it). */
   setFog(mode, density, start, end, color) {
-    this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : 0;
+    this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : mode === 'exp2' ? 3 : 0;
     this._fogDensity = density;
     this._fogRange[0] = start;
     this._fogRange[1] = end;
@@ -2186,6 +2230,35 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._pointColors = colors ? (colors.subarray ? colors.subarray(0, 16 * 3) : colors) : null;
   }
 
+  /** DS1: THE LIGHTNING FLASH - Dynamic Skies' LightningFlash point light
+   *  (a Unity point light over the player, colour x intensity, range
+   *  500..1000, on for a fifth of a second). Takes {x, y, z, range,
+   *  color} or null (off, which is every frame the storm is quiet).
+   *  Called AFTER setPointLights on the frame - it composes the flash
+   *  into the arrays that call just stored, as their FIRST entry, so
+   *  the host's own lanterns, candle and torch keep their order behind
+   *  it under the same cap of sixteen; the next setPointLights, on this
+   *  host or any modal frame, stores its own arrays and the flash is
+   *  gone with them - no per-frame state outlives the frame. */
+  setFlashLight(light) {
+    this._flashLight = light ?? null;
+    if (!light) return;
+    const data = this._pointLights, colors = this._pointColors, f = light;
+    const keep = Math.min(15, Math.floor(data.length / 4));
+    const out = this._flashLightScratch;
+    out[0] = f.x; out[1] = f.y; out[2] = f.z; out[3] = f.range;
+    out.set(data.subarray ? data.subarray(0, keep * 4) : data.slice(0, keep * 4), 4);
+    this._pointLights = out.subarray(0, (keep + 1) * 4);
+    const c = this._flashColorScratch;
+    c[0] = f.color[0]; c[1] = f.color[1]; c[2] = f.color[2];
+    if (colors) {
+      c.set(colors.subarray ? colors.subarray(0, keep * 3) : colors.slice(0, keep * 3), 3);
+    } else {
+      for (let i = 0; i < keep; i++) { c[3 + i * 3] = this._pointColor[0]; c[4 + i * 3] = this._pointColor[1]; c[5 + i * 3] = this._pointColor[2]; }
+    }
+    this._pointColors = c.subarray(0, (keep + 1) * 3);
+  }
+
   /** LT1: the vec3 array a frame uploads - the host's per-light colours
    *  when given, else the shared colour splatted across the count. */
   _pointColorData(count) {
@@ -2225,7 +2298,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // REVIEW 2026-09-05: the emission map carries the same chain as the
+    // albedo (TextureReader.cs:316/:328/:340 new Texture2D(..., MipMaps),
+    // :306 reuses the mipped albedo) and is point-sampled over it
+    // (MaterialReader.cs:448/:104). The shader subtracts one from the
+    // other (:108-109): both samples must come from the same mip level.
+    gl.generateMipmap?.(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
@@ -2699,7 +2778,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         // being re-minted on every one of those misses.
         const key = sm._evKey ?? (sm._evKey = `${sm.textureArchive}_${sm.textureRecord}`);
         const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
-        tex = this.textures.get(resolved);
+        tex = this.textures.get(resolved + '#opaque') ?? this.textures.get(resolved);   // the mesh material (alphaIndex -1) first
         if (tex) {
           sm._evTex = tex;
           sm._evEmis = this.emissionTextures.get(resolved) || this._blackTex;

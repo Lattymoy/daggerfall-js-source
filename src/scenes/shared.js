@@ -10,11 +10,17 @@ import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
-import { skyFrameForTime } from '../world/worldClock.js';
+import { skyFrameForTime, isNight, setLightCurve } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_SECONDS } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
+import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
+import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
+import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';   // DS1: the vendored files
+import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
+import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
+import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
@@ -163,9 +169,39 @@ export function createSkyController(gl, params) {
   // fogMix and fogColor on it without knowing which pass it is.
   // EE1: one switch for the whole outdoors. ?sky=classic stays the URL
   // door and still forces the panorama, so every probe riding it works.
-  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments')
-    ? new EnhancedSkyRenderer(gl) : null;
+  const enhancedLane = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments');
+  // DS1: DYNAMIC SKIES (BadLuckBurt and carademono, vendored 1:1 with
+  // permission - Mac, 2026-09-04) is the enhanced lane's sky while the
+  // mod's own `Enabled` switch is on (Mods pane; on by default - a DFU
+  // mod is on by being installed). The doors keep their meaning:
+  // `?sky=dynamic` forces the mod, `?sky=enhanced` / `?sky=smooth` force
+  // the port's own dome (every probe riding them still gets it), and
+  // `?sky=classic` still forces the panorama. The mod replaces
+  // SunlightManager.LightCurve for the whole world while it is the sky
+  // (BLBSkybox.SetLightCurve), and the rig's own curve comes back when
+  // it is not.
+  const skyDoor = params.get('sky');
+  const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));
+  const enhancedSky = enhancedLane && !dynamicOn ? new EnhancedSkyRenderer(gl) : null;
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
+  const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
+  const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;
+  setLightCurve(dynamic ? dynamic.lightCurve : null);
+  if (dynamicSky) {
+    // the presets' textures land as they decode; a slot shows the
+    // shader's own default ("black", "bump", "white") until its file does
+    for (const name of DYNAMIC_SKIES_TEXTURES) {
+      if (name === 'PixelSnow') continue;   // the snow's, not the sky's
+      loadDynamicSkiesTexture(name).then((img) => dynamicSky.setTexture(name, img))
+        .catch((e) => console.warn(`Dynamic Skies: ${name} did not load -`, e?.message ?? e));
+    }
+  }
+  // DS1: the ground's deck under the mod: the eased row's wind and cover
+  // for the readers that take the lane from it (the rain, the front, the
+  // grass, the mills), and NO shadow amount - the mod casts none, and
+  // its clouds are textures the ground cannot sample.
+  let dynamicDeck = dynamic ? { cover: 0, soft: 0.25, wind: [0, 0], time: 0, drift: [0, 0], amount: 0 } : null;
+  let dynamicMoons = null;   // DS1: the moons' places for the world's moonlight, from the mod's own orbits
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
   const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
@@ -238,8 +274,32 @@ export function createSkyController(gl, params) {
   }
 
   return {
-    renderer: enhancedSky ?? sky,
-    enhanced: Boolean(enhancedSky),
+    renderer: enhancedSky ?? dynamicSky ?? sky,
+    enhanced: Boolean(enhancedSky || dynamicSky),
+    /** DS1: Dynamic Skies is the sky this scene draws. */
+    dynamic: Boolean(dynamic),
+    /** DS1: WeatherManager's five fog settings as the mod installed
+     *  them (ProcessFogSetting) - fogForWeather's table - and undefined
+     *  under any other sky, which is DFU's own table. */
+    fogSettings: dynamic?.fogSettings,
+    /** DS1: the world's fog colour this frame. Under the mod it is the
+     *  mod's own RenderSettings.fogColor (setFogColor: the preset's day
+     *  colour toward black on the sun's height, every real second -
+     *  DaggerfallSky is switched off, so nothing else writes it); under
+     *  any other sky, SetSkyFogColor's law over the sky's own horizon,
+     *  as before. */
+    fogColorFor(fogNow) {
+      if (dynamic?.fogColor) return dynamic.fogColor;
+      return outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
+    },
+    /** DS1: AmbientEffectsPlayer.OnPlayEffect reaches the mod's
+     *  LightningFlashListener here (a no-op under any other sky). */
+    onAmbientEffect(playerPos) { dynamic?.onAmbientEffect(playerPos); },
+    /** DS1: the LightningFlash point light this frame, or null. */
+    lightningLight() { return dynamic?.lightningLight ?? null; },
+    /** DS1: the pixel-snow replacement (InitSnow) when the mod's switch
+     *  is on: the two viewport-fraction sizes and the PixelSnow texture. */
+    pixelSnow: dynamic?.pixelSnow ? { ...dynamic.pixelSnow, textureUrl: dynamicSkiesTextureUrl('PixelSnow') } : null,
     /** GR3 (Mac: "the wind still isn't working ingame"): THE CLOUD
      *  SHADOW DECK, off the dome. EE5 publishes `cloudShadow` on the
      *  EnhancedSkyRenderer - cover, softness, WIND, time - "from the
@@ -260,7 +320,7 @@ export function createSkyController(gl, params) {
      *  which is what the three readers' `?? null`/`?? [0, 0]` arms
      *  were written for. */
     get cloudShadow() {
-      return enhancedSky?.cloudShadow ?? null;
+      return enhancedSky?.cloudShadow ?? dynamicDeck;   // DS1: the mod's deck carries the wind and no shadow
     },
     /** WM2b: THE EASED WIND, and the ONE place anything but the sky can
      *  read it. `easeWeather` walks this row toward the sim's over
@@ -294,6 +354,7 @@ export function createSkyController(gl, params) {
     weatherJump() {
       weatherRowNow = null;
       windModel.jump();
+      dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
     },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to
@@ -309,14 +370,18 @@ export function createSkyController(gl, params) {
      *  the classic sky - which has no moon state, so the 1:1 lane
      *  keeps DFU's hard-off night - and null by day. */
     moonlight() {
-      return enhancedSky?.state ? moonlightTerm(enhancedSky.state) : null;
+      if (enhancedSky?.state) return moonlightTerm(enhancedSky.state);
+      // DS1: the same term from the mod's own moons - where its orbit
+      // puts them, lit by DFU's phase - so the world's night agrees
+      // with the sky it stands under
+      return dynamicMoons ? moonlightTerm(dynamicMoons) : null;
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
      *  and the classic clock too (`extra`), for the clouds and the moons;
      *  it is synchronous - numbers into uniforms, nothing to load. */
     use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
-      if (enhancedSky) {
+      if (enhancedSky || dynamic) {
         const now = (typeof performance !== 'undefined' ? performance.now() : 0);
         const seconds = (now - t0) / 1000;
         // ES1c: the weather EASES. The sim flips its type between two
@@ -362,6 +427,22 @@ export function createSkyController(gl, params) {
         // with a wind that moves every frame made the clouds stream.
         driftXZ[0] += weatherRowNow.wind[0] * dt;
         driftXZ[1] += weatherRowNow.wind[1] * dt;
+        if (dynamic) {
+          // DS1: BLBSkybox.Update - the mod's own frame, on the sim's
+          // WORD: a DFU mod sees WeatherManager's event, not the port's
+          // front, so its presets switch as the sim's do. The ease and
+          // the wind above still run for the ground's readers.
+          const nowMinutes = extra?.classicMinutes ?? 0;   // the host's carrier, a view on the one clock
+          const winter = seasonValue(dateFromClassicMinutes(nowMinutes)) === SEASONS.Winter;
+          const st = dynamic.tick({
+            minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt,
+            weatherScale: weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
+          });
+          dynamicSky.setState(st);
+          dynamicDeck = { cover: weatherRowNow.cover, soft: Math.max(1e-3, weatherRowNow.soft), wind: weatherRowNow.wind, time: seconds, drift: driftXZ, amount: 0 };
+          dynamicMoons = dynamicMoonState(dynamic, minuteOfDay);
+          return;
+        }
         enhancedSky.setState(skyState({
           minuteOfDay,
           weather: weatherName,
@@ -408,8 +489,30 @@ export function createSkyController(gl, params) {
       }
     },
     draw(yaw, pitch, fovY, aspect) {
-      (enhancedSky ?? sky).draw(yaw, pitch, fovY, aspect);
+      (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
     },
+  };
+}
+
+/** DS1: the moons as moonlightTerm reads them, from the mod's own
+ *  state: each moon's place is the shader's orbit (the CPU twin in
+ *  systems/dynamicSkies.js), its phase is DFU's ladder, its visibility
+ *  is "up, and not in daylight" on the shader's own `day` term
+ *  (Remap(sunY, NightEnd..NightStart)), its colour the preset's. Night
+ *  is the port's law, as for the enhanced dome. */
+function dynamicMoonState(dyn, minuteOfDay) {
+  const mat = dyn.mat;
+  const sunY = dyn._sunDir?.[1] ?? 0;
+  const span = mat._NightStartHeight - mat._NightEndHeight;
+  const day = span === 0 ? (sunY >= mat._NightStartHeight ? 1 : 0) : Math.max(0, Math.min(1, (sunY - mat._NightEndHeight) / span));
+  const moon = (which, phase, color) => {
+    const dir = dyn.moonDirection(which);
+    return { dir, vis: dir[1] > 0 ? 1 - day : 0, phase, color: [color[0], color[1], color[2]] };
+  };
+  return {
+    night: isNight(minuteOfDay),
+    masser: moon('Moon', dyn.phases?.masser?.phase ?? -1, mat._MoonColor),
+    secunda: moon('Secunda', dyn.phases?.secunda?.phase ?? -1, mat._SecundaColor),
   };
 }
 
@@ -1528,7 +1631,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:216`, the standalone host, has always had the right
+ *  `dungeon.js:218`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

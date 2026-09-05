@@ -81,6 +81,7 @@ import {
   tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
@@ -137,7 +138,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // host's flags all false.
   enterExitFlags = () => null,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:80).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:81).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -216,9 +217,23 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // the dungeon host's two spawn branches (hostCombat.equipEnemy).
       equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
+      const archive = basics.maleTexture;
+      const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the town it was posted
+      // to is gone, and pushing it now would land a departure-point
+      // watchman in the destination beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; both callers already read a missing guard as no spawn.
+      // (REVIEW 2026-09-05: the fetch moved above the AI so the capsule
+      // can read the idle sprite - SetupDemoEnemy.cs:103-115 sizes a
+      // watchman's controller like any other enemy's.)
+      if (gen !== epoch) return null;
+      const idleH = idleSpriteHeight(tex);
       const ai = new EnemyAI(collider, pending.feet, yaw, {
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+        height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
+        centreOffset: idleH / 2,
         playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
         // wave 35: DoRangedAttack's band. Knight_CityWatch has
         // HasRangedAttack1 = false and CastsMagic = false
@@ -243,17 +258,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // not an interim. (Checked in AUDIT 18: the routed claim that 146
       // carries HasRangedAttack1 does not hold against the table.)
       attack.rangedAttack = false;
-      const archive = basics.maleTexture;
-      const tex = await getTexture(archive);
-      // AUDIT-39r: a sweep crossed this spawn - the town it was posted
-      // to is gone, and pushing it now would land a departure-point
-      // watchman in the destination beside restoreWorld's copies.
-      // Nothing is allocated yet, so dropping the record is the whole
-      // cancel; both callers already read a missing guard as no spawn.
-      if (gen !== epoch) return null;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null,
         sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
         // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
         // melee frame inside its OWN pool's loop, so the target's pool
@@ -545,7 +552,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:195)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:940). */
+   *  encounter pool's is (exteriorFoes.js:963). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -904,7 +911,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const live = guards.filter((g) => !g.dead);
     if (!live.length) return false;
     const canSee = (g) => {
-      const c = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];
+      const c = [g.ai.feet[0], g.ai.feet[1] + (g.ai.height ?? 1.8) / 2, g.ai.feet[2]];   // REVIEW 2026-09-05: the watchman's own capsule centre
       const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
       const dist = Math.hypot(dx, dy, dz);
       const l = dist || 1;
