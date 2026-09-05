@@ -124,3 +124,43 @@ test('exteriorfoes X4: the PLAYER-side rolls are UNIFORM - DFRandom bytes never 
   assert.ok(s.includes('playerAttackGrunt(playerEntity, false, rolls)'), 'the encounter pool threads the seam');
   assert.ok(src('cityGuards.js').includes('playerAttackGrunt(playerEntity, false, rand)'), 'the guards pool threads its own');
 });
+
+// ROAD-G TAIL (2026-09-05): the fixed-city route's two Wave G leftovers.
+test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both hosts skip the roll while swimming, and the watch transforms', () => {
+  const e = src('exterior.js');
+  const w = src('world.js');
+  const i = e.indexOf('function runEncounterTick');
+  assert.ok(i > 0, 'PlayerEntity.Update:479-525 has a caller on the ?town route');
+  const fn = e.slice(i, e.indexOf('\n  }\n', i));
+  assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
+  assert.ok(fn.includes('inLocationRect: _musicInLocationRect(),'), 'the town branch reads the rect');
+  assert.ok(fn.includes('climateIndex: locClimateIndex,'), 'the city\'s own climate feeds the table pick');
+  assert.ok(fn.includes('Math.min(now - _lastEncMinutes, 1440)'), 'the catch-up is bounded');
+  assert.ok(fn.includes('const span = playerEntity.preventEnemySpawns ? 0 : Math.min(now - _lastEncMinutes, 1440);'), 'the suppression flag gates the whole loop (:482)');
+  assert.ok(fn.includes('if (playerEntity.preventEnemySpawns) playerEntity.preventEnemySpawns = false;'), 'and clears at the tail (:524-525)');
+  assert.ok(fn.includes('passiveGuardSpawns({'), 'the two passive-guard rolls (:498-511)');
+  assert.ok(fn.includes('setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);'), 'each levies Criminal_Conspiracy first');
+  assert.ok(fn.includes('_witnessResponse();'), 'through SpawnCityGuards(false)');
+  assert.match(fn, /let _updatedGuards = false;[^]*if \(!_updatedGuards\) \{\n\s*_updatedGuards = true;\n\s*if \(_m !== 'dungeon'\) cityGuards\.makeNpcGuardsIntoEnemies\(/, 'the conversion sweep runs at most once per Update (:513-516)');
+  // :488-491 - no encounter roll while the player swims (DFU: or is on a ship; the port has no ship state)
+  assert.ok(fn.includes('const hit = player.swimming ? null : intermittentEnemySpawn({'), 'the fixed city skips the roll while swimming');
+  const wi = w.indexOf('function runEncounterTick');
+  const wfn = w.slice(wi, w.indexOf('\n  }\n', wi));
+  assert.ok(wfn.includes('const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({'), 'the world host skips it too');
+  // the placement: DFU's own ring with the arm's band, a FLYING foe lifted 1.5
+  assert.match(e, /const _standEncounterFoe = \(hit, feet\) => \{[^]*minDistance: hit\.minDistance, maxDistance: hit\.maxDistance,\n\s*lineOfSightCheck: hit\.lineOfSightCheck,/);
+  // the two callers: the frame (exterior mode, no overlay) and the rest advance
+  // (PR #59 review) the loop runs in EVERY mode and hands IsPlayerInside to
+  // the roll (:564), so indoor minutes are skipped, not banked for the door
+  assert.match(e, /if \(!townTalk\.overlayActive\) runEncounterTick\(walkMode \? player\.pos : cam\.pos\);/);
+  assert.ok(fn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the fixed city hands the mode to the roll');
+  assert.ok(wfn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the world host too');
+  assert.match(w, /const _pf = walkMode && playerSpawned \? player\.pos : cam\.pos;\n\s*if \(!townTalk\.overlayActive\) runEncounterTick\(_pf\);\n\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{/, 'the world host rolls before its exterior-only pool update');
+  for (const [f, body] of [['exterior.js', fn], ['world.js', wfn]]) assert.ok(body.includes("if (_m !== 'dungeon') cityGuards.makeNpcGuardsIntoEnemies("), `${f}: no conversion sweep in a dungeon (:768-770)`);
+  assert.match(e, /advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode \? player\.pos : cam\.pos\); \},/);
+  // the watch's Wabbajack transform on this route (WabbajackEffect.cs:64 - Knight_CityWatch is an EnemyEntity)
+  assert.match(e, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);\n\s*exteriorFoes\.spawnFoe\(mobileType, feet\)/, 'a struck watchman is removed by its own pool and re-stood by the encounter pool');
+  const rf = e.slice(e.indexOf('const _enchantReplaceFoe ='), e.indexOf('setDefaultEnchantCtx(createEnchantCtx({'));
+  assert.equal(/if \(!f\._encounter\) return;/.test(rf), false, 'the pre-TAIL refusal is gone from the arm');
+  assert.equal((rf.slice(rf.indexOf("if (host === 'inside')")).match(/\breturn\b/g) || []).length, 1, 'nothing returns before the membership route');
+});

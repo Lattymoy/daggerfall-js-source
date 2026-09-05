@@ -473,9 +473,12 @@ test('rest: the world host carries the ENCOUNTER roll through a rested night', (
   assert.ok(wd.value('advanceMinutes').indexOf('playerTicker.advance(n)')
     < wd.value('advanceMinutes').indexOf('runEncounterTick('),
     'the minutes pass before the roll asks how many passed');
-  // The ?town page has no such pool and does not pretend to: it
-  // advances the clock alone, and the catch-up has ONE home.
+  // ROAD-G TAIL (2026-09-05): the ?town page HAS the pool now (ROAD-G G2
+  // mounted it) and carries the same loop - the catch-up has TWO homes,
+  // one per streaming host, each riding its own rest advance.
   const ed = scan(src('scenes/exterior.js'), 'createRestDeps(playerEntity, {');
+  assert.match(ed.value('advanceMinutes'), /runEncounterTick\(/, 'the fixed city rolls the rested night too');
   assert.match(ed.value('advanceMinutes'), /playerTicker\.advance\(n\)/);
-  assert.deepEqual(modulesMatching(/runEncounterTick/), ['scenes/world.js']);
+  assert.ok(ed.value('advanceMinutes').indexOf('playerTicker.advance(n)') < ed.value('advanceMinutes').indexOf('runEncounterTick('));
+  assert.deepEqual(modulesMatching(/runEncounterTick/), ['scenes/exterior.js', 'scenes/world.js']);
 });

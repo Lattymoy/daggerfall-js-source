@@ -2913,3 +2913,38 @@ measuring its centre at 1.6 and aiming 0.2 in feet-space, a rat +0.35,
 a walker level; every host/re-stand/hit-site shape), and the two
 wave-34/35 motor pins moved to the transform-space law they had
 encoded the feet-space reading of.
+
+### REVIEW 2 - the round over PR #57 (2026-09-05)
+
+Four lenses over the review round itself, two refuters each; 9
+confirmed, folding to six. The transform-space law had two terms left
+that still read the PLAYER's capsule:
+
+- **distanceToTarget.** `EnemySenses.cs:425-426` subtracts transforms;
+  the port's `_dist` was feet to feet, which coincided only while
+  every foe's transform sat 0.9 above its feet. The stop test, the
+  melee gate, the ranged band, the hearing radius, the stealth gates
+  and `canSeeTarget`'s radius all read it. It is transform to transform
+  now (`_targetCentreOffset()` for the far side), the sight gate takes
+  the caller's measure, the spawn-band distance and `GetTargets`'
+  candidate distance follow.
+- **The target's transform.** `_getDestination` lifted every target by
+  `tHeight/2` - right for the player, wrong for a foe target whose
+  transform is `idleH/2` up (a walker hunting a bat aimed at 0.8, DFU
+  at 1.6). `tOff` is the target's own offset in every arm that rebuilds
+  its transform (the predicted point, the in-sight destination, the
+  search base, `predictNextTargetPos`, `canHearTarget`'s target point);
+  `tHeight/2` stays only for the face bump and the grounded delta.
+- **Three more contact sites** (the player's spell missile, the touch
+  pick, the area sweep) and the placement occupancy sphere read the
+  foe's own capsule centre.
+- **The exterior restore** still gave a flyer the walker's +0.1 lift,
+  which a flyer never grounds out of - 0.1 per load. A restore hands
+  back the exact saved feet.
+- **The pre-fix ghost.** C12's `Flying|Spectral` gate had stood ghosts
+  at their raw markers too, and a ghost never falls; the layout marker
+  now rides both dungeon records and an un-stamped Spectral still at it
+  keeps the floor-landed rebuild.
+
+Refuted (1): the enhanced motor's final-leg y (it reads classic's
+converted destination, which is now right).

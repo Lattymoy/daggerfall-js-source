@@ -118,7 +118,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
-    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands
+    const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
