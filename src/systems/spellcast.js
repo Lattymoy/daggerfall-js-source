@@ -218,7 +218,7 @@ export function pickTouchTarget(eye, dir, foes, losClear = () => true) {
   let best = null, bestT = Infinity;
   for (const f of foes) {
     if (f.dead) continue;
-    const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
+    const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? 1.8) / 2, f.ai.feet[2]];   // REVIEW 2026-09-05: the foe's own capsule centre
     const rx = c[0] - eye[0], ry = c[1] - eye[1], rz = c[2] - eye[2];
     const t = Math.max(0, Math.min(TOUCH_RANGE, rx * dir[0] + ry * dir[1] + rz * dir[2]));
     const d = Math.hypot(rx - dir[0] * t, ry - dir[1] * t, rz - dir[2] * t);
@@ -234,7 +234,7 @@ export function sweepFoes(pos, radius, foes) {
   const out = [];
   for (const f of foes) {
     if (f.dead) continue;
-    const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
+    const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? 1.8) / 2, f.ai.feet[2]];   // REVIEW 2026-09-05: the foe's own capsule centre
     if (Math.hypot(c[0] - pos[0], c[1] - pos[1], c[2] - pos[2]) <= radius) out.push(f);
   }
   return out;

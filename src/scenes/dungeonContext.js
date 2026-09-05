@@ -787,7 +787,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       attack.rangedAttack = hasBowAttack(basics);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH });
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH, marker: [e.x, e.y, e.z] });   // REVIEW 2026-09-05: the layout marker, for a pre-fix save's ghost
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -868,7 +868,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // per frame (the batch geometry is a unit quad; size is a
       // uniform, origin a live translation - zero rebuilds).
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH });
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender, idleH, marker: [e.x, e.y, e.z] });   // REVIEW 2026-09-05: the layout marker, for a pre-fix save's ghost
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -2793,7 +2793,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // REVIEW 2026-09-05: a save written before the enemyAnchor law holds
       // every idle bat's feet AT its marker; the rebuilt spawn stands
       // correctly and the old feet would put it back into the ceiling.
-      if (!keepRebuiltSpawn(sf, f.ai.feet, f.idleH, f.mobile?.basics?.behaviour ?? 'General')) { f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2]; }
+      if (!keepRebuiltSpawn(sf, f.ai.feet, f.idleH, f.mobile?.basics?.behaviour ?? 'General', f.marker ?? null)) { f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2]; }
       f.ai.yaw = sf.yaw;
       // CH4: the senses/resource halves restore when the save carries
       // them (:182-183 motor.IsHostile / senses.HasEncounteredPlayer,

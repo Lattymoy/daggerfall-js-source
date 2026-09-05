@@ -265,7 +265,7 @@ test('nativeTrade: icon draws V-FLIP the record texture (the bottom-up GL rows)'
   const key = '209_2';   // the Book template's world texture
   w._icon._warm.add(key);
   w._icon._sizes.set(key, { width: 32, height: 16 });
-  h.icons.textures.set(key, 'gl-tex');
+  h.icons.textures.set(`${key}#ui`, 'gl-tex');   // REVIEW 2026-09-05: the un-mipped UI variant the icon door reads
   let captured = null;
   const fakeRenderer = { drawScreenQuad: (tex, dst, src) => { captured = { tex, src }; } };
   const m = { s: 1, ox: 0, oy: 0 };
@@ -280,7 +280,7 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   const key = '209_2';
   w._icon._warm.add(key);
   w._icon._sizes.set(key, { width: 8, height: 8 });   // tiny icon
-  h.icons.textures.set(key, 'gl-tex');
+  h.icons.textures.set(`${key}#ui`, 'gl-tex');   // REVIEW 2026-09-05: the un-mipped UI variant the icon door reads
   let captured = null;
   const fakeRenderer = { drawScreenQuad: (tex, dst, src) => { captured = { dst, src }; } };
   const m = { s: 1, ox: 0, oy: 0 };

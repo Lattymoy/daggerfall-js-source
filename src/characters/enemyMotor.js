@@ -183,10 +183,10 @@ export function blockedByIllusionEffect(seesThrough, { invisible = false, blendi
  *  collider's ray includes closed action doors (they are collider
  *  buckets), which DFU's static-only mask lets sound pass - a
  *  closed door muffles here. */
-export function canHearTarget(collider, feet, height, targetFeet, dist, centreOffset = height / 2) {
+export function canHearTarget(collider, feet, height, targetFeet, dist, centreOffset = height / 2, targetCentreOffset = CAPSULE_HEIGHT / 2) {
   if (dist >= HEARING_RADIUS) return false;
   const center = [feet[0], feet[1] + centreOffset, feet[2]];   // EnemySenses.cs:942 casts from transform.position
-  const ex = targetFeet[0] - center[0], ey = targetFeet[1] + 0.9 - center[1], ez = targetFeet[2] - center[2];
+  const ex = targetFeet[0] - center[0], ey = targetFeet[1] + targetCentreOffset - center[1], ez = targetFeet[2] - center[2];   // ...toward the target's transform
   const el = Math.hypot(ex, ey, ez) || 1;
   const hit = collider.raycast(center, [ex / el, ey / el, ez / el], el);
   return !Number.isFinite(hit) || hit >= el - 1e-3;
@@ -217,9 +217,11 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
  * EnemySenses.CanSeeTarget:912-918 records an action door the sight
  * ray strikes first, which is what OpenDoors later consumes.
  */
-export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null) {
+export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null, distIn = null) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
-  const dist = Math.hypot(dx, targetFeet[1] - feet[1], dz);
+  // REVIEW 2026-09-05: the radius gate is distanceToTarget (EnemySenses.cs:881),
+  // transform to transform - the caller's own measure when it has one.
+  const dist = distIn ?? Math.hypot(dx, (targetFeet[1] + targetHeight / 2) - (feet[1] + height / 2), dz);
   const radius = SIGHT_RADIUS;   // P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
   if (dist >= radius) return false;
   if (!withinYaw(yaw, dx, dz, FIELD_OF_VIEW / 2)) return false;
@@ -498,7 +500,7 @@ export class EnemyAI {
     // where the source keeps it.
     if (!senses) return;
     const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
-    const dist = Math.hypot(dxp, playerFeet[1] - this.feet[1], dzp);
+    const dist = Math.hypot(dxp, (playerFeet[1] + CAPSULE_HEIGHT / 2) - (this.feet[1] + this.centreOffset), dzp);   // distanceToPlayer (:376-377), transforms
     this.wouldBeSpawned = wouldBeSpawnedInClassic(
       dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
   }
@@ -537,7 +539,12 @@ export class EnemyAI {
    *  shape applies. */
   _senses(playerFeet, senses = null) {
     const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
-    this._dist = Math.hypot(dx, playerFeet[1] - this.feet[1], dz);
+    // REVIEW 2026-09-05: EnemySenses.cs:425-426 `target.transform.position
+    // - transform.position` - TRANSFORM to transform, which the stop test,
+    // the melee gate, the ranged band, the hearing radius and the stealth
+    // gates all read. Feet to feet coincided with it only while every
+    // foe's transform sat 0.9 above its feet like the player's.
+    this._dist = Math.hypot(dx, (playerFeet[1] + this._targetCentreOffset()) - (this.feet[1] + this.centreOffset), dz);
     // C-slice: EnemySenses clears actionDoor at every CanSeeTarget
     // (:879) and records the ray's blocking door; the host resolves
     // the key against its action registry for OpenDoors.
@@ -550,7 +557,7 @@ export class EnemyAI {
     // a wall that hides it did not.
     const _targetHeight = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer
       ? (this._targetCandidate.ai?.height ?? undefined) : undefined;
-    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker);
+    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist);   // the sight-radius gate (:881) reads distanceToTarget
     this.doorKey = _blocker.key;
     // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
     // not an action skip. EnemySenses.Update:321-327 nulls `target`
@@ -589,7 +596,7 @@ export class EnemyAI {
     // hearing only once the target is already detected and unseen -
     // "classic stealth mechanics would be interfered with by hearing"
     const inEarshot = (this.detected && !this.inSight)
-      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist, this.centreOffset)
+      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist, this.centreOffset, this._targetCentreOffset())
       : false;
     // AUDIT 24 (wave 35): the TARGET-POSITION MEMORY, which the port did
     // not have at all - EnemySenses.cs:451-495. Sight or earshot writes
@@ -812,7 +819,7 @@ export class EnemyAI {
     // positions are; `assumed` is feet-space like every other position
     // on this class, so it lifts by half the TARGET's capsule.
     const c = this._centre();
-    const lift = this._targetHeight() / 2;
+    const lift = this._targetCentreOffset();   // REVIEW 2026-09-05: the target's transform, not its capsule half
     const d = [assumed[0] - c[0], assumed[1] + lift - c[1], assumed[2] - c[2]];
     const v = [diff[0] / divisor, diff[1] / divisor, diff[2] / divisor];
     const a = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) - interceptSpeed * interceptSpeed;
@@ -1137,6 +1144,21 @@ export class EnemyAI {
     return (t && !t.isPlayer && t.ai?.height) || CAPSULE_HEIGHT;
   }
 
+  /** REVIEW 2026-09-05 (PR #57 review): where the TARGET's transform sits
+   *  above its feet. The player's controller has no centre offset
+   *  (CAPSULE_HEIGHT/2); a foe target carries its own centreOffset (its
+   *  idle sprite's half, SetupDemoEnemy.cs:62-71 BOTTOM-justifies the
+   *  capsule by moving controller.center, never the transform). Every
+   *  place DFU reads senses.PredictedTargetPos / LastKnownTargetPos /
+   *  target.transform.position reconstructs the target's transform from
+   *  the feet the port stores with THIS, and only the face bump and the
+   *  grounded delta read the target's capsule (_targetHeight). */
+  _targetCentreOffset() {
+    const t = this._armedTargeting ? this._targetCandidate : null;
+    if (!t || t.isPlayer || !t.ai) return CAPSULE_HEIGHT / 2;
+    return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
+  }
+
   _getDestination(playerFeet) {
     const c = this._centre();
     const tHeight = this._targetHeight();
@@ -1167,15 +1189,16 @@ export class EnemyAI {
     // half, and the grounded arm's (tHeight - height)/2 was applied to
     // a feet-space point (zero while every foe wore 1.8, wrong the day
     // a rat's 1.6 or a giant's 2.6 arrived).
-    const tc = tHeight / 2;
-    const predictedCentre = [predicted[0], predicted[1] + tc, predicted[2]];
+    const tc = tHeight / 2;                      // targetController.height * 0.5f - the face bump and the grounded delta
+    const tOff = this._targetCentreOffset();     // the target's TRANSFORM above its feet (0.9 for the player; a foe's idleH/2)
+    const predictedCentre = [predicted[0], predicted[1] + tOff, predicted[2]];
     let dest;
     // ...or the foe is a shooter with the target in sight, in which case
     // it heads for the target whether the path is clear or not (:539-540
     // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
     if (this._clearPathToPosition(predictedCentre, prevDist)
       || (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))) {
-      dest = [predicted[0], predicted[1] + tc, predicted[2]];   // senses.PredictedTargetPos, the target's transform
+      dest = [predicted[0], predicted[1] + tOff, predicted[2]];   // senses.PredictedTargetPos, the target's transform
       // Flyers, levitators and the slaughterfish aim for the target FACE
       // (:543-544) - `targetController.height * 0.5f` on top of the
       // target's centre. The predicate is DFU's own `flies ||
@@ -1195,7 +1218,7 @@ export class EnemyAI {
       const base = this.lastKnownTargetPos ?? playerFeet;
       const search = [
         base[0] + n[0] * this.searchMult,
-        base[1] + tc + n[1] * this.searchMult,
+        base[1] + tOff + n[1] * this.searchMult,
         base[2] + n[2] * this.searchMult,
       ];
       const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);   // (searchPosition - transform.position).magnitude

@@ -281,12 +281,12 @@ function makeAccessoryIconDrawer(icons, identityOf = null) {
       warm.add(key);
       icons.getTexture(img.archive).then((tex) => {
         if (img.record < tex.recordCount) {
-          icons.uploadRecord(img.archive, img.record);
+          icons.uploadRecord(img.archive, img.record, { mips: false });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain
           sizes.set(key, tex.getSize(img.record));
         }
       }).catch(() => {});
     }
-    const glTex = icons.textures.get(key);
+    const glTex = icons.textures.get(`${key}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
     const size = sizes.get(key);
     if (!glTex || !size?.width) return false;
     const [rx, ry, rw, rh] = rect;

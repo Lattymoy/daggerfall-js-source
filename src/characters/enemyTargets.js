@@ -24,6 +24,7 @@
 // EntityBehaviours yields the player after the enemies (:748).
 
 import { canSeeTarget, SYSTEM_TIMER_UPDATES_DIVISOR, SENSES_INTERVAL_UNITS } from './enemyMotor.js';
+import { CAPSULE_HEIGHT } from '../player/motor.js';   // REVIEW 2026-09-05: the player's transform above its feet
 import { getBool } from '../systems/settings.js';
 import { ENEMY_BASICS } from './enemyBasics.js';   // the STATIC table the ally revert reads
 
@@ -140,10 +141,14 @@ export function getTargets(self, candidates, playerFeet, {
     if (targetAi && c.isQuestFoe && !c.questAttackable) continue;
     const tFeet = isPlayer ? playerFeet : targetAi.feet;
     if (!tFeet) continue;
-    const dx = tFeet[0] - ai.feet[0], dy = tFeet[1] - ai.feet[1], dz = tFeet[2] - ai.feet[2];
+    // REVIEW 2026-09-05: EnemySenses.cs:818-819 measures transform to
+    // transform - each side's feet lifted by its own centre offset.
+    const tOff = isPlayer ? CAPSULE_HEIGHT / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
+    const sOff = ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2;
+    const dx = tFeet[0] - ai.feet[0], dy = (tFeet[1] + tOff) - (ai.feet[1] + sOff), dz = tFeet[2] - ai.feet[2];
     const distance = Math.hypot(dx, dy, dz);
     const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet,
-      isPlayer ? undefined : targetAi.height);
+      isPlayer ? undefined : targetAi.height, null, distance);
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
