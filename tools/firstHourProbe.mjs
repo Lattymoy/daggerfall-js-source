@@ -172,7 +172,7 @@ const alive = async (where) => {
 begin('1 chargen');
 await page.goto('http://localhost:5222/play/?world&shot&classic&novideo&play');
 // NOT __shotReady: that flag waits for the EXTERIOR stream queue to
-// drain (world.js:3199), and the classic start spends its first
+// drain (world.js:3207), and the classic start spends its first
 // minutes inside a dungeon with the world still building behind it -
 // the first run sat here past five minutes with the host long since
 // up. The host being up is __mode answering, which is exactly what

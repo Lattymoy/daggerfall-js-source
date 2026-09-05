@@ -20,10 +20,12 @@
 // pixels are never in this repository (see the module header of
 // systems/seasonsIliacBay.js for why).
 //
-// Registration is a name list and two loaders, exactly like the music
-// and texture replacement registries: nothing is read or decoded until
-// a season that needs a prefix is installed, and a bundle is opened at
-// most once.
+// Registration is a name list and a loader, exactly like the music and
+// texture replacement registries. The bundle is opened ONCE, when a
+// host first asks whether the mod is installed (its blocks decompressed
+// and its object table read, to find the manifest and learn whose it
+// is); no texture's pixels decode until a season asks for its prefix.
+// The loose folders are read only per prefix.
 
 import { readUnityBundle } from '../formats/unityBundle.js';
 import { decodePng } from './textureReplacement.js';
@@ -35,20 +37,26 @@ export const LOOSE_KEY_PREFIX = 'Seasons of the Iliac Bay/';
 
 const FOLDERS = new Set(Object.values(PREFIX_FOLDER).map((f) => f.toLowerCase()));
 const isPng = (name) => /\.png$/i.test(name);
-const isDfmod = (name) => /\.dfmod$/i.test(name);
+/** The one bundle this door takes: the file Nexus ships and DFU loads.
+ *  Any other `.dfmod` in the picked folder (a player's whole Mods
+ *  folder runs to gigabytes) is not stored - a bundle is decompressed
+ *  whole to be read, and this registry has no use for another mod's. */
+export const SEASONS_DFMOD = 'seasons of the iliac bay.dfmod';
+const isSeasonsDfmod = (name) => name.toLowerCase() === SEASONS_DFMOD;
 
 /**
  * Does a picked file belong to this mod, and under what stored key?
  * `relativePath` is the picker's webkitRelativePath (or the bare name).
- * A `.dfmod` is kept whole under `dfmod/<name>`; a PNG is kept only when
- * one of its path segments is one of the mod's eleven folders, under
- * `Seasons of the Iliac Bay/<Folder>/<file>`. Null means "not ours".
+ * The mod's own `.dfmod` is kept whole under `dfmod/<name>`; a PNG is
+ * kept only when one of its path segments is one of the mod's eleven
+ * folders, under `Seasons of the Iliac Bay/<Folder>/<file>`. Null means
+ * "not ours".
  */
 export function seasonsAssetKey(relativePath) {
   const path = String(relativePath ?? '').replace(/\\/g, '/');
   const parts = path.split('/').filter(Boolean);
   const base = parts[parts.length - 1] ?? '';
-  if (isDfmod(base)) return DFMOD_KEY_PREFIX + base.toLowerCase();
+  if (isSeasonsDfmod(base)) return DFMOD_KEY_PREFIX + base.toLowerCase();
   if (!isPng(base)) return null;
   for (let i = parts.length - 2; i >= 0; i--) {
     const seg = parts[i];
@@ -67,10 +75,18 @@ let _seasonsBundle = null;  // Promise<{ files, textures } | null> for the mod's
 /** Register the stored names and a `load(name) -> bytes` loader. Returns
  *  how many stored entries belong to this mod (bundles count one). */
 export function setSeasonsSources(fileNames, load) {
-  _names = (fileNames ?? []).filter((n) => n.startsWith(DFMOD_KEY_PREFIX) || n.startsWith(LOOSE_KEY_PREFIX));
-  _load = typeof load === 'function' ? load : null;
-  _bundles = new Map();
-  _seasonsBundle = null;
+  const names = (fileNames ?? []).filter((n) => n.startsWith(DFMOD_KEY_PREFIX) || n.startsWith(LOOSE_KEY_PREFIX));
+  const loader = typeof load === 'function' ? load : null;
+  // The boot seam registers on EVERY host boot (ensureAudio is called
+  // by each host, some twice); the same names and loader keep the
+  // opened bundle rather than dropping it to be read again.
+  const same = loader === _load && names.length === _names.length && names.every((n, i) => n === _names[i]);
+  _names = names;
+  _load = loader;
+  if (!same) {
+    _bundles = new Map();
+    _seasonsBundle = null;
+  }
   return _names.length;
 }
 

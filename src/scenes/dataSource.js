@@ -606,18 +606,31 @@ export async function pickMorrowindFiles() {
   });
 }
 
+/**
+ * SIB1: THE ONE DECISION for a file the texture pick sees - the stored
+ * key it takes, or null. A DFU-named PNG (`003_5-0.png`) keys by its
+ * basename, as it always has; Seasons of the Iliac Bay's own files -
+ * its `.dfmod`, or a PNG under one of its eleven `Textures/` folders -
+ * key by the RELATIVE PATH that says what they are (the picker's
+ * webkitRelativePath; a browser File's `name` is the bare basename, so
+ * a folder decision made on the name alone answers null for every mod
+ * PNG). Exported so the pin can drive it with File-like objects.
+ */
+export function textureStoreKey(file, { textureEntry, seasonsAssetKey }) {
+  const base = String(file?.name ?? '');
+  if (textureEntry(base)) return base;
+  return seasonsAssetKey(file?.webkitRelativePath || base);
+}
+
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');
   const { seasonsAssetKey } = await import('../systems/seasonsIliacBayAssets.js');
-  // SIB1: the same pick takes a MOD'S OWN FILES - a `.dfmod` bundle, or
-  // the Seasons of the Iliac Bay texture folders - keyed by the path
-  // that says what they are, beside the DFU-named PNGs keyed by name.
-  // `accept` sees the basename; the key sees the relative path.
-  const pathOf = (f) => f.webkitRelativePath || f.name;
-  const accept = (base) => !!textureEntry(base) || !!seasonsAssetKey(base);
-  const acceptFile = (f) => !!textureEntry(f.name) || !!seasonsAssetKey(pathOf(f));
-  return storeAssets(TEXTURE_STORE, [...files].filter(acceptFile), accept,
-    (f, base) => (textureEntry(base) ? base : seasonsAssetKey(pathOf(f)) ?? base));
+  const deps = { textureEntry, seasonsAssetKey };
+  const keyed = [...files].map((f) => [f, textureStoreKey(f, deps)]).filter(([, k]) => k);
+  const keyOf = new Map(keyed);
+  // The list is already decided above; storeAssets' own accept sees the
+  // basename only and must not re-decide.
+  return storeAssets(TEXTURE_STORE, keyed.map(([f]) => f), () => true, (f) => keyOf.get(f));
 }
 export const storedTextureNames = () => assetNames(TEXTURE_STORE);
 export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
@@ -751,7 +764,7 @@ export async function pickTextureFolder() {
     register: async () => {
       const names = await storedTextureNames();
       const n = setTextureReplacements(names, loadTextureFile);
-      return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's files count too
+      return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
     },
   });
 }

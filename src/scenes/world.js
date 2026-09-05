@@ -541,16 +541,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   // no-op until a dungeon was entered (DFU's sound reader is global
   // and the exterior prefab is audible from frame one).
   // SIB1: the mod's textures register on the same seam as the music
-  // and texture packs (a name list and a loader, nothing read yet);
+  // and texture packs (a name list and a loader; the bundle is opened
+  // once to read its manifest, no texture decoded yet);
   // SaveLoadManager.OnLoad is what this boot is to SeasonHelper, and it
   // runs once the registration has answered whether the mod is there.
+  // The mod is ACTIVE only once that first apply has landed: a boot
+  // that fails leaves it inert rather than half-installed.
   const dataReady = ensureAudio(fetchBytes);
   seasonsReady = seasons ? (async () => {
     try {
       await dataReady;
       if (!(await seasonsInstalled())) return false;
-      seasonsActive = true;
       await seasons.onLoad();
+      seasonsActive = true;
       return true;
     } catch (e) {
       console.warn('[seasons] not installed:', e?.message ?? e);
@@ -1243,24 +1246,29 @@ export async function bootWorld(canvas, renderer, params, status) {
    *   TeleportToCoordinates (DaggerfallTravelPopUp.cs:333, :344) and
    *   the destination must not build in the departure month.
    *  @returns {boolean} */
+  /** SIB1: WorldTime.OnNewMonth, which SeasonHelper subscribes - the
+   *  four-valued season can only turn on a month boundary, so the day
+   *  poll that found the boundary is where the mod hears it.
+   *  ApplyCurrentSeason(false) installs the season's atlases and asks
+   *  for the refresh; a turn the climate season does not share (Summer
+   *  to Fall, Spring to Summer) reaches the standing world through that
+   *  refresh alone. Called ABOVE the ?season pin: the pin is the CLASSIC
+   *  skin's three-valued shot pin and cannot name the mod's Fall or
+   *  Spring, and a latched day is what SeasonHelper reads through the
+   *  fast-travel latch. */
+  function seasonsMonthTurn(atMinutes) {
+    const four = seasonValue(dateFromClassicMinutes(atMinutes));
+    if (four === _fourSeason) return;
+    _fourSeason = four;
+    if (seasonsActive) seasons.onNewMonth().catch((e) => console.warn('[seasons] month turn:', e?.message ?? e));
+  }
   function refreshSeason(atMinutes = worldMinutes()) {
-    if (seasonPin !== null) return false;   // ?season pins the world for a shot
     const day = Math.floor(atMinutes / MINUTES_PER_DAY);
     if (day === _seasonDay) return false;
     _seasonDay = day;
+    seasonsMonthTurn(atMinutes);
+    if (seasonPin !== null) return false;   // ?season pins the world for a shot
     const want = climateSeasonFromMinutes(atMinutes);
-    // SIB1: WorldTime.OnNewMonth, which SeasonHelper subscribes - the
-    // four-valued season can only turn on a month boundary, so the
-    // day poll that found the boundary is where the mod hears it.
-    // ApplyCurrentSeason(false) installs the season's atlases and asks
-    // for the refresh; a turn the climate season does not share (Summer
-    // to Fall, Spring to Summer) reaches the standing world through
-    // that refresh alone.
-    const four = seasonValue(dateFromClassicMinutes(atMinutes));
-    if (four !== _fourSeason) {
-      _fourSeason = four;
-      if (seasonsActive) seasons.onNewMonth().catch((e) => console.warn('[seasons] month turn:', e?.message ?? e));
-    }
     if (want === season) return false;
     season = want;
     // SetSunlightScale (WeatherManager.cs:309-319) reads the same

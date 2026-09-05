@@ -19,7 +19,7 @@ in 1.1:
 
 | Method | What it does | Port |
 |---|---|---|
-| `Awake` | subscribes `DaggerfallTerrain.OnInstantiateTerrain`, `WorldTime.OnNewMonth`, `SaveLoadManager.OnLoad`, `DaggerfallTravelPopUp.OnPostFastTravel`, `StreamingWorld.OnUpdateTerrainsEnd` | the five seams in `scenes/world.js` (the fixed city hears the first three at its one boot) |
+| `Awake` | subscribes `DaggerfallTerrain.OnInstantiateTerrain`, `WorldTime.OnNewMonth`, `SaveLoadManager.OnLoad`, `DaggerfallTravelPopUp.OnPostFastTravel`, `StreamingWorld.OnUpdateTerrainsEnd` | the five seams in `scenes/world.js` (the fixed city hears only `OnLoad` and its one `OnInstantiateTerrain` at boot, and - as with its own winter re-skin - nothing after: the month turn is the streaming host's) |
 | `ApplyCurrentSeason(force)` | `season = WorldTime.Now.SeasonValue`; a force forgets the installed season; the same season returns; else install and refresh | `SeasonHelper.apply` |
 | `EnsureSeasonalAtlasesInstalled` | every displaced vanilla atlas back into MaterialReader's cache, then the season's managed archives get their seasonal atlas (built once per season and archive) under the vanilla key | `ensureSeasonalAtlasesInstalled`, the `cache` map the hosts read through `lookup` |
 | `GetManagedArchivesForSeason` | Fall and Spring: 504, 506, 508, 510; Winter: 505, 507, 509; Summer: none | `managedArchivesForSeason` |
@@ -75,9 +75,14 @@ mod, through the **Your own textures** pick:
 2. **the mod's `Textures/` folders** as loose PNGs, kept by folder.
 
 `systems/seasonsIliacBayAssets.js` is the registry: the stored names
-and a loader, nothing read until a season needs a prefix; a bundle is
-opened once and identified by its manifest's GUID (or title). Without
-either source the mod is inert.
+and a loader. The bundle is opened once, when a host first asks whether
+the mod is installed (its blocks decompressed and its object table
+read, to find the manifest and identify it by GUID or title); no
+texture's pixels decode until a season asks for its prefix, and the
+loose folders are read only per prefix. Only the mod's own `.dfmod`
+(by name) is stored from the pick - a whole DFU Mods folder would
+otherwise put every bundle in the browser. Without either source the
+mod is inert.
 
 ## How it meets the port
 

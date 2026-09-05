@@ -11,10 +11,11 @@
 // SerializedFile 21, LZ4HC blocks). What is NOT here, on purpose:
 //   - LZMA-compressed bundles (Unity's default when a mod is built
 //     without ChunkBasedCompression) - refused with a clear error;
-//   - the pre-blob type-tree format (SerializedFile < 12) and files
-//     with the type tree stripped - the object layout is read FROM the
-//     tree the bundle carries, which is what makes this reader
-//     version-independent, so a bundle without one is refused;
+//   - SerializedFile versions below 14 (Unity 5.0 and older: the
+//     pre-blob type tree, the unaligned 32-bit path ids) and files with
+//     the type tree stripped - the object layout is read FROM the tree
+//     the bundle carries, which is what keeps this reader independent
+//     of the Unity version, so a bundle without one is refused;
 //   - every texture format but the six a mod's PNG import lands on
 //     (Alpha8, RGB24, RGBA32, ARGB32, DXT1, DXT5).
 //
@@ -35,7 +36,10 @@ class Reader {
     this.le = littleEndian;
   }
   get length() { return this.bytes.length; }
-  u8() { return this.bytes[this.pos++]; }
+  u8() {
+    if (this.pos >= this.bytes.length) throw new Error('unity bundle: read past the end');
+    return this.bytes[this.pos++];
+  }
   i8() { return this.view.getInt8(this.pos++); }
   u16() { const v = this.view.getUint16(this.pos, this.le); this.pos += 2; return v; }
   i16() { const v = this.view.getInt16(this.pos, this.le); this.pos += 2; return v; }
@@ -221,13 +225,20 @@ function readTypeTreeBlob(r, version) {
 }
 
 /** Does this container file look like a SerializedFile? The header is
- *  big-endian: metadata size, file size, version, data offset. */
+ *  big-endian: metadata size, file size, version, data offset - and
+ *  from version 22 the 32-bit size slot is written as 0 and the real
+ *  64-bit size follows the endian byte, so the size is read where that
+ *  version keeps it (the reference readers' IsSerializedFile rule). */
 function looksSerialized(bytes) {
   if (bytes.length < 20) return false;
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const fileSize = v.getUint32(4);
   const version = v.getUint32(8);
-  return version >= 5 && version <= 40 && fileSize === bytes.length;
+  if (version < 5 || version > 40) return false;
+  if (version >= 22) {
+    if (bytes.length < 48) return false;
+    return Number(v.getBigInt64(24)) === bytes.length;
+  }
+  return v.getUint32(4) === bytes.length;
 }
 
 /**
@@ -259,7 +270,11 @@ export function readSerializedFile(bytes, name) {
   const targetPlatform = version >= 8 ? r.i32() : 0;
   const enableTypeTree = version >= 13 ? r.u8() !== 0 : true;
   if (!enableTypeTree) throw new Error(`unity bundle: ${name} carries no type tree; this reader takes the object layout from it`);
-  if (version < 12 && version !== 10) throw new Error(`unity bundle: SerializedFile ${version} writes the old type-tree format`);
+  // Below 14 the object table is a different shape (unaligned 32-bit
+  // path ids unless bigIdEnabled, an isDestroyed field before 11) and
+  // 9 and 11 write the old type-tree format: Unity 5.0 and older, which
+  // no DFU mod is built with. Refused whole rather than read wrongly.
+  if (version < 14) throw new Error(`unity bundle: SerializedFile ${version} (Unity 5.0 or older) is older than this reader`);
   const typeCount = r.i32();
   const types = [];
   for (let i = 0; i < typeCount; i++) {
@@ -338,6 +353,10 @@ function readValue(node, r) {
     if (arr.metaFlag & ALIGN_FLAG) align = true;
     const n = r.i32();
     if (n < 0) throw new Error('unity bundle: negative array length');
+    // Every element consumes at least one byte, so a count past the
+    // bytes that remain is corrupt - and refused BEFORE the allocation,
+    // which for a count near 2^31 is not a catchable error but the tab.
+    if (n > r.length - r.pos) throw new Error(`unity bundle: array length ${n} exceeds the ${r.length - r.pos} bytes that remain`);
     const sub = arr.children[1];
     if ((sub.type === 'UInt8' || sub.type === 'char') && !(sub.metaFlag & ALIGN_FLAG)) {
       value = r.bytesOf(n);
@@ -391,6 +410,12 @@ export function decodeTexture2D(tex, resource = null) {
   if (!src) throw new Error(`unity bundle: ${tex.m_Name} carries no image data`);
   let rgba;
   const n = width * height;
+  // Mip 0 comes first and must be whole: a short buffer is corrupt, not
+  // a darker picture (the block formats check the same in dxtDecode).
+  const RAW_BPP = { [TEXTURE_FORMAT.RGBA32]: 4, [TEXTURE_FORMAT.ARGB32]: 4, [TEXTURE_FORMAT.RGB24]: 3, [TEXTURE_FORMAT.Alpha8]: 1 };
+  if (RAW_BPP[format] && src.length < n * RAW_BPP[format]) {
+    throw new Error(`unity bundle: ${tex.m_Name} carries ${src.length} bytes for ${width}x${height} at ${RAW_BPP[format]} bytes a texel`);
+  }
   switch (format) {
     case TEXTURE_FORMAT.RGBA32:
       rgba = src.slice(0, n * 4);
@@ -444,6 +469,7 @@ export function readUnityBundle(bytes) {
     const base = path.slice(path.lastIndexOf('/') + 1);
     const res = resources.get(base) ?? resources.get(path);
     if (!res) throw new Error(`unity bundle: resource ${path} is not in the container`);
+    if (offset < 0 || size < 0 || offset + size > res.length) throw new Error(`unity bundle: ${path} stream ${offset}+${size} runs past ${res.length} bytes`);
     return res.subarray(offset, offset + size);
   };
   const textures = [];

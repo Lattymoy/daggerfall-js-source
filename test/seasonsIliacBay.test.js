@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 import { lz4BlockDecompress } from '../src/formats/lz4.js';
 import { dxtDecode } from '../src/formats/dxt.js';
-import { readUnityBundle, readUnityFs, COMMON_STRINGS, TEXTURE_FORMAT, parseUnityVersion, usesNewArchiveFlags } from '../src/formats/unityBundle.js';
+import { readUnityBundle, readUnityFs, readSerializedFile, COMMON_STRINGS, TEXTURE_FORMAT, parseUnityVersion, usesNewArchiveFlags } from '../src/formats/unityBundle.js';
 import {
   SEASONS_MOD, NO_INSTALLED_SEASON, BILLBOARD_SCALE, managedArchivesForSeason, archivePrefix, PREFIX_FOLDER,
   parseRecordFromFilename, filesForPrefix, seasonalRecordSet, seasonalBillboardSize, atlasKey, SeasonHelper,
@@ -33,6 +33,8 @@ import { SEASONS } from '../src/systems/gameDate.js';
 import { scaledBillboardSize } from '../src/world/rmbFlats.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { CREDITS } from '../src/ui/credits.js';
+import { textureStoreKey } from '../src/scenes/dataSource.js';
+import { textureEntry } from '../src/systems/textureReplacement.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -47,6 +49,8 @@ test('SIB1: GetManagedArchivesForSeason - the four woodland sets below Summer, t
   // the IL's `ble.un 1` is UNSIGNED: -1 (NoInstalledSeason) is a huge
   // unsigned value and falls through to the Winter test, which fails
   assert.equal(NO_INSTALLED_SEASON, -1);
+  assert.deepEqual(managedArchivesForSeason(NO_INSTALLED_SEASON), [], 'a negative season manages nothing (the switch, not a signed range)');
+  assert.deepEqual(managedArchivesForSeason(-7), []);
 });
 
 test('SIB1: ArchiveForSeason - the eleven prefixes, and null everywhere else', () => {
@@ -87,6 +91,9 @@ test('SIB1: ParseRecordFromFilename - prefix (case-blind) then an Int32, or -1',
   assert.equal(parseRecordFromFilename('K11.png', 'J'), -1, 'another prefix');
   assert.equal(parseRecordFromFilename('SeasonHelper.cs', 'S'), -1, 'the manifest\'s one script does not parse either');
   assert.equal(parseRecordFromFilename('K 7.png', 'K'), 7, 'Int32.TryParse takes surrounding whitespace');
+  assert.equal(parseRecordFromFilename('K\t7 .png', 'K'), 7, '.NET whitespace: tab, space');
+  assert.equal(parseRecordFromFilename('K\u00a07.png', 'K'), -1, 'but not the no-break space, which JavaScript\'s trim() would take');
+  assert.equal(parseRecordFromFilename('K\u30007.png', 'K'), -1);
   assert.equal(parseRecordFromFilename('K99999999999.png', 'K'), -1, 'out of Int32');
   assert.deepEqual(filesForPrefix(['a/K1.png', 'b/J1.png', 'c/k2.PNG', 'SeasonHelper.cs'], 'K'), ['a/K1.png', 'c/k2.PNG']);
 });
@@ -205,6 +212,17 @@ test('SIB1: a failed build warns with the mod\'s words, leaves the archive vanil
   await h2.apply(false);
   assert.match(l2.warns[0], /Could not load the native atlas metadata for TEXTURE\.507/);
   assert.equal(h2.lookup(507, 1), null);
+  // ...or whose reader REJECTS (a hosted ARENA2 over a bad network): the
+  // same warning, the same next archive, the install never half-done
+  const h3 = new SeasonHelper({
+    currentSeason: () => SEASONS.Winter,
+    recordCount: async (a) => { if (a === 505) throw new Error('TEXTURE.505: 503'); return 33; },
+    load: async (prefix) => fullSet(prefix, 33, 1), refresh: () => {}, warn: (m) => l2.warns.push(m),
+  });
+  assert.equal(await h3.apply(false), true);
+  assert.match(l2.warns.at(-1), /Could not load the native atlas metadata for TEXTURE\.505/);
+  assert.equal(h3.lookup(505, 1), null);
+  assert.equal(h3.lookup(507, 1).texture.name, 'F1.png', 'the archives after it still installed');
 });
 
 test('SIB1: the events - load forces and re-applies next frame, travel forces and refreshes when the terrains end', async () => {
@@ -476,6 +494,20 @@ test('SIB1: the UnityFS reader - header, stored and LZ4 blocks, the type tree wi
   assert.equal(COMMON_STRINGS.get(427), 'm_Name');
   // refusals
   assert.throws(() => readUnityFs(new Uint8Array([...Buffer.from('UnityWeb'), 0, 0, 0, 0, 6])), /not a UnityFS archive/);
+  // a corrupt array count is refused before it is allocated: patch the
+  // first Texture2D's name length to 2^31 - 1
+  {
+    const cab = readUnityFs(testBundle()).files[0].bytes;
+    const sf = readSerializedFile(cab, 'CAB-test');
+    const dv = new DataView(cab.buffer, cab.byteOffset, cab.byteLength);
+    dv.setInt32(sf.objects[0].byteStart, 0x7fffffff, true);
+    assert.throws(() => sf.objects[0].read(), /exceeds the .* bytes that remain|past the end/, 'refused by the bound, never allocated');
+  }
+  // a raw texture whose data is short is corrupt, not a darker picture
+  {
+    const short = readUnityBundle(unityFs(serializedFile([{ typeIndex: 0, body: texture2dBody('S', 4, 4, TEXTURE_FORMAT.RGBA32, new Uint8Array(8)) }])));
+    assert.throws(() => short.textures[0].rgba(), /8 bytes for 4x4/);
+  }
   const lzma = testBundle();
   lzma[lzma.indexOf(0x40, 30)] = 0x41;   // flags: compression 1 = LZMA
   assert.throws(() => readUnityFs(lzma), /LZMA/);
@@ -490,7 +522,17 @@ test('SIB1: the UnityFS reader - header, stored and LZ4 blocks, the type tree wi
 
 test('SIB1: seasonsAssetKey - the .dfmod whole, the eleven folders\' PNGs by folder, nothing else', () => {
   assert.equal(seasonsAssetKey('Seasons of the Iliac Bay/seasons of the iliac bay.dfmod'), `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`);
-  assert.equal(seasonsAssetKey('Mods/Dynamic Skies.DFMOD'), `${DFMOD_KEY_PREFIX}dynamic skies.dfmod`, 'any bundle is kept; the registry reads its manifest to know whose it is');
+  assert.equal(seasonsAssetKey('Mods/Dynamic Skies.DFMOD'), null, 'another mod\'s bundle is not stored - a whole Mods folder is gigabytes, and a bundle is decompressed whole to be read');
+  assert.equal(seasonsAssetKey('Mods/SEASONS OF THE ILIAC BAY.dfmod'), `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`, 'the mod\'s own, case-blind');
+  // THE PICK'S ONE DECISION, over File-like objects: a browser File's
+  // `name` is the bare basename, so a mod PNG is decided by its
+  // webkitRelativePath - deciding on the name alone drops every one
+  const deps = { textureEntry, seasonsAssetKey };
+  assert.equal(textureStoreKey({ name: 'K11.png', webkitRelativePath: 'Seasons of the Iliac Bay/Textures/TempW/K11.png' }, deps), `${LOOSE_KEY_PREFIX}TempW/K11.png`);
+  assert.equal(textureStoreKey({ name: '003_5-0.png', webkitRelativePath: 'pack/003_5-0.png' }, deps), '003_5-0.png', 'a DFU-named PNG keys by name wherever it sits');
+  assert.equal(textureStoreKey({ name: 'seasons of the iliac bay.dfmod', webkitRelativePath: 'Mods/seasons of the iliac bay.dfmod' }, deps), `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`);
+  assert.equal(textureStoreKey({ name: 'K11.png' }, deps), null, 'no path, no folder, not ours');
+  assert.equal(textureStoreKey({ name: 'readme.txt', webkitRelativePath: 'Seasons of the Iliac Bay/Textures/TempW/readme.txt' }, deps), null);
   assert.equal(seasonsAssetKey('Seasons of the Iliac Bay/Textures/TempW/K11.png'), `${LOOSE_KEY_PREFIX}TempW/K11.png`);
   assert.equal(seasonsAssetKey('x\\y\\hillss\\E3.PNG'), `${LOOSE_KEY_PREFIX}hillss/E3.PNG`, 'folders match case-blind, keep their spelling');
   assert.equal(seasonsAssetKey('Textures/Other/K11.png'), null);
@@ -517,6 +559,19 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   setSeasonsSources([`${DFMOD_KEY_PREFIX}other.dfmod`], async () => other);
   assert.equal(await seasonsInstalled(), false);
   assert.deepEqual(await loadSeasonsTextures('K'), []);
+  // the same registration again keeps the opened bundle; a different
+  // one drops it (the boot seam registers on every host boot)
+  let opens = 0;
+  const counting = async (name) => { opens++; return store.get(name) ?? null; };
+  setSeasonsSources([...store.keys()], counting);
+  await seasonsInstalled();
+  assert.equal(opens, 1);
+  setSeasonsSources([...store.keys()], counting);
+  await seasonsInstalled();
+  assert.equal(opens, 1, 'an unchanged registration does not re-open the bundle');
+  setSeasonsSources([...store.keys(), `${LOOSE_KEY_PREFIX}TempW/K9.png`], counting);
+  await seasonsInstalled();
+  assert.equal(opens, 2, 'a changed one does');
   // loose folders, decoded by the injected decoder
   const loose = new Map([[`${LOOSE_KEY_PREFIX}TempW/K1.png`, new Uint8Array([7])], [`${LOOSE_KEY_PREFIX}TempW/K2.png`, new Uint8Array([8])], [`${LOOSE_KEY_PREFIX}TempS/J1.png`, new Uint8Array([9])]]);
   setSeasonsSources([...loose.keys()], async (n) => loose.get(n));
@@ -553,7 +608,8 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(world, /p\._seasonsGen !== seasons\.generation\) \{ _reskinPending = true/, 'refresh tears down only what stands on an older install');
   // the pick and the boot registration
   const ds = read('src/scenes/dataSource.js');
-  assert.match(ds, /seasonsAssetKey\(pathOf\(f\)\)/, 'the texture pick keeps the mod\'s files by path');
+  assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');
+  assert.match(ds, /storeAssets\(TEXTURE_STORE, keyed\.map\(\(\[f\]\) => f\), \(\) => true, \(f\) => keyOf\.get\(f\)\)/, 'and storeAssets does not re-decide on the basename');
   assert.match(ds, /setSeasonsSources\(names, loadTextureFile\)/, 'and registers them');
   assert.match(read('src/scenes/shared.js'), /setSeasonsSources\(names, loadTextureFile\)/, 'the boot registers them on the same seam');
   // the switch and the credit
@@ -566,9 +622,8 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
 
 test('SIB1: the vendor tree carries the manifest and the record, and NO raster - the textures are the player\'s to supply', () => {
   const tracked = execFileSync('git', ['ls-files', 'vendor/seasons-iliac-bay'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
-  assert.ok(tracked.includes('vendor/seasons-iliac-bay/README.md'));
-  assert.ok(tracked.includes('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json'));
-  assert.deepEqual(tracked.filter((f) => /\.(png|jpg|dfmod|dll)$/i.test(f)), [], 'no texture, bundle or binary is tracked');
+  assert.deepEqual([...tracked].sort(), ['vendor/seasons-iliac-bay/README.md', 'vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json'],
+    'the folder holds the manifest and the record and nothing else');
   const readme = read('vendor/seasons-iliac-bay/README.md');
   assert.match(readme, /permission/i);
   assert.match(readme, /re-shaded sprite|silhouette/i, 'the README says why the textures are not here');

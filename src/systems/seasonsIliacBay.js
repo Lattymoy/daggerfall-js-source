@@ -2,7 +2,8 @@
 //
 // The mod ships one script, SeasonHelper (in `Seasons of the Iliac
 // Bay.dll`, 25,600 bytes; the `.cs` is in its manifest and not in the
-// bundle), and 374 textures in eleven folders. What the script DOES,
+// bundle), and 372 textures in eleven folders (the manifest's 374
+// entries add the script and the manifest itself). What the script DOES,
 // read off its IL (method by method, cited by name below):
 //
 //   Init          - AddComponent<SeasonHelper> on a new GameObject.
@@ -79,13 +80,17 @@ export const NO_INSTALLED_SEASON = -1;
 export const BILLBOARD_SCALE = Math.fround(3.1);
 
 /**
- * GetManagedArchivesForSeason (the iterator's MoveNext): a season at or
- * below Spring (Fall 0, Spring 1) yields 504, 506, 508, 510; Winter
- * yields 505, 507, 509; Summer yields nothing. Mountains in snow (511)
- * and the four non-woodland sets (500-503) are never managed.
+ * GetManagedArchivesForSeason (the iterator's MoveNext): a C# switch
+ * whose `case Fall: case Spring:` arm yields 504, 506, 508, 510, whose
+ * `case Winter:` yields 505, 507, 509, and whose default (Summer, or
+ * anything else) yields nothing. The lowered range test is UNSIGNED
+ * (`ble.un 1`), so a negative season - NoInstalledSeason - is not
+ * "below Spring": it falls through to the Winter test and out. Written
+ * as the switch, so it answers the same. Mountains in snow (511) and
+ * the four non-woodland sets (500-503) are never managed.
  */
 export function managedArchivesForSeason(season) {
-  if (season <= SEASONS.Spring) return [504, 506, 508, 510];
+  if (season === SEASONS.Fall || season === SEASONS.Spring) return [504, 506, 508, 510];
   if (season === SEASONS.Winter) return [505, 507, 509];
   return [];
 }
@@ -136,13 +141,16 @@ const startsWithIgnoreCase = (s, prefix) => s.slice(0, prefix.length).toLowerCas
  * ParseRecordFromFilename(fileName, prefix): the name without its
  * extension must start with the prefix (StringComparison 5,
  * OrdinalIgnoreCase); what follows must parse as an Int32 or the answer
- * is -1. `Int32.TryParse` takes an optional sign and surrounding
- * whitespace, so those are accepted too.
+ * is -1. `Int32.TryParse(string, out int)` is NumberStyles.Integer: an
+ * optional sign, and leading or trailing whitespace of .NET's own
+ * definition - U+0009..U+000D and U+0020 only, NOT the no-break space
+ * or the rest of Unicode's White_Space that JavaScript's trim() takes.
  */
+const DOTNET_WHITE = /^[\t\n\v\f\r ]+|[\t\n\v\f\r ]+$/g;
 export function parseRecordFromFilename(fileName, prefix) {
   const stem = withoutExtension(baseName(fileName));
   if (!startsWithIgnoreCase(stem, prefix)) return -1;
-  const rest = stem.slice(prefix.length).trim();
+  const rest = stem.slice(prefix.length).replace(DOTNET_WHITE, '');
   if (!/^[+-]?\d+$/.test(rest)) return -1;
   const n = Number(rest);
   if (n > 2147483647 || n < -2147483648) return -1;
@@ -301,7 +309,11 @@ export class SeasonHelper {
 
   /** TryBuildSeasonalAtlas(archive, prefix) -> { records } or null. */
   async tryBuildSeasonalAtlas(archive, prefix) {
-    const recordCount = await this.deps.recordCount(archive);
+    // GetCachedMaterialAtlas answering false - an archive the reader
+    // could not load - is the warning below and the next archive, so a
+    // rejecting count is read as no count.
+    let recordCount = 0;
+    try { recordCount = await this.deps.recordCount(archive); } catch { recordCount = 0; }
     if (!(recordCount > 0)) {
       this.deps.warn?.(`SeasonHelper: Could not load the native atlas metadata for TEXTURE.${String(archive).padStart(3, '0')}.`);
       return null;
