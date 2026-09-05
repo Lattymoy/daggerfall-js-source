@@ -185,7 +185,7 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
   // them would let the next crossing list them a second time.
   const tick = world.slice(world.indexOf('function tickSeason()'), world.indexOf('function tickSeason()') + 1800);
   assert.doesNotMatch(tick, /state\.release/, 'the re-skin released the pixels it is about to rebuild');
-  assert.match(tick, /queue\.push\(\.\.\.rebuild\)/, 'the torn-down pixels must be queued back');
+  assert.match(tick, /queue\.push\(\.\.\.plan\.rebuild\)/, 'the torn-down pixels must be queued back (ROADS 26b: through the one plan)');
   // ...and it waits for a build in flight: buildPixel publishes only at
   // its very end, so tearing down a key that has no entry yet frees
   // nothing and orphans everything the finished build made (the hazard
@@ -292,15 +292,18 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   // the re-anchoring spawn), and the gate on the motor itself.
   const world = read('src/scenes/world.js');
   const tick = world.slice(world.indexOf('function tickSeason()'));
-  const arm = tick.indexOf('_seasonHoldKey = `${state.current.x},${state.current.y}`');
+  // ROADS 26b: the hold names the pixel under the FEET through the one
+  // rebuild plan (pixelRebuild.js), with the swept ring around it.
+  const arm = tick.indexOf('_seasonHoldKey = plan.holdKey');
+  assert.ok(tick.slice(0, arm).includes('const plan = planPixelRebuild({ keys, current: state.current, feetKey: walkMode && playerSpawned ? feetPixelKey() : null });'));
   const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
   assert.ok(arm > 0 && arm < teardown,
     'the hold must be armed while the player still has a pixel to name');
   // ROADS 26: the re-anchoring spawn re-floors when the ground came back
   // HIGHER (the road network's SmoothRoads under a roads sweep); a
   // season's identical ground re-anchors exactly where it was.
-  assert.match(world, /if \(_seasonHoldKey !== null && \(built\.has\(_seasonHoldKey\) \|\| \(!building && !queue\.length\)\)\) \{[\s\S]{0,800}?const re = Number\.isFinite\(ty\) && ty > fy \? floorLanding\(collider, \[fx, ty \+ 0\.5, fz\], 2\) : \[fx, fy, fz\];\s*\n\s*player\.spawn\(re\[0\], re\[1\], re\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
-    'the release must wait for the pixel and re-anchor the fall - onto ground that came back higher, else exactly where it was (and never wedge)');
+  assert.match(world, /if \(_seasonHoldKey !== null && \(\(built\.has\(_seasonHoldKey\) && _holdRing\.every\(\(k\) => built\.has\(k\)\)\) \|\| \(!building && !queue\.length\)\)\) \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*const \[fx, fy, fz\] = player\.pos;\s*\n\s*const ty = heightAt\(fx, fz\);\s*\n\s*const re = Number\.isFinite\(ty\) && ty > fy \? \[fx, ty, fz\] : \[fx, fy, fz\];\s*\n\s*player\.spawn\(re\[0\], re\[1\], re\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
+    'the release must wait for the pixel AND its swept ring, and re-anchor the fall - lifted to the terrain when the ground came back higher, else exactly where it was (and never wedge)');
   assert.match(world, /const _seasonHeld = _seasonHoldKey !== null;/);
   assert.match(world, /if \(!_overlayHeld && !_seasonHeld\) player\.update\(dt,/,
     'the motor must not integrate gravity while the ground is being rebuilt');

@@ -569,45 +569,108 @@ on the common path.
 ## ROADS 26 - the sweep is the frame's, and it puts the pixels back (2026-09-05)
 
 Mac: "when using the test section, you can sometimes spawn outside of
-the dungeon in the world, in the ground." The test presets take the
-classic start (TSR4b), which is `await modes.startInDungeon()` at the
-end of the boot walk (`src/scenes/world.js:6062`), and
-`startInDungeon` finds its entrance in `doorTargets()` - the doors the
-start pixel's build pushed. ROADS 25's sweep ran the moment
-`loadModRoads()` resolved, and a fetch resolves wherever it likes: on
-a slow connection, AFTER the start pixel was built and BEFORE the
-classic arm. `destroyPixel` takes a pixel's doors with it (T3d), so
-the arm found no DUNGEON_ENTRANCE, answered "no dungeon entrance at
-the start cell; starting outside", and the exterior gate stood the
-player at the pixel centre - which for a 1x1 dungeon location is the
-entrance model itself. Three defects in one sweep:
+the dungeon in the world, in the ground." ROADS 25's sweep ran the
+moment `loadModRoads()` resolved - anywhere `bootWorld` yields - and it
+never put a pixel BACK: `destroyPixel` neither releases the key from the
+streamer nor re-queues it, and `StreamingWorldState._loadList` skips
+every key it still holds as loaded, so a swept pixel was a HOLE until
+the ring walked away and came back. ROADS 25's "the stream rebuilds it"
+was never true. Two endings, sorted by the adversarial review below:
 
-1. THE BOOT WALK COULD BE SWEPT FROM UNDER. Any await between the
-   first build and the classic arm was a window.
-2. THE SWEEP NEVER PUT A PIXEL BACK. `destroyPixel` neither releases
-   the key from the streamer nor re-queues it, and
-   `StreamingWorldState._loadList` skips every key it still holds as
-   loaded - so a swept pixel was a HOLE until the ring walked away and
-   came back. ROADS 25's "the stream rebuilds it" was never true.
-3. A NETWORK LANDING UNDER A STANDING PLAYER took the collider out
-   from under them: the fall through the terrain, "in the ground".
+1. A NETWORK LANDING UNDER A STANDING PLAYER took the collider bucket
+   and the terrain floor out from under them (`heightAt` answers
+   -Infinity for a key that left `built`) and nothing rebuilt it: the
+   fall through the world, "in the ground". Any exterior stand - the
+   ride, a walk, the world after a dungeon exit.
+2. A NETWORK LANDING INSIDE THE BOOT WALK, between the start pixel's
+   first build and the classic start's arm (`bootWorld` yields there at
+   `await loadQuestPack()` and the NPC stand loop, and inside
+   `buildPixel` itself after the pixel published), took the start
+   pixel's doors with it, so `startInDungeon` found no DUNGEON_ENTRANCE
+   and the boot "started outside" - onto a spawn gate
+   (`src/scenes/world.js:6375`) that waits for a start pixel nobody
+   would rebuild. A dead boot: the camera frozen thirty units up over
+   a hole, every input dead.
 
 The fix is the season re-skin's own shape (ROAD-Ar R0). The arrival
-only raises a flag (`rebuildRoadless`, `src/scenes/world.js:375`);
-the sweep is `tickRoadsSweep` (:1288-1307), called on the exterior
-frame between two builds, before `pump()` takes the next (:6669): it
-waits out the same publish hazard `tickSeason` does, arms
-`_seasonHoldKey` on the player's own pixel BEFORE the ground goes,
-tears down only the roadless pixels, and puts them back at the FRONT
-of the queue, nearest-first. The hold's release (:6339-6350) now
-re-floors when the ground came back HIGHER - the network's SmoothRoads
-flattens the tiles under a road, and re-anchoring at the old feet
-would have left them under the new surface; a season's identical
-ground re-anchors exactly where it was. In a dungeon or a building the
-exterior frame does not run, so the sweep waits for the exit, which
-lands on the pixel that still stands and is then held and rebuilt
-like any other. The classic arm is untouched: nothing sweeps under it
-any more. Pinned (`test/roads.test.js` ROADS 26; the R0 pin in
-`test/seasoncalendar.test.js` follows the release); five mutants dead
-- the immediate sweep, the sweep after the pump, the missing hold, the
-missing re-queue, the old release.
+only raises a flag (`rebuildRoadless`, `src/scenes/world.js:381`);
+the sweep is `tickRoadsSweep` (:1294-1312), called ONCE, on the
+exterior frame between two builds, before `pump()` takes the next
+(:6691): it waits out the same publish hazard `tickSeason` does, arms
+the R0 hold BEFORE the ground goes, tears down only the roadless
+pixels, and puts them back at the FRONT of the queue, nearest-first.
+In a dungeon or a building the exterior frame does not run, so the
+sweep waits for the exit, which lands on the pixel that still stands
+and is then held and rebuilt like any other. The classic arm is
+untouched by the sweep: nothing tears the start pixel down before it
+asks for the door.
+
+### ROADS 26b - what the adversarial review found (2026-09-05)
+
+Seventy-one agents over five lenses (refute the diagnosis, alternative
+causes, break the fix, regressions, does the mechanism fit the words),
+every finding cross-checked by two independent skeptics. Sixteen
+survived; the code fix stood, the first record's story did not, and
+six defects were fixed on the same day:
+
+- THE FIRST RECORD'S STORY WAS WRONG TWICE. It had ending 2 finishing
+  with the player stood "at the pixel centre, inside the entrance
+  model". The gate never fires in that ordering (above), and the boot
+  camera for a location pixel is not the pixel centre at all: it
+  stands 120 units past the location's footprint
+  (`src/scenes/world.js:4100`), on bare terrain. Corrected here, in
+  the source comment and in the pin's header.
+- THE DUNGEON STAND NEVER SPENT THE BOOT GATE. Every landing in this
+  host sets `playerSpawned` except the classic dungeon start:
+  `worldModes.tryEnterDungeon` stands the player with a bare
+  `player.spawn` and has no handle on the flag, so the boot gate stayed
+  armed through the whole dungeon visit and fired on the first
+  exterior frame after the exit, re-flooring the player at the
+  camera's x/z over PositionPlayerToDungeonExit's own landing. Now
+  `if (entered) playerSpawned = true;` (:6077) - a boot gate, spent
+  by the boot that stood the player underground.
+- THE SECOND ROADS MISS CRASHED THE BUILD. `buildPixelNow`'s retry arm
+  tore the pixel down and then read `_stride` off the entry it had just
+  deleted - the ROADS 25a crash back by another door, reachable
+  whenever `hasRoads` is true with no network behind it (a failed bake
+  leaves every pixel roadless for the session). The second miss now
+  keeps the pixel as painted (:1017); a world without roads is ROADS
+  3's promise, no world is not.
+- THE HOLD COVERED ONE PIXEL WHILE THE RING WAS STILL HOLES. The sweep
+  tore down every roadless pixel but held the motor only until the
+  player's own came back - first, by nearest-first - and freed it one
+  step from a neighbour still torn down. R0's season re-skin had the
+  same shape. Both now take ONE plan, `src/world/pixelRebuild.js`
+  (`planPixelRebuild`: the rebuild order, the hold key, the ring), and
+  the release (:6354-6372) waits for the player's pixel AND every
+  swept pixel within one of it (`_holdRing`, :1254).
+- THE HOLD WAS KEYED ON THE EYE, THE RE-FLOOR READ THE FEET. `state
+  .current` is derived from the interpolated eye plus the head-bob;
+  `heightAt(player.pos)` resolves the feet's pixel; at a seam they
+  differ, so the arm could name a pixel the release never reads. Both
+  tearers now key the hold on `feetPixelKey()` (:1258), the inverse
+  map `heightAt` uses.
+- THE RE-FLOOR COULD LIFT ONTO A ROOF. `floorLanding` answers the
+  HIGHEST mesh a five-ray footprint finds, so a release under any
+  overhang stood the player on it - the wedge R0 was written against.
+  The lift is now the terrain sample alone: feet under the surface go
+  to the surface, feet on or above it re-anchor exactly where they
+  were.
+- THE PINS DID NOT BIND THE CALL SITE. A second `tickRoadsSweep()` in
+  the boot walk (Mac's bug verbatim) and a never-true gate on the frame
+  call both passed. The pin now requires exactly one call, inside
+  `frame()`, after the streamer's step, unconditional; the plan is
+  tested behaviourally (order, hold, ring, the no-player and
+  neighbour-only cases); eight mutants dead - the boot-walk call, the
+  gate, the eye-keyed hold, the ring-less release, the destroying retry,
+  the eye at the release, the unspent boot gate, the mesh lift.
+
+Recorded, not changed: for the one build after a dungeon exit the
+swept start pixel's doors are out of `buildingDoors`, so the entrance
+the player just left does not answer an activation until it republishes
+- the motor is held for exactly that span. Rejected by the review:
+the pixel-centre stand as the "in the ground" hazard (the boot camera
+is outside the footprint), StartInDungeon-off as a route to it (same),
+a missing ARCH3D model taking the entrance with it, `dungeonLocationFor`
+throwing (main-story dungeons never shrink), the ride's IIFE race, a
+stale `?classicload`, and the shot probes draining mid-sweep.

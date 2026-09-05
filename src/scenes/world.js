@@ -150,6 +150,7 @@ import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from 
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
+import { planPixelRebuild } from '../world/pixelRebuild.js';   // ROADS 26b: the season's and the roadless sweep's one rebuild plan
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
@@ -356,21 +357,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   //
   // ROADS 26 (Mac: "when using the test section, you can sometimes
   // spawn outside of the dungeon in the world, in the ground"): THE
-  // SWEEP RAN WHENEVER THE FETCH RESOLVED, and that is anywhere in the
-  // boot walk. Three things followed. destroyPixel takes a pixel's
-  // doors with it, so a network landing between the start pixel's
-  // first build and the classic start's arm left doorTargets() with no
-  // DUNGEON_ENTRANCE - startInDungeon answered false and the player
-  // "started outside", at the pixel centre, inside Privateer's Hold's
-  // entrance model. The sweep never put the pixel BACK: the streamer
-  // still held its key as loaded, so _loadList skipped it for ever and
-  // the torn-down pixel was a hole until the ring walked away and
-  // returned. And a network landing under a standing player took the
-  // collider out from under them. So the arrival only RAISES the flag;
-  // the sweep itself is the frame's (tickRoadsSweep, beside the season
-  // poll it is the twin of): outside any boot walk, with the R0 hold
-  // armed before the ground goes and the pixels re-queued nearest-first
-  // - what tickSeason does for a season turn.
+  // SWEEP RAN WHENEVER THE FETCH RESOLVED - anywhere bootWorld yields -
+  // and it never put a pixel BACK: destroyPixel neither releases the
+  // key from the streamer nor re-queues it, and _loadList skips every
+  // key still held as loaded, so a swept pixel was a HOLE until the ring
+  // walked away and returned. Two endings, and the adversarial review
+  // (Roads.md ROADS 26) sorted them. A network landing under a STANDING
+  // player took the collider bucket and the terrain floor from under
+  // them - heightAt answers -Infinity for a key that left `built` - and
+  // nothing rebuilt it: the fall through the world, "in the ground". A
+  // network landing inside the boot walk, between the start pixel's
+  // first build and the classic arm, took the start pixel's doors with
+  // it, so startInDungeon found no DUNGEON_ENTRANCE and the boot
+  // "started outside" - onto a spawn gate that waits for a start pixel
+  // nobody would rebuild: a dead boot, the camera frozen forty units up
+  // over a hole. So the arrival only RAISES the flag; the sweep itself
+  // is the frame's (tickRoadsSweep, beside the season poll it is the
+  // twin of): outside any boot walk, with the R0 hold armed on the
+  // pixel under the feet and its swept neighbours before the ground
+  // goes, and the pixels re-queued nearest-first - what tickSeason does
+  // for a season turn.
   let _roadsSweepPending = false;
   function rebuildRoadless() { _roadsSweepPending = true; }
   loadModRoads().then((his) => {
@@ -1001,9 +1007,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // paint has the network, and a network that vanished again is not a
     // reason to loop.
     if (!withRoads && terrainGen.hasRoads) {
-      destroyPixel(px, py, { collectLoose: false });
+      // ROADS 26b (review): a SECOND miss really keeps the pixel. The
+      // arm tore it down and then read `_stride` off the entry it had
+      // just deleted - the ROADS 25a crash back by another door - and
+      // it is reachable whenever hasRoads is true with no network
+      // behind it: a bake that failed (roadsProducer answers null)
+      // leaves every pixel roadless for the session. A world without
+      // roads is ROADS 3's promise; no world is not.
       if (roadsRetry) console.warn(`[roads] pixel ${key} painted without the network twice - kept as painted`);
-      else return buildPixelNow(px, py, { roadsRetry: true });
+      else { destroyPixel(px, py, { collectLoose: false }); return buildPixelNow(px, py, { roadsRetry: true }); }
     }
     const entry = built.get(key);
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
@@ -1239,6 +1251,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // in player.spawn; this one holds instead, which is nearer the
   // reference still: the player does not move at all.
   let _seasonHoldKey = null;
+  let _holdRing = [];   // ROADS 26b: the swept pixels around the held one - the release waits for all of them
+  /** ROADS 26b: the pixel under the player's FEET - what the release's
+   *  heightAt reads. The streamer's `current` is the eye's pixel (plus
+   *  the head-bob), a different pixel at a seam. */
+  const feetPixelKey = () => {
+    const w = state.worldCoords(player.pos);
+    const p = worldCoordToMapPixel(w.x, w.z);
+    return `${p.x},${p.y}`;
+  };
   function tickSeason() {
     if (_seasonStraightening) return;   // the FRAME's poll only (see above)
     if (refreshSeason()) _reskinPending = true;
@@ -1252,48 +1273,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     _reskinPending = false;
     const keys = [...built.keys()];
     // ...and the hold is armed BEFORE the ground goes, on the pixel
-    // the streamer says the player is standing on (the same pixel the
-    // nearest-first rebuild below puts back first).
-    if (walkMode && playerSpawned) _seasonHoldKey = `${state.current.x},${state.current.y}`;
+    // under the player's feet with the swept ring around it (ROADS 26b:
+    // pixelRebuild.js - the same plan the roadless sweep takes), which
+    // the nearest-first rebuild below puts back first.
+    const plan = planPixelRebuild({ keys, current: state.current, feetKey: walkMode && playerSpawned ? feetPixelKey() : null });
+    if (plan.holdKey !== null) { _seasonHoldKey = plan.holdKey; _holdRing = plan.holdRing; }
     for (const key of keys) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by, { collectLoose: false });
     }
     // Nearest-first, the load list's own order (StreamingWorldState
     // ._loadList): the pixel under the player comes back first.
-    const rebuild = keys.map((key) => {
-      const [px, py] = key.split(',').map(Number);
-      return { px, py };
-    }).sort((p, q) => {
-      const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
-      const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
-      if (ca !== cb) return ca - cb;
-      return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
-        - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
-    });
-    queue.push(...rebuild);
-    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${rebuild.length} pixels`);
+    queue.push(...plan.rebuild);
+    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${plan.rebuild.length} pixels`);
   }
 
   /** ROADS 26: the roadless sweep, the FRAME's - rebuildRoadless above
-   *  only raises the flag. Nearest-first is the load list's own order
-   *  (StreamingWorldState._loadList), the same sort tickSeason runs. */
-  const nearestFirst = (p, q) => {
-    const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
-    const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
-    if (ca !== cb) return ca - cb;
-    return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
-      - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
-  };
+   *  only raises the flag. The same plan as the season's: the hold on
+   *  the feet's pixel and its swept ring, the rebuild nearest-first. */
   function tickRoadsSweep() {
     if (!_roadsSweepPending || building) return;   // the publish hazard tickSeason waits out, verbatim
     _roadsSweepPending = false;
     const keys = [...built.values()].filter((p) => !p.withRoads).map((p) => `${p.px},${p.py}`);
     if (!keys.length) return;
-    // The hold is armed BEFORE the ground goes, on the pixel the
-    // streamer says the player stands on - when it is one of the swept.
-    const here = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && keys.includes(here)) _seasonHoldKey = here;
+    // The hold is armed BEFORE the ground goes - on the pixel under the
+    // feet, when it or a neighbour is one of the swept.
+    const plan = planPixelRebuild({ keys, current: state.current, feetKey: walkMode && playerSpawned ? feetPixelKey() : null });
+    if (plan.holdKey !== null) { _seasonHoldKey = plan.holdKey; _holdRing = plan.holdRing; }
     for (const key of keys) {
       const [px, py] = key.split(',').map(Number);
       destroyPixel(px, py, { collectLoose: false });
@@ -1301,9 +1307,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ...and back at the FRONT of the queue: the ring behind can wait,
     // the pixel under the player cannot. The streamer still holds every
     // key as loaded, so nothing else would ever offer them again.
-    const rebuild = keys.map((key) => { const [px, py] = key.split(',').map(Number); return { px, py }; }).sort(nearestFirst);
-    queue.unshift(...rebuild);
-    console.log(`[roads] ${rebuild.length} pixel(s) built before the network landed - rebuilt with roads`);
+    queue.unshift(...plan.rebuild);
+    console.log(`[roads] ${plan.rebuild.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
@@ -3002,7 +3007,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     refreshSeason(arriveMinutes ?? worldMinutes());
     _seasonStraightening = true;   // ...and no frame polls it back off the live clock until the destination stands
     _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
-    _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
+    _seasonHoldKey = null; _holdRing = [];    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
     // on SaveLoadManager_OnStartLoad) - "remove loose enemies,
@@ -6060,7 +6065,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();
-    if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
+    // ROADS 26b (review): THE DUNGEON STAND IS THE BOOT'S STAND. Every
+    // other landing in this host sets playerSpawned; worldModes'
+    // tryEnterDungeon stands the player with a bare player.spawn and has
+    // no handle on the flag, so a classic start left the boot gate below
+    // (`!playerSpawned && built.has(startKey)`) ARMED for the whole
+    // dungeon visit - and the first exterior frame after the exit fired
+    // it, re-flooring the player at the camera's x/z over
+    // PositionPlayerToDungeonExit's own landing. A boot gate; a boot
+    // that stood the player underground has spent it.
+    if (entered) playerSpawned = true;
+    else console.warn('[world] no dungeon entrance at the start cell; starting outside');
   }
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
@@ -6336,18 +6351,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       // freeze the game for ever, and re-anchoring there is what keeps
       // the outage off the fall ledger. player.spawn IS the re-anchor
       // (fallStart = y, falling cleared) - _teleportToPixel's own tail.
-      if (_seasonHoldKey !== null && (built.has(_seasonHoldKey) || (!building && !queue.length))) {
+      if (_seasonHoldKey !== null && ((built.has(_seasonHoldKey) && _holdRing.every((k) => built.has(k))) || (!building && !queue.length))) {
         // ROADS 26: the ground can come back HIGHER than it left - the
         // network's SmoothRoads flattens the tiles under a road - and
         // re-anchoring at the old feet would leave them under the new
-        // surface, where a body falls for ever. The terrain's own height
-        // decides; feet on or above it (a bridge, a building's floor, a
-        // season's identical ground) re-anchor exactly where they were.
+        // surface, where a body falls for ever. The terrain's own sample
+        // is the lift, and only a lift: feet under the surface go to the
+        // surface, never onto the highest mesh a footprint ray could
+        // find (a roof, a wall top - the wedge R0 was written against).
+        // Feet on or above the terrain (a bridge, a floor, a season's
+        // identical ground) re-anchor exactly where they were. ROADS
+        // 26b: the wait covers the swept pixels AROUND the player's too
+        // (_holdRing) - nearest-first put the player's own back first
+        // and freed a motor one step from a neighbour still a hole.
         const [fx, fy, fz] = player.pos;
         const ty = heightAt(fx, fz);
-        const re = Number.isFinite(ty) && ty > fy ? floorLanding(collider, [fx, ty + 0.5, fz], 2) : [fx, fy, fz];
+        const re = Number.isFinite(ty) && ty > fy ? [fx, ty, fz] : [fx, fy, fz];
         player.spawn(re[0], re[1], re[2]);
         _seasonHoldKey = null;
+        _holdRing = [];
       }
       const _seasonHeld = _seasonHoldKey !== null;
       if (!playerSpawned && built.has(startKey)) {
