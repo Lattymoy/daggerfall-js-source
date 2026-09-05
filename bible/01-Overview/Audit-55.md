@@ -36,7 +36,7 @@ mechanism found** - and that is a result, stated as one.
 **F1 - the nudge's fall probe was silenced by the stuck foe's own
 obstacle flag.** `_fallCheck` returns "no fall" WITHOUT CASTING when
 `obstacleDetected`, `foundUpwardSlope` or `foundDoor` is set
-(`enemyMotor.js:929`). A foe the watchdog fires on is stuck against
+(`enemyMotor.js:945`). A foe the watchdog fires on is stuck against
 something, so it has `obstacleDetected` set almost by definition - the
 probe 4b-pre added answered false in exactly the case it was added
 for. The nudge now clears the three classic flags for the probe and

@@ -63,7 +63,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-  const uploadRecord = (archive, record, { opaque = false } = {}) => {
+  const uploadRecord = (archive, record, { opaque = false, mips } = {}) => {   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain)
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -96,7 +96,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
     const color32 = swap ?? t.getColor32(bitmap, opaque ? -1 : 0);
-    renderer.uploadTexture(archive, record, color32, { opaque });
+    renderer.uploadTexture(archive, record, color32, { opaque, mips });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {

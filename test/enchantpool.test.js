@@ -173,7 +173,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // is two pools. `exteriorFoePool` is the watch AND the encounter
   // foes, and this arm handed both to the encounter pool's remover.
   // That was not a leak - removeFoe never looks the record up in `foes`
-  // (exteriorFoes.js:247-252) and both pools share the host's one
+  // (exteriorFoes.js:253-258) and both pools share the host's one
   // renderer - but the teardown of a watchman is the WATCH's to own,
   // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
   // encounter-pool term a guard has no business reaching, so the
@@ -300,7 +300,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   // dungeons and shops entered from here inherited the hole.
   const ext = read('src/scenes/exterior.js');
   assert.match(ext, /import \{ setDefaultEnchantCtx \} from '\.\.\/systems\/enchantments\.js';/);
-  assert.match(ext, /import \{ createEnchantCtx, standLooseFoe \} from '\.\/hostEnchant\.js';/);
+  assert.match(ext, /import \{ createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS \} from '\.\/hostEnchant\.js';/);   // ROAD-G TAIL: + the catch-up loop's placement budget
   const at = ext.indexOf('setDefaultEnchantCtx(createEnchantCtx({');
   assert.ok(at > 0, 'the host mounts the SHARED body, not a second copy of it');
   // ...and it mounts AFTER the mode machine exists, so the fold routes
@@ -342,9 +342,17 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /const host = enchantFoeHost\(f, modes\?\.dungeonCtx \?\? null, _insidePool\);/);
   assert.match(rf, /if \(host === 'dungeon'\)/);
   assert.match(rf, /if \(host === 'inside'\)/);
-  assert.match(rf, /if \(!f\._encounter\) return;/, 'the watch is named by MEMBERSHIP, not by pool identity');
+  // ROAD-G TAIL: the watch transforms on this route too - removed by ITS pool, by membership
+  assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
   assert.match(rf, /exteriorFoes\.removeFoe\(f\);\n\s*exteriorFoes\.spawnFoe\(mobileType, feet\)/);
-  assert.equal(/cityGuards\./.test(rf), false, 'and the arm still never names the watch pool');
+  // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
+  // (world.js:2399's shape) - the removal, never the re-stand
+  assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');
+  assert.equal(/cityGuards\.spawn/.test(rf), false, 'the re-stand is the encounter pool\'s');
+  // (PR #59 review) pin the ARM: after the inside arm nothing returns before
+  // the membership route - a struck watchman reaches removeGuard
+  const tail = rf.slice(rf.indexOf("if (host === 'inside')"));
+  assert.equal((tail.match(/\breturn\b/g) || []).length, 1, 'the inside arm\'s own return is the only one left');
   // the loose-foe arm reaches whichever pool the player is standing in
   // (SD1) - the dungeon's own chain below, this host's encounter pool
   // above ground - and INTERIOR still refuses, which is world.js's own

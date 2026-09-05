@@ -391,11 +391,15 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
     const line = src(rel).split('\n')[n - 1];
     assert.match(line, /townTalk\.tryActivate\(cam\.pos, useFwd/,
       `${rel}:${n} is cited for the activation ray and must BE it`);
-    // ...and the ray really is the camera's own forward vector, built
-    // from the angles rather than unprojected from a pixel.
-    assert.match(src(rel).split('\n').slice(Math.max(0, n - 20), n).join('\n'),
-      /const useFwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
-      `${rel}'s useFwd is the camera angles, so a reduced viewport moves no pick`);
+    // ...and the ray is the camera's own forward vector from the angles
+    // - or, since TI1, the touch tap's ray in its place: a pixel
+    // unprojected, but through the SAME reduced-viewport rect the world
+    // pass draws into, so a docked bar moves no pick on either device.
+    assert.match(src(rel).split('\n').slice(Math.max(0, n - 24), n).join('\n'),
+      /const useFwd = _tapDir \?\? \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
+      `${rel}'s useFwd is the camera angles, or the tap's ray`);
+    assert.match(src(rel), /rayDirFromScreen\([^\n]*largeHudViewportRect\(canvas\.clientHeight\)\)/,
+      `${rel}'s tap ray unprojects through the world-pass rect, not the canvas`);
   }
   // no third host carries the call and goes uncited
   const hosts = ['world', 'exterior', 'dungeon', 'dungeonContext', 'interior', 'worldModes']

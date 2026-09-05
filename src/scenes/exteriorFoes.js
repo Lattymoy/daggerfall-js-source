@@ -20,7 +20,7 @@ import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
@@ -114,11 +114,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  from the encounter self-limit: DFU's CreateFoe spawns
    *  unconditionally, and the cap is the port's own encounter bound,
    *  not a law. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false } = {}) {
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false } = {}) {
     if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
-    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands
+    const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
@@ -157,12 +157,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // CreateFoe.cs:341-359; CreateEnemy skips the ground align for
       // Flying, GameObjectHelper.cs:1227) - the motor keeps FEET.
       const idleH = idleSpriteHeight(tex);
-      if (behaviour === 'Flying') pending.feet[1] = pos[1] - idleH / 2;
+      // REVIEW 2026-09-05: a DELTA on the live pending array (offsetAll may
+      // have recentred it during the awaits), taking the walker's +0.1
+      // lift back with it; `feetGiven` is the restore's word that `pos`
+      // already IS feet (SerializableEnemy restores the position it
+      // wrote - no FinalizeFoe, no drop).
+      if (behaviour === 'Flying' && !feetGiven) pending.feet[1] -= idleH / 2 + 0.1;
       const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
         height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
+        centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
@@ -712,7 +718,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const live = foes.filter((f) => !f.dead);
     if (!live.length) return false;
     const canSee = (f) => {
-      const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
+      const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2, f.ai.feet[2]];   // REVIEW 2026-09-05: the foe's own capsule centre
       const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
       const dist = Math.hypot(dx, dy, dz);
       const l = dist || 1;
@@ -916,7 +922,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function restoreWorld(saved, fromNative, yOffset = 0) {
     for (const sf of saved ?? []) {
       const [lx, lz] = fromNative(sf.nativeX, sf.nativeZ);
-      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender }).then((f) => {
+      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
         if (!f) return;
         f.ai.yaw = sf.yaw ?? f.ai.yaw;
         f.entity.maxHealth = sf.maxHealth ?? f.entity.maxHealth;

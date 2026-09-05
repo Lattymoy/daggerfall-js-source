@@ -253,7 +253,7 @@ string was RECOVERED from the reference, standing over a string somebody
 wrote, is the anti-lie law's exact failure mode, and it shipped with a
 pin. **The classic inventory and trade windows never drew the two
 target-icon panels** (`DaggerfallInventoryWindow.cs:49-50`, `:424-439`,
-`:857-890`), so the classic lane had no encumbrance readout at all - the
+`:858-890`), so the classic lane had no encumbrance readout at all - the
 rects were named in a header comment and nothing else. A repair-shop
 merchant skipped `DaggerfallMerchantRepairPopupWindow` entirely; the bank
 purchase list's arrows were never drawn; `ListPickerWindow` hardcoded 9
@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:957`) and all three seams route by pool membership.
+  `exteriorFoes.js:963`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

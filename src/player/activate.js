@@ -130,10 +130,27 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
  * @returns {object|null} the nearest clicked quest foe
  */
 export function pickQuestFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, (f) => !!f.questBehaviour);
+}
+
+/**
+ * TI1 - THE LOCK-ON PICK: the same box, the same occlusion, ANY live
+ * foe. The quest-foe click above is this with `questBehaviour` as the
+ * accept; the touch lock-on (player/lockOn.js) wants the foe under the
+ * finger whether or not a quest owns it. One law, two accepts - a
+ * second copy of the box would drift from the first (the exact way
+ * F-C2's three swing thresholds once did).
+ * @returns {object|null} the nearest live foe the ray hits
+ */
+export function pickFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, () => true);
+}
+
+function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
   let best = null;
   let bestD = Infinity;
   for (const f of foes ?? []) {
-    if (!f || f.dead || !f.questBehaviour) continue;
+    if (!f || f.dead || !accept(f)) continue;
     const feet = f.ai?.feet;
     if (!feet) continue;
     const h = f.ai?.height ?? 1.8;

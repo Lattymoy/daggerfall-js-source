@@ -38,6 +38,39 @@ export function feetFromCentre(pos, idleH) {
   return [pos[0], pos[1] - idleH / 2, pos[2]];
 }
 
+/** The inverse: DFU's transform from the port's feet. WabbajackEffect.cs:90
+ *  hands CreateEnemy the struck foe's transform.localPosition, and a
+ *  save restores the transform it wrote - both are the sprite CENTRE,
+ *  feet + idleH/2 for walker and flyer alike (the BOTTOM-justified
+ *  capsule keeps the sprite bottom on the feet whatever its height). A
+ *  record with no idleH (a watchman stood before it carried one) reads
+ *  its capsule, which for a walker over 1.6 IS its idle height. */
+export function centreFromFeet(feet, idleH) {
+  return [feet[0], feet[1] + idleH / 2, feet[2]];
+}
+
+/** REVIEW 2026-09-05 (PR #55): a dungeon save written BEFORE this law
+ *  holds every idle flyer's feet AT its marker - the old spawn stood
+ *  them there, half a sprite too high. Such an entry carries no
+ *  `anchor` stamp; when its saved feet are exactly the rebuilt spawn's
+ *  feet plus half the idle sprite (the bat never moved), the rebuilt
+ *  spawn is kept and the old position is not written back. A flyer
+ *  that had moved restores verbatim, as DFU's SerializableEnemy does. */
+export function keepRebuiltSpawn(sf, feet, idleH, behaviour, marker = null) {
+  if (sf.anchor != null || !sf.feet) return false;
+  const eps = 1e-3;
+  // REVIEW 2026-09-05 (PR #57 review): the pre-fix spawn stood a SPECTRAL's
+  // feet at its marker too (C12's CanFly = Flying|Spectral), and a ghost
+  // never grounds by gravity - so an un-stamped ghost still AT its raw
+  // marker keeps the floor-landed rebuild. The marker rides the record.
+  if (behaviour === 'Spectral') {
+    return !!marker && Math.abs(sf.feet[0] - marker[0]) < eps && Math.abs(sf.feet[1] - marker[1]) < eps && Math.abs(sf.feet[2] - marker[2]) < eps;
+  }
+  if (behaviour !== 'Flying' || idleH === undefined) return false;
+  return Math.abs(sf.feet[0] - feet[0]) < eps && Math.abs(sf.feet[2] - feet[2]) < eps
+    && Math.abs(sf.feet[1] - (feet[1] + idleH / 2)) < eps;
+}
+
 /** DaggerfallMobileUnit.cs:398-411 as a base: a flyer or swimmer keeps
  *  its CENTRE across records (it grows half up, half down); a walker
  *  keeps its FEET. The port's shader bottom-anchors, so the walker's

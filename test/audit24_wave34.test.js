@@ -86,7 +86,11 @@ test('audit24 wave34: a wall STOPS the foe and buys a detour, it does not get sl
   // and the destination is two units out AT THE MOMENT IT IS CHOSEN -
   // measured later it is wherever the foe has walked to since, which is
   // the whole point of the 0.75s commitment.
-  const at = [ai.feet[0], ai.feet[1] + ai.height / 2, ai.feet[2]];
+  // REVIEW 2026-09-05 (PR #55 review): the detour destination is FEET-space
+  // like every other destination on the class (DFU's transform + probe *
+  // reach, less the transform offset) - measured from the feet, not the
+  // capsule centre it used to be built from.
+  const at = [ai.feet[0], ai.feet[1], ai.feet[2]];
   ai._findDetour([Math.sin(ai.yaw), 0, Math.cos(ai.yaw)]);
   const d = Math.hypot(ai.detourDestination[0] - at[0], ai.detourDestination[1] - at[1], ai.detourDestination[2] - at[2]);
   assert.ok(Math.abs(d - DETOUR_REACH) < 1e-6, `two units along the probe, got ${d.toFixed(2)}`);

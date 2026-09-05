@@ -114,26 +114,29 @@ test('AUDIT 39 F126: the three item windows hand the rail their live scroll and 
 });
 
 // ---------------------------------------------------------------
-// F127 - the touch attack hook nothing called
+// F127 - the touch attack hook nothing called (2026-08-14 to
+// 2026-09-05). REWRITTEN BY TI1: the drag hook is BACK and LIVE - the
+// swipe calls it (ui/touchGestures.js classifies the drag, touch.js
+// routes a 'swipe' to hooks.attack), and the sword BUTTON is gone with
+// the E button and the rest. The original finding was a hook nothing
+// called; the inverse condition is pinned in the same spirit - a hook
+// the layer documents must be one the layer calls.
 // ---------------------------------------------------------------
 
-test('AUDIT 39 F127: the sword button is gated by the hook it CALLS', () => {
+test('AUDIT 39 F127 / TI1: the drag hook is live - the swipe calls it, and no button pretends to', () => {
   const touch = read('src/ui/touch.js');
-  assert.match(touch, /if \(hooks\.attackTap\) \{/, 'the gate is the live seam');
-  assert.doesNotMatch(touch, /hooks\.attack\b(?!Tap)/, 'the dead drag hook is gone, gate included');
-  // ...and the header no longer documents the retired press/drag/
-  // release seam as live.
-  assert.doesNotMatch(touch, /attack\(0,0,true\)/);
-  assert.doesNotMatch(touch, /attack\?\(dx,dy,held\)/);
-  assert.match(touch, /@param hooks \{ look\(dx,dy\), attackTap\?\(\) \}/);
-  // The three combat hosts pass attackTap alone; the fly-cam interior
-  // passes neither and gets no sword.
+  assert.match(touch, /hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\)/, 'the swipe reaches the drag seam');
+  assert.doesNotMatch(touch, /hooks\.attackTap/, 'the tap-to-attack button is gone (the tap is the activation now)');
+  assert.match(touch, /@param hooks \{ look\(dx,dy\), attack\?\(dx,dy,held\), tap\?\(x,y\), locked\?\(\), dial\?, cycleMode\?\(\), overlayActive\?\(\) \}/,
+    'the header documents exactly the hooks the layer calls');
+  // The three combat hosts pass the drag hook; the fly-cam interior
+  // passes neither it nor a tap and gets no sword and no dial.
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(h);
-    assert.match(s, /attackTap: \(\) =>/, `${h} keeps the tap`);
-    assert.doesNotMatch(s, /\n\s*attack: \(dx, dy, held\)/, `${h} drops the dead closure`);
+    assert.match(s, /\n\s*attack: \(dx, dy, held\) =>/, `${h} passes the live drag hook`);
+    assert.doesNotMatch(s, /attackTap: \(\) =>/, `${h} no longer passes a tap-to-attack`);
   }
-  assert.doesNotMatch(read('src/scenes/interior.js'), /attackTap/);
+  assert.doesNotMatch(read('src/scenes/interior.js'), /attackTap|attack: \(dx/);
 });
 
 // ---------------------------------------------------------------

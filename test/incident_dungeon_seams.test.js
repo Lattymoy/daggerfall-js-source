@@ -64,16 +64,22 @@ test('seams 1: alphaIndex -1 keeps palette index 0 opaque; 0 cuts it (MaterialRe
 
 test('seams 1: the pipeline uploads MESH materials opaque and flats as cutouts, through the one door', () => {
   const p = src('src/scenes/dataPipeline.js');
-  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false \} = \{\}\) =>/);
+  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out
   assert.match(p, /const color32 = swap \?\? t\.getColor32\(bitmap, opaque \? -1 : 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, \{ opaque \}\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/);
   // every sub-mesh upload asks for the opaque material
-  const meshSites = [...p.matchAll(/uploadRecord\((?:sm|pn)\.textureArchive, (?:sm|pn)\.textureRecord(, \{ opaque: true \})?\)/g)];
+  const meshSites = [...p.matchAll(/uploadRecord\(sm\.textureArchive, sm\.textureRecord(, \{ opaque: true \})?\)/g)];
   assert.ok(meshSites.length >= 2, `the pipeline uploads sub-mesh textures at ${meshSites.length} sites`);
   for (const m of meshSites) assert.ok(m[1], `a sub-mesh upload without { opaque: true }: ${m[0]}`);
   // the two other mesh-texture doors
   assert.match(src('src/world/texRemap.js'), /uploadRecord\(swapped, sm\.textureRecord, \{ opaque: true \}\);/, 'the climate/season swap is a mesh material too');
-  assert.match(src('src/scenes/interiorContext.js'), /uploadRecord\([^)]*\{ opaque: true \}\)/, 'the interior swap uploads mesh materials opaque');
+  // REVIEW 2026-09-05 (PR #55 review): interiorContext has NO mesh door of
+  // its own - its climate swap rides remapSubMeshes -> texRemap.js - and
+  // its late-stood person is a FLAT (DaggerfallBillboard.cs:289-293,
+  // alphaIndex 0). The first cut sent that flat through the mesh door
+  // and the person never drew: drawBillboards reads the bare key only.
+  assert.match(src('src/scenes/interiorContext.js'), /remapSubMeshes\(/, 'the interior swap goes through texRemap');
+  assert.doesNotMatch(src('src/scenes/interiorContext.js'), /uploadRecord\([^)]*opaque/, 'no interior flat goes through the mesh door');
   // the flat/billboard door still cuts index 0
   assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);
 });
@@ -140,8 +146,16 @@ test('seams 2: setClearColor is idempotent through the shadow, and the two colou
 test('seams 2: every host sets the clear colour - interiors black, the streaming hosts by mode', () => {
   assert.match(src('src/scenes/dungeon.js'), /renderer\.setClearColor\(INTERIOR_CLEAR\);/);
   assert.match(src('src/scenes/interior.js'), /renderer\.setClearColor\(INTERIOR_CLEAR\);/);
-  assert.match(src('src/scenes/world.js'), /renderer\.setClearColor\(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? INTERIOR_CLEAR : SKY_CLEAR\);/);
-  assert.match(src('src/scenes/exterior.js'), /renderer\.setClearColor\(_mode\(\) !== 'exterior' \? INTERIOR_CLEAR : SKY_CLEAR\);/);
+  // REVIEW 2026-09-05 (PR #55 review): the streaming hosts' own call sits
+  // AFTER their `modes.frame` early return, so it only ever colours the
+  // EXTERIOR frame; the world-hosted dungeon and interior frames are
+  // begun in worldModes, and that is where they clear black.
+  assert.match(src('src/scenes/world.js'), /renderer\.setClearColor\(SKY_CLEAR\);/);
+  assert.match(src('src/scenes/exterior.js'), /renderer\.setClearColor\(SKY_CLEAR\);/);
+  const wm = src('src/scenes/worldModes.js');
+  const modeFrames = [...wm.matchAll(/renderer\.setClearColor\(INTERIOR_CLEAR\);[^\n]*\n\s+renderer\.setWorldViewport\([^\n]*\n\s+renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR\);/g)];
+  assert.equal(modeFrames.length, 2, 'both mode frames (dungeon, interior) clear black above their viewport + beginFrame pair (E5 wants the rect immediately above the frame)');
+  assert.equal([...wm.matchAll(/renderer\.beginFrame\(proj, view, INTERIOR_LIGHT_DIR\);/g)].length, 2, 'and those are the only two');
   // the mode-driven pair run BEFORE the frame they colour
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = src(f);
@@ -149,4 +163,58 @@ test('seams 2: every host sets the clear colour - interiors black, the streaming
     const begin = s.indexOf('renderer.beginFrame(', set);
     assert.ok(set > 0 && begin > set && begin - set < 2000, `${f}: setClearColor precedes the beginFrame it colours`);
   }
+});
+
+test('seams review: a billboard draws ONLY from the bare key - an opaque-only upload leaves it invisible', () => {
+  // The law the late-stood interior person broke: drawBillboards looks
+  // up `archive_record`, never `#opaque`.
+  const I = identity();
+  const log = [];
+  const r = recordingRenderer(log);
+  r.uploadTexture(182, 5, px, { opaque: true });
+  const b = r.createBillboardBatch(182, 5, { w: 1, h: 2 }, [[0, 0, 0]]);
+  log.length = 0;
+  r.drawBillboards([b], I, I);
+  assert.equal(calls(log, 'drawElements').length, 0, 'the opaque key is not a flat\'s texture');
+  r.uploadTexture(182, 5, px);
+  log.length = 0;
+  r.drawBillboards([b], I, I);
+  assert.equal(calls(log, 'drawElements').length, 1, 'the bare key draws it');
+});
+
+test('seams review: the mip chain is WORLD art\'s - a string-keyed UI upload keeps one NEAREST level; emission maps carry the chain', () => {
+  const log = [];
+  const r = recordingRenderer(log);
+  r.uploadTexture('img', 'paint:1', px);   // ImageReader.cs:59 mipChain false
+  assert.equal(calls(log, 'generateMipmap').length, 0, 'UI art has no chain');
+  assert.equal(calls(log, 'texParameteri').find((c) => c[2] === 'TEXTURE_MIN_FILTER')[3], 'NEAREST');
+  log.length = 0;
+  r.uploadTexture(7, 4, px, { mips: false });
+  assert.equal(calls(log, 'generateMipmap').length, 0, 'an explicit opt-out is honoured');
+  log.length = 0;
+  r.uploadEmissionTexture(7, 3, px);
+  assert.equal(calls(log, 'generateMipmap').length, 1, 'TextureReader.cs:316/:328/:340 - the emission map is mipped like the albedo it is subtracted from');
+  assert.equal(calls(log, 'texParameteri').find((c) => c[2] === 'TEXTURE_MIN_FILTER')[3], 'NEAREST_MIPMAP_NEAREST');
+});
+
+test('seams review 2: item icons are UI art - the icon door uploads a world archive un-mipped under its own key', () => {
+  // ImageReader.cs:59 builds UI textures with mipChain false; the inventory
+  // and scroller icons come from TEXTURE.nnn item archives (numeric), so
+  // the world-art gate would have mipped them. `mips: false` keys apart.
+  const log = [];
+  const r = recordingRenderer(log);
+  r.uploadTexture(233, 5, px, { mips: false });
+  assert.equal(calls(log, 'generateMipmap').length, 0);
+  assert.equal(calls(log, 'texParameteri').find((c) => c[2] === 'TEXTURE_MIN_FILTER')[3], 'NEAREST');
+  assert.ok(r.textures.has('233_5#ui') && !r.textures.has('233_5'), 'the UI variant under its own key');
+  log.length = 0;
+  r.uploadTexture(233, 5, px);
+  assert.equal(calls(log, 'generateMipmap').length, 1, 'the same record as WORLD art still gets its chain under the bare key');
+  r.releaseTexture(233, 5);
+  assert.ok(!r.textures.has('233_5#ui') && !r.textures.has('233_5'), 'a release frees every variant');
+  for (const f of ['src/ui/nativeInventory.js', 'src/ui/itemScroller.js']) {
+    assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false \}\);/, `${f} asks for the UI variant`);
+    assert.match(src(f), /icons\.textures\.get\(`\$\{key\}#ui`\)/, `${f} reads it back`);
+  }
+  assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/, 'the door forwards it');
 });

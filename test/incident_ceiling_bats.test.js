@@ -24,8 +24,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, spriteOriginY } from '../src/characters/enemyAnchor.js';
-import { EnemyAI } from '../src/characters/enemyMotor.js';
+import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../src/characters/enemyAnchor.js';
+import { EnemyAI, canSeeTarget } from '../src/characters/enemyMotor.js';
+import { sweepFoes } from '../src/systems/spellcast.js';
+import { entityOccupancy } from '../src/scenes/questFoeHost.js';
 import { Collider } from '../src/player/collider.js';
 import { CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
@@ -93,15 +95,183 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   assert.match(d, /const pos = behaviour === 'Flying' \? feetFromCentre\(\[e\.x, e\.y, e\.z\], idleH\) : D\.floorLanding\(collider, \[e\.x, e\.y \+ 0\.2, e\.z\]\);/);
   assert.doesNotMatch(d, /const canFly = behaviour === 'Flying' \|\| behaviour === 'Spectral';/, 'a Spectral grounds at the layout');
   assert.equal([...d.matchAll(/height: enemyControllerHeight\(idleH, /g)].length, 2, 'the class and monster branches both size the capsule');
-  assert.equal([...d.matchAll(/gender: e\.gender, idleH \}\);/g)].length, 2, 'both records carry the idle height for the draw');
+  assert.equal([...d.matchAll(/gender: e\.gender, idleH, marker: \[e\.x, e\.y, e\.z\] \}\);/g)].length, 2, 'both records carry the idle height for the draw (and the layout marker, REVIEW 2026-09-05)');
   assert.match(d, /o\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the dungeon draw pins a flyer\'s centre');
   const x = src('src/scenes/exteriorFoes.js');
-  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n\s+if \(behaviour === 'Flying'\) pending\.feet\[1\] = pos\[1\] - idleH \/ 2;\n\s+const ai = new EnemyAI\(/,
-    'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre');
+  // REVIEW 2026-09-05: a DELTA on the live pending array (offsetAll may
+  // have recentred it during the awaits), gated off for a restore whose
+  // position already IS feet.
+  assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n\s+const ai = new EnemyAI\(/,
+    'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre as a delta');
+  assert.match(x, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');
+  assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \? 0 : 0\.1\), pos\[2\]\] \};/, 'and takes no walker lift either (a flyer never grounds - 0.1 per load, cumulative)');
   assert.match(x, /height: enemyControllerHeight\(idleH, behaviour\),/);
   assert.match(x, /org\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the exterior draw pins a flyer\'s centre');
   // the epoch guard still stands between the texture await and the AI
   const guard = x.indexOf('if (gen !== epoch) return null;');
   assert.ok(guard > x.indexOf('const tex = await getTexture(archive);') && guard < x.indexOf('const ai = new EnemyAI('),
     'AUDIT-39r: a sweep across the texture await still cancels the spawn before anything stands');
+});
+
+// ---------------------------------------------------------------------------
+// REVIEW 2026-09-05 (the PR #55 adversarial round): the laws the first cut
+// missed - DFU's TRANSFORM is the sprite centre, and every position the
+// motor measures against it, every position a re-stand or a save hands
+// back, and every capsule the player's hit laws test, must say so.
+// ---------------------------------------------------------------------------
+
+test('bats review: centreFromFeet is feetFromCentre\'s inverse; keepRebuiltSpawn recognises a pre-fix save', () => {
+  assert.deepEqual(centreFromFeet([1, 9, 2], 2), [1, 10, 2]);
+  assert.deepEqual(feetFromCentre(centreFromFeet([3, 4, 5], 2.4), 2.4), [3, 4, 5]);
+  // an un-stamped Flying entry whose feet sit exactly at the old marker
+  // (= the rebuilt feet + idleH/2): keep the rebuilt spawn
+  assert.equal(keepRebuiltSpawn({ feet: [1, 11.2, 2] }, [1, 10, 2], 2.4, 'Flying'), true);
+  assert.equal(keepRebuiltSpawn({ feet: [1, 11.2, 2], anchor: 1 }, [1, 10, 2], 2.4, 'Flying'), false, 'a stamped save restores verbatim');
+  assert.equal(keepRebuiltSpawn({ feet: [1, 11.2, 2] }, [1, 10, 2], 2.4, 'General'), false, 'a walker restores verbatim');
+  assert.equal(keepRebuiltSpawn({ feet: [1, 12, 2] }, [1, 10, 2], 2.4, 'Flying'), false, 'a flyer that had moved restores verbatim');
+  assert.equal(keepRebuiltSpawn({ feet: [1, 11.2, 2] }, [1, 10, 2], undefined, 'Flying'), false, 'no idle height, no judgement');
+  // REVIEW 2026-09-05 (PR #57 review): the pre-fix ghost stood at its raw marker too
+  assert.equal(keepRebuiltSpawn({ feet: [1, 10.5, 2] }, [1, 10, 2], 2.4, 'Spectral', [1, 10.5, 2]), true, 'an un-stamped ghost still at its marker keeps the floor-landed rebuild');
+  assert.equal(keepRebuiltSpawn({ feet: [1, 10.5, 2], anchor: 1 }, [1, 10, 2], 2.4, 'Spectral', [1, 10.5, 2]), false);
+  assert.equal(keepRebuiltSpawn({ feet: [3, 10.5, 2] }, [1, 10, 2], 2.4, 'Spectral', [1, 10.5, 2]), false, 'a moved ghost restores verbatim');
+  assert.equal(keepRebuiltSpawn({ feet: [1, 10.5, 2] }, [1, 10, 2], 2.4, 'Spectral'), false, 'no marker, no judgement');
+});
+
+test('bats review: the motor measures from DFU\'s transform (centreOffset), not half its capsule', () => {
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
+  const mk = () => { const c = new Collider(() => -100); c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I); return c; };
+  // the default keeps every caller that names no sprite where it was
+  const plain = new EnemyAI(mk(), [0, 0, 0], 0, { liveSpeed: 50 });
+  assert.equal(plain.centreOffset, CAPSULE_HEIGHT / 2);
+  assert.deepEqual(plain._centre(), [0, CAPSULE_HEIGHT / 2, 0]);
+  // a big flyer: idle sprite 3.2, capsule halved to 1.6, transform 1.6 up
+  const bat = new EnemyAI(mk(), [0, 0, 0], 0, { liveSpeed: 50, behaviour: 'Flying', height: enemyControllerHeight(3.2, 'Flying'), centreOffset: 1.6 });
+  assert.equal(bat.height, 1.6);
+  assert.deepEqual(bat._centre(), [0, 1.6, 0], 'transform.position sits at the sprite centre, not at 0.8');
+  bat.inSight = true;
+  bat.lastKnownTargetPos = [0, 0, 12];
+  bat.predictedTargetPos = bat.lastKnownTargetPos;
+  bat._getDestination([0, 0, 12]);
+  // DFU: target transform (feet + 0.9) + targetController.height/2 (0.9)
+  // = feet + 1.8, measured from this transform (feet + 1.6): +0.2 in
+  // feet-space. The first cut aimed the bat's FEET at the player's head.
+  assert.ok(near(bat.destination[1], 1.8 - 1.6), `a flyer's feet-space aim: ${bat.destination[1]}`);
+  // a rat: idle sprite 0.9, capsule floored to 1.6, transform 0.45 up -
+  // the grounded arm's (targetHeight - originalHeight)/2 is DFU's, in
+  // transform-space: 0.9 - 0.1 - 0.45 = +0.35 (it aims a little up)
+  const rat = new EnemyAI(mk(), [0, 0, 0], 0, { liveSpeed: 50, height: enemyControllerHeight(0.9, 'General'), centreOffset: 0.45 });
+  rat.inSight = true;
+  rat.lastKnownTargetPos = [0, 0, 12];
+  rat.predictedTargetPos = rat.lastKnownTargetPos;
+  rat._getDestination([0, 0, 12]);
+  assert.ok(near(rat.destination[1], 0.9 - (1.8 - 1.6) / 2 - 0.45), `a rat's feet-space aim: ${rat.destination[1]}`);
+  // a plain 1.8 walker still aims dead level (feet to feet)
+  plain.inSight = true;
+  plain.lastKnownTargetPos = [0, 0, 12];
+  plain.predictedTargetPos = plain.lastKnownTargetPos;
+  plain._getDestination([0, 0, 12]);
+  assert.ok(near(plain.destination[1], 0), 'a walker aims at its own height');
+});
+
+test('bats review: every host passes centreOffset; the watch sizes its capsule too; re-stands hand the TRANSFORM; hit laws read the capsule', () => {
+  const d = src('src/scenes/dungeonContext.js');
+  const x = src('src/scenes/exteriorFoes.js');
+  const g = src('src/scenes/cityGuards.js');
+  assert.equal([...d.matchAll(/centreOffset: idleH \/ 2,/g)].length, 2, 'both dungeon branches');
+  assert.match(x, /centreOffset: idleH \/ 2,/);
+  assert.match(g, /height: enemyControllerHeight\(idleH, basics\.behaviour \?\? 'General'\),/, 'the watch wears its sprite (SetupDemoEnemy.cs:103-115)');
+  assert.match(g, /centreOffset: idleH \/ 2,/);
+  assert.match(g, /mobileType: GUARD_MOBILE_TYPE, idleH, dead: false,/, 'and carries idleH for the re-stand');
+  const guardTex = g.indexOf('const tex = await getTexture(archive);');
+  assert.ok(guardTex > 0 && guardTex < g.indexOf('const ai = new EnemyAI(') && g.indexOf('if (gen !== epoch) return null;') < g.indexOf('const ai = new EnemyAI('),
+    'the guard texture is read before the AI stands, the epoch guard still ahead of any allocation');
+  // WabbajackEffect.cs:90 hands the struck foe's transform.localPosition
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /const feet = f\.ai\?\.feet \? centreFromFeet\(f\.ai\.feet, f\.idleH \?\? f\.ai\.height\) : enchantFeet\(\);/, `${f}: the re-stand hands the transform`);
+  }
+  assert.match(d, /const at = f\.ai\?\.feet \? centreFromFeet\(f\.ai\.feet, f\.idleH \?\? f\.ai\.height\) : \(lastPlayerFeet \?\? \[0, 0, 0\]\);/);
+  // the player's swing/arrow contact tests the FOE's capsule centre
+  // (the audio.play3d origins keep their 0.9 - a sound source, not a hit law)
+  for (const [f, n] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1], ['src/combat/arrowFlight.js', 1], ['src/scenes/hostMagic.js', 1], ['src/systems/spellcast.js', 2]]) {
+    const s = src(f);
+    assert.doesNotMatch(s, /const c = \[\w+\.ai\.feet\[0\], \w+\.ai\.feet\[1\] \+ 0\.9, /, `${f}: the swing's canSee reads no 0.9 (the player's half-capsule) on a foe`);
+    assert.doesNotMatch(s, /f\.ai\.feet\[1\] \+ 0\.9 - m\.pos\[1\]/, `${f}: no missile contact at the player's half-capsule on a foe`);
+    assert.ok([...s.matchAll(/(?:[fg]\.ai|t\.ref\?\.ai\?)\.height \?\? (?:CAPSULE_HEIGHT|1\.8)\) \/ 2/g)].length >= n, `${f}: at least ${n} hit site(s) read the foe's capsule`);
+  }
+  // the dungeon save: stamped, and a pre-fix flyer entry judged
+  assert.match(d, /feet: \[\.\.\.f\.ai\.feet\], yaw: f\.ai\.yaw, anchor: 1,/);
+  assert.match(d, /if \(!keepRebuiltSpawn\(sf, f\.ai\.feet, f\.idleH, f\.mobile\?\.basics\?\.behaviour \?\? 'General', f\.marker \?\? null\)\) \{ f\.ai\.feet\[0\] = sf\.feet\[0\];/);
+  assert.equal([...d.matchAll(/idleH, marker: \[e\.x, e\.y, e\.z\] \}\);/g)].length, 2, 'both dungeon records carry the layout marker');
+});
+
+// ---------------------------------------------------------------------------
+// REVIEW 2026-09-05, the round over PR #57: the TARGET's transform and the
+// distance between transforms - the two terms the transform-space law had
+// still read from the player's capsule.
+// ---------------------------------------------------------------------------
+
+const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const quad = new Uint32Array([0, 1, 2, 0, 2, 3]);
+const floored = () => { const c = new Collider(() => -100); c.addMesh('floor', new Float32Array([-60, 0, -60, 60, 0, -60, 60, 0, 60, -60, 0, 60]), quad, I4); return c; };
+const walled = () => { const c = floored(); c.addMesh('wall', new Float32Array([-60, 0, 6, 60, 0, 6, 60, 6, 6, -60, 6, 6]), quad, I4); return c; };
+
+test('bats review 2: distanceToTarget is transform to transform (EnemySenses.cs:425-426), and the sight gate reads it', () => {
+  // the PR's own bat at its own destination: feet 0.2 above the player's,
+  // transform 1.6 above THAT - DFU's vertical term is 1.8 - 0.9 = 0.9
+  const bat = new EnemyAI(floored(), [0, 0.2, 0], 0, { liveSpeed: 50, behaviour: 'Flying', height: 1.6, centreOffset: 1.6 });
+  bat._senses([0, 0, 2.1]);
+  assert.ok(near(bat._dist, Math.hypot(0, 1.8 - 0.9, 2.1)), `the bat's distance: ${bat._dist} (feet-to-feet would say 2.11)`);
+  const rat = new EnemyAI(floored(), [0, 0, 0], 0, { liveSpeed: 50, height: 1.6, centreOffset: 0.45 });
+  rat._senses([0, 0, 2.22]);
+  assert.ok(near(rat._dist, Math.hypot(0, 0.9 - 0.45, 2.22)), `the rat's distance: ${rat._dist}`);
+  const plain = new EnemyAI(floored(), [0, 0, 0], 0, { liveSpeed: 50 });
+  plain._senses([0, 0, 5]);
+  assert.ok(near(plain._dist, 5), 'a 1.8 walker against the player: unchanged');
+  // canSeeTarget's radius gate takes the caller's distance; without one it measures transforms itself
+  assert.equal(canSeeTarget(floored(), [0, 0, 0], 0, 1.8, [0, 0, 10], 1.8, null, 1e9), false, 'a handed-in distance past the radius refuses');
+  assert.equal(canSeeTarget(floored(), [0, 0, 0], 0, 1.8, [0, 0, 10]), true);
+});
+
+test('bats review 2: a FOE target\'s transform is feet + ITS centreOffset, in every arm that rebuilds it', () => {
+  const batTarget = new EnemyAI(floored(), [0, 0, 12], 0, { liveSpeed: 50, behaviour: 'Flying', height: 1.6, centreOffset: 1.6 });
+  const walker = new EnemyAI(floored(), [0, 0, 0], 0, { liveSpeed: 50 });
+  walker._armedTargeting = true;
+  walker._targetCandidate = { isPlayer: false, ai: batTarget, entity: {} };
+  walker.inSight = true;
+  walker.lastKnownTargetPos = [0, 0, 12];
+  walker.predictedTargetPos = walker.lastKnownTargetPos;
+  walker._getDestination([0, 0, 12]);
+  // target transform 1.6 up, grounded delta (1.6 - 1.8)/2 = -0.1 subtracted, this transform 0.9: 1.6 + 0.1 - 0.9
+  assert.ok(near(walker.destination[1], 1.6 - (1.6 - 1.8) / 2 - 0.9), `a walker hunting a bat aims at the bat's transform: ${walker.destination[1]}`);
+  const ratTarget = new EnemyAI(floored(), [0, 0, 12], 0, { liveSpeed: 50, height: 1.6, centreOffset: 0.45 });
+  walker._targetCandidate = { isPlayer: false, ai: ratTarget, entity: {} };
+  walker._getDestination([0, 0, 12]);
+  assert.ok(near(walker.destination[1], 0.45 - (1.6 - 1.8) / 2 - 0.9), `...and a rat's: ${walker.destination[1]}`);
+  // the SEARCH arm (:549-557) lifts LastKnownTargetPos (feet) to the target transform too
+  const sBat = new EnemyAI(walled(), [0, 0, 0], 0, { liveSpeed: 50, behaviour: 'Flying', height: enemyControllerHeight(3.2, 'Flying'), centreOffset: 1.6 });
+  sBat.inSight = false;
+  sBat.lastKnownTargetPos = [0, 0, 12];
+  sBat.predictedTargetPos = sBat.lastKnownTargetPos;
+  sBat.destination = [0, 0, 12];   // the clear-path cast reaches (destination - transform).magnitude (:539)
+  sBat._getDestination([0, 0, 12]);
+  assert.equal(sBat.searchMult, 0, 'the wall forces the search arm (12 > the stop distance, the ramp holds)');
+  assert.ok(near(sBat.destination[1], 0.9 - 1.6), `a searching flyer: the player's transform, no face add, less its own offset: ${sBat.destination[1]}`);
+  const sRat = new EnemyAI(walled(), [0, 0, 0], 0, { liveSpeed: 50, height: enemyControllerHeight(0.9, 'General'), centreOffset: 0.45 });
+  sRat.inSight = false;
+  sRat.lastKnownTargetPos = [0, 0, 12];
+  sRat.predictedTargetPos = sRat.lastKnownTargetPos;
+  sRat.destination = [0, 0, 12];
+  sRat._getDestination([0, 0, 12]);
+  assert.ok(near(sRat.destination[1], 0.9 - (1.8 - 1.6) / 2 - 0.45), `a searching rat: ${sRat.destination[1]}`);
+});
+
+test('bats review 2: the spell sweep, the touch pick and the occupancy sphere sit at the FOE\'s capsule centre', () => {
+  const giant = { ai: { feet: [0, 0, 0], height: 3 } };
+  assert.deepEqual(sweepFoes([0, 1.5, 0], 0.2, [giant]), [giant], 'a burst at chest height catches a 3-tall foe (0.9 would miss)');
+  assert.deepEqual(sweepFoes([0, 0.9, 0], 0.2, [giant]), [], 'and not at the player\'s half-capsule');
+  const occupied = entityOccupancy((f) => f.ai.feet, () => [giant], [50, 0, 50]);
+  assert.equal(occupied({ x: 0, y: 1.5, z: 0 }, 0.2), true, 'placement sees the giant at its centre');
+  assert.equal(occupied({ x: 0, y: 0.5, z: 0 }, 0.2), false, 'a metre under its centre is clear (0.9 would have been 0.4 away)');
+  assert.equal(occupied({ x: 50, y: 0.9, z: 50 }, 0.2), true, 'the player at 0.9 - its own capsule');
 });

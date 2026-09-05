@@ -6,11 +6,11 @@
 //    1032-1036). DFU's billboard is CENTRE-anchored, so that puts the
 //    base ON the marker inside a building and half a height BELOW it
 //    inside a dungeon. This port's shader is BOTTOM-anchored (position
-//    = base - the C11 law stated at dungeonContext.js:1336, learned
+//    = base - the C11 law stated at dungeonContext.js:1338, learned
 //    when a centre-anchor holdover floated every corpse), so the same
 //    visual result needs the shift on the DUNGEON side. It is the very
 //    shift the dungeon's own RDB flats already take
-//    (dungeonContext.js:1254) and that a building's flats correctly do
+//    (dungeonContext.js:1256) and that a building's flats correctly do
 //    not (interiorContext.js passes its centers through).
 //
 //    B2 stood dungeon quest flats at the raw marker y, so every quest

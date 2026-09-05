@@ -123,9 +123,12 @@ test('AUDIT 28 F-C1/F-C2: settle drops the owed look (SetFacing -> Init), and ev
   // and is now that host's real pause, so its owed look WAITS under the
   // open map exactly as PlayerMouseLook.Update:241-244 says.
   const gates = {
-    'src/scenes/world.js': ['gamePaused()', "rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
-    'src/scenes/exterior.js': ['gamePaused()', "rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
-    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', 'rightHeld && walkMode && !ctx.weaponIsBow'],
+    // TI1: the touch SWIPE is a held swing too (swipeHeld beside
+    // rightHeld) - the same drop, so a swing never pays out the look
+    // it interrupted whichever device holds it.
+    'src/scenes/world.js': ['gamePaused()', "(rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
+    'src/scenes/exterior.js': ['gamePaused()', "(rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow"],
+    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', '(rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow'],
     'src/scenes/interior.js': ['gamePaused()', 'false'],
   };
   const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

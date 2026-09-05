@@ -525,7 +525,7 @@ ok((noBone.status.notes || []).some((n) => /no bone "Weapon Bone"/.test(n)),
 // MW-D34, and MW-D23's law obeyed this time: the question is MEASURED
 // through the REAL composite - drawThird -> drawRigSpriteBox -> the
 // mini ortho pass -> the world quad under the HOST's mirrorProjectionX
-// (dungeon.js:496's exact lens) - never deduced from one matrix alone.
+// (dungeon.js:530's exact lens) - never deduced from one matrix alone.
 // The ground truth is the port's own motor law (motor.js:573: the
 // player's RIGHT at yaw 0 is +X), anchored per-shot by projecting a
 // +X point through this very lens and requiring it screen-RIGHT. The
@@ -547,7 +547,7 @@ const thirdShot = async (weapon) => {
     // Fit the camera to the FIXTURE's own measured box (the rig is
     // doll-sized - at retail distances it rasterizes sub-pixel). The
     // lens's SHAPE is the host's law verbatim - mirrorProjectionX over
-    // a standard perspective (dungeon.js:496) - only near/far/distance
+    // a standard perspective (dungeon.js:530) - only near/far/distance
     // are fitted, and a mirror does not care about metres.
     const { MW_UNITS_PER_METER } = await import('/src/formats/mwFirstPerson.js');
     const u = 1 / MW_UNITS_PER_METER;

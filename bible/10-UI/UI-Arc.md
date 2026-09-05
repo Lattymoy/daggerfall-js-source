@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1607 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:792, world.js:1398,
-                        exterior.js:1708. It is the only window TWO
+                        dungeonContext.js:793, world.js:1410,
+                        exterior.js:1795. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1437, dungeonContext.js:3076. A seam
+    / NOTEBOOK          world.js:1449, dungeonContext.js:3081. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7833,7 +7833,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1651 and
+questJournal.js from charSheetNav:53, world.js:1663 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8460,7 +8460,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:4693` and `dungeonContext.js:1235` answer the same
+`worldModes.js:4693` and `dungeonContext.js:1237` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9288,3 +9288,121 @@ data moves the pin with the game; 4 mutants, 4 killed) and, for the
 merchant half, by `test/ui2_merchantpopup.test.js`'s existing
 accelerator test plus `test/citedrift.test.js` CD1, which holds the row
 and the by-name citation together.
+
+## TI1 - MOBILE TOUCH INPUT: THE SWIPE, THE TAP, THE LOCK, THE DIAL (2026-09-05)
+
+Mac: "So next I want to focus on mobile input. currently it places a
+bunch of buttons on the screen so heres what I want to do: 1. Swipe
+based combat using touchscreen. 2. Touch based to interact. 3. Touch to
+lock on to enemy using a dark souls like dot over your targeted foe.
+4. A button to bring up the radial UI. 5. Remove all the unneeded
+buttons from mobile."
+
+DFU has no touch input at all (zero `Input.touch` / `TouchPhase` reads
+under Assets/Scripts/Game), so the model is the port's own - Ledger
+section A, MOBILE TOUCH INPUT. The design rule that held it together:
+the layer SPEAKS THE DESKTOP SEAMS. Nothing here is a second input
+system; every gesture ends in a call the mouse or the keyboard already
+makes.
+
+THE TWO FACTS THAT SHAPED IT.
+- The shipped `WeaponAttackThreshold` is 0.005 of the screen's longest
+  side - five pixels on a phone. Feed a look-drag to the attack seam
+  and every camera turn swings on its first frame. So a drag is
+  CLASSIFIED before a pixel is routed (`ui/touchGestures.js`): still
+  and short = TAP; fast (48 px inside 180 ms) = SWIPE; slow = LOOK;
+  and LOCKED ON, any drag past the tap radius is the swipe, because the
+  camera is facing the foe on its own and the drag has nothing else to
+  mean. A pending drag's motion is buffered, not dropped: a look pays
+  it in one lump (at most 180 ms late), a swipe hands the seam the
+  whole trail (TravelDist is the trail's length - AUDIT 24's law).
+- DFU activates along the MOUSE POSITION when the cursor is free -
+  `PlayerActivate.cs:303 ScreenPointToRay(Input.mousePosition)`. The
+  centre ray the hosts build is the locked-cursor arm. So the tap is
+  not a departure: it is that arm on a finger. `player/tapRay.js`
+  unprojects through the SAME mirrorProjectionX(perspective)*lookAt
+  the frame drew with - numerically inverted, never a hand-derived
+  sign (the bible's flipped-billboard and transposed-row-major lessons)
+  - and through the large-HUD strip rect (ROAD-E E5), so a finger in
+  the bar is no world tap.
+
+HOW THE TAP REACHES EVERY LADDER WITHOUT TOUCHING ONE. A tap presses
+Mouse0 into the host's `keys` for exactly one frame (`_tapArmed`,
+counted down at the frame's top) and sets `_tapDir` for the release
+frame. A8's activate gate then fires on the RELEASE, ClickDelay and the
+readied-spell block included, and every ray builder reads
+`_tapDir ?? centre`: the world host's own ladder (`useFwd`), the
+exterior host's, the dungeon host's `tryActivate`, and worldModes'
+twelve `eyeDir()` sites through `host.activateDir` - streets, shops,
+dungeons-in-the-world, all with zero ladder edits. The drawn bow's
+un-draw-on-press stays 1:1 for the same reason.
+
+THE LOCK (`player/lockOn.js`). The pick is `player/activate.js`
+`pickFoe` - pickQuestFoe's box and occlusion with ANY live foe accepted
+(one law, two accepts; a second box would drift). A tap on a foe
+toggles the lock and ENDS the activation there (the quest-foe arm
+above it still runs - the C# fall-through). Each frame the yaw and
+pitch error to the foe's chest (0.6 of its height) is paid into the
+host's LookFilter at min(1, 8*dt) - the one door every look takes, so
+mouse smoothing, the pitch clamp and F-C2's swing-settle rule hold
+over the lock exactly as over a drag. Death or 32 m breaks it. With
+the camera facing the foe, DFU's own melee (the camera ray behind the
+in-view gate) lands on it with no second aim. The dot is the host's:
+`tick()` answers the chest, the host projects it (`projectToScreen`),
+the layer places a 14 px mark; hidden behind the camera or under an
+overlay.
+
+THE BUTTONS. Twelve became five: the DIAL (Tab - drawn only where a
+host routes it, the gate-by-hook rule the sword button taught), the
+MENU (Escape; save and load live in the pause window), JUMP (Space,
+held), SHEATHE (Z, held), and the interaction MODE cycle where a host
+has one. Gone: the sword (the swipe), E (the tap), F5/F6/spellbook
+(the dial's four arms), quicksave/quickload (the menu), and the
+keyboard toggle - the classic-window nav row now shows itself while a
+classic overlay holds the game and no enhanced one is up (an enhanced
+window is DOM and takes the finger directly).
+
+The swipe holds the swing-settle law like the mouse button:
+`(rightHeld || swipeHeld)` in all three hosts, so a swing never pays
+out a look it interrupted. AUDIT 39 F127 - "the touch attack hook
+nothing called" - is rewritten for the inverse condition: the hook is
+live, and it is pinned as one the layer calls.
+
+Pinned by `test/touchinput.test.js` (13): the ray with an ABSOLUTE
+anchor (+x screen-right, +y screen-up at yaw 0, both directions) as
+well as the round-trip, the docked-HUD rect, invert4 against the real
+product; each gesture rule with its mutant (drop the buffer, ignore
+the lock predicate, feed only the last delta); the lock's yaw sign
+through a real LookFilter, the wrap's short way, both breaks; pickFoe
+against pickQuestFoe in one assertion; and the layer and hosts by text.
+
+### TI1b - THE PHONE IN HAND (2026-09-05, same day)
+
+Mac: "its better but the righthand side of the screen needs to work for
+touch to look around. currently its bugged. also tap to lock on doesnt
+work."
+
+THE LOOK. The first cut told a swipe from a look by SPEED - 48 px
+inside 180 ms - and a look-pan clears that in the first thirty
+milliseconds. Nearly every look became a swipe, and a swipe with the
+weapon sheathed is nothing: the right half looked dead. Speed cannot
+separate the two gestures; a HOLD can. `ui/touchGestures.js` now: a
+drag that starts moving is the LOOK, live from its first move past the
+tap radius (the sub-radius motion paid in one lump); a finger held
+still for 160 ms and THEN dragged is the SWIPE - the press-and-stroke
+DFU's own swing mode 0 asks of the mouse; locked on, any drag is the
+swipe, as before. The flick constants are gone. Pinned with the exact
+pan that failed (60 px in 30 ms must be a look) and its mutant
+(classify by speed).
+
+THE LOCK. The split was the window's, and it was absolute: a touch on
+the left half became the stick, so a tap on a foe standing left of
+centre never reached the tap path at all. A still, short touch on the
+stick's half engages no key (the stick's dead zone), so it is now
+answered as the tap it was. Every touch point is canvas-relative
+(getBoundingClientRect) - the space the host's unproject and the dot
+speak - and the dot is placed back in the overlay's space. The whole
+chain - tap, the one-frame press through the REAL activate gate, the
+ray, the pick, the lock, and the dot projecting back under the finger,
+then the second tap unlocking - is now executed end to end in
+`test/touchinput.test.js`, with a foe deliberately left of centre.

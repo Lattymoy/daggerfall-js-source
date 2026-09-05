@@ -7,7 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { INTERIOR_CLEAR, SKY_CLEAR } from '../render/renderer.js';
+import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -111,7 +111,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
-import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door
+import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -135,6 +135,8 @@ import { shipTransition, REPOSITION } from '../systems/ship.js';   // TR4: board
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';   // TR2: the sprite and its loop
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
 import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
+import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
+import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
 import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnItemPicked's two arms
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
@@ -1367,6 +1369,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   let ridingArt = null;   // TR2: the four CFA frames of the mount under you
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
+  // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
+  // truth beside rightHeld (the settle law reads both); a tap arms a
+  // ONE-frame Mouse0 press (_tapArmed counts it down at the frame's
+  // top) and _tapDir carries the finger's ray for the release frame,
+  // which is when A8's gate fires the activation. player/lockOn.js
+  // holds the lock; _lockChest is this frame's dot target.
+  let swipeHeld = false;
+  let _tapArmed = 0, _tapPoint = null, _tapDir = null;
+  let _lastProj = null, _lastView = null, _lockChest = null;
+  const lockOn = createLockOn();
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
   // C9 fix: shotMode must be declared BEFORE walkMode reads it - the
@@ -1975,7 +1987,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // flag cleared before the loop that reads it is no flag at all.
     //
     // The three writers are the clock JUMPS - fast travel, the
-    // vampirism transformation, and the jail skip (both its arms:
+    // vampirism transformation (infection.js deployInfection,
+    // VampirismInfection.cs:157 - REVIEW 2026-09-05: it raised the
+    // clock and never set the flag), and the jail skip (both its arms:
     // DaggerfallCourtWindow.cs:473 across the sentence, :484 on every
     // release). A thirty-day sentence would otherwise walk thirty days
     // of encounter rolls the instant the courthouse door opened.
@@ -1986,8 +2000,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     let _updatedGuards = false;
     for (let l = 0; l < span; l++) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
-      const hit = intermittentEnemySpawn({
-        gameMinutes: _lastEncMinutes + l + 1, inside: false,
+      // :488-491 - "Don't spawn encounters while player is swimming in
+      // water or on ship (same as classic)" (ROAD-G TAIL: the gate had no
+      // reader; the port has no ship state to ask).
+      // REVIEW 2026-09-05 (PR #59): IsPlayerInside (:564) - the loop runs
+      // in every mode and rolls nothing inside a building or an un-rested
+      // dungeon, so indoor minutes are skipped, not banked for the door.
+      const _m = modes?.mode ?? 'exterior';
+      const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({
+        gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
         // in the wilderness ring of a town's pixel the wilderness
@@ -2040,7 +2061,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // player could walk straight past.
       if (!_updatedGuards) {
         _updatedGuards = true;
-        cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })
+        if (_m !== 'dungeon') cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })   // :768-770 - no location object in a dungeon
           .catch((e) => console.error('[guards]', e));
       }
     }
@@ -2284,7 +2305,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1916 mounts the same one, gated on
+  // and dungeonContext.js:1918 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4092
@@ -2358,7 +2379,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
     if (!f) return;
     if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
-    const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+    const feet = f.ai?.feet ? centreFromFeet(f.ai.feet, f.idleH ?? f.ai.height) : enchantFeet();   // REVIEW 2026-09-05: WabbajackEffect.cs:90 hands CreateEnemy the struck foe's TRANSFORM (its sprite centre); the spawn chain reads a marker
     const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
     const stamp = (nf) => {
       if (!nf?.entity) return;
@@ -2372,11 +2393,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:247-252) never looks the record up in `foes`, and
+    // (exteriorFoes.js:253-258) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1163-1167) gives it -
+    // got exactly what removeGuard (cityGuards.js:1170-1174) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:718) and spliced out at the end of it (:889).
+    // (cityGuards.js:725) and spliced out at the end of it (:889).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -4548,7 +4569,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:186, "a right-click on a window is the window's...
+  // (dungeon.js:198, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -4561,12 +4582,35 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
   addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
-  attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
+  const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2; AUDIT 39 F127: the tap is the whole touch strike, the drag hook was never called
+    // TI1: the swipe is the RMB drag - the mousemove arm above, on a
+    // finger: the exterior rig here, the modal rig through worldModes
+    // indoors, the M2 cast gate in front of both.
+    attack: (dx, dy, held) => {
+      if (!walkMode) { swipeHeld = false; return; }
+      if (modeNow() === 'exterior') {
+        swipeHeld = held;
+        if (held && magic.interceptAttack(true)) return;   // M2: an armed cast eats the swing
+        weaponRig.attackInput(dx, dy, held);
+      } else {
+        swipeHeld = false;
+        modes?.attackInput?.(dx, dy, held);
+      }
+    },
+    // TI1: the tap is a one-frame press of the activate action along
+    // the finger's ray - A8's gate fires it on the release. A finger in
+    // the docked bar's strip is no world tap at all.
+    tap: (x, y) => {
+      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
+    },
+    locked: () => lockOn.locked,
+    dial: true,
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
+    overlayActive: () => townTalk.overlayActive,
   });
 
   const initialCount = queue.length + 1;
@@ -4727,7 +4771,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6367-6379 -
+  // worldModes answers it in BOTH modes (worldModes.js:6369-6381 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5795,6 +5839,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     // V2e: worldModes re-registers the infection host on entry, so the
     // cemetery arm rides the bag or it dies at that re-registration.
     transferToCemetery: transferToCemeteryArm,
@@ -6048,7 +6093,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:85, so the
+  // only reader of `load` in the whole tree is dungeon.js:87, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6225,9 +6270,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
     if (!gamePaused()) {
-      if (rightHeld && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
+      if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
+    // TI1: the tap's one-frame press. Armed 2 on the tap (the key is
+    // already down): this frame counts to 1 and the gate sees the
+    // press; next frame counts to 0, the key lifts, the ray is built
+    // through the frame the finger saw, and the gate fires the
+    // activation on that release. The frame after clears the ray.
+    if (_tapArmed > 0 && --_tapArmed === 0) {
+      keys.delete('Mouse0');
+      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
@@ -6381,7 +6436,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:470's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:504's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6528,7 +6583,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // T3b: a townsperson under the ray wins the activation (the
           // PlayerActivate nearest-hit order); G3: a guard corpse next
           // (loot pickup on the dungeon's S2 shape); doors otherwise.
-          const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+          const useFwd = _tapDir ?? [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];   // TI1: the tap's ray, else the centre
           // QG1: the quest-resource click arm runs FIRST and does not
           // consume the activation (PlayerActivate.cs:325-339 - the
           // Hit Checks region's opening arm, no return, skipped in
@@ -6539,7 +6594,12 @@ export async function bootWorld(canvas, renderer, params, status) {
             const qf = pickQuestFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider);
             if (qf) qf.questBehaviour.doClick();
           }
-          if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+          // TI1: a tap on a live foe is the LOCK (player/lockOn.js),
+          // toggled, and the activation ends there - the ladder has no
+          // arm for a living enemy but the quest one above, which ran.
+          const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE) : null;
+          if (_lockFoe) lockOn.toggle(_lockFoe);
+          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
             // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
             // The watch and the encounter foes leave the same container
             // type, so which body you open is PlayerActivate's nearest
@@ -6669,6 +6729,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
+    _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
+    if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
+      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+      touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
+    }
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
     // A1: DaggerfallLocation.Update's season poll (:118-130), on the
@@ -6796,7 +6861,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
-    renderer.setClearColor((modes?.mode ?? 'exterior') !== 'exterior' ? INTERIOR_CLEAR : SKY_CLEAR);   // INCIDENT 2026-09-04: CameraClearManager.cs:51-57 - inside clears to BLACK, outside to the sky
+    renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
@@ -6986,10 +7051,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
       walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
     // X-slice: the encounter pool drives + draws beside the watch;
-    // the cadence loop rolls the elapsed minutes (exterior mode only).
+    // the cadence loop rolls the elapsed minutes in EVERY mode (REVIEW
+    // 2026-09-05: the loop's own inside arm skips indoor minutes).
+    const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
+    if (!townTalk.overlayActive) runEncounterTick(_pf);
     if ((modes?.mode ?? 'exterior') === 'exterior') {
-      const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
-      if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
       livePersonBatches.push(...exteriorFoes.batches());
     }
@@ -7162,11 +7228,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:543-548), so this seam ROUTES by pool exactly
+        // (cityGuards.js:550-555), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:960). DFU makes no pool distinction:
+        // (cityGuards.js:967). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

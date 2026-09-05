@@ -149,13 +149,13 @@ export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, ro
 export function entityOccupancy(feetOf, liveFoes, playerFeet) {
   const CAPSULE_R = 0.45;
   return (p, r) => {
-    const hit = (feet) => {
+    const hit = (feet, half = 0.9) => {   // REVIEW 2026-09-05: a foe's sphere sits at ITS capsule centre
       if (!feet) return false;
-      const dx = feet[0] - p.x, dy = feet[1] + 0.9 - p.y, dz = feet[2] - p.z;
+      const dx = feet[0] - p.x, dy = feet[1] + half - p.y, dz = feet[2] - p.z;
       return dx * dx + dy * dy + dz * dz < (r + CAPSULE_R) * (r + CAPSULE_R);
     };
     if (hit(playerFeet)) return true;
-    for (const f of liveFoes()) if (!f.dead && hit(feetOf(f))) return true;
+    for (const f of liveFoes()) if (!f.dead && hit(feetOf(f), (f.ai?.height ?? 1.8) / 2)) return true;
     return false;
   };
 }
