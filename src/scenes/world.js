@@ -29,6 +29,8 @@ import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, 
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
+import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
@@ -281,6 +283,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // test, and applyWeather/weatherSun read this binding live.
   const seasonPin = seasonOverride(params);
   let season = seasonPin ?? climateSeasonFromMinutes(worldMinutes());
+  // SIB1: SEASONS OF THE ILIAC BAY - SeasonHelper's instance, when the
+  // mod's switch is on. Its season is DFU's FOUR-valued SeasonValue off
+  // the one clock (the climate season above has two); `recordCount` is
+  // the vanilla atlas's record count, read off TEXTURE.5xx; `refresh` is
+  // RefreshLoadedNatureBatches, answered with the re-skin sweep
+  // tickSeason already runs for the winter flip - but only when a pixel
+  // stands on an OLDER install than the current one, because DFU's
+  // refresh re-applies every batch for free and this host's is a
+  // teardown. Inert until `seasonsReady` says the player supplied the
+  // mod (a bundle or its folders through the texture pick).
+  let _fourSeason = seasonValue(dateFromClassicMinutes(worldMinutes()));
+  let seasonsActive = false;
+  let seasonsReady = Promise.resolve(false);
+  const seasons = modSetting('seasons-iliac-bay', 'Enabled') ? new SeasonHelper({
+    // While a teleport's season latch is up the ARRIVAL day is what
+    // refreshSeason latched (`_seasonDay`), and the one clock still
+    // reads the departure minute - the same rule the climate season
+    // takes, read through the same latch.
+    currentSeason: () => seasonValue(dateFromClassicMinutes(_seasonStraightening ? _seasonDay * MINUTES_PER_DAY : worldMinutes())),
+    recordCount: async (archive) => (await getTexture(archive)).recordCount,
+    load: (prefix) => loadSeasonsTextures(prefix),
+    refresh: () => {
+      for (const p of built.values()) {
+        if (p._seasonsGen !== seasons.generation) { _reskinPending = true; return; }
+      }
+    },
+    warn: (m) => console.warn(m),
+  }) : null;
 
   audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
   status('loading data');
@@ -510,7 +540,23 @@ export async function bootWorld(canvas, renderer, params, status) {
   // buildDungeonContext, so every sound in this host was a silent
   // no-op until a dungeon was entered (DFU's sound reader is global
   // and the exterior prefab is audible from frame one).
-  ensureAudio(fetchBytes);
+  // SIB1: the mod's textures register on the same seam as the music
+  // and texture packs (a name list and a loader, nothing read yet);
+  // SaveLoadManager.OnLoad is what this boot is to SeasonHelper, and it
+  // runs once the registration has answered whether the mod is there.
+  const dataReady = ensureAudio(fetchBytes);
+  seasonsReady = seasons ? (async () => {
+    try {
+      await dataReady;
+      if (!(await seasonsInstalled())) return false;
+      seasonsActive = true;
+      await seasons.onLoad();
+      return true;
+    } catch (e) {
+      console.warn('[seasons] not installed:', e?.message ?? e);
+      return false;
+    }
+  })() : Promise.resolve(false);
 
   const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, cpuModels } = pipeline;
   // WM2b/WM2d: the vendored mill's two parts, uploaded on the first mill
@@ -909,12 +955,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     // at the same point in the sequence it was always computed at.
     for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
 
+    // SIB1: DaggerfallTerrain.OnInstantiateTerrain - ApplyCurrentSeason
+    // (false) before this terrain's batches take their material, so the
+    // cache they read holds the season the clock says.
+    if (await seasonsReady) await seasons.onTerrainInstantiated();
     const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
     for (const [k, centers] of groups) {
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
+      // SIB1: what MaterialReader's cache holds for this archive NOW -
+      // the mod's seasonal record (its texture at the mod's size, one
+      // frame) while a season is installed over it, the classic record
+      // otherwise. The seasonal texture keys on the install so a later
+      // season never reads an earlier one's upload.
+      const sib = seasonsActive ? seasons.lookup(archive, record) : null;
+      if (sib) {
+        const rkey = `${record}#season${seasons.installedSeason}`;
+        const img = sib.texture.image;
+        renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data });
+        const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
+        batch._box = flatBatchAabb(centers, sib.size);   // EV3
+        unionBox(batch._box);
+        batches.push(batch);
+        continue;
+      }
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
@@ -955,6 +1021,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     models.sort((a, b) => a._order - b._order);
 
     built.set(key, {
+      _seasonsGen: seasons?.generation ?? 0,   // SIB1: the install this pixel's flats were built under
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
@@ -1182,6 +1249,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (day === _seasonDay) return false;
     _seasonDay = day;
     const want = climateSeasonFromMinutes(atMinutes);
+    // SIB1: WorldTime.OnNewMonth, which SeasonHelper subscribes - the
+    // four-valued season can only turn on a month boundary, so the
+    // day poll that found the boundary is where the mod hears it.
+    // ApplyCurrentSeason(false) installs the season's atlases and asks
+    // for the refresh; a turn the climate season does not share (Summer
+    // to Fall, Spring to Summer) reaches the standing world through
+    // that refresh alone.
+    const four = seasonValue(dateFromClassicMinutes(atMinutes));
+    if (four !== _fourSeason) {
+      _fourSeason = four;
+      if (seasonsActive) seasons.onNewMonth().catch((e) => console.warn('[seasons] month turn:', e?.message ?? e));
+    }
     if (want === season) return false;
     season = want;
     // SetSunlightScale (WeatherManager.cs:309-319) reads the same
@@ -2970,9 +3049,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
+    if (seasonsActive) await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month
     let dest;   // `finally`: a throwing build must not leave the poll off
     try { dest = await buildPixel(first.px, first.py); }
     finally { _seasonStraightening = false; }
+    if (seasonsActive) seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
     // TeleportToMapPixel STORES the reposition method and calls
     // InitWorld (:1076-1095); Update() applies it only once the terrain
     // update has finished (:266-295). So the RandomStartMarker arm runs
@@ -6586,6 +6667,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exterior frame with the weather drain - the reference runs it in
     // the location's own Update, which is the same place.
     tickSeason();
+    if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     // W1/S41: the DRAIN ticks on the exterior frame, which is
     // WeatherManager.Update's own shape - it returns while the player
     // is inside, so a sky rolled by a day spent indoors or underground

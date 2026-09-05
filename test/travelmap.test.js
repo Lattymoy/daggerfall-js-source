@@ -284,7 +284,11 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // across the destination build can read the DEPARTURE clock and undo
   // it - one statement and a `finally` around the build's await, both
   // above these needles, which are still unchanged.
-  const core = src.slice(k, k + 2800);
+  // PIN MOVED AGAIN (SIB1), 2800 -> 3000: Seasons of the Iliac Bay's
+  // OnPostFastTravel - the mod's forced season re-apply off the arrival
+  // month - stands between state.init and the destination build, one
+  // statement, above the last needle.
+  const core = src.slice(k, k + 3000);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

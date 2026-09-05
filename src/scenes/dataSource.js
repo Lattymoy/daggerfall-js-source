@@ -608,7 +608,16 @@ export async function pickMorrowindFiles() {
 
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');
-  return storeAssets(TEXTURE_STORE, files, (n) => !!textureEntry(n));
+  const { seasonsAssetKey } = await import('../systems/seasonsIliacBayAssets.js');
+  // SIB1: the same pick takes a MOD'S OWN FILES - a `.dfmod` bundle, or
+  // the Seasons of the Iliac Bay texture folders - keyed by the path
+  // that says what they are, beside the DFU-named PNGs keyed by name.
+  // `accept` sees the basename; the key sees the relative path.
+  const pathOf = (f) => f.webkitRelativePath || f.name;
+  const accept = (base) => !!textureEntry(base) || !!seasonsAssetKey(base);
+  const acceptFile = (f) => !!textureEntry(f.name) || !!seasonsAssetKey(pathOf(f));
+  return storeAssets(TEXTURE_STORE, [...files].filter(acceptFile), accept,
+    (f, base) => (textureEntry(base) ? base : seasonsAssetKey(pathOf(f)) ?? base));
 }
 export const storedTextureNames = () => assetNames(TEXTURE_STORE);
 export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
@@ -725,6 +734,7 @@ export async function pickMusicFolder() {
 
 export async function pickTextureFolder() {
   const { setTextureReplacements } = await import('../systems/textureReplacement.js');
+  const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
   return pickAssetFolder({
     title: 'Your own textures',
     blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
@@ -732,9 +742,17 @@ export async function pickTextureFolder() {
       browser.</p>
       <p style="color:#999">A <b>Daggerfall Unity texture pack works
       as-is</b>: its <b>003_5-0.png</b> names are already the ones this
-      looks for. Anything you skip keeps the classic art.</p>`,
+      looks for. Anything you skip keeps the classic art.</p>
+      <p style="color:#999"><b>Seasons of the Iliac Bay</b> works from
+      the same pick: a folder holding its <b>.dfmod</b>, or its
+      <b>Textures</b> folders, gives the woodland its autumn, spring
+      and winter.</p>`,
     store: storeTextureFiles,
-    register: async () => setTextureReplacements(await storedTextureNames(), loadTextureFile),
+    register: async () => {
+      const names = await storedTextureNames();
+      const n = setTextureReplacements(names, loadTextureFile);
+      return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's files count too
+    },
   });
 }
 
