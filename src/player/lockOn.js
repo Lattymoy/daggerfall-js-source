@@ -5,9 +5,10 @@
 // Assets/Scripts/Game - so this is the port's own, recorded in the
 // Ledger's section A (MOBILE TOUCH INPUT, TI1).
 //
-// THE LAW. A tap whose ray hits a live foe locks it (the pick is
-// player/activate.js's pickFoe - the SAME box and occlusion the
-// quest-foe click uses, any live foe accepted). A tap on the locked
+// THE LAW. A tap locks the live foe nearest its RAY inside a small
+// cone (pickFoeNearRay below: LOCK_PICK_ANGLE, LOCK_PICK_DISTANCE, the
+// line of sight to the chest through the collider) - TI1c replaced the
+// quest click's box hit, which a thumb misses. A tap on the locked
 // foe unlocks it. The lock lets go by itself when the foe dies or
 // stands past LOCK_BREAK_DISTANCE. While locked the camera FACES the
 // foe: each frame the yaw and pitch error to its chest is paid into
@@ -47,7 +48,13 @@ export function wrapAngle(a) {
 export function chestPoint(foe) {
   const feet = foe?.ai?.feet;
   if (!feet) return null;
-  const h = foe.ai?.height ?? 1.8;
+  // TI1d (review): the DRAWN height, not the capsule's - enemyAnchor
+  // floors the controller at 1.6 m, so a rat's capsule "chest" stood
+  // above its 0.9 m sprite and no thumb on the rat was inside the
+  // cone. The record's idleH is the sprite; ai.centreOffset is half of
+  // it (the draw's own centre, flyers included); the capsule is the
+  // last resort.
+  const h = foe.idleH ?? (foe.ai?.centreOffset != null ? foe.ai.centreOffset * 2 : null) ?? foe.ai?.height ?? 1.8;
   return [feet[0], feet[1] + h * CHEST_FRACTION, feet[2]];
 }
 

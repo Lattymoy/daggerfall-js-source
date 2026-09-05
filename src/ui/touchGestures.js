@@ -27,43 +27,49 @@
 // Pure: no DOM, no clock of its own. Times are the caller's ms.
 // Pinned by test/touchinput.test.js, each rule with its mutant.
 
-export const TAP_PX = 12;
-export const TAP_MS = 300;
-export const HOLD_MS = 160;
+export const TAP_PX = 16;    // TI1d: DISPLACEMENT from the touch origin, a thumb's roll on a phone
+export const HOLD_MS = 160;  // a finger still this long, then moved, is the swipe
+
+// TI1d (review, Mac: "touch to lock on still doesn't work"): the tap
+// was judged on the PATH'S LENGTH against 12 px, and a thumb resting
+// on a phone jitters 2-6 px per touchmove - ten or twenty of them in a
+// 200 ms press - so the budget was spent before the finger lifted and
+// the press became a look; and a still press longer than 300 ms was
+// nothing at all. A tap is now a finger that never left TAP_PX of
+// where it landed, however long it rested: the hold-then-drag rule
+// below tells a held swipe apart by MOVEMENT, so a still long press is
+// unambiguous and costs the swipe nothing.
 
 /**
  * @param {object} [opts]
- * @param {() => boolean} [opts.locked] - the host's lock-on predicate
+ * @param {() => boolean} [opts.locked] - the host's predicate: a drag
+ *   is the swipe at once (a lock held AND a weapon in hand)
  * @returns a recogniser: begin/move/end/cancel each answer an ARRAY of
  *   events {type:'tap',x,y} | {type:'look',dx,dy} | {type:'swipe',dx,dy,held}
  */
 export function createGestureRecognizer({
-  tapPx = TAP_PX, tapMs = TAP_MS, holdMs = HOLD_MS,
+  tapPx = TAP_PX, holdMs = HOLD_MS,
   locked = () => false,
 } = {}) {
   let state = 'idle';
   let ox = 0, oy = 0, ot = 0, lx = 0, ly = 0;
-  let travel = 0, bufDx = 0, bufDy = 0;
+  let bufDx = 0, bufDy = 0;
   return {
     get state() { return state; },
     begin(x, y, t) {
       state = 'pending';
       ox = lx = x; oy = ly = y; ot = t;
-      travel = 0; bufDx = 0; bufDy = 0;
+      bufDx = 0; bufDy = 0;
       return [];
     },
     move(x, y, t) {
       if (state === 'idle') return [];
       const dx = x - lx, dy = y - ly;
       lx = x; ly = y;
-      travel += Math.hypot(dx, dy);
       if (state === 'look') return [{ type: 'look', dx, dy }];
       if (state === 'swipe') return [{ type: 'swipe', dx, dy, held: true }];
       bufDx += dx; bufDy += dy;
-      if (travel < tapPx) return [];
-      // The finger has left the tap radius: this is a drag. Which one
-      // is decided HERE, once, by what came before the move - the lock,
-      // or a hold - never by how fast it is going.
+      if (Math.hypot(x - ox, y - oy) < tapPx) return [];   // still inside the tap radius, whatever the path was
       if (locked() || (t - ot) >= holdMs) {
         state = 'swipe';
         return [{ type: 'swipe', dx: bufDx, dy: bufDy, held: true }];
@@ -71,13 +77,10 @@ export function createGestureRecognizer({
       state = 'look';
       return [{ type: 'look', dx: bufDx, dy: bufDy }];
     },
-    end(t) {
+    end() {
       const s = state;
       state = 'idle';
-      if (s === 'pending') {
-        if (travel < tapPx && (t - ot) <= tapMs) return [{ type: 'tap', x: ox, y: oy }];
-        return [];   // a long press that never moved: nothing (yet)
-      }
+      if (s === 'pending') return [{ type: 'tap', x: ox, y: oy }];   // never left the radius: a tap, however long it rested
       if (s === 'swipe') return [{ type: 'swipe', dx: 0, dy: 0, held: false }];
       return [];
     },

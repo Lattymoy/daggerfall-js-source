@@ -298,6 +298,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // SetClickDelay too (PlayerActivate.cs:1050-1054). ONLY on a real
     // acquisition: with the pointer already locked this click IS the
     // world's.
+    if (e.pointerType === 'touch') return;   // TI1d: a touch pointer never acquires the lock and has no re-acquiring click to swallow - the delay ate the tap's own release
     if (document.pointerLockElement !== canvas) setClickDelay(activateGate);
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
   });
@@ -367,6 +368,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      if (_tapArmed > 0) return;   // TI1d: a second tap inside the first's two frames would re-arm over a held key and lose both
       _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
     },
     locked: () => lockOn.locked,

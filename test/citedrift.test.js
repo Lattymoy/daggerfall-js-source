@@ -498,6 +498,15 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
 const EX = 'src/scenes/exterior.js';
 const SOURCE_CITES = [
+  // TI1d (2026-09-05): the touch layer's record, guarded here so the next line shift cannot strand it
+  ['bible/10-UI/UI-Arc.md', /for `e\.pointerType === 'touch'` \(`src\/scenes\/world\.js:(\d+)`,/,
+    'src/scenes/world.js', /if \(e\.pointerType === 'touch'\) return;/],
+  ['bible/10-UI/UI-Arc.md', /DISPLACEMENT \(`src\/ui\/touchGestures\.js:(\d+)`\)/,
+    'src/ui/touchGestures.js', /if \(Math\.hypot\(x - ox, y - oy\) < tapPx\) return \[\];/],
+  ['bible/10-UI/UI-Arc.md', /is the camera's \(`src\/scenes\/worldModes\.js:(\d+)`\)/,
+    'src/scenes/worldModes.js', /const fwd = camForward\(\);/],
+  ['bible/10-UI/UI-Arc.md', /the capsule last \(`src\/player\/lockOn\.js:(\d+)`\)/,
+    'src/player/lockOn.js', /const h = foe\.idleH \?\? \(foe\.ai\?\.centreOffset != null/],
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
   ['tools/toneProbe.mjs', /`native` \(townTalk\.js:(\d+), true only/,
@@ -518,7 +527,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2120\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2124\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:4635/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -526,37 +535,37 @@ const SOURCE_CITES = [
   ['src/systems/advancement.js', /exterior\.js:750\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:962-964/,
     EX, /from '\.\.\/systems\/chargenSession\.js'/],
-  ['src/systems/equip.js', /world\.js:1602, exterior\.js:(\d+)\)/,
+  ['src/systems/equip.js', /world\.js:1606, exterior\.js:(\d+)\)/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/systems/loot.js', /world\.js:1616 and exterior\.js:(\d+)/,
+  ['src/systems/loot.js', /world\.js:1620 and exterior\.js:(\d+)/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
   ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:257/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['src/systems/startingGear.js', /world\.js:1602 and exterior\.js:(\d+) seed it/,
+  ['src/systems/startingGear.js', /world\.js:1606 and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/ui/pauseWindow.js', /world\.js:4097, exterior\.js:(\d+),/,
+  ['src/ui/pauseWindow.js', /world\.js:4102, exterior\.js:(\d+),/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
-  ['src/ui/restWindow.js', /world\.js:4077, exterior\.js:(\d+),/,
+  ['src/ui/restWindow.js', /world\.js:4082, exterior\.js:(\d+),/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
   ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:649/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:1922/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:1926/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:1922/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:1926/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2070/,
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2074/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-978 and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2148/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2152/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:2140\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:2144\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:644`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2070\)/,
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2074\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:721`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:723`/, EX, /^ {6}fieldOfView\(\),$/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
@@ -569,7 +578,7 @@ const SOURCE_CITES = [
   // subject the number is gone and the seam is named instead.
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1158`/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3411`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3416`, `exterior\.js:(\d+)`/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:530`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
@@ -590,9 +599,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3180` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3193` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3156-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3169-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:90-114`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
@@ -603,7 +612,7 @@ const SOURCE_CITES = [
 // removed says so, rather than carrying a number that lands on a
 // stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
-  [/`world\.js:3631-3634` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  [/`world\.js:3636-3639` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
   [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 
@@ -777,7 +786,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:717-671`, `world.js:4877-4853`,
+// multi-number citation: `cityGuards.js:717-671`, `world.js:4888-4864`,
 // `worldModes.js:996 against :959`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

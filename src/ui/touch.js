@@ -47,7 +47,7 @@
 //
 // Activates only when the device reports touch; desktop is untouched.
 
-import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
+import { createGestureRecognizer, TAP_PX } from './touchGestures.js';
 import { overlayOpen } from './enhancedOverlays.js';
 
 const TOUCH_LOOK_GAIN = 2.0;
@@ -137,7 +137,7 @@ export function attachTouch(canvas, hooks = {}) {
   // Overlay-nav row (classic windows navigate on arrows/Enter/Esc) -
   // shown by itself while a classic overlay holds the game.
   const nav = document.createElement('div');
-  nav.style.cssText = 'position:absolute;right:16px;top:16px;display:none;pointer-events:none';
+  nav.style.cssText = 'position:absolute;inset:0;display:none;pointer-events:none';   // TI1d (review): a full-bleed positioning context - the buttons' right/top read against the viewport as written
   ui.appendChild(nav);
   const navBtn = (label, code, dx) => {
     const b = button(label, `right:${dx}px`, 'top:16px', 44, () => tap(code));
@@ -171,7 +171,7 @@ export function attachTouch(canvas, hooks = {}) {
 
   function setStickKeys(dx, dy, mag) {
     const on = (code, v) => (v ? down(code) : up(code));
-    const dead = mag < 0.25;
+    const dead = mag < 0.32;   // TI1d: 18 px at STICK_RADIUS 56 - strictly wider than TAP_PX (16), the left-half tap's law
     // 8-way: an axis engages when its component clears tan(22.5deg)
     // (~0.414) of the other's - diagonals hold two keys.
     on('KeyW', !dead && dy < 0 && Math.abs(dy) >= Math.abs(dx) * 0.414);
@@ -236,7 +236,10 @@ export function attachTouch(canvas, hooks = {}) {
         // TI1b: a still, short touch on this half is a TAP - it moved no
         // key (the stick's dead zone) and it is how a foe left of centre
         // gets locked.
-        if (e.type !== 'touchcancel' && stickTravel < TAP_PX && (e.timeStamp - stickStart) <= TAP_MS) {
+        // TI1d: however long it rested (the right half's law), and the
+        // stick's dead zone stays wider than TAP_PX so a tap-qualified
+        // touch never pressed a movement key.
+        if (e.type !== 'touchcancel' && stickTravel < TAP_PX) {
           hooks.tap?.(stickOrigin[0], stickOrigin[1]);
         }
       } else if (t.identifier === lookId) {

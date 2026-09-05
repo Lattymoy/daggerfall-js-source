@@ -3627,8 +3627,8 @@ export function createWorldModes(host) {
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
 
-  const eyeDir = () => host.activateDir?.() ??   // TI1: the tap's ray for the modal ladders, else the centre
-    [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  const camForward = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  const eyeDir = () => host.activateDir?.() ?? camForward();   // TI1: the tap's ray for the ACTIVATION ladders, else the centre
   const objAabb = (o) => worldAabb(o.cpu.positions, o.matrix);
 
   async function tryEnter() {
@@ -4158,7 +4158,7 @@ export function createWorldModes(host) {
   }
 
   function tryExit() {
-    const eye = player.eye;
+    const eye = host.activateOrigin?.() ?? player.eye;   // TI1d: a tap's ray starts where it was unprojected - one apex for the ray and the cone
     const dir = eyeDir();
     // QG1, AUDIT 58: the quest-resource click arm, which this ray was
     // the only one of the three without - tryExitDungeon carries it
@@ -4581,7 +4581,7 @@ export function createWorldModes(host) {
   }
 
   function tryExitDungeon() {
-    const eye = player.eye;
+    const eye = host.activateOrigin?.() ?? player.eye;   // TI1d: one apex for the ray and the cone
     const dir = eyeDir();
     // QG1: the quest-resource click arm runs FIRST and does not
     // consume the activation (PlayerActivate.cs:325-339 - no return,
@@ -4697,7 +4697,11 @@ export function createWorldModes(host) {
     // hosts' early return froze __frame inside interiors/dungeons and
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
-    const fwd = eyeDir();
+    // TI1d (review): the FRAME's forward is the camera's. This read
+    // eyeDir(), which TI1 taught the tap's ray - so on the release
+    // frame the view matrix, the ears and the automap probe all swung
+    // to the finger, and the rotated lens was what the host recorded.
+    const fwd = camForward();
     // AUDIT 21 (hosts lane, F4): THE EARS MOVE IN HERE TOO.
     //
     // The 3D listener was set by world.js, exterior.js and dungeonContext.js
@@ -4812,7 +4816,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:395 is this same gate
+    // the crouch edge still toggled. dungeon.js:397 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -5160,7 +5164,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5539's own wave-46 note); the interior
+          // a blow (world.js:5550's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -5735,7 +5739,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:305-331 carries, so a probe could take the
+    // scenes/dungeon.js:306-332 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -6962,6 +6966,10 @@ export function createWorldModes(host) {
     // mousemove above feeds (the dungeon context's entry, or the
     // interior rig behind the M2 cast gate).
     attackInput(dx, dy, held) { modalAttackSink()?.(dx, dy, held); },
+    /** TI1d: the modal weapon is in hand - the touch layer's lock
+     *  predicate reads it, so a lock never makes the right half a
+     *  swipe into a sheathed weapon. */
+    weaponDrawn() { return mode !== 'exterior' && !interiorWeapon.playerWeapon.sheathed; },
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

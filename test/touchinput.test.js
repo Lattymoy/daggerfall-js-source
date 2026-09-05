@@ -11,8 +11,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 import { invert4, ndcFromScreen, rayDirFromScreen, projectToScreen, worldRectPx } from '../src/player/tapRay.js';
-import { createGestureRecognizer, TAP_PX, TAP_MS, HOLD_MS } from '../src/ui/touchGestures.js';
-import { createActivateGate, activateFrame } from '../src/systems/activateGate.js';
+import { createGestureRecognizer, TAP_PX, HOLD_MS } from '../src/ui/touchGestures.js';
+import { createActivateGate, activateFrame, setClickDelay } from '../src/systems/activateGate.js';
 import { createLockOn, wrapAngle, chestPoint, CHEST_FRACTION, LOCK_BREAK_DISTANCE, pickFoeNearRay, LOCK_PICK_ANGLE } from '../src/player/lockOn.js';
 import { LookFilter } from '../src/player/lookFilter.js';
 import { pickFoe, pickQuestFoe } from '../src/player/activate.js';
@@ -87,14 +87,28 @@ test('TI1 tapRay: the docked-HUD rect - a finger in the bar is no world tap, and
 // ---- the gesture ----
 const drive = (g, pts) => pts.flatMap(([x, y, t]) => g.move(x, y, t));
 
-test('TI1 gesture: a short still touch is a TAP with its landing point (mutant: drop the TAP_MS bound or the travel bound)', () => {
+test('TI1d gesture: a still touch is a TAP whatever it jittered or however long it rested (mutant: path length back, or a time ceiling)', () => {
   const g = createGestureRecognizer();
   g.begin(300, 200, 0);
-  assert.deepEqual(drive(g, [[303, 201, 40]]), []);
-  assert.deepEqual(g.end(120), [{ type: 'tap', x: 300, y: 200 }]);
+  // a thumb resting on a phone: twelve touchmoves of 3 px, back and
+  // forth - 36 px of PATH, never 4 px from where it landed. The old
+  // recogniser spent a 12 px path budget on the fourth and called the
+  // rest a look; Mac's tap never reached the host.
+  const jitter = []; for (let i = 0; i < 12; i++) jitter.push([300 + (i % 2 ? 3 : 0), 200 + (i % 3 ? 1 : -2), 20 + i * 15]);
+  assert.deepEqual(drive(g, jitter), [], 'inside the radius the whole time: nothing yet');
+  assert.deepEqual(g.end(), [{ type: 'tap', x: 300, y: 200 }], 'a tap, at the landing point');
+  // held 600 ms without leaving the radius: STILL a tap (a press-to-lock
+  // is exactly this gesture; the old 300 ms ceiling made it nothing)
   const slow = createGestureRecognizer();
   slow.begin(300, 200, 0);
-  assert.deepEqual(slow.end(TAP_MS + 1), [], 'held past TAP_MS without moving: not a tap, and not anything else');
+  assert.deepEqual(drive(slow, [[302, 201, 400]]), []);
+  assert.deepEqual(slow.end(), [{ type: 'tap', x: 300, y: 200 }], 'however long it rested');
+  // ...but a finger that LEFT the radius is not a tap, whatever it did after
+  const left = createGestureRecognizer();
+  left.begin(300, 200, 0);
+  assert.equal(drive(left, [[300 + TAP_PX, 200, 30]])[0].type, 'look', 'the radius is displacement from the origin');
+  assert.deepEqual(left.end(), []);
+  assert.ok(TAP_PX >= 14 && TAP_PX <= 24, 'a thumb\'s roll, not a mouse\'s');
 });
 
 test('TI1b gesture: a FAST pan is the LOOK - the bug Mac hit - live from the first move past the tap radius (mutant: classify by speed)', () => {
@@ -170,7 +184,7 @@ test('TI1 lockOn: toggle, chest, and the two breaks - death and distance (mutant
   assert.equal(lock.tick(0.016, cam, [0, 1.7, 0], filter), null); assert.equal(lock.locked, false, 'distance breaks the lock');
 });
 
-test('TI1 pickFoe: the SAME box as the quest click, ANY live foe - and pickQuestFoe still refuses the questless one (mutant: reuse pickQuestFoe for the lock)', () => {
+test('TI1 pickFoe: the QUEST CLICK\'s box law, ANY live foe - and pickQuestFoe still refuses the questless one; the lock no longer takes it (TI1c) (mutant: reuse pickQuestFoe for the box)', () => {
   const plain = foeAt(0, 0, 3);
   const quest = foeAt(0, 0, 6, { questBehaviour: {} });
   const eye = [0, 1.7, 0], dir = [0, 0, 1];
@@ -272,6 +286,28 @@ test('TI1c pickFoeNearRay: the cone - the smallest angle wins, the nearer body w
   assert.equal(pickFoeNearRay(eye, [0, 0, 5], [a], null), a, 'the ray is normalised inside');
 });
 
+test('TI1d gate: the click delay a pointerdown arms swallows a touch tap\'s release - why every host skips it for touch pointers (mutant: arm it for touch)', () => {
+  // A phone: touchstart follows pointerdown by nothing, the lift by
+  // ~200 ms, the tap's two frames by ~30 ms more - all inside the 0.3 s
+  // SetClickDelay a pointer-grab click takes. The gate consumes the
+  // edge (gate.down = down runs before the delay check), so the
+  // release is not deferred, it is gone.
+  const armed = createActivateGate();
+  setClickDelay(armed, 0.3, 10.0);
+  assert.equal(activateFrame(armed, { down: true, now: 10.20 }).activate, false, 'the press, inside the delay');
+  assert.equal(activateFrame(armed, { down: false, now: 10.22 }).activate, false, 'the release: swallowed');
+  assert.equal(activateFrame(armed, { down: false, now: 10.40 }).activate, false, 'and never fires later either');
+  const free = createActivateGate();
+  assert.equal(activateFrame(free, { down: true, now: 10.20 }).activate, false);
+  assert.equal(activateFrame(free, { down: false, now: 10.22 }).activate, true, 'the same tap with no delay armed: the activation');
+  // ...and the lock aims at the DRAWN sprite: a rat's capsule is floored
+  // at 1.6 m (enemyAnchor) while its sprite is 0.9 m - the old chest
+  // point stood above its head, outside any cone
+  assert.equal(chestPoint({ ai: { feet: [0, 0, 0], height: 1.6, centreOffset: 0.45 }, idleH: 0.9 })[1], 0.9 * CHEST_FRACTION, 'the record\'s idleH');
+  assert.equal(chestPoint({ ai: { feet: [0, 0, 0], height: 1.6, centreOffset: 0.45 } })[1], 0.9 * CHEST_FRACTION, 'else the draw\'s centre, doubled');
+  assert.equal(chestPoint({ ai: { feet: [0, 0, 0], height: 1.6 } })[1], 1.6 * CHEST_FRACTION, 'the capsule only as the last resort');
+});
+
 // ---- the DOM layer and the hosts, by text ----
 test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three routes (mutant: any removed button back, or a route dropped)', () => {
   const s = read('src/ui/touch.js');
@@ -286,7 +322,7 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
   // TI1b: canvas-relative coordinates, a tap on the stick's half too, the dot offset by the canvas rect
   assert.match(s, /const local = \(tch\) => \{ const r = canvas\.getBoundingClientRect\(\);/, 'touch points are canvas-relative');
   assert.doesNotMatch(s, /innerWidth \/ 2/, 'the half split is the canvas\'s, not the window\'s');
-  assert.match(s, /stickTravel < TAP_PX && \(e\.timeStamp - stickStart\) <= TAP_MS\) \{\s*\n\s*hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\]\);/, 'a still short touch on the stick half is a tap');
+  assert.match(s, /if \(e\.type !== 'touchcancel' && stickTravel < TAP_PX\) \{\s*\n\s*hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\]\);/, 'a still touch on the stick half is a tap, however long it rested (TI1d)');
   assert.match(s, /dot\.style\.left = `\$\{x \+ r\.left\}px`;/, 'the dot is placed in the overlay\'s space');
   assert.match(s, /ev\.type === 'look'\) hooks\.look\?\.\(ev\.dx \* TOUCH_LOOK_GAIN/, 'look routes');
   assert.match(s, /ev\.type === 'swipe'\) hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\)/, 'the swipe routes to the drag seam');
@@ -301,7 +337,7 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
     assert.match(s, /const touch = attachTouch\(canvas, \{/, `${h}: the layer's handle is kept for the dot`);
     assert.match(s, /\n\s*attack: \(dx, dy, held\) =>/, `${h}: the swipe hook`);
     assert.match(s, /\n\s*tap: \(x, y\) =>/, `${h}: the tap hook`);
-    assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
+    assert.match(s, /locked: \(\) => lockOn\.locked/, `${h}: the lock predicate`);   // TI1d: `&& weaponDrawn()` in the two mode hosts
     assert.match(s, /dial: true,/, `${h}: routes Tab, so it draws the dial`);
     assert.match(s, /\(rightHeld \|\| swipeHeld\) && walkMode/, `${h}: the swipe holds the swing-settle law like the mouse button`);
     assert.match(s, /lockOn\.tick\(dt, cam, /, `${h}: the lock pays its facing every frame`);
@@ -332,13 +368,52 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const t = read(h);
     assert.match(t, /const tapLock = \(eye, dir, foes, collider\) => \{\s*\n\s*const foe = pickFoeNearRay\(eye, dir, foes, collider, LOCK_PICK_DISTANCE\);\s*\n\s*if \(foe\) lockOn\.toggle\(foe\);\s*\n\s*return !!foe;/, `${h}: the one lock arm, on the cone pick`);
-    assert.match(t, /activateDir: \(\) => _tapDir,[^\n]*\n\s*tapLock,[^\n]*\n\s*onModalView: \(proj, view\) => \{ _lastProj = proj; _lastView = view; placeLockDot\(proj, view\); \},/, `${h}: both handed to the mode machine`);
-    assert.match(t, /if \(_tapDir && tapLock\(cam\.pos, useFwd, /, `${h}: the exterior ladder takes the same arm`);
+    assert.match(t, /activateDir: \(\) => _tapDir,[^\n]*\n\s*tapLock,[^\n]*\n\s*activateOrigin: \(\) => _tapOrigin,[^\n]*\n\s*onModalView: \(proj, view, eye\) => \{/, `${h}: all handed to the mode machine`);   // TI1d: the origin and the lens's eye ride along
+    assert.match(t, /if \(_tapDir && tapLock\(_tapOrigin \?\? cam\.pos, useFwd, /, `${h}: the exterior ladder takes the same arm`);   // TI1d: from the ray's own apex
     assert.match(t, /_lastProj = proj; _lastView = view;[^\n]*\n\s*placeLockDot\(proj, view\);/, `${h}: the exterior pass places the dot through its own lens`);
     assert.doesNotMatch(t, /\bpickFoe\(/, `${h}: the box pick is gone from the lock`);
   }
   assert.match(read('src/scenes/dungeon.js'), /pickFoeNearRay\(eye, dir, ctx\.foes, ctx\.collider, LOCK_PICK_DISTANCE\)/, 'the standalone host locks by the cone too');
   assert.doesNotMatch(read('src/scenes/dungeon.js'), /\bpickFoe\(/, 'and not by the box');
+  // TI1d (review): the two root causes on a phone, and the rest.
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
+    const t = read(h);
+    assert.match(t, /if \(e\.pointerType === 'touch'\) return;[^\n]*\n\s*if \(document\.pointerLockElement !== canvas\) setClickDelay\(/, `${h}: a touch pointer never arms the click delay that ate the tap's release`);
+    assert.match(t, /if \(_tapArmed > 0\) return;[^\n]*\n\s*_tapPoint = \[x, y\]; _tapArmed = 2; keys\.add\('Mouse0'\);/, `${h}: a second tap inside the first's two frames is dropped, not re-armed over the held key`);
+  }
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const t = read(h);
+    assert.match(t, /activateOrigin: \(\) => _tapOrigin,[^\n]*\n\s*onModalView: \(proj, view, eye\) => \{ _lastProj = proj; _lastView = view; _lastEye = eye; placeLockDot\(proj, view\); \},/, `${h}: the lens's eye is kept, and the ray's origin is handed to the modal ladders`);
+    assert.match(t, /_tapOrigin = \(_lastEye \?\? cam\.pos\)\.slice\(\);[^\n]*\n\s*_tapDir = \(_tapPoint && _lastProj\) \? rayDirFromScreen\([^\n]*_lastProj, _lastView, _tapOrigin, largeHudViewportRect\(canvas\.clientHeight\)\) : null;/, `${h}: the ray starts at the lens's eye`);
+    assert.match(t, /_lastProj = proj; _lastView = view; _lastEye = mwv\.eye;/, `${h}: the exterior pass records its eye too`);
+    assert.match(t, /if \(_tapDir && tapLock\(_tapOrigin \?\? cam\.pos, useFwd, /, `${h}: the exterior ladder's cone has the ray's apex`);
+    assert.match(t, /locked: \(\) => lockOn\.locked && weaponDrawn\(\),/, `${h}: a lock makes a drag the swipe only with a weapon in hand`);
+    assert.match(t, /const weaponDrawn = \(\) => \(modeNow\(\) === 'exterior' \? !weaponRig\.playerWeapon\.sheathed : !!modes\?\.weaponDrawn\?\.\(\)\);/, `${h}: read from the mode that owns the weapon`);
+    assert.match(t, /overlayActive: \(\) => townTalk\.overlayActive \|\| !!modes\?\.overlayHeld,/, `${h}: a modal window holds the touch layer too`);
+    assert.match(t, /if \(modeNow\(\) !== _lockMode\) \{ lockOn\.unlock\(\); _lockMode = modeNow\(\); \}[^\n]*\n\s*_lockChest = lockOn\.tick\(dt, cam, cam\.pos, lookFilter\);[^\n]*\n\s*\} else _lockChest = null;/, `${h}: a mode change drops the lock; a window hides the dot`);
+    const dotFn = t.slice(t.indexOf('const placeLockDot = (proj, view) => {'), t.indexOf('\n  };', t.indexOf('const placeLockDot = (proj, view) => {')));
+    assert.ok(dotFn.includes('largeHudViewportRect(canvas.clientHeight)'), `${h}: the dot projects through the docked-HUD rect`);
+  }
+  assert.match(read('src/scenes/world.js'), /async function _teleportToPixel\([\s\S]{0,700}?cameraRecoiler\.reset\(\);\s*\n\s*lockOn\.unlock\(\);/, 'world: a teleport drops the lock, right after it drops the recoil');
+  const wm = read('src/scenes/worldModes.js');
+  const frameBody = wm.slice(wm.indexOf('function frame(dt, now) {'), wm.indexOf('const camRight = ', wm.indexOf('function frame(dt, now) {')));
+  assert.ok(frameBody.includes('const fwd = camForward();') && !frameBody.includes('const fwd = eyeDir()'), 'the modal FRAME looks where the camera looks - the tap ray is the ladders\' alone');
+  assert.match(wm, /const eyeDir = \(\) => host\.activateDir\?\.\(\) \?\? camForward\(\);/);
+  assert.equal(wm.split('const eye = host.activateOrigin?.() ?? player.eye;').length, 3, 'both modal ladders measure from the ray\'s own origin');
+  assert.match(wm, /weaponDrawn\(\) \{ return mode !== 'exterior' && !interiorWeapon\.playerWeapon\.sheathed; \}/);
+  for (const [fn, arm] of [['function tryExitDungeon() {', 'host.tapLock?.(eye, dir, dungeonCtx.foes, dungeonCtx.collider)'], ['function tryExit() {', 'host.tapLock?.(eye, dir, interiorFoePool(), interiorCtx.collider)']]) {
+    const head = wm.indexOf(fn); const at = wm.indexOf(arm, head);
+    assert.ok(at > head, `${fn} carries the arm`);
+    assert.doesNotMatch(wm.slice(head, at).replace(/\/\/[^\n]*/g, ''), /\breturn\b/, `${fn}: nothing returns before the lock arm - it is reachable (mutant: an early return above it)`);   // comments stripped: the quest click's note says "no return"
+  }
+  // the stick's dead zone stays wider than the tap radius: a tap-qualified
+  // touch on the left half can never have pressed a movement key
+  const touchSrc = read('src/ui/touch.js');
+  const radius = Number(/const STICK_RADIUS = (\d+);/.exec(touchSrc)[1]);
+  const dead = Number(/const dead = mag < ([0-9.]+);/.exec(touchSrc)[1]);
+  assert.ok(dead * radius > TAP_PX, `dead zone ${dead * radius}px > TAP_PX ${TAP_PX}px`);
+  assert.match(touchSrc, /if \(e\.type !== 'touchcancel' && stickTravel < TAP_PX\) \{/, 'the left-half tap has no time ceiling either');
+  assert.match(touchSrc, /nav\.style\.cssText = 'position:absolute;inset:0;display:none;pointer-events:none';/, 'the nav row is positioned against the viewport');
   const interior = read('src/scenes/interior.js');
   assert.doesNotMatch(interior, /attack:|tap:|dial:|attackTap/, 'the fly-cam interior draws no sword, no dial');
 });

@@ -1339,8 +1339,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // holds the lock; _lockChest is this frame's dot target.
   let swipeHeld = false;
   let _tapArmed = 0, _tapPoint = null, _tapDir = null;
-  let _lastProj = null, _lastView = null, _lockChest = null;
+  let _lastProj = null, _lastView = null, _lastEye = null, _lockChest = null;   // TI1d: _lastEye is the eye the lens was built from
+  let _tapOrigin = null;   // TI1d: where the tap's ray starts - the cone's apex, handed to the modal ladders (activateOrigin)
+  let _lockMode = 'exterior';   // TI1d: a mode change drops the lock - a torn-down context's foe is no target
   const lockOn = createLockOn();
+  /** TI1d: the weapon in hand in the CURRENT mode - the exterior rig's, or the modal one's through the mode machine. */
+  const weaponDrawn = () => (modeNow() === 'exterior' ? !weaponRig.playerWeapon.sheathed : !!modes?.weaponDrawn?.());
   /** TI1c: THE LOCK'S ARM, one for every ladder - the exterior's below
    *  and the modal ones through worldModes (host.tapLock). The cone
    *  pick, not the box hit: a thumb misses a sprite the mouse would
@@ -3020,6 +3024,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the sway does not ride a fast travel, a teleport or a load's
     // landing to the new place.
     cameraRecoiler.reset();
+    lockOn.unlock();   // TI1d: the world moves under the lock - its foe is somewhere else now
     // A1: a fast travel is where the calendar jumps WEEKS - straighten
     // the season BEFORE the destination pixel builds, or the arrival
     // is skinned for the month the player left and the frame loop
@@ -4498,6 +4503,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // acquisition: with the pointer already locked this click IS the
     // world's. (worldModes shares this host's `latch`, so its gate is
     // this gate.)
+    // TI1d (review: no phone tap ever fired): a TOUCH pointer never
+    // acquires the lock, so it has no re-acquiring click to swallow -
+    // and the delay it armed here swallowed the tap's own release,
+    // every time. Mouse and pen keep the law.
+    if (e.pointerType === 'touch') return;
     if (document.pointerLockElement !== canvas) setClickDelay((latch.activate ??= createActivateGate()));
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
@@ -4581,12 +4591,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      if (_tapArmed > 0) return;   // TI1d: a second tap inside the first's two frames would re-arm over a held key and lose both
       _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
     },
-    locked: () => lockOn.locked,
+    locked: () => lockOn.locked && weaponDrawn(),   // TI1d: a drag is the swipe only with a weapon IN HAND - sheathed, the lock left no way to look
     dial: true,
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
-    overlayActive: () => townTalk.overlayActive,
+    overlayActive: () => townTalk.overlayActive || !!modes?.overlayHeld,   // TI1d: a dungeon or interior window holds the layer too
   });
 
   const initialCount = queue.length + 1;
@@ -4747,7 +4758,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6384-6396 -
+  // worldModes answers it in BOTH modes (worldModes.js:6388-6400 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5817,7 +5828,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   var modes = createWorldModes({
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     tapLock,   // TI1c: the lock's arm for the modal ladders - the cone pick the exterior ladder takes
-    onModalView: (proj, view) => { _lastProj = proj; _lastView = view; placeLockDot(proj, view); },   // TI1c: the modal pass's lens - the tap ray and the dot ride it as they ride the exterior pass's
+    activateOrigin: () => _tapOrigin,   // TI1d: the ray's own origin, for the modal ladders' cone
+    onModalView: (proj, view, eye) => { _lastProj = proj; _lastView = view; _lastEye = eye; placeLockDot(proj, view); },   // TI1c: the modal pass's lens - the tap ray and the dot ride it as they ride the exterior pass's
     // V2e: worldModes re-registers the infection host on entry, so the
     // cemetery arm rides the bag or it dies at that re-registration.
     transferToCemetery: transferToCemeteryArm,
@@ -6260,8 +6272,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!gamePaused()) {
       if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      if (modeNow() !== _lockMode) { lockOn.unlock(); _lockMode = modeNow(); }   // TI1d: the mode changed under the lock
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
-    }
+    } else _lockChest = null;   // TI1d: no dot under a window
     // TI1: the tap's one-frame press. Armed 2 on the tap (the key is
     // already down): this frame counts to 1 and the gate sees the
     // press; next frame counts to 0, the key lifts, the ray is built
@@ -6269,8 +6282,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // activation on that release. The frame after clears the ray.
     if (_tapArmed > 0 && --_tapArmed === 0) {
       keys.delete('Mouse0');
-      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
-    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
+      _tapOrigin = (_lastEye ?? cam.pos).slice();   // TI1d: the lens's own eye
+      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, _tapOrigin, largeHudViewportRect(canvas.clientHeight)) : null;
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; _tapOrigin = null; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
@@ -6440,7 +6454,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:504's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:506's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6601,7 +6615,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // TI1: a tap on a live foe is the LOCK (player/lockOn.js),
           // toggled, and the activation ends there - the ladder has no
           // arm for a living enemy but the quest one above, which ran.
-          if (_tapDir && tapLock(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider)) { /* TI1c: the tap was the lock */ }
+          if (_tapDir && tapLock(_tapOrigin ?? cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider)) { /* TI1c: the tap was the lock */ }
           else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
             // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
             // The watch and the encounter foes leave the same container
@@ -6733,7 +6747,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
-    _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
+    _lastProj = proj; _lastView = view; _lastEye = mwv.eye;   // TI1: the tap ray unprojects through the frame the finger saw, from its eye (TI1d)
     placeLockDot(proj, view);   // TI1c: through the exterior pass's lens - the modal pass hands its own in (onModalView)
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
