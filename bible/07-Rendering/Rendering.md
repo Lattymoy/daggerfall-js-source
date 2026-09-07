@@ -228,6 +228,14 @@ directory by `test/audit18_bible_docs.test.js`:
   world.js (pixel/model/batch grains) and exterior.js (per-drawList-row,
   per-batch); `?cull=off` is the escape hatch. Simulation never gates -
   see `07-Rendering/Enhanced-Visuals-Arc.md`.
+- `renderTarget.js` - VC2 THE RENDER TARGET: a 2D colour target and a 3D
+  volume, creation under the upload law (it sizes, parameterises and binds
+  no framebuffer), the framebuffer work on named DRAW paths that leave the
+  default framebuffer and the caller's viewport behind and never ask GL.
+- `cloudNoise.js` - VC2 THE CLOUD NOISE: a 128^3 shape volume (Perlin-Worley
+  + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
+  every axis, generated on the GPU one layer per draw; the lab's slice viewer
+  (`?noise=`) behind tools/cloudNoiseProbe.mjs.
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when

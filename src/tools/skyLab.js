@@ -9,6 +9,7 @@ import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // D
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';
 import { weatherSunlightScale } from '../world/weather.js';
+import { CloudNoise } from '../render/cloudNoise.js';   // VC2: the noise volumes' slice viewer - ?noise=shape|detail&z=&ch=&tiles=
 
 const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -33,6 +34,12 @@ const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
 const still = params.has('still');
+// VC2: `?noise=shape|detail` shows a z-slice of a cloud noise volume in
+// place of the sky - `z=` the slice (0..1), `ch=` r|g|b|a|rgb, `tiles=`
+// how many times the volume tiles across the frame (a seam would show).
+// The volumes are generated on the first frame, once the canvas is sized.
+const noiseView = params.get('noise');
+let cloudNoise = null;
 if (params.has('nopanel')) document.getElementById('panel').style.display = 'none';   // the probe measures the frame, not the sliders
 const t0 = performance.now();
 
@@ -51,6 +58,15 @@ function frame() {
   // means anyway.
   const phases = lunarPhasesFromMinutes(((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay);
   const seconds = still ? 0 : (performance.now() - t0) / 1000;
+  if (noiseView) {
+    cloudNoise ??= new CloudNoise(gl, [0, 0, w, h]);
+    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const ch = { r: 0, g: 1, b: 2, a: 3, rgb: 4 }[params.get('ch') ?? 'r'] ?? 0;
+    cloudNoise.drawSlice(noiseView, Number(params.get('z') ?? 0.25), ch, Number(params.get('tiles') ?? 1));
+    window.__skyReady = true;
+    requestAnimationFrame(frame);
+    return;
+  }
   if (dyn) {
     // DS1: the mod's frame on the lab's clock - year 405, the slider's
     // day, the slider's hour; the sim's word is the weather select

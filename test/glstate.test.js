@@ -132,7 +132,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   // expands it. An injected declaration - a string replace after the
   // template - does not count, because it hides from this reader as it
   // hid from the last one (AUDIT 47 F1).
-  const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js'];
+  const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js'];   // VC2: the noise generators and the slice viewer
   // AUDIT 49: labGrass.js composes its stages as HEAD + FIELD + body, so
   // the reader composes them the same way before it looks
   {
