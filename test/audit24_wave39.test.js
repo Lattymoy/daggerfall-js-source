@@ -302,7 +302,7 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
   assert.match(rd('src/scenes/cityGuards.js'), /hitEffects\?\.showBloodSplash\(ENEMY_BASICS\[GUARD_MOBILE_TYPE\]\?\.bloodIndex \?\? 0/);
   assert.match(rd('src/scenes/cityGuards.js'), /hitEffects\?\.showBloodSplash\(0,\n\s*\[eye\[0\] \+ lookDir\[0\] \* bestD/, 'the civilian murder, at the REAL impact point');
   assert.match(rd('src/scenes/exteriorFoes.js'), /hitEffects\?\.showBloodSplash\(ENEMY_BASICS\[foe\.mobileType\]\?\.bloodIndex \?\? 0/);
-  // AUDIT 61 F20: the fall splash rides the foe's TRANSFORM (feet +
+  // AUDIT 62 F20: the fall splash rides the foe's TRANSFORM (feet +
   // centreOffset, which _centre() answers), not its feet -
   // EnemyMotor.cs:1403-1406 passes bare `transform.position`, and the
   // enemy transform is the idle sprite's CENTRE (prefab m_Center 0,

@@ -423,7 +423,7 @@ test('host: ReleaseFromPrison\'s last two lines are wired to the world', () => {
   const world = read('src/scenes/world.js');
   // the seams the flow asks for
   assert.match(world, /clearEnemies: \(\) => \{ for \(const f of \[\.\.\.exteriorFoes\.foes\]\) \{ if \(!f\.dead\) exteriorFoes\.removeFoe\(f\); \} lockOn\.unlock\(\); \}/,
-    'GameManager.ClearEnemies over the encounter pool (AUDIT 61 F16: a removed foe carries no `dead` flag, so the TI1 lock is let go with it)');
+    'GameManager.ClearEnemies over the encounter pool (AUDIT 62 F16: a removed foe carries no `dead` flag, so the TI1 lock is let go with it)');
   // ROAD-G G2 (review): the fixed-city host owns the same sweep -
   // ClearEnemies is host-agnostic in DFU, and this one mounts a WATCH
   // beside the encounter pool, so both go. It was reducible to the

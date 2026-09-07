@@ -98,7 +98,7 @@ mod is inert.
   `tickSeason` already runs for the winter flip - and only when a pixel
   stands on an OLDER install than the current one (each pixel records
   the `generation` it was built under) AND carries a batch on an
-  archive the mod has ever managed, which is DFU's own filter (AUDIT 61
+  archive the mod has ever managed, which is DFU's own filter (AUDIT 62
   F4). A season turn the climate season does not share (Summer to Fall,
   Spring to Summer) reaches the standing world that way; the winter
   flip's own rebuild finds every pixel fresh and rebuilds nothing twice.
@@ -121,7 +121,7 @@ mod is inert.
    archive** - DFU re-applies materials in place; the port's batches
    are baked, and the winter flip already rebuilds. Same visible
    result; the generation filter is what keeps a season turn to one
-   rebuild, and the archive filter (AUDIT 61 F4, below) is DFU's own -
+   rebuild, and the archive filter (AUDIT 62 F4, below) is DFU's own -
    `RefreshLoadedNatureBatches` touches only batches whose archive the
    mod has ever managed.
 2. **No atlas.** DFU packs the season's textures into one atlas
@@ -146,7 +146,7 @@ vendor tree without a raster. The real bundle was read in this session
 and matched the reference extraction 374 of 374; a live world render
 needs ARENA2, which the container lacks.
 
-## AUDIT 61 (2026-09-07) - the seasonal flat's row order, the refresh's archive filter, and two pins that could not fail
+## AUDIT 62 (2026-09-07) - the seasonal flat's row order, the refresh's archive filter, and two pins that could not fail
 
 **F26 (high, within the mod's lane): every seasonal tree, rock and
 plant drew UPSIDE-DOWN.** The port's texel convention is bottom-up:
@@ -218,7 +218,7 @@ Pinned with a K0-bearing fixture at both arms: `seasonalRecordSet` and
 a `SeasonHelper` whose winter set carries K0 must both answer
 `K1.png` at slot 0.
 
-## AUDIT 61 review round (2026-09-07) - F28
+## AUDIT 62 review round (2026-09-07) - F28
 
 **F28 (low, doc): `decodeTexture2D`'s JSDoc stated a rationale F26 had
 falsified.** The reader's header read "TOP ROW FIRST (Unity stores its

@@ -1,4 +1,4 @@
-// AUDIT 61 - THE FOES AND THE MOTOR. Five transform-space laws that
+// AUDIT 62 - THE FOES AND THE MOTOR. Five transform-space laws that
 // the REVIEW 2026-09-05 rewrite either left half-converted or left
 // unpinned, each pinned here against the REFERENCE's own value:
 //
@@ -55,7 +55,7 @@ const rayStub = () => {
 
 // ── F17 ───────────────────────────────────────────────────────────
 
-test('AUDIT 61 F17: one TRANSFORM-space y feeds both wouldBeSpawnedInClassic arguments', () => {
+test('AUDIT 62 F17: one TRANSFORM-space y feeds both wouldBeSpawnedInClassic arguments', () => {
   // EnemySenses.cs:288-290 takes YDiffToPlayer from the transforms and
   // rebuilds the XZ leg as sqrt(distanceToPlayer^2 - YDiffAbs^2), with
   // :376-377's distanceToPlayer also transform-to-transform. Two
@@ -90,7 +90,7 @@ test('AUDIT 61 F17: one TRANSFORM-space y feeds both wouldBeSpawnedInClassic arg
 
 // ── F18 ───────────────────────────────────────────────────────────
 
-test('AUDIT 61 F18: getTargets measures transform to transform, and the PRIORITY ordering it drives says so', () => {
+test('AUDIT 62 F18: getTargets measures transform to transform, and the PRIORITY ordering it drives says so', () => {
   // EnemySenses.cs:816-818 `toTarget = targetBehaviour.transform
   // .position - transform.position` - each side lifted by its OWN
   // centre offset. The distance feeds targetPriority (:829-841), so the
@@ -116,7 +116,7 @@ test('AUDIT 61 F18: getTargets measures transform to transform, and the PRIORITY
 
 // ── F37 ───────────────────────────────────────────────────────────
 
-test('AUDIT 61 F37: CanHearTarget casts from THIS transform to the TARGET transform, through the live call site', () => {
+test('AUDIT 62 F37: CanHearTarget casts from THIS transform to the TARGET transform, through the live call site', () => {
   // EnemySenses.cs:942 `new Ray(transform.position, directionToTarget)`
   // with :425-427 `directionToTarget = (target.transform.position -
   // transform.position).normalized`. Both ends are TRANSFORMS - a bat's
@@ -156,7 +156,7 @@ test('AUDIT 61 F37: CanHearTarget casts from THIS transform to the TARGET transf
 
 // ── F21 ───────────────────────────────────────────────────────────
 
-test('AUDIT 61 F21: an enemy missile aims at the TARGET transform, and the contact test is the capsule', () => {
+test('AUDIT 62 F21: an enemy missile aims at the TARGET transform, and the contact test is the capsule', () => {
   const d = src('src/scenes/dungeonContext.js');
   // DaggerfallMissile.cs:571-581 aims at enemySenses.LastKnownTargetPos,
   // which EnemySenses.cs:453/:465 sets to target.transform.position.
@@ -190,7 +190,7 @@ test('AUDIT 61 F21: an enemy missile aims at the TARGET transform, and the conta
   assert.equal(missileHitsFoe([0, 0, 2], bat), false, 'nor one two metres in front of it');
 });
 
-test('AUDIT 61 F21 (review): the swept capsule is the INNER segment, feet+r .. feet+h-r', () => {
+test('AUDIT 62 F21 (review): the swept capsule is the INNER segment, feet+r .. feet+h-r', () => {
   // The prefab's CharacterController is m_Height 1.8, m_Radius 0.4,
   // m_SkinWidth 0.05, m_Center {0,0,0} (DaggerfallEnemy [Game
   // Serializable].prefab:442-448) - so 0.45 is the surface a cast
@@ -217,7 +217,7 @@ test('AUDIT 61 F21 (review): the swept capsule is the INNER segment, feet+r .. f
   assert.equal(missileHitsCapsule([0, 1.3, 0], imp.ai.feet, 0.6), false, '...and reaches exactly 0.9 from it, no further');
 });
 
-test('AUDIT 61 F21 (review): ONE aim-point law, and the player arm of it is the LIVE transform', () => {
+test('AUDIT 62 F21 (review): ONE aim-point law, and the player arm of it is the LIVE transform', () => {
   // DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453: the aim point is
   // target.transform.position, with no arrow-specific variation (the
   // forward*0.6 + height/3 lift at :518-527 is GetAimPosition, the
@@ -251,7 +251,7 @@ test('AUDIT 61 F21 (review): ONE aim-point law, and the player arm of it is the 
     "the shared engine sweeps the player's live capsule");
 });
 
-test('AUDIT 61 F21: a foe casts from - and blows an AreaAroundCaster at - its own TRANSFORM', () => {
+test('AUDIT 62 F21: a foe casts from - and blows an AreaAroundCaster at - its own TRANSFORM', () => {
   const c = src('src/characters/enemyCasting.js');
   // DaggerfallMissile.cs:513-525 GetAimPosition: caster.transform
   // .position for a non-player caster (the forward*0.6 + height/3 lift
@@ -266,7 +266,7 @@ test('AUDIT 61 F21: a foe casts from - and blows an AreaAroundCaster at - its ow
 
 // ── F23 ───────────────────────────────────────────────────────────
 
-test('AUDIT 61 F23: the senses context carries the LIVE player capsule, and every host fills it', () => {
+test('AUDIT 62 F23: the senses context carries the LIVE player capsule, and every host fills it', () => {
   // PlayerHeightChanger.cs:54-57 - standing 1.8, crouch 0.9, ride 2.6,
   // swim 0.30 - and :475-478 keeps the capsule bottom planted while the
   // transform moves by heightChange/2.
@@ -287,7 +287,7 @@ test('AUDIT 61 F23: the senses context carries the LIVE player capsule, and ever
   }
 });
 
-test('AUDIT 61 F23: a crouched player is a 0.9 capsule to every foe - transform, eye and destination', () => {
+test('AUDIT 62 F23: a crouched player is a 0.9 capsule to every foe - transform, eye and destination', () => {
   // EnemyMotor.cs:532 reads senses.Target's CharacterController LIVE;
   // :544/:562 measure against its height, and EnemySenses.cs:896-898
   // builds the target eye at controller.center + height/3.
@@ -315,7 +315,7 @@ test('AUDIT 61 F23: a crouched player is a 0.9 capsule to every foe - transform,
     'EnemySenses.cs:288 against the LIVE player transform');
 });
 
-test("AUDIT 61 F23 (review): the OUT-OF-BAND player-LOS check reads the live capsule too", () => {
+test("AUDIT 62 F23 (review): the OUT-OF-BAND player-LOS check reads the live capsule too", () => {
   // EnemySenses.cs:377-383 - outside the classic spawn area a foe still
   // checks direct LOS to the PLAYER, and only that check opens the
   // GetTargets gate at :391-395. The ray is CanSeeTarget's

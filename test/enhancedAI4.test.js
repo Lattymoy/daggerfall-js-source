@@ -348,7 +348,7 @@ test('ENHANCED AI 4a: the route supplies x and z; the y is CLASSIC\u2019S, never
   ai.pathI = 1;
   ai._getDestination(target);
   assert.ok(Math.abs(ai.destination[1] - ai.feet[1]) < 1e-9, `a corner took y ${ai.destination[1]}, not the foe's ${ai.feet[1]}`);
-  // The goal: the y CLASSIC aims at. AUDIT 61 F1 - it was the predicted
+  // The goal: the y CLASSIC aims at. AUDIT 62 F1 - it was the predicted
   // position's RAW FEET, which is classic's answer only when a foe's
   // capsule equals its idle sprite. The control is a real classic
   // EnemyAI of the SAME shape in the SAME state, on its clear-path arm

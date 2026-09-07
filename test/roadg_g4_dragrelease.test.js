@@ -43,8 +43,8 @@ import {
   SpellIconPickerWindow, ICON_PICKER_PANEL_SIZE, ICON_PICKER_SCROLLER,
 } from '../src/ui/spellIconPickerWindow.js';
 import { SpellMakerWindow } from '../src/ui/spellMakerWindow.js';
-import { ListPickerWindow } from '../src/ui/listPicker.js';           // AUDIT 61 F25
-import { BankPurchaseWindow } from '../src/ui/bankPurchaseWindow.js'; // AUDIT 61 F24
+import { ListPickerWindow } from '../src/ui/listPicker.js';           // AUDIT 62 F25
+import { BankPurchaseWindow } from '../src/ui/bankPurchaseWindow.js'; // AUDIT 62 F24
 import { ChargenFlow } from '../src/ui/chargen.js';
 import { createChargenWindow } from '../src/systems/chargenSession.js';
 import { PICK_SCROLL_RECT } from '../src/ui/chargenArt.js';
@@ -268,7 +268,7 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the FIVE drags', 
   // against PICK_SCROLL_RECT, clamped to row 0 - so the sweep is over
   // all three now, the flow AND the wrapper every host calls.
   //
-  // AUDIT 61 F24/F25: and over FIVE, because the sweep stopped at "the
+  // AUDIT 62 F24/F25: and over FIVE, because the sweep stopped at "the
   // three drags" while the SHARED list picker - the shape those three
   // were copied from, and the window a dozen-plus classic pickers mount
   // - never had the arm, nor did `ui/bankPurchaseWindow.js`, which was
@@ -314,7 +314,7 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the FIVE drags', 
   win.hover(PBX + 2, PBY + 40, { buttons: 1 });
   assert.equal(f.classScroll, 7, 'and a real frame after it still drags from the LIVE anchor');
 
-  // AUDIT 61 F25: ...and the SHARED list picker, the fourth machine and
+  // AUDIT 62 F25: ...and the SHARED list picker, the fourth machine and
   // the one the other three cite as their model. 40 items over the
   // ListBox default of 9 rows, bar at native [241,59,5,82], thumb at
   // bar-local 24.6 from scrollIndex 12; scale = 82/40 = 2.05, so a real
@@ -337,7 +337,7 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the FIVE drags', 
   lp.release();
   assert.equal(lp.scrollBar.draggingThumb, false);
 
-  // AUDIT 61 F24: ...and the bank purchase window, the fifth, which IS
+  // AUDIT 62 F24: ...and the bank purchase window, the fifth, which IS
   // `scenes/worldModes.js`'s interior overlay and takes the pair from
   // the same seam. 30 houses over 8 rows, bar at native [154,75,7,48],
   // thumb at bar-local 16 from scroll 10; scale = 48/30 = 1.6, so a real

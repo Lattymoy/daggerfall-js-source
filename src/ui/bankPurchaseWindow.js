@@ -201,7 +201,7 @@ export class BankPurchaseWindow {
   /** VerticalScrollBar.Update (:101-130) off the host's hover seam -
    *  `e.buttons & 1` is the port's read of GetMouseButton(0).
    *
-   *  AUDIT 61 F24: ...and never on the hosts' (-1,-1) SENTINEL. This
+   *  AUDIT 62 F24: ...and never on the hosts' (-1,-1) SENTINEL. This
    *  window IS `scenes/worldModes.js`'s interior overlay, whose hover
    *  seam answers a pointer off the letterboxed panel with that
    *  fabricated pair (`nativePanel.js`'s pointToNative returns null

@@ -1,4 +1,4 @@
-// AUDIT 61 - THE HOSTS AND ENCOUNTERS LANE (2026-09-07).
+// AUDIT 62 - THE HOSTS AND ENCOUNTERS LANE (2026-09-07).
 //
 // Seven findings against the two walkable outdoor hosts and the mode
 // machine they both mount. What is pinned here is the REFERENCE's own
@@ -39,7 +39,7 @@ const rngFrom = (seed) => {
 // F11 - the catch-up loop must run in the modal modes
 // ─────────────────────────────────────────────────────────────────────
 
-test('AUDIT 61 F11: an indoor minute rolls NOTHING, and the door must not replay it as an outdoor one', () => {
+test('AUDIT 62 F11: an indoor minute rolls NOTHING, and the door must not replay it as an outdoor one', () => {
   // The tavern night the finding names: enter at 20:00 on a town pixel,
   // sleep eight hours, walk back out. PlayerEntity.Update runs its loop
   // every Update whatever PlayerEnterExit says (PlayerEntity.cs:486-492)
@@ -82,7 +82,7 @@ test('AUDIT 61 F11: an indoor minute rolls NOTHING, and the door must not replay
   assert.ok(banked > 120, `the banked replay spawns on most nights (${banked}/200) - that is the divergence`);
 });
 
-test('AUDIT 61 F11: the mode machine rings the loop once per modal frame, and from the interior rest', () => {
+test('AUDIT 62 F11: the mode machine rings the loop once per modal frame, and from the interior rest', () => {
   const wm = src('src/scenes/worldModes.js');
   const fi = wm.indexOf('  function frame(dt, now) {');
   assert.ok(fi > 0);
@@ -106,7 +106,7 @@ test('AUDIT 61 F11: the mode machine rings the loop once per modal frame, and fr
   }
 });
 
-test('AUDIT 61 F11: the NPC-guard conversion sweep is EXTERIOR only in both hosts', () => {
+test('AUDIT 62 F11: the NPC-guard conversion sweep is EXTERIOR only in both hosts', () => {
   // MakeNPCGuardsIntoEnemiesIfGuardsSpawned (PlayerEntity.cs:764-780)
   // walks PopulationManager.PopulationPool and skips every
   // `!npc.isActiveAndEnabled` entry; PlayerEnterExit.cs:1047 disables
@@ -149,7 +149,7 @@ const poolRig = (calls) => ({
 });
 const deadRecord = () => ({ mobileType: 0, dead: false, ai: { feet: [0, 0, 0], height: 1.8 }, entity: {} });
 
-test('AUDIT 61 F12: a saturated pool refuses a plain spawn and ACCEPTS the transform\'s re-stand', async () => {
+test('AUDIT 62 F12: a saturated pool refuses a plain spawn and ACCEPTS the transform\'s re-stand', async () => {
   const calls = { n: 0 };
   const pool = createExteriorFoes(poolRig(calls));
   for (let i = 0; i < MAX_ACTIVE_ENCOUNTER_FOES; i++) pool.foes.push(deadRecord());
@@ -171,7 +171,7 @@ test('AUDIT 61 F12: a saturated pool refuses a plain spawn and ACCEPTS the trans
   } finally { console.error = err; }
 });
 
-test('AUDIT 61 F12: all three Wabbajack re-stand sites pass it', () => {
+test('AUDIT 62 F12: all three Wabbajack re-stand sites pass it', () => {
   for (const [h, re] of [
     ['src/scenes/world.js', /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)\.then\(stamp\)/],
     ['src/scenes/exterior.js', /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)\.then\(stamp\)/],
@@ -202,7 +202,7 @@ const guardRig = (flags) => createCityGuards({
   enterExitFlags: () => flags,
 });
 
-test('AUDIT 61 F13: underground SpawnCityGuards does nothing - and the ?exterior host can now say so', async () => {
+test('AUDIT 62 F13: underground SpawnCityGuards does nothing - and the ?exterior host can now say so', async () => {
   // PlayerEntity.cs:625 encloses the WHOLE member in
   // `if (!GameManager.Instance.PlayerEnterExit.IsPlayerInsideDungeon && ...)`.
   const under = guardRig({ isPlayerInsideDungeon: true, isPlayerInside: true, insideOpenShop: false, insideTavern: false, insideResidence: false });
@@ -225,7 +225,7 @@ test('AUDIT 61 F13: underground SpawnCityGuards does nothing - and the ?exterior
   }
 });
 
-test('AUDIT 61 F14: a NON-eligible interior is answered INSIDE the building, around the player', async () => {
+test('AUDIT 62 F14: a NON-eligible interior is answered INSIDE the building, around the player', async () => {
   // The population is inactive indoors (PlayerEnterExit.cs:1047, and
   // the three `isActiveAndEnabled` continues at PlayerEntity.cs:653,
   // :707, :776), so guardsSpawnedFromNPCs is 0 and :687's
@@ -248,7 +248,7 @@ test('AUDIT 61 F14: a NON-eligible interior is answered INSIDE the building, aro
   assert.equal(witness.activeCount(), 0, 'no crime is seen by an inactive population');
 });
 
-test('AUDIT 61 F14: the mode machine takes the call for EVERY interior, and the street pool is empty indoors', () => {
+test('AUDIT 62 F14: the mode machine takes the call for EVERY interior, and the street pool is empty indoors', () => {
   const wm = src('src/scenes/worldModes.js');
   const fn = wm.slice(wm.indexOf('spawnCityGuardsInside(immediate) {'));
   const body = fn.slice(0, fn.indexOf('\n    },'));
@@ -271,7 +271,7 @@ test('AUDIT 61 F14: the mode machine takes the call for EVERY interior, and the 
 // F15 - CreateFoe's OverlapSphere is over ANY collider
 // ─────────────────────────────────────────────────────────────────────
 
-test('AUDIT 61 F15: both of world.js\'s placement arms test the watch too', () => {
+test('AUDIT 62 F15: both of world.js\'s placement arms test the watch too', () => {
   // CreateFoe.cs:319-323 - `Physics.OverlapSphere(testPoint,
   // overlapSphereRadius); if (colliders.Length > 0) return;`. A
   // watchman's capsule is a collider, so the quest arm may not ask the
@@ -288,7 +288,7 @@ test('AUDIT 61 F15: both of world.js\'s placement arms test the watch too', () =
 // F22 - EnemySenses' band pick reads IsPlayerInside
 // ─────────────────────────────────────────────────────────────────────
 
-test('AUDIT 61 F22: inside a building a foe two storeys up is NOT spawned in classic', () => {
+test('AUDIT 62 F22: inside a building a foe two storeys up is NOT spawned in classic', () => {
   // EnemySenses.cs:267 reads PlayerEnterExit.IsPlayerInside - the
   // GENERIC flag (PlayerEnterExit.cs:111-113), true in a building
   // interior - and :269-286 takes classicSpawnDespawnExterior only when
@@ -310,7 +310,7 @@ test('AUDIT 61 F22: inside a building a foe two storeys up is NOT spawned in cla
   assert.equal(wouldBeSpawnedInClassic(26, 0, false, 0, false), true, '...but well inside 102.4m outdoors');
 });
 
-test('AUDIT 61 F22: the two INTERIOR mounts declare it; the street pools keep the exterior band', () => {
+test('AUDIT 62 F22: the two INTERIOR mounts declare it; the street pools keep the exterior band', () => {
   const wm = src('src/scenes/worldModes.js');
   assert.equal((wm.match(/^\s*playerInside: true,$/gm) ?? []).length, 2,
     'makeInteriorFoes and makeInteriorGuards both stand inside a building');
@@ -326,7 +326,7 @@ test('AUDIT 61 F22: the two INTERIOR mounts declare it; the street pools keep th
 // F29 - the sky's PlayerEnterExit transition
 // ─────────────────────────────────────────────────────────────────────
 
-test('AUDIT 61 F29: a flash in flight is killed at the door, not paid out on the way back', () => {
+test('AUDIT 62 F29: a flash in flight is killed at the door, not paid out on the way back', () => {
   // BLBSkybox.cs:1247-1284 (InteriorTransitionEvent): under Thunder the
   // handler stops the listener, stops the coroutine, and does
   // `lightningFlash.StopAllCoroutines(); lightningLight.enabled = false`.
@@ -347,7 +347,7 @@ test('AUDIT 61 F29: a flash in flight is killed at the door, not paid out on the
   assert.equal(closed.tick(0.01), null, 'the door killed the routine and the light with it');
 });
 
-test('AUDIT 61 F29: the sky controller carries the door and both hosts latch the edge around modes.frame', () => {
+test('AUDIT 62 F29: the sky controller carries the door and both hosts latch the edge around modes.frame', () => {
   assert.match(src('src/scenes/shared.js'), /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \},/,
     'createSkyController publishes the transition door');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

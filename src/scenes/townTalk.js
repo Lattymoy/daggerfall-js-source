@@ -559,7 +559,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
   function nextMode() {
-    // AUDIT 61 F9: the touch mode button is the one control on that
+    // AUDIT 62 F9: the touch mode button is the one control on that
     // layer that calls a hook DIRECTLY instead of synthesizing a key,
     // so it walked past both gates the F1-F4 ladder carries - this
     // host's own `overlay` slot (:320) and the host's other slot

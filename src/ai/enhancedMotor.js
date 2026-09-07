@@ -77,7 +77,7 @@
 // clear-path arm's vertical (EnemyMotor.cs:541-544, :559-564): the
 // target's transform lift, the flyer/levitator/slaughterfish face bump,
 // the grounded foe's own-height delta, converted back to feet once.
-// AUDIT 61 F1: this leg took the predicted position's RAW FEET, which is
+// AUDIT 62 F1: this leg took the predicted position's RAW FEET, which is
 // classic's answer only when a foe's capsule equals its idle sprite -
 // a bat (capsule halved and floored at 1.6 under a 1.8 sprite) aimed
 // 0.9 m low and, at floor level, never climbed at all, because the

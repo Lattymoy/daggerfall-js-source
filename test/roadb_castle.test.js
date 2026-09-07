@@ -332,7 +332,7 @@ test('ROAD-B B4: outside, and inside a building the arm does NOT name, the exter
     }),
     /SPAWNED/, 'the arm names exactly three latches');
 
-  // No host flags at all. AUDIT 61 F13: no HOST in the tree is this any
+  // No host flags at all. AUDIT 62 F13: no HOST in the tree is this any
   // more - ?world and ?exterior both mount the mode machine and both
   // hand the latches in - so this is the module's own default, which is
   // the shape a pool constructed with no mode machine (a rig) has.
@@ -346,7 +346,7 @@ test('ROAD-B B4: outside, and inside a building the arm does NOT name, the exter
 });
 
 test('ROAD-B B4: BOTH mode-machine hosts feed the guard gate the mode host\'s three latches', () => {
-  // AUDIT 61 F13: ?exterior carries the interior and dungeon modes too,
+  // AUDIT 62 F13: ?exterior carries the interior and dungeon modes too,
   // so the bag is not the world host's alone.
   for (const h of ['scenes/world.js', 'scenes/exterior.js']) {
     const w = SRC(h);

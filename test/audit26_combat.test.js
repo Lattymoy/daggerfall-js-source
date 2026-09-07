@@ -174,7 +174,7 @@ test('F038: the acquittal refills; release keeps its own floor, named as such', 
 test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   const cg = src('scenes/cityGuards.js');
   const arm = cg.slice(cg.indexOf('if (g.ai.landedFall > 0'));
-  // AUDIT 61 F20: at the guard's TRANSFORM (feet + centreOffset =
+  // AUDIT 62 F20: at the guard's TRANSFORM (feet + centreOffset =
   // idleH/2, which _centre() answers) - EnemyMotor.cs:1403-1406 passes
   // bare `transform.position`, and the DaggerfallEnemy prefab centres
   // its controller on the transform (m_Center 0) while
@@ -222,7 +222,7 @@ test('F052: a landed player arrow thuds and splashes, at the real impact point',
       basics: { bloodIndex: 3 }, isClass: false, careerIndex: 0, skills: 0,
       maxHealth: 30, health: 30, stats: { strength: 50, agility: 50, luck: 50 },
     },
-    // AUDIT 61 F20: a DISCRIMINATING rig - the splash rides the struck
+    // AUDIT 62 F20: a DISCRIMINATING rig - the splash rides the struck
     // foe's TRANSFORM (feet + centreOffset), so the foe must carry an
     // offset that is not zero and not the player's 0.9, or the pin
     // cannot tell the fixed code from the broken code. A big flyer:

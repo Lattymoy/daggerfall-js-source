@@ -1,4 +1,4 @@
-// AUDIT 61 - THE TOUCH INPUT LANE (TI1), the six holes closed.
+// AUDIT 62 - THE TOUCH INPUT LANE (TI1), the six holes closed.
 //
 // F6  the 0.3 s click delay every finger-down armed, which ate the tap
 // F7  the pause gate the finger never passed and the mouse always did
@@ -55,7 +55,7 @@ const tev = (type, touches, t) => ({
   changedTouches: touches.map(([identifier, clientX, clientY]) => ({ identifier, clientX, clientY })),
 });
 
-// AUDIT 61 (review): the layer's nav-row `setInterval` is cleared by
+// AUDIT 62 (review): the layer's nav-row `setInterval` is cleared by
 // dispose() and by nothing else, and the stub window supplies no timer
 // so touch.js takes NODE'S real one. A dispose() written as the last
 // statement of a test body is SKIPPED when an assertion above it
@@ -94,7 +94,7 @@ const codesOfLog = (keys, type) => keys.filter((e) => e.type === type).map((e) =
 // ---------------------------------------------------------------
 // F6 - the click delay
 // ---------------------------------------------------------------
-test('AUDIT 61 F6: SetClickDelay is a UI gesture, not a finger - a 0.3 s window really does eat a 120 ms tap, so the touch pointerdown must not arm one (mutant: arm it for a touch pointer)', () => {
+test('AUDIT 62 F6: SetClickDelay is a UI gesture, not a finger - a 0.3 s window really does eat a 120 ms tap, so the touch pointerdown must not arm one (mutant: arm it for a touch pointer)', () => {
   // DFU calls SetClickDelay from exactly two places, both
   // UserInterfaceManager.RemoveWindow's PauseGame(false) arms
   // (UserInterfaceManager.cs:206/:214 -> PlayerActivate.cs:1050-1054).
@@ -117,7 +117,7 @@ test('AUDIT 61 F6: SetClickDelay is a UI gesture, not a finger - a 0.3 s window 
   assert.equal(tapRun(0.02).activate, false, 'a click 20 ms before the tap still shuts the window');
 });
 
-test('AUDIT 61 F6: the three combat hosts refuse the arm for a touch pointer (mutant: drop the pointerType clause at any one host)', () => {
+test('AUDIT 62 F6: the three combat hosts refuse the arm for a touch pointer (mutant: drop the pointerType clause at any one host)', () => {
   for (const h of HOSTS) {
     assert.match(read(h), /if \(e\.pointerType !== 'touch' && document\.pointerLockElement !== canvas\) setClickDelay\(/,
       `${h}: a finger-down must not arm RemoveWindow's click delay`);
@@ -127,7 +127,7 @@ test('AUDIT 61 F6: the three combat hosts refuse the arm for a touch pointer (mu
 // ---------------------------------------------------------------
 // F7 - the pause gate
 // ---------------------------------------------------------------
-test('AUDIT 61 F7: under a window the finger\'s look is DROPPED and its held swipe refused, and the swipe in flight is released (mutant: route look/swipe ungated, or bank the delta)', () => {
+test('AUDIT 62 F7: under a window the finger\'s look is DROPPED and its held swipe refused, and the swipe in flight is released (mutant: route look/swipe ungated, or bank the delta)', () => {
   // DFU: InputManager.cs:230-236 clears mouseX/mouseY/lookX/lookY every
   // Update and :487-505 returns before currentActions is populated while
   // paused, so no SwingWeapon is seen under a window and the paused
@@ -183,7 +183,7 @@ test('AUDIT 61 F7: under a window the finger\'s look is DROPPED and its held swi
   });
 });
 
-test('AUDIT 61 F7: all three hosts hand the layer the SAME predicate their mouse arms carry (mutant: pass only townTalk.overlayActive, which cannot see the modal windows)', () => {
+test('AUDIT 62 F7: all three hosts hand the layer the SAME predicate their mouse arms carry (mutant: pass only townTalk.overlayActive, which cannot see the modal windows)', () => {
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(read(h), /paused: \(\) => gamePaused\(\),/, `${h}: gamePaused() is townTalk's slot OR modes.overlayHeld`);
   }
@@ -194,7 +194,7 @@ test('AUDIT 61 F7: all three hosts hand the layer the SAME predicate their mouse
 // ---------------------------------------------------------------
 // F8 - the bindings registry
 // ---------------------------------------------------------------
-test('AUDIT 61 F8: a touch button presses the ACTION\'s live code, not a frozen default (mutant: synthesize the literal Space/KeyZ/Escape)', () => {
+test('AUDIT 62 F8: a touch button presses the ACTION\'s live code, not a frozen default (mutant: synthesize the literal Space/KeyZ/Escape)', () => {
   // Every consumer resolves by ACTION through the registry
   // (InputManager.GetKey's dual-dict fallthrough, :1084), so a control
   // that speaks a literal only works while the default row stands.
@@ -224,7 +224,7 @@ test('AUDIT 61 F8: a touch button presses the ACTION\'s live code, not a frozen 
   });
 });
 
-test('AUDIT 61 F8: an UNBOUND action presses nothing - never the old default (mutant: fall back to the default code)', () => {
+test('AUDIT 62 F8: an UNBOUND action presses nothing - never the old default (mutant: fall back to the default code)', () => {
   // The unbind is deliberate (AddRemovedPrimaryAction, :795-798) and
   // the freed code very likely serves a DIFFERENT action now, so a
   // fallback would be the same defect wearing the fix's clothes.
@@ -241,7 +241,7 @@ test('AUDIT 61 F8: an UNBOUND action presses nothing - never the old default (mu
   });
 });
 
-test('AUDIT 61 F8: a COMBO binding is pressed as its two keys, modifier FIRST and released last (mutant: dispatch the packed "ShiftLeft+KeyJ" code)', () => {
+test('AUDIT 62 F8: a COMBO binding is pressed as its two keys, modifier FIRST and released last (mutant: dispatch the packed "ShiftLeft+KeyJ" code)', () => {
   // comboCode packs one string (inputActions.js, GetComboCode
   // :1165-1177) and codeDown answers it only when BOTH halves are in
   // the held set, with the modifier's held-first latch up
@@ -260,7 +260,7 @@ test('AUDIT 61 F8: a COMBO binding is pressed as its two keys, modifier FIRST an
   });
 });
 
-test('AUDIT 61 F8: the stick holds the four move actions and Run, and a rebind mid-hold releases the code it actually pressed (mutant: hardcode KeyW/KeyA/KeyS/KeyD/ShiftLeft, or release the literal list)', () => {
+test('AUDIT 62 F8: the stick holds the four move actions and Run, and a rebind mid-hold releases the code it actually pressed (mutant: hardcode KeyW/KeyA/KeyS/KeyD/ShiftLeft, or release the literal list)', () => {
   withTouchDom((keys, attach) => {
     const store = defaultStore();
     setBinding(store, 'ArrowUp', 'MoveForwards');
@@ -285,7 +285,7 @@ test('AUDIT 61 F8: the stick holds the four move actions and Run, and a rebind m
   });
 });
 
-test('AUDIT 61 F8 (review): a held BUTTON releases only the keys the stick does not still need - Run + a combo Jump share ShiftLeft (mutant: `upCode(jumpCode)` with no keep set)', () => {
+test('AUDIT 62 F8 (review): a held BUTTON releases only the keys the stick does not still need - Run + a combo Jump share ShiftLeft (mutant: `upCode(jumpCode)` with no keep set)', () => {
   // The synthesis invariant this layer creates and DFU never has: one
   // physical key can be wanted by two live touch controls at once,
   // because a combo binding decomposes to its two halves
@@ -336,7 +336,7 @@ test('AUDIT 61 F8 (review): a held BUTTON releases only the keys the stick does 
   });
 });
 
-test('AUDIT 61 F8: the tap is the ActivateCenterObject ACTION, read straight into the gate - no synthesized "Mouse0" (mutant: keys.add(\'Mouse0\') back)', () => {
+test('AUDIT 62 F8: the tap is the ActivateCenterObject ACTION, read straight into the gate - no synthesized "Mouse0" (mutant: keys.add(\'Mouse0\') back)', () => {
   for (const h of HOSTS) {
     const s = read(h);
     assert.match(s, /down: held\(keys, 'ActivateCenterObject'\) \|\| _tapArmed > 0,/,
@@ -351,7 +351,7 @@ test('AUDIT 61 F8: the tap is the ActivateCenterObject ACTION, read straight int
 // ---------------------------------------------------------------
 // F9 - the mode-cycle button
 // ---------------------------------------------------------------
-test('AUDIT 61 F9: nextMode refuses under a window, on the same predicate the F1-F4 ladder uses (mutant: drop the guard)', () => {
+test('AUDIT 62 F9: nextMode refuses under a window, on the same predicate the F1-F4 ladder uses (mutant: drop the guard)', () => {
   // DFU reads the four modes through ActionStarted
   // (PlayerActivate.cs:220-228) and a paused InputManager never
   // populates currentActions (InputManager.cs:487-505), while a
@@ -373,7 +373,7 @@ test('AUDIT 61 F9: nextMode refuses under a window, on the same predicate the F1
 // ---------------------------------------------------------------
 // F10 - the dial button's skin
 // ---------------------------------------------------------------
-test('AUDIT 61 F10: no dial hook, no dial button - and the hosts pass the opener\'s own predicate (mutant: dial: true)', () => {
+test('AUDIT 62 F10: no dial hook, no dial button - and the hosts pass the opener\'s own predicate (mutant: dial: true)', () => {
   withTouchDom((_keys, attach) => {
     setBindings(defaultStore());
     const canvas = stubEl();
@@ -392,7 +392,7 @@ test('AUDIT 61 F10: no dial hook, no dial button - and the hosts pass the opener
 // ---------------------------------------------------------------
 // F16 / F28 - the lock-on
 // ---------------------------------------------------------------
-test('AUDIT 61 F16: a foe swept from the pool is never flagged dead, so the lock survives it - the transition must break it by hand (mutant: rely on lockOn\'s own breaks)', () => {
+test('AUDIT 62 F16: a foe swept from the pool is never flagged dead, so the lock survives it - the transition must break it by hand (mutant: rely on lockOn\'s own breaks)', () => {
   const lock = createLockOn();
   const filter = new LookFilter();
   const cam = { yaw: 0, pitch: 0 };
@@ -408,7 +408,7 @@ test('AUDIT 61 F16: a foe swept from the pool is never flagged dead, so the lock
   assert.equal(lock.locked, false);
 });
 
-test('AUDIT 61 F16/F28: the world hosts publish the lock doors and worldModes arms BOTH modal ladders (mutant: delete either arm, the guard, or the consumption)', () => {
+test('AUDIT 62 F16/F28: the world hosts publish the lock doors and worldModes arms BOTH modal ladders (mutant: delete either arm, the guard, or the consumption)', () => {
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(h);
     assert.match(s, /lockToggle: \(foe\) => lockOn\.toggle\(foe\),/, `${h}: the toggle door`);
@@ -431,7 +431,7 @@ test('AUDIT 61 F16/F28: the world hosts publish the lock doors and worldModes ar
   assert.match(wm, /host\.reportFrame\?\.\(proj, view\);/, 'the modal frame reports its camera, so the tap ray and the dot stop riding the last street frame');
 });
 
-test('AUDIT 61 F8 (review): worldModes\' OWN activate gate sees the finger - its `down` expression is EXECUTED here across the tap\'s two frames (mutant: drop `|| !!host.activateDown?.()`, or stop publishing activateDown from either world host)', () => {
+test('AUDIT 62 F8 (review): worldModes\' OWN activate gate sees the finger - its `down` expression is EXECUTED here across the tap\'s two frames (mutant: drop `|| !!host.activateDown?.()`, or stop publishing activateDown from either world host)', () => {
   // THE MACHINE THAT OWNS EVERY DOOR INDOORS. worldModes runs the
   // interior and world-hosted-dungeon activate gate - every shop, every
   // house, and the classic start into Privateer\'s Hold - off a `keys`
@@ -475,7 +475,7 @@ test('AUDIT 61 F8 (review): worldModes\' OWN activate gate sees the finger - its
   }
 });
 
-test('AUDIT 61 F16/F28 (review): the modal frame renders, listens and reveals down the CAMERA, never down the tap ray (mutant: `const fwd = eyeDir();`)', () => {
+test('AUDIT 62 F16/F28 (review): the modal frame renders, listens and reveals down the CAMERA, never down the tap ray (mutant: `const fwd = eyeDir();`)', () => {
   // DFU builds the activation ray off the screen point with
   // `mainCamera.ScreenPointToRay` (PlayerActivate.cs:283-309) and the
   // camera transform is untouched by it; the automap reveal probe reads
@@ -500,7 +500,7 @@ test('AUDIT 61 F16/F28 (review): the modal frame renders, listens and reveals do
   }
 });
 
-test('AUDIT 61 F16/F28: EVERY mode change releases the lock (mutant: drop the unlock at any one transition)', () => {
+test('AUDIT 62 F16/F28: EVERY mode change releases the lock (mutant: drop the unlock at any one transition)', () => {
   const wm = read('src/scenes/worldModes.js');
   const lines = wm.split('\n');
   const flips = [];

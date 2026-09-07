@@ -180,7 +180,7 @@ test('DS1 apply: every material property a preset sets, the timescale factors, a
   assert.equal(mat._SunSizeConvergence, 10);
   assert.deepEqual(mat._SkyTint, parseHtmlColor('6176DCFF'));
   assert.equal(mat._SkyFadeEnd, s.SkyEndStart);
-  // AUDIT 61 F30: the three assertions below used to multiply by the
+  // AUDIT 62 F30: the three assertions below used to multiply by the
   // IMPORTED TIMESCALE_FACTOR, so they restated the port's own constant
   // on both sides and 0.0833 -> 0.08 survived the whole suite. The
   // mod's LITERAL is the law, and the constant is asserted outright -
@@ -233,7 +233,7 @@ test('DS1 day parts: isHourDayPart’s bands and getWeatherIndex', () => {
 // ── THE MOONS ─────────────────────────────────────────────────────
 test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interpolation, verbatim', () => {
   assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.New], 180); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.Full], 0); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.OneWane], -135);
-  // AUDIT 61 F32: the WHOLE ladder, not three of its eight arms.
+  // AUDIT 62 F32: the WHOLE ladder, not three of its eight arms.
   // GetLunarPhaseLength (BLBSkybox.cs:901-913) verbatim, in DFU's own
   // order, plus the `default: return 1` arm - LUNAR_PHASES.None is what
   // gameDate's lunarPhase answers for a year below zero.
@@ -244,7 +244,7 @@ test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interp
     LUNAR_PHASES.OneWane, LUNAR_PHASES.OneWax, LUNAR_PHASES.HalfWax, LUNAR_PHASES.ThreeWax,
   ].map(lunarPhaseLength), [1, 1, 5, 5, 5, 6, 6, 3], 'GetLunarPhaseLength (:901-913)');
   assert.equal(lunarPhaseLength(LUNAR_PHASES.None), 1, 'and the default arm (:912)');
-  // AUDIT 61 F33: GetPhaseDayOffset (:915-931) over its WHOLE domain,
+  // AUDIT 62 F33: GetPhaseDayOffset (:915-931) over its WHOLE domain,
   // written out from the reference's six bands - `==0||==16 -> 0`, then
   // `<=5`/-1, `<=10`/-6, `<=15`/-11, `<=22`/-17, `<=28`/-23, `<=31`/-29.
   // Five sample points used to stand here and left every band edge and
@@ -266,7 +266,7 @@ test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interp
   assert.ok(near(st.interpolatedX, interpolateAngle(135, 90, st.progress)));
   const sec = lunarPhaseState(date, false);
   assert.equal(sec.moonRatio, 18);
-  // AUDIT 61 F32, the LIVE path: the only date fixture above is OneWax
+  // AUDIT 62 F32, the LIVE path: the only date fixture above is OneWax
   // for both moons, so the length-6 arm was the only one ChangeLunarPhases
   // ever divided by. Sixteen days on, Masser is HalfWane (moonRatio 8,
   // band 6..10, day offset 2) and the divisor is the FIVE-day length -
@@ -289,7 +289,7 @@ test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interp
   assert.ok(near(o2._MoonOrbitOffset, -157.5 + 180 + 15 * 0.5));
   assert.ok(near(o2._MoonOrbitAngle[2], -20 * Math.sin(-157.5 * Math.PI / 180) + 15 * 0.5));
   assert.ok(near(o2._SecundaOrbitOffset, 180 + 180 - 5));
-  // AUDIT 61 F34: the MIRROR pair. The fixture above only ever gives
+  // AUDIT 62 F34: the MIRROR pair. The fixture above only ever gives
   // Masser the OneWane arm and Secunda the New one, so Secunda's own
   // constants (20f, not Masser's 15f - BLBSkybox.cs:972-973, :997-998)
   // and Masser's New arm (-5f, :969-970) had no pin: 20 -> 15 and
@@ -395,7 +395,7 @@ test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomis
   h.startFlash([0, 0, 0]); h.tick(0.01); h.stopAll();
   assert.equal(h.tick(0.01), null);
 
-  // AUDIT 61 F31: the two thresholds AT THEIR BOUNDARY. Every drive
+  // AUDIT 62 F31: the two thresholds AT THEIR BOUNDARY. Every drive
   // above rolls 0.1 / 0.9 / 0.7 (and the runtime's 0.25), all far from
   // both edges, so `Random.value < (0.5f / Time.timeScale)`
   // (LightningFlash.cs:52) and `< (0.33f / Time.timeScale)` (:55)
@@ -485,7 +485,7 @@ test('DS1 runtime: Init, the pending weather applied a frame late, the fog colou
 });
 
 test('DS1 runtime: the fog colour is recomputed on a ONE-SECOND cadence, and holds in between', () => {
-  // AUDIT 61 F35. The hold assertion in the test above discriminates
+  // AUDIT 62 F35. The hold assertion in the test above discriminates
   // nothing: it compares two NOON frames, where sunY is ~1, so
   // setFogColor's rescaled smoothstep underflows to 0 in the squaring
   // and the recomputed colour is the day colour to the last bit either

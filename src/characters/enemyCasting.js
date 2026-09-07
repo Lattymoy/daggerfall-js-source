@@ -286,7 +286,7 @@ export function castEnemySpell(f, spell, {
     const cost = calculateCastCost(spell, playerEntity).sp;
     f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
   }
-  // AUDIT 61 F21: GetAimPosition (DaggerfallMissile.cs:513-525) is
+  // AUDIT 62 F21: GetAimPosition (DaggerfallMissile.cs:513-525) is
   // `caster.transform.position` for a non-player caster, with the
   // forward*0.6 + height/3 offset added ONLY for an arrow - so a spell
   // looses (and its cast sound rings) at the caster's TRANSFORM, which
@@ -319,7 +319,7 @@ export function castEnemySpell(f, spell, {
     return true;
   }
   if (spell.rangeType === 3) {
-    // AUDIT 61 F21: DaggerfallMissile.cs:280-282 `case TargetTypes
+    // AUDIT 62 F21: DaggerfallMissile.cs:280-282 `case TargetTypes
     // .AreaAroundCaster: DoAreaOfEffect(caster.transform.position,
     // true)` - the CASTER'S TRANSFORM, feet + centreOffset. The
     // hardcoded 0.9 was the PLAYER's half-capsule on a foe caster:

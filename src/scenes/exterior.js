@@ -1095,7 +1095,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258 - a struck PASSIVE watchman turns the area
     // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
     // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
-    // AUDIT 61 F13: this host mounts the SAME mode machine world.js
+    // AUDIT 62 F13: this host mounts the SAME mode machine world.js
     // does (createWorldModes below - E on a building door enters its
     // interior, E on a DUNGEON_ENTRANCE door drops into the crawl), so
     // the flagless default was never right here: with `_ee` null the
@@ -1189,13 +1189,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       explodeAt: (...a) => magic.explodeAt(...a),
       fireMissile: (from, spell, casterLevel, foe) => {
         if (!walkMode) return;
-        const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 61 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
+        const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
         const l = Math.hypot(...d) || 1;
         magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
       },
     },
   });
-  // AUDIT 61 F14: DFU's population is INACTIVE indoors. PlayerEnterExit
+  // AUDIT 62 F14: DFU's population is INACTIVE indoors. PlayerEnterExit
   // .DisableAllParents (PlayerEnterExit.cs:1047) does
   // `ExteriorParent.SetActive(false)` on every interior transition, and
   // all three SpawnCityGuards/MakeNPCGuards walks open with
@@ -1242,7 +1242,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // city has no fast travel and no ship; the clock jumps that raise the
   // flag here are the jail skip (arrestFlow) and the vampirism turn
   // (infection.js deployInfection, VampirismInfection.cs:157).
-  // AUDIT 61 F11: the loop runs in EVERY mode, as DFU's Update does -
+  // AUDIT 62 F11: the loop runs in EVERY mode, as DFU's Update does -
   // and it is CALLED in every mode now, which is what that claim was
   // missing. The mode machine rings this function once per modal frame
   // (host.encounterTick) and from its interior rest; the frame call
@@ -1285,7 +1285,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // :513-516 - at most ONCE per Update however many minutes catch up
       if (!_updatedGuards) {
         _updatedGuards = true;
-        // AUDIT 61 F11: EXTERIOR only, not merely "not a dungeon".
+        // AUDIT 62 F11: EXTERIOR only, not merely "not a dungeon".
         // MakeNPCGuardsIntoEnemiesIfGuardsSpawned (PlayerEntity.cs
         // :764-780) walks PopulationManager.PopulationPool skipping
         // every `!npc.isActiveAndEnabled` entry, and PlayerEnterExit
@@ -1454,7 +1454,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     backButtonHeld: () => backButtonHeld,
   });
   const weaponRig = createWeaponRig({
-    activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 61 F8: the finger's press too (it was 'Mouse0' in the held set until the tap stopped speaking a literal code)   // AUDIT 28 W12: the drawn bow's un-draw key
+    activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the finger's press too (it was 'Mouse0' in the held set until the tap stopped speaking a literal code)   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
@@ -1775,7 +1775,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, exteriorFoePool, _insidePool);
   const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
-    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 61 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 62 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
     // MT-ii/ROAD-G G2: the target-machine seam - EnemySenses reads ONE
     // active-enemy database (EnemySenses.cs:741-749), so a watchman and
     // a foe stood in the street by CreateFoe's exterior arm can see
@@ -2288,7 +2288,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // acquisition: with the pointer already locked this click IS the
     // world's. (worldModes shares this host's `latch`, so its gate is
     // this gate.)
-    // AUDIT 61 F6: ...and NEVER for a touch pointer. A finger can never
+    // AUDIT 62 F6: ...and NEVER for a touch pointer. A finger can never
     // hold the pointer lock (ui/touch.js's own note), so the test above
     // is permanently true on a phone and every finger-down armed a 0.3 s
     // window that swallowed the tap's release edge (activateGate.js's
@@ -2386,10 +2386,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
-      _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 61 F8: the arm IS the press - see _tapArmed at the gate below
+      _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
     },
     locked: () => lockOn.locked,
-    // AUDIT 61 F10: the dial button is drawn only where Tab actually
+    // AUDIT 62 F10: the dial button is drawn only where Tab actually
     // opens the rose. openPixelDial refuses off the enhanced skin
     // (ui/pixelDial.js), so on the classic skin the ◆ was a drawn door
     // that opens nothing - the lie touch.js's own doc block names. The
@@ -2398,7 +2398,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     dial: isEnhanced(),
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
     overlayActive: () => townTalk.overlayActive,
-    // AUDIT 61 F7: the finger's pause gate - the same predicate the
+    // AUDIT 62 F7: the finger's pause gate - the same predicate the
     // mouse arms carry (the mousemove look needs the pointer lock a
     // window frees, the RMB swing tests `!townTalk.overlayActive`).
     paused: () => gamePaused(),
@@ -2712,7 +2712,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // GameManager.ClearEnemies destroys every active enemy object; the
     // encounter half is world.js:5440's line and the watch half is this
     // host's own (cityGuards owns its live list).
-    clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } lockOn.unlock(); },   // AUDIT 61 F16: a removed foe is never flagged dead, so the lock must be let go here
+    clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } lockOn.unlock(); },   // AUDIT 62 F16: a removed foe is never flagged dead, so the lock must be let go here
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
     // over ONE database - the inside pool unioned in, or SetComplete
     // never completes and the action re-runs every tick for ever.
@@ -2741,7 +2741,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
-    // AUDIT 61 F8 (review): THE FINGER'S PRESS, published. worldModes
+    // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
     // no sight of `_tapArmed` - it is a host-local `let`. While the tap
     // spoke a literal 'Mouse0' the shared `keys` Set carried the press
@@ -2749,7 +2749,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ActivateCenterObject must not kill the finger) and this is the
     // honest replacement, the same shape `activateDir` already had.
     activateDown: () => _tapArmed > 0,
-    // AUDIT 61 F16/F28: the lock's two doors for the modal ladders.
+    // AUDIT 62 F16/F28: the lock's two doors for the modal ladders.
     // The tap-to-lock arm existed only in this host's EXTERIOR
     // activation and in the standalone dungeon scene, so inside a
     // building or a world-hosted dungeon - which is where the classic
@@ -2766,7 +2766,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // never fires on an orphan).
     lockToggle: (foe) => lockOn.toggle(foe),
     unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
-    // AUDIT 61 F16/F28: the MODAL frame's matrices, handed back. Both
+    // AUDIT 62 F16/F28: the MODAL frame's matrices, handed back. Both
     // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
     // unprojects through them at the top of the frame, and the lock dot
     // projects through them - and ONLY the exterior render wrote them,
@@ -2792,7 +2792,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // arm's caller, which neither host answered. Same shape as the
     // world host's.
     spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
-    // AUDIT 61 F11: PlayerEntity.Update's CATCH-UP LOOP, from the modal
+    // AUDIT 62 F11: PlayerEntity.Update's CATCH-UP LOOP, from the modal
     // frame. The loop runs every Update whatever PlayerEnterExit says
     // (PlayerEntity.cs:479-522) and advances lastGameMinutes at :521, so
     // an indoor minute is CONSUMED as it passes - IntermittentEnemySpawn
@@ -3034,7 +3034,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // record (removeGuard), the encounter pool re-stands (world.js's route)
       if (cityGuards.guards.includes(f)) cityGuards.removeGuard(f);
       else exteriorFoes.removeFoe(f);
-      // AUDIT 61 F12: `replacing` - world.js's twin (THE FOUR HOSTS RULE).
+      // AUDIT 62 F12: `replacing` - world.js's twin (THE FOUR HOSTS RULE).
       // One entity destroyed, one minted (WabbajackEffect.cs:86-88), so the
       // encounter cap has no business refusing it - least of all when the
       // freed slot was the guard pool's.
@@ -3228,7 +3228,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // arming edge is here rather than on a poll. Without it a graveyard
   // opened as ?exterior was silent while the streaming host howled.
   ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
-  // AUDIT 61 F29: the sky's PlayerEnterExit latch. BLBSkybox subscribes
+  // AUDIT 62 F29: the sky's PlayerEnterExit latch. BLBSkybox subscribes
   // OnTransitionInterior/DungeonInterior/Exterior/DungeonExterior
   // (BLBSkybox.cs:1236-1240) and the handlers are TRANSITION events, so
   // the port holds the EDGE here rather than polling. Read on both
@@ -3267,7 +3267,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
-    // counts to 1 and the gate sees the press (AUDIT 61 F8: `_tapArmed
+    // counts to 1 and the gate sees the press (AUDIT 62 F8: `_tapArmed
     // > 0` IS the press - the arm no longer stuffs a literal 'Mouse0'
     // into the held set, which a rebind of ActivateCenterObject would
     // have made inert); next frame counts to 0, the press lifts, the
@@ -3319,7 +3319,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
-      _skyEnterExit();   // AUDIT 61 F29: the transition, read after the mode flipped
+      _skyEnterExit();   // AUDIT 62 F29: the transition, read after the mode flipped
       // WM4c: inside a building or a dungeon the exterior parent is
       // INACTIVE in DFU (PlayerEnterExit disables it), and a disabled
       // AudioSource stops. The mills fall silent with it and start
@@ -3344,7 +3344,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
-    // AUDIT 61 F29: and the OTHER edge - the frame the player steps back
+    // AUDIT 62 F29: and the OTHER edge - the frame the player steps back
     // out is the one modes.frame answered false on, so the sky learns it
     // here, before anything below ticks or draws the flash.
     _skyEnterExit();
@@ -3507,7 +3507,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // never read through held(), so a SwingWeapon rebind is inert.
 
       const _act = activateFrame((latch.activate ??= createActivateGate()), {
-        down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 61 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
+        down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
         hasReadySpell: magic.spellArmed(),
         touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
         hudBlocked: activeMouseOverLargeHUD(),
@@ -3953,7 +3953,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...guardBatches);
       // ROAD-G G2: the encounter pool drives and draws on the same
       // flats' axis, and freezes with the population under an overlay.
-      if (!townTalk.overlayActive) runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the EXTERIOR arm of the cadence loop (AUDIT 61 F11: the modal modes ring the same function through the mode machine, above the modal return)
+      if (!townTalk.overlayActive) runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the EXTERIOR arm of the cadence loop (AUDIT 62 F11: the modal modes ring the same function through the mode machine, above the modal return)
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, _senses);
       personBatches.push(...exteriorFoes.batches());

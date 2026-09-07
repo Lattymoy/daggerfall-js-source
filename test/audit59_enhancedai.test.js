@@ -87,7 +87,7 @@ test('AUDIT 59 F4: the route\'s vertical is never steered at, whatever y findPat
     foe.predictedTargetPos = [10, 7.5, 0];
     return foe;
   };
-  // AUDIT 61 F1: the GOAL's y is not the predicted position's raw feet -
+  // AUDIT 62 F1: the GOAL's y is not the predicted position's raw feet -
   // it is what GetDestination's clear-path arm builds from it
   // (EnemyMotor.cs:541 destination = PredictedTargetPos, :543-544 the
   // flyer/levitator/slaughterfish face bump of targetController.height *

@@ -9,7 +9,7 @@
 //     MoveForwards/Backwards/Left/Right (+Run past 80% throw), so the
 //     scenes' `keys` Set, the input map, and reportInput all see
 //     ordinary keys. 8-way digital - a test-build call, not a motor
-//     change. AUDIT 61 F8: the CODE for each is the live binding's,
+//     change. AUDIT 62 F8: the CODE for each is the live binding's,
 //     read at press time (GetBinding), never a frozen default.
 //   - The right half is ONE surface with three meanings, classified
 //     by ui/touchGestures.js BEFORE anything is routed (TI1b: a drag is
@@ -55,7 +55,7 @@
 
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
 import { overlayOpen } from './enhancedOverlays.js';
-import { bindings } from './input.js';                       // AUDIT 61 F8: the live registry
+import { bindings } from './input.js';                       // AUDIT 62 F8: the live registry
 import { getBinding, getCombo } from '../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
 
 const TOUCH_LOOK_GAIN = 2.0;
@@ -73,7 +73,7 @@ function synth(type, code) {
   window.dispatchEvent(new KeyboardEvent(type, { code, key: KEY_NAMES[code] ?? code, bubbles: true }));
 }
 
-// AUDIT 61 F8: A TOUCH CONTROL PRESSES AN ACTION, NOT A LETTER.
+// AUDIT 62 F8: A TOUCH CONTROL PRESSES AN ACTION, NOT A LETTER.
 // The layer's promise is that it speaks the desktop input language;
 // the codes it spoke were the DEFAULT bindings, frozen at write time,
 // while every consumer resolves BY ACTION through the registry
@@ -139,7 +139,7 @@ export function attachTouch(canvas, hooks = {}) {
   const down = (code) => { if (!held.has(code)) { held.add(code); synth('keydown', code); } };
   const up = (code) => { if (held.has(code)) { held.delete(code); synth('keyup', code); } };
   const tap = (code) => { synth('keydown', code); synth('keyup', code); };
-  // AUDIT 61 F8: the action-shaped arms. An UNBOUND action presses
+  // AUDIT 62 F8: the action-shaped arms. An UNBOUND action presses
   // NOTHING - no fall back to the default code, because a deliberately
   // unbound action's old default very likely serves a DIFFERENT action
   // now (setBinding steals the code, inputActions.js), and pressing it
@@ -169,10 +169,10 @@ export function attachTouch(canvas, hooks = {}) {
   // (inputActions.js ACTIONS) and the hosts match `e.code === 'Tab'`.
   if (hooks.dial) button('◆', 'left:16px', 'top:16px', 48, () => tap('Tab'));
   button('≡', hooks.dial ? 'left:72px' : 'left:16px', 'top:16px', 48, () => tapAction('Escape'));   // the menu: the pause window, save and load inside it
-  // AUDIT 61 F8: each held button captures the code it resolved at the
+  // AUDIT 62 F8: each held button captures the code it resolved at the
   // press and lifts THAT one, so a rebind mid-hold cannot strand a key.
   let jumpCode = null, sheatheCode = null;
-  // AUDIT 61 F8 (review): A CONTROL LIFTS ONLY THE KEYS NO OTHER LIVE
+  // AUDIT 62 F8 (review): A CONTROL LIFTS ONLY THE KEYS NO OTHER LIVE
   // CONTROL STILL NEEDS. The stick already released against
   // `liveNeeds()`; the two held BUTTONS released bare, so any code they
   // SHARE with a held stick axis was torn out from under it - and the
@@ -232,7 +232,7 @@ export function attachTouch(canvas, hooks = {}) {
   const gesture = createGestureRecognizer({ locked: () => !!hooks.locked?.() });
   const local = (tch) => { const r = canvas.getBoundingClientRect(); return [tch.clientX - r.left, tch.clientY - r.top, r.width]; };
 
-  // AUDIT 61 F8: the stick holds ACTIONS, and remembers the code each
+  // AUDIT 62 F8: the stick holds ACTIONS, and remembers the code each
   // one resolved to, so a binding changed mid-hold releases the code it
   // actually pressed instead of stranding it down forever.
   const stickHeld = new Map();   // action -> the code it is holding
@@ -267,7 +267,7 @@ export function attachTouch(canvas, hooks = {}) {
     on('Run', !dead && mag >= RUN_THROW);
   }
 
-  // AUDIT 61 F7: THE PAUSE GATE THE MOUSE ARMS ALWAYS CARRIED. The
+  // AUDIT 62 F7: THE PAUSE GATE THE MOUSE ARMS ALWAYS CARRIED. The
   // mouse look returns unless the pointer is locked (a window frees it)
   // and the RMB swing is gated on the host's overlay predicate; the
   // finger had neither, so a drag on a canvas-drawn CLASSIC window
@@ -349,7 +349,7 @@ export function attachTouch(canvas, hooks = {}) {
       if (t.identifier === stickId) {
         stickId = null;
         stick.style.display = 'none';
-        releaseStick();   // AUDIT 61 F8: the codes it actually holds, not a frozen literal list
+        releaseStick();   // AUDIT 62 F8: the codes it actually holds, not a frozen literal list
         // TI1b: a still, short touch on this half is a TAP - it moved no
         // key (the stick's dead zone) and it is how a foe left of centre
         // gets locked.

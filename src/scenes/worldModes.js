@@ -26,8 +26,8 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 61 F16/F28: TI1's lock pick
-import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 61 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
+import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -516,7 +516,7 @@ export function createWorldModes(host) {
   // combat/fpsSpellCasting.js holds the animation as a singleton and
   // whichever rig owns the frame draws it - which indoors is this one.
   const interiorWeapon = createWeaponRig({
-    activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),   // AUDIT 61 F8 (review): the finger's press too - it reaches this host ONLY through activateDown, never through `keys`   // AUDIT 28 W12: the drawn bow's un-draw key
+    activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),   // AUDIT 62 F8 (review): the finger's press too - it reaches this host ONLY through activateDown, never through `keys`   // AUDIT 28 W12: the drawn bow's un-draw key
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
@@ -695,7 +695,7 @@ export function createWorldModes(host) {
       // corpses never leave streaming range hands nothing to
       // TrackLooseObject (GameObjectHelper.cs:836-839).
       currentPixelKey: () => null,
-      // AUDIT 61 F22: PlayerEnterExit.IsPlayerInside is TRUE in a
+      // AUDIT 62 F22: PlayerEnterExit.IsPlayerInside is TRUE in a
       // building interior (PlayerEnterExit.cs:111-113, set at :1086 by
       // EnableInteriorParent), so EnemySenses.cs:269-286 gives this pool
       // the ROW bands - spawn XZ 25.6m / Y +3.2m, despawn XZ 25.6m /
@@ -742,7 +742,7 @@ export function createWorldModes(host) {
         // world.js's arm, minus its walk-mode gate: the interior frame
         // runs magic.update itself, so a missile loosed here flies.
         fireMissile: (from, spell, casterLevel, foe) => {
-          const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 61 F21 (review): the player's LIVE transform, as world.js
+          const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 62 F21 (review): the player's LIVE transform, as world.js
           const l = Math.hypot(...d) || 1;
           magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
         },
@@ -834,7 +834,7 @@ export function createWorldModes(host) {
    *  and a summoned daedra standing in it are one database, exactly as
    *  the street's two pools are one for the exterior host. */
   const _interiorSenses = () => sensesContext(playerEntity, interiorTicker.classicMinutes, {
-    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 61 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 62 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
     candidates: () => interiorEnemyDatabase(),
     playerEntity,
   });
@@ -855,7 +855,7 @@ export function createWorldModes(host) {
       // passive; the encounter pool has walked both since AUDIT 58 and
       // this one walked nothing at all.
       makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
-      // AUDIT 61 F22: interiorFoes' arm - this watch stands INSIDE a
+      // AUDIT 62 F22: interiorFoes' arm - this watch stands INSIDE a
       // building, so EnemySenses.cs:267's IsPlayerInside is true for it
       // and the row-0 bands with their Y test apply, not the exterior one.
       playerInside: true,
@@ -4145,7 +4145,7 @@ export function createWorldModes(host) {
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
-      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
+      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
       transitioning = false;
@@ -4191,7 +4191,7 @@ export function createWorldModes(host) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
-    // AUDIT 61 F16/F28: TI1's tap-to-lock, the arm this ladder never
+    // AUDIT 62 F16/F28: TI1's tap-to-lock, the arm this ladder never
     // had. `A tap whose ray hits a live foe locks it` (player/lockOn.js)
     // carries no mode qualifier, but the arm existed only in the two
     // hosts' EXTERIOR activations and in the standalone dungeon scene -
@@ -4407,7 +4407,7 @@ export function createWorldModes(host) {
     // the terrain's floor (enterExit.repositionFeetY).
     player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
-    host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
+    host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     console.log('exterior: returned at door');
@@ -4552,7 +4552,7 @@ export function createWorldModes(host) {
         return false;
       }
       mode = 'dungeon';
-      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
+      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:1112 - the dungeon transition clears the tavern latch too (and, verbatim, not the residence one)
       dungeonLoc = dfLocation;
       player.collider = ctx.collider;
@@ -4623,7 +4623,7 @@ export function createWorldModes(host) {
       const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
-    // AUDIT 61 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
+    // AUDIT 62 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
     // the ladder the classic start into Privateer's Hold runs through,
     // so it is the one the feature was most missing from; the arm is
     // scenes/dungeon.js:213's, line for line, over this context's pool.
@@ -4700,7 +4700,7 @@ export function createWorldModes(host) {
     dungeonCtx = null;
     dungeonLoc = null;
     mode = 'exterior';
-    host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
+    host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
     questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
@@ -4732,7 +4732,7 @@ export function createWorldModes(host) {
     // hosts' early return froze __frame inside interiors/dungeons and
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
-    // AUDIT 61 F16/F28 (review): THE CAMERA'S OWN FORWARD, not the
+    // AUDIT 62 F16/F28 (review): THE CAMERA'S OWN FORWARD, not the
     // activation ray. `eyeDir()` answers `host.activateDir()` while a
     // tap's ray is live (the release frame), and that ray belongs to
     // the ACTIVATION ladders alone: DFU builds it with
@@ -4964,7 +4964,7 @@ export function createWorldModes(host) {
         interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, _interiorSenses());
       }
     }
-    // AUDIT 61 F11: PlayerEntity.Update's catch-up loop, ONCE per modal
+    // AUDIT 62 F11: PlayerEntity.Update's catch-up loop, ONCE per modal
     // frame - both arms above, since :479-522 runs it every Update
     // whatever PlayerEnterExit says and consumes each elapsed minute
     // through IntermittentEnemySpawn's IsPlayerInside arm (:564-600),
@@ -5006,7 +5006,7 @@ export function createWorldModes(host) {
     // room behind it; `hudBlocked` is PlayerActivate.cs:230-236;
     // `touchSpell` is its stated exception at :250-258. The readied
     // spell comes off the same per-mode engine HasReadySpell does.
-    // AUDIT 61 F8 (review): ...AND THE FINGER'S PRESS, which reaches
+    // AUDIT 62 F8 (review): ...AND THE FINGER'S PRESS, which reaches
     // this machine through NOTHING ELSE. The tap used to stuff a
     // literal 'Mouse0' into the host's `keys` Set, and this gate -
     // which owns EVERY interior and every world-hosted dungeon, so
@@ -5072,7 +5072,7 @@ export function createWorldModes(host) {
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
-    host.reportFrame?.(proj, view);   // AUDIT 61 F16/F28: TI1's tap ray and lock dot ride the host's last frame, and only its EXTERIOR render wrote one
+    host.reportFrame?.(proj, view);   // AUDIT 62 F16/F28: TI1's tap ray and lock dot ride the host's last frame, and only its EXTERIOR render wrote one
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
@@ -6111,7 +6111,7 @@ export function createWorldModes(host) {
     topWindow: () => interiorOverlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => mountInterior(new ActionTextBox(rows)),
-    // AUDIT 61 F11: and the loop rides the rest's minutes too, exactly
+    // AUDIT 62 F11: and the loop rides the rest's minutes too, exactly
     // as the outdoor hosts' rest deps do (world.js's twin). TickRest
     // advances the clock in sub-ticks and PlayerEntity.Update consumes
     // them as they pass; the rolls answer nothing indoors, which is the
@@ -6754,7 +6754,7 @@ export function createWorldModes(host) {
      *  building record (AUDIT 26 F066 put it there), and Tavern and
      *  Residence are the bare RMBLayout type predicates.
      *
-     *  AUDIT 61 F14: EVERY interior is answered here, eligible or not.
+     *  AUDIT 62 F14: EVERY interior is answered here, eligible or not.
      *  The old `if (!eligible) return false` handed a temple, a guild
      *  hall or a palace back to the STREET pool - the exterior collider,
      *  the exterior host's frozen update, and (before F14's other half)
@@ -6864,7 +6864,7 @@ export function createWorldModes(host) {
       if (foe._encounter) interiorFoes.removeFoe(foe);
       else if (interiorGuards?.guards.includes(foe)) interiorGuards.removeGuard(foe);
       else return null;
-      // AUDIT 61 F12: `replacing` - the indoor twin. A removed WATCHMAN
+      // AUDIT 62 F12: `replacing` - the indoor twin. A removed WATCHMAN
       // frees a slot in interiorGuards and none here, so the encounter
       // cap could answer null and leave the strike with nothing standing;
       // WabbajackEffect.cs:86-88 destroys one and mints one, slot-neutral.
@@ -7009,7 +7009,7 @@ export function createWorldModes(host) {
       }
       player.collider = baseCollider();
       mode = 'exterior';
-      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
+      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do
     },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's

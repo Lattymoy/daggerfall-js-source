@@ -201,7 +201,7 @@ test('ROAD-Ar: the click that GRABS the pointer arms the delay too, and only on 
     assert.ok(i > 0, `${h} arms the delay on the grab`);
     // guarded on the lock NOT already being held - an unguarded arm
     // would kill every ordinary activation click
-    // AUDIT 61 F6: ...and never for a TOUCH pointer. A finger can never
+    // AUDIT 62 F6: ...and never for a TOUCH pointer. A finger can never
     // hold the lock, so this test is permanently true on a phone and
     // every finger-down armed a 0.3 s window that ate the tap's release
     // edge. DFU arms SetClickDelay only from RemoveWindow

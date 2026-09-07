@@ -879,7 +879,7 @@ opaque })` decodes at -1 for a mesh and 0 for a flat, every sub-mesh
 site (the pipeline's model and part uploads, `texRemap`'s climate
 swap, `interiorContext`'s swap) asks for the opaque material, the
 renderer keys it `archive_record#opaque` (OUR device, not a DFU law -
-see AUDIT 61 F27) and `_drawMeshBundle` looks there first with a fall-back
+see AUDIT 62 F27) and `_drawMeshBundle` looks there first with a fall-back
 to the cutout upload, and the model fragment shader carries no alpha
 clip. The billboard shader keeps its discard.
 
@@ -966,7 +966,7 @@ level. The door takes `mips: false`, the renderer keys that variant
 `#ui` beside the bare (mipped) key of the same record, `releaseTexture`
 frees every variant, and the two icon drawers ask for and read it.
 
-### AUDIT 61 F27 (2026-09-07) - the `#opaque` key's rationale cited a DFU law that does not exist
+### AUDIT 62 F27 (2026-09-07) - the `#opaque` key's rationale cited a DFU law that does not exist
 
 The comment at `renderer.js`'s `uploadTexture` key and the pin message
 in `test/incident_dungeon_seams.test.js` both said "DFU caches

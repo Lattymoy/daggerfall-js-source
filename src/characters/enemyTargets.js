@@ -97,7 +97,7 @@ export function targetPriority(targetHasNoTarget, seen, distance) {
 export function getTargets(self, candidates, playerFeet, {
   noTargetMode = false,
   infighting = enemyInfightingEnabled(),
-  // AUDIT 61 F23: the PLAYER candidate's LIVE controller height - DFU
+  // AUDIT 62 F23: the PLAYER candidate's LIVE controller height - DFU
   // reads the component (EnemySenses.cs:896-898 for the eye,
   // :816-818 for the transform distance) and PlayerHeightChanger.cs
   // :54-57/:475-478 makes it 0.9 crouched, 2.6 mounted, 0.30 swimming
@@ -186,7 +186,7 @@ export function getTargets(self, candidates, playerFeet, {
 }
 
 /**
- * AUDIT 61 F21 (review): the aim POINT every ranged component takes -
+ * AUDIT 62 F21 (review): the aim POINT every ranged component takes -
  * the TARGET'S TRANSFORM, one law for every host.
  *
  * DaggerfallMissile.cs:571-581 (GetAimDirection) reads
@@ -249,7 +249,7 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   noTargetMode = false,
   infighting,
   playerEntity = null,
-  playerHeight = CAPSULE_HEIGHT,   // AUDIT 61 F23: the live player capsule, off the senses context
+  playerHeight = CAPSULE_HEIGHT,   // AUDIT 62 F23: the live player capsule, off the senses context
 } = {}) {
   const ai = self.ai;
   ai.classicTargetUpdateTimer = (ai.classicTargetUpdateTimer ?? 0) + classicDt / SYSTEM_TIMER_UPDATES_DIVISOR;

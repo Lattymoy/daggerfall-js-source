@@ -250,7 +250,7 @@ export function sweepFoes(pos, radius, foes) {
  *  height. 0.4 + 0.05 is the surface a cast meets. */
 export const BODY_CAPSULE_RADIUS = 0.45;
 
-/** AUDIT 61 F21: a missile's contact test, against the target's
+/** AUDIT 62 F21: a missile's contact test, against the target's
  *  CAPSULE rather than one point on it.
  *  DaggerfallMissile.cs:339 sweeps the missile sphere
  *  (Physics.SphereCast, ColliderRadius) into whatever collider it

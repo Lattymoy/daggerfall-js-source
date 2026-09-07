@@ -140,7 +140,7 @@ export const CLASSIC_DESPAWN_Y = CLASSIC_DESPAWN_Y_BY_TYPE[0];
 export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already, distanceType = 0, playerInside = true) {
   if (distanceToPlayer >= 1094 * GLOBAL_SCALE) return false;
   const yAbs = Math.abs(yDiff);
-  // AUDIT 61 F17: the clamp is float insurance only. With both terms in
+  // AUDIT 62 F17: the clamp is float insurance only. With both terms in
   // one space (DFU's transforms) |yDiff| <= distanceToPlayer always, so
   // the radicand cannot go negative; it went negative while the two
   // arguments were measured differently, which is what F17 fixed.
@@ -361,7 +361,7 @@ export class EnemyAI {
     // read this, not height/2. The default keeps a caller that names
     // no sprite (the tests' 1.8 capsule) exactly where it was.
     this.centreOffset = centreOffset ?? height / 2;
-    // AUDIT 61 F23: the PLAYER target's LIVE controller height, cached
+    // AUDIT 62 F23: the PLAYER target's LIVE controller height, cached
     // once per step off the senses context (EnemyMotor.cs:532 reads
     // `senses.Target.GetComponent<CharacterController>().height` every
     // FixedUpdate; PlayerHeightChanger.cs:54-57 gives it 1.8 standing,
@@ -512,7 +512,7 @@ export class EnemyAI {
     // where the source keeps it.
     if (!senses) return;
     const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
-    // AUDIT 61 F17: ONE transform-space y term feeds BOTH arguments.
+    // AUDIT 62 F17: ONE transform-space y term feeds BOTH arguments.
     // EnemySenses.cs:288 `YDiffToPlayer = transform.position.y -
     // player.transform.position.y` and :376-377 `distanceToPlayer =
     // (player.transform.position - transform.position).magnitude` are
@@ -524,7 +524,7 @@ export class EnemyAI {
     // for a rat, enough to flip the row-0 vertical band. Sign is
     // preserved (enemy - player, DFU's :288) for the row-4/5 lower
     // arms; Math.hypot is sign-blind, so the same value serves both.
-    // AUDIT 61 F23: the player half is the LIVE controller
+    // AUDIT 62 F23: the player half is the LIVE controller
     // (PlayerHeightChanger.cs:475-478 keeps the capsule BOTTOM planted
     // and moves the transform by heightChange/2), not the 1.8 constant.
     const yDiff = (this.feet[1] + this.centreOffset) - (playerFeet[1] + this._playerHeight / 2);
@@ -583,7 +583,7 @@ export class EnemyAI {
     // the player and wrong for every foe target that is not
     // player-sized - a rat's eye sat a metre and a half too high, so
     // a wall that hides it did not.
-    // AUDIT 61 F23: and the PLAYER arm names the live capsule rather
+    // AUDIT 62 F23: and the PLAYER arm names the live capsule rather
     // than falling to canSeeTarget's 1.8 default - CanSeeTarget builds
     // the target eye from `controller.center` + `controller.height / 3`
     // (EnemySenses.cs:896-898), which for a crouched player is feet +
@@ -1174,7 +1174,7 @@ export class EnemyAI {
    *  says so in as many words. */
   _targetHeight() {
     const t = this._armedTargeting ? this._targetCandidate : null;
-    // AUDIT 61 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
+    // AUDIT 62 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
     // reads the controller component itself, and a crouched player's is
     // 0.9 (a mounted one's 2.6).
     return (t && !t.isPlayer && t.ai?.height) || this._playerHeight;
@@ -1191,7 +1191,7 @@ export class EnemyAI {
    *  grounded delta read the target's capsule (_targetHeight). */
   _targetCentreOffset() {
     const t = this._armedTargeting ? this._targetCandidate : null;
-    // AUDIT 61 F23: the player's transform tracks feet + liveHeight/2
+    // AUDIT 62 F23: the player's transform tracks feet + liveHeight/2
     // (PlayerHeightChanger.cs:477-478 moves it by heightChange/2 while
     // the capsule bottom stays planted), so a crouched player's sits at
     // feet + 0.45.
@@ -1204,7 +1204,7 @@ export class EnemyAI {
    * (EnemyMotor.cs:541-544 + :559-564), from the target's PREDICTED FEET
    * y to the feet-space y the motor steers at, in one place.
    *
-   * AUDIT 61 F1: a subclass whose route ends at the same point this arm
+   * AUDIT 62 F1: a subclass whose route ends at the same point this arm
    * heads for must carry the same three terms - the target's transform
    * lift, the flyer/levitator/slaughterfish face bump, and the grounded
    * foe's own-height delta - and the one conversion back to feet. The
@@ -1523,7 +1523,7 @@ export class EnemyAI {
     // senses half stays cycle-free). Unarmed = player-only, as ever.
     const targeting = senses?.targeting ?? null;
     this._armedTargeting = !!targeting;
-    // AUDIT 61 F23: _getDestination is reached from the decision path
+    // AUDIT 62 F23: _getDestination is reached from the decision path
     // with no senses argument, so the live player capsule is cached
     // HERE, with the rest of the per-step senses reads, and read by
     // _targetHeight/_targetCentreOffset and _classicSenses below.

@@ -1692,7 +1692,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  REPEAT lets a LINEAR tap at the border sample the opposite edge.
    *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead.
    *
-   *  INCIDENT 2026-09-04, reworded AUDIT 61 F27: the '#opaque' variant in
+   *  INCIDENT 2026-09-04, reworded AUDIT 62 F27: the '#opaque' variant in
    *  the key below is OUR device, not a DFU law. DFU's material cache is
    *  keyed by (archive, record, frame) plus a key GROUP and nothing else
    *  (MaterialReader.cs:961, hit at :387-392) - alphaIndex is not in the

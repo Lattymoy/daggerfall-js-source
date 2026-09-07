@@ -288,7 +288,7 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // OnPostFastTravel - the mod's forced season re-apply off the arrival
   // month - stands between state.init and the destination build, one
   // statement, above the last needle.
-  // PIN MOVED AGAIN (AUDIT 61 F16), 3000 -> 3200: the load/teleport
+  // PIN MOVED AGAIN (AUDIT 62 F16), 3000 -> 3200: the load/teleport
   // sweep that empties the street pools now lets the TI1 lock go with
   // them (`lockOn.unlock()` beside `exteriorFoes.clearLive()`, since a
   // removed foe is never flagged dead) - one statement, above the last

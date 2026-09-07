@@ -17,12 +17,12 @@ import { idbStore } from '../world/roadsCache.js';
 
 /** Bumped BY HAND whenever the bake's output for the same input changes
  *  (roadsCache.js's GENERATOR_VERSION rule) - a cached bake under an old
- *  version is a wrong bake served forever per dungeon. AUDIT 61 F3: 1 had
+ *  version is a wrong bake served forever per dungeon. AUDIT 62 F3: 1 had
  *  outlived the y-anchor fix (2026-09-03) and now the stacked-floor weld
  *  and the serialised vertex heights (F1). */
 export const NAV_BAKE_VERSION = 2;
 
-/** AUDIT 61 F3: the key carries the ANCHOR's cell too - buildRegions keeps
+/** AUDIT 62 F3: the key carries the ANCHOR's cell too - buildRegions keeps
  *  the anchor's foot-connected component and culls the rest, so a bake taken
  *  from a save loaded in a teleporter pocket must never be a cache hit for the
  *  front-door entry (or vice versa). */

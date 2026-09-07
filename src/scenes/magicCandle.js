@@ -61,7 +61,7 @@ export const CANDLE = Object.freeze({
 /** The unwobbled position: `transform.position + forward * 1.4`, then
  *  `y += height * 0.25` (LightNormal.cs:95-96).
  *
- *  AUDIT 61 F21 (review): `feet` is NOT DFU's transform.position. The
+ *  AUDIT 62 F21 (review): `feet` is NOT DFU's transform.position. The
  *  header used to say it was, and the whole candle hung half a
  *  capsule low as a result. The player's CharacterController has no
  *  centre offset and PlayerHeightChanger.cs:477-478

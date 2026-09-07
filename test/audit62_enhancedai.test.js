@@ -1,4 +1,4 @@
-// AUDIT 61 (2026-09-07), the ENHANCED AI lens - the navmesh under a STACKED
+// AUDIT 62 (2026-09-07), the ENHANCED AI lens - the navmesh under a STACKED
 // dungeon. project-final's arenas had no floor over a floor; a Daggerfall
 // dungeon is built of them, and the poly-mesh stage welded every vertex by
 // (x,z) alone, so the levels fused, the shared edges got 3-4 owners,
@@ -34,7 +34,7 @@ function stackedRoom({ mezz = true, pillar = true } = {}) {
 const overOwned = (mesh) => { const em = new Map(); for (const p of mesh.polys) { const v = p.verts; for (let e = 0; e < v.length; e++) { const a = v[e], b = v[(e + 1) % v.length], k = Math.min(a, b) + ',' + Math.max(a, b); em.set(k, (em.get(k) || 0) + 1); } } let n = 0; for (const c of em.values()) if (c > 2) n++; return n; };
 const components = (mesh) => { const seen = new Set(); let n = 0; for (let p = 0; p < mesh.polys.length; p++) { if (seen.has(p)) continue; n++; const q = [p]; seen.add(p); while (q.length) { const a = q.pop(); for (const nb of mesh.polys[a].neis) if (nb >= 0 && !seen.has(nb)) { seen.add(nb); q.push(nb); } } } return n; };
 
-test('AUDIT 61 F1: a floor over a floor bakes as ONE connected mesh, and both levels route', () => {
+test('AUDIT 62 F1: a floor over a floor bakes as ONE connected mesh, and both levels route', () => {
   const bake = bakeNavFromCollider(stackedRoom(), { anchor: [2, 0, 8] });
   const chf = bake.chf, mesh = chf.mesh;
   assert.equal(overOwned(mesh), 0, 'no edge has three or four owners (the levels no longer fuse)');
@@ -54,7 +54,7 @@ test('AUDIT 61 F1: a floor over a floor bakes as ONE connected mesh, and both le
   assert.equal(findPath(flat, [4, 0, 7], [12, 0, 7]).length, 4);
 });
 
-test('AUDIT 61 F1: the locate prefers the query’s level; a waypoint’s height is its corridor’s, not the tallest top', () => {
+test('AUDIT 62 F1: the locate prefers the query’s level; a waypoint’s height is its corridor’s, not the tallest top', () => {
   const chf = bakeNavFromCollider(stackedRoom(), { anchor: [2, 0, 8] }).chf;
   const lo = __locatePolyIndexed(chf, 10, 10, 0), hi = __locatePolyIndexed(chf, 10, 10, 3);
   assert.notEqual(lo, hi, 'the same (x,z) at y 0 and y 3 lands on two polys');
@@ -62,7 +62,7 @@ test('AUDIT 61 F1: the locate prefers the query’s level; a waypoint’s height
   assert.equal(__locatePolyIndexed(chf, 10, 10), locatePolyLinear(chf, 10, 10), 'with no height the first-inside law and the linear oracle still agree');
 });
 
-test('AUDIT 61 F1: the bake carries vertex heights, and a hydrated stacked mesh still tells its floors apart', () => {
+test('AUDIT 62 F1: the bake carries vertex heights, and a hydrated stacked mesh still tells its floors apart', () => {
   const chf = bakeNavFromCollider(stackedRoom(), { anchor: [2, 0, 8] }).chf;
   const baked = bakeNavData(chf);
   assert.equal(baked.stride, 3);
@@ -79,7 +79,7 @@ test('AUDIT 61 F1: the bake carries vertex heights, and a hydrated stacked mesh 
   assert.equal(hydrateBakedNav(old, chf.colliders).mesh.verts.length, chf.mesh.verts.length);
 });
 
-test('AUDIT 61 F3: the nav cache key is versioned past the fixes and carries its anchor', () => {
+test('AUDIT 62 F3: the nav cache key is versioned past the fixes and carries its anchor', () => {
   assert.equal(NAV_BAKE_VERSION, 2);
   const base = { key: 'loc', tris: 10, minY: -5, maxY: 3, agent: AGENT };
   assert.match(navCacheKey(base), /^nav:v2:/);

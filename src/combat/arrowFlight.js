@@ -153,7 +153,7 @@ export class ArrowFlight {
  * (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
  * WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
  *
- * AUDIT 61 F20: and that transform origin is NOT the foe's feet. The
+ * AUDIT 62 F20: and that transform origin is NOT the foe's feet. The
  * DaggerfallEnemy prefab's CharacterController is centred on the
  * transform (m_Center 0) and SetupDemoEnemy.cs:98-115 only ever moves
  * controller.center (AdjustControllerHeight, BOTTOM justification),
@@ -193,7 +193,7 @@ export function playerArrowHitFoe(m, foe, {
     rolls, onInflictPoison, say,
   });
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
-  // AUDIT 61 F20: the splash point is the struck foe's TRANSFORM
+  // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its
   // feet lifted by its own centreOffset. `at` stays the feet for the
   // hit sound and the pain voice below.

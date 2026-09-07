@@ -2949,14 +2949,14 @@ that still read the PLAYER's capsule:
 Refuted (1): the enhanced motor's final-leg y (it reads classic's
 converted destination, which is now right).
 
-## AUDIT 61 (2026-09-07) - THE HOSTS AND ENCOUNTERS LANE
+## AUDIT 62 (2026-09-07) - THE HOSTS AND ENCOUNTERS LANE
 
 Six findings against the two walkable outdoor hosts (`scenes/world.js`,
 `scenes/exterior.js`) and the mode machine both of them mount
 (`scenes/worldModes.js`). Every one is a missing clause on the classic
 path: no `isEnhanced()`, no pref, no Ledger row covered any of them.
 
-### AUDIT 61 F11 - the catch-up loop could not run indoors
+### AUDIT 62 F11 - the catch-up loop could not run indoors
 
 PR #59 wrote down that "the loop runs in EVERY mode" and handed
 `IntermittentEnemySpawn` an `inside:` argument to prove it. The call
@@ -3006,7 +3006,7 @@ call dead. It is behavioural now: 200 seeded eight-hour spans, every
 indoor minute rolling nothing, against the banked replay that stands a
 foe on the doorstep on most nights.
 
-### AUDIT 61 F12 - Wabbajack on a watchman could erase him
+### AUDIT 62 F12 - Wabbajack on a watchman could erase him
 
 The three re-stand sites (`world.js`, `exterior.js`, and worldModes'
 `insideReplaceFoe`) remove the struck record through the pool that owns
@@ -3025,7 +3025,7 @@ port's encounter bound is not being widened. Pinned behaviourally on the
 real factory: a saturated pool still refuses an ADDITION and lets the
 replacement through to the spawn chain.
 
-### AUDIT 61 F13 - the ?exterior host minted its watch without the latches
+### AUDIT 62 F13 - the ?exterior host minted its watch without the latches
 
 `world.js` hands `createCityGuards` an `enterExitFlags` thunk;
 `exterior.js` passed none, so `cityGuards` read `_ee = null` and
@@ -3039,7 +3039,7 @@ dungeon-local feet. Landed: the same thunk, in world.js's exact shape.
 `cityGuards`' own "a host with no interiors and no dungeons answers
 null" note is corrected with it - no host in the tree is that host.
 
-### AUDIT 61 F14 - the street pool survived indoors, stale
+### AUDIT 62 F14 - the street pool survived indoors, stale
 
 `_guardPool()` maps `_livePersons`, rebuilt only in the exterior frame
 (below the modal return), so indoors it was the last exterior frame's
@@ -3072,7 +3072,7 @@ Landed, both halves:
   update does not. A dungeon still answers false and is refused by
   `SpawnCityGuards`' own outer gate.
 
-### AUDIT 61 F15 - world.js's quest placement did not see the watch
+### AUDIT 62 F15 - world.js's quest placement did not see the watch
 
 `CreateFoe.cs:319-323` is `Physics.OverlapSphere(testPoint,
 overlapSphereRadius); if (colliders.Length > 0) return;` - ANY collider
@@ -3083,7 +3083,7 @@ stood inside a standing watchman on a city street. Now
 `() => exteriorFoePool()`, the shape its own sibling uses, pinned by
 count so neither arm can regress alone.
 
-### AUDIT 61 F22 - the interior pools wore the outdoor spawn band
+### AUDIT 62 F22 - the interior pools wore the outdoor spawn band
 
 `EnemySenses.cs:267` reads `PlayerEnterExit.IsPlayerInside` - the
 GENERIC flag (`PlayerEnterExit.cs:111-113`, set at `:1086` by
@@ -3107,7 +3107,7 @@ pin that asserted the literal `playerInside: false,` is replaced by the
 LAW: at yDiff 5m / XZ 3m the outdoor band spawns and the indoor one does
 not.
 
-### AUDIT 61 REVIEW (2026-09-07) - F11 took the sweep's latch pin with it
+### AUDIT 62 REVIEW (2026-09-07) - F11 took the sweep's latch pin with it
 
 The F11 comment block that explains why the conversion sweep is
 `_m === 'exterior'` and not `_m !== 'dungeon'` was written BETWEEN
@@ -3131,7 +3131,7 @@ before only the fixed-city body carried the adjacency. It dies under a
 line-neutral mutation that closes the latch early
 (`_updatedGuards = true; } {`) in either host.
 
-### AUDIT 61 F17 / F18 / F19 / F20 / F21 / F23 - THE FOES AND THE MOTOR (2026-09-07)
+### AUDIT 62 F17 / F18 / F19 / F20 / F21 / F23 - THE FOES AND THE MOTOR (2026-09-07)
 
 Six rows off the audit's foe lane, all of them the same shape: the
 REVIEW 2026-09-05 transform/capsule split above, applied where it had
@@ -3233,13 +3233,13 @@ never reached, the player.
   `bible/03-World/Player-Arc.md` ("foes still target the standing
   height") is discharged by this row.
 
-Pins: `test/audit61_foes.test.js` (10, three of them from the review
+Pins: `test/audit62_foes.test.js` (10, three of them from the review
 round below). Every one was checked to die under a mutation that
 reverts its law - both F17 terms independently, each of `getTargets`'
 two offsets independently, the six- and seven-argument `canHearTarget`
 mutants, the F21 aim and both cast origins, and each of the F23 sites.
 
-### AUDIT 61 F21 / F23 - THE REVIEW ROUND (2026-09-07)
+### AUDIT 62 F21 / F23 - THE REVIEW ROUND (2026-09-07)
 
 Four things the round above got wrong or left half-done, each found by
 re-reading the reference rather than the port.

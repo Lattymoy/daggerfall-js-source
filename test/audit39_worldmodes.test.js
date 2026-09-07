@@ -378,7 +378,7 @@ test('AUDIT39 #164: the greeting-deferred entry catches, like the two host call 
 // entity's transform origin; only the MELEE callers pass a contact
 // point (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
 // WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
-// AUDIT 61 F20: and that transform origin is NOT the foe's feet - the
+// AUDIT 62 F20: and that transform origin is NOT the foe's feet - the
 // DaggerfallEnemy prefab centres its controller on the transform
 // (m_Center 0) and SetupDemoEnemy.cs:98-115 moves only
 // controller.center, so it is the idle sprite's CENTRE, feet +

@@ -145,7 +145,7 @@ test('ROAD-B: spawnCityGuardsInside reads the three PlayerEnterExit flags and an
   assert.match(fn.slice(0, 1200), /!!b\.insideOpenShop/, 'IsPlayerInsideOpenShop, off the latched building record');
   assert.match(fn.slice(0, 1200), /b\.buildingType === BUILDING_TYPES\.Tavern/, 'IsPlayerInsideTavern');
   assert.match(fn.slice(0, 1200), /isResidence\(b\.buildingType\)/, 'IsPlayerInsideResidence');
-  // AUDIT 61 F14: a temple, a guild hall or a palace no longer falls
+  // AUDIT 62 F14: a temple, a guild hall or a palace no longer falls
   // through to the STREET pool. C#'s fall-through lands on the same
   // player position in the same (interior) physics scene, with the
   // population inactive (PlayerEnterExit.cs:1047) - so what actually

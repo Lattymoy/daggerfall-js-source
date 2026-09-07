@@ -648,7 +648,7 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   viewmodel rides the LIVE eye offset so the weapon lowers with the
   camera. RESIDUAL
   (honest): the stealth row shipped in P13 and the standing-height
-  half is DISCHARGED by AUDIT 61 F23 (2026-09-07) - `sensesContext`
+  half is DISCHARGED by AUDIT 62 F23 (2026-09-07) - `sensesContext`
   carries the LIVE `player.height`, so a crouched player is a 0.9
   capsule to every foe (transform, sight eye, distances - and, since
   the F21 review round of the same date, the missile and arrow AIM

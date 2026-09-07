@@ -17,7 +17,7 @@ import { audio } from '../systems/audio.js';   // FS-slice: the stride plays fla
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
-import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 61 F10: the dial button's own skin gate
+import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 62 F10: the dial button's own skin gate
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -98,7 +98,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, /* AUDIT 61 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
       // is created AFTER the context (from startSpawn), so the seam
       // closes over the slot lazily.
@@ -300,7 +300,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // SetClickDelay too (PlayerActivate.cs:1050-1054). ONLY on a real
     // acquisition: with the pointer already locked this click IS the
     // world's.
-    // AUDIT 61 F6: ...and NEVER for a touch pointer. A finger can never
+    // AUDIT 62 F6: ...and NEVER for a touch pointer. A finger can never
     // hold the pointer lock (ui/touch.js's own note), so the test above
     // is permanently true on a phone and every finger-down armed a 0.3 s
     // window that swallowed the tap's release edge - the touch activation
@@ -377,10 +377,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
-      _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 61 F8: the arm IS the press - see _tapArmed at the gate below
+      _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
     },
     locked: () => lockOn.locked,
-    // AUDIT 61 F10: the dial button is drawn only where Tab actually
+    // AUDIT 62 F10: the dial button is drawn only where Tab actually
     // opens the rose. openPixelDial refuses off the enhanced skin
     // (ui/pixelDial.js), so on the classic skin the ◆ was a drawn door
     // that opens nothing - the lie touch.js's own doc block names. The
@@ -388,7 +388,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // location.replace), so this boot-time read is exact.
     dial: isEnhanced(),
     overlayActive: () => !!ctx.uiOverlayActive,
-    // AUDIT 61 F7: the finger's pause gate - this host's own mouse
+    // AUDIT 62 F7: the finger's pause gate - this host's own mouse
     // predicate (mousedown :`!ctx.uiOverlayActive`, mousemove's return).
     paused: () => !!ctx.uiOverlayActive,
   });
@@ -558,7 +558,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       _lockChest = lockOn.tick(dt, cam, walkMode ? player.eye : cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
-    // counts to 1 and the gate sees the press (AUDIT 61 F8: `_tapArmed
+    // counts to 1 and the gate sees the press (AUDIT 62 F8: `_tapArmed
     // > 0` IS the press - the arm no longer stuffs a literal 'Mouse0'
     // into the held set, which a rebind of ActivateCenterObject would
     // have made inert); next frame counts to 0, the press lifts, the
@@ -603,7 +603,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // running the gate inside `!overlayHeld` was what left the click
     // that dismissed a window free to activate the world behind it.
     const _act = activateFrame(activateGate, {
-      down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 61 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
+      down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
       hasReadySpell: ctx.spellArmed?.() ?? false,
       // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
       // spell leaves doors reachable. rangeType 1 is ByTouch

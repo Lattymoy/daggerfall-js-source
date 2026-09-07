@@ -183,7 +183,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // mints an EnemyMonster (WabbajackEffect.cs:24-44, :87-88).
   assert.match(body, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s+else exteriorFoes\.removeFoe\(f\);/,
     'the removal goes through the pool that owns the billboard');
-  // AUDIT 61 F12: and the re-stand is the encounter pool's either way,
+  // AUDIT 62 F12: and the re-stand is the encounter pool's either way,
   // exempt from that pool's own cap - WabbajackEffect.cs:86-88 destroys
   // one entity and mints one, so removing a GUARD (which frees no slot
   // here) must not be able to leave the strike with nothing standing.
@@ -207,7 +207,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   assert.match(wm, /insideReplaceFoe\(foe, mobileType, feet\) \{\n\s+if \(!foe \|\| !interiorFoes\) return null;\n\s+if \(foe\._encounter\) interiorFoes\.removeFoe\(foe\);\n\s+else if \(interiorGuards\?\.guards\.includes\(foe\)\) interiorGuards\.removeGuard\(foe\);\n\s+else return null;/,
     'the interior arm removes through whichever of THIS building\'s two pools owns the record');
   assert.match(wm, /return interiorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\);/,
-    'AUDIT 61 F12: and the indoor re-stand is exempt from the cap too');
+    'AUDIT 62 F12: and the indoor re-stand is exempt from the cap too');
   // ROAD-G G1: and the refusal that used to stand here is RETIRED, not
   // reworded. Its whole premise was "createCityGuards exposes no
   // remove/spawn pair"; the pool carries removeGuard now, so the watch
@@ -352,7 +352,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /if \(host === 'inside'\)/);
   // ROAD-G TAIL: the watch transforms on this route too - removed by ITS pool, by membership
   assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
-  assert.match(rf, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'AUDIT 61 F12: the re-stand cannot be refused by the cap');
+  assert.match(rf, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'AUDIT 62 F12: the re-stand cannot be refused by the cap');
   // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
   // (world.js:2399's shape) - the removal, never the re-stand
   assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');

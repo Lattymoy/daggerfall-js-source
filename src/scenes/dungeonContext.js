@@ -103,7 +103,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule,   // AUDIT 61 F21: the capsule contact test DFU spherecasts against
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -608,7 +608,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
       runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,
-      targetAimPoint,   // AUDIT 61 F21 (review): the ONE aim-point law, shared with the exterior pool
+      targetAimPoint,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
     // and the nav epoch, one per host, every foe reading the same one.
@@ -2525,7 +2525,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function updateMissiles(dt, playerFeet, playerHeight = CAPSULE_HEIGHT) {
     while (_pendingCasts.length) { const c = _pendingCasts.shift(); fireCast(c.index, c.origin); }
     if (!missiles.length || !playerFeet) return;
-    const target = [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]];   // AUDIT 61 F21 (review): the PLAYER arm of the aim is the foe arm's law - LastKnownTargetPos is target.transform.position (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453), and the player's is feet + the LIVE height/2 (no controller centre offset; PlayerHeightChanger.cs:477-478 plants the capsule bottom and moves the transform by heightChange/2). The hardcoded 0.9 made a crouched player a standing target.
+    const target = [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]];   // AUDIT 62 F21 (review): the PLAYER arm of the aim is the foe arm's law - LastKnownTargetPos is target.transform.position (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453), and the player's is feet + the LIVE height/2 (no controller centre offset; PlayerHeightChanger.cs:477-478 plants the capsule bottom and moves the transform by heightChange/2). The hardcoded 0.9 made a crouched player a standing target.
     for (const m of missiles) {
       if (m.dead) continue;
       if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
@@ -2541,7 +2541,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // that may have moved on mid-flight (DFU locks direction at
         // fire time; the port locks the victim with it).
         m.aimFoe = (foeDeps && ct && !foeDeps.isPlayerTarget(ct)) ? ct : null;
-        // AUDIT 61 F21: LastKnownTargetPos is the target's TRANSFORM
+        // AUDIT 62 F21: LastKnownTargetPos is the target's TRANSFORM
         // (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453/:465) -
         // feet + centreOffset for a foe, feet + the LIVE height/2 for
         // the player. enemyTargets.targetAimPoint is the ONE body of that law; this host carried its own copy and converted only the foe arm of it.
@@ -3380,7 +3380,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DFU's GetActiveEnemyBehaviours yields only ACTIVE ones.
     // `_activity` is a persistent mutable bag: spread, never mutate.
     const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
-      ..._activity, playerHeight,   // AUDIT 61 F23: playerHeight is the LIVE capsule drawFoes already holds (crouch 0.9, ride 2.6)
+      ..._activity, playerHeight,   // AUDIT 62 F23: playerHeight is the LIVE capsule drawFoes already holds (crouch 0.9, ride 2.6)
       candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null,
       // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
       // This is the ONE host that can answer it true, off the same
@@ -3519,7 +3519,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const _armed = (rec, sn) => (sn?.candidates && foeDeps ? {
         ...sn,
         targeting: (ai, pf, cdt) => foeDeps.runTargetMachine(rec, sn.candidates(), pf, cdt, {
-          playerEntity: sn.playerEntity ?? playerEntity, playerHeight: sn.playerHeight,   // AUDIT 61 F23: GetTargets measures the player at its LIVE capsule too
+          playerEntity: sn.playerEntity ?? playerEntity, playerHeight: sn.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
         }),
       } : sn);
       const _pf = playerFeet || eye;
@@ -3543,7 +3543,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player's fall formula - trunc(5 x (drop - 5)) - through the
       // pool's damage door (no knockback), ringing FallDamage at the
       // foe. The blood splash rides damageFoe's own art.
-      // AUDIT 61 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
       // `transform.position`, and a DFU enemy's transform is the
       // idle sprite's CENTRE, not the capsule base - the prefab
       // centres the controller on it (m_Center 0) and
@@ -3556,7 +3556,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.ai.landedFall = 0;
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
-          // AUDIT 61 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
           hitEffects?.showBloodSplash(0, f.ai._centre());
           damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
@@ -3758,7 +3758,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           else if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
             f.mobile.shootArrow = false;
             const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-            const d = [playerFeet[0] - from[0], playerFeet[1] + playerHeight / 2 - from[1], playerFeet[2] - from[2]];   // AUDIT 61 F21 (review): the player's TRANSFORM at its LIVE height (PlayerHeightChanger.cs:477-478), the same aim point the spell arm takes (DaggerfallMissile.cs:571-581)
+            const d = [playerFeet[0] - from[0], playerFeet[1] + playerHeight / 2 - from[1], playerFeet[2] - from[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (PlayerHeightChanger.cs:477-478), the same aim point the spell arm takes (DaggerfallMissile.cs:571-581)
             const l = Math.hypot(...d) || 1;
             fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)

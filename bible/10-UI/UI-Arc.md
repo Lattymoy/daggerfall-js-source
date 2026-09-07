@@ -8935,7 +8935,7 @@ and silent, because nothing errors on a latch. The pin sweeps all six
 hover routes rather than trusting an edit.
 
 Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 19 mutations
-killed - 17 at this slice, two more at AUDIT 61 F24/F25 below): the
+killed - 17 at this slice, two more at AUDIT 62 F24/F25 below): the
 drag's arithmetic dies under the span-scale and the floor;
 the release dies under an emptied `release()` in either window, in the
 wizard's flow and in its wrapper; the rail's press dies under the
@@ -8947,7 +8947,7 @@ fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
 it flinging the town map ~165 world units - so a thumb dragged into the
 black border would have snapped its list to row 0. Every drag machine
 in the port skips the frame and keeps the latch, because `release()`
-is what ends a drag - THREE of them at this slice, FIVE since AUDIT 61
+is what ends a drag - THREE of them at this slice, FIVE since AUDIT 62
 F24/F25 (below) found the shared list picker and the bank's price list
 still taking the pair. The wizard's bar was NOT among them when this
 section was first written - it took the sentinel straight into
@@ -9411,7 +9411,7 @@ ray, the pick, the lock, and the dot projecting back under the finger,
 then the second tap unlocking - is now executed end to end in
 `test/touchinput.test.js`, with a foe deliberately left of centre.
 
-### AUDIT 61 F6 - THE CLICK DELAY EVERY FINGER ARMED (2026-09-07)
+### AUDIT 62 F6 - THE CLICK DELAY EVERY FINGER ARMED (2026-09-07)
 
 The three combat hosts' canvas `pointerdown` handler arms
 `setClickDelay` whenever the pointer lock is not held - the port's own
@@ -9448,7 +9448,7 @@ was rejected: `pointerdown` is the ONLY route by which a finger reaches
 click seam) and `routeLargeHudClick`, so it would trade one dead verb
 for the docked HUD's eleven panels and every classic window.
 
-### AUDIT 61 F7 - THE PAUSE GATE THE FINGER NEVER PASSED (2026-09-07)
+### AUDIT 62 F7 - THE PAUSE GATE THE FINGER NEVER PASSED (2026-09-07)
 
 The mouse arms all carry it: the `mousemove` look returns unless the
 pointer is locked (a window frees it), the RMB swing tests
@@ -9489,7 +9489,7 @@ which cannot see the windows worldModes owns. Three rules:
     passes through `activateFrame`'s `paused` (Fact 5, citing
     `InputManager.cs:486-505`).
 
-### AUDIT 61 F8 - THE LAYER SPOKE DEFAULTS, NOT BINDINGS (2026-09-07)
+### AUDIT 62 F8 - THE LAYER SPOKE DEFAULTS, NOT BINDINGS (2026-09-07)
 
 `ui/touch.js` promises in its header that it SPEAKS THE DESKTOP INPUT
 LANGUAGE. It spoke the DEFAULT bindings: literal `Space`, `KeyZ`,
@@ -9530,7 +9530,7 @@ Tab keeps its literal: it is not an InputManager action at all and the
 hosts match `e.code === 'Tab'`; so do the classic nav row's arrows,
 Enter, Escape and +/-, which are window chrome, not action rows.
 
-### AUDIT 61 F9 - THE MODE BUTTON UNDER A WINDOW (2026-09-07)
+### AUDIT 62 F9 - THE MODE BUTTON UNDER A WINDOW (2026-09-07)
 
 The touch mode-cycle button is the one control on that layer that calls
 a hook DIRECTLY instead of synthesizing a key, so it never entered the
@@ -9552,7 +9552,7 @@ rather than hiding the button: the `overlayActive` hook the hosts pass
 is `talkPaused()`, this host's stack only, and cannot see the
 interior/dungeon slot the key path refuses on.
 
-### AUDIT 61 F10 - A DRAWN DOOR THAT OPENS NOTHING (2026-09-07)
+### AUDIT 62 F10 - A DRAWN DOOR THAT OPENS NOTHING (2026-09-07)
 
 All three combat hosts passed `dial: true`, so the ◆ button was drawn
 on the classic skin too - where `openPixelDial` refuses outright
@@ -9566,7 +9566,7 @@ boot-time read is exact: both skin switches end in `location.replace`,
 so the skin cannot change without a reload. The menu button already
 slides into the vacated slot on its own.
 
-### AUDIT 61 F16 + F28 - THE LOCK-ON'S FOURTH HOST, AND THE LOCK THAT RODE THROUGH THE DOOR (2026-09-07)
+### AUDIT 62 F16 + F28 - THE LOCK-ON'S FOURTH HOST, AND THE LOCK THAT RODE THROUGH THE DOOR (2026-09-07)
 
 TI1's law carries no mode qualifier: "a tap whose ray hits a live foe
 locks it". The arm existed in the two exterior hosts' EXTERIOR
@@ -9618,7 +9618,7 @@ now hands its own matrices back through `host.reportFrame(proj, view)`,
 which places the dot indoors and puts the ray in the right frame; the
 one-frame lag is the exterior path's own.
 
-### AUDIT 61 F8/F16/F28 (review) - THE MACHINE THAT OWNS EVERY DOOR INDOORS (2026-09-07)
+### AUDIT 62 F8/F16/F28 (review) - THE MACHINE THAT OWNS EVERY DOOR INDOORS (2026-09-07)
 
 The review found the hole F8 opened while closing its own. F8's whole
 point was that the tap must stop speaking a literal `'Mouse0'` - a
@@ -9663,7 +9663,7 @@ Vector3.forward` (`Automap.cs:1168`). The modal frame's `fwd` is the
 camera's own yaw/pitch now, and `eyeDir` is the activation ladders' ray
 and nothing else.
 
-### AUDIT 61 F8 (review) - TWO CONTROLS, ONE KEY (2026-09-07)
+### AUDIT 62 F8 (review) - TWO CONTROLS, ONE KEY (2026-09-07)
 
 The touch layer's stick already released against the set of codes its
 other axes still needed; the two HELD buttons released bare. That is
@@ -9685,7 +9685,7 @@ button codes, each releasing control clearing its own entry first, and
 the pin drives the Run + combo-Jump fixture through the shipped module
 in both directions.
 
-### AUDIT 61 (review) - THE PIN THAT HUNG INSTEAD OF FAILING (2026-09-07)
+### AUDIT 62 (review) - THE PIN THAT HUNG INSTEAD OF FAILING (2026-09-07)
 
 `attachTouch`'s nav-row `setInterval` is cleared by `dispose()` and by
 nothing else, and the test file's stub `window` supplies no timer, so
@@ -9708,7 +9708,7 @@ the other half went stale unnoticed. (The rest cite names `world.js:4442`,
 the first of the host's TWO identical `act === 'Rest'` arms; the second
 at `:4456` is unreachable and is left for a lane that owns that ladder.)
 
-## AUDIT 61 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
+## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
 ROAD-G G4's review widened its own sentinel pin from "both drag
 machines" to all three, and wrote the count into this page, the Ledger

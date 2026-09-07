@@ -16,7 +16,7 @@ import { canAccessService, canAccessLibrary } from '../src/systems/guildServices
 import { TG_SPYMASTER_FACTION_ID } from '../src/systems/guildServiceFlow.js';
 import { GUILDS } from '../src/systems/guilds.js';
 import { MobileUnit, MOBILE_RAT } from '../src/characters/mobileUnit.js';
-import { wouldBeSpawnedInClassic } from '../src/characters/enemyMotor.js';   // AUDIT 61 F22: the band law the guard pool's mount picks
+import { wouldBeSpawnedInClassic } from '../src/characters/enemyMotor.js';   // AUDIT 62 F22: the band law the guard pool's mount picks
 import { ACTION_FLAGS } from '../src/world/rdbLayout.js';
 import { tickPlayerMinutes, setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
 import { raisePlayerSkills } from '../src/scenes/shared.js';
@@ -156,7 +156,7 @@ test('AUDIT 23 characters-7 + items-1: the spawn bands and the pile gender ride 
   assert.equal((dc.match(/spawnDistanceType: e\.spawnDistanceType \?\? 0/g) ?? []).length, 2,
     'both foe constructions pass the marker band');
   assert.ok(dc.includes('gender: playerEntity.gender });   // AUDIT 23 (items-1)'), 'piles roll the player gender');
-  // AUDIT 61 F22: the STREET watch runs the exterior band, and it is
+  // AUDIT 62 F22: the STREET watch runs the exterior band, and it is
   // the mount that says so - EnemySenses.cs:267 reads
   // PlayerEnterExit.IsPlayerInside per classic tick, so the pool that
   // the mode machine stands INSIDE a building takes the row bands

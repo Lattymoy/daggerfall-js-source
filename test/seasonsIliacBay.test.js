@@ -119,7 +119,7 @@ test('SIB1: seasonalRecordSet - n >= 2, records 1..n-1 all present, slot 0 holds
   assert.equal(ok.records[0].name, 'K1.png');
   assert.equal(ok.records[1].name, 'K1.png');
   assert.equal(ok.records[32].name, 'K32.png');
-  // AUDIT 61 F36: ...and a record 0 that DOES exist is DISCARDED. The
+  // AUDIT 62 F36: ...and a record 0 that DOES exist is DISCARDED. The
   // mod ships one for 9 of its 11 prefix folders (TempW/K0.png,
   // TempS/J0.PNG, ...), and nothing filters it out on the way in, so
   // `textures[0] = dict[1]` is a live law with the player's own copy,
@@ -187,7 +187,7 @@ test('SIB1: ApplyCurrentSeason - installs once per season, forces on demand, ref
   assert.deepEqual(hit.size, seasonalBillboardSize(hit.texture.width, hit.texture.height));
   assert.equal(helper.lookup(505, 0).texture.name, 'K1.png', 'slot 0 is record 1');
   {
-    // AUDIT 61 F36: the same through the cache, over a set that DOES
+    // AUDIT 62 F36: the same through the cache, over a set that DOES
     // carry the record 0 the mod ships (TempW/K0.png)
     const { helper: h0 } = makeHelper({ sets: { K: fullSet('K', 33) } });
     await h0.apply(false);
@@ -264,7 +264,7 @@ test('SIB1: the events - load forces and re-applies next frame, travel forces an
   assert.deepEqual(l2.loads, ['K', 'F', 'C']);
 });
 
-test('SIB1 (AUDIT 61 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid standing only on unmanaged archives is refreshed by nothing', async () => {
+test('SIB1 (AUDIT 62 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid standing only on unmanaged archives is refreshed by nothing', async () => {
   // The mod's refresh walks the scene's DaggerfallBillboardBatches and
   // re-applies the ones whose archive is in vanillaAtlasByArchive
   // (`manages`) - nothing else. Nature archives 500-503 (rainforest,
@@ -615,7 +615,7 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   assert.equal(await seasonsInstalled(), true);
   const k = await loadSeasonsTextures('K');
   assert.deepEqual(k.map((t) => [t.name, t.width, t.height]), [['K1.png', 2, 2], ['K2.png', 4, 4]]);
-  // AUDIT 61 F26: the door hands the host COLOR32 order - row 0 is the
+  // AUDIT 62 F26: the door hands the host COLOR32 order - row 0 is the
   // picture's BOTTOM row, which is the row Unity stored first. (The
   // Texture2D reader still answers PNG raster order for its own
   // consumers, see the flip pinned above; this door undoes it.)
@@ -647,7 +647,7 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   const decode = async (b) => ({ width: b[0], height: b[0] * 2, data: new Uint8Array(b[0] * b[0] * 8) });
   const got = await loadSeasonsTextures('K', { decode });
   assert.deepEqual(got.map((t) => [t.name, t.width, t.height]), [['K1.png', 7, 14], ['K2.png', 8, 16]]);
-  // AUDIT 61 F26: the loose arm agrees with the bundle arm - a decoder
+  // AUDIT 62 F26: the loose arm agrees with the bundle arm - a decoder
   // that hands back PNG raster order (row 0 = the picture's TOP) leaves
   // this door in getColor32 order (row 0 = the picture's BOTTOM)
   const twoRow = async () => ({ width: 1, height: 2, data: new Uint8Array([30, 31, 32, 33, 10, 11, 12, 13]) });
@@ -676,7 +676,7 @@ function recordingRenderer(log) {
   return r;
 }
 
-test('SIB1 (AUDIT 61 F26): a seasonal flat reaches texImage2D in getColor32 order - the picture\'s BOTTOM row first', async () => {
+test('SIB1 (AUDIT 62 F26): a seasonal flat reaches texImage2D in getColor32 order - the picture\'s BOTTOM row first', async () => {
   // The picture: 1 wide, 2 tall, palette index 1 on top and 2 below.
   // What the CLASSIC producer hands the renderer for it is the
   // reference value - BaseImageFile.cs:250 `dstRow = (dstHeight - 1 -
@@ -746,7 +746,7 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   // the streaming host: the five subscriptions, in the seams they belong to
   assert.match(world, /seasons\.onLoad\(\)/, 'SaveLoadManager.OnLoad at boot');
   assert.match(world, /seasons\.onTerrainInstantiated\(\)/, 'DaggerfallTerrain.OnInstantiateTerrain per pixel');
-  // AUDIT 61 F5: the CALLER, not the member. `seasons.onNewMonth()`
+  // AUDIT 62 F5: the CALLER, not the member. `seasons.onNewMonth()`
   // alone matches the body of the one-caller wrapper `seasonsMonthTurn`
   // and stayed green when the day poll's hand-over was deleted - which
   // leaves the streaming host deaf to every month turn, so a standing
@@ -760,7 +760,7 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(world, /seasons\.tick\(\)/, 'RefreshSeasonAfterLoad the frame after');
   assert.match(world, /_seasonsGen: seasons\?\.generation/, 'a pixel remembers the install it was built under');
   assert.match(world, /p\._seasonsGen !== seasons\.generation && p\.batches\.some\(\(b\) => seasons\.manages\(b\.archive\)\)\) \{ _reskinPending = true/,
-    'AUDIT 61 F4: refresh tears down only what stands on an older install AND carries a batch on an archive the mod manages');
+    'AUDIT 62 F4: refresh tears down only what stands on an older install AND carries a batch on an archive the mod manages');
   // the pick and the boot registration
   const ds = read('src/scenes/dataSource.js');
   assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');

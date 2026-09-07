@@ -5606,7 +5606,7 @@ is built. Pinned in `enterexit.test.js` (the miss arm both ways, a
 mesh hit still winning, the exterior collider handed the terrain);
 every suite that reads `floorLanding` was run and stands.
 
-## AUDIT 61 F21 REVIEW - THE MAGIC CANDLE HUNG HALF A CAPSULE LOW (2026-09-07)
+## AUDIT 62 F21 REVIEW - THE MAGIC CANDLE HUNG HALF A CAPSULE LOW (2026-09-07)
 
 `LightNormal.cs:95-96` builds the Light effect's candle at
 `PlayerObject.transform.position + transform.forward * 1.4`, then
@@ -5621,7 +5621,7 @@ moving the transform by `heightChange/2`, so the transform is
 1.35 standing. The port hung it at 0.45, a metre low: knee height, and
 under the geometry it is meant to light past.
 
-This is the same false proposition AUDIT 61 F20 retired for the enemy
+This is the same false proposition AUDIT 62 F20 retired for the enemy
 transform, left standing over the player one. The half-capsule is
 added in `candleBase` now and the header says plainly what `feet` is;
 the port keeps the FEET as every host's player origin, so nothing else

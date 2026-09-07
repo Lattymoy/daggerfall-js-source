@@ -150,22 +150,22 @@ test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both host
   // the placement: DFU's own ring with the arm's band, a FLYING foe lifted 1.5
   assert.match(e, /const _standEncounterFoe = \(hit, feet\) => \{[^]*minDistance: hit\.minDistance, maxDistance: hit\.maxDistance,\n\s*lineOfSightCheck: hit\.lineOfSightCheck,/);
   // the callers: this host's exterior frame, its rest advance, and -
-  // AUDIT 61 F11 - the mode machine, which rings the same function once
+  // AUDIT 62 F11 - the mode machine, which rings the same function once
   // per modal frame so the indoor minutes are consumed where they pass
-  // rather than banked for the door (test/audit61_hosts.test.js pins
+  // rather than banked for the door (test/audit62_hosts.test.js pins
   // that wiring and the law under it).
   assert.match(e, /if \(!townTalk\.overlayActive\) runEncounterTick\(walkMode \? player\.pos : cam\.pos\);/);
   assert.ok(fn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the fixed city hands the mode to the roll');
   assert.ok(wfn.includes("inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,"), 'the world host too');
   assert.match(w, /const _pf = walkMode && playerSpawned \? player\.pos : cam\.pos;\n\s*if \(!townTalk\.overlayActive\) runEncounterTick\(_pf\);\n\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{/, 'the world host rolls before its exterior-only pool update');
-  // AUDIT 61 F11: EXTERIOR only - the population is inactive indoors
+  // AUDIT 62 F11: EXTERIOR only - the population is inactive indoors
   // (PlayerEntity.cs:653-654, :776-777 over a disabled ExteriorParent)
   // and there is no location object underground (:768-770).
   for (const [f, body] of [['exterior.js', fn], ['world.js', wfn]]) assert.match(body, _sweepLatch, `${f}: the sweep sits INSIDE the once-per-Update latch (:513-516) and asks a population that is actually active`);
   assert.match(e, /advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode \? player\.pos : cam\.pos\); \},/);
   // the watch's Wabbajack transform on this route (WabbajackEffect.cs:64 - Knight_CityWatch is an EnemyEntity)
   assert.match(e, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'a struck watchman is removed by its own pool');
-  assert.match(e, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'and re-stood by the encounter pool, past its cap (AUDIT 61 F12)');
+  assert.match(e, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'and re-stood by the encounter pool, past its cap (AUDIT 62 F12)');
   const rf = e.slice(e.indexOf('const _enchantReplaceFoe ='), e.indexOf('setDefaultEnchantCtx(createEnchantCtx({'));
   assert.equal(/if \(!f\._encounter\) return;/.test(rf), false, 'the pre-TAIL refusal is gone from the arm');
   assert.equal((rf.slice(rf.indexOf("if (host === 'inside')")).match(/\breturn\b/g) || []).length, 1, 'nothing returns before the membership route');

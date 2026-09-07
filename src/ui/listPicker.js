@@ -278,7 +278,7 @@ export class ListPickerWindow {
    *  cursor is the highlightedIndex, anything off the LIST clears it,
    *  and the seam also drives VerticalScrollBar.Update off `e.buttons`
    *  bit 0 (InputManager.GetMouseButton(0)) - no event, no button, so
-   *  the drag lets go. AUDIT 61 F25: `vy >= 0` keeps the hosts' (-1,-1)
+   *  the drag lets go. AUDIT 62 F25: `vy >= 0` keeps the hosts' (-1,-1)
    *  SENTINEL out of the drag; the FRAME goes, `release()` the latch. */
   hover(vx, vy, e = null) {
     const rh = this.rowHeight(this._font);

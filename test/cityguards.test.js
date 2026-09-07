@@ -345,7 +345,7 @@ test('CLOSEOUT: SpawnCityGuards does nothing at all inside a dungeon (PlayerEnti
   assert.equal(witness.tried.n, 0, 'the non-immediate arm is enclosed by the same gate');
 
   // ...and EVERY host that owns the latch must actually publish it.
-  // AUDIT 61 F13: ?exterior mounts the same mode machine ?world does -
+  // AUDIT 62 F13: ?exterior mounts the same mode machine ?world does -
   // E on a DUNGEON_ENTRANCE door drops it into the crawl - and it used
   // to pass no flags at all, so this gate could not fire on that route.
   for (const h of ['../src/scenes/world.js', '../src/scenes/exterior.js']) {

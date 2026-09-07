@@ -190,7 +190,7 @@ the first rows there that are not OURS: ten "the mod's own art", nine
 textures out when they were provably classic exports; these are not
 provably that, and are not replaceable without changing the sky.
 
-## AUDIT 61 F29 (2026-09-07): the transition event gets its caller
+## AUDIT 62 F29 (2026-09-07): the transition event gets its caller
 
 `DynamicSkies.setInside` had been ported and had no caller anywhere in
 `src/` - `grep -rn 'setInside(' src` answered with the definition and
@@ -230,12 +230,12 @@ Landed:
   `isPlayerInside` latch the guard pool is handed, because the mod binds
   the dungeon transitions to the same handler.
 
-Pinned in `test/audit61_hosts.test.js`: the mod's own `LightningFlash`
+Pinned in `test/audit62_hosts.test.js`: the mod's own `LightningFlash`
 kept in flight across a visit with no ticks is still lit on the way out,
 and `stopAll` - the transition event's teardown - is what makes it null;
 plus the seam and the two edge positions in both hosts.
 
-## AUDIT 61 F30-F35 - six pins that restated the port (2026-09-07)
+## AUDIT 62 F30-F35 - six pins that restated the port (2026-09-07)
 
 Six of DS1's pins read the port's own constants back to themselves, or
 drove a law nowhere near the edge that decides it. No shipped

@@ -98,7 +98,7 @@ test('seams 4: the texture cache keys the opaque upload apart, and the mesh draw
   const r = recordingRenderer(log);
   r.uploadTexture(7, 3, px);
   r.uploadTexture(7, 3, px, { opaque: true });
-  // AUDIT 61 F27: OUR device, not a DFU law - DFU's key is
+  // AUDIT 62 F27: OUR device, not a DFU law - DFU's key is
   // (archive, record, frame) + group with no alphaIndex term
   // (MaterialReader.cs:961) and its mesh shader never clips, so a
   // collision there is invisible. Here one GL texture cannot carry

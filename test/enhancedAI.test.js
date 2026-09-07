@@ -15,11 +15,11 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   assert.match(head, /function surfaceY\(c, x, z\) \{\s*\n\s*if \(!c\.ramp\) return c\.top;/, 'terrain.js:17-22 inlined verbatim');
   assert.match(head, /\/\* global Buffer, btoa, atob \*\//);
   assert.ok(!/setNavGround|_ground/.test(ours), 'no seam of our own - the ground goes in as buildNav\u2019s `ground`');
-  // AUDIT 61 F4 (2026-09-07): the pin above never read the BODY - every law from buildNav to the
+  // AUDIT 62 F4 (2026-09-07): the pin above never read the BODY - every law from buildNav to the
   // funnel could change and it stayed green. The body is pinned by digest now: the sha256 of the
   // file from '// Agent params' on, re-recorded DELIBERATELY with the project-final commit the
   // change was made in (decision #3: a change is made in both repos and said in both).
-  // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 61 F1's
+  // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
   // stacked-floor changes, made HERE FIRST and owed to project-final.
   const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
   assert.equal(sum, '6c65912d41f28bca394e35ac30f3ff0559278c43aae5aaf955841835aa904ac4',
@@ -152,7 +152,7 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
   assert.equal(bake.stats.cs, 0.25);
 });
 
-// AUDIT 61 F38 (2026-09-07): this was a `test(...)` whose whole body was
+// AUDIT 62 F38 (2026-09-07): this was a `test(...)` whose whole body was
 // `assert.ok(true)` behind an ARENA2_PATH skip - so on the ONE machine it
 // names, the archives machine (or any machine with a stale ARENA2_PATH,
 // since the gate never checked the directory exists), it reported as a

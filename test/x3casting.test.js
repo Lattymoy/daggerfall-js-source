@@ -10,7 +10,7 @@ import { castEnemySpell } from '../src/characters/enemyCasting.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
 
-// AUDIT 61 F21: a DISCRIMINATING rig. Both release points the executor
+// AUDIT 62 F21: a DISCRIMINATING rig. Both release points the executor
 // builds are the caster's TRANSFORM - feet + centreOffset - so the stub
 // must carry a centreOffset that is neither the player's 0.9 nor half
 // its capsule, or the pin passes over the fix AND over its revert. A

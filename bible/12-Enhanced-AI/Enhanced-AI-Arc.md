@@ -20,8 +20,8 @@ the enhanced tab."
    only by the four-line `surfaceY` inlined verbatim from project-final's
    terrain.js and a linter global. A change is made in both repos and
    said in both - the body is pinned by DIGEST (`test/enhancedAI.test.js`,
-   AUDIT 61 F4: the old pin read only the two head lines), re-recorded
-   deliberately with the commit the change was made in. AUDIT 61 F1
+   AUDIT 62 F4: the old pin read only the two head lines), re-recorded
+   deliberately with the commit the change was made in. AUDIT 62 F1
    (2026-09-07) is the first body change, made here first and owed to
    project-final: the stacked-floor weld and the heights that ride it. The ground needs no seam: buildNav's own
    `ground` = { at(x, z), min } is what Daggerfall's Collider.heightAt is.
@@ -35,7 +35,7 @@ the enhanced tab."
 
 ## ENHANCED AI 1 - the port, the voxelizer, the switch (2026-09-02)
 
-Landed: the navmesh whole (pinned by digest since AUDIT 61), the voxelizer (a
+Landed: the navmesh whole (pinned by digest since AUDIT 62), the voxelizer (a
 floor walks, a wall stands, a ramp within slope walks and a steeper one
 does not), a room of triangles baked end to end with a path bending
 around a wall, the switch present and off.
@@ -238,7 +238,7 @@ surface to sample and every waypoint sat at y = 0; a flyer moves along
 ten metres above or below it. The route supplies x and z now; a
 corner's y is the foe's own and the goal's is the one classic's own
 clear-path law builds from the predicted target position (`_aimY`; it
-took the predicted position's raw feet until AUDIT 61 F1). And the stuck nudge asks classic's
+took the predicted position's raw feet until AUDIT 62 F1). And the stuck nudge asks classic's
 `_fallCheck` on its own heading before it moves; a nudge that skipped
 it could side-step a foe off a ledge the nav's cells never saw.
 
@@ -282,7 +282,7 @@ either. Two flags with numbers: the main-thread hydrate (0.2-0.7 s,
 avoidable once the 3b pin stops reading hydrated heights) and doors
 baked closed (4b). Nothing ran in a real dungeon.
 
-### AUDIT 61 F1 - the routed final leg aims where classic aims (2026-09-07)
+### AUDIT 62 F1 - the routed final leg aims where classic aims (2026-09-07)
 
 (The enhanced-MOTOR lens's F1; batch 1's F1 was the stacked-floor weld
 in the navmesh.) Adaptation 3 says the route bends x and z and the goal
@@ -322,7 +322,7 @@ shape where the two laws agree. They now read a bat and a rat against a
 real classic `EnemyAI` in the same state and against EnemyMotor.cs's own
 numbers, and both fail on the pre-fix line.
 
-### AUDIT 61 F38 - the ARENA2 pin asserted nothing (2026-09-07)
+### AUDIT 62 F38 - the ARENA2 pin asserted nothing (2026-09-07)
 
 `ENHANCED AI 3 (ARENA2): Privateer's Hold bakes, and a path crosses its
 first hall` had a body of `assert.ok(true)` behind `if

@@ -79,7 +79,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // street) hands in the union; absent, striking a passive foe turns
   // only that foe, which is the pre-wiring shape.
   makeAreaHostile = null,
-  // AUDIT 61 F22: EnemySenses.cs:267 reads PlayerEnterExit.IsPlayerInside
+  // AUDIT 62 F22: EnemySenses.cs:267 reads PlayerEnterExit.IsPlayerInside
   // - the GENERIC inside flag (PlayerEnterExit.cs:111-113), true in a
   // BUILDING interior as well as a dungeon - and :269-286 takes the flat
   // exterior band (classicSpawnDespawnExterior, 102.4m, no Y term) only
@@ -125,7 +125,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  unconditionally, and the cap is the port's own encounter bound,
    *  not a law.
    *
-   *  AUDIT 61 F12: `replacing` is the second exemption, and it is the
+   *  AUDIT 62 F12: `replacing` is the second exemption, and it is the
    *  same argument. WabbajackEffect.cs:86-88 is
    *  `targetEntity.gameObject.SetActive(false)` followed by an
    *  unconditional `GameObjectHelper.CreateEnemy(...)` - one entity
@@ -476,7 +476,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       ...senses,
       targeting: (ai, pf, cdt) => runTargetMachine(f, senses.candidates(), pf, cdt, {
         playerEntity: senses.playerEntity ?? null,
-        playerHeight: senses.playerHeight,   // AUDIT 61 F23: GetTargets measures the player at its LIVE capsule too
+        playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
       }),
     };
   }
@@ -489,7 +489,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (t == null) return f.ai._armedTargeting ? null : playerFeet;
     return isPlayerTarget(t) ? playerFeet : t.ai.feet;
   }
-  /** AUDIT 61 F21 (review): the aim point, through the ONE law in
+  /** AUDIT 62 F21 (review): the aim point, through the ONE law in
    *  enemyTargets.targetAimPoint (DaggerfallMissile.cs:571-581 ->
    *  EnemySenses.cs:453). This pool's arrow lifted the target's feet
    *  by a flat 0.9 - the PLAYER's standing half-capsule, applied to
@@ -529,7 +529,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _tgt = _targetFeet(f, playerFeet);
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door - no knockback.
-      // AUDIT 61 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
       // `transform.position`, and a DFU enemy's transform is the
       // idle sprite's CENTRE, not the capsule base - the prefab
       // centres the controller on it (m_Center 0) and
@@ -542,7 +542,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         f.ai.landedFall = 0;
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
-          // AUDIT 61 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
           hitEffects?.showBloodSplash(0, f.ai._centre());
           damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }

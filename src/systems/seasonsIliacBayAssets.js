@@ -143,7 +143,7 @@ async function seasonsBundle() {
 }
 
 /**
- * AUDIT 61 F26: rows reversed - a top-down RGBA raster (what a PNG
+ * AUDIT 62 F26: rows reversed - a top-down RGBA raster (what a PNG
  * decodes to, and what `decodeTexture2D` hands back) in the port's
  * COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
  * `BaseImageFile.getColor32` produces (baseImageFile.js:123,

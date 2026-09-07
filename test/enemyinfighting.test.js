@@ -13,7 +13,7 @@ import {
 } from '../src/combat/formulas.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { PLAYER_TARGET } from '../src/characters/enemyTargets.js';
-import { bloodCentre } from '../src/scenes/hitEffects.js';   // AUDIT 61 F19: the reference's own law, not a restated literal
+import { bloodCentre } from '../src/scenes/hitEffects.js';   // AUDIT 62 F19: the reference's own law, not a restated literal
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const clearCollider = () => ({
@@ -71,7 +71,7 @@ test('MT-ii: the landed blow - damage, blood, knockback, health, and the struck 
   assert.equal(target.entity.health, 23);
   assert.equal(blood.length, 1, 'ShowBloodSplash at the target (:325-333)');
   assert.equal(blood[0][0], 2, 'the target\'s BloodIndex');
-  // AUDIT 61 F19: EnemyAttack.cs:326-328 is `bloodPos = Target
+  // AUDIT 62 F19: EnemyAttack.cs:326-328 is `bloodPos = Target
   // .transform.position + targetController.center` and THEN `bloodPos.y
   // += targetController.height / 8`. The capsule is BOTTOM-justified
   // (SetupDemoEnemy.cs:55-71 moves controller.center, never the

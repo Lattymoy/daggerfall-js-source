@@ -35,7 +35,7 @@ import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUD
 import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 61 F23: the standing capsule, the senses context's headless default
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
 import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
@@ -298,7 +298,7 @@ export function createSkyController(gl, params) {
     onAmbientEffect(playerPos) { dynamic?.onAmbientEffect(playerPos); },
     /** DS1: the LightningFlash point light this frame, or null. */
     lightningLight() { return dynamic?.lightningLight ?? null; },
-    /** DS1 / AUDIT 61 F29: PlayerEnterExit's Interior/ExteriorTransition
+    /** DS1 / AUDIT 62 F29: PlayerEnterExit's Interior/ExteriorTransition
      *  events (BLBSkybox.cs:1236-1240, handlers at :1247-1299) - the mod
      *  subscribes all four (building AND dungeon, both directions) and,
      *  under Thunder, stops the listener AND kills the flash coroutine
@@ -1337,7 +1337,7 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // the dungeon host can answer it true, and only from the block
     // the player is standing in.
     insideDungeonCastle,
-    // AUDIT 61 F23: the PLAYER's LIVE controller height. DFU reads the
+    // AUDIT 62 F23: the PLAYER's LIVE controller height. DFU reads the
     // component off senses.Target every FixedUpdate (EnemyMotor.cs:532,
     // :544, :562; EnemySenses.cs:896-898) and PlayerHeightChanger.cs
     // :54-57 gives it 1.8 standing / 0.9 crouched / 2.6 mounted / 0.30

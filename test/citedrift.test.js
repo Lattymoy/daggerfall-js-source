@@ -539,7 +539,7 @@ const SOURCE_CITES = [
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['src/ui/restWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  // AUDIT 61 (review): ...AND THE OTHER HALF OF THE SAME SENTENCE. The
+  // AUDIT 62 (review): ...AND THE OTHER HALF OF THE SAME SENTENCE. The
   // two entries above read the exterior number out of a cite that names
   // THREE files, so the `world.js` half sat unpinned and had been stale
   // since before this file existed - :4121 landed inside the
@@ -964,7 +964,7 @@ test('CD8c: the sentinel guard the docs claim is on ALL FIVE drag machines', () 
   // places - the Ledger row, UI-Arc's G4 section and Testing.md's row
   // all said the (-1,-1) sentinel was kept out of "both drag machines"
   // while the slice had shipped THREE, and the wizard's was the one
-  // without the arm. AUDIT 61 F24/F25 then found two MORE unguarded -
+  // without the arm. AUDIT 62 F24/F25 then found two MORE unguarded -
   // the shared list picker those machines cite as their model, and the
   // bank's price list copied from it - so the roster is five. A wording
   // that outlives the code it describes is the same defect as a stale
