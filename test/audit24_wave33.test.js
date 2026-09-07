@@ -68,7 +68,10 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
   // clear the pin guards is unchanged.
   assert.ok(d.includes('if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }'),
     'the dungeon consumes and clears');
-  assert.ok(d.includes('if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {\n            f.mobile.shootArrow = false;'),
+  // ROAD-H tail (2026-09-07): the archer arm is gated on the live
+  // TARGET too (BowDamage returns at `senses.Target == null`, :136-137),
+  // the shape the exterior pool has carried since MT-ii.
+  assert.match(d, /if \(_tgt && !_fParalyzed && f\.mobile\.shootArrow\) \{[^\n]*\n\s+f\.mobile\.shootArrow = false;/,
     'and so does its archer arm');
 
   const xf = rd('src/scenes/exteriorFoes.js');

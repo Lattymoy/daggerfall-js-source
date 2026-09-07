@@ -1202,3 +1202,62 @@ pool, so its frame-loop write stays a spelling pin — but the exterior
 producer's behavioural drive holds the shared law it mirrors.
 
 No source line changed in this round.
+
+## ROAD-H TAIL - THE CONTACT, THE REACH, AND THE DUNGEON ARCHER'S TARGET (2026-09-07)
+
+Three things the missiles lane recorded and left, closed in one pass
+after Wave H merged.
+
+**The contact is the capsule, everywhere.** AUDIT 62 F21's review landed
+`missileHitsCapsule` for the dungeon's enemy missile and `hostMagic`'s
+missile-vs-player test, and Wave H's H2 reused its arithmetic for the
+area sweep - but four contact sites still measured a POINT: the host
+arrow flight (`combat/arrowFlight.js`) tested an enemy shaft against
+`playerFeet + 0.9` and a foe against its capsule CENTRE, and the player's
+own shafts and spells met a foe at its centre in `dungeonContext.js` and
+`hostMagic.js`. `DaggerfallMissile.cs:339` is a SphereCast into the
+CharacterController - the capsule's inner axis at
+`ColliderRadius + 0.45` - so a shaft at y 1.6 over a CROUCHED player
+(0.9 controller) HIT where DFU misses, and a shaft at 2.9 over a giant
+(3.2 sprite) MISSED where DFU hits it near the head. All four read
+`missileHitsCapsule` / `missileHitsFoe` now; the arrow flight takes the
+player's LIVE height from both outdoor hosts (`playerHeight` beside
+`playerFeet`), defaulting to the standing capsule for the bare callers.
+
+**The reach carries the dip.** `:332-336` casts for
+`displacement.magnitude + ColliderRadius`, where `displacement =
+direction * MovementSpeed * fixedDeltaTime` and Physics normalises the
+ray. H1b's crouch dip (`:583-585`) lands after the normalise and nothing
+renormalises it, so `direction` can have magnitude `sqrt(1 + 0.0025)`;
+the port's three flights stepped `dir * step` (the dipped vector, as
+DFU's `:293` does) but cast for the bare `step + r` along the raw
+direction - and the collider's distances are in the direction's own
+units, so a non-unit ray under-reached. `missileReach(dir, step)` in
+`systems/spellcast.js` is the one body: the unit ray and
+`step * |dir| + ColliderRadius`; `arrowFlight.js`, `dungeonContext.js`
+and `hostMagic.js` cast through it. A unit direction is handed back
+untouched.
+
+**The dungeon archer aims at whom it selected.** `BowDamage`
+(`EnemyAttack.cs:134-148`) returns at `senses.Target == null` and then
+forks on the target - the player arm or `ApplyDamageToNonPlayer`. The
+exterior pool has aimed at its SELECTED target through `_targetAim`
+since MT-ii; the dungeon's archer arm still gated on `playerFeet` and
+built the player's aim point by hand, so a dungeon archer that had
+selected another foe (the alliance machine, a Wabbajack-turned ally,
+infighting) loosed at the player anyway. It gates on the live target
+now, takes the aim point through `targetAimPoint` (the player at its
+live height, a foe at feet + centreOffset), keys the crouch dip on
+whether the target IS the player (`DaggerfallMissile.cs:584`), and
+`fireArrow` carries the foe target as `aimFoe` - the same field the
+spell missile stores at fire time - so the impact fork's non-player arm
+(MT-iv) runs for an arrow as it already did for a bolt.
+
+Pins: `test/roadh_tail.test.js` (4). The crouched-player miss and the
+giant's head both die under the point law restored; the reach pin drives
+`missileReach` with the dipped vector and reads what the flight asks the
+collider for; the archer arm is pinned on its gate, its target read, its
+aim law, its dip key and the missile's memory. Three pins whose subject
+moved were re-pointed with the law rather than deleted (AUDIT 62 F21's
+dungeon aim line, the ceiling-bats "reads the capsule" count, wave 33's
+archer gate).

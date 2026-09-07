@@ -204,7 +204,11 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
     const s = src(f);
     assert.doesNotMatch(s, /const c = \[\w+\.ai\.feet\[0\], \w+\.ai\.feet\[1\] \+ 0\.9, /, `${f}: the swing's canSee reads no 0.9 (the player's half-capsule) on a foe`);
     assert.doesNotMatch(s, /f\.ai\.feet\[1\] \+ 0\.9 - m\.pos\[1\]/, `${f}: no missile contact at the player's half-capsule on a foe`);
-    assert.ok([...s.matchAll(/(?:[fg]\.ai|t\.ref\?\.ai\?)\.height \?\? (?:CAPSULE_HEIGHT|1\.8)\) \/ 2/g)].length >= n, `${f}: at least ${n} hit site(s) read the foe's capsule`);
+    // ROAD-H tail (2026-09-07): a hit site that goes through
+    // missileHitsFoe / missileHitsCapsule reads the foe's feet AND
+    // height (the capsule's inner axis) - the strictly stronger form,
+    // counted alongside the centre reads that remain.
+    assert.ok([...s.matchAll(/(?:[fg]\.ai|t\.ref\?\.ai\?)\.height \?\? (?:CAPSULE_HEIGHT|1\.8)\) \/ 2|missileHits(?:Foe|Capsule)\(/g)].length >= n, `${f}: at least ${n} hit site(s) read the foe's capsule`);
   }
   // the dungeon save: stamped, and a pre-fix flyer entry judged
   assert.match(src('src/systems/spellcast.js'),

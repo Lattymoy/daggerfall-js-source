@@ -3835,6 +3835,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
       playerFeet: walkMode ? player.pos : null,
+      playerHeight: player.height,   // ROAD-H tail: the contact is the LIVE capsule (crouch 0.9, ride 2.6)
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);

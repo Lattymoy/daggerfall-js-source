@@ -245,9 +245,14 @@ test('AUDIT 62 F21 (review): ONE aim-point law, and the player arm of it is the 
   // runs through arrowAimDirection, so the aim POINT this pin owns is
   // spelled as its own vector. The law is unchanged - the player's
   // TRANSFORM at its LIVE height.
+  // ROAD-H tail (2026-09-07): the dungeon archer took BowDamage's
+  // two-arm split - it aims at its SELECTED target through the one
+  // aim-point law, which is the player's LIVE transform when the
+  // target is the player (targetAimPoint's player arm) and a foe's
+  // feet + centreOffset otherwise.
   assert.match(src('src/scenes/dungeonContext.js'),
-    /const aim = \[playerFeet\[0\], playerFeet\[1\] \+ playerHeight \/ 2, playerFeet\[2\]\];/,
-    "the dungeon archer aims at the player's live transform");
+    /const aim = foeDeps\.targetAimPoint\(_at, _pf, playerHeight\);/,
+    "the dungeon archer aims at its target's transform - the player at its live height");
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     assert.match(src(f), /player\.pos\[1\] \+ player\.height \/ 2 - from\[1\]/, `${f}: the fireMissile hook too`);
     assert.doesNotMatch(src(f), /player\.pos\[1\] \+ 0\.9 - from\[1\]/, `${f}: and not the standing constant`);

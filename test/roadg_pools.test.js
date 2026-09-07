@@ -182,7 +182,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
-  // (arrowFlight.js:203-209), and `onAttackFromPlayer`, which it calls
+  // (arrowFlight.js:206-212), and `onAttackFromPlayer`, which it calls
   // unconditionally at :195 because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own

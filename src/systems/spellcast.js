@@ -309,6 +309,21 @@ export function sphereOverlapsCapsule(pos, radius, feet, height) {
   return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= radius + BODY_CAPSULE_RADIUS;
 }
 
+/**
+ * ROAD-H tail - DaggerfallMissile.cs:332-336: the flight raycast
+ * reaches `displacement.magnitude + ColliderRadius`, where
+ * displacement = direction * MovementSpeed * deltaTime. GetAimDirection's
+ * crouch dip (:583-585) lands AFTER the normalise and nothing
+ * renormalises it, so `direction` can carry |dir| > 1 and the port's
+ * flights step `dir * step` - the reach must scale with it too, and the
+ * collider's ray wants a UNIT direction (its distances are in the
+ * direction's own units). One body for the three flights.
+ */
+export function missileReach(dir, step) {
+  const len = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+  return { unit: len === 1 ? dir : [dir[0] / len, dir[1] / len, dir[2] / len], reach: step * len + MISSILE_COLLIDER_RADIUS };
+}
+
 /** The same test against a foe's controller (enemyAnchor's height). */
 export function missileHitsFoe(pos, foe) {
   return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);
