@@ -2711,7 +2711,7 @@ retired rather than reworded.
 it.** A player ARROW reaches a pool through two separate seams:
 `dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
 and `onAttackFromPlayer`, which it calls unconditionally
-(`arrowFlight.js:195`) precisely because that is where :630 lives. All
+(`arrowFlight.js:212`) precisely because that is where :630 lives. All
 three hosts that resolve a player arrow EXCLUDED the guards from the
 second seam, on a sentence — "the watch pool's damage door carries no
 hostility pair of its own" — that this lane's own `handleAttackFromPlayer`
@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:972`)
+encounter pool has always exported its own at `exteriorFoes.js:1008`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once
