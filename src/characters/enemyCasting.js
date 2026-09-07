@@ -275,7 +275,7 @@ export class EnemyCaster {
  *  the player only - foe-vs-foe friendly fire pends the missile
  *  seam's target sweep. */
 export function castEnemySpell(f, spell, {
-  noSpellPointCost = false, playerEntity, playerFeet = null,
+  noSpellPointCost = false, playerEntity, playerFeet = null, playerHeight = 1.8,   // ROAD-H H2: the LIVE player capsule the AoC OverlapSphere measures against (DaggerfallMissile.cs:481)
   applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
   playCastSound = null, explodeAt = null, fireMissile = null,
   hitEffects = null,   // AUDIT 24 (wave 44): ShowMagicSparkles
@@ -326,7 +326,7 @@ export function castEnemySpell(f, spell, {
     // wrong under both models, and off by up to a metre against the
     // 4.0-radius OverlapSphere, which flips rim membership.
     explodeAt?.([f.ai.feet[0], casterTransformY, f.ai.feet[2]], spell, f.entity.level, playerFeet,
-      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });
+      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });
     return true;
   }
   fireMissile?.(from, spell, f.entity.level, f);

@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S } from '../systems/spellcast.js';
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin } from '../systems/spellcast.js';   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
 import { calculateAttackDamage } from './formulas.js';
@@ -57,7 +57,7 @@ export class ArrowFlight {
    *  LastBowUsed, which the impact prices off - and hunts the foes
    *  through the same contact law. */
   fire(from, dir, meta = {}) {
-    this.arrows.push({ pos: [...from], dir: [...dir], age: 0, gpu: null, dead: false, ...meta });
+    this.arrows.push({ pos: meta.fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, gpu: null, dead: false, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
 
   update(dt, { playerFeet = null, onPlayerHit = null, foeTargets = null, onFoeHit = null,

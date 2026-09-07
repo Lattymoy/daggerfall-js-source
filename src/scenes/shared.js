@@ -1315,7 +1315,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false, playerHeight = CAPSULE_HEIGHT } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false, playerHeight = CAPSULE_HEIGHT, playerCrouching = false } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -1354,6 +1354,13 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // feet + 1.50 against a crouched player DFU sees at feet + 0.75.
     // The default keeps every headless caller exactly where it was.
     playerHeight,
+    // ROAD-H H1b: PlayerMotor.IsCrouching (PlayerMotor.cs:132-136) -
+    // the LATCHED crouch state, which is what an enemy archer's aim
+    // reads (DaggerfallMissile.cs:584). It rides beside playerHeight
+    // and is deliberately NOT derived from it: a 0.9 capsule is also
+    // the SWIM case (PlayerHeightChanger.cs:54-57), and a swimming
+    // player draws no dip.
+    playerCrouching,
     playerEntity: playerEntity ?? entity,
   };
 }

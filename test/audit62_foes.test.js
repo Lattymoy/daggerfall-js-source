@@ -240,8 +240,13 @@ test('AUDIT 62 F21 (review): ONE aim-point law, and the player arm of it is the 
   assert.match(src('src/scenes/exteriorFoes.js'),
     /const aim = _targetAim\(f, playerFeet, senses\.playerHeight \?\? CAPSULE_HEIGHT\);/, '...at the live player height');
   assert.doesNotMatch(src('src/scenes/exteriorFoes.js'), /_tgt\[1\] \+ 0\.9/, "and the player's half-capsule is gone from its arrow");
+  // ROAD-H H1/H1b (2026-09-07) rewrote this line: the archer's LOOSE
+  // POINT moved to GetAimPosition's arrow arm and the direction now
+  // runs through arrowAimDirection, so the aim POINT this pin owns is
+  // spelled as its own vector. The law is unchanged - the player's
+  // TRANSFORM at its LIVE height.
   assert.match(src('src/scenes/dungeonContext.js'),
-    /const d = \[playerFeet\[0\] - from\[0\], playerFeet\[1\] \+ playerHeight \/ 2 - from\[1\], playerFeet\[2\] - from\[2\]\];/,
+    /const aim = \[playerFeet\[0\], playerFeet\[1\] \+ playerHeight \/ 2, playerFeet\[2\]\];/,
     "the dungeon archer aims at the player's live transform");
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     assert.match(src(f), /player\.pos\[1\] \+ player\.height \/ 2 - from\[1\]/, `${f}: the fireMissile hook too`);

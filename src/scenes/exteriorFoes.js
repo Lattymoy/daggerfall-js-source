@@ -19,7 +19,7 @@ import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58:
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint } from '../characters/enemyTargets.js';   // MT-ii
+import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection } from '../characters/enemyTargets.js';   // MT-ii   // ROAD-H H1/H1b: the ONE arrow loose point and the crouch dip
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
@@ -305,7 +305,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  spider/scorpion paralyze rider - so the deps are written once. */
   function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {
     castEnemySpell(f, spell, {
-      noSpellPointCost, playerEntity, playerFeet,
+      noSpellPointCost, playerEntity, playerFeet, playerHeight: _lastPlayerHeight,   // ROAD-H H2: the AreaAroundCaster blast is an OverlapSphere against the player's CAPSULE
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio?.play3dId?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
@@ -502,9 +502,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return _targetFeet(f, playerFeet) ? targetAimPoint(f.ai.target, playerFeet, playerHeight) : null;
   }
 
-  let _ecvT = 0;   // ECV1: the pool's clock (seconds), for the shimmer and the hit reveal
+  let _ecvT = 0, _lastPlayerHeight = CAPSULE_HEIGHT;   // ECV1: the pool's clock (seconds), for the shimmer and the hit reveal   // ROAD-H H2: the LIVE player capsule the last tick carried - the AreaAroundCaster blast measures its OverlapSphere against it (DaggerfallMissile.cs:481)
   function update(dt, playerFeet, eye, senses = {}) {
-    _ecvT += dt;
+    _ecvT += dt; _lastPlayerHeight = senses.playerHeight ?? CAPSULE_HEIGHT;   // ROAD-H H2: the live capsule this tick, for the AoC blast the cast seam fires
     for (const f of foes) {
       // B1: the QuestResourceBehaviour drives every frame the object
       // lives (Unity Update on the component) - BEFORE the dead skip,
@@ -742,11 +742,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // AR1 closed the impact half: arrows.update tests every live
         // foe but the shooter, and arrowHitFoe below runs BowDamage's
         // non-player arm, so an arrow loosed at another foe LANDS.
-        const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+        // ROAD-H H1/H1b: the loose point and the aim direction, through the ONE law in enemyTargets, so this pool and the dungeon's cannot drift apart the way their aim points had.
+        const from = enemyArrowOrigin(f.ai);   // ROAD-H H1: GetAimPosition's ENEMY ARROW arm - the caster's TRANSFORM plus forward*0.6 plus height/3 (DaggerfallMissile.cs:528-539), through the ONE law in enemyTargets so this pool and the dungeon's cannot drift apart the way their aim points had. `feet + 1.2` was a guess in the player's scale with no forward lean at all
         const aim = _targetAim(f, playerFeet, senses.playerHeight ?? CAPSULE_HEIGHT);
-        const d = [aim[0] - from[0], aim[1] - from[1], aim[2] - from[2]];
-        const l = Math.hypot(...d) || 1;
-        onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
+        const dir = arrowAimDirection(enemyTransformPoint(f.ai), aim, { targetIsPlayer: isPlayerTarget(f.ai.target ?? PLAYER_TARGET), playerCrouching: !!senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin, and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585) - only at the player, and only on the latched crouch STATE
+        onArrow(from, dir, f);
       }
       // the -1 damage marker vs the player (C16)
     }

@@ -4,19 +4,19 @@
 // Daggerfall Workshop).
 //
 // EF1c: this header used to declare a SCOPE - "the RESOLVED effect
-// family is classic Damage Health... every other effect in a trap
-// spell is SKIPPED with a flag until the effect-library slice" - and
-// it had outlived every clause. This module never resolved effects at
-// all: it owns the saving throw, the magnitude roll and the missile
-// constants, and systems/effects.js has dispatched the whole library
-// (all 91 of DFU's classic keys - EF1) for a long time. A scope note
-// describing a neighbour's old shape is worse than none, because it
-// reads as current and nothing here contradicts it.
+// family is classic Damage Health... every other effect in a trap spell
+// is SKIPPED with a flag until the effect-library slice" - and it had
+// outlived every clause. This module never resolved effects at all: it
+// owns the saving throw, the magnitude roll and the missile constants,
+// and systems/effects.js has dispatched the whole library (all 91 of
+// DFU's classic keys - EF1) for a long time. A scope note describing a
+// neighbour's old shape is worse than none: it reads as current.
 
 import { dice100 } from '../combat/formulas.js';
 import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE willpower
 import { magicResist } from '../combat/formulas.js';   // U10
 import { raceById, raceByKey } from './races.js';   // AUDIT 18: the racial saving-throw block
+import { getInt } from './settings.js';   // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
 
 // ---- DaggerfallMissile constants, verbatim ----
 export const MISSILE_SPEED = 25.0;
@@ -229,13 +229,24 @@ export function pickTouchTarget(eye, dir, foes, losClear = () => true) {
   return best;
 }
 
-/** Area sweep: live foes within radius of a point (OverlapSphere). */
+/**
+ * ROAD-H H2: the area sweep - `Physics.OverlapSphereNonAlloc(position,
+ * ExplosionRadius, ..., layerMaskDefault, QueryTriggerInteraction
+ * .Ignore)` (DaggerfallMissile.cs:481, inside DoAreaOfEffect :477-510).
+ * An OverlapSphere tests COLLIDERS, and every DFU body wears a
+ * CharacterController capsule - so a foe is caught when the sphere
+ * overlaps its CAPSULE, not when a single point on it falls inside the
+ * bare radius. The old measure took the foe's capsule CENTRE against
+ * `radius` alone, which shrank DFU's catch by a whole body radius at
+ * every rim and missed outright any foe whose flank was inside the
+ * blast while its centre was not (a 3-tall giant standing 4.3 from the
+ * impact: DFU hits it, the point measure did not).
+ */
 export function sweepFoes(pos, radius, foes) {
   const out = [];
   for (const f of foes) {
     if (f.dead) continue;
-    const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? 1.8) / 2, f.ai.feet[2]];   // REVIEW 2026-09-05: the foe's own capsule centre
-    if (Math.hypot(c[0] - pos[0], c[1] - pos[1], c[2] - pos[2]) <= radius) out.push(f);
+    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height)) out.push(f);
   }
   return out;
 }
@@ -274,14 +285,89 @@ export const BODY_CAPSULE_RADIUS = 0.45;
  *  which is what min(r, h/2) gives.
  */
 export function missileHitsCapsule(pos, feet, height) {
+  return sphereOverlapsCapsule(pos, MISSILE_COLLIDER_RADIUS, feet, height);
+}
+
+/**
+ * ROAD-H H2: the one body of that arithmetic, at whatever SPHERE
+ * RADIUS the caller measures with. A Unity sphere (a SphereCast's tip
+ * at ColliderRadius, an OverlapSphere at ExplosionRadius) meets a
+ * CharacterController capsule when its centre is within
+ * `radius + BODY_CAPSULE_RADIUS` of the capsule's INNER AXIS SEGMENT -
+ * feet + r up to feet + height - r, the two hemisphere centres, which
+ * collapse to one point (a sphere) under height < 2r exactly as Unity
+ * collapses a capsule shorter than its own diameter. Both laws
+ * DaggerfallMissile carries are this function: the contact test at
+ * :339 (MISSILE_COLLIDER_RADIUS, above) and the area sweep at :481
+ * (ExplosionRadius, sweepFoes).
+ */
+export function sphereOverlapsCapsule(pos, radius, feet, height) {
   if (!feet) return false;
   const h = height ?? 1.8;
   const half = Math.min(BODY_CAPSULE_RADIUS, h / 2);
   const y = Math.min(Math.max(pos[1], feet[1] + half), feet[1] + h - half);   // the clamped point on the capsule AXIS
-  return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= MISSILE_COLLIDER_RADIUS + BODY_CAPSULE_RADIUS;
+  return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= radius + BODY_CAPSULE_RADIUS;
 }
 
 /** The same test against a foe's controller (enemyAnchor's height). */
 export function missileHitsFoe(pos, foe) {
   return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);
+}
+
+/** ROAD-H H1c: GetAimPosition's PLAYER ARROW offsets
+ *  (DaggerfallMissile.cs:540-550) - 0.11 DOWN along the camera's own
+ *  up ("Adjust slightly downward to match bow animation") and 0.15 to
+ *  the side ("Adjust to the right or left to match bow animation"). */
+export const PLAYER_ARROW_DOWN = 0.11;
+export const PLAYER_ARROW_SIDE = 0.15;
+
+/**
+ * ROAD-H H1c - GetAimPosition's player arm, verbatim
+ * (DaggerfallMissile.cs:521-551): a PLAYER missile leaves the CAMERA
+ * position (:522-525), and an ARROW takes the bow-hand offset on top
+ * of it -
+ *
+ *     adjust = (MainCamera.rotation * -caster.transform.up) * 0.11f;
+ *     var right = MainCamera.transform.right * 0.15f;
+ *     if (!ScreenWeapon.FlipHorizontal) adjust += right; else adjust -= right;
+ *
+ * `caster.transform.up` is the PLAYER object's up, and the player
+ * object never pitches (only the camera does), so it is world up: the
+ * first term is 0.11 along MINUS THE CAMERA'S OWN UP, which tilts back
+ * with the pitch rather than dropping straight down. The port looses
+ * from the bare eye at every host, which put the shaft 0.11 high and
+ * 0.15 off-hand of DFU's - a fifth of the missile's own contact radius,
+ * and the whole of the reason DFU's arrow lines up with the drawn bow.
+ *
+ * The basis is rebuilt from the look direction the host already
+ * carries, which for a yaw/pitch camera with no roll IS the camera's:
+ * right = Cross(worldUp, forward), up = Cross(forward, right) - the
+ * same vectors `cam.yaw`/`cam.pitch` build, and the same the view
+ * matrix's first two columns hold.
+ *
+ * `flipHorizontal` is FPSWeapon.FlipHorizontal (Controls/Handedness ==
+ * 1, StartGameBehaviour :269), read live at the loose. It is the
+ * screen weapon's FIELD, not the per-state mirror combat/fpsWeapon's
+ * FLIP_STATES gates: a left-handed player looses from the left of the
+ * crosshair in every stance, whatever the swing is drawing.
+ */
+const bowHandFlipped = () => getInt('Controls', 'Handedness', 0, 3) === 1;
+
+export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped()) {
+  const fl = Math.hypot(lookDir[0], lookDir[1], lookDir[2]) || 1;
+  const f = [lookDir[0] / fl, lookDir[1] / fl, lookDir[2] / fl];
+  // right = Cross(worldUp, forward) = (f.z, 0, -f.x), renormalised
+  // (its length is cos(pitch)); straight up or down has no side and
+  // keeps the last well-defined axis rather than dividing by zero.
+  let rx = f[2], rz = -f[0];
+  const rl = Math.hypot(rx, rz);
+  if (rl < 1e-6) { rx = 1; rz = 0; } else { rx /= rl; rz /= rl; }
+  // up = Cross(forward, right)
+  const ux = f[1] * rz, uy = f[2] * rx - f[0] * rz, uz = -f[1] * rx;
+  const side = flipHorizontal ? -PLAYER_ARROW_SIDE : PLAYER_ARROW_SIDE;   // :546-549
+  return [
+    eye[0] - ux * PLAYER_ARROW_DOWN + rx * side,
+    eye[1] - uy * PLAYER_ARROW_DOWN,
+    eye[2] - uz * PLAYER_ARROW_DOWN + rz * side,
+  ];
 }
