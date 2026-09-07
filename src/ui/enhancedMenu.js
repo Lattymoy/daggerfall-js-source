@@ -904,7 +904,7 @@ function paneEnhanced(body) {
     'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
     + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
     + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
-    + 'on an unseen enemy flashes it for a moment. Invisibility still hides it outright. Nothing about '
+    + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. Otherwise invisibility still hides it. Nothing about '
     + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');

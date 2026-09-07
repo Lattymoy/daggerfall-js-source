@@ -238,7 +238,7 @@ test('a5 pins: the three foe pools fold the flag, build the closure, and hide th
     // the skip is foeDraw's answer now - `hidden` on the classic skin or
     // with Enhanced Combat Visuals off (systems/combatVisuals.js pins
     // that), and the host still takes it verbatim.
-    assert.ok(src.includes(`const ecv = foeDraw(${ent}, ecvOn, `) && src.includes("if (ecv.kind === 'hidden') continue;"),
+    assert.ok(src.includes(`const ecv = foeDraw(${ent.replace('.entity', '')}, ecvOn, _ecvT);`) && src.includes("if (ecv.kind === 'hidden') continue;"),
       `${file}: a concealed non-player entity is not drawn`);
   }
 });

@@ -49,7 +49,7 @@ import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58:
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
-import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags, isMagicallyConcealed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
+import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { hasMagickaToCast } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35) / D9: GetDestination's magic term
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too   // ROAD-B: PlayerController.radius, for the indoor arm's door clearance
@@ -93,7 +93,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: Player
 import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, the one home the other placement hosts read
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
-import { combatVisualsOn, foeDraw, foePhase, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
+import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -887,7 +887,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // true has its renderer disabled. The watchman keeps acting; it
       // is simply not drawn. ECV1: on the enhanced skin with the
       // switch on, drawn concealed instead (systems/combatVisuals.js).
-      const ecv = foeDraw(g.entity, ecvOn, { t: _ecvT, hitAt: g._ecvHit ?? -Infinity, phase: foePhase(g) });
+      const ecv = foeDraw(g, ecvOn, _ecvT);
       if (ecv.kind === 'hidden') continue;
       g.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
       const o = g._mout;

@@ -9,8 +9,10 @@
 // power (EntityConcealmentBehaviour.cs:36-43, :56-62). The enemy keeps
 // acting and its collider keeps taking hits; there is nothing on screen
 // between the cast and its next landed blow (which breaks a normal-
-// power concealment, FormulaHelper.cs:316-317). Mac: "the imp enemy
-// type goes invisible and still can be attacked" - it reads as a bug.
+// power concealment: EnemyAttack.cs:316-318 for a foe's blow on
+// anything, :255-257 on the player; WeaponManager.cs:549-552 the
+// player's). Mac: "the imp enemy type goes invisible and still can be
+// attacked" - it reads as a bug.
 // It is DFU's rule, kept 1:1 on the classic lane (the A5 skip in every
 // foe draw). This is the ENHANCED lane's drawing of the same state.
 //
@@ -18,6 +20,10 @@
 // gate, the hits, the break. Only what is DRAWN for a concealed foe:
 //   Invisibility  -> hidden, as DFU draws it (invisible means invisible;
 //                    the Orc Shaman's spell stays stronger than the imp's)
+//                    - except for the hit flash below, which shows an
+//                    invisible foe too: the one place this departure
+//                    hands the player something DFU's draw never does
+//                    (where the blow landed), said so on the page
 //   Chameleon     -> the sprite at low opacity with a slow shimmer and a
 //                    ripple across it - blending in, trackable up close
 //   Shadow        -> a dark translucent silhouette - a shade
@@ -77,27 +83,35 @@ export function combatVisualsOn(search = globalThis.location?.search ?? '', pref
 export function concealVisual(flags, { t, hitAt = -Infinity, phase = 0 }) {
   const { invisible = false, blending = false, shade = false } = flags ?? {};
   if (!invisible && !blending && !shade) return null;
+  // The clock reaches the shader through sin(z * 7 + w): uploaded
+  // wrapped to one turn so a long session never feeds float32 sin a
+  // number it cannot resolve (7 * 2pi is a whole number of turns, so
+  // the wrap is invisible to the ripple).
+  const tz = t % (2 * Math.PI);
   const since = t - hitAt;
   if (since >= 0 && since < REVEAL_SECONDS) {
-    return { mode: CONCEAL_MODE.reveal, alpha: REVEAL_ALPHA * (1 - since / REVEAL_SECONDS), t, phase };
+    return { mode: CONCEAL_MODE.reveal, alpha: REVEAL_ALPHA * (1 - since / REVEAL_SECONDS), t: tz, phase };
   }
   if (invisible) return null;
   if (blending) {
-    return { mode: CONCEAL_MODE.blend, alpha: BLEND_ALPHA + BLEND_SHIMMER * Math.sin(2 * Math.PI * BLEND_HZ * t + phase), t, phase };
+    return { mode: CONCEAL_MODE.blend, alpha: BLEND_ALPHA + BLEND_SHIMMER * Math.sin(2 * Math.PI * BLEND_HZ * t + phase), t: tz, phase };
   }
-  return { mode: CONCEAL_MODE.shade, alpha: SHADE_ALPHA, t, phase };
+  return { mode: CONCEAL_MODE.shade, alpha: SHADE_ALPHA, t: tz, phase };
 }
 
 /**
  * The host's one question per foe per frame: draw it plain, draw it
- * concealed, or not at all.
+ * concealed, or not at all. Reads the foe's entity, its hit stamp and
+ * its phase - the phase minted only on the concealed draw, so the
+ * plain and classic paths touch nothing.
  *
+ * @param {{entity: object, _ecvHit?: number, _ecvPhase?: number}} foe
  * @returns {{kind: 'plain'} | {kind: 'hidden'} | {kind: 'conceal', visual: object}}
  */
-export function foeDraw(entity, on, clock) {
-  if (!isMagicallyConcealed(entity)) return PLAIN;
+export function foeDraw(foe, on, t) {
+  if (!isMagicallyConcealed(foe.entity)) return PLAIN;
   if (!on) return HIDDEN;   // A5, verbatim: EntityConcealmentBehaviour disables the renderer
-  const visual = concealVisual(concealmentFlags(entity), clock);
+  const visual = concealVisual(concealmentFlags(foe.entity), { t, hitAt: foe._ecvHit ?? -Infinity, phase: foePhase(foe) });
   return visual ? { kind: 'conceal', visual } : HIDDEN;
 }
 const PLAIN = Object.freeze({ kind: 'plain' });
@@ -110,8 +124,13 @@ export function markConcealedHit(foe, t) {
   foe._ecvHit = t;
 }
 
-/** A foe's shimmer phase, minted once from the roll the host hands in. */
-export function foePhase(foe, roll = Math.random) {
-  if (foe._ecvPhase === undefined) foe._ecvPhase = roll() * 2 * Math.PI;
+/** A foe's shimmer phase, minted once, DETERMINISTICALLY: the golden
+ *  angle times a running count spreads a pack around the circle with
+ *  no random draw (the classic lane's Math.random sequence is not this
+ *  feature's to consume). */
+export const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+let _phaseCount = 0;
+export function foePhase(foe) {
+  if (foe._ecvPhase === undefined) foe._ecvPhase = (_phaseCount++ * GOLDEN_ANGLE) % (2 * Math.PI);
   return foe._ecvPhase;
 }

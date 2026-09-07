@@ -2414,7 +2414,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1178-1182) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:730) and spliced out at the end of it (:889).
+    // (cityGuards.js:730) and spliced out at the end of it (:910).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js

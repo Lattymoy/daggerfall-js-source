@@ -52,7 +52,7 @@ rows, terrainSurface.js:92-95): a permanent lighting lattice at every
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:1805 - thousands of strings/frame, the single
+per frame (renderer.js:1808 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -74,7 +74,7 @@ tint term without a vertex-format change across ~20 call sites.
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:574) is a regression latch: set once,
+- `_clockLit` (renderer.js:577) is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.

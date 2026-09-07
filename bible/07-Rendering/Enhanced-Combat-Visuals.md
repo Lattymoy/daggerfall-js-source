@@ -21,8 +21,9 @@ entities other than player" - disables the enemy's mesh renderer while
 :56-62`): any of the six flags, normal or true power. The enemy keeps
 moving, attacking and taking hits; its collider never went anywhere.
 When it lands a blow its normal-power concealment breaks
-(`FormulaHelper.cs:316-317`), and when the spell's rounds run out it
-reappears. Between the cast and either, there is nothing on screen.
+(`EnemyAttack.cs:316-318` for a foe's blow on anything, `:255-257` on
+the player; `WeaponManager.cs:549-552` for the player's own), and
+when the spell's rounds run out it reappears. Between the cast and either, there is nothing on screen.
 
 The port carries all of that verbatim: the spell table, the touch
 pick (`characters/enemyCasting.js`), the concealment flags
@@ -45,10 +46,10 @@ the enhanced skin with the switch on:
 
 | Concealment | Draw |
 |---|---|
-| Invisibility (normal or true) | hidden, as DFU draws it - invisible means invisible, and the Orc Shaman's spell stays stronger than the imp's |
+| Invisibility (normal or true) | hidden, as DFU draws it - invisible means invisible, and the Orc Shaman's spell stays stronger than the imp's - except for the hit flash below |
 | Chameleon | the sprite at `BLEND_ALPHA` 0.22 opacity, a slow shimmer (`BLEND_SHIMMER` 0.08 at `BLEND_HZ` 1.3, phased per foe so a pack does not breathe in step) and a horizontal ripple across the sprite in the shader - blending in, trackable up close |
 | Shadow | a dark translucent silhouette: `SHADE_ALPHA` 0.55, the lit colour pulled to `SHADE_DARK` 0.12 of itself - a shade |
-| any of them, just HIT | the sprite at `REVEAL_ALPHA` 0.8 fading over `REVEAL_SECONDS` 0.35 - a connecting swing on an unseen foe reads as a hit, not a glitch |
+| any of them, just HIT | the sprite at `REVEAL_ALPHA` 0.8 fading over `REVEAL_SECONDS` 0.35 - a connecting swing on an unseen foe reads as a hit, not a glitch. THIS IS THE ONE PLACE THE DEPARTURE SHOWS SOMETHING DFU'S DRAW NEVER DOES: for a third of a second the player sees where an invisible foe stands. Mac's call, in the list he approved ("Any hidden enemy you hit: a brief flash"); recorded here rather than hidden in "draw only" |
 
 When two flags are up the stronger concealment wins: invisible over
 blending over shade. The reveal overrides all three while it runs. The
@@ -68,12 +69,18 @@ person and neither does the port.
   (mode, opacity, seconds, phase) and a THIRD phase in `drawBillboards`
   draws the batches carrying a `conceal` after the opaque and spectral
   phases: blended, depth-writes off, one uniform per batch, cleared
-  after. A concealed ghost keeps its spectral emission map.
+  after. The spectral batches share the phase, and the whole blended
+  set draws back to front by distance from the camera, so a
+  translucent foe behind another shows through it.
 - **The three foe hosts** - `scenes/dungeonContext.js`,
   `scenes/exteriorFoes.js`, `scenes/cityGuards.js` - ask `foeDraw`
   where the A5 skip stood, hand the visual to the foe's batch, stamp
   `markConcealedHit` where their damage function lands a blow, and
-  tick a clock in seconds for the shimmer and the reveal.
+  tick a clock in seconds for the shimmer and the reveal. The clock is
+  wrapped to one turn before it reaches the shader's `sin`; the shimmer
+  phase is minted deterministically (the golden angle times a running
+  count) and only on the concealed draw, so the classic path consumes
+  no random draw.
 - **The switch** - `enhancedCombatVisuals` in `systems/uiPrefs.js`,
   on by default like the other enhanced visuals, the row in the
   Enhanced menu's live pane; `?combatvisuals=off` the kill switch. The

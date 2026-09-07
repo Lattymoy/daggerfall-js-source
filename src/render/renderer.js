@@ -317,7 +317,10 @@ void main() {
   // the sprite, phased per foe - so it reads as blending in, not as a
   // faded sprite.
   vec2 uv = vUV;
-  if (uConceal.x == 1.0) uv.x += sin(vUV.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008;
+  if (uConceal.x == 1.0) {
+    uv.x += sin(vUV.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008;
+    if (uv.x < 0.0 || uv.x > 1.0) discard;   // the texture wraps REPEAT: never pull the far edge onto this one
+  }
   vec4 tex = texture(uTex, uv);
   // Spectral flats keep their 180-alpha translucency (blended pass);
   // opaque flats keep the classic 0.5 cutout. ECV1's concealed pass is
@@ -2632,33 +2635,28 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.bbUSpectral, 0);
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
     for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) drawOne(b);
-    let anySpectral = false, anyConcealed = false;
+    // The BLENDED phase: the spectral batches and (ECV1) the concealed
+    // ones together, depth-writes off, drawn BACK TO FRONT by their
+    // origin's distance from the camera so a translucent foe behind
+    // another shows through it rather than over it. ECV1's batches
+    // carry one uConceal each (the mode, the opacity, the host's clock,
+    // the foe's phase); a spectral batch keeps its flag, which the
+    // shader reads only when uConceal says plain.
+    let blended = null;
     for (const b of batches) {
-      if (b.conceal) anyConcealed = true;
-      else if (isSpectralArchive(b.archive)) anySpectral = true;
+      if (b.conceal || isSpectralArchive(b.archive)) (blended ??= []).push(b);
     }
-    if (anySpectral) {
-      gl.uniform1i(this.bbUSpectral, 1);
+    if (blended) {
+      const cp = this._camPos;
+      const d2 = (b) => { const o = b.origin || ZERO_ORIGIN; const dx = o[0] - cp[0], dy = o[1] - cp[1], dz = o[2] - cp[2]; return dx * dx + dy * dy + dz * dz; };
+      blended.sort((a, b) => d2(b) - d2(a));
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.depthMask(false);
-      for (const b of batches) if (isSpectralArchive(b.archive) && !b.conceal) drawOne(b);
-      gl.depthMask(true);
-      gl.disable(gl.BLEND);
-    }
-    // ECV1: a third phase for CONCEALED foes (systems/combatVisuals.js) -
-    // blended, depth-writes off like the spectral phase, one uConceal
-    // per batch: the mode, the opacity, the host's clock and the foe's
-    // phase. A concealed ghost keeps its spectral emission map.
-    if (anyConcealed) {
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.depthMask(false);
-      for (const b of batches) {
-        if (!b.conceal) continue;
+      for (const b of blended) {
         const c = b.conceal;
         gl.uniform1i(this.bbUSpectral, isSpectralArchive(b.archive) ? 1 : 0);
-        gl.uniform4f(this.bbUConceal, c.mode, c.alpha, c.t, c.phase);
+        gl.uniform4f(this.bbUConceal, c ? c.mode : 0, c ? c.alpha : 0, c ? c.t : 0, c ? c.phase : 0);
         drawOne(b);
       }
       gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);
