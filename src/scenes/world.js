@@ -6682,6 +6682,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       adjustFallStart(player, r.offset[1]);
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
+      sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
@@ -6929,6 +6930,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.

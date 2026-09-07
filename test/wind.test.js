@@ -110,7 +110,7 @@ test('WIND2: the clouds move by an INTEGRATED drift, and the wind leads the sky 
   // VC4: the ground's shadow is the slab's own map now - the drift reaches
   // it through the field both marches read, handed by the controller
   const clouds = read('src/render/volumetricClouds.js');
-  assert.match(clouds, /vec3 q = vec3\(p\.x \+ uDrift\.x \+ uShear \* \(p\.y - uBase\), p\.y, p\.z \+ uDrift\.y\);/, 'the field moves by the drift, integrated');
+  assert.match(clouds, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ uShear \* \(p\.y - uBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'the field moves by the drift, integrated (and sits on the absolute position - VC4c)');
   assert.match(shared, /clouds\?\.setState\([^;]*driftXZ,/, 'the one integral, handed to the clouds');
   assert.doesNotMatch(read('src/render/renderer.js'), /uCloudWind \* uCloudTime|uCloudDrift/, 'no deck multiplies wind by time, and the noise shadow is gone');
 });

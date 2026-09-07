@@ -366,6 +366,9 @@ export function createSkyController(gl, params) {
      *  arriving. The eased row is dropped so the next use() takes the
      *  new row whole (the first-call law), and the wind builds no front.
      *  A no-op under the classic sky, which eases nothing. */
+    /** VC4: the host's floating-origin recenter - every world position
+     *  moved by `offset`; the clouds keep their place over the land. */
+    offsetOrigin(offset) { clouds?.offsetOrigin(offset); },
     weatherJump() {
       weatherRowNow = null;
       windModel.jump();

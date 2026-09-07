@@ -84,7 +84,23 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(shared, /const clouds = enhancedSky && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, cloudsDoor in CLOUD_QUALITY \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the dome only (never the mod), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
   assert.match(shared, /if \(clouds\) enhancedSky\.cloudsExternal = true;/, 'the dome\'s own decks stand down');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
-  assert.match(read('src/render/volumetricClouds.js'), /jump\(\) \{ this\.profile = null; this\.full = true; this\.shadowFull = true; \}/);
+  const vc = read('src/render/volumetricClouds.js');
+  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.stripe = 0; this\.shadowFull = true; \}/);
+  // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
+  assert.match(vc, /vec3 q = vec3\(p\.x \+ uShift\.x \+ uDrift\.x \+ uShear \* \(p\.y - uBase\), p\.y, p\.z \+ uShift\.y \+ uDrift\.y\);/, 'every sample carries the accumulated recenters');
+  assert.match(vc, /offsetOrigin\(offset\) \{\s*\n\s*this\.shift\[0\] -= offset\[0\]; this\.shift\[1\] -= offset\[2\];\s*\n\s*this\.cam\[0\] \+= offset\[0\]; this\.cam\[1\] \+= offset\[2\];\s*\n\s*if \(this\.origin\) \{ this\.origin\[0\] \+= offset\[0\]; this\.origin\[1\] \+= offset\[2\]; \}/, 'a recenter moves the camera and the square with the world and keeps the map');
+  assert.match(read('src/scenes/world.js'), /player\.offsetOrigin\(r\.offset\);[^\n]*\n\s*sky\.offsetOrigin\(r\.offset\);/, 'the host hands the recenter to the sky');
+  assert.match(shared, /offsetOrigin\(offset\) \{ clouds\?\.offsetOrigin\(offset\); \},/);
+  // a pixel crossing without a recenter shifts the map by whole texels, no re-march
+  assert.match(vc, /gl\.blitFramebuffer\(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl\.COLOR_BUFFER_BIT, gl\.NEAREST\);/);
+  assert.match(vc, /if \(!this\.origin \|\| !this\.shadowMarched\) return null;/, 'the ground samples nothing before the first march');
+  assert.match(vc, /gl\.clearColor\(1, 1, 1, 1\); gl\.clear\(gl\.COLOR_BUFFER_BIT\);/, 'and the targets start all light');
+  assert.doesNotMatch(vc, /this\.full\b/, 'the first sky sweep is striped like every other - no stall');
+  // the renderer's lens-local sprite borrow and the hosts' body deck
+  const rr = read('src/render/renderer.js');
+  assert.match(rr, /cloudShadow: this\._cloudShadow,   \/\/ VC4/, 'the studio borrow saves the deck');
+  assert.match(rr, /if \(saved\.cloudShadow\) \{ this\._cloudShadow = saved\.cloudShadow; this\._csStamp\+\+; \}/, 'and returns it');
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);[^\n]*\n\s*mwViewDrawBody\(/, `${h}: the body takes the frame's deck`);
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');
   assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
   const dome = read('src/render/enhancedSky.js');

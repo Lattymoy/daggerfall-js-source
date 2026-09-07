@@ -31,9 +31,15 @@
 // world's 819.2-metre pixel grid around the camera, each texel the
 // transmittance along the sun's ray from that ground point up through
 // the slab - the projection of the bank overhead, not a noise that
-// resembles it. Every field the two marches read tiles at a multiple
-// of 819.2, so the floating origin's recenters (whole pixels) leave
-// the clouds where they were over the land. The terrain, the models,
+// resembles it. THE FLOATING ORIGIN: a recenter shifts every world
+// position by whole pixels; the controller hands the shift here
+// (offsetOrigin) and both marches sample the field at the ABSOLUTE
+// position (uShift, the shifts accumulated), so the clouds stay where
+// they were over the land, the shadow square moves with the world and
+// its map is kept, not re-marched. When the camera crosses a pixel
+// without a recenter (the fixed city), the map is SHIFTED by whole
+// texels (a blit) and only the uncovered strip is marched, over the
+// next sweep, so a crossing costs no spike. The terrain, the models,
 // the characters and the flats sample the map through one shared GLSL
 // block (renderer.js CLOUD_SHADOW_GLSL); the sun's disc dims through
 // the sky map's own transmittance, so the disc, the light and the
@@ -66,10 +72,10 @@ export const SWEEP_FRAMES = 8;
  *  1 / 0.0038, the scale the terrain's shadow field moved by before
  *  VC4, so the sky drifts at the pace the ground was already keeping. */
 export const WORLD_PER_DRIFT = 1 / 0.0038;
-/** The fields' periods, every one a whole number of pixels so a
- *  recenter cannot move a cloud over the land: the shape volume tiles
- *  every 15 pixels, the detail every 1, the weather's variation every
- *  16, the ambient's mottle every 5. */
+/** The fields' periods, in whole pixels (the shape volume tiles every
+ *  15, the detail every 1, the weather's variation every 16, the
+ *  ambient's mottle every 5) - a recenter is answered by uShift, not
+ *  by the periods; these keep the shadow square's texel grid exact. */
 export const SHAPE_METRES = PIXEL_METRES * 15;
 export const DETAIL_METRES = PIXEL_METRES;
 export const VARIATION_METRES = PIXEL_METRES * 16;
@@ -148,6 +154,7 @@ uniform float uDensity;
 uniform float uFlat;
 uniform float uShear;
 uniform vec2 uDrift;      // world metres
+uniform vec2 uShift;      // the floating origin's recenters, accumulated - added to every position so the field is sampled where it ABSOLUTELY is
 uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
 const float EXT = ${EXTINCTION.toFixed(4)};
 const float SHAPE_M = ${SHAPE_METRES.toFixed(1)};
@@ -163,7 +170,7 @@ float heightGradient(float h) {
 }
 float density(vec3 p, float mip) {
   float h = clamp((p.y - uBase) / max(uTop - uBase, 1.0), 0.0, 1.0);
-  vec3 q = vec3(p.x + uDrift.x + uShear * (p.y - uBase), p.y, p.z + uDrift.y);
+  vec3 q = vec3(p.x + uShift.x + uDrift.x + uShear * (p.y - uBase), p.y, p.z + uShift.y + uDrift.y);
   vec4 s = textureLod(uShape, q / SHAPE_M, mip);
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
   float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * heightGradient(h);
@@ -239,7 +246,7 @@ void main() {
       float light = lightMarch(p);
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
-      float mottle = textureLod(uShape, vec3(p.x + uDrift.x, p.y, p.z + uDrift.y) / MOTTLE_M, 1.0).g;
+      float mottle = textureLod(uShape, vec3(p.x + uShift.x + uDrift.x, p.y, p.z + uShift.y + uDrift.y) / MOTTLE_M, 1.0).g;
       vec3 ambient = mix(uCloudShade, uCloudLit, h) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * uDark * (1.0 - h));
       vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * uDark) + ambient * (1.0 + uFlash * 3.0);
       float Ti = exp(-rho * EXT * ds);
@@ -332,7 +339,7 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDrift', 'uCamXZ'];
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDrift', 'uShift', 'uCamXZ'];
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uDark', 'uFlash', 'uSteps', 'uLightSteps'];
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect'];
@@ -346,6 +353,10 @@ export class VolumetricClouds {
     this.noise = new CloudNoise(gl, viewport);
     this.map = createRenderTarget(gl, this.q.width, this.q.height, { filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' });
     this.shadowMap = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE' });
+    this.shadowScratch = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE' });
+    // both shadow targets start ALL LIGHT (T = 1), a draw path at
+    // construction: nothing samples an unmarched texel as shadow
+    for (const t of [this.shadowMap, this.shadowScratch]) withTarget(gl, t, viewport, () => { gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const vb = gl.createBuffer();
@@ -367,14 +378,26 @@ export class VolumetricClouds {
     this.state = null;        // the dome's skyState
     this.row = null;          // the eased weather row
     this.drift = [0, 0];
+    this.shift = [0, 0];      // the floating origin's recenters, accumulated (metres)
     this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
     this.stripe = 0;
-    this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one)
-    this.full = true;         // the first update marches both maps whole
+    this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner
     this.shadowStripe = 0;
-    this.shadowFull = true;
+    this.shadowFull = true;   // the first march of the shadow map is whole (a quarter of a sky sweep)
+    this.shadowMarched = false;
+    this.pendingShift = null; // a pixel crossing's texel shift, applied on the next update (a draw path)
+  }
+
+  /** The host's recenter: every world position moved by `offset`; the
+   *  field is sampled at the absolute position, so the shift is
+   *  accumulated here, and the shadow square moves with the world - its
+   *  map is the same land, kept. */
+  offsetOrigin(offset) {
+    this.shift[0] -= offset[0]; this.shift[1] -= offset[2];
+    this.cam[0] += offset[0]; this.cam[1] += offset[2];
+    if (this.origin) { this.origin[0] += offset[0]; this.origin[1] += offset[2]; }
   }
 
   /** Per frame, from the controller: the dome's state, the eased row,
@@ -389,19 +412,46 @@ export class VolumetricClouds {
     this.flash = flash;
     if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
     const o = shadowOrigin(this.cam[0], this.cam[1]);
-    if (!this.origin || o[0] !== this.origin[0] || o[1] !== this.origin[1]) { this.origin = o; this.shadowFull = true; }
+    if (!this.origin) { this.origin = o; this.shadowFull = true; }
+    else if (Math.abs(o[0] - this.origin[0]) > 1e-3 || Math.abs(o[1] - this.origin[1]) > 1e-3) {
+      // the camera crossed a pixel: the square moves by whole texels;
+      // the map is shifted on the next update and the new strip marched
+      const texel = SHADOW_EXTENT / this.q.shadow;
+      const dx = Math.round((o[0] - this.origin[0]) / texel), dz = Math.round((o[1] - this.origin[1]) / texel);
+      this.pendingShift = [(this.pendingShift?.[0] ?? 0) + dx, (this.pendingShift?.[1] ?? 0) + dz];
+      this.origin = o;
+    }
+  }
+
+  /** DRAW PATH: move the shadow map by whole texels (a blit into the
+   *  scratch target, the uncovered strips left all light), so a pixel
+   *  crossing keeps the land it already marched. */
+  _shiftShadowMap(dx, dz, viewport) {
+    const gl = this.gl, n = this.q.shadow;
+    if (Math.abs(dx) >= n || Math.abs(dz) >= n) { this.shadowFull = true; this.pendingShift = null; return; }
+    const dst = this.shadowScratch, src = this.shadowMap;
+    withTarget(gl, dst, viewport, () => { gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, src.fbo);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.fbo);
+    // old texel (i, j) is new texel (i - dx, j - dz)
+    const sx0 = Math.max(0, dx), sx1 = Math.min(n, n + dx), sy0 = Math.max(0, dz), sy1 = Math.min(n, n + dz);
+    gl.blitFramebuffer(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+    this.shadowMap = dst; this.shadowScratch = src;
+    this.pendingShift = null;
   }
 
   /** A weather JUMP (a load, a travel landing): the profile is dropped
    *  so the next setState takes the new weather whole, as the row does,
    *  and both maps are marched whole again - the old sky is not eased
    *  into the new one. */
-  jump() { this.profile = null; this.full = true; this.shadowFull = true; }
+  jump() { this.profile = null; this.stripe = 0; this.shadowFull = true; }
 
   /** VC4: what the ground samples - the map and its square, for the
    *  deck the controller hands the renderer. */
   get shadow() {
-    if (!this.origin) return null;
+    if (!this.origin || !this.shadowMarched) return null;
     return { map: this.shadowMap.tex, rect: [this.origin[0], this.origin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT] };
   }
 
@@ -413,6 +463,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, p.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
+    gl.uniform2f(u.uShift, this.shift[0], this.shift[1]);
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);
   }
 
@@ -425,11 +476,12 @@ export class VolumetricClouds {
     const light = cloudLight(s);
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
     gl.bindVertexArray(this.vao);
-    // the sky map
+    if (this.pendingShift) this._shiftShadowMap(this.pendingShift[0], this.pendingShift[1], viewport);
+    // the sky map, a stripe at a time from the first frame on
     {
       const u = this.mu;
-      const rows = this.full ? q.height : Math.ceil(q.height / SWEEP_FRAMES);
-      const y0 = this.full ? 0 : this.stripe * rows;
+      const rows = Math.ceil(q.height / SWEEP_FRAMES);
+      const y0 = this.stripe * rows;
       gl.useProgram(this.marchProgram);
       this._fieldUniforms(u);
       gl.uniform2f(u.uMapSize, q.width, q.height);
@@ -443,11 +495,8 @@ export class VolumetricClouds {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       });
-      if (this.full) { this.full = false; this.sweeps = 1; }
-      else {
-        this.stripe++;
-        if (this.stripe * rows >= q.height) { this.stripe = 0; this.sweeps++; }
-      }
+      this.stripe++;
+      if (this.stripe * rows >= q.height) { this.stripe = 0; this.sweeps++; }
     }
     // the shadow map (VC4)
     {
@@ -465,7 +514,7 @@ export class VolumetricClouds {
         gl.viewport(0, y0, q.shadow, Math.min(rows, q.shadow - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       });
-      if (this.shadowFull) this.shadowFull = false;
+      if (this.shadowFull) { this.shadowFull = false; this.shadowMarched = true; }
       else {
         this.shadowStripe++;
         if (this.shadowStripe * rows >= q.shadow) this.shadowStripe = 0;

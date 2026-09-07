@@ -1382,8 +1382,10 @@ export class Renderer {
       lightDir: this._lightDir, ambient: this._ambient, sunScale: this._sunScale,
       sunColor: this._sunColor, pointLights: this._pointLights, indirect: this._indirect,
       moonScale: this._moonScale,   // EV5: no moonlight on a UI panel
+      cloudShadow: this._cloudShadow,   // VC4: no cloud shadow on lens-local geometry
     } : null;
     if (studio) {
+      if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }   // VC4
       const st = studioLight(view);
       this._lightDir = st.lightDir; this._ambient = st.ambient; this._sunScale = st.sunScale;
       this._sunColor = st.sunColor; this._pointLights = st.pointLights; this._indirect = st.indirect;
@@ -1396,6 +1398,7 @@ export class Renderer {
         this._lightDir = saved.lightDir; this._ambient = saved.ambient; this._sunScale = saved.sunScale;
         this._sunColor = saved.sunColor; this._pointLights = saved.pointLights; this._indirect = saved.indirect;
         this._moonScale = saved.moonScale;
+        if (saved.cloudShadow) { this._cloudShadow = saved.cloudShadow; this._csStamp++; }   // VC4: the frame's deck back
       }
     }
     const cs = this._charSpriteRT();
