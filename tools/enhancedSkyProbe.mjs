@@ -91,9 +91,9 @@ const awaySun = await shoot('cloudy-away-sun', 'hour=8&weather=cloudy&yaw=270&pi
 // different sky - it was byte-identical before.
 const night3 = await shoot('midnight-plus-3h', 'hour=3&weather=sunny&yaw=90&pitch=20&day=3');
 
-// ES1e: the RETRO pass is the default; ?sky=smooth is the modern dome.
-const retro = await shoot('retro', 'hour=6.4&weather=sunny&yaw=90&pitch=10');
-const smooth = await shoot('smooth', 'hour=6.4&weather=sunny&yaw=90&pitch=10&sky=smooth');
+// ES1e: the RETRO pass; VC1: the smooth dome is the DEFAULT and ?sky=retro the door back.
+const retro = await shoot('retro', 'hour=6.4&weather=sunny&yaw=90&pitch=10&sky=retro&clouds=off');   // VC3: the dome's own pixel, without the clouds' smooth composite
+const smooth = await shoot('smooth', 'hour=6.4&weather=sunny&yaw=90&pitch=10&clouds=off');
 
 const overcast = await shoot('overcast', 'hour=12&weather=overcast&yaw=90&pitch=12');
 const storm = await shoot('storm', 'hour=12&weather=thunder&yaw=90&pitch=12');
@@ -103,7 +103,7 @@ check('no page or WebGL errors across the set', errors.length === 0 && [noon, da
 check('every frame draws (none black)', [noon, dawn, dusk, night, overcast, storm, foggy].every((s) => s.mean > 4));
 check('noon is brighter than midnight', noon.mean > night.mean * 3, `${noon.mean.toFixed(0)} vs ${night.mean.toFixed(0)}`);
 check('the sun\'s disc is in the frame looking up at noon', noonUp.brightFrac > 0.0005 && noonUp.max === 255, `${(noonUp.brightFrac * 100).toFixed(3)}% at 255`);
-check('the storm is darker than the overcast, which is darker than the clear noon', storm.mean < overcast.mean && overcast.mean < noon.mean, `${storm.mean.toFixed(0)} < ${overcast.mean.toFixed(0)} < ${noon.mean.toFixed(0)}`);
+check('the storm is darker than the overcast, and neither is the clear noon (VC3: a lid is a bright grey, a storm dark)', storm.mean < overcast.mean * 0.6 && Math.abs(overcast.mean - noon.mean) > 5, `${storm.mean.toFixed(0)} < ${overcast.mean.toFixed(0)} ~ ${noon.mean.toFixed(0)}`);
 check('midnight has points of light (stars)', night.max > 120 && night.mean < 40, `max ${night.max} mean ${night.mean.toFixed(0)}`);
 check('the clouds are lit: under the same cloud, toward the sun is brighter than away from it',
   towardSun.mean > awaySun.mean * 1.06, `${towardSun.mean.toFixed(0)} vs ${awaySun.mean.toFixed(0)}`);
@@ -113,7 +113,7 @@ check('the star field wheels: three hours on is a different sky, still full of s
 // a 24-bit one has dozens. `changes` only has to be fewer: how much
 // fewer depends on the field of view, and ES1f's equi-angular cells are
 // a touch smaller near the horizon than the lat-long ones they replaced.
-check('the retro pass is the DEFAULT: chunkier and far more posterised than ?sky=smooth',
+check('the smooth dome is the DEFAULT (VC1): ?sky=retro is chunkier and far more posterised than it',
   retro.changes < smooth.changes * 0.8 && retro.levels * 4 < smooth.levels,
   `retro ${retro.changes} changes / ${retro.levels} levels vs smooth ${smooth.changes} / ${smooth.levels}`);
 check('Masser is in the frame when the camera is pointed at where the law puts it', moons.warmFrac > 0.0003 && moons.warmFrac < 0.01, `${(moons.warmFrac * 100).toFixed(3)}% of the frame is its warm lit disc`);

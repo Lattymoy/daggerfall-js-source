@@ -132,9 +132,13 @@ export const SUN_RADIUS = 0.032;
 export const RETRO = Object.freeze({ step: Math.PI / 512, levels: 26 });   // step: SKY_ANGLE_PER_PIXEL, the painted sky's own pixel
 
 /** ONE DOOR for the retro decision, so the game and the lab cannot
- *  disagree about what the sky looks like: retro unless `?sky=smooth`. */
+ *  disagree about what the sky looks like. VC1 (2026-09-07, Mac:
+ *  "remove the pixelated sky look"): SMOOTH is the default now and
+ *  `?sky=retro` is the door back to ES1e's angular pixel and its
+ *  posterise; `?sky=smooth` still answers smooth, so every probe that
+ *  spells it keeps its meaning. */
 export const retroFor = (search = globalThis.location?.search ?? '') =>
-  (new URLSearchParams(search).get('sky') === 'smooth' ? null : RETRO);
+  (new URLSearchParams(search).get('sky') === 'retro' ? RETRO : null);
 
 /** The pole the star field turns about: north (+Z here, since the sun's
  *  arc is the XZ east-west line), leaned toward the zenith so the field
@@ -741,9 +745,15 @@ export class EnhancedSkyRenderer {
     this.clearColor = new Float32Array([0.66, 0.78, 0.92]);
     this.fillColor = new Float32Array([0.17, 0.35, 0.72]);
     this.state = null;
-    // ES1e: the retro pass, on by default - Mac's call. `?sky=smooth`
-    // clears it and the modern dome comes back.
-    this.retro = RETRO;
+    // ES1e: the retro pass, on by default - Mac's call; VC1 (2026-09-07,
+    // Mac: "remove the pixelated sky look"): off by default, `?sky=retro`
+    // the door back. The host sets it through retroFor, the one door.
+    this.retro = null;
+    // VC3: with the volumetric clouds on the lane, the dome's own two
+    // noise decks stand down (cover 0 to the shader); the state keeps
+    // the row's cover for every other reader (the moonlight, the deck
+    // the ground takes until VC4 replaces it).
+    this.cloudsExternal = false;
   }
 
   /** The frame's state (skyState). Cheap: numbers into fields. */
@@ -789,7 +799,7 @@ export class EnhancedSkyRenderer {
     gl.uniform4f(u.uMoonB, s.secunda.dir[0], s.secunda.dir[1], s.secunda.dir[2], s.secunda.radius);
     gl.uniform3fv(u.uMoonAColor, s.masser.color); gl.uniform3fv(u.uMoonBColor, s.secunda.color);
     gl.uniform1f(u.uMoonAVis, s.masser.vis); gl.uniform1f(u.uMoonBVis, s.secunda.vis);
-    gl.uniform1f(u.uCloudCover, s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);
+    gl.uniform1f(u.uCloudCover, this.cloudsExternal ? 0 : s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);   // VC3: the decks stand down under the volumetric clouds
     gl.uniform1f(u.uTime, s.seconds); gl.uniform2f(u.uWind, s.wind[0], s.wind[1]);
     gl.uniform2f(u.uDrift, s.drift?.[0] ?? s.wind[0] * s.seconds, s.drift?.[1] ?? s.wind[1] * s.seconds);   // WIND2
     gl.uniform1f(u.uFogMix, this.fogMix);

@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:42-43` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:363` is right, the
+  frame" - no host reads it (the Ledger row `:364` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:752-753`).

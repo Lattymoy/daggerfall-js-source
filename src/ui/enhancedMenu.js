@@ -880,14 +880,14 @@ function paneEnhanced(body) {
     + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
-    + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
+    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
     + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
     + 'driven by the wind, rather than across the screen, arriving and clearing with the front - a '
     + 'sprinkle one day, a downpour the next - instead of switching on and off; and the prototype\u2019s grass, a million '
     + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
-    + 'panorama and its own weather. Takes effect when the world next loads. The sky itself is Dynamic Skies\u2019 '
-    + '(BadLuckBurt and carademono, carried with permission - see the Mods pane and About) while its own switch is on, '
-    + 'and the port\u2019s dome when it is off.'));   // DS1
+    + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
+    + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
+    + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so
   // the outdoors can be checked without a walk to a season). A season, a
