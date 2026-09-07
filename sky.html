@@ -21,6 +21,8 @@
     <label for="yaw">Yaw</label><input id="yaw" type="range" min="-180" max="180" step="1" value="90" /><span class="v" id="yawV"></span>
     <label for="pitch">Pitch</label><input id="pitch" type="range" min="-10" max="80" step="1" value="12" /><span class="v" id="pitchV"></span>
     <label for="fog">Fog mix</label><input id="fog" type="range" min="0" max="1" step="0.01" value="0" /><span class="v" id="fogV"></span>
+    <label for="clouds">Clouds</label><select id="clouds"><option>off</option><option>lo</option><option>default</option><option>hi</option></select><span class="v">VC5: the tier (the <code>?clouds=</code> door; a change reloads)</span>
+    <label for="shadowmap">Shadow map</label><input id="shadowmap" type="checkbox" /><span class="v">VC4: the ground's map as a picture (<code>?shadowmap</code>)</span>
   </div>
   <script type="module" src="/src/tools/skyLab.js"></script>
 </body>

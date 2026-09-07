@@ -155,5 +155,12 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(lab, /if \(!dynamicOn && cloudsDoor !== 'off'\) sky\.cloudsExternal = true;/);
   assert.match(lab, /clouds \?\?= new VolumetricClouds\(gl, Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : 'default', \[0, 0, w, h\]\);/);
   assert.match(lab, /window\.__skyReady = texturesPending === 0 && \(!clouds \|\| clouds\.sweeps > 0\);/, 'the probe waits for the first sweep');
+  // VC5: the panel's clouds row is the URL doors made visible - a change rewrites the query and reloads
+  assert.match(lab, /\$\('clouds'\)\.value = cloudsDoor === 'off' \|\| Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : 'default';/);
+  assert.match(lab, /\$\('shadowmap'\)\.checked = params\.has\('shadowmap'\);/);
+  assert.match(lab, /if \(\$\('clouds'\)\.value === 'default'\) p\.delete\('clouds'\); else p\.set\('clouds', \$\('clouds'\)\.value\);/, 'default is no door');
+  const html = read('sky.html');
+  assert.match(html, /<select id="clouds"><option>off<\/option><option>lo<\/option><option>default<\/option><option>hi<\/option><\/select>/, 'the four doors');
+  assert.match(html, /<input id="shadowmap" type="checkbox" \/>/);
   assert.match(read('test/glstate.test.js'), /'src\/render\/volumetricClouds\.js'/, 'the AUDIT 47 sweep reads the march and the composite');
 });

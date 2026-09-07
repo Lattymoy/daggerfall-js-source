@@ -30,15 +30,15 @@ async function shoot(label, q, whole = false) {
     // a sky shot: the UPPER half only (the lab has no ground); a map shot
     // (`whole`): every texel. Mean, variance, blueness, max, and a coarse
     // luminance grid (every 8th pixel) for a picture-to-picture diff.
-    let sum = 0, sum2 = 0, blue = 0, max = 0, n = 0;
+    let sum = 0, sum2 = 0, blue = 0, max = 0, n = 0, bright = 0;
     const grid = [];
     for (let y = whole ? 0 : h >> 1; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4; const r = px[i], g = px[i + 1], b = px[i + 2], l = (r + g + b) / 3;
-      sum += l; sum2 += l * l; blue += b - r; if (l > max) max = l; n++;
+      sum += l; sum2 += l * l; blue += b - r; if (l > max) max = l; if (l >= 254) bright++; n++;
       if ((x & 7) === 0 && (y & 7) === 0) grid.push(l);
     }
     const mean = sum / n;
-    return { mean, sd: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), blue: blue / n, max, grid, glError: gl.getError() };
+    return { mean, sd: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), blue: blue / n, max, brightFrac: bright / n, grid, glError: gl.getError() };
   }, whole);
   await page.screenshot({ path: `${shots}/vc-${label}.png` });
   console.log(`  ${shots}/vc-${label}.png  mean ${stats.mean.toFixed(1)} sd ${stats.sd.toFixed(1)} blue ${stats.blue.toFixed(1)} max ${stats.max}`);
@@ -56,6 +56,10 @@ const nightSunny = await shoot('midnight-sunny', 'hour=0&weather=sunny&yaw=90&pi
 const nightOvercast = await shoot('midnight-overcast', 'hour=0&weather=overcast&yaw=90&pitch=30&day=3');
 const dusk = await shoot('dusk-cloudy', 'hour=17.8&weather=cloudy&yaw=180&pitch=15');
 const duskOff = await shoot('dusk-cloudy-off', 'hour=17.8&weather=cloudy&yaw=180&pitch=15&clouds=off');
+// the sun's disc: a compact white disc on the bare noon sky; under the overcast lid it DISSOLVES into a broad glow (the forward
+// scatter through the lid - the composite covers the disc as it covers the dome, and the lid toward the sun is its brightest part)
+const noonUpOff = await shoot('noon-up-off', 'hour=12&weather=sunny&yaw=90&pitch=78&clouds=off');
+const overcastUp = await shoot('overcast-noon-up', 'hour=12&weather=overcast&yaw=90&pitch=78');
 // VC4: the ground's shadow map, as a picture - the WHOLE frame is the map, measured whole: mean = the mean transmittance
 const shadowSunny = await shoot('shadow-sunny-noon', 'hour=12&weather=sunny&shadowmap', true);
 const shadowOvercast = await shoot('shadow-overcast-noon', 'hour=12&weather=overcast&shadowmap', true);
@@ -73,6 +77,7 @@ check('an overcast noon is a lid: a bright grey well above the bare overcast dom
 check('and the lid is grey, not blown out (brighter than a blue sky, and never white)', overcast.mean < 215 && overcast.max < 250, `mean ${overcast.mean.toFixed(0)} max ${overcast.max}`);
 check('the storm is darker than the overcast', storm.mean < overcast.mean * 0.85, `${storm.mean.toFixed(0)} vs ${overcast.mean.toFixed(0)}`);
 check('the clouds are lit: toward the sun is brighter than away from it', cloudyToward.mean > cloudyAway.mean * 1.05, `${cloudyToward.mean.toFixed(0)} vs ${cloudyAway.mean.toFixed(0)}`);
+check('the sun\'s disc dissolves behind the lid: a compact disc on the bare noon sky, a glow many times its size under the overcast', noonUpOff.brightFrac > 0.0005 && noonUpOff.brightFrac < 0.02 && overcastUp.brightFrac > noonUpOff.brightFrac * 3, `white: bare ${(noonUpOff.brightFrac * 100).toFixed(2)}% of the frame vs lid ${(overcastUp.brightFrac * 100).toFixed(2)}%`);
 check('an overcast midnight hides the stars a clear one shows', nightOvercast.max < nightSunny.max * 0.7, `max ${nightOvercast.max} vs ${nightSunny.max}`);
 check('a cloudy dusk is warm-lit: the clouds are WARMER than the bare dusk dome, and not black', dusk.blue < duskOff.blue - 2 && dusk.mean > 20, `warmth ${(-dusk.blue).toFixed(1)} vs bare ${(-duskOff.blue).toFixed(1)}; mean ${dusk.mean.toFixed(0)}`);
 check('VC4: a sunny noon\'s shadow map is mostly lit with dark patches under the clouds', shadowSunny.mean > 120 && shadowSunny.mean < 250 && shadowSunny.sd > 15, `mean ${shadowSunny.mean.toFixed(0)} sd ${shadowSunny.sd.toFixed(0)}`);

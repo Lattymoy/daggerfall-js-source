@@ -39,6 +39,14 @@ const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
 const still = params.has('still');
+// VC5: the panel's clouds row is the URL doors made visible - the tier
+// select and the shadow-map box rewrite the query and reload, so the
+// sky is rebuilt whole (a tier is a set of targets, not a live knob).
+$('clouds').value = cloudsDoor === 'off' || Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default';
+$('shadowmap').checked = params.has('shadowmap');
+const reloadWith = (mutate) => { const p = new URLSearchParams(location.search); mutate(p); location.search = p.toString(); };
+$('clouds').addEventListener('change', () => reloadWith((p) => { if ($('clouds').value === 'default') p.delete('clouds'); else p.set('clouds', $('clouds').value); }));
+$('shadowmap').addEventListener('change', () => reloadWith((p) => { if ($('shadowmap').checked) p.set('shadowmap', ''); else p.delete('shadowmap'); }));
 // VC2: `?noise=shape|detail` shows a z-slice of a cloud noise volume in
 // place of the sky - `z=` the slice (0..1), `ch=` r|g|b|a|rgb, `tiles=`
 // how many times the volume tiles across the frame (a seam would show).
