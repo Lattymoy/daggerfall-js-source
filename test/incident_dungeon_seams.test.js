@@ -98,7 +98,12 @@ test('seams 4: the texture cache keys the opaque upload apart, and the mesh draw
   const r = recordingRenderer(log);
   r.uploadTexture(7, 3, px);
   r.uploadTexture(7, 3, px, { opaque: true });
-  assert.ok(r.textures.has('7_3') && r.textures.has('7_3#opaque'), 'two materials, two keys (DFU caches per alphaIndex)');
+  // AUDIT 61 F27: OUR device, not a DFU law - DFU's key is
+  // (archive, record, frame) + group with no alphaIndex term
+  // (MaterialReader.cs:961) and its mesh shader never clips, so a
+  // collision there is invisible. Here one GL texture cannot carry
+  // both alpha treatments, so the two uploads must key apart.
+  assert.ok(r.textures.has('7_3') && r.textures.has('7_3#opaque'), 'two materials, two keys (one GL texture cannot carry both alpha treatments)');
   assert.notEqual(r.textures.get('7_3'), r.textures.get('7_3#opaque'));
   const mesh = { vao: {}, subMeshes: [{ textureArchive: 7, textureRecord: 3, primitiveCount: 2, startIndex: 0 }] };
   r.drawMesh(mesh, identity());

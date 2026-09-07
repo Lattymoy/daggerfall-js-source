@@ -878,8 +878,8 @@ room behind showed through. Now: `uploadRecord(archive, record, {
 opaque })` decodes at -1 for a mesh and 0 for a flat, every sub-mesh
 site (the pipeline's model and part uploads, `texRemap`'s climate
 swap, `interiorContext`'s swap) asks for the opaque material, the
-renderer keys it `archive_record#opaque` (DFU caches materials per
-alphaIndex) and `_drawMeshBundle` looks there first with a fall-back
+renderer keys it `archive_record#opaque` (OUR device, not a DFU law -
+see AUDIT 61 F27) and `_drawMeshBundle` looks there first with a fall-back
 to the cutout upload, and the model fragment shader carries no alpha
 clip. The billboard shader keeps its discard.
 
@@ -965,3 +965,31 @@ minified icon on a small canvas would have sampled a box-filtered
 level. The door takes `mips: false`, the renderer keys that variant
 `#ui` beside the bare (mipped) key of the same record, `releaseTexture`
 frees every variant, and the two icon drawers ask for and read it.
+
+### AUDIT 61 F27 (2026-09-07) - the `#opaque` key's rationale cited a DFU law that does not exist
+
+The comment at `renderer.js`'s `uploadTexture` key and the pin message
+in `test/incident_dungeon_seams.test.js` both said "DFU caches
+materials per alphaIndex". It does not. `MaterialReader`'s cache key is
+`MakeTextureKey(archive, record, frame)` plus a key GROUP and nothing
+else (`MaterialReader.cs:961`, the hit taken at `:387-392`);
+`alphaIndex` never enters the key, and it is the FIRST requester that
+fixes both the alpha treatment and the shader every later asker
+receives (`:409`, `:429-432`). A mesh (`alphaIndex` -1, `:352`) and a
+non-atlas flat (`alphaIndex` 0, `DaggerfallBillboard.cs:289-296`)
+therefore share ONE entry in DFU. It is invisible there because
+`GetColor32` keeps RGB and only zeroes the alpha
+(`BaseImageFile.cs:257-260`) while `DaggerfallDefault.shader:24` is
+`Opaque` with no clip, and because the ordinary flat rides the separate
+atlas key group (`:553`).
+
+The `#opaque` variant key itself stands and nothing behavioural
+changed: OUR two shaders DO read that alpha channel differently - the
+billboard shader discards on it - so one GL texture cannot carry both
+treatments and the -1 and 0 uploads must key apart. What changed is the
+citation: the comment and the pin message now name the real mechanism,
+and the arc's own account of seam 1 above is corrected with them. The
+file header's item 4 already described the port-side collision
+correctly and is unchanged. Every assertion in the seams pin (two keys,
+distinct textures, the mesh's preference for `#opaque`, the fall-back
+to the bare key) is kept as it was.

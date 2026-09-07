@@ -389,9 +389,14 @@ export const CLASS_ID = Object.freeze({ Texture2D: 28, TextAsset: 49, AssetBundl
 export const TEXTURE_FORMAT = Object.freeze({ Alpha8: 1, RGB24: 3, RGBA32: 4, ARGB32: 5, DXT1: 10, DXT5: 12 });
 
 /**
- * Decode a parsed Texture2D to RGBA8, TOP ROW FIRST (Unity stores its
- * rows bottom-up; every consumer here wants the raster order a PNG
- * decodes to). Mip 0 only.
+ * Decode a parsed Texture2D to RGBA8, TOP ROW FIRST - the raster order
+ * a PNG decodes to, since Unity stores its rows bottom-up and this
+ * reader reverses them. That order is the reader's contract for any
+ * bundle consumer, NOT a claim about what its callers want: the port
+ * uploads textures in getColor32 (bottom-up) order, so a caller that
+ * feeds one of these to the renderer converts at its own door - see
+ * `toColor32Order` in `systems/seasonsIliacBayAssets.js`, which is
+ * where the seasons mod's textures are turned back over. Mip 0 only.
  * @param {object} tex the Texture2D value
  * @param {(path:string, offset:number, size:number) => Uint8Array} resource
  *   resolves the bundle's `.resS` streams for a texture that streams

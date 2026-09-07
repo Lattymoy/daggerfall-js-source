@@ -290,11 +290,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the one clock (the climate season above has two); `recordCount` is
   // the vanilla atlas's record count, read off TEXTURE.5xx; `refresh` is
   // RefreshLoadedNatureBatches, answered with the re-skin sweep
-  // tickSeason already runs for the winter flip - but only when a pixel
-  // stands on an OLDER install than the current one, because DFU's
-  // refresh re-applies every batch for free and this host's is a
-  // teardown. Inert until `seasonsReady` says the player supplied the
-  // mod (a bundle or its folders through the texture pick).
+  // tickSeason already runs for the winter flip - but only for a pixel
+  // on an OLDER install that ALSO carries a batch on an archive the mod
+  // has ever managed (AUDIT 61 F4 - that archive filter is DFU's own,
+  // vanillaAtlasByArchive; its refresh is free, this host's is a
+  // teardown). Inert until `seasonsReady` says the player has the mod.
   let _fourSeason = seasonValue(dateFromClassicMinutes(worldMinutes()));
   let seasonsActive = false;
   let seasonsReady = Promise.resolve(false);
@@ -308,7 +308,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     load: (prefix) => loadSeasonsTextures(prefix),
     refresh: () => {
       for (const p of built.values()) {
-        if (p._seasonsGen !== seasons.generation) { _reskinPending = true; return; }
+        if (p._seasonsGen !== seasons.generation && p.batches.some((b) => seasons.manages(b.archive))) { _reskinPending = true; return; }
       }
     },
     warn: (m) => console.warn(m),
