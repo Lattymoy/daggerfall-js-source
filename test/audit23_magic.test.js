@@ -53,7 +53,13 @@ test('AUDIT 23 magic-2: a wall hit explodes an AreaAtRange payload at the impact
   const branch = src.slice(i, src.indexOf('m.pos[0] += m.dir[0] * step', i));
   assert.ok(branch.includes("m.spell?.rangeType === 4"), 'the wall branch tests AreaAtRange');
   assert.ok(branch.includes('explodeAt(impact'), 'and explodes at the impact point');
-  assert.ok(branch.includes('m.pos[0] + m.dir[0] * hitWall'), 'impact = pos + dir * hit distance');
+  // ROAD-H tail (review): along the UNIT ray, which is what the cast
+  // was given - the collider answers in its ray's own parameter units,
+  // so `m.dir * hitWall` scaled the point by |dir| a second time.
+  // DaggerfallMissile.cs:347 stops the missile at
+  // `direction.normalized * hitInfo.distance`.
+  assert.ok(branch.includes('m.pos[0] + _unit[0] * hitWall'), 'impact = pos + the UNIT direction * hit distance');
+  assert.ok(!branch.includes('m.pos[0] + m.dir[0] * hitWall'), 'and not the raw, possibly crouch-dipped vector');
 });
 
 test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () => {

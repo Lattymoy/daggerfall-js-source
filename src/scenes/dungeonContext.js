@@ -101,7 +101,7 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
-  missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
+  missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)
 } from '../systems/spellcast.js';
@@ -2116,8 +2116,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // along flight (DFU ShootBow / WeaponManager verbatim shape). On a
   // landed enemy arrow, ONE recoverable Arrow joins the TARGET'S
   // items (BowDamage's classic charm). Crouch pass-over pends.
-  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null) {
-    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null) {   // ROAD-H tail: aimFoe - BowDamage's non-player arm (EnemyAttack.cs:141-143), the foe this shaft was loosed AT
+    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, aimFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
   // S16: the enemy cast - "enemies always cast ready spell instantly
   // once queued" (EntityEffectManager.Update): spend the S10 cost
@@ -2554,12 +2554,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
-      const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
-      if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
+      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
+      const hitWall = collider.raycast(m.pos, _unit, reach);
+      if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
-        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
+        const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell?.rangeType === 4) {
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster, { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
@@ -2585,13 +2586,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (m.fromPlayer) {
           for (const f of foes) {
             if (f.dead) continue;
-            const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the foe's own capsule centre
-            if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6559,
-              // exterior.js:3864 and worldModes.js:5251 already ran;
+              // playerArrowHitFoe is the one copy world.js:7370,
+              // exterior.js:3865 and worldModes.js:5252 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2625,15 +2625,40 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               break;
             }
           }
-        } else if (m.aimFoe && !m.aimFoe.dead) {
+        } else {
           // MT-iv: BowDamage's OWN two-arm split (EnemyAttack.cs:
           // 134-148) - `if (Target == player) ApplyDamageToPlayer else
           // ApplyDamageToNonPlayer(weapon, direction, bowAttack: true)`.
           // Without this arm an arrow AIMED at another foe would fly
           // through it and land nothing, which is worse than the
           // pre-MT behaviour of never aiming there at all.
-          const af = m.aimFoe;
-          if (missileHitsFoe(m.pos, af)) {
+          //
+          // ROAD-H tail (review): that split is the DAMAGE gate, not
+          // the CONTACT gate, and the two were one `else if` chain -
+          // so a shaft loosed at another foe was TRANSPARENT to the
+          // player and to every bystander. An enemy missile casts with
+          // the DEFAULT layer mask (:250-253, which keeps the Player
+          // layer a player's own missile drops at :263), so :337 meets
+          // whatever collider is first IN SPACE and DoCollision
+          // destroys the shaft there (:388-396); only then does
+          // AssignBowDamageToTarget ask whether the struck entity is
+          // `caster.GetComponent<EnemySenses>().Target` (:669) before
+          // it calls BowDamage. A shaft that meets the wrong body
+          // STOPS on it, pays nothing and recovers no Arrow. The
+          // player is tested first, as the shared flight's own arm
+          // does (combat/arrowFlight.js's player test precedes its foe
+          // sweep); the shooter cannot feather itself on the release
+          // frame.
+          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          let struckFoe = null;
+          if (!struckPlayer) {
+            for (const f of foes) {
+              if (f.dead || f === m.shooterFoe) continue;
+              if (missileHitsFoe(m.pos, f)) { struckFoe = f; break; }
+            }
+          }
+          if (struckFoe && struckFoe === m.aimFoe) {
+            const af = m.aimFoe;
             if (m.shooterFoe && foeDeps) {
               applyDamageToNonPlayer(m.shooterFoe, af, {
                 weapon: m.weapon, direction: m.dir, bowAttack: true, rolls: Math.random,
@@ -2655,9 +2680,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // player was the only thing an arrow could reach.
             addItem(af.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             retireMissile(m);
-          }
-        } else if (playerFeet) {
-          if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {   // ...and the contact test is the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          } else if (struckPlayer && !m.aimFoe) {
             const shooter = m.shooterFoe;
             // C2-slice (AUDIT 23 combat-10): an arrow reaching the
             // player rides the same ApplyDamageToPlayer the melee
@@ -2694,6 +2717,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
             retireMissile(m);
+          } else if (struckPlayer || struckFoe) {
+            retireMissile(m);   // :669 refused the damage - the shaft is spent on the body it met, and no Arrow is recovered (:145-147 rides BowDamage, which never ran)
           }
         }
         continue;
@@ -3760,12 +3785,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // frame, and would prefer the arrow. (Found by the wave-35
           // re-read.)
           if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }   // MT-iv: gated on a live TARGET (:136-137), not the player alone
-          else if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
+          else if (_tgt && !_fParalyzed && f.mobile.shootArrow) {   // ROAD-H tail: gated on a live TARGET like the melee arm - BowDamage returns at `senses.Target == null` (EnemyAttack.cs:136-137)
             f.mobile.shootArrow = false;
             const from = foeDeps.enemyArrowOrigin(f.ai);   // ROAD-H H1: GetAimPosition's ENEMY ARROW arm - the caster's TRANSFORM plus forward*0.6 plus height/3 (DaggerfallMissile.cs:528-539), through the ONE law in enemyTargets so the two pools' loose points cannot drift apart the way their aim points had. `feet + 1.2` was a guess in the player's scale with no forward lean at all
-            const aim = [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]];   // AUDIT 62 F21 (review): the player's TRANSFORM at its LIVE height (PlayerHeightChanger.cs:477-478), the same aim point the spell arm takes (DaggerfallMissile.cs:571-581)
-            const dir = foeDeps.arrowAimDirection(foeDeps.enemyTransformPoint(f.ai), aim, { targetIsPlayer: true, playerCrouching: !!_senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin - DFU's two functions do not share an origin - and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585)
-            fireArrow(from, dir, f.entity.weapon, false, f);
+            const _at = f.ai.target ?? foeDeps.PLAYER_TARGET, _atPlayer = foeDeps.isPlayerTarget(_at);   // ROAD-H tail: BowDamage's two-arm split (EnemyAttack.cs:139-143) - the shaft flies at the SELECTED target, as the exterior pool's has since MT-ii
+            const aim = foeDeps.targetAimPoint(_at, _pf, playerHeight);   // AUDIT 62 F21 (review): the target's TRANSFORM - the player at its LIVE height (PlayerHeightChanger.cs:477-478), a foe at feet + centreOffset - the same aim point the spell arm takes (DaggerfallMissile.cs:571-581)
+            const dir = foeDeps.arrowAimDirection(foeDeps.enemyTransformPoint(f.ai), aim, { targetIsPlayer: _atPlayer, playerCrouching: !!_senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin - DFU's two functions do not share an origin - and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585)
+            fireArrow(from, dir, f.entity.weapon, false, f, _atPlayer ? null : _at);   // the missile REMEMBERS its foe target so the impact fork runs BowDamage's non-player arm
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
         }

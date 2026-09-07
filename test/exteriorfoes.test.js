@@ -90,7 +90,10 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   // X2-slice: the arrow seam - the loose rides the C13 flight with
   // the enemy meta + ArrowShoot from the archer, and the impact runs
   // the shared damage member with the tally/poison/recoverable-arrow
-  assert.ok(s.includes("arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon })"),
+  // ROAD-H tail (review): ...and the shaft carries `aimFoe`, the foe the
+  // archer selected (null for the player) - the flight's damage gate
+  // (DaggerfallMissile.cs:669) reads it at contact.
+  assert.ok(s.includes("arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe })"),
     'the shoot frame looses a real hunting arrow');
   assert.ok(s.includes('audio.play3d(SOUND.ArrowShoot, from'), 'the loose rings from the archer');
   const imp = s.indexOf('onPlayerHit: (m) =>');

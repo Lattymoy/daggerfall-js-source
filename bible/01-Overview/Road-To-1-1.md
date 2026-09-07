@@ -431,20 +431,25 @@ squashed one commit per lane.
   `SetBinding` in either order) and replaced a whitespace-matching
   shape test with a structural one.
 
-Left, by the lanes' own decision and recorded on the arc pages:
-`combat/arrowFlight.js` still tests an enemy shaft against the player as
-a POINT (the contact law, one line per site onto `missileHitsCapsule`);
-a crouch-dipped, non-unit direction lengthens DFU's wall-check reach by
-0.125% of a step and the port's does not; the dungeon archer aims at the
-player unconditionally where the exterior pool aims at its selected
-target (`BowDamage`'s two-arm split, older than this wave); the M-TEX
-door's non-Albedo maps have no consumer yet; and nothing here has been
-seen in a browser - the loose PNG landing the right way up on a flat and
-a tap on hardware are the two surfaces that want eyes.
+Left by the lanes and closed the same day as THE TAIL (one solo pass,
+`bible/05-Combat/Combat.md`): the four point-contact sites the capsule
+law had not reached (the host arrow flight's player and foe tests, the
+player's shafts and spells against a foe in the dungeon and `hostMagic`)
+read `missileHitsCapsule` now, the flight takes the player's live
+height; the three flights cast for `displacement.magnitude +
+ColliderRadius` along the unit ray through one `missileReach`, so a
+crouch-dipped direction reaches as DFU's does; and the dungeon archer
+takes `BowDamage`'s two-arm split - it aims at its selected target,
+keys the dip on whether that is the player, and its missile remembers a
+foe target for the impact fork. Still left: the M-TEX door's non-Albedo
+maps have no consumer yet; and nothing here has been seen in a browser -
+the loose PNG landing the right way up on a flat and a tap on hardware
+are the two surfaces that want eyes.
 
 Pins: `test/roadh_missiles.test.js` (12), `test/roadh_seasons_tex.test.js`
-(5), `test/roadh_residue.test.js` (8); every one checked dead under a
-mutation that reverts its law. Open flags: 7.
+(5), `test/roadh_residue.test.js` (8), `test/roadh_tail.test.js` (4);
+every one checked dead under a mutation that reverts its law. Open
+flags: 7.
 
 ## The standing watches (not wave work)
 

@@ -89,7 +89,14 @@ test('MT-iv: BowDamage forks too - an arrow aimed at a foe LANDS on it, and the 
   // worse than never aiming there.
   assert.match(DG, /m\.aimFoe = \(foeDeps && ct && !foeDeps\.isPlayerTarget\(ct\)\) \? ct : null;/,
     'the missile REMEMBERS its victim at fire time');
-  assert.match(DG, /\} else if \(m\.aimFoe && !m\.aimFoe\.dead\) \{/, 'and the impact forks on it');
+  // ROAD-H tail (review): the impact still forks on that memory, but
+  // as BowDamage's DAMAGE gate rather than as the contact gate - the
+  // shaft stops on whatever body it meets (DaggerfallMissile.cs:337,
+  // :388-396) and only pays when the struck body IS the remembered
+  // target (`targetEntities[0] == senses.Target`, :669). The SPELL
+  // missile's arm below is unchanged.
+  assert.match(DG, /if \(struckFoe && struckFoe === m\.aimFoe\) \{/, 'and the impact forks on it');
+  assert.match(DG, /if \(m\.aimFoe && !m\.aimFoe\.dead\) \{\n\s+const af = m\.aimFoe;/, 'as the enemy spell missile\'s arm still does');
   assert.match(DG, /bowAttack: true/, 'through ApplyDamageToNonPlayer with the bow flag (:143)');
   assert.match(DG, /addItem\(af\.entity\.items \?\?= \[\], \{ group: 'Weapons', name: 'Arrow'/,
     ':145-147 - the recovered Arrow goes into the TARGET\'s items, not the player\'s');

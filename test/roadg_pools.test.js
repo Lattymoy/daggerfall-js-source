@@ -182,8 +182,8 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
-  // (arrowFlight.js:203-209), and `onAttackFromPlayer`, which it calls
-  // unconditionally at :195 because that is where WeaponManager.cs:630
+  // (arrowFlight.js:219-225), and `onAttackFromPlayer`, which it calls
+  // unconditionally at :228 because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own
   // `handleAttackFromPlayer` had already falsified. DFU makes no such
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1008), so every host can reach it.
+  // (exteriorFoes.js:1009), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');

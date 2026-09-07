@@ -1178,8 +1178,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // C13/X2-slice: the shoot frame looses a REAL arrow through this
     // host's own flight, ringing ArrowShoot from the archer. The watch
     // carries no bow arm; an encounter foe does.
-    onArrow: (from, dir, f) => {
-      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+    onArrow: (from, dir, f, aimFoe = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player
+      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });
       audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
     },
     // X3-slice: casters - the S16 lists assign once the SPELLS.STD map
@@ -3835,6 +3835,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
       playerFeet: walkMode ? player.pos : null,
+      playerHeight: player.height,   // ROAD-H tail: the contact is the LIVE capsule (crouch 0.9, ride 2.6)
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);

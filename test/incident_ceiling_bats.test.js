@@ -200,11 +200,31 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
   // sphereOverlapsCapsule, which reads the foe's own feet AND height and
   // is a strictly stronger form of the law this count stands for. The
   // remaining site is pickTouchTarget's mid-capsule.
-  for (const [f, n] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1], ['src/combat/arrowFlight.js', 1], ['src/scenes/hostMagic.js', 1], ['src/systems/spellcast.js', 1]]) {
+  // ROAD-H tail (2026-09-07, REVIEW): this was ONE count over an
+  // alternation whose first branch was the POINT law itself, so a site
+  // converted back from `missileHitsFoe(...)` to the capsule-centre
+  // hypot still matched it - the count was satisfied by either law and
+  // therefore pinned neither. (`missileHitsCapsule\(` was loose the
+  // other way too: it counted the PLAYER-capsule arms and spellcast's
+  // own two declarations.) It is TWO counts now, in two shapes that
+  // cannot stand in for each other: the reads that are legitimately
+  // still a CENTRE (pickTouchTarget's mid-capsule, the swing's canSee -
+  // the `const c = [...]` form), and the missile CONTACT sites, counted
+  // only where they read a FOE (`missileHitsFoe(m.pos`, plus the shared
+  // flight's foe arm `missileHitsCapsule(m.pos, t.feet`). Revert any
+  // contact site to a point and its file drops below its number.
+  const CENTRE = /const c = \[[fg]\.ai\.feet\[0\], [fg]\.ai\.feet\[1\] \+ \([fg]\.ai\.height \?\? (?:CAPSULE_HEIGHT|1\.8)\) \/ 2, [fg]\.ai\.feet\[2\]\]/g;
+  const FOE_CONTACT = /missileHitsFoe\(m\.pos|missileHitsCapsule\(m\.pos, t\.feet/g;
+  for (const [f, centres, contacts] of [
+    ['src/scenes/dungeonContext.js', 1, 3], ['src/scenes/exteriorFoes.js', 1, 0],
+    ['src/scenes/cityGuards.js', 1, 0], ['src/combat/arrowFlight.js', 0, 1],
+    ['src/scenes/hostMagic.js', 0, 1], ['src/systems/spellcast.js', 1, 0],
+  ]) {
     const s = src(f);
     assert.doesNotMatch(s, /const c = \[\w+\.ai\.feet\[0\], \w+\.ai\.feet\[1\] \+ 0\.9, /, `${f}: the swing's canSee reads no 0.9 (the player's half-capsule) on a foe`);
     assert.doesNotMatch(s, /f\.ai\.feet\[1\] \+ 0\.9 - m\.pos\[1\]/, `${f}: no missile contact at the player's half-capsule on a foe`);
-    assert.ok([...s.matchAll(/(?:[fg]\.ai|t\.ref\?\.ai\?)\.height \?\? (?:CAPSULE_HEIGHT|1\.8)\) \/ 2/g)].length >= n, `${f}: at least ${n} hit site(s) read the foe's capsule`);
+    assert.ok([...s.matchAll(CENTRE)].length >= centres, `${f}: at least ${centres} read(s) of the foe's OWN capsule centre`);
+    assert.ok([...s.matchAll(FOE_CONTACT)].length >= contacts, `${f}: at least ${contacts} missile contact site(s) read the FOE's capsule (DaggerfallMissile.cs:339), not a point`);
   }
   // the dungeon save: stamped, and a pre-fix flyer entry judged
   assert.match(src('src/systems/spellcast.js'),

@@ -498,6 +498,9 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
 const EX = 'src/scenes/exterior.js';
 const WO = 'src/scenes/world.js';
+const WM = 'src/scenes/worldModes.js';   // ROAD-H tail (review)
+const DC = 'src/scenes/dungeonContext.js';   // ROAD-H tail (review)
+const AF = 'src/combat/arrowFlight.js';   // ROAD-H tail (review)
 const SOURCE_CITES = [
   // ═══ ECV1 review (2026-09-07): THE POOL CITES ═══
   //
@@ -544,8 +547,49 @@ const SOURCE_CITES = [
     EX, /createChargenFlow\(fetchBytes\)\.then/],
   ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2184\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
-  ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:5251/,
+  ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
+  // ROAD-H tail (review): THE OTHER TWO THIRDS OF THAT SENTENCE. It
+  // names THREE hosts and only the exterior number was read, so the
+  // `world.js` half had been stale since before this file existed - it
+  // pointed at a WorldTime/PauseWhileOpen note, 800 lines from the
+  // host's `onPlayerArrowHitFoe` - and the ROAD-H tail's own
+  // re-resolution pass caught the exterior one and walked past both
+  // siblings. All three halves are read now, the shape AUDIT 62's
+  // review already had to apply to pauseWindow/restWindow.
+  // ROAD-H tail (review): ...and the same half-pinned shape in
+  // roadg_pools' header, whose sentence names the `dmg > 0` fork and the
+  // unconditional call beside it. The round re-resolved the fork's range
+  // and left `:195` naming a `backstabChance:` field. Both halves, plus
+  // the sibling sentence in cityGuards that already names the call.
+  ['test/roadg_pools.test.js', /\(arrowFlight\.js:(\d+)-\d+\), and `onAttackFromPlayer`/,
+    AF, /^ {2}if \(dmg > 0\) \{$/],
+  ['test/roadg_pools.test.js', /unconditionally at :(\d+) because that is where WeaponManager/,
+    AF, /^ {2}onAttackFromPlayer\?\.\(foe\);$/],
+  ['src/scenes/cityGuards.js', /calls unconditionally \(arrowFlight\.js:(\d+)\)/,
+    AF, /^ {2}onAttackFromPlayer\?\.\(foe\);$/],
+  ['src/scenes/dungeonContext.js', /playerArrowHitFoe is the one copy world\.js:(\d+),/,
+    WO, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
+  ['src/scenes/dungeonContext.js', /exterior\.js:\d+ and worldModes\.js:(\d+) already ran/,
+    WM, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
+  // ROAD-H tail (review): THE LIST PICKER'S THREE ROUTERS. The sentence
+  // names the three hosts that mount a bare picker and pass a
+  // right-button BOOLEAN in the font slot; all three numbers were stale
+  // together, and the tail bumped the dungeon's by one - a mechanical
+  // +1 preserves staleness exactly as a wrong number moved by the right
+  // offset does. Re-resolved by content and read as a set.
+  ['src/ui/listPicker.js', /\(townTalk\.js:(\d+), worldModes\.js:\d+, dungeonContext\.js:\d+ /,
+    'src/scenes/townTalk.js', /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],
+  ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:(\d+), dungeonContext\.js:\d+ /,
+    WM, /interiorOverlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],
+  ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:\d+, dungeonContext\.js:(\d+) /,
+    DC, /else activeOverlay\.click\(vx, vy, right, middle\);/],
+  // ...and the wizard's hover route, whose dungeon and worldModes
+  // numbers this round's one-line insert into worldModes moved.
+  ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
+    DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
+  ['src/systems/chargenSession.js', /dungeon\.js:406 and worldModes\.js:(\d+) both feed/,
+    WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1384/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:790\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:1002-1004/,
