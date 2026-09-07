@@ -83,6 +83,8 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const clouds = enhancedSky && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, cloudsDoor in CLOUD_QUALITY \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the dome only (never the mod), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
   assert.match(shared, /if \(clouds\) enhancedSky\.cloudsExternal = true;/, 'the dome\'s own decks stand down');
+  assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
+  assert.match(read('src/render/volumetricClouds.js'), /jump\(\) \{ this\.profile = null; this\.full = true; this\.shadowFull = true; \}/);
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');
   assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
   const dome = read('src/render/enhancedSky.js');

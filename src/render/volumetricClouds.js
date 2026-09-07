@@ -392,6 +392,12 @@ export class VolumetricClouds {
     if (!this.origin || o[0] !== this.origin[0] || o[1] !== this.origin[1]) { this.origin = o; this.shadowFull = true; }
   }
 
+  /** A weather JUMP (a load, a travel landing): the profile is dropped
+   *  so the next setState takes the new weather whole, as the row does,
+   *  and both maps are marched whole again - the old sky is not eased
+   *  into the new one. */
+  jump() { this.profile = null; this.full = true; this.shadowFull = true; }
+
   /** VC4: what the ground samples - the map and its square, for the
    *  deck the controller hands the renderer. */
   get shadow() {

@@ -370,6 +370,7 @@ export function createSkyController(gl, params) {
       weatherRowNow = null;
       windModel.jump();
       dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
+      clouds?.jump();   // VC3: the profile takes the new weather whole, both maps re-marched whole
     },
     /** ES1d: how much the world's KEY light is taken by the cloud that
      *  is in front of the sun this frame - the number the shader uses to

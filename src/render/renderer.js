@@ -1860,6 +1860,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginFrame(proj, view, lightDir) {
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0;
+    // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
+    // that wants one sets it after this (the exterior hosts do, per
+    // pixel); an interior or a dungeon, which never does, gets none, and
+    // never inherits the last exterior frame's map onto its walls.
+    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted.
     this._lastProgram = null;
@@ -2512,7 +2517,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
    *  amount} - or null. Numbers only; it binds nothing. */
-  setCloudShadow(d) { this._cloudShadow = d ?? null; this._csStamp++; }
+  setCloudShadow(d) { d = d ?? null; if (d !== this._cloudShadow) { this._cloudShadow = d; this._csStamp++; } }   // VC4: the stamp moves only when the deck does (the hosts hand the same object per pixel)
 
   /** VC4: bind the deck's shadow map (or nothing) on unit 7 for one
    *  program, once per setCloudShadow - a draw-path step. */
