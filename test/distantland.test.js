@@ -228,9 +228,13 @@ test('EV4: the distance haze follows the Land View Distance; weather does not', 
 
 test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buffers', () => {
   const world = readFileSync('src/scenes/world.js', 'utf8');
-  // both fogForWeather call sites route through the distance scale
-  assert.equal((world.match(/scaleFogForDistance\(fogForWeather\(/g) || []).length, 2,
-    'both weather-fog reads ride the live distance');
+  // both fogForWeather call sites route through the distance scale -
+  // through ONE helper since AUDIT 61 (DS1): the scale is DFU's own
+  // row's law and does not stretch Dynamic Skies' authored rows
+  assert.equal((world.match(/= weatherFogRow\(/g) || []).length, 2,
+    'both weather-fog reads ride the one helper');
+  assert.match(world, /const weatherFogRow = \(w\) => \(sky\.dynamic \? fogForWeather\(w, sky\.fogSettings\) : scaleFogForDistance\(fogForWeather\(w\), fogDistance\)\);/,
+    'the helper rides the live distance for DFU\'s rows and installs the mod\'s verbatim');
   // the far ring: strided build, its own index set, enhanced-gated,
   // and a surviving pixel re-strides when the walk reclassifies it
   assert.ok(world.includes('TERRAIN_INDICES_LOD'), 'the strided index set exists');

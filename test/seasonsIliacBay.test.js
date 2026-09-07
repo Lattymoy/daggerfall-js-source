@@ -593,6 +593,7 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
     assert.match(src, /new SeasonHelper\(\{/, `${name} builds the helper`);
     assert.match(src, /seasons\??\.lookup\(archive, record\)/, `${name} asks the cache per flat`);
     assert.match(src, /renderer\.createBillboardBatch\(archive, rkey, sib\.size, centers\)/, `${name} draws the seasonal record at the mod's size`);
+    assert.match(src, /renderer\.uploadTexture\(archive, rkey, \{ width: img\.width, height: img\.height, colors: img\.data \}, \{ mips: false, variant: '' \}\);/, `${name} uploads it WITHOUT a mip chain under the plain batch key (AUDIT 61: the mod's atlas is mipChain:false, Point)`);
     assert.match(src, /modSetting\('seasons-iliac-bay', 'Enabled'\)/, `${name} honours the switch`);
     assert.match(src, /await seasonsInstalled\(\)/, `${name} is inert without the player's copy`);
     assert.match(src, /seasonValue\(dateFromClassicMinutes\(/, `${name} reads DFU's four-valued season`);
@@ -604,7 +605,9 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(world, /seasons\.onPostFastTravel\(\)/, 'DaggerfallTravelPopUp.OnPostFastTravel at the teleport');
   assert.match(world, /seasons\.onUpdateTerrainsEnd\(\)/, 'StreamingWorld.OnUpdateTerrainsEnd once the destination stands');
   assert.match(world, /seasons\.tick\(\)/, 'RefreshSeasonAfterLoad the frame after');
-  assert.match(world, /_seasonsGen: seasons\?\.generation/, 'a pixel remembers the install it was built under');
+  assert.match(world, /const seasonsGen = seasons\?\.generation \?\? 0;/, 'AUDIT 61: the install is read where the lookups read it');
+  assert.match(world, /_seasonsGen: seasonsGen,/, 'a pixel remembers the install it was built under');
+  assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskinPending = true;/, 'AUDIT 61: a pixel published across an install asks for its own re-skin');
   assert.match(world, /p\._seasonsGen !== seasons\.generation\) \{ _reskinPending = true/, 'refresh tears down only what stands on an older install');
   // the pick and the boot registration
   const ds = read('src/scenes/dataSource.js');

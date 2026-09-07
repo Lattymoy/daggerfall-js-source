@@ -396,6 +396,28 @@ test('DS1 runtime: Init, the pending weather applied a frame late, the fog colou
   assert.equal(d.lightningListening, false);
   d.setInside(false);
   assert.equal(d.lightningListening, true);
+  // AUDIT 61 - THE LISTENER IS A MULTICAST DELEGATE, kept as the mod
+  // keeps it: the interior transition nulls the coroutine and drops one
+  // subscription, the exterior transition re-subscribes without
+  // restarting the coroutine, so the NEXT OnWeatherChange that takes its
+  // branch under Thunder (the day-part machine forces one every frame)
+  // subscribes a second time - two handlers, two rolls per one-shot;
+  // leaving Thunder removes ONE, and the other stays for the session.
+  assert.equal(d.lightningSubscriptions, 1);
+  assert.equal(d.lightningCoroutine, false, 'the exterior transition re-arms the listener, not the coroutine');
+  d.forceWeatherUpdate = true; d.pendingWeather = false; d.onWeatherChange('thunder'); d.applyPendingWeatherSettings();
+  assert.equal(d.lightningSubscriptions, 2, 'the next OnWeatherChange subscribes again');
+  let rolls = 0;
+  const startFlash = d.lightningFlash.startFlash.bind(d.lightningFlash);
+  d.lightningFlash.startFlash = (p) => { rolls++; return startFlash(p); };
+  d.onAmbientEffect([1, 2, 3]);
+  assert.equal(rolls, 2, 'two delegate entries, two independent rolls');
+  assert.equal(d.onAmbientEffect([1, 2, 3], false), undefined, 'a clip that is not the storm\'s rolls nothing (the port\'s front plays the front\'s word)');
+  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'sunny', seconds: 3.5, dt: 1 / 60, weatherScale: 1 });
+  assert.equal(d.lightningSubscriptions, 1, 'the else arm removes ONE subscription - the other leaks');
+  assert.equal(d.lightningListening, true);
+  rolls = 0; d.onAmbientEffect([1, 2, 3]);
+  assert.equal(rolls, 1, '...and rolls on every outdoor one-shot under any weather, as the mod does');
   // a load: weatherJump forces the loaded weather through
   d.weatherJump('snow');
   assert.equal(d.pendingWeather, true);
@@ -455,21 +477,44 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
     'the mod’s own switch, under the lane; ?sky=dynamic forces it, any other door the dome');
   assert.match(shared, /setLightCurve\(dynamic \? dynamic\.lightCurve : null\);/, 'SetLightCurve for the world while it is the sky');
   assert.match(shared, /fogSettings: dynamic\?\.fogSettings,/);
-  assert.match(shared, /onAmbientEffect\(playerPos\) \{ dynamic\?\.onAmbientEffect\(playerPos\); \}/);
+  assert.match(shared, /onAmbientEffect\(playerPos, storm = true\) \{ dynamic\?\.onAmbientEffect\(playerPos, storm\); \}/);
+  assert.match(shared, /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \}/, 'AUDIT 61: the transition seam on the controller');
+  assert.match(shared, /dynamicMoonState\(dynamic, minuteOfDay, weatherRowNow\.cover\)/, 'AUDIT 61: the eased cover stands in for the mod’s clouds');
+  assert.match(shared, /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons');
+  assert.match(read('src/render/dynamicSkiesRenderer.js'), /gl\.uniform3f\(u\._CloudTopColorBoost, 0, 0, 0\)/, 'AUDIT 61: the top boost is inert, as the readme says it is');
   assert.match(shared, /lightningLight\(\) \{ return dynamic\?\.lightningLight \?\? null; \}/);
   assert.match(shared, /dynamic\?\.weatherJump\(\);/, 'a load forces the mod’s re-apply');
-  assert.match(shared, /weatherScale: weatherSunlightScale\(weatherName, winter\)/, '_LightColor0 takes WeatherManager’s ScaleFactor');
+  assert.match(shared, /weatherScale: extra\?\.sun \?\? weatherSunlightScale\(weatherName, winter\)/, '_LightColor0 takes WeatherManager’s ScaleFactor - the host’s own (AUDIT 61)');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
-    assert.match(s, /fogForWeather\(weather, sky\.fogSettings\)/, `${host}: the boot fog over the mod’s table`);
-    assert.match(s, /fogForWeather\(w, sky\.fogSettings\)/, `${host}: and every change`);
+    if (host.endsWith('world.js')) {
+      assert.match(s, /let weatherFog = weatherFogRow\(weather\);/, `${host}: the boot fog over the mod’s table (through the EV4 row helper, AUDIT 61)`);
+      assert.match(s, /weatherFog = weatherFogRow\(w\);/, `${host}: and every change`);
+    } else {
+      assert.match(s, /fogForWeather\(weather, sky\.fogSettings\)/, `${host}: the boot fog over the mod’s table`);
+      assert.match(s, /fogForWeather\(w, sky\.fogSettings\)/, `${host}: and every change`);
+    }
     assert.match(s, /const fogColor = sky\.fogColorFor\(fogNow\);/, `${host}: the fog colour through the controller`);
-    assert.match(s, /ambience\.onPlayEffect = \(clip, playerPos\) => sky\.onAmbientEffect\(playerPos\);/, `${host}: OnPlayEffect reaches the listener`);
+    assert.match(s, /ambience\.onPlayEffect = \(clip, playerPos\) => sky\.onAmbientEffect\(playerPos, ambientWord === 'thunder'\);/, `${host}: OnPlayEffect reaches the listener, with the word the ambience plays`);
+    assert.match(s, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;/, `${host}: the ambient word is the preset’s`);
+    assert.match(s, /if \(!skyInside\) \{ skyInside = true; sky\.setInside\(true\); \}/, `${host}: InteriorTransitionEvent on the modal edge (AUDIT 61)`);
+    assert.match(s, /if \(skyInside\) \{ skyInside = false; sky\.setInside\(false\); \}/, `${host}: ExteriorTransitionEvent before the sky’s frame`);
+    assert.match(s, /isEnhanced\(\) && !sky\.dynamic \? strobe : 1/, `${host}: one lightning under the mod - the strobe stands down (AUDIT 61)`);
+    assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
     assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\)\);/, `${host}: the flash on the light channel`);
     assert.match(s, /if \(sky\.pixelSnow\) precipOpts\.pixelSnow = sky\.pixelSnow;/, `${host}: the pixel snow`);
     // the flash composes AFTER the lanterns are stored
     assert.ok(s.lastIndexOf('renderer.setPointLights(') < s.indexOf('renderer.setFlashLight(sky.lightningLight())'), `${host}: setFlashLight follows setPointLights`);
   }
+  // AUDIT 61: the mod's fog rows are installed verbatim - EV4's distance
+  // scale is DFU's row's law - and the far ring's ramp starts where the
+  // row starts
+  const world = read('src/scenes/world.js');
+  assert.match(world, /sky\.dynamic \? fogForWeather\(w, sky\.fogSettings\) : scaleFogForDistance\(fogForWeather\(w\), fogDistance\)/);
+  assert.match(world, /fogStart: fogNow\.start \?\? 0, fogEnd: fogNow\.end,/);
+  const ring = read('src/render/farRing.js');
+  assert.match(ring, /uniform float uFogStart;/);
+  assert.match(ring, /clamp\(\(vDist - uFogStart\) \/ max\(uFogEnd - uFogStart, 1\.0\), 0\.0, 1\.0\)/);
   // the classic pass knows nothing of it
   assert.doesNotMatch(read('src/render/skyRenderer.js'), /dynamic/i);
   // the lab has the door
@@ -538,7 +583,7 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
         assert.equal(def.default, k.Value, `${k.Name} default`);
         if (k.Min !== undefined) { assert.equal(def.min, k.Min); assert.equal(def.max, k.Max); assert.ok(isIntKey(def)); }
         else assert.ok(!isIntKey(def));
-        assert.ok(def.description.startsWith(k.Description), `${k.Name} description is the mod’s`);
+        assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
       }
     }
     assert.equal(modSetting('dynamic-skies', 'Enabled'), true, 'on by being installed');

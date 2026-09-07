@@ -63,8 +63,8 @@ test('AUDIT 39 #14: the storm strobe is enhanced-skin only in both hosts', () =>
   // on SunlightManager's key light.
   for (const host of HOSTS) {
     const text = read(host);
-    assert.match(text, /const flash = params\.has\('flashtest'\) \? 2 : \(isEnhanced\(\) \? strobe : 1\);/,
-      `${host}: the flash multiplier is not gated on the skin`);
+    assert.match(text, /const flash = params\.has\('flashtest'\) \? 2 : \(isEnhanced\(\) && !sky\.dynamic \? strobe : 1\);/,
+      `${host}: the flash multiplier is not gated on the skin (and, AUDIT 61, stands down under the Dynamic Skies mod - one lightning)`);
     // The player still ticks on both skins - it is the clip schedule
     // the Audio arc reads, not just the strobe.
     // WX2a (AUDIT 57): the tick is `strobeNow` now - the player still

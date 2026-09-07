@@ -295,7 +295,12 @@ export function createSkyController(gl, params) {
     },
     /** DS1: AmbientEffectsPlayer.OnPlayEffect reaches the mod's
      *  LightningFlashListener here (a no-op under any other sky). */
-    onAmbientEffect(playerPos) { dynamic?.onAmbientEffect(playerPos); },
+    onAmbientEffect(playerPos, storm = true) { dynamic?.onAmbientEffect(playerPos, storm); },
+    /** DS1: PlayerEnterExit's interior/dungeon transitions reach the
+     *  mod here (InteriorTransitionEvent / ExteriorTransitionEvent: the
+     *  lightning listener and the flash in flight) - a no-op under any
+     *  other sky. AUDIT 61: it had no caller. */
+    setInside(inside) { dynamic?.setInside(inside); },
     /** DS1: the LightningFlash point light this frame, or null. */
     lightningLight() { return dynamic?.lightningLight ?? null; },
     /** DS1: the pixel-snow replacement (InitSnow) when the mod's switch
@@ -434,14 +439,20 @@ export function createSkyController(gl, params) {
           // front, so its presets switch as the sim's do. The ease and
           // the wind above still run for the ground's readers.
           const nowMinutes = extra?.classicMinutes ?? 0;   // the host's carrier, a view on the one clock
+          // AUDIT 61: ONE SetSunlightScale. The host's `weatherSun` is
+          // WeatherManager.ScaleFactor with the winter arm read off the
+          // host's own season - the ?season pin and the fast-travel
+          // latch included - and the skybox's _LightColor0 takes the
+          // SAME number the world's key light takes, as in DFU. The
+          // calendar recompute stays for a caller that passes no `sun`.
           const winter = seasonValue(dateFromClassicMinutes(nowMinutes)) === SEASONS.Winter;
           const st = dynamic.tick({
             minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt,
-            weatherScale: weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
+            weatherScale: extra?.sun ?? weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
           });
           dynamicSky.setState(st);
           dynamicDeck = { cover: weatherRowNow.cover, soft: Math.max(1e-3, weatherRowNow.soft), wind: weatherRowNow.wind, time: seconds, drift: driftXZ, amount: 0 };
-          dynamicMoons = dynamicMoonState(dynamic, minuteOfDay);
+          dynamicMoons = dynamicMoonState(dynamic, minuteOfDay, weatherRowNow.cover);
           return;
         }
         enhancedSky.setState(skyState({
@@ -501,14 +512,19 @@ export function createSkyController(gl, params) {
  *  is "up, and not in daylight" on the shader's own `day` term
  *  (Remap(sunY, NightEnd..NightStart)), its colour the preset's. Night
  *  is the port's law, as for the enhanced dome. */
-function dynamicMoonState(dyn, minuteOfDay) {
+function dynamicMoonState(dyn, minuteOfDay, cover = 0) {
   const mat = dyn.mat;
   const sunY = dyn._sunDir?.[1] ?? 0;
   const span = mat._NightStartHeight - mat._NightEndHeight;
   const day = span === 0 ? (sunY >= mat._NightStartHeight ? 1 : 0) : Math.max(0, Math.min(1, (sunY - mat._NightEndHeight) / span));
+  // AUDIT 61: the dome dims its moonlight by the clouds (`1 - cover *
+  // 0.35`, enhancedSky.js); the mod's clouds are textures the CPU
+  // cannot sample, so the port's eased cover row - the same number the
+  // ground's readers take - stands in for them.
+  const cloud = 1 - cover * 0.35;
   const moon = (which, phase, color) => {
     const dir = dyn.moonDirection(which);
-    return { dir, vis: dir[1] > 0 ? 1 - day : 0, phase, color: [color[0], color[1], color[2]] };
+    return { dir, vis: dir[1] > 0 ? (1 - day) * cloud : 0, phase, color: [color[0], color[1], color[2]] };
   };
   return {
     night: isNight(minuteOfDay),

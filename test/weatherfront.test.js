@@ -252,7 +252,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
     assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow && params\.get\('front'\) !== 'off';/, `${host}: the front rides the enhanced sky, and ?front=off is its kill switch`);
     assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along`);
     assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, weatherTerms\(\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);
-    assert.match(h, /ambience\.setPreset\(presetForExterior\(enhancedFront \? soundWeather\(fx, weather\) : weather, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim`);
+    assert.match(h, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;[^\n]*\n\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim (AUDIT 61: the word is named once, for the mod's lightning listener too)`);
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
     assert.match(h, /if \(precip\.enhanced\) \{\s*\n\s*precip\.intensity = fx\.intensity;/, `${host}: the intensity is set inside the enhanced branch only`);
     assert.match(h, /precip\.draw\(precipShown, proj, view/, `${host}: the draw takes the shown mode`);
@@ -372,7 +372,7 @@ test('AUDIT 57 F1 + F2 + F3 (hosts): the flash waits for the storm, ?front=off i
     assert.match(h, /let seenJump = weatherJumpStamp\(\);/, `${host}: the boot's stamp is the baseline - a boot is never a jump`);
     assert.match(h, /const lightningShown = !enhancedFront \|\| fx\.shown === 'storm' \? lightning : null;/, `${host}: the flash follows the shown storm under the front and the player on classic`);
     assert.match(h, /const strobeNow = lightning \? lightning\.tick\(dt\) : 1;/, `${host}: the player ticks every frame regardless`);
-    assert.match(h, /const flash = params\.has\('flashtest'\) \? 2 : \(isEnhanced\(\) \? strobe : 1\);/, `${host}: ?flashtest still pins the flash on`);
+    assert.match(h, /const flash = params\.has\('flashtest'\) \? 2 : \(isEnhanced\(\) && !sky\.dynamic \? strobe : 1\);/, `${host}: ?flashtest still pins the flash on`);
     assert.match(h, /params\.get\('front'\) !== 'off'/, `${host}: the kill switch`);
   }
 });
