@@ -72,9 +72,17 @@
 //
 // So the route's vertical is not asked for. A corner takes the FOE'S OWN y
 // (level along the corridor, which for a walker is a no-op and for a
-// flyer is the only honest guess) and the goal takes the GOAL'S real y,
-// the predicted target position's, which is precisely the y classic's
-// destination carries. The route bends x and z; nothing else changes.
+// flyer is the only honest guess) and the goal takes the y CLASSIC'S OWN
+// LAW builds from the predicted target position - EnemyAI._aimY, the
+// clear-path arm's vertical (EnemyMotor.cs:541-544, :559-564): the
+// target's transform lift, the flyer/levitator/slaughterfish face bump,
+// the grounded foe's own-height delta, converted back to feet once.
+// AUDIT 61 F1: this leg took the predicted position's RAW FEET, which is
+// classic's answer only when a foe's capsule equals its idle sprite -
+// a bat (capsule halved and floored at 1.6 under a 1.8 sprite) aimed
+// 0.9 m low and, at floor level, never climbed at all, because the
+// flyer's floor-lift clause only arms on a NEGATIVE heading.
+// The route bends x and z; nothing else changes.
 //
 // ── ADAPTATION 4: THE NUDGE RUNS THE FALL CHECK ─────────────────
 //
@@ -249,8 +257,9 @@ export class EnhancedEnemyAI extends EnemyAI {
     let wp = this.path[this.pathI];
     while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
     const last = this.pathI === this.path.length - 1;
-    // adaptation 3: the goal's y is the goal's, a corner's is the foe's
-    const y = last ? this._navGoal(targetFeet)[1] : this.feet[1];
+    // adaptation 3: the goal's y is classic's own aim at the goal
+    // (EnemyAI._aimY, the clear-path arm's vertical), a corner's is the foe's
+    const y = last ? this._aimY(this._navGoal(targetFeet)[1]) : this.feet[1];
     const dx = wp[0] - this.feet[0], dz = wp[2] - this.feet[2];
     const d = Math.hypot(dx, dz);
     const reach = this.stopDistance + PROJECT_MARGIN;

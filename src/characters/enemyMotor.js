@@ -1159,6 +1159,41 @@ export class EnemyAI {
     return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
   }
 
+  /**
+   * GetDestination's VERTICAL for the clear-path/shooter arm
+   * (EnemyMotor.cs:541-544 + :559-564), from the target's PREDICTED FEET
+   * y to the feet-space y the motor steers at, in one place.
+   *
+   * AUDIT 61 F1: a subclass whose route ends at the same point this arm
+   * heads for must carry the same three terms - the target's transform
+   * lift, the flyer/levitator/slaughterfish face bump, and the grounded
+   * foe's own-height delta - and the one conversion back to feet. The
+   * one in the tree took the raw predicted feet instead, which is only
+   * the same number when a foe's capsule equals its idle sprite: a bat
+   * aimed 0.9 low, a rat 0.3. One method both callers share is the fix,
+   * so the two cannot drift apart again.
+   */
+  _aimY(predictedFeetY) {
+    const tHeight = this._targetHeight();
+    // senses.PredictedTargetPos is the target's TRANSFORM (:541); the
+    // port stores feet, so the target's own centre offset lifts it.
+    let y = predictedFeetY + this._targetCentreOffset();
+    // Flyers, levitators and the slaughterfish aim for the target FACE
+    // (:543-544) - `targetController.height * 0.5f` on top of the
+    // target's centre. The predicate is DFU's own `flies ||
+    // IsLevitating || (swims && Slaughterfish)` and is read LIVE -
+    // `levitating` changes with the effect. A plain swimmer takes the
+    // centre as it is (DFU's no-add case).
+    if (this.flies || this.levitating || this.isFaceAimingSwimmer) y += tHeight / 2;
+    // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
+    // enemies' vector can aim up towards the target, which could
+    // interfere with distance-to-target calculations". The delta is
+    // `(targetController.height - originalHeight) / 2`: the TARGET's
+    // capsule against this foe's own (MT-ii: a rat hunting a giant).
+    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) y -= (tHeight - this.height) / 2;
+    return y - this.centreOffset;   // transform-space -> feet-space, once
+  }
+
   _getDestination(playerFeet) {
     const c = this._centre();
     const tHeight = this._targetHeight();
@@ -1189,47 +1224,41 @@ export class EnemyAI {
     // half, and the grounded arm's (tHeight - height)/2 was applied to
     // a feet-space point (zero while every foe wore 1.8, wrong the day
     // a rat's 1.6 or a giant's 2.6 arrived).
-    const tc = tHeight / 2;                      // targetController.height * 0.5f - the face bump and the grounded delta
     const tOff = this._targetCentreOffset();     // the target's TRANSFORM above its feet (0.9 for the player; a foe's idleH/2)
     const predictedCentre = [predicted[0], predicted[1] + tOff, predicted[2]];
-    let dest;
     // ...or the foe is a shooter with the target in sight, in which case
     // it heads for the target whether the path is clear or not (:539-540
     // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
     if (this._clearPathToPosition(predictedCentre, prevDist)
       || (this.inSight && (this.hasBowAttack || this.hasMagickaToCast()))) {
-      dest = [predicted[0], predicted[1] + tOff, predicted[2]];   // senses.PredictedTargetPos, the target's transform
-      // Flyers, levitators and the slaughterfish aim for the target FACE
-      // (:543-544) - `targetController.height * 0.5f` on top of the
-      // target's centre. The predicate is DFU's own `flies ||
-      // IsLevitating || (swims && Slaughterfish)` and is read LIVE -
-      // `levitating` changes with the effect. A plain swimmer takes the
-      // centre as it is (DFU's no-add case).
-      if (this.flies || this.levitating || this.isFaceAimingSwimmer) dest[1] += tc;
       this.searchMult = 0;
-    } else {
-      // The SEARCH (:549-557): walk past the last known position along
-      // the direction the target was last moving, further each pass, and
-      // only while the search position is still inside the stop distance.
-      // LastKnownTargetPos is the target's transform (its centre).
-      const diff = this.lastPositionDiff;
-      const dl = Math.hypot(diff[0], diff[1], diff[2]);
-      const n = dl > 1e-9 ? [diff[0] / dl, diff[1] / dl, diff[2] / dl] : [0, 0, 0];
-      const base = this.lastKnownTargetPos ?? playerFeet;
-      const search = [
-        base[0] + n[0] * this.searchMult,
-        base[1] + tOff + n[1] * this.searchMult,
-        base[2] + n[2] * this.searchMult,
-      ];
-      const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);   // (searchPosition - transform.position).magnitude
-      if (this.searchMult <= SEARCH_MULT_MAX && sd <= this.stopDistance) this.searchMult++;
-      dest = search;
+      // senses.PredictedTargetPos, with this arm's whole vertical -
+      // the transform lift, the face bump and the grounded delta - in
+      // _aimY, the one place a subclass can share it from.
+      this.destination = [predicted[0], this._aimY(predicted[1]), predicted[2]];
+      return;
     }
+    // The SEARCH (:549-557): walk past the last known position along
+    // the direction the target was last moving, further each pass, and
+    // only while the search position is still inside the stop distance.
+    // LastKnownTargetPos is the target's transform (its centre).
+    const diff = this.lastPositionDiff;
+    const dl = Math.hypot(diff[0], diff[1], diff[2]);
+    const n = dl > 1e-9 ? [diff[0] / dl, diff[1] / dl, diff[2] / dl] : [0, 0, 0];
+    const base = this.lastKnownTargetPos ?? playerFeet;
+    const dest = [
+      base[0] + n[0] * this.searchMult,
+      base[1] + tOff + n[1] * this.searchMult,
+      base[2] + n[2] * this.searchMult,
+    ];
+    const sd = Math.hypot(dest[0] - c[0], dest[1] - c[1], dest[2] - c[2]);   // (searchPosition - transform.position).magnitude
+    if (this.searchMult <= SEARCH_MULT_MAX && sd <= this.stopDistance) this.searchMult++;
     // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
     // enemies' vector can aim up towards the target, which could
     // interfere with distance-to-target calculations". The delta is
     // `(targetController.height - originalHeight) / 2`: the TARGET's
     // capsule against this foe's own (MT-ii: a rat hunting a giant).
+    // The same clause _aimY carries for the arm above.
     if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) dest[1] -= (tHeight - this.height) / 2;
     this.destination = [dest[0], dest[1] - this.centreOffset, dest[2]];   // transform-space -> feet-space, once
   }
