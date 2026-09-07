@@ -12,6 +12,44 @@ import { EnhancedEnemyAI, makeNavWorld } from '../src/ai/enhancedMotor.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
+// ROAD-H H7a (2026-09-07): THE WALK THAT READS A WHOLE FUNCTION.
+//
+// F2's pin below used to read `destroy()` as `src.slice(at, at + 3000)`.
+// The function is ~3770 characters, so the window stopped four fifths
+// of the way through the body it claims to read, and every line the
+// teardown gains moves more of the tail out of view - a pin that reads
+// less of its subject each time the subject grows. The three ordering
+// assertions all happen to sit in the first 1800 characters TODAY;
+// nothing kept them there, and `indexOf` on a truncated body answers
+// -1, which reads as "the code moved" whether it moved or not.
+//
+// Read the body by BALANCED BRACES instead. This is audit24_wave37's
+// `statementAt` walk (the same idiom audit24_wave46 and g3_heldorder
+// use), copied with its `decomment`: only comments are stripped, since
+// this port's prose carries brackets constantly and a gate that trips
+// on a sentence is noise, not a gate. Offsets into the returned body
+// are the same offsets `slice(at, ...)` gave, so the "outside the
+// 500-char window" assertion keeps its meaning exactly.
+const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+
+function statementAt(src, needle) {
+  const lines = src.split('\n');
+  const start = lines.findIndex((l) => l.includes(needle));
+  assert.ok(start >= 0, `no line matching ${needle}`);
+  let depth = 0;
+  const out = [];
+  for (let i = start; i < lines.length; i++) {
+    out.push(lines[i]);
+    for (const ch of decomment(lines[i])) {
+      if (ch === '(' || ch === '{' || ch === '[') depth++;
+      else if (ch === ')' || ch === '}' || ch === ']') depth--;
+    }
+    if (depth <= 0) return out.join('\n');
+  }
+  assert.fail(`unbalanced statement at ${needle}`);
+  return '';
+}
+
 test('AUDIT 59 F1: the nav worker is spelled the way Vite bundles it - the literal terrainGenClient.js records', () => {
   const client = read('src/ai/navClient.js');
   // the one spelling the bundler turns into a worker chunk; anything
@@ -46,17 +84,26 @@ test('AUDIT 59 F1: a worker double is constructed through WorkerCtor and the bak
 
 test('AUDIT 59 F2: the dungeon context disposes its nav client on destroy, first thing after the dead latch', () => {
   const src = read('src/scenes/dungeonContext.js');
-  const at = src.indexOf('    destroy() {');
-  assert.ok(at > 0);
-  const body = src.slice(at, at + 3000);
+  // ROAD-H H7a: the WHOLE body, brace-balanced - see the walk above.
+  const body = statementAt(src, '    destroy() {');
+  assert.match(body, /^ {4}destroy\(\) \{\n/, 'the walk starts at the method, not at a mention of it');
+  assert.match(body, /\n {4}\},?$/, 'and ends on its own closing brace');
   const latch = body.indexOf('_ctxDead = true;');
   const dispose = body.indexOf('enhancedNav.client?.dispose();');
+  const batch = body.indexOf('renderer.destroyBatch(b)');
+  const nulled = body.indexOf('enhancedNav.client = null;');
+  // every landmark is really INSIDE the body now - with the fixed
+  // window an `indexOf` of -1 was indistinguishable from "it moved"
+  for (const [what, n] of [['the latch', latch], ['the dispose', dispose],
+    ['the batch frees', batch], ['the null', nulled]]) {
+    assert.ok(n >= 0, `${what} is not in destroy()'s body at all`);
+  }
   assert.ok(latch > 0 && dispose > latch, 'the worker leaves with the context, after NT1\'s latch');
   // ...and OUTSIDE the 500-char window two older pins read after the
   // latch (automap A1, PX21c) - the dispose sits with the foe frees
   assert.ok(dispose > 500, 'below the latch window the teardown pins watch');
-  assert.ok(dispose < body.indexOf('renderer.destroyBatch(b)'), 'before the batch frees');
-  assert.ok(body.includes('enhancedNav.client = null;'), 'and the handle is dropped');
+  assert.ok(dispose < batch, 'before the batch frees');
+  assert.ok(nulled > dispose, 'and the handle is dropped, right after');
   // one client per context, built once when the switch is on
   assert.equal((src.match(/new NavClient\(\)/g) ?? []).length, 1);
 });

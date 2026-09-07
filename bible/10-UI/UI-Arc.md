@@ -9704,9 +9704,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite names `world.js:4488`,
-the first of the host's TWO identical `act === 'Rest'` arms; the second
-at `:4456` is unreachable and is left for a lane that owns that ladder.)
+the other half went stale unnoticed. (The rest cite named `world.js:4488`,
+the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
+deleted the second and the cite is `world.js:4494` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9798,3 +9798,180 @@ the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
 deliberately take the vy-only form, for the reason stated above - DFU's
 `Update` reads `dragDistance.y` only - and the pages now say so.
+
+## ROAD-H H5 - THE DEAD REST ARM (2026-09-07)
+
+AUDIT 62's residue list: "`world.js`'s second, unreachable
+`act === 'Rest'` arm (two byte-identical arms in the same block, the
+second dead). The cite names the one that fires; deleting the duplicate
+shifts every cite into the ladder and belongs to a residue sweep."
+
+The streaming world host's keydown ladder carried the arm twice,
+fourteen lines apart in one block:
+
+```js
+if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
+```
+
+The first stood under a `V5: Rest` comment (the dead binding above
+ground, and CanRest's town half that came with it); the second under an
+`S40: Rest` comment naming the BINDING and the DISPATCH. Every arm in
+these ladders `return`s, so the second could never run - and because
+the two comments say different things, the live arm carried only half
+of what had been written about it while the reader's eye landed on the
+dead one.
+
+The second arm is deleted and its comment folded into the first, whole:
+`R` is Rest (`InputManager.cs:997`, `SetupDefaults`), `GameManager`'s
+dispatch (`GameManager.cs:534-537`) is a link in an `else if` chain with
+no scene gate of its own, and this ladder's gate is the U43 flag still
+standing over these lines. Nothing said was lost.
+
+DFU tests `InputManager.Actions.Rest` exactly ONCE in the whole of
+`GameManager` - which is why a second arm in the port's ladder modelled
+nothing at all. The four hosts were checked: the two outdoor hosts
+(`world.js`, `exterior.js`) each carry one arm; the interior and dungeon
+hosts reach the action through `routeAction`'s `case 'Rest'`
+(`ui/input.js`), which is one arm by construction. `test/roadh_residue.test.js`
+sweeps the WHOLE of `src/` for the class - no file may write the same
+`if (act === '...')` statement twice - because one duplicate is a typo
+and the shape is what rots.
+
+The delete moved the ladder: `world.js`'s Rest arm is `:4494` and the
+Escape arm `:4510` now. The three pinned cites that name them
+(`ui/restWindow.js`, `ui/pauseWindow.js`, and the hudLarge withdrawal's
+activation-ray cite at `:6744`) were re-resolved with the change; the
+rest of the shifted cites are listed in the lane's notes for the
+integrator's provenance pass.
+
+## ROAD-H H8 - THE TOUCH CODE-LIFT GUARD (2026-09-07)
+
+A TI1 DEPARTURE, and it is recorded here rather than as a reference law
+because DFU has no touch layer: there is no C# line this restores. What
+there IS, is an invariant the port's own SYNTHESIS creates and a
+keyboard cannot break - one physical key cannot be pressed while it is
+already held - and AUDIT 62 F8's review already wrote half of it.
+
+F8's review gave the HELD controls the rule: "the held set is the UNION
+of what the live controls want, and a release subtracts only its own"
+(`upCode(code, liveNeeds())` at the jump button, the sheathe button and
+`setStickKey`). AUDIT 62 closed with the other half on its residue list,
+as a lane observation outside the findings: "a button and a stick axis
+bound to the same code can lift each other's press".
+
+Read against the layer, that turned out to be two different things.
+
+**The HELD/HELD case was already closed** by F8's review, and it holds
+for a DIRECT shared code and not only for the combo share F8 pinned.
+`codeFor` follows `GetKey`'s fallthrough to the secondary dict
+(`InputManager.cs:1084`), so an action with no primary row resolves to
+whatever the secondary holds.
+
+One code standing in BOTH dicts at once is a state `SetBinding` cannot
+produce, and refuses on purpose: it steals the code out of the OTHER
+dict first -
+
+```csharp
+var dict = primary ? actionKeyDict : secondaryActionKeyDict;
+var alt  = primary ? secondaryActionKeyDict : actionKeyDict;
+if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
+```
+
+- and for a SECONDARY write the "other" dict IS the primary, so a
+secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
+the reverse order deletes Jump's secondary row by the same line. The
+port carries it at `inputActions.js:268-269`. Either order collapses the
+pair.
+
+The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
+is a raw `dict.Add` behind a SAME-dict check and nothing else -
+
+```csharp
+if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
+    dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
+```
+
+- ported at `inputActions.js:385-395`, whose own comment already said
+"Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
+puts Jump on the run key as a SECONDARY, with the primary `Space` spent
+on something else, loads exactly as written; and it SURVIVES the
+autofill pass that follows the load (`:445-448`), because
+`TestSetBinding` skips a default whose code the dict already holds
+(`InputManager.cs:1405-1422`). That is the store the pin builds, through
+`loadKeyBinds` + `resetDefaults(store, true)` - the port's own startup
+pair - rather than by writing the two dicts by hand.
+
+Driven both ways (button released while the stick holds the code; stick
+released while the button holds it) the code stays down. Pinned, because
+the case was named and never exercised.
+
+**The MOMENTARY case was open.** A tap does not go through `up()` at
+all - `tap`/`tapAction` called `synth('keyup', ...)` directly - so it
+never met the guard. The collision is ordinary, not an exotic rebind:
+
+- the MENU button presses the Escape ACTION, and a combo Escape
+  (`'ShiftLeft+F10'`) decomposes to `ShiftLeft` + `F10` (`GetCombo`,
+  `InputManager.cs:1195-1207`) over Run's DEFAULT modifier. The controls
+  window flags no duplicate, because there is none.
+- the DIAL's `Tab` is in no binding table at all (`inputActions`
+  `ACTIONS`), so `setBinding` cannot steal it back from a stick axis
+  rebound onto `Tab`.
+
+Tapping either sent the host `keyup:ShiftLeft` / `keyup:Tab` out from
+under the running stick, and `setStickKey`'s `cur === code`
+early-return meant the stick never pressed it again for the rest of the
+hold - the player stopped walking, or stopped running, until the axis
+next changed. Exactly F8's shape, one door further along.
+
+The fix is an ownership check on the SAME latch, not a second one:
+
+```js
+const tapCodes = (ks) => {
+  for (const k of ks) synth('keydown', k);
+  for (const k of [...ks].reverse()) if (!held.has(k)) synth('keyup', k);
+};
+```
+
+`held` is the layer's own set of codes it is holding DOWN, and a tap
+never writes to it, so `held.has(k)` means exactly "a held control owns
+this". The tap keeps its DOWN edge - the host's keydown ladder is what
+a touch button means, and the button must not be made dead - and drops
+only the keyup for a code someone else is still holding. `tap` and
+`tapAction` are now one path.
+
+Pinned in `test/roadh_residue.test.js`, three drives and a shape read;
+the mutants (the keyup unguarded, `upCode(c)` with no keep set at either
+the button or `setStickKey`, `alt.Remove` dropped from `setBinding`, the
+load path routed through `setBinding`) all go red. Not seen on hardware:
+`tools/touchProbe.mjs` is the browser probe that would confirm it, and
+AUDIT 62's own residue list already carries "the touch layer on
+hardware" as outstanding.
+
+### Review round (2026-09-07)
+
+Two findings against this section's own prose and its pin, both taken.
+
+**The derivation above was backwards.** The first writing said the
+held/held state was one `setBinding` "never cleared out of the primary,
+because a secondary write only steals the code from the OTHER dict" -
+but for a secondary write the other dict IS the primary, so that is the
+one thing `SetBinding` does clear (`InputManager.cs:730-734`). The state
+is unreachable through `SetBinding` in either order. It is reachable
+through `LoadActionKeybinds` (`InputManager.cs:1950-1969`), and the
+paragraphs above now name that route and say plainly that `SetBinding`
+forbids it. The pin no longer writes `store.primary` / `store.secondary`
+by hand either: it builds the store through `loadKeyBinds` and the
+autofill pass that follows a load, so it drives a state the port can
+actually enter. Two more mutants fall out of the rewrite and both are
+dead: `alt.delete` dropped from `setBinding`, and `loadActionKeybinds`
+routed through `setBinding` instead of its raw map-set.
+
+**The shape read pinned the implementation's whitespace.** It matched
+`tapCodes` character for character and closed on an `existsSync` that
+could not fail, so it went red on a reformat and added nothing the three
+drives did not already kill. It reads structurally now: the identifier
+`down` adds to and `up` deletes from is recovered from the source, and
+the tap path must consult THAT name and no other. Reformatting `tapCodes`
+onto one line and renaming its parameter leaves it green; a second Set
+kept in lock-step by `down`/`up`, with the tap guarded on that one -
+behaviourally identical, so invisible to all three drives - turns it red.

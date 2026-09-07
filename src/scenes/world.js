@@ -4485,6 +4485,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the DUNGEON's chain and nowhere else, so KeyR outdoors did
       // nothing at all - and with it comes CanRest's town half: the
       // camping refusal, the Vagrancy charge and the watch.
+      // S40: the key is R (InputManager.cs:997, SetupDefaults) and
+      // GameManager's dispatch (GameManager.cs:534-537) carries no
+      // scene gate at all; this ladder's gate is the U43 flag still
+      // standing over these lines. ROAD-H H5: a byte-identical SECOND
+      // arm stood fourteen lines below, unreachable behind this one,
+      // and was deleted - this is the arm that fires.
       if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // P-slice: the classic quicksave bindings (F9 save, F11 load -
       // InputManager.SetupDefaults), above ground at last.
@@ -4496,10 +4502,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // I2: through the registry, so M is rebindable like every other
       // action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // S40: Rest (R - InputManager.SetupDefaults). GameManager's
-      // dispatch has no scene gate at all; this ladder's is the U43
-      // flag still standing over these lines.
-      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // I3: Escape with no overlay opens the pause screen; it closes
       // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
       // decision - the classic OPTN00I0 panel, or the enhanced menu in

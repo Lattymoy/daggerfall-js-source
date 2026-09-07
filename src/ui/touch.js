@@ -138,7 +138,33 @@ export function attachTouch(canvas, hooks = {}) {
   const held = new Set();      // codes currently synthesized DOWN
   const down = (code) => { if (!held.has(code)) { held.add(code); synth('keydown', code); } };
   const up = (code) => { if (held.has(code)) { held.delete(code); synth('keyup', code); } };
-  const tap = (code) => { synth('keydown', code); synth('keyup', code); };
+  // ROAD-H H8 (2026-09-07): A MOMENTARY CONTROL NEVER LIFTS A KEY A
+  // HELD CONTROL STILL OWNS. AUDIT 62 F8's review gave the two HELD
+  // paths that invariant (`upCode(code, liveNeeds())` - "the held set
+  // is the UNION of what the live controls want, and a release
+  // subtracts only its own"); the TAP paths kept synthesizing their
+  // keyup bare, and a tap's keyup is not routed through `up()` at all,
+  // so it never met the guard. One key wanted by two live touch
+  // controls is ordinary here: the menu button is the Escape ACTION and
+  // a combo Escape ('ShiftLeft+F10') decomposes onto Run's default
+  // modifier, and the dial's Tab is in no binding table at all
+  // (inputActions ACTIONS), so `setBinding` cannot steal it back from a
+  // stick axis rebound onto it. Tapping either then sent the host
+  // `keyup:ShiftLeft` / `keyup:Tab` out from under the running stick,
+  // and `setStickKey`'s `cur === code` early-return meant the stick
+  // never pressed it again for the rest of the hold - the same shape
+  // F8's review closed for the buttons, one door further along.
+  // DFU has no seam to restore: one key is one key there, and a
+  // keyboard cannot press what a finger is already holding. What the
+  // port owes is the invariant its SYNTHESIS creates, so the tap keeps
+  // its down edge (the host's keydown ladder is what a touch button
+  // means) and drops only the keyup for a code the layer is still
+  // holding for someone else.
+  const tapCodes = (ks) => {
+    for (const k of ks) synth('keydown', k);
+    for (const k of [...ks].reverse()) if (!held.has(k)) synth('keyup', k);
+  };
+  const tap = (code) => tapCodes(codesOf(code));
   // AUDIT 62 F8: the action-shaped arms. An UNBOUND action presses
   // NOTHING - no fall back to the default code, because a deliberately
   // unbound action's old default very likely serves a DIFFERENT action
@@ -146,11 +172,7 @@ export function attachTouch(canvas, hooks = {}) {
   // would be the same bug wearing the fix's clothes.
   const downAction = (action) => { const c = codeFor(action); for (const k of codesOf(c)) down(k); return c; };
   const upCode = (code, keep = null) => { for (const k of codesOf(code).reverse()) if (!keep?.has(k)) up(k); };
-  const tapAction = (action) => {
-    const ks = codesOf(codeFor(action));
-    for (const k of ks) synth('keydown', k);
-    for (const k of [...ks].reverse()) synth('keyup', k);
-  };
+  const tapAction = (action) => tapCodes(codesOf(codeFor(action)));
 
   function button(label, x, y, w, onDown, onUp) {
     const b = document.createElement('div');
