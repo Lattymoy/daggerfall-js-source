@@ -290,6 +290,7 @@ in vec3 vBBWorld;
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
+uniform vec4 uConceal;  // ECV1: x mode (0 plain, 1 chameleon, 2 shade, 3 hit reveal), y opacity, z seconds, w phase
 uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -312,10 +313,19 @@ float fogFactorAt(vec3 worldPos) {
   return exp(-uFogDensity * d);
 }
 void main() {
-  vec4 tex = texture(uTex, vUV);
+  // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
+  // the sprite, phased per foe - so it reads as blending in, not as a
+  // faded sprite.
+  vec2 uv = vUV;
+  if (uConceal.x == 1.0) {
+    uv.x += sin(vUV.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008;
+    if (uv.x < 0.0 || uv.x > 1.0) discard;   // the texture wraps REPEAT: never pull the far edge onto this one
+  }
+  vec4 tex = texture(uTex, uv);
   // Spectral flats keep their 180-alpha translucency (blended pass);
-  // opaque flats keep the classic 0.5 cutout.
-  if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;
+  // opaque flats keep the classic 0.5 cutout. ECV1's concealed pass is
+  // blended too and takes the spectral threshold.
+  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5)) discard;
   // Point lights on flats: billboards have no normal, so the term is
   // attenuation-only (squared linear falloff) - documented equivalence
   // to Unity's vertex-lit billboards.
@@ -333,14 +343,19 @@ void main() {
   // any light. Adding it on top of the exterior tint (~1.31 at noon) put
   // every missile, impact flash and fire daedra at ~2.3x albedo, clipped
   // to white. The clamp is ours; a negative albedo has no meaning here.
-  vec3 emission = texture(uEmissionTex, vUV).rgb;
+  vec3 emission = texture(uEmissionTex, uv).rgb;
   vec3 albedo = max(tex.rgb - emission, vec3(0.0));
   // R12: the indirect term, attenuation-only like the lantern term
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   vec3 lit = albedo * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
+  // ECV1: a shade is its silhouette - the lit colour pulled to black;
+  // every concealed draw takes the visual's opacity over the texel's.
+  if (uConceal.x == 2.0) lit *= 0.12;
+  float alpha = uSpectral == 1 ? tex.a : 1.0;
+  if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -956,6 +971,7 @@ export class Renderer {
     this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
     this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
     this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
+    this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
     this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
@@ -1715,7 +1731,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? '#ui' : ''}`;   // INCIDENT 2026-09-04 (the '#opaque' variant - OURS, see above) + REVIEW 2026-09-05 (the un-mipped UI variant of a world archive)
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -2633,15 +2649,33 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.stats.texBinds += 2; this.stats.draws++;
     };
     gl.uniform1i(this.bbUSpectral, 0);
-    for (const b of batches) if (!isSpectralArchive(b.archive)) drawOne(b);
-    let anySpectral = false;
-    for (const b of batches) if (isSpectralArchive(b.archive)) { anySpectral = true; break; }
-    if (anySpectral) {
-      gl.uniform1i(this.bbUSpectral, 1);
+    gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
+    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) drawOne(b);
+    // The BLENDED phase: the spectral batches and (ECV1) the concealed
+    // ones together, depth-writes off, drawn BACK TO FRONT by their
+    // origin's distance from the camera so a translucent foe behind
+    // another shows through it rather than over it. ECV1's batches
+    // carry one uConceal each (the mode, the opacity, the host's clock,
+    // the foe's phase); a spectral batch keeps its flag, which the
+    // shader reads only when uConceal says plain.
+    let blended = null;
+    for (const b of batches) {
+      if (b.conceal || isSpectralArchive(b.archive)) (blended ??= []).push(b);
+    }
+    if (blended) {
+      const cp = this._camPos;
+      const d2 = (b) => { const o = b.origin || ZERO_ORIGIN; const dx = o[0] - cp[0], dy = o[1] - cp[1], dz = o[2] - cp[2]; return dx * dx + dy * dy + dz * dz; };
+      blended.sort((a, b) => d2(b) - d2(a));
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.depthMask(false);
-      for (const b of batches) if (isSpectralArchive(b.archive)) drawOne(b);
+      for (const b of blended) {
+        const c = b.conceal;
+        gl.uniform1i(this.bbUSpectral, isSpectralArchive(b.archive) ? 1 : 0);
+        gl.uniform4f(this.bbUConceal, c ? c.mode : 0, c ? c.alpha : 0, c ? c.t : 0, c ? c.phase : 0);
+        drawOne(b);
+      }
+      gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);
       gl.depthMask(true);
       gl.disable(gl.BLEND);
     }

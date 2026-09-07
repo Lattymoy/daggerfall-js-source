@@ -234,8 +234,11 @@ test('a5 pins: the three foe pools fold the flag, build the closure, and hide th
     // The candidate's concealment closure BlockedByIllusionEffect reads.
     assert.ok(/concealment: \{ value: \(\) => concealmentFlags\(|'concealment', \{ value: \(\) => concealmentFlags\(/.test(src),
       `${file}: the foe candidate carries concealment()`);
-    // EntityConcealmentBehaviour's renderer disable.
-    assert.ok(src.includes(`if (isMagicallyConcealed(${ent})) continue;`),
+    // EntityConcealmentBehaviour's renderer disable. ECV1 (2026-09-07):
+    // the skip is foeDraw's answer now - `hidden` on the classic skin or
+    // with Enhanced Combat Visuals off (systems/combatVisuals.js pins
+    // that), and the host still takes it verbatim.
+    assert.ok(src.includes(`const ecv = foeDraw(${ent.replace('.entity', '')}, ecvOn, _ecvT);`) && src.includes("if (ecv.kind === 'hidden') continue;"),
       `${file}: a concealed non-player entity is not drawn`);
   }
 });

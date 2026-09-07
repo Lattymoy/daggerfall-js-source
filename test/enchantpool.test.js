@@ -173,7 +173,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // is two pools. `exteriorFoePool` is the watch AND the encounter
   // foes, and this arm handed both to the encounter pool's remover.
   // That was not a leak - removeFoe never looks the record up in `foes`
-  // (exteriorFoes.js:253-258) and both pools share the host's one
+  // (exteriorFoes.js:254-259) and both pools share the host's one
   // renderer - but the teardown of a watchman is the WATCH's to own,
   // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
   // encounter-pool term a guard has no business reaching, so the
@@ -354,7 +354,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
   assert.match(rf, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'AUDIT 62 F12: the re-stand cannot be refused by the cap');
   // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
-  // (world.js:2399's shape) - the removal, never the re-stand
+  // (world.js:2416's shape) - the removal, never the re-stand
   assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');
   assert.equal(/cityGuards\.spawn/.test(rf), false, 'the re-stand is the encounter pool\'s');
   // (PR #59 review) pin the ARM: after the inside arm nothing returns before

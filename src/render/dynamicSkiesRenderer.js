@@ -138,7 +138,7 @@ uniform float _CloudFadeHeight;
 
 uniform sampler2D _CloudTopDiffuse, _CloudTopNormal;
 uniform vec4 _CloudTopDiffuse_ST, _CloudTopNormal_ST;
-uniform vec3 _CloudTopColorBoost, _CloudTopColor, _CloudTopNightColor;   // QUIRK: float3 fed by a float - (boost, 0, 0)
+uniform vec3 _CloudTopColorBoost, _CloudTopColor, _CloudTopNightColor;   // QUIRK: float3 fed by a float - stays zero, the boost inert (the readme's "broken")
 uniform float _CloudTopNormalEffect, _CloudTopOpacity;
 uniform float _CloudTopAlphaMax, _CloudTopAlphaCutoff;
 uniform float _CloudTopBending, _CloudTopSunScale, _CloudTopSunLerpScale;
@@ -808,7 +808,13 @@ export class DynamicSkiesRenderer {
     // QUIRK: _CloudTopColorBoost is a float3 in the shader fed by SetFloat -
     // the value lands in x and y, z are 0, so only red is boosted (the
     // mod's readme: "broken on the top layer for some reason")
-    gl.uniform3f(u._CloudTopColorBoost, mat._CloudTopColorBoost ?? MATERIAL_DEFAULTS._CloudTopColorBoost, 0, 0);
+    // AUDIT 61: what the player SEES is no boost at all - the mod's own
+    // readme: "Color boost - broken on the top layer for some reason".
+    // A Range property SetFloat into a float3 uniform leaves the vector
+    // zero, so the divide is by 1.0; (boost, 0, 0) would have tinted the
+    // top layer red, which the mod never shows. Uploaded as the zero it is.
+    void mat;
+    gl.uniform3f(u._CloudTopColorBoost, 0, 0, 0);
     for (let i = 0; i < TEXTURE_SLOTS.length; i++) {
       const slot = TEXTURE_SLOTS[i];
       const st = mat[slot + '_ST'] ?? MATERIAL_DEFAULTS[slot + '_ST'];

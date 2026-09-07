@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:704)". Section A carried no widget row at all -
+//     (Port-Ledger.md:705)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -499,6 +499,29 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 const EX = 'src/scenes/exterior.js';
 const WO = 'src/scenes/world.js';
 const SOURCE_CITES = [
+  // ═══ ECV1 review (2026-09-07): THE POOL CITES ═══
+  //
+  // Five `cityGuards.js` / `exteriorFoes.js` cites in the pools' own
+  // comments were stale on main and were bumped POSITIONALLY by ECV1's
+  // re-resolution - a wrong number moved by the right offset is still
+  // wrong. Resolved by content here, so the next wave that moves either
+  // pool goes red instead of rotting them again.
+  ['test/roadg_pools.test.js', /skipped by cityGuards\.js:(\d+) and spliced/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['test/roadg_pools.test.js', /spliced\s*\n\s*\/\/ at :(\d+) in that same pass/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/world.js', /removeGuard \(cityGuards\.js:(\d+)-\d+\) gives it/,
+    'src/scenes/cityGuards.js', /^\s*function removeGuard\(g\) \{$/],
+  ['src/scenes/world.js', /\(cityGuards\.js:(\d+)\) and spliced out at the end of it/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['src/scenes/world.js', /and spliced out at the end of it \(:(\d+)\)/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/worldModes.js', /READ the effect list every frame \(exteriorFoes\.js:(\d+)-\d+ and/,
+    'src/scenes/exteriorFoes.js', /const _fParalyzed = entityIsParalyzed\(f\.entity\)/],
+  ['src/scenes/worldModes.js', /cityGuards\.js:(\d+)-\d+ each take `entityIsParalyzed`/,
+    'src/scenes/cityGuards.js', /const _gParalyzed = entityIsParalyzed\(g\.entity\)/],
+  ['src/scenes/cityGuards.js', /encounter pool's is \(exteriorFoes\.js:(\d+)\)\. \*\//,
+    'src/scenes/exteriorFoes.js', /^\s*return \{ foes, spawnFoe, damageFoe,/],
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
   ['tools/toneProbe.mjs', /`native` \(townTalk\.js:(\d+), true only/,
@@ -519,7 +542,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2142\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:2159\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:4627/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -527,13 +550,13 @@ const SOURCE_CITES = [
   ['src/systems/advancement.js', /exterior\.js:790\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:1002-1004/,
     EX, /from '\.\.\/systems\/chargenSession\.js'/],
-  ['src/systems/equip.js', /world\.js:1346, exterior\.js:(\d+)\)/,
+  ['src/systems/equip.js', /world\.js:1363, exterior\.js:(\d+)\)/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/systems/loot.js', /world\.js:1358 and exterior\.js:(\d+)/,
+  ['src/systems/loot.js', /world\.js:1375 and exterior\.js:(\d+)/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
   ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:257/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['src/systems/startingGear.js', /world\.js:1346 and exterior\.js:(\d+) seed it/,
+  ['src/systems/startingGear.js', /world\.js:1363 and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/ui/pauseWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
@@ -553,7 +576,7 @@ const SOURCE_CITES = [
   ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:679/, EX, /playerTicker\.advance\(60\);/],
   ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:1944/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:1944/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:1961/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2094/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -564,7 +587,7 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:2165\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:674`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:680`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2094\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
@@ -579,11 +602,11 @@ const SOURCE_CITES = [
   // "Original finding" is a dated snapshot, so where its subject still
   // stands the cite is re-resolved and where the fix DELETED the
   // subject the number is gone and the seam is named instead.
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1158`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1159`/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3435`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:3452`, `exterior\.js:(\d+)`/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:541`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:547`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
   ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
@@ -594,7 +617,7 @@ const SOURCE_CITES = [
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:1079-(\d+)` build `createDetectFeed`/,
     EX, /^ {2}\}\);$/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:873`, `exterior\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:879`, `exterior\.js:(\d+)`/,
     EX, /const droppedLoot = createDroppedLoot\(/],
   ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-852`/,
     EX, /const townTalk = createTownTalk\(\{/],
@@ -615,7 +638,7 @@ const SOURCE_CITES = [
 // removed says so, rather than carrying a number that lands on a
 // stranger. Pinned as the absence.
 const NO_LINE_LEFT = [
-  [/`world\.js:3655-3658` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  [/`world\.js:3672-3675` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
   [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 
@@ -789,7 +812,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:717-671`, `world.js:4901-4877`,
+// multi-number citation: `cityGuards.js:722-673`, `world.js:4918-4894`,
 // `worldModes.js:996 against :959`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.

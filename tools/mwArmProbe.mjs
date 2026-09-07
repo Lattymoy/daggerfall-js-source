@@ -211,7 +211,7 @@ async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
 }
 
 /** Alpha readback off the OFFSCREEN first-person target. It is cleared to
- *  (0,0,0,0) before the arm draws (renderer.js:771), so alpha != 0 IS the
+ *  (0,0,0,0) before the arm draws (renderer.js:786), so alpha != 0 IS the
  *  arm - nothing else can put ink there. */
 async function shoot(t) {
   return page.evaluate((time) => {
@@ -227,7 +227,7 @@ async function shoot(t) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     // READ THE VIEWPORT, NOT THE WHOLE TARGET. renderCharacterSprite
     // draws into a pw x ph corner of a fixed 512 x 512 RT
-    // (renderer.js:766 then :764), so coverage measured over the whole
+    // (renderer.js:781 then :764), so coverage measured over the whole
     // texture is bounded by (pw*ph)/512^2 - about 3% here - and a
     // threshold set against the texture would be measuring the padding.
     const vp = window.__vp;

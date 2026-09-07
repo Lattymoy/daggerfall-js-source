@@ -534,7 +534,7 @@ const sleeper = () => ({
   career: {}, skillUses: { [SKILLS.Medical]: 0 },
 });
 
-/** world.js:4204's keydown arm, verbatim in shape: the host consumes
+/** world.js:4221's keydown arm, verbatim in shape: the host consumes
  *  the press itself and hands the slot a brand-new window. */
 const openOnKeydown = (tt, win) => { tt.showOverlay(win); return win; };
 
@@ -549,7 +549,7 @@ test('E-FIX LIVE (townTalk): the R that OPENS the rest window does not close it 
     })));
     assert.equal(w.done, false, 'the window stands the instant the host mounts it');
 
-    // world.js:4241 delivers THAT SAME KEY'S release into the slot.
+    // world.js:4258 delivers THAT SAME KEY'S release into the slot.
     tt.keyup({ code: 'KeyR', key: 'r' });
     assert.equal(w.done, false,
       'the opening release closes nothing: its press was the HOST\'s, not this window\'s '

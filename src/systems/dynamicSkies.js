@@ -40,7 +40,9 @@
 //     shader's `_MoonTidalAngle` keeps the material's (0, 300, 0).
 //   - `_CloudSunScale` takes the TOP layer's SunColorScale.
 //   - `_TwinkleTex`'s offset is the stars' offset, not the twinkle offset.
-//   - `_CloudTopColorBoost` is a float3 in the shader fed by a float, so
+//   - `_CloudTopColorBoost` is a float3 in the shader fed by a float (a
+//     Range property), so the vector stays ZERO and the top boost does
+//     nothing - the readme's "broken on the top layer" (AUDIT 61); so
 //     only its red channel is boosted (the readme: "broken on the top
 //     layer for some reason").
 //   - `_CloudDirection` is the preset's Direction (absent -> 0), so the

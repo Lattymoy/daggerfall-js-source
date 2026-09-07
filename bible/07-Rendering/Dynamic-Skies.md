@@ -94,8 +94,19 @@ WeatherType), five fog presets, a light curve, and a lightning script.
   `_MoonTidalAngle` keeps the material's (0, 300, 0).
 - `_CloudSunScale` takes the TOP layer's SunColorScale.
 - `_TwinkleTex`'s offset is the stars' offset.
-- `_CloudTopColorBoost` is a float3 fed by a float - only red is boosted
-  (the readme: "broken on the top layer for some reason").
+- `_CloudTopColorBoost` is a float3 fed by a float (a Range property):
+  the vector stays zero and the top boost does nothing - the readme's
+  "broken on the top layer for some reason". (AUDIT 61: the port had
+  uploaded `(boost, 0, 0)`, a red tint the mod never shows.)
+- The lightning listener is a C# multicast delegate and is KEPT AS ONE
+  (AUDIT 61): `LightningFlashListener.StartListening` is `+=` on
+  `AmbientEffectsPlayer.OnPlayEffect`, duplicates kept, and
+  `StopListening` removes one. A Thunder round trip through a door
+  (InteriorTransitionEvent drops one and nulls the coroutine;
+  ExteriorTransitionEvent re-subscribes without it) and the next
+  `OnWeatherChange` that takes its branch subscribe TWICE - two rolls
+  per one-shot - and leaving Thunder removes one, so the other rolls on
+  every outdoor one-shot for the rest of the session.
 - `_CloudDirection` is the preset's Direction (absent -> 0): the random
   wind rolled at Init is overwritten on the first apply; the clouds
   travel +X.
@@ -137,10 +148,31 @@ force the port's dome so every probe riding them keeps its meaning,
 - the port's retro snap is not applied over it (REDUCE_COLOR is the
   mod's own posterise).
 
-Both exterior hosts carry the same six hunks, each marked `DS1:`:
-the fog table, the fog colour, the ambience event, the flash light,
-the pixel snow, and nothing else. Interiors and dungeons are untouched
-(the mod switches its sky off inside).
+Both exterior hosts carry the same hunks, each marked `DS1:`: the fog
+table, the fog colour, the ambience event, the flash light, the pixel
+snow, and - since AUDIT 61 - the transition edge (`sky.setInside` on
+the modal frame's first return and before the next sky frame:
+PlayerEnterExit's interior/dungeon transitions, which tear the flash
+down and re-arm the listener), the word the ambience is playing beside
+the one-shot (under the port's front the presets follow the front, so
+the flash follows the storm clips it can hear, which is what DFU shows
+where the two words never differ), the one sunlight scale the ground
+takes on the sky's frame (`wxNow.sun` - WX2's front blend of the
+host's `weatherSun`, the raw row under `?front=off`: ONE
+SetSunlightScale, so the ?season pin and the fast-travel latch reach
+`_LightColor0` as they reach the ground), and the port's sun strobe
+standing down under the mod (one lightning, the mod's).
+Interiors and dungeons draw no sky (the mod switches its sky off
+inside).
+
+AUDIT 61 also settled three seams the port's own machinery had put
+over the mod: the mod's fog rows are installed VERBATIM (EV4's
+distance scale is the law over DFU's 0..2400 row, not over FogSunny's
+2000..3600 - `BLBSkybox.SetFogDistance` writes the end distance as
+authored); the far ring's fog ramp starts where the row starts (a row
+that starts at 2000 fogged the ring from 0); and EV5's moonlight takes
+the port's eased cover as the stand-in for the mod's cloud textures,
+the dome's own `1 - cover * 0.35`.
 
 ## Doors and gates
 

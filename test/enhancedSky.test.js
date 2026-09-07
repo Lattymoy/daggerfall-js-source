@@ -230,7 +230,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   assert.doesNotMatch(classic, /enhanced/i, 'skyRenderer.js knows nothing of the enhanced sky');
   // Both hosts hand the weather and the classic clock through.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes \}\);\s*\/\/ ES1/, `${host} feeds the sky`);
+    assert.match(read(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun \}\);\s*\/\/ ES1/, `${host} feeds the sky`);
   }
   // The lab is a page like the other prototypes, built as one.
   assert.match(read('vite.config.js'), /sky: 'sky\.html',/);

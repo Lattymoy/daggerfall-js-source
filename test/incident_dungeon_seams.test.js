@@ -217,6 +217,14 @@ test('seams review 2: item icons are UI art - the icon door uploads a world arch
   assert.equal(calls(log, 'generateMipmap').length, 1, 'the same record as WORLD art still gets its chain under the bare key');
   r.releaseTexture(233, 5);
   assert.ok(!r.textures.has('233_5#ui') && !r.textures.has('233_5'), 'a release frees every variant');
+  // AUDIT 61 (SIB1): world art from a mod atlas built mipChain:false keeps
+  // the PLAIN key - the batch draw looks up `${archive}_${record}` - and
+  // still gets no chain.
+  log.length = 0;
+  r.uploadTexture(505, '1#season3', px, { mips: false, variant: '' });
+  assert.equal(calls(log, 'generateMipmap').length, 0, 'no chain');
+  assert.equal(calls(log, 'texParameteri').find((c) => c[2] === 'TEXTURE_MIN_FILTER')[3], 'NEAREST');
+  assert.ok(r.textures.has('505_1#season3') && !r.textures.has('505_1#season3#ui'), 'under the plain batch key');
   for (const f of ['src/ui/nativeInventory.js', 'src/ui/itemScroller.js']) {
     assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false \}\);/, `${f} asks for the UI variant`);
     assert.match(src(f), /icons\.textures\.get\(`\$\{key\}#ui`\)/, `${f} reads it back`);

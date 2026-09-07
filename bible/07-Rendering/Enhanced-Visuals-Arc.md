@@ -34,7 +34,7 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:123), and `_playerStill` reads one moving
-frame per crossing (world.js:4909-4911).
+frame per crossing (world.js:4926-4928).
 
 frame per crossing (world.js:7020-7022).
 
@@ -52,7 +52,7 @@ rows, terrainSurface.js:92-95): a permanent lighting lattice at every
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:1792 - thousands of strings/frame, the single
+per frame (renderer.js:1808 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -74,7 +74,7 @@ tint term without a vertex-format change across ~20 call sites.
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:562) is a regression latch: set once,
+- `_clockLit` (renderer.js:577) is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.
@@ -119,7 +119,7 @@ tint term without a vertex-format change across ~20 call sites.
   drawList skip off build-time AABBs, per-batch billboard skip.
   ?cull=off is the escape hatch. Expected: 60-70% of terrain and a
   comparable placement fraction culled - the headroom EV4 spends.
-- EV4 DISTANT LAND: the fog end scales with the LIVE terrain distance
+- EV4 DISTANT LAND (AUDIT 61: over DFU's own rows only - Dynamic Skies' authored rows install verbatim): the fog end scales with the LIVE terrain distance
   at the host seam (the weather table stays byte-identical - DFU's
   2400 remains the d=3-ish base); outer-ring chunks build at stride 4
   (33x33 - a 16x triangle cut) from the same pinned samples; ghost

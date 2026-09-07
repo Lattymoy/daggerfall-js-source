@@ -184,6 +184,7 @@ uniform vec3 uMoonDir;    // AUDIT EV F-R4: the moonlit night reaches the horizo
 uniform float uMoonScale;
 uniform vec3 uMoonColor;
 uniform vec3 uFogColor;
+uniform float uFogStart; // the WORLD fog's start (0 for DFU's rows; Dynamic Skies' Sunny starts at 2000 - AUDIT 61)
 uniform float uFogEnd;   // the WORLD fog's end - the ramp the seam must match
 uniform float uRimStart; // where the hold starts closing into the sky
 uniform float uRimEnd;   // the mesh rim - fully sky by here
@@ -196,7 +197,7 @@ void main() {
   vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim
-  float base = uHazeHold * clamp(vDist / max(uFogEnd, 1.0), 0.0, 1.0);
+  float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
   outColor = vec4(mix(lit, uFogColor, min(base + rim, 1.0)), 1.0);
 }`;
@@ -233,7 +234,7 @@ export class FarRingRenderer {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonDir', 'uMoonScale', 'uMoonColor',
-      'uFogColor', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold']) {
+      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold']) {
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -303,7 +304,7 @@ export class FarRingRenderer {
    * the streamed world paints over it); its OWN projection, because
    * the world's 6000-unit far plane is 7.3 map pixels.
    */
-  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogEnd, fovY, aspect }) {
+  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fovY, aspect }) {
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
     const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
@@ -324,6 +325,7 @@ export class FarRingRenderer {
     gl.uniform1f(this.u.uMoonScale, moonScale);
     gl.uniform3fv(this.u.uMoonColor, moonColor ?? FLAT_WHITE);
     gl.uniform3fv(this.u.uFogColor, fogColor);
+    gl.uniform1f(this.u.uFogStart, fogStart);
     gl.uniform1f(this.u.uFogEnd, fogEnd);
     // AUDIT EV F-R3: the rim close must key on the NEAREST rim the
     // square mesh can present - an edge midpoint with the base drifted

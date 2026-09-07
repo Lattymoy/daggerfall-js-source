@@ -655,7 +655,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (sib) {
       const rkey = `${record}#season${seasons.installedSeason}`;
       const img = sib.texture.image;
-      renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data });
+      renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data }, { mips: false, variant: '' });   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
       const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
       batch._box = flatBatchAabb(centers, sib.size);   // EV3
       billboardBatches.push(batch);
@@ -1706,7 +1706,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
     // two engine-owning hosts wire the identical pair (world.js:2131-2132,
-    // dungeonContext.js:1789-1790); `questBridge` is assigned below this
+    // dungeonContext.js:1790-1791); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
     onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
@@ -1892,7 +1892,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (chronicleDoor.js:68 `if (!questJournalArtLoaded()) return null`),
     // so a readiness test placed AHEAD of the preload that satisfies it
     // made the classic skin answer null for ever - the warm behind the
-    // gate could never run. dungeonContext.js:1136-1138 is the shape:
+    // gate could never run. dungeonContext.js:1137-1139 is the shape:
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
@@ -3218,7 +3218,12 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
-  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
+  // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies'
+  // LightningFlashListener, with the word the ambience is PLAYING
+  // (AUDIT 61; see world.js).
+  let ambientWord = weather;
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos, ambientWord === 'thunder');
+  let skyInside = false;   // DS1 (AUDIT 61): PlayerEnterExit's transition edge
   // AUDIT 58 (F089's other host): AmbientEffectsPlayer.Start subscribes
   // PlayerGPS.OnEnterLocationRect on EVERY instance (:89), and the
   // handler arms IsCemeteryNearby when the entered location is a
@@ -3228,23 +3233,6 @@ export async function bootExterior(canvas, renderer, params, status) {
   // arming edge is here rather than on a poll. Without it a graveyard
   // opened as ?exterior was silent while the streaming host howled.
   ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
-  // AUDIT 62 F29: the sky's PlayerEnterExit latch. BLBSkybox subscribes
-  // OnTransitionInterior/DungeonInterior/Exterior/DungeonExterior
-  // (BLBSkybox.cs:1236-1240) and the handlers are TRANSITION events, so
-  // the port holds the EDGE here rather than polling. Read on both
-  // sides of `modes.frame` and nowhere else: the mode flips INSIDE that
-  // call, so a read before it misses the exit edge by a frame - and on
-  // that frame the exterior block below would tick a LightningFlash
-  // frozen since the door and light it, from where the player stood
-  // before entering, which is exactly what the mod's
-  // InteriorTransitionEvent (BLBSkybox.cs:1247-1284) exists to prevent.
-  let _skyInside = false;
-  const _skyEnterExit = () => {
-    const inside = (modes?.mode ?? 'exterior') !== 'exterior';   // the isPlayerInside latch the guard pool is handed
-    if (inside === _skyInside) return;
-    _skyInside = inside;
-    sky.setInside(inside);
-  };
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
@@ -3319,7 +3307,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
-      _skyEnterExit();   // AUDIT 62 F29: the transition, read after the mode flipped
+      if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
       // INACTIVE in DFU (PlayerEnterExit disables it), and a disabled
       // AudioSource stops. The mills fall silent with it and start
@@ -3344,10 +3332,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
-    // AUDIT 62 F29: and the OTHER edge - the frame the player steps back
-    // out is the one modes.frame answered false on, so the sky learns it
-    // here, before anything below ticks or draws the flash.
-    _skyEnterExit();
 
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -3653,7 +3637,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
-    ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
+    ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
+    ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
@@ -3675,7 +3660,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ambience preset; the flash now follows the same word.
     const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
     const strobe = lightningShown ? strobeNow : 1;
-    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() && !sky.dynamic ? strobe : 1);   // DS1 (AUDIT 61): one lightning under the mod (see world.js)
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
@@ -3704,9 +3689,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // arm adds the CALENDAR season to SkyBase (Fall 0 / Spring 1 /
     // Summer 2 / Winter 3); the rain/snow variants keep their boot
     // roll. One clock, so the season reads the world date.
+    if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun });   // ES1: the enhanced sky's clouds and moons; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
@@ -3886,11 +3872,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:550-555), so this seam ROUTES by pool exactly
+        // (cityGuards.js:551-556), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:967). DFU makes no pool distinction:
+        // (cityGuards.js:975). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
