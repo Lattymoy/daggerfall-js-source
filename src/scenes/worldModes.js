@@ -2749,7 +2749,7 @@ export function createWorldModes(host) {
    *  portraitIndexFromStaticNPCBillboard (systems/npcSession.js); this
    *  is the host wiring it needs - the faction record from townTalk's
    *  FACTION.TXT and FLATS.CFG's faceIndex column from the data
-   *  pipeline (dataPipeline.js:41, loaded for the captions already). */
+   *  pipeline (dataPipeline.js:46, loaded for the captions already). */
   function staticNpcPortrait(npcData) {
     return portraitIndexFromStaticNPCBillboard(npcData, {
       factionData: townTalk?.factionDict?.get(npcData?.factionID ?? 0) ?? null,
@@ -5226,7 +5226,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5639's own wave-46 note); the interior
+          // a blow (world.js:5641's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();

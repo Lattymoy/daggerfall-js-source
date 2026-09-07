@@ -333,7 +333,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
 (`ui/windowStack.js:85`, `:101`, `:279`). It is mounted in the two hosts
 that own overlay slots - `worldModes.js:57` and `dungeonContext.js:35` -
-and `world.js:171` reaches it by mounting `worldModes`. But `grep -rn
+and `world.js:172` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
 `windowStack.js:219`: **no host reads the primitive.** Every host still
 gates on its own `overlayHeld`/depth expression. The class is narrowed,
