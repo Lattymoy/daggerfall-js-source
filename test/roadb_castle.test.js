@@ -332,7 +332,10 @@ test('ROAD-B B4: outside, and inside a building the arm does NOT name, the exter
     }),
     /SPAWNED/, 'the arm names exactly three latches');
 
-  // No host flags at all (the standalone exterior host).
+  // No host flags at all. AUDIT 61 F13: no HOST in the tree is this any
+  // more - ?world and ?exterior both mount the mode machine and both
+  // hand the latches in - so this is the module's own default, which is
+  // the shape a pool constructed with no mode machine (a rig) has.
   const bare = guardRig(null);
   await assert.rejects(
     bare.spawnCityGuards(true, {
@@ -342,9 +345,13 @@ test('ROAD-B B4: outside, and inside a building the arm does NOT name, the exter
     /SPAWNED/);
 });
 
-test('ROAD-B B4: the world host feeds the guard gate the mode host\'s three latches', () => {
-  const w = SRC('scenes/world.js');
-  assert.match(w, /enterExitFlags: \(\) => \(\{[\s\S]{0,400}?insideOpenShop: modes\?\.insideOpenShop \?\? false,/);
-  assert.match(w, /insideTavern: modes\?\.insideTavern \?\? false,/);
-  assert.match(w, /insideResidence: modes\?\.insideResidence \?\? false,/);
+test('ROAD-B B4: BOTH mode-machine hosts feed the guard gate the mode host\'s three latches', () => {
+  // AUDIT 61 F13: ?exterior carries the interior and dungeon modes too,
+  // so the bag is not the world host's alone.
+  for (const h of ['scenes/world.js', 'scenes/exterior.js']) {
+    const w = SRC(h);
+    assert.match(w, /enterExitFlags: \(\) => \(\{[\s\S]{0,400}?insideOpenShop: modes\?\.insideOpenShop \?\? false,/, h);
+    assert.match(w, /insideTavern: modes\?\.insideTavern \?\? false,/, h);
+    assert.match(w, /insideResidence: modes\?\.insideResidence \?\? false,/, h);
+  }
 });

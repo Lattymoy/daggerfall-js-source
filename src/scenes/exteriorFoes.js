@@ -79,6 +79,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // street) hands in the union; absent, striking a passive foe turns
   // only that foe, which is the pre-wiring shape.
   makeAreaHostile = null,
+  // AUDIT 61 F22: EnemySenses.cs:267 reads PlayerEnterExit.IsPlayerInside
+  // - the GENERIC inside flag (PlayerEnterExit.cs:111-113), true in a
+  // BUILDING interior as well as a dungeon - and :269-286 takes the flat
+  // exterior band (classicSpawnDespawnExterior, 102.4m, no Y term) only
+  // when it is false. This pool is mounted over a building interior by
+  // worldModes.makeInteriorFoes, where the literal `false` put every
+  // interior foe on the outdoor band: a foe two storeys up was "spawned
+  // in classic" where DFU's row-0 band (XZ 25.6m, Y +3.2m) denies it.
+  // The default keeps the street pools (world.js, exterior.js) unchanged.
+  playerInside = false,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -113,9 +123,20 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  QuestResourceBehaviour host at the stand. A quest foe is exempt
    *  from the encounter self-limit: DFU's CreateFoe spawns
    *  unconditionally, and the cap is the port's own encounter bound,
-   *  not a law. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false } = {}) {
-    if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+   *  not a law.
+   *
+   *  AUDIT 61 F12: `replacing` is the second exemption, and it is the
+   *  same argument. WabbajackEffect.cs:86-88 is
+   *  `targetEntity.gameObject.SetActive(false)` followed by an
+   *  unconditional `GameObjectHelper.CreateEnemy(...)` - one entity
+   *  destroyed, one minted in its place, so the transform is
+   *  slot-NEUTRAL by construction and cannot grow the pool. The struck
+   *  entity is often a WATCHMAN, whose removal frees a slot in the
+   *  guard pool and none here, so without the exemption a Wabbajack
+   *  strike on a full street simply erased him and stood nothing -
+   *  worse than either the reference or the refusal it replaced. */
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false } = {}) {
+    if (!questBehaviour && !replacing && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
@@ -169,7 +190,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         behaviour, mobileId: mobileType,
         height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre
-        playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
+        playerInside,   // EnemySenses.cs:267-269 - the host's PlayerEnterExit.IsPlayerInside picks the band
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
         hasBowAttack: hasBowAttack(basics),

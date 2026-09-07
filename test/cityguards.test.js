@@ -344,10 +344,15 @@ test('CLOSEOUT: SpawnCityGuards does nothing at all inside a dungeon (PlayerEnti
   await witness.call(false, [{ pos: [0, 0, 10], fwdYaw: Math.PI, guard: true, disable: () => {} }]);
   assert.equal(witness.tried.n, 0, 'the non-immediate arm is enclosed by the same gate');
 
-  // ...and the host that owns the latch must actually publish it.
-  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(world, /enterExitFlags: \(\) => \(\{\s*\n\s*isPlayerInsideDungeon: \(modes\?\.mode \?\? 'exterior'\) === 'dungeon',/,
-    'world.js hands the dungeon latch into the flags bag the module reads');
+  // ...and EVERY host that owns the latch must actually publish it.
+  // AUDIT 61 F13: ?exterior mounts the same mode machine ?world does -
+  // E on a DUNGEON_ENTRANCE door drops it into the crawl - and it used
+  // to pass no flags at all, so this gate could not fire on that route.
+  for (const h of ['../src/scenes/world.js', '../src/scenes/exterior.js']) {
+    const host = readFileSync(new URL(h, import.meta.url), 'utf8');
+    assert.match(host, /enterExitFlags: \(\) => \(\{\s*\n\s*isPlayerInsideDungeon: \(modes\?\.mode \?\? 'exterior'\) === 'dungeon',/,
+      `${h} hands the dungeon latch into the flags bag the module reads`);
+  }
 });
 
 test('CLOSEOUT: the surrender-dialogue reset counts HOSTILE, non-allied watchmen only (PlayerEntity.cs:534)', () => {

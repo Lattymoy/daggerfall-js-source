@@ -189,3 +189,48 @@ the first rows there that are not OURS: ten "the mod's own art", nine
 "PROVENANCE OPEN, Mac's ruling pending". The windmills precedent left
 textures out when they were provably classic exports; these are not
 provably that, and are not replaceable without changing the sky.
+
+## AUDIT 61 F29 (2026-09-07): the transition event gets its caller
+
+`DynamicSkies.setInside` had been ported and had no caller anywhere in
+`src/` - `grep -rn 'setInside(' src` answered with the definition and
+nothing else - so `playerInside` was never true and the mod's
+`InteriorTransitionEvent` teardown never ran.
+
+The load-bearing half is not the listener flags; it is the FLASH.
+`BLBSkybox.cs:1236-1240` subscribes the same handler to
+`OnTransitionInterior`, `OnTransitionDungeonInterior` (and the exterior
+pair to the other), and `:1247-1284` - under `pendingWeatherType ==
+WeatherType.Thunder` - calls `LightningFlashListener.Instance
+.StopListening()`, stops the coroutine, and does
+`lightningFlash.StopAllCoroutines(); lightningLight.enabled = false`.
+In the port, `LightningFlash.tick` is advanced only by the exterior
+frame's `sky.use(...)`, and both walkable hosts return out of the frame
+above that when a mode consumed it. So a flash rolled by a thunder clap
+a moment before the door neither finished nor stopped: it froze with
+its routine intact and paid out the rest of its burst on the first
+exterior frame after the visit, from the position the player stood at
+before entering. The mod never shows that.
+
+Landed:
+
+- **The door.** `createSkyController` (`src/scenes/shared.js`) publishes
+  `setInside(inside) { dynamic?.setInside(inside); }` beside
+  `onAmbientEffect` and `lightningLight`, so a host can reach the
+  runtime's handler at all.
+- **The edge, on both sides of `modes.frame`.** `worldModes` exposes no
+  enter/exit callback and the mode FLIPS inside that call, so the hosts
+  hold a `_skyInside` latch and read it in two places: at the top of the
+  modal block (the entering edge, after the flip) and immediately after
+  the block for the frame that fell through (the leaving edge, before
+  anything below ticks or draws the sky). Reading it only before the
+  call would miss the exit by a frame - and that is exactly the frame on
+  which the exterior block would tick the frozen routine and light it.
+  The predicate is `(modes?.mode ?? 'exterior') !== 'exterior'`, the same
+  `isPlayerInside` latch the guard pool is handed, because the mod binds
+  the dungeon transitions to the same handler.
+
+Pinned in `test/audit61_hosts.test.js`: the mod's own `LightningFlash`
+kept in flight across a visit with no ticks is still lit on the way out,
+and `stopAll` - the transition event's teardown - is what makes it null;
+plus the seam and the two edge positions in both hosts.

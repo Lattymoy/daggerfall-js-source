@@ -695,6 +695,15 @@ export function createWorldModes(host) {
       // corpses never leave streaming range hands nothing to
       // TrackLooseObject (GameObjectHelper.cs:836-839).
       currentPixelKey: () => null,
+      // AUDIT 61 F22: PlayerEnterExit.IsPlayerInside is TRUE in a
+      // building interior (PlayerEnterExit.cs:111-113, set at :1086 by
+      // EnableInteriorParent), so EnemySenses.cs:269-286 gives this pool
+      // the ROW bands - spawn XZ 25.6m / Y +3.2m, despawn XZ 25.6m /
+      // Y 9.6m - and the :297-306 vertical test, not the flat 102.4m
+      // exterior band. An interior carries ladder geometry and storeys;
+      // this is the term that stops a foe upstairs from stealth-detecting
+      // through the ceiling.
+      playerInside: true,
       playerSinks: interiorTicker.sinks,
       // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 - striking a
       // non-hostile foe turns the whole area. Inside a building the
@@ -846,6 +855,10 @@ export function createWorldModes(host) {
       // passive; the encounter pool has walked both since AUDIT 58 and
       // this one walked nothing at all.
       makeAreaHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
+      // AUDIT 61 F22: interiorFoes' arm - this watch stands INSIDE a
+      // building, so EnemySenses.cs:267's IsPlayerInside is true for it
+      // and the row-0 bands with their Y test apply, not the exterior one.
+      playerInside: true,
       say: (l) => say(l),
       onPlayerHurt: (dmg, wpn) => {
         if (dmg <= 0) return;
@@ -4951,6 +4964,17 @@ export function createWorldModes(host) {
         interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, _interiorSenses());
       }
     }
+    // AUDIT 61 F11: PlayerEntity.Update's catch-up loop, ONCE per modal
+    // frame - both arms above, since :479-522 runs it every Update
+    // whatever PlayerEnterExit says and consumes each elapsed minute
+    // through IntermittentEnemySpawn's IsPlayerInside arm (:564-600),
+    // which rolls nothing in a building or an un-rested dungeon. The
+    // host's own call sits below its modal early return, so without
+    // this the minutes THIS host's ticker advances were banked against
+    // the host's frozen anchor and replayed as outdoor rolls at the
+    // door. `overlayHeld` is DFU's timeScale-0 pause, the same gate the
+    // ticker above rides - a paused game runs no Update at all.
+    if (!overlayHeld) host.encounterTick?.();
     cam.pos = player.eyeAt();   // EV1: the interpolated render eye
     // DC1: PlayerDeath.Update's camera sink; the fresh eye array keeps
     // it per-frame, never cumulative. AUDIT 39 (#36) added the dungeon
@@ -6087,7 +6111,12 @@ export function createWorldModes(host) {
     topWindow: () => interiorOverlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => mountInterior(new ActionTextBox(rows)),
-    advanceMinutes: (n) => interiorTicker.advance(n),
+    // AUDIT 61 F11: and the loop rides the rest's minutes too, exactly
+    // as the outdoor hosts' rest deps do (world.js's twin). TickRest
+    // advances the clock in sub-ticks and PlayerEntity.Update consumes
+    // them as they pass; the rolls answer nothing indoors, which is the
+    // whole point - they must not be left banked for the door.
+    advanceMinutes: (n) => { interiorTicker.advance(n); host.encounterTick?.(); },
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED (DFU calls the machine directly,
     // not through QuestMachine.Update's ticksPerSecond timer). This
@@ -6716,26 +6745,42 @@ export function createWorldModes(host) {
      *  DFU's unconditional `return` at :641 means - a crime committed
      *  in an open shop, a tavern or a residence is answered by that
      *  building's own front door and the street arm never runs. Every
-     *  other case (outdoors, or inside a temple / guild hall / palace)
-     *  answers false and falls through to the exterior host's pool,
-     *  which is exactly the fall-through C# makes.
+     *  other case (a dungeon, or outdoors) answers false and falls
+     *  through to the exterior host's pool, which is exactly the
+     *  fall-through C# makes.
      *
      *  The three flags are PlayerEnterExit's, all latched at the door
      *  (PlayerActivate.cs:1120-1122): IsPlayerInsideOpenShop rides the
      *  building record (AUDIT 26 F066 put it there), and Tavern and
-     *  Residence are the bare RMBLayout type predicates. */
+     *  Residence are the bare RMBLayout type predicates.
+     *
+     *  AUDIT 61 F14: EVERY interior is answered here, eligible or not.
+     *  The old `if (!eligible) return false` handed a temple, a guild
+     *  hall or a palace back to the STREET pool - the exterior collider,
+     *  the exterior host's frozen update, and (before F14's other half)
+     *  the stale street population, so the watch was minted out in the
+     *  road while the player stood inside. DFU cannot do that: the
+     *  population is inactive indoors (PlayerEnterExit.cs:1047), so
+     *  guardsSpawnedFromNPCs is 0 and PlayerEntity.cs:687's
+     *  CreateFoeSpawner(true, Knight_CityWatch, Random.Range(2, 5+1),
+     *  12.8f, 51.2f) rings the watch AROUND THE PLAYER, parented to the
+     *  Interior (FoeSpawner.cs:138-139 through GameObjectHelper
+     *  .GetBestParent, :407-410). `eligible: false` with an empty pool
+     *  is exactly that arm in this pool: cityGuards skips its door
+     *  spawn and its (empty) conversion walk and falls to the ring
+     *  fallback over THIS interior's collider, while the witness arm
+     *  correctly finds nobody to see the crime. */
     spawnCityGuardsInside(immediate) {
       if (mode !== 'interior' || !interiorCtx || !interiorGuards) return false;
       const b = interiorBuilding;
       const eligible = !!b && (!!b.insideOpenShop
         || b.buildingType === BUILDING_TYPES.Tavern   // RMBLayout.IsTavern (:803)
         || isResidence(b.buildingType));              // RMBLayout.IsResidence
-      if (!eligible) return false;
       interiorGuards.spawnCityGuards(!!immediate, {
         playerFeet: [...player.pos],
         playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)],
-        pool: [],   // there is no street population in here to convert
-        interior: { doors: interiorCtx.doors, origin: interiorCtx.parentPt(0, 0, 0), eligible: true },
+        pool: [],   // the population is INACTIVE indoors (PlayerEntity.cs:653-654)
+        interior: { doors: interiorCtx.doors, origin: interiorCtx.parentPt(0, 0, 0), eligible },
       }).catch((e) => console.error('[guards]', e));
       return true;
     },
@@ -6819,7 +6864,11 @@ export function createWorldModes(host) {
       if (foe._encounter) interiorFoes.removeFoe(foe);
       else if (interiorGuards?.guards.includes(foe)) interiorGuards.removeGuard(foe);
       else return null;
-      return interiorFoes.spawnFoe(mobileType, feet);
+      // AUDIT 61 F12: `replacing` - the indoor twin. A removed WATCHMAN
+      // frees a slot in interiorGuards and none here, so the encounter
+      // cap could answer null and leave the strike with nothing standing;
+      // WabbajackEffect.cs:86-88 destroys one and mints one, slot-neutral.
+      return interiorFoes.spawnFoe(mobileType, feet, { replacing: true });
     },
     tryPlaceQuestFoe(handle) {
       if (mode === 'interior') return tryPlaceInteriorQuestFoe(handle);

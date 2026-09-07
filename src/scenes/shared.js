@@ -298,6 +298,16 @@ export function createSkyController(gl, params) {
     onAmbientEffect(playerPos) { dynamic?.onAmbientEffect(playerPos); },
     /** DS1: the LightningFlash point light this frame, or null. */
     lightningLight() { return dynamic?.lightningLight ?? null; },
+    /** DS1 / AUDIT 61 F29: PlayerEnterExit's Interior/ExteriorTransition
+     *  events (BLBSkybox.cs:1236-1240, handlers at :1247-1299) - the mod
+     *  subscribes all four (building AND dungeon, both directions) and,
+     *  under Thunder, stops the listener AND kills the flash coroutine
+     *  with its light on the way in. Without a door here the port had
+     *  nowhere to say it: a LightningFlash in flight when the player
+     *  steps through froze with the exterior frame (nothing ticks the
+     *  sky in a modal mode) and paid out the rest of its burst on the
+     *  first frame back outside, from where the player stood before. */
+    setInside(inside) { dynamic?.setInside(inside); },
     /** DS1: the pixel-snow replacement (InitSnow) when the mod's switch
      *  is on: the two viewport-fraction sizes and the PixelSnow texture. */
     pixelSnow: dynamic?.pixelSnow ? { ...dynamic.pixelSnow, textureUrl: dynamicSkiesTextureUrl('PixelSnow') } : null,

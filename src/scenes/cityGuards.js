@@ -133,10 +133,19 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
   // { isPlayerInsideDungeon, isPlayerInside, insideOpenShop,
   // insideTavern, insideResidence } - so the conjunction stays in this
-  // file with the rest of the law. A host with no interiors and no
-  // dungeons (the standalone exterior) answers null, which is that
-  // host's flags all false.
+  // file with the rest of the law. AUDIT 61 F13: no HOST in the tree
+  // is flagless any more - ?world and ?exterior both mount the mode
+  // machine, and the interior watch pool is mounted by the machine
+  // itself - so the null default now only covers a pool built with no
+  // mode machine at all (the test rigs), which is flags all false.
   enterExitFlags = () => null,
+  // AUDIT 61 F22: EnemySenses.cs:267's PlayerEnterExit.IsPlayerInside,
+  // which picks the spawn/despawn band at :269-286 - true in a BUILDING
+  // interior (PlayerEnterExit.cs:111-113), not dungeons only. The mode
+  // machine mounts this pool inside a building (makeInteriorGuards) and
+  // the hard-coded `false` gave that watch the flat 102.4m exterior band
+  // with no Y test. The default keeps the two street pools as they were.
+  playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
   // area, the encounter pool's dep to the line (exteriorFoes.js:81).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
@@ -234,7 +243,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,
-        playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
+        playerInside,   // AUDIT 23 (characters-7) / AUDIT 61 F22: EnemySenses.cs:267-269 - the mount's IsPlayerInside picks the band
         // wave 35: DoRangedAttack's band. Knight_CityWatch has
         // HasRangedAttack1 = false and CastsMagic = false
         // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack

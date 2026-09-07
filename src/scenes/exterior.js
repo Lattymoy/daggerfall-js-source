@@ -1093,6 +1093,25 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258 - a struck PASSIVE watchman turns the area
+    // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
+    // outer gate (PlayerEntity.cs:625) and its indoor arm (:628-641).
+    // AUDIT 61 F13: this host mounts the SAME mode machine world.js
+    // does (createWorldModes below - E on a building door enters its
+    // interior, E on a DUNGEON_ENTRANCE door drops into the crawl), so
+    // the flagless default was never right here: with `_ee` null the
+    // outer gate could not fire and the quest action `spawncityguards`,
+    // which ticks in dungeon mode, fell straight through to the street
+    // law - 2-5 Knight_CityWatch placed against the EXTERIOR collider
+    // at the player's dungeon-local feet, the exact case cityGuards'
+    // own note describes. Written in world.js:1907's shape, so one pin
+    // covers both hosts (`modes` is the `var` below; the thunk is lazy).
+    enterExitFlags: () => ({
+      isPlayerInsideDungeon: (modes?.mode ?? 'exterior') === 'dungeon',
+      isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
+      insideOpenShop: modes?.insideOpenShop ?? false,
+      insideTavern: modes?.insideTavern ?? false,
+      insideResidence: modes?.insideResidence ?? false,
+    }),
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -1176,13 +1195,24 @@ export async function bootExterior(canvas, renderer, params, status) {
       },
     },
   });
-  const _guardPool = () => _livePersons.map(({ person, pos }) => ({
+  // AUDIT 61 F14: DFU's population is INACTIVE indoors. PlayerEnterExit
+  // .DisableAllParents (PlayerEnterExit.cs:1047) does
+  // `ExteriorParent.SetActive(false)` on every interior transition, and
+  // all three SpawnCityGuards/MakeNPCGuards walks open with
+  // `if (!populationManager.PopulationPool[i].npc.isActiveAndEnabled)
+  // continue;` (PlayerEntity.cs:653-654, :707-708, :776-777) - so inside,
+  // the street pool answers NOBODY. `_livePersons` is only rebuilt in the
+  // exterior frame (below the modal return), so without this the street
+  // arms walked the LAST exterior frame's list at world-space positions:
+  // a crime in a temple converted and disabled townsfolk out in the road
+  // and minted the watch outside the wall.
+  const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard,
     disable: () => {
       const it = population?.pool.find((i) => i.person === person);
       if (it) { it.person.release(); it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false; }
     },
-  }));
+  })));
   // AUDIT 17e F6: DFU clears the active crime on OnExitLocationRect.
   // This host IS one fixed location with no rect to leave - the
   // streaming host (world.js) owns that edge. Nothing to clear here.
@@ -1212,15 +1242,19 @@ export async function bootExterior(canvas, renderer, params, status) {
   // city has no fast travel and no ship; the clock jumps that raise the
   // flag here are the jail skip (arrestFlow) and the vampirism turn
   // (infection.js deployInfection, VampirismInfection.cs:157).
-  // REVIEW 2026-09-05 (PR #59): the loop runs in EVERY mode, as DFU's
-  // Update does - IntermittentEnemySpawn reads IsPlayerInside (:564)
-  // and rolls nothing inside a building or an un-rested dungeon, so an
-  // 8-hour tavern sleep is SKIPPED rather than banked and replayed as
-  // outdoor night rolls at the door; the passive-guard rolls reach the
-  // indoor watch through _spawnGuards' inside arm; the conversion
-  // sweep asks the street population, which a dungeon has none of
-  // (MakeNPCGuardsIntoEnemiesIfGuardsSpawned :768-770 returns on a
-  // null location object).
+  // AUDIT 61 F11: the loop runs in EVERY mode, as DFU's Update does -
+  // and it is CALLED in every mode now, which is what that claim was
+  // missing. The mode machine rings this function once per modal frame
+  // (host.encounterTick) and from its interior rest; the frame call
+  // below is the exterior arm. IntermittentEnemySpawn reads
+  // IsPlayerInside (:564) and rolls nothing inside a building or an
+  // un-rested dungeon, so an 8-hour tavern sleep is SKIPPED rather than
+  // banked and replayed as outdoor night rolls at the door; the
+  // passive-guard rolls reach the indoor watch through _spawnGuards'
+  // inside arm (and are refused underground by SpawnCityGuards' own
+  // outer gate, PlayerEntity.cs:625); the conversion sweep is exterior
+  // only, because the population is inactive indoors and there is no
+  // location object underground (:768-780).
   let _lastEncMinutes = null;
   function runEncounterTick(playerFeet) {
     const now = Math.floor(playerTicker.classicMinutes);
@@ -1251,7 +1285,17 @@ export async function bootExterior(canvas, renderer, params, status) {
       // :513-516 - at most ONCE per Update however many minutes catch up
       if (!_updatedGuards) {
         _updatedGuards = true;
-        if (_m !== 'dungeon') cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })   // :768-770 - no location object in a dungeon
+        // AUDIT 61 F11: EXTERIOR only, not merely "not a dungeon".
+        // MakeNPCGuardsIntoEnemiesIfGuardsSpawned (PlayerEntity.cs
+        // :764-780) walks PopulationManager.PopulationPool skipping
+        // every `!npc.isActiveAndEnabled` entry, and PlayerEnterExit
+        // disables the whole ExteriorParent on an interior transition
+        // (:1047) - so indoors the sweep converts nobody, and :768-770
+        // returns outright underground with no location object. Now
+        // that the loop runs in the modal modes too, the old gate would
+        // have turned street townsfolk into enemy watchmen while the
+        // player stood in a shop, at an interior-local playerFeet.
+        if (_m === 'exterior') cityGuards.makeNpcGuardsIntoEnemies({ pool: _guardPool(), playerFeet })
           .catch((e) => console.error('[guards]', e));
       }
     }
@@ -2748,6 +2792,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     // arm's caller, which neither host answered. Same shape as the
     // world host's.
     spawnCityGuards: (immediate) => (immediate ? _crimeResponse() : _witnessResponse()),
+    // AUDIT 61 F11: PlayerEntity.Update's CATCH-UP LOOP, from the modal
+    // frame. The loop runs every Update whatever PlayerEnterExit says
+    // (PlayerEntity.cs:479-522) and advances lastGameMinutes at :521, so
+    // an indoor minute is CONSUMED as it passes - IntermittentEnemySpawn
+    // reads IsPlayerInside (:564) and rolls nothing in a building or an
+    // un-rested dungeon. The host's own call sits below its modal early
+    // return, so before this the interior ticker advanced the one world
+    // clock while the anchor froze at the door, and an 8-hour tavern
+    // sleep was replayed at the door as 480 EXTERIOR minutes of
+    // location-night/wilderness rolls plus a burst of passive-guard
+    // rolls. The mode machine calls this once per modal frame (and from
+    // its interior rest), which is where those minutes actually pass.
+    encounterTick: () => runEncounterTick(walkMode ? player.pos : cam.pos),
     // ROAD-B / G2: the arrest interception for the mode machine's
     // INDOOR watch - world.js's twin. The court flow is the host's, so
     // the interior pool asks through here rather than owning a copy.
@@ -2977,7 +3034,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // record (removeGuard), the encounter pool re-stands (world.js's route)
       if (cityGuards.guards.includes(f)) cityGuards.removeGuard(f);
       else exteriorFoes.removeFoe(f);
-      exteriorFoes.spawnFoe(mobileType, feet).then(stamp).catch(() => {});
+      // AUDIT 61 F12: `replacing` - world.js's twin (THE FOUR HOSTS RULE).
+      // One entity destroyed, one minted (WabbajackEffect.cs:86-88), so the
+      // encounter cap has no business refusing it - least of all when the
+      // freed slot was the guard pool's.
+      exteriorFoes.spawnFoe(mobileType, feet, { replacing: true }).then(stamp).catch(() => {});
     };
     setDefaultEnchantCtx(createEnchantCtx({
       playerEntity,
@@ -3167,6 +3228,23 @@ export async function bootExterior(canvas, renderer, params, status) {
   // arming edge is here rather than on a poll. Without it a graveyard
   // opened as ?exterior was silent while the streaming host howled.
   ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+  // AUDIT 61 F29: the sky's PlayerEnterExit latch. BLBSkybox subscribes
+  // OnTransitionInterior/DungeonInterior/Exterior/DungeonExterior
+  // (BLBSkybox.cs:1236-1240) and the handlers are TRANSITION events, so
+  // the port holds the EDGE here rather than polling. Read on both
+  // sides of `modes.frame` and nowhere else: the mode flips INSIDE that
+  // call, so a read before it misses the exit edge by a frame - and on
+  // that frame the exterior block below would tick a LightningFlash
+  // frozen since the door and light it, from where the player stood
+  // before entering, which is exactly what the mod's
+  // InteriorTransitionEvent (BLBSkybox.cs:1247-1284) exists to prevent.
+  let _skyInside = false;
+  const _skyEnterExit = () => {
+    const inside = (modes?.mode ?? 'exterior') !== 'exterior';   // the isPlayerInside latch the guard pool is handed
+    if (inside === _skyInside) return;
+    _skyInside = inside;
+    sky.setInside(inside);
+  };
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
@@ -3241,6 +3319,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      _skyEnterExit();   // AUDIT 61 F29: the transition, read after the mode flipped
       // WM4c: inside a building or a dungeon the exterior parent is
       // INACTIVE in DFU (PlayerEnterExit disables it), and a disabled
       // AudioSource stops. The mills fall silent with it and start
@@ -3265,6 +3344,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
+    // AUDIT 61 F29: and the OTHER edge - the frame the player steps back
+    // out is the one modes.frame answered false on, so the sky learns it
+    // here, before anything below ticks or draws the flash.
+    _skyEnterExit();
 
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -3870,7 +3953,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...guardBatches);
       // ROAD-G G2: the encounter pool drives and draws on the same
       // flats' axis, and freezes with the population under an overlay.
-      if (!townTalk.overlayActive) runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the cadence loop rolls the elapsed minutes - in EVERY mode (REVIEW 2026-09-05: indoor minutes are skipped by the loop's own inside arm, not banked)
+      if (!townTalk.overlayActive) runEncounterTick(walkMode ? player.pos : cam.pos);   // ROAD-G TAIL: the EXTERIOR arm of the cadence loop (AUDIT 61 F11: the modal modes ring the same function through the mode machine, above the modal return)
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, _senses);
       personBatches.push(...exteriorFoes.batches());

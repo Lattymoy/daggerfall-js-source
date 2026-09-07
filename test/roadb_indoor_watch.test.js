@@ -138,17 +138,24 @@ test('ROAD-B: the mode machine mints a watch pool with every interior and tears 
     'and the interior swing resolves against the watch FIRST, as it does above ground');
 });
 
-test('ROAD-B: spawnCityGuardsInside gates on the three PlayerEnterExit flags', () => {
+test('ROAD-B: spawnCityGuardsInside reads the three PlayerEnterExit flags and answers EVERY interior', () => {
   const wm = src('src/scenes/worldModes.js');
   const fn = wm.slice(wm.indexOf('spawnCityGuardsInside(immediate) {'));
   assert.match(fn.slice(0, 1200), /if \(mode !== 'interior' \|\| !interiorCtx \|\| !interiorGuards\) return false;/);
   assert.match(fn.slice(0, 1200), /!!b\.insideOpenShop/, 'IsPlayerInsideOpenShop, off the latched building record');
   assert.match(fn.slice(0, 1200), /b\.buildingType === BUILDING_TYPES\.Tavern/, 'IsPlayerInsideTavern');
   assert.match(fn.slice(0, 1200), /isResidence\(b\.buildingType\)/, 'IsPlayerInsideResidence');
-  assert.match(fn.slice(0, 1200), /if \(!eligible\) return false;/,
-    'and a temple or a guild hall falls through to the street arm, as C# does');
-  assert.match(fn.slice(0, 1200), /interior: \{ doors: interiorCtx\.doors, origin: interiorCtx\.parentPt\(0, 0, 0\), eligible: true \}/,
-    'the interior hands its own doors and its own origin');
+  // AUDIT 61 F14: a temple, a guild hall or a palace no longer falls
+  // through to the STREET pool. C#'s fall-through lands on the same
+  // player position in the same (interior) physics scene, with the
+  // population inactive (PlayerEnterExit.cs:1047) - so what actually
+  // runs there is PlayerEntity.cs:687's CreateFoeSpawner around the
+  // player, parented to the Interior, which is this pool's ring
+  // fallback with an empty pool and `eligible:false`.
+  assert.equal(/if \(!eligible\) return false;/.test(fn.slice(0, 1600)), false,
+    'the non-eligible interior is answered in here, not out in the road');
+  assert.match(fn.slice(0, 1600), /interior: \{ doors: interiorCtx\.doors, origin: interiorCtx\.parentPt\(0, 0, 0\), eligible \}/,
+    'the interior hands its own doors, its own origin and the eligibility');
 });
 
 test('ROAD-B: both mode-machine hosts offer the indoor arm the call before the street law', () => {

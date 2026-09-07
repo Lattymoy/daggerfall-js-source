@@ -2948,3 +2948,185 @@ that still read the PLAYER's capsule:
 
 Refuted (1): the enhanced motor's final-leg y (it reads classic's
 converted destination, which is now right).
+
+## AUDIT 61 (2026-09-07) - THE HOSTS AND ENCOUNTERS LANE
+
+Six findings against the two walkable outdoor hosts (`scenes/world.js`,
+`scenes/exterior.js`) and the mode machine both of them mount
+(`scenes/worldModes.js`). Every one is a missing clause on the classic
+path: no `isEnhanced()`, no pref, no Ledger row covered any of them.
+
+### AUDIT 61 F11 - the catch-up loop could not run indoors
+
+PR #59 wrote down that "the loop runs in EVERY mode" and handed
+`IntermittentEnemySpawn` an `inside:` argument to prove it. The call
+could not reach those modes: in both hosts `runEncounterTick` is invoked
+BELOW `if (modes.frame(dt, now)) { ... return; }`, and that frame
+consumes every interior and dungeon frame. The interior rest
+(`interiorRestDeps.advanceMinutes`) called no tick either. But
+`playerTicker.classicMinutes` is a view on the ONE world clock that the
+interior ticker advances, so `_lastEncMinutes` froze at the door while
+the clock ran: an eight-hour tavern sleep was banked and replayed at the
+door as 480 EXTERIOR minutes - location-night and wilderness rolls plus
+one passive-guard roll each - the exact defect the comment claimed was
+closed. `inside:`/`inDungeon:` were dead arguments.
+
+DFU runs the loop every `Update` whatever `PlayerEnterExit` says
+(`PlayerEntity.cs:479-522`) and advances `lastGameMinutes` at `:521`, so
+each indoor minute is CONSUMED as it passes and `IntermittentEnemySpawn`
+refuses it (`:564`'s outdoor block is guarded by `!IsPlayerInside`, and
+the inside block spawns only for `IsPlayerInsideDungeon && isResting`).
+
+Landed: `createWorldModes` takes a `host.encounterTick` dep, rung once
+per modal frame under the same `overlayHeld` gate the interior ticker
+rides (above the render split, so one line covers the interior and the
+dungeon arms, and above the exit-transition return so the minutes are
+still indoor minutes), and from `interiorRestDeps.advanceMinutes`
+beside `interiorTicker.advance(n)` - the outdoor hosts' rest deps have
+consumed theirs since ROAD-G TAIL. The hosts' own frame calls stay as
+the exterior arm.
+
+And the arm that had to move with it: the once-per-Update NPC-guard
+conversion sweep was gated `_m !== 'dungeon'`, which let it run in
+INTERIOR mode. It is `_m === 'exterior'` now.
+`MakeNPCGuardsIntoEnemiesIfGuardsSpawned` (`PlayerEntity.cs:764-780`)
+walks `PopulationManager.PopulationPool` skipping every
+`!npc.isActiveAndEnabled` NPC, and `PlayerEnterExit.cs:1047` disables
+the whole `ExteriorParent` on an interior transition - so indoors it
+converts nobody, and `:768-770` returns underground on the null location
+object. Left as it was, a hoisted loop would have turned street
+townsfolk into enemy watchmen while the player stood in a shop, at an
+interior-local `playerFeet`. The passive-guard rolls need no such gate:
+`_spawnGuards` offers `modes.spawnCityGuardsInside` the call first (F14
+below), and underground `SpawnCityGuards`' own outer gate refuses it
+(`PlayerEntity.cs:625`, F13 below).
+
+The old pin was a source-text regex over the call line, green with the
+call dead. It is behavioural now: 200 seeded eight-hour spans, every
+indoor minute rolling nothing, against the banked replay that stands a
+foe on the doorstep on most nights.
+
+### AUDIT 61 F12 - Wabbajack on a watchman could erase him
+
+The three re-stand sites (`world.js`, `exterior.js`, and worldModes'
+`insideReplaceFoe`) remove the struck record through the pool that owns
+it and re-stand through the ENCOUNTER pool. Removing a GUARD frees a
+slot in the guard pool and none in the encounter pool, so with eight
+live encounter records `spawnFoe` answered null and the watchman was
+destroyed with nothing standing in his place - worse than the written
+refusal two of those arms replaced. `WabbajackEffect.cs:86-88` is
+`SetActive(false)` then an unconditional `CreateEnemy`.
+
+Landed: a `replacing` option beside the existing `questBehaviour`
+exemption in `createExteriorFoes.spawnFoe`, passed at all three sites.
+The justification is the reference's own shape - a transform destroys
+one entity and mints one, so it is slot-neutral by construction and the
+port's encounter bound is not being widened. Pinned behaviourally on the
+real factory: a saturated pool still refuses an ADDITION and lets the
+replacement through to the spawn chain.
+
+### AUDIT 61 F13 - the ?exterior host minted its watch without the latches
+
+`world.js` hands `createCityGuards` an `enterExitFlags` thunk;
+`exterior.js` passed none, so `cityGuards` read `_ee = null` and
+`PlayerEntity.cs:625`'s `!IsPlayerInsideDungeon` outer gate - which
+encloses the WHOLE member - could never fire on that route. That host
+has mounted the same mode machine since P7 (E on a DUNGEON_ENTRANCE door
+drops it into the crawl), and the quest action `spawncityguards` ticks
+in dungeon mode, so the call fell through to the street law and rang
+2-5 Knight_CityWatch onto the EXTERIOR collider at the player's
+dungeon-local feet. Landed: the same thunk, in world.js's exact shape.
+`cityGuards`' own "a host with no interiors and no dungeons answers
+null" note is corrected with it - no host in the tree is that host.
+
+### AUDIT 61 F14 - the street pool survived indoors, stale
+
+`_guardPool()` maps `_livePersons`, rebuilt only in the exterior frame
+(below the modal return), so indoors it was the last exterior frame's
+street NPCs at world-space positions - metres from the indoor player,
+because the interior is parented on the building's world matrix. A crime
+in a temple or a guild hall (which `spawnCityGuardsInside` refused) then
+reached the street arm with that list: guard NPCs in range converted and
+were `disable()`d out in the road, and the ring fallback cast against
+the exterior collider. DFU cannot do that - the population is inactive
+inside, and all three walks open with `if (!populationManager
+.PopulationPool[i].npc.isActiveAndEnabled) continue;`
+(`PlayerEntity.cs:653-654`, `:707-708`, `:776-777`).
+
+Landed, both halves:
+
+- `_guardPool` answers `[]` whenever the mode is not exterior, in BOTH
+  hosts - DFU's three `isActiveAndEnabled` continues, expressed at the
+  one place the port materialises the pool, so the conversion sweep and
+  the witness arm are covered with it.
+- `worldModes.spawnCityGuardsInside` takes the call for EVERY interior
+  and routes the non-eligible ones with `eligible:false` and an empty
+  pool, answering true. With no pool to convert, `cityGuards` falls to
+  its ring fallback over THIS interior's collider at the player's feet -
+  which is `PlayerEntity.cs:687`'s `CreateFoeSpawner(true,
+  Knight_CityWatch, Random.Range(2, 5+1), 12.8f, 51.2f)` parented to the
+  Interior (`FoeSpawner.cs:138-139` through `GameObjectHelper
+  .GetBestParent`, `:407-410`). C# "falls through" there, but the
+  fall-through lands on the same player position in the same physics
+  scene; handing it to the exterior host's collider and its frozen
+  update does not. A dungeon still answers false and is refused by
+  `SpawnCityGuards`' own outer gate.
+
+### AUDIT 61 F15 - world.js's quest placement did not see the watch
+
+`CreateFoe.cs:319-323` is `Physics.OverlapSphere(testPoint,
+overlapSphereRadius); if (colliders.Length > 0) return;` - ANY collider
+refuses the spot, and a watchman's capsule is one. Every other placement
+arm in the tree passes the host's whole street pool; `world.js`'s quest
+arm still passed `() => exteriorFoes.foes`, so a quest foe could be
+stood inside a standing watchman on a city street. Now
+`() => exteriorFoePool()`, the shape its own sibling uses, pinned by
+count so neither arm can regress alone.
+
+### AUDIT 61 F22 - the interior pools wore the outdoor spawn band
+
+`EnemySenses.cs:267` reads `PlayerEnterExit.IsPlayerInside` - the
+GENERIC flag (`PlayerEnterExit.cs:111-113`, set at `:1086` by
+`EnableInteriorParent`), true in a BUILDING interior and not dungeons
+only - and `:269-286` takes `classicSpawnDespawnExterior` (102.4m, no Y
+term) ONLY when it is false. `createExteriorFoes` and `createCityGuards`
+hard-coded `playerInside: false` with no dep, and the mode machine
+mounts both of those factories over a building interior, so an interior
+foe ran the flat outdoor band with no vertical test: a watchman or a
+summoned daedra a storey above the player was "spawned in classic" where
+row 0 (XZ 25.6m, Y +3.2m) denies it - and that flag gates `GetTargets`
+(`:381-393`), the stealth check (`:623`) and `areEnemiesNearby`.
+
+Landed: a `playerInside` dep on both factories (defaulting false, so the
+two street pools are unchanged), passed `true` from `makeInteriorFoes`
+and `makeInteriorGuards`. The dungeon pools already rode `EnemyAI`'s
+`true` default. A constant per mount is faithful because each host ticks
+only its own space; if that ever stops holding, the dep becomes a getter,
+since `EnemySenses` re-reads the flag every classic tick. The AUDIT 23
+pin that asserted the literal `playerInside: false,` is replaced by the
+LAW: at yDiff 5m / XZ 3m the outdoor band spawns and the indoor one does
+not.
+
+### AUDIT 61 REVIEW (2026-09-07) - F11 took the sweep's latch pin with it
+
+The F11 comment block that explains why the conversion sweep is
+`_m === 'exterior'` and not `_m !== 'dungeon'` was written BETWEEN
+`_updatedGuards = true;` and the `cityGuards.makeNpcGuardsIntoEnemies(`
+call, and the pin in `test/exteriorfoes.test.js` that had held those two
+adjacent was relaxed to make room: one assertion for the latch, another,
+19 lines later, for the call. Nothing then pinned the call INSIDE the
+latch. `PlayerEntity.cs:484` declares `bool updatedGuards = false`
+outside the catch-up loop and `:513-516` runs
+`MakeNPCGuardsIntoEnemiesIfGuardsSpawned` at most ONCE per `Update`
+however many minutes catch up; with the pin split, moving the call out
+of the latch - so the whole population sweep runs once per caught-up
+MINUTE - left the suite green. F11 makes that worse, not better: the
+loop is now rung from three call sites and a door-side catch-up can be
+480 minutes long.
+
+The two assertions are one again, as a single regex that spells the
+whole block - latch, the comment lines, then the guarded call - and is
+asserted against BOTH host bodies (`exterior.js` and `world.js`), where
+before only the fixed-city body carried the adjacency. It dies under a
+line-neutral mutation that closes the latch early
+(`_updatedGuards = true; } {`) in either host.
