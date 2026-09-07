@@ -1309,8 +1309,11 @@ export class Renderer {
 
   /** Render a character mesh into the sprite target under a fitted
    *  ortho camera (frame lighting; the frame camera caches are
-   *  swapped and restored - drawCharacter reads them). */
-  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph) {
+   *  swapped and restored - drawCharacter reads them). `lensLocal`:
+   *  the mesh sits at the ORIGIN of a private lens space (the FP
+   *  viewmodel), not in the world - the cloud deck is borrowed off for
+   *  it (VC5 review), as the studio variant does for the panels. */
+  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph, { lensLocal = false } = {}) {
     const gl = this.gl;
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
@@ -1344,10 +1347,22 @@ export class Renderer {
     // figure, the item icons) were fogged by the player's absolute
     // distance from the world origin, and the icon read-back baked that
     // darkness into its cache.
+    // VC5 review: THE CLOUD DECK IS BORROWED OFF for a lens-local pass,
+    // for the fog's second reason - the map is world-space and this
+    // geometry sits at the origin, so the FP arm read the cloud over the
+    // corner of the player's pixel, up to a kilometre away, and stepped
+    // in brightness at every recenter while nothing else did. The
+    // world-space callers (the rig sprite box, the third-person arm)
+    // keep the deck: they are characters in the world.
     const sp = this._proj, sv = this._view, sf = this._fogMode;
+    const sd = lensLocal ? this._cloudShadow : null;
+    if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0;
-    this.drawCharacter(mesh, modelMatrix);
-    this._proj = sp; this._view = sv; this._fogMode = sf;
+    try { this.drawCharacter(mesh, modelMatrix); }
+    finally {
+      this._proj = sp; this._view = sv; this._fogMode = sf;
+      if (sd) { this._cloudShadow = sd; this._csStamp++; }
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
     // the middle of the world pass (every voxel character composites

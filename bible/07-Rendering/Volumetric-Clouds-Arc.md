@@ -100,13 +100,24 @@ tree took (VC4b-VC4e):
   was not a whole number of texels per pixel crossing at any tier,
   and the crossing's blit left 0.67 of a texel behind - SIXTEEN, and
   the whole-texel law pinned per tier.
+- **CONFIRMED, after the close (the seam reviewer, the one finding of
+  thirty-three that survived the skeptics against the closed tree).**
+  `renderCharacterSprite` borrowed the fog off for its lens-local
+  callers and not the deck: the first-person arm is drawn at the ORIGIN
+  of a private lens space, so it read the cloud over the corner of the
+  player's pixel (up to a kilometre away) and stepped in brightness at
+  every recenter while nothing else in the picture did. The deck is now
+  borrowed off under a `lensLocal` flag the arm passes; the world-space
+  callers (the rig sprite box, the third-person arm) keep it, as the
+  design row says the characters do. Pinned.
 - **REFUTED.** The construction-time noise pass marks no foreign pass:
   no renderer entry point runs between the sky's construction and the
   first `beginFrame`, which resets the EV6 shadows (a comment records
   it). Testing.md's suite line "nine tests short": the manifest's law
   counts `test(` calls (6575), node's `# tests` line counts subtests
-  too (6584) - the line follows the manifest. The first-frame stall (a
-  full sky sweep) was gone before the review ran.
+  too (6584) - the line follows the manifest, and the skeptics found
+  the change breaks both the manifest and the landing pins. The
+  first-frame stall (a full sky sweep) was gone before the review ran.
 
 ## Residue (honest, for whoever opens this next)
 
