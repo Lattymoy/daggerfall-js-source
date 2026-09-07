@@ -91,7 +91,15 @@ mod is inert.
   the mod's texture under a key that carries the installed season and
   draws at `seasonalBillboardSize`; a classic record takes the path it
   always took. The seasonal record has one frame, as the mod's atlas
-  does, so it is never armed for animation.
+  does, so it is never armed for animation. AUDIT 61: the upload has
+  NO mip chain - the mod builds its atlas `new Texture2D(size, size,
+  RGBA32, mipChain: false)`, `Apply(updateMipmaps: false)`, filtered
+  Point, where DFU's own nature atlas is mipped
+  (`TextureReader.cs:31/:521`) - so the seasonal flat is one NEAREST
+  level at every distance while the classic flats keep their chain
+  (`uploadTexture(..., { mips: false, variant: '' })`: the un-mipped
+  upload keeps the plain batch key, which only the item icons had
+  re-keyed to `#ui` before).
 - **The refresh.** DFU's `RefreshLoadedNatureBatches` re-applies every
   batch in place, which is free. This host bakes its batches, so the
   refresh is answered with the same destroy-and-requeue sweep
@@ -100,7 +108,17 @@ mod is inert.
   the `generation` it was built under). A season turn the climate
   season does not share (Summer to Fall, Spring to Summer) reaches the
   standing world that way; the winter flip's own rebuild finds every
-  pixel fresh and rebuilds nothing twice.
+  pixel fresh and rebuilds nothing twice. AUDIT 61: the generation a
+  pixel records is the one its lookups READ (captured right after its
+  `OnInstantiateTerrain`), not the one standing when it publishes -
+  a build's texture fetches yield, and a forced apply on a quickload
+  or a teleport whose destination ring keeps the pixel can land in
+  between; and a pixel that publishes across such an install raises
+  the re-skin itself, since the stamp scan cannot see a pixel that is
+  not published yet. That is what `RefreshLoadedNatureBatches`'s
+  forced walk over every ACTIVE batch (`FindObjectsOfType` with no
+  `includeInactive`, il.txt 0x08a4) guarantees in DFU for the batches
+  it can see - translation 4 records the ones it cannot.
 - **The events.** Boot is `OnLoad` (the forced apply, once the pick's
   registration has answered whether the mod is present); each pixel
   build is `OnInstantiateTerrain`; the day poll that finds a month
@@ -118,8 +136,9 @@ mod is inert.
 
 1. **The refresh is a rebuild, filtered by install generation** - DFU
    re-applies materials in place; the port's batches are baked, and
-   the winter flip already rebuilds. Same visible result; the
-   generation filter is what keeps a season turn to one rebuild.
+   the winter flip already rebuilds. The generation filter is what
+   keeps a season turn to one rebuild; what the rebuild reaches that
+   DFU's re-apply does not is translation 4.
 2. **No atlas.** DFU packs the season's textures into one atlas
    (`PackTextures`, padding 2, 2048 or 4096 with asset injection) and
    the batch reads UV rects; the port uploads each record as its own
@@ -128,6 +147,35 @@ mod is inert.
 3. **The textures come through the pick, not the mod system** - see
    above; the manifest's file list is still what the prefix filter
    runs over when the bundle is present.
+4. **The refresh reaches every standing pixel; DFU's reaches the
+   ACTIVE batches, over a substrate that never re-skins a standing
+   terrain** (AUDIT 61, two skeptics, recorded as they agreed).
+   `RefreshLoadedNatureBatches` walks
+   `FindObjectsOfType<DaggerfallBillboardBatch>()` (il.txt 0x08a4),
+   which skips inactive objects, and `DaggerfallBillboardBatch.
+   SetMaterial` returns early on `archive == currentArchive && !force`
+   (`DaggerfallBillboardBatch.cs:283-284`) with `Clear()` never
+   resetting `currentArchive`, while `StreamingWorld.UpdateTerrainNature`
+   re-materialises a recycled pool slot UNFORCED (`StreamingWorld.cs:
+   1269`). So a batch that was inactive at the instant of the month
+   turn - a terrain in flight - keeps the old season through every
+   later recycle until it is active at a later turn; and a month turn
+   taken indoors (`DisableAllParents` has `ExteriorParent` off) installs
+   the atlases and refreshes nothing, the town's OWN flats taking the
+   new season on the first exterior frame through `DaggerfallLocation.
+   Update`'s four-valued season poll (`DaggerfallLocation.cs:113-129`,
+   :277-282) while the streamed terrain around them keeps the season it
+   was streamed in. That last is DFU's substrate, mod or no mod: DFU
+   raises `updateData`/`updateNature` only in `PlaceTerrain`
+   (`StreamingWorld.cs:905-906`), so a standing terrain's ground atlas
+   and nature batch keep their season until the pixel re-streams. The
+   port's `tickSeason` rebuilds the whole standing grid on a season
+   change - the ROAD A1 season law, older than this mod and pinned by
+   `test/seasoncalendar.test.js` - and this host has no pooled batch
+   and no cached batch material (translation 2), so the mod's refresh
+   here converges on the installed season everywhere on the first
+   exterior frame. A known difference, the port's and not the mod's:
+   the port never shows DFU's split.
 
 ## Verification
 

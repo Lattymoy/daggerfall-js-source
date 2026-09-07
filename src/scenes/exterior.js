@@ -655,7 +655,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (sib) {
       const rkey = `${record}#season${seasons.installedSeason}`;
       const img = sib.texture.image;
-      renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data });
+      renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data }, { mips: false, variant: '' });   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
       const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
       batch._box = flatBatchAabb(centers, sib.size);   // EV3
       billboardBatches.push(batch);
@@ -3093,7 +3093,12 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
-  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
+  // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies'
+  // LightningFlashListener, with the word the ambience is PLAYING
+  // (AUDIT 61; see world.js).
+  let ambientWord = weather;
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos, ambientWord === 'thunder');
+  let skyInside = false;   // DS1 (AUDIT 61): PlayerEnterExit's transition edge
   // AUDIT 58 (F089's other host): AmbientEffectsPlayer.Start subscribes
   // PlayerGPS.OnEnterLocationRect on EVERY instance (:89), and the
   // handler arms IsCemeteryNearby when the entered location is a
@@ -3176,6 +3181,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
       // INACTIVE in DFU (PlayerEnterExit disables it), and a disabled
       // AudioSource stops. The mills fall silent with it and start
@@ -3505,7 +3511,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
-    ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
+    ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
+    ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
@@ -3527,7 +3534,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ambience preset; the flash now follows the same word.
     const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
     const strobe = lightningShown ? strobeNow : 1;
-    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() && !sky.dynamic ? strobe : 1);   // DS1 (AUDIT 61): one lightning under the mod (see world.js)
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
@@ -3556,9 +3563,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // arm adds the CALENDAR season to SkyBase (Fall 0 / Spring 1 /
     // Summer 2 / Winter 3); the rain/snow variants keep their boot
     // roll. One clock, so the season reads the world date.
+    if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun });   // ES1: the enhanced sky's clouds and moons; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);

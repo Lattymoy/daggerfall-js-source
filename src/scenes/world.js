@@ -468,7 +468,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // scale is 1 at DFU's default 3, so the classic path is untouched);
   // the exp weather rows pass through scaleFogForDistance unchanged.
   const fogDistance = getInt('Experimental', 'TerrainDistance', 1, 4);
-  let weatherFog = scaleFogForDistance(fogForWeather(weather, sky.fogSettings), fogDistance);   // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies is the sky
+  // DS1: WeatherManager's fog settings are the mod's while Dynamic Skies
+  // is the sky - and INSTALLED VERBATIM (BLBSkybox.SetFogDistance writes
+  // the row's end distance as authored, AUDIT 61): EV4's distance scale
+  // is the port's law over DFU's own 0..2400 row and does not stretch
+  // the mod's 2000..3600.
+  const weatherFogRow = (w) => (sky.dynamic ? fogForWeather(w, sky.fogSettings) : scaleFogForDistance(fogForWeather(w), fogDistance));
+  let weatherFog = weatherFogRow(weather);
   let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
   let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   let precipMode = precipitationForWeather(weather);
@@ -509,7 +515,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   function applyWeather(w) {
     weather = w;
-    weatherFog = scaleFogForDistance(fogForWeather(w, sky.fogSettings), fogDistance);   // EV4; DS1: the mod's table
+    weatherFog = weatherFogRow(w);   // EV4; DS1: the mod's table, unscaled
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
@@ -964,6 +970,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (false) before this terrain's batches take their material, so the
     // cache they read holds the season the clock says.
     if (await seasonsReady) await seasons.onTerrainInstantiated();
+    const seasonsGen = seasons?.generation ?? 0;   // AUDIT 61: the install the lookups below read - not the one standing at publish
     const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
     for (const [k, centers] of groups) {
@@ -979,7 +986,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (sib) {
         const rkey = `${record}#season${seasons.installedSeason}`;
         const img = sib.texture.image;
-        renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data });
+        renderer.uploadTexture(archive, rkey, { width: img.width, height: img.height, colors: img.data }, { mips: false, variant: '' });   // AUDIT 61: the mod's atlas has NO mip chain (mipChain:false, Apply(false), Point) - one NEAREST level at every distance, unlike the classic flats
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
         unionBox(batch._box);
@@ -1026,7 +1033,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     models.sort((a, b) => a._order - b._order);
 
     built.set(key, {
-      _seasonsGen: seasons?.generation ?? 0,   // SIB1: the install this pixel's flats were built under
+      _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
       px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
@@ -1042,6 +1049,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    // AUDIT 61 (SIB1): an install landed while this pixel's textures were
+    // in flight (a forced apply on a quickload or a teleport whose
+    // destination ring keeps this pixel), so its flats were read from an
+    // OLDER cache than the one that now stands. The mod's
+    // RefreshLoadedNatureBatches re-applies EVERY batch after every
+    // apply, the just-built ones included; the stamp scan in `refresh`
+    // cannot see a pixel that was not published yet, so this build asks
+    // for the re-skin itself - the same publish-time re-check the
+    // terrain ring class runs below.
+    if (seasons && seasonsGen !== seasons.generation) _reskinPending = true;
     // ROADS 25: a pixel that was already in flight when the network landed
     // was painted without it and arrives AFTER the sweep. It goes straight
     // back for a rebuild - the worker has the network by now, since the
@@ -6231,7 +6248,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
-  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos);   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies' LightningFlashListener
+  // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies'
+  // LightningFlashListener. AUDIT 61: the word the ambience is PLAYING
+  // rides along - under the port's weather front the presets follow the
+  // front (WX2), and in DFU the listener only ever hears storm clips.
+  let ambientWord = weather;
+  ambience.onPlayEffect = (clip, playerPos) => sky.onAmbientEffect(playerPos, ambientWord === 'thunder');
+  let skyInside = false;   // DS1 (AUDIT 61): PlayerEnterExit's transition edge, for the mod's listener and flash
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
@@ -6329,6 +6352,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
       // AudioSources stop with it; the mills fall silent and the
       // per-frame retry restarts them on the way out.
@@ -6777,7 +6801,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WX2: under the front the ear follows what is FALLING - the loop
     // fades with the drops and holds off with them; a rain word with
     // nothing down yet is a cloudy day. Classic: the word, verbatim.
-    ambience.setPreset(presetForExterior(enhancedFront ? soundWeather(fx, weather) : weather, isNight(minute)));
+    ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
+    ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: cam.pos, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
@@ -6796,7 +6821,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ambience preset; the flash now follows the same word.
     const lightningShown = !enhancedFront || fx.shown === 'storm' ? lightning : null;
     const strobe = lightningShown ? strobeNow : 1;
-    const flash = params.has('flashtest') ? 2 : (isEnhanced() ? strobe : 1);
+    // DS1 (AUDIT 61): under the mod the storm's light is the mod's own
+    // point flash; the port's sun strobe (DFU's PlayLightningEffect,
+    // unreachable there) stands down so there is ONE lightning, as in DFU
+    // with the mod. LightningPlayer keeps ticking for the audio schedule.
+    const flash = params.has('flashtest') ? 2 : (isEnhanced() && !sky.dynamic ? strobe : 1);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
@@ -6822,9 +6851,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (Rain1 4 / Rain2 5 / Snow1 6 / Snow2 7; Normal is 0).
     // AUDIT 23 (wts-1): the Normal-weather sky adds the CALENDAR season
     // (DaggerfallSky.cs:354-357); rain/snow keep their boot variant.
+    if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun });   // ES1: the enhanced sky's clouds and moons; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
@@ -6890,7 +6920,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogEnd: fogNow.end,
+        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end,
         // E5: the ring draws INTO the world pass's rect, so it takes
         // that pass's aspect - a horizon built on the full-canvas ratio
         // would step against the terrain in front of it under a docked bar.

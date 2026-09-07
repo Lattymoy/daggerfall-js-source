@@ -60,7 +60,8 @@ export class DynamicSkies {
     this._seenWeather = null;
     // Lightning
     this.lightningFlash = new LightningFlash(rng);   // BLBSkybox.Start: flashDuration 0.2
-    this.lightningListening = false;
+    this.lightningSubscriptions = 0;   // the OnPlayEffect invocation list (a count: duplicates kept)
+    this.lightningCoroutine = false;    // StartLightningEffect's handle, null until Thunder
     // Fog colour (RenderSettings.fogColor), sRGB
     this.fogColor = null;
     this.lastFogUpdate = null;
@@ -85,11 +86,25 @@ export class DynamicSkies {
       this.pendingWindDirection = windDirectionRoll(this.rng);
       this.pendingSkyboxSettings = (this.skyboxSettings[weather] ?? this.skyboxSettings.sunny)[index];
       this.pendingWeather = true;
-      // the lightning listener follows the pending type
+      // The lightning listener follows the pending type - AS THE MOD
+      // KEEPS IT (AUDIT 61): `lightningCoroutine` is the coroutine
+      // handle (:557-571 start it only while null, stop it in the else
+      // arm), and StartListening/StopListening are `+=`/`-=` on a C#
+      // multicast event (LightingFlashListener.cs:28/:33), which keeps
+      // duplicates and removes one at a time - so the subscriptions are
+      // a COUNT. The ExteriorTransitionEvent re-arms the listener without
+      // touching the null coroutine (:1295-1298), so a Thunder round
+      // trip through a door and the next OnWeatherChange subscribe
+      // twice; the else arm then drops one, and the other stays for the
+      // session, rolling on every one-shot under any weather. Kept.
       if (this.pendingWeatherType === 'thunder') {
-        if (!this.lightningListening) this.lightningListening = true;   // StartCoroutine(StartLightningEffect) -> StartListening
-      } else if (this.lightningListening) {
-        this.lightningListening = false;   // StopCoroutine + StopListening
+        if (!this.lightningCoroutine) {   // StartCoroutine(StartLightningEffect) -> StartListening
+          this.lightningCoroutine = true;
+          this.lightningSubscriptions++;
+        }
+      } else if (this.lightningCoroutine) {   // StopCoroutine + ONE StopListening
+        this.lightningCoroutine = false;
+        this.lightningSubscriptions = Math.max(0, this.lightningSubscriptions - 1);
       }
     }
   }
@@ -145,22 +160,39 @@ export class DynamicSkies {
     this.pendingWeather = true;
   }
 
+  /** Is the listener subscribed at all (the port's pins' question). */
+  get lightningListening() { return this.lightningSubscriptions > 0; }
+
   /** LightningFlashListener.HandleOnPlayEffect: an ambient effect
-   *  played; outside, under Thunder, the flash rolls. */
-  onAmbientEffect(playerPos) {
+   *  played; outside, the flash rolls ONCE PER SUBSCRIPTION (each
+   *  delegate entry is its own handler, :37-51 - two entries, two
+   *  independent StartFlash rolls). `storm` is the host's word for
+   *  whether the clip that played is a storm clip: in DFU the listener
+   *  is on exactly while WeatherManager's word is Thunder and the
+   *  AmbientEffectsPlayer preset is the storm's, so the two coincide;
+   *  under the port's own weather front the ambience follows the
+   *  front's word, and the flash follows the clips it can hear. */
+  onAmbientEffect(playerPos, storm = true) {
     if (this.playerInside) return;
-    if (!this.lightningListening) return;
-    return this.lightningFlash.startFlash(playerPos);
+    if (!this.lightningSubscriptions || !storm) return;
+    let hit = false;
+    for (let i = 0; i < this.lightningSubscriptions; i++) hit = this.lightningFlash.startFlash(playerPos) || hit;
+    return hit;
   }
 
-  /** InteriorTransitionEvent / ExteriorTransitionEvent. */
+  /** InteriorTransitionEvent (:1264-1283) / ExteriorTransitionEvent
+   *  (:1295-1298), under Thunder: inside, StopListening once, the
+   *  weather coroutine stopped and nulled, the flash's routines killed
+   *  and the light off; outside, StartListening only - the coroutine
+   *  stays null, which is the double subscription above. */
   setInside(inside) {
     this.playerInside = !!inside;
     if (inside && this.pendingWeatherType === 'thunder') {
-      this.lightningListening = false;
+      this.lightningSubscriptions = Math.max(0, this.lightningSubscriptions - 1);
+      this.lightningCoroutine = false;
       this.lightningFlash.stopAll();
     } else if (!inside && this.pendingWeatherType === 'thunder') {
-      this.lightningListening = true;
+      this.lightningSubscriptions++;
     }
   }
 

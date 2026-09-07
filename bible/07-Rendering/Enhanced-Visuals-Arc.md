@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:123), and `_playerStill` reads one moving
-frame per crossing (world.js:4909-4911).
+frame per crossing (world.js:4926-4928).
 
-frame per crossing (world.js:7012-7014).
+frame per crossing (world.js:7042-7044).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:33-40, DFU's own number) while the default 7x7
@@ -119,7 +119,7 @@ tint term without a vertex-format change across ~20 call sites.
   drawList skip off build-time AABBs, per-batch billboard skip.
   ?cull=off is the escape hatch. Expected: 60-70% of terrain and a
   comparable placement fraction culled - the headroom EV4 spends.
-- EV4 DISTANT LAND: the fog end scales with the LIVE terrain distance
+- EV4 DISTANT LAND (AUDIT 61: over DFU's own rows only - Dynamic Skies' authored rows install verbatim): the fog end scales with the LIVE terrain distance
   at the host seam (the weather table stays byte-identical - DFU's
   2400 remains the d=3-ish base); outer-ring chunks build at stride 4
   (33x33 - a 16x triangle cut) from the same pinned samples; ghost
