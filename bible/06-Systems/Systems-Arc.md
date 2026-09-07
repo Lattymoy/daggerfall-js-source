@@ -3345,6 +3345,102 @@ against, and a binary parser written against a remembered spec and
 shipped unverified is the exact shape this project's pins exist to
 prevent.
 
+## ROAD-H H4 (2026-09-07) - the texture-replacement swap threw, and was upside-down
+
+**With a texture pack installed, the FIRST record it covered crashed
+the frame that drew it.** `systems/textureReplacement.js` decoded a
+PNG through the DOM and cached `{ width, height, data }` - the shape
+`getImageData` hands back. `scenes/dataPipeline.js`'s two override arms
+pass that object straight on as a colour32
+(`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
+`renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
+it (`renderer.js:1749`). `colors` was `undefined`, `asBytes` reads
+`.buffer` off it, and the upload threw. Every pin on this door held:
+they asserted the cache stored the object the decoder returned, by
+IDENTITY, which is precisely the assertion that cannot see a wrong
+shape. AUDIT 62's finder folded the defect into F26 and the audit
+recorded it as left over - "the swap passes `undefined` and throws,
+orientation is not its only problem".
+
+**And orientation was the other half.** The port's texel convention is
+bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
+dstWidth` (`baseImageFile.js:123`, `BaseImageFile.cs:250`), the upload
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1739`), and `BB_VS`
+samples the quad's top at v=1 (`renderer.js:277-282`). A browser decode
+is TOP row first. So a swap named correctly would still have drawn
+mirrored beside the classic art in the same batch loop - the exact
+defect AUDIT 62 F26 fixed for the seasons mod's textures, one door over.
+
+**DFU has neither problem, and the reason is one line of Unity.**
+`TryImportTextureFromDisk` builds the replacement with
+`Texture2D.LoadImage(bytes)`
+(`Utility/AssetInjection/TextureReplacement.cs:1041-1056`), and a
+`Texture2D`'s rows are bottom-up. `TextureReader.GetTexture2D` then
+assigns that imported albedo into the very slot
+`albedoMap.SetPixels32(albedoColors)` would have filled from
+`GetColor32` (`TextureReader.cs:261-267`) - the imported texture and the
+classic one it displaces are the same shape, the same way up, and
+interchangeable. That interchangeability is the law this fix restores.
+
+**Fixed at ONE door.** `formats/color32Order.js` now holds
+`toColor32Order` (moved out of `systems/seasonsIliacBayAssets.js`,
+where AUDIT 62 F26 put it - not copied: two copies of a flip is how one
+of them ends up flipped twice) and adds `toColor32`, which returns the
+`{ colors, width, height }` shape the upload path reads. The M-TEX
+registry crosses that door where a replacement ENTERS -
+`preloadTextureArchive`, and the `_setDecodedForTests` seam beside it -
+so `decodedTexture` answers a colour32 and neither `dataPipeline` arm
+changes at all: the model/record arm, the per-frame arm and the
+auto-emissive arm that reuses the same buffer as its emission map
+(`TextureReader.cs:301-308`) are all served by the one conversion.
+`decodePng` keeps the PNG raster order it states as its contract, which
+is what the seasons door and any future bundle consumer read it for.
+Every other reader of the cache was swept: there are none - the `map`
+argument (Normal, Emission, Height, MetallicGloss, Mask) has no
+consumer in `src/` yet, and when one arrives it reads the same door.
+
+**Pinned** in `test/roadh_seasons_tex.test.js` against the REFERENCE's
+value rather than the port's: a replacement is uploaded through a
+recording GL and its bytes must equal, byte for byte, what
+`getColor32` produces for the same picture - which is what DFU's
+`SetPixels32(GetColor32(...))` slot holds. Three arms covered (record,
+frame, and the auto-emissive mask that rides each), with a guard pin
+that the picture really was the other way up on the way in.
+`createDataPipeline` grew a `fetch` parameter defaulting to the one
+data seam (the shape `loadMagicRegistries` and `ensureAudio` already
+use) so the pins can drive the real arms over a texture built in the
+test - the container has no ARENA2. `test/texturereplacement.test.js`'s
+two identity assertions were replaced with the law they could not see.
+Mutation-proven twice: storing the decoder's object unconverted, and
+removing the row reversal, each kill the pins.
+
+### ROAD-H H4 review round (2026-09-07)
+
+**R3 (medium) - the orientation pins never crossed the PRODUCTION
+door.** Both upload pins reached the cache through
+`_setDecodedForTests`, which does its own `toColor32`; the only pins
+that drove `preloadTextureArchive` - the door a real pack enters by -
+used a uniform `new Uint8Array(16).fill(7)` 2x2 and a 1x1, neither of
+which can see row order. So the orientation half of the fix was
+unpinned exactly where it matters: dropping the row reversal from
+`preloadTextureArchive` alone (keeping the shape:
+`{ width, height, colors: decoded.data }`) left all 15 tests green,
+while the recorded mutation, which removed the conversion from BOTH
+sites, was caught by the shape assertions instead. Both
+`test/roadh_seasons_tex.test.js` upload arms now register a pack file
+with `setTextureReplacements` and decode it through
+`preloadTextureArchive`, over the four-distinct-entries picture they
+already build, and assert the door's own output equals `getColor32`'s
+before the GL ever sees it; `test/texturereplacement.test.js`'s
+decode-ahead pin gets a non-uniform raster and asserts the reversed row
+order. The orientation-only mutation at line 224 now kills two pins.
+
+**R4 (low) - a stale cite the move of `toColor32Order` caused.**
+`src/formats/unityBundle.js`'s `decodeTexture2D` comment still sent the
+reader to "`toColor32Order` in `systems/seasonsIliacBayAssets.js`",
+which now only imports it. Repointed at `formats/color32Order.js`, and
+it names both consumers rather than one.
+
 ## S42 - THE REGION CONDITION STORE (2026-08-25)
 
 `src/systems/regionConditions.js` (new: the flags enum, the group map,
