@@ -51,6 +51,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // 1:1 law, and this is the port's departure from it, opt-in exactly
   // as EnhancedCombatAI is DFU's own opt-in departure from classic.
   enhancedAI: false,
+  // ECV1: ENHANCED COMBAT VISUALS (2026-09-07, Mac). What the enhanced
+  // skin DRAWS for a state the rules already hold: a chameleoned foe
+  // shimmers, a shade is a silhouette, a hit on an unseen foe flashes
+  // it. On by default like the other enhanced visuals; the rules are
+  // untouched either way, and off (or the classic skin) takes DFU's
+  // renderer-disabled draw verbatim (systems/combatVisuals.js).
+  enhancedCombatVisuals: true,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',

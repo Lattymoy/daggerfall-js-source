@@ -2874,7 +2874,7 @@ gave rest to were not.
 
 The gate is narrow on purpose: the JUMPING drain is C#'s `:427`,
 outside the per-minute block and ungated, and the Swimming tally at
-`:415` runs BEFORE the gate. A false sentence in a comment is what
+`:416` runs BEFORE the gate. A false sentence in a comment is what
 licensed the omission, which is the argument for the rule that
 comments must be true stated about as plainly as it gets.
 
@@ -2908,7 +2908,7 @@ taken.
 
 **And two last ones in the code.** All FOUR of `EndRest`'s arms
 attach `OnClose` (`:461-462`, `:468-469`, `:482-483`, `:489-490`,
-`:497-497`) - the DEATH arm included, since DFU's death path sets
+`:498-497`) - the DEATH arm included, since DFU's death path sets
 `youNeverAwaken` and calls `EndRest`, whose box closes into
 `PopToHUD(); RaiseSkills();`. The port skipped the raise on death and
 on a missing endLines, so a poison that killed the sleeper cost a
@@ -2923,7 +2923,7 @@ door the previous round gave the other three. Three of four is how
 this rule keeps being broken, and it is why the rule is written down.
 
 **And the sub-tick was ported at half its purpose.** `TickRest`
-`:377-379` is two calls inside one sub-tick - `RaiseTime` and then
+`:378-379` is two calls inside one sub-tick - `RaiseTime` and then
 `QuestMachine.Instance.Tick()` - and DFU's own comment two lines above
 says the ten-minute granularity exists FOR the second one: "This
 allows quest machine to have more time resolution while still counting
@@ -3159,7 +3159,7 @@ because a line a host has to remember is a line a host forgets.
 
 **The block sits after the fatigue band, and that is not cosmetic.**
 DFU draws the swimming roll at `:412` and the first price roll at
-`:447`. The port's tick had already reordered the normalize loop
+`:448`. The port's tick had already reordered the normalize loop
 ahead of the fatigue band (those two share no generator, so it is
 free), but a day block placed before the swim roll would shift every
 draw after it. There is a pin that watches which caller gets which

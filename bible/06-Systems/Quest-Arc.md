@@ -3677,7 +3677,7 @@ if (entityBehaviour.Entity.IsParalyzed)
 mobile.FreezeAnims = false;
 ```
 
-`:260` is outside the brace. `FreezeAnims` is a plain field with a
+`:261` is outside the brace. `FreezeAnims` is a plain field with a
 plain setter, there are exactly five references to it in the whole
 tree, and nothing reads it between the two writes - so a paralysed
 enemy's animation is **never** frozen in DFU, and
@@ -3728,7 +3728,7 @@ void HandleParalysis()
 }
 ```
 
-`:260` is outside the brace at `:258`. Two plain field assignments sit
+`:261` is outside the brace at `:258`. Two plain field assignments sit
 between the write and the overwrite - no call, no yield, no event.
 `FreezeAnims` is a plain `bool` behind a plain getter and setter,
 there are exactly five references to it in the entire tree, and the
@@ -5491,7 +5491,7 @@ ready-spell events (`hostMagic.js:73-74`), and those two doors are the
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
 other two engine-owning hosts wire (`world.js:2148-2149`,
-`dungeonContext.js:1789-1790`) is wired here now, and with it
+`dungeonContext.js:1790-1791`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
 byte-folded `spellHasMatchForClassicEffect` (`world.js:4869-4872`),
 absent which the action self-completes at *parse*

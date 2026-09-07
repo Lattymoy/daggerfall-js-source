@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:704)". Section A carried no widget row at all -
+//     (Port-Ledger.md:705)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -498,6 +498,29 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
 const EX = 'src/scenes/exterior.js';
 const SOURCE_CITES = [
+  // ═══ ECV1 review (2026-09-07): THE POOL CITES ═══
+  //
+  // Five `cityGuards.js` / `exteriorFoes.js` cites in the pools' own
+  // comments were stale on main and were bumped POSITIONALLY by ECV1's
+  // re-resolution - a wrong number moved by the right offset is still
+  // wrong. Resolved by content here, so the next wave that moves either
+  // pool goes red instead of rotting them again.
+  ['test/roadg_pools.test.js', /skipped by cityGuards\.js:(\d+) and spliced/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['test/roadg_pools.test.js', /spliced\s*\n\s*\/\/ at :(\d+) in that same pass/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/world.js', /removeGuard \(cityGuards\.js:(\d+)-\d+\) gives it/,
+    'src/scenes/cityGuards.js', /^\s*function removeGuard\(g\) \{$/],
+  ['src/scenes/world.js', /\(cityGuards\.js:(\d+)\) and spliced out at the end of it/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['src/scenes/world.js', /and spliced out at the end of it \(:(\d+)\)/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/worldModes.js', /READ the effect list every frame \(exteriorFoes\.js:(\d+)-\d+ and/,
+    'src/scenes/exteriorFoes.js', /const _fParalyzed = entityIsParalyzed\(f\.entity\)/],
+  ['src/scenes/worldModes.js', /cityGuards\.js:(\d+)-\d+ each take `entityIsParalyzed`/,
+    'src/scenes/cityGuards.js', /const _gParalyzed = entityIsParalyzed\(g\.entity\)/],
+  ['src/scenes/cityGuards.js', /encounter pool's is \(exteriorFoes\.js:(\d+)\)\. \*\//,
+    'src/scenes/exteriorFoes.js', /^\s*return \{ foes, spawnFoe, damageFoe,/],
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
   ['tools/toneProbe.mjs', /`native` \(townTalk\.js:(\d+), true only/,
@@ -567,7 +590,7 @@ const SOURCE_CITES = [
   // "Original finding" is a dated snapshot, so where its subject still
   // stands the cite is re-resolved and where the fix DELETED the
   // subject the number is gone and the seam is named instead.
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1158`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`, `dungeonContext\.js:1159`/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:3452`, `exterior\.js:(\d+)`/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
@@ -777,7 +800,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:717-671`, `world.js:4918-4894`,
+// multi-number citation: `cityGuards.js:722-673`, `world.js:4918-4894`,
 // `worldModes.js:996 against :959`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
