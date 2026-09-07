@@ -898,6 +898,14 @@ function paneEnhanced(body) {
   const test = el('div', 'row');
   const testMain = el('div', 'row-main');
   testMain.append(el('div', 'row-name', 'Test the outdoors'));
+  // ECV1: what the enhanced skin DRAWS for a concealed enemy. The rules
+  // (the cast, the senses, the hits) are classic either way.
+  live.append(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
+    'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
+    + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
+    + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
+    + 'on an unseen enemy flashes it for a moment. Invisibility still hides it outright. Nothing about '
+    + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');
   const seasonSel = el('select', 'act');

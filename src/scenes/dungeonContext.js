@@ -160,6 +160,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
+import { combatVisualsOn, foeDraw, foePhase, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
@@ -2921,6 +2922,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  the third pool's copy of the same law - see exteriorFoes. */
   function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
     markFoeStruck(foe, { fromPlayer });   // PX30: the enhanced HUD's target frame
+    if (damage > 0) markConcealedHit(foe, _ecvT);   // ECV1: a hit on an unseen foe flashes it
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
     // inside DFU's player-source gate, so a FALL cannot do it.
@@ -3283,7 +3285,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
+  let _ecvT = 0;   // ECV1: the foe draw's clock (seconds), for the shimmer and the hit reveal
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0) {
+    _ecvT += dt;
+    const ecvOn = combatVisualsOn();   // ECV1: once per frame
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     // MW-D8: latch the eye and heading THIS frame, before anything draws.
     // Set after weaponRig.draw() instead, the arm would render a frame
@@ -3771,7 +3776,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // any of the six flags, normal or true power. The animation
         // above still ran (DFU's Update on the mobile is untouched by
         // this component); only the draw is dropped.
-        if (isMagicallyConcealed(f.entity)) continue;
+        // ECV1: on the enhanced skin with the switch on, the concealed
+        // foe is DRAWN concealed instead (systems/combatVisuals.js):
+        // `hidden` is the A5 skip, `conceal` rides the batch to the
+        // renderer's concealed phase, `plain` is an unconcealed foe.
+        const ecv = foeDraw(f.entity, ecvOn, { t: _ecvT, hitAt: f._ecvHit ?? -Infinity, phase: foePhase(f) });
+        if (ecv.kind === 'hidden') continue;
+        f.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);

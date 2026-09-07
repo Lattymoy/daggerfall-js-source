@@ -50,6 +50,7 @@ import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recover
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
+import { combatVisualsOn, foeDraw, foePhase, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -338,6 +339,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
 
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
     markFoeStruck(f, { fromPlayer });   // PX30: the enhanced HUD's target frame
+    if (damage > 0) markConcealedHit(f, _ecvT);   // ECV1: a hit on an unseen foe flashes it
     if (fromPlayer && f.ai) {
       handleAttackFromPlayer(f, playerFeet);
     }
@@ -468,7 +470,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return isPlayerTarget(t) ? playerFeet : t.ai.feet;
   }
 
+  let _ecvT = 0;   // ECV1: the pool's clock (seconds), for the shimmer and the hit reveal
   function update(dt, playerFeet, eye, senses = {}) {
+    _ecvT += dt;
     for (const f of foes) {
       // B1: the QuestResourceBehaviour drives every frame the object
       // lives (Unity Update on the component) - BEFORE the dead skip,
@@ -791,6 +795,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  record/size/origin mutate per frame, frames upload lazily. */
   function batches() {
     const out = [];
+    const ecvOn = combatVisualsOn();   // ECV1: once per frame
     for (const f of foes) {
       if (f.dead || !f._mout) continue;
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
@@ -800,7 +805,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // of the six flags, normal or true power. The entity keeps
       // acting, it simply is not drawn. (The player's own concealment
       // has no visual: DFU never disables the first-person view.)
-      if (isMagicallyConcealed(f.entity)) continue;
+      // ECV1: on the enhanced skin with the switch on, drawn concealed
+      // instead (systems/combatVisuals.js; see dungeonContext.js).
+      const ecv = foeDraw(f.entity, ecvOn, { t: _ecvT, hitAt: f._ecvHit ?? -Infinity, phase: foePhase(f) });
+      if (ecv.kind === 'hidden') continue;
+      f.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);

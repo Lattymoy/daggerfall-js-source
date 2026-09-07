@@ -93,6 +93,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: Player
 import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, the one home the other placement hosts read
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
+import { combatVisualsOn, foeDraw, foePhase, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -576,6 +577,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false } = {}) {
+    if (damage > 0) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
     // ROAD-G G1: HandleAttackFromSource's MOBILE-ENEMY AGGRO BLOCK
     // (DaggerfallEntityBehaviour.cs:250-261), which this door carried
     // none of while both encounter pools carried it whole. The order is
@@ -692,7 +694,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
 
   /** Per-frame drive; returns the live mobile batches (the host draws
    *  them on the flats' axis with the corpses). */
+  let _ecvT = 0;   // ECV1: the watch's clock (seconds), for the shimmer and the hit reveal
   function update(dt, playerFeet, eye, senses = {}) {
+    _ecvT += dt;
+    const ecvOn = combatVisualsOn();   // ECV1: once per frame
     // EnemyEntity verbatim: the city watch DESPAWNS when the active
     // crime returns to None (court release, death, region exit).
     if (!playerEntity.crimeCommitted) {
@@ -880,8 +885,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
       // true has its renderer disabled. The watchman keeps acting; it
-      // is simply not drawn.
-      if (isMagicallyConcealed(g.entity)) continue;
+      // is simply not drawn. ECV1: on the enhanced skin with the
+      // switch on, drawn concealed instead (systems/combatVisuals.js).
+      const ecv = foeDraw(g.entity, ecvOn, { t: _ecvT, hitAt: g._ecvHit ?? -Infinity, phase: foePhase(g) });
+      if (ecv.kind === 'hidden') continue;
+      g.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
