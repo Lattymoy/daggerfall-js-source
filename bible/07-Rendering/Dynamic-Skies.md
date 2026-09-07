@@ -10,10 +10,13 @@ commit `04506e2`, which is the 2.3.4 the shipped `.dfmod` was built
 from - the manifests are identical and every preset byte-identical).
 Vendored under `vendor/dynamic-skies/` with the permission recorded in
 its README, credited on the About screen, and ported as the ENHANCED
-LANE'S SKY: while the mod's own `Enabled` switch is on (Mods pane, on
-by default - a DFU mod is on by being installed), the lane draws the
-mod's skybox in place of the port's own dome (ES1). The classic lane
-keeps Daggerfall's painted sky, untouched.
+LANE'S SKY: while the mod's own `Enabled` switch is on (Mods pane; on
+by default until VC1, 2026-09-07, when Mac asked for the pixelated sky
+look to go - the mod's 512-pixel cloud sheets drawn nearest and its own
+colour posterise ARE that look, and they are the mod's to keep, so the
+port's own dome is the lane's sky now and the mod is the player's
+choice), the lane draws the mod's skybox in place of the port's own
+dome (ES1). The classic lane keeps Daggerfall's painted sky, untouched.
 
 ## What the mod is, and where each part landed
 

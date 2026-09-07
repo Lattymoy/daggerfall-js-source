@@ -21,10 +21,15 @@ export const MOD_SETTINGS = Object.freeze({
   // `Enabled`, which is the port's: DFU enables a mod by listing it, and
   // the port has no mod list, so the whole sky is one switch here. A
   // key with `min`/`max` is a SliderIntKey and reads as an integer.
+  // VC1 (2026-09-07, Mac: "remove the pixelated sky look"): OFF by
+  // default. The mod's look - 512-pixel cloud sheets drawn nearest and
+  // its own colour posterise - is the pixelation Mac named, and it is
+  // the mod's to keep; the port's own dome is the enhanced lane's sky
+  // and the mod is a choice in the Mods pane (Ledger row DS1).
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
     keys: Object.freeze({
-      Enabled: Object.freeze({ default: true, description: 'Dynamic Skies\u2019 procedural skybox in place of the port\u2019s own dome, under the enhanced environments: its sun and scattering, textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog colours and distances, its longer sunrise and sunset, and a lightning flash under thunder. Off returns the port\u2019s own procedural sky.' }),
+      Enabled: Object.freeze({ default: false, description: 'Dynamic Skies\u2019 procedural skybox in place of the port\u2019s own dome, under the enhanced environments: its sun and scattering, textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog colours and distances, its longer sunrise and sunset, and a lightning flash under thunder. Off returns the port\u2019s own procedural sky.' }),
       densitySetting: Object.freeze({ default: 1, min: 1, max: 10, description: 'Makes fog thicker' }),
       ActivatePixelSnow: Object.freeze({ default: false, description: 'Turn the pixel snow replacement on or off' }),
       MinParticleSize: Object.freeze({ default: 100, min: 100, max: 800, description: 'Minimum snow particle size' }),

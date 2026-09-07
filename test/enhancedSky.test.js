@@ -385,9 +385,12 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   assert.ok(RETRO.levels >= 12 && RETRO.levels <= 64, `${RETRO.levels}: a 256-colour gradient, not a 24-bit one`);
   // On by default (Mac's call), off with ?sky=smooth - ONE door, so the
   // game and the lab cannot disagree about what the sky looks like.
-  assert.equal(retroFor(''), RETRO);
+  // VC1 (2026-09-07, Mac: "remove the pixelated sky look"): smooth is
+  // the default; ?sky=retro is the door back; ?sky=smooth still means smooth.
+  assert.equal(retroFor(''), null, 'VC1: smooth by default');
+  assert.equal(retroFor('?sky=retro'), RETRO, 'the retro pass is a door now');
   assert.equal(retroFor('?sky=smooth'), null);
-  assert.equal(retroFor('?sky=classic'), RETRO, 'classic is the OTHER pass entirely; it never reaches here');
+  assert.equal(retroFor('?sky=classic'), null, 'classic is the OTHER pass entirely; it never reaches here');
   assert.match(read('src/scenes/shared.js'), /enhancedSky\.retro = retroFor\(params\.toString\(\)\);/);
   assert.match(read('src/tools/skyLab.js'), /sky\.retro = retroFor\(location\.search\);/);
   const fs = read('src/render/enhancedSky.js');

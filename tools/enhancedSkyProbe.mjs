@@ -91,9 +91,9 @@ const awaySun = await shoot('cloudy-away-sun', 'hour=8&weather=cloudy&yaw=270&pi
 // different sky - it was byte-identical before.
 const night3 = await shoot('midnight-plus-3h', 'hour=3&weather=sunny&yaw=90&pitch=20&day=3');
 
-// ES1e: the RETRO pass is the default; ?sky=smooth is the modern dome.
-const retro = await shoot('retro', 'hour=6.4&weather=sunny&yaw=90&pitch=10');
-const smooth = await shoot('smooth', 'hour=6.4&weather=sunny&yaw=90&pitch=10&sky=smooth');
+// ES1e: the RETRO pass; VC1: the smooth dome is the DEFAULT and ?sky=retro the door back.
+const retro = await shoot('retro', 'hour=6.4&weather=sunny&yaw=90&pitch=10&sky=retro');
+const smooth = await shoot('smooth', 'hour=6.4&weather=sunny&yaw=90&pitch=10');
 
 const overcast = await shoot('overcast', 'hour=12&weather=overcast&yaw=90&pitch=12');
 const storm = await shoot('storm', 'hour=12&weather=thunder&yaw=90&pitch=12');
@@ -113,7 +113,7 @@ check('the star field wheels: three hours on is a different sky, still full of s
 // a 24-bit one has dozens. `changes` only has to be fewer: how much
 // fewer depends on the field of view, and ES1f's equi-angular cells are
 // a touch smaller near the horizon than the lat-long ones they replaced.
-check('the retro pass is the DEFAULT: chunkier and far more posterised than ?sky=smooth',
+check('the smooth dome is the DEFAULT (VC1): ?sky=retro is chunkier and far more posterised than it',
   retro.changes < smooth.changes * 0.8 && retro.levels * 4 < smooth.levels,
   `retro ${retro.changes} changes / ${retro.levels} levels vs smooth ${smooth.changes} / ${smooth.levels}`);
 check('Masser is in the frame when the camera is pointed at where the law puts it', moons.warmFrac > 0.0003 && moons.warmFrac < 0.01, `${(moons.warmFrac * 100).toFixed(3)}% of the frame is its warm lit disc`);
