@@ -3566,7 +3566,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1 });   // ES1: the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: eye });   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);

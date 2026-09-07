@@ -153,11 +153,12 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
     const s = readFileSync(file, 'utf8');
     assert.ok(!/`\.replace\('uniform /.test(s), `${file}: a uniform must be declared in the template, not injected after it`);
     const shared = (s.match(/const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];
+    const field = (s.match(/const CLOUD_FIELD_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // VC4: the marches' shared field
     const re = /const ([A-Z_]+) = `#version 300 es([\s\S]*?)`(?:;|\.)/g;
     let m; let seen = 0;
     while ((m = re.exec(s))) {
       seen++;
-      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared);
+      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field);
       const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
         .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));

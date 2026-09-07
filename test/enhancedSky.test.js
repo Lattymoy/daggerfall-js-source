@@ -230,7 +230,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   assert.doesNotMatch(classic, /enhanced/i, 'skyRenderer.js knows nothing of the enhanced sky');
   // Both hosts hand the weather and the classic clock through.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1 \}\);\s*\/\/ ES1/, `${host} feeds the sky`);
+    assert.match(read(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ ES1/, `${host} feeds the sky`);
   }
   // The lab is a page like the other prototypes, built as one.
   assert.match(read('vite.config.js'), /sky: 'sky\.html',/);
@@ -478,38 +478,40 @@ test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has 
   assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/);
 });
 
-// ═══ EE5: cloud shadows - the sky and the ground share one field ════
-test('EE5: the ground reads the sky\u2019s own deck, declared INSIDE the shader that uses it', () => {
+// ═══ EE5 / VC4: cloud shadows - the sky and the ground share one field ════
+test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one block, declared INSIDE every shader that uses it', () => {
   const r = read('src/render/renderer.js');
-  // the declarations live INSIDE the terrain fragment shader - the first
-  // attempt put them outside every shader and the renderer threw on boot
-  const ti = r.indexOf('const TERRAIN_FS = `'); const tj = r.indexOf('`;', ti);
-  const terrain = r.slice(ti, tj);
-  assert.match(terrain, /\$\{CLOUD_SHADOW_GLSL\}/, 'the block is interpolated into TERRAIN_FS');
-  assert.match(terrain, /if \(uShadowAmt > 0\.0 && uLightDir\.y > 0\.02\) \{/);
-  assert.match(terrain, /diff \*= 1\.0 - cov \* uShadowAmt;/, 'a cloud dims the SUN and leaves the ambient alone');
-  const fi = r.indexOf('const FS = `'); const fj = r.indexOf('`;', fi);
-  assert.ok(!/uShadowAmt/.test(r.slice(fi, fj)), 'and the mesh shader is untouched');
-  // ONE FIELD: the sky's own hash, noise and fbm, offsets and all
-  assert.match(r, /float tfbm\(vec2 p\)\{ float v=0\.0,a=0\.5; for\(int i=0;i<5;i\+\+\)\{ v\+=a\*tvn\(p\); p=p\*2\.03\+vec2\(17\.1,9\.7\); a\*=0\.5; \} return v; \}/);
-  assert.match(r, /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudDrift;/,
-    'the sun\u2019s own ray picks the point on the deck');
-  // OFF is free and cannot change classic
+  // the block is interpolated into every program that lights by the sun
+  // - a GLSL declaration is visible only to its own compilation unit; the
+  // first attempt put them outside every shader and the renderer threw
+  for (const name of ['const FS = `', 'const CHAR_FS = `', 'const BB_FS = `', 'const TERRAIN_FS = `']) {
+    const ti = r.indexOf(name); const tj = r.indexOf('`;', ti);
+    assert.match(r.slice(ti, tj), /\$\{CLOUD_SHADOW_GLSL\}/, `${name} interpolates the block`);
+  }
+  assert.ok(r.indexOf('const CLOUD_SHADOW_GLSL = `') < r.indexOf('const FS = `'), 'declared before the first shader that reads it');
+  assert.equal((r.match(/diff \*= cloudShadowAt\(vWorldPos\);/g) || []).length, 3, 'the mesh, the character and the terrain: a cloud dims the SUN and leaves the ambient alone');
+  assert.match(r, /uBBSun \* cloudShadowAt\(vBBWorld\)/, 'the flats: the sun\u2019s half of the tint, shadowed');
+  // OFF is free and cannot change classic: the amount 0 returns before the sample
+  assert.match(r, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
+  assert.match(r, /if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return 1\.0;/, 'outside the square, no shadow');
   assert.match(r, /this\._cloudShadow = null;/);
-  assert.match(r, /gl\.uniform1f\(this\.tUShadowAmt, cs \? cs\.amount : 0\);/);
-  assert.match(r, /setCloudShadow\(d\) \{ this\._cloudShadow = d \?\? null; \}/, 'numbers only - it binds nothing');
-  // PUBLISHED by the sky from the state the dome is drawn from
+  assert.match(r, /setCloudShadow\(d\) \{ this\._cloudShadow = d \?\? null; this\._csStamp\+\+; \}/, 'numbers and handles only - it binds nothing');
+  assert.match(r, /gl\.bindTexture\(gl\.TEXTURE_2D, cs\?\.map \?\? this\._blackTex\);/, 'the draw path binds the map, or black under an amount of 0');
+  for (const k of ['terrain', 'mesh', 'char', 'bb']) assert.match(r, new RegExp(`this\\._uploadCloudShadow\\('${k}'\\)`), `${k} uploads on its draw path`);
+  // the old noise shadow is gone whole: no tfbm, no deck numbers in the terrain shader
+  assert.doesNotMatch(r, /tfbm|uShadowAmt|uCloudDrift/, 'EE5\u2019s noise projection is superseded by the slab\u2019s transmittance');
+  // PUBLISHED by the sky from the state the dome is drawn from, and the
+  // slab\u2019s map assigned onto it by the controller
   const sky = read('src/render/enhancedSky.js');
   assert.match(sky, /this\.cloudShadow = \{\s*\n\s*cover: state\.cloudCover \?\? 0,/);
   assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
   assert.match(sky, /time: state\.seconds \?\? 0,/);
+  const sharedSrc = read('src/scenes/shared.js');
+  assert.match(sharedSrc, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow\);/, 'the deck carries the map and its square');
+  assert.match(sharedSrc, /if \(clouds\) return 1;   \/\/ VC4/, 'no global dim on top of the per-surface shadow');
   // both hosts hand it over immediately before the terrain draw, and
   // hand over NOTHING when there is no enhanced sky
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    // EE9 sets the surface field between the deck and the draw; both
-    // are numbers-and-handles setters, and the order among them is free
-    // EE16: the world host chooses the fine ground or the coarse mesh
-    // after the setters; both are drawTerrain, both come after the deck
     assert.match(read(host), /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n(\s*renderer\.setSurfaceField\([^\n]*\n)?[\s\S]{0,400}?renderer\.drawTerrain\(/, host);
   }
   // and the probe door, so the gate can put the sky under overcast

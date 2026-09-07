@@ -376,6 +376,8 @@ export function createSkyController(gl, params) {
      *  hide the disc, handed to the light so the two agree. 1 under a
      *  clear sky and under the classic sky, which has no cloud field. */
     sunFactor() {
+      if (clouds) return 1;   // VC4: the key light's shadow is the map's, per surface - one field, no global dim on top
+
       const occ = enhancedSky?.state?.sunOcclusion ?? 0;
       return 1 - CLOUD_SHADOW * occ;
     },
@@ -475,7 +477,9 @@ export function createSkyController(gl, params) {
         // VC3: the clouds take the dome's state, the SAME eased row and
         // the SAME front-stretched ease dt (their profile eases on it),
         // the one drift integral, and the host's lightning flash.
-        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0);
+        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+        // VC4: the ground's deck carries the slab's own shadow map and its square
+        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
         return;
       }
       let frame = params.has('window')

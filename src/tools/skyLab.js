@@ -90,7 +90,8 @@ function frame() {
     clouds ??= new VolumetricClouds(gl, cloudsDoor in CLOUD_QUALITY ? cloudsDoor : 'default', [0, 0, w, h]);
     clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, still ? 0 : 1 / 60, sky.state.drift ?? [0, 0], 0);
     clouds.update([0, 0, w, h]);
-    clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
+    if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture
+    else clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
   }
   for (const id of ['hour', 'day', 'yaw', 'pitch', 'fog']) $(id + 'V').textContent = $(id).value;
   window.__skyReady = texturesPending === 0 && (!clouds || clouds.sweeps > 0);   // DS1: the mod's frame is ready once its textures are; VC3: and the clouds' map once marched

@@ -51,6 +51,12 @@ const storm = await shoot('thunder-noon', 'hour=12&weather=thunder&yaw=90&pitch=
 const nightSunny = await shoot('midnight-sunny', 'hour=0&weather=sunny&yaw=90&pitch=30&day=3');
 const nightOvercast = await shoot('midnight-overcast', 'hour=0&weather=overcast&yaw=90&pitch=30&day=3');
 const dusk = await shoot('dusk-cloudy', 'hour=17.8&weather=cloudy&yaw=180&pitch=15');
+// VC4: the ground's shadow map, as a picture (the whole frame is the map: mean = the mean transmittance)
+const shadowSunny = await shoot('shadow-sunny-noon', 'hour=12&weather=sunny&shadowmap');
+const shadowOvercast = await shoot('shadow-overcast-noon', 'hour=12&weather=overcast&shadowmap');
+const shadowStorm = await shoot('shadow-thunder-noon', 'hour=12&weather=thunder&shadowmap');
+const shadowMorning = await shoot('shadow-sunny-8h', 'hour=8&weather=sunny&shadowmap');
+const shadowNight = await shoot('shadow-midnight', 'hour=0&weather=sunny&shadowmap');
 
 check('no page or WebGL errors across the set', errors.length === 0 && [sunny, overcast, storm, nightSunny].every((s) => s.glError === 0), errors.join(' | '));
 check('a sunny noon has clouds: more variation in the sky than the bare dome', sunny.sd > sunnyOff.sd * 1.5, `sd ${sunny.sd.toFixed(1)} vs bare ${sunnyOff.sd.toFixed(1)}`);
@@ -61,6 +67,11 @@ check('the storm is darker than the overcast', storm.mean < overcast.mean * 0.85
 check('the clouds are lit: toward the sun is brighter than away from it', cloudyToward.mean > cloudyAway.mean * 1.05, `${cloudyToward.mean.toFixed(0)} vs ${cloudyAway.mean.toFixed(0)}`);
 check('an overcast midnight hides the stars a clear one shows', nightOvercast.max < nightSunny.max * 0.7, `max ${nightOvercast.max} vs ${nightSunny.max}`);
 check('a cloudy dusk is warm-lit, not black', dusk.mean > 20, `${dusk.mean.toFixed(0)}`);
+check('VC4: a sunny noon\'s shadow map is mostly lit with dark patches under the clouds', shadowSunny.mean > 120 && shadowSunny.mean < 250 && shadowSunny.sd > 15, `mean ${shadowSunny.mean.toFixed(0)} sd ${shadowSunny.sd.toFixed(0)}`);
+check('VC4: an overcast noon\'s is dark everywhere', shadowOvercast.mean < 110 && shadowOvercast.sd < shadowSunny.sd, `mean ${shadowOvercast.mean.toFixed(0)} sd ${shadowOvercast.sd.toFixed(0)}`);
+check('VC4: a storm\'s darker still', shadowStorm.mean < shadowOvercast.mean * 0.8, `${shadowStorm.mean.toFixed(0)} vs ${shadowOvercast.mean.toFixed(0)}`);
+check('VC4: the sun\'s angle moves the shadows - eight in the morning is a different map from noon', Math.abs(shadowMorning.mean - shadowSunny.mean) > 2 || shadowMorning.sd !== shadowSunny.sd, `${shadowMorning.mean.toFixed(1)}/${shadowMorning.sd.toFixed(1)} vs ${shadowSunny.mean.toFixed(1)}/${shadowSunny.sd.toFixed(1)}`);
+check('VC4: at midnight the moon casts none - the map is all light', shadowNight.mean > 250, `${shadowNight.mean.toFixed(0)}`);
 
 await browser.close();
 await server.close();

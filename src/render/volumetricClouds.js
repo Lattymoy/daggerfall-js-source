@@ -1,8 +1,9 @@
-// VC3 (2026-09-07): THE VOLUMETRIC CLOUDS.
+// VC3 (2026-09-07): THE VOLUMETRIC CLOUDS. VC4: AND THEIR SHADOW.
 //
 // Mac: "true volumetric clouds that move across the sky, build during
-// weather". A raymarched cloud SLAB - a layer of the atmosphere between
-// two altitudes, in world metres, over a flat earth that fades into the
+// weather... on top of real cloud shadows that reflect on the ground".
+// A raymarched cloud SLAB - a layer of the atmosphere between two
+// altitudes, in world metres, over a flat earth that fades into the
 // dome's horizon with distance - lit by the sun (or the moon at night)
 // with a short light march, shaped by the two noise volumes VC2 made,
 // and driven by the SAME numbers the rest of the outdoors already
@@ -10,18 +11,33 @@
 // cloud colours), a per-weather PROFILE eased on the same clock, and
 // the one wind integral (WIND2's drift), so the clouds build over a
 // front's lead as the rain and the wind do, and drift as the ground's
-// shadow will (VC4).
+// shadow does.
 //
 // NOT PER SCREEN PIXEL. The march writes a SKY-SPACE MAP - an
-// equirectangular hemisphere, azimuth across, elevation up - which is
-// camera-independent because a cloud is at infinity for translation.
-// A stripe of the map is re-marched each frame (a full sweep every
-// SWEEP_FRAMES), with a per-texel jitter that is FIXED (a hash of the
-// texel, not the clock) so the dithered banding never flickers; the
-// composite pass then draws the whole sky with one bilinear sample per
-// pixel, blending the map's colour over the dome by its transmittance
-// (ONE, SRC_ALPHA: sky * T + cloud). The stars and the sun's disc show
-// through the gaps by construction.
+// equirectangular hemisphere, azimuth across, elevation up - from the
+// camera's own world position (a cloud is at infinity for the camera's
+// rotation, not for its travel: a walk of a kilometre moves the bank
+// overhead, and the shadow under it). A stripe of the map is
+// re-marched each frame (a full sweep every SWEEP_FRAMES), with a
+// per-texel jitter that is FIXED (a hash of the texel, not the clock)
+// so the dithered banding never flickers; the composite pass then
+// draws the whole sky with one bilinear sample per pixel, blending the
+// map's colour over the dome by its transmittance (ONE, SRC_ALPHA:
+// sky * T + cloud). The stars and the sun's disc show through the gaps
+// by construction.
+//
+// THE SHADOW (VC4) is the SAME FIELD seen from the ground: a world-
+// space map, a square of SHADOW_EXTENT metres snapped to the streaming
+// world's 819.2-metre pixel grid around the camera, each texel the
+// transmittance along the sun's ray from that ground point up through
+// the slab - the projection of the bank overhead, not a noise that
+// resembles it. Every field the two marches read tiles at a multiple
+// of 819.2, so the floating origin's recenters (whole pixels) leave
+// the clouds where they were over the land. The terrain, the models,
+// the characters and the flats sample the map through one shared GLSL
+// block (renderer.js CLOUD_SHADOW_GLSL); the sun's disc dims through
+// the sky map's own transmittance, so the disc, the light and the
+// ground agree because they are one field.
 //
 // The ray construction in the composite is the dome's own, line for
 // line (test/volumetricClouds.test.js pins the two texts against each
@@ -35,24 +51,37 @@ import { createRenderTarget, withTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { WEATHER_EASE_SECONDS } from './enhancedSky.js';
 
-/** The quality tiers: the map's texels and the march's steps. */
+/** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
+export const PIXEL_METRES = 819.2;
+/** The quality tiers: the sky map's texels, the march's steps, the
+ *  shadow map's texels and steps. */
 export const QUALITY = Object.freeze({
-  lo: Object.freeze({ width: 512, height: 128, steps: 32, light: 4 }),
-  default: Object.freeze({ width: 1024, height: 256, steps: 56, light: 5 }),
-  hi: Object.freeze({ width: 2048, height: 512, steps: 80, light: 6 }),
+  lo: Object.freeze({ width: 512, height: 128, steps: 32, light: 4, shadow: 256, shadowSteps: 8 }),
+  default: Object.freeze({ width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12 }),
+  hi: Object.freeze({ width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16 }),
 });
-/** A full sweep of the map takes this many frames. */
+/** A full sweep of either map takes this many frames. */
 export const SWEEP_FRAMES = 8;
 /** One unit of the WIND2 drift integral is this many world metres -
- *  1 / 0.0038, the scale the terrain's shadow field has always moved
- *  by, so the sky drifts at the pace the ground was already keeping. */
+ *  1 / 0.0038, the scale the terrain's shadow field moved by before
+ *  VC4, so the sky drifts at the pace the ground was already keeping. */
 export const WORLD_PER_DRIFT = 1 / 0.0038;
-/** The shape volume tiles every this many metres; the detail volume
- *  every DETAIL_METRES. */
-export const SHAPE_METRES = 12000;
-export const DETAIL_METRES = 900;
+/** The fields' periods, every one a whole number of pixels so a
+ *  recenter cannot move a cloud over the land: the shape volume tiles
+ *  every 15 pixels, the detail every 1, the weather's variation every
+ *  16, the ambient's mottle every 5. */
+export const SHAPE_METRES = PIXEL_METRES * 15;
+export const DETAIL_METRES = PIXEL_METRES;
+export const VARIATION_METRES = PIXEL_METRES * 16;
+export const MOTTLE_METRES = PIXEL_METRES * 5;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
+/** The shadow map's square, in metres: eight pixels a side, the
+ *  camera's pixel in the middle - past the fog's end either way. */
+export const SHADOW_EXTENT = PIXEL_METRES * 8;
+/** How much of the sun a full shadow takes (the ambient is never
+ *  touched - a cloud dims the sun and leaves the sky's light alone). */
+export const SHADOW_AMOUNT = 1.0;
 
 /** Per-weather PROFILE, eased on the weather ease's own clock: the
  *  slab's base and top (metres), how dense the cloud is, how dark
@@ -93,43 +122,39 @@ export function cloudLight(state) {
   return { dir: [0, 1, 0], color: [0, 0, 0], day: 0 };
 }
 
+/** VC4: the shadow map's square for a camera at (x, z): its corner,
+ *  snapped to the pixel grid with the camera's pixel in the middle.
+ *  Pure - the seam that keeps a recenter from moving the map. */
+export function shadowOrigin(camX, camZ, extent = SHADOW_EXTENT, pixel = PIXEL_METRES) {
+  return [Math.floor(camX / pixel) * pixel - extent / 2 + pixel / 2, Math.floor(camZ / pixel) * pixel - extent / 2 + pixel / 2];
+}
+
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
 void main() { vNdc = aPos; gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
-/** The march: one texel of the sky map per fragment. */
-export const MARCH_FS = `#version 300 es
-precision highp float;
-precision highp sampler3D;
+/** THE FIELD: the density at a world point, and everything both
+ *  marches share. Declared with its own uniforms and interpolated into
+ *  each march's template (the AUDIT 47 sweep expands it there). */
+export const CLOUD_FIELD_GLSL = `
 uniform sampler3D uShape;
 uniform sampler3D uDetail;
-uniform vec2 uMapSize;
-uniform vec3 uLightDir;
-uniform vec3 uLightColor;
-uniform vec3 uCloudLit;
-uniform vec3 uCloudShade;
-uniform vec3 uHorizonColor;
 uniform float uCover;
 uniform float uSoft;
 uniform float uBase;
 uniform float uTop;
 uniform float uDensity;
-uniform float uDark;
 uniform float uFlat;
 uniform float uShear;
 uniform vec2 uDrift;      // world metres
-uniform float uFlash;     // lightning: the whole sky lit for a frame
-uniform int uSteps;
-uniform int uLightSteps;
-out vec4 outColor;
-const float PI = 3.14159265;
+uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
 const float EXT = ${EXTINCTION.toFixed(4)};
 const float SHAPE_M = ${SHAPE_METRES.toFixed(1)};
 const float DETAIL_M = ${DETAIL_METRES.toFixed(1)};
+const float VARIATION_M = ${VARIATION_METRES.toFixed(1)};
+const float MOTTLE_M = ${MOTTLE_METRES.toFixed(1)};
 float remap(float v, float lo, float hi, float nlo, float nhi) { return nlo + (v - lo) / (hi - lo) * (nhi - nlo); }
-float hg(float c, float g) { float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * c, 1.5)); }
-float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 // the towers' profile against a stratus lid's, by the weather's flatness
 float heightGradient(float h) {
   float towers = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(0.5, 1.0, h));
@@ -142,8 +167,8 @@ float density(vec3 p, float mip) {
   vec4 s = textureLod(uShape, q / SHAPE_M, mip);
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
   float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * heightGradient(h);
-  // the weather's own variation over the land: the shape's R read as a 2D field, fourteen kilometres a tile
-  float variation = textureLod(uShape, vec3(q.x / 14000.0, 0.37, q.z / 14000.0), 0.0).r;
+  // the weather's own variation over the land: the shape's R read as a 2D field
+  float variation = textureLod(uShape, vec3(q.x / VARIATION_M, 0.37, q.z / VARIATION_M), 0.0).r;
   // the row's cover is the dome's deck's word; the slab's coverage is
   // sharper - a sunny 0.32 is a scattered sky, an overcast 0.94 a lid
   float coverage = clamp(pow(uCover, 1.6) * (0.6 + 0.8 * variation), 0.0, 1.0);
@@ -155,6 +180,27 @@ float density(vec3 p, float mip) {
   base = remap(base, erode * (0.15 + 0.35 * uSoft), 1.0, 0.0, 1.0);
   return clamp(base, 0.0, 1.0) * uDensity;
 }
+`;
+
+/** The march: one texel of the sky map per fragment. */
+export const MARCH_FS = `#version 300 es
+precision highp float;
+precision highp sampler3D;
+uniform vec2 uMapSize;
+uniform vec3 uLightDir;
+uniform vec3 uLightColor;
+uniform vec3 uCloudLit;
+uniform vec3 uCloudShade;
+uniform vec3 uHorizonColor;
+uniform float uDark;
+uniform float uFlash;     // lightning: the whole sky lit for a frame
+uniform int uSteps;
+uniform int uLightSteps;
+out vec4 outColor;
+const float PI = 3.14159265;
+${CLOUD_FIELD_GLSL}
+float hg(float c, float g) { float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * c, 1.5)); }
+float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 // toward the light: a short march, Beer's law with the powder term
 float lightMarch(vec3 p) {
   float sum = 0.0;
@@ -180,11 +226,12 @@ void main() {
   float t = t0 + ds * hash12(gl_FragCoord.xy);
   float cosTheta = dot(dir, uLightDir);
   float phase = min(mix(hg(cosTheta, 0.55), hg(cosTheta, -0.1), 0.4) * 4.0 * PI, 2.5);   // the average over the sphere is 1; the forward peak capped
+  vec3 cam = vec3(uCamXZ.x, 0.0, uCamXZ.y);
   vec3 col = vec3(0.0);
   float T = 1.0;
   for (int i = 0; i < 96; i++) {
     if (i >= uSteps) break;
-    vec3 p = dir * t;
+    vec3 p = cam + dir * t;
     float mip = clamp(t / 12000.0, 0.0, 2.0);
     float rho = density(p, mip);
     if (rho > 0.0) {
@@ -192,7 +239,7 @@ void main() {
       float light = lightMarch(p);
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
-      float mottle = textureLod(uShape, vec3(p.x + uDrift.x, p.y, p.z + uDrift.y) / (SHAPE_M * 0.5), 1.0).g;
+      float mottle = textureLod(uShape, vec3(p.x + uDrift.x, p.y, p.z + uDrift.y) / MOTTLE_M, 1.0).g;
       vec3 ambient = mix(uCloudShade, uCloudLit, h) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * uDark * (1.0 - h));
       vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * uDark) + ambient * (1.0 + uFlash * 3.0);
       float Ti = exp(-rho * EXT * ds);
@@ -206,6 +253,35 @@ void main() {
   float fade = 1.0 - exp(-t0 / 14000.0);
   col = mix(col, uHorizonColor * (1.0 - T), fade);
   outColor = vec4(col, T);
+}`;
+
+/** VC4: the shadow map - one ground texel per fragment, the
+ *  transmittance along the sun's ray up through the slab. */
+export const SHADOW_FS = `#version 300 es
+precision highp float;
+precision highp sampler3D;
+uniform vec2 uMapSize;
+uniform vec2 uOrigin;      // the square's corner, world metres
+uniform float uExtent;     // its side
+uniform vec3 uLightDir;
+uniform int uSteps;
+out vec4 outColor;
+${CLOUD_FIELD_GLSL}
+void main() {
+  if (uLightDir.y <= 0.05) { outColor = vec4(1.0); return; }   // no sun to shadow: the moon casts none
+  vec2 g = uOrigin + gl_FragCoord.xy / uMapSize * uExtent;
+  float t0 = uBase / uLightDir.y, t1 = uTop / uLightDir.y;
+  float ds = (t1 - t0) / float(uSteps);
+  float t = t0 + ds * 0.5;
+  float sum = 0.0;
+  for (int i = 0; i < 24; i++) {
+    if (i >= uSteps) break;
+    vec3 p = vec3(g.x, 0.0, g.y) + uLightDir * t;
+    sum += density(p, 0.5) * ds;
+    t += ds;
+  }
+  float T = exp(-sum * EXT);
+  outColor = vec4(T, T, T, 1.0);
 }`;
 
 /** The composite: the whole sky, one sample per pixel, over the dome. */
@@ -232,6 +308,14 @@ void main() {
   outColor = texture(uMap, uv);
 }`;
 
+/** The lab's shadow-map viewer: the square as a picture. */
+export const SHADOW_VIEW_FS = `#version 300 es
+precision highp float;
+in vec2 vNdc;
+uniform sampler2D uMap;
+out vec4 outColor;
+void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
+
 function link(gl, vs, fs) {
   const compile = (type, src) => {
     const sh = gl.createShader(type);
@@ -247,8 +331,10 @@ function link(gl, vs, fs) {
   return prog;
 }
 
-export const MARCH_UNIFORMS = ['uShape', 'uDetail', 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor',
-  'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uDark', 'uFlat', 'uShear', 'uDrift', 'uFlash', 'uSteps', 'uLightSteps'];
+/** The field's uniforms, shared by both marches. */
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDrift', 'uCamXZ'];
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uDark', 'uFlash', 'uSteps', 'uLightSteps'];
+export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect'];
 
 export class VolumetricClouds {
@@ -259,6 +345,7 @@ export class VolumetricClouds {
     this.q = QUALITY[quality] ?? QUALITY.default;
     this.noise = new CloudNoise(gl, viewport);
     this.map = createRenderTarget(gl, this.q.width, this.q.height, { filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' });
+    this.shadowMap = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE' });
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const vb = gl.createBuffer();
@@ -268,68 +355,120 @@ export class VolumetricClouds {
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
     this.marchProgram = link(gl, VS, MARCH_FS);
+    this.shadowProgram = link(gl, VS, SHADOW_FS);
     this.compositeProgram = link(gl, VS, COMPOSITE_FS);
+    this.viewProgram = link(gl, VS, SHADOW_VIEW_FS);
     this.mu = {}; for (const n of MARCH_UNIFORMS) this.mu[n] = gl.getUniformLocation(this.marchProgram, n);
+    this.su = {}; for (const n of SHADOW_UNIFORMS) this.su[n] = gl.getUniformLocation(this.shadowProgram, n);
     this.cu = {}; for (const n of COMPOSITE_UNIFORMS) this.cu[n] = gl.getUniformLocation(this.compositeProgram, n);
+    this.vu = { uMap: gl.getUniformLocation(this.viewProgram, 'uMap') };
     this.profile = null;      // the eased profile
     this.weather = null;
     this.state = null;        // the dome's skyState
     this.row = null;          // the eased weather row
     this.drift = [0, 0];
+    this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
     this.stripe = 0;
-    this.sweeps = 0;          // full sweeps completed (the probe waits for one)
-    this.full = true;         // the first update marches the whole map
+    this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one)
+    this.full = true;         // the first update marches both maps whole
+    this.origin = null;       // the shadow square's corner
+    this.shadowStripe = 0;
+    this.shadowFull = true;
   }
 
   /** Per frame, from the controller: the dome's state, the eased row,
    *  the sim's weather word and the (front-stretched) ease dt, the
-   *  drift integral, the lightning flash. */
-  setState(state, row, weather, easeDt, drift, flash = 0) {
+   *  drift integral, the lightning flash, the camera's world position. */
+  setState(state, row, weather, easeDt, drift, flash = 0, pos = null) {
     this.state = state; this.row = row;
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
-    this.profile = (this.weather === null || this.weather === weather) && this.profile ? easeProfile(this.profile, target, easeDt) : easeProfile(this.profile, target, easeDt);
+    this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
     this.drift = [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT];
     this.flash = flash;
+    if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
+    const o = shadowOrigin(this.cam[0], this.cam[1]);
+    if (!this.origin || o[0] !== this.origin[0] || o[1] !== this.origin[1]) { this.origin = o; this.shadowFull = true; }
   }
 
-  /** DRAW PATH: march this frame's stripe of the map (the whole map on
-   *  the first call). `viewport` the caller's rect to restore. */
-  update(viewport) {
-    if (!this.state || !this.profile) return;
-    const gl = this.gl, u = this.mu, q = this.q, s = this.state, r = this.row, p = this.profile;
-    const light = cloudLight(s);
-    const rows = this.full ? q.height : Math.ceil(q.height / SWEEP_FRAMES);
-    const y0 = this.full ? 0 : this.stripe * rows;
-    gl.useProgram(this.marchProgram);
-    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+  /** VC4: what the ground samples - the map and its square, for the
+   *  deck the controller hands the renderer. */
+  get shadow() {
+    if (!this.origin) return null;
+    return { map: this.shadowMap.tex, rect: [this.origin[0], this.origin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT] };
+  }
+
+  _fieldUniforms(u) {
+    const gl = this.gl, r = this.row, p = this.profile;
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, this.noise.shape.tex); gl.uniform1i(u.uShape, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, this.noise.detail.tex); gl.uniform1i(u.uDetail, 1);
-    gl.uniform2f(u.uMapSize, q.width, q.height);
-    gl.uniform3fv(u.uLightDir, light.dir); gl.uniform3fv(u.uLightColor, light.color);
-    gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
-    gl.uniform3fv(u.uHorizonColor, s.horizon);
     gl.uniform1f(u.uCover, r.cover); gl.uniform1f(u.uSoft, r.soft);
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, p.top); gl.uniform1f(u.uDensity, p.density);
-    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
+    gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
-    gl.uniform1f(u.uFlash, this.flash);
-    gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
+    gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);
+  }
+
+  /** DRAW PATH: march this frame's stripe of the sky map and of the
+   *  shadow map (both whole on the first call, the shadow map whole
+   *  again whenever its square moves). `viewport` the caller's rect. */
+  update(viewport) {
+    if (!this.state || !this.profile) return;
+    const gl = this.gl, q = this.q, s = this.state, p = this.profile;
+    const light = cloudLight(s);
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
     gl.bindVertexArray(this.vao);
-    withTarget(gl, this.map, viewport, () => {
-      gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    });
+    // the sky map
+    {
+      const u = this.mu;
+      const rows = this.full ? q.height : Math.ceil(q.height / SWEEP_FRAMES);
+      const y0 = this.full ? 0 : this.stripe * rows;
+      gl.useProgram(this.marchProgram);
+      this._fieldUniforms(u);
+      gl.uniform2f(u.uMapSize, q.width, q.height);
+      gl.uniform3fv(u.uLightDir, light.dir); gl.uniform3fv(u.uLightColor, light.color);
+      gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
+      gl.uniform3fv(u.uHorizonColor, s.horizon);
+      gl.uniform1f(u.uDark, p.dark);
+      gl.uniform1f(u.uFlash, this.flash);
+      gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
+      withTarget(gl, this.map, viewport, () => {
+        gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      });
+      if (this.full) { this.full = false; this.sweeps = 1; }
+      else {
+        this.stripe++;
+        if (this.stripe * rows >= q.height) { this.stripe = 0; this.sweeps++; }
+      }
+    }
+    // the shadow map (VC4)
+    {
+      const u = this.su;
+      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / SWEEP_FRAMES);
+      const y0 = this.shadowFull ? 0 : this.shadowStripe * rows;
+      gl.useProgram(this.shadowProgram);
+      this._fieldUniforms(u);
+      gl.uniform2f(u.uMapSize, q.shadow, q.shadow);
+      gl.uniform2f(u.uOrigin, this.origin[0], this.origin[1]);
+      gl.uniform1f(u.uExtent, SHADOW_EXTENT);
+      gl.uniform3fv(u.uLightDir, s.sunDir);   // the SUN's: the moon casts none
+      gl.uniform1i(u.uSteps, q.shadowSteps);
+      withTarget(gl, this.shadowMap, viewport, () => {
+        gl.viewport(0, y0, q.shadow, Math.min(rows, q.shadow - y0));
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      });
+      if (this.shadowFull) this.shadowFull = false;
+      else {
+        this.shadowStripe++;
+        if (this.shadowStripe * rows >= q.shadow) this.shadowStripe = 0;
+      }
+    }
     gl.bindVertexArray(null);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, null);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, null);
     gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
-    if (this.full) { this.full = false; this.sweeps = 1; }
-    else {
-      this.stripe++;
-      if (this.stripe * rows >= q.height) { this.stripe = 0; this.sweeps++; }
-    }
   }
 
   /** DRAW PATH: the composite over the dome. Same contract as the
@@ -349,6 +488,20 @@ export class VolumetricClouds {
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.disable(gl.BLEND);
+    gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+  }
+
+  /** DRAW PATH, the lab's: the shadow map as a picture over the frame. */
+  drawShadowView() {
+    if (!this.origin) return;
+    const gl = this.gl;
+    gl.useProgram(this.viewProgram);
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.shadowMap.tex); gl.uniform1i(this.vu.uMap, 0);
+    gl.bindVertexArray(this.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
   }
 }

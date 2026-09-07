@@ -52,7 +52,6 @@ test('VC3: the map, the sweep, the drift - the numbers the rest of the outdoors 
   assert.ok(QUALITY.lo.steps < QUALITY.default.steps && QUALITY.default.steps < QUALITY.hi.steps);
   for (const q of Object.values(QUALITY)) assert.ok(q.height % SWEEP_FRAMES === 0, 'a sweep divides the map evenly');
   assert.ok(Math.abs(WORLD_PER_DRIFT - 1 / 0.0038) < 1e-9, 'one drift unit is the metres the terrain\'s shadow field has always moved by');
-  assert.match(read('src/render/renderer.js'), /vec2 sp = \(vWorldPos\.xz \+ uLightDir\.xz \/ max\(uLightDir\.y, 0\.12\) \* 260\.0\) \* 0\.0038 \+ uCloudDrift;/, 'the 0.0038 is still the ground\'s');
 });
 
 test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, every uniform declared is fetched, the blend is sky * T + cloud', () => {
@@ -84,14 +83,14 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const clouds = enhancedSky && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, cloudsDoor in CLOUD_QUALITY \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the dome only (never the mod), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
   assert.match(shared, /if \(clouds\) enhancedSky\.cloudsExternal = true;/, 'the dome\'s own decks stand down');
-  assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash');
+  assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');
   assert.match(shared, /draw\(yaw, pitch, fovY, aspect, viewport = \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) \{\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}/, 'marched then composited after the dome, inside the host\'s marked span');
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /gl\.uniform1f\(u\.uCloudCover, this\.cloudsExternal \? 0 : s\.cloudCover\);/, 'cover 0 to the dome\'s shader under the clouds; the state keeps the row\'s');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(h);
     assert.match(s, /sky\.draw\([^;]*worldAspect, renderer\.worldViewportPx \?\? \[0, 0, renderer\.gl\.drawingBufferWidth, renderer\.gl\.drawingBufferHeight\]\);/, `${h}: the world rect the map restores`);
-    assert.match(s, /sun: wxNow\.sun, flash: flash - 1 \}\);/, `${h}: the strobe reaches the clouds`);
+    assert.match(s, /sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);/, `${h}: the strobe and the camera's position reach the clouds`);
   }
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /if \(!dynamicOn && cloudsDoor !== 'off'\) sky\.cloudsExternal = true;/);

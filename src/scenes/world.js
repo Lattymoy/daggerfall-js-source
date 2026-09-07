@@ -6854,7 +6854,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1 });   // ES1: the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos });   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than

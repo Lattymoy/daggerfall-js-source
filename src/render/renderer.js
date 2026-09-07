@@ -24,6 +24,24 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+// EE5 / VC4: THE CLOUD SHADOW, one block for every program that lights by
+// the sun - declared INSIDE each shader that interpolates it (a GLSL
+// declaration is visible only to its own compilation unit; the first
+// attempt put it outside every shader and the renderer threw on boot).
+const CLOUD_SHADOW_GLSL = `
+uniform sampler2D uCloudShadowMap;
+uniform vec4 uCloudShadowRect;   // VC4: the square's corner x, z; 1 / its side; the amount (0 = no shadow, the classic skin and every interior)
+// the transmittance of the cloud slab along the sun's ray from this
+// ground point, read off the map the same field the sky is drawn from
+// writes (render/volumetricClouds.js); outside the square, no shadow
+float cloudShadowAt(vec3 wp) {
+  if (uCloudShadowRect.w <= 0.0) return 1.0;
+  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
+  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
+}
+`;
+
 const FS = `#version 300 es
 precision highp float;
 in vec3 vNormal;
@@ -71,6 +89,7 @@ uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law)
 uniform float uAutomapMode;
 uniform float uAutomapWaterLevel;   // _WaterLevel: AddWater's per-block level (:1982-2001); the shader's own default is -10000
 uniform vec4 uAutomapWaterColor;    // _WaterColor: UnderwaterFog.waterMapColor, which Automap.cs:2590 injects into the one automap material
+${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -96,6 +115,7 @@ void main() {
   // are palette index 0 and were being discarded as cutouts.
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
+  diff *= cloudShadowAt(vWorldPos);   // VC4: the cloud's shadow on the sun term
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float l3diff = max(dot(n, uLight3Dir), 0.0);
   // AUDIT 39r R17: DaggerfallDefault.shader:83-85 - "Emission cancels out
@@ -221,6 +241,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -240,6 +261,7 @@ void main() {
   if (uAlphaCut > 0.0 && texel.a < uAlphaCut) discard;
   vec3 albedo = vColor * texel.rgb;
   float diff = max(dot(n, uLightDir), 0.0);
+  diff *= cloudShadowAt(vWorldPos);   // VC4: the cloud's shadow on the sun term
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
@@ -291,7 +313,8 @@ uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform int uSpectral;
 uniform vec4 uConceal;  // ECV1: x mode (0 plain, 1 chameleon, 2 shade, 3 hit reveal), y opacity, z seconds, w phase
-uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
+uniform vec3 uTint; // time-of-day: ambient (+ the moon's half); VC4: the sun's half rides uBBSun so a cloud's shadow can take it
+uniform vec3 uBBSun;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
 uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
@@ -302,6 +325,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -349,7 +373,7 @@ void main() {
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lit = albedo * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
+  vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) + pointAcc + iAtt * iAtt * uIndirectColor) + emission;   // VC4
   // ECV1: a shade is its silhouette - the lit colour pulled to black;
   // every concealed draw takes the visual's opacity over the texel's.
   if (uConceal.x == 2.0) lit *= 0.12;
@@ -437,15 +461,7 @@ void main() {
 // every shader, the terrain shader used uniforms it never declared,
 // and the renderer's constructor threw on boot. A GLSL declaration is
 // visible only to the compilation unit that contains it.
-const CLOUD_SHADOW_GLSL = `
-uniform float uShadowAmt, uCloudCover, uCloudSoft, uCloudTime;
-uniform vec2 uCloudWind;
-uniform vec2 uCloudDrift;   // WIND2
-float thash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
-float tvn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
-  return mix(mix(thash(i),thash(i+vec2(1,0)),f.x), mix(thash(i+vec2(0,1)),thash(i+vec2(1,1)),f.x), f.y); }
-float tfbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*tvn(p); p=p*2.03+vec2(17.1,9.7); a*=0.5; } return v; }
-`;
+
 
 const TERRAIN_FS = `#version 300 es
 precision highp float;
@@ -509,16 +525,13 @@ void main() {
   // EE5: the deck's field, sampled where this ground's ray to the sun
   // crosses the cloud plane - so a bank overhead drags its shadow across
   // the land, and the shadow and the cloud that casts it are ONE field.
-  // The plane is high and the dome far, so the parallax is the WIND's:
-  // shadows move with the weather and not with the player. A cloud dims
-  // the SUN and leaves the ambient alone, which is what a cloud does.
-  // uShadowAmt is 0 for the classic skin and every interior: the branch
-  // does not run and classic draws exactly what it drew.
-  if (uShadowAmt > 0.0 && uLightDir.y > 0.02) {
-    vec2 sp = (vWorldPos.xz + uLightDir.xz / max(uLightDir.y, 0.12) * 260.0) * 0.0038 + uCloudDrift;   // WIND2: integrated, not wind * time
-    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, tfbm(sp));
-    diff *= 1.0 - cov * uShadowAmt;
-  }
+  // A cloud dims the SUN and leaves the ambient alone, which is what a
+  // cloud does; the shadow moves with the weather (the one drift
+  // integral) and with the bank overhead, which VC4 made one field.
+  // uCloudShadowRect.w is 0 for the classic skin and every interior: the
+  // branch does not run and classic draws exactly what it drew. VC4: the
+  // shadow is the slab's own transmittance off the map, not a noise.
+  diff *= cloudShadowAt(vWorldPos);
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   vec3 pointAcc = vec3(0.0);
@@ -887,13 +900,14 @@ export class Renderer {
     this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
     this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
     this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
-    // EE5: the deck's uniforms
-    this.tUShadowAmt = gl.getUniformLocation(this.terrainProgram, 'uShadowAmt');
-    this.tUCloudCover = gl.getUniformLocation(this.terrainProgram, 'uCloudCover');
-    this.tUCloudSoft = gl.getUniformLocation(this.terrainProgram, 'uCloudSoft');
-    this.tUCloudTime = gl.getUniformLocation(this.terrainProgram, 'uCloudTime');
-    this.tUCloudWind = gl.getUniformLocation(this.terrainProgram, 'uCloudWind');
-    this.tUCloudDrift = gl.getUniformLocation(this.terrainProgram, 'uCloudDrift');
+    // EE5 / VC4: the cloud shadow map's uniforms, one pair per program that lights by the sun
+    this._csLoc = {
+      terrain: [gl.getUniformLocation(this.terrainProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.terrainProgram, 'uCloudShadowRect')],
+      mesh: [gl.getUniformLocation(this.program, 'uCloudShadowMap'), gl.getUniformLocation(this.program, 'uCloudShadowRect')],
+      char: [gl.getUniformLocation(this.charProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.charProgram, 'uCloudShadowRect')],
+      bb: [gl.getUniformLocation(this.bbProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.bbProgram, 'uCloudShadowRect')],
+    };
+    this._csStamp = 0; this._csUploaded = {}; this._csRect = new Float32Array(4);
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -973,6 +987,7 @@ export class Renderer {
     this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
     this.bbUConceal = gl.getUniformLocation(this.bbProgram, 'uConceal');   // ECV1
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
+    this.bbUSun = gl.getUniformLocation(this.bbProgram, 'uBBSun');   // VC4
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
     this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
     this.bbUPointColors = gl.getUniformLocation(this.bbProgram, 'uPointColors');
@@ -1193,6 +1208,7 @@ export class Renderer {
     const gl = this.gl;
     const c = this._char;
     this._use(this.charProgram);
+    this._uploadCloudShadow('char');   // VC4
     gl.uniformMatrix4fv(c.proj, false, this._proj);
     gl.uniformMatrix4fv(c.view, false, this._view);
     gl.uniformMatrix4fv(c.model, false, modelMatrix);
@@ -2496,7 +2512,23 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,
    *  amount} - or null. Numbers only; it binds nothing. */
-  setCloudShadow(d) { this._cloudShadow = d ?? null; }
+  setCloudShadow(d) { this._cloudShadow = d ?? null; this._csStamp++; }
+
+  /** VC4: bind the deck's shadow map (or nothing) on unit 7 for one
+   *  program, once per setCloudShadow - a draw-path step. */
+  _uploadCloudShadow(key) {
+    const loc = this._csLoc?.[key];   // a bare prototype (the crash-report tests) has no programs
+    if (!loc || this._csUploaded[key] === this._csStamp) return;
+    this._csUploaded[key] = this._csStamp;
+    const gl = this.gl, cs = this._cloudShadow, [mapLoc, rectLoc] = loc;
+    gl.activeTexture(gl.TEXTURE7);
+    gl.bindTexture(gl.TEXTURE_2D, cs?.map ?? this._blackTex);
+    gl.uniform1i(mapLoc, 7);
+    const r = cs?.map ? cs.rect : null;
+    this._csRect[0] = r ? r[0] : 0; this._csRect[1] = r ? r[1] : 0; this._csRect[2] = r ? r[2] : 0; this._csRect[3] = r ? r[3] : 0;
+    gl.uniform4fv(rectLoc, this._csRect);
+    gl.activeTexture(gl.TEXTURE0);
+  }
 
   /** Draw one terrain surface with its tilemap + tile array. */
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
@@ -2506,14 +2538,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
-    // EE5: the deck, or nothing at all
-    const cs = this._cloudShadow;
-    gl.uniform1f(this.tUShadowAmt, cs ? cs.amount : 0);
-    gl.uniform1f(this.tUCloudCover, cs ? cs.cover : 0);
-    gl.uniform1f(this.tUCloudSoft, cs ? cs.soft : 1);
-    gl.uniform1f(this.tUCloudTime, cs ? cs.time : 0);
-    gl.uniform2f(this.tUCloudWind, cs ? cs.wind[0] : 0, cs ? cs.wind[1] : 0);
-    gl.uniform2f(this.tUCloudDrift, cs?.drift ? cs.drift[0] : 0, cs?.drift ? cs.drift[1] : 0);   // WIND2
+    // EE5 / VC4: the deck's shadow map, or nothing at all
+    this._uploadCloudShadow('terrain');
     this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);
@@ -2580,6 +2606,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawBillboards(batches, camRight, camUp) {
     const gl = this.gl;
     this._use(this.bbProgram);
+    this._uploadCloudShadow('bb');   // VC4
     gl.uniformMatrix4fv(this.bbUProj, false, this._proj);
     gl.uniformMatrix4fv(this.bbUView, false, this._view);
     gl.uniform3fv(this.bbURight, camRight);
@@ -2594,12 +2621,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // Lambert-average half the sun does - a scalar on the tint.
       gl.uniform3f(
         this.bbUTint,
-        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5 + this._moonColor[0] * this._moonScale * 0.5,
-        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5 + this._moonColor[1] * this._moonScale * 0.5,
-        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5 + this._moonColor[2] * this._moonScale * 0.5
+        this._ambient[0] + this._moonColor[0] * this._moonScale * 0.5,
+        this._ambient[1] + this._moonColor[1] * this._moonScale * 0.5,
+        this._ambient[2] + this._moonColor[2] * this._moonScale * 0.5
       );
+      gl.uniform3f(this.bbUSun, this._sunColor[0] * this._sunScale * 0.5, this._sunColor[1] * this._sunScale * 0.5, this._sunColor[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
     } else {
       gl.uniform3f(this.bbUTint, 1, 1, 1);
+      gl.uniform3f(this.bbUSun, 0, 0, 0);
     }
     const bbCount = this._pointLights.length >> 2;
     gl.uniform1i(this.bbUPointCount, bbCount);
@@ -2789,6 +2818,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // still this call's to account for, it just costs nothing when the
     // program is already bound.
     this._use(this.program);
+    this._uploadCloudShadow('mesh');   // VC4
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
     this._bindVao(wire ? wireMesh.vao : mesh.vao);
     for (let smi = 0; smi < mesh.subMeshes.length; smi++) {
