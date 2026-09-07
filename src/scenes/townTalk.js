@@ -558,7 +558,23 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
-  function nextMode() { setMode(nextInteractionMode(getInteractionMode())); return getInteractionMode(); }
+  function nextMode() {
+    // AUDIT 61 F9: the touch mode button is the one control on that
+    // layer that calls a hook DIRECTLY instead of synthesizing a key,
+    // so it walked past both gates the F1-F4 ladder carries - this
+    // host's own `overlay` slot (:320) and the host's other slot
+    // (:376's otherOverlayActive). On a phone the mode flipped and the
+    // HUD line printed under an open inventory or pause window. DFU
+    // reads the four modes through ActionStarted (PlayerActivate.cs
+    // :220-228) and a paused InputManager never populates
+    // currentActions (InputManager.cs:487-505; the window pauses at
+    // UserInterfaceManager.cs:180-185), so no mode change happens under
+    // a pausing window. Returning the CURRENT mode keeps the button's
+    // label truthful.
+    if (overlay || otherOverlayActive?.()) return getInteractionMode();
+    setMode(nextInteractionMode(getInteractionMode()));
+    return getInteractionMode();
+  }
 
   /** The activation ray (the host's E/use edge). persons =
    *  [{ person, pos }] world feet of LIVE townsfolk. Returns true if

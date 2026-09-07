@@ -1410,7 +1410,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     backButtonHeld: () => backButtonHeld,
   });
   const weaponRig = createWeaponRig({
-    activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
+    activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 61 F8: the finger's press too (it was 'Mouse0' in the held set until the tap stopped speaking a literal code)   // AUDIT 28 W12: the drawn bow's un-draw key
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
@@ -1918,8 +1918,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
-  // ONE-frame Mouse0 press (_tapArmed counts it down at the frame's
-  // top) and _tapDir carries the finger's ray for the release frame,
+  // ONE-frame ActivateCenterObject press (_tapArmed counts it down at
+  // the frame's top and is read straight into the gate's `down`)
+  // and _tapDir carries the finger's ray for the release frame,
   // which is when A8's gate fires the activation. player/lockOn.js
   // holds the lock; _lockChest is this frame's dot target.
   let swipeHeld = false;
@@ -2243,7 +2244,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     // acquisition: with the pointer already locked this click IS the
     // world's. (worldModes shares this host's `latch`, so its gate is
     // this gate.)
-    if (document.pointerLockElement !== canvas) setClickDelay((latch.activate ??= createActivateGate()));
+    // AUDIT 61 F6: ...and NEVER for a touch pointer. A finger can never
+    // hold the pointer lock (ui/touch.js's own note), so the test above
+    // is permanently true on a phone and every finger-down armed a 0.3 s
+    // window that swallowed the tap's release edge (activateGate.js's
+    // clickDelay check runs after `gate.down = down`, so the edge is
+    // destroyed, not deferred) - the touch activation was dead below a
+    // ~267 ms hold. There is no lock to re-acquire and no Mouse0 press
+    // rides this event on touch (the compat mousedown is preventDefault'd
+    // in touch.js), so there is no UI gesture here for RemoveWindow's
+    // SetClickDelay to model (PlayerActivate.cs:1050-1054, called only
+    // from UserInterfaceManager.cs:206/:214).
+    if (e.pointerType !== 'touch' && document.pointerLockElement !== canvas) setClickDelay((latch.activate ??= createActivateGate()));
     requestLook(canvas);
   });   // U8b/U8c: native windows own the pointer
   canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e) || mwViewWheel(e.deltaY)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel; MW-D25: otherwise the Morrowind camera zoom
@@ -2330,12 +2342,22 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
-      _tapPoint = [x, y]; _tapArmed = 2; keys.add('Mouse0');
+      _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 61 F8: the arm IS the press - see _tapArmed at the gate below
     },
     locked: () => lockOn.locked,
-    dial: true,
+    // AUDIT 61 F10: the dial button is drawn only where Tab actually
+    // opens the rose. openPixelDial refuses off the enhanced skin
+    // (ui/pixelDial.js), so on the classic skin the ◆ was a drawn door
+    // that opens nothing - the lie touch.js's own doc block names. The
+    // skin cannot change without a reload (both switches end in
+    // location.replace), so this boot-time read is exact.
+    dial: isEnhanced(),
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
     overlayActive: () => townTalk.overlayActive,
+    // AUDIT 61 F7: the finger's pause gate - the same predicate the
+    // mouse arms carry (the mousemove look needs the pointer lock a
+    // window frees, the RMB swing tests `!townTalk.overlayActive`).
+    paused: () => gamePaused(),
   });
 
   // ---- QX1: THE QUEST BRIDGE - THE MACHINE OVER THIS ONE CITY ----
@@ -2646,7 +2668,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // GameManager.ClearEnemies destroys every active enemy object; the
     // encounter half is world.js:5440's line and the watch half is this
     // host's own (cityGuards owns its live list).
-    clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } },
+    clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } lockOn.unlock(); },   // AUDIT 61 F16: a removed foe is never flagged dead, so the lock must be let go here
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
     // over ONE database - the inside pool unioned in, or SetComplete
     // never completes and the action re-runs every tick for ever.
@@ -2675,6 +2697,48 @@ export async function bootExterior(canvas, renderer, params, status) {
   // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
+    // AUDIT 61 F8 (review): THE FINGER'S PRESS, published. worldModes
+    // owns the interior and world-hosted-dungeon activate gate and has
+    // no sight of `_tapArmed` - it is a host-local `let`. While the tap
+    // spoke a literal 'Mouse0' the shared `keys` Set carried the press
+    // in for free; F8 took the literal out (a rebind of
+    // ActivateCenterObject must not kill the finger) and this is the
+    // honest replacement, the same shape `activateDir` already had.
+    activateDown: () => _tapArmed > 0,
+    // AUDIT 61 F16/F28: the lock's two doors for the modal ladders.
+    // The tap-to-lock arm existed only in this host's EXTERIOR
+    // activation and in the standalone dungeon scene, so inside a
+    // building or a world-hosted dungeon - which is where the classic
+    // start and every shop live - a tap on a live foe fell through to
+    // the door/loot ladder and nothing locked, while the standalone
+    // host locked on the same surface. And nothing cleared the lock at
+    // the door: `lockOn.tick` runs in every mode (correctly - an indoor
+    // lock must steer too), so a foe locked in the street kept dragging
+    // the camera toward its chest through the shop wall for the whole
+    // visit, inside the 32 m break because the interior is parented at
+    // the building's world matrix. `unlockOn` is called at every mode
+    // transition and wherever the exterior pool is destroyed
+    // (destroy() empties it WITHOUT flagging `dead`, so the death break
+    // never fires on an orphan).
+    lockToggle: (foe) => lockOn.toggle(foe),
+    unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
+    // AUDIT 61 F16/F28: the MODAL frame's matrices, handed back. Both
+    // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
+    // unprojects through them at the top of the frame, and the lock dot
+    // projects through them - and ONLY the exterior render wrote them,
+    // below the modal early return. So indoors the tap was cast through
+    // the last STREET frame's camera and the dot was never replaced,
+    // leaving the newly-armed modal lock aiming at nothing and the last
+    // outdoor dot frozen on the glass. One report, both seams; the
+    // one-frame lag is the exterior path's own (it writes them after
+    // the ray is built too).
+    reportFrame: (proj, view) => {
+      _lastProj = proj; _lastView = view;
+      if (touch) {
+        const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+        touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
+      }
+    },
     canvas, renderer, player, cam, keys, latch, blocks,
     // S40: IsPlayerInTown() with both flags at their defaults - the
     // location TYPE alone (PlayerGPS.cs:504-527), which is what
@@ -3124,13 +3188,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       else lookFilter.tick(dt, cam);
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
-    // TI1: the tap's one-frame press. Armed 2 on the tap (the key is
-    // already down): this frame counts to 1 and the gate sees the
-    // press; next frame counts to 0, the key lifts, the ray is built
-    // through the frame the finger saw, and the gate fires the
-    // activation on that release. The frame after clears the ray.
+    // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
+    // counts to 1 and the gate sees the press (AUDIT 61 F8: `_tapArmed
+    // > 0` IS the press - the arm no longer stuffs a literal 'Mouse0'
+    // into the held set, which a rebind of ActivateCenterObject would
+    // have made inert); next frame counts to 0, the press lifts, the
+    // ray is built through the frame the finger saw, and the gate fires
+    // the activation on that release. The frame after clears the ray.
     if (_tapArmed > 0 && --_tapArmed === 0) {
-      keys.delete('Mouse0');
       _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
     } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
@@ -3359,7 +3424,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // never read through held(), so a SwingWeapon rebind is inert.
 
       const _act = activateFrame((latch.activate ??= createActivateGate()), {
-        down: held(keys, 'ActivateCenterObject'),
+        down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 61 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
         hasReadySpell: magic.spellArmed(),
         touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
         hudBlocked: activeMouseOverLargeHUD(),
@@ -3696,7 +3761,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7025-7077 is the shape.
+    // through the player for ever. world.js:7033-7085 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -3895,7 +3960,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7135's order, and the order
+          // BEFORE civilians - world.js:7143's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

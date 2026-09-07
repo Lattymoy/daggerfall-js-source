@@ -26,7 +26,8 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 61 F16/F28: TI1's lock pick
+import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 61 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -515,7 +516,7 @@ export function createWorldModes(host) {
   // combat/fpsSpellCasting.js holds the animation as a singleton and
   // whichever rig owns the frame draws it - which indoors is this one.
   const interiorWeapon = createWeaponRig({
-    activateHeld: () => held(keys, 'ActivateCenterObject'),   // AUDIT 28 W12: the drawn bow's un-draw key
+    activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),   // AUDIT 61 F8 (review): the finger's press too - it reaches this host ONLY through activateDown, never through `keys`   // AUDIT 28 W12: the drawn bow's un-draw key
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
@@ -4131,6 +4132,7 @@ export function createWorldModes(host) {
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
+      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
       transitioning = false;
@@ -4175,6 +4177,23 @@ export function createWorldModes(host) {
     if (getInteractionMode() !== 'info' && interiorCtx) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
       if (qf) qf.questBehaviour.doClick();
+    }
+    // AUDIT 61 F16/F28: TI1's tap-to-lock, the arm this ladder never
+    // had. `A tap whose ray hits a live foe locks it` (player/lockOn.js)
+    // carries no mode qualifier, but the arm existed only in the two
+    // hosts' EXTERIOR activations and in the standalone dungeon scene -
+    // and the standalone scene is not the game (main.js sends the
+    // classic start into THIS machine), so on a phone no foe in any
+    // building or world-hosted dungeon could be locked at all, while
+    // the swipe already swung at them through modalAttackSink. Gated on
+    // the ray being the FINGER'S (`host.activateDir()`, the same
+    // `_tapDir ?` guard the exterior arm carries), placed AFTER the
+    // quest arm so QG1's non-consuming fall-through is preserved, and
+    // consuming the activation exactly as the standalone host's
+    // `return null` does. The pool and collider are the CONTEXT's.
+    if (host.activateDir?.() && interiorCtx) {
+      const f = pickFoe(eye, dir, interiorFoePool(), interiorCtx.collider, LOCK_PICK_DISTANCE);
+      if (f) { host.lockToggle?.(f); return true; }
     }
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
@@ -4375,6 +4394,7 @@ export function createWorldModes(host) {
     // the terrain's floor (enterExit.repositionFeetY).
     player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
+    host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     console.log('exterior: returned at door');
@@ -4398,7 +4418,7 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject'), useMagicItem: (item) => host.useMagicItem?.(item),
+        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(), useMagicItem: (item) => host.useMagicItem?.(item),
           // A10: the Recall prompt (Teleport.cs:81-98). The outer host
           // owns it - the plan's arms are its pixel teleport, its mode
           // teardown and its dungeon mount - so a cast underground in
@@ -4519,6 +4539,7 @@ export function createWorldModes(host) {
         return false;
       }
       mode = 'dungeon';
+      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
       _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:1112 - the dungeon transition clears the tavern latch too (and, verbatim, not the residence one)
       dungeonLoc = dfLocation;
       player.collider = ctx.collider;
@@ -4589,6 +4610,14 @@ export function createWorldModes(host) {
       const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
+    // AUDIT 61 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
+    // the ladder the classic start into Privateer's Hold runs through,
+    // so it is the one the feature was most missing from; the arm is
+    // scenes/dungeon.js:213's, line for line, over this context's pool.
+    if (host.activateDir?.() && dungeonCtx) {
+      const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
+      if (f) { host.lockToggle?.(f); return true; }
+    }
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
@@ -4658,6 +4687,7 @@ export function createWorldModes(host) {
     dungeonCtx = null;
     dungeonLoc = null;
     mode = 'exterior';
+    host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
     questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
@@ -4689,7 +4719,20 @@ export function createWorldModes(host) {
     // hosts' early return froze __frame inside interiors/dungeons and
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
-    const fwd = eyeDir();
+    // AUDIT 61 F16/F28 (review): THE CAMERA'S OWN FORWARD, not the
+    // activation ray. `eyeDir()` answers `host.activateDir()` while a
+    // tap's ray is live (the release frame), and that ray belongs to
+    // the ACTIVATION ladders alone: DFU builds it with
+    // `mainCamera.ScreenPointToRay` off the free cursor
+    // (PlayerActivate.cs:283-309) and never touches the camera
+    // transform with it, so the render, the 3D listener and the
+    // automap reveal probe all keep reading `Camera.main.transform`
+    // (Automap.cs:1168 `rayDirection = Camera.main.transform.rotation
+    // * Vector3.forward`). Reading the ray here swung the whole modal
+    // frame - view matrix, ears and reveal - down the finger for one
+    // frame, and the review found it riding into `host.reportFrame`
+    // below, which stores the pair the NEXT tap unprojects through.
+    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     // AUDIT 21 (hosts lane, F4): THE EARS MOVE IN HERE TOO.
     //
     // The 3D listener was set by world.js, exterior.js and dungeonContext.js
@@ -4939,8 +4982,21 @@ export function createWorldModes(host) {
     // room behind it; `hudBlocked` is PlayerActivate.cs:230-236;
     // `touchSpell` is its stated exception at :250-258. The readied
     // spell comes off the same per-mode engine HasReadySpell does.
+    // AUDIT 61 F8 (review): ...AND THE FINGER'S PRESS, which reaches
+    // this machine through NOTHING ELSE. The tap used to stuff a
+    // literal 'Mouse0' into the host's `keys` Set, and this gate -
+    // which owns EVERY interior and every world-hosted dungeon, so
+    // every shop, every house and the classic start into Privateer's
+    // Hold - read it out of that shared Set for free. F8 replaced the
+    // literal with the hosts' own `_tapArmed > 0`, a host-local `let`
+    // this module cannot see, and the three standalone gates were
+    // updated while THIS one was not: a tap on a door, a container, a
+    // ladder, a corpse or an exit indoors produced no press frame at
+    // all, so nothing activated and F16's own tap-to-lock arms below
+    // sat unreachable. `activateDown` is that press, published the way
+    // `activateDir` publishes its ray.
     const _act = activateFrame((latch.activate ??= createActivateGate()), {
-      down: held(keys, 'ActivateCenterObject'),
+      down: held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
       hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
       touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
       hudBlocked: activeMouseOverLargeHUD(),
@@ -4992,6 +5048,7 @@ export function createWorldModes(host) {
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
+    host.reportFrame?.(proj, view);   // AUDIT 61 F16/F28: TI1's tap ray and lock dot ride the host's last frame, and only its EXTERIOR render wrote one
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
@@ -6903,6 +6960,7 @@ export function createWorldModes(host) {
       }
       player.collider = baseCollider();
       mode = 'exterior';
+      host.unlockOn?.();   // AUDIT 61 F16/F28: the lock never outlives a mode change
       if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do
     },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's

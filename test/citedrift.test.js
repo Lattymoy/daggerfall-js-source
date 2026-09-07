@@ -497,6 +497,7 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 // ═══ CD4: the in-source citations the wave invalidated resolve again ═══
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
 const EX = 'src/scenes/exterior.js';
+const WO = 'src/scenes/world.js';
 const SOURCE_CITES = [
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
@@ -534,10 +535,21 @@ const SOURCE_CITES = [
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
   ['src/systems/startingGear.js', /world\.js:1346 and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/ui/pauseWindow.js', /world\.js:4121, exterior\.js:(\d+),/,
+  ['src/ui/pauseWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
-  ['src/ui/restWindow.js', /world\.js:4101, exterior\.js:(\d+),/,
+  ['src/ui/restWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+  // AUDIT 61 (review): ...AND THE OTHER HALF OF THE SAME SENTENCE. The
+  // two entries above read the exterior number out of a cite that names
+  // THREE files, so the `world.js` half sat unpinned and had been stale
+  // since before this file existed - :4121 landed inside the
+  // ExteriorAutomapWindow construction and :4101 on a `locationName:`
+  // field. A half-pinned cite is the shape ROAD-G G1 already caught
+  // once; both halves are read here now.
+  ['src/ui/pauseWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
+    WO, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+  ['src/ui/restWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
+    WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
   ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:679/, EX, /playerTicker\.advance\(60\);/],
   ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:1944/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
@@ -547,9 +559,9 @@ const SOURCE_CITES = [
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-1018 and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2172/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2173/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:2164\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:2165\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:674`/, EX, /playerTicker\.advance\(60\);/],
@@ -590,9 +602,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3202` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3267` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3178-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3243-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:90-114`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],

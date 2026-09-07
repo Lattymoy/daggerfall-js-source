@@ -866,7 +866,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:495` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:670-674`, `scenes/world.js:2597`), the
+   (`ui/nativeInventory.js:670-674`, `scenes/world.js:2598`), the
    (`ui/nativeInventory.js:670-674`, `scenes/world.js:2543`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed

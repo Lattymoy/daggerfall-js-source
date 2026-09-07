@@ -9406,3 +9406,300 @@ chain - tap, the one-frame press through the REAL activate gate, the
 ray, the pick, the lock, and the dot projecting back under the finger,
 then the second tap unlocking - is now executed end to end in
 `test/touchinput.test.js`, with a foe deliberately left of centre.
+
+### AUDIT 61 F6 - THE CLICK DELAY EVERY FINGER ARMED (2026-09-07)
+
+The three combat hosts' canvas `pointerdown` handler arms
+`setClickDelay` whenever the pointer lock is not held - the port's own
+addition (ROAD-Ar), modelling the relock click as the UI gesture
+`UserInterfaceManager.RemoveWindow` really does arm
+(`UserInterfaceManager.cs:206`/`:214` -> `PlayerActivate.cs:1050-1054`,
+the only two callers in the reference; a world click never arms it).
+
+A finger can never hold the pointer lock - `ui/touch.js` says so in its
+own header, which is why the look rides `hooks.look` rather than
+`mousemove` - so that test was permanently true on a phone and EVERY
+finger-down opened a 0.3 s window. `systems/activateGate.js` writes
+`gate.down = down` BEFORE the delay test returns
+`{cast:false, activate:false}`, so the tap's release edge was consumed
+inside the window and destroyed, not deferred. Executed against the
+shipped gate: an 80, 120, 150, 200 or 250 ms tap never activated; only
+a hold in the ~267-300 ms band cleared the window, and the recogniser
+refuses anything past `TAP_MS` (300) - so on a real device the entire
+touch activation verb (lock-on, doors, NPCs, loot, the M2 cast) was
+dead, and the layer's own e2e pin could not see it because it stepped
+the gate in whole seconds and never armed a delay.
+
+The fix is one clause at each of the three hosts:
+
+    if (e.pointerType !== 'touch' && document.pointerLockElement !== canvas) setClickDelay(...)
+
+Safe because on touch nothing presses Mouse0 at finger-down - the
+Mouse0 press comes from the `mousedown` listener, and touch.js's
+`preventDefault` on touchstart suppresses the compatibility mouse
+events - so the ROAD-Ar rationale has no subject here. The
+alternative, swallowing `pointerdown` for touch pointers in the layer,
+was rejected: `pointerdown` is the ONLY route by which a finger reaches
+`townTalk.pointerdown`, `modes.pointerdown` (the classic-overlay native
+click seam) and `routeLargeHudClick`, so it would trade one dead verb
+for the docked HUD's eleven panels and every classic window.
+
+### AUDIT 61 F7 - THE PAUSE GATE THE FINGER NEVER PASSED (2026-09-07)
+
+The mouse arms all carry it: the `mousemove` look returns unless the
+pointer is locked (a window frees it), the RMB swing tests
+`!townTalk.overlayActive`, the dungeon host returns under
+`ctx.uiOverlayActive`. The touch `look` and `attack` hooks carried
+nothing. Classic windows are painted into the WebGL canvas and the
+touch layer is the only listener on it, so a hold-then-drag on an open
+inventory, travel map or spellbook was classified as a SWIPE and
+reached `weaponRig.attackInput` / `magic.interceptAttack(true)` - which
+arms `pendingClickCast`, and `firePending` sits at frame-body
+indentation, NOT under the host's `if (!gamePaused())`, so the readied
+spell was loosed into the world on the next frame with the window still
+open. A plain drag was a LOOK, and `LookFilter.add` banks the residual
+while the payout tick is paused - so the camera swung on window close.
+
+DFU: `InputManager.cs:230-236` clears `mouseX/mouseY/lookX/lookY` every
+Update and `:487-505` returns before `currentActions` is populated while
+paused (with the `wasPaused`/`inputWaitTimer` block at `:506-515` there
+precisely so "GUI actions do not fall-through to main world"), so no
+SwingWeapon or ActivateCenterObject is ever seen under a window and the
+paused frame's delta is DISCARDED; `PlayerMouseLook.cs:238-244` sets
+`enableMouseLook = !GameManager.IsGamePaused` and returns before
+`ApplyLook`.
+
+The gate went into `route()` in `ui/touch.js`, the one door all three
+hosts share, fed by a new `paused()` hook - and the hosts pass the FULL
+predicate their mouse arms use, `gamePaused()` (`townTalk.overlayActive
+|| modes.overlayHeld`) in world/exterior and `ctx.uiOverlayActive` in
+the dungeon, not the narrower `overlayActive` hook the nav row uses,
+which cannot see the windows worldModes owns. Three rules:
+
+  - the look is DROPPED, never accumulated;
+  - a held swipe is refused, and because the recogniser emits
+    `held:false` only on the finger's lift, the gate SYNTHESIZES the
+    release the moment it bites - a window opened mid-swing must still
+    let go, the ungated `mouseup` arms' own rule;
+  - the RELEASE is never gated, and the TAP is left alone: it already
+    passes through `activateFrame`'s `paused` (Fact 5, citing
+    `InputManager.cs:486-505`).
+
+### AUDIT 61 F8 - THE LAYER SPOKE DEFAULTS, NOT BINDINGS (2026-09-07)
+
+`ui/touch.js` promises in its header that it SPEAKS THE DESKTOP INPUT
+LANGUAGE. It spoke the DEFAULT bindings: literal `Space`, `KeyZ`,
+`Escape`, `KeyW/KeyA/KeyS/KeyD/ShiftLeft`, and the hosts' tap stuffed a
+literal `Mouse0` into the held-keys set. Every consumer resolves BY
+ACTION through the registry - `held(keys,'Jump')`, `moveHeld(keys)`,
+`actionOf(e)`, which is `InputManager.GetKey`'s dual-dict fallthrough
+(`:1084`) - so those literals worked only while the default row stood.
+Move Jump off Space in the controls window and the JUMP button fired
+whatever now owned Space; move Run off ShiftLeft and the stick's 80%
+throw did nothing; move ActivateCenterObject off Mouse0 and every tap
+was inert. The reverse lookup the layer needed is `GetBinding`
+(`inputActions.js`, `InputManager.cs:641-671`) - the same call the
+automap, exterior-automap and rest windows already make.
+
+Now: each control resolves its ACTION's live code at PRESS time, and
+
+  - a COMBO code is decomposed with `getCombo` and pressed as its two
+    keys, MODIFIER FIRST so the held-first latch is up when the combo is
+    read (`InputManager.cs:1695-1711`), released key-first - the packed
+    `ShiftLeft+KeyW` string is a code no host can ever match;
+  - an UNBOUND action presses NOTHING. There is no fallback to the
+    default: an action carrying a removed-primary mark was deliberately
+    unbound and `SetBinding` (`:727-758`) very likely gave its old code
+    to a different action, so the fallback would be the same defect
+    wearing the fix's clothes;
+  - the stick remembers the code each axis is holding, so a rebind
+    mid-hold releases what it actually pressed instead of stranding a
+    key down forever;
+  - the TAP does not go through `keys` at all. The hosts read
+    `down: held(keys,'ActivateCenterObject') || _tapArmed > 0` (and the
+    drawn bow's `activateHeld` the same way): the two-frame arithmetic
+    is unchanged, the paired `keys.delete('Mouse0')` is gone with the
+    add, and it stays correct when the action is bound to a mouse code,
+    which no synthesized KeyboardEvent can honestly express.
+
+Tab keeps its literal: it is not an InputManager action at all and the
+hosts match `e.code === 'Tab'`; so do the classic nav row's arrows,
+Enter, Escape and +/-, which are window chrome, not action rows.
+
+### AUDIT 61 F9 - THE MODE BUTTON UNDER A WINDOW (2026-09-07)
+
+The touch mode-cycle button is the one control on that layer that calls
+a hook DIRECTLY instead of synthesizing a key, so it never entered the
+host keydown ladder and walked past both gates the F1-F4 ladder carries:
+`townTalk.keydown` consumes every key while this host's `overlay` slot
+is filled, and the mode ladder refuses on `otherOverlayActive` (the
+host's second slot, `modes.overlayHeld`). On a phone the interaction
+mode flipped and printed its HUD line under an open inventory or pause
+window, and the player left the window in a different mode.
+
+DFU reads the four modes through `InputManager.ActionStarted`
+(`PlayerActivate.cs:220-228`); a paused InputManager never populates
+`currentActions` (`InputManager.cs:487-505`) and a `PauseWhileOpen`
+window pauses on `AddWindow` (`UserInterfaceManager.cs:180-185`) - so no
+mode change happens under a window. `townTalk.nextMode` now carries the
+key ladder's own predicate and returns the CURRENT mode when it
+refuses, which keeps the button's label truthful. Gating at the source
+rather than hiding the button: the `overlayActive` hook the hosts pass
+is `talkPaused()`, this host's stack only, and cannot see the
+interior/dungeon slot the key path refuses on.
+
+### AUDIT 61 F10 - A DRAWN DOOR THAT OPENS NOTHING (2026-09-07)
+
+All three combat hosts passed `dial: true`, so the ◆ button was drawn
+on the classic skin too - where `openPixelDial` refuses outright
+(`ui/pixelDial.js`: `if (!isEnhanced() ...) return false`) and the
+synthesized Tab falls through to no action at all, Tab being in no
+binding table. That is exactly the lie touch.js's own doc block names -
+"no dial button is drawn - a drawn door that opens nothing is the lie
+this repo names" - with the gate-by-hook rule half-applied. The hosts
+now pass the opener's own predicate, `dial: isEnhanced()`. One
+boot-time read is exact: both skin switches end in `location.replace`,
+so the skin cannot change without a reload. The menu button already
+slides into the vacated slot on its own.
+
+### AUDIT 61 F16 + F28 - THE LOCK-ON'S FOURTH HOST, AND THE LOCK THAT RODE THROUGH THE DOOR (2026-09-07)
+
+TI1's law carries no mode qualifier: "a tap whose ray hits a live foe
+locks it". The arm existed in the two exterior hosts' EXTERIOR
+activation and in the standalone dungeon scene - and the standalone
+scene is not the game: `main.js` sends the classic start into the world
+host's mode machine. So in every building interior and every
+world-hosted dungeon, Privateer's Hold included, the finger's ray
+reached `worldModes`' ladders (through `eyeDir` -> `host.activateDir`)
+and no foe could ever be locked, while the same finger's SWIPE already
+swung at them through `modalAttackSink`. Touch combat was wired
+indoors; only its aim half was left behind.
+
+Worse, nothing let the lock go at the door. `lockOn.tick` runs in every
+mode (correctly - an indoor lock must steer and must break), and
+`lockOn` breaks only on death, a null chest, or 32 m. None of those fire
+for a street foe after you walk into a shop: the interior is parented at
+the entered building's world matrix, so the foe stays metres away; the
+exterior pool is frozen below the modal early return, so it neither
+moves nor dies. The camera was dragged toward a foe through the wall for
+the whole visit, the last exterior dot stayed painted, and
+`touchGestures`' `locked()` predicate turned every indoor look-drag into
+a weapon swing.
+
+The fix, in three parts:
+
+  1. The hosts publish `lockToggle(foe)` and `unlockOn()` beside
+     `activateDir`, and `worldModes` calls `host.unlockOn?.()` at EVERY
+     `mode = ...` transition - interior enter and exit, dungeon enter
+     and exit, and the quest-teleport/load teardown. `lockOn.unlock()`
+     also runs beside `exteriorFoes.clearLive()` and in both
+     `clearEnemies` sinks, because `destroy()`/`removeFoe` empty the
+     pool WITHOUT flagging `dead`, so the death break never fires on the
+     orphan record the lock still holds.
+  2. `worldModes`' `tryExit` and `tryExitDungeon` take the arm, after
+     the QG1 quest-click (whose non-consuming fall-through is
+     preserved) and before the door/loot pick: guarded on
+     `host.activateDir?.()` so only a FINGER locks, over the CONTEXT's
+     own pool and collider, consuming the activation exactly as the
+     standalone host does.
+  3. `lockOn.tick` stays UNGATED. Gating it on `modeNow() === 'exterior'`
+     would kill the lock the arm above just made possible and would
+     leave the two dungeon surfaces disagreeing about the same law.
+
+One thing the arm exposed: both TI1 seams read the host's `_lastProj`/
+`_lastView`, and only the EXTERIOR render wrote them - below the modal
+return - so indoors the finger's ray was unprojected through the last
+STREET frame's camera and the dot was never replaced. The modal frame
+now hands its own matrices back through `host.reportFrame(proj, view)`,
+which places the dot indoors and puts the ray in the right frame; the
+one-frame lag is the exterior path's own.
+
+### AUDIT 61 F8/F16/F28 (review) - THE MACHINE THAT OWNS EVERY DOOR INDOORS (2026-09-07)
+
+The review found the hole F8 opened while closing its own. F8's whole
+point was that the tap must stop speaking a literal `'Mouse0'` - a
+rebind of `ActivateCenterObject` off the mouse would otherwise kill the
+finger - and it replaced the synthesized code with the hosts' own
+`_tapArmed > 0` at each of the three standalone gates. But
+`worldModes.js` runs a FOURTH activate gate, and it is the one that
+matters most: it owns interior mode and world-hosted-dungeon mode, so
+every shop, every house and the classic start into Privateer's Hold
+activate through it. That gate reads `held(keys, 'ActivateCenterObject')`
+out of the `keys` Set it destructures from its host, and `_tapArmed` is
+a host-local `let` no other module can see. While the literal existed
+the press rode into the shared Set for free; without it the gate saw no
+press at all, so on a phone a tap on a door, a container, a shelf, a
+ladder, a loot pile, a corpse or an exit did nothing anywhere indoors -
+and F16's brand-new tap-to-lock arms, which sit inside `tryExit` and
+`tryExitDungeon`, were unreachable code the moment they were written.
+
+The press is now published the way the ray already was: `activateDown:
+() => _tapArmed > 0` on the `createWorldModes` host object in
+`world.js` and `exterior.js`, ORed into all three of `worldModes`'
+activate reads - the gate, `interiorWeapon.activateHeld` (the drawn
+bow's un-draw, which F8 deliberately preserved in the three standalone
+hosts and lost here), and the `activateHeld` handed to the dungeon
+context this machine mounts. The pin EXECUTES the gate's own `down:`
+expression, lifted out of the shipped source and driven across the tap's
+two frames through the shipped `activateGate`, so a revert cannot hide
+behind a text match: the law it asserts is DFU's, that
+`ActivateCenterObject` fires on `ActionComplete` - the RELEASE edge
+(`PlayerActivate.cs:280`, `InputManager.cs:634-637`).
+
+The review also found what `reportFrame` was reporting. `worldModes`'
+modal frame built its forward with `eyeDir()`, which answers
+`host.activateDir()` whenever a tap ray is live - so on the release
+frame the view matrix, the 3D listener and the automap reveal probe all
+swung down the finger, and the new `reportFrame` seam then stored that
+skewed view for the next tap to unproject through. DFU builds the
+activation ray with `mainCamera.ScreenPointToRay` off the free cursor
+(`PlayerActivate.cs:283-309`) and never touches the camera transform
+with it; the reveal probe reads `Camera.main.transform.rotation *
+Vector3.forward` (`Automap.cs:1168`). The modal frame's `fwd` is the
+camera's own yaw/pitch now, and `eyeDir` is the activation ladders' ray
+and nothing else.
+
+### AUDIT 61 F8 (review) - TWO CONTROLS, ONE KEY (2026-09-07)
+
+The touch layer's stick already released against the set of codes its
+other axes still needed; the two HELD buttons released bare. That is
+only invisible while no button shares a key with a live axis, and the
+sharing case is ordinary rather than pathological: `Run` is `ShiftLeft`
+by default, and a combo binding decomposes to its two halves
+(`GetCombo`, `InputManager.cs:1165-1177`), so `Jump = 'ShiftLeft+KeyJ'`
+- which the controls window does not flag, because it is not a
+duplicate - made the jump button's release synthesize `keyup:ShiftLeft`
+out from under a running stick. `setStickKey`'s `cur === code`
+early-return then never pressed it again: the player silently stopped
+running for the rest of the hold.
+
+DFU has no such seam to restore - one key is one physical key there -
+so what the port owes is the invariant its own synthesis creates: the
+held set is the UNION of what the live controls want, and a release
+subtracts only its own. `liveNeeds()` spans the stick's axes AND the two
+button codes, each releasing control clearing its own entry first, and
+the pin drives the Run + combo-Jump fixture through the shipped module
+in both directions.
+
+### AUDIT 61 (review) - THE PIN THAT HUNG INSTEAD OF FAILING (2026-09-07)
+
+`attachTouch`'s nav-row `setInterval` is cleared by `dispose()` and by
+nothing else, and the test file's stub `window` supplies no timer, so
+the layer takes Node's real global one. Every `dispose()` in the new
+file was written as the last statement of a test body - which an
+assertion throwing above it SKIPS. A regression therefore printed its
+failure and then held the event loop open forever: `node --test` hung
+rather than exiting 1, which is strictly worse than the defect it was
+meant to catch. Verified: with the F7 look gate reverted the committed
+file exits 124 under `timeout`, and exits 1 now. Every layer the file
+attaches is registered and torn down in a `finally`.
+
+The `pauseWindow`/`restWindow` cite pass was half-done, too: it
+re-resolved the `exterior.js` half of a three-file sentence and left the
+`world.js` half naming a stranger (`:4121` landed inside the
+`ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
+field). Both halves are now read by `test/citedrift.test.js` - the
+existing entries only ever captured the exterior number, which is how
+the other half went stale unnoticed. (The rest cite names `world.js:4442`,
+the first of the host's TWO identical `act === 'Rest'` arms; the second
+at `:4456` is unreachable and is left for a lane that owns that ladder.)
