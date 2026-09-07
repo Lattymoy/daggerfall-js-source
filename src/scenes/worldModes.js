@@ -742,7 +742,7 @@ export function createWorldModes(host) {
         // world.js's arm, minus its walk-mode gate: the interior frame
         // runs magic.update itself, so a missile loosed here flies.
         fireMissile: (from, spell, casterLevel, foe) => {
-          const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+          const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 61 F21 (review): the player's LIVE transform, as world.js
           const l = Math.hypot(...d) || 1;
           magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
         },
@@ -834,7 +834,7 @@ export function createWorldModes(host) {
    *  and a summoned daedra standing in it are one database, exactly as
    *  the street's two pools are one for the exterior host. */
   const _interiorSenses = () => sensesContext(playerEntity, interiorTicker.classicMinutes, {
-    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 61 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
     candidates: () => interiorEnemyDatabase(),
     playerEntity,
   });

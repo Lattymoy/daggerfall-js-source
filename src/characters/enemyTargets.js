@@ -97,6 +97,13 @@ export function targetPriority(targetHasNoTarget, seen, distance) {
 export function getTargets(self, candidates, playerFeet, {
   noTargetMode = false,
   infighting = enemyInfightingEnabled(),
+  // AUDIT 61 F23: the PLAYER candidate's LIVE controller height - DFU
+  // reads the component (EnemySenses.cs:896-898 for the eye,
+  // :816-818 for the transform distance) and PlayerHeightChanger.cs
+  // :54-57/:475-478 makes it 0.9 crouched, 2.6 mounted, 0.30 swimming
+  // with the capsule bottom planted. The 1.8 default is the headless
+  // charter.
+  playerHeight = CAPSULE_HEIGHT,
 } = {}) {
   const ai = self.ai;
   const selfTeam = self.entity?.team ?? 'PlayerEnemy';
@@ -143,12 +150,12 @@ export function getTargets(self, candidates, playerFeet, {
     if (!tFeet) continue;
     // REVIEW 2026-09-05: EnemySenses.cs:818-819 measures transform to
     // transform - each side's feet lifted by its own centre offset.
-    const tOff = isPlayer ? CAPSULE_HEIGHT / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
+    const tOff = isPlayer ? playerHeight / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
     const sOff = ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2;
     const dx = tFeet[0] - ai.feet[0], dy = (tFeet[1] + tOff) - (ai.feet[1] + sOff), dz = tFeet[2] - ai.feet[2];
     const distance = Math.hypot(dx, dy, dz);
     const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet,
-      isPlayer ? undefined : targetAi.height, null, distance);
+      isPlayer ? playerHeight : targetAi.height, null, distance);
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
@@ -178,6 +185,44 @@ export function getTargets(self, candidates, playerFeet, {
   };
 }
 
+/**
+ * AUDIT 61 F21 (review): the aim POINT every ranged component takes -
+ * the TARGET'S TRANSFORM, one law for every host.
+ *
+ * DaggerfallMissile.cs:571-581 (GetAimDirection) reads
+ * `enemySenses.LastKnownTargetPos`, and EnemySenses.cs:453/:465 set
+ * that to `target.transform.position`. There is NO arrow-specific
+ * variation of the aim point: the arrow's `caster.transform.forward *
+ * 0.6 + casterController.height / 3` lift (DaggerfallMissile.cs:
+ * 518-527) belongs to GetAimPosition - the ORIGIN - and says nothing
+ * about where the shaft is pointed.
+ *
+ * For a FOE that transform is feet + centreOffset, the idle sprite's
+ * centre (SetupDemoEnemy.cs:98-115 sets controller.center, never the
+ * transform, over the prefab's m_Center {0,0,0}). For the PLAYER it
+ * is feet + the LIVE controller height / 2: PlayerHeightChanger.cs
+ * :477-478 (ControllerHeightChange) keeps the capsule bottom planted
+ * and moves the transform by heightChange/2, and the player's
+ * controller has no centre offset either.
+ *
+ * The four hosts each carried their own `+ 0.9` here - the PLAYER's
+ * STANDING half-capsule, applied to whoever was struck. Against a
+ * crouched player that aimed at the very crown of the capsule; against
+ * a bat (centreOffset 1.6) it flew 0.7 m under DFU's point, against a
+ * rat (0.3) 0.6 m over.
+ *
+ * A null target is the player, which is what every host's
+ * `_targetFeet` already falls back to.
+ */
+export function targetAimPoint(target, playerFeet, playerHeight = CAPSULE_HEIGHT) {
+  if (target == null || isPlayerTarget(target)) {
+    return playerFeet ? [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]] : null;
+  }
+  const a = target.ai;
+  if (!a?.feet) return null;
+  return [a.feet[0], a.feet[1] + (a.centreOffset ?? (a.height ?? CAPSULE_HEIGHT) / 2), a.feet[2]];
+}
+
 /** The dead-target cull's health read (:317, `target.Entity
  *  .CurrentHealth`): the player's rides the context; without it the
  *  player is presumed standing. */
@@ -204,6 +249,7 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   noTargetMode = false,
   infighting,
   playerEntity = null,
+  playerHeight = CAPSULE_HEIGHT,   // AUDIT 61 F23: the live player capsule, off the senses context
 } = {}) {
   const ai = self.ai;
   ai.classicTargetUpdateTimer = (ai.classicTargetUpdateTimer ?? 0) + classicDt / SYSTEM_TIMER_UPDATES_DIVISOR;
@@ -243,13 +289,13 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   // player so enemies who see the player will try to attack.
   let playerInSight = false;
   if (!ai.wouldBeSpawned && playerFeet) {
-    playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet);
+    playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet, playerHeight);
   }
   if (ai.classicTargetUpdateTimer > SENSES_INTERVAL_UNITS) {
     ai.classicTargetUpdateTimer = 0;
     // Is enemy in area around player or can see player? (:392-401)
     if (ai.wouldBeSpawned || playerInSight) {
-      const got = getTargets(self, candidates, playerFeet, { noTargetMode, infighting });
+      const got = getTargets(self, candidates, playerFeet, { noTargetMode, infighting, playerHeight });
       ai.target = got.target;
       ai.sawSecondaryTarget = got.sawSecondaryTarget;
       // `targetSenses = target.GetComponent<EnemySenses>()` (:397-400)

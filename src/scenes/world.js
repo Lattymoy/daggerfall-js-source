@@ -1964,7 +1964,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       explodeAt: (...a) => magic.explodeAt(...a),
       fireMissile: (from, spell, casterLevel, foe) => {
         if (!(walkMode && playerSpawned)) return;
-        const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+        const d = [player.pos[0] - from[0], player.pos[1] + player.height / 2 - from[1], player.pos[2] - from[2]];   // AUDIT 61 F21 (review): the player's TRANSFORM at its LIVE height (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453; PlayerHeightChanger.cs:477-478), not the standing half-capsule
         const l = Math.hypot(...d) || 1;
         magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
       },
@@ -2596,7 +2596,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  gameMinutes defaulted to 0 - froze each foe's detection on its
    *  first roll for the rest of its life. */
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
-    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 61 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
     // MT-ii: THE SHARED CANDIDATE LIST - DFU's
     // ActiveGameObjectDatabase.GetActiveEnemyBehaviours (EnemySenses
     // .cs:741-749), which is ONE database across every enemy in the

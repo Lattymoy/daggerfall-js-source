@@ -3130,3 +3130,174 @@ asserted against BOTH host bodies (`exterior.js` and `world.js`), where
 before only the fixed-city body carried the adjacency. It dies under a
 line-neutral mutation that closes the latch early
 (`_updatedGuards = true; } {`) in either host.
+
+### AUDIT 61 F17 / F18 / F19 / F20 / F21 / F23 - THE FOES AND THE MOTOR (2026-09-07)
+
+Six rows off the audit's foe lane, all of them the same shape: the
+REVIEW 2026-09-05 transform/capsule split above, applied where it had
+been left half-applied - plus the one target whose transform the split
+never reached, the player.
+
+- **F17 - one yDiff, one distance.** `_classicSenses` handed
+  `wouldBeSpawnedInClassic` a transform-space `distanceToPlayer`
+  (PR #57) and a feet-to-feet `yDiff`. `EnemySenses.cs:288-290` takes
+  BOTH from the transforms and rebuilds the XZ leg as
+  `sqrt(distanceToPlayer^2 - YDiffAbs^2)`, so the pair is one
+  Pythagorean identity and cannot be two measures: the error was
+  exactly `centreOffset - playerHeight/2` (0.7 for a 3.2m bat, -0.5 for
+  a rat), enough to flip the row-0 vertical band (upper 3.2) for a
+  flyer perched 2.6-3.2m up and to skew the XZ leg for everything else.
+  ONE value now feeds both arguments, sign preserved (enemy - player,
+  `:288`) for the row-4/5 lower arms. The `Math.max(0, ...)` clamp in
+  `wouldBeSpawnedInClassic` is now unreachable float insurance and says
+  so.
+- **F18 / F37 - the unpinned half of the round.** Three of the review's
+  four transform-space laws had no test that died when they were
+  reverted: `canHearTarget`'s two offset arguments at the live call
+  site, `_classicSenses`' distance, and `getTargets`' transform
+  distance. `test/ch4senses.test.js` calls `canHearTarget` with five
+  arguments, so both new parameters sat at their defaults and were
+  invisible to it, and a PLAYER target cannot separate the far term at
+  all (`_targetCentreOffset()` IS the parameter's default there). Pinned
+  now through the LIVE path with a capture-raycast collider - a bat
+  casting from its 1.6 transform (half its capsule says 0.8) and a
+  walker casting AT a rat target's 0.45 transform (the player's
+  half-capsule says 0.9) - plus the call site's argument pair as source,
+  and `getTargets` pinned on the ORDERING its distance drives
+  (`targetPriority`, `:829-841`), which is the live lever; the returned
+  `distanceToTarget` is discarded by `runTargetMachine` and would not
+  have guarded anything.
+- **F19 - the foe-vs-foe blood splash.** `applyDamageToNonPlayer`
+  splashed at `feet + height/8` where `EnemyAttack.cs:325-328` is
+  `transform.position + controller.center` and THEN `y += height/8` -
+  the capsule is BOTTOM-justified, so that is `feet + height/2 +
+  height/8`, the shared `bloodCentre` every player-melee site for the
+  same lines already uses. An orc mauling a bear bled it at the shins.
+  Its own comment named the right point. The pin
+  (`test/enemyinfighting.test.js`) asserted the port's value under the
+  reference's label and so held the missing term in place; it is
+  anchored to `bloodCentre` now.
+- **F20 - `transform.position` is not the base.** Four sites passed the
+  bare feet where DFU passes the enemy transform: the three fall-damage
+  splashes (`EnemyMotor.cs:1403-1406`, "falling enemies bleed at the
+  center") and the player-arrow splash
+  (`DaggerfallMissile.cs:680-687` -> `WeaponManager.cs:571`). The
+  DaggerfallEnemy prefab centres its controller on the transform
+  (`m_Center` 0) and `SetupDemoEnemy.cs:98-115` moves only
+  `controller.center` - `GameObjectHelper.cs:360` confirms it
+  independently (`hit.point.y + controller.height * 0.52f`) - so the
+  transform is the idle sprite's CENTRE, which is this delta's own
+  `centreOffset`. All four take it now (`ai._centre()` at the three
+  pools); the FallDamage clip stays at the feet, because `:1409` rings
+  it at `FindGroundPosition()`, and the arrow's hit sound and pain voice
+  keep their feet convention. Three pins that froze the bare-feet
+  literal moved with the law.
+- **F21 - the aim, the blast and the contact.** The enemy missile's
+  foe-vs-foe arm aimed at `feet + height/2`; DFU aims at
+  `LastKnownTargetPos` = `target.transform.position`
+  (`DaggerfallMissile.cs:571-581`, `EnemySenses.cs:453`), i.e. `feet +
+  centreOffset`. `castEnemySpell` exploded an AreaAroundCaster at a
+  hardcoded `feet + 0.9` where `:280-282` passes
+  `caster.transform.position`, and loosed from a hardcoded `feet + 1.2`
+  where `GetAimPosition` (`:513-525`) is the caster transform for any
+  non-player, non-arrow cast. All three read the transform now. Moving
+  the aim REQUIRED moving the contact test with it: the port's foe-vs-foe
+  resolution was a point-sphere at the capsule centre, so once the
+  flight line ran at the transform a Flying unit with an idle sprite
+  past 3.6 would have been permanently unhittable. It is a capsule test
+  now (`missileHitsFoe`, `systems/spellcast.js`) - the point clamped to
+  the capsule AXIS at missile radius + capsule radius, which is what
+  `DaggerfallMissile.cs:339`'s SphereCast meets. (This row first wrote
+  that axis as `feet -> feet + height`, which is the capsule's SURFACE,
+  not its axis - corrected in the review round below.) The
+  x3casting pin's stub foe carried no offset and passed either way; it
+  is discriminating now.
+- **F23 - the player is a live capsule.** `_targetHeight()` answered
+  1.8 and `_targetCentreOffset()` 0.9 for the player unconditionally,
+  and `_classicSenses`, `canSeeTarget`'s target eye and `getTargets`'
+  player arms all carried the same constant. DFU reads the component
+  (`EnemyMotor.cs:532`, `:544`, `:562`; `EnemySenses.cs:896-898`) and
+  `PlayerHeightChanger.cs:54-57`/`:475-478` gives it 1.8 standing, 0.9
+  crouched, 2.6 mounted, 0.30 swimming with the capsule BOTTOM planted
+  and the transform tracking `feet + liveHeight/2`. Crouched, the port
+  aimed its sight ray at `feet + 1.50` where DFU aims at `feet + 0.75`,
+  so ducking behind low cover never broke line of sight; mounted it
+  erred the other way. `sensesContext` carries `playerHeight` now (all
+  four hosts fill it from `player.height`, which already folds
+  crouch/ride/swim/head-dip), `EnemyAI` caches it per step - the
+  decision path reaches `_getDestination` with no senses argument, so
+  the read cannot happen in the helper - and the target machine takes
+  it through the options bag it already had. The 1.8 default stays
+  everywhere as the headless charter, so every existing caller is
+  byte-identical. The stale RESIDUAL note in
+  `bible/03-World/Player-Arc.md` ("foes still target the standing
+  height") is discharged by this row.
+
+Pins: `test/audit61_foes.test.js` (10, three of them from the review
+round below). Every one was checked to die under a mutation that
+reverts its law - both F17 terms independently, each of `getTargets`'
+two offsets independently, the six- and seven-argument `canHearTarget`
+mutants, the F21 aim and both cast origins, and each of the F23 sites.
+
+### AUDIT 61 F21 / F23 - THE REVIEW ROUND (2026-09-07)
+
+Four things the round above got wrong or left half-done, each found by
+re-reading the reference rather than the port.
+
+- **The swept capsule was 0.9 m too tall.** `missileHitsFoe` clamped
+  the missile point to the segment `feet -> feet + height` and then
+  tested `MISSILE_COLLIDER_RADIUS + 0.45`. A Unity capsule of height
+  `h` and radius `r` is the set of points within `r` of the segment
+  `[feet + r, feet + h - r]` - its SURFACE is what spans
+  `feet..feet + h`, and its two hemisphere CENTRES are inset by a
+  radius at each end. Taking the endpoints as the axis inflated the
+  swept shape by `2r`: for a 1.6 m rat the port's hit volume ran
+  `feet - 0.9 .. feet + 2.5` where `DaggerfallMissile.cs:339`'s
+  SphereCast into the prefab's CharacterController
+  (`DaggerfallEnemy [Game Serializable].prefab:442-448` - m_Height 1.8,
+  m_Radius 0.4, m_SkinWidth 0.05, m_Center 0) reaches
+  `feet - 0.45 .. feet + 2.05`. A bolt into the floor under a rat hit
+  it. The clamp is the inner segment now, with `min(r, h/2)` for the
+  sub-`2r` case Unity collapses to a sphere, and `0.45` has a name
+  (`BODY_CAPSULE_RADIUS`) and the prefab line behind it.
+- **F21 converted only the FOE arm of the aim.** The player arm one
+  line above (`dungeonContext.js`, `const target`) still built
+  `playerFeet + 0.9`, and the same constant was the player's contact
+  test - so a crouched player stayed a 1.8 m target to every enemy
+  missile, and the proximity fuse registered anywhere from `feet` to
+  `feet + 1.8`. `LastKnownTargetPos` is `target.transform.position`
+  for either kind of target, and the player's transform is
+  `feet + LIVE height/2` (`PlayerHeightChanger.cs:477-478` plants the
+  capsule bottom and moves the transform by `heightChange/2`; the
+  player's controller has no centre offset). `updateMissiles` takes
+  `playerHeight` now, aims at the live transform, and sweeps the
+  player's own capsule (`missileHitsCapsule`) exactly as the foe arm
+  does. The three sibling hosts' `fireMissile` hooks
+  (`world.js`, `exterior.js`, `worldModes.js`), the dungeon archer's
+  aim and `hostMagic`'s shared missile-vs-player test carried the same
+  constant and move with it - the four-hosts rule.
+- **The exterior archer aimed at the PLAYER's half-capsule whoever it
+  struck.** `exteriorFoes.js` lifted its target's feet by a flat 0.9,
+  so a foe-vs-foe shaft flew 0.7 m under a bat's transform
+  (centreOffset 1.6) and 0.6 m over a rat's (0.3). The lane's F21
+  deferral covers the two arrow ORIGINS and justifies itself with
+  `GetAimPosition`'s arrow-only `forward * 0.6 + height / 3`
+  (`DaggerfallMissile.cs:518-527`) - a term about the origin that says
+  nothing about the aim POINT, which `GetAimDirection` takes from
+  `LastKnownTargetPos` with no arrow-specific variation. There is ONE
+  body of that law now, `enemyTargets.targetAimPoint`, and the dungeon
+  and the exterior pool both call it. The origins stay deferred, on
+  their own stated reason.
+- **`runTargetMachine`'s out-of-band player LOS had no pin.** The
+  round claimed every F23 site died under a reverting mutation;
+  `enemyTargets.js`'s `:377-383` check
+  (`playerInSight = canSeeTarget(..., playerHeight)`) did not - the
+  only needle that matched it also matched `getTargets`' own parameter
+  default. Dropping the argument there was green across the suite. It
+  is pinned behaviourally now: with `wouldBeSpawned` false and a wall
+  topping out at 1.3, a standing player (eye 1.5) opens the GetTargets
+  gate and is selected, a crouched one (eye 0.75) is not seen and no
+  target is taken. Nothing else in the machine separates them - the
+  PLAYER candidate has no senses, so `getTargets`' own
+  `!WouldBeSpawnedInClassic && !see` reject (`EnemySenses.cs:823-825`)
+  never fires on it and would hand back the player blind.

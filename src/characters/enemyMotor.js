@@ -140,6 +140,10 @@ export const CLASSIC_DESPAWN_Y = CLASSIC_DESPAWN_Y_BY_TYPE[0];
 export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already, distanceType = 0, playerInside = true) {
   if (distanceToPlayer >= 1094 * GLOBAL_SCALE) return false;
   const yAbs = Math.abs(yDiff);
+  // AUDIT 61 F17: the clamp is float insurance only. With both terms in
+  // one space (DFU's transforms) |yDiff| <= distanceToPlayer always, so
+  // the radicand cannot go negative; it went negative while the two
+  // arguments were measured differently, which is what F17 fixed.
   const xz = Math.sqrt(Math.max(0, distanceToPlayer * distanceToPlayer - yAbs * yAbs));
   if (!playerInside) return xz <= CLASSIC_SPAWN_DESPAWN_EXTERIOR;   // no Y test outdoors
   const row = distanceType >= 0 && distanceType < CLASSIC_SPAWN_XZ_BY_TYPE.length ? distanceType : -1;
@@ -357,6 +361,14 @@ export class EnemyAI {
     // read this, not height/2. The default keeps a caller that names
     // no sprite (the tests' 1.8 capsule) exactly where it was.
     this.centreOffset = centreOffset ?? height / 2;
+    // AUDIT 61 F23: the PLAYER target's LIVE controller height, cached
+    // once per step off the senses context (EnemyMotor.cs:532 reads
+    // `senses.Target.GetComponent<CharacterController>().height` every
+    // FixedUpdate; PlayerHeightChanger.cs:54-57 gives it 1.8 standing,
+    // 0.9 crouched, 2.6 mounted, 0.30 swimming). The 1.8 default is the
+    // headless charter - a caller that hands no context keeps exactly
+    // the capsule the port has always used.
+    this._playerHeight = CAPSULE_HEIGHT;
     // CH3 (AUDIT 23 characters-8): EnemyMotor.ApplyFallDamage's
     // tracking pair - LastGroundedY refreshes while grounded, and a
     // landing after a past-threshold drop reports the distance for
@@ -500,9 +512,25 @@ export class EnemyAI {
     // where the source keeps it.
     if (!senses) return;
     const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
-    const dist = Math.hypot(dxp, (playerFeet[1] + CAPSULE_HEIGHT / 2) - (this.feet[1] + this.centreOffset), dzp);   // distanceToPlayer (:376-377), transforms
+    // AUDIT 61 F17: ONE transform-space y term feeds BOTH arguments.
+    // EnemySenses.cs:288 `YDiffToPlayer = transform.position.y -
+    // player.transform.position.y` and :376-377 `distanceToPlayer =
+    // (player.transform.position - transform.position).magnitude` are
+    // the same measure, and :290 reconstructs the XZ leg as
+    // sqrt(distanceToPlayer^2 - YDiffAbs^2) - so the pair must be one
+    // Pythagorean triple. The port had lifted the distance to the
+    // transforms (PR #57) and left the yDiff feet-to-feet, which is a
+    // (centreOffset - playerHeight/2) error: 0.7 for a 3.2 bat, -0.5
+    // for a rat, enough to flip the row-0 vertical band. Sign is
+    // preserved (enemy - player, DFU's :288) for the row-4/5 lower
+    // arms; Math.hypot is sign-blind, so the same value serves both.
+    // AUDIT 61 F23: the player half is the LIVE controller
+    // (PlayerHeightChanger.cs:475-478 keeps the capsule BOTTOM planted
+    // and moves the transform by heightChange/2), not the 1.8 constant.
+    const yDiff = (this.feet[1] + this.centreOffset) - (playerFeet[1] + this._playerHeight / 2);
+    const dist = Math.hypot(dxp, yDiff, dzp);   // distanceToPlayer (:376-377), transforms
     this.wouldBeSpawned = wouldBeSpawnedInClassic(
-      dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
+      dist, yDiff, this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
   }
 
   /** The illusion re-roll (:444-449), split out of _classicSenses at
@@ -555,8 +583,13 @@ export class EnemyAI {
     // the player and wrong for every foe target that is not
     // player-sized - a rat's eye sat a metre and a half too high, so
     // a wall that hides it did not.
+    // AUDIT 61 F23: and the PLAYER arm names the live capsule rather
+    // than falling to canSeeTarget's 1.8 default - CanSeeTarget builds
+    // the target eye from `controller.center` + `controller.height / 3`
+    // (EnemySenses.cs:896-898), which for a crouched player is feet +
+    // 0.75, not feet + 1.50.
     const _targetHeight = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer
-      ? (this._targetCandidate.ai?.height ?? undefined) : undefined;
+      ? (this._targetCandidate.ai?.height ?? undefined) : this._playerHeight;
     this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist);   // the sight-radius gate (:881) reads distanceToTarget
     this.doorKey = _blocker.key;
     // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
@@ -1141,7 +1174,10 @@ export class EnemyAI {
    *  says so in as many words. */
   _targetHeight() {
     const t = this._armedTargeting ? this._targetCandidate : null;
-    return (t && !t.isPlayer && t.ai?.height) || CAPSULE_HEIGHT;
+    // AUDIT 61 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
+    // reads the controller component itself, and a crouched player's is
+    // 0.9 (a mounted one's 2.6).
+    return (t && !t.isPlayer && t.ai?.height) || this._playerHeight;
   }
 
   /** REVIEW 2026-09-05 (PR #57 review): where the TARGET's transform sits
@@ -1155,7 +1191,11 @@ export class EnemyAI {
    *  grounded delta read the target's capsule (_targetHeight). */
   _targetCentreOffset() {
     const t = this._armedTargeting ? this._targetCandidate : null;
-    if (!t || t.isPlayer || !t.ai) return CAPSULE_HEIGHT / 2;
+    // AUDIT 61 F23: the player's transform tracks feet + liveHeight/2
+    // (PlayerHeightChanger.cs:477-478 moves it by heightChange/2 while
+    // the capsule bottom stays planted), so a crouched player's sits at
+    // feet + 0.45.
+    if (!t || t.isPlayer || !t.ai) return this._playerHeight / 2;
     return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
   }
 
@@ -1483,6 +1523,11 @@ export class EnemyAI {
     // senses half stays cycle-free). Unarmed = player-only, as ever.
     const targeting = senses?.targeting ?? null;
     this._armedTargeting = !!targeting;
+    // AUDIT 61 F23: _getDestination is reached from the decision path
+    // with no senses argument, so the live player capsule is cached
+    // HERE, with the rest of the per-step senses reads, and read by
+    // _targetHeight/_targetCentreOffset and _classicSenses below.
+    this._playerHeight = senses?.playerHeight ?? CAPSULE_HEIGHT;
     let classicTicks = 0;
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {

@@ -690,6 +690,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       ...senses,
       targeting: (ai, pf, cdt) => runTargetMachine(g, senses.candidates(), pf, cdt, {
         playerEntity: senses.playerEntity ?? null,
+        playerHeight: senses.playerHeight,   // AUDIT 61 F23: GetTargets measures the player at its LIVE capsule too
       }),
     };
   }
@@ -767,17 +768,25 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // (:173, :1384-1418) runs unconditionally for every enemy and the
       // motor has always produced landedFall for guards too - the value
       // was simply read by nobody, and discarded.
+      // AUDIT 61 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
       if (g.ai.landedFall > 0 && !g.dead) {
         const gdmg = Math.trunc(FALL_HP_PER_METRE * (g.ai.landedFall - FALL_DAMAGE_THRESHOLD));
         g.ai.landedFall = 0;
         if (gdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 26 F040: EnemyMotor.cs:1403-1407 splashes on EVERY
-          // enemy fall past the threshold - index 0, at the position
-          // DFU passes (the feet, as the sibling pool notes). This arm
-          // billed the damage and played the clip but never bled,
-          // where exteriorFoes has splashed since CH3.
-          hitEffects?.showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]);
+          // enemy fall past the threshold. This arm billed the damage
+          // and played the clip but never bled, where exteriorFoes has
+          // splashed since CH3.
+          // AUDIT 61 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, g.ai._centre());
           damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
           if (g.dead) continue;
         }

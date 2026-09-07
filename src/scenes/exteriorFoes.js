@@ -19,7 +19,7 @@ import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58:
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
+import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
@@ -476,6 +476,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       ...senses,
       targeting: (ai, pf, cdt) => runTargetMachine(f, senses.candidates(), pf, cdt, {
         playerEntity: senses.playerEntity ?? null,
+        playerHeight: senses.playerHeight,   // AUDIT 61 F23: GetTargets measures the player at its LIVE capsule too
       }),
     };
   }
@@ -487,6 +488,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const t = f.ai.target;
     if (t == null) return f.ai._armedTargeting ? null : playerFeet;
     return isPlayerTarget(t) ? playerFeet : t.ai.feet;
+  }
+  /** AUDIT 61 F21 (review): the aim point, through the ONE law in
+   *  enemyTargets.targetAimPoint (DaggerfallMissile.cs:571-581 ->
+   *  EnemySenses.cs:453). This pool's arrow lifted the target's feet
+   *  by a flat 0.9 - the PLAYER's standing half-capsule, applied to
+   *  whoever was struck. `_targetFeet`'s null (the armed-but-targetless foe)
+   *  carries through as a null aim, and the loose is gated on `_tgt`
+   *  anyway. */
+  function _targetAim(f, playerFeet, playerHeight) {
+    return _targetFeet(f, playerFeet) ? targetAimPoint(f.ai.target, playerFeet, playerHeight) : null;
   }
 
   function update(dt, playerFeet, eye, senses = {}) {
@@ -518,18 +529,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _tgt = _targetFeet(f, playerFeet);
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door - no knockback.
+      // AUDIT 61 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
       if (f.ai.landedFall > 0 && !f.dead) {
         const fdmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
         f.ai.landedFall = 0;
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
-          // EnemyMotor.cs:1404-1407 - index 0, at `transform.position`.
-          // Its comment says "falling enemies bleed at the center",
-          // but transform.position on a CharacterController IS the
-          // base; the centre is `+ controller.center`, which this line
-          // does not add. The feet are what DFU passes, so the feet are
-          // what the port passes.
-          hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
+          // AUDIT 61 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, f.ai._centre());
           damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -725,7 +739,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // foe but the shooter, and arrowHitFoe below runs BowDamage's
         // non-player arm, so an arrow loosed at another foe LANDS.
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-        const d = [_tgt[0] - from[0], _tgt[1] + 0.9 - from[1], _tgt[2] - from[2]];
+        const aim = _targetAim(f, playerFeet, senses.playerHeight ?? CAPSULE_HEIGHT);
+        const d = [aim[0] - from[0], aim[1] - from[1], aim[2] - from[2]];
         const l = Math.hypot(...d) || 1;
         onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
       }

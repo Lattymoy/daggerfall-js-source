@@ -98,7 +98,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
 
 test('audit24 lifetimes: a retired dungeon missile leaves the list', () => {
   const src = read('src/scenes/dungeonContext.js');
-  const update = bodyOf(src, 'function updateMissiles(dt, playerFeet)');
+  const update = bodyOf(src, 'function updateMissiles(dt, playerFeet, playerHeight = CAPSULE_HEIGHT)');
   assert.match(update, /for \(let i = missiles\.length - 1; i >= 0; i--\) if \(missiles\[i\]\.dead\) missiles\.splice\(i, 1\);/,
     'the prune hostMagic has had all along');
   // and the in-flight batch microtask still guards on m.dead, which is

@@ -242,3 +242,46 @@ export function sweepFoes(pos, radius, foes) {
 
 // resolveSpellVsTarget moved to systems/effects.applySpell (S7) -
 // one door for instant AND continuous families.
+
+/** The CharacterController every DFU body wears: the enemy prefab's
+ *  is m_Height 1.8, m_Radius 0.4, m_SkinWidth 0.05, m_Center {0,0,0}
+ *  (DaggerfallEnemy [Game Serializable].prefab:442-448), and the
+ *  player's is the same radius under PlayerHeightChanger's live
+ *  height. 0.4 + 0.05 is the surface a cast meets. */
+export const BODY_CAPSULE_RADIUS = 0.45;
+
+/** AUDIT 61 F21: a missile's contact test, against the target's
+ *  CAPSULE rather than one point on it.
+ *  DaggerfallMissile.cs:339 sweeps the missile sphere
+ *  (Physics.SphereCast, ColliderRadius) into whatever collider it
+ *  meets - a CharacterController - so the port measures to the
+ *  capsule AXIS at the same missile radius + capsule radius. One
+ *  point at the capsule centre was adequate only because the AIM used
+ *  that identical point; with the aim at the target's TRANSFORM (feet
+ *  + centreOffset = idleH/2, DaggerfallMissile.cs:571-581 +
+ *  EnemySenses.cs:453) the flight line sits |height/2 - centreOffset|
+ *  off centre, which for a Flying unit with an idle sprite past 3.6
+ *  exceeds the 0.9 sphere and would leave it permanently unhittable.
+ *
+ *  REVIEW: the axis is the capsule's INNER segment, feet + r up to
+ *  feet + height - r, NOT feet up to feet + height. A Unity capsule
+ *  of height h and radius r has its two hemisphere CENTRES inset by r
+ *  - its SURFACE is what spans feet..feet+h - so taking the endpoints
+ *  as the segment inflated the swept shape by a whole radius at each
+ *  end (a 1.6 rat became a 3.4 m tall target where DFU's is 2.5).
+ *  Unity also refuses to let a capsule be shorter than its own
+ *  diameter: under 2r the two centres coincide and it is a sphere,
+ *  which is what min(r, h/2) gives.
+ */
+export function missileHitsCapsule(pos, feet, height) {
+  if (!feet) return false;
+  const h = height ?? 1.8;
+  const half = Math.min(BODY_CAPSULE_RADIUS, h / 2);
+  const y = Math.min(Math.max(pos[1], feet[1] + half), feet[1] + h - half);   // the clamped point on the capsule AXIS
+  return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= MISSILE_COLLIDER_RADIUS + BODY_CAPSULE_RADIUS;
+}
+
+/** The same test against a foe's controller (enemyAnchor's height). */
+export function missileHitsFoe(pos, foe) {
+  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);
+}
