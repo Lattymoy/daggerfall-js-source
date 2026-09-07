@@ -87,7 +87,7 @@ function frame() {
   const yaw = Number($('yaw').value) * Math.PI / 180, pitch = Number($('pitch').value) * Math.PI / 180;
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
   if (!dynamicOn && cloudsDoor !== 'off') {
-    clouds ??= new VolumetricClouds(gl, cloudsDoor in CLOUD_QUALITY ? cloudsDoor : 'default', [0, 0, w, h]);
+    clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
     clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, still ? 0 : 1 / 60, sky.state.drift ?? [0, 0], 0);
     clouds.update([0, 0, w, h]);
     if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture

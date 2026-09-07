@@ -21,10 +21,10 @@
  *  depth. `filter` NEAREST or LINEAR; `wrap` (or `wrapS` / `wrapT`
  *  apart) REPEAT for an axis that tiles - the sky map's azimuth -
  *  CLAMP_TO_EDGE otherwise. */
-export function createRenderTarget(gl, width, height, { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE', wrapS = wrap, wrapT = wrap } = {}) {
+export function createRenderTarget(gl, width, height, { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE', wrapS = wrap, wrapT = wrap, data = null } = {}) {
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);   // `data`: the target's first texels (an upload), so nothing has to CLEAR it
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[filter]);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[filter]);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrapS]);

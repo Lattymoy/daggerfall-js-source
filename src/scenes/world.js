@@ -6916,7 +6916,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       farRing.draw(view, {
         origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
         lightDir: renderer._lightDir, ambient: renderer._ambient,
-        sunScale: renderer._sunScale, sunColor: renderer._sunColor,
+        sunScale: renderer._sunScale * sky.farSunFactor(), sunColor: renderer._sunColor,   // VC4: the ring stands outside the shadow map - a cover-derived dim
         // AUDIT EV F-R4: the same moon the streamed terrain takes -
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide

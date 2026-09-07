@@ -82,9 +82,10 @@ export const VARIATION_METRES = PIXEL_METRES * 16;
 export const MOTTLE_METRES = PIXEL_METRES * 5;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
-/** The shadow map's square, in metres: eight pixels a side, the
- *  camera's pixel in the middle - past the fog's end either way. */
-export const SHADOW_EXTENT = PIXEL_METRES * 8;
+/** The shadow map's square, in metres: twelve pixels a side, the
+ *  camera's pixel in the middle - past the fog's end at Land View
+ *  Distance 4 (3200 m) either way. */
+export const SHADOW_EXTENT = PIXEL_METRES * 12;
 /** How much of the sun a full shadow takes (the ambient is never
  *  touched - a cloud dims the sun and leaves the sky's light alone). */
 export const SHADOW_AMOUNT = 1.0;
@@ -119,13 +120,14 @@ export function easeProfile(from, to, dt, seconds = WEATHER_EASE_SECONDS) {
 /** The light the clouds take: the sun while it is up, else the
  *  brighter visible moon (EV5's colour, dimmed), else none. Pure. */
 export function cloudLight(state) {
-  if (state.sunDir[1] > 0.0) return { dir: state.sunDir, color: state.sun, day: 1 };
+  // the sun's weight fades over its last degrees, so the light crosses
+  // to the moon's (or to none) without a pop at the horizon
+  const w = Math.min(1, Math.max(0, (state.sunDir[1] + 0.02) / 0.08));
   const moons = [state.masser, state.secunda].filter((m) => m && m.dir[1] > 0.02 && m.vis > 0);
-  if (moons.length) {
-    const m = moons.reduce((a, b) => (a.vis * a.color[0] >= b.vis * b.color[0] ? a : b));
-    return { dir: m.dir, color: [m.color[0] * 0.12 * m.vis, m.color[1] * 0.12 * m.vis, m.color[2] * 0.14 * m.vis], day: 0 };
-  }
-  return { dir: [0, 1, 0], color: [0, 0, 0], day: 0 };
+  const m = moons.length ? moons.reduce((a, b) => (a.vis * a.color[0] >= b.vis * b.color[0] ? a : b)) : null;
+  const moon = m ? [m.color[0] * 0.12 * m.vis, m.color[1] * 0.12 * m.vis, m.color[2] * 0.14 * m.vis] : [0, 0, 0];
+  if (w > 0) return { dir: state.sunDir, color: [state.sun[0] * w + moon[0] * (1 - w), state.sun[1] * w + moon[1] * (1 - w), state.sun[2] * w + moon[2] * (1 - w)], day: w };
+  return { dir: m ? m.dir : [0, 1, 0], color: moon, day: 0 };
 }
 
 /** VC4: the shadow map's square for a camera at (x, z): its corner,
@@ -200,7 +202,6 @@ uniform vec3 uCloudLit;
 uniform vec3 uCloudShade;
 uniform vec3 uHorizonColor;
 uniform float uDark;
-uniform float uFlash;     // lightning: the whole sky lit for a frame
 uniform int uSteps;
 uniform int uLightSteps;
 out vec4 outColor;
@@ -227,8 +228,11 @@ void main() {
   float az = uv.x * 2.0 * PI, el = uv.y * 0.5 * PI;
   vec3 dir = vec3(sin(az) * cos(el), sin(el), cos(az) * cos(el));
   if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
-  float t0 = uBase / dir.y, t1 = min(uTop / dir.y, 32000.0);
-  if (t0 >= t1) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+  // the march covers the slab, or the first 24 km of it at a grazing
+  // angle - the aerial fade takes the rest, so the deck reaches the
+  // horizon instead of stopping short of it in a rim of bare dome
+  float t0 = uBase / dir.y, t1 = min(uTop / dir.y, t0 + 24000.0);
+  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 0.0); return; }
   float ds = (t1 - t0) / float(uSteps);
   float t = t0 + ds * hash12(gl_FragCoord.xy);
   float cosTheta = dot(dir, uLightDir);
@@ -248,7 +252,7 @@ void main() {
       // lid is mottled and an underside is not one flat grey
       float mottle = textureLod(uShape, vec3(p.x + uShift.x + uDrift.x, p.y, p.z + uShift.y + uDrift.y) / MOTTLE_M, 1.0).g;
       vec3 ambient = mix(uCloudShade, uCloudLit, h) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * uDark * (1.0 - h));
-      vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * uDark) + ambient * (1.0 + uFlash * 3.0);
+      vec3 S = uLightColor * light * phase * 0.7 * (1.0 - 0.8 * uDark) + ambient;
       float Ti = exp(-rho * EXT * ds);
       col += T * S * (1.0 - Ti);
       T *= Ti;
@@ -278,11 +282,14 @@ void main() {
   if (uLightDir.y <= 0.05) { outColor = vec4(1.0); return; }   // no sun to shadow: the moon casts none
   vec2 g = uOrigin + gl_FragCoord.xy / uMapSize * uExtent;
   float t0 = uBase / uLightDir.y, t1 = uTop / uLightDir.y;
-  float ds = (t1 - t0) / float(uSteps);
+  // the steps follow the path: a low sun's long slant is sampled no
+  // coarser than 150 m, the tier's count the floor, 24 the ceiling
+  int steps = min(24, max(uSteps, int(ceil((t1 - t0) / 150.0))));
+  float ds = (t1 - t0) / float(steps);
   float t = t0 + ds * 0.5;
   float sum = 0.0;
   for (int i = 0; i < 24; i++) {
-    if (i >= uSteps) break;
+    if (i >= steps) break;
     vec3 p = vec3(g.x, 0.0, g.y) + uLightDir * t;
     sum += density(p, 0.5) * ds;
     t += ds;
@@ -300,6 +307,7 @@ uniform float uYaw;
 uniform float uPitch;
 uniform float uTanHalfFov;
 uniform float uAspect;
+uniform float uFlash;     // lightning: the WHOLE sky lit for the frame (the march writes one stripe a frame; the flash cannot ride it)
 out vec4 outColor;
 const float PI = 3.14159265;
 void main() {
@@ -312,7 +320,8 @@ void main() {
   if (el <= 0.0) discard;
   float az = atan(dir.x, dir.z);
   vec2 uv = vec2(az / (2.0 * PI), el / (0.5 * PI));
-  outColor = texture(uMap, uv);
+  vec4 c = texture(uMap, uv);
+  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0), c.a);
 }`;
 
 /** The lab's shadow-map viewer: the square as a picture. */
@@ -340,9 +349,9 @@ function link(gl, vs, fs) {
 
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDrift', 'uShift', 'uCamXZ'];
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uDark', 'uFlash', 'uSteps', 'uLightSteps'];
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uDark', 'uSteps', 'uLightSteps'];
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect'];
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -352,11 +361,12 @@ export class VolumetricClouds {
     this.q = QUALITY[quality] ?? QUALITY.default;
     this.noise = new CloudNoise(gl, viewport);
     this.map = createRenderTarget(gl, this.q.width, this.q.height, { filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' });
-    this.shadowMap = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE' });
-    this.shadowScratch = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE' });
-    // both shadow targets start ALL LIGHT (T = 1), a draw path at
-    // construction: nothing samples an unmarched texel as shadow
-    for (const t of [this.shadowMap, this.shadowScratch]) withTarget(gl, t, viewport, () => { gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
+    // both shadow targets are born ALL LIGHT (T = 1): nothing samples an
+    // unmarched texel as shadow, and nothing CLEARS (the renderer keeps a
+    // JS shadow of the clear colour that a clear here would make a lie)
+    this.white = new Uint8Array(this.q.shadow * this.q.shadow * 4).fill(255);
+    this.shadowMap = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE', data: this.white });
+    this.shadowScratch = createRenderTarget(gl, this.q.shadow, this.q.shadow, { filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE', data: this.white });
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const vb = gl.createBuffer();
@@ -383,7 +393,8 @@ export class VolumetricClouds {
     this.flash = 0;
     this.stripe = 0;
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
-    this.origin = null;       // the shadow square's corner
+    this.origin = null;       // the shadow square's corner the camera asks for
+    this.mapOrigin = null;    // the corner the map HOLDS - the deck's rect (the two differ for the frame between a crossing and its blit)
     this.shadowStripe = 0;
     this.shadowFull = true;   // the first march of the shadow map is whole (a quarter of a sky sweep)
     this.shadowMarched = false;
@@ -398,6 +409,7 @@ export class VolumetricClouds {
     this.shift[0] -= offset[0]; this.shift[1] -= offset[2];
     this.cam[0] += offset[0]; this.cam[1] += offset[2];
     if (this.origin) { this.origin[0] += offset[0]; this.origin[1] += offset[2]; }
+    if (this.mapOrigin) { this.mapOrigin[0] += offset[0]; this.mapOrigin[1] += offset[2]; }
   }
 
   /** Per frame, from the controller: the dome's state, the eased row,
@@ -412,7 +424,7 @@ export class VolumetricClouds {
     this.flash = flash;
     if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
     const o = shadowOrigin(this.cam[0], this.cam[1]);
-    if (!this.origin) { this.origin = o; this.shadowFull = true; }
+    if (!this.origin) { this.origin = o; this.mapOrigin = [o[0], o[1]]; this.shadowFull = true; }
     else if (Math.abs(o[0] - this.origin[0]) > 1e-3 || Math.abs(o[1] - this.origin[1]) > 1e-3) {
       // the camera crossed a pixel: the square moves by whole texels;
       // the map is shifted on the next update and the new strip marched
@@ -430,7 +442,12 @@ export class VolumetricClouds {
     const gl = this.gl, n = this.q.shadow;
     if (Math.abs(dx) >= n || Math.abs(dz) >= n) { this.shadowFull = true; this.pendingShift = null; return; }
     const dst = this.shadowScratch, src = this.shadowMap;
-    withTarget(gl, dst, viewport, () => { gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT); });
+    withTarget(gl, dst, viewport, () => {});   // attached, if it never was
+    // the strips the blit will not cover are re-filled ALL LIGHT by upload
+    gl.bindTexture(gl.TEXTURE_2D, dst.tex);
+    if (dx !== 0) gl.texSubImage2D(gl.TEXTURE_2D, 0, dx > 0 ? n - dx : 0, 0, Math.abs(dx), n, gl.RGBA, gl.UNSIGNED_BYTE, this.white.subarray(0, Math.abs(dx) * n * 4));
+    if (dz !== 0) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, dz > 0 ? n - dz : 0, n, Math.abs(dz), gl.RGBA, gl.UNSIGNED_BYTE, this.white.subarray(0, Math.abs(dz) * n * 4));
+    gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, src.fbo);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.fbo);
     // old texel (i, j) is new texel (i - dx, j - dz)
@@ -439,6 +456,7 @@ export class VolumetricClouds {
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     this.shadowMap = dst; this.shadowScratch = src;
+    this.mapOrigin = [this.origin[0], this.origin[1]];
     this.pendingShift = null;
   }
 
@@ -451,8 +469,8 @@ export class VolumetricClouds {
   /** VC4: what the ground samples - the map and its square, for the
    *  deck the controller hands the renderer. */
   get shadow() {
-    if (!this.origin || !this.shadowMarched) return null;
-    return { map: this.shadowMap.tex, rect: [this.origin[0], this.origin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT] };
+    if (!this.mapOrigin || !this.shadowMarched) return null;
+    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT] };
   }
 
   _fieldUniforms(u) {
@@ -489,7 +507,6 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
       gl.uniform3fv(u.uHorizonColor, s.horizon);
       gl.uniform1f(u.uDark, p.dark);
-      gl.uniform1f(u.uFlash, this.flash);
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
@@ -514,7 +531,7 @@ export class VolumetricClouds {
         gl.viewport(0, y0, q.shadow, Math.min(rows, q.shadow - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       });
-      if (this.shadowFull) { this.shadowFull = false; this.shadowMarched = true; }
+      if (this.shadowFull) { this.shadowFull = false; this.shadowMarched = true; this.mapOrigin = [this.origin[0], this.origin[1]]; }
       else {
         this.shadowStripe++;
         if (this.shadowStripe * rows >= q.shadow) this.shadowStripe = 0;
@@ -534,10 +551,11 @@ export class VolumetricClouds {
     gl.useProgram(this.compositeProgram);
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.SRC_ALPHA);   // sky * T + cloud
+    gl.blendFuncSeparate(gl.ONE, gl.SRC_ALPHA, gl.ZERO, gl.ONE);   // sky * T + cloud; the buffer's alpha untouched (ONE, SRC_ALPHA on both would leave it 2T)
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.map.tex); gl.uniform1i(u.uMap, 0);
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
+    gl.uniform1f(u.uFlash, this.flash);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);

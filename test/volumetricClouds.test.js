@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS,
+  QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS,
+  SHADOW_EXTENT, PIXEL_METRES,
 } from '../src/render/volumetricClouds.js';
 import { easeWeather, WEATHER_SKY, WEATHER_EASE_SECONDS } from '../src/render/enhancedSky.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
@@ -45,6 +46,14 @@ test('VC3: the light - the sun while it is up, else the brighter visible moon, d
   assert.ok(night.color[0] < 0.2 && night.day === 0, 'dim');
   const set = cloudLight({ sunDir: [0, -0.2, 0.98], sun: [0, 0, 0], masser: { ...masser, dir: [0.3, -0.1, 0.9] }, secunda: { ...secunda, vis: 0 } });
   assert.deepEqual(set.color, [0, 0, 0], 'no light: the sun down, Masser set, Secunda dark');
+  // VC4d: the sun's weight fades over its last degrees (y from -0.02 to
+  // 0.06), the moon's share rising as it goes - no pop at the horizon
+  const dusk = cloudLight({ sunDir: [0, 0.02, 0.9998], sun: [1, 0.5, 0.3], masser, secunda });
+  assert.ok(dusk.day > 0.49 && dusk.day < 0.51, 'half way down, half the weight');
+  assert.ok(dusk.color[0] < 1 && dusk.color[0] > night.color[0], 'between the sun\'s and the moon\'s');
+  assert.deepEqual(dusk.dir, [0, 0.02, 0.9998], 'still the sun\'s direction while any of it is up');
+  const gone = cloudLight({ sunDir: [0, -0.02, 0.9998], sun: [1, 0.5, 0.3], masser, secunda });
+  assert.deepEqual(gone, night, 'at -0.02 the sun weighs nothing: the moon\'s light exactly');
 });
 
 test('VC3: the map, the sweep, the drift - the numbers the rest of the outdoors already keeps', () => {
@@ -73,7 +82,11 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
   assert.match(MARCH_FS, /sum \+= density\(p, 0\.0\) \* step;/, 'the light march reads the field itself, not a blurred level');
   assert.match(MARCH_FS, /outColor = vec4\(col, T\);/, 'colour and transmittance');
   const src = read('src/render/volumetricClouds.js');
-  assert.match(src, /gl\.blendFunc\(gl\.ONE, gl\.SRC_ALPHA\);   \/\/ sky \* T \+ cloud/);
+  assert.match(src, /gl\.blendFuncSeparate\(gl\.ONE, gl\.SRC_ALPHA, gl\.ZERO, gl\.ONE\);   \/\/ sky \* T \+ cloud/, 'the colour blends sky * T + cloud; the buffer\'s alpha is left alone (ONE, SRC_ALPHA on alpha too would leave it 2T)');
+  // VC4d: the flash lights the WHOLE sky on the composite, never one stripe of the map
+  assert.doesNotMatch(MARCH_FS, /uFlash/, 'the march (a stripe a frame) carries no flash');
+  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0\), c\.a\);/, 'the composite lights every texel for the frame');
+  assert.match(src, /gl\.uniform1f\(u\.uFlash, this\.flash\);/);
   assert.match(src, /createRenderTarget\(gl, this\.q\.width, this\.q\.height, \{ filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' \}\)/, 'the azimuth wraps, the elevation clamps');
   assert.match(src, /gl\.viewport\(0, y0, q\.width, Math\.min\(rows, q\.height - y0\)\);/, 'a stripe per frame');
   assert.doesNotMatch(src, /getParameter\(/, 'EV6: GL is never asked');
@@ -81,7 +94,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
 
 test('VC3: the seam - the clouds ride the dome only, behind the one switch, on the same row, dt and drift; the hosts hand the viewport and the flash', () => {
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /const clouds = enhancedSky && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, cloudsDoor in CLOUD_QUALITY \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the dome only (never the mod), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
+  assert.match(shared, /const clouds = enhancedSky && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the dome only (never the mod), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
   assert.match(shared, /if \(clouds\) enhancedSky\.cloudsExternal = true;/, 'the dome\'s own decks stand down');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
   const vc = read('src/render/volumetricClouds.js');
@@ -93,8 +106,17 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(shared, /offsetOrigin\(offset\) \{ clouds\?\.offsetOrigin\(offset\); \},/);
   // a pixel crossing without a recenter shifts the map by whole texels, no re-march
   assert.match(vc, /gl\.blitFramebuffer\(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl\.COLOR_BUFFER_BIT, gl\.NEAREST\);/);
-  assert.match(vc, /if \(!this\.origin \|\| !this\.shadowMarched\) return null;/, 'the ground samples nothing before the first march');
-  assert.match(vc, /gl\.clearColor\(1, 1, 1, 1\); gl\.clear\(gl\.COLOR_BUFFER_BIT\);/, 'and the targets start all light');
+  assert.match(vc, /if \(!this\.mapOrigin \|\| !this\.shadowMarched\) return null;/, 'the ground samples nothing before the first march, and the rect it takes is the corner the map HOLDS');
+  assert.match(vc, /if \(this\.shadowFull\) \{ this\.shadowFull = false; this\.shadowMarched = true; this\.mapOrigin = \[this\.origin\[0\], this\.origin\[1\]\]; \}/, 'a full march publishes the corner it marched');
+  assert.equal(SHADOW_EXTENT, PIXEL_METRES * 12, 'twelve pixels across: the square outruns the far fog');
+  assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(\(t1 - t0\) \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m');
+  for (const q of Object.values(QUALITY)) assert.ok(q.shadowSteps >= 8 && q.shadowSteps <= 24, 'the tier\'s count is the floor under the ceiling');
+  // the far ring stands outside the square: a cover-derived dim on the slab's own law
+  assert.match(shared, /farSunFactor\(\) \{\s*\n\s*if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return 1 - 0\.7 \* Math\.pow\(weatherRowNow\?\.cover \?\? 0, 1\.6\);/);
+  assert.match(read('src/scenes/world.js'), /sunScale: renderer\._sunScale \* sky\.farSunFactor\(\), sunColor: renderer\._sunColor,/, 'the ring takes it');
+  assert.match(vc, /this\.white = new Uint8Array\(this\.q\.shadow \* this\.q\.shadow \* 4\)\.fill\(255\);/, 'the targets start all light by UPLOAD');
+  assert.match(vc, /this\.shadowMap = createRenderTarget\(gl, this\.q\.shadow, this\.q\.shadow, \{ filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE', data: this\.white \}\);/);
+  assert.doesNotMatch(vc, /gl\.clear\(|clearColor\(/, 'never a clear - the renderer keeps a JS shadow of the clear colour that a clear here would falsify');
   assert.doesNotMatch(vc, /this\.full\b/, 'the first sky sweep is striped like every other - no stall');
   // the renderer's lens-local sprite borrow and the hosts' body deck
   const rr = read('src/render/renderer.js');
@@ -112,7 +134,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   }
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /if \(!dynamicOn && cloudsDoor !== 'off'\) sky\.cloudsExternal = true;/);
-  assert.match(lab, /clouds \?\?= new VolumetricClouds\(gl, cloudsDoor in CLOUD_QUALITY \? cloudsDoor : 'default', \[0, 0, w, h\]\);/);
+  assert.match(lab, /clouds \?\?= new VolumetricClouds\(gl, Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : 'default', \[0, 0, w, h\]\);/);
   assert.match(lab, /window\.__skyReady = texturesPending === 0 && \(!clouds \|\| clouds\.sweeps > 0\);/, 'the probe waits for the first sweep');
   assert.match(read('test/glstate.test.js'), /'src\/render\/volumetricClouds\.js'/, 'the AUDIT 47 sweep reads the march and the composite');
 });
