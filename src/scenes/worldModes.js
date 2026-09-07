@@ -725,8 +725,8 @@ export function createWorldModes(host) {
       },
       // C13: the interior's own arrow flight, the seam this host
       // already owns for the player's bow.
-      onArrow: (from, dir, f) => {
-        interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+      onArrow: (from, dir, f, aimFoe = null) => {   // ROAD-H tail (review): aimFoe - the foe the archer selected, null for the player
+        interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });
         audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
       },
       // AUDIT 39 (#39): the MAGIC half of the same payload. SetEnemySpells
@@ -5239,7 +5239,7 @@ export function createWorldModes(host) {
       // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
-      // died on geometry (arrowFlight.js:106-115 is a shaft's ONLY
+      // died on geometry (arrowFlight.js:115-128 is a shaft's ONLY
       // foe-contact path) - after the loose had already spent the
       // Arrow and tallied Archery, and while this host's MELEE ray hit
       // the same watchman. DFU makes no pool distinction: DoCollision

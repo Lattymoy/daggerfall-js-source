@@ -1352,7 +1352,7 @@ the step, and the dip only ever makes `|dir|` larger.
 
 **Four stale cites, re-resolved by content rather than by offset.**
 `roadg_pools.test.js` had half of a re-resolved pair left behind
-(`arrowFlight.js:195` is a `backstabChance:` field; the unconditional
+(`arrowFlight.js:208` is a `backstabChance:` field; the unconditional
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
@@ -1380,3 +1380,24 @@ were re-pointed with the law rather than deleted (the ceiling-bats
 count, AUDIT 23's magic-2 impact point, AUDIT 26's F033 flash order,
 AUDIT 62 F21's foe-vs-foe contact count, MT-iv's arrow fork and wave
 D's dungeon-arm slice).
+
+**The review round's scope note, closed (2026-09-07).** The reviewers
+held the shared arrow flight up as the model for contact ORDER and
+noted that its enemy arm still damaged ANY foe it met, where
+`AssignBowDamageToTarget` (`DaggerfallMissile.cs:660-677`) runs
+`BowDamage` only when `targetEntities[0]` IS the archer's
+`senses.Target` (`:669`) - and `DoCollision` (`:388-396`) has already
+destroyed the arrow on whatever it met. The flight had no view of the
+archer's target (only `shooterFoe`), so the exterior pool now decides
+the target ONCE at the loose (`_at` / `_atPlayer`, the same read that
+keys the crouch dip) and hands it to the host's `onArrow` as `aimFoe`
+(null for the player); all three hosts store it on the shaft, the shape
+the dungeon's `fireArrow` took in this same tail. At contact the flight
+stops the shaft on any body it meets and damages only the one it was
+loosed at: a foe-aimed shaft the player steps into is spent on the
+player with no `BowDamage`, no Dodging tally and no recovered Arrow; a
+non-target foe in the way stops it and takes nothing; a player shaft
+(`WeaponDamage`) keeps striking what it hits. `test/roadh_tail.test.js`
+drives all five cases and pins the pool's read and the three hosts'
+stores; the two AR1 infighting pins now carry the law they always
+described (the bear the shaft was loosed AT).

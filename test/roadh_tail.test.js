@@ -67,14 +67,14 @@ test('ROAD-H tail: a shaft meets a FOE at its capsule, not at its centre - a tal
   const f = open();
   const landed = [];
   const giant = { ai: { feet: [0, 0, 5], height: 3.2 }, dead: false };
-  f.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {} });
+  f.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {}, aimFoe: giant });   // loosed AT the giant (the :669 gate, below)
   for (let i = 0; i < 4; i++) f.update(0.05, { foeTargets: [{ feet: giant.ai.feet, ref: giant }], onFoeHit: (m, t) => landed.push(t) });
   assert.equal(landed.length, 1, 'the giant is struck near its head');
   assert.equal(landed[0], giant);
   // a RAT (1.0) under the same shaft: axis 0.45..0.55, the shaft 2.35 up - nothing
   const r = open();
   const rat = { ai: { feet: [0, 0, 5], height: 1.0 }, dead: false };
-  r.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {} });
+  r.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {}, aimFoe: rat });
   for (let i = 0; i < 4; i++) r.update(0.05, { foeTargets: [{ feet: rat.ai.feet, ref: rat }], onFoeHit: (m, t) => landed.push(t) });
   assert.equal(landed.length, 1, 'and sails over a rat');
   // the one body: the flight's test IS spellcast's capsule test
@@ -275,4 +275,51 @@ test('ROAD-H tail (review): an enemy shaft STOPS on the body it meets, and pays 
     'a shaft that met the wrong body is spent on it - no damage, no recovered Arrow');
   assert.doesNotMatch(d, /\} else if \(m\.aimFoe && !m\.aimFoe\.dead\) \{\n\s+\/\/ MT-iv/,
     'the foe target is no longer the CONTACT gate');
+});
+
+test('ROAD-H tail (review): an enemy shaft is SPENT on whatever it meets and DAMAGES only the foe it was loosed at (DaggerfallMissile.cs:388-396, :669)', () => {
+  // DoCollision destroys an arrow on any collider it meets (:388-396);
+  // AssignBowDamageToTarget then runs BowDamage only when the struck
+  // body IS the archer's Target (:669). So a shaft loosed at a bear
+  // that the player steps into is spent on the player and deals
+  // nothing - no BowDamage, no Dodging tally, no recovered Arrow.
+  const bear = { id: 'bear', ai: { feet: [0, 0, 8], height: 1.8 }, dead: false };
+  const wolf = { id: 'wolf', ai: { feet: [0, 0, 5], height: 1.8 }, dead: false };
+  const log = [];
+  // (1) the player in the way of a foe-aimed shaft: stopped, unhurt
+  const a = open();
+  a.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
+  for (let i = 0; i < 4; i++) a.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: () => log.push('player hurt'), foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  assert.deepEqual(log, [], 'the player took nothing');
+  assert.equal(a.arrows[0].dead, true, 'and the shaft is spent on the player, not flown through');
+  // (2) a NON-target foe in the way: stopped, unhurt, the target never reached
+  const b = open();
+  b.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
+  for (let i = 0; i < 4; i++) b.update(0.05, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }, { feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  assert.deepEqual(log, [], 'the wolf took nothing');
+  assert.equal(b.arrows[0].dead, true, 'the shaft stopped on the wolf');
+  // (3) the same shaft with the wolf out of the way reaches its target
+  const c = open();
+  c.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
+  for (let i = 0; i < 8; i++) c.update(0.05, { foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  assert.deepEqual(log, ['bear'], 'the bear is struck');
+  // (4) a shaft loosed at the PLAYER (aimFoe null) still lands on the player
+  const d = open();
+  d.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {} });
+  for (let i = 0; i < 4; i++) d.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: () => log.push('player hurt') });
+  assert.deepEqual(log, ['bear', 'player hurt']);
+  // (5) a PLAYER shaft has no such gate - WeaponDamage strikes what it hits
+  const e = open();
+  e.fire([0, 0.9, 0], [0, 0, 1], { fromPlayer: true });
+  for (let i = 0; i < 4; i++) e.update(0.05, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }], onPlayerArrowHitFoe: (m, t) => log.push('player shaft: ' + t.id) });
+  assert.deepEqual(log, ['bear', 'player hurt', 'player shaft: wolf']);
+  // the pool decides the target ONCE and hands it to every host's fire
+  const x = src('src/scenes/exteriorFoes.js');
+  assert.match(x, /const _at = f\.ai\.target \?\? PLAYER_TARGET, _atPlayer = isPlayerTarget\(_at\);/);
+  assert.match(x, /onArrow\(from, dir, f, _atPlayer \? null : _at\);/, 'the selected foe rides the shaft; the player is null');
+  for (const [h, call] of [['src/scenes/world.js', 'arrows.fire'], ['src/scenes/exterior.js', 'arrows.fire'], ['src/scenes/worldModes.js', 'interiorArrows.fire']]) {
+    const s = src(h);
+    assert.match(s, /onArrow: \(from, dir, f, aimFoe = null\) => \{/, `${h}: the host takes the target`);
+    assert.ok(s.includes(`${call}(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon, aimFoe });`), `${h}: and stores it on the shaft`);
+  }
 });

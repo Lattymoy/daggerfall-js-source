@@ -745,8 +745,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // ROAD-H H1/H1b: the loose point and the aim direction, through the ONE law in enemyTargets, so this pool and the dungeon's cannot drift apart the way their aim points had.
         const from = enemyArrowOrigin(f.ai);   // ROAD-H H1: GetAimPosition's ENEMY ARROW arm - the caster's TRANSFORM plus forward*0.6 plus height/3 (DaggerfallMissile.cs:528-539), through the ONE law in enemyTargets so this pool and the dungeon's cannot drift apart the way their aim points had. `feet + 1.2` was a guess in the player's scale with no forward lean at all
         const aim = _targetAim(f, playerFeet, senses.playerHeight ?? CAPSULE_HEIGHT);
-        const dir = arrowAimDirection(enemyTransformPoint(f.ai), aim, { targetIsPlayer: isPlayerTarget(f.ai.target ?? PLAYER_TARGET), playerCrouching: !!senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin, and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585) - only at the player, and only on the latched crouch STATE
-        onArrow(from, dir, f);
+        const _at = f.ai.target ?? PLAYER_TARGET, _atPlayer = isPlayerTarget(_at);   // ROAD-H tail (review): BowDamage's two arms, decided once here - the aim, the dip, and the shaft's own memory of whom it was loosed at
+        const dir = arrowAimDirection(enemyTransformPoint(f.ai), aim, { targetIsPlayer: _atPlayer, playerCrouching: !!senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin, and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585) - only at the player, and only on the latched crouch STATE
+        onArrow(from, dir, f, _atPlayer ? null : _at);   // ROAD-H tail (review): the foe target rides the shaft (aimFoe) - AssignBowDamageToTarget's `targetEntities[0] == senses.Target` gate (DaggerfallMissile.cs:669) is what the flight reads at contact
       }
       // the -1 damage marker vs the player (C16)
     }

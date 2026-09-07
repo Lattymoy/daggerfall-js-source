@@ -89,7 +89,16 @@ export class ArrowFlight {
         // CharacterController CAPSULE at its LIVE height, not a point
         // 0.9 up - a crouched player (0.9) is a shorter target.
         if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {
-          onPlayerHit(m);
+          // ROAD-H tail (review): the CONTACT stops the shaft on any
+          // body (DoCollision, DaggerfallMissile.cs:388-396: an arrow is
+          // destroyed on whatever it meets); the DAMAGE is gated on the
+          // struck body being the archer's Target
+          // (AssignBowDamageToTarget, :669). A shaft loosed at another
+          // foe that the player steps into is spent on the player and
+          // deals nothing - no BowDamage, no Dodging tally, no
+          // recovered Arrow. `aimFoe` is that Target, snapshotted at
+          // the loose as the dungeon flight's is (null = the player).
+          if (!m.aimFoe) onPlayerHit(m);
           m.dead = true;
           continue;
         }
@@ -107,7 +116,11 @@ export class ArrowFlight {
         for (const t of foeTargets) {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
           if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
-            foeImpact(m, t.ref);
+            // ROAD-H tail (review): an ENEMY shaft damages only the foe
+            // it was loosed at (:669); any other foe it meets stops it
+            // and takes nothing. A PLAYER shaft (WeaponDamage through
+            // playerArrowHitFoe) has no such gate - it strikes what it hits.
+            if (!m.enemy || t.ref === m.aimFoe) foeImpact(m, t.ref);
             m.dead = true;
             break;
           }
