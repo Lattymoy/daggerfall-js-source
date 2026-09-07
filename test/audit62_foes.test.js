@@ -173,8 +173,15 @@ test('AUDIT 62 F21: an enemy missile aims at the TARGET transform, and the conta
   // ...and the contact test is now the CAPSULE DaggerfallMissile.cs:339
   // spherecasts into, or a tall flyer would be unhittable once the
   // flight line left the capsule centre.
-  assert.equal([...d.matchAll(/if \(missileHitsFoe\(m\.pos, af\)\) \{/g)].length, 2, 'both foe-vs-foe arms (arrow and spell) use it');
-  assert.equal([...d.matchAll(/if \(missileHitsCapsule\(m\.pos, playerFeet, playerHeight\)\) \{/g)].length, 2,
+  // ROAD-H tail (review): the ARROW arm's CONTACT became spatial - an
+  // enemy shaft carries the default layer mask, so it meets whatever
+  // body is first in space (:337) and the remembered target is the
+  // DAMAGE gate (:669), not the contact gate. Its capsule read is the
+  // sweep's; the SPELL arm still resolves on the target it remembers.
+  assert.equal([...d.matchAll(/if \(missileHitsFoe\(m\.pos, af\)\) \{/g)].length, 1, 'the foe-vs-foe SPELL arm reads the capsule');
+  assert.match(d, /if \(missileHitsFoe\(m\.pos, f\)\) \{ struckFoe = f; break; \}/,
+    '...and the foe-vs-foe ARROW arm sweeps every live body with the same test');
+  assert.equal([...d.matchAll(/missileHitsCapsule\(m\.pos, playerFeet, playerHeight\)/g)].length, 2,
     "and both PLAYER arms sweep the player's own live capsule");
   assert.doesNotMatch(d, /const ay = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'the single-point arrow test is gone');
   assert.doesNotMatch(d, /const sy = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'and the single-point spell test');

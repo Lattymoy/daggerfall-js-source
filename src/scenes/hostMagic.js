@@ -564,10 +564,10 @@ export function createPlayerMagic({
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
-      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:332-336's reach along the normalised direction
+      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       const hitWall = collider.raycast(m.pos, _unit, reach);
       if (Number.isFinite(hitWall) && hitWall <= reach) {
-        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
+        const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell.rangeType === 4) {
           explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }

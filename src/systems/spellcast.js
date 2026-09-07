@@ -310,7 +310,7 @@ export function sphereOverlapsCapsule(pos, radius, feet, height) {
 }
 
 /**
- * ROAD-H tail - DaggerfallMissile.cs:332-336: the flight raycast
+ * ROAD-H tail - DaggerfallMissile.cs:333/:337-339: the flight raycast
  * reaches `displacement.magnitude + ColliderRadius`, where
  * displacement = direction * MovementSpeed * deltaTime. GetAimDirection's
  * crouch dip (:583-585) lands AFTER the normalise and nothing

@@ -2554,13 +2554,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
-      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:332-336's reach along the normalised direction
+      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       const hitWall = collider.raycast(m.pos, _unit, reach);
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
-        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
+        const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell?.rangeType === 4) {
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster, { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
@@ -2590,8 +2590,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6559,
-              // exterior.js:3865 and worldModes.js:5251 already ran;
+              // playerArrowHitFoe is the one copy world.js:7370,
+              // exterior.js:3865 and worldModes.js:5252 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2625,15 +2625,40 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               break;
             }
           }
-        } else if (m.aimFoe && !m.aimFoe.dead) {
+        } else {
           // MT-iv: BowDamage's OWN two-arm split (EnemyAttack.cs:
           // 134-148) - `if (Target == player) ApplyDamageToPlayer else
           // ApplyDamageToNonPlayer(weapon, direction, bowAttack: true)`.
           // Without this arm an arrow AIMED at another foe would fly
           // through it and land nothing, which is worse than the
           // pre-MT behaviour of never aiming there at all.
-          const af = m.aimFoe;
-          if (missileHitsFoe(m.pos, af)) {
+          //
+          // ROAD-H tail (review): that split is the DAMAGE gate, not
+          // the CONTACT gate, and the two were one `else if` chain -
+          // so a shaft loosed at another foe was TRANSPARENT to the
+          // player and to every bystander. An enemy missile casts with
+          // the DEFAULT layer mask (:250-253, which keeps the Player
+          // layer a player's own missile drops at :263), so :337 meets
+          // whatever collider is first IN SPACE and DoCollision
+          // destroys the shaft there (:388-396); only then does
+          // AssignBowDamageToTarget ask whether the struck entity is
+          // `caster.GetComponent<EnemySenses>().Target` (:669) before
+          // it calls BowDamage. A shaft that meets the wrong body
+          // STOPS on it, pays nothing and recovers no Arrow. The
+          // player is tested first, as the shared flight's own arm
+          // does (combat/arrowFlight.js's player test precedes its foe
+          // sweep); the shooter cannot feather itself on the release
+          // frame.
+          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          let struckFoe = null;
+          if (!struckPlayer) {
+            for (const f of foes) {
+              if (f.dead || f === m.shooterFoe) continue;
+              if (missileHitsFoe(m.pos, f)) { struckFoe = f; break; }
+            }
+          }
+          if (struckFoe && struckFoe === m.aimFoe) {
+            const af = m.aimFoe;
             if (m.shooterFoe && foeDeps) {
               applyDamageToNonPlayer(m.shooterFoe, af, {
                 weapon: m.weapon, direction: m.dir, bowAttack: true, rolls: Math.random,
@@ -2655,9 +2680,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // player was the only thing an arrow could reach.
             addItem(af.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             retireMissile(m);
-          }
-        } else if (playerFeet) {
-          if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {   // ...and the contact test is the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          } else if (struckPlayer && !m.aimFoe) {
             const shooter = m.shooterFoe;
             // C2-slice (AUDIT 23 combat-10): an arrow reaching the
             // player rides the same ApplyDamageToPlayer the melee
@@ -2694,6 +2717,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
             retireMissile(m);
+          } else if (struckPlayer || struckFoe) {
+            retireMissile(m);   // :669 refused the damage - the shaft is spent on the body it met, and no Arrow is recovered (:145-147 rides BowDamage, which never ran)
           }
         }
         continue;

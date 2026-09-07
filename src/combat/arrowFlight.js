@@ -75,7 +75,7 @@ export class ArrowFlight {
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { m.dead = true; continue; }
       const step = MISSILE_SPEED * dt;
-      const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:332-336) - a crouch-dipped shaft carries |dir| > 1
+      const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
       const hit = c ? c.raycast(m.pos, unit, reach) : Infinity;
       if (Number.isFinite(hit) && hit <= reach) { m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU)
       m.pos[0] += m.dir[0] * step;

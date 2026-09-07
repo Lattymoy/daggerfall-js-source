@@ -1224,7 +1224,8 @@ CharacterController - the capsule's inner axis at
 player's LIVE height from both outdoor hosts (`playerHeight` beside
 `playerFeet`), defaulting to the standing capsule for the bare callers.
 
-**The reach carries the dip.** `:332-336` casts for
+**The reach carries the dip.** `:333` builds the displacement and
+`:337-339` cast for
 `displacement.magnitude + ColliderRadius`, where `displacement =
 direction * MovementSpeed * fixedDeltaTime` and Physics normalises the
 ray. H1b's crouch dip (`:583-585`) lands after the normalise and nothing
@@ -1232,7 +1233,11 @@ renormalises it, so `direction` can have magnitude `sqrt(1 + 0.0025)`;
 the port's three flights stepped `dir * step` (the dipped vector, as
 DFU's `:293` does) but cast for the bare `step + r` along the raw
 direction - and the collider's distances are in the direction's own
-units, so a non-unit ray under-reached. `missileReach(dir, step)` in
+units, so a non-unit ray OVER-reached: bounding the parameter at
+`step + r` is a WORLD reach of `(step + r) * |dir|`, i.e. DFU's
+`step * |dir| + r` plus `r * (|dir| - 1)` (about 0.00056 at the 0.05
+dip). The old cast scaled the collider RADIUS by `|dir|` as well as the
+step, and the dip only ever makes `|dir|` larger. `missileReach(dir, step)` in
 `systems/spellcast.js` is the one body: the unit ray and
 `step * |dir| + ColliderRadius`; `arrowFlight.js`, `dungeonContext.js`
 and `hostMagic.js` cast through it. A unit direction is handed back
@@ -1261,3 +1266,117 @@ aim law, its dip key and the missile's memory. Three pins whose subject
 moved were re-pointed with the law rather than deleted (AUDIT 62 F21's
 dungeon aim line, the ceiling-bats "reads the capsule" count, wave 33's
 archer gate).
+
+### The review round (2026-09-07)
+
+Two reviewers read the round above. Nine findings, seven of them
+defects in the round's own work.
+
+**The interior host never got the live height.** `ArrowFlight.update` is
+mounted by THREE hosts — `world.js`, `exterior.js` and `worldModes.js`'s
+`interiorArrows` — and the round wired `playerHeight` into the two
+outdoor ones. The interior call still passed `playerFeet` alone, so it
+took the new `CAPSULE_HEIGHT` default and a CROUCHING player inside a
+building stayed a 1.8-tall target: exactly the divergence the round says
+it closed, left standing in the third host of the same module. The host
+already reads `player.height` three times over. It passes it now, and
+the pin sweeps all three call sites rather than none — the round had
+pinned the flight's arithmetic and no producer, which is the hole
+ROAD-H's own H2 review had already had to close once.
+
+**Two of the four converted contact sites had no pin at all.** Of the
+four the round moved onto `missileHitsCapsule` / `missileHitsFoe`, only
+`arrowFlight.js`'s two were held by behaviour; the player's own shaft
+against a foe (`dungeonContext.js`) and the player's spell against a foe
+(`hostMagic.js`) could each be reverted in place to the pre-round
+capsule-CENTRE point and the whole suite stayed green. The spell one is
+driven for real now (a 3.2 giant struck at y 2.9, which the centre law
+misses, and a 1.0 rat the same bolt sails over); the dungeon's is held
+by its call and by the absence of the point form it came from.
+
+**The re-pointed ceiling-bats count could not die under its own
+revert.** The round widened that count to an alternation whose FIRST
+branch was the point law itself, so a site converted back from
+`missileHitsFoe(...)` to the capsule-centre hypot still satisfied it —
+the pin was satisfied by either law and therefore pinned neither. It was
+loose twice more: `missileHitsCapsule(` also counted the PLAYER arms and
+`spellcast.js`'s own two declarations, and the thresholds sat well under
+the real counts. It is two counts now, in two shapes that cannot stand
+in for each other — the reads that are legitimately still a CENTRE
+(`pickTouchTarget`, the swing's `canSee`) and the missile CONTACT sites
+counted only where they read a FOE — so reverting any contact site drops
+its file below its number.
+
+**A foe-aimed dungeon shaft was transparent to the player.** Once
+`fireArrow` could carry `aimFoe`, the impact fork's arms became mutually
+exclusive (`if (fromPlayer) … else if (aimFoe) … else if (playerFeet)`),
+so a shaft loosed at another foe never tested the player capsule and
+flew through the player and through every bystander. DFU has no such
+ordering: an ENEMY missile casts with the DEFAULT layer mask
+(`DaggerfallMissile.cs:250-253` — the mask a PLAYER missile drops the
+Player layer from at `:263`), `:337` meets whatever collider is first IN
+SPACE, and `DoCollision` destroys the arrow there (`:388-396`). Only
+then does `AssignBowDamageToTarget` ask whether the struck entity is
+`caster.GetComponent<EnemySenses>().Target` (`:669`) before calling
+`BowDamage`. `targetEntities[0] == senses.Target` is the DAMAGE gate,
+not the contact gate. The dungeon arm reads that way now: the player's
+capsule first (the order the shared flight's own arm takes), then every
+live body but the shooter, and a shaft that met the wrong one is spent
+on it — no damage, no Dodging tally, no recovered Arrow. The secondary
+symptom goes with it: an arrow whose target died mid-flight used to fall
+through to the player arm and land a full `ApplyDamageToPlayer`.
+
+**The wall-impact point still scaled by `|dir|`.** `missileReach`
+changed the ray handed to `collider.raycast` from `m.dir` to the
+normalised `unit`, and the collider answers in its ray's OWN parameter
+units (`player/collider.js`'s `rayTriangle` returns Möller–Trumbore's
+`t` for `P = O + t*d`; the DDA's `walked` is the same parameter). So
+`hitWall` became a WORLD distance and `m.pos + m.dir * hitWall`
+overshot the wall by a factor of `|dir|`. DFU stops the missile at
+`direction.normalized * hitInfo.distance` (`:347`). Both flights use
+`_unit` now. Latent today — every direction that reaches a payload is
+unit, because the crouch dip is arrow-only and arrows carry no spell —
+but it was a live inconsistency and the next non-unit spell direction
+would have mis-placed an `AreaAtRange` blast.
+
+**The record stated the pre-fix reach error backwards**, and the reach
+cite named the wrong lines. `:332-336` is the comment, the
+`displacement` assignment, two declarations and the `if (isArrow || …)`
+branch line; the cast and the reach expression are `:337` (the Raycast
+arm, which the arrows take) and `:339` (the SphereCast). Every copy of
+that cite — the docblock, the three flights, the pin and the paragraph
+above — now says `:333` / `:337-339`. And the paragraph above said a
+non-unit ray "under-reached": it OVER-reached, by `r * (|dir| - 1)`,
+because the old cast scaled the collider radius by `|dir|` as well as
+the step, and the dip only ever makes `|dir|` larger.
+
+**Four stale cites, re-resolved by content rather than by offset.**
+`roadg_pools.test.js` had half of a re-resolved pair left behind
+(`arrowFlight.js:195` is a `backstabChance:` field; the unconditional
+`onAttackFromPlayer` the sentence is about is `:215`, which is where the
+sibling comment in `cityGuards.js` was pointed in the same round). The
+dungeon's three-host sentence had its `exterior.js` number re-resolved
+and its `world.js:6559` left naming a `WorldTime`/`PauseWhileOpen` note
+800 lines from the host's `onPlayerArrowHitFoe` (`world.js:7370`); all
+three halves are read in `citedrift.test.js` now, the shape AUDIT 62's
+review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
+"three routers that mount a bare picker" named three lines, none of
+which was a router — the round bumped the dungeon's `:4112` to `:4113`
+mechanically, and a wrong number moved by the right offset is still
+wrong. All three are resolved by content (`townTalk.js:1048`,
+`worldModes.js:6496`, `dungeonContext.js:4586`) and pinned as a set.
+
+The `worldModes.js` fix inserts one line, so cites into that host past
+it move by one: the dungeon's `worldModes.js:5251` and
+`chargenSession.js`'s `worldModes.js:6594` are bumped and pinned. Four
+`worldModes.js` cites elsewhere (`interior.js`, `world.js`,
+`tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
+ALREADY stale before this round and are left as found rather than
+bumped — a mechanical +1 on a wrong number is the defect this round is
+recording.
+
+Pins: `test/roadh_tail.test.js` (4 → 7). Five pins whose subject moved
+were re-pointed with the law rather than deleted (the ceiling-bats
+count, AUDIT 23's magic-2 impact point, AUDIT 26's F033 flash order,
+AUDIT 62 F21's foe-vs-foe contact count, MT-iv's arrow fork and wave
+D's dungeon-arm slice).

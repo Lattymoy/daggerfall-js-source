@@ -50,7 +50,7 @@ test('wave D: the player-arrow law has FOUR CALLERS and one body', () => {
   // ...and the dungeon host prices no shot of its own any more: no
   // SWING_MODS read, no calculateAttackDamage on the arrow arm.
   assert.equal(/SWING_MODS/.test(DC), false, 'the fourth body is gone, import and all');
-  const arm = DC.slice(DC.indexOf('if (m.fromPlayer) {'), DC.indexOf('} else if (m.aimFoe'));
+  const arm = DC.slice(DC.indexOf('if (m.fromPlayer) {'), DC.indexOf("// MT-iv: BowDamage's OWN two-arm split"));   // ROAD-H tail (review): the enemy arm's head is that comment now - its `} else if (m.aimFoe...)` became a plain `} else {` when the contact went spatial
   assert.equal(/calculateAttackDamage/.test(arm), false, 'and its damage door with it');
   // the four options the shared law cannot work without
   assert.match(arm, /playerEntity, playerWeapon, playerFeet,/);

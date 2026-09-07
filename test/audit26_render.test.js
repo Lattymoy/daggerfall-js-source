@@ -136,7 +136,7 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
     // it - DFU flashes on any wall hit, AoE or not. Read as an order
     // pin rather than by distance, so a comment either side cannot
     // break it.
-    const decl = s.indexOf('const impact = [m.pos[0] + m.dir[0] * hitWall');
+    const decl = s.indexOf('const impact = [m.pos[0] + _unit[0] * hitWall');   // ROAD-H tail (review): along the UNIT ray the cast was given (DaggerfallMissile.cs:347)
     const aoe = s.indexOf('rangeType === 4', decl);
     const flash = s.indexOf('showImpactFlash(m, impact);', decl);
     assert.ok(decl > 0 && aoe > decl && flash > aoe,

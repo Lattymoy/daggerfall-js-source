@@ -5212,6 +5212,7 @@ export function createWorldModes(host) {
     // host resolved at all.
     interiorArrows.update(dt, {
       playerFeet: player.pos,
+      playerHeight: player.height,   // ROAD-H tail (review): the contact is the LIVE capsule (crouch 0.9, ride 2.6) - the THIRD ArrowFlight host, which the lane's outdoor pair got and this one did not
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);
