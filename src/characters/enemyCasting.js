@@ -275,7 +275,7 @@ export class EnemyCaster {
  *  the player only - foe-vs-foe friendly fire pends the missile
  *  seam's target sweep. */
 export function castEnemySpell(f, spell, {
-  noSpellPointCost = false, playerEntity, playerFeet = null,
+  noSpellPointCost = false, playerEntity, playerFeet = null, playerHeight = 1.8,   // ROAD-H H2: the LIVE player capsule the AoC OverlapSphere measures against (DaggerfallMissile.cs:481)
   applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
   playCastSound = null, explodeAt = null, fireMissile = null,
   hitEffects = null,   // AUDIT 24 (wave 44): ShowMagicSparkles
@@ -286,7 +286,18 @@ export function castEnemySpell(f, spell, {
     const cost = calculateCastCost(spell, playerEntity).sp;
     f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
   }
-  const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+  // AUDIT 62 F21: GetAimPosition (DaggerfallMissile.cs:513-525) is
+  // `caster.transform.position` for a non-player caster, with the
+  // forward*0.6 + height/3 offset added ONLY for an arrow - so a spell
+  // looses (and its cast sound rings) at the caster's TRANSFORM, which
+  // for an enemy is the idle sprite's centre, feet + centreOffset
+  // (SetupDemoEnemy.cs:53-72 moves controller.center under BOTTOM
+  // justification, never the transform). The hardcoded 1.2 was a
+  // player-shaped guess; the `?? height / 2` fallback is the same
+  // spelling _targetCentreOffset uses, so a stub ai degrades to the
+  // capsule half rather than to the player's constant.
+  const casterTransformY = f.ai.feet[1] + (f.ai.centreOffset ?? (f.ai.height ?? 1.8) / 2);
+  const from = [f.ai.feet[0], casterTransformY, f.ai.feet[2]];
   f._castPending = true;   // C14: the sprite Spell one-shot
   playCastSound?.(spell.element, from);
   // AUDIT 24 (wave 44) - EntityEffectManager.cs:2055-2068, right after
@@ -308,8 +319,14 @@ export function castEnemySpell(f, spell, {
     return true;
   }
   if (spell.rangeType === 3) {
-    explodeAt?.([f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], spell, f.entity.level, playerFeet,
-      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });   // caster transform = mid-capsule
+    // AUDIT 62 F21: DaggerfallMissile.cs:280-282 `case TargetTypes
+    // .AreaAroundCaster: DoAreaOfEffect(caster.transform.position,
+    // true)` - the CASTER'S TRANSFORM, feet + centreOffset. The
+    // hardcoded 0.9 was the PLAYER's half-capsule on a foe caster:
+    // wrong under both models, and off by up to a metre against the
+    // 4.0-radius OverlapSphere, which flips rim membership.
+    explodeAt?.([f.ai.feet[0], casterTransformY, f.ai.feet[2]], spell, f.entity.level, playerFeet,
+      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });
     return true;
   }
   fireMissile?.(from, spell, f.entity.level, f);

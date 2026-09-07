@@ -101,9 +101,9 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
-  missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
+  missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -565,7 +565,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack },
+      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection },
       { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
@@ -609,6 +609,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // reads foeDeps.* and must guard on foeDeps first, as
       // resolvePlayerHit already does.
       runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,
+      targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection,   // AUDIT 62 F21 (review): the ONE aim-point law, shared with the exterior pool   // ROAD-H H1/H1b: and the ONE arrow loose point + the crouch dip beside it
     };
     // ENHANCED AI 4: the routes' world - the per-frame findPath budget
     // and the nav epoch, one per host, every foe reading the same one.
@@ -1342,7 +1343,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // hostile, whether the bash opened it or not. The castle read is the
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
-  let lastPlayerFeet = null;
+  let lastPlayerFeet = null, lastPlayerHeight = CAPSULE_HEIGHT;   // ROAD-H H2: the LIVE player capsule the last frame carried - explodeAt measures the AoE sphere against it (DaggerfallMissile.cs:481)
   // (enhancedNav is declared beside `foes` at the top of this function -
   // see the note there for why it cannot live here.)
   let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
@@ -1686,7 +1687,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:880,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:894,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2115,8 +2116,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // along flight (DFU ShootBow / WeaponManager verbatim shape). On a
   // landed enemy arrow, ONE recoverable Arrow joins the TARGET'S
   // items (BowDamage's classic charm). Crouch pass-over pends.
-  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null) {
-    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null });
+  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null, aimFoe = null) {   // ROAD-H tail: aimFoe - BowDamage's non-player arm (EnemyAttack.cs:141-143), the foe this shaft was loosed AT
+    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, aimFoe, pos: fromPlayer ? playerArrowOrigin(from, dir) : [...from], dir: [...dir], age: 0, batch: null, draw: null });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
   // S16: the enemy cast - "enemies always cast ready spell instantly
   // once queued" (EntityEffectManager.Update): spend the S10 cost
@@ -2136,7 +2137,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function castEnemySpell(f, spell, noSpellPointCost = false) {
     if (!foeDeps?.castEnemySpell) return;   // the foe subsystem degraded (its loud boot warning already fired)
     foeDeps.castEnemySpell(f, spell, {
-      noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
+      noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,   // ROAD-H H2: the AreaAroundCaster blast is an OverlapSphere against the player's CAPSULE
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       // AUDIT 58: play3dId - SPELL_CAST_SOUND is ID space (EntityEffectManager.cs:44-48)
       playCastSound: (element, from) => audio.play3dId(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
@@ -2155,7 +2156,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:764 against :795; worldModes.js:5047 against :5056).
+    // (dungeon.js:784 against :815; worldModes.js:5128 against :5137).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2522,10 +2523,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     m.dead = true;
   }
-  function updateMissiles(dt, playerFeet) {
+  function updateMissiles(dt, playerFeet, playerHeight = CAPSULE_HEIGHT) {
     while (_pendingCasts.length) { const c = _pendingCasts.shift(); fireCast(c.index, c.origin); }
     if (!missiles.length || !playerFeet) return;
-    const target = [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]];   // mid-capsule, as enemy melee aims
+    const target = [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]];   // AUDIT 62 F21 (review): the PLAYER arm of the aim is the foe arm's law - LastKnownTargetPos is target.transform.position (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453), and the player's is feet + the LIVE height/2 (no controller centre offset; PlayerHeightChanger.cs:477-478 plants the capsule bottom and moves the transform by heightChange/2). The hardcoded 0.9 made a crouched player a standing target.
     for (const m of missiles) {
       if (m.dead) continue;
       if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
@@ -2541,9 +2542,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // that may have moved on mid-flight (DFU locks direction at
         // fire time; the port locks the victim with it).
         m.aimFoe = (foeDeps && ct && !foeDeps.isPlayerTarget(ct)) ? ct : null;
-        const aim = m.aimFoe
-          ? [m.aimFoe.ai.feet[0], m.aimFoe.ai.feet[1] + (m.aimFoe.ai.height ?? 1.8) / 2, m.aimFoe.ai.feet[2]]
-          : target;
+        // AUDIT 62 F21: LastKnownTargetPos is the target's TRANSFORM
+        // (DaggerfallMissile.cs:571-581 -> EnemySenses.cs:453/:465) -
+        // feet + centreOffset for a foe, feet + the LIVE height/2 for
+        // the player. enemyTargets.targetAimPoint is the ONE body of that law; this host carried its own copy and converted only the foe arm of it.
+        const aim = m.aimFoe ? foeDeps.targetAimPoint(m.aimFoe, playerFeet, playerHeight) : target;
         const d = [aim[0] - m.pos[0], aim[1] - m.pos[1], aim[2] - m.pos[2]];
         const l = Math.hypot(...d) || 1;
         m.dir = [d[0] / l, d[1] / l, d[2] / l];
@@ -2551,15 +2554,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
-      const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
-      if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
+      const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
+      const hitWall = collider.raycast(m.pos, _unit, reach);
+      if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
-        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
+        const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell?.rangeType === 4) {
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-          magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster);
+          magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster, { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         // AUDIT 26 F033: DoCollision swaps the billboard to record 1 of
         // the missile's own element archive, one-shot at 15fps
@@ -2582,13 +2586,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (m.fromPlayer) {
           for (const f of foes) {
             if (f.dead) continue;
-            const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the foe's own capsule centre
-            if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:6500,
-              // exterior.js:3739 and worldModes.js:4627 already ran;
+              // playerArrowHitFoe is the one copy world.js:7372,
+              // exterior.js:3866 and worldModes.js:5252 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2622,18 +2625,40 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               break;
             }
           }
-        } else if (m.aimFoe && !m.aimFoe.dead) {
+        } else {
           // MT-iv: BowDamage's OWN two-arm split (EnemyAttack.cs:
           // 134-148) - `if (Target == player) ApplyDamageToPlayer else
           // ApplyDamageToNonPlayer(weapon, direction, bowAttack: true)`.
           // Without this arm an arrow AIMED at another foe would fly
           // through it and land nothing, which is worse than the
           // pre-MT behaviour of never aiming there at all.
-          const af = m.aimFoe;
-          const ax = af.ai.feet[0] - m.pos[0];
-          const ay = af.ai.feet[1] + (af.ai.height ?? 1.8) / 2 - m.pos[1];
-          const az = af.ai.feet[2] - m.pos[2];
-          if (Math.hypot(ax, ay, az) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+          //
+          // ROAD-H tail (review): that split is the DAMAGE gate, not
+          // the CONTACT gate, and the two were one `else if` chain -
+          // so a shaft loosed at another foe was TRANSPARENT to the
+          // player and to every bystander. An enemy missile casts with
+          // the DEFAULT layer mask (:250-253, which keeps the Player
+          // layer a player's own missile drops at :263), so :337 meets
+          // whatever collider is first IN SPACE and DoCollision
+          // destroys the shaft there (:388-396); only then does
+          // AssignBowDamageToTarget ask whether the struck entity is
+          // `caster.GetComponent<EnemySenses>().Target` (:669) before
+          // it calls BowDamage. A shaft that meets the wrong body
+          // STOPS on it, pays nothing and recovers no Arrow. The
+          // player is tested first, as the shared flight's own arm
+          // does (combat/arrowFlight.js's player test precedes its foe
+          // sweep); the shooter cannot feather itself on the release
+          // frame.
+          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          let struckFoe = null;
+          if (!struckPlayer) {
+            for (const f of foes) {
+              if (f.dead || f === m.shooterFoe) continue;
+              if (missileHitsFoe(m.pos, f)) { struckFoe = f; break; }
+            }
+          }
+          if (struckFoe && struckFoe === m.aimFoe) {
+            const af = m.aimFoe;
             if (m.shooterFoe && foeDeps) {
               applyDamageToNonPlayer(m.shooterFoe, af, {
                 weapon: m.weapon, direction: m.dir, bowAttack: true, rolls: Math.random,
@@ -2655,10 +2680,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // player was the only thing an arrow could reach.
             addItem(af.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             retireMissile(m);
-          }
-        } else if (playerFeet) {
-          const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
-          if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+          } else if (struckPlayer && !m.aimFoe) {
             const shooter = m.shooterFoe;
             // C2-slice (AUDIT 23 combat-10): an arrow reaching the
             // player rides the same ApplyDamageToPlayer the melee
@@ -2695,6 +2717,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
             retireMissile(m);
+          } else if (struckPlayer || struckFoe) {
+            retireMissile(m);   // :669 refused the damage - the shaft is spent on the body it met, and no Arrow is recovered (:145-147 rides BowDamage, which never ran)
           }
         }
         continue;
@@ -2705,25 +2729,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // on THAT foe - the same fork the arrow arm takes.
       if (m.aimFoe && !m.aimFoe.dead) {
         const af = m.aimFoe;
-        const sx = af.ai.feet[0] - m.pos[0];
-        const sy = af.ai.feet[1] + (af.ai.height ?? 1.8) / 2 - m.pos[1];
-        const sz = af.ai.feet[2] - m.pos[2];
-        if (Math.hypot(sx, sy, sz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+        if (missileHitsFoe(m.pos, af)) {
           const fCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-          if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, fCaster);
+          if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, fCaster, { playerHeight });   // ROAD-H H2
           else applySpell(m.spell, m.casterLevel ?? playerEntity.level, af.entity, foeSinks(af), Math.random, fCaster);
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
         }
         continue;
       }
-      const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
-      if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
+      if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {   // the player's capsule, DaggerfallMissile.cs:339
         // S16: enemy missiles carry their caster (level + the
         // transfer heal-back pair); trap casts stay casterless (DFU
         // action casters are null) on the S4b player-level shape.
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-        if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
+        if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster, { playerHeight });   // ROAD-H H2
         else magic.applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
         showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
         retireMissile(m);
@@ -3286,7 +3306,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false) {
     _ecvT += dt;
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
@@ -3334,7 +3354,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         key?.startsWith('corpse:') ? 'Remains' : 'Loot');
     }
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
-    if (playerFeet) lastPlayerFeet = [...playerFeet];
+    if (playerFeet) { lastPlayerFeet = [...playerFeet]; lastPlayerHeight = playerHeight; }   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
     // player's feet are known - they are the anchor, the component the
     // enemies live in. Only when the Enhanced tab's switch is on; the
@@ -3390,7 +3410,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DFU's GetActiveEnemyBehaviours yields only ACTIVE ones.
     // `_activity` is a persistent mutable bag: spread, never mutate.
     const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
-      ..._activity,
+      ..._activity, playerHeight, playerCrouching,   // AUDIT 62 F23: playerHeight is the LIVE capsule drawFoes already holds (crouch 0.9, ride 2.6)   // ROAD-H H1b: and the LATCHED crouch state beside it (PlayerMotor.cs:132-136) - the swim case is 0.9 too and draws no arrow dip
       candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null,
       // ROAD-B: EnemySenses.StealthCheck's first statement (:619-621).
       // This is the ONE host that can answer it true, off the same
@@ -3433,7 +3453,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the thing you drained. Off the frame's dt, not the minute loop.
     for (const f of foes) if (!f.dead) killIfAnyLiveStatZero(f.entity, foeSinks(f), dt);
     collisionTriggers(dt, playerFeet, moveHeld);
-    updateMissiles(dt, playerFeet);
+    updateMissiles(dt, playerFeet, playerHeight);
     // X11: the look direction and the capsule height ride along now -
     // the engine hangs the Light effect's magic candle 1.4 units in
     // FRONT of the player, and `-view[2..10]` is the same forward the
@@ -3488,7 +3508,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // shape).
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
           if (!spendArrow(playerEntity.items)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
-          fireArrow(eye, lookDir, playerWeapon.weapon, true);
+          fireArrow(eye, lookDir, playerWeapon.weapon, true);   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
           // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),
@@ -3529,7 +3549,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const _armed = (rec, sn) => (sn?.candidates && foeDeps ? {
         ...sn,
         targeting: (ai, pf, cdt) => foeDeps.runTargetMachine(rec, sn.candidates(), pf, cdt, {
-          playerEntity: sn.playerEntity ?? playerEntity,
+          playerEntity: sn.playerEntity ?? playerEntity, playerHeight: sn.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
         }),
       } : sn);
       const _pf = playerFeet || eye;
@@ -3553,16 +3573,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // player's fall formula - trunc(5 x (drop - 5)) - through the
       // pool's damage door (no knockback), ringing FallDamage at the
       // foe. The blood splash rides damageFoe's own art.
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
       if (f.ai.landedFall > 0 && !f.dead) {
         const dmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
         f.ai.landedFall = 0;
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
-          // EnemyMotor.cs:1404-1407 - index 0 at `transform.position`,
-          // which on a CharacterController is the BASE. Its comment
-          // says "falling enemies bleed at the center"; the line does
-          // not add controller.center, so the feet are what DFU passes.
-          hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, f.ai._centre());
           damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -3760,12 +3785,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // frame, and would prefer the arrow. (Found by the wave-35
           // re-read.)
           if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }   // MT-iv: gated on a live TARGET (:136-137), not the player alone
-          else if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
+          else if (_tgt && !_fParalyzed && f.mobile.shootArrow) {   // ROAD-H tail: gated on a live TARGET like the melee arm - BowDamage returns at `senses.Target == null` (EnemyAttack.cs:136-137)
             f.mobile.shootArrow = false;
-            const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-            const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
-            const l = Math.hypot(...d) || 1;
-            fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
+            const from = foeDeps.enemyArrowOrigin(f.ai);   // ROAD-H H1: GetAimPosition's ENEMY ARROW arm - the caster's TRANSFORM plus forward*0.6 plus height/3 (DaggerfallMissile.cs:528-539), through the ONE law in enemyTargets so the two pools' loose points cannot drift apart the way their aim points had. `feet + 1.2` was a guess in the player's scale with no forward lean at all
+            const _at = f.ai.target ?? foeDeps.PLAYER_TARGET, _atPlayer = foeDeps.isPlayerTarget(_at);   // ROAD-H tail: BowDamage's two-arm split (EnemyAttack.cs:139-143) - the shaft flies at the SELECTED target, as the exterior pool's has since MT-ii
+            const aim = foeDeps.targetAimPoint(_at, _pf, playerHeight);   // AUDIT 62 F21 (review): the target's TRANSFORM - the player at its LIVE height (PlayerHeightChanger.cs:477-478), a foe at feet + centreOffset - the same aim point the spell arm takes (DaggerfallMissile.cs:571-581)
+            const dir = foeDeps.arrowAimDirection(foeDeps.enemyTransformPoint(f.ai), aim, { targetIsPlayer: _atPlayer, playerCrouching: !!_senses.playerCrouching });   // ROAD-H H1b: the DIRECTION is measured from the BARE transform (:581), not from that offset origin - DFU's two functions do not share an origin - and a shot at a CROUCHING player dips 0.05 after the normalise (:583-585)
+            fireArrow(from, dir, f.entity.weapon, false, f, _atPlayer ? null : _at);   // the missile REMEMBERS its foe target so the impact fork runs BowDamage's non-player arm
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
         }
@@ -4443,7 +4469,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:779) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:781) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with

@@ -201,9 +201,16 @@ test('ROAD-Ar: the click that GRABS the pointer arms the delay too, and only on 
     assert.ok(i > 0, `${h} arms the delay on the grab`);
     // guarded on the lock NOT already being held - an unguarded arm
     // would kill every ordinary activation click
+    // AUDIT 62 F6: ...and never for a TOUCH pointer. A finger can never
+    // hold the lock, so this test is permanently true on a phone and
+    // every finger-down armed a 0.3 s window that ate the tap's release
+    // edge. DFU arms SetClickDelay only from RemoveWindow
+    // (UserInterfaceManager.cs:206/:214 -> PlayerActivate.cs:1050-1054),
+    // and a touch pointerdown is no UI gesture at all - it re-acquires
+    // nothing and presses no Mouse0.
     assert.match(s.slice(Math.max(0, i - 120), i),
-      /if \(document\.pointerLockElement !== canvas\) $/,
-      `${h} arms it only when the pointer was not already locked`);
+      /if \(e\.pointerType !== 'touch' && document\.pointerLockElement !== canvas\) $/,
+      `${h} arms it only when the pointer was not already locked, and never for a finger`);
     // and it is armed BEFORE requestLook, not instead of it
     assert.ok(s.indexOf('requestLook(canvas)', i) > i, `${h} still grabs the pointer`);
   }

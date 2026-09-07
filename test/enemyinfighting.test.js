@@ -13,6 +13,7 @@ import {
 } from '../src/combat/formulas.js';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { PLAYER_TARGET } from '../src/characters/enemyTargets.js';
+import { bloodCentre } from '../src/scenes/hitEffects.js';   // AUDIT 62 F19: the reference's own law, not a restated literal
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const clearCollider = () => ({
@@ -70,7 +71,18 @@ test('MT-ii: the landed blow - damage, blood, knockback, health, and the struck 
   assert.equal(target.entity.health, 23);
   assert.equal(blood.length, 1, 'ShowBloodSplash at the target (:325-333)');
   assert.equal(blood[0][0], 2, 'the target\'s BloodIndex');
-  assert.ok(Math.abs(blood[0][1][1] - target.ai.height / 8) < 1e-9, 'centre + height/8');
+  // AUDIT 62 F19: EnemyAttack.cs:326-328 is `bloodPos = Target
+  // .transform.position + targetController.center` and THEN `bloodPos.y
+  // += targetController.height / 8`. The capsule is BOTTOM-justified
+  // (SetupDemoEnemy.cs:55-71 moves controller.center, never the
+  // transform), so transform + center is the capsule CENTRE, feet +
+  // height/2 - five eighths up in total, which is what bloodCentre
+  // answers. This pin used to assert the port's feet + height/8 under
+  // the reference's own label, and so held the missing term in place.
+  assert.deepEqual(blood[0][1], bloodCentre(target.ai.feet, target.ai.height),
+    'EnemyAttack.cs:326-328: transform + controller.center (= feet + height/2), then + height/8');
+  assert.ok(Math.abs(blood[0][1][1] - (target.ai.height / 2 + target.ai.height / 8)) < 1e-9,
+    'and that is five eighths of the capsule, not one eighth');
   assert.ok(target.ai.knockbackSpeed > 0, 'the knockback landed (settled target, class attacker)');
   assert.deepEqual(target.ai.knockbackDir, [0, 0, 1], 'along the attack ray');
   assert.equal(target.ai.target, attacker, 'MakeEnemyHostileToAttacker (:389-391) - it turns on whoever hit it');

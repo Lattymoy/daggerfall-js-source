@@ -16,6 +16,7 @@ import { canAccessService, canAccessLibrary } from '../src/systems/guildServices
 import { TG_SPYMASTER_FACTION_ID } from '../src/systems/guildServiceFlow.js';
 import { GUILDS } from '../src/systems/guilds.js';
 import { MobileUnit, MOBILE_RAT } from '../src/characters/mobileUnit.js';
+import { wouldBeSpawnedInClassic } from '../src/characters/enemyMotor.js';   // AUDIT 62 F22: the band law the guard pool's mount picks
 import { ACTION_FLAGS } from '../src/world/rdbLayout.js';
 import { tickPlayerMinutes, setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
 import { raisePlayerSkills } from '../src/scenes/shared.js';
@@ -155,8 +156,18 @@ test('AUDIT 23 characters-7 + items-1: the spawn bands and the pile gender ride 
   assert.equal((dc.match(/spawnDistanceType: e\.spawnDistanceType \?\? 0/g) ?? []).length, 2,
     'both foe constructions pass the marker band');
   assert.ok(dc.includes('gender: playerEntity.gender });   // AUDIT 23 (items-1)'), 'piles roll the player gender');
+  // AUDIT 62 F22: the STREET watch runs the exterior band, and it is
+  // the mount that says so - EnemySenses.cs:267 reads
+  // PlayerEnterExit.IsPlayerInside per classic tick, so the pool that
+  // the mode machine stands INSIDE a building takes the row bands
+  // instead. Pinned as the law rather than as the literal that used to
+  // stand here: at yDiff 5m / XZ 3m the outdoor band spawns and the
+  // indoor one does not (row 0 = XZ 25.6m, Yupper 3.2m).
   const cg = src('src/scenes/cityGuards.js');
-  assert.ok(cg.includes('playerInside: false,'), 'guards senses run the exterior despawn band');
+  assert.match(cg, /^\s*playerInside = false,$/m, 'the dep defaults to the street pool\'s band');
+  const d = Math.hypot(3, 5);
+  assert.equal(wouldBeSpawnedInClassic(d, 5, false, 0, false), true, 'outdoors: the flat 102.4m band, no Y test');
+  assert.equal(wouldBeSpawnedInClassic(d, 5, false, 0, true), false, 'inside: row 0\'s +3.2m upper band refuses the storey above');
 });
 
 test('AUDIT 23 audio-4: channel gains resync at play() and the loop seam', () => {

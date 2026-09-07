@@ -51,22 +51,31 @@ import { LIGHTS_ARCHIVE } from '../world/cityLights.js';
 export const CANDLE = Object.freeze({
   archive: LIGHTS_ARCHIVE,   // 210 (MagicCandleBehaviour.cs:22)
   record: 3,                 // (:23)
-  distance: 1.4,             // candleDistance (LightNormal.cs:82)
-  heightFraction: 0.25,      // candlePosition.y += height * 0.25 (:85)
+  distance: 1.4,             // candleDistance (LightNormal.cs:89)
+  heightFraction: 0.25,      // candlePosition.y += height * 0.25 (:96)
   range: 15,                 // MagicCandle.prefab m_Range
   jitterRadius: 0.125,       // Random.insideUnitSphere * 0.125 (:47)
   moveSpeed: 8,              // moveSpeed (:14), lerp units per second
 });
 
 /** The unwobbled position: `transform.position + forward * 1.4`, then
- *  `y += height * 0.25`. `feet` is the port's player origin, which is
- *  DFU's transform.position (hitEffects.bloodCentre adds the capsule
- *  centre to it, so the bare value is the foot point in both). */
+ *  `y += height * 0.25` (LightNormal.cs:95-96).
+ *
+ *  AUDIT 62 F21 (review): `feet` is NOT DFU's transform.position. The
+ *  header used to say it was, and the whole candle hung half a
+ *  capsule low as a result. The player's CharacterController has no
+ *  centre offset and PlayerHeightChanger.cs:477-478
+ *  (ControllerHeightChange) moves the transform by heightChange/2
+ *  with the capsule bottom planted, so DFU's transform.position is
+ *  feet + height/2 and its candle sits at feet + 0.75 * height -
+ *  1.35 standing, where the port hung it at 0.45. The port keeps the
+ *  FEET as every host's player origin, so the half-capsule is added
+ *  here rather than assumed away. */
 export function candleBase(feet, height, forward) {
   const f = forward ?? [0, 0, 1];
   return [
     feet[0] + f[0] * CANDLE.distance,
-    feet[1] + f[1] * CANDLE.distance + height * CANDLE.heightFraction,
+    feet[1] + f[1] * CANDLE.distance + height / 2 + height * CANDLE.heightFraction,
     feet[2] + f[2] * CANDLE.distance,
   ];
 }

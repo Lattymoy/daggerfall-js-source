@@ -251,20 +251,27 @@ test('X11 Light: a duration-only incumbent, stacking rounds like every other buf
 });
 
 test('X11 the magic candle: DFU\'s numbers, and the position it hangs at', () => {
-  assert.equal(CANDLE.distance, 1.4, 'candleDistance (LightNormal.cs:82)');
-  assert.equal(CANDLE.heightFraction, 0.25, 'y += height * 0.25 (:85)');
+  assert.equal(CANDLE.distance, 1.4, 'candleDistance (LightNormal.cs:89)');
+  assert.equal(CANDLE.heightFraction, 0.25, 'y += height * 0.25 (:96)');
   assert.equal(CANDLE.range, 15, 'MagicCandle.prefab m_Range');
   assert.equal(CANDLE.archive, 210);
   assert.equal(CANDLE.record, 3);
   assert.equal(CANDLE.jitterRadius, 0.125);
   assert.equal(CANDLE.moveSpeed, 8);
-  // 1.4 in front, a quarter of the capsule up
+  // 1.4 in front, and a quarter of the capsule ABOVE THE TRANSFORM -
+  // which LightNormal.cs:95 takes as PlayerObject.transform.position,
+  // feet + height/2 (PlayerHeightChanger.cs:477-478 plants the capsule
+  // bottom and moves the transform by heightChange/2). So 0.75 * 1.8 =
+  // 1.35 over the feet, not the 0.45 the port used to hang it at.
   const at = candleBase([10, 2, 30], 1.8, [0, 0, 1]);
-  assert.deepEqual(at.map((n) => Math.round(n * 1000) / 1000), [10, 2.45, 31.4]);
+  assert.deepEqual(at.map((n) => Math.round(n * 1000) / 1000), [10, 3.35, 31.4]);
   // and it swings round with the facing, because DFU parents it to the
   // player object
   const back = candleBase([10, 2, 30], 1.8, [-1, 0, 0]);
-  assert.deepEqual(back.map((n) => Math.round(n * 1000) / 1000), [8.6, 2.45, 30]);
+  assert.deepEqual(back.map((n) => Math.round(n * 1000) / 1000), [8.6, 3.35, 30]);
+  // crouched the whole thing drops with the capsule: 0.75 * 0.9 = 0.675
+  const low = candleBase([10, 2, 30], 0.9, [0, 0, 1]);
+  assert.deepEqual(low.map((n) => Math.round(n * 1000) / 1000), [10, 2.675, 31.4]);
 });
 
 test('X11 the magic candle: the wobble stays inside its 0.125 sphere and keeps moving', () => {

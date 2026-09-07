@@ -21,7 +21,7 @@ test('AR1: an enemy arrow contacts a foe capsule and the hit hands over arrow AN
   const f = flight();
   const shooter = { id: 'archer' };
   const bear = { id: 'bear', dead: false };
-  f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: shooter, weapon: { name: 'Short Bow' } });
+  f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: shooter, weapon: { name: 'Short Bow' }, aimFoe: bear });   // ROAD-H tail (review): the shaft was loosed AT the bear (DaggerfallMissile.cs:669)
   const hits = [];
   // one 0.05s step is 1.25 units; the bear at z=1.5 sits inside the
   // capsule sum from the post-step position (the contact is tested
@@ -97,10 +97,11 @@ test('AR1: an arrow marked neither way still lands nothing - the arms are the SH
 test('AR1: the contact radius is the missile law - radius + the 0.45 body', () => {
   const mk = (z) => {
     const f = flight();
-    f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: {}, weapon: {} });
+    const x = { id: 'x' };
+    f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: {}, weapon: {}, aimFoe: x });   // ROAD-H tail (review): loosed AT x
     let hit = false;
     // dt tiny: the step is ~0.025, so contact is decided by the radius
-    f.update(0.001, { foeTargets: [{ feet: [0, 0, z], ref: { id: 'x' } }], onFoeHit: () => { hit = true; } });
+    f.update(0.001, { foeTargets: [{ feet: [0, 0, z], ref: x }], onFoeHit: () => { hit = true; } });
     return hit;
   };
   assert.equal(mk(MISSILE_COLLIDER_RADIUS + 0.45 + 0.2), false, 'outside the capsule sum');

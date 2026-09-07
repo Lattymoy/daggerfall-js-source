@@ -275,11 +275,11 @@ export class ListPickerWindow {
   rowHeight(font) { return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
   /** MouseMove (:428-458) and MouseLeave (:460-463): the row under the
-   *  cursor is the highlightedIndex, and anything off the LIST clears
-   *  it. The host's hover seam also drives VerticalScrollBar.Update -
-   *  `e` is the DOM mousemove, whose `buttons` bit 0 stands in for
-   *  InputManager.GetMouseButton(0). A host that hands no event holds
-   *  no button, so the drag lets go, which is the safe direction. */
+   *  cursor is the highlightedIndex, anything off the LIST clears it,
+   *  and the seam also drives VerticalScrollBar.Update off `e.buttons`
+   *  bit 0 (InputManager.GetMouseButton(0)) - no event, no button, so
+   *  the drag lets go. AUDIT 62 F25: `vy >= 0` keeps the hosts' (-1,-1)
+   *  SENTINEL out of the drag; the FRAME goes, `release()` the latch. */
   hover(vx, vy, e = null) {
     const rh = this.rowHeight(this._font);
     this.highlightedIndex = -1;
@@ -289,7 +289,7 @@ export class ListPickerWindow {
       if (index >= 0 && index < this.items.length) this.highlightedIndex = index;
     }
     this.syncScrollBar();
-    if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
+    if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
   }
 
   /** The button let go: Update's else arm (:123-129).
@@ -329,7 +329,7 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:904, worldModes.js:5826, dungeonContext.js:4112),
+      // (townTalk.js:1048, worldModes.js:6496, dungeonContext.js:4586 - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you

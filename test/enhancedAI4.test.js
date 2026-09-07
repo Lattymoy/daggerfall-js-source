@@ -348,12 +348,37 @@ test('ENHANCED AI 4a: the route supplies x and z; the y is CLASSIC\u2019S, never
   ai.pathI = 1;
   ai._getDestination(target);
   assert.ok(Math.abs(ai.destination[1] - ai.feet[1]) < 1e-9, `a corner took y ${ai.destination[1]}, not the foe's ${ai.feet[1]}`);
-  // The goal: the goal's real y - the predicted target position's, which
-  // is what classic's own destination carries.
-  ai.pathI = ai.path.length - 1;
-  ai._getDestination(target);
-  assert.ok(Math.abs(ai.destination[1] - ai._navGoal(target)[1]) < 1e-9, 'the goal took the wrong y');
-  assert.ok(Math.abs(ai.destination[1]) > 1, 'the goal is not at the nav\u2019s zero');
+  // The goal: the y CLASSIC aims at. AUDIT 62 F1 - it was the predicted
+  // position's RAW FEET, which is classic's answer only when a foe's
+  // capsule equals its idle sprite. The control is a real classic
+  // EnemyAI of the SAME shape in the SAME state, on its clear-path arm
+  // (the shooter clause, EnemyMotor.cs:539-540, is the classic state
+  // that guarantees that arm through a wall) - the arm the route
+  // parallels. dungeonContext spawns height = enemyControllerHeight
+  // (halved for a flyer, floored at 1.6) and centreOffset = idleH/2,
+  // so a bat and a rat are exactly the shapes where the two laws part.
+  const shapes = [
+    ['a bat (Flying, 1.8 sprite -> 1.6 capsule)', { behaviour: 'Flying', height: 1.6, centreOffset: 0.9 }],
+    ['a rat (1.0 sprite -> 1.6 capsule)', { behaviour: 'General', height: 1.6, centreOffset: 0.5 }],
+    ['an orc (capsule == sprite)', { behaviour: 'General', height: 1.8, centreOffset: 0.9 }],
+  ];
+  for (const [what, shape] of shapes) {
+    const { ai: e } = foe(EnhancedEnemyAI, c, bake, start, shape);
+    tick(e, target);
+    assert.ok(e.path && e.path.length >= 3, `${what}: no route`);
+    e.avoidObstaclesTimer = 0;
+    e.pathI = e.path.length - 1;
+    e._getDestination(target);
+    const ctl = new EnemyAI(c, [...e.feet], e.yaw, { liveSpeed: 50, rolls: () => 0.5, hasBowAttack: true, ...shape });
+    ctl.makeHostileToPlayer();
+    ctl.predictedTargetPos = e.predictedTargetPos;
+    ctl.stopDistance = e.stopDistance;
+    ctl.inSight = true;   // `senses.TargetInSight && hasBowAttack` - classic's clear-path arm
+    ctl._getDestination(target);
+    assert.ok(Math.abs(e.destination[1] - ctl.destination[1]) < 1e-9,
+      `${what}: the routed goal aims at y ${e.destination[1]}, classic at ${ctl.destination[1]}`);
+    assert.ok(Math.abs(e.destination[1]) > 1, 'the goal is not at the nav\u2019s zero');
+  }
 });
 
 test('ENHANCED AI 4a: the bake is height-invariant - the anchor carries its y', () => {

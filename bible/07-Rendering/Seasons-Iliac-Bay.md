@@ -105,10 +105,12 @@ mod is inert.
   refresh is answered with the same destroy-and-requeue sweep
   `tickSeason` already runs for the winter flip - and only when a pixel
   stands on an OLDER install than the current one (each pixel records
-  the `generation` it was built under). A season turn the climate
-  season does not share (Summer to Fall, Spring to Summer) reaches the
-  standing world that way; the winter flip's own rebuild finds every
-  pixel fresh and rebuilds nothing twice. AUDIT 61: the generation a
+  the `generation` it was built under) AND carries a batch on an
+  archive the mod has ever managed, which is DFU's own filter (AUDIT 62
+  F4). A season turn the climate season does not share (Summer to Fall,
+  Spring to Summer) reaches the standing world that way; the winter
+  flip's own rebuild finds every pixel fresh and rebuilds nothing twice.
+  AUDIT 61: the generation a
   pixel records is the one its lookups READ (captured right after its
   `OnInstantiateTerrain`), not the one standing when it publishes -
   a build's texture fetches yield, and a forced apply on a quickload
@@ -134,11 +136,18 @@ mod is inert.
 
 ## Translations recorded (not departures)
 
-1. **The refresh is a rebuild, filtered by install generation** - DFU
-   re-applies materials in place; the port's batches are baked, and
-   the winter flip already rebuilds. The generation filter is what
-   keeps a season turn to one rebuild; what the rebuild reaches that
-   DFU's re-apply does not is translation 4.
+1. **The refresh is a rebuild of the qualifying PIXELS, filtered by
+   install generation AND by archive** - DFU re-applies materials in
+   place; the port's batches are baked, and the winter flip already
+   rebuilds. Same visible result; the generation filter is what keeps a
+   season turn to one rebuild, and the archive filter (AUDIT 62 F4,
+   below) is DFU's own - `RefreshLoadedNatureBatches` touches only
+   batches whose archive the mod has ever managed. Both filters decide
+   PER KEY (ROAD-H H3, below): the seam marks the pixels that qualify
+   and the driver rebuilds those alone, as the reference re-applies the
+   batches that qualify and no others. The whole-grid sweep belongs to
+   the CLASSIC winter flip, a different and older law. What the rebuild
+   reaches that DFU's re-apply does not is translation 4.
 2. **No atlas.** DFU packs the season's textures into one atlas
    (`PackTextures`, padding 2, 2048 or 4096 with asset injection) and
    the batch reads UV rects; the port uploads each record as its own
@@ -147,9 +156,13 @@ mod is inert.
 3. **The textures come through the pick, not the mod system** - see
    above; the manifest's file list is still what the prefix filter
    runs over when the bundle is present.
-4. **The refresh reaches every standing pixel; DFU's reaches the
-   ACTIVE batches, over a substrate that never re-skins a standing
-   terrain** (AUDIT 61, two skeptics, recorded as they agreed).
+4. **The refresh reaches every standing pixel THAT QUALIFIES; DFU's
+   reaches the ACTIVE batches, over a substrate that never re-skins a
+   standing terrain** (AUDIT 61, two skeptics, recorded as they agreed;
+   ROAD-H H3 narrowed "every standing pixel" to the qualifying ones,
+   which does not touch what this translation is about - the port
+   reaches an INACTIVE pixel's batch where DFU's walk cannot see it, not
+   that it reaches batches the filter would have skipped).
    `RefreshLoadedNatureBatches` walks
    `FindObjectsOfType<DaggerfallBillboardBatch>()` (il.txt 0x08a4),
    which skips inactive objects, and `DaggerfallBillboardBatch.
@@ -169,17 +182,19 @@ mod is inert.
    raises `updateData`/`updateNature` only in `PlaceTerrain`
    (`StreamingWorld.cs:905-906`), so a standing terrain's ground atlas
    and nature batch keep their season until the pixel re-streams. The
-   port's `tickSeason` rebuilds the whole standing grid on a season
-   change - the ROAD A1 season law, older than this mod and pinned by
-   `test/seasoncalendar.test.js` - and this host has no pooled batch
-   and no cached batch material (translation 2), so the mod's refresh
-   here converges on the installed season everywhere on the first
-   exterior frame. A known difference, the port's and not the mod's:
+   port's `tickSeason` rebuilds the whole standing grid on a CLIMATE
+   season change - the ROAD A1 season law, older than this mod and
+   pinned by `test/seasoncalendar.test.js` - and on the mod's own
+   refresh it rebuilds every standing pixel the filter marks, whether
+   that pixel is the one under the player or one at the far edge of the
+   ring, active or not; this host has no pooled batch and no cached
+   batch material (translation 2), so the mod's refresh here converges
+   on the installed season everywhere on the first exterior frame. A known difference, the port's and not the mod's:
    the port never shows DFU's split.
 
 ## Verification
 
-`test/seasonsIliacBay.test.js` (15 tests): the tables, the filename
+`test/seasonsIliacBay.test.js` (17 tests): the tables, the filename
 parse, the record-set checks with the mod's own messages, the size law,
 the state machine (install once, force, failed build retried, the
 racing applies), the events, the LZ4 and DXT vectors, the UnityFS
@@ -189,3 +204,228 @@ the refusals), the asset key and registry, the hosts' seams, the
 vendor tree without a raster. The real bundle was read in this session
 and matched the reference extraction 374 of 374; a live world render
 needs ARENA2, which the container lacks.
+
+## AUDIT 62 (2026-09-07) - the seasonal flat's row order, the refresh's archive filter, and two pins that could not fail
+
+**F26 (high, within the mod's lane): every seasonal tree, rock and
+plant drew UPSIDE-DOWN.** The port's texel convention is bottom-up:
+`getColor32` writes `dstRow = (height - 1 - y) * width`
+(`baseImageFile.js:123`, `BaseImageFile.cs:250`), `uploadTexture`
+uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1739`), and
+`BB_VS` samples the quad's TOP at v=1, i.e. the LAST row
+(`renderer.js:279-282`). The seasonal record arrived in PNG raster
+order instead - `decodeTexture2D` flips Unity's bottom-up rows to
+top-down for its own consumers, and the loose arm is a canvas
+`getImageData` - and `world.js:989` / `exterior.js:658` handed that
+straight to `uploadTexture`. So a seasonal flat drew mirrored against
+the classic flat uploaded five lines later in the same batch loop. In
+DFU there is nothing to reconcile: the mod's asset is a Unity
+`Texture2D` and so is every texture `TextureReader` builds from
+`GetColor32`, both bottom-up. Fixed at the mod's own door -
+`loadSeasonsTextures` now reverses rows into getColor32 order on both
+arms (`toColor32Order`), so `decodeTexture2D` and `decodePng` keep the
+PNG raster order each states as its contract and neither upload site
+changes (see F28 below on what that leaves the reader's own doc
+saying). Pinned behaviourally: a 1x2 picture shipped as the mod ships
+it (a Unity `Texture2D`, bottom row stored first) goes through the
+bundle reader, `SeasonHelper.lookup` and the hosts' upload expression
+into a recording GL, and the bytes at `texImage2D` must equal, byte
+for byte, what `TextureFile.getColor32` produces for the same picture,
+with `UNPACK_FLIP_Y_WEBGL` false. The door's own row-order pin, which
+asserted top-down, is inverted with the fix.
+
+**F4 (medium): `manages()` had no caller - a whole grid torn down where
+DFU refreshes nothing.** `RefreshLoadedNatureBatches` re-applies only
+the batches whose archive is in `vanillaAtlasByArchive` (`manages`).
+The host's `refresh` seam tested the install generation alone, and
+`ensureSeasonalAtlasesInstalled` bumps that generation on EVERY
+install including the Summer one that manages nothing - so in every
+climate whose nature set is 500-503 (rainforest, subtropical, swamp,
+desert: archives no season manages) all four season turns tore down
+the whole grid, armed the `_seasonHoldKey` motor hold on the standing
+player and cold-rebuilt a world that does not change by one texel,
+where DFU touches no batch at all. `refresh` now takes DFU's filter as
+well: stale install AND a batch on an archive the mod has ever
+managed. The set is cumulative and is filled inside
+`tryBuildSeasonalAtlas` before `apply` calls `refresh`, so a pixel
+still standing on the summer archive 504 at the Winter install (which
+manages 505/507/509) is still re-skinned, as DFU re-skins it. NOT
+narrowed further at the time: `tickSeason` rebuilt all of `built` once
+any pixel qualified, and that sweep is shared with the classic winter
+flip - a per-key refresh was its own step. **That step is ROAD-H H3,
+below.**
+
+**F5 (low, pin): the `OnNewMonth` pin matched the member, not the
+call.** `assert.match(world, /seasons\.onNewMonth\(\)/)` matched the
+body of the one-caller wrapper `seasonsMonthTurn`; deleting the day
+poll's hand-over to it left every pin green while the streaming host
+went deaf to every month turn (a standing world would keep the
+previous season's atlases until a load or a teleport). Replaced with
+two caller-shaped assertions: `refreshSeason` hands each latched day
+boundary to `seasonsMonthTurn`, and that wrapper is
+`WorldTime.OnNewMonth` (`WorldTime.cs:139/:226`). The `tick` and
+`onUpdateTerrainsEnd` pins are NOT the same shape - their matched text
+IS their sole call site - and were left alone.
+
+**F36 (medium, pin): "slot 0 holds record 1" could not tell record 1
+from a record 0.** `textures[0] = dict[1]` deliberately discards a
+present record 0, and every fixture that asserted slot 0 was built
+from record 1 up, so `byRecord.get(0) ?? byRecord.get(1)` passed the
+whole file. The mod really ships a record 0 for 9 of its 11 prefix
+folders (`TempW/K0.png`, `TempS/J0.PNG`, ...) and nothing filters it
+out on the way in, so the discarded branch is the production path.
+Pinned with a K0-bearing fixture at both arms: `seasonalRecordSet` and
+a `SeasonHelper` whose winter set carries K0 must both answer
+`K1.png` at slot 0.
+
+## AUDIT 62 review round (2026-09-07) - F28
+
+**F28 (low, doc): `decodeTexture2D`'s JSDoc stated a rationale F26 had
+falsified.** The reader's header read "TOP ROW FIRST (Unity stores its
+rows bottom-up; **every consumer here wants the raster order a PNG
+decodes to**)". After F26 that parenthetical is false: the reader has
+exactly one consumer in `src/`
+(`seasonsIliacBayAssets.js:187`, `toColor32Order(tex.rgba())` - the helper itself moved to `formats/color32Order.js` at ROAD-H H4, where the M-TEX door takes it too) and it
+reverses every row straight back, so the composition is the identity
+on every `TextureFormat` arm. The comment was left claiming the
+opposite of what the delta did - the same class of defect F27 corrects
+at `renderer.js`. The doc now states the reader's PNG-order CONTRACT
+for a general bundle consumer and says outright that the port's upload
+order is getColor32, pointing at the seasons door that converts, the
+way the door's own header already points back at the reader; the
+door's closing line drops "for their other consumers" with it, and so
+does F26's paragraph above. The BEHAVIOUR is untouched: the reader's
+row-order pin (`test/seasonsIliacBay.test.js:539-543`, which asserts
+the top row of the image is the LAST row Unity stored) still holds and
+was rightly left alone by F26, and the end-to-end
+`texImage2D`-vs-`getColor32` pin is what fixes the order that reaches
+the GL. Dropping the reader's flip instead (one fewer `Uint8Array`
+copy per texture, 372 per install on the real bundle) was NOT taken:
+it changes the reader's published contract for any future bundle
+consumer and would have to move that pin, which is a behavioural step,
+not a comment fix.
+
+## ROAD-H H3 (2026-09-07) - the refresh, per KEY
+
+**The seam raised ONE flag and the driver rebuilt the WHOLE grid.**
+AUDIT 62 F4 gave the streaming host's `refresh` seam DFU's archive
+filter and left it there: the seam scanned `built` and, on the FIRST
+pixel standing on an older install with a batch on a managed archive,
+set `_reskinPending` and returned. `tickSeason` then tore down and
+cold-rebuilt every key in `built`. One qualifying pixel at the edge of
+the ring therefore cost the player the pixel under his feet - the whole
+destroy-and-requeue sweep, the `_seasonHoldKey` motor hold, a cold
+refetch of every archive in the grid - for a turn that changes nothing
+on most of those pixels.
+
+**The reference decides PER BATCH, and its filter is the ARCHIVE.**
+`RefreshLoadedNatureBatches` walks
+`FindObjectsOfType<DaggerfallBillboardBatch>()` (the DLL's il.txt
+0x08a4) and asks only the batches whose archive is in
+`vanillaAtlasByArchive` - every batch the archive filter skips is not
+touched at all. Every batch it DOES ask is re-applied, the just-built
+included, and the call is forced: `SetMaterial`'s early return is
+`archive == currentArchive && !force`
+(`DaggerfallBillboardBatch.cs:283-284`) and `currentArchive` is the
+archive INDEX (`DaggerfallBillboardBatch.cs:73` `int currentArchive =
+-1;`, `:360` `currentArchive = archive;`), which does not change when
+the mod installs a seasonal atlas under that same index - so an
+unforced walk would return at :283-284 for every batch it asks and
+refresh nothing at all. (The unforced call this page cites at
+`:283-284` in translation 4 is a DIFFERENT call site: `StreamingWorld.
+UpdateTerrainNature`'s `dfBillboardBatch.SetMaterial(natureArchive)`,
+`StreamingWorld.cs:1269`, which recycles a pool slot without the mod
+in the loop. It is not the mod's own refresh.)
+
+**So only ONE of the port's two filters is the reference's.** The
+ARCHIVE filter is DFU's (AUDIT 62 F4). The install-GENERATION filter
+is this port's translation 1, recorded in AUDIT 61 and unchanged by
+this section: DFU's forced walk re-applies the batches that already
+wear the current atlas because a re-apply is free there, and this host
+would have to tear a pixel down and cold-rebuild it to hand it the
+atlas it is already wearing. Both filters happen to decide per KEY,
+which is what this section narrows the sweep to; only the first is a
+law read off the reference.
+
+**The fix.** `src/world/seasonReskin.js` is the collector.
+`markStale(seasons, built)` is the filter over the built grid - older
+install (the port's half) AND a batch on an archive the mod has ever
+managed (DFU's half) - collecting KEYS; `mark(key)` adds one; `markAll()` is the classic flip's
+whole-grid flag; `pending` is "is there anything to re-skin"; and
+`take(built)` hands the driver the keys and spends the pending state,
+dropping any marked key that has since left `built` (there is no batch
+there to re-apply, which is what `FindObjectsOfType` not returning it
+means); `clear()` is the teleport's quiet path. In `scenes/world.js`
+the seam is now `refresh: () => _reskin.markStale(seasons, built)`, the
+AUDIT 61 publish-across-install arm marks **its own** key rather than
+the grid, `tickSeason` takes the keys instead of `[...built.keys()]`,
+and `_reskin.clear()` at the teleport keeps exactly the meaning
+`_reskinPending = false` had there. The `building` gate, the generation
+stamps and the nearest-first rebuild order are untouched. One thing
+follows from the narrowing: the motor hold is armed only when the
+player's own pixel is among the keys going down - a re-skin that leaves
+it standing takes no ground from under him, and arming the hold there
+would re-anchor a fall for nothing. The collector is declared ABOVE the
+`SeasonHelper` whose seam marks into it: the boot's forced apply can
+land during any await between that block and the frame loop, and a
+`const` still in its temporal dead zone would have thrown inside
+`seasonsReady`'s catch and left the mod silently inert.
+
+**The classic winter flip still sweeps every key**, and must: the
+two-valued climate season turns the ground atlas, the tile set and the
+climate swaps of every pixel (the ROAD A1 law, `DaggerfallLocation.
+Update`'s `lastSeason` test), which is not the mod's per-archive
+question at all. `refreshSeason()` returning true calls `markAll`.
+
+**The fixed city is unchanged**: `scenes/exterior.js` builds its flats
+once and answers `refresh` with `() => {}`, as it did - there is no
+grid there to narrow.
+
+**Pinned** in `test/roadh_seasons_tex.test.js`, behaviourally, through
+the seam: a three-pixel grid at the moment of `OnUpdateTerrainsEnd`'s
+after-travel refresh - one stale on a managed archive, one stale on the
+unmanaged 503, one built under the current install - yields exactly one
+key, and `markAll` then yields all three. `test/seasonsIliacBay.test.js`'s
+F4 pin drives the same collector rather than restating the seam.
+Mutation-proven both ways: `markStale` raising the whole-grid flag, and
+`markAll` marking nothing, each kill it.
+
+### ROAD-H H3 review round (2026-09-07)
+
+**R1 (medium) - the stated reference law was INVERTED.** The first
+draft of this section, the collector's header, `world.js`'s driver
+comment, the Testing.md row and the pin's own comment all said the
+mod's refresh leaves a batch alone when it already wears the current
+season, citing `DaggerfallBillboardBatch.cs:283-284`. It does not.
+`currentArchive` is the archive INDEX
+(`DaggerfallBillboardBatch.cs:73` `int currentArchive = -1;`, `:360`
+`currentArchive = archive;`), and a nature batch's archive number does
+not change when the mod installs a seasonal atlas under it - so if
+`RefreshLoadedNatureBatches` passed `force = false`, `archive ==
+currentArchive` would be true for every batch it asks and the mod could
+never re-skin anything. The walk is FORCED and re-applies every batch
+on a managed archive, the just-built included, which is exactly what
+this page already said in two older places
+(`systems/seasonsIliacBay.js`'s `generation` comment, and AUDIT 61 F11:
+"walks EVERY batch after every apply, the just-built included"). The
+`:283-284` citation that DOES belong on this page is translation 4's,
+about a different call site entirely - `StreamingWorld.
+UpdateTerrainNature`'s unforced `dfBillboardBatch.SetMaterial(
+natureArchive)` at `StreamingWorld.cs:1269` - and the draft repurposed
+it as the mod's own. Consequence: the ARCHIVE half of the per-key
+narrowing is genuinely DFU's, but the GENERATION half is the port's
+translation 1 (AUDIT 61), and the draft had recorded it as the
+reference's decision in five places, the pin comment included. All five
+corrected; the behaviour is unchanged, because the SET the port
+rebuilds was right for the right reason on the archive half and for a
+stated-wrong reason on the generation half.
+
+**R2 (low) - the motor-hold guard shipped unpinned.** The narrowing
+arms `_seasonHoldKey` only when the player's own key is among the keys
+going down, and the draft deferred a behavioural pin claiming the
+source-order pin covered it. It did not: `test/seasoncalendar.test.js`
+matched only the assignment substring, which survives deleting the
+guard (mutation: rewrite the line back to `if (walkMode &&
+playerSpawned)`; 34/34 stayed green). The ROAD-Ar R0 pin now matches
+the WHOLE condition inside the `tickSeason` window it already slices,
+and that mutation kills it.

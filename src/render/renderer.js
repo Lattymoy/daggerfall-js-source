@@ -1740,7 +1740,23 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  authored outside that world - our logo is a high-resolution banner
    *  drawn at a NON-integer scale, where NEAREST aliases the serifs and
    *  REPEAT lets a LINEAR tap at the border sample the opposite edge.
-   *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead. */
+   *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead.
+   *
+   *  INCIDENT 2026-09-04, reworded AUDIT 62 F27: the '#opaque' variant in
+   *  the key below is OUR device, not a DFU law. DFU's material cache is
+   *  keyed by (archive, record, frame) plus a key GROUP and nothing else
+   *  (MaterialReader.cs:961, hit at :387-392) - alphaIndex is not in the
+   *  key, and it is the FIRST requester that fixes both the alpha
+   *  treatment and the shader every later asker receives (:409, :429-432).
+   *  A mesh (alphaIndex -1, :352) and a non-atlas flat (alphaIndex 0,
+   *  DaggerfallBillboard.cs:289-296) therefore share ONE entry there; it
+   *  never shows, because GetColor32 keeps RGB and only zeroes the alpha
+   *  (BaseImageFile.cs:257-260) while DaggerfallDefault.shader:24 is
+   *  Opaque with no clip, and the ordinary flat rides the separate atlas
+   *  key group (:553). OUR two shaders DO read that alpha differently -
+   *  the billboard shader discards on it - so one GL texture cannot carry
+   *  both treatments and the -1 (mesh) and 0 (flat) uploads must key
+   *  apart. The '#ui' variant is the same argument for the mip chain. */
   uploadTexture(archive, record, color32, opts = {}) {
     // (see textureParams below - the decision is pure and pinned there)
     // AUDIT 19 F10: the SAMPLING MODE is part of the key. The cache is

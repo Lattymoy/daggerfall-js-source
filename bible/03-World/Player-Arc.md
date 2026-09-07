@@ -647,9 +647,13 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   swallowed every press that landed on a sub-1/60 s frame); the FP
   viewmodel rides the LIVE eye offset so the weapon lowers with the
   camera. RESIDUAL
-  (honest): crouch-based stealth pends the enemyMotor stealth row
-  (foes still target the standing height); jump-while-crouched stays
-  allowed (DFU's AcrobatMotor has no crouch gate).
+  (honest): the stealth row shipped in P13 and the standing-height
+  half is DISCHARGED by AUDIT 62 F23 (2026-09-07) - `sensesContext`
+  carries the LIVE `player.height`, so a crouched player is a 0.9
+  capsule to every foe (transform, sight eye, distances - and, since
+  the F21 review round of the same date, the missile and arrow AIM
+  POINT and the missile CONTACT test in all four hosts); only
+  jump-while-crouched stays allowed (DFU's AcrobatMotor has no gate).
 
 2 tests (player.test.js 10). Suite 351/80, ARENA2 corpus 351/351
 green pre-commit.
@@ -944,7 +948,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:597). exterior.js and world.js have no submersion
+  (worldModes.js:598). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,

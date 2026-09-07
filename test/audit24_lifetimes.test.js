@@ -88,7 +88,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:587).
+  // prune is the encounter pool's (exteriorFoes.js:622).
   assert.match(src, /idOf: \(g\) => g\.id/, 'lootTargets keys by a stable id');
   assert.doesNotMatch(src, /guardCorpse:\$\{i\}/, 'never by the array index again');
   assert.match(src, /guards\.find\(\(g\) => g\.id === id\)/, 'and takeLoot resolves the same name');
@@ -98,7 +98,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
 
 test('audit24 lifetimes: a retired dungeon missile leaves the list', () => {
   const src = read('src/scenes/dungeonContext.js');
-  const update = bodyOf(src, 'function updateMissiles(dt, playerFeet)');
+  const update = bodyOf(src, 'function updateMissiles(dt, playerFeet, playerHeight = CAPSULE_HEIGHT)');
   assert.match(update, /for \(let i = missiles\.length - 1; i >= 0; i--\) if \(missiles\[i\]\.dead\) missiles\.splice\(i, 1\);/,
     'the prune hostMagic has had all along');
   // and the in-flight batch microtask still guards on m.dead, which is

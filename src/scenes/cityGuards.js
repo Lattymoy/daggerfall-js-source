@@ -134,12 +134,21 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
   // { isPlayerInsideDungeon, isPlayerInside, insideOpenShop,
   // insideTavern, insideResidence } - so the conjunction stays in this
-  // file with the rest of the law. A host with no interiors and no
-  // dungeons (the standalone exterior) answers null, which is that
-  // host's flags all false.
+  // file with the rest of the law. AUDIT 62 F13: no HOST in the tree
+  // is flagless any more - ?world and ?exterior both mount the mode
+  // machine, and the interior watch pool is mounted by the machine
+  // itself - so the null default now only covers a pool built with no
+  // mode machine at all (the test rigs), which is flags all false.
   enterExitFlags = () => null,
+  // AUDIT 62 F22: EnemySenses.cs:267's PlayerEnterExit.IsPlayerInside,
+  // which picks the spawn/despawn band at :269-286 - true in a BUILDING
+  // interior (PlayerEnterExit.cs:111-113), not dungeons only. The mode
+  // machine mounts this pool inside a building (makeInteriorGuards) and
+  // the hard-coded `false` gave that watch the flat 102.4m exterior band
+  // with no Y test. The default keeps the two street pools as they were.
+  playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:81).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:82).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -235,7 +244,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,
-        playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
+        playerInside,   // AUDIT 23 (characters-7) / AUDIT 62 F22: EnemySenses.cs:267-269 - the mount's IsPlayerInside picks the band
         // wave 35: DoRangedAttack's band. Knight_CityWatch has
         // HasRangedAttack1 = false and CastsMagic = false
         // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack
@@ -550,10 +559,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  and ALL THREE of this pool's arms reach the door: the melee swing
    *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
    *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
-   *  which arrowFlight.js calls unconditionally (arrowFlight.js:195)
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:228)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:972). */
+   *  encounter pool's is (exteriorFoes.js:1009). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -683,6 +692,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       ...senses,
       targeting: (ai, pf, cdt) => runTargetMachine(g, senses.candidates(), pf, cdt, {
         playerEntity: senses.playerEntity ?? null,
+        playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
       }),
     };
   }
@@ -763,17 +773,25 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // (:173, :1384-1418) runs unconditionally for every enemy and the
       // motor has always produced landedFall for guards too - the value
       // was simply read by nobody, and discarded.
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
       if (g.ai.landedFall > 0 && !g.dead) {
         const gdmg = Math.trunc(FALL_HP_PER_METRE * (g.ai.landedFall - FALL_DAMAGE_THRESHOLD));
         g.ai.landedFall = 0;
         if (gdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
           // AUDIT 26 F040: EnemyMotor.cs:1403-1407 splashes on EVERY
-          // enemy fall past the threshold - index 0, at the position
-          // DFU passes (the feet, as the sibling pool notes). This arm
-          // billed the damage and played the clip but never bled,
-          // where exteriorFoes has splashed since CH3.
-          hitEffects?.showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]);
+          // enemy fall past the threshold. This arm billed the damage
+          // and played the clip but never bled, where exteriorFoes has
+          // splashed since CH3.
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, g.ai._centre());
           damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
           if (g.dead) continue;
         }

@@ -208,17 +208,17 @@ E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
 were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:2969`, the two ship pixels): the owner supplied the
-(`scenes/world.js:2942`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2999`, the two ship pixels): the owner supplied the
+(`scenes/world.js:2972`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:1732`) with the
+guild-service popup above ground (`scenes/worldModes.js:1746`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:1734`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:1735`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals
@@ -342,6 +342,114 @@ outdoor rolls at the door - they run in every mode and hand
 indoor minutes as DFU does, with the conversion sweep held in a
 dungeon (`:768-770`, no location object); and the watch-route pins had
 matched the comment, not the arm - they count the arm's returns now.
+
+## Wave H - AUDIT 62's deliberately-left remainder - CLOSED 2026-09-07
+
+`Audit-62.md` ended, as `Audit-58.md` had, with a list of things it
+measured and left on purpose. Wave H ran that list as three lanes on
+worktrees cut from main after the audit merged, each lane followed by
+its own adversarial reviewer and a fixup round (9 review findings, all
+confirmed and applied; nothing refuted), integrated in order and
+squashed one commit per lane.
+
+- **H1 the enemy arrow origin** (`characters/enemyTargets.js`,
+  `scenes/dungeonContext.js`, `scenes/exteriorFoes.js`) - both archer
+  pools loosed from a hardcoded `feet + 1.2`. `GetAimPosition`'s
+  non-player arrow arm is the caster transform + forward * 0.6 + the
+  controller height / 3 (`DaggerfallMissile.cs:528-537`): one exported
+  helper, `enemyArrowOrigin`, both pools call it. A giant bat looses at
+  2.13 and a rat at 0.98 where one constant said 1.2.
+- **H1b the crouch dip** - `GetAimDirection` adds 0.05 DOWN, after the
+  normalisation and never renormalised, when the shaft is an arrow, the
+  target is the player, and `PlayerMotor.IsCrouching` (the latched
+  state, not the live height - a 0.9 controller is also the swim case).
+  `arrowAimDirection` is the one body; `playerCrouching` rides
+  `sensesContext` beside AUDIT 62's `playerHeight` from all four hosts.
+  The review round found the "only at the PLAYER" half unpinned at the
+  exterior archer (hardcoding it left the suite green) and drove it.
+- **H1c the player's own arrow origin** - camera position, then 0.11
+  along the camera's own -up (the drop tilts with the pitch) and 0.15 to
+  the right, or the LEFT under `FPSWeapon.FlipHorizontal`
+  (`:540-550`). `playerArrowOrigin` in `systems/spellcast.js`, applied at
+  the two arrow SPAWN seams (`combat/arrowFlight.js` and the dungeon's
+  `fireArrow`) because DFU runs `GetAimPosition` inside the missile - so
+  no host can forget it and an enemy shaft is not offset twice.
+- **H2 the area-of-effect sweep** - `DoAreaOfEffect` is an
+  `OverlapSphere` at radius 4.0 against COLLIDERS (`:477-510`): a target
+  is hit when the sphere overlaps its capsule. One helper,
+  `sphereOverlapsCapsule`, reusing AUDIT 62's inset-axis arithmetic
+  (`missileHitsCapsule` is now a call to it); `sweepFoes` takes it for
+  foes and `explodeAt` for the player at its LIVE height, threaded from
+  every caller including the enemy AreaAroundCaster arm. The review
+  round pinned the two producers of that live height, which only the
+  consumer had pinned.
+- **H3 the seasons refresh, per key** (`world/seasonReskin.js`,
+  `scenes/world.js`) - the refresh seam raised ONE flag on the first
+  qualifying pixel and rebuilt the whole grid. It collects the
+  qualifying KEYS now (stale install AND a batch on a managed archive -
+  AUDIT 62 F4's filter, per pixel), a pixel published across an install
+  marks only its own key, and the classic winter flip still marks every
+  key. The review round found the lane's stated reference law INVERTED:
+  `SetMaterial`'s early return keys on the archive INDEX
+  (`DaggerfallBillboardBatch.cs:283-284`), which a seasonal-atlas swap
+  under the same index does not change, so the mod's walk is FORCED and
+  re-applies every batch on a managed archive - the port's per-key
+  walk matches that, and the five places that said otherwise were
+  corrected. The `_seasonHoldKey` membership guard gained the pin the
+  lane had claimed it already had.
+- **H4 the texture-replacement swap** (`formats/color32Order.js`,
+  `systems/textureReplacement.js`) - with a user texture pack installed,
+  the first swapped record THREW: `decodedTexture` answered
+  `{width,height,data}` where the upload path reads `colors`; and even
+  with the field right the rows were inverted (a PNG decodes top row
+  first; every Daggerfall texture uploads bottom-up - AUDIT 62 F26's
+  lesson). Fixed where a replacement ENTERS, so `decodedTexture` answers
+  a colour32 in `getColor32` order and neither consumer arm changed;
+  `toColor32Order` MOVED to a shared module (the seasons door imports
+  it). The review round found the orientation pins never crossed the
+  production door - dropping the flip left the suite green - so both
+  upload arms now decode through the real `preloadTextureArchive`.
+- **H5 the dead Rest arm** (`scenes/world.js`) - two byte-identical
+  `act === 'Rest'` arms in one keydown ladder, the second unreachable.
+  Deleted, its comment's substance folded into the survivor; the three
+  pinned cites the shift broke were re-resolved with the law and the
+  other 24 by the integration's provenance pass.
+- **H7 two pin-quality defects** - AUDIT 59 F2's pin read `destroy()`
+  through a 3000-character window over a 3769-character body; it walks
+  the balanced braces now. `LightningFlash`'s `timeScale` option existed
+  at five sites and had never been built off 1; pinned against the mod's
+  own `LightningFlash.cs:52-79` at both the divide and the multiply.
+- **H8 the touch code-lift guard** (`ui/touch.js`, a TI1 departure) -
+  the held/held case AUDIT 62 named was already closed by F8's review
+  (`liveNeeds()` covers both directions, a direct shared code included;
+  pinned both ways now). The case still OPEN was the MOMENTARY one: the
+  menu button's tap synthesised its keyup directly and never passed the
+  guard, so a tap on a combo-bound action lifted a modifier the stick
+  still held. The review round corrected the pin's derivation (the
+  shared-code state is reachable through `LoadActionKeybinds`'
+  raw map-set, `InputManager.cs:1950-1969`, and forbidden by
+  `SetBinding` in either order) and replaced a whitespace-matching
+  shape test with a structural one.
+
+Left by the lanes and closed the same day as THE TAIL (one solo pass,
+`bible/05-Combat/Combat.md`): the four point-contact sites the capsule
+law had not reached (the host arrow flight's player and foe tests, the
+player's shafts and spells against a foe in the dungeon and `hostMagic`)
+read `missileHitsCapsule` now, the flight takes the player's live
+height; the three flights cast for `displacement.magnitude +
+ColliderRadius` along the unit ray through one `missileReach`, so a
+crouch-dipped direction reaches as DFU's does; and the dungeon archer
+takes `BowDamage`'s two-arm split - it aims at its selected target,
+keys the dip on whether that is the player, and its missile remembers a
+foe target for the impact fork. Still left: the M-TEX door's non-Albedo
+maps have no consumer yet; and nothing here has been seen in a browser -
+the loose PNG landing the right way up on a flat and a tap on hardware
+are the two surfaces that want eyes.
+
+Pins: `test/roadh_missiles.test.js` (12), `test/roadh_seasons_tex.test.js`
+(5), `test/roadh_residue.test.js` (8), `test/roadh_tail.test.js` (4);
+every one checked dead under a mutation that reverts its law. Open
+flags: 7.
 
 ## The standing watches (not wave work)
 

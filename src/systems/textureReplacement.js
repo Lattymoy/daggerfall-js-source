@@ -24,6 +24,7 @@
 // music.
 
 import { getBool } from './settings.js';
+import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the one door a decoded PNG crosses into the port's texel convention
 
 /** TextureReplacement.cs:39-47, in declaration order. Albedo is the
  *  default and carries NO suffix, which is why it leads. */
@@ -164,7 +165,35 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // anything uploads a record, its replacement is either decoded and
 // waiting or genuinely absent.
 
-const _decoded = new Map();   // textureKey -> { width, height, data }
+// ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
+//
+// The upload path is `renderer.uploadTexture(archive, record, color32)`,
+// which reads `color32.colors` and `asBytes` of it (renderer.js:1749),
+// and every texture it uploads is BOTTOM-UP - `getColor32` writes
+// `dstRow = (dstHeight - 1 - border - y) * dstWidth`
+// (baseImageFile.js:123, BaseImageFile.cs:250) and the upload leaves
+// UNPACK_FLIP_Y_WEBGL off (renderer.js:1739). A browser decode hands
+// back `{ width, height, data }` with the TOP row first, so a swap
+// stored raw was BOTH the wrong field name - `color32.colors` was
+// `undefined` and `asBytes` threw on the first swapped record a pack
+// covered - and, once named, upside-down.
+//
+// DFU has neither problem and the reason is one line of Unity:
+// `TryImportTextureFromDisk` builds the replacement with
+// `Texture2D.LoadImage(bytes)` (TextureReplacement.cs:1041-1056) and a
+// Texture2D's rows are bottom-up, exactly like the classic texture it
+// displaces - `TextureReader.GetTexture2D` assigns the imported albedo
+// into the same slot `SetPixels32(albedoColors)` would have filled from
+// `GetColor32` (TextureReader.cs:261-267). Same orientation, same
+// shape, no conversion anywhere.
+//
+// So the conversion happens HERE, at the ONE door a replacement enters
+// by, and `decodedTexture` answers something a caller can hand straight
+// to `uploadTexture` beside a classic `getColor32`. `decodePng` keeps
+// the PNG raster order it states as its contract (the seasons door
+// takes the same conversion from the same module for the same reason -
+// AUDIT 62 F26).
+const _decoded = new Map();   // textureKey -> { width, height, colors } in getColor32 (bottom-up) order
 
 /** The browser decode. Injectable because node has none of this, and
  *  the pins drive the cache rather than the DOM. */
@@ -192,7 +221,7 @@ export async function preloadTextureArchive(archive, { decode = decodePng } = {}
     try {
       const bytes = await _load(entry.fileName);
       if (!bytes || !bytes.byteLength) continue;
-      _decoded.set(key, await decode(bytes));
+      _decoded.set(key, toColor32(await decode(bytes)));   // H4: into the port's color32 contract at the door, never at the upload sites
       done++;
     } catch (e) {
       console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
@@ -201,7 +230,11 @@ export async function preloadTextureArchive(archive, { decode = decodePng } = {}
   return done;
 }
 
-/** The SYNC read the upload path uses. Null means "draw the classic". */
+/** The SYNC read the upload path uses, as a COLOR32 (`{ colors, width,
+ *  height }`, rows bottom-up) - the shape `getColor32` returns, so the
+ *  two arms in scenes/dataPipeline.js can write `swap ?? t.getColor32(...)`
+ *  and upload either without knowing which it got. Null means "draw the
+ *  classic". */
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo') {
   if (!textureReplacementEnabled()) return null;
   return _decoded.get(textureKey(archive, record, frame, map)) ?? null;
@@ -209,7 +242,10 @@ export function decodedTexture(archive, record, frame = 0, map = 'Albedo') {
 
 export const decodedTextureCount = () => _decoded.size;
 
-/** Test seam: place an already-decoded image without touching the DOM. */
+/** Test seam: place an already-decoded image without touching the DOM.
+ *  Takes a decoder's `{ width, height, data }` and crosses the SAME
+ *  door production does, so a pin driven through it sees the bytes the
+ *  GL would see. */
 export function _setDecodedForTests(archive, record, frame, map, image) {
-  _decoded.set(textureKey(archive, record, frame, map), image);
+  _decoded.set(textureKey(archive, record, frame, map), toColor32(image));
 }

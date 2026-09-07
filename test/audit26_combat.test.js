@@ -174,12 +174,22 @@ test('F038: the acquittal refills; release keeps its own floor, named as such', 
 test('F040: a falling watchman bleeds, like every other falling enemy', () => {
   const cg = src('scenes/cityGuards.js');
   const arm = cg.slice(cg.indexOf('if (g.ai.landedFall > 0'));
-  assert.ok(arm.slice(0, 1600).includes('hitEffects?.showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]);'),
-    'ShowBloodSplash(0, position) on every fall past the threshold');
+  // AUDIT 62 F20: at the guard's TRANSFORM (feet + centreOffset =
+  // idleH/2, which _centre() answers) - EnemyMotor.cs:1403-1406 passes
+  // bare `transform.position`, and the DaggerfallEnemy prefab centres
+  // its controller on the transform (m_Center 0) while
+  // SetupDemoEnemy.cs:98-115 moves only controller.center. The clip
+  // above stays at the feet: :1409 rings it at FindGroundPosition().
+  assert.ok(arm.slice(0, 2600).includes('hitEffects?.showBloodSplash(0, g.ai._centre());'),
+    'ShowBloodSplash(0, transform.position) on every fall past the threshold');
+  assert.equal(arm.slice(0, 2600).includes('showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]])'), false,
+    'not at the feet - that was the pre-F20 reading');
+  assert.ok(arm.slice(0, 2600).includes('SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]'),
+    'and the FallDamage clip DOES ring at the ground');
   // the sibling pool has done this since CH3 - one law, both pools
   const xf = src('scenes/exteriorFoes.js');
   const xarm = xf.slice(xf.indexOf('if (f.ai.landedFall > 0'));
-  assert.ok(xarm.slice(0, 900).includes('hitEffects?.showBloodSplash(0,'));
+  assert.ok(xarm.slice(0, 2000).includes('hitEffects?.showBloodSplash(0, f.ai._centre());'));
 });
 
 test('F206: a damaging fall in a dungeon flashes the screen', () => {
@@ -212,7 +222,12 @@ test('F052: a landed player arrow thuds and splashes, at the real impact point',
       basics: { bloodIndex: 3 }, isClass: false, careerIndex: 0, skills: 0,
       maxHealth: 30, health: 30, stats: { strength: 50, agility: 50, luck: 50 },
     },
-    ai: { feet: [7, 2, -4], yaw: 0 },
+    // AUDIT 62 F20: a DISCRIMINATING rig - the splash rides the struck
+    // foe's TRANSFORM (feet + centreOffset), so the foe must carry an
+    // offset that is not zero and not the player's 0.9, or the pin
+    // cannot tell the fixed code from the broken code. A big flyer:
+    // idle sprite 3.2, capsule halved to 1.6, transform 1.6 up.
+    ai: { feet: [7, 2, -4], yaw: 0, height: 1.6, centreOffset: 1.6 },
   };
   const log = [];
   let i = 0;
@@ -227,11 +242,14 @@ test('F052: a landed player arrow thuds and splashes, at the real impact point',
       say: () => {}, rolls,
     });
   assert.ok(dmg > 0, 'the shot lands');
-  // the enemy-side hit sound (:562-567) rings at the target
+  // the enemy-side hit sound (:562-567) rings at the target's feet
   assert.deepEqual(log[0], ['sound', [7, 2, -4]]);
-  // ...and the splash is at that SAME transform origin, NOT [1, 1, 1]
-  assert.deepEqual(log[1], ['blood', 3, [7, 2, -4]]);
+  // ...and the splash is at the struck foe's TRANSFORM, which
+  // DaggerfallMissile.cs:680-687 hands WeaponManager.cs:571 - the idle
+  // sprite's centre, feet + centreOffset - and NOT the arrow tip.
+  assert.deepEqual(log[1], ['blood', 3, [7, 2 + 1.6, -4]]);
   assert.notDeepEqual(log[1][2], [1, 1, 1], 'the arrow tip is not the impact position');
+  assert.notDeepEqual(log[1][2], [7, 2, -4], 'nor are the feet - the transform is half a sprite up');
   // ordering: sound and blood come BEFORE the pain voice and the
   // knockback, as WeaponDamage has them. MT-iv: the knockback rides
   // the host's own damage door (damageFoe with the player's feet), so

@@ -199,10 +199,22 @@ export class BankPurchaseWindow {
   }
 
   /** VerticalScrollBar.Update (:101-130) off the host's hover seam -
-   *  `e.buttons & 1` is the port's read of GetMouseButton(0). */
+   *  `e.buttons & 1` is the port's read of GetMouseButton(0).
+   *
+   *  AUDIT 62 F24: ...and never on the hosts' (-1,-1) SENTINEL. This
+   *  window IS `scenes/worldModes.js`'s interior overlay, whose hover
+   *  seam answers a pointer off the letterboxed panel with that
+   *  fabricated pair (`nativePanel.js`'s pointToNative returns null
+   *  there). It is not a position: unguarded it is bar-local -76 and
+   *  SetScrollIndex flings the price list to row 0, where DFU's Update
+   *  drags off `ScreenToLocal(MousePosition)` - a real cursor, which
+   *  clamps to the LAST page instead. The FRAME is skipped, never the
+   *  latch: `release()`, which the host delivers on pointerup, is what
+   *  ends the drag. Same arm as `ui/listPicker.js`, the shape this bar
+   *  was copied from, and its three siblings. */
   hover(vx, vy, e = null) {
     this.syncScrollBar();
-    if (this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
+    if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy)) this.syncScrollBar();
   }
 
   /** Update's else arm (:123-129): the button came up, the latch drops. */
