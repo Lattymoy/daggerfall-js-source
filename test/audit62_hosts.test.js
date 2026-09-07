@@ -348,20 +348,25 @@ test('AUDIT 62 F29: a flash in flight is killed at the door, not paid out on the
 });
 
 test('AUDIT 62 F29: the sky controller carries the door and both hosts latch the edge around modes.frame', () => {
+  // main's AUDIT 61 (PR #61) landed the same wiring while this lane ran;
+  // the lane's own latch was dropped for it at integration. What this
+  // pin holds is the POSITION of the two edges, which is the law: the
+  // entering edge inside the modal block (the mode flips inside
+  // modes.frame), the leaving edge above sky.use (the first line that
+  // would tick a frozen flash and light it).
   assert.match(src('src/scenes/shared.js'), /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \},/,
     'createSkyController publishes the transition door');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = src(h);
-    assert.match(s, /const inside = \(modes\?\.mode \?\? 'exterior'\) !== 'exterior';[\s\S]{0,200}sky\.setInside\(inside\);/,
-      `${h}: the same isPlayerInside predicate the guard pool is handed, held as an EDGE`);
     const modal = s.indexOf('if (modes.frame(dt, now)) {');
-    const entering = s.indexOf('_skyEnterExit();', modal);
+    const entering = s.indexOf('if (!skyInside) { skyInside = true; sky.setInside(true); }', modal);
     const closes = s.indexOf('\n    }\n', modal);
-    const leaving = s.indexOf('_skyEnterExit();', closes);
+    const leaving = s.indexOf('if (skyInside) { skyInside = false; sky.setInside(false); }', closes);
     const use = s.indexOf('sky.use(');
     assert.ok(modal > 0 && entering > modal && entering < closes,
       `${h}: the entering edge is read INSIDE the modal block - the mode flips inside modes.frame`);
     assert.ok(leaving > closes && leaving < use,
       `${h}: and the leaving edge on the frame that fell through, before anything ticks or draws the sky`);
+    assert.equal(s.includes('_skyEnterExit'), false, `${h}: one latch, not two`);
   }
 });

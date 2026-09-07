@@ -244,28 +244,32 @@ its routine intact and paid out the rest of its burst on the first
 exterior frame after the visit, from the position the player stood at
 before entering. The mod never shows that.
 
-Landed:
+Landed - and landed TWICE. While this lane ran, main's own AUDIT 61
+(the two mods, PR #61) closed the same hole: `createSkyController`
+(`src/scenes/shared.js`) publishes `setInside(inside) { dynamic?.setInside
+(inside); }` beside `onAmbientEffect` and `lightningLight`, and both
+walkable hosts hold a `skyInside` latch read on two edges. At
+integration the lane's own latch (`_skyEnterExit`, read inside the modal
+block and again immediately after it) was dropped for main's, which is
+the same law in a different place:
 
-- **The door.** `createSkyController` (`src/scenes/shared.js`) publishes
-  `setInside(inside) { dynamic?.setInside(inside); }` beside
-  `onAmbientEffect` and `lightningLight`, so a host can reach the
-  runtime's handler at all.
-- **The edge, on both sides of `modes.frame`.** `worldModes` exposes no
-  enter/exit callback and the mode FLIPS inside that call, so the hosts
-  hold a `_skyInside` latch and read it in two places: at the top of the
-  modal block (the entering edge, after the flip) and immediately after
-  the block for the frame that fell through (the leaving edge, before
-  anything below ticks or draws the sky). Reading it only before the
-  call would miss the exit by a frame - and that is exactly the frame on
-  which the exterior block would tick the frozen routine and light it.
-  The predicate is `(modes?.mode ?? 'exterior') !== 'exterior'`, the same
-  `isPlayerInside` latch the guard pool is handed, because the mod binds
-  the dungeon transitions to the same handler.
+- **The entering edge** is `if (!skyInside) { skyInside = true;
+  sky.setInside(true); }` at the top of the modal block - after
+  `modes.frame` flipped the mode, since `worldModes` exposes no
+  enter/exit callback.
+- **The leaving edge** is `if (skyInside) { skyInside = false;
+  sky.setInside(false); }` in the exterior frame, immediately above
+  `sky.use(...)` - the first line that would tick the frozen routine and
+  light it. That is the frame `modes.frame` answered false on, so the
+  sky learns the exit before anything ticks or draws it, which is the
+  property the lane's second read was there for.
 
 Pinned in `test/audit62_hosts.test.js`: the mod's own `LightningFlash`
 kept in flight across a visit with no ticks is still lit on the way out,
 and `stopAll` - the transition event's teardown - is what makes it null;
-plus the seam and the two edge positions in both hosts.
+plus the seam and the two edge POSITIONS in both hosts (inside the modal
+block; above `sky.use`). `test/dynamicSkies.test.js` pins the two edge
+lines' text.
 
 ## AUDIT 62 F30-F35 - six pins that restated the port (2026-09-07)
 
