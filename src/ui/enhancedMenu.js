@@ -880,7 +880,7 @@ function paneEnhanced(body) {
     + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
   live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
     'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
-    + 'field, a finely stepped sunrise and sunset, clouds that follow the weather to the horizon and '
+    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
     + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
     + 'driven by the wind, rather than across the screen, arriving and clearing with the front - a '
     + 'sprinkle one day, a downpour the next - instead of switching on and off; and the prototype\u2019s grass, a million '

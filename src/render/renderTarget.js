@@ -18,16 +18,17 @@
 // what viewport to restore, this file never asks GL.
 
 /** A 2D colour target: one RGBA8 texture on one framebuffer, no
- *  depth. `filter` NEAREST or LINEAR; `wrap` REPEAT for a map that
- *  tiles (the sky map's azimuth), CLAMP_TO_EDGE otherwise. */
-export function createRenderTarget(gl, width, height, { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE' } = {}) {
+ *  depth. `filter` NEAREST or LINEAR; `wrap` (or `wrapS` / `wrapT`
+ *  apart) REPEAT for an axis that tiles - the sky map's azimuth -
+ *  CLAMP_TO_EDGE otherwise. */
+export function createRenderTarget(gl, width, height, { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE', wrapS = wrap, wrapT = wrap } = {}) {
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[filter]);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[filter]);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrap]);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[wrap]);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrapS]);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[wrapT]);
   gl.bindTexture(gl.TEXTURE_2D, null);
   // the framebuffer is created here and ATTACHED on the first draw path
   // (`withTarget`): creation binds no framebuffer, by the upload law

@@ -10,6 +10,7 @@ import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';
 import { weatherSunlightScale } from '../world/weather.js';
 import { CloudNoise } from '../render/cloudNoise.js';   // VC2: the noise volumes' slice viewer - ?noise=shape|detail&z=&ch=&tiles=
+import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome - ?clouds=off|lo|hi
 
 const params = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -30,6 +31,10 @@ if (dynamicOn) {
   }
 }
 if (!dynamicOn) sky.retro = retroFor(location.search);   // ES1e: the lab shows what the game shows
+// VC3: the volumetric clouds over the dome, as the game draws them; built on the first frame
+const cloudsDoor = params.get('clouds');
+let clouds = null;
+if (!dynamicOn && cloudsDoor !== 'off') sky.cloudsExternal = true;
 const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
@@ -79,9 +84,16 @@ function frame() {
   sky.fogColor = sky.clearColor;
   gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.CULL_FACE); gl.enable(gl.DEPTH_TEST);
-  sky.draw(Number($('yaw').value) * Math.PI / 180, Number($('pitch').value) * Math.PI / 180, 65 * Math.PI / 180, w / h);
+  const yaw = Number($('yaw').value) * Math.PI / 180, pitch = Number($('pitch').value) * Math.PI / 180;
+  sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
+  if (!dynamicOn && cloudsDoor !== 'off') {
+    clouds ??= new VolumetricClouds(gl, cloudsDoor in CLOUD_QUALITY ? cloudsDoor : 'default', [0, 0, w, h]);
+    clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, still ? 0 : 1 / 60, sky.state.drift ?? [0, 0], 0);
+    clouds.update([0, 0, w, h]);
+    clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
+  }
   for (const id of ['hour', 'day', 'yaw', 'pitch', 'fog']) $(id + 'V').textContent = $(id).value;
-  window.__skyReady = texturesPending === 0;   // DS1: the mod's frame is ready once its textures are
+  window.__skyReady = texturesPending === 0 && (!clouds || clouds.sweeps > 0);   // DS1: the mod's frame is ready once its textures are; VC3: and the clouds' map once marched
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

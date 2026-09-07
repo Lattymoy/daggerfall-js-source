@@ -749,6 +749,11 @@ export class EnhancedSkyRenderer {
     // Mac: "remove the pixelated sky look"): off by default, `?sky=retro`
     // the door back. The host sets it through retroFor, the one door.
     this.retro = null;
+    // VC3: with the volumetric clouds on the lane, the dome's own two
+    // noise decks stand down (cover 0 to the shader); the state keeps
+    // the row's cover for every other reader (the moonlight, the deck
+    // the ground takes until VC4 replaces it).
+    this.cloudsExternal = false;
   }
 
   /** The frame's state (skyState). Cheap: numbers into fields. */
@@ -794,7 +799,7 @@ export class EnhancedSkyRenderer {
     gl.uniform4f(u.uMoonB, s.secunda.dir[0], s.secunda.dir[1], s.secunda.dir[2], s.secunda.radius);
     gl.uniform3fv(u.uMoonAColor, s.masser.color); gl.uniform3fv(u.uMoonBColor, s.secunda.color);
     gl.uniform1f(u.uMoonAVis, s.masser.vis); gl.uniform1f(u.uMoonBVis, s.secunda.vis);
-    gl.uniform1f(u.uCloudCover, s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);
+    gl.uniform1f(u.uCloudCover, this.cloudsExternal ? 0 : s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);   // VC3: the decks stand down under the volumetric clouds
     gl.uniform1f(u.uTime, s.seconds); gl.uniform2f(u.uWind, s.wind[0], s.wind[1]);
     gl.uniform2f(u.uDrift, s.drift?.[0] ?? s.wind[0] * s.seconds, s.drift?.[1] ?? s.wind[1] * s.seconds);   // WIND2
     gl.uniform1f(u.uFogMix, this.fogMix);

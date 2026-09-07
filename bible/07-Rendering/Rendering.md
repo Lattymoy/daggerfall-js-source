@@ -236,6 +236,12 @@ directory by `test/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
+  two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
+  with a short light march, driven by the eased weather row, a per-weather
+  profile eased on the same clock and the one drift integral; marched into a
+  sky-space hemisphere map a stripe per frame and composited over the dome by
+  transmittance (`?clouds=off|lo|hi`).
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when

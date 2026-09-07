@@ -500,7 +500,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
     assert.match(s, /if \(!skyInside\) \{ skyInside = true; sky\.setInside\(true\); \}/, `${host}: InteriorTransitionEvent on the modal edge (AUDIT 61)`);
     assert.match(s, /if \(skyInside\) \{ skyInside = false; sky\.setInside\(false\); \}/, `${host}: ExteriorTransitionEvent before the sky’s frame`);
     assert.match(s, /isEnhanced\(\) && !sky\.dynamic \? strobe : 1/, `${host}: one lightning under the mod - the strobe stands down (AUDIT 61)`);
-    assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
+    assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1 \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
     assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\)\);/, `${host}: the flash on the light channel`);
     assert.match(s, /if \(sky\.pixelSnow\) precipOpts\.pixelSnow = sky\.pixelSnow;/, `${host}: the pixel snow`);
     // the flash composes AFTER the lanterns are stored
