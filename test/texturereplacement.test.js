@@ -98,14 +98,30 @@ test('texture: bytes NEVER throw - a broken pack costs that texture', async () =
 test('texture: decode-ahead fills the SYNC cache, per archive', async () => {
   on();
   clearTextureReplacements();
-  const img = { width: 2, height: 2, data: new Uint8Array(16) };
+  // ROAD-H H4: the decoder's `{ width, height, data }` crosses ONE door
+  // on the way in and what the cache holds is a COLOR32 - `colors`, the
+  // field renderer.uploadTexture reads, with the rows the way up
+  // getColor32 writes them. The identity assertions this pin used to
+  // make were what let a whole-file swap of the wrong shape sit here
+  // green while the first swapped record threw at the GL.
+  // The raster is NON-UNIFORM by row, or the conversion this pin is
+  // here to see would be invisible: a uniform image survives any row
+  // order. Top row first, the way a browser decode hands it over.
+  const img = { width: 2, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255, 4, 4, 4, 255]) };
   setTextureReplacements(['003_5-0.png', '004_1-0.png'], async () => new Uint8Array([1]));
   // nothing decoded until an archive is actually loaded
   assert.equal(decodedTexture(3, 5, 0), null);
 
   assert.equal(await preloadTextureArchive(3, { decode: async () => img }), 1,
     'only THIS archive decodes - the other pack file is left alone');
-  assert.equal(decodedTexture(3, 5, 0), img);
+  const got = decodedTexture(3, 5, 0);
+  assert.deepEqual({ width: got.width, height: got.height }, { width: 2, height: 2 });
+  assert.ok(got.colors && got.colors.length === 16, 'a color32, not a decoded PNG');
+  // ...and in getColor32's order, row 0 the picture's BOTTOM row
+  // (baseImageFile.js:123 / BaseImageFile.cs:250; TextureReader.cs:266
+  // hands GetColor32 straight to SetPixels32, so DFU never converts).
+  assert.deepEqual([...got.colors], [3, 3, 3, 255, 4, 4, 4, 255, 1, 1, 1, 255, 2, 2, 2, 255],
+    'the door reverses the decoded rows');
   assert.equal(decodedTexture(4, 1, 0), null, 'archive 4 has not been asked for yet');
 
   // idempotent: a second pass re-decodes nothing
@@ -130,10 +146,10 @@ test('texture: decode-ahead fills the SYNC cache, per archive', async () => {
 test('texture: a new pick does not inherit the old pick\'s pixels', async () => {
   on();
   clearTextureReplacements();
-  const first = { width: 1, height: 1, data: new Uint8Array(4) };
+  const first = { width: 1, height: 1, data: new Uint8Array([9, 9, 9, 255]) };
   setTextureReplacements(['003_5-0.png'], async () => new Uint8Array([1]));
   await preloadTextureArchive(3, { decode: async () => first });
-  assert.equal(decodedTexture(3, 5, 0), first);
+  assert.deepEqual([...decodedTexture(3, 5, 0).colors], [9, 9, 9, 255]);
   // clear must drop the DECODED cache too, or swapping packs shows the
   // previous pack's art for anything the new one does not cover
   clearTextureReplacements();

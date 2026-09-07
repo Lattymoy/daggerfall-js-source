@@ -35,6 +35,7 @@ import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { CREDITS } from '../src/ui/credits.js';
 import { textureStoreKey } from '../src/scenes/dataSource.js';
 import { textureEntry } from '../src/systems/textureReplacement.js';
+import { createSeasonReskin } from '../src/world/seasonReskin.js';
 import { Renderer } from '../src/render/renderer.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 
@@ -273,18 +274,15 @@ test('SIB1 (AUDIT 62 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid
   // host answers `refresh` with a TEARDOWN, so it must take the same
   // filter or it rebuilds a world the mod does not change by one texel.
   const built = new Map();
-  let reskin = false;
+  // ROAD-H H3: world.js's seam, verbatim - the collector's own markStale
+  // (world/seasonReskin.js), which is the filter this pin is about.
+  const reskin = createSeasonReskin();
   const state = { season: SEASONS.Summer };
   const helper = new SeasonHelper({
     currentSeason: () => state.season,
     recordCount: async () => 33,
     load: async (prefix) => fullSet(prefix, 33, 1),
-    // world.js's seam, in its shape: stale install AND a managed batch
-    refresh: () => {
-      for (const p of built.values()) {
-        if (p._seasonsGen !== helper.generation && p.batches.some((b) => helper.manages(b.archive))) { reskin = true; return; }
-      }
-    },
+    refresh: () => reskin.markStale(helper, built),
     warn: () => {},
   });
   // a desert pixel, built before any install: nature archive 503, and
@@ -292,12 +290,12 @@ test('SIB1 (AUDIT 62 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid
   built.set('0,0', { _seasonsGen: 0, batches: [{ archive: 503 }, { archive: 182 }] });
   assert.equal(await helper.apply(false), true, 'the Summer install runs (it manages nothing)');
   assert.equal(helper.generation, 1);
-  assert.equal(reskin, false, 'nothing the mod manages stands here, so nothing is torn down');
+  assert.equal(reskin.pending, false, 'nothing the mod manages stands here, so nothing is torn down');
   state.season = SEASONS.Fall;
   assert.equal(await helper.apply(false), true);
   assert.equal(helper.manages(503), false, '500-503 are in no season\'s set');
   assert.equal(helper.manages(504), true, 'Fall took 504 over');
-  assert.equal(reskin, false, 'and the desert grid is still not torn down at the Fall turn');
+  assert.equal(reskin.pending, false, 'and the desert grid is still not torn down at the Fall turn');
   // a temperate pixel built UNDER the Fall install, on 504
   built.set('1,0', { _seasonsGen: helper.generation, batches: [{ archive: 504 }] });
   state.season = SEASONS.Winter;
@@ -306,7 +304,7 @@ test('SIB1 (AUDIT 62 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid
   // mod has EVER managed, so the pixel still carrying 504 does refresh
   assert.deepEqual(managedArchivesForSeason(SEASONS.Winter), [505, 507, 509]);
   assert.equal(helper.manages(504), true, 'ever managed, not managed now');
-  assert.equal(reskin, true, 'the pixel on 504 stands on an older install and IS re-applied');
+  assert.deepEqual(reskin.take(built), ['1,0'], 'the pixel on 504 stands on an older install and IS re-applied - and it alone');
 });
 
 // ═══ the door: LZ4 blocks ═══════════════════════════════════════════════
@@ -761,9 +759,14 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(world, /seasons\.tick\(\)/, 'RefreshSeasonAfterLoad the frame after');
   assert.match(world, /const seasonsGen = seasons\?\.generation \?\? 0;/, 'AUDIT 61: the install is read where the lookups read it');
   assert.match(world, /_seasonsGen: seasonsGen,/, 'a pixel remembers the install it was built under');
-  assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskinPending = true;/, 'AUDIT 61: a pixel published across an install asks for its own re-skin');
-  assert.match(world, /p\._seasonsGen !== seasons\.generation && p\.batches\.some\(\(b\) => seasons\.manages\(b\.archive\)\)\) \{ _reskinPending = true/,
-    'AUDIT 62 F4: refresh tears down only what stands on an older install AND carries a batch on an archive the mod manages');
+  // ROAD-H H3: the pixel published across an install marks ITS OWN key,
+  // and the seam is the collector's markStale - the filter itself
+  // (older install AND a batch on an archive the mod has ever managed,
+  // AUDIT 62 F4) lives in world/seasonReskin.js, where it is executed
+  // by the pins rather than matched as text.
+  assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskin\.mark\(key\);/, 'AUDIT 61: a pixel published across an install asks for its own re-skin - ROAD-H H3: for its key alone');
+  assert.match(world, /refresh: \(\) => _reskin\.markStale\(seasons, built\),/,
+    'AUDIT 62 F4 / ROAD-H H3: refresh marks only what stands on an older install AND carries a batch on an archive the mod manages');
   // the pick and the boot registration
   const ds = read('src/scenes/dataSource.js');
   assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');

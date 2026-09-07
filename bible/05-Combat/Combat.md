@@ -1009,3 +1009,196 @@ something cheap and mechanical rather than by care: a lint rule and a
 neighbouring call site. **When a slice's premise is "this thing has no
 home yet", check before writing the home, because that premise is the
 one most often wrong in a codebase this size.**
+
+## ROAD-H H1 - THE ENEMY ARROW ORIGIN (2026-09-07)
+
+AUDIT 62 fixed where an enemy archer's shaft *goes* (F21: the target's
+transform) and recorded that where it *comes from* was still a guess.
+Both pools loosed from `feet + 1.2` — `dungeonContext.js` and
+`exteriorFoes.js`, the same constant written twice.
+
+`GetAimPosition` (`DaggerfallMissile.cs:513-555`) has three terms for a
+non-player arrow, and the port had none of them:
+
+```csharp
+Vector3 aimPosition = caster.transform.position;          // :521
+if (isArrow) {
+    adjust = caster.transform.forward * 0.6f;              // :534
+    if (casterController) adjust.y += casterController.height / 3;   // :537
+    aimPosition += adjust;
+}
+```
+
+- `caster.transform.position` for an enemy is the idle sprite's
+  **centre**, `feet + centreOffset` (`SetupDemoEnemy.cs:103-115` moves
+  the *controller's* centre under BOTTOM justification and never the
+  transform) — the same reading AUDIT 62 landed for the aim point.
+- `transform.forward` is `[sin(yaw), 0, cos(yaw)]`, the motor's own
+  convention (`enemyMotor.yawOf = atan2(dx, dz)`, and its walk builds
+  `dir2d` exactly so).
+- `casterController.height` is the **capsule** height — halved for a
+  flyer, floored at 1.6 — not the sprite's.
+
+One constant cannot be both ends of that. A giant bat (capsule 1.6,
+transform 1.6) looses at **2.13**; a rat (capsule 1.6, transform 0.45)
+at **0.98**. The port's 1.2 shot a metre under the bat and over the rat,
+and no shaft anywhere leaned forward out of the body at all.
+
+The law is `enemyTargets.enemyArrowOrigin(ai)`, beside `targetAimPoint`,
+and **both pools call it** — the loose point cannot now drift apart per
+host the way the aim point had. The non-arrow enemy cast is untouched:
+`GetAimPosition` adds the lean only inside `if (isArrow)`, so a spell
+still leaves the bare transform (AUDIT 62 F21, in `enemyCasting.js`).
+
+## ROAD-H H1b - THE CROUCH DIP (2026-09-07)
+
+`GetAimDirection` (`DaggerfallMissile.cs:557-589`):
+
+```csharp
+aimDirection = (predictedPosition - caster.transform.position).normalized;
+if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player
+    && gm.PlayerMotor.IsCrouching)
+    aimDirection += Vector3.down * 0.05f;                  // :584-585
+```
+
+Two teeth. **The dip lands after the normalise and nothing renormalises
+it** — `DoMissile` stores the vector as it stands (`:470`) and the
+flight is `direction * MovementSpeed * Time.deltaTime` (`:293`), so a
+dipped shaft is a hair longer as well as lower; the port's flights step
+the same way, so the length carries for free. And the gate is
+`PlayerMotor.IsCrouching` — the **latched crouch state**
+(`PlayerMotor.cs:132-136` over `isCrouching`), not the live capsule. A
+swimming player is 0.9 tall too and draws no dip, which is why the flag
+rides *beside* `playerHeight` rather than being derived from it.
+
+`sensesContext` carries `playerCrouching` the way AUDIT 62 F23 routed
+`playerHeight`, and all four hosts fill it from `player.crouching`. The
+dungeon host takes it as a `drawFoes` argument (its senses context is
+built inside the draw) and both of its mounts pass it.
+
+`arrowAimDirection(casterTransform, aimPoint, …)` is the one body. Note
+what it takes: **the bare transform**, not the offset loose point.
+`GetAimDirection` subtracts `caster.transform.position` (`:581`) where
+`GetAimPosition` returns the leaned origin — DFU's two functions do not
+share an origin, and neither do these.
+
+## ROAD-H H1c - THE PLAYER'S OWN ARROW ORIGIN (2026-09-07)
+
+The player arm of the same function (`DaggerfallMissile.cs:540-550`):
+
+```csharp
+adjust = (gm.MainCamera.transform.rotation * -caster.transform.up) * 0.11f;
+var right = gm.MainCamera.transform.right * 0.15f;
+if (!gm.WeaponManager.ScreenWeapon.FlipHorizontal) adjust += right;
+else                                               adjust -= right;
+```
+
+The player object never pitches — only its camera does — so
+`caster.transform.up` is world up and the first term is **0.11 along
+minus the camera's own up**. That tilts *back* with the pitch: it is not
+a world-space `-Y` drop, and the difference is visible the moment the
+player looks up. The second is 0.15 to the bow hand, mirrored under
+`FlipHorizontal` (Controls/Handedness == 1, `StartGameBehaviour :269`).
+
+Every host loosed from the bare eye. The fix is
+`spellcast.playerArrowOrigin(eye, lookDir)`, which rebuilds the camera
+basis from the look direction the host already carries — for a
+yaw/pitch camera with no roll, `right = Cross(worldUp, forward)` and
+`up = Cross(forward, right)` *are* the camera's, and are what both
+`cam.yaw`/`cam.pitch` and the view matrix's first two columns hold.
+
+**It is applied at the two arrow SPAWN SEAMS**, not at the four hosts'
+loose sites: DFU runs `GetAimPosition` inside the missile (`:471`), so
+`ArrowFlight.fire` and `dungeonContext.fireArrow` apply it when
+`fromPlayer`, and no host can forget it. An enemy shaft arrives with its
+own origin already applied and is not offset twice.
+
+## ROAD-H H2 - THE AREA-OF-EFFECT SWEEP (2026-09-07)
+
+`DoAreaOfEffect` (`DaggerfallMissile.cs:477-510`) is
+
+```csharp
+Physics.OverlapSphereNonAlloc(position, ExplosionRadius, aoeBuffer,
+                              layerMaskDefault, QueryTriggerInteraction.Ignore);   // :481
+```
+
+with `ExplosionRadius = 4.0` (`:38`). An OverlapSphere tests
+**colliders**, and every DFU body wears a `CharacterController` capsule.
+So a target is caught when the sphere overlaps its capsule: distance
+from the blast to the capsule's **inner axis segment** `[feet + r,
+feet + h - r]`, `r = 0.45`, against `ExplosionRadius + r`.
+
+The port measured one **point** against the bare radius — the foe's
+capsule centre in `sweepFoes`, and `playerFeet + 0.9` in
+`hostMagic.explodeAt`. That is short of DFU's catch by a whole body
+radius at every rim, and it misses outright any foe whose flank is
+inside the blast while its centre is not: a foe 4.3 out is hit in DFU
+and was missed here. On the player it was also the *standing*
+half-capsule applied to every stance — half a metre wrong crouched, a
+metre and a half wrong mounted.
+
+`spellcast.sphereOverlapsCapsule(pos, radius, feet, height)` is the one
+body of that arithmetic, at whatever sphere radius the caller measures
+with. It is the same law AUDIT 62's review round put in
+`missileHitsCapsule` — including Unity's collapse of a sub-2r capsule to
+a sphere — so `missileHitsCapsule` is now a *call* to it at
+`MISSILE_COLLIDER_RADIUS` rather than a second copy.
+
+Every caller of `sweepFoes` was checked before it changed in place: both
+of them (`explodeAt`'s AreaAtRange blast and the release frame's
+AreaAroundCaster) are `DoAreaOfEffect`, at `:401` and `:280-282`
+respectively, so both take the new measure. The player's live height is
+threaded into `explodeAt` from every caller, including the enemy
+AreaAroundCaster arm that reaches it through the shared cast executor —
+so the dungeon's enemy half and both above-ground pools carry it.
+
+## ROAD-H REVIEW ROUND - THE TWO UNPINNED CALL SITES (2026-09-07)
+
+The review round found no defect in the three laws above, and two pins
+that could not tell whether their **call sites** were still wired. Both
+were source-text needles that stopped short of the thing they meant to
+hold, so a revert at the seam left the whole suite green.
+
+**H1b's target term.** `GetAimDirection` gates the dip on three things
+(`DaggerfallMissile.cs:584`):
+
+```csharp
+if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player && gm.PlayerMotor.IsCrouching)
+    aimDirection += Vector3.down * 0.05f;   // :585
+```
+
+The middle term is only observable where a foe can select a foe, which
+is the exterior encounter pool — the dungeon arm passes a literal
+`true` legitimately, its own foe-target arm being the deferred item.
+The pool wired it correctly, but the needle read only as far as
+`arrowAimDirection(enemyTransformPoint(f.ai), aim,` and never entered
+the option bag, so hardcoding `targetIsPlayer: true` there — which
+would dip every shaft on the street whenever the player happened to
+duck — was invisible.
+
+**H2's producers.** The live-capsule thread has two links: the consumer
+that hands `playerHeight` to `castEnemySpell`, and the producer that
+keeps the latch live (`_lastPlayerHeight = senses.playerHeight ??
+CAPSULE_HEIGHT` in the exterior tick, `lastPlayerHeight = playerHeight`
+in the dungeon frame loop). Only the consumers were pinned, and their
+spelling keeps matching when the producer is deleted. With the producer
+gone both latches sit at the standing default forever and the enemy
+`AreaAroundCaster` blast measures its `OverlapSphere` (`:481`) against a
+1.8 capsule for a crouched (0.9) or mounted (2.6) player — the exact
+defect H2 exists to close, and the one half of it the behavioural
+`explodeAt` pin cannot reach, since that test calls `explodeAt` directly
+with an explicit height.
+
+Both are now **driven** rather than spelled. `test/roadh_missiles.test.js`
+stands a headless exterior encounter pool (every seam stubbed, the spawn
+chain never entered, so no ARENA2 is wanted) with one hand-built foe on
+its shoot frame, and reads what the pool's own call site hands the two
+laws: a shaft loosed at a FOE while the player crouches comes back
+exactly `[0, 0, 1]` and a shaft at the crouching player comes back with
+`-0.05`; and a tick at `playerHeight` 0.9 followed by one at 2.6 carries
+each of those into the blast seam in turn, so the latch is proved live
+rather than defaulted. The dungeon host is a whole scene rather than a
+pool, so its frame-loop write stays a spelling pin — but the exterior
+producer's behavioural drive holds the shared law it mirrors.
+
+No source line changed in this round.

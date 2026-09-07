@@ -28,6 +28,7 @@
 // The loose folders are read only per prefix.
 
 import { readUnityBundle } from '../formats/unityBundle.js';
+import { toColor32Order } from '../formats/color32Order.js';   // ROAD-H H4: the flip moved to the shared door M-TEX takes too
 import { decodePng } from './textureReplacement.js';
 import { SEASONS_MOD, PREFIX_FOLDER, filesForPrefix } from './seasonsIliacBay.js';
 
@@ -142,37 +143,31 @@ async function seasonsBundle() {
   return _seasonsBundle;
 }
 
-/**
- * AUDIT 62 F26: rows reversed - a top-down RGBA raster (what a PNG
- * decodes to, and what `decodeTexture2D` hands back) in the port's
- * COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
- * `BaseImageFile.getColor32` produces (baseImageFile.js:123,
- * BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
- * as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:4-5, :1723).
- * In DFU the mod's asset is a Unity Texture2D, whose pixels are
- * bottom-up like every Texture2D the classic reader builds, so its
- * flats and the classic ones agree; here the seasonal record entered
- * through a PNG-order door and every seasonal tree, rock and plant
- * drew vertically mirrored under BB_VS (renderer.js:279-282, v=0 =
- * image bottom). The flip belongs at THIS door: `decodeTexture2D` and
- * `decodePng` keep the PNG raster order each states as its contract,
- * and the port's upload order is reached here, once, per texture.
- */
-function toColor32Order(image) {
-  const { width, height, data } = image;
-  const row = width * 4;
-  if (data.length !== row * height) throw new Error(`seasons: ${width}x${height} carries ${data.length} bytes`);
-  const out = new Uint8Array(data.length);
-  for (let y = 0; y < height; y++) out.set(data.subarray(y * row, (y + 1) * row), (height - 1 - y) * row);
-  return { width, height, data: out };
-}
+// AUDIT 62 F26: rows reversed - a top-down RGBA raster (what a PNG
+// decodes to, and what `decodeTexture2D` hands back) in the port's
+// COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
+// `BaseImageFile.getColor32` produces (baseImageFile.js:123,
+// BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
+// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1739).
+// In DFU the mod's asset is a Unity Texture2D, whose pixels are
+// bottom-up like every Texture2D the classic reader builds, so its
+// flats and the classic ones agree; here the seasonal record entered
+// through a PNG-order door and every seasonal tree, rock and plant
+// drew vertically mirrored under BB_VS (renderer.js:277-282, v=0 =
+// image bottom). The flip belongs at THIS door: `decodeTexture2D` and
+// `decodePng` keep the PNG raster order each states as its contract,
+// and the port's upload order is reached here, once, per texture.
+// ROAD-H H4: `toColor32Order` itself now lives in
+// formats/color32Order.js, because M-TEX's loose-file override needs
+// the very same conversion at its own door and two copies of a flip
+// is how one of them ends up flipped twice.
 
 /**
  * SeasonHelper.LoadTexturesFromMod(prefix): every texture whose file
  * name starts with the prefix, loaded and decoded, as
  * `{ name, width, height, image }` where `image` is
  * `{ width, height, data }` RGBA in getColor32 (bottom-up) order - the
- * order the hosts upload it in (see toColor32Order above). The bundle
+ * order the hosts upload it in (see formats/color32Order.js). The bundle
  * is asked first, over ITS manifest's file list, as the mod does; the
  * loose folders answer when there is no bundle. Never throws: one bad
  * texture is skipped with a warning, the way `Mod.GetAsset` returning

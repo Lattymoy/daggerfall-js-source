@@ -183,15 +183,23 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
     'the season rebuild must not sweep loose objects');
   // The pixels stay in state.loaded ("built or building") - releasing
   // them would let the next crossing list them a second time.
-  const tick = world.slice(world.indexOf('function tickSeason()'), world.indexOf('function tickSeason()') + 1800);
+  // ROAD-H H3: the window is the whole function (it grew with the
+  // per-key collector), not a byte count that silently stops covering
+  // the assertions below.
+  const tick = world.slice(world.indexOf('function tickSeason()'), world.indexOf('\n  }\n', world.indexOf('function tickSeason()')));
   assert.doesNotMatch(tick, /state\.release/, 'the re-skin released the pixels it is about to rebuild');
   assert.match(tick, /queue\.push\(\.\.\.rebuild\)/, 'the torn-down pixels must be queued back');
   // ...and it waits for a build in flight: buildPixel publishes only at
   // its very end, so tearing down a key that has no entry yet frees
   // nothing and orphans everything the finished build made (the hazard
   // pump re-checks for after its own await, AUDIT 24).
-  assert.match(tick, /if \(!_reskinPending \|\| building\) return;/,
+  assert.match(tick, /if \(!_reskin\.pending \|\| building\) return;/,
     'the re-skin must not tear down a pixel whose textures are still crossing');
+  // ROAD-H H3: the keys come out of the collector, not out of `built`.
+  // The classic flip marks every key (markAll); the mod's refresh marks
+  // only the pixels RefreshLoadedNatureBatches would have re-applied.
+  assert.match(tick, /const keys = _reskin\.take\(built\);/,
+    'the re-skin rebuilds the keys the refresh marked, not the whole grid');
   assert.match(world, /^\s*tickSeason\(\);$/m, 'nothing calls the season poll on the frame');
   // A fast travel is where the calendar jumps weeks: straighten the
   // season BEFORE the destination pixel builds, and take the quiet
@@ -296,6 +304,16 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
   assert.ok(arm > 0 && arm < teardown,
     'the hold must be armed while the player still has a pixel to name');
+  // ROAD-H H3: and armed only when the player's OWN pixel is one of the
+  // keys going down. The refresh is per key now, so a re-skin that
+  // leaves him standing takes no ground from under him - holding the
+  // motor and re-anchoring the fall there would be a stall and a
+  // swallowed landing for nothing. (The whole-key condition, not just
+  // the assignment: matching the assignment alone let the guard be
+  // deleted with the suite green.)
+  assert.match(tick.slice(0, teardown),
+    /if \(walkMode && playerSpawned && keys\.includes\(`\$\{state\.current\.x\},\$\{state\.current\.y\}`\)\) _seasonHoldKey =/,
+    'the hold is armed only when the player\'s own key is among the keys going down');
   assert.match(world, /if \(_seasonHoldKey !== null && \(built\.has\(_seasonHoldKey\) \|\| \(!building && !queue\.length\)\)\) \{\s*\n\s*player\.spawn\(player\.pos\[0\], player\.pos\[1\], player\.pos\[2\]\);\s*\n\s*_seasonHoldKey = null;/,
     'the release must wait for the pixel and re-anchor the fall (and never wedge)');
   assert.match(world, /const _seasonHeld = _seasonHoldKey !== null;/);
@@ -373,7 +391,7 @@ test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the 
   // down in a `finally` so a failed build cannot switch the frame's
   // season off for the rest of the session.
   const tick = world.slice(world.indexOf('function tickSeason() {'));
-  assert.match(tick.slice(0, tick.indexOf('\n  }')), /^function tickSeason\(\) \{\n(\s*\/\/[^\n]*\n)*\s*if \(_seasonStraightening\) return;[^\n]*\n\s*if \(refreshSeason\(\)\) _reskinPending = true;/,
+  assert.match(tick.slice(0, tick.indexOf('\n  }')), /^function tickSeason\(\) \{\n(\s*\/\/[^\n]*\n)*\s*if \(_seasonStraightening\) return;[^\n]*\n\s*if \(refreshSeason\(\)\) _reskin\.markAll\(\);/,
     'the frame poll stands down FIRST - above the refreshSeason that would otherwise mutate the cache');
   const tp = world.slice(world.indexOf('async function _teleportToPixel'));
   const core = tp.slice(0, tp.indexOf('\n  }'));

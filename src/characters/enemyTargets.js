@@ -223,6 +223,97 @@ export function targetAimPoint(target, playerFeet, playerHeight = CAPSULE_HEIGHT
   return [a.feet[0], a.feet[1] + (a.centreOffset ?? (a.height ?? CAPSULE_HEIGHT) / 2), a.feet[2]];
 }
 
+/** ROAD-H H1: GetAimPosition's ENEMY ARROW arm
+ *  (DaggerfallMissile.cs:528-539) - "Offset up so it comes from same
+ *  place LOS check is done from". */
+export const ARROW_ORIGIN_FORWARD = 0.6;      // :534, caster.transform.forward * 0.6f
+export const ARROW_ORIGIN_HEIGHT_DIVISOR = 3; // :537, adjust.y += casterController.height / 3
+
+/** `caster.transform.position` for a foe - feet + centreOffset, the
+ *  idle sprite's centre (AUDIT 62 F21's reading of SetupDemoEnemy.cs
+ *  :103-115). GetAimDirection measures FROM this (DaggerfallMissile.cs
+ *  :581) even for an arrow, which leaves from the offset point below -
+ *  DFU's two functions do not share an origin, and neither do these. */
+export function enemyTransformPoint(ai) {
+  if (!ai?.feet) return null;
+  return [ai.feet[0], ai.feet[1] + (ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2), ai.feet[2]];
+}
+
+/**
+ * ROAD-H H1 - where a non-player archer's shaft LEAVES ITS BOW, one
+ * law for both foe pools (DaggerfallMissile.cs:521-551):
+ *
+ *     Vector3 aimPosition = caster.transform.position;   // :521
+ *     if (isArrow) {
+ *         adjust = caster.transform.forward * 0.6f;       // :534
+ *         if (casterController) adjust.y += casterController.height / 3;   // :537
+ *         aimPosition += adjust;
+ *     }
+ *
+ * Three terms, and the port had none of them: both archer sites loosed
+ * from a hardcoded `feet + 1.2` - a guess in the PLAYER's scale, with
+ * no forward lean at all.
+ *
+ *   - `caster.transform.position` for an enemy is the idle sprite's
+ *     CENTRE, feet + centreOffset (SetupDemoEnemy.cs:103-115 moves the
+ *     controller's centre under BOTTOM justification and never the
+ *     transform; enemyAnchor / EnemyAI._centre). A giant bat's is 1.6,
+ *     a rat's 0.45.
+ *   - `transform.forward` is [sin(yaw), 0, cos(yaw)] - the motor's own
+ *     convention (enemyMotor.yawOf = atan2(dx, dz), and its walk
+ *     builds `dir2d` exactly so).
+ *   - `casterController.height` is the CAPSULE height (EnemyAI.height,
+ *     enemyAnchor.enemyControllerHeight), not the sprite's: a flyer's
+ *     is halved and everything is floored at 1.6.
+ *
+ * The non-arrow enemy cast is the BARE transform (AUDIT 62 F21 landed
+ * that in enemyCasting) - this offset is the arrow's alone.
+ */
+export function enemyArrowOrigin(ai) {
+  if (!ai?.feet) return null;
+  const h = ai.height ?? CAPSULE_HEIGHT;
+  const centre = ai.centreOffset ?? h / 2;
+  return [
+    ai.feet[0] + Math.sin(ai.yaw ?? 0) * ARROW_ORIGIN_FORWARD,
+    ai.feet[1] + centre + h / ARROW_ORIGIN_HEIGHT_DIVISOR,
+    ai.feet[2] + Math.cos(ai.yaw ?? 0) * ARROW_ORIGIN_FORWARD,
+  ];
+}
+
+/** ROAD-H H1b: "Enemy archers must aim lower to compensate for
+ *  crouched player capsule" - DaggerfallMissile.cs:583-585. */
+export const ARROW_CROUCH_DIP = 0.05;
+
+/**
+ * ROAD-H H1 + H1b - GetAimDirection's enemy arm for an ARROW
+ * (DaggerfallMissile.cs:570-586):
+ *
+ *     aimDirection = (predictedPosition - caster.transform.position).normalized;
+ *     if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player
+ *         && gm.PlayerMotor.IsCrouching)
+ *         aimDirection += Vector3.down * 0.05f;
+ *
+ * TWO teeth. The dip lands AFTER the normalisation and NOTHING
+ * renormalises it: DoMissile stores the vector as-is (:470) and the
+ * flight is `transform.position += direction * MovementSpeed *
+ * Time.deltaTime` (:293), so a dipped shaft is a hair longer as well as
+ * lower. And the gate is `PlayerMotor.IsCrouching` - the latched crouch
+ * STATE (PlayerMotor.cs:132-136 over `isCrouching`), not the live
+ * capsule: a swimming player is also 0.9 tall and draws no dip.
+ *
+ * `casterTransform` is what C# subtracts here (:581) - the BARE
+ * transform, not the offset loose point GetAimPosition returns - so
+ * this takes the two apart at the call site, as DFU keeps them apart.
+ */
+export function arrowAimDirection(casterTransform, aimPoint, { targetIsPlayer = false, playerCrouching = false } = {}) {
+  if (!casterTransform || !aimPoint) return null;
+  const dx = aimPoint[0] - casterTransform[0], dy = aimPoint[1] - casterTransform[1], dz = aimPoint[2] - casterTransform[2];
+  const l = Math.hypot(dx, dy, dz) || 1;
+  const dir = [dx / l, dy / l, dz / l];
+  if (targetIsPlayer && playerCrouching) dir[1] -= ARROW_CROUCH_DIP;   // :584-585, after the normalise, NOT renormalised
+  return dir;
+}
+
 /** The dead-target cull's health read (:317, `target.Entity
  *  .CurrentHealth`): the player's rides the context; without it the
  *  player is presumed standing. */

@@ -353,3 +353,54 @@ later - a second on - it follows the sun down.
 Eleven mutations were driven on a scratch copy of
 `src/systems/dynamicSkies.js` for these six; eleven dead. No production
 line changed - the port already matched the mod on all six laws.
+
+## ROAD-H H7b - LIGHTNINGFLASH'S UNDRIVEN TIME SCALE (2026-09-07)
+
+AUDIT 62's ui-pins lane left a note: the port's `LightningFlash` carries
+a `timeScale` option, and nothing in the suite ever built one at
+anything but 1. F31 (above) drove both rolls at their boundary and said
+so in passing - "`timeScale` is 1 on the only construction path" - which
+is exactly the hole: at 1, `0.5 / t`, `0.5 * t` and a bare `0.5` are the
+same expression, and so are `flashDuration * t` and `flashDuration`.
+Five of the mod's own arithmetic sites were therefore pinned only in the
+case where the scale disappears.
+
+The option is real and it is the mod's. `LightningFlash.cs` reads
+`Time.timeScale` at five places:
+
+| mod line | the arithmetic |
+|---|---|
+| `:52` | `if (Random.value < (0.5f / Time.timeScale))` - the 50% gate |
+| `:55` | `if (Random.value < (0.33f / Time.timeScale))` - the double-flash gate |
+| `:61` | `StartCoroutine(FlashRoutine(flashDuration * Time.timeScale))` |
+| `:77` | `float halfDuration = flashDuration * Time.timeScale / 2f;` |
+| `:79` | `yield return new WaitForSeconds(0.1f * Time.timeScale);` |
+
+Two DIVIDES and three MULTIPLIES, and the port carries all five. It is
+Unity's own frame scale, not Daggerfall's x12 game clock (that one is
+`BLBSkybox.cs`'s `x0.0833`, pinned by F30): it is 1 while the game runs
+and `GameManager.PauseGame` takes it to 0, so the mod's own reading is
+"an ambient effect fires half the time at normal speed, and a flash
+lasts a fifth of a second of REAL time however the frame clock is
+scaled".
+
+`test/roadh_residue.test.js` drives the class at `timeScale: 2`, where
+the mod's numbers come apart: the first gate sits at 0.25 (0.25 does not
+fire, 0.24 does, and the SAME 0.25 fires at timeScale 1 - which is the
+whole content of the divide), the second at 0.165, the single routine
+runs `0.2 * 2 = 0.4` s and the double two 0.2 s halves around a 0.2 s
+gap. Five mutants on a scratch copy - either literal with its divide
+dropped, and each of the three multiplies - five dead. No production
+line changed; the port already matched the mod at every one.
+
+### Review round (2026-09-07)
+
+The 0.2 s flash duration is set at `BLBSkybox.cs:183`
+(`lightningFlash.flashDuration = 0.2f;` inside the lightning-effect
+setup), not `:184` - `:184` is the blank line before the setup's
+`Debug.Log`. The lane's new pin cited `:184` twice while the production
+comment beside it (`src/systems/dynamicSkies.js:738`) already read
+`:183`; the two test cites and the Testing.md row are corrected to `:183`
+and now agree with the port. No behaviour and no other cite moved: the
+five `LightningFlash.cs` lines (`:52`, `:55`, `:61`, `:77`, `:79`)
+re-derived clean.

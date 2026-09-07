@@ -14,8 +14,13 @@ import { decodedTexture, preloadTextureArchive } from '../systems/textureReplace
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
 
-/** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
-export function createDataPipeline({ renderer, arch, palette }) {
+/** ROAD-H H4: `fetch` defaults to the one data seam every scene uses
+ *  (shared.js's fetchBytes) and is a parameter for the same reason
+ *  `loadMagicRegistries` and `ensureAudio` take one - so a pin can drive
+ *  the upload arms over a texture it built itself, in a container with
+ *  no ARENA2. No host passes it.
+ *  @param deps {{renderer, arch: Arch3dFile, palette: DFPalette, fetch?: (name: string) => Promise<Uint8Array>}} */
+export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
   const texturePromises = new Map();
 
@@ -30,7 +35,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
   let flatsPromise = null;
   const loadFlats = () => (flatsPromise ??= (async () => {
     try {
-      flats = new FlatsFile().load(await fetchBytes('FLATS.CFG'), 'FLATS.CFG');
+      flats = new FlatsFile().load(await fetch('FLATS.CFG'), 'FLATS.CFG');
     } catch (e) {
       console.warn('[flats] FLATS.CFG unavailable; flats keep no caption and people no portrait', e);
       flats = new FlatsFile();
@@ -44,7 +49,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     if (!texturePromises.has(archive)) {
       texturePromises.set(archive, (async () => {
         const t = new TextureFile();
-        t.load(await fetchBytes(texName(archive)), texName(archive), palette);
+        t.load(await fetch(texName(archive)), texName(archive), palette);
         // M-TEX: the replacement PNGs for this archive decode HERE,
         // where there is already an await and the result is already
         // cached per archive. uploadRecord is synchronous and runs off

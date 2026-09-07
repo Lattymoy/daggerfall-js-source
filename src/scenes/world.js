@@ -31,6 +31,7 @@ import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: 
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
+import { createSeasonReskin } from '../world/seasonReskin.js';   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
 import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
@@ -294,7 +295,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // on an OLDER install that ALSO carries a batch on an archive the mod
   // has ever managed (AUDIT 62 F4 - that archive filter is DFU's own,
   // vanillaAtlasByArchive; its refresh is free, this host's is a
-  // teardown). Inert until `seasonsReady` says the player has the mod.
+  // teardown), and only THOSE pixels: the mod re-applies per BATCH, so
+  // the seam collects the qualifying KEYS and the driver rebuilds them
+  // alone (ROAD-H H3). Inert until `seasonsReady` says the mod is here.
+  const _reskin = createSeasonReskin();   // ROAD-H H3: the frame's pending re-skin, declared ABOVE the seam that marks into it - the boot's forced apply can land during any await between here and the frame loop, and a collector still in its temporal dead zone would throw inside seasonsReady's catch and leave the mod silently inert
   let _fourSeason = seasonValue(dateFromClassicMinutes(worldMinutes()));
   let seasonsActive = false;
   let seasonsReady = Promise.resolve(false);
@@ -306,11 +310,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentSeason: () => seasonValue(dateFromClassicMinutes(_seasonStraightening ? _seasonDay * MINUTES_PER_DAY : worldMinutes())),
     recordCount: async (archive) => (await getTexture(archive)).recordCount,
     load: (prefix) => loadSeasonsTextures(prefix),
-    refresh: () => {
-      for (const p of built.values()) {
-        if (p._seasonsGen !== seasons.generation && p.batches.some((b) => seasons.manages(b.archive))) { _reskinPending = true; return; }
-      }
-    },
+    refresh: () => _reskin.markStale(seasons, built),
     warn: (m) => console.warn(m),
   }) : null;
 
@@ -1058,7 +1058,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cannot see a pixel that was not published yet, so this build asks
     // for the re-skin itself - the same publish-time re-check the
     // terrain ring class runs below.
-    if (seasons && seasonsGen !== seasons.generation) _reskinPending = true;
+    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(key);   // ROAD-H H3: ITS key, not the grid
     // ROADS 25: a pixel that was already in flight when the network landed
     // was painted without it and arrives AFTER the sweep. It goes straight
     // back for a rebuild - the worker has the network by now, since the
@@ -1295,7 +1295,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
     return true;
   }
-  let _reskinPending = false;
+  // (the frame's pending re-skin is `_reskin`, declared with the mod's seam above)
   // ROAD-Ar (R1), closeout: the teleport's SEASON LATCH. DFU runs
   // TeleportToCoordinates (DaggerfallTravelPopUp.cs:333) and RaiseTime
   // (:344) inside one Unity frame with nothing between them, so the
@@ -1332,20 +1332,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _seasonHoldKey = null;
   function tickSeason() {
     if (_seasonStraightening) return;   // the FRAME's poll only (see above)
-    if (refreshSeason()) _reskinPending = true;
+    if (refreshSeason()) _reskin.markAll();   // the CLASSIC flip re-skins every pixel: the ground atlas, the tiles and the climate swaps all turn (ROAD A1)
     // A pixel whose textures are still crossing must PUBLISH before its
     // key can be torn down - the same hazard pump re-checks for after
     // its await (buildPixel publishes only at its very end, so a
     // teardown against a key that has no entry yet frees nothing and
     // the finished build orphans everything it made). The flip waits a
     // frame; the season turns twice a game year.
-    if (!_reskinPending || building) return;
-    _reskinPending = false;
-    const keys = [...built.keys()];
+    if (!_reskin.pending || building) return;
+    const keys = _reskin.take(built);   // ROAD-H H3: every key on the classic flip, the MARKED ones alone on the mod's refresh - RefreshLoadedNatureBatches asks only the batches whose archive it has EVER managed, and re-applies every one it asks, FORCED (SetMaterial's early return keys on the archive INDEX - DaggerfallBillboardBatch.cs:73, :283-284, :360 - which a seasonal atlas swap does not change, so an unforced walk would refresh nothing). The archive filter is the reference's; the install-generation filter is this host's, a re-apply being free there and a teardown here
+    if (!keys.length) return;   // ...and every marked key had left the grid: nothing standing to re-apply
     // ...and the hold is armed BEFORE the ground goes, on the pixel
     // the streamer says the player is standing on (the same pixel the
-    // nearest-first rebuild below puts back first).
-    if (walkMode && playerSpawned) _seasonHoldKey = `${state.current.x},${state.current.y}`;
+    // nearest-first rebuild below puts back first) - and only if that pixel is one of the ones going down, since a re-skin that leaves it standing takes no ground from under him.
+    if (walkMode && playerSpawned && keys.includes(`${state.current.x},${state.current.y}`)) _seasonHoldKey = `${state.current.x},${state.current.y}`;
     for (const key of keys) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by, { collectLoose: false });
@@ -2613,7 +2613,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  gameMinutes defaulted to 0 - froze each foe's detection on its
    *  first roll for the rest of its life. */
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
-    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height,   // AUDIT 62 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height, playerCrouching: !!player.crouching,   // AUDIT 62 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant   // ROAD-H H1b: PlayerMotor.IsCrouching, the LATCHED state an enemy archer's dip reads (DaggerfallMissile.cs:584) - a swimming player is 0.9 tall too and takes none
     // MT-ii: THE SHARED CANDIDATE LIST - DFU's
     // ActiveGameObjectDatabase.GetActiveEnemyBehaviours (EnemySenses
     // .cs:741-749), which is ONE database across every enemy in the
@@ -3100,7 +3100,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // teardown below is a real unload (CollectLooseObjects and all).
     refreshSeason(arriveMinutes ?? worldMinutes());
     _seasonStraightening = true;   // ...and no frame polls it back off the live clock until the destination stands
-    _reskinPending = false;   // ...and the frame's own re-skin has nothing left to re-skin
+    _reskin.clear();   // ...and the frame's own re-skin has nothing left to re-skin
     _seasonHoldKey = null;    // ...nor a held motor: the spawn below re-anchors it anyway
     _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     // AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1620-1644,
@@ -4485,6 +4485,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the DUNGEON's chain and nowhere else, so KeyR outdoors did
       // nothing at all - and with it comes CanRest's town half: the
       // camping refusal, the Vagrancy charge and the watch.
+      // S40: the key is R (InputManager.cs:997, SetupDefaults) and
+      // GameManager's dispatch (GameManager.cs:534-537) carries no
+      // scene gate at all; this ladder's gate is the U43 flag still
+      // standing over these lines. ROAD-H H5: a byte-identical SECOND
+      // arm stood fourteen lines below, unreachable behind this one,
+      // and was deleted - this is the arm that fires.
       if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // P-slice: the classic quicksave bindings (F9 save, F11 load -
       // InputManager.SetupDefaults), above ground at last.
@@ -4496,10 +4502,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // I2: through the registry, so M is rebindable like every other
       // action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // S40: Rest (R - InputManager.SetupDefaults). GameManager's
-      // dispatch has no scene gate at all; this ladder's is the U43
-      // flag still standing over these lines.
-      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // I3: Escape with no overlay opens the pause screen; it closes
       // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
       // decision - the classic OPTN00I0 panel, or the enhanced menu in
@@ -7428,7 +7430,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-            arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it
+            arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon });   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           }
           continue;
         }

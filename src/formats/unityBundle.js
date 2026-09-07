@@ -395,8 +395,11 @@ export const TEXTURE_FORMAT = Object.freeze({ Alpha8: 1, RGB24: 3, RGBA32: 4, AR
  * bundle consumer, NOT a claim about what its callers want: the port
  * uploads textures in getColor32 (bottom-up) order, so a caller that
  * feeds one of these to the renderer converts at its own door - see
- * `toColor32Order` in `systems/seasonsIliacBayAssets.js`, which is
- * where the seasons mod's textures are turned back over. Mip 0 only.
+ * `toColor32Order` in `formats/color32Order.js`, the one place that
+ * conversion lives, which BOTH such doors import:
+ * `systems/seasonsIliacBayAssets.js` (the seasons mod's textures) and
+ * `systems/textureReplacement.js` (M-TEX's loose-file swap). Mip 0
+ * only.
  * @param {object} tex the Texture2D value
  * @param {(path:string, offset:number, size:number) => Uint8Array} resource
  *   resolves the bundle's `.resS` streams for a texture that streams

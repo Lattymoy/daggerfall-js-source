@@ -38,7 +38,7 @@
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
-  MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
+  MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
   missileHitsCapsule,   // AUDIT 62 F21 (review): the SphereCast contact test
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
@@ -285,14 +285,14 @@ export function createPlayerMagic({
   // excludeFoe carries the enemy AreaAroundCaster's ignoreCaster -
   // DFU's caster-position AoE skips the caster itself
   // (DoAreaOfEffect(position, true), DaggerfallMissile.cs:477-495).
-  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null } = {}) {
+  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
       applySpellToFoe(spell, casterLevel, t, caster);
     }
-    if (playerFeet) {
-      const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
-      if (d <= EXPLOSION_RADIUS) applySpellToPlayer(spell, casterLevel, caster);
+    // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by the whole 0.45 body radius in every stance.
+    if (playerFeet && sphereOverlapsCapsule(pos, EXPLOSION_RADIUS, playerFeet, playerHeight)) {
+      applySpellToPlayer(spell, casterLevel, caster);
     }
   }
 
@@ -568,7 +568,7 @@ export function createPlayerMagic({
       if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
         const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell.rangeType === 4) {
-          explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster());
+          explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         showImpactFlash(m, impact);   // F033: DFU flashes on ANY wall hit, AoE or not
         retireMissile(m);
@@ -588,7 +588,7 @@ export function createPlayerMagic({
           // height - the shared engine's copy of the dungeon's arm.
           if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {
             const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster);
+            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster, { playerHeight });   // ROAD-H H2
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);
             showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
             retireMissile(m);
@@ -600,7 +600,7 @@ export function createPlayerMagic({
         if (f.dead) continue;
         const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + (f.ai.height ?? 1.8) / 2 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];   // REVIEW 2026-09-05: the foe's own capsule centre
         if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
+          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight });   // ROAD-H H2
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
