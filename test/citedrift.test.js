@@ -498,6 +498,29 @@ test('CD3: Port-Status section 2 row identifiers resolve to the rows they descri
 /** `<file> ... :<line>` cited from a comment, and what must be on it. */
 const EX = 'src/scenes/exterior.js';
 const SOURCE_CITES = [
+  // ═══ ECV1 review (2026-09-07): THE POOL CITES ═══
+  //
+  // Five `cityGuards.js` / `exteriorFoes.js` cites in the pools' own
+  // comments were stale on main and were bumped POSITIONALLY by ECV1's
+  // re-resolution - a wrong number moved by the right offset is still
+  // wrong. Resolved by content here, so the next wave that moves either
+  // pool goes red instead of rotting them again.
+  ['test/roadg_pools.test.js', /skipped by cityGuards\.js:(\d+) and spliced/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['test/roadg_pools.test.js', /spliced\s*\n\s*\/\/ at :(\d+) in that same pass/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/world.js', /removeGuard \(cityGuards\.js:(\d+)-\d+\) gives it/,
+    'src/scenes/cityGuards.js', /^\s*function removeGuard\(g\) \{$/],
+  ['src/scenes/world.js', /\(cityGuards\.js:(\d+)\) and spliced out at the end of it/,
+    'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
+  ['src/scenes/world.js', /and spliced out at the end of it \(:(\d+)\)/,
+    'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
+  ['src/scenes/worldModes.js', /READ the effect list every frame \(exteriorFoes\.js:(\d+)-\d+ and/,
+    'src/scenes/exteriorFoes.js', /const _fParalyzed = entityIsParalyzed\(f\.entity\)/],
+  ['src/scenes/worldModes.js', /cityGuards\.js:(\d+)-\d+ each take `entityIsParalyzed`/,
+    'src/scenes/cityGuards.js', /const _gParalyzed = entityIsParalyzed\(g\.entity\)/],
+  ['src/scenes/cityGuards.js', /encounter pool's is \(exteriorFoes\.js:(\d+)\)\. \*\//,
+    'src/scenes/exteriorFoes.js', /^\s*return \{ foes, spawnFoe, damageFoe,/],
   ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
   ['tools/toneProbe.mjs', /`native` \(townTalk\.js:(\d+), true only/,
