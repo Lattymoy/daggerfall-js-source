@@ -183,7 +183,7 @@ the dome's own `1 - cover * 0.35`.
   looking up at noon, stars at midnight, the six weathers differ,
   thunder dark, dusk warm), shots in `/tmp/dsky-*.png`. 11/11 at
   landing, on SwiftShader.
-- `test/dynamicSkies.test.js` - 20 pins: the vendored tree is the
+- `test/dynamicSkies.test.js` - 21 pins: the vendored tree is the
   mod's; the structs, the fog law, the light curve; the apply with its
   quirks; the day parts; the moons' ladder, lengths, offsets,
   interpolation and orbits; the CPU orbit maths; the sun and
@@ -221,3 +221,135 @@ the first rows there that are not OURS: ten "the mod's own art", nine
 "PROVENANCE OPEN, Mac's ruling pending". The windmills precedent left
 textures out when they were provably classic exports; these are not
 provably that, and are not replaceable without changing the sky.
+
+## AUDIT 62 F29 (2026-09-07): the transition event gets its caller
+
+`DynamicSkies.setInside` had been ported and had no caller anywhere in
+`src/` - `grep -rn 'setInside(' src` answered with the definition and
+nothing else - so `playerInside` was never true and the mod's
+`InteriorTransitionEvent` teardown never ran.
+
+The load-bearing half is not the listener flags; it is the FLASH.
+`BLBSkybox.cs:1236-1240` subscribes the same handler to
+`OnTransitionInterior`, `OnTransitionDungeonInterior` (and the exterior
+pair to the other), and `:1247-1284` - under `pendingWeatherType ==
+WeatherType.Thunder` - calls `LightningFlashListener.Instance
+.StopListening()`, stops the coroutine, and does
+`lightningFlash.StopAllCoroutines(); lightningLight.enabled = false`.
+In the port, `LightningFlash.tick` is advanced only by the exterior
+frame's `sky.use(...)`, and both walkable hosts return out of the frame
+above that when a mode consumed it. So a flash rolled by a thunder clap
+a moment before the door neither finished nor stopped: it froze with
+its routine intact and paid out the rest of its burst on the first
+exterior frame after the visit, from the position the player stood at
+before entering. The mod never shows that.
+
+Landed - and landed TWICE. While this lane ran, main's own AUDIT 61
+(the two mods, PR #61) closed the same hole: `createSkyController`
+(`src/scenes/shared.js`) publishes `setInside(inside) { dynamic?.setInside
+(inside); }` beside `onAmbientEffect` and `lightningLight`, and both
+walkable hosts hold a `skyInside` latch read on two edges. At
+integration the lane's own latch (`_skyEnterExit`, read inside the modal
+block and again immediately after it) was dropped for main's, which is
+the same law in a different place:
+
+- **The entering edge** is `if (!skyInside) { skyInside = true;
+  sky.setInside(true); }` at the top of the modal block - after
+  `modes.frame` flipped the mode, since `worldModes` exposes no
+  enter/exit callback.
+- **The leaving edge** is `if (skyInside) { skyInside = false;
+  sky.setInside(false); }` in the exterior frame, immediately above
+  `sky.use(...)` - the first line that would tick the frozen routine and
+  light it. That is the frame `modes.frame` answered false on, so the
+  sky learns the exit before anything ticks or draws it, which is the
+  property the lane's second read was there for.
+
+Pinned in `test/audit62_hosts.test.js`: the mod's own `LightningFlash`
+kept in flight across a visit with no ticks is still lit on the way out,
+and `stopAll` - the transition event's teardown - is what makes it null;
+plus the seam and the two edge POSITIONS in both hosts (inside the modal
+block; above `sky.use`). `test/dynamicSkies.test.js` pins the two edge
+lines' text.
+
+## AUDIT 62 F30-F35 - six pins that restated the port (2026-09-07)
+
+Six of DS1's pins read the port's own constants back to themselves, or
+drove a law nowhere near the edge that decides it. No shipped
+behaviour was wrong - every value below matches the mod as it ships -
+but each of these mutations left the whole suite green, so the mod's
+numbers were free to drift out of the port unobserved. All are in
+`test/dynamicSkies.test.js`.
+
+**F30 - the timescale factor.** The three material assertions
+multiplied the parsed preset value by the IMPORTED `TIMESCALE_FACTOR`,
+so `0.0833 -> 0.08` survived. `BLBSkybox.cs:1380` ("Because game runs
+at timescale 12"), and identically :1383, :1430, :1447, is the law.
+The constant is now asserted outright and the three expectations are
+written with the literal. The outright assert is the load-bearing
+half: `near`'s 1e-6 against Sunny's `BottomClouds.Speed` of 0.00125
+catches 0.08 by 4.1e-6 but would sleep through 0.0832. `_CloudBlendSpeed`
+(:1383) is deliberately left alone - no shipped preset carries a
+`BlendSpeed` key, so it parses to 0 and any factor gives 0.
+
+**F31 - LightningFlash's two rolls, at their boundary.** Every drive
+rolled 0.1 / 0.9 / 0.7 (and the runtime's constant 0.25), all far from
+both edges, so `0.5 -> 0.6` and `0.33 -> 0.5` both survived. The
+reference is `LightningFlash.cs:52` `Random.value < (0.5f /
+Time.timeScale)` and :55 `< (0.33f / Time.timeScale)` - STRICTLY less
+than, and `timeScale` is 1 on the only construction path. Now driven at
+the edge: 0.5 does not flash and 0.49 does; 0.33 takes the SINGLE
+0.2 s routine (still lit at 0.19 s, where a double has been dark since
+0.1 s) and 0.32 takes the double, two 0.1 halves around a 0.1 gap.
+The single/double discrimination has to be made on CHARGED time - the
+frame that enters a routine is lit whatever its dt.
+
+**F32 - GetLunarPhaseLength, all eight arms.** Three were asserted, and
+the one date fixture is OneWax for both moons, so the wane arms, HalfWax
+and the default were free: `HalfWane 5 -> 4` was invisible. The whole
+ladder is deepEqualled against `BLBSkybox.cs:901-913` - Full 1, New 1,
+ThreeWane 5, HalfWane 5, OneWane 5, OneWax 6, HalfWax 6, ThreeWax 3 -
+plus `default: return 1` through `LUNAR_PHASES.None`. And the length is
+pinned through the LIVE path as well as the pure function: sixteen days
+on from the existing fixture Masser is HalfWane at moonRatio 8, day
+offset 2, and `lunarPhaseState`'s progress divides by the FIVE-day
+length - the divisor `dynamicSkiesRuntime`'s per-tick `applyLunarPhases`
+actually consumes.
+
+**F33 - GetPhaseDayOffset, its whole domain.** Five sample points stood
+here and left both sides of most band edges free, along with three
+bands (HalfWane 6-10, OneWane 11-15, HalfWax 23-28) that nothing
+drove: `<= 28 -> <= 27`, `<= 10 -> <= 9`, `<= 15 -> <= 14` and the
+subtraction constants -6, -11, -23 all survived. The 0..31 domain is
+now deepEqualled against the ladder transcribed from
+`BLBSkybox.cs:915-931`, which pins every edge, every constant and the
+`== 0 || == 16` single-day guard in one line.
+
+**F34 - ApplyOrbitCalculations' mirror arms.** The synthetic fixture
+only ever gave Masser the OneWane arm and Secunda the New one, so
+Secunda's own constants - `secundaOrbitOffset += 20f * progress`
+(:972-973) and `secundaZAngle += 20f * progress` (:997-998), 20 where
+Masser's is 15 - and Masser's `-= 5f` New arm (:969-970) had no pin at
+all. A second call with the roles swapped drives all four; the distinct
+multipliers (15 vs 20, `-20 sin` vs `-30 sin`) make each separately
+visible. The no-arm baseline `_SecundaOrbitOffset === X + 180` is
+asserted on the real date too.
+
+**F35 - the fog cadence.** "The fog colour holds for a second" compared
+two NOON frames. At noon `sunY` is ~1, so `setFogColor`'s rescaled
+smoothstep underflows to 0 in the squaring and the recomputed colour
+equals the held one to the last bit - `FOG_COLOR_INTERVAL_SECONDS`
+1.0 -> 0.3 was invisible, and nothing asserted the constant. Measured
+over the real presets, the colour only MOVES between about 15:00 and
+16:25; from 16:30 on it is saturated black, so a dusk drive would have
+gone red against correct code. The hold has its own frame now, driven
+at 15:30 -> 15:50 inside ONE day part (hour 15 is Midday, so no
+day-part arm re-applies) and on one weather word (so
+`ApplyPendingWeatherSettings`' unconditional `setFogColor` cannot forge
+the result): 20 game-minutes pass with the colour held, and 0.15 s
+later - a second on - it follows the sun down.
+`FOG_COLOR_INTERVAL_SECONDS === 1.0` is asserted beside it,
+`BLBSkybox.cs:193` "Update fog color every 1.0 seconds".
+
+Eleven mutations were driven on a scratch copy of
+`src/systems/dynamicSkies.js` for these six; eleven dead. No production
+line changed - the port already matched the mod on all six laws.

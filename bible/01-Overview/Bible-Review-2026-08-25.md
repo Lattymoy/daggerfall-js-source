@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2103`). This is the one page whose live-queue
+(`dungeonContext.js:2104`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1061-1072` opens the real talk window.
+  `:446` (B7); `worldModes.js:1075-1086` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:3741-3745` routes them). UI-Arc carries no records
+  (`worldModes.js:3755-3759` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -234,8 +234,8 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:462` (save.js:27/:444/:453 → :28/:471/:501), `:450`
-(world.js:1652 → :2409); `Quest-Arc.md:719`/`:2904`
-(worldModes.js:452 → :903); `Player-Arc.md:947` (worldModes.js:597 →
+(world.js:1653 → :2409); `Quest-Arc.md:719`/`:2904`
+(worldModes.js:453 → :903); `Player-Arc.md:947` (worldModes.js:598 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:418` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`

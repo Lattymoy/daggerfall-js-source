@@ -6,9 +6,11 @@
 // DESKTOP INPUT LANGUAGE instead of adding a second input system.
 //
 //   - Virtual stick (left half): synthesizes real KeyboardEvents for
-//     KeyW/KeyA/KeyS/KeyD (+ShiftLeft past 80% throw), so the scenes'
-//     `keys` Set, the input map, and reportInput all see ordinary
-//     keys. 8-way digital - a test-build call, not a motor change.
+//     MoveForwards/Backwards/Left/Right (+Run past 80% throw), so the
+//     scenes' `keys` Set, the input map, and reportInput all see
+//     ordinary keys. 8-way digital - a test-build call, not a motor
+//     change. AUDIT 62 F8: the CODE for each is the live binding's,
+//     read at press time (GetBinding), never a frozen default.
 //   - The right half is ONE surface with three meanings, classified
 //     by ui/touchGestures.js BEFORE anything is routed (TI1b: a drag is
 //     the look unless the finger was HELD first or the host is locked
@@ -32,15 +34,19 @@
 //               stick's half engaged no key anyway, so it is answered
 //               as the tap it was - a foe left of centre is lockable.
 //     All coordinates are CANVAS-relative (getBoundingClientRect), the
-//     space the host's unproject and the dot both speak.
+//     space the host's unproject and the dot both speak. The look and
+//     the held swipe pass the host's `paused()` first - the same
+//     predicate its mouse arms carry (InputManager.cs:487-505,
+//     PlayerMouseLook.cs:238-244); only the RELEASE is ungated.
 //   - Lock-on dot: the host projects the locked foe's chest and calls
 //     setLockDot(x, y) (or null); the layer only places a mark.
 //   - Buttons, the five that have no gesture: the DIAL (Tab, the door
-//     every combat host routes to the compass rose - PX15), JUMP
-//     (Space, held), the weapon SHEATHE (Z, held), the interaction MODE
-//     cycle (T3-touch, hosts with one), and the MENU (Escape). Synthetic
-//     keydown/keyup with BOTH e.key and e.code set (the input map
-//     routes on either). The nav row for the CLASSIC windows (arrows,
+//     the ENHANCED skin routes to the compass rose - PX15), JUMP
+//     (held), the weapon SHEATHE (ReadyWeapon, held), the interaction
+//     MODE cycle (T3-touch, hosts with one), and the MENU (Escape).
+//     Synthetic keydown/keyup with BOTH e.key and e.code set (the input
+//     map routes on either), on the ACTION's live code - an unbound
+//     action presses nothing at all. The nav row for the CLASSIC windows (arrows,
 //     Enter, Escape, +/-, a name prompt) shows itself while a classic
 //     overlay is up and no enhanced one is - an enhanced window is DOM
 //     and takes the finger directly.
@@ -49,6 +55,8 @@
 
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
 import { overlayOpen } from './enhancedOverlays.js';
+import { bindings } from './input.js';                       // AUDIT 62 F8: the live registry
+import { getBinding, getCombo } from '../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
 
 const TOUCH_LOOK_GAIN = 2.0;
 const STICK_RADIUS = 56;        // px, visual + clamp
@@ -65,10 +73,33 @@ function synth(type, code) {
   window.dispatchEvent(new KeyboardEvent(type, { code, key: KEY_NAMES[code] ?? code, bubbles: true }));
 }
 
+// AUDIT 62 F8: A TOUCH CONTROL PRESSES AN ACTION, NOT A LETTER.
+// The layer's promise is that it speaks the desktop input language;
+// the codes it spoke were the DEFAULT bindings, frozen at write time,
+// while every consumer resolves BY ACTION through the registry
+// (`held(keys, 'Jump')`, `moveHeld(keys)`, `actionOf(e)` - ui/input.js,
+// InputManager.GetKey's dual-dict fallthrough :1084). Move Jump off
+// Space in the controls window and the JUMP button fired whatever now
+// owned Space; move Run off ShiftLeft and the stick's 80% throw did
+// nothing. The reverse lookup is GetBinding (inputActions.js:301,
+// InputManager.cs:641-671) and it is exactly what the automap, rest
+// and exterior-automap windows already ask. Resolved at PRESS time, so
+// a rebind takes effect on the next touch with no re-attach.
+function codeFor(action) {
+  const b = bindings();
+  return getBinding(b, action) ?? getBinding(b, action, false);   // primary, then the secondary dict (:1084)
+}
+// A combo code ('ShiftLeft+KeyW', comboCode :1165-1177) is no key any
+// host matches: codeDown wants BOTH halves in the held Set
+// (ui/input.js), so it is pressed as its two keys - the MODIFIER
+// FIRST, so the held-first latch is up when the combo is read
+// (InputManager.cs:1695-1711) - and released key-first.
+const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
+
 /**
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
- * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?() }
+ * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?(), paused?() }
  *   - attack/tap/dial omitted on scenes without them (the fly-cam
  *     interior): a drag then only looks, a tap does nothing, and no
  *     dial button is drawn - a drawn door that opens nothing is the
@@ -108,6 +139,18 @@ export function attachTouch(canvas, hooks = {}) {
   const down = (code) => { if (!held.has(code)) { held.add(code); synth('keydown', code); } };
   const up = (code) => { if (held.has(code)) { held.delete(code); synth('keyup', code); } };
   const tap = (code) => { synth('keydown', code); synth('keyup', code); };
+  // AUDIT 62 F8: the action-shaped arms. An UNBOUND action presses
+  // NOTHING - no fall back to the default code, because a deliberately
+  // unbound action's old default very likely serves a DIFFERENT action
+  // now (setBinding steals the code, inputActions.js), and pressing it
+  // would be the same bug wearing the fix's clothes.
+  const downAction = (action) => { const c = codeFor(action); for (const k of codesOf(c)) down(k); return c; };
+  const upCode = (code, keep = null) => { for (const k of codesOf(code).reverse()) if (!keep?.has(k)) up(k); };
+  const tapAction = (action) => {
+    const ks = codesOf(codeFor(action));
+    for (const k of ks) synth('keydown', k);
+    for (const k of [...ks].reverse()) synth('keyup', k);
+  };
 
   function button(label, x, y, w, onDown, onUp) {
     const b = document.createElement('div');
@@ -122,10 +165,30 @@ export function attachTouch(canvas, hooks = {}) {
 
   // TI1: the five. The dial button exists only where a host routes
   // Tab to the rose - the same gate-by-hook rule the sword button had.
+  // Tab alone stays a literal: it is not an InputManager action
+  // (inputActions.js ACTIONS) and the hosts match `e.code === 'Tab'`.
   if (hooks.dial) button('◆', 'left:16px', 'top:16px', 48, () => tap('Tab'));
-  button('≡', hooks.dial ? 'left:72px' : 'left:16px', 'top:16px', 48, () => tap('Escape'));   // the menu: the pause window, save and load inside it
-  button('↑↑', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
-  button('Z', 'right:96px', 'bottom:16px', 52, () => down('KeyZ'), () => up('KeyZ'));   // ReadyWeapon: sheathe toggle (held-style so the per-frame edge reads it)
+  button('≡', hooks.dial ? 'left:72px' : 'left:16px', 'top:16px', 48, () => tapAction('Escape'));   // the menu: the pause window, save and load inside it
+  // AUDIT 62 F8: each held button captures the code it resolved at the
+  // press and lifts THAT one, so a rebind mid-hold cannot strand a key.
+  let jumpCode = null, sheatheCode = null;
+  // AUDIT 62 F8 (review): A CONTROL LIFTS ONLY THE KEYS NO OTHER LIVE
+  // CONTROL STILL NEEDS. The stick already released against
+  // `liveNeeds()`; the two held BUTTONS released bare, so any code they
+  // SHARE with a held stick axis was torn out from under it - and the
+  // shape is ordinary, not a self-conflicting rebind: Run is ShiftLeft
+  // by default and a combo binding (Jump = 'ShiftLeft+KeyJ') decomposes
+  // to ShiftLeft + KeyJ, which the controls window does not flag as a
+  // duplicate because it is not one. Lifting the button then killed the
+  // run, and `setStickKey`'s `cur === code` early-return meant the
+  // stick never pressed it again for the rest of the hold. DFU has no
+  // such seam to restore - one key is one key there - so the port owes
+  // the invariant its synthesis creates: the held set is the UNION of
+  // what the live controls want, and a release subtracts only its own.
+  // The code is cleared BEFORE the lift so `liveNeeds()` does not count
+  // the control that is letting go.
+  button('↑↑', 'right:16px', 'bottom:16px', 64, () => { jumpCode = downAction('Jump'); }, () => { const c = jumpCode; jumpCode = null; upCode(c, liveNeeds()); });   // jump
+  button('Z', 'right:96px', 'bottom:16px', 52, () => { sheatheCode = downAction('ReadyWeapon'); }, () => { const c = sheatheCode; sheatheCode = null; upCode(c, liveNeeds()); });   // ReadyWeapon: sheathe toggle (held-style so the per-frame edge reads it)
   if (hooks.cycleMode) {
     // T3-touch: NextInteractionMode (Steal > Grab > Info > Talk wrap,
     // verbatim order) - the phone's path to the F1-F4 modes. The
@@ -169,23 +232,77 @@ export function attachTouch(canvas, hooks = {}) {
   const gesture = createGestureRecognizer({ locked: () => !!hooks.locked?.() });
   const local = (tch) => { const r = canvas.getBoundingClientRect(); return [tch.clientX - r.left, tch.clientY - r.top, r.width]; };
 
+  // AUDIT 62 F8: the stick holds ACTIONS, and remembers the code each
+  // one resolved to, so a binding changed mid-hold releases the code it
+  // actually pressed instead of stranding it down forever.
+  const stickHeld = new Map();   // action -> the code it is holding
+  // Every key a live control still wants down: the stick's axes AND the
+  // two held buttons (see their release above). Whoever is letting go
+  // clears its own entry first, so this never keeps a key for the
+  // control that is releasing it.
+  const liveNeeds = () => {
+    const s = new Set();
+    for (const c of stickHeld.values()) for (const k of codesOf(c)) s.add(k);
+    for (const c of [jumpCode, sheatheCode]) for (const k of codesOf(c)) s.add(k);
+    return s;
+  };
+  function setStickKey(action, want) {
+    const cur = stickHeld.get(action) ?? null;
+    const code = want ? codeFor(action) : null;   // unbound -> null -> nothing is pressed
+    if (cur === code) return;
+    if (cur != null) { stickHeld.delete(action); upCode(cur, liveNeeds()); }   // a code another axis still needs stays down
+    if (code != null) { for (const k of codesOf(code)) down(k); stickHeld.set(action, code); }
+  }
+  function releaseStick() { for (const a of [...stickHeld.keys()]) setStickKey(a, false); }
+
   function setStickKeys(dx, dy, mag) {
-    const on = (code, v) => (v ? down(code) : up(code));
+    const on = (action, v) => setStickKey(action, v);
     const dead = mag < 0.25;
     // 8-way: an axis engages when its component clears tan(22.5deg)
     // (~0.414) of the other's - diagonals hold two keys.
-    on('KeyW', !dead && dy < 0 && Math.abs(dy) >= Math.abs(dx) * 0.414);
-    on('KeyS', !dead && dy > 0 && Math.abs(dy) >= Math.abs(dx) * 0.414);
-    on('KeyA', !dead && dx < 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
-    on('KeyD', !dead && dx > 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
-    on('ShiftLeft', !dead && mag >= RUN_THROW);
+    on('MoveForwards', !dead && dy < 0 && Math.abs(dy) >= Math.abs(dx) * 0.414);
+    on('MoveBackwards', !dead && dy > 0 && Math.abs(dy) >= Math.abs(dx) * 0.414);
+    on('MoveLeft', !dead && dx < 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
+    on('MoveRight', !dead && dx > 0 && Math.abs(dx) >= Math.abs(dy) * 0.414);
+    on('Run', !dead && mag >= RUN_THROW);
   }
 
+  // AUDIT 62 F7: THE PAUSE GATE THE MOUSE ARMS ALWAYS CARRIED. The
+  // mouse look returns unless the pointer is locked (a window frees it)
+  // and the RMB swing is gated on the host's overlay predicate; the
+  // finger had neither, so a drag on a canvas-drawn CLASSIC window
+  // (inventory, travel map, spellbook) swung the weapon, fired a
+  // readied spell through the M2 intercept, and banked look residual
+  // that the LookFilter paid out the moment the window closed.
+  // DFU: InputManager.cs:230-236 clears mouseX/mouseY/lookX/lookY every
+  // Update and :487-505 returns before currentActions is populated while
+  // paused, so no SwingWeapon/ActivateCenterObject is ever seen under a
+  // window; PlayerMouseLook.cs:238-244 `enableMouseLook =
+  // !GameManager.IsGamePaused; if (!enableMouseLook) return;` DROPS the
+  // frame's delta rather than banking it.
+  // The gate lives here, at the one door all three hosts share (the
+  // hosts pass the same predicate their mouse arms use). The RELEASE is
+  // never gated - a window opened mid-swing must still let go, exactly
+  // as the ungated mouseup arms do - and because the recognizer emits
+  // held:false only on the finger's lift, the gate synthesizes that
+  // release itself the moment it bites.
+  let swiping = false;   // a held=true swipe was actually delivered
   function route(events) {
+    const paused = !!hooks.paused?.();
     for (const ev of events) {
-      if (ev.type === 'look') hooks.look?.(ev.dx * TOUCH_LOOK_GAIN, ev.dy * TOUCH_LOOK_GAIN);
-      else if (ev.type === 'swipe') hooks.attack?.(ev.dx, ev.dy, ev.held);
-      else if (ev.type === 'tap') hooks.tap?.(ev.x, ev.y);
+      if (ev.type === 'look') {
+        if (!paused) hooks.look?.(ev.dx * TOUCH_LOOK_GAIN, ev.dy * TOUCH_LOOK_GAIN);   // dropped, never accumulated
+      } else if (ev.type === 'swipe') {
+        if (ev.held) {
+          if (paused) { if (swiping) { swiping = false; hooks.attack?.(0, 0, false); } continue; }
+          swiping = true;
+        } else swiping = false;
+        hooks.attack?.(ev.dx, ev.dy, ev.held);
+      } else if (ev.type === 'tap') {
+        // ungated: the hosts' activateGate already refuses it while
+        // paused (systems/activateGate.js Fact 5, InputManager.cs:486-505)
+        hooks.tap?.(ev.x, ev.y);
+      }
     }
   }
 
@@ -232,7 +349,7 @@ export function attachTouch(canvas, hooks = {}) {
       if (t.identifier === stickId) {
         stickId = null;
         stick.style.display = 'none';
-        for (const c of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft']) up(c);
+        releaseStick();   // AUDIT 62 F8: the codes it actually holds, not a frozen literal list
         // TI1b: a still, short touch on this half is a TAP - it moved no
         // key (the stick's dead zone) and it is how a foe left of centre
         // gets locked.

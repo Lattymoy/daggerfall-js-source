@@ -35,7 +35,7 @@ import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUD
 import { getPreventedRestMessage } from '../systems/restSession.js';   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
 import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
@@ -1315,7 +1315,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null, insideDungeonCastle = false, playerHeight = CAPSULE_HEIGHT } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -1343,6 +1343,17 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // the dungeon host can answer it true, and only from the block
     // the player is standing in.
     insideDungeonCastle,
+    // AUDIT 62 F23: the PLAYER's LIVE controller height. DFU reads the
+    // component off senses.Target every FixedUpdate (EnemyMotor.cs:532,
+    // :544, :562; EnemySenses.cs:896-898) and PlayerHeightChanger.cs
+    // :54-57 gives it 1.8 standing / 0.9 crouched / 2.6 mounted / 0.30
+    // swimming, with :475-478 keeping the capsule BOTTOM planted and
+    // moving the transform by heightChange/2 - so the player's transform
+    // is feet + liveHeight/2 in every stance. The port answered the
+    // standing constant everywhere, which aimed a foe's sight ray at
+    // feet + 1.50 against a crouched player DFU sees at feet + 0.75.
+    // The default keeps every headless caller exactly where it was.
+    playerHeight,
     playerEntity: playerEntity ?? entity,
   };
 }
@@ -1651,7 +1662,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:218`, the standalone host, has always had the right
+ *  `dungeon.js:220`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

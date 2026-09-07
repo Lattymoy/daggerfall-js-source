@@ -318,7 +318,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
   // ...and the PLAYER's shaft damages through the pool that owns the
   // billboard, the same `_encounter` split this host's sinks take -
-  // world.js:7022's own law, so a killed watchman still runs the crime
+  // world.js:7079's own law, so a killed watchman still runs the crime
   // and the corpse.
   assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir\)\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call
@@ -378,12 +378,21 @@ test('AUDIT39 #164: the greeting-deferred entry catches, like the two host call 
 // entity's transform origin; only the MELEE callers pass a contact
 // point (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
 // WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
+// AUDIT 62 F20: and that transform origin is NOT the foe's feet - the
+// DaggerfallEnemy prefab centres its controller on the transform
+// (m_Center 0) and SetupDemoEnemy.cs:98-115 moves only
+// controller.center, so it is the idle sprite's CENTRE, feet +
+// centreOffset. This pin used to assert the bare feet with a foe that
+// carried no offset to tell the two apart.
 // ---------------------------------------------------------------
 
 test('AUDIT39r R16: a player arrow bleeds its TARGET, not its own tip', () => {
   const foe = {
     entity: { isPlayer: false, level: 1, skills: 0, stats: { agility: 0, luck: 0 }, armor: 0, items: [], basics: { bloodIndex: 2 } },
-    ai: { feet: [3, 0, 4], yaw: 0, height: 1.8 },
+    // a big flyer: idle sprite 3.2, capsule halved to 1.6, transform 1.6
+    // up - an offset that is neither zero nor half the capsule, so the
+    // pin dies under a revert to either.
+    ai: { feet: [3, 0, 4], yaw: 0, height: 1.6, centreOffset: 1.6 },
   };
   const splashes = [];
   const dmg = playerArrowHitFoe(
@@ -396,7 +405,8 @@ test('AUDIT39r R16: a player arrow bleeds its TARGET, not its own tip', () => {
   assert.ok(dmg > 0, 'the shot landed');
   assert.equal(splashes.length, 1);
   assert.equal(splashes[0][0], 2, 'MobileEnemy.BloodIndex');
-  assert.deepEqual(splashes[0][1], [3, 0, 4], 'hitTransform.position - the target\'s own origin');
+  assert.deepEqual(splashes[0][1], [3, 1.6, 4], 'hitTransform.position - the target\'s TRANSFORM, feet + centreOffset');
+  assert.notDeepEqual(splashes[0][1], [3, 0, 4], 'not its feet');
   // the stale gloss is gone from the header with the code
   const af = src('src/combat/arrowFlight.js');
   assert.ok(!af.includes('The missile\'s\n * own position is DFU\'s impactPosition'),

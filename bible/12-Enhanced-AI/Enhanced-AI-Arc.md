@@ -16,10 +16,14 @@ the enhanced tab."
    beside Enhanced environments. DFU's own EnhancedCombatAI is the
    precedent: the port's departure from 1:1 is opt-in.
 3. **The navmesh is project-final's, ported whole.** `src/ai/navmesh.js`
-   is Mac's file byte-identical from `// Agent params` to the end; the
-   header differs only by the four-line `surfaceY` inlined verbatim from
-   project-final's terrain.js and a linter global. A change is made in
-   both repos and said in both. The ground needs no seam: buildNav's own
+   is Mac's file from `// Agent params` to the end; the header differs
+   only by the four-line `surfaceY` inlined verbatim from project-final's
+   terrain.js and a linter global. A change is made in both repos and
+   said in both - the body is pinned by DIGEST (`test/enhancedAI.test.js`,
+   AUDIT 62 F4: the old pin read only the two head lines), re-recorded
+   deliberately with the commit the change was made in. AUDIT 62 F1
+   (2026-09-07) is the first body change, made here first and owed to
+   project-final: the stacked-floor weld and the heights that ride it. The ground needs no seam: buildNav's own
    `ground` = { at(x, z), min } is what Daggerfall's Collider.heightAt is.
 4. **Triangles become his colliders, not his code.** Daggerfall's level
    is a triangle soup; his voxelizer stamps boxes and ramps.
@@ -31,7 +35,7 @@ the enhanced tab."
 
 ## ENHANCED AI 1 - the port, the voxelizer, the switch (2026-09-02)
 
-Landed: the navmesh whole (pinned byte-identical), the voxelizer (a
+Landed: the navmesh whole (pinned by digest since AUDIT 62), the voxelizer (a
 floor walks, a wall stands, a ramp within slope walks and a steeper one
 does not), a room of triangles baked end to end with a path bending
 around a wall, the switch present and off.
@@ -232,8 +236,9 @@ is hydrated without colliders (3b, by design), so `findPath` has no
 surface to sample and every waypoint sat at y = 0; a flyer moves along
 `_dir3(destination)` and never comes inside stopDistance of a point
 ten metres above or below it. The route supplies x and z now; a
-corner's y is the foe's own and the goal's is the predicted target's -
-the y classic's destination carries. And the stuck nudge asks classic's
+corner's y is the foe's own and the goal's is the one classic's own
+clear-path law builds from the predicted target position (`_aimY`; it
+took the predicted position's raw feet until AUDIT 62 F1). And the stuck nudge asks classic's
 `_fallCheck` on its own heading before it moves; a nudge that skipped
 it could side-step a foe off a ledge the nav's cells never saw.
 
@@ -276,3 +281,62 @@ real floor or the phantom one, and the motor still must not steer at
 either. Two flags with numbers: the main-thread hydrate (0.2-0.7 s,
 avoidable once the 3b pin stops reading hydrated heights) and doors
 baked closed (4b). Nothing ran in a real dungeon.
+
+### AUDIT 62 F1 - the routed final leg aims where classic aims (2026-09-07)
+
+(The enhanced-MOTOR lens's F1; batch 1's F1 was the stacked-floor weld
+in the navmesh.) Adaptation 3 says the route bends x and z and the goal
+takes "the y classic's destination carries". That was true when it was
+written and stopped being true on 2026-09-05, when PR #55/#57 rebuilt
+`GetDestination` in TRANSFORM space: the classic destination is the
+predicted target position lifted to the target's transform, plus
+`targetController.height * 0.5f` for a flyer, a levitator or the
+slaughterfish (EnemyMotor.cs:543-544), minus `(targetController.height -
+originalHeight) / 2` for a grounded foe (:559-564), converted back to
+feet once. The routed leg still took the predicted position's RAW FEET.
+
+Those two are the same number only when a foe's capsule equals its idle
+sprite. The dungeon host spawns `height = enemyControllerHeight(idleH,
+behaviour)` - halved for a flyer, floored at 1.6 - and `centreOffset =
+idleH/2`, so they part for exactly the flyers and the sub-1.6 sprites: a
+bat aimed 0.9 m low, a rat 0.3, an Aquatic 0.2; an orc and a giant were
+unaffected, which is why nothing showed. The 0.9 is not cosmetic - a
+flyer steers along `_dir3(destination)`, and the floor-lift clause only
+arms on a NEGATIVE heading, so a bat that had touched the floor (after a
+knockback, a paralysis or a landing) aimed at the player's feet, read no
+descent to correct, and never left the floor for the rest of the fight
+with the switch on. On the ground it is the out-of-sight stop measure
+(`hypot(dx, destination[1] - feet[1], dz)`) reading 0.2-0.3 m short.
+
+The fix is one law in one place: `EnemyAI._aimY(predictedFeetY)` carries
+the clear-path arm's whole vertical, the classic arm calls it, and the
+routed final leg calls it. Corners are unchanged - they still take the
+foe's own y, which is adaptation 3's actual point. The classic arm's
+behaviour is byte-identical (the search arm keeps its own tail); the
+enhanced lane's only change is that its goal is now classic's goal.
+
+Both pins had to be re-pointed first: `enhancedAI4.test.js` compared the
+goal to `_navGoal`, the port's own expression, and `audit59_enhancedai.
+test.js` asserted the literal 7.5 on a default 1.8-capsule foe - the one
+shape where the two laws agree. They now read a bat and a rat against a
+real classic `EnemyAI` in the same state and against EnemyMotor.cs's own
+numbers, and both fail on the pre-fix line.
+
+### AUDIT 62 F38 - the ARENA2 pin asserted nothing (2026-09-07)
+
+`ENHANCED AI 3 (ARENA2): Privateer's Hold bakes, and a path crosses its
+first hall` had a body of `assert.ok(true)` behind `if
+(!process.env.ARENA2_PATH) return t.skip(...)`. Without the archives it
+skipped honestly; WITH them - or with a merely stale or mistyped path,
+since the gate never checked the directory exists - it reported as a
+PASS under a title claiming a real dungeon bakes, having loaded nothing,
+baked nothing and queried no path. It was green under every mutation of
+`navmesh.js`, `navBake.js`, `navClient.js` and the host, and it was
+loudest on the one machine it was written for. The bake is still
+unwritten (this container has no ARENA2), so the pin now reports what it
+is - SKIPPED when `ARENA2_PATH` is unset or does not exist, TODO when it
+does, asserting nothing either way - with the body it owes written out
+beside it: the loader through the host's own path, `collider.addMesh
+('dungeon', ...)` as `dungeonContext.js:437` feeds it, a bake anchored at
+the entry marker, then `bake.stats.polys > 0`, every waypoint locating on
+the mesh, and the path across the first hall.

@@ -391,9 +391,9 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1076-1087,
-    // the route itself :1085), dungeonContext.js through `overlayHover`
-    // (:4649), which dungeon.js:387 and worldModes.js:6508 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1092-1103,
+    // the route itself :1101), dungeonContext.js through `overlayHover`
+    // (:4649), which dungeon.js:406 and worldModes.js:6594 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

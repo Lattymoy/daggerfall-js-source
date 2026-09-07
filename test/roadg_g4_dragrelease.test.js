@@ -43,6 +43,8 @@ import {
   SpellIconPickerWindow, ICON_PICKER_PANEL_SIZE, ICON_PICKER_SCROLLER,
 } from '../src/ui/spellIconPickerWindow.js';
 import { SpellMakerWindow } from '../src/ui/spellMakerWindow.js';
+import { ListPickerWindow } from '../src/ui/listPicker.js';           // AUDIT 62 F25
+import { BankPurchaseWindow } from '../src/ui/bankPurchaseWindow.js'; // AUDIT 62 F24
 import { ChargenFlow } from '../src/ui/chargen.js';
 import { createChargenWindow } from '../src/systems/chargenSession.js';
 import { PICK_SCROLL_RECT } from '../src/ui/chargenArt.js';
@@ -254,7 +256,7 @@ test('G4-9: BOTH windows that NEST the picker forward the release, on the class 
   assert.equal(mk.picker.scroller.draggingThumb, false, 'and the maker forwards it from its own class');
 });
 
-test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the three drags', () => {
+test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the FIVE drags', () => {
   // ROAD-C c2 flight 2 found this pair - every host's answer for a
   // pointer OFF its letterboxed panel - driving the town map's chrome as
   // though it were a position. A thumb drag that strays into the black
@@ -265,9 +267,15 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the three drags',
   // fabricated pair straight into `pickBar.update` - bar-local -60
   // against PICK_SCROLL_RECT, clamped to row 0 - so the sweep is over
   // all three now, the flow AND the wrapper every host calls.
-  // MUTANT: drop the `vy >= 0` guard from ANY of the three hovers
+  //
+  // AUDIT 62 F24/F25: and over FIVE, because the sweep stopped at "the
+  // three drags" while the SHARED list picker - the shape those three
+  // were copied from, and the window a dozen-plus classic pickers mount
+  // - never had the arm, nor did `ui/bankPurchaseWindow.js`, which was
+  // written after this review and copied the picker's unguarded line.
+  // MUTANT: drop the `vy >= 0` guard from ANY of the five hovers
   // (`ui/spellbookWindow.js`, `ui/spellIconPickerWindow.js`,
-  // `ui/chargen.js`).
+  // `ui/chargen.js`, `ui/listPicker.js`, `ui/bankPurchaseWindow.js`).
   const w = book(40);
   w.scrollIndex = 12;
   w.click(...railPoint(50));
@@ -305,6 +313,52 @@ test('G4-12: the hosts\' (-1,-1) SENTINEL never reaches ANY of the three drags',
   assert.equal(f.classScroll, 7, 'the host seam hands the pair down and it is skipped');
   win.hover(PBX + 2, PBY + 40, { buttons: 1 });
   assert.equal(f.classScroll, 7, 'and a real frame after it still drags from the LIVE anchor');
+
+  // AUDIT 62 F25: ...and the SHARED list picker, the fourth machine and
+  // the one the other three cite as their model. 40 items over the
+  // ListBox default of 9 rows, bar at native [241,59,5,82], thumb at
+  // bar-local 24.6 from scrollIndex 12; scale = 82/40 = 2.05, so a real
+  // +8px held move drags to 15. The sentinel's bar-local -60 would pull
+  // it to -17 and clamp to the top.
+  const lp = new ListPickerWindow({ items: Array.from({ length: 40 }, (_, i) => `Item ${i}`) });
+  lp.scrollIndex = 12;
+  lp.syncScrollBar();
+  const [px, py] = lp.scrollBar.rect;
+  const pspan = lp.scrollBar.thumbSpan;
+  assert.equal(Math.round(pspan.y * 10), 246);
+  assert.equal(lp.click(px + 2, py + pspan.y + 2), true, 'the bar consumes the press');
+  assert.equal(lp.scrollBar.draggingThumb, true);
+  lp.hover(px + 2, py + pspan.y + 10, { buttons: 1 });
+  assert.equal(lp.scrollIndex, 15, 'a real held move still drags the picker');
+  lp.hover(-1, -1, { buttons: 1 });
+  assert.equal(lp.scrollIndex, 15, 'and the picker ignores the fabricated point');
+  assert.equal(lp.scrollBar.scrollIndex, 15, 'the bar did not move under it either');
+  assert.equal(lp.scrollBar.draggingThumb, true, 'the latch survives the skipped frame - release() ends it');
+  lp.release();
+  assert.equal(lp.scrollBar.draggingThumb, false);
+
+  // AUDIT 62 F24: ...and the bank purchase window, the fifth, which IS
+  // `scenes/worldModes.js`'s interior overlay and takes the pair from
+  // the same seam. 30 houses over 8 rows, bar at native [154,75,7,48],
+  // thumb at bar-local 16 from scroll 10; scale = 48/30 = 1.6, so a real
+  // +8px held move drags to 15. The sentinel's bar-local -76 is -47
+  // units, clamped to row 0.
+  const market = Array.from({ length: 30 }, (_, i) => ({ buildingKey: i, meshRadius: 10 }));
+  const bp = new BankPurchaseWindow({ houses: () => market, onClose: () => {} });
+  bp.scroll = 10;
+  bp.syncScrollBar();
+  const [qx, qy] = bp.scrollBar.rect;
+  const qspan = bp.scrollBar.thumbSpan;
+  assert.equal(bp.click(qx + 3, qy + qspan.y + 1), true);
+  assert.equal(bp.scrollBar.draggingThumb, true);
+  bp.hover(qx + 3, qy + qspan.y + 9, { buttons: 1 });
+  assert.equal(bp.scroll, 15, 'a real held move still drags the price list');
+  bp.hover(-1, -1, { buttons: 1 });
+  assert.equal(bp.scroll, 15, 'and the bank window ignores the fabricated point');
+  assert.equal(bp.rows()[0].index, 15, 'the list slice did not move under it');
+  assert.equal(bp.scrollBar.draggingThumb, true, 'nor is the latch what the skip ends');
+  bp.release();
+  assert.equal(bp.scrollBar.draggingThumb, false);
 });
 
 // ═══════════════════════════════════════════════════════════════════

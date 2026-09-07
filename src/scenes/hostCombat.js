@@ -22,6 +22,7 @@ import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
+import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -468,9 +469,19 @@ export function applyDamageToNonPlayer(attacker, target, {
     // :323 PlayHitSound at the TARGET (hitSoundFor is the port's one
     // home for EnemySounds.PlayHitSound's weapon-aware clip), then
     // :325-333 the blood splash at the target's centre + height/8.
+    // AUDIT 62 F19: `bloodPos = senses.Target.transform.position +
+    // targetController.center` and only THEN `bloodPos.y +=
+    // targetController.height / 8` (EnemyAttack.cs:326-328). The
+    // capsule is BOTTOM-justified (SetupDemoEnemy.cs:55-71 moves
+    // controller.center, never the transform), so transform + center is
+    // the capsule CENTRE - feet + height/2 - and the splash sits five
+    // eighths up, which is exactly bloodCentre. This site had dropped
+    // the centre term and bled the target at its shins while its own
+    // comment named the right point; the four player-melee sites for
+    // the same DFU lines (dungeonContext.js, exteriorFoes.js,
+    // cityGuards.js) have used the shared law all along.
     audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0,
-      [at[0], at[1] + (target.ai?.height ?? 1.8) / 8, at[2]]);
+    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8));
     // :336-350 - the knockback, on the ATTACKER-class guard
     if (target.ai && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
       tEnt?.basics?.weight)) {

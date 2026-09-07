@@ -229,18 +229,30 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
     assert.ok(!s.includes(gone), `${gone} is an unneeded button and must be gone`);
   }
   assert.match(s, /if \(hooks\.dial\) button\('◆'[^\n]*tap\('Tab'\)/, 'the dial button exists only where a host routes Tab');
-  assert.match(s, /tap\('Escape'\)/, 'the menu button');
-  assert.match(s, /down\('Space'\)[^\n]*up\('Space'\)/, 'jump, held');
-  assert.match(s, /down\('KeyZ'\)[^\n]*up\('KeyZ'\)/, 'sheathe, held');
+  // AUDIT 62 F8: the four gameplay buttons press ACTIONS, not letters -
+  // the codes are the live registry's (InputManager.GetKey's dual-dict
+  // read, :1084), so a rebind moves the button with it. The literals
+  // these lines used to pin are what let the defect ship; the RESOLUTION
+  // is executed against a rebind fixture in test/audit62_touch.test.js.
+  assert.match(s, /tapAction\('Escape'\)/, 'the menu button presses the Escape ACTION');
+  // AUDIT 62 F8 (review): the held button lifts against `liveNeeds()` -
+  // the keys no OTHER live control still wants down - because a combo
+  // binding shares its modifier with the stick's Run (the fixture is in
+  // test/audit62_touch.test.js, executed both ways).
+  assert.match(s, /downAction\('Jump'\)[\s\S]{0,120}upCode\(c, liveNeeds\(\)\)/, 'jump, held, on Jump\'s live code');
+  assert.match(s, /downAction\('ReadyWeapon'\)[\s\S]{0,140}upCode\(c, liveNeeds\(\)\)/, 'sheathe, held, on ReadyWeapon\'s');
+  assert.match(s, /on\('MoveForwards',[\s\S]*on\('Run',/, 'the stick holds the four move actions and Run');
+  assert.doesNotMatch(s, /\['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft'\]/, 'and releases what it HOLDS, not a frozen literal list');
   assert.match(s, /createGestureRecognizer\(\{ locked: \(\) => !!hooks\.locked\?\.\(\) \}\)/, 'the recogniser takes the host\'s lock predicate');
   // TI1b: canvas-relative coordinates, a tap on the stick's half too, the dot offset by the canvas rect
   assert.match(s, /const local = \(tch\) => \{ const r = canvas\.getBoundingClientRect\(\);/, 'touch points are canvas-relative');
   assert.doesNotMatch(s, /innerWidth \/ 2/, 'the half split is the canvas\'s, not the window\'s');
   assert.match(s, /stickTravel < TAP_PX && \(e\.timeStamp - stickStart\) <= TAP_MS\) \{\s*\n\s*hooks\.tap\?\.\(stickOrigin\[0\], stickOrigin\[1\]\);/, 'a still short touch on the stick half is a tap');
   assert.match(s, /dot\.style\.left = `\$\{x \+ r\.left\}px`;/, 'the dot is placed in the overlay\'s space');
-  assert.match(s, /ev\.type === 'look'\) hooks\.look\?\.\(ev\.dx \* TOUCH_LOOK_GAIN/, 'look routes');
-  assert.match(s, /ev\.type === 'swipe'\) hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\)/, 'the swipe routes to the drag seam');
-  assert.match(s, /ev\.type === 'tap'\) hooks\.tap\?\.\(ev\.x, ev\.y\)/, 'the tap routes with its point');
+  assert.match(s, /if \(!paused\) hooks\.look\?\.\(ev\.dx \* TOUCH_LOOK_GAIN/, 'look routes - and AUDIT 62 F7: not under a window, where PlayerMouseLook.cs:238-244 drops the delta');
+  assert.match(s, /hooks\.attack\?\.\(ev\.dx, ev\.dy, ev\.held\);/, 'the swipe routes to the drag seam');
+  assert.match(s, /if \(paused\) \{ if \(swiping\) \{ swiping = false; hooks\.attack\?\.\(0, 0, false\); \} continue; \}/, 'a held swipe is refused under a window and the seam in flight is released');
+  assert.match(s, /hooks\.tap\?\.\(ev\.x, ev\.y\);/, 'the tap routes with its point');
   assert.match(s, /setLockDot,/, 'the dot is the host\'s to place');
   assert.match(s, /!!hooks\.overlayActive\?\.\(\) && !overlayOpen\(\)/, 'the classic nav row shows itself under a classic overlay only');
 });
@@ -252,11 +264,12 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
     assert.match(s, /\n\s*attack: \(dx, dy, held\) =>/, `${h}: the swipe hook`);
     assert.match(s, /\n\s*tap: \(x, y\) =>/, `${h}: the tap hook`);
     assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
-    assert.match(s, /dial: true,/, `${h}: routes Tab, so it draws the dial`);
+    assert.match(s, /dial: isEnhanced\(\),/, `${h}: AUDIT 62 F10 - it draws the dial only where Tab OPENS one (pixelDial refuses off the enhanced skin), not merely where the host routes Tab`);
     assert.match(s, /\(rightHeld \|\| swipeHeld\) && walkMode/, `${h}: the swipe holds the swing-settle law like the mouse button`);
     assert.match(s, /lockOn\.tick\(dt, cam, /, `${h}: the lock pays its facing every frame`);
     assert.match(s, /touch\.setLockDot\(/, `${h}: places the dot`);
     assert.match(s, /_tapArmed > 0 && --_tapArmed === 0/, `${h}: the tap is a ONE-frame press of the activate action`);
+    assert.match(s, /paused: \(\) => /, `${h}: AUDIT 62 F7 - the finger takes the same pause predicate the mouse arms carry`);
   }
   assert.match(read('src/scenes/world.js'), /const useFwd = _tapDir \?\? \[/, 'world: the tap ray replaces the centre ray');
   assert.match(read('src/scenes/exterior.js'), /const useFwd = _tapDir \?\? \[/, 'exterior: the tap ray replaces the centre ray');

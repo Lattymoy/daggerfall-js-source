@@ -35,6 +35,8 @@ import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { CREDITS } from '../src/ui/credits.js';
 import { textureStoreKey } from '../src/scenes/dataSource.js';
 import { textureEntry } from '../src/systems/textureReplacement.js';
+import { Renderer } from '../src/render/renderer.js';
+import { TextureFile } from '../src/formats/textureFile.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -117,6 +119,15 @@ test('SIB1: seasonalRecordSet - n >= 2, records 1..n-1 all present, slot 0 holds
   assert.equal(ok.records[0].name, 'K1.png');
   assert.equal(ok.records[1].name, 'K1.png');
   assert.equal(ok.records[32].name, 'K32.png');
+  // AUDIT 62 F36: ...and a record 0 that DOES exist is DISCARDED. The
+  // mod ships one for 9 of its 11 prefix folders (TempW/K0.png,
+  // TempS/J0.PNG, ...), and nothing filters it out on the way in, so
+  // `textures[0] = dict[1]` is a live law with the player's own copy,
+  // not a fixture curiosity - the nature layout never places record 0.
+  const withZero = seasonalRecordSet('K', 505, 33, fullSet('K', 33));
+  assert.equal(withZero.ok, true);
+  assert.equal(withZero.records[0].name, 'K1.png', 'slot 0 is record 1 even when a record 0 file is present');
+  assert.equal(withZero.records[0].width, 11, 'K1, not the K0 that sits beside it');
   // extra records past n are ignored; an archive shorter than the set is fine
   const short = seasonalRecordSet('J', 504, 5, fullSet('J', 38));
   assert.equal(short.ok, true);
@@ -175,6 +186,13 @@ test('SIB1: ApplyCurrentSeason - installs once per season, forces on demand, ref
   assert.equal(hit.texture.name, 'K5.png');
   assert.deepEqual(hit.size, seasonalBillboardSize(hit.texture.width, hit.texture.height));
   assert.equal(helper.lookup(505, 0).texture.name, 'K1.png', 'slot 0 is record 1');
+  {
+    // AUDIT 62 F36: the same through the cache, over a set that DOES
+    // carry the record 0 the mod ships (TempW/K0.png)
+    const { helper: h0 } = makeHelper({ sets: { K: fullSet('K', 33) } });
+    await h0.apply(false);
+    assert.equal(h0.lookup(505, 0).texture.name, 'K1.png', 'a shipped record 0 does not take slot 0');
+  }
   assert.equal(helper.lookup(504, 5), null, 'a summer archive is not managed in winter');
   assert.equal(helper.lookup(505, 40), null, 'past the archive');
   assert.equal(helper.manages(505), true);
@@ -244,6 +262,51 @@ test('SIB1: the events - load forces and re-applies next frame, travel forces an
   const [a, b] = await Promise.all([h2.apply(false), h2.apply(false)]);
   assert.deepEqual([a, b], [true, false]);
   assert.deepEqual(l2.loads, ['K', 'F', 'C']);
+});
+
+test('SIB1 (AUDIT 62 F4): RefreshLoadedNatureBatches filters by ARCHIVE - a grid standing only on unmanaged archives is refreshed by nothing', async () => {
+  // The mod's refresh walks the scene's DaggerfallBillboardBatches and
+  // re-applies the ones whose archive is in vanillaAtlasByArchive
+  // (`manages`) - nothing else. Nature archives 500-503 (rainforest,
+  // subtropical, swamp, desert) are in no season's managed set, so in
+  // those climates DFU's refresh touches not one batch; the streaming
+  // host answers `refresh` with a TEARDOWN, so it must take the same
+  // filter or it rebuilds a world the mod does not change by one texel.
+  const built = new Map();
+  let reskin = false;
+  const state = { season: SEASONS.Summer };
+  const helper = new SeasonHelper({
+    currentSeason: () => state.season,
+    recordCount: async () => 33,
+    load: async (prefix) => fullSet(prefix, 33, 1),
+    // world.js's seam, in its shape: stale install AND a managed batch
+    refresh: () => {
+      for (const p of built.values()) {
+        if (p._seasonsGen !== helper.generation && p.batches.some((b) => helper.manages(b.archive))) { reskin = true; return; }
+      }
+    },
+    warn: () => {},
+  });
+  // a desert pixel, built before any install: nature archive 503, and
+  // the people/street flats that ride the same batch list
+  built.set('0,0', { _seasonsGen: 0, batches: [{ archive: 503 }, { archive: 182 }] });
+  assert.equal(await helper.apply(false), true, 'the Summer install runs (it manages nothing)');
+  assert.equal(helper.generation, 1);
+  assert.equal(reskin, false, 'nothing the mod manages stands here, so nothing is torn down');
+  state.season = SEASONS.Fall;
+  assert.equal(await helper.apply(false), true);
+  assert.equal(helper.manages(503), false, '500-503 are in no season\'s set');
+  assert.equal(helper.manages(504), true, 'Fall took 504 over');
+  assert.equal(reskin, false, 'and the desert grid is still not torn down at the Fall turn');
+  // a temperate pixel built UNDER the Fall install, on 504
+  built.set('1,0', { _seasonsGen: helper.generation, batches: [{ archive: 504 }] });
+  state.season = SEASONS.Winter;
+  await helper.apply(false);
+  // Winter manages 505/507/509, but vanillaAtlasByArchive is what the
+  // mod has EVER managed, so the pixel still carrying 504 does refresh
+  assert.deepEqual(managedArchivesForSeason(SEASONS.Winter), [505, 507, 509]);
+  assert.equal(helper.manages(504), true, 'ever managed, not managed now');
+  assert.equal(reskin, true, 'the pixel on 504 stands on an older install and IS re-applied');
 });
 
 // ═══ the door: LZ4 blocks ═══════════════════════════════════════════════
@@ -552,7 +615,12 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   assert.equal(await seasonsInstalled(), true);
   const k = await loadSeasonsTextures('K');
   assert.deepEqual(k.map((t) => [t.name, t.width, t.height]), [['K1.png', 2, 2], ['K2.png', 4, 4]]);
-  assert.deepEqual([...k[0].image.data.subarray(0, 4)], [30, 31, 32, 33]);
+  // AUDIT 62 F26: the door hands the host COLOR32 order - row 0 is the
+  // picture's BOTTOM row, which is the row Unity stored first. (The
+  // Texture2D reader still answers PNG raster order for its own
+  // consumers, see the flip pinned above; this door undoes it.)
+  assert.deepEqual([...k[0].image.data.subarray(0, 4)], [10, 11, 12, 13]);
+  assert.deepEqual([...k[0].image.data.subarray(4, 8)], [20, 21, 22, 23]);
   assert.deepEqual(await loadSeasonsTextures('J'), [], 'a prefix the manifest does not carry');
   // another mod's bundle is not this mod
   const other = testBundle({ manifest: { ModTitle: 'Dynamic Skies', GUID: 'x', Files: ['a/K1.png'] } });
@@ -579,9 +647,87 @@ test('SIB1: the registry - a bundle answers over its manifest\'s file list, loos
   const decode = async (b) => ({ width: b[0], height: b[0] * 2, data: new Uint8Array(b[0] * b[0] * 8) });
   const got = await loadSeasonsTextures('K', { decode });
   assert.deepEqual(got.map((t) => [t.name, t.width, t.height]), [['K1.png', 7, 14], ['K2.png', 8, 16]]);
+  // AUDIT 62 F26: the loose arm agrees with the bundle arm - a decoder
+  // that hands back PNG raster order (row 0 = the picture's TOP) leaves
+  // this door in getColor32 order (row 0 = the picture's BOTTOM)
+  const twoRow = async () => ({ width: 1, height: 2, data: new Uint8Array([30, 31, 32, 33, 10, 11, 12, 13]) });
+  const flipped = await loadSeasonsTextures('K', { decode: twoRow });
+  assert.deepEqual([...flipped[0].image.data], [10, 11, 12, 13, 30, 31, 32, 33]);
   clearSeasonsSources();
   assert.equal(seasonsSourcesCount(), 0);
   assert.equal(await seasonsInstalled(), false);
+});
+
+/** The recording Proxy-GL the seams pins use, for the one upload. */
+function recordingRenderer(log) {
+  const stub = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray'
+        || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer') return () => ({});
+      if (k === 'getParameter') return () => new Float32Array([0, 0, 0, 0]);
+      if (typeof k === 'string' && k.toUpperCase() === k) return k;   // GL enums answer their own name
+      return (...args) => { log.push([k, ...args]); };
+    },
+  });
+  const r = new Renderer({ getContext: () => stub, clientWidth: 640, clientHeight: 400, width: 640, height: 400 });
+  log.length = 0;
+  return r;
+}
+
+test('SIB1 (AUDIT 62 F26): a seasonal flat reaches texImage2D in getColor32 order - the picture\'s BOTTOM row first', async () => {
+  // The picture: 1 wide, 2 tall, palette index 1 on top and 2 below.
+  // What the CLASSIC producer hands the renderer for it is the
+  // reference value - BaseImageFile.cs:250 `dstRow = (dstHeight - 1 -
+  // border - y) * dstWidth`, so row 0 of the upload is the picture's
+  // BOTTOM row. In DFU the mod's asset is a Unity Texture2D, bottom-up
+  // like every Texture2D TextureReader builds from GetColor32, so the
+  // mod's flats and the classic ones agree. Here they must too:
+  // uploadTexture uploads as-is with UNPACK_FLIP_Y_WEBGL off and BB_VS
+  // samples the quad's TOP at v=1 (the last row), so a top-down
+  // seasonal record draws every tree, rock and plant upside-down.
+  const t = new TextureFile();
+  t.palette.set(1, 30, 31, 32);
+  t.palette.set(2, 10, 11, 12);
+  const classic = t.getColor32({ width: 1, height: 2, data: new Uint8Array([1, 2]) }, -1);
+  assert.deepEqual([...classic.colors.subarray(0, 4)], [10, 11, 12, 255], 'the classic upload leads with the bottom row');
+
+  // the same picture as the mod ships it: a Unity Texture2D, which
+  // stores its BOTTOM row first
+  const rgba = new Uint8Array([10, 11, 12, 255, 30, 31, 32, 255]);
+  const bytes = unityFs(serializedFile([
+    { typeIndex: 0, body: texture2dBody('K1', 1, 2, TEXTURE_FORMAT.RGBA32, rgba) },
+    { typeIndex: 0, body: texture2dBody('K2', 1, 2, TEXTURE_FORMAT.RGBA32, rgba) },
+    { typeIndex: 1, body: textAssetBody('Seasons.dfmod', JSON.stringify({
+      ModTitle: SEASONS_MOD.title, GUID: SEASONS_MOD.guid,
+      Files: ['Assets/Mods/Textures/TempW/K1.png', 'Assets/Mods/Textures/TempW/K2.png'],
+    })) },
+  ]));
+  assert.equal(setSeasonsSources([`${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`], async () => bytes), 1);
+  const helper = new SeasonHelper({
+    currentSeason: () => SEASONS.Winter,
+    recordCount: async () => 3,   // TEXTURE.505 with records 0..2
+    load: (prefix) => loadSeasonsTextures(prefix),
+    refresh: () => {},
+    warn: () => {},   // 507/509 have no files in this bundle
+  });
+  await helper.apply(false);
+  const sib = helper.lookup(505, 1);
+  assert.ok(sib, 'the winter atlas installed over 505');
+
+  // ...and now the hosts' own upload of it (world.js / exterior.js)
+  const log = [];
+  const r = recordingRenderer(log);
+  const img = sib.texture.image;
+  r.uploadTexture(505, `1#season${helper.installedSeason}`, { width: img.width, height: img.height, colors: img.data });
+  const upload = log.find((c) => c[0] === 'texImage2D');
+  assert.ok(upload, 'the seasonal record reached texImage2D');
+  assert.deepEqual([upload[4], upload[5]], [1, 2], 'at the mod texture\'s size');
+  assert.deepEqual([...upload[9]], [...classic.colors], 'byte for byte what getColor32 hands for the same picture');
+  const flip = log.find((c) => c[0] === 'pixelStorei' && c[1] === 'UNPACK_FLIP_Y_WEBGL');
+  assert.equal(flip[2], false, 'uploaded as-is - the row order handed in IS the GL texel order');
+  clearSeasonsSources();
 });
 
 // ═══ the hosts, the pick, the settings, the credits, the vendor tree ═════
@@ -601,14 +747,23 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   // the streaming host: the five subscriptions, in the seams they belong to
   assert.match(world, /seasons\.onLoad\(\)/, 'SaveLoadManager.OnLoad at boot');
   assert.match(world, /seasons\.onTerrainInstantiated\(\)/, 'DaggerfallTerrain.OnInstantiateTerrain per pixel');
-  assert.match(world, /seasons\.onNewMonth\(\)/, 'WorldTime.OnNewMonth off the day poll');
+  // AUDIT 62 F5: the CALLER, not the member. `seasons.onNewMonth()`
+  // alone matches the body of the one-caller wrapper `seasonsMonthTurn`
+  // and stayed green when the day poll's hand-over was deleted - which
+  // leaves the streaming host deaf to every month turn, so a standing
+  // world keeps the previous season's atlases until a load or a
+  // teleport (WorldTime.cs:139/:226 raises OnNewMonth off the clock's
+  // own advance, and that is what this poll stands in for).
+  assert.match(world, /_seasonDay = day;\s*seasonsMonthTurn\(atMinutes\);/, 'refreshSeason hands every day boundary to the month turn');
+  assert.match(world, /function seasonsMonthTurn[\s\S]{0,400}?seasons\.onNewMonth\(\)/, 'and the month turn is WorldTime.OnNewMonth off the day poll');
   assert.match(world, /seasons\.onPostFastTravel\(\)/, 'DaggerfallTravelPopUp.OnPostFastTravel at the teleport');
   assert.match(world, /seasons\.onUpdateTerrainsEnd\(\)/, 'StreamingWorld.OnUpdateTerrainsEnd once the destination stands');
   assert.match(world, /seasons\.tick\(\)/, 'RefreshSeasonAfterLoad the frame after');
   assert.match(world, /const seasonsGen = seasons\?\.generation \?\? 0;/, 'AUDIT 61: the install is read where the lookups read it');
   assert.match(world, /_seasonsGen: seasonsGen,/, 'a pixel remembers the install it was built under');
   assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskinPending = true;/, 'AUDIT 61: a pixel published across an install asks for its own re-skin');
-  assert.match(world, /p\._seasonsGen !== seasons\.generation\) \{ _reskinPending = true/, 'refresh tears down only what stands on an older install');
+  assert.match(world, /p\._seasonsGen !== seasons\.generation && p\.batches\.some\(\(b\) => seasons\.manages\(b\.archive\)\)\) \{ _reskinPending = true/,
+    'AUDIT 62 F4: refresh tears down only what stands on an older install AND carries a batch on an archive the mod manages');
   // the pick and the boot registration
   const ds = read('src/scenes/dataSource.js');
   assert.match(ds, /textureStoreKey\(f, deps\)/, 'the texture pick decides every file through the one exported decision');

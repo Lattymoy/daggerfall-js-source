@@ -2711,7 +2711,7 @@ retired rather than reworded.
 it.** A player ARROW reaches a pool through two separate seams:
 `dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
 and `onAttackFromPlayer`, which it calls unconditionally
-(`arrowFlight.js:195`) precisely because that is where :630 lives. All
+(`arrowFlight.js:212`) precisely because that is where :630 lives. All
 three hosts that resolve a player arrow EXCLUDED the guards from the
 second seam, on a sentence — "the watch pool's damage door carries no
 hostility pair of its own" — that this lane's own `handleAttackFromPlayer`
@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:972`)
+encounter pool has always exported its own at `exteriorFoes.js:1008`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once
@@ -2948,3 +2948,356 @@ that still read the PLAYER's capsule:
 
 Refuted (1): the enhanced motor's final-leg y (it reads classic's
 converted destination, which is now right).
+
+## AUDIT 62 (2026-09-07) - THE HOSTS AND ENCOUNTERS LANE
+
+Six findings against the two walkable outdoor hosts (`scenes/world.js`,
+`scenes/exterior.js`) and the mode machine both of them mount
+(`scenes/worldModes.js`). Every one is a missing clause on the classic
+path: no `isEnhanced()`, no pref, no Ledger row covered any of them.
+
+### AUDIT 62 F11 - the catch-up loop could not run indoors
+
+PR #59 wrote down that "the loop runs in EVERY mode" and handed
+`IntermittentEnemySpawn` an `inside:` argument to prove it. The call
+could not reach those modes: in both hosts `runEncounterTick` is invoked
+BELOW `if (modes.frame(dt, now)) { ... return; }`, and that frame
+consumes every interior and dungeon frame. The interior rest
+(`interiorRestDeps.advanceMinutes`) called no tick either. But
+`playerTicker.classicMinutes` is a view on the ONE world clock that the
+interior ticker advances, so `_lastEncMinutes` froze at the door while
+the clock ran: an eight-hour tavern sleep was banked and replayed at the
+door as 480 EXTERIOR minutes - location-night and wilderness rolls plus
+one passive-guard roll each - the exact defect the comment claimed was
+closed. `inside:`/`inDungeon:` were dead arguments.
+
+DFU runs the loop every `Update` whatever `PlayerEnterExit` says
+(`PlayerEntity.cs:479-522`) and advances `lastGameMinutes` at `:521`, so
+each indoor minute is CONSUMED as it passes and `IntermittentEnemySpawn`
+refuses it (`:564`'s outdoor block is guarded by `!IsPlayerInside`, and
+the inside block spawns only for `IsPlayerInsideDungeon && isResting`).
+
+Landed: `createWorldModes` takes a `host.encounterTick` dep, rung once
+per modal frame under the same `overlayHeld` gate the interior ticker
+rides (above the render split, so one line covers the interior and the
+dungeon arms, and above the exit-transition return so the minutes are
+still indoor minutes), and from `interiorRestDeps.advanceMinutes`
+beside `interiorTicker.advance(n)` - the outdoor hosts' rest deps have
+consumed theirs since ROAD-G TAIL. The hosts' own frame calls stay as
+the exterior arm.
+
+And the arm that had to move with it: the once-per-Update NPC-guard
+conversion sweep was gated `_m !== 'dungeon'`, which let it run in
+INTERIOR mode. It is `_m === 'exterior'` now.
+`MakeNPCGuardsIntoEnemiesIfGuardsSpawned` (`PlayerEntity.cs:764-780`)
+walks `PopulationManager.PopulationPool` skipping every
+`!npc.isActiveAndEnabled` NPC, and `PlayerEnterExit.cs:1047` disables
+the whole `ExteriorParent` on an interior transition - so indoors it
+converts nobody, and `:768-770` returns underground on the null location
+object. Left as it was, a hoisted loop would have turned street
+townsfolk into enemy watchmen while the player stood in a shop, at an
+interior-local `playerFeet`. The passive-guard rolls need no such gate:
+`_spawnGuards` offers `modes.spawnCityGuardsInside` the call first (F14
+below), and underground `SpawnCityGuards`' own outer gate refuses it
+(`PlayerEntity.cs:625`, F13 below).
+
+The old pin was a source-text regex over the call line, green with the
+call dead. It is behavioural now: 200 seeded eight-hour spans, every
+indoor minute rolling nothing, against the banked replay that stands a
+foe on the doorstep on most nights.
+
+### AUDIT 62 F12 - Wabbajack on a watchman could erase him
+
+The three re-stand sites (`world.js`, `exterior.js`, and worldModes'
+`insideReplaceFoe`) remove the struck record through the pool that owns
+it and re-stand through the ENCOUNTER pool. Removing a GUARD frees a
+slot in the guard pool and none in the encounter pool, so with eight
+live encounter records `spawnFoe` answered null and the watchman was
+destroyed with nothing standing in his place - worse than the written
+refusal two of those arms replaced. `WabbajackEffect.cs:86-88` is
+`SetActive(false)` then an unconditional `CreateEnemy`.
+
+Landed: a `replacing` option beside the existing `questBehaviour`
+exemption in `createExteriorFoes.spawnFoe`, passed at all three sites.
+The justification is the reference's own shape - a transform destroys
+one entity and mints one, so it is slot-neutral by construction and the
+port's encounter bound is not being widened. Pinned behaviourally on the
+real factory: a saturated pool still refuses an ADDITION and lets the
+replacement through to the spawn chain.
+
+### AUDIT 62 F13 - the ?exterior host minted its watch without the latches
+
+`world.js` hands `createCityGuards` an `enterExitFlags` thunk;
+`exterior.js` passed none, so `cityGuards` read `_ee = null` and
+`PlayerEntity.cs:625`'s `!IsPlayerInsideDungeon` outer gate - which
+encloses the WHOLE member - could never fire on that route. That host
+has mounted the same mode machine since P7 (E on a DUNGEON_ENTRANCE door
+drops it into the crawl), and the quest action `spawncityguards` ticks
+in dungeon mode, so the call fell through to the street law and rang
+2-5 Knight_CityWatch onto the EXTERIOR collider at the player's
+dungeon-local feet. Landed: the same thunk, in world.js's exact shape.
+`cityGuards`' own "a host with no interiors and no dungeons answers
+null" note is corrected with it - no host in the tree is that host.
+
+### AUDIT 62 F14 - the street pool survived indoors, stale
+
+`_guardPool()` maps `_livePersons`, rebuilt only in the exterior frame
+(below the modal return), so indoors it was the last exterior frame's
+street NPCs at world-space positions - metres from the indoor player,
+because the interior is parented on the building's world matrix. A crime
+in a temple or a guild hall (which `spawnCityGuardsInside` refused) then
+reached the street arm with that list: guard NPCs in range converted and
+were `disable()`d out in the road, and the ring fallback cast against
+the exterior collider. DFU cannot do that - the population is inactive
+inside, and all three walks open with `if (!populationManager
+.PopulationPool[i].npc.isActiveAndEnabled) continue;`
+(`PlayerEntity.cs:653-654`, `:707-708`, `:776-777`).
+
+Landed, both halves:
+
+- `_guardPool` answers `[]` whenever the mode is not exterior, in BOTH
+  hosts - DFU's three `isActiveAndEnabled` continues, expressed at the
+  one place the port materialises the pool, so the conversion sweep and
+  the witness arm are covered with it.
+- `worldModes.spawnCityGuardsInside` takes the call for EVERY interior
+  and routes the non-eligible ones with `eligible:false` and an empty
+  pool, answering true. With no pool to convert, `cityGuards` falls to
+  its ring fallback over THIS interior's collider at the player's feet -
+  which is `PlayerEntity.cs:687`'s `CreateFoeSpawner(true,
+  Knight_CityWatch, Random.Range(2, 5+1), 12.8f, 51.2f)` parented to the
+  Interior (`FoeSpawner.cs:138-139` through `GameObjectHelper
+  .GetBestParent`, `:407-410`). C# "falls through" there, but the
+  fall-through lands on the same player position in the same physics
+  scene; handing it to the exterior host's collider and its frozen
+  update does not. A dungeon still answers false and is refused by
+  `SpawnCityGuards`' own outer gate.
+
+### AUDIT 62 F15 - world.js's quest placement did not see the watch
+
+`CreateFoe.cs:319-323` is `Physics.OverlapSphere(testPoint,
+overlapSphereRadius); if (colliders.Length > 0) return;` - ANY collider
+refuses the spot, and a watchman's capsule is one. Every other placement
+arm in the tree passes the host's whole street pool; `world.js`'s quest
+arm still passed `() => exteriorFoes.foes`, so a quest foe could be
+stood inside a standing watchman on a city street. Now
+`() => exteriorFoePool()`, the shape its own sibling uses, pinned by
+count so neither arm can regress alone.
+
+### AUDIT 62 F22 - the interior pools wore the outdoor spawn band
+
+`EnemySenses.cs:267` reads `PlayerEnterExit.IsPlayerInside` - the
+GENERIC flag (`PlayerEnterExit.cs:111-113`, set at `:1086` by
+`EnableInteriorParent`), true in a BUILDING interior and not dungeons
+only - and `:269-286` takes `classicSpawnDespawnExterior` (102.4m, no Y
+term) ONLY when it is false. `createExteriorFoes` and `createCityGuards`
+hard-coded `playerInside: false` with no dep, and the mode machine
+mounts both of those factories over a building interior, so an interior
+foe ran the flat outdoor band with no vertical test: a watchman or a
+summoned daedra a storey above the player was "spawned in classic" where
+row 0 (XZ 25.6m, Y +3.2m) denies it - and that flag gates `GetTargets`
+(`:381-393`), the stealth check (`:623`) and `areEnemiesNearby`.
+
+Landed: a `playerInside` dep on both factories (defaulting false, so the
+two street pools are unchanged), passed `true` from `makeInteriorFoes`
+and `makeInteriorGuards`. The dungeon pools already rode `EnemyAI`'s
+`true` default. A constant per mount is faithful because each host ticks
+only its own space; if that ever stops holding, the dep becomes a getter,
+since `EnemySenses` re-reads the flag every classic tick. The AUDIT 23
+pin that asserted the literal `playerInside: false,` is replaced by the
+LAW: at yDiff 5m / XZ 3m the outdoor band spawns and the indoor one does
+not.
+
+### AUDIT 62 REVIEW (2026-09-07) - F11 took the sweep's latch pin with it
+
+The F11 comment block that explains why the conversion sweep is
+`_m === 'exterior'` and not `_m !== 'dungeon'` was written BETWEEN
+`_updatedGuards = true;` and the `cityGuards.makeNpcGuardsIntoEnemies(`
+call, and the pin in `test/exteriorfoes.test.js` that had held those two
+adjacent was relaxed to make room: one assertion for the latch, another,
+19 lines later, for the call. Nothing then pinned the call INSIDE the
+latch. `PlayerEntity.cs:484` declares `bool updatedGuards = false`
+outside the catch-up loop and `:513-516` runs
+`MakeNPCGuardsIntoEnemiesIfGuardsSpawned` at most ONCE per `Update`
+however many minutes catch up; with the pin split, moving the call out
+of the latch - so the whole population sweep runs once per caught-up
+MINUTE - left the suite green. F11 makes that worse, not better: the
+loop is now rung from three call sites and a door-side catch-up can be
+480 minutes long.
+
+The two assertions are one again, as a single regex that spells the
+whole block - latch, the comment lines, then the guarded call - and is
+asserted against BOTH host bodies (`exterior.js` and `world.js`), where
+before only the fixed-city body carried the adjacency. It dies under a
+line-neutral mutation that closes the latch early
+(`_updatedGuards = true; } {`) in either host.
+
+### AUDIT 62 F17 / F18 / F19 / F20 / F21 / F23 - THE FOES AND THE MOTOR (2026-09-07)
+
+Six rows off the audit's foe lane, all of them the same shape: the
+REVIEW 2026-09-05 transform/capsule split above, applied where it had
+been left half-applied - plus the one target whose transform the split
+never reached, the player.
+
+- **F17 - one yDiff, one distance.** `_classicSenses` handed
+  `wouldBeSpawnedInClassic` a transform-space `distanceToPlayer`
+  (PR #57) and a feet-to-feet `yDiff`. `EnemySenses.cs:288-290` takes
+  BOTH from the transforms and rebuilds the XZ leg as
+  `sqrt(distanceToPlayer^2 - YDiffAbs^2)`, so the pair is one
+  Pythagorean identity and cannot be two measures: the error was
+  exactly `centreOffset - playerHeight/2` (0.7 for a 3.2m bat, -0.5 for
+  a rat), enough to flip the row-0 vertical band (upper 3.2) for a
+  flyer perched 2.6-3.2m up and to skew the XZ leg for everything else.
+  ONE value now feeds both arguments, sign preserved (enemy - player,
+  `:288`) for the row-4/5 lower arms. The `Math.max(0, ...)` clamp in
+  `wouldBeSpawnedInClassic` is now unreachable float insurance and says
+  so.
+- **F18 / F37 - the unpinned half of the round.** Three of the review's
+  four transform-space laws had no test that died when they were
+  reverted: `canHearTarget`'s two offset arguments at the live call
+  site, `_classicSenses`' distance, and `getTargets`' transform
+  distance. `test/ch4senses.test.js` calls `canHearTarget` with five
+  arguments, so both new parameters sat at their defaults and were
+  invisible to it, and a PLAYER target cannot separate the far term at
+  all (`_targetCentreOffset()` IS the parameter's default there). Pinned
+  now through the LIVE path with a capture-raycast collider - a bat
+  casting from its 1.6 transform (half its capsule says 0.8) and a
+  walker casting AT a rat target's 0.45 transform (the player's
+  half-capsule says 0.9) - plus the call site's argument pair as source,
+  and `getTargets` pinned on the ORDERING its distance drives
+  (`targetPriority`, `:829-841`), which is the live lever; the returned
+  `distanceToTarget` is discarded by `runTargetMachine` and would not
+  have guarded anything.
+- **F19 - the foe-vs-foe blood splash.** `applyDamageToNonPlayer`
+  splashed at `feet + height/8` where `EnemyAttack.cs:325-328` is
+  `transform.position + controller.center` and THEN `y += height/8` -
+  the capsule is BOTTOM-justified, so that is `feet + height/2 +
+  height/8`, the shared `bloodCentre` every player-melee site for the
+  same lines already uses. An orc mauling a bear bled it at the shins.
+  Its own comment named the right point. The pin
+  (`test/enemyinfighting.test.js`) asserted the port's value under the
+  reference's label and so held the missing term in place; it is
+  anchored to `bloodCentre` now.
+- **F20 - `transform.position` is not the base.** Four sites passed the
+  bare feet where DFU passes the enemy transform: the three fall-damage
+  splashes (`EnemyMotor.cs:1403-1406`, "falling enemies bleed at the
+  center") and the player-arrow splash
+  (`DaggerfallMissile.cs:680-687` -> `WeaponManager.cs:571`). The
+  DaggerfallEnemy prefab centres its controller on the transform
+  (`m_Center` 0) and `SetupDemoEnemy.cs:98-115` moves only
+  `controller.center` - `GameObjectHelper.cs:360` confirms it
+  independently (`hit.point.y + controller.height * 0.52f`) - so the
+  transform is the idle sprite's CENTRE, which is this delta's own
+  `centreOffset`. All four take it now (`ai._centre()` at the three
+  pools); the FallDamage clip stays at the feet, because `:1409` rings
+  it at `FindGroundPosition()`, and the arrow's hit sound and pain voice
+  keep their feet convention. Three pins that froze the bare-feet
+  literal moved with the law.
+- **F21 - the aim, the blast and the contact.** The enemy missile's
+  foe-vs-foe arm aimed at `feet + height/2`; DFU aims at
+  `LastKnownTargetPos` = `target.transform.position`
+  (`DaggerfallMissile.cs:571-581`, `EnemySenses.cs:453`), i.e. `feet +
+  centreOffset`. `castEnemySpell` exploded an AreaAroundCaster at a
+  hardcoded `feet + 0.9` where `:280-282` passes
+  `caster.transform.position`, and loosed from a hardcoded `feet + 1.2`
+  where `GetAimPosition` (`:513-525`) is the caster transform for any
+  non-player, non-arrow cast. All three read the transform now. Moving
+  the aim REQUIRED moving the contact test with it: the port's foe-vs-foe
+  resolution was a point-sphere at the capsule centre, so once the
+  flight line ran at the transform a Flying unit with an idle sprite
+  past 3.6 would have been permanently unhittable. It is a capsule test
+  now (`missileHitsFoe`, `systems/spellcast.js`) - the point clamped to
+  the capsule AXIS at missile radius + capsule radius, which is what
+  `DaggerfallMissile.cs:339`'s SphereCast meets. (This row first wrote
+  that axis as `feet -> feet + height`, which is the capsule's SURFACE,
+  not its axis - corrected in the review round below.) The
+  x3casting pin's stub foe carried no offset and passed either way; it
+  is discriminating now.
+- **F23 - the player is a live capsule.** `_targetHeight()` answered
+  1.8 and `_targetCentreOffset()` 0.9 for the player unconditionally,
+  and `_classicSenses`, `canSeeTarget`'s target eye and `getTargets`'
+  player arms all carried the same constant. DFU reads the component
+  (`EnemyMotor.cs:532`, `:544`, `:562`; `EnemySenses.cs:896-898`) and
+  `PlayerHeightChanger.cs:54-57`/`:475-478` gives it 1.8 standing, 0.9
+  crouched, 2.6 mounted, 0.30 swimming with the capsule BOTTOM planted
+  and the transform tracking `feet + liveHeight/2`. Crouched, the port
+  aimed its sight ray at `feet + 1.50` where DFU aims at `feet + 0.75`,
+  so ducking behind low cover never broke line of sight; mounted it
+  erred the other way. `sensesContext` carries `playerHeight` now (all
+  four hosts fill it from `player.height`, which already folds
+  crouch/ride/swim/head-dip), `EnemyAI` caches it per step - the
+  decision path reaches `_getDestination` with no senses argument, so
+  the read cannot happen in the helper - and the target machine takes
+  it through the options bag it already had. The 1.8 default stays
+  everywhere as the headless charter, so every existing caller is
+  byte-identical. The stale RESIDUAL note in
+  `bible/03-World/Player-Arc.md` ("foes still target the standing
+  height") is discharged by this row.
+
+Pins: `test/audit62_foes.test.js` (10, three of them from the review
+round below). Every one was checked to die under a mutation that
+reverts its law - both F17 terms independently, each of `getTargets`'
+two offsets independently, the six- and seven-argument `canHearTarget`
+mutants, the F21 aim and both cast origins, and each of the F23 sites.
+
+### AUDIT 62 F21 / F23 - THE REVIEW ROUND (2026-09-07)
+
+Four things the round above got wrong or left half-done, each found by
+re-reading the reference rather than the port.
+
+- **The swept capsule was 0.9 m too tall.** `missileHitsFoe` clamped
+  the missile point to the segment `feet -> feet + height` and then
+  tested `MISSILE_COLLIDER_RADIUS + 0.45`. A Unity capsule of height
+  `h` and radius `r` is the set of points within `r` of the segment
+  `[feet + r, feet + h - r]` - its SURFACE is what spans
+  `feet..feet + h`, and its two hemisphere CENTRES are inset by a
+  radius at each end. Taking the endpoints as the axis inflated the
+  swept shape by `2r`: for a 1.6 m rat the port's hit volume ran
+  `feet - 0.9 .. feet + 2.5` where `DaggerfallMissile.cs:339`'s
+  SphereCast into the prefab's CharacterController
+  (`DaggerfallEnemy [Game Serializable].prefab:442-448` - m_Height 1.8,
+  m_Radius 0.4, m_SkinWidth 0.05, m_Center 0) reaches
+  `feet - 0.45 .. feet + 2.05`. A bolt into the floor under a rat hit
+  it. The clamp is the inner segment now, with `min(r, h/2)` for the
+  sub-`2r` case Unity collapses to a sphere, and `0.45` has a name
+  (`BODY_CAPSULE_RADIUS`) and the prefab line behind it.
+- **F21 converted only the FOE arm of the aim.** The player arm one
+  line above (`dungeonContext.js`, `const target`) still built
+  `playerFeet + 0.9`, and the same constant was the player's contact
+  test - so a crouched player stayed a 1.8 m target to every enemy
+  missile, and the proximity fuse registered anywhere from `feet` to
+  `feet + 1.8`. `LastKnownTargetPos` is `target.transform.position`
+  for either kind of target, and the player's transform is
+  `feet + LIVE height/2` (`PlayerHeightChanger.cs:477-478` plants the
+  capsule bottom and moves the transform by `heightChange/2`; the
+  player's controller has no centre offset). `updateMissiles` takes
+  `playerHeight` now, aims at the live transform, and sweeps the
+  player's own capsule (`missileHitsCapsule`) exactly as the foe arm
+  does. The three sibling hosts' `fireMissile` hooks
+  (`world.js`, `exterior.js`, `worldModes.js`), the dungeon archer's
+  aim and `hostMagic`'s shared missile-vs-player test carried the same
+  constant and move with it - the four-hosts rule.
+- **The exterior archer aimed at the PLAYER's half-capsule whoever it
+  struck.** `exteriorFoes.js` lifted its target's feet by a flat 0.9,
+  so a foe-vs-foe shaft flew 0.7 m under a bat's transform
+  (centreOffset 1.6) and 0.6 m over a rat's (0.3). The lane's F21
+  deferral covers the two arrow ORIGINS and justifies itself with
+  `GetAimPosition`'s arrow-only `forward * 0.6 + height / 3`
+  (`DaggerfallMissile.cs:518-527`) - a term about the origin that says
+  nothing about the aim POINT, which `GetAimDirection` takes from
+  `LastKnownTargetPos` with no arrow-specific variation. There is ONE
+  body of that law now, `enemyTargets.targetAimPoint`, and the dungeon
+  and the exterior pool both call it. The origins stay deferred, on
+  their own stated reason.
+- **`runTargetMachine`'s out-of-band player LOS had no pin.** The
+  round claimed every F23 site died under a reverting mutation;
+  `enemyTargets.js`'s `:377-383` check
+  (`playerInSight = canSeeTarget(..., playerHeight)`) did not - the
+  only needle that matched it also matched `getTargets`' own parameter
+  default. Dropping the argument there was green across the suite. It
+  is pinned behaviourally now: with `wouldBeSpawned` false and a wall
+  topping out at 1.3, a standing player (eye 1.5) opens the GetTargets
+  gate and is selected, a crouched one (eye 0.75) is not seen and no
+  target is taken. Nothing else in the machine separates them - the
+  PLAYER candidate has no senses, so `getTargets`' own
+  `!WouldBeSpawnedInClassic && !see` reject (`EnemySenses.cs:823-825`)
+  never fires on it and would hand back the player blind.

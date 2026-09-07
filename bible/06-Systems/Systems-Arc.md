@@ -4476,7 +4476,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1412` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1413` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5605,3 +5605,27 @@ ground to exist, since `heightAt` answers -Infinity until the pixel
 is built. Pinned in `enterexit.test.js` (the miss arm both ways, a
 mesh hit still winning, the exterior collider handed the terrain);
 every suite that reads `floorLanding` was run and stands.
+
+## AUDIT 62 F21 REVIEW - THE MAGIC CANDLE HUNG HALF A CAPSULE LOW (2026-09-07)
+
+`LightNormal.cs:95-96` builds the Light effect's candle at
+`PlayerObject.transform.position + transform.forward * 1.4`, then
+`y += PlayerController.height * 0.25`. `magicCandle.js`'s `candleBase`
+took the port's `feet` as that transform, on a header sentence that
+said so outright - "`feet` is the port's player origin, which is DFU's
+transform.position". It is not. The player's CharacterController has
+no centre offset, and `PlayerHeightChanger.cs:477-478`
+(`ControllerHeightChange`) keeps the capsule BOTTOM planted while
+moving the transform by `heightChange/2`, so the transform is
+`feet + height/2` and DFU's candle sits at `feet + 0.75 * height` -
+1.35 standing. The port hung it at 0.45, a metre low: knee height, and
+under the geometry it is meant to light past.
+
+This is the same false proposition AUDIT 62 F20 retired for the enemy
+transform, left standing over the player one. The half-capsule is
+added in `candleBase` now and the header says plainly what `feet` is;
+the port keeps the FEET as every host's player origin, so nothing else
+moves. `test/x11.test.js`'s position pin moves with the law (3.35 over
+feet at 2, and 0.675 crouched) and dies when the term is dropped. The
+`LightNormal.cs` line cites in `CANDLE` were seven lines stale against
+the reference tree and are re-resolved (`:89`, `:96`).

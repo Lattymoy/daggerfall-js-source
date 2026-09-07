@@ -302,7 +302,15 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
   assert.match(rd('src/scenes/cityGuards.js'), /hitEffects\?\.showBloodSplash\(ENEMY_BASICS\[GUARD_MOBILE_TYPE\]\?\.bloodIndex \?\? 0/);
   assert.match(rd('src/scenes/cityGuards.js'), /hitEffects\?\.showBloodSplash\(0,\n\s*\[eye\[0\] \+ lookDir\[0\] \* bestD/, 'the civilian murder, at the REAL impact point');
   assert.match(rd('src/scenes/exteriorFoes.js'), /hitEffects\?\.showBloodSplash\(ENEMY_BASICS\[foe\.mobileType\]\?\.bloodIndex \?\? 0/);
+  // AUDIT 62 F20: the fall splash rides the foe's TRANSFORM (feet +
+  // centreOffset, which _centre() answers), not its feet -
+  // EnemyMotor.cs:1403-1406 passes bare `transform.position`, and the
+  // enemy transform is the idle sprite's CENTRE (prefab m_Center 0,
+  // SetupDemoEnemy.cs:98-115 moves only controller.center). This pin
+  // used to hold the bare-feet literal in place.
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, \[f\.ai\.feet\[0\]/, `${f}: fall damage bleeds at index 0`);
+    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\)\);/, `${f}: fall damage bleeds at index 0, at the transform`);
+    assert.doesNotMatch(rd(f), /showBloodSplash\(0, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]\)/, `${f}: not at the feet`);
+    assert.match(rd(f), /SOUND\.FallDamage, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]/, `${f}: the FallDamage clip stays at FindGroundPosition() (EnemyMotor.cs:1409)`);
   }
 });

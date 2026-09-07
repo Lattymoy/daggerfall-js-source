@@ -19,7 +19,7 @@ import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58:
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
+import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET, targetAimPoint } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasMagickaToCast } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
@@ -80,6 +80,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // street) hands in the union; absent, striking a passive foe turns
   // only that foe, which is the pre-wiring shape.
   makeAreaHostile = null,
+  // AUDIT 62 F22: EnemySenses.cs:267 reads PlayerEnterExit.IsPlayerInside
+  // - the GENERIC inside flag (PlayerEnterExit.cs:111-113), true in a
+  // BUILDING interior as well as a dungeon - and :269-286 takes the flat
+  // exterior band (classicSpawnDespawnExterior, 102.4m, no Y term) only
+  // when it is false. This pool is mounted over a building interior by
+  // worldModes.makeInteriorFoes, where the literal `false` put every
+  // interior foe on the outdoor band: a foe two storeys up was "spawned
+  // in classic" where DFU's row-0 band (XZ 25.6m, Y +3.2m) denies it.
+  // The default keeps the street pools (world.js, exterior.js) unchanged.
+  playerInside = false,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -114,9 +124,20 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  QuestResourceBehaviour host at the stand. A quest foe is exempt
    *  from the encounter self-limit: DFU's CreateFoe spawns
    *  unconditionally, and the cap is the port's own encounter bound,
-   *  not a law. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false } = {}) {
-    if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+   *  not a law.
+   *
+   *  AUDIT 62 F12: `replacing` is the second exemption, and it is the
+   *  same argument. WabbajackEffect.cs:86-88 is
+   *  `targetEntity.gameObject.SetActive(false)` followed by an
+   *  unconditional `GameObjectHelper.CreateEnemy(...)` - one entity
+   *  destroyed, one minted in its place, so the transform is
+   *  slot-NEUTRAL by construction and cannot grow the pool. The struck
+   *  entity is often a WATCHMAN, whose removal frees a slot in the
+   *  guard pool and none here, so without the exemption a Wabbajack
+   *  strike on a full street simply erased him and stood nothing -
+   *  worse than either the reference or the refusal it replaced. */
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false } = {}) {
+    if (!questBehaviour && !replacing && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
@@ -170,7 +191,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         behaviour, mobileId: mobileType,
         height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre
-        playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
+        playerInside,   // EnemySenses.cs:267-269 - the host's PlayerEnterExit.IsPlayerInside picks the band
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
         hasBowAttack: hasBowAttack(basics),
@@ -457,6 +478,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       ...senses,
       targeting: (ai, pf, cdt) => runTargetMachine(f, senses.candidates(), pf, cdt, {
         playerEntity: senses.playerEntity ?? null,
+        playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
       }),
     };
   }
@@ -468,6 +490,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const t = f.ai.target;
     if (t == null) return f.ai._armedTargeting ? null : playerFeet;
     return isPlayerTarget(t) ? playerFeet : t.ai.feet;
+  }
+  /** AUDIT 62 F21 (review): the aim point, through the ONE law in
+   *  enemyTargets.targetAimPoint (DaggerfallMissile.cs:571-581 ->
+   *  EnemySenses.cs:453). This pool's arrow lifted the target's feet
+   *  by a flat 0.9 - the PLAYER's standing half-capsule, applied to
+   *  whoever was struck. `_targetFeet`'s null (the armed-but-targetless foe)
+   *  carries through as a null aim, and the loose is gated on `_tgt`
+   *  anyway. */
+  function _targetAim(f, playerFeet, playerHeight) {
+    return _targetFeet(f, playerFeet) ? targetAimPoint(f.ai.target, playerFeet, playerHeight) : null;
   }
 
   let _ecvT = 0;   // ECV1: the pool's clock (seconds), for the shimmer and the hit reveal
@@ -501,18 +533,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _tgt = _targetFeet(f, playerFeet);
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door - no knockback.
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
       if (f.ai.landedFall > 0 && !f.dead) {
         const fdmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
         f.ai.landedFall = 0;
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
-          // EnemyMotor.cs:1404-1407 - index 0, at `transform.position`.
-          // Its comment says "falling enemies bleed at the center",
-          // but transform.position on a CharacterController IS the
-          // base; the centre is `+ controller.center`, which this line
-          // does not add. The feet are what DFU passes, so the feet are
-          // what the port passes.
-          hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, f.ai._centre());
           damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
@@ -708,7 +743,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // foe but the shooter, and arrowHitFoe below runs BowDamage's
         // non-player arm, so an arrow loosed at another foe LANDS.
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-        const d = [_tgt[0] - from[0], _tgt[1] + 0.9 - from[1], _tgt[2] - from[2]];
+        const aim = _targetAim(f, playerFeet, senses.playerHeight ?? CAPSULE_HEIGHT);
+        const d = [aim[0] - from[0], aim[1] - from[1], aim[2] - from[2]];
         const l = Math.hypot(...d) || 1;
         onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
       }

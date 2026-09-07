@@ -39,6 +39,7 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
+  missileHitsCapsule,   // AUDIT 62 F21 (review): the SphereCast contact test
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
@@ -582,8 +583,10 @@ export function createPlayerMagic({
       // friendly fire pends the target sweep, the shared residual).
       if (m.fromPlayer === false) {
         if (playerFeet) {
-          const px = playerFeet[0] - m.pos[0], py = playerFeet[1] + 0.9 - m.pos[1], pz = playerFeet[2] - m.pos[2];
-          if (Math.hypot(px, py, pz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+          // AUDIT 62 F21 (review): the player's CAPSULE, DaggerfallMissile
+          // .cs:339's SphereCast into its CharacterController, at the LIVE
+          // height - the shared engine's copy of the dungeon's arm.
+          if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {
             const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
             if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster);
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);

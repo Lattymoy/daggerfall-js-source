@@ -1,7 +1,8 @@
 // ENHANCED AI 1: the navmesh ported whole, and triangles into its shape.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { trianglesToColliders } from '../src/ai/triRaster.js';
 import { buildNav, buildCompact, buildRegions, buildContours, buildPolyMesh, buildPolyMeshDetail, findPath, AGENT } from '../src/ai/navmesh.js';
 
@@ -14,6 +15,15 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   assert.match(head, /function surfaceY\(c, x, z\) \{\s*\n\s*if \(!c\.ramp\) return c\.top;/, 'terrain.js:17-22 inlined verbatim');
   assert.match(head, /\/\* global Buffer, btoa, atob \*\//);
   assert.ok(!/setNavGround|_ground/.test(ours), 'no seam of our own - the ground goes in as buildNav\u2019s `ground`');
+  // AUDIT 62 F4 (2026-09-07): the pin above never read the BODY - every law from buildNav to the
+  // funnel could change and it stayed green. The body is pinned by digest now: the sha256 of the
+  // file from '// Agent params' on, re-recorded DELIBERATELY with the project-final commit the
+  // change was made in (decision #3: a change is made in both repos and said in both).
+  // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
+  // stacked-floor changes, made HERE FIRST and owed to project-final.
+  const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
+  assert.equal(sum, '7033c4d66c7c317f6ceb0ed58ee56c1e9349fca074cf39b96b1b3ef3bf608c4f',
+    'THE BODY CHANGED: make the change in project-final too, say it in both repos, then re-pin this digest with the commit');
 });
 
 test('ENHANCED AI 1: a floor becomes walkable spans, a wall becomes a column with no walkable top', () => {
@@ -142,15 +152,34 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
   assert.equal(bake.stats.cs, 0.25);
 });
 
-test('ENHANCED AI 3 (ARENA2): Privateer\u2019s Hold bakes, and a path crosses its first hall', async (t) => {
-  if (!process.env.ARENA2_PATH) return t.skip('ARENA2_PATH not set - the first real bake waits on the archives');
-  // When the archives are present: load the dungeon through dungeonContext's
-  // own path, bake from its collider anchored at the entry, and assert a
-  // path from the entry to the first hall exists and stays inside the mesh.
-  // Written now so the moment the data lands the pin runs; the loader
-  // call is the one dungeonContext.js:428 feeds.
-  assert.ok(true);
-});
+// AUDIT 62 F38 (2026-09-07): this was a `test(...)` whose whole body was
+// `assert.ok(true)` behind an ARENA2_PATH skip - so on the ONE machine it
+// names, the archives machine (or any machine with a stale ARENA2_PATH,
+// since the gate never checked the directory exists), it reported as a
+// PASS under a title claiming Privateer's Hold bakes and a path crosses
+// its first hall, while loading nothing, baking nothing and querying no
+// path. It stayed green under every mutation of the nav, including
+// deleting navBake.js. The bake is still unwritten, so it is now reported
+// as what it is: SKIPPED without the archives (the existsSync gate the
+// rest of the suite uses - test/terrain.test.js:12-14, arch3d.test.js:10,
+// paperdollart.test.js:11), TODO with them. It asserts nothing either way.
+//
+// What the body owes when the archives land: load the dungeon block
+// meshes through dungeonContext's own loader, feed them with
+// `collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)`
+// (src/scenes/dungeonContext.js:437), `bakeNavFromCollider(collider,
+// { anchor: <the entry marker's xyz> })` (src/ai/navBake.js), then assert
+// `bake.stats.polys > 0`, that the entry and every waypoint of
+// `navPath(bake, entry, firstHall)` locates via `__locatePolyIndexed`,
+// and that each waypoint's `polyHeight` sits on the hall floor - the
+// shape the synthetic pin above already uses.
+const ARENA2 = process.env.ARENA2_PATH;
+const noArena2 = !ARENA2 || !existsSync(ARENA2);
+test('ENHANCED AI 3 (ARENA2): Privateer\u2019s Hold bakes, and a path crosses its first hall',
+  noArena2
+    ? { skip: 'ARENA2_PATH not set or the path does not exist - the first real bake waits on the archives' }
+    : { todo: 'the bake through the dungeon loader is not written yet - this pin asserts nothing' },
+  () => {});
 
 // ENHANCED AI 3b: the worker, the cache, the host. Pinned where node can
 // reach: the client with no Worker bakes here and caches through an

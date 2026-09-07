@@ -133,7 +133,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2246), so the copy that survived
+ * now calls it (dungeonContext.js:2247), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -152,9 +152,19 @@ export class ArrowFlight {
  * origin; only the MELEE callers pass a contact point
  * (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
  * WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
- * `foe.ai.feet` is that transform origin (magicCandle.js:61-64), bare
- * - not bloodCentre, which is the melee-miss centre+height/8 point
+ *
+ * AUDIT 62 F20: and that transform origin is NOT the foe's feet. The
+ * DaggerfallEnemy prefab's CharacterController is centred on the
+ * transform (m_Center 0) and SetupDemoEnemy.cs:98-115 only ever moves
+ * controller.center (AdjustControllerHeight, BOTTOM justification),
+ * never the transform - so `hitTransform.position` is the idle sprite's
+ * CENTRE, feet + idleH/2, which is the motor's `centreOffset`
+ * (enemyAnchor.js:41-50). The header used to claim the feet were the
+ * transform origin and bled every struck foe half a sprite low. It is
+ * still not bloodCentre, which is the melee-miss centre+height/8 point
  * EnemyAttack.cs:326-328 builds when there is no contact point at all.
+ * The hit sound and the AUDIT 58 pain voice keep the FEET (feet + 0.9
+ * for the voice), the convention the three sibling pools share.
  *
  * `dealDamage` is the pool's own damage door, so death runs whole -
  * corpse, loot, crime - and this function never writes health itself.
@@ -183,9 +193,16 @@ export function playerArrowHitFoe(m, foe, {
     rolls, onInflictPoison, say,
   });
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
+  // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
+  // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its
+  // feet lifted by its own centreOffset. `at` stays the feet for the
+  // hit sound and the pain voice below.
+  const bloodAt = foe.ai?.feet
+    ? [at[0], at[1] + (foe.ai.centreOffset ?? (foe.ai.height ?? 1.8) / 2), at[2]]
+    : at;
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, [at[0], at[1], at[2]]);
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt);
     const pain = enemyPainVoice(foe, dmg, rolls);
     if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
