@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS,
-  SHADOW_EXTENT, PIXEL_METRES,
+  QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS, SHADOW_UNIFORMS,
+  SHADOW_EXTENT, PIXEL_METRES, shadowOrigin,
 } from '../src/render/volumetricClouds.js';
 import { easeWeather, WEATHER_SKY, WEATHER_EASE_SECONDS } from '../src/render/enhancedSky.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
@@ -74,7 +74,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
   assert.match(COMPOSITE_FS, /vec2 uv = vec2\(az \/ \(2\.0 \* PI\), el \/ \(0\.5 \* PI\)\);/, 'azimuth across, elevation up');
   assert.match(COMPOSITE_FS, /if \(el <= 0\.0\) discard;/, 'below the horizon the dome stands');
   assert.match(MARCH_FS, /vec3 dir = vec3\(sin\(az\) \* cos\(el\), sin\(el\), cos\(az\) \* cos\(el\)\);/, 'the march reads the same map coordinates back into a direction');
-  for (const [fs, names] of [[MARCH_FS, MARCH_UNIFORMS], [COMPOSITE_FS, COMPOSITE_UNIFORMS]]) {
+  for (const [fs, names] of [[MARCH_FS, MARCH_UNIFORMS], [COMPOSITE_FS, COMPOSITE_UNIFORMS], [SHADOW_FS, SHADOW_UNIFORMS]]) {   // all THREE marched programs (the review: a drifted SHADOW_UNIFORMS was silent)
     const declared = [...fs.matchAll(/uniform\s+\w+\s+(\w+)/g)].map((m) => m[1]);
     assert.deepEqual(declared.sort(), [...names].sort(), 'every uniform the shader declares has its location fetched, and none is fetched that it lacks');
   }
@@ -108,7 +108,26 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(vc, /gl\.blitFramebuffer\(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl\.COLOR_BUFFER_BIT, gl\.NEAREST\);/);
   assert.match(vc, /if \(!this\.mapOrigin \|\| !this\.shadowMarched\) return null;/, 'the ground samples nothing before the first march, and the rect it takes is the corner the map HOLDS');
   assert.match(vc, /if \(this\.shadowFull\) \{ this\.shadowFull = false; this\.shadowMarched = true; this\.mapOrigin = \[this\.origin\[0\], this\.origin\[1\]\]; \}/, 'a full march publishes the corner it marched');
-  assert.equal(SHADOW_EXTENT, PIXEL_METRES * 12, 'twelve pixels across: the square outruns the far fog');
+  // the square: sixteen pixels a side, a pixel a WHOLE number of texels at every tier (the crossing's shift depends on it)
+  assert.equal(SHADOW_EXTENT, PIXEL_METRES * 16, 'sixteen pixels across: the near edge stands 6144 m out, past the far fog');
+  for (const [k, q] of Object.entries(QUALITY)) {
+    const texelsPerPixel = PIXEL_METRES / (SHADOW_EXTENT / q.shadow);
+    assert.ok(Math.abs(texelsPerPixel - Math.round(texelsPerPixel)) < 1e-9 && texelsPerPixel >= 1, `${k}: a pixel is ${texelsPerPixel} texels - whole`);
+  }
+  // shadowOrigin, by value: the camera's pixel centred in the square
+  const half = SHADOW_EXTENT / 2, p = PIXEL_METRES;
+  assert.deepEqual(shadowOrigin(0, 0), [-half + p / 2, -half + p / 2], 'at the origin: the square\'s centre is pixel (0,0)\'s centre');
+  for (const x of [37, 100, p - 1, p + 1, 2.5 * p, -0.3 * p, 12345.6]) {   // interior points: a camera ON an edge is float rounding's to place
+    const o = shadowOrigin(x, -x);
+    assert.ok(Math.abs(o[0] + half - (Math.floor(x / p) * p + p / 2)) < 1e-6, `x=${x}: the square is centred on the camera\'s pixel`);
+    assert.ok(Math.abs(o[1] + half - (Math.floor(-x / p) * p + p / 2)) < 1e-6, `z=${-x}: and on z`);
+    for (const k of [1, -3, 7]) {   // a whole-pixel recenter moves it by exactly the recenter
+      const r = shadowOrigin(x + k * p, -x + k * p);
+      assert.ok(Math.abs(r[0] - (o[0] + k * p)) < 1e-6 && Math.abs(r[1] - (o[1] + k * p)) < 1e-6, `x=${x}, k=${k}: invariant under a whole-pixel recenter`);
+    }
+  }
+  const before = shadowOrigin(3 * p - 1, 0), after = shadowOrigin(3 * p + 1, 0);
+  assert.ok(Math.abs(after[0] - before[0] - p) < 1e-6 && after[1] === before[1], 'a crossing moves the square by exactly one pixel, on that axis only');
   assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(\(t1 - t0\) \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m');
   for (const q of Object.values(QUALITY)) assert.ok(q.shadowSteps >= 8 && q.shadowSteps <= 24, 'the tier\'s count is the floor under the ceiling');
   // the far ring stands outside the square: a cover-derived dim on the slab's own law

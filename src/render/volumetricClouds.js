@@ -82,10 +82,14 @@ export const VARIATION_METRES = PIXEL_METRES * 16;
 export const MOTTLE_METRES = PIXEL_METRES * 5;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
-/** The shadow map's square, in metres: twelve pixels a side, the
- *  camera's pixel in the middle - past the fog's end at Land View
- *  Distance 4 (3200 m) either way. */
-export const SHADOW_EXTENT = PIXEL_METRES * 12;
+/** The shadow map's square, in metres: SIXTEEN pixels a side, the
+ *  camera's pixel in the middle, so the near edge stands 6144 m out -
+ *  past the fog's end at Land View Distance 4 (3200 m) either way.
+ *  Sixteen and not twelve: a pixel must be a WHOLE number of the map's
+ *  texels at every tier (256/16, 512/16, 1024/16), which the crossing's
+ *  texel shift (`_shiftShadowMap`) depends on - twelve left 0.67 of a
+ *  texel behind at every crossing. Pinned. */
+export const SHADOW_EXTENT = PIXEL_METRES * 16;
 /** How much of the sun a full shadow takes (the ambient is never
  *  touched - a cloud dims the sun and leaves the sky's light alone). */
 export const SHADOW_AMOUNT = 1.0;

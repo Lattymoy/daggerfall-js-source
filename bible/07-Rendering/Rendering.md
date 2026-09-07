@@ -243,7 +243,7 @@ directory by `test/audit18_bible_docs.test.js`:
   sky-space hemisphere map a stripe per frame and composited over the dome by
   transmittance (`?clouds=off|lo|hi`); VC4: and the SAME field marched from
   the ground along the sun's ray into a world-space shadow map, a square of
-  eight pixels snapped to the 819.2 grid, which the terrain, the models, the
+  sixteen pixels snapped to the 819.2 grid, which the terrain, the models, the
   characters and the flats sample through renderer.js's CLOUD_SHADOW_GLSL.
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
