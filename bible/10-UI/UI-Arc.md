@@ -8934,8 +8934,9 @@ latch a thumb and never move it. The four-hosts rule's own failure mode,
 and silent, because nothing errors on a latch. The pin sweeps all six
 hover routes rather than trusting an edit.
 
-Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 17 mutations
-killed): the drag's arithmetic dies under the span-scale and the floor;
+Pinned by `test/roadg_g4_dragrelease.test.js` (12 tests, 19 mutations
+killed - 17 at this slice, two more at AUDIT 61 F24/F25 below): the
+drag's arithmetic dies under the span-scale and the floor;
 the release dies under an emptied `release()` in either window, in the
 wizard's flow and in its wrapper; the rail's press dies under the
 removed branch; the trough's absence dies under the grey rectangle
@@ -8944,13 +8945,16 @@ the one the slice did not set out to write: the hosts answer a pointer
 off their letterboxed panel with `(-1, -1)`, and that pair is a
 fabricated coordinate rather than a position - ROAD-C c2 flight 2 caught
 it flinging the town map ~165 world units - so a thumb dragged into the
-black border would have snapped its list to row 0. All three of the
-slice's drag machines skip the frame and keep the latch, because
-`release()` is what ends a drag. The wizard's bar was NOT among them
-when this section was first written - it took the sentinel straight
-into `pickBar.update` and clamped the class list to row 0, and the
-ROAD-G G4 review caught the gap; `ui/chargen.js`'s `hover` carries the
-same `vy >= 0` arm as its two siblings now, and G4-12 drives all three.
+black border would have snapped its list to row 0. Every drag machine
+in the port skips the frame and keeps the latch, because `release()`
+is what ends a drag - THREE of them at this slice, FIVE since AUDIT 61
+F24/F25 (below) found the shared list picker and the bank's price list
+still taking the pair. The wizard's bar was NOT among them when this
+section was first written - it took the sentinel straight into
+`pickBar.update` and clamped the class list to row 0, and the ROAD-G
+G4 review caught the gap; `ui/chargen.js`'s `hover` carries the same
+`vy >= 0` arm as the spellbook's now (the icon picker's is the
+two-part `vx >= 0 && vy >= 0`), and G4-12 drives all five.
 
 ## ROAD-G G5 - THE DROP ICONS, AND THE BANK LIST'S SCROLL BAR (2026-09-04)
 
@@ -9703,3 +9707,94 @@ existing entries only ever captured the exterior number, which is how
 the other half went stale unnoticed. (The rest cite names `world.js:4442`,
 the first of the host's TWO identical `act === 'Rest'` arms; the second
 at `:4456` is unreachable and is left for a lane that owns that ladder.)
+
+## AUDIT 61 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
+
+ROAD-G G4's review widened its own sentinel pin from "both drag
+machines" to all three, and wrote the count into this page, the Ledger
+and Testing.md. It was still short by two, and one of them is the
+window the other three cite as their model.
+
+**THE LAW.** `VerticalScrollBar.Update`
+(`Game/UserInterface/VerticalScrollBar.cs:101-130`) drags off
+`ScreenToLocal(MousePosition)`. `BaseScreenComponent.cs:573` sets
+`mousePosition` from the RAW screen cursor; only `scaledMousePosition`
+is set to `-Vector2.one` when the cursor leaves a rect (:575), and
+`Update` never reads that one. So in DFU a thumb drag that leaves the
+panel keeps a real local y, and a drag pulled past the bottom of the
+list clamps to the LAST page.
+
+**THE PORT.** Every host answers a pointer off its letterboxed 320x200
+panel with a fabricated `(-1, -1)` - `pointToNative`
+(`ui/nativePanel.js:107-111`) returns null out there, and
+`scenes/townTalk.js`, both of `scenes/worldModes.js`' overlay slots and
+`scenes/dungeon.js` (through `scenes/dungeonContext.js`'s
+`overlayHover`) all substitute the pair. That is not a position; ROAD-C
+c2 flight 2 caught the same pair driving the town map's chrome.
+
+- **F25, `ui/listPicker.js`.** The shared picker - guild training, the
+  travel map's teleport list, the quest journal, the nested pickers in
+  the spell, item and potion makers, a dozen-plus classic windows -
+  pumped `scrollBar.update(!!(e?.buttons & 1), vy)` with no guard.
+  Bar-local `-1 - 59 = -60` into `dragScrollIndex`, clamped to row 0:
+  the list jumps to the top on the commonest overshoot gesture, the
+  opposite direction from DFU's, and the latch stays set so the next
+  real frame drags on from the stale anchor. Reproduced at HEAD: 40
+  items at scrollIndex 12, press the thumb, one real held move to 15,
+  then `hover(-1, -1, {buttons: 1})` -> 0.
+- **F24, `ui/bankPurchaseWindow.js`.** ROAD-G G5's new price-list bar
+  copied the picker's unguarded line, and this window IS
+  `worldModes`' interior overlay, so it takes the pair from the same
+  seam. Bar-local `-1 - 75 = -76`, scale `48/30`, -47 units, clamped to
+  row 0.
+
+**THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
+- the arm `ui/chargen.js:1078` and `ui/spellbookWindow.js:427` already
+carry. (The third guarded sibling is not the same arm:
+`ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
+`test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
+The vy-only arm is the faithful one to add: DFU's `Update` reads
+`dragDistance.y` only, so horizontal cursor travel never moves
+`scrollIndex`, and the hosts fabricate BOTH halves of the pair
+together anyway, so the y test alone catches every sentinel the x test
+would. The FRAME is skipped, never
+the latch - `release()`, which every host delivers on pointerup, is
+the one thing that ends a drag.
+
+**PINNED** by `test/roadg_g4_dragrelease.test.js`'s G4-12, now "ANY of
+the FIVE drags": each new machine is driven from an index the fling
+would be visible from (picker 40 items / scrollIndex 12 / thumb at
+bar-local 24.6, bank 30 houses / scroll 10 / thumb at 16), each takes
+one REAL held move first so the pin cannot pass on a dead drag, and
+each asserts both that the index is unchanged AND that
+`draggingThumb` is still true - the second assert is what stops a
+"fix" that drops the latch instead of the frame. Both mutants (delete
+the guard from either file) go red.
+
+The `listPicker.js` edit is line-neutral by construction: the hover
+docstring was rewritten to the same six lines, so the four files and
+the Ledger row that cite `listPicker.js:292` and `:309` keep their
+numbers.
+
+**THE COUNT SWEEP (review round, same date).** Raising the roster from
+three to five made every page that had written "three" stale, which is
+the drift class CD8c exists to police - and CD8c was itself one of the
+stale pages, its `GUARDED` list naming only the first three windows.
+So the pin was widened WITH the wording it guards: `src/ui/listPicker.js`
+and `src/ui/bankPurchaseWindow.js` joined the list, the forbidden-wording
+assertion now rejects a stale "ALL THREE" as well as the original
+"both" (the phrase is spelled out only in the pin itself, so the pages
+cannot re-introduce it by quoting it), and the Ledger row it reads must
+state ALL FIVE. The G4 section
+above, the Ledger row and Testing.md's row were corrected in the same
+edit (19 mutations, not 17; five machines, not three), and CD8c's four
+mutants - the guard deleted from either new window, "ALL THREE" restored
+to the Ledger, "both" restored to Testing.md - all go red.
+
+**AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
+section above called `ui/chargen.js:1078`, `ui/spellbookWindow.js:427`
+and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
+the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
+pins by regex, while the other two test `vy` alone. The two new guards
+deliberately take the vy-only form, for the reason stated above - DFU's
+`Update` reads `dragDistance.y` only - and the pages now say so.

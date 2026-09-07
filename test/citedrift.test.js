@@ -959,25 +959,34 @@ test('CD8b: the C# members ROAD-G G4 names EXIST, and at the lines it cites', ()
     'the icon picker\'s UpdateSelectedIcon cite names another line');
 });
 
-test('CD8c: the sentinel guard the docs claim is on ALL THREE drag machines', () => {
+test('CD8c: the sentinel guard the docs claim is on ALL FIVE drag machines', () => {
   // The rationale this pin corrects was written as fact in three
   // places - the Ledger row, UI-Arc's G4 section and Testing.md's row
   // all said the (-1,-1) sentinel was kept out of "both drag machines"
   // while the slice had shipped THREE, and the wizard's was the one
-  // without the arm. A wording that outlives the code it describes is
-  // the same defect as a stale line number, so both halves are held:
-  // the guard is live in all three windows, and no page says "both".
-  // MUTANT: drop the guard from `ui/chargen.js`, or restore the "both
-  // drag machines" wording.
+  // without the arm. AUDIT 61 F24/F25 then found two MORE unguarded -
+  // the shared list picker those machines cite as their model, and the
+  // bank's price list copied from it - so the roster is five. A wording
+  // that outlives the code it describes is the same defect as a stale
+  // line number, so both halves stay held: the guard is live in all
+  // five windows, and no page states a superseded count. NOTE the icon
+  // picker's arm is the two-part `vx >= 0 && vy >= 0`, not the vy-only
+  // one the other four carry, and the pages must not call them "the
+  // same arm".
+  // MUTANT: drop the guard from any of the five, or restore the "both
+  // drag machines" / "ALL THREE drag machines" wording.
   const GUARDED = [
     ['src/ui/spellbookWindow.js', /!this\.top && vy >= 0 && this\._syncScrollBar\(\)\.update\(/],
     ['src/ui/spellIconPickerWindow.js', /if \(vx >= 0 && vy >= 0\) this\._syncScroller\(\)\.update\(/],
     ['src/ui/chargen.js', /if \(vy >= 0 && this\.pickBar\.update\(/],
+    ['src/ui/listPicker.js', /if \(vy >= 0 && this\.scrollBar\.update\(/],
+    ['src/ui/bankPurchaseWindow.js', /if \(vy >= 0 && this\.scrollBar\.update\(/],
   ];
   for (const [f, re] of GUARDED) assert.match(read(f), re, `${f}'s drag takes the fabricated (-1,-1)`);
   for (const f of [LEDGER, 'bible/10-UI/UI-Arc.md', 'bible/09-Testing/Testing.md']) {
-    assert.equal(/both drag machines/i.test(read(f)), false, `${f} still says the sentinel is kept out of BOTH`);
+    assert.equal(/(both|all three) drag machines/i.test(read(f)), false,
+      `${f} still states a superseded drag-machine count`);
   }
-  assert.match(read(LEDGER), /sentinel kept out of ALL THREE drag machines/,
+  assert.match(read(LEDGER), /sentinel kept out of ALL FIVE drag machines/,
     'the Ledger row no longer states the count it was corrected to');
 });

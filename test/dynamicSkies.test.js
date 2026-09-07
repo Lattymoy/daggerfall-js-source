@@ -24,7 +24,7 @@ import {
   TEXTURE_IMPORTS, TEXTURE_SLOTS, dayPartOfHour, weatherIndexOf, DAY_PARTS,
   LUNAR_PHASE_X, lunarPhaseLength, phaseDayOffset, nextLunarPhase, interpolateAngle, lunarPhaseState, orbitParameters,
   rotateWorldPosition, orbitPosition, rotateArbitraryAxis, moonDirection,
-  worldTimeSeconds, sunLightDirection, sunCurveTime, sunLightColor, mathfSmoothStep, fogColorNow,
+  worldTimeSeconds, sunLightDirection, sunCurveTime, sunLightColor, mathfSmoothStep, fogColorNow, FOG_COLOR_INTERVAL_SECONDS,
   LightningFlash, pixelSnowSettings,
 } from '../src/systems/dynamicSkies.js';
 import { DynamicSkies } from '../src/systems/dynamicSkiesRuntime.js';
@@ -180,9 +180,16 @@ test('DS1 apply: every material property a preset sets, the timescale factors, a
   assert.equal(mat._SunSizeConvergence, 10);
   assert.deepEqual(mat._SkyTint, parseHtmlColor('6176DCFF'));
   assert.equal(mat._SkyFadeEnd, s.SkyEndStart);
-  assert.ok(near(mat._CloudSpeed, s.BottomClouds.Speed * TIMESCALE_FACTOR), '"Because game runs at timescale 12"');
-  assert.ok(near(mat._TwinkleSpeed, s.Stars.TwinkleSpeed * TIMESCALE_FACTOR));
-  assert.deepEqual(mat._MoonSpinSpeed, s.Masser.SpinSpeed.map((v) => v * TIMESCALE_FACTOR));
+  // AUDIT 61 F30: the three assertions below used to multiply by the
+  // IMPORTED TIMESCALE_FACTOR, so they restated the port's own constant
+  // on both sides and 0.0833 -> 0.08 survived the whole suite. The
+  // mod's LITERAL is the law, and the constant is asserted outright -
+  // that is the load-bearing half, because near()'s 1e-6 sleeps through
+  // a small drift on Sunny's BottomClouds.Speed of 0.00125.
+  assert.equal(TIMESCALE_FACTOR, 0.0833, 'BLBSkybox.cs:1380 "Because game runs at timescale 12"');
+  assert.ok(near(mat._CloudSpeed, s.BottomClouds.Speed * 0.0833), '"Because game runs at timescale 12" (:1380)');
+  assert.ok(near(mat._TwinkleSpeed, s.Stars.TwinkleSpeed * 0.0833), ':1430');
+  assert.deepEqual(mat._MoonSpinSpeed, s.Masser.SpinSpeed.map((v) => v * 0.0833), ':1447');
   assert.deepEqual(mat._SecundaSpinSpeed, s.Secunda.SpinSpeed, 'Secunda’s spin is NOT timescaled (:1464)');
   // QUIRK 1: the preset's Direction (0) overwrites Init's wind
   assert.equal(mat._CloudDirection, 0);
@@ -226,8 +233,27 @@ test('DS1 day parts: isHourDayPart’s bands and getWeatherIndex', () => {
 // ── THE MOONS ─────────────────────────────────────────────────────
 test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interpolation, verbatim', () => {
   assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.New], 180); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.Full], 0); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.OneWane], -135);
-  assert.equal(lunarPhaseLength(LUNAR_PHASES.OneWax), 6); assert.equal(lunarPhaseLength(LUNAR_PHASES.ThreeWax), 3); assert.equal(lunarPhaseLength(LUNAR_PHASES.Full), 1);
-  assert.equal(phaseDayOffset(0), 0); assert.equal(phaseDayOffset(16), 0); assert.equal(phaseDayOffset(5), 4); assert.equal(phaseDayOffset(17), 0); assert.equal(phaseDayOffset(31), 2);
+  // AUDIT 61 F32: the WHOLE ladder, not three of its eight arms.
+  // GetLunarPhaseLength (BLBSkybox.cs:901-913) verbatim, in DFU's own
+  // order, plus the `default: return 1` arm - LUNAR_PHASES.None is what
+  // gameDate's lunarPhase answers for a year below zero.
+  // MUTANT: any single `return` in dynamicSkies.js's switch - the three
+  // wane arms and HalfWax used to have no pin at all.
+  assert.deepEqual([
+    LUNAR_PHASES.Full, LUNAR_PHASES.New, LUNAR_PHASES.ThreeWane, LUNAR_PHASES.HalfWane,
+    LUNAR_PHASES.OneWane, LUNAR_PHASES.OneWax, LUNAR_PHASES.HalfWax, LUNAR_PHASES.ThreeWax,
+  ].map(lunarPhaseLength), [1, 1, 5, 5, 5, 6, 6, 3], 'GetLunarPhaseLength (:901-913)');
+  assert.equal(lunarPhaseLength(LUNAR_PHASES.None), 1, 'and the default arm (:912)');
+  // AUDIT 61 F33: GetPhaseDayOffset (:915-931) over its WHOLE domain,
+  // written out from the reference's six bands - `==0||==16 -> 0`, then
+  // `<=5`/-1, `<=10`/-6, `<=15`/-11, `<=22`/-17, `<=28`/-23, `<=31`/-29.
+  // Five sample points used to stand here and left every band edge and
+  // three whole bands (HalfWane, OneWane, HalfWax) undriven, so
+  // `<= 28` -> `<= 27`, `<= 10` -> `<= 9`, `<= 15` -> `<= 14` and the
+  // subtraction constants -6/-11/-23 all survived.
+  assert.deepEqual(Array.from({ length: 32 }, (_, r) => phaseDayOffset(r)),
+    [0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2],
+    'GetPhaseDayOffset (:915-931), both sides of every band edge');
   assert.equal(nextLunarPhase(LUNAR_PHASES.OneWane), LUNAR_PHASES.New); assert.equal(nextLunarPhase(LUNAR_PHASES.ThreeWax), LUNAR_PHASES.Full);
   assert.equal(interpolateAngle(-135, 180, 0.5), -157.5, 'OneWane (-135) to New (180) goes the short way, through -180');
   assert.equal(interpolateAngle(180, 135, 0.5), 157.5);
@@ -240,6 +266,15 @@ test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interp
   assert.ok(near(st.interpolatedX, interpolateAngle(135, 90, st.progress)));
   const sec = lunarPhaseState(date, false);
   assert.equal(sec.moonRatio, 18);
+  // AUDIT 61 F32, the LIVE path: the only date fixture above is OneWax
+  // for both moons, so the length-6 arm was the only one ChangeLunarPhases
+  // ever divided by. Sixteen days on, Masser is HalfWane (moonRatio 8,
+  // band 6..10, day offset 2) and the divisor is the FIVE-day length -
+  // this is the phaseLength that dynamicSkiesRuntime's per-tick
+  // applyLunarPhases actually consumes, through `progress`.
+  const hw = lunarPhaseState(dateFromClassicMinutes(405 * 360 * MINUTES_PER_DAY + 28 * MINUTES_PER_DAY + 12 * 60), true);
+  assert.equal(hw.phase, LUNAR_PHASES.HalfWane); assert.equal(hw.moonRatio, 8);
+  assert.ok(near(hw.progress, (2 * 86400 + 12 * 3600) / (5 * 86400)), 'day offset 2 of a FIVE-day phase, at noon');
   // the orbit: 270/90 with a Z from the phase, speed 0.0000725, offset X + 180
   const o = orbitParameters(st, sec);
   assert.deepEqual(o._MoonOrbitAngle.slice(0, 2), [270, 90]);
@@ -254,6 +289,22 @@ test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interp
   assert.ok(near(o2._MoonOrbitOffset, -157.5 + 180 + 15 * 0.5));
   assert.ok(near(o2._MoonOrbitAngle[2], -20 * Math.sin(-157.5 * Math.PI / 180) + 15 * 0.5));
   assert.ok(near(o2._SecundaOrbitOffset, 180 + 180 - 5));
+  // AUDIT 61 F34: the MIRROR pair. The fixture above only ever gives
+  // Masser the OneWane arm and Secunda the New one, so Secunda's own
+  // constants (20f, not Masser's 15f - BLBSkybox.cs:972-973, :997-998)
+  // and Masser's New arm (-5f, :969-970) had no pin: 20 -> 15 and
+  // -5 -> -7 both left the suite green. Swapping the roles drives all
+  // four arms, and the distinct multipliers (15 vs 20, -20 sin vs
+  // -30 sin) make each one separately visible.
+  const secWane = { phase: LUNAR_PHASES.OneWane, progress: 0.5, interpolatedX: -157.5 };
+  const o3 = orbitParameters(nw, secWane);
+  assert.ok(near(o3._SecundaOrbitOffset, -157.5 + 180 + 20 * 0.5), 'Secunda’s OneWane nudge is 20, not Masser’s 15 (:972-973)');
+  assert.ok(near(o3._SecundaOrbitAngle[2], -30 * Math.sin(-157.5 * Math.PI / 180) + 20 * 0.5), 'and on Z too (:997-998)');
+  assert.ok(near(o3._MoonOrbitOffset, 180 + 180 - 5), 'Masser New: -5 (:969-970)');
+  assert.ok(near(o3._MoonOrbitAngle[2], -20 * Math.sin(180 * Math.PI / 180)), 'and New adds nothing to Z');
+  // ...and the no-arm baseline for Secunda on the real date, which was
+  // asserted for Masser only
+  assert.ok(near(o._SecundaOrbitOffset, sec.interpolatedX + 180), 'no phase arm: offset is X + 180 (:964)');
 });
 
 test('DS1 moons: the CPU twin of MoonFunctions.cginc - rows dot vector, the ellipse, the arbitrary axis', () => {
@@ -343,6 +394,30 @@ test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomis
   const h = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
   h.startFlash([0, 0, 0]); h.tick(0.01); h.stopAll();
   assert.equal(h.tick(0.01), null);
+
+  // AUDIT 61 F31: the two thresholds AT THEIR BOUNDARY. Every drive
+  // above rolls 0.1 / 0.9 / 0.7 (and the runtime's 0.25), all far from
+  // both edges, so `Random.value < (0.5f / Time.timeScale)`
+  // (LightningFlash.cs:52) and `< (0.33f / Time.timeScale)` (:55)
+  // survived 0.5 -> 0.6 and 0.33 -> 0.5 untouched. The comparison is
+  // STRICTLY less-than, so the threshold value itself must not fire.
+  // MUTANT: either literal at dynamicSkies.js's two roll lines.
+  const M8 = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5];    // FlashOnce's 8 draws
+  assert.equal(new LightningFlash(seq([0.5, 0.9, ...M8])).startFlash([0, 0, 0]), false, '0.5 is not < 0.5: no flash');
+  assert.equal(new LightningFlash(seq([0.49, 0.9, ...M8])).startFlash([0, 0, 0]), true, '0.49 < 0.5: a flash');
+  // 0.33 is not < 0.33, so this is the SINGLE 0.2 s routine: still lit
+  // at 0.19 s, where a double would have gone dark at 0.1 s.
+  const sB = new LightningFlash(seq([0.1, 0.33, ...M8]));
+  sB.startFlash([0, 0, 0]);
+  assert.ok(sB.tick(0.05)); assert.ok(sB.tick(0.1));
+  assert.ok(sB.tick(0.09), '0.33 rolls the single 0.2 s flash, not a 0.1 half with a gap');
+  assert.equal(sB.tick(0.02), null);
+  // 0.32 < 0.33: the double, two 0.1 halves around a 0.1 gap
+  const dB = new LightningFlash(seq([0.1, 0.32, ...M8]));
+  dB.startFlash([0, 0, 0]);
+  assert.ok(dB.tick(0.05)); assert.ok(dB.tick(0.05));
+  assert.equal(dB.tick(0.05), null, 'the first half ends at 0.1');
+  assert.equal(dB.tick(0.04), null, 'the gap'); assert.ok(dB.tick(0.06), 'the second half');
 });
 
 test('DS1 pixel snow: InitSnow’s numbers - sizes /100000 (viewport fractions), the count x1000 and unused', () => {
@@ -407,6 +482,38 @@ test('DS1 runtime: Init, the pending weather applied a frame late, the fog colou
   // a moon's direction is the shader's, on the CPU
   const m = d.moonDirection('Moon');
   assert.ok(near(Math.hypot(...m), 1, 1e-9));
+});
+
+test('DS1 runtime: the fog colour is recomputed on a ONE-SECOND cadence, and holds in between', () => {
+  // AUDIT 61 F35. The hold assertion in the test above discriminates
+  // nothing: it compares two NOON frames, where sunY is ~1, so
+  // setFogColor's rescaled smoothstep underflows to 0 in the squaring
+  // and the recomputed colour is the day colour to the last bit either
+  // way - `FOG_COLOR_INTERVAL_SECONDS` 1.0 -> 0.3 left the whole suite
+  // green, and nothing asserted the constant.
+  //
+  // The colour only MOVES between about 15:00 and 16:25 (from 16:30 on
+  // it is saturated black), so the hold is driven there. Both frames sit
+  // in ONE day part (hour 15 is Midday, so no day-part arm re-applies)
+  // and carry the SAME weather word, so ApplyPendingWeatherSettings'
+  // unconditional setFogColor (:587-595) cannot forge the result - only
+  // the interval gate can write the colour.
+  // MUTANT: `UpdateInterval = 1.0f` (BLBSkybox.cs:193), the gate at
+  // :199 - at 0.3 the middle frame already recomputes and the hold goes
+  // red.
+  assert.equal(FOG_COLOR_INTERVAL_SECONDS, 1.0, 'BLBSkybox.cs:193 "Update fog color every 1.0 seconds"');
+  const d = new DynamicSkies(assets(), { densitySetting: 2 }, () => 0.25);
+  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
+  const frame = (minute, seconds) => ({
+    minuteOfDay: minute, classicMinutes: base + minute, weather: 'sunny', seconds, dt: 1 / 60, weatherScale: 1,
+  });
+  d.tick(frame(15 * 60 + 30, 10.0));                 // lastUpdateTime is stamped here
+  const c1 = [...d.fogColor];
+  assert.ok(c1[0] > 0 && c1[0] < parseHtmlColor('7783B7FF')[0], 'mid-afternoon: the fog is between the day colour and black');
+  d.tick(frame(15 * 60 + 50, 10.9));
+  assert.deepEqual([...d.fogColor], c1, 'not yet a second: the sun moved 20 game-minutes and the fog did not');
+  d.tick(frame(15 * 60 + 50, 11.05));
+  assert.ok(d.fogColor[0] < c1[0], 'a second on, the fog follows the sun down');
 });
 
 // ── THE SHADER ────────────────────────────────────────────────────
