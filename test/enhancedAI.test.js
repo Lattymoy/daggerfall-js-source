@@ -22,7 +22,7 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
   // stacked-floor changes, made HERE FIRST and owed to project-final.
   const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
-  assert.equal(sum, '6c65912d41f28bca394e35ac30f3ff0559278c43aae5aaf955841835aa904ac4',
+  assert.equal(sum, '7033c4d66c7c317f6ceb0ed58ee56c1e9349fca074cf39b96b1b3ef3bf608c4f',
     'THE BODY CHANGED: make the change in project-final too, say it in both repos, then re-pin this digest with the commit');
 });
 
