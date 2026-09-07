@@ -13,6 +13,11 @@
 // everything proven there - the pipeline, the funnel, the obstacles, the
 // bake - is what runs here. Do not re-derive; a change is made in both
 // repos and said in both.
+// AUDIT 61 F1 (2026-09-07): THE FIRST CHANGE TO THE BODY, and it is said
+// here for project-final to take: the poly-mesh weld, the lattice cut's
+// height, the bake's vertex heights, the level-aware locate and heights
+// (grep AUDIT 61). test/enhancedAI.test.js pins the body by digest; a
+// change re-pins it deliberately, with project-final's commit beside it.
 //
 // THE TWO LINES. (1) project-final imports surfaceY from its terrain
 // module; that function is four lines and is inlined here EXACTLY. (2)
@@ -572,10 +577,22 @@ export function buildPolyMesh(chf, opts = {}) {
   const maxArea2 = 2 * ((opts.maxArea ?? 12) / (chf.cs * chf.cs)); // twice-area poly cap in grid units² (opts.maxArea = world m²). The Slice-9 overlay blocks WHOLE polys, so poly size is every obstacle's blast radius: open rooms baked as mega-polys (a 144 m² dig-face floor) and one boss disc severed the arena - alert adds with no path stood still. The cap bounds any block's reach; corridors/ledges (already small) are untouched.
   const contours = chf.contours || [];
 
-  // global vertex dedupe by (x,z); y from first sighting (detail height is 4.3d)
+  // global vertex dedupe by (x,z) - AUDIT 61 F1 (2026-09-07): WITH A HEIGHT TERM. project-final's arenas
+  // had no stacked floors and welded on (x,z) alone; a Daggerfall dungeon is stacked by construction (a
+  // mezzanine over a hall, a bridge, a room under a room), and welding a lower floor's vertex to the
+  // upper floor's at the same (x,z) gave every lattice edge under the overlap 3-4 owners, which
+  // linkPolyNeighbours refuses - the mesh fragmented and findPath answered null on BOTH levels. Recast's
+  // rcBuildPolyMesh addVertex (RecastMesh.cpp:143) welds only within 2 voxels of height; the lattice-cut
+  // verts sliceTri mints carry the ring endpoint's y (not the cut point's), so the same lattice point
+  // minted from two triangles of ONE region can differ in y by more than that - a vertex welds to an
+  // existing one when it was minted by the same region OR sits within Recast's 2 voxels of it.
+  // (Change made here first; project-final takes it per decision #3 - said in both repos.)
+  const ch = chf.ch ?? 0.2;
   const verts = [], vmap = new Map();
-  const vid = (v) => { const k = v.x + ',' + v.z; let i = vmap.get(k);
-    if (i === undefined) { i = verts.length; verts.push({ x: v.x, z: v.z, y: v.y }); vmap.set(k, i); } return i; };
+  let curReg = 0; // the contour's region while it is polygonised (set per contour below)
+  const vid = (v) => { const k = v.x + ',' + v.z; const l = vmap.get(k);
+    if (l) for (const i of l) { const w = verts[i]; if (w.reg === curReg || Math.abs(w.y - v.y) <= 2 * ch + 1e-6) return i; }   // Recast compares whole voxels; ymin + floor * ch is not exact in binary, so two voxels apart must still weld
+    const i = verts.length; verts.push({ x: v.x, z: v.z, y: v.y, reg: curReg }); if (l) l.push(i); else vmap.set(k, [i]); return i; };
   const V = (gi) => verts[gi];
 
   // ── exact integer predicates (O'Rourke) ──
@@ -646,7 +663,7 @@ export function buildPolyMesh(chf, opts = {}) {
       const a = ring[i], b = ring[(i + 1) % ring.length], sa = side(a), sb = side(b);
       const inA = keepLE ? sa <= 0 : sa >= 0, inB = keepLE ? sb <= 0 : sb >= 0;
       if (inA) out.push(a);
-      if (inA !== inB) { const t = sa / (sa - sb), s = (v) => Math.round(v * 8) / 8; out.push(ax ? { x: s(a.x + (b.x - a.x) * t), z: c, y: a.y } : { x: c, z: s(a.z + (b.z - a.z) * t), y: a.y }); } // minted verts snap to the 1/8-cell lattice so the same geometric point on both sides of a shared edge welds to ONE vid (contour verts are integers - already on it)
+      if (inA !== inB) { const t = sa / (sa - sb), s = (v) => Math.round(v * 8) / 8, y = a.y + (b.y - a.y) * t; out.push(ax ? { x: s(a.x + (b.x - a.x) * t), z: c, y } : { x: c, z: s(a.z + (b.z - a.z) * t), y }); }   // AUDIT 61 F1: the cut point's INTERPOLATED y, not the ring endpoint's - the height-aware weld reads it, and a lattice point minted from both sides of a region seam must carry the same height on both // minted verts snap to the 1/8-cell lattice so the same geometric point on both sides of a shared edge welds to ONE vid (contour verts are integers - already on it)
     }
     return out;
   };
@@ -701,6 +718,7 @@ export function buildPolyMesh(chf, opts = {}) {
   const polys = [];
   for (const c of contours) {
     if (c.hole) continue; // merged into its outer below
+    curReg = c.reg;
     const loop = holesByReg.has(c.reg) ? mergeHoles(c.verts, holesByReg.get(c.reg)) : c.verts;
     let rp = triangulate(loop).flatMap(sliceTri);
     for (;;) { let bi = -1, bj = -1, bv = -1;
@@ -743,16 +761,17 @@ const _b64ToU8 = (s) => { if (typeof atob === 'function') { const bin = atob(s);
 // serialise a fully-baked chf into the compact form the map ships. Runs in the compiler (node) only.
 export function bakeNavData(chf) {
   const mesh = chf.mesh, v = [];
-  for (const vert of mesh.verts) v.push(vert.x, vert.z); // grid coords (integers); heights are re-snapped at load
+  for (const vert of mesh.verts) v.push(vert.x, vert.z, Math.round(vert.y * 1000) / 1000); // grid x,z + the vertex's y (AUDIT 61 F1: the level a vertex belongs to must survive the bake, or a hydrated stacked mesh cannot tell its floors apart)
   const walk = new Uint8Array(Math.ceil((chf.nx * chf.nz) / 8)); // 1 bit per cell: a walkable, regioned span exists
   for (let i = 0; i < chf.nx * chf.nz; i++) { for (const s of chf.spans[i]) if (s.walkable && s.reg) { walk[i >> 3] |= 1 << (i & 7); break; } }
-  return { v, p: mesh.polys.map((p) => p.verts), reg: mesh.polys.map((p) => p.reg ?? 0), walk: _u8ToB64(walk), cs: chf.cs, xmin: chf.xmin, zmin: chf.zmin, nx: chf.nx, nz: chf.nz, nvp: mesh.nvp };
+  return { v, stride: 3, p: mesh.polys.map((p) => p.verts), reg: mesh.polys.map((p) => p.reg ?? 0), walk: _u8ToB64(walk), cs: chf.cs, xmin: chf.xmin, zmin: chf.zmin, nx: chf.nx, nz: chf.nz, nvp: mesh.nvp };
 }
 
 // rebuild a queryable chf from shipped nav data + the (cheaply rebuilt) collider set. Runs at load.
 export function hydrateBakedNav(baked, colliders) {
-  const verts = new Array(baked.v.length / 2);
-  for (let i = 0; i < verts.length; i++) verts[i] = { x: baked.v[i * 2], z: baked.v[i * 2 + 1], y: 0 };
+  const st = baked.stride ?? 2; // a stride-2 bake (pre AUDIT 61) carries no heights: every level reads 0
+  const verts = new Array(baked.v.length / st);
+  for (let i = 0; i < verts.length; i++) verts[i] = { x: baked.v[i * st], z: baked.v[i * st + 1], y: st >= 3 ? baked.v[i * st + 2] : 0 };
   const polys = baked.p.map((vs, pi) => ({ verts: vs, reg: (baked.reg && baked.reg[pi]) || 0, neis: new Array(vs.length).fill(-1) }));
   linkPolyNeighbours(polys); // adjacency rebuilt from the winding (identical to the fresh bake's edge-match)
   const mesh = { verts, polys, nvp: baked.nvp };
@@ -794,7 +813,7 @@ function buildLocateIndex(mesh) {
 function ensureMeshHeights(chf) {
   if (!chf._flatHeights || !chf.colliders) return;
   const { cs, xmin, zmin, colliders } = chf;
-  for (const v of chf.mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground);
+  for (const v of chf.mesh.verts) v.y = surfHNear(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground, v.y);   // AUDIT 61 F1: the surface nearest the vertex's own level
   chf._flatHeights = false;
 }
 
@@ -831,16 +850,38 @@ export function polyMeshDebugFaces(chf) {
 export function buildPolyMeshDetail(chf, colliders) {
   const mesh = chf.mesh; if (!mesh) return null;
   const { cs, xmin, zmin } = chf;
-  for (const v of mesh.verts) v.y = surfH(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground); // snap onto the real surface
+  for (const v of mesh.verts) v.y = surfHNear(colliders, xmin + v.x * cs, zmin + v.z * cs, chf.ground, v.y); // snap onto the real surface - the one nearest the vertex's own level (AUDIT 61 F1: under a mezzanine the tallest top is the wrong floor)
   chf.colliders = colliders; // the height query samples the surface directly
   return mesh;
 }
 
-// the highest walkable-surface height at world (wx,wz): the draped height the agent rides across a poly.
-// (`pi` is reserved for picking among stacked walkable surfaces later; this arena has none, so highest wins.)
+// the walkable-surface height at world (wx,wz) the agent rides across poly `pi`: the surface nearest the
+// poly's own level (AUDIT 61 F1 - a Daggerfall dungeon stacks floors; the tallest top under a mezzanine is
+// the upper floor). No poly (pi < 0) = the tallest, as before.
 export function polyHeight(chf, pi, wx, wz) {
-  void pi;
-  return chf.colliders ? surfH(chf.colliders, wx, wz, chf.ground) : null;
+  if (!chf.colliders) return null;
+  const ref = pi >= 0 && chf.mesh ? polyRefY(chf.mesh, pi) : null;
+  return surfHNear(chf.colliders, wx, wz, chf.ground, ref);
+}
+
+// a poly's own level: the mean of its vertices' y (memoised on the mesh - static once baked)
+function polyRefY(mesh, pi) {
+  const py = mesh.py || (mesh.py = mesh.polys.map((p) => { let y = 0; for (const gi of p.verts) y += mesh.verts[gi].y; return y / p.verts.length; }));
+  return py[pi];
+}
+
+// surfH with a preference: among the collider tops covering (wx,wz), the one nearest `nearY`; null = the
+// tallest (surfH's law, byte-identical). The ground floor stands in only when no top covers the point.
+function surfHNear(colliders, wx, wz, ground = null, nearY = null) {
+  if (nearY === null || nearY === undefined) return surfH(colliders, wx, wz, ground);
+  let y = null, best = Infinity;
+  for (const c of colliders) {
+    if (c.rayOnly) continue;
+    if (wx < c.x0 || wx > c.x1 || wz < c.z0 || wz > c.z1) continue;
+    const sy = surfaceY(c, wx, wz), d = Math.abs(sy - nearY);
+    if (d < best) { best = d; y = sy; }
+  }
+  return y === null ? (ground ? ground.at(wx, wz) : 0) : y;
 }
 
 // the one surface sampler: the tallest collider top whose footprint covers (wx,wz), else the ground -
@@ -884,10 +925,10 @@ export function detailDebugFaces(chf) {
 
 // the poly under world (wx,wz): the one that contains it, else the nearest poly within ~1m (covers an
 // agent standing in the radius-eroded margin, just off the mesh edge). Grid coords. Returns index | -1.
-function locatePoly(chf, wx, wz) {
+function locatePoly(chf, wx, wz, wy = null) { // wy (AUDIT 61 F1): the query's height - among containing polys the one on its level wins; null = the first inside, as before
   const mesh = chf.mesh, { cs, xmin, zmin } = chf, gx = (wx - xmin) / cs, gz = (wz - zmin) / cs;
   const idx = mesh.index;
-  if (!idx) return locateScan(mesh, gx, gz, null); // no index baked (defensive) -> the full linear scan
+  if (!idx) return locateScan(mesh, gx, gz, null, wy); // no index baked (defensive) -> the full linear scan
   // gather candidates from every bucket the snap disc (radius 2 grid units) can touch - any poly outside
   // those buckets has an AABB, hence an edge, farther than 2, so it can never win the snap. Ascending +
   // deduped, so the first-inside / strict-< tie-breaks match the linear oracle exactly.
@@ -899,10 +940,10 @@ function locatePoly(chf, wx, wz) {
   else { const seen = new Set(); cand = [];
     for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) for (const pi of idx.buckets[k * idx.bx + i]) if (!seen.has(pi)) { seen.add(pi); cand.push(pi); }
     cand.sort((a, b) => a - b); }
-  return locateScan(mesh, gx, gz, cand);
+  return locateScan(mesh, gx, gz, cand, wy);
 }
 
-export const __locatePolyIndexed = (chf, wx, wz) => locatePoly(chf, wx, wz); // test seam: the indexed production query, for the equivalence sweep only
+export const __locatePolyIndexed = (chf, wx, wz, wy = null) => locatePoly(chf, wx, wz, wy); // test seam: the indexed production query, for the equivalence sweep only (wy: AUDIT 61 F1's level preference)
 
 // exported ONLY as the equivalence oracle for test/game/navIndex.test.js - the pre-index linear scan,
 // byte-for-byte the old locatePoly. Production queries go through the indexed locatePoly above.
@@ -913,9 +954,12 @@ export function locatePolyLinear(chf, wx, wz) {
 
 // the shared kernel: containment + nearest-edge snap over a candidate id list (null = all polys).
 // EXACTLY the old loop body - first inside wins; strict < keeps the lowest id on distance ties.
-function locateScan(mesh, gx, gz, cand) {
+// AUDIT 61 F1: with a query height `gy` (world y), a containing poly on another LEVEL no longer wins by id
+// - the containing poly whose own level is nearest gy does (strict <, so ties keep the lowest id and the
+// linear/indexed oracle equivalence holds); null keeps the first-inside law byte for byte.
+function locateScan(mesh, gx, gz, cand, gy = null) {
   const cross = (a, b) => (b.x - a.x) * (gz - a.z) - (gx - a.x) * (b.z - a.z);
-  let best = -1, bestD = Infinity;
+  let best = -1, bestD = Infinity, lvl = -1, lvlD = Infinity;
   const n = cand ? cand.length : mesh.polys.length;
   for (let c = 0; c < n; c++) {
     const pi = cand ? cand[c] : c;
@@ -924,9 +968,10 @@ function locateScan(mesh, gx, gz, cand) {
       if (cross(a, b) < -1e-6) inside = false;
       const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz; let t = l2 ? ((gx - a.x) * dx + (gz - a.z) * dz) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
       d = Math.min(d, Math.hypot(gx - (a.x + t * dx), gz - (a.z + t * dz))); }
-    if (inside) return pi;
+    if (inside) { if (gy === null) return pi; const dy = Math.abs(polyRefY(mesh, pi) - gy); if (dy < lvlD) { lvlD = dy; lvl = pi; } continue; }
     if (d < bestD) { bestD = d; best = pi; }
   }
+  if (lvl >= 0) return lvl;
   return bestD <= 2 ? best : -1; // snap within ~0.5m (covers the radius-eroded margin; tighter than the 0.5m walls)
 }
 
@@ -1056,7 +1101,7 @@ function solvePath(chf, start, goal, opts) {
   const ov = chf.obstacles && chf.obstacles.size ? navOverlay(chf) : null; // Slice 9: overlay only when obstacles exist - the empty path is byte-identical to pre-slice
   const ignore = opts && opts.ignore ? hashObstId(opts.ignore) : 0;
   const { cs, xmin, zmin } = chf;
-  const sPi = locatePoly(chf, start[0], start[2]), gPi = locatePoly(chf, goal[0], goal[2]);
+  const sPi = locatePoly(chf, start[0], start[2], start[1]), gPi = locatePoly(chf, goal[0], goal[2], goal[1]);   // AUDIT 61 F1: the endpoints' heights pick their level
   if (sPi < 0 || gPi < 0) return null;
   const autoIgn = !ignore && ov && ov.polyBlocked[sPi] ? ov.polyBlockId[sPi] : 0; // starting INSIDE an obstacle's block: that one obstacle is waived for this query (the same principle as the free exit below - a soft entity like a boss disc must never nav-TRAP a mover; a spawn in the disc's shadow walks out through it). A caller ignore wins; other obstacles still block.
   const sG = { x: (start[0] - xmin) / cs, z: (start[2] - zmin) / cs }, gG = { x: (goal[0] - xmin) / cs, z: (goal[2] - zmin) / cs };
@@ -1074,7 +1119,8 @@ function solvePath(chf, start, goal, opts) {
     portals.push({ left: { x: head.x, z: head.z }, right: { x: tail.x, z: tail.z } });
   }
   portals.push({ left: gG, right: gG });
-  const points = funnel(portals).map((c) => { const wx = xmin + c.x * cs, wz = zmin + c.z * cs; return [wx, chf.colliders ? surfH(chf.colliders, wx, wz, chf.ground) : 0, wz]; });
+  // AUDIT 61 F1: a waypoint's height is the surface on ITS corridor poly's level, not the tallest top over it
+  const points = funnel(portals).map((c) => { const wx = xmin + c.x * cs, wz = zmin + c.z * cs; const pi = locateScan(mesh, c.x, c.z, corridor, null); return [wx, chf.colliders ? surfHNear(chf.colliders, wx, wz, chf.ground, pi >= 0 ? polyRefY(mesh, pi) : null) : 0, wz]; });
   return { polys: corridor, points };
 }
 

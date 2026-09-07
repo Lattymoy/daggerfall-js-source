@@ -15,10 +15,20 @@ import { trianglesToColliders } from './triRaster.js';
 import { AGENT, coarsenAgent, hydrateBakedNav, buildNav, buildCompact, buildRegions, buildContours, buildPolyMesh, buildPolyMeshDetail, bakeNavData } from './navmesh.js';
 import { idbStore } from '../world/roadsCache.js';
 
-export const NAV_BAKE_VERSION = 1;
+/** Bumped BY HAND whenever the bake's output for the same input changes
+ *  (roadsCache.js's GENERATOR_VERSION rule) - a cached bake under an old
+ *  version is a wrong bake served forever per dungeon. AUDIT 61 F3: 1 had
+ *  outlived the y-anchor fix (2026-09-03) and now the stacked-floor weld
+ *  and the serialised vertex heights (F1). */
+export const NAV_BAKE_VERSION = 2;
 
-export function navCacheKey({ key, tris, minY, maxY, agent = AGENT }) {
-  return `nav:v${NAV_BAKE_VERSION}:${key}:${tris}:${minY.toFixed(2)}:${maxY.toFixed(2)}:${agent.cs}:${agent.radius}:${agent.height}:${agent.maxStep}:${agent.maxSlope}`;
+/** AUDIT 61 F3: the key carries the ANCHOR's cell too - buildRegions keeps
+ *  the anchor's foot-connected component and culls the rest, so a bake taken
+ *  from a save loaded in a teleporter pocket must never be a cache hit for the
+ *  front-door entry (or vice versa). */
+export function navCacheKey({ key, tris, minY, maxY, agent = AGENT, anchor = null }) {
+  const a = anchor ? `:a${Math.floor(anchor[0] / agent.cs)},${Math.floor(anchor[2] / agent.cs)},${Math.round(anchor[1] ?? 0)}` : '';
+  return `nav:v${NAV_BAKE_VERSION}:${key}:${tris}:${minY.toFixed(2)}:${maxY.toFixed(2)}:${agent.cs}:${agent.radius}:${agent.height}:${agent.maxStep}:${agent.maxSlope}${a}`;
 }
 
 /** Bake on this thread - the fallback, and node. Same steps as the worker. */
@@ -80,7 +90,7 @@ export class NavClient {
   async bake({ collider, anchor, key, agent = AGENT }) {
     const input = navInputFromCollider(collider);
     if (!input.tris) return null;
-    const ck = navCacheKey({ key, tris: input.tris, minY: input.minY, maxY: input.maxY, agent });
+    const ck = navCacheKey({ key, tris: input.tris, minY: input.minY, maxY: input.maxY, agent, anchor });
     if (this._store) {
       const hit = await this._store.get(ck).catch(() => null);
       if (hit && hit.baked) return { chf: hydrateHere(hit.baked, hit.cs, input, agent), stats: { ...(hit.stats ?? {}), cached: true }, cached: true };

@@ -2,7 +2,7 @@
 // every bucket's triangles in world space - the exact triangles the
 // player and the enemies collide with - so the navmesh is baked from
 // those and nothing else: "the nav's ground and the game's ground are
-// one source" (project-final/navmesh.js:27), kept verbatim as a law.
+// one source" (project-final/navmesh.js:32), kept verbatim as a law.
 //
 // Pure: a Collider in, a compact heightfield with its poly mesh out.
 // No worker here (the client that owns the worker and the cache is

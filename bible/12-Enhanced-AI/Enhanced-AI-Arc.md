@@ -16,10 +16,14 @@ the enhanced tab."
    beside Enhanced environments. DFU's own EnhancedCombatAI is the
    precedent: the port's departure from 1:1 is opt-in.
 3. **The navmesh is project-final's, ported whole.** `src/ai/navmesh.js`
-   is Mac's file byte-identical from `// Agent params` to the end; the
-   header differs only by the four-line `surfaceY` inlined verbatim from
-   project-final's terrain.js and a linter global. A change is made in
-   both repos and said in both. The ground needs no seam: buildNav's own
+   is Mac's file from `// Agent params` to the end; the header differs
+   only by the four-line `surfaceY` inlined verbatim from project-final's
+   terrain.js and a linter global. A change is made in both repos and
+   said in both - the body is pinned by DIGEST (`test/enhancedAI.test.js`,
+   AUDIT 61 F4: the old pin read only the two head lines), re-recorded
+   deliberately with the commit the change was made in. AUDIT 61 F1
+   (2026-09-07) is the first body change, made here first and owed to
+   project-final: the stacked-floor weld and the heights that ride it. The ground needs no seam: buildNav's own
    `ground` = { at(x, z), min } is what Daggerfall's Collider.heightAt is.
 4. **Triangles become his colliders, not his code.** Daggerfall's level
    is a triangle soup; his voxelizer stamps boxes and ramps.
@@ -31,7 +35,7 @@ the enhanced tab."
 
 ## ENHANCED AI 1 - the port, the voxelizer, the switch (2026-09-02)
 
-Landed: the navmesh whole (pinned byte-identical), the voxelizer (a
+Landed: the navmesh whole (pinned by digest since AUDIT 61), the voxelizer (a
 floor walks, a wall stands, a ramp within slope walks and a steeper one
 does not), a room of triangles baked end to end with a path bending
 around a wall, the switch present and off.
