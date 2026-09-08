@@ -82,7 +82,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // the quest machine is restored.
   assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
-  assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
+  assert.ok(lf.includes("await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' })"), 'the load teleports through the travel core - as a LOAD (SIB2: the Seasons mod hears SaveLoadManager.OnLoad, not the travel)');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');
   assert.ok(lf.includes('exteriorFoes.restoreWorld(w.foes,') && lf.includes('cityGuards.restoreWorld(w.guards,'),

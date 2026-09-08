@@ -1121,7 +1121,7 @@ function paneMods(body) {
   // The row is a switch like DFU's, writing through modSettings.js.
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     const mc = el('div', 'card');
-    mc.append(el('h3', null, mod.title));
+    mc.append(el('h3', null, `${mod.title} by ${mod.author}`));   // the creator's name in the title (Mac, 2026-09-08)
     for (const [key, def] of Object.entries(mod.keys)) {
       const row = el('div', 'row');
       const main = el('div', 'row-main');

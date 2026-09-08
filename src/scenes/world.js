@@ -3124,7 +3124,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
   const OBSTRUCTED_ABOVE = 3;
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
+  // SIB2: `modEvent` names the Seasons mod's event this teleport IS in
+  // DFU - 'travel' (DaggerfallTravelPopUp.OnPostFastTravel, the travel
+  // popup's arm alone) or 'load' (SaveLoadManager.OnLoad, a quickload
+  // and the classic import) - and null for the rest (the court release,
+  // the ship, the recall, the teleport service, a quest's respawn, the
+  // cemetery), which raise neither in DFU: their terrains'
+  // OnInstantiateTerrain is the only word the mod hears, and the
+  // per-pixel build raises that. Every teleport used to raise the
+  // travel event: a forced apply and a rebuild of the season's atlases
+  // on each, and the load's own two-step apply never on a load.
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, modEvent = null } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -3167,11 +3177,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
-    if (seasonsActive) await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month
+    if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
+    if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
     let dest;   // `finally`: a throwing build must not leave the poll off
     try { dest = await buildPixel(first.px, first.py); }
     finally { _seasonStraightening = false; }
-    if (seasonsActive) seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
+    if (seasonsActive && modEvent === 'travel') seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
     // TeleportToMapPixel STORES the reposition method and calls
     // InitWorld (:1076-1095); Update() applies it only once the terrain
     // update has finished (:266-295). So the RandomStartMarker arm runs
@@ -3694,7 +3705,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // on `landing` and so never ran on the one path it was written
       // for. The same door the court release and the ship already take.
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes, reposition: REPOSITION.RandomStartMarker });
+        { arriveMinutes: worldMinutes() + computed.minutes, reposition: REPOSITION.RandomStartMarker, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -3910,7 +3921,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
-        await _teleportToPixel(w.pixel.x, w.pixel.y);
+        await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = (w.y ?? 2) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
@@ -4095,7 +4106,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // lands inside it, the quickload arm's own shape.
     if (bundle.position) {
       const px = worldCoordToMapPixel(bundle.position.worldX, bundle.position.worldZ);
-      await _teleportToPixel(px.x, px.y);
+      await _teleportToPixel(px.x, px.y, null, { modEvent: 'load' });   // SIB2: a classic import is a load (StartFromClassicSave raises OnLoad)
       const [lx, lz] = state.localFromWorld(bundle.position.worldX, bundle.position.worldZ);
       // The classic worldY does not translate (different vertical
       // frames); FixStanding's own answer - land on what is there -
