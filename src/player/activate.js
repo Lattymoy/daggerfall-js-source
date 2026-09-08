@@ -94,6 +94,34 @@ export function rayAabb(origin, dir, aabb) {
 }
 
 /**
+ * AUDIT 63 F37: the world box a RAY must test against one action
+ * object - the collider DFU's Physics.Raycast actually meets.
+ *
+ * A posed object measures LIVE. DaggerfallAction.TweenToEnd
+ * (Internal/DaggerfallAction.cs:361-379) is iTween.RotateBy (:378) and
+ * iTween.MoveTo (:379) on the GameObject, so its MeshCollider travels
+ * with the transform, and both ray sites read a live hit:
+ * PlayerActivate.cs:381-385 (ActionCheck -> Receive(Direct)) and
+ * WeaponManager.cs:459-464
+ * (WeaponEnvDamage -> Receive(Attack)). The port's precomputed `aabb`
+ * is the AT-REST placement box (dungeonContext writes it for the
+ * collision-trigger pass, which wants exactly that), so preferring it
+ * left a moved platform unclickable at its new pose while its ghost
+ * still answered - and shadowed - the ray at the old one.
+ *
+ * Recomputing (rather than translating a baseAabb the way _applyFlat
+ * does) is required: a model mover carries ActionRotation as well as
+ * ActionTranslation, and an offset-shifted box is wrong under
+ * rotation. Objects with no mesh - effects, relays, moveFlats - keep
+ * their stored box, which is the only one they have.
+ */
+export function objectAabb(o) {
+  if (!o) return null;
+  if (o.cpu && o.matrix) return worldAabb(o.cpu.positions, o.matrix);
+  return o.aabb ?? null;
+}
+
+/**
  * Build activation targets from an ActionSystem's live objects - ONE
  * source for both scenes (audit 2026-08-16: the scenes built targets
  * inline with worldAabb(o.cpu.positions, o.matrix) and CRASHED on
@@ -105,7 +133,7 @@ export function rayAabb(origin, dir, aabb) {
 export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) {
   const targets = [];
   for (const o of objects.values()) {
-    const aabb = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    const aabb = objectAabb(o);
     if (!aabb) continue;
     targets.push({ key: o.key, aabb, distance });
   }

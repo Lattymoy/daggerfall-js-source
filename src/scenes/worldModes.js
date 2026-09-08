@@ -36,7 +36,7 @@ import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28:
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
+import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
@@ -137,7 +137,7 @@ import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
-import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
+import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';   // BG1: the shop quality + the householder's greeting
@@ -229,6 +229,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
+import { openDoorsStep } from '../characters/enemyMotor.js';   // AUDIT 63 F42: EnemyMotor.OpenDoors (EnemyMotor.cs:1424-1442), which lives in the motor and runs wherever an enemy does
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
@@ -685,12 +686,59 @@ export function createWorldModes(host) {
     }, mobileType, opts);
   }
 
+  /** AUDIT 63 F42 (review round): EnemyMotor.OpenDoors
+   *  (EnemyMotor.cs:1424-1442), for THIS host. OpenDoors is a private
+   *  step of EnemyMotor.Move - it is on the MOTOR, so it runs wherever
+   *  an enemy does, and a building interior is full of
+   *  DaggerfallActionDoors (Internal/DaggerfallInterior.cs:1277). The
+   *  dungeon host has run this arm over its own ActionSystem since the
+   *  C-slice (dungeonContext.js); the interior host had NO arm at all,
+   *  so wiring `isActionDoor` above on its own would leave a
+   *  CanOpenDoors foe walking at a shut door forever - a state DFU
+   *  never reaches, because ObstacleCheck and OpenDoors are two steps
+   *  of the one Move. Verbatim shape: CanOpenDoors gates the whole
+   *  law, the door must be the LAST KNOWN one, closed, unlocked and
+   *  within OpenDoorDistance, and ToggleDoor is called with no
+   *  activatedByPlayer (openDoorsStep owns all of that). Paralysis is
+   *  EnemyMotor.HandleParalysis' gate, the same one the pools' own
+   *  update arms read. */
+  function openInteriorDoors(pool) {
+    const acts = interiorCtx?.actions;
+    if (!acts || !pool) return;
+    for (const f of pool) {
+      if (f.dead || f.ai?.doorKey == null) continue;
+      if (!ENEMY_BASICS[f.mobileType]?.canOpenDoors) continue;
+      if (entityIsParalyzed(f.entity)) continue;
+      const door = acts.objects.get(f.ai.doorKey);
+      if (!isActionDoorObject(door)) continue;
+      openDoorsStep(f.ai.feet, true, {
+        state: door.state, currentLockValue: door.currentLockValue,
+        center: [door.matrix[12], door.matrix[13], door.matrix[14]],
+      }, () => acts.toggleDoor(door));
+    }
+  }
+
   /** Mint the pool over THIS interior's collider. Called at the mount,
    *  torn down with the context. */
   function makeInteriorFoes(ctx) {
     return createExteriorFoes({
       renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
       playerEntity, audio,
+      // AUDIT 63 F42 (review round): ObstacleCheck's
+      // GetComponent<DaggerfallActionDoor>() arm (EnemyMotor.cs:1158-1171),
+      // which F36 wired in the dungeon and DEFERRED here on the open
+      // question of whether an above-ground host has action doors at
+      // all. Internal/DaggerfallInterior.cs:1250-1281 answers it for
+      // this mount: AddActionDoors instantiates every building swing
+      // door from Option_InteriorDoorPrefab and reads
+      // `GetComponent<DaggerfallActionDoor>()` off it (:1277), so a
+      // BUILDING INTERIOR is full of them - and interiorContext mints
+      // them into THIS collider (interiorContext.js addDoor). Without
+      // the dep enemyMotor fell back to `() => false`, so every closed
+      // interior door read as a wall: the foe detoured instead of
+      // walking at it and no door was ever recorded. Only the OPEN
+      // STREET mount stays deferred.
+      isActionDoor: (key) => key != null && isActionDoorObject(ctx.actions?.objects.get(key)),
       // HE1: and the blood it draws. This was `null` with the absence
       // recorded; the pool is mounted now, so the whole payload -
       // sound, knockback, death, corpse, loot AND the splash - runs
@@ -849,6 +897,12 @@ export function createWorldModes(host) {
     return createCityGuards({
       renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
       playerEntity, audio,
+      // AUDIT 63 F42: makeInteriorFoes' dep, on the pool standing
+      // beside it and over the same collider - ObstacleCheck is
+      // EnemyMotor's, so it runs for a watchman in a shop exactly as
+      // it does for a daedra in one (EnemyMotor.cs:1158-1171 over
+      // Internal/DaggerfallInterior.cs:1277's component).
+      isActionDoor: (key) => key != null && isActionDoorObject(ctx.actions?.objects.get(key)),
       hitEffects: interiorHitEffects,
       playerWeaponSheathed: () => !!interiorWeapon.playerWeapon.sheathed,
       currentMinute: () => Math.floor(interiorTicker.classicMinutes),
@@ -3995,8 +4049,13 @@ export function createWorldModes(host) {
         // gone. LOCK has no exterior arm at all in DFU (PlayerActivate
         // calls HandleLockEffect only from the action-door path), so an
         // armed Lock is left untouched here, still waiting for a real
-        // door: doorSpellFor only answers 'lock' when no Open is armed,
-        // and the kind test below refuses it.
+        // door. AUDIT 63 F41: the reason an armed Lock is left alone
+        // here is DFU's own routing, not a priority in the lookup -
+        // HandleOpenEffectOnExteriorDoor (:1036-1043) runs its own
+        // FindIncumbentEffect<Open> and never asks about Lock - so this
+        // host reads Open DIRECTLY (exteriorOpenSpellFor) while
+        // doorSpellFor answers the ACTION door, where PlayerActivate
+        // tests Lock first (:693-696).
         let opened = unlocked;
         // BG1: DFU carries TWO variables here and they answer different
         // questions (:517-518). `buildingUnlocked` is this host's
@@ -4012,8 +4071,8 @@ export function createWorldModes(host) {
         // :519-520 - `if (!buildingUnlocked && !isBash && ...)`: a
         // swing never spends the readied Open spell.
         if (!opened && !isBash) {
-          const spell = doorSpellFor(playerEntity);
-          if (spell?.kind === 'open') {
+          const spell = exteriorOpenSpellFor(playerEntity);
+          if (spell) {
             const r = triggerExteriorOpen(lockValue, spell.holderLevel);
             consumeDoorSpell(playerEntity, 'open');
             if (r.alert) townTalk?.say?.(DOOR_SPELL_TEXT[r.alert]);
@@ -4450,9 +4509,18 @@ export function createWorldModes(host) {
     interiorCtx.shelves.forEach((s, i) => {
       targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix) });   // E2
     });
-    for (const o of interiorCtx.actions.objects.values()) {
-      targets.push({ key: o.key, aabb: objAabb(o) });
-    }
+    // AUDIT 63 F43 (review round): the dungeon arm's ONE helper
+    // (activationTargets, below at the dungeon ray) - this loop was a
+    // fourth reader of the law F37 centralised and it spelled it the
+    // old way, `worldAabb(o.cpu.positions, o.matrix)` inline via
+    // objAabb, which DEREFERENCES a mesh-less action object and
+    // crashes. That is the exact crash activationTargets was minted
+    // for (activate.js's docblock); it was inert here only because
+    // interiorContext registers nothing but doors on this
+    // ActionSystem, i.e. one interior action record away from a
+    // TypeError inside the activation ray. objectAabb's live-box law
+    // (F37) comes with it, and the reach is the same constant.
+    targets.push(...activationTargets(interiorCtx.actions.objects));
     interiorCtx.ladders.forEach((l, i) => {
       targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
     });
@@ -5258,6 +5326,9 @@ export function createWorldModes(host) {
       // whole active-enemy database, which is the pool itself.
       if (interiorFoes && interiorCtx) {
         interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, _interiorSenses());
+        // AUDIT 63 F42: EnemyMotor.OpenDoors, the step that follows
+        // ObstacleCheck inside the same Move (EnemyMotor.cs:1424-1442).
+        if (!overlayHeld) openInteriorDoors(interiorFoes.foes);
       }
     }
     // AUDIT 62 F11: PlayerEntity.Update's catch-up loop, ONCE per modal
@@ -5598,6 +5669,11 @@ export function createWorldModes(host) {
     if (interiorGuards && interiorCtx) {
       const _guardBatches = interiorGuards.update(overlayHeld ? 0 : dt, player.pos, cam.pos,
         _interiorSenses(), { canvas, proj, view, eye: mwv.eye });
+      // AUDIT 63 F42: the foe pool's arm, beside the drive that owns
+      // it - Knight_CityWatch is a CanOpenDoors mobile
+      // (EnemyBasics.cs), so a watchman chasing the player through a
+      // shop opens the inner door exactly as a dungeon guard does.
+      if (!overlayHeld) openInteriorDoors(interiorGuards.guards);
       if (_guardBatches.length) renderer.drawBillboards(_guardBatches, camRight, UP_Y);
     }
     if (magic) {

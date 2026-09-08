@@ -90,6 +90,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // in classic" where DFU's row-0 band (XZ 25.6m, Y +3.2m) denies it.
   // The default keeps the street pools (world.js, exterior.js) unchanged.
   playerInside = false,
+  // AUDIT 63 F42 (review round): EnemyMotor.ObstacleCheck's
+  // `GetComponent<DaggerfallActionDoor>()` arm (EnemyMotor.cs:1158-1171).
+  // The arm is not dungeon-scoped in DFU and neither is its host here:
+  // DaggerfallInterior.AddActionDoors builds every building swing door
+  // off Option_InteriorDoorPrefab and takes the component straight off
+  // it (Internal/DaggerfallInterior.cs:1277-1281), so a BUILDING
+  // INTERIOR is full of action doors. worldModes.makeInteriorFoes
+  // mounts this pool over exactly that collider and had no dep to give,
+  // so every closed interior door stayed `obstacleDetected` and the foe
+  // detoured around it instead of walking at it, never recording the
+  // door. The STREET mounts (world.js, exterior.js) pass nothing and
+  // keep the `() => false` fallback, which is correct there.
+  isActionDoor = null,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -192,6 +205,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         height: enemyControllerHeight(idleH, behaviour),   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,   // REVIEW 2026-09-05: transform.position = the sprite centre
         playerInside,   // EnemySenses.cs:267-269 - the host's PlayerEnterExit.IsPlayerInside picks the band
+        isActionDoor,   // AUDIT 63 F42: ObstacleCheck's DaggerfallActionDoor arm (EnemyMotor.cs:1158-1171)
         // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
         // the target in sight stands off instead of closing.
         hasBowAttack: hasBowAttack(basics),

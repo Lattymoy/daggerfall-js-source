@@ -28,7 +28,7 @@ import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -37,7 +37,7 @@ import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROA
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow } from '../systems/inventory.js';
-import { worldAabb } from '../player/activate.js';
+import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
@@ -410,6 +410,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // non-door) turns a plain model into a hinged special door -
           // own bucket, swings on the chain or the player's hand.
           const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
+          // AUDIT 63 F38: a special door is a plain model that went
+          // through AddActionModelHelper, so AddAction (RDBLayout.cs:897)
+          // gave it DaggerfallActionCollision on a Collision01/03/09 or
+          // MultiTrigger flag exactly as it does any other model
+          // (RDBLayout.cs:992-996). It needs a box to be walked into.
+          o.aabb = aabb;
+          o.restOnlyTrigger = true;
           dynamicDraws.push({ gpu, object: o });
           automapEntries.push(amapRow(o.key, aabb, true, cpu, matrix));   // A1
           continue;
@@ -460,6 +467,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
         loadID: d.loadID,   // ROAD-B B4: RDBLayout.cs:242 - the Castle Daggerfall foyer hack names its two doors by this
       });
+      // AUDIT 63 F38: an action door WITH a record is a
+      // DaggerfallActionCollision too. RDBLayout.cs:255-259 runs
+      // AddActionModelHelper on the door GameObject `if (HasAction(obj))`,
+      // that reaches AddAction (:897), and AddAction attaches the
+      // collision component on Collision01/Collision03/MultiTrigger/
+      // Collision09 (:992-996) with no door exclusion - which is why
+      // DaggerfallActionDoor.cs:263 can note "Some Castle Wayrest doors
+      // have 'MultiTrigger' trigger flag". Without a box the port's
+      // collision pass skipped every door, so bumping such a door never
+      // fired its record: no plaque line and no trespass check. The box
+      // marks the door as walkable-into; restOnlyTrigger is the door's
+      // OWN law, since Open() calls MakeTrigger(true)
+      // (DaggerfallActionDoor.cs:293, :354-358) and a swinging or open
+      // door can no longer be collided with at all.
+      if (d.action) {
+        o.aabb = worldAabb(cpu.positions, matrix);
+        o.restOnlyTrigger = true;
+      }
       dynamicDraws.push({ gpu, object: o });
       // ROAD-C c2/S1: ACTION DOORS ARE NOT ON THE AUTOMAP. DFU's
       // automap copy has none - AddModels skips them outright
@@ -648,11 +673,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  at it and OpenDoors deals with it. The AI holds collider bucket
    *  KEYS and this host owns the registry that turns one into an action
    *  object, which is the same resolution the OpenDoors arm below
-   *  already does with senses.LastKnownDoor. */
+   *  already does with senses.LastKnownDoor.
+   *
+   *  AUDIT 63 F36: the question is `GetComponent<DaggerfallActionDoor>()`
+   *  (EnemyMotor.cs:1159), not the door-verb ACTION family. This arm
+   *  tested DOOR_VERB_FLAGS.has(o.actionFlag), which the ordinary
+   *  dungeon door fails - RDBLayout.cs:247-259 gives every action-door
+   *  model the component and only a door that ALSO has a record gets
+   *  one - so a plain closed door stayed `obstacleDetected` and the foe
+   *  detoured around it instead of walking at it. */
   const isActionDoor = (key) => {
     if (key == null) return false;
-    const o = actions?.objects.get(key);
-    return !!o && DOOR_VERB_FLAGS.has(o.actionFlag);
+    return isActionDoorObject(actions?.objects.get(key));
   };
   /** EnemyEntity.cs:350-386 + SetEnemySpells (:453-461), the tail of
    *  SetEnemyCareer: a monster takes its per-career list, a CastsMagic
@@ -1325,7 +1357,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   actions.onDoorText = (id) => {
     const lines = rscLines(id);
     if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
-    for (const l of lines) hudText.add(l);
+    // AUDIT 63 F39: AddHUDText(tokens, 2.0f) (DaggerfallAction.cs:875)
+    // carries its delay PER LINE through PopupText.cs:130-141; the bare
+    // add() took PopupText's 1.0 popDelay and halved every plaque.
+    for (const l of lines) hudText.add(l, DOOR_TEXT_HUD_DELAY_S);
   };
   // ROAD-B: THE TRESPASS CHECK IS A REAL SWITCH NOW.
   // DaggerfallAction.cs:882-890 - a DoorText record whose
@@ -2600,7 +2635,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:7370,
-              // exterior.js:3865 and worldModes.js:5252 already ran;
+              // exterior.js:3865 and worldModes.js:5257 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3225,10 +3260,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const R = 0.45, H = 1.8;   // the player capsule
     for (const o of actions.objects.values()) {
       if (!o.aabb) continue;
+      // AUDIT 63 F45: DFU's collision pass is a COMPONENT, not a loop -
+      // AddAction attaches DaggerfallActionCollision only on
+      // Collision01/Collision03/MultiTrigger/Collision09
+      // (RDBLayout.cs:992-996), and that component is the only
+      // collision caller of Receive. Everything downstream of Receive's
+      // trigger gate already agreed (TRIGGER_GATE admits WalkOn/WalkInto
+      // for exactly those four), but the Castle Daggerfall hack runs
+      // AHEAD of that gate (DaggerfallAction.cs:183), so once F38 gave
+      // recorded doors a box a `Door`-flagged foyer door would have
+      // unlocked and swung open on a bump - a Receive DFU's component
+      // set makes unreachable. Refusing the CALL, not the gate, keeps
+      // ROAD-B B4's ordering intact for the objects that do collide.
+      if (!hasActionCollision(o)) continue;
       if (o.restOnlyTrigger && o.state !== 'start') continue;   // a mover in flight: bounds stale, and classic triggers on the step, not the ride
       o._colTimer = (o._colTimer ?? COLLISION_TIMEOUT_S) + dt;
       if (o._colTimer < COLLISION_TIMEOUT_S) continue;
-      const a = o.aabb;
+      // AUDIT 63 F38: a DOOR is measured live. Its BoxCollider rides the
+      // transform, and a door's record can carry a Move of its own that
+      // translates the closed door away from its placement
+      // (_applyMatrix's moveT arm) - DFU collides with it where it now
+      // stands. Every other kind keeps its stored box: movers only reach
+      // here parked at 'start', where the two are identical, and flats
+      // travel their box in _applyFlat.
+      const a = o.kind === 'door' ? objectAabb(o) : o.aabb;
       const overlapXZ = playerFeet[0] + R > a.min[0] && playerFeet[0] - R < a.max[0]
         && playerFeet[2] + R > a.min[2] && playerFeet[2] - R < a.max[2];
       if (!overlapXZ) continue;
@@ -3668,11 +3723,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
       // CanOpenDoors foe whose sight ray to the player is blocked by
       // an action DOOR opens it when unlocked and within 2m. The
-      // senses recorded the blocking bucket key; only a door-flagged
-      // action object counts (walls block sight with the level key).
+      // senses recorded the blocking bucket key; only a
+      // DaggerfallActionDoor counts (walls block sight with the level
+      // key). AUDIT 63 F36: EnemySenses.cs:913 stores `actionDoor` off
+      // GetComponent<DaggerfallActionDoor>() and EnemyMotor.cs:1425-1442
+      // consumes senses.LastKnownDoor with no flag test - a RECORD-LESS
+      // door is still one (RDBLayout.cs:247-259), and a special door
+      // (a separate MonoBehaviour) is not.
       if (!_fParalyzed && foeDeps && f.ai.doorKey != null && ENEMY_BASICS[f.mobileType]?.canOpenDoors) {
         const _door = actions?.objects.get(f.ai.doorKey);
-        if (_door && DOOR_VERB_FLAGS.has(_door.actionFlag)) {
+        if (isActionDoorObject(_door)) {
           foeDeps.openDoorsStep(f.ai.feet, true, {
             state: _door.state, currentLockValue: _door.currentLockValue,
             center: [_door.matrix[12], _door.matrix[13], _door.matrix[14]],

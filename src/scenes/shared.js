@@ -732,8 +732,16 @@ export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {
 ];
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
- *  Answers null when nothing is armed. Open wins if both are somehow
- *  armed (it is the one that can still fail on the lock).
+ *  Answers null when nothing is armed.
+ *
+ *  AUDIT 63 F41: LOCK IS TESTED FIRST. ActivateActionDoor runs
+ *  `if (HandleLockEffect(actionDoor)) return; if (HandleOpenEffect(
+ *  actionDoor)) return;` (PlayerActivate.cs:693-696), and the two
+ *  handlers (:1012-1021, :1023-1032) look up two INDEPENDENT
+ *  incumbents - Open and Lock are separate IncumbentEffect classes,
+ *  each parked on forcedRoundsRemaining, so casting Open and then Lock
+ *  leaves both armed and the door is LOCKED to the caster's level and
+ *  swung shut (Lock.cs:100-129). This answered 'open' on that path.
  *
  *  X3: the level travels LIVE. Both triggers read
  *  manager.EntityBehaviour.Entity.Level at the door (Open.cs:118,
@@ -743,12 +751,12 @@ export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {
  *  activation, is that read. */
 export function doorSpellFor(entity) {
   const find = (k) => entity?.activeEffects?.find((a) => a.kind === k && !a.ended);
-  const open = find('openArmed');
-  const lock = open ? null : find('lockArmed');
-  const armed = open ?? lock;
+  const lock = find('lockArmed');
+  const open = lock ? null : find('openArmed');
+  const armed = lock ?? open;
   if (!armed) return null;
   return {
-    kind: open ? 'open' : 'lock',
+    kind: lock ? 'lock' : 'open',
     holderLevel: entity?.level ?? 1,
     // D9: the Skeleton's Key. Open.CheckCastByItem asks the ARMED
     // BUNDLE's castByItem whether it is the artifact with world
@@ -765,6 +773,23 @@ export function doorSpellFor(entity) {
     // carried no casting item. Both ship at D9, so the key is a key.
     skeletonKey: castBySkeletonKey(armed.castByItem),
   };
+}
+
+/** AUDIT 63 F41: the EXTERIOR door's own lookup.
+ *  HandleOpenEffectOnExteriorDoor (PlayerActivate.cs:1036-1043) does its
+ *  own `FindIncumbentEffect<Open>` and there is no HandleLockEffect on
+ *  that path at all - PlayerActivate calls the Lock handler only from
+ *  ActivateActionDoor (:693) - so an armed Lock must not hide an armed
+ *  Open at a building. Reading Open directly here is what keeps
+ *  doorSpellFor free to answer Lock first for the action door.
+ *
+ *  No skeletonKey: TriggerExteriorOpenEffect (Open.cs:146-160) tests
+ *  only the player's level and says so in its own summary ("for the
+ *  classic effect, the player's level is always checked, even for the
+ *  Skeleton Key"). */
+export function exteriorOpenSpellFor(entity) {
+  const open = entity?.activeEffects?.find((a) => a.kind === 'openArmed' && !a.ended);
+  return open ? { kind: 'open', holderLevel: entity?.level ?? 1 } : null;
 }
 
 /** Drop the armed entry once a door has consumed it - DFU's

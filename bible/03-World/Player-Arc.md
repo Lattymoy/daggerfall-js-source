@@ -1216,3 +1216,268 @@ Pins: 6 in `test/fallwater.test.js`, including a source sweep that both
 exterior hosts pass the tile and that no underground host invents one,
 and a regeneration arm asserting from `AcrobatMotor.cs` that the water
 return still precedes the distance. Campaign: 6 mutants, 6 killed.
+
+## AUDIT 63 F37 - a moved action model kept its AT-REST activation box (2026-09-08)
+
+`activationTargets` preferred a precomputed `o.aabb` over the live
+`o.matrix`, and `dungeonContext` writes the placement's AT-REST world
+box onto every MOVE-flag action model. Nothing ever refreshed it:
+`ActionSystem.update` rebuilds the mover's matrix and its collider
+bucket every frame, and the only aabb-travelling code in the file,
+`_applyFlat`, is guarded by `baseAabb`, which only `addMoveFlat` sets.
+
+DFU has no second box. `DaggerfallAction.TweenToEnd`
+(`Internal/DaggerfallAction.cs:361-379`) is `iTween.RotateBy` (:378)
+plus `iTween.MoveTo` (:379) on the GameObject, so the MeshCollider
+RDBLayout attached travels with the transform, and both rays that reach
+an action object read a LIVE `Physics.Raycast` hit -
+`PlayerActivate.cs:381-385` (`ActionCheck` -> `Receive(Direct)`) and
+`WeaponManager.WeaponEnvDamage` (`Game/WeaponManager.cs:459-464`,
+`GetComponent<DaggerfallAction>()` -> `Receive(player, Attack)`). So a
+platform that has tweened to its End state is clickable and strikeable
+where it now stands, and nothing answers where it used to.
+
+The port answered the opposite on both. A Translation mover driven to
+`state === 'end'` reported `matrix[13] === 10` while its target box was
+still `{min:[0,0,0]}`: the mover could not be clicked or struck at its
+new pose, and its ghost box both answered the ray at the vacated spot
+and - because `pickActivatable` takes the NEAREST AABB hit - swallowed
+the activation of anything genuinely standing behind it.
+
+One box now, `objectAabb(o)` in `src/player/activate.js`: a posed
+object (`cpu` + `matrix`) measures live, and the objects that have no
+mesh - effects, relays, moveFlats - keep the stored box, which is the
+only one they have. `activationTargets` and `weaponRig.envAttack` (the
+port's single WeaponEnvDamage ray, called from the dungeon and interior
+swings) both call it, so the two copies cannot drift apart again.
+Recomputing rather than translating a `baseAabb` is required: a model
+mover carries ActionRotation as well as ActionTranslation
+(`_applyMatrix` applies both) and an offset-shifted box is wrong under
+rotation.
+
+`dungeonContext`'s `o.aabb = aabb` stays where it is and is never
+mutated in place: `collisionTriggers` owns that array as the AT-REST
+trigger box behind its `restOnlyTrigger` guard, and at `state ===
+'start'` the recomputed box is identical to the stored one.
+
+Pins: 3 in `test/audit63_world_actions.test.js` - the live box, the
+activate ray following the mover while the ghost stops answering, and
+the swing landing at the live pose. Mutants: the precedence reverted in
+either reader, 2 killed.
+
+## AUDIT 63 F38 - action DOORS were excluded from the collision-trigger pass (2026-09-08)
+
+`collisionTriggers` skips every object without an `aabb`, and no door
+had one: `addDoor` assigns none, and neither the action-door loop nor
+the special-door arm filled it in. Doors were the only registered kind
+with no box, so the port's only WalkOn/WalkInto producer could never
+reach one.
+
+DFU flags them through the same call every other model goes through.
+`RDBLayout.cs:255-259` runs `AddActionModelHelper` on the action-door
+GameObject `if (HasAction(obj))`; that reaches `AddAction` (:897); and
+`AddAction` attaches `DaggerfallActionCollision` whenever the trigger
+flag is Collision01/Collision03/MultiTrigger/Collision09 (:992-996),
+with no door exclusion. A special door is a plain model that went
+through the same `AddAction` (:897) before
+`AddComponent<DaggerfallActionDoorSpecial>()` (:901). The component
+then fires `thisAction.Receive(PlayerObject, WalkOn|WalkInto)` on
+contact while a move key is held
+(`Internal/DaggerfallActionCollision.cs:36-56`).
+
+Everything downstream was already ported and simply never called:
+TRIGGER_GATE accepts WalkInto for Collision03/MultiTrigger/Collision09,
+`receive` increments `activationCount` and plays, and `_dispatchDoor`
+sends a DoorText door to `_runDoorText`, which carries the plaque line
+and the `ActionAxisRawValue > 5` trespass -> MakeEnemiesHostile check.
+`DaggerfallActionDoor.cs:263` names the real classic data this costs -
+"Some Castle Wayrest doors have 'MultiTrigger' trigger flag" - and
+those are DoorText doors, so bumping one showed no plaque and never ran
+the trespass check.
+
+Both door buckets get their box now, gated the way DFU gates the
+component: the action-door loop `if (d.action)` (DFU's
+`if (HasAction(obj))`), the special-door arm unconditionally, since a
+special door is minted from a record by definition. `restOnlyTrigger`
+is the door's OWN law rather than a borrowed one: `Open()` calls
+`MakeTrigger(true)` (`DaggerfallActionDoor.cs:293`, :354-358) and
+`Close()` `MakeTrigger(false)` (:349), so DFU's ControllerColliderHit
+cannot fire on a swinging or open door either.
+
+One refinement beyond the finding: the pass measures a door LIVE. A
+door's `state` is the SWING while the RECORD's move rides `moveState` /
+`moveT`, so a door whose record also translates would sit at
+`state === 'start'` with a stale placement box - and DFU, whose
+BoxCollider rides the transform, would collide with it where it now
+stands. Suppressing the trigger there would have been a second
+departure; recomputing is the reference. Every other kind keeps its
+stored box: movers only reach the test parked at 'start', where the two
+are identical, and flats travel their box in `_applyFlat`.
+
+Pins: 2 in `test/audit63_world_actions.test.js` - the registration and
+the live read, and a MultiTrigger DoorText door driven through
+`receive('WalkInto')` to the plaque, the second-bump trespass, and the
+record-less door's empty gate. Mutants: either box removed, the live
+read reverted; 3 killed.
+
+## AUDIT 63 F39 - the door plaque scrolled off in half the classic time (2026-09-08)
+
+`DaggerfallAction.DoorText` is the one action text that overrides the
+HUD pop delay: `DaggerfallUI.AddHUDText(tokens, 2.0f)`
+(`Internal/DaggerfallAction.cs:875`) -> `DaggerfallUI.cs:775-781` ->
+`PopupText.cs:130-141`, which hands the delay to
+`AddText(string, float)` PER LINE (:106-116). The port's `onDoorText`
+seam called `hudText.add(l)` with no second argument, taking
+`HUD_TEXT_POP_DELAY` = 1.0 - `PopupText.popDelay` (:28) - so every
+plaque line held for one second instead of two. The port's own comments
+at both ends already stated the 2.0 while the code took the default.
+
+`DOOR_TEXT_HUD_DELAY_S = 2.0` now lives beside `TYPE_99_TEXT_INDEX` in
+`src/world/actionSystem.js` and the seam passes it, the way DFU's call
+site carries its own literal. The port's `add` was already a verbatim
+transcription of `AddText(string, float)`, timer arithmetic included,
+so the argument was live and merely unsent.
+
+Noted, not swept: DFU overrides the delay at many other sites (Open,
+Lock, EnemyEntity, DiseaseEffect, EnemySenses, EntityEffectManager,
+QuestMachine) and not one of the port's 43 `hudText.add(` calls passes
+one. That is the same defect shape at the ported twins of those sites
+and belongs to the magic/entity lenses, each call site matched to its
+own DFU literal.
+
+Pins: 1 in `test/audit63_world_actions.test.js` - the constant against
+`DaggerfallAction.cs:875`, the 2.0 line still on its no-scroll hold at
+1.5 s where the 1.0 default has begun sliding, and the seam passing it.
+Mutants: the argument dropped, the constant drifted to popDelay; 2
+killed.
+
+## AUDIT 63 F41 - an armed Open beat an armed Lock at the door (2026-09-08)
+
+`doorSpellFor` picked Open when both were armed ("Open wins if both are
+somehow armed"). `PlayerActivate.ActivateActionDoor` runs
+`if (HandleLockEffect(actionDoor)) return;` and only then
+`if (HandleOpenEffect(actionDoor)) return;`
+(`Game/PlayerActivate.cs:693-696`); the two handlers (:1012-1021,
+:1023-1032) resolve two INDEPENDENT incumbents, so casting Open and
+then Lock leaves both armed and the door is LOCKED to the caster's
+level and swung shut (`Lock.cs:100-129`), not opened. The port produced
+the opposite outcome on that classic path, and nothing merged the two
+armed entries in either engine.
+
+The bare inversion would have broken the EXTERIOR door, which is why
+the fix is two lookups rather than one order.
+`HandleOpenEffectOnExteriorDoor` (`PlayerActivate.cs:1036-1043`) does
+its own `FindIncumbentEffect<Open>` and never asks about Lock - Lock
+has no exterior arm at all - so an armed Lock masking an armed Open at
+a building would have been a new defect on a wider path.
+`exteriorOpenSpellFor` reads Open directly for that host and carries no
+skeletonKey, because `TriggerExteriorOpenEffect` (`Open.cs:146-160`)
+tests only the player's level and says so in its own summary. The
+comment at the exterior site that justified the old order ("doorSpellFor
+only answers 'lock' when no Open is armed") is rewritten: the reason an
+armed Lock is left alone at a building is DFU's routing, not a priority
+inside the lookup.
+
+Pins: 1 in `test/effectarms.test.js` - both armed on one entity, the
+action door answering 'lock' while the exterior arm still answers
+'open'. Mutants: Open-first restored, the exterior arm folded back onto
+`doorSpellFor`; 2 killed.
+
+## AUDIT 63 F43 - the interior activation ray was a fourth reader of F37's law (2026-09-08)
+
+The review round. F37 centralised "what box does a ray meet" onto
+`objectAabb` / `activationTargets` in `src/player/activate.js` and the
+lane's note claimed all consumers were covered through those helpers.
+They were not: `worldModes.js`'s INTERIOR activation ray walked
+`interiorCtx.actions.objects.values()` itself and measured each one
+with the host-local `objAabb = (o) => worldAabb(o.cpu.positions, o.matrix)`.
+
+That inline spelling is exactly what `activationTargets` was minted to
+replace. It dereferences `o.cpu.positions` on an object that has no
+mesh - an effect, a relay, a moveFlat, all of which carry a precomputed
+`aabb` and nothing else - where `objectAabb` returns `o.aabb ?? null`.
+The arm was inert only because `interiorContext` registers doors and
+nothing else on that ActionSystem (`actions.addDoor` at :327 is its one
+registration), i.e. it sat one interior action record away from a
+TypeError thrown inside the activation ray - the crash class
+`activate.js`'s own docblock records as the reason the helper exists.
+It also missed F37's live-box law for a posed object.
+
+The loop is `targets.push(...activationTargets(interiorCtx.actions.objects));`
+now, which is what the dungeon arm twenty lines below already was. The
+reach is unchanged: `activationTargets` stamps
+`DOOR_ACTIVATION_DISTANCE`, and `pickActivatable`'s fallback
+`DEFAULT_ACTIVATION_DISTANCE` is the same `128 * GLOBAL_SCALE`.
+`objAabb` stays for the ladders, which are genuine meshes.
+
+Pins: 1 in `test/audit63_world_actions.test.js` - the arm reads the
+helper and no longer names `objAabb`, plus the crash the dropped
+spelling throws on a mesh-less object. Mutants: the loop restored; 1
+killed.
+
+## AUDIT 63 F44 - the Castle Daggerfall hack spelled the component one door too wide (2026-09-08)
+
+The review round. `CastleDaggerfallMagicDoorsSpecialOpenHack`
+(`Internal/DaggerfallAction.cs:256-273`) ends in
+`DaggerfallActionDoor door = GetComponent<DaggerfallActionDoor>();`
+(:270) and acts only `if (door && door.IsLocked && door.IsClosed)`. The
+port's copy tested `if (o.kind !== 'door') return;` with no `!o.special`
+- and a `DaggerfallActionDoorSpecial`
+(`Internal/DaggerfallActionDoorSpecial.cs:24`) is a SEPARATE
+MonoBehaviour from `DaggerfallActionDoor`
+(`Internal/DaggerfallActionDoor.cs:28`), so that lookup can never
+return one. It has no `CurrentLockValue` at all; DFU's own class
+comment is that the player "cannot open, bash, pick, or cast their way
+through this type of door".
+
+The line is `if (!isActionDoorObject(o)) return;` now - the helper F36
+minted, which the F36 bible record and the `actionSystem.js` docblock
+both already asserted this site was using. Both prose claims are
+corrected on the Characters arc page and in the docblock: the hack was
+the one of the three named sites that did NOT spell it that way, and
+collapsing it was the change that made the claim true.
+
+Pins: 1 in `test/audit63_world_actions.test.js` - given the same foyer
+`loadID` and the same lock, the ordinary door is unlocked and swung and
+the special door is untouched. Mutants: the `kind !== 'door'` test
+restored; 1 killed.
+
+## AUDIT 63 F45 - F38's boxes newly exposed doors to the hack on the collision path (2026-09-08)
+
+The review round, against F38 itself. F38 gave every recorded action
+door an `o.aabb`, which is what lets `collisionTriggers` reach it and
+call `actions.receive(o, 'WalkOn'|'WalkInto')`. `receive` runs
+`_castleDaggerfallMagicDoorsSpecialOpenHack(o)` BEFORE the
+`TRIGGER_GATE` test, which is correct and deliberate - DFU's `Receive`
+runs the hack ahead of its own trigger-flag switch
+(`Internal/DaggerfallAction.cs:183`), the ROAD-B B4 ordering. But in
+DFU the collision path is a COMPONENT, not a loop:
+`RDBLayout.AddAction` attaches `DaggerfallActionCollision` only when
+the TriggerFlag is Collision01, Collision03, MultiTrigger or Collision09
+(`Utility/RDBLayout.cs:992-996`), and that component - driven by
+`PlayerCollisionHandler.OnCharacterCollided`, itself driven only by
+`Game/PlayerCollision.cs`'s `OnControllerColliderHit` - is the ONLY
+collision caller of `Receive`. A Castle Daggerfall foyer door carrying
+the ordinary `Door` or `Direct` trigger flag therefore has no
+`DaggerfallActionCollision` in DFU and can take the hack from the
+activate ray alone; the port would have unlocked it and swung it open
+when the player walked into it.
+
+Everything downstream of the gate already agreed, which is why the
+distinction had never mattered: `TRIGGER_GATE` admits `WalkOn`/`WalkInto`
+for exactly those four flags, so `activationCount` and the delegate
+were both already refused. The hack is the one statement in front of
+the gate. The fix refuses the CALL rather than reordering the gate, so
+B4's ordering survives intact for the objects that genuinely collide:
+`COLLISION_TRIGGER_FLAGS` / `hasActionCollision` in `actionSystem.js`
+are `RDBLayout.cs:992-996` with a name, and `collisionTriggers` skips
+anything they refuse. That makes the port's reachable `Receive` set
+DFU's component set for every kind, not doors only. `dungeonContext` is
+the tree's one collision pass (the interior host registers no action
+records, so it has none to run).
+
+Pins: 2 in `test/audit63_world_actions.test.js` - the four flags that
+carry the component against the five that do not, and a `Door`-flagged
+foyer door proven to take the hack from a direct `receive` (so the gate
+alone would not have saved it) with the pass refusing the call ahead of
+it. Mutants: the filter dropped; 1 killed.

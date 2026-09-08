@@ -158,7 +158,18 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // that owns several pools hands in the union, because DFU's
   // ActiveGameObjectDatabase is ONE database for the scene.
   makeAreaHostile = null,
-  playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
+  playerWeaponSheathed = () => false,   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
+  // AUDIT 63 F42 (review round): exteriorFoes' dep to the line
+  // (exteriorFoes.js), for the same reason and at the same mount.
+  // ObstacleCheck's `GetComponent<DaggerfallActionDoor>()`
+  // (EnemyMotor.cs:1158-1171) is not dungeon-scoped, and
+  // DaggerfallInterior.AddActionDoors gives every building swing door
+  // that very component off the door prefab
+  // (Internal/DaggerfallInterior.cs:1277-1281) - so a watchman called
+  // into a shop meets action doors and must walk at them, not detour.
+  // The two STREET pools pass nothing and keep the `() => false`
+  // fallback, which is right for them.
+  isActionDoor = null }) {
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
@@ -245,6 +256,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
         centreOffset: idleH / 2,
         playerInside,   // AUDIT 23 (characters-7) / AUDIT 62 F22: EnemySenses.cs:267-269 - the mount's IsPlayerInside picks the band
+        isActionDoor,   // AUDIT 63 F42: ObstacleCheck's DaggerfallActionDoor arm (EnemyMotor.cs:1158-1171)
         // wave 35: DoRangedAttack's band. Knight_CityWatch has
         // HasRangedAttack1 = false and CastsMagic = false
         // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack

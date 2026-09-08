@@ -41,7 +41,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 import { fpArm, hasDaggerfallArrows } from './fpArm.js';
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
-import { worldAabb, rayAabb } from '../player/activate.js';
+import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 
@@ -570,7 +570,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
   for (const o of actions.objects.values()) {
-    const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
+    // (WeaponManager.cs:459-464), so a mover is struck where it is,
+    // not where it was placed - the same law as the activate ray.
+    const box = objectAabb(o);
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;

@@ -2148,8 +2148,8 @@ DFU's 52 - whose known door is not open, not locked, and closer
 than 2m (foe to door CENTER, :917) toggles it through the
 ActionSystem's own door path, whose IsMoving gate refuses a
 swinging door exactly as DFU's ToggleDoor. The dungeon arm gates on
-DOOR_VERB_FLAGS so only real doors count. The Enhanced-AI bash arm
-stays with its setting.
+the DaggerfallActionDoor COMPONENT (see AUDIT 63 F36 below). The
+Enhanced-AI bash arm stays with its setting.
 
 **PACIFICATION (characters-2).**
 CalculateEnemyPacification (:357-391): Etiquette/Streetwise read
@@ -3301,3 +3301,126 @@ re-reading the reference rather than the port.
   PLAYER candidate has no senses, so `getTargets`' own
   `!WouldBeSpawnedInClassic && !see` reject (`EnemySenses.cs:823-825`)
   never fires on it and would hand back the player blind.
+
+## AUDIT 63 F36/F40 - the enemy door seams asked the action-FLAG family, not the door COMPONENT (2026-09-08)
+
+Both enemy door seams in `dungeonContext` decided "this collider bucket
+is a door" with `DOOR_VERB_FLAGS.has(o.actionFlag)` - the door-VERB
+ACTION RECORD family (LockDoor 0x10, UnlockDoor 0x11, OpenDoor 0x12,
+CloseDoor 0x14). That is a different thing from having a
+DaggerfallActionDoor component, and DFU asks only for the component:
+`EnemyMotor.ObstacleCheck` does
+`hit.transform.GetComponent<DaggerfallActionDoor>()`
+(`Game/EnemyMotor.cs:1159`) and `EnemySenses.CanSeeTarget` the same on
+the sight ray (`Game/EnemySenses.cs:913`), storing the handle as
+`LastKnownDoor`; `EnemyMotor.OpenDoors` (:1425-1442) consumes it with
+no flag test of its own.
+
+The two answers differ on the common case. `RDBLayout.cs:247-259`
+attaches the component to EVERY DOR/DDR/NEW/CAV model and only then,
+`if (HasAction(obj))`, the action record - so the ordinary dungeon door
+has no record, `actionFlag` None, and the port's predicate rejected it.
+Two consequences on the classic path: `ObstacleCheck` left an ordinary
+closed door as `obstacleDetected`, routing the foe into `_findDetour`
+instead of DFU's "walk at the door"; and the OpenDoors arm never ran
+for it, so none of the 52 CanOpenDoors mobiles ever opened a plain
+dungeon door. The predicate was also over-inclusive the other way: a
+`DaggerfallActionDoorSpecial` (`Internal/DaggerfallActionDoorSpecial.cs:24`,
+a separate MonoBehaviour attached at `RDBLayout.cs:901`) carries
+OpenDoor and was accepted where the GetComponent misses it, and a plain
+lever wired to LockDoor was accepted as a door.
+
+`isActionDoorObject(o)` in `src/world/actionSystem.js` is that
+GetComponent with a name - `kind === 'door' && !special`, which is how
+the port already spells the same component in `attemptBash` and in
+`activate`. Both seams call it, since DFU makes the same test twice and
+fixing only OpenDoors would leave record-less doors as
+detour-triggering obstacles.
+
+(REVIEW ROUND, AUDIT 63 F44 below: this paragraph originally named the
+Castle Daggerfall hack as a third site already spelling it that way. It
+was not - `actionSystem.js` tested `o.kind !== 'door'` there with no
+`!o.special`. The claim is now true because the hack was collapsed onto
+the helper; it was not true when it was written.)
+
+F40 is the pin that kept it green: `test/enemydoors.test.js` grepped
+the host for the literal `DOOR_VERB_FLAGS.has(_door.actionFlag)` under
+the label "only DOOR action objects count" - the port restated, not the
+reference, so the defect was pinned rather than caught. It is now a
+behavioural pin over the shared helper: a record-less door counts, a
+door with a record counts, a door with a non-verb record counts, a
+special door does NOT, and neither a LockDoor lever nor a mover does -
+plus source checks that both host seams call the helper.
+
+Out of scope and left standing: `exteriorFoes.js` and `cityGuards.js`
+construct EnemyAI with no `isActionDoor` dep at all (the motor falls
+back to `() => false`), so the ObstacleCheck door arm is dead above
+ground. That is the four-hosts shape of the same seam and needs its own
+reference read - whether an above-ground host has DaggerfallActionDoors
+to find.
+
+(REVIEW ROUND: that open question is ANSWERED for the interior mount,
+and the deferral was wrong there - see AUDIT 63 F42 below. Only the
+OPEN-STREET mount remains genuinely undecided.)
+
+Pins: 2 in `test/enemydoors.test.js`. Mutants: the helper reverted to
+the flag family, and each host seam reverted on its own; 3 killed.
+
+## AUDIT 63 F42 - the interior mount had no door component to ask, and no OpenDoors at all (2026-09-08)
+
+The review round. F36 wired `isActionDoor` in the dungeon and DEFERRED
+`exteriorFoes.js` / `cityGuards.js` on an open question: "whether an
+above-ground host has DaggerfallActionDoors to find". One read of the
+reference answers it for the mount that matters.
+`DaggerfallInterior.AddActionDoors`
+(`Internal/DaggerfallInterior.cs:1240-1285`) walks
+`recordData.Interior.BlockDoorRecords`, instantiates every building
+swing door from `Option_InteriorDoorPrefab` (:1255) - whose own comment
+says a replacement prefab "must include DaggerfallActionDoor component
+with all requirements" - and then takes
+`DaggerfallActionDoor actionDoor = go.GetComponent<DaggerfallActionDoor>();`
+straight off it (:1277), logging an error if it is missing. A BUILDING
+INTERIOR is full of action doors. And `EnemyMotor.ObstacleCheck`
+(:1140-1201) and `EnemyMotor.OpenDoors` (:1424-1442) are steps of
+`EnemyMotor.Move`: they are on the MOTOR, with no scene test anywhere
+in either, so they run wherever an enemy does.
+
+The port already had everything the wiring needs.
+`scenes/interiorContext.js` mints one `ActionSystem` over the
+building's collider and registers each swing door on it
+(`actions.addDoor(cpu, parent(d.matrix))`), and `addDoor` ends
+`this.collider.addMesh(key, ...)` into that SAME collider -
+`worldModes.makeInteriorFoes` and `makeInteriorGuards` both hand
+`ctx.collider` to their pools. Neither passed `isActionDoor`, so
+`enemyMotor.js` fell back to `() => false` and the door arm was dead
+indoors: every closed interior door stayed `obstacleDetected`, routing
+the foe into `_findDetour` instead of DFU's "walk at the door", and
+`doorKey` was never recorded. Both pool factories take the dep now
+(defaulted `null`) and forward it to `new EnemyAI(...)`; both interior
+mounts pass
+`isActionDoor: (key) => key != null && isActionDoorObject(ctx.actions?.objects.get(key))`.
+The two STREET mounts (`world.js`, `exterior.js`) still pass nothing
+and keep the `() => false` fallback - that half of F36's deferral is
+correct and stands, since nothing above ground registers action doors.
+
+The second half: the interior host had no OpenDoors arm AT ALL.
+`openDoorsStep` was imported only by `dungeonContext`, so wiring
+ObstacleCheck alone would have left a CanOpenDoors foe walking at a
+shut door forever - a state DFU cannot reach, because ObstacleCheck and
+OpenDoors are two steps of the one `Move`. `openInteriorDoors(pool)` in
+`worldModes.js` is the dungeon host's arm over the interior's
+ActionSystem, run for both pools after their drives: `CanOpenDoors`
+gates the whole law (:1428), the last known door must be a
+DaggerfallActionDoor, and `openDoorsStep` owns the distance / IsLocked
+/ IsOpen gates and the `ToggleDoor()` with no `activatedByPlayer`.
+Knight_CityWatch is a CanOpenDoors mobile, so the indoor watch is
+driven too. Paralysis is `EnemyMotor.HandleParalysis`, the gate both
+pools already read in their own updates.
+
+Pins: 3 in `test/audit63_world_actions.test.js` - the behavioural one
+builds an interior-shaped record-less door, gives one EnemyAI the
+mount's dep and one none, and shows `obstacleDetected` false with the
+key recorded against `obstacleDetected` true with nothing recorded;
+the other two hold the wiring at all four factory/mount sites, the two
+street hosts' abstention, and the OpenDoors arm's five terms. Mutants:
+the mount's dep dropped, and the OpenDoors call dropped; 2 killed.

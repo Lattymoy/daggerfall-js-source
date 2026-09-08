@@ -44,7 +44,11 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   the player actively moves HORIZONTALLY (classic ignores up/down/
   jump), contact beneath -> WalkOn; movers carry their AT-REST bounds and
   trigger only while parked (audit 06f closed the step-on-platform
-  gap). The Combat build queue is EMPTY;
+  gap); action DOORS and SPECIAL doors carry one too and are measured
+  live (AUDIT 63 F38 - RDBLayout.cs:255-259 -> AddAction :897 ->
+  :992-996 attaches DaggerfallActionCollision to a recorded door
+  exactly as to a model, which is how a Castle Wayrest MultiTrigger
+  plaque fires on contact). The Combat build queue is EMPTY;
   remaining Combat-adjacent work lives in Systems (effect library)
   and UI.
 - Systems-shared interims tracked in the Home ledger: TallySkill,
