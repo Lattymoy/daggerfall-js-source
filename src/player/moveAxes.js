@@ -5,8 +5,11 @@
 // classic "just go / just stop" - and the port's hosts produced the
 // axes as the bare held-key difference, so the setting sat stored.
 //
-// The law: every Update clears the four impulse flags, then each held
-// movement action applies a force to its axis - with acceleration the
+// The law: every Update clears the four impulse flags, then the
+// AUTORUN latch applies its own forward force (InputManager.cs:542-545,
+// AUDIT 64 F3 - ahead of the keys, because :548 is where
+// FindKeyboardActions runs), then each held movement action applies a
+// force to its axis - with acceleration the
 // axis climbs at moveAccelerationConst (9.8) per second toward +/-1,
 // without it the axis IS the scale - and raises the impulse flag for
 // its sign; then friction runs, decaying an axis whose impulse was NOT
@@ -38,18 +41,39 @@ export class MoveAxes {
   /**
    * One Update: flags cleared, forces for the held actions, friction.
    * @param {number} dt - Time.deltaTime
-   * @param {{forwards?:boolean, backwards?:boolean, left?:boolean, right?:boolean}} held
+   * @param {{forwards?:boolean, backwards?:boolean, left?:boolean, right?:boolean, autorun?:boolean}} held
    * @returns {{forward:number, strafe:number}} the motor's axes
    */
   update(dt, held, { acceleration = getBool('Controls', 'MovementAcceleration') } = {}) {
     if (!acceleration) {
       // "just go" / "just stop": the axis is the held difference.
       this.horizontal = (held.right ? 1 : 0) - (held.left ? 1 : 0);
-      this.vertical = (held.forwards ? 1 : 0) - (held.backwards ? 1 : 0);
+      // AUDIT 64 F3 - InputManager.cs:542-545, `if (ToggleAutorun)
+      // ApplyVerticalForce(1);`, the half of autorun that MOVES the
+      // player: the latch drives the vertical axis forward with no key
+      // held. Without it AutoRun toggled the run MODE and nothing
+      // walked. In this arm ApplyVerticalForce is `vertical = scale`
+      // (:1466-1468), so the LAST write wins and the key forces (:548's
+      // FindKeyboardActions, after :542) override the latch: autorun
+      // alone is +1, autorun + MoveBackwards is -1 (the same GetKey
+      // pass that zeroes ToggleAutorun at :1851 still applies its -1
+      // this frame), autorun + MoveForwards is +1. Two opposing keys
+      // keep the file's recorded neutral-difference answer above.
+      this.vertical = (held.forwards || held.backwards)
+        ? ((held.forwards ? 1 : 0) - (held.backwards ? 1 : 0))
+        : (held.autorun ? 1 : 0);
       return { forward: this.vertical, strafe: this.horizontal };
     }
     let posH = false, negH = false, posV = false, negV = false;
     const force = (axis, scale) => clamp(axis + (MOVE_ACCELERATION_CONST * scale) * dt, -1, 1);
+    // AUDIT 64 F3: the autorun force runs BEFORE the key forces,
+    // because :542 precedes FindKeyboardActions at :548 - so a frame
+    // with autorun AND MoveForwards sums two +1 forces, and autorun
+    // with MoveBackwards nets zero change with both impulses raised.
+    // Raising posV is load-bearing (:1472): without it ApplyFriction
+    // (:1482-1483) decays the axis by the same 9.8/s every frame and
+    // the net stays 0.
+    if (held.autorun) { this.vertical = force(this.vertical, 1); posV = true; }
     // FindKeyboardActions (:1840-1852): right, left, forwards, backwards.
     if (held.right) { this.horizontal = force(this.horizontal, 1); posH = true; }
     if (held.left) { this.horizontal = force(this.horizontal, -1); negH = true; }

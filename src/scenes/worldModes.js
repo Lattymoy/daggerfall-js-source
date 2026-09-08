@@ -5111,6 +5111,18 @@ export function createWorldModes(host) {
     // Covers both modes. The dungeon arm sets it again later from its own
     // view matrix, which is a pure write and harmless.
     audio.setListener(cam.pos, fwd);
+    // AUDIT 64 F0/F1: PlayerMotor.Update recomputes
+    // `onExteriorWaterMethod = GetOnExteriorWaterMethod()` EVERY frame
+    // in every context (PlayerMotor.cs:367), and that method answers
+    // None indoors and underground because GetOnExteriorGroundMethod
+    // returns false when `PlayerEnterExit.IsPlayerInside`
+    // (PlayerMotor.cs:511-513, :585-587). Only the two exterior hosts
+    // wrote the port's flag, and nothing cleared it - so a value
+    // carried in off a lake kept the sunk capsule here, and now would
+    // also carry the exterior swim speed and the jump cancel. This
+    // frame() only runs in interior/dungeon mode (the exterior arm
+    // returns above), which is exactly DFU's IsPlayerInside.
+    player.onExteriorWater = false;
     const jumpHeld = held(keys, 'Jump');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
@@ -5209,8 +5221,14 @@ export function createWorldModes(host) {
     const mv = moveHeld(keys);
     // AUDIT 28 W8: the axes advance only on frames the motor runs (a
     // held overlay is DFU's timeScale 0 - no climb, no friction).
-    const axes = overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-    const moving = !paralyzed && anyMove(mv);
+    // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
+    // ApplyVerticalForce(1);` runs in Update ahead of
+    // FindKeyboardActions, so the latch drives the vertical axis
+    // forward with no key held. The latch itself lives in the motor
+    // (PlayerSpeedChanger's half), so this reads last step's value -
+    // DFU's own script-order indeterminacy between InputManager.Update
+    // and PlayerMotor.Update.
+    const axes = overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
     // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
     // ONLY into the standalone ?dungeon scene, so a world/exterior
     // hosted dungeon dropped the mover delta and the lift penetrated
@@ -5254,14 +5272,22 @@ export function createWorldModes(host) {
       }, cam.yaw, cam.pitch);
       latch.crouch = crouchHeld;
       // FS-slice: PlayerFootsteps - buildings walk on wood, dungeons on
-      // stone with the water arms (shallow = the capsule center 0.57
-      // under the block water line, DFU's own expression at the port's
-      // feet-origin convention).
+      // stone with the water arms (shallow = the LIVE capsule centre
+      // 0.57 under the block water line - AUDIT 64 F4).
       {
         const _surf = player.waterSurfaceY;
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !moving,   // AUDIT 39r: `moving` is the paralysis-folded read - a frozen player takes no stride (world.js/exterior.js's own line)
+          // AUDIT 64 F3 (review): PlayerFootsteps gates on
+          // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
+          // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
+          // inside `if (grounded)` (PlayerMotor.cs:113-125) - NOT a HasAction
+          // read. Under AutoRun, InputManager.cs:542-545's ApplyVerticalForce
+          // writes a non-zero moveDirection with no move key down, so DFU
+          // plays the stride; `!anyMove(keys)` silenced it. `player.standing`
+          // IS that getter (grounded && no forward/strafe axis), so it also
+          // keeps the paralysed player silent - the hosts zero both axes.
+          standingStill: player.standing,
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet(mode === 'interior'
           ? { inside: true, inBuilding: true }
@@ -5269,7 +5295,17 @@ export function createWorldModes(host) {
               dungeonSwimming: player.swimming,
               // F090: the LATCHED flag - shallow is entered at 0.57 and
               // only left at 0.95 (PlayerFootsteps :189, :199-208).
-              dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, _surf, player.swimming) }));
+              // AUDIT 64 F4: both arms read `playerMotor.transform
+              // .position.y`, the LIVE CharacterController centre;
+              // ControllerHeightChange (PlayerHeightChanger.cs:477-478)
+              // keeps the feet planted, so it is feet +
+              // controller.height/2 - crouch 0.45, ride 1.3 - not the
+              // standing 0.9 this line baked in. (Not the sunk 0.30
+              // swim capsule: DoSinking arms only on
+              // `OnExteriorWater == Swimming`, PlayerHeightChanger.cs
+              // :127/:147-158, and that is None indoors -
+              // PlayerMotor.cs:582-587 over :505-514.)
+              dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, _surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
     }
@@ -5280,7 +5316,20 @@ export function createWorldModes(host) {
       // by the update that sets them, so their readers ride the motor's
       // own gate: a jump taken the instant before a window opened would
       // otherwise be re-reported on every paused frame.
-      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
+      // AUDIT 64 F7: the two dungeon hosts fed the RAW Run key
+      // (`held(keys,'Run') && moving`) where their three siblings feed
+      // the motor's latch. PlayerMotor.IsRunning (:108-111) is
+      // PlayerSpeedChanger.isRunning, latched from the run MODE only
+      // while grounded (:107-118) - and the mode is the AutoRun/
+      // ToggleRun latch, never the physical key, so an autorunning
+      // dungeon crawler read false: no Running tally at all and
+      // DefaultFatigueLoss 11/min where PlayerEntity.cs:408-409 charges
+      // RunningFatigueLoss 88. The old `moving` term was input-derived
+      // where DFU's IsStandingStill (PlayerMotor.cs:113-125) is
+      // grounded-gated and false in the air, so `player.standing` is
+      // the faithful term (and the footstep gate above now reads it
+      // too - AUDIT 64 F3 review).
+      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:322 fed it, so in a world-hosted dungeon the
@@ -5318,6 +5367,13 @@ export function createWorldModes(host) {
       // poisons, fatigue and skill advancement had all stopped.
       if (!overlayHeld) interiorTicker.tick(dt, {
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)
+        // AUDIT 64 F7 - PlayerEntity.cs:311, the TALLY's own gate:
+        // `playerMotor.IsRunning && !playerMotor.IsRiding`, with NO
+        // standing test. The fatigue arm at :408 is the one that
+        // reads !IsStandingStill; the port drove both off one flag,
+        // so the Running skill did not advance while the run key was
+        // held standing still.
+        runningTally: player.isRunning && !player.riding,
         swimming: false,
         jumped: player.jumped,   // C6
       });

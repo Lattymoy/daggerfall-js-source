@@ -306,3 +306,67 @@ setting alone, within 60 ms, and no throw before a master exists), and
 every writer going through setValue. The replacement suite's shared-law
 pin re-aimed at the split. 3 mutants, 3 dead.
 
+
+## AUDIT 64 F4 - the dungeon shallow-water threshold restated a constant (2026-09-08)
+
+`PlayerFootsteps`' two dungeon-water arms compare the player against the
+block water line at a fixed offset:
+
+    else if (... && (playerMotor.transform.position.y - 0.57f) < (blockWaterLevel * -1 * GlobalScale))   // :189, enter
+    ... || (playerMotor.transform.position.y - 0.95f) >= (...)                                           // :201, leave
+
+`playerMotor.transform.position` is the LIVE CharacterController capsule
+CENTRE - `controller.center` is never assigned anywhere in DFU, and
+`ControllerHeightChange` (`PlayerHeightChanger.cs:473-478`) sets
+`controller.height` and then moves `controller.transform.position` by
+`heightChange / 2f`, so the FEET stay planted and the centre tracks the
+live height: standing 1.8 gives feet+0.9, crouched 0.9 gives feet+0.45,
+riding 2.6 gives feet+1.3.
+
+`footsteps.js`'s own contract said exactly that ("`centreY` is the
+capsule CENTRE, which is DFU's transform.position on a
+CharacterController; the hosts pass feet + half-height") and both
+dungeon hosts passed `player.pos[1] + 0.9` - the STANDING half-height,
+baked as a literal - while the swim toggle a few lines above each
+already read the live value. Crouched in a dungeon block with water, DFU
+enters the splash at `feet - 0.12 < waterY` and the port waited for
+`feet + 0.33 < waterY`: 0.45 units of water crossed on the stone pair,
+with the exit threshold wrong in the other direction (`feet - 0.5`
+against the port's `feet - 0.05`). Both hosts pass `player.pos[1] +
+player.height / 2` now; `motor.js`'s `height` getter IS
+`controller.height` and answers crouch, the sunk swim capsule (plus the
+horse displacement), the ride height and `standingHeightAdjustment`.
+
+REVIEW ROUND (2026-09-08): the section first claimed the same error
+"again during `DoSinking`/`DoUnsinking`'s 0.30 capsule - i.e. exactly
+while surfacing from a dungeon swim", and both host comments listed
+"sunk 0.15" among the stances the arm answers. That stance cannot reach
+this arm. `PlayerFootsteps`' two water arms are inside
+`IsPlayerInsideDungeon && blockWaterLevel != 10000` (`:178`), while
+`DecideHeightAction` arms `DoSinking`/`DoUnsinking` only from `onWater =
+(PlayerMotor.OnExteriorWater == OnExteriorWaterMethod.Swimming)`
+(`PlayerHeightChanger.cs:127`, `:147-158`) - and
+`GetOnExteriorWaterMethod` returns `None` the moment
+`GetOnExteriorGroundMethod` fails, which it does on
+`PlayerEnterExit.IsPlayerInside` (`PlayerMotor.cs:505-514`, `:582-587`).
+A dungeon swimmer is force-crouched to 0.9 instead
+(`PlayerHeightChanger.cs:193-199`), so the centre there is feet+0.45,
+never feet+0.15. The crouch case is the whole (and sufficient) defect;
+the ride height 1.3 is the other stance the arm can see. Claim and
+comments corrected; the fix and its pins are unchanged, since they were
+written against the crouched 0.45 case all along.
+
+The project had already ruled on this defect class in the other
+direction: AUDIT 24 took the identical hardcoded `feet + 0.9` out of
+LevitateMotor's swim-rise clamp citing `PlayerHeightChanger.cs:477-478`.
+The footstep hosts were never brought along.
+
+The pin that stood here was a pin that restated the port - it asserted
+the literal source text `waterStep(player.pos[1] + 0.9,` in both hosts,
+so it would have revert-protected the bug. It asserts the live centre
+now, refuses the baked constant outright, and gains a machine-level case
+the old form could not express: with the feet at 0 and the surface at
+-0.05, the crouched centre 0.45 enters the splash (0.45 - 0.57 < -0.05)
+where the standing centre 0.9 does not. Pins: 2 in
+`test/audit26_audio.test.js`. Mutant: `+ 0.9` restored in one host; 1
+killed.

@@ -7034,3 +7034,50 @@ reference gate pins those three C# lines beside the five the setter
 rewrites (`Base/MobileUnit.cs:214-217`). Red-proofed against a mutant
 that keeps the copy but leaks the shared row's `corpseTexture` object
 by reference, which is precisely what the tautology could not see.
+
+## AUDIT 64 F7 - THE RUNNING TALLY AND THE RUNNING DRAIN ARE DIFFERENT QUESTIONS (2026-09-08)
+
+`PlayerEntity` asks about running twice, with two different conditions:
+
+    if (playerMotor.IsRunning && !playerMotor.IsRiding)          // :311, the Running skill tally
+    else if (playerMotor.IsRunning && !playerMotor.IsStandingStill)  // :408, RunningFatigueLoss 88/min
+
+The tally (every 4th ClassicUpdate, `:311-320`) has NO standing test;
+the per-minute fatigue band (`:405-409`) does. The port collapsed both
+onto one `activity.running` flag that `worldTick.js` read at both sites,
+and the hosts built it with the FATIGUE arm's condition
+(`player.isRunning && !player.standing`) - so a grounded player holding
+Run in place tallied nothing where DFU tallies 4/s. The channel is split
+now: `runningTally` (`:311`) drives the tally, `running` (`:408`) keeps
+the band, and both travel through the dungeon channel
+(`dungeonContext.reportActivity` -> `_activity` -> `tickPlayerMinutes`).
+The `!IsRiding` term is redundant in the port because the motor's own
+`isRunning` latch already runs through `canRunUnlessRiding`, and it is
+kept verbatim for the same reason DFU keeps it.
+
+**The bigger half was a four-hosts miss on the same line.** Three hosts
+fed the motor's latched `player.isRunning`; the two DUNGEON arms -
+`worldModes.js`'s and the standalone `dungeon.js`'s, the identical line
+in both - fed the RAW physical key, `held(keys, 'Run') && moving &&
+!player.riding`. `PlayerMotor.IsRunning` (`:108-111`) is
+`PlayerSpeedChanger.isRunning`, latched from the run MODE only while
+grounded (`:107-118`), and the mode is driven by the AutoRun/ToggleRun
+latch (`:71-99`), never by the key. So an AUTORUNNING dungeon crawler -
+autorun is bound by default and implemented - read `held(keys,'Run')`
+false while `IsRunning` was true: no Running advancement at all, and
+`DefaultFatigueLoss` 11/min where `PlayerEntity.cs:408-409` charges
+`RunningFatigueLoss` 88, an eighth of the classic drain. The inverse
+(autorun toggled off with Shift held) over-drained while walking. Both
+dungeon arms carry their three siblings' pair now.
+
+`moving` went with the key rather than being kept: it is input-derived
+(`anyMove(mv)`) where DFU's `IsStandingStill` (`PlayerMotor.cs:113-125`)
+runs its zero-magnitude test only inside `if (grounded)` and is false
+whenever airborne, which is what `player.standing` already answers.
+
+Pins: 1 new and 1 rewritten in `test/audit23_hosts.test.js` (the tally
+gate and the fatigue gate proven to be different conditions - the
+standing runner tallies AND pays the default band; the moving one pays
+88), plus `test/tr1_transport.test.js`'s dungeon-host pin rewritten from
+the raw-key shape to the latched pair. Mutants: the tally gate reverted
+to `activity.running`, a dungeon host reverted to the raw key; 2 killed.

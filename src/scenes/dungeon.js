@@ -30,7 +30,7 @@ import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';
 import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
-import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
   pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
   DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE,   // AUDIT 63 F33: the enemy arm's two reaches
@@ -172,7 +172,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
@@ -648,6 +648,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // AUDIT 18: extracted to shared.js so the worldModes host (which
       // had dropped it entirely) cannot half-apply it again.
       ridePlatform(player, ctx.actions);
+      // AUDIT 64 F0/F1: GetOnExteriorWaterMethod (PlayerMotor.cs
+      // :582-594) is recomputed every Update (:367) and answers None
+      // underground - GetOnExteriorGroundMethod fails on
+      // PlayerEnterExit.IsPlayerInside (:511-513). Only the exterior
+      // hosts raise the port's flag and nothing cleared it; the swim
+      // speed and the jump cancel read it now, so the standalone
+      // dungeon states DFU's indoor answer for itself.
+      player.onExteriorWater = false;
       const jumpHeld = held(keys, 'Jump');
       player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
@@ -676,8 +684,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
-      const axes = moveAxes.update(dt, mv);   // AUDIT 28 W8: one Update of the axes per frame the motor runs
-      const moving = !paralyzed && anyMove(mv);
+      // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
+      // ApplyVerticalForce(1);` runs in Update ahead of
+      // FindKeyboardActions, so the latch drives the vertical axis
+      // forward with no key held. The latch itself lives in the motor
+      // (PlayerSpeedChanger's half), so this reads last step's value -
+      // DFU's own script-order indeterminacy between InputManager.Update
+      // and PlayerMotor.Update.
+      const axes = moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });   // AUDIT 28 W8: one Update of the axes per frame the motor runs
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
       // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -706,21 +720,60 @@ export async function bootDungeon(canvas, renderer, params, status) {
       }, cam.yaw, cam.pitch);
       prevCrouch = crouchHeld;
       // FS-slice: PlayerFootsteps - the dungeon stride on stone with
-      // the water arms (shallow = capsule center 0.57 under the line).
+      // the water arms (shallow = the LIVE capsule centre 0.57 under
+      // the block water line - AUDIT 64 F4).
       {
         const _step = _footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !moving,
+          // AUDIT 64 F3 (review): PlayerFootsteps gates on
+          // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
+          // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
+          // inside `if (grounded)` (PlayerMotor.cs:113-125) - NOT a HasAction
+          // read. Under AutoRun, InputManager.cs:542-545's ApplyVerticalForce
+          // writes a non-zero moveDirection with no move key down, so DFU
+          // plays the stride; `!anyMove(keys)` silenced it. `player.standing`
+          // IS that getter (grounded && no forward/strafe axis), so it also
+          // keeps the paralysed player silent - the hosts zero both axes.
+          standingStill: player.standing,
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet({ inside: true, inBuilding: false,
           dungeonSwimming: player.swimming,
           // F090: the LATCHED flag - shallow is entered at 0.57 and
           // only left at 0.95 (PlayerFootsteps :189, :199-208).
-          dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, surf, player.swimming) }));
+          // AUDIT 64 F4: those two arms read `playerMotor.transform
+          // .position.y`, the LIVE CharacterController centre -
+          // ControllerHeightChange (PlayerHeightChanger.cs:477-478)
+          // moves the transform by heightChange/2 so the FEET stay
+          // planted and the centre is feet + controller.height/2 in
+          // every stance. The standing half-height was baked here as
+          // 0.9, so a CROUCHED player (0.45) carried a threshold 0.45
+          // too high and kept the stone pair through water DFU has
+          // already splashed in. (The sunk 0.30 swim capsule cannot
+          // reach this arm: DoSinking/DoUnsinking arm only on
+          // `OnExteriorWater == Swimming` - PlayerHeightChanger.cs
+          // :127, :147-158 - which GetOnExteriorWaterMethod answers
+          // None for indoors, PlayerMotor.cs:582-587 over :505-514. A
+          // dungeon swimmer is force-crouched instead, :193-199.) motor.js's
+          // `height` getter IS controller.height, and the swim toggle
+          // three dozen lines above already reads it.
+          dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
-      ctx.reportActivity?.({ running: held(keys, 'Run') && moving && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
+      // AUDIT 64 F7: the two dungeon hosts fed the RAW Run key
+      // (`held(keys,'Run') && moving`) where their three siblings feed
+      // the motor's latch. PlayerMotor.IsRunning (:108-111) is
+      // PlayerSpeedChanger.isRunning, latched from the run MODE only
+      // while grounded (:107-118) - and the mode is the AutoRun/
+      // ToggleRun latch, never the physical key, so an autorunning
+      // dungeon crawler read false: no Running tally at all and
+      // DefaultFatigueLoss 11/min where PlayerEntity.cs:408-409 charges
+      // RunningFatigueLoss 88. The old `moving` term was input-derived
+      // where DFU's IsStandingStill (PlayerMotor.cs:113-125) is
+      // grounded-gated and false in the air, so `player.standing` is
+      // the faithful term (and the footstep gate above now reads it
+      // too - AUDIT 64 F3 review).
+      ctx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083)
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
 // ROAD-Ar: the gate itself ran at :459, above the overlay guard.

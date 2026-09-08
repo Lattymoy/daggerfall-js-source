@@ -61,6 +61,10 @@ function stubFloor() {
   return {
     blockedStand: false,
     onGround: true,
+    // AUDIT 64 F5: CanStand is an upward SphereCast now
+    // (PlayerHeightChanger.cs:525-531) - Infinity is Unity's "nothing
+    // hit", i.e. the stand passes.
+    sphereCast() { return { dist: this.blockedStand ? 0.1 : Infinity }; },
     penetrationAt() { return this.blockedStand ? 0.9 : 0; },
     move(pos, dx, dy, dz) {
       pos[0] += dx;

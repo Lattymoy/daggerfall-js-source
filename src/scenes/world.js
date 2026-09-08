@@ -182,7 +182,7 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // S
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
-import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
+import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
@@ -1414,7 +1414,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -6801,6 +6801,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
+        // AUDIT 64 F7 - PlayerEntity.cs:311, the TALLY's own gate:
+        // `playerMotor.IsRunning && !playerMotor.IsRiding`, with NO
+        // standing test. The fatigue arm at :408 is the one that
+        // reads !IsStandingStill; the port drove both off one flag,
+        // so the Running skill did not advance while the run key was
+        // held standing still.
+        runningTally: player.isRunning && !player.riding,
         swimming: player.swimming,
         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
@@ -6816,8 +6823,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         const mv = moveHeld(keys);
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
-        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:547's shape - a frozen player takes no stride
+        // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
+        // ApplyVerticalForce(1);` runs in Update ahead of
+        // FindKeyboardActions, so the latch drives the vertical axis
+        // forward with no key held. The latch itself lives in the motor
+        // (PlayerSpeedChanger's half), so this reads last step's value -
+        // DFU's own script-order indeterminacy between InputManager.Update
+        // and PlayerMotor.Update.
+        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6899,7 +6912,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-            standingStill: !moving,
+            // AUDIT 64 F3 (review): PlayerFootsteps gates on
+            // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
+            // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
+            // inside `if (grounded)` (PlayerMotor.cs:113-125) - NOT a HasAction
+            // read. Under AutoRun, InputManager.cs:542-545's ApplyVerticalForce
+            // writes a non-zero moveDirection with no move key down, so DFU
+            // plays the stride; `!anyMove(keys)` silenced it. `player.standing`
+            // IS that getter (grounded && no forward/strafe axis), so it also
+            // keeps the paralysed player silent - the hosts zero both axes.
+            standingStill: player.standing,
             halfSpeed: player.movingLessThanHalfSpeed,
             // :221-227 - a mount silences the stride UNLESS the player
             // is in exterior water, which is the one arm that needs

@@ -346,7 +346,7 @@ export function tickPlayerMinutes({
   classicMinutes,
   dt,
   sinks,
-  activity = { running: false, swimming: false },
+  activity = { running: false, runningTally: false, swimming: false },   // AUDIT 64 F7: the tally's gate is its own (PlayerEntity.cs:311)
   fatigueMultiplier = 1,
   rolls = Math.random,
   say = () => {},
@@ -456,7 +456,14 @@ export function tickPlayerMinutes({
   // every 4th classic update (4 x 0.0625s) while running. The counter
   // rides the entity so the cadence survives host swaps; it only
   // advances while running, exactly like runningTallyCounter.
-  if (activity.running) {
+  //
+  // AUDIT 64 F7: its gate is its OWN - `playerMotor.IsRunning &&
+  // !playerMotor.IsRiding` (:311), with no standing test - and it is
+  // NOT the fatigue band's `IsRunning && !IsStandingStill` (:408,
+  // below). The port drove both off one `activity.running` that the
+  // hosts built with the fatigue condition, so a grounded player
+  // holding Run in place tallied nothing where DFU tallies 4/s.
+  if (activity.runningTally) {
     entity._runTallyAcc = (entity._runTallyAcc ?? 0) + dt;
     while (entity._runTallyAcc >= 0.25) {
       entity._runTallyAcc -= 0.25;

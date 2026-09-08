@@ -190,9 +190,17 @@ export function resetSkillsRecentlyRaised(entity) {
 export const JUMP_SPELL_MULTIPLIER = 0.6;   // AcrobatMotor.cs:16
 export const ATHLETICISM_MULTIPLIER = 0.1;            // AcrobatMotor.cs:14
 export const IMPROVED_ATHLETICISM_MULTIPLIER = 0.1;   // AcrobatMotor.cs:15
+/** DaggerfallEntity.IsEnhancedJumping (:85) - raised by the Jumping
+ *  effect's Start and cleared by its End (Jumping.cs:84/:94). TWO
+ *  AcrobatMotor members read it: the +0.6 liftoff term below (:104-105)
+ *  and CheckAirControl's mid-air steering disjunct (:145, AUDIT 64 F2),
+ *  so the one activeEffects read lives here beside the formula rather
+ *  than being restated at each motor construction site. */
+export const isEnhancedJumping = (entity) =>
+  !!entity?.activeEffects?.some((a) => a.kind === 'jumping');
 export function jumpSpeedMultiplier(entity) {
   let m = 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
-  if (entity?.activeEffects?.some((a) => a.kind === 'jumping')) m += JUMP_SPELL_MULTIPLIER;
+  if (isEnhancedJumping(entity)) m += JUMP_SPELL_MULTIPLIER;
   // DFCareer.HasSpecialAbility: the flag masked against the
   // bitfield's LOW BYTE, verbatim (the C# (byte)flags cast).
   const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;

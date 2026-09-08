@@ -39,9 +39,18 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
       `${name}: the read-time fold (DaggerfallEntity.IsParalyzed + the FreeAction immunity)`);
     assert.match(s, /const paralyzed = entityIsParalyzed\(playerEntity\);/,
       `${name}: one read per frame, above the motor and the weapon rig`);
-    assert.ok(s.includes('const moving = !paralyzed && anyMove(mv);'),
-      `${name}: a frozen player takes no stride`);
-    assert.ok(s.includes('standingStill: !moving,'), `${name}: and the footstep machine reads it`);
+    // AUDIT 64 F3 (review): the stride gate is no longer a host-side
+    // `moving` term. DFU silences the frozen player's footsteps
+    // THROUGH IsStandingStill: FrictionMotor.GroundedMovement zeroes
+    // inputX/inputY on IsParalyzed (:76-81), so moveDirection is zero
+    // and PlayerMotor.cs:113-125 answers true, which is what
+    // PlayerFootsteps.cs:264-265 reads. The hosts zero both axes in
+    // the paralysis bag (pinned below), so `player.standing` carries
+    // it - and unlike the raw move keys it also speaks under AutoRun.
+    assert.ok(s.includes('standingStill: player.standing,'),
+      `${name}: the footstep machine reads IsStandingStill`);
+    assert.equal(/standingStill: !moving,/.test(s), false,
+      `${name}: not a raw-move-key term (silent under autorun)`);
     assert.ok(s.includes('weaponRig.frame(dt, { paralyzed })'), `${name}: no swing while frozen`);
     assert.ok(s.includes('weaponRig.draw({ paralyzed })'), `${name}: ShowWeapons(false) - and no viewmodel`);
   }
@@ -82,9 +91,12 @@ test('AUDIT 39r: the THIRD above-ground host - worldModes\' interior arm - reads
   assert.ok(WORLD_MODES.includes("const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);"),
     'one fold: the dungeon context underground, the entity above it');
   assert.ok(!WORLD_MODES.includes("(dungeonCtx.playerParalyzed?.() ?? false) : false;"), 'the hardcoded false is gone');
-  assert.ok(WORLD_MODES.includes('const moving = !paralyzed && anyMove(mv);'), 'a frozen player takes no stride');
-  assert.ok(WORLD_MODES.includes('standingStill: !moving,'), 'and the footstep machine reads the folded flag');
-  assert.ok(!WORLD_MODES.includes('standingStill: !anyMove(mv),'), 'not the raw keys');
+  // AUDIT 64 F3 (review): see the note in the #59 pin above - the
+  // stride gate is IsStandingStill (PlayerFootsteps.cs:264-265), and
+  // the paralysis answer rides it because FrictionMotor.cs:76-81
+  // zeroes the axes the port's paralysis bag also zeroes.
+  assert.ok(WORLD_MODES.includes('standingStill: player.standing,'), 'the footstep machine reads IsStandingStill');
+  assert.equal(/standingStill: !(moving|anyMove\(mv\)),/.test(WORLD_MODES), false, 'not the raw keys');
   assert.ok(WORLD_MODES.includes('interiorWeapon.frame(dt, { paralyzed })'), 'WeaponManager :235-239 - no swing while frozen');
   assert.ok(WORLD_MODES.includes('interiorWeapon.draw({ paralyzed })'), 'ShowWeapons(false) - and no viewmodel');
 });
