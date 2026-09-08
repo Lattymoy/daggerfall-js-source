@@ -18,6 +18,7 @@ import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // RO
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
+import { waterUniforms, tilemapHasWater } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -541,6 +542,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
+  // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
+  // the kill door. A draw only: nothing here tells the game where water is.
+  const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off';
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
@@ -799,6 +803,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     };
     const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
+    const hasWater = tilemapHasWater(tilemapBytes);   // WATER1: a pixel without water never enters the pass
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -1076,7 +1081,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     built.set(key, {
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      px, py, terrain, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, tilemap, hasWater, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
@@ -7460,6 +7465,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates: the rotor's angle, the mill's hum and the flats' clocks
       // all run for a pixel behind the camera.
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
+      p._visible = pixelVisible;   // WATER1: the water pass below walks the same verdict
       if (pixelVisible) {
         // EE5: the ground shadows under the SKY'S OWN deck - one field for the
         // cloud and for the shadow it casts. Null when there is no enhanced
@@ -7511,6 +7517,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
+    // WATER1: THE WATER, after every pixel's opaque ground and models and
+    // before the first flat - so the surface blends over the land it lies
+    // on and every sprite, missile, drop and the arms draw over it. One
+    // uniform set a frame: the clock, the eased wind (the same vector the
+    // cloud deck and the mills take; null = calm), the front's rain, and
+    // the dome's own two colours to reflect.
+    if (waterOn) {
+      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
+      for (const p of built.values()) {
+        if (!p._visible || !p.hasWater) continue;
+        renderer.drawWaterSurface(p.terrain, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
+      }
+    }
     renderer.drawBillboards(allBatches, camRight, UP_Y);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles
     // T2 towns: every built populated pixel runs its own pool

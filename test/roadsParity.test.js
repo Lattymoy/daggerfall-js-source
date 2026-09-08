@@ -90,7 +90,7 @@ test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corne
 // min-inclusive and MAX-EXCLUSIVE - and the port's was max-inclusive:
 // the column x == xMax and the row y == yMax were smoothed by the mod
 // and skipped here. The rect is DFU's (xMax = xmax + extraClearance,
-// terrainTiles.js:257), so the boundary is a real tile column.
+// terrainTiles.js:273), so the boundary is a real tile column.
 test('MODS AUDIT: the smoother skips the rect as Rect.Contains does - min in, max OUT', async () => {
   const { smoothRoadHeights } = await import('../src/world/roadPainter.js');
   const H = 129;

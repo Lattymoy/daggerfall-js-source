@@ -59,6 +59,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // untouched either way, and off (or the classic skin) takes DFU's
   // renderer-disabled draw verbatim (systems/combatVisuals.js).
   enhancedCombatVisuals: true,
+  // WATER1: ENHANCED WATER (2026-09-08, Mac: "develop proper water shader
+  // for the oceans/rivers/ponds"). A second pass over the terrain grid
+  // that shades every water tile as a surface - waves on the wind, the
+  // sky by Fresnel, the sun's glint, rain, the shore feathered. On by
+  // default like the other enhanced visuals; off (or the classic skin)
+  // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
+  enhancedWater: true,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',

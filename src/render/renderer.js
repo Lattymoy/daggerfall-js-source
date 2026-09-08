@@ -661,6 +661,7 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // c2/S6: the automap's water tint is UnderwaterFog's, not the shader's -
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
+import { WATER_SURFACE_VS, waterSurfaceFs, packWaterMask } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /
@@ -937,6 +938,24 @@ export class Renderer {
     this._terrainIndexSets = new Map(); // indices array -> { buffer, count }
 
     this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
+    // WATER1: the exterior water surface - the terrain grid drawn again,
+    // lifted, every non-water texel discarded (render/waterSurface.js).
+    this.waterSurfaceProgram = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL));
+    {
+      const P = this.waterSurfaceProgram, u = (n) => gl.getUniformLocation(P, n);
+      this._ws = {
+        proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
+        tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), mask: u('uWaterMask'),
+        time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'), scroll: u('uScroll'),
+        lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
+        moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
+        zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
+      };
+      this._waterSurfaceFog = { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') };
+      this._waterMaskUploaded = false;
+      // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
+      this._csLoc.water = [u('uCloudShadowMap'), u('uCloudShadowRect')];
+    }
     this._bbFog = {
       fogColor: gl.getUniformLocation(this.bbProgram, 'uFogColor'),
       fogMode: gl.getUniformLocation(this.bbProgram, 'uFogMode'),
@@ -2636,6 +2655,79 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this.stats.draws++;
     }
     this._bindVao(null);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
+  }
+
+  /**
+   * WATER1: draw one terrain surface's WATER - the same grid, lifted,
+   * alpha-blended above the ground it was drawn on, depth-tested and
+   * never depth-written, both faces (a river bank seen from below the
+   * lift is still the surface). Call after every opaque pass of the
+   * pixel and before the flats. `u` is waterUniforms' object.
+   */
+  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u) {
+    const gl = this.gl, L = this._ws;
+    this._use(this.waterSurfaceProgram);
+    if (!this._waterMaskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); this._waterMaskUploaded = true; }
+    gl.uniformMatrix4fv(L.proj, false, this._proj);
+    gl.uniformMatrix4fv(L.view, false, this._view);
+    gl.uniformMatrix4fv(L.model, false, modelMatrix);
+    gl.uniform1f(L.lift, u.lift);
+    gl.uniform1f(L.tileSize, tileSize);
+    gl.uniform1f(L.time, u.time);
+    gl.uniform2f(L.windDir, u.windDir[0], u.windDir[1]);
+    gl.uniform1f(L.windStrength, u.windStrength);
+    gl.uniform1f(L.rain, u.rain);
+    gl.uniform1f(L.scroll, u.scroll);
+    gl.uniform3fv(L.zenith, u.zenith);
+    gl.uniform3fv(L.horizon, u.horizon);
+    gl.uniform3fv(L.tint, u.tint);
+    gl.uniform1f(L.opacity, u.opacity);
+    gl.uniform1f(L.f0, u.f0);
+    gl.uniform1f(L.shoreSoft, u.shoreSoft);
+    // the ground's own light, term for term, so the surface sits in the
+    // frame the land beside it is lit in
+    this._uploadCloudShadow('water');
+    this._uploadFog(this._waterSurfaceFog);
+    gl.uniform3fv(L.lightDir, this._lightDir);
+    gl.uniform3fv(L.ambient, this._ambient);
+    gl.uniform1f(L.sunScale, this._sunScale);
+    gl.uniform3fv(L.sunColor, this._sunColor);
+    gl.uniform3fv(L.moonDir, this._moonDir);
+    gl.uniform1f(L.moonScale, this._moonScale);
+    gl.uniform3fv(L.moonColor, this._moonColor);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+    gl.uniform1i(L.tileArr, 0);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+    gl.uniform1i(L.tilemap, 2);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    // The surface is the ground's own triangles a hand's breadth up, and
+    // a world-space lift is worth less depth the farther it is: at 800
+    // units a 24-bit buffer resolves about the lift itself, and the sea
+    // beyond lost the test and showed the flat tile (the lab's first
+    // shots: a light band at a fixed distance). A polygon offset is the
+    // same nudge in WINDOW depth, slope-scaled, at every distance.
+    // ...and where even that rounds to nothing (a 16-bit buffer, the far
+    // sea on a 24-bit one), LEQUAL: the surface is the ground's own
+    // triangles lifted, so its depth is never farther than the ground's
+    // at the same pixel, and an equal depth is the surface, not the tile.
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(-1, -2);
+    gl.depthFunc(gl.LEQUAL);
+    this._bindVao(surface.vao);
+    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    this.stats.texBinds += 2; this.stats.draws++;
+    this._bindVao(null);
+    gl.depthFunc(gl.LESS);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     gl.enable(gl.CULL_FACE);

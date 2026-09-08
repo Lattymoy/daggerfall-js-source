@@ -329,6 +329,16 @@ export function createSkyController(gl, params) {
     setInside(inside) { dynamic?.setInside(inside); },
     /** DS1: the LightningFlash point light this frame, or null. */
     lightningLight() { return dynamic?.lightningLight ?? null; },
+    /** WATER1: the sky the water reflects - the dome's zenith and
+     *  horizon this frame ({zenith, horizon}, 0..1 rgb), from the SAME
+     *  state the dome is drawn from; under the mod, the mod's fog colour
+     *  at the horizon and its dome fill above; null under the classic
+     *  sky, which draws no water surface. */
+    waterSky() {
+      if (enhancedSky?.state) return { zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon };
+      if (dynamicSky) return { zenith: dynamicSky.fillColor ?? dynamicSky.clearColor, horizon: dynamic?.fogColor ?? dynamicSky.clearColor };
+      return null;
+    },
     /** DS1: the pixel-snow replacement (InitSnow) when the mod's switch
      *  is on: the two viewport-fraction sizes and the PixelSnow texture. */
     pixelSnow: dynamic?.pixelSnow ? { ...dynamic.pixelSnow, textureUrl: dynamicSkiesTextureUrl('PixelSnow') } : null,

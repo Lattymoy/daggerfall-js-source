@@ -11,7 +11,7 @@ called a bug.
 ## Cleared - checked and found sound
 
 **The marching squares do not erase the roads.** `assignTiles`
-(terrainTiles.js:180) skips any non-zero tile, not just the 0xFF
+(terrainTiles.js:196) skips any non-zero tile, not just the 0xFF
 location tiles - so tile 46 written before it survives it. This was the
 audit's first suspect because DFU's job carries the same guard and a
 port that had narrowed it to 0xFF would paint roads and then erase
