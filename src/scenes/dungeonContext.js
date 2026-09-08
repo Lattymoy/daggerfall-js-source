@@ -1731,7 +1731,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *      walk takes DFU's "Identify spell remains free" line
    *      (:479-481) and _modeAction returns at :458 before it reads a
    *      price context. There is no merchant underground to sell the
-   *      paid service anyway - that is DFU's shape too, not a gap. */
+   *      paid service anyway - that is DFU's shape too, not a gap.
+   *    AUDIT 63 F48's steal hooks (pickpocketSkill, tallyPickpocket,
+   *      tallyCrimeGuild, crimeTheft, spawnCityGuards, say) - DFU only
+   *      ADDS the steal button in Buy mode (DaggerfallTradeWindow.cs
+   *      :316-322) and DoSteal re-checks it (:909), so this mount can
+   *      never reach them. There is no shop to rob underground. */
   function openIdentifySpellWindow({ chance, cost }) {
     return new NativeTradeWindow({
       mode: 'Identify',

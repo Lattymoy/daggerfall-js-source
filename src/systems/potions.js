@@ -183,11 +183,21 @@ export function mixCauldron(templateIndices) {
  *  every item in the pack whose template says so. */
 export const isIngredient = (item) => !!templateByIndex(item?.templateIndex)?.isIngredient;
 
-/** The recipe list the RECIPES button opens (:376-382): the potion
- *  recipes the player has LEARNED, by key. An empty list is a message
- *  box rather than an empty picker. */
+/** The recipe list the RECIPES button opens (:376-382): the recipes
+ *  the CARRIED recipe items resolve to, by key. An empty list is a
+ *  message box rather than an empty picker.
+ *
+ *  AUDIT 63 F42: Refresh's picker walk (:164-170) de-dupes -
+ *  `if (!recipes.Contains(potionRecipe)) recipes.Add(potionRecipe)` -
+ *  and then SORTS by display name,
+ *  `recipes.Sort((x, y) => (x.DisplayName.CompareTo(y.DisplayName)))`,
+ *  so two copies of the same scroll are one row and the picker is
+ *  alphabetical. Both were missing while the caller could never hand
+ *  this a key. De-duping the KEYS is DFU's object de-dupe: key -> recipe
+ *  is 1:1 through _byKey. */
 export const knownRecipes = (recipeKeys = []) =>
-  recipeKeys.map((k) => potionRecipeByKey(k)).filter(Boolean);
+  [...new Set(recipeKeys)].map((k) => potionRecipeByKey(k)).filter(Boolean)
+    .sort((a, b) => (a.displayName < b.displayName ? -1 : a.displayName > b.displayName ? 1 : 0));
 
 // ── the cauldron (DaggerfallPotionMakerWindow) ────────────────────
 

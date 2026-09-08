@@ -251,14 +251,30 @@ export class BankWindow {
     // Update (:212-223): Return commits an OPEN transaction and does
     // nothing otherwise - it is not a close.
     if (code === 'Enter') { if (this.transactionType !== TRANSACTION_TYPE.None) this._commit(); return; }
+    // AUDIT 63 F45: the BACK BUTTON cancels UNCONDITIONALLY.
+    // DaggerfallBankingWindow is a DaggerfallPopupWindow (:24) and
+    // never assigns AllowCancel, so DaggerfallPopupWindow.Update
+    // (:70-74) runs `if (allowCancel && GetBackButtonUp())
+    // CancelWindow()` on every frame, and CancelWindow (:88-93) posts
+    // wmCloseWindow. The open amount field does not stop it:
+    // GetBackButtonUp is a raw Escape read (InputManager.cs:1070-1073)
+    // and TextBox only ABSORBS the key so it does not become a typed
+    // character (TextBox.cs:404-406). This window's own Update
+    // (:212-227) has no Escape arm at all - there is no field-cancel
+    // in DFU. So Escape mid-amount closes the bank, the typed value
+    // discarded, while the EXIT BUTTON in the same state does nothing
+    // (:473-478): the two paths are MEANT to disagree.
+    // KeyE is the port's own accelerator for that exit button (the
+    // Ledger A note in this file's header - DFU gives exitButton no
+    // HotKey), so it keeps the button's gate. No ButtonClick here:
+    // CancelWindow plays none; only ExitButton_OnMouseClick does.
+    if (code === 'Escape' || (code === 'KeyE' && this.transactionType === TRANSACTION_TYPE.None)) { this._close(); return; }
     if (this.transactionType !== TRANSACTION_TYPE.None) {
-      if (code === 'Escape') { this._openInput(TRANSACTION_TYPE.None); return; }
       if (code === 'backspace' || code === 'Backspace') { this.value = this.value.slice(0, -1); return; }
       const ch = typedChar(code, e);
       if (ch && /^[0-9]$/.test(ch) && this.value.length < AMOUNT_FIELD.maxCharacters) this.value += ch;
       return;
     }
-    if (code === 'Escape' || code === 'KeyE') this._close();
   }
 
   click(vx, vy) {
@@ -272,8 +288,13 @@ export class BankWindow {
     if (inRect(BANK_RECTS.exit, vx, vy)) {
       // AUDIT 26 F140: ExitButton_OnMouseClick (:473-478) - the sound
       // always fires, but EXIT is a NO-OP while an amount is being
-      // typed (`if (!transactionInput.Enabled) CloseWindow()`); the
-      // Escape path below already gated this, so the two disagreed.
+      // typed (`if (!transactionInput.Enabled) CloseWindow()`).
+      // AUDIT 63 F45 corrected the reason given here: this gate is the
+      // BUTTON's alone. The back button is NOT gated
+      // (DaggerfallPopupWindow.cs:70-74 - allowCancel is true and this
+      // window never clears it), so in DFU Escape closes the bank
+      // mid-amount while this click does nothing. The two paths
+      // disagree on purpose.
       audio.playOneShot(SOUND.ButtonClick, 1);
       if (this.transactionType === TRANSACTION_TYPE.None) this._close();
       return true;

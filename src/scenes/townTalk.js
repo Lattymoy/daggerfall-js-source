@@ -728,7 +728,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  resets are NOT here: the mobile path runs its own above, and
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
-  function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null } = {}) {
+  function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null, push = false, onClosed = null } = {}) {
+    // AUDIT 63 F44: TalkToStaticNPC is a PushWindow (TalkManager.cs:
+    // :757, :767), and for ONE caller that distinction is visible -
+    // DaggerfallGuildServicePopupWindow's TALK button is the only
+    // sibling that does not CloseWindow first (:291-295), so its popup
+    // is suspended under the conversation and returned to when
+    // DaggerfallTalkWindow closes itself. `push` routes that caller
+    // through pushOverlay, the genuine stack door; every other caller
+    // keeps CloseWindow-then-Push, which showOverlay is.
+    const mount = push ? pushOverlay : showOverlay;
     // ROAD-D D10: SetNPCPortrait (DaggerfallTalkWindow.cs:360-385).
     // DFU sets it from SetTargetNPC, BEFORE the push (TalkManager.cs
     // :817 for a mobile, :849 for a static NPC), so it lands here -
@@ -750,7 +759,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if (sup) { showOverlay(new ActionTextBox([sup.text])); return; }
     const eng = engine();
     if (talkArtLoaded() && directory.length) {
-      showOverlay(new NativeTalkWindow(greeting, {
+      mount(new NativeTalkWindow(greeting, {
         categories: () => treeCategories() ?? localCategories(),
         // B5-6: the OTHER pages, off the engine's own lists - the
         // whole reason they were blockers is that the tree computed
@@ -789,10 +798,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // no-op, which is this port's established shape for a
         // hook-less host.
         copyToNotebook: (tokens) => _notebookSink?.(tokens),
-      }));
+      }), onClosed);   // AUDIT 63 F44: the popup's TALK leaves its window standing under the conversation
       return;
     }
-    showGreeting(greeting);
+    showGreeting(greeting, mount, onClosed);
   }
 
   /** TK-vi: THE WINDOW ON THE TREE. DaggerfallTalkWindow's Where-is
@@ -915,44 +924,57 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     action: () => { tone = (tone + 1) % 3; reshow(); },
   });
 
-  function showGreeting(text) {
-    showOverlay(new ChoiceWindow({
+  /** AUDIT 63 F44 (review): THE CLOSE CALLBACK RIDES THE WHOLE
+   *  CONVERSATION, not only its first window. This art-less chain
+   *  re-mounts itself on every T and every W, and each re-mount is a
+   *  showOverlay - which overwrites _onOverlayClosed (:532-558). So
+   *  the guild popup's interior restore, handed in here by
+   *  openTalkWindow, was thrown away by the player's first tone press
+   *  and the popup DFU keeps waiting underneath
+   *  (DaggerfallGuildServicePopupWindow.cs:291-295, TalkManager.cs:757)
+   *  never came back. The exterior route does not need this - its
+   *  window is genuinely PUSHED and showOverlay is a one-level
+   *  replacement over the suspended stack - but the interior slot has
+   *  no stack, so the callback is the only thing holding the popup and
+   *  every mount in the chain must carry it. */
+  function showGreeting(text, mount = showOverlay, onClosed = null) {
+    mount(new ChoiceWindow({
       lines: [text],
       options: [
-        { code: 'KeyW', label: 'W - where is...', action: () => openCategories() },
-        toneOption(() => showGreeting(text)),
+        { code: 'KeyW', label: 'W - where is...', action: () => openCategories(onClosed) },
+        toneOption(() => showGreeting(text, showOverlay, onClosed)),
         { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         { code: 'KeyE', label: '', action: () => {} },
         { code: 'Enter', label: '', action: () => {} },
       ],
-    }));
+    }), onClosed);
   }
 
-  function pagedList(lines, items, onPick, page = 0) {
+  function pagedList(lines, items, onPick, page = 0, onClosed = null) {
     const per = 8;
     const slice = items.slice(page * per, (page + 1) * per);
     const options = slice.map((it, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${it.label}`, action: () => onPick(it) }));
-    if ((page + 1) * per < items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => pagedList(lines, items, onPick, page + 1) });
+    if ((page + 1) * per < items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => pagedList(lines, items, onPick, page + 1, onClosed) });
     options.push({ code: 'Escape', label: 'Esc - goodbye', action: () => {} });
-    showOverlay(new ChoiceWindow({ lines, options }));
+    showOverlay(new ChoiceWindow({ lines, options }), onClosed);
   }
 
-  function openCategories() {
+  function openCategories(onClosed = null) {
     const cats = TOPIC_CATEGORIES
       .map((c) => ({ ...c, buildings: directory.filter((b) => b.buildingType === c.type) }))
       .filter((c) => c.buildings.length)
       .map((c) => ({ label: c.caption, buildings: c.buildings }));
     pagedList(['Where is...'], cats, (cat) => {
-      pagedList([cat.label], cat.buildings.map((b) => ({ label: b.name, building: b })), (it) => answerWhereIs(it.building));
-    });
+      pagedList([cat.label], cat.buildings.map((b) => ({ label: b.name, building: b })), (it) => answerWhereIs(it.building, onClosed), 0, onClosed);
+    }, 0, onClosed);
   }
 
-  function answerWhereIs(building) {
+  function answerWhereIs(building, onClosed = null) {
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
     // knows/doesn't-know table half) + the %hnt hint chain: the T4
     // fork - a 7333 direction variant (%loc + the %di compass) or the
     // 7332 map reveal that discovers the building.
-    showAnswer(answerText(building));
+    showAnswer(answerText(building), onClosed);
   }
 
   // AUDIT 17e F13 - the PLAYER'S QUESTION, verbatim
@@ -1012,16 +1034,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     });
   }
 
-  function showAnswer(text) {
+  function showAnswer(text, onClosed = null) {
     showOverlay(new ChoiceWindow({
       lines: [text],
       options: [
-        { code: 'KeyW', label: 'W - ask another', action: () => openCategories() },
-        toneOption(() => showAnswer(text)),
+        { code: 'KeyW', label: 'W - ask another', action: () => openCategories(onClosed) },
+        toneOption(() => showAnswer(text, onClosed)),
         { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         { code: 'KeyE', label: '', action: () => {} },
       ],
-    }));
+    }), onClosed);
   }
 
   function frame(dt) {

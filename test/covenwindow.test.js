@@ -185,7 +185,9 @@ test('CW1: the host wiring - dispatch, the witch\'s OWN factionID, the shared po
   assert.match(modes, /const godName = guild\?\.divine \?\? '';/);
   // ONE popup-talk door, three callers: the guild popup binds it, the
   // coven's Talk calls it (menu defaulted TRUE both places).
-  assert.match(modes, /function popupTalkToStaticNpc\(npcData, \{ isSpyMaster = false \} = \{\}\)/);
+  // AUDIT 63 F44 widened the signature with `returnTo`, the guild
+  // popup's own arm; the door is still the one door.
+  assert.match(modes, /function popupTalkToStaticNpc\(npcData, \{ isSpyMaster = false, returnTo = null \} = \{\}\)/);
   assert.match(modes, /const talkToStaticNpcHere = \(o\) => popupTalkToStaticNpc\(npcData, o\);/);
   assert.match(modes, /onTalk: \(\) => popupTalkToStaticNpc\(npcData\),/);
   // the art rides the interior preload block
@@ -275,10 +277,14 @@ test('D1: the guild popup\'s MIDDLE hotkey moves with the SERVICE, and Join only
   non.w.input('KeyJ');
   assert.deepEqual(non.log, ['join', 'close']);
 
-  // Talk T and Exit E are the fixed two.
+  // Talk T and Exit E are the fixed two. AUDIT 63 F44: the KeyUp arm
+  // of TalkButton_OnKeyboardEvent (:304-308) is TalkToStaticNPC alone,
+  // with no CloseWindow - so T leaves the popup standing, as the click
+  // does.
   const talk = make();
   talk.w.input('KeyT');
-  assert.deepEqual(talk.log, ['talk', 'close']);
+  assert.deepEqual(talk.log, ['talk']);
+  assert.equal(talk.w.done, false);
   const exit = make();
   exit.w.input('KeyE');
   assert.deepEqual(exit.log, ['close']);

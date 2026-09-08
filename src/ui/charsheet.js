@@ -28,9 +28,9 @@
 import { statUp, statDown, MAX_STAT_VALUE } from './chargen.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
-import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
+import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // U10; AUDIT 63 F34: CalculateHandToHandMin/MaxDamage
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { SKILL_NAMES, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
+import { SKILLS, SKILL_NAMES, skillValue, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
@@ -207,9 +207,14 @@ export const statDescriptionTextId = (i) => (i >= 0 && i < STAT_KEYS_ORDER.lengt
 /** Internal_Strings.csv:110 - CheckIfDoneLeveling's refusal (:437-443). */
 export const MUST_DISTRIBUTE_BONUS_POINTS = 'You must distribute all bonus points.';
 /** DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54),
- *  Color32(219,130,40,255) - what MultiFormatTextLabel paints a
- *  TextHighlight token with (:362-363), and therefore what a
- *  recently-raised skill's whole row reads as. */
+ *  Color32(219,130,40,255) - MultiFormatTextLabel's DEFAULT
+ *  HighlightColor, what it paints a TextHighlight token with (:363)
+ *  when nobody overrides it.
+ *
+ *  AUDIT 63 F35: the skills dialog is not one of those - see
+ *  SKILL_DIALOG_HIGHLIGHT_COLOR below. This constant is the UI-wide
+ *  default the dialog replaces, kept because that is the thing the
+ *  override is an override OF. */
 export const SKILL_HIGHLIGHT_COLOR = Object.freeze([219 / 255, 130 / 255, 40 / 255, 1]);
 
 /** The four buttons that lead somewhere (:134-204). */
@@ -221,6 +226,18 @@ export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', '
  *  it is INCREASED, and equal takes the label's default. */
 export const STAT_DRAINED_COLOR = Object.freeze([190 / 255, 85 / 255, 24 / 255, 1]);
 export const STAT_INCREASED_COLOR = Object.freeze([178 / 255, 207 / 255, 255 / 255, 1]);
+
+/** AUDIT 63 F35: ShowSkillsDialog builds its message box and then
+ *  overrides the highlight before showing it -
+ *  `messageBox.SetHighlightColor(DaggerfallUI.DaggerfallUnityStatIncreasedTextColor)`
+ *  (DaggerfallCharacterSheetWindow.cs:321), which
+ *  DaggerfallMessageBox.SetHighlightColor (:455-458) hangs on the
+ *  label, and MultiFormatTextLabel paints every TextHighlight token
+ *  with it (:363). That constant is Color32(178,207,255,255)
+ *  (DaggerfallUI.cs:66) - the SAME blue the drained/increased stat
+ *  labels take - so a recently-raised skill row in THIS dialog is
+ *  pale blue, not the orange default. */
+export const SKILL_DIALOG_HIGHLIGHT_COLOR = STAT_INCREASED_COLOR;
 
 /** What the sheet says when a host cannot open one. NEVER a silent
  *  swallow, and never a word about the port's own gaps - the same rule
@@ -402,6 +419,21 @@ export class CharSheet {
       this._stepChild();
       return true;
     }
+    // AUDIT 63 F35 (review): THE SKILLS DIALOG EATS THE CLICK.
+    // ShowSkillsDialog's box is `messageBox.ClickAnywhereToClose = true`
+    // (DaggerfallCharacterSheetWindow.cs:323), and DaggerfallMessageBox's
+    // ParentPanel_OnMouseClick (:645-663) CloseWindow()s on any click
+    // while the box is uiManager.TopWindow - the sheet underneath is not
+    // the top window and receives nothing. The port draws the page as a
+    // plate on the sheet rather than as a pushed window, so without this
+    // line the click fell straight through to whatever rect lay beneath:
+    // with F35's centred two-column plate (37,34,246,131) that is the
+    // eight STATS_ROLLOUT_SELECT rects (x 141..169), so reading the
+    // Miscellaneous skills and clicking to dismiss them popped the AUDIT
+    // 58 attribute-description box on top of the dialog instead. It also
+    // reached the four skill buttons and the nav row under the old
+    // sheet-anchored plate. One click, and the dialog is gone.
+    if (this.page) { this.page = 0; return true; }
     const R = CHARSHEET_RECTS;
     // The rollout's own hit rects, while it is mounted: the eight stat
     // select buttons (StatsRollout.cs:110-131) and the spinner's two
@@ -542,6 +574,40 @@ export class CharSheet {
     shadowText(renderer, font, String(this.pool), m, sp.x, y + 7, { align: 'center', w: sp.w });
   }
 
+  /** ShowSkillsDialog (:276-325).
+   *
+   *  AUDIT 63 F35: the list is the WHOLE group. DFU's loop is
+   *  `for (int i = 0; i < skills.Count; i++)` with no cap, and its
+   *  tokens go into a DaggerfallMessageBox that AUTO-SIZES to them
+   *  (:320-324), so all 23 Miscellaneous skills are on screen. The
+   *  port sliced to nine and hid fourteen of them - a truncation the
+   *  UI arc had written down as the classic sheet's own answer.
+   *
+   *  TWO COLUMNS, on page 4 only. MiscSkillsButton_OnMouseClick is the
+   *  one caller that passes `twoColumn: true` (:835); the three career
+   *  buttons (:817, :823, :829) do not. The fill is ROW-MAJOR, not
+   *  column-major: the EVEN entry goes at token x=0 and the ODD one at
+   *  x=136 on the same line, with the newline emitted after the right
+   *  entry (:294-305) - so consecutive skills are neighbours across,
+   *  not down.
+   *
+   *  Because that dialog is a message box rather than a panel pinned
+   *  to the sheet, the two-column page sizes and centres itself the
+   *  way DaggerfallMessageBox does instead of reusing the sheet-
+   *  anchored rect the single-column pages keep. 246 is DFU's own 136
+   *  column pitch plus a column's width of text.
+   *
+   *  AUDIT 63 F34: and the HAND-TO-HAND DAMAGE LINE (:283-284,
+   *  :309-318), which neither skin drew. Whenever the GROUP being
+   *  listed contains HandToHand the dialog appends one more line after
+   *  a NewLineToken: `hthDamageFormatString` (Internal_Strings.csv:1553,
+   *  `{0} dmg: {1}-{2}`) over the skill's name and
+   *  CalculateHandToHandMin/MaxDamage of the LIVE skill value
+   *  (GetLiveSkillValue, :313-314 - so a lycanthrope's +30 and an
+   *  EnhancesSkill enchantment both move the printed damage). The
+   *  detection walks the whole group, not the drawn rows. Its token
+   *  formatting is plain Text (:316), so it never takes the highlight
+   *  colour. */
   _drawSkillPage(renderer, font, m) {
     const e = this.entity;
     const names = ['Primary', 'Major', 'Minor', 'Miscellaneous'];
@@ -549,15 +615,34 @@ export class CharSheet {
     const inCareer = new Set(career.flat());
     const ids = this.page <= 3 ? career[this.page - 1]
       : Object.keys(SKILL_NAMES).map(Number).filter((id) => !inCareer.has(id));
-    drawRect(renderer, m, 8, 100, 130, Math.min(96, ids.length * 9 + 14), [0.05, 0.05, 0.09, 0.95]);
-    shadowText(renderer, font, `${names[this.page - 1]} skills`, m, 12, 103);
+    const twoColumn = this.page === 4;   // :835 is the only caller that passes true
+    const showHth = ids.includes(SKILLS.HandToHand);
+    const lines = (twoColumn ? Math.ceil(ids.length / 2) : ids.length) + (showHth ? 1 : 0);
+    const h = lines * 9 + 14;
+    const w = twoColumn ? 246 : 130;
+    const x = twoColumn ? Math.floor((320 - w) / 2) : 8;
+    const y = twoColumn ? Math.floor((200 - h) / 2) : 100;
+    drawRect(renderer, m, x, y, w, h, [0.05, 0.05, 0.09, 0.95]);
+    shadowText(renderer, font, `${names[this.page - 1]} skills`, m, x + 4, y + 3);
     // TextProvider.GetSkillSummary (:490-496): a skill raised since
     // the sheet was last closed formats its WHOLE row as
-    // TextHighlight, which MultiFormatTextLabel draws in
-    // DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54).
-    ids.slice(0, 9).forEach((id, i) =>
-      shadowText(renderer, font, `${SKILL_NAMES[id]} ${e.skills?.[id] ?? 0}%`, m, 12, 113 + i * 9,
-        { color: getSkillRecentlyIncreased(e, id) ? SKILL_HIGHLIGHT_COLOR : [0.9, 0.9, 0.85, 1] }));
+    // TextHighlight, which MultiFormatTextLabel draws in the label's
+    // HighlightColor (:363). AUDIT 63 F35: for THIS dialog that colour
+    // is not the UI default - ShowSkillsDialog overrides it with
+    // `SetHighlightColor(DaggerfallUI.DaggerfallUnityStatIncreasedTextColor)`
+    // (:321), Color32(178,207,255,255) (DaggerfallUI.cs:66), so a
+    // recently-raised row is pale BLUE here rather than the orange
+    // DaggerfallHighlightTextColor (:54) this used to draw.
+    ids.forEach((id, i) =>
+      shadowText(renderer, font, `${SKILL_NAMES[id]} ${e.skills?.[id] ?? 0}%`,
+        m, x + 4 + (twoColumn && i % 2 ? 136 : 0), y + 13 + (twoColumn ? Math.floor(i / 2) : i) * 9,
+        { color: getSkillRecentlyIncreased(e, id) ? SKILL_DIALOG_HIGHLIGHT_COLOR : [0.9, 0.9, 0.85, 1] }));
+    if (showHth) {
+      const v = skillValue(e, SKILLS.HandToHand);
+      shadowText(renderer, font,
+        `${SKILL_NAMES[SKILLS.HandToHand]} dmg: ${handToHandMinDamage(v)}-${handToHandMaxDamage(v)}`,
+        m, x + 4, y + 13 + (lines - 1) * 9, { color: [0.9, 0.9, 0.85, 1] });
+    }
   }
 
   _drawFallback(renderer, canvas, font, s) {

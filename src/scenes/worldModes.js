@@ -116,6 +116,7 @@ import { BULLETIN_BOARD_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT, bulletinBoardRow
 import { tokenRows } from '../ui/messageBox.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS } from '../systems/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
+import { isPotionRecipe } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347)
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
@@ -1685,6 +1686,18 @@ export function createWorldModes(host) {
         maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
       commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
+      // AUDIT 63 F48: DoSteal's five effects (DaggerfallTradeWindow.cs
+      // :913-928). The same four sinks the private-property theft
+      // above already uses, in DoSteal's own - inverted - order, which
+      // the window owns; these are only the effects. The HUD lines go
+      // at AddHUDText's 2-second delay (:918, :925), the same seam the
+      // shop-quality lines take.
+      pickpocketSkill: () => skillValue(playerEntity, SKILLS.Pickpocket),
+      tallyPickpocket: (n) => tallySkill(playerEntity, SKILLS.Pickpocket, n),
+      tallyCrimeGuild: (a, n) => tallyCrimeGuildRequirements(playerEntity, a, n),
+      crimeTheft: () => setCrimeCommitted(playerEntity, CRIMES.Theft),
+      spawnCityGuards: (flag) => host.spawnCityGuards?.(flag),
+      say: (line, seconds) => townTalk?.say?.(line, seconds),
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
       shopName: b.name ?? '',
@@ -2834,7 +2847,17 @@ export function createWorldModes(host) {
     return true;
   }
 
-  function popupTalkToStaticNpc(npcData, { isSpyMaster = false } = {}) {
+  /** AUDIT 63 F44: `returnTo` is the ONE caller whose popup DFU leaves
+   *  standing under the conversation - DaggerfallGuildServicePopupWindow's
+   *  TALK button (:291-295, :304-308), the one handler in that window
+   *  with no CloseWindow, against four siblings that all have one
+   *  (DaggerfallTavernWindow.cs:265, DaggerfallMerchantServicePopupWindow.cs:139,
+   *  DaggerfallMerchantRepairPopupWindow.cs:146,
+   *  DaggerfallWitchesCovenPopupWindow.cs:164). TalkToStaticNPC
+   *  PushWindows (TalkManager.cs:757, :767) and DaggerfallTalkWindow's
+   *  exit is CloseWindow (DaggerfallTalkWindow.cs:1598, :1611), so the
+   *  popup comes back when the conversation ends. */
+  function popupTalkToStaticNpc(npcData, { isSpyMaster = false, returnTo = null } = {}) {
     const dict2 = townTalk?.factionDict ?? null;
     const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
     const talk2 = npcSession?.talkToStaticNPC(
@@ -2851,9 +2874,30 @@ export function createWorldModes(host) {
       // no replace-on-push, while townTalk's openTalkWindow below goes
       // through showOverlay, which IS CloseWindow-then-Push and drops
       // the popup this call came out of (ROAD-F GS1's outdoor arm).
-      interiorOverlay = null;
+      //
+      // AUDIT 63 F44: ...except for the GUILD popup, which DFU does
+      // not close. Above ground the popup IS townTalk's overlay, so
+      // the conversation goes up through pushOverlay - the genuine
+      // PushWindow - and the popup is suspended beneath and restored
+      // when the talk window drains. In the interior slot, which has
+      // no stack, the popup is taken down for the conversation and
+      // re-mounted from its close callback; re-mounting the SAME
+      // instance is safe because the OnPush effects (:158-205) ran
+      // once in its constructor, as DFU's OnPush does not re-run on
+      // return. The `done` guard is the U24 identity shape: a talk
+      // window that dispatched onward must not resurrect a popup the
+      // player already dismissed.
+      const keepUnder = returnTo && !returnTo.done ? returnTo : null;
+      const pushed = !!keepUnder && mode !== 'interior';
+      if (!pushed) interiorOverlay = null;
       npcSession?.startNewConversation();   // #108: the same OnPush reset - this door is a push too
-      townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2, portrait: staticNpcPortrait(npcData) });
+      townTalk.openTalkWindow(talk2.greeting, {
+        npcSeed: npcData.nameSeed,
+        npcName: displayName2,
+        portrait: staticNpcPortrait(npcData),
+        push: pushed,
+        onClosed: keepUnder && !pushed ? () => { if (!keepUnder.done) mountServiceWindow(keepUnder); } : null,
+      });
       return;
     }
     if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
@@ -2959,7 +3003,7 @@ export function createWorldModes(host) {
       /** B7: the popup's TALK button is TalkToStaticNPC with menu
        *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
        *  the same engine doors, then the window push. */
-      onTalk: () => talkToStaticNpcHere({ isSpyMaster: false }),
+      onTalk: () => talkToStaticNpcHere({ isSpyMaster: false, returnTo: win }),
       onService: () => {
         const access = serviceAccess(guild, membershipOf(memberships, guild), service);
         if (!access.allowed) {
@@ -3338,11 +3382,24 @@ export function createWorldModes(host) {
         // (DaggerfallTravelPopUp.cs:280), and both carry that note;
         // this one had the coins-only reader without it.
         gold: () => totalGoldAmount(playerEntity),
-        // The recipes the player has LEARNED. Reading a recipe scroll
-        // is the useItem arm that fills this; until then a character
-        // knows none and the button says so, which is DFU's own
-        // answer for a new character.
-        recipeKeys: () => playerEntity.potionRecipeKeys ?? [],
+        // AUDIT 63 F42: the picker's source is DFU's own - the recipe
+        // ITEMS the player carries, in the pack AND the wagon, each
+        // resolved through GetPotionRecipe(item.PotionRecipeKey)
+        // (Refresh :143-153, :150-151, :164-169). Recipes are not
+        // "learned": UseItem's recipe arm really is cannotUseThis, so
+        // the carried scroll IS the knowledge. The old read took
+        // `playerEntity.potionRecipeKeys`, which nothing in the port
+        // ever wrote, so the button answered "You have no recipes."
+        // for every character in every game.
+        // Key 0 is DFU's "no recipe" sentinel (potionRecipeKey([]) is
+        // 0, potions.js), so it never enters the set.
+        recipeKeys: () => {
+          const seen = new Set();
+          for (const it of [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? [])]) {
+            if (isPotionRecipe(it) && it.potionRecipeKey) seen.add(it.potionRecipeKey);
+          }
+          return [...seen];
+        },
         // ItemBuilder.CreatePotion (:324) - loot.js has minted these
         // since E1 for random treasure; a mixed potion is the same
         // bottle carrying the same key, so there is one minter.

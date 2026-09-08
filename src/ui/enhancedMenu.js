@@ -119,7 +119,7 @@ import { sheetModel } from './enhancedCharSheet.js';
 import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
-import { SKILL_NAMES } from '../systems/skills.js';
+import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
@@ -1514,6 +1514,16 @@ function statsSkills(detail, m) {
       grid.append(r);
     }
     detail.append(grid);
+    // AUDIT 63 F34: ShowSkillsDialog appends the hand-to-hand damage
+    // line to whichever GROUP contains HandToHand
+    // (DaggerfallCharacterSheetWindow.cs:283-284, :309-318), so the
+    // gate here is per group, as it is there.
+    if (group.ids.includes(SKILLS.HandToHand)) {
+      const hth = el('div', 'px-qrow');
+      hth.append(document.createTextNode(
+        `${SKILL_NAMES[SKILLS.HandToHand]} dmg: ${m.handToHandDamage.min}-${m.handToHandDamage.max}`));
+      detail.append(hth);
+    }
   }
   const more = el('button', 'px-qrow px-disclose');
   const miscCount = m.groups[3]?.ids.length ?? 0;
