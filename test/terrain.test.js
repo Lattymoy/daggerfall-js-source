@@ -465,7 +465,9 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   let water = 0;
   for (const v of td) if (v === 0) water++;
   assert.equal(water, td.length, 'every corner of a flat sea is water');
-  // and a sample one float32 step above the clamp is the beach, not water
+  // and a sample two float32 steps above the clamp is the beach, not water -
+  // a guard against an over-broad fix (an epsilon), not the mutation killer
+  // above (WATER-AUDIT)
   const shore = new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION).fill(Math.fround(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT) * (1 + 2e-7));
   const td2 = generateTileData(shore, 500, 250);
   let water2 = 0;
@@ -473,6 +475,9 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   assert.equal(water2, 0, 'a step above the sea is land');
   const src = readFileSync(new URL('../src/world/terrainTiles.js', import.meta.url), 'utf8');
   assert.match(src, /const height = Math\.fround\(heightmapData\[hy \+ hx \* hDim\] \* MAX_TERRAIN_HEIGHT\);/, 'the height is the reference\'s float');
-  assert.match(src, /if \(height <= OCEAN_ELEVATION_F32\) \{/, 'against the reference\'s float threshold');
-  assert.match(src, /if \(height <= Math\.fround\(BEACH_ELEVATION_F32 \+ jitter\)\) \{/, 'and the beach the same');
+  assert.match(src, /if \(height <= SCALED_OCEAN_ELEVATION\) \{/, 'against the reference\'s float threshold');
+  assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
+  assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) \{/, 'and the beach the same');
+  // WATER-AUDIT: the jitter is float32 per operation, as NextFloat(min, max) is
+  assert.match(readFileSync(new URL('../src/formats/umRandom.js', import.meta.url), 'utf8'), /return Math\.fround\(Math\.fround\(this\.nextFloat\(\) \* Math\.fround\(max - min\)\) \+ min\);/);
 });

@@ -81,12 +81,16 @@ test('audit58 pins2: DefaultTerrainSampler\'s scale constants against DFU\'s lit
   // `3.4f * baseHeightScale` and `5.0f * baseHeightScale` (:28-29).
   // Both products are EXACT in IEEE754 - multiplying by a power of two
   // only moves the exponent - so these are equalities, not epsilons.
-  assert.equal(SCALED_OCEAN_ELEVATION, 27.2, 'scaledOceanElevation = 3.4 * 8 (:28)');
+  assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'scaledOceanElevation = 3.4f * 8 (:28) - the float, WATER-AUDIT');
   assert.equal(SCALED_BEACH_ELEVATION, 40, 'scaledBeachElevation = 5.0 * 8 (:29)');
   // The sea floor is the value every ocean sample is CLAMPED to
   // (:115-116) and then normalized by maxTerrainHeight (:120), so it
   // is also the exact height every water pixel reports.
-  assert.equal(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, 27.2 / 1539);
+  // WATER-AUDIT: the float 27.2f over 1539; the sampler stores it into a
+  // Float32Array, where fround(27.2f / 1539) and fround(27.2 / 1539) are the
+  // SAME float - the normalised sea is one value whichever way it is written
+  assert.equal(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, Math.fround(27.2) / 1539);
+  assert.equal(Math.fround(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT), Math.fround(27.2 / 1539));
 });
 
 // ── 2. specialInfectionChance AND THE PENDING IMMUNITY TERM ──────────

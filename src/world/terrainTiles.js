@@ -40,9 +40,6 @@ const RMB_TILES_PER_BLOCK = 16;
 const RMB_TILES_PER_TERRAIN = 128;
 
 const SEED = 417028; // Use same seed to ensure continuous tiles
-// WATER1: the thresholds as the reference's floats (see generateTileData)
-const OCEAN_ELEVATION_F32 = Math.fround(SCALED_OCEAN_ELEVATION);
-const BEACH_ELEVATION_F32 = Math.fround(SCALED_BEACH_ELEVATION);
 const WATER = 0;
 const DIRT = 1;
 const GRASS = 2;
@@ -157,17 +154,18 @@ export function generateTileData(heightmapData, mapPixelX, mapPixelY, hDim = HEI
     // through this job an open ocean was 0 water corners in 16641
     // (test/terrain.test.js pins the flat-sea case), and every ocean
     // tile the port ever drew was the beach band's dirt. The height is
-    // rounded to float32 and compared against float32 thresholds, which
+    // rounded to float32 and compared against the reference's float32
+    // thresholds (terrainSampler.js: the constants are the floats), which
     // is the arithmetic the reference does.
     const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);
 
-    if (height <= OCEAN_ELEVATION_F32) {
+    if (height <= SCALED_OCEAN_ELEVATION) {
       tileData[index] = WATER;
       continue;
     }
     // A little +/- randomness so the beach line isn't too regular.
     const jitter = UMRandom.createFromIndex(index >>> 0).nextFloatRange(-1.5, 1.5);
-    if (height <= Math.fround(BEACH_ELEVATION_F32 + jitter)) {
+    if (height <= Math.fround(SCALED_BEACH_ELEVATION + jitter)) {
       tileData[index] = DIRT;
       continue;
     }

@@ -133,7 +133,8 @@ export function layoutNature(heightmapData, tilemapData, opts) {
       const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
       // x & y swapped in heightmap, verbatim; unscaled height vs beach.
-      const height = heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT;
+      // WATER-AUDIT: float32, as the tile job's twin of this line is.
+      const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);
       if (height < beachLine) continue;
 
       const record = rng.nextIntRange(1, 32);
