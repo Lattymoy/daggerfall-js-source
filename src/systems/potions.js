@@ -272,8 +272,8 @@ export function gatherRecipe(recipe, availableTemplateIndices) {
 // BOTH OF THE SLICES THIS FILE WAITED ON HAVE LANDED:
 //  - the potion's EFFECT when drunk is the recipe->effect map, and it
 //    is potionBundle above (:138) - DrinkPotion's EffectBundleSettings
-//    (:903-947). U44 mounted it: scenes/hostMagic.js:525-532 builds the
-//    bundle, all three hosts hand `drinkPotion` down (world.js:2430,
+//    (:903-947). U44 mounted it: scenes/hostMagic.js:528-535 builds the
+//    bundle, all three hosts hand `drinkPotion` down (world.js:2464,
 //    dungeonContext.js:1220, exterior.js:1942) and useItem.js:257
 //    routes the bottle into it.
 //  - RandomlyAddPotionRecipe(25) is live in shopStock.js:203-209

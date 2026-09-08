@@ -1544,7 +1544,7 @@ and every enemy-side call passes 16. The data diet's whole fetch
 surface (literal + variable-name sites: HUD art, palette indirection
 incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
 KEEP on both diets; SKY-on-lean is the designed gradient. (AUDIT 18
-correction: NIGHTSKY.COL really is fetched - scenes/shared.js:49 loads
+correction: NIGHTSKY.COL really is fetched - scenes/shared.js:52 loads
 it through `img.paletteName` - but MAP.PAL is NOT. Its only namer is
 ImgFile.paletteName for TMAP00I0.IMG, and the one loader of that file,
 chargenArt.js loadOne, draws it with the shared ART_PAL and never

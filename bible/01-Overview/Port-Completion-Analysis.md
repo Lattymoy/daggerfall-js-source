@@ -216,7 +216,7 @@ reader that touches a shipping ARENA2 file. What remains:
 - Three readers missing: `PaintFile` (PAINT.DAT, ~90 - paintings currently
   print raw `%sub`/`%adj` macros on screen), `CfaFile` (~70 - horse/cart FP
   sprites), `BssFile` (~50 - large-HUD compass strips). All three also need
-  an ingest-diet arm in `scenes/dataSource.js:74-80`.
+  an ingest-diet arm in `scenes/dataSource.js:73-79`.
 - Five SHIPPED readers sit outside the differential parity harness
   (FlatsFile, BookFile, VidFile, FlcFile, RumorFile), and
   `tools/parity/README.md` still describes them as having no port

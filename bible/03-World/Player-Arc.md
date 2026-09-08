@@ -957,7 +957,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:610). exterior.js and world.js have no submersion
+  (worldModes.js:618). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1684,10 +1684,10 @@ that `worldModes`'s own mousedown/mouseup handlers never call
 `mouseCode(e.button)`, so `held(keys, 'AutoRun')` was dead in that host
 at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
-`host` (`worldModes.js:346`), and its only two callers are `world.js`
+`host` (`worldModes.js:354`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:5064-5065`,
-`exterior.js:2500-2501`) call `mouseCode(e.button)` and add/delete
+and both of whose WINDOW-level handlers (`world.js:5112-5113`,
+`exterior.js:2504-2505`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:281`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
@@ -1705,7 +1705,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:8155` already did at its
+motor's own mirror of that getter (`world.js:8237` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
