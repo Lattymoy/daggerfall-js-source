@@ -128,7 +128,7 @@ test('U56 planTake: the carry gate, the two sounds, and the gift', () => {
   // ...and the index alone does not either: MiscItems.Unused is ALSO
   // template 276 (ItemEnums.cs:592-608 - Letter_of_credit 275 then a
   // bare `Unused`), the very collision the two-term test exists to
-  // resolve, and classicSave.js:299 really does build such a row.
+  // resolve, and classicSave.js:304 really does build such a row.
   assert.equal(planTake({ group: 'MiscItems', templateIndex: 276, stackCount: 5 }, { bag: [] }).sound,
     'click', 'the index alone does not make a coin');
   // ...and the interception is where the loss would be DESTRUCTIVE:

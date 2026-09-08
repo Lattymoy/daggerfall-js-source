@@ -188,7 +188,7 @@ test('FE1 world: the ctx mounts, the session init, the faction-face read', () =>
   // together; the third is a block.
   assert.match(world, /addFace: \(r\) => addEscortFace\(r\),\s*\n\s*dropFace: \(r\) => dropEscortFace\(r\),\s*\n\s*onQuestEnded: \(q\) => \{/,
     'the three ctx doors stand together');
-  assert.match(world, /guildInitiationQuestEnded\([\s\S]{0,220}?\);\n\s*escortQuestEnded\(q\);/,
+  assert.match(world, /guildInitiationQuestEnded\([\s\S]{0,700}?escortQuestEnded\(q\);/,
     'the sweep still runs on every quest end, whatever the guild arm made of it');
   assert.match(world, /initEscortFaces\(\{\s*\n\s*fetchBytes, palette, renderer,\s*\n\s*getFactionData: \(id\) => _questStore\(\)\?\.dict\.get\(id\) \?\? null,/,
     'the session mount, with the persistent-store faction read');

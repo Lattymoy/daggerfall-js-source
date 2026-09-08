@@ -181,7 +181,7 @@ export function resetSkillsRecentlyRaised(entity) {
  *          if (ImprovedAthleticism) += improvedAthleticismMultiplier;
  *      }
  *
- *  - exactly the shape shared.js:1168 already uses for the same pair
+ *  - exactly the shape shared.js:1231 already uses for the same pair
  *  on the fatigue rate, so the item alone does nothing and the two
  *  together make +20%. X1 landed the Jump SPELL's term (+0.6,
  *  AcrobatMotor's own jumpSpellMultiplier :16, added when
@@ -198,7 +198,7 @@ export function jumpSpeedMultiplier(entity) {
   const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;
   if ((bits & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) {
     m += ATHLETICISM_MULTIPLIER;
-    // The same fold entityImprovedAthleticism (enchantments.js:861)
+    // The same fold entityImprovedAthleticism (enchantments.js:901)
     // answers, read in place: this leaf cannot import enchantments.js
     // without closing a cycle back through skills.js, which is why
     // the skillMods read above (:86) is spelled out the same way.

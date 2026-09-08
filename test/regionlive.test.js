@@ -76,7 +76,10 @@ test('RP1: the map-discovery key is the CURRENT region', () => {
   const tt = read('src/scenes/townTalk.js');
   assert.equal(tt.includes('discoverBuilding(`${regionIndex}:${cityName()}`'), false,
     'the boot-region key filed a Daggerfall building under Betony');
-  assert.match(tt, /discoverBuilding\(`\$\{regionNow\(\)\}:\$\{cityName\(\)\}`, building\)/);
+  // AUDIT 63 F49 gave DiscoverBuilding its overrideName + quest-seam
+  // arguments (PlayerGPS.cs:917, :945-959); the KEY this pin is for is
+  // unchanged.
+  assert.match(tt, /discoverBuilding\(`\$\{regionNow\(\)\}:\$\{cityName\(\)\}`, building, null, questBuildingSource\)/);
 });
 
 test('RP1: the world host passes its live PlayerGPS read; the dev hosts keep their number', () => {

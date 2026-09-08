@@ -48,7 +48,7 @@
 // (listTopicTellMeAbout / Person / Thing and the Work question);
 // each stays a consumed no-op on a host with no engine mounted.
 
-import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from './nativePanel.js';   // AUDIT 63 F5: DaggerfallDefaultShadowColor, the unmarked row's shadow
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { bitmapToColor32 } from './hud.js';
 import { drawScreenDimBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
@@ -71,6 +71,12 @@ export const TALK_RECTS = Object.freeze({
   categoryWork: [4, 56, 107, 10],
   okay: [4, 186, 107, 10],
   goodbye: [118, 183, 67, 10],
+  // AUDIT 63 F5: buttonLogbook (DaggerfallTalkWindow.cs:725-737) -
+  // Position (118,158), Size (67,18), ToolTipText "copyLogbookInfo",
+  // hotkey DaggerfallShortcut.Buttons.TalkCopy. The baked TALK01I0
+  // label under the portrait was dead area: no rect, no selection
+  // state, no OnPop, so no conversation could ever reach the Notebook.
+  logbook: [118, 158, 67, 18],
   topicList: [6, 71, 94, 104],
   conversation: [189, 65, 114, 126],
   npcName: [117, 52, 197, 10],
@@ -107,7 +113,11 @@ export const TOPIC_ROW_H = 7;                    // FONT0003 fixedHeight + spaci
 export const ROW_H = 7;                          // FONT0003 fixedHeight
 export const ROW_SPACING = 4;                    // ListBox RowSpacing, per ITEM
 export const CONV_LINE_H = ROW_H + ROW_SPACING;  // kept: one single-line entry to the next
-export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the newest row)
+export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the selected row)
+/** AUDIT 63 F5: MarkCopiedListItem's `Color.blue`
+ *  (DaggerfallTalkWindow.cs:1585-1589) - the shadow a row marked
+ *  for the logbook wears until the button unmarks it. */
+export const COPIED_SHADOW_COLOR = [0, 0, 1, 1];
 /** ROAD-D D10: the TOPIC listbox's selected row. listboxTopic sets no
  *  colour of its own (DaggerfallTalkWindow.cs:535-551), so it keeps
  *  ListBox's default selectedTextColor = DaggerfallUI.cs:62's
@@ -384,6 +394,25 @@ export class NativeTalkWindow {
     // never read back up.
     this.conversationScroll = null;
     this._conversationContentH = 0;
+    // AUDIT 63 F5: listboxConversation.SelectedIndex. A fresh window
+    // has NOTHING selected: SetStartConversation
+    // (DaggerfallTalkWindow.cs:635-652), run from both Setup (:616)
+    // and OnPush (:266), opens with `listboxConversation.ClearItems()`
+    // - and ListBox.ClearItems (ListBox.cs:532-537) calls SelectNone
+    // (:773-776) `selectedIndex = -1;`. AddItem (:539-577) never
+    // assigns selectedIndex, so the greeting draws UNHIGHLIGHTED and
+    // ButtonLogbook_OnMouseClick (:1554-1555) copies nothing until a
+    // selection exists. :1280 moves it to the newest row on every Q/A
+    // pair; ListBox.MouseClick moves it on a click. The draw used to
+    // restate it as `index === entries.length - 1`.
+    this.conversationSelected = -1;
+    // The per-entry heights the last draw laid out, for the click's
+    // PixelWise hit test (ListBox.cs:483-497). They cannot be computed
+    // without the font, which only draw() holds.
+    this._conversationHeights = null;
+    // copyIndexes (DaggerfallTalkWindow.cs:243, minted fresh in OnPush
+    // at :262 - a new window is a new push, so the Set is born empty).
+    this.copyIndexes = new Set();
     // AUDIT 58: horizontalSliderTopic.ScrollIndex, in PIXELS
     // (listboxTopic.HorizontalScrollIndex, :1364). UpdateScrollBarsTopic
     // zeroes it with every page (:816), so _setListboxTopics does.
@@ -418,7 +447,7 @@ export class NativeTalkWindow {
   /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
    *  its first row - index 1 when row 0 is the NavigationBack
    *  "previous" row, which this port's flattened lists never carry
-   *  (treeCategories drops them, townTalk.js:674) - and SelectIndex
+   *  (treeCategories drops them, townTalk.js:686) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
    *  label is filled before the player clicks anything.
    *
@@ -468,10 +497,10 @@ export class NativeTalkWindow {
    *  Empty captions are reachable from the port's own assembler:
    *  topicTree.js's `captionString` starts '' (:578) and the NotSet
    *  arm never overwrites it, the Location arm's null test takes an
-   *  EMPTY buildingName as the caption (:588-589, and quest/place.js
-   *  builds dungeon and town siteDetails with `buildingName: ''`), and
-   *  the Thing arm only fills it once the Item resource has minted its
-   *  daggerfallUnityItem (:602).
+   *  EMPTY (but non-null) buildingName as the caption (:588-589 -
+   *  ConfigureFromPlayerLocation's Town arm mints exactly that,
+   *  Place.cs:314), and the Thing arm only fills it once the Item
+   *  resource has minted its daggerfallUnityItem (:602).
    *
    *  DFU's ListItem is a CLASS (TalkManager.cs:159), so the repair is
    *  a WRITE-BACK that outlives the draw - the tree's own row stays
@@ -526,6 +555,9 @@ export class NativeTalkWindow {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.conversation.push({ text: question, kind: 'question' });
     this.conversation.push({ text: answer, kind: 'answer' });
+    // :1280 `listboxConversation.SelectedIndex = listboxConversation
+    // .Count - 1;` - "always highlight the new answer" (AUDIT 63 F5).
+    this.conversationSelected = this.conversation.length - 1;
     this.conversationScroll = null;   // F159: UpdateScrollBarConversation on new content
   }
 
@@ -594,7 +626,7 @@ export class NativeTalkWindow {
     // sentence the player-says panel is showing. The port re-ran
     // _updateQuestion here unconditionally, and GetQuestionText is
     // ExpandRandomTextRecord - a fresh RANDOM variant of 7212/7225 per
-    // call (systems/answerPipeline.js -> talkMacros.js:328-332) - so
+    // call (systems/answerPipeline.js -> talkMacros.js:349-353) - so
     // the conversation recorded a different sentence from the one on
     // screen. _selectIndex IS that guarded handler.
     this._selectIndex(idx);
@@ -667,7 +699,62 @@ export class NativeTalkWindow {
   _scrollTopicH(dPx) {
     this.topicHScroll = clampTopicHScroll(this.topicHScroll + dPx, this._topicWidthContent, TALK_RECTS.topicList[2]);
   }
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  /** OnPop (DaggerfallTalkWindow.cs:299-319): the copied rows go to
+   *  PlayerEntity.Notebook.AddNote as TextQuestion/TextAnswer tokens,
+   *  in SORTED index order, with an EMPTY token inserted wherever the
+   *  run is broken (`if (idx - prev != 1 && prev > -1)`, :307-308) -
+   *  which PlayerNotebook.AddNote turns into a line break
+   *  (notebook.js:93). The port keeps ONE conversation entry per Q or
+   *  A, exactly one ListBox item each, so the indexes map 1:1 and the
+   *  text is the entry's own UNWRAPPED text, not the drawn lines.
+   *  AddNote's own `texts.Count > 0` guard (PlayerNotebook.cs:89) is
+   *  already in notebook.js:91, so the call is unconditional. */
+  _close() {
+    this.done = true;
+    const tokens = [];
+    let prev = -1;
+    for (const idx of [...this.copyIndexes].sort((a, b) => a - b)) {
+      const c = this.conversation[idx];
+      if (c === undefined) continue;
+      if (idx - prev !== 1 && prev > -1) tokens.push({ formatting: 'text', text: '' });
+      // the greeting is stored as a bare STRING (`[greeting]`), which
+      // draw() normalises to an answer - the copy must normalise the
+      // same way or the note is filed under a formatting the journal
+      // cannot render
+      const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c;
+      tokens.push({ formatting: e.kind === 'question' ? 'question' : 'answer', text: e.text });
+      prev = idx;
+    }
+    this.hooks.copyToNotebook?.(tokens);
+    this.hooks.onClose?.();
+  }
+
+  /** ListBox.MouseClick's PixelWise branch (ListBox.cs:483-497) over
+   *  the conversation panel: `y = scrollIndex + clickY`, then walk the
+   *  per-item heights accumulating `yNext = yCur + TextHeight +
+   *  rowSpacing` and take the item whose band holds y with a
+   *  rowSpacing*0.5 tolerance at both edges. NOT the topic list's
+   *  fixed-row divide: conversation entries are WRAPPED and each has
+   *  its own height. Answers -1 before the first draw, which is
+   *  ListBox.cs:469's `listItems.Count == 0` return. */
+  _conversationIndexAt(vy) {
+    const heights = this._conversationHeights;
+    if (!heights || !heights.length) return -1;
+    const y = (this.conversationScroll ?? 0) + (vy - TALK_RECTS.conversation[1]);
+    let yCur = 0;
+    for (let i = 0; i < heights.length; i++) {
+      const yNext = yCur + heights[i] + ROW_SPACING;
+      if (y >= yCur - ROW_SPACING * 0.5 && y < yNext - ROW_SPACING * 0.5) return i;
+      yCur = yNext;
+    }
+    return -1;
+  }
+
+  /** MarkCopiedListItem (:1580-1592): it plays a ButtonClick of its
+   *  OWN, on top of the one the click handler already played - so a
+   *  left click that marks or unmarks a row sounds TWICE in DFU, and a
+   *  right click sounds once per row it marks. */
+  _markCopied() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
   /** Keyboard accelerators (the session's established keys). */
   input(code) {
@@ -682,10 +769,29 @@ export class NativeTalkWindow {
 
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  The third slot is the host's right-button boolean
-   *  (townTalk.js:930) and is not read here; `now` is the
+   *  (townTalk.js:985) and is not read here; `now` is the
    *  double-click clock, injectable for the pins. */
-  click(vx, vy, _rightButton = false, now = null) {
+  click(vx, vy, rightButton = false, now = null) {
     const R = TALK_RECTS;
+    // AUDIT 63 F5: THE LOGBOOK BUTTON, before every broad panel rect so
+    // it is not swallowed. Left click (ButtonLogbook_OnMouseClick,
+    // :1551-1567): ButtonClick, then return with nothing done when
+    // SelectedIndex < 0 (:1554-1555), else toggle that index in
+    // copyIndexes and mark it (which plays a SECOND ButtonClick).
+    // Right click (:1569-1578): clear the set and mark EVERY row.
+    if (inRect(R.logbook, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      if (rightButton) {
+        this.copyIndexes.clear();
+        for (let i = 0; i < this.conversation.length; i++) { this.copyIndexes.add(i); this._markCopied(); }
+        return true;
+      }
+      if (this.conversationSelected < 0) return true;
+      if (this.copyIndexes.has(this.conversationSelected)) this.copyIndexes.delete(this.conversationSelected);
+      else this.copyIndexes.add(this.conversationSelected);
+      this._markCopied();
+      return true;
+    }
     // AUDIT 17e F12: GOODBYE closes. OKAY is DFU's "ask the selected
     // topic" button (DaggerfallTalkWindow) - it never closed the
     // window.
@@ -749,9 +855,19 @@ export class NativeTalkWindow {
       if (wasDouble) { this._lastRowClick = null; this._pickIndex(this.selected); }
       return true;
     }
+    // AUDIT 63 F5: a plain click in the CONVERSATION panel moves
+    // listboxConversation.SelectedIndex (ListBox.cs:465-505 - the
+    // listbox is a plain ListBox added to mainPanel, :601-614, so it is
+    // click-selectable), which is the row the logbook button copies.
+    // ListBox plays no sound of its own.
+    if (inRect(R.conversation, vx, vy)) {
+      const i = this._conversationIndexAt(vy);
+      if (i >= 0) this.conversationSelected = i;
+      return true;
+    }
     // B5-6: the four pages are live at :313-327 - tellMeAbout, then
     // people/things/work behind the whereIs gate - with three of the
-    // hooks supplied at scenes/townTalk.js:628-630 and Work's OKAY
+    // hooks supplied at scenes/townTalk.js:630-632 and Work's OKAY
     // question shipped alongside them (_askWork :293, ButtonOkay's
     // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
     // still falls back to consuming the click when its hook is absent
@@ -876,14 +992,25 @@ export class NativeTalkWindow {
     // newest row ONCE (UpdateScrollBarConversation), then hold the
     // player's own position between frames.
     this._conversationContentH = contentH;
+    this._conversationHeights = heights;   // AUDIT 63 F5: the click's PixelWise hit test reads the last laid-out heights
     if (this.conversationScroll == null) this.conversationScroll = conversationScroll(contentH, R.conversation[3]);
     else this.conversationScroll = clampScrollPixels(this.conversationScroll, contentH, R.conversation[3]);
     const scroll = this.conversationScroll;
     for (const { index, y } of layoutPixelRows(heights, scroll, R.conversation[3], ROW_SPACING)) {
       const e = entries[index];
-      const newest = index === entries.length - 1;
-      const color = newest ? SELECTED_TEXT_COLOR
+      // AUDIT 63 F5: the LIVE selection, not a restatement of it. This
+      // was `index === entries.length - 1` - a constant standing in for
+      // listboxConversation.SelectedIndex, which :1280 sets and
+      // ListBox.MouseClick moves, so a player who selected an earlier
+      // row to copy saw the highlight on a different row than the one
+      // the logbook button acted on.
+      const selected = index === this.conversationSelected;
+      const color = selected ? SELECTED_TEXT_COLOR
         : e.kind === 'question' ? QUESTION_COLOR : DEFAULT_TEXT_COLOR;
+      // MarkCopiedListItem (:1584-1590) sets shadowColor and
+      // selectedShadowColor to Color.blue on a marked row, and back to
+      // DaggerfallDefaultShadowColor when unmarked.
+      const shadow = this.copyIndexes.has(index) ? COPIED_SHADOW_COLOR : DEFAULT_SHADOW_COLOR;
       // AUDIT 26 F165: the QUESTION label is placed Right and the
       // ANSWER Left (SetQuestionAnswerPairInConversationListbox
       // :1259, :1270) - the classic look, the player's questions
@@ -905,7 +1032,7 @@ export class NativeTalkWindow {
             { x: m.ox + x * m.s, y: m.oy + ly * m.s, w: tw * m.s, h: rowH * m.s },
             undefined, e.kind === 'question' ? MODERN_QUESTION_BG : MODERN_ANSWER_BG);
         }
-        shadowText(renderer, font, text, m, x, ly, { color, scale: modern ? MODERN_TEXT_SCALE : 1 });
+        shadowText(renderer, font, text, m, x, ly, { color, shadow, scale: modern ? MODERN_TEXT_SCALE : 1 });
       });
     }
   }

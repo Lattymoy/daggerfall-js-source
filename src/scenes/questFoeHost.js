@@ -159,3 +159,35 @@ export function entityOccupancy(feetOf, liveFoes, playerFeet) {
     return false;
   };
 }
+
+/** AUDIT 63r F24 - SerializableEnemy.RestoreSaveData's quest-link arm
+ *  (Serialization/SerializableEnemy.cs:206-217), the ONE home for it:
+ *
+ *      enemy.QuestSpawn = data.questSpawn;
+ *      if (enemy.QuestSpawn) {
+ *          var b = gameObject.AddComponent<QuestResourceBehaviour>();
+ *          b.RestoreSaveData(data.questResource);
+ *          if (b.QuestUID == 0 || b.TargetSymbol == null) {
+ *              enemy.QuestSpawn = false; Destroy(b);
+ *          }
+ *      }
+ *
+ *  The foe POOLS carry no dependency on the quest machine, so the host
+ *  that owns one hands this in as `restoreWorld`'s
+ *  `reviveQuestBehaviour`. It lives here rather than in either host
+ *  because BOTH need it - the interior pools (worldModes
+ *  .restoreInteriorPools) and the exterior pool (world.js's load arm),
+ *  which is the same law under a different WorldContext - and because
+ *  bindQuestFoeHost, the mint-side half of the same link, is already
+ *  here. Returns null for a record that names no quest, which is the
+ *  Destroy: the foe stands plain.
+ *
+ *  @param machine the live QuestMachine, or null on a host without one
+ *  @param data    the record's `questResource` (GetSaveData's object) */
+export function reviveQuestBehaviour(machine, data) {
+  if (!machine || !data) return null;
+  const b = new QuestResourceBehaviour(machine);
+  b.restoreSaveData(data);
+  if (!b.questUID || b.targetSymbol == null) return null;   // :214-217 - QuestSpawn = false; Destroy(questResourceBehaviour)
+  return b;
+}

@@ -42,6 +42,7 @@ import {
 import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)
 import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill; F98: every other non-execution exit's
 import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
 import { PrisonScreenWindow, CourtScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)   // ROAD-B B5: Setup's courtPanel, the backdrop the trial stands on
@@ -374,6 +375,18 @@ export function createArrestFlow({
           playerEntity.preventEnemySpawns = true;
           playerEntity.preventNormalizingReputations = true;
           advanceDays(days);
+          // AUDIT 63 F13: RaiseOnEndPrisonTimeEvent (:476), which comes
+          // straight after that RaiseTime (:475) and whose ONE
+          // subscriber is the broker raising SyntheticTimeIncrease
+          // (EntityEffectBroker.cs:841-842). The order is DFU's own and
+          // costs nothing either way here: advanceDays moves the clock
+          // without running a round, so the sentence's window is
+          // claimed by the next host frame - which is also the frame
+          // that carries release()'s four hours (ReleaseFromPrison's
+          // own RaiseTime, :485, is the SAME DFU frame and is
+          // deliberately not shielded on its own: a zero-day plea or an
+          // acquittal runs its 240 minutes of rounds in full).
+          setSyntheticTimeIncrease(true);
           playerEntity.inPrison = false;
           // (:478) the refill lands when daysInPrisonLeft hits 0,
           // AFTER the RaiseTime - the day the sentence ends, not the

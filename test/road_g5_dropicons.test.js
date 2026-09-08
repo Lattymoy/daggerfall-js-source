@@ -497,9 +497,11 @@ test('G5: the interior scene cache and the save envelope carry the archive', () 
   assert.equal(snap.scenes[0].droppedPiles[0].archive, 204, 'GetSceneCache writes it');
   const fresh = restoreSceneCache(createSceneCache(), JSON.parse(JSON.stringify(snap)));
   assert.equal(restoreCachedScene(fresh, scene).droppedPiles[0].archive, 204, 'and RestoreSceneCache reads it');
-  // and the producer that fills it
-  assert.match(readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8'),
-    /\.map\(\(pile\) => \(\{ pos: \[\.\.\.pile\.pos\], archive: pile\.archive, record: pile\.record,/,
+  // and the producer that fills it - AUDIT 63 F22 (review round) moved
+  // the interior host's half into the pool that owns the pile shape,
+  // beside restorePiles, so the write and the read cannot drift.
+  assert.match(readFileSync(join(root, 'src/scenes/droppedLoot.js'), 'utf8'),
+    /pos: \[\.\.\.p\.pos\], archive: p\.archive, record: p\.record,/,
     'the interior host builds the pair');
   assert.match(readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8'),
     /pos: \[\.\.\.p\.pos\], archive: p\.archive, record: p\.record,/,
@@ -525,8 +527,13 @@ test('G5: all FOUR hosts hand the pile\'s identity down and take the icon back',
   assert.match(src('scenes/dungeon.js'), /e\.button === 2, e\.button === 1\)/, 'the standalone dungeon page');
   assert.match(src('scenes/dungeonContext.js'), /activeOverlay\.click\(vx, vy, right, middle\);/);
   // ONE identity shape, so a fifth call site cannot ship a partial one
+  // AUDIT 63 F22 (review round): the flag is READ OFF THE CONTAINER -
+  // CreateDroppedLootContainer sets it (GameObjectHelper.cs:766) and
+  // CreateLootContainer (:691-704) never does - so the one shape
+  // serves a scene-built container too and no host has to mint a
+  // partial identity of its own.
   assert.match(src('scenes/droppedLoot.js'),
-    /export const droppedLootHooks = \(pile\) => \(\{[\s\S]*?playerOwned: true,[\s\S]*?textureArchive: pile\.archive,[\s\S]*?textureRecord: pile\.record,/);
+    /export const droppedLootHooks = \(pile\) => \(\{[\s\S]*?playerOwned: !pile\.container,[\s\S]*?textureArchive: pile\.archive,[\s\S]*?textureRecord: pile\.record,/);
   // ...and the dungeon's RDB treasure flat is NOT player-owned: it gets
   // UpdateRemoteTargetIcon's second arm and no cycling.
   const dc = src('scenes/dungeonContext.js');

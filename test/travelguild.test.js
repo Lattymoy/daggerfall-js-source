@@ -113,7 +113,14 @@ test('TP1: RaiseSkills has ONE home and fast travel calls it after the clamp', (
   assert.equal(/export function raiseAtRestEnd\(/.test(shared), false,
     'the rest-only name is gone - it became a small lie the moment travel used it');
   const world = readFileSync(join(HERE, '..', 'src', 'scenes', 'world.js'), 'utf8');
-  const clamp = world.indexOf('if (clamp > 0) playerTicker.advance(clamp)');
+  // AUDIT 63 F13 armed that same clamp advance with the broker's
+  // synthetic-time flag (DaggerfallTravelPopUp.cs:355/:367/:374 are
+  // raised before the flag goes up at :383), so the anchor grew to the
+  // whole armed statement - the ORDER this pin owns is unchanged, and
+  // the guard stays inside the anchor rather than outside it.
+  assert.match(world, /\n      if \(clamp > 0\) \{ setSyntheticTimeIncrease\(true\); playerTicker\.advance\(clamp\); \}/,
+    'the arrival advance is a guarded statement at the top of the block, not a bare call');
+  const clamp = world.indexOf('\n      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }');
   // matched with its LINE START and indentation, not as a bare
   // substring: the campaign wrapped the call in `if (false)` and a
   // substring test still found the text, which is PY1's lesson in

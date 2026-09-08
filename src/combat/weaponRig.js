@@ -41,7 +41,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 import { fpArm, hasDaggerfallArrows } from './fpArm.js';
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
-import { worldAabb, rayAabb } from '../player/activate.js';
+import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 
@@ -55,7 +55,7 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  *
  * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
  * everywhere in this port (chargen.js applyCharacter,
- * classicSave.js:624), so the card's old `female: !!playerEntity
+ * classicSave.js:665), so the card's old `female: !!playerEntity
  * .gender` was TRUE FOR EVERYONE - every build asked for the female
  * skeleton and the female body columns, and the male-record fallback
  * fills made it look almost right. The test is the string compare,
@@ -89,9 +89,9 @@ export function buildArmsFor(entity) {
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:1960), townTalk.say
- *                     (exterior.js:1167, world.js:2184) and
- *                     worldModes' own interior sink (worldModes.js:348,
+ *                     (dungeonContext.js:2004), townTalk.say
+ *                     (exterior.js:1172, world.js:2225) and
+ *                     worldModes' own interior sink (worldModes.js:356,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -570,7 +570,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
   for (const o of actions.objects.values()) {
-    const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
+    // (WeaponManager.cs:459-464), so a mover is struck where it is,
+    // not where it was placed - the same law as the activate ray.
+    const box = objectAabb(o);
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;

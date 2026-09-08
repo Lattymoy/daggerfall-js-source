@@ -2029,3 +2029,102 @@ heard it: no audio here, as no GL and no ARENA2. The one-listen question
 is whether ArenaFireDaemon at a fresh AudioSource's 500-unit reach is
 audible across the whole farm, which is what his numbers say and what
 the port now does.
+
+## AUDIT 63 F49 - DISCOVERBUILDING'S QUEST NAME-OVERRIDE ARM (2026-09-08)
+
+`PlayerGPS.DiscoverBuilding` has five clauses and the port carried two.
+Three were cut, and their absence left a field with no writer and a pair
+of fields with no reader on opposite sides of the same seam.
+
+**The signature (PlayerGPS.cs:917).** `DiscoverBuilding(int buildingKey,
+string overrideName = null)` — and the override BYPASSES the
+already-discovered early-out: `:926-927` is `if (overrideName == null &&
+HasDiscoveredBuilding(buildingKey)) return;`. The port returned on
+discovery alone, which is precisely why the bank's house purchase
+(DaggerfallBankManager.cs:440 passes `"<player>'s residence"` as the
+override) silently did nothing to a house the player had already
+entered.
+
+**The quest consult (:945-959).** With no override handed in, DFU asks
+`TalkManager.IsBuildingQuestResource(CurrentMapID, buildingKey, ...)`
+and promotes the quest Place's `overrideBuildingName` to the override
+when `pcLearnedAboutExistence` and that name differs from the
+directory's `displayName`. `discovery.js` is a pure module with no
+TalkManager, so the pair arrives INJECTED — `{ currentMapID,
+isBuildingQuestResource }`, the same shape the exterior automap's
+`stampResidenceQuestNames` already takes, and keyed on `CurrentMapID`
+rather than this store's `region:location` string because
+`IsBuildingQuestResource` tests `place.SiteDetails.mapId != mapID`. The
+producer half already existed and was orphaned in the mirror direction:
+`topicTree.isBuildingQuestResource` wrote `pcLearnedAboutExistence` and
+`overrideBuildingName` that nothing in `src/` read.
+
+**The stamp (:961-972).** `oldDisplayName` on the first override,
+`displayName` overwritten, `isOverrideName` raised — and the
+unconditional collapse `if (db.oldDisplayName == db.displayName)
+db.isOverrideName = false;`. `isOverrideName` had **no writer anywhere in
+the port** while the automap read it twice
+(`ExteriorAutomap.cs:676-677` verbatim), so it was permanently falsy: a
+discovered quest residence took the residence arm, `residenceQuestName`
+requires `locationWasMarkedOnMapByNPC` and answers `''`, and the plate
+was never drawn at all. `oldDisplayName` starts `null`, not `''`, so the
+collapse cannot fire for a nameless building.
+
+The record is **rebuilt, not merged**, on the override pass:
+`GetBaseBuildingDiscoveryData` (:931-933, :1285-1330) mints a fresh
+`DiscoveredBuilding` from the building directory on every call and
+`:973` assigns it over the slot, so `db.isOverrideName` is always false
+when :965 tests it, `oldDisplayName` is always the BASE name, and a
+re-discovery with an override resets `lastLockpickAttempt` and
+`customUserDisplayName` with it. Preserving those would have been a new
+departure needing its own row, not fidelity.
+
+All three port callers move with it: the building door
+(PlayerEnterExit.cs:1032), the talk map reveal (TalkManager.cs:1290) and
+the quest bridge's own hook each take the seam; the bank caller hands its
+name as the third ARGUMENT instead of smuggling it in as the synthetic
+record's `name`. The seam is composed once in `scenes/world.js` and rides
+to `townTalk` and to the mode machine's host bundle;
+`scenes/exterior.js` mounts no topic tree — the stance it already
+records at the nameplate stamp — so that host passes nothing and the
+member behaves exactly as it always did. `restoreDiscovery` gives the two
+new columns the same missing-field default the rename column already
+has, so a pre-fix save restores without holes.
+
+**Still absent, and named here so it is not re-derived:**
+`RevealGuildHallOnMap` (ThievesGuild.cs:241-247, DarkBrotherhood.cs:255)
+is DFU's fourth `overrideName` caller and has no counterpart in the port
+at all. That is a missing member, not part of this arm.
+
+## AUDIT 63 F46 - THE POLITENESS GATE'S FIFTH TERM WAS A WRITE WITH NO READER (2026-09-08)
+
+`MobilePersonMotor` builds its idle gate from six terms, and one of them
+is `bool inBeastForm = GameManager.Instance.PlayerEntity.IsInBeastForm;`
+(**MobilePersonMotor.cs:222**), folded into `wantsToStop =
+playerStandingStill && withinIdleDistance && sheathed && !invisible &&
+!inBeastForm` (:224). `PlayerEntity.cs:193` declares the property and
+`LycanthropyEffect.cs:241` is its only writer in the whole reference
+tree, inside ConstantEffect — a per-round live flag, which
+`systems/lycanthropy.js` mirrors exactly.
+
+`characters/mobilePerson.js` ported the gate whole, with `inBeastForm`
+as a defaulted parameter — and NEITHER of the two hosts that evaluate it
+passed the term, so it took its `false` default on every frame and
+`entity.isInBeastForm` was a field written three times and read nowhere
+in `src/`.
+
+The state is reachable on the classic path: `hostMagic` wires `morphSelf`
+into the one cast engine that both town hosts build, and `worldTick`
+runs `lycanthropyMagicRound`, whose full-moon arm force-morphs the
+player. The suppression that exists does NOT clear the street —
+`PopulationManager.cs:174-191` gates only the PROMOTE arm on
+`SuppressPopulationSpawns`, and `townPopulation.js` mirrors that exactly
+— so walkers already out keep ticking against a transformed player, which
+is precisely who this term is for. A sheathed, standing werewolf inside
+2.5 units had townsfolk politely stop and idle for him.
+
+One line per host. Two stale records went with it: `mobilePerson.js`'s
+own doc comment, which taught the omission as correct ("nothing above
+ground can raise it yet" — false since Ledger V4 shipped the transformed
+host laws), and `bible/Home.md`'s "(inBeastForm N/A)". A doc comment that
+licenses a missing caller is what kept this alive through V4's landing.

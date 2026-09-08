@@ -44,7 +44,8 @@ import {
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
   isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
-import { isSummoned, carriedWeight, totalWeight } from '../systems/inventory.js';   // TransferItem's summoned guard
+import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
+import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
 // AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
 // and overrides both halves (:630-647, :649-670).
@@ -69,6 +70,12 @@ const MODE_ACTION_BUTTON = Object.freeze({
 // re-exported so the composed window keeps one import surface
 export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
 
+/** AUDIT 63 F48: DoSteal's two HUD lines, Internal_Strings.csv:825-826
+ *  verbatim, both spoken at AddHUDText's delay of 2 seconds
+ *  (:918, :925). */
+export const STEAL_SUCCESS_TEXT = 'You are successful.';
+export const STEAL_FAILURE_TEXT = 'You are not successful...';
+
 export const TRADE_RECTS = Object.freeze({
   costPanel: [49, 13, 111, 9],           // SHOP00I0 strip
   actionPanel: [222, 10, 39, 190],       // the mode's own panel - INVE08/10/12/14 (:755-764)
@@ -82,6 +89,12 @@ export const TRADE_RECTS = Object.freeze({
   exit: [222 + 0, 178, 39, 22],          // the inventory exit rect over the action panel art
   modeAction: [222 + 4, 10 + 124, 31, 14],   // the mode action (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
+  // AUDIT 63 F48: stealButtonRect (:44), a child of
+  // actionButtonsPanelRect (:40) like its two neighbours above. The
+  // button is only ADDED in Buy mode (:316-322), so the click and the
+  // key both gate on the mode - in every other mode this rect falls
+  // back through to the consumed action-panel no-op.
+  steal: [222 + 4, 10 + 102, 31, 14],
 });
 // The ItemListScroller layout lives in itemScroller.js (the 17d UI
 // audit's corrected law, shared with the inventory window).
@@ -141,6 +154,16 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   gold(), rows(textId), weight() -> { carriedWeightKg, maxEncumbranceKg }
  *   commit(mode, staged, price, proceeds) - the host's transaction
  *   icons, entity, shopName
+ *   AUDIT 63 F48, DoSteal's five (:907-932). All optional: a host
+ *   that never opens Buy mode - the dungeon's Identify window - needs
+ *   none of them, and DoSteal's own Buy gate keeps them unreachable.
+ *   pickpocketSkill()      -> the LIVE Pickpocket skill (:913)
+ *   tallyPickpocket(n)     -> TallySkill(Pickpocket, 1) (:914)
+ *   tallyCrimeGuild(a, n)  -> TallyCrimeGuildRequirements(true, 1) (:921)
+ *   crimeTheft()           -> CrimeCommitted = Crimes.Theft (:927)
+ *   spawnCityGuards(flag)  -> SpawnCityGuards(true) (:928)
+ *   say(line, seconds)     -> AddHUDText(text, 2) (:918, :925)
+ *
  *   getQuest(uid)  -> QuestMachine.GetQuest, for TransferItem's quest
  *                     arm. UNWIRED: no host passes one yet, and DFU
  *                     refuses a quest item it cannot resolve (:1489),
@@ -458,6 +481,53 @@ export class NativeTradeWindow {
     while (remote.length) this._move(remote[0], remote, this.hooks.packItems());
   }
 
+  /** AUDIT 63 F48: DoSteal (:907-932). The shop screen's STEAL button
+   *  had been one of the four consumed action-panel no-ops, so a
+   *  player could stage a basket at any open shop, press a PAINTED,
+   *  keyed button and have nothing at all happen - no roll, no free
+   *  goods, no Theft crime, no guards, no Pickpocket or Thieves Guild
+   *  tally.
+   *
+   *  The order is DFU's and it is NOT AttemptPrivatePropertyTheft's:
+   *  the Pickpocket tally is unconditional and comes BEFORE the roll
+   *  (:914), and the guild tally fires on the SUCCESS arm only (:921).
+   *  The decision itself is systems/theft.js's `shopliftAttempt`; the
+   *  effects are the host's hooks, as every other consequence on this
+   *  screen is.
+   *
+   *  `cost > 0` (:909) is the gate, not the basket count - a basket of
+   *  free goods does nothing at all, not even the tally.
+   *
+   *  The transfer runs BEFORE the close, because `_close` is
+   *  CloseWindow -> OnPop -> ClearSelectedItems (:404-407, :589-600)
+   *  and the Buy arm of that walks the basket back onto the shelf. On
+   *  the success arm TransferAll (:920, ItemCollection.cs:451-462) has
+   *  already emptied it, so the clear is a no-op; on the caught arm
+   *  the still-full basket goes back to the shelf, which is exactly
+   *  DFU's OnPop. */
+  _doSteal() {
+    const { cost } = this.cost();
+    if (this.mode !== 'Buy' || !(cost > 0)) return;
+    const ctx = this.hooks.priceCtx?.() ?? {};
+    const out = shopliftAttempt({
+      basket: this.basket,
+      pickpocketSkill: this.hooks.pickpocketSkill?.() ?? 0,
+      shopQuality: ctx.quality ?? 0,
+    });
+    // :914 - always, and before the roll is read.
+    this.hooks.tallyPickpocket?.(1);
+    if (!out.caught) {
+      this.hooks.say?.(STEAL_SUCCESS_TEXT, 2);
+      transferAll(this.basket, this.hooks.packItems());
+      this.hooks.tallyCrimeGuild?.(true, 1);
+    } else {
+      this.hooks.say?.(STEAL_FAILURE_TEXT, 2);
+      this.hooks.crimeTheft?.();
+      this.hooks.spawnCityGuards?.(true);
+    }
+    this._close();
+  }
+
   /** CloseWindow -> OnPop (:404-407). Every exit from this screen is
    *  DFU's window pop, and the pop clears the selection. */
   _close() {
@@ -563,14 +633,24 @@ export class NativeTradeWindow {
     if (code === 'Enter') { this._modeAction(); return; }
     // A8: the rest are DaggerfallShortcut's, read from the table
     // (DaggerfallTradeWindow.cs:249 exit, :323-345 the mode action -
-    // whose LETTER is the window mode's, :348 clear). The four
-    // action-panel buttons this port consumes as no-ops (wagon, info,
-    // select, steal) carry no key here for the same reason they carry
-    // no click: each waits on its own slice, and a live key onto a
-    // dead button is worse than a quiet one.
+    // whose LETTER is the window mode's, :348 clear, :320 steal). The
+    // THREE action-panel buttons this port still consumes as no-ops
+    // (wagon, info, select) carry no key here for the same reason they
+    // carry no click: each waits on its own slice, and a live key onto
+    // a dead button is worse than a quiet one.
+    // AUDIT 63 F48: steal is no longer one of them, and its key is
+    // Buy-only because the BUTTON is (:316-322). DFU defers the action
+    // to the KeyUp edge (isStealDeferred, :940-952); the port's single
+    // input edge collapses that the same way the mode action's does.
     const action = MODE_ACTION_BUTTON[this.mode] ?? null;   // Inventory mode assigns none ("Shouldn't happen")
-    const hit = firstHotkey(['TradeExit', ...(action ? [action] : []), 'TradeClear'], code, e);
+    const hit = firstHotkey([
+      'TradeExit',
+      ...(this.mode === 'Buy' ? ['TradeSteal'] : []),
+      ...(action ? [action] : []),
+      'TradeClear',
+    ], code, e);
     if (hit === 'TradeExit') { this._close(); return; }
+    if (hit === 'TradeSteal') { audio.playOneShot(SOUND.ButtonClick, 1); this._doSteal(); return; }
     if (hit === 'TradeClear') { this._clear(); return; }
     if (hit) { this._modeAction(); return; }
     const d = /^Digit([1-4])$/.exec(code);   // digits stage the visible remote slots (the port's own)
@@ -596,6 +676,10 @@ export class NativeTradeWindow {
     if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }   // every trade button clicks (:887-1022)
     if (inRect(R.modeAction, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._modeAction(); return true; }
     if (inRect(R.clear, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._clear(); return true; }
+    // AUDIT 63 F48: StealButton_OnMouseClick (:934-938) - the sound,
+    // then DoSteal. The button exists only in Buy mode (:316-322), so
+    // in every other mode this rect stays part of the consumed panel.
+    if (this.mode === 'Buy' && inRect(R.steal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._doSteal(); return true; }
     for (const [rect, which, items, pick] of [
       [R.remoteList, 'remoteScroll', this.remoteList(), (s) => this._pickRemote(s)],
       [R.localList, 'localScroll', this.localList(), (s) => this._pickLocal(s)],
@@ -608,8 +692,8 @@ export class NativeTradeWindow {
       else { playScrollerArrowClick(hit.kind); this[which] = applyScroll(this[which], hit.kind, items.length); }   // ROAD-A7: the two arrows click
       return true;
     }
-    // the remaining action-panel buttons (wagon/info/select/steal)
-    // are consumed no-ops - each waits on its own slice
+    // the remaining action-panel buttons (wagon/info/select) are
+    // consumed no-ops - each waits on its own slice
     return inRect(R.actionPanel, vx, vy) || inRect(R.costPanel, vx, vy);
   }
 

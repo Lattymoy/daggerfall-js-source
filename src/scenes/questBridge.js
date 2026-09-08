@@ -210,6 +210,7 @@ export function createQuestBridge(ctx) {
     removeQuestorPostMessage: (uid) => ctx.removeQuestorPostMessage?.(uid),
     removeQuestRumors: (uid) => ctx.removeQuestRumors?.(uid),
     removeQuestInfoTopics: (uid) => ctx.removeQuestInfoTopics?.(uid),
+    undiscoverBuilding: (buildingKey, buildingName) => ctx.undiscoverBuilding?.(buildingKey, buildingName),   // AUDIT 63 F0: Quest.cs:655's tombstone sweep
     forceTopicListsUpdate: () => ctx.forceTopicListsUpdate?.(),
     addFace: (r) => ctx.addFace?.(r),
     dropFace: (r) => ctx.dropFace?.(r),

@@ -100,8 +100,12 @@ test('F140: bank EXIT clicks are a no-op while an amount is typed', () => {
   // !transactionInput.Enabled.
   const s = src('ui/bankWindow.js');
   const arm = s.slice(s.indexOf('BANK_RECTS.exit'));
-  assert.ok(arm.slice(0, 500).includes("if (this.transactionType === TRANSACTION_TYPE.None) this._close();"),
-    'the exit click gates on the open field, like the Escape path always did');
+  assert.ok(arm.slice(0, 900).includes("if (this.transactionType === TRANSACTION_TYPE.None) this._close();"),
+    // AUDIT 63 F45 corrected the reason: this gate is the BUTTON's
+    // alone. The back button cancels regardless of the field
+    // (DaggerfallPopupWindow.cs:70-74), so Escape closes the bank
+    // mid-amount where this click does nothing.
+    'the exit click gates on the open field, unlike the Escape/back-button path');
 });
 
 // ── F141 / F145 / F146 ────────────────────────────────────────────

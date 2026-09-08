@@ -60,8 +60,9 @@
 // interiorContext.js. Neither exterior host owns doors. That is the
 // next slice, and those are its seams.
 import { EFFECT_FLAGS } from './spellcast.js';
-import { isSilencedEffect } from './effects.js';
+import { isSilencedEffect, BUFF_START_TEXT } from './effects.js';
 import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: ContainsEnchantment, the way SoulTrap.cs asks
+import { setEnchantmentEffectDoors } from './enchantments.js';   // AUDIT 63 F14: SoulBound's Enchanted arm reaches RemoveFilledTrap through the doors bag (this leaf cannot be imported BY enchantments.js - effects.js sits between them)
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -349,6 +350,76 @@ export function fillEmptyTrap(items, soulType, {
   return trap;
 }
 
+/** SoulBound.cs:29 - monsterIDCount, the 43 classic monster ids the
+ *  effect's cost table and its trap enumeration are both bounded by. */
+export const SOUL_BOUND_MONSTER_ID_COUNT = 43;
+
+/** SoulBound.EnumerateFilledTraps (:105-127) - the OTHER half of the
+ *  pack read fillEmptyTrap owns, and the one the item maker's list is
+ *  built from. DFU counts per soul id into a 43-slot array; the port
+ *  answers the SET of ids present, which is all three of its consumers
+ *  ask (the primary list's "is it empty", the secondary list's options,
+ *  and the pin).
+ *
+ *  THE ASYMMETRY IS DFU'S, kept verbatim: an ordinary trap is counted
+ *  only when its soul is `!= None && < monsterIDCount` (:115), while a
+ *  filled Azura's Star is counted with NO bound at all (:121-125).
+ *
+ *  AUDIT 63 F14: before this the maker offered all 43 souls to a player
+ *  carrying no trap at all - and SoulBound's costs are NEGATIVE, so an
+ *  empty-handed player could mint 8000 free enchantment points off a
+ *  Daedra Lord he had never trapped. */
+export function enumerateFilledTraps(items, {
+  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
+  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
+} = {}) {
+  const found = new Set();
+  for (const it of items ?? []) {
+    const soul = it?.trappedSoulType ?? null;
+    if (soul === null) continue;
+    if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT) found.add(soul);
+    else if (isAzurasStar(it)) found.add(soul);   // :121-125, unbounded
+  }
+  return found;
+}
+
+/** SoulBound.RemoveFilledTrap (:129-155) - the Enchanted payload, i.e.
+ *  what binding a soul to an item COSTS. DFU's control flow verbatim:
+ *
+ *    - out-of-range monster id: nothing at all (:131-132);
+ *    - the FIRST ordinary soul trap holding that soul is removed from
+ *      the pack and the walk RETURNS (:135-147) - one trap, and an
+ *      ordinary trap always wins over the Star;
+ *    - only if none matched, EVERY matching Azura's Star amulet is
+ *      emptied (:150-155) - that loop has no break, so two Stars
+ *      holding the same soul both empty. The Star is reusable and is
+ *      never destroyed.
+ *
+ *  AUDIT 63 F14: the port declared PAYLOAD.Enchanted on the SoulBound
+ *  row and supplied no arm, so a bound soul was never spent and one
+ *  filled gem could bind an unlimited number of items.
+ *
+ *  @returns {object|null} the trap consumed or emptied, for the caller
+ *           that wants to say so; null when nothing matched. */
+export function removeFilledTrap(items, monsterID, {
+  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
+  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
+} = {}) {
+  if (!Array.isArray(items)) return null;
+  if (!(monsterID >= 0) || monsterID >= SOUL_BOUND_MONSTER_ID_COUNT) return null;
+  for (const it of items) {
+    if (isSoulTrap(it) && it?.trappedSoulType === monsterID) {
+      items.splice(items.indexOf(it), 1);
+      return it;
+    }
+  }
+  let emptied = null;
+  for (const it of items) {
+    if (isAzurasStar(it) && it?.trappedSoulType === monsterID) { it.trappedSoulType = null; emptied ??= it; }
+  }
+  return emptied;
+}
+
 /** The five Soul Trap HUD lines (Internal_Strings.csv :658-662). */
 export const SOUL_TRAP_TEXT = Object.freeze({
   trapActive: 'Trap active.',                        // :658
@@ -466,8 +537,23 @@ export const DOOR_SPELL_TEXT = Object.freeze({
   spellEffectFailed: 'Spell effect failed.',// :647
 });
 
-export const SILENCED_TEXT = 'You are silenced.';
+/** AUDIT 63 F16: DFU prints this line from TWO places - SilenceCheck at
+ *  cast time (EntityEffectManager.cs:1932-1946, which is what
+ *  hostMagic's gate says) and StartSilence when the silence LANDS
+ *  (Silence.cs:91-95). Both read the same "youAreSilenced" string, so
+ *  the port keeps one literal: it lives in effects.js's landing table
+ *  (the direction of the import is forced - effects.js is under this
+ *  file, not over it) and this is the cast gate's name for it. */
+export const SILENCED_TEXT = BUFF_START_TEXT.silenced;
 // SetReadySpell's HUD line (EntityEffectManager.cs:355) -
 // GetLocalizedText('pressButtonToFireSpell'), Internal_Strings_en
 // m_Id 211. AUDIT 24: the port had invented "<spell> readied."
 export const PRESS_BUTTON_TO_FIRE_SPELL = 'Press button to fire spell.';
+
+// AUDIT 63 F14: the SoulBound Enchanted payload's one door
+// (SoulBound.cs:90-96 -> RemoveFilledTrap :129-155). Registered upward,
+// the setEnchantmentEffectDoors shape effects.js already uses at its own
+// tail: enchantments.js is a leaf under effects.js and cannot import this
+// file back. Every host imports mysticism.js, and so does the item
+// maker's own path (ui/itemMakerWindow.js -> systems/enchanting.js).
+setEnchantmentEffectDoors({ removeFilledTrap });

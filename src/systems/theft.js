@@ -89,6 +89,41 @@ export function privatePropertyTheft({ basket, pickpocketSkill = 0, shopQuality 
   };
 }
 
+/** AUDIT 63 F48: THE THIRD MEMBER - DaggerfallTradeWindow.DoSteal
+ *  (:907-932), the OPEN shop's shoplift. Same arithmetic as the
+ *  private-property member above and the OPPOSITE order of tallies,
+ *  which is why it is a sibling and not a caller:
+ *
+ *      if (WindowMode == Buy && cost > 0) {
+ *          weightAndNumItems = (int)basketItems.GetWeight() + basketItems.Count;
+ *          chance = CalculateShopliftingChance(player, quality, weightAndNumItems);
+ *          TallySkill(Pickpocket, 1);                      // :914, ALWAYS, BEFORE the roll
+ *          if (Dice100.FailedRoll(chance)) {               // got away with it
+ *              AddHUDText("stealSuccess", 2);
+ *              PlayerEntity.Items.TransferAll(basketItems);
+ *              TallyCrimeGuildRequirements(true, 1);       // :921, SUCCESS ONLY
+ *          } else {
+ *              AddHUDText("stealFailure", 2);
+ *              CrimeCommitted = Theft; SpawnCityGuards(true);
+ *          }
+ *          CloseWindow();
+ *      }
+ *
+ *  AttemptPrivatePropertyTheft inverts both: its guild tally is
+ *  unconditional and its Pickpocket tally fires only when it got away.
+ *  Do not fold the two together.
+ *
+ *  `caught` is `!Dice100.FailedRoll(chance)` - the roll landing UNDER
+ *  the chance is the bad outcome, because `chance` is the chance of
+ *  being SEEN. There is NO empty-basket guard here: DFU gates on
+ *  `cost > 0` at the call site, not on the count, so that gate is the
+ *  window's. */
+export function shopliftAttempt({ basket, pickpocketSkill = 0, shopQuality = 0, rolls = Math.random } = {}) {
+  const weightAndNumItems = shopliftingLoad(basket);
+  const chance = calculateShopliftingChance(pickpocketSkill, shopQuality, weightAndNumItems);
+  return { weightAndNumItems, chance, caught: dice100(chance, rolls()) };
+}
+
 /** The shop-shelf arm (:681-687). DFU compares the shelf's COUNT with
  *  what it held when the window opened, so putting an item of your own
  *  onto the shelf can mask a theft of one - kept, because the count

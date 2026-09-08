@@ -134,7 +134,7 @@ test('17n F3: parseCareerData leaves every numeric field finite and unsigned', (
 
 test('17n F3: a career with advantages survives the save round trip', () => {
   // AUDIT 17h found the port silently dropped player reputation on
-  // save. The career is spread as plain CFG data (save.js:61,88), so
+  // save. The career is spread as plain CFG data (save.js:62,88), so
   // the flags ride along - pinned because the same shape has bitten
   // this flow before.
   const c = career();

@@ -27,6 +27,7 @@ import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
@@ -787,8 +788,16 @@ export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {
 ];
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
- *  Answers null when nothing is armed. Open wins if both are somehow
- *  armed (it is the one that can still fail on the lock).
+ *  Answers null when nothing is armed.
+ *
+ *  AUDIT 63 F41: LOCK IS TESTED FIRST. ActivateActionDoor runs
+ *  `if (HandleLockEffect(actionDoor)) return; if (HandleOpenEffect(
+ *  actionDoor)) return;` (PlayerActivate.cs:693-696), and the two
+ *  handlers (:1012-1021, :1023-1032) look up two INDEPENDENT
+ *  incumbents - Open and Lock are separate IncumbentEffect classes,
+ *  each parked on forcedRoundsRemaining, so casting Open and then Lock
+ *  leaves both armed and the door is LOCKED to the caster's level and
+ *  swung shut (Lock.cs:100-129). This answered 'open' on that path.
  *
  *  X3: the level travels LIVE. Both triggers read
  *  manager.EntityBehaviour.Entity.Level at the door (Open.cs:118,
@@ -798,12 +807,12 @@ export const nearbyLootRecords = ({ piles = [], containers = [], foes = [] } = {
  *  activation, is that read. */
 export function doorSpellFor(entity) {
   const find = (k) => entity?.activeEffects?.find((a) => a.kind === k && !a.ended);
-  const open = find('openArmed');
-  const lock = open ? null : find('lockArmed');
-  const armed = open ?? lock;
+  const lock = find('lockArmed');
+  const open = lock ? null : find('openArmed');
+  const armed = lock ?? open;
   if (!armed) return null;
   return {
-    kind: open ? 'open' : 'lock',
+    kind: lock ? 'lock' : 'open',
     holderLevel: entity?.level ?? 1,
     // D9: the Skeleton's Key. Open.CheckCastByItem asks the ARMED
     // BUNDLE's castByItem whether it is the artifact with world
@@ -820,6 +829,23 @@ export function doorSpellFor(entity) {
     // carried no casting item. Both ship at D9, so the key is a key.
     skeletonKey: castBySkeletonKey(armed.castByItem),
   };
+}
+
+/** AUDIT 63 F41: the EXTERIOR door's own lookup.
+ *  HandleOpenEffectOnExteriorDoor (PlayerActivate.cs:1036-1043) does its
+ *  own `FindIncumbentEffect<Open>` and there is no HandleLockEffect on
+ *  that path at all - PlayerActivate calls the Lock handler only from
+ *  ActivateActionDoor (:693) - so an armed Lock must not hide an armed
+ *  Open at a building. Reading Open directly here is what keeps
+ *  doorSpellFor free to answer Lock first for the action door.
+ *
+ *  No skeletonKey: TriggerExteriorOpenEffect (Open.cs:146-160) tests
+ *  only the player's level and says so in its own summary ("for the
+ *  classic effect, the player's level is always checked, even for the
+ *  Skeleton Key"). */
+export function exteriorOpenSpellFor(entity) {
+  const open = entity?.activeEffects?.find((a) => a.kind === 'openArmed' && !a.ended);
+  return open ? { kind: 'open', holderLevel: entity?.level ?? 1 } : null;
 }
 
 /** Drop the armed entry once a door has consumed it - DFU's
@@ -1567,11 +1593,17 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       });
     },
     // DaggerfallDateTime.RaiseTime + `SyntheticTimeIncrease = true`
-    // (:161-162): the fortnight is a CLOCK MOVE, not fourteen days of
-    // magic rounds - the broker is told to sit the jump out, so a
-    // new vampire does not wake up starved and diseased. The port's
-    // advanceWorldMinutes is that same bare move.
-    raiseTime: (seconds) => advanceWorldMinutes(seconds / 60),
+    // (VampirismInfection.cs:161-162). AUDIT 63 F13 corrected what this
+    // comment used to claim - that the broker "sits the jump out". It
+    // does not: the fortnight runs the full capped catch-up like any
+    // other jump (EntityEffectBroker.cs:224-241 has no synthetic arm),
+    // and the flag buys exactly three exemptions - ItemDeteriorates
+    // (:76-80), HealthLeech (:101-105) and CastWhenHeld's durability
+    // loss (:131-136). So the new vampire's magic items survive the
+    // fortnight; his diseases and spells still age through it.
+    // advanceWorldMinutes is the bare clock move, and the marker it
+    // leaves behind is what makes the next host frame claim the window.
+    raiseTime: (seconds) => { setSyntheticTimeIncrease(true); return advanceWorldMinutes(seconds / 60); },
     // "Death is not eternal" (:187-188) - a DaggerfallMessageBox on
     // TEXT.RSC 401. The LINES are shared; the BOX is the host's, the
     // same split D1's DeathScreen mount uses, because the dungeon
@@ -1725,7 +1757,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:220`, the standalone host, has always had the right
+ *  `dungeon.js:239`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

@@ -63,6 +63,11 @@ export class QuestResourceBehaviour {
     this.targetQuest = null;
     this.targetResource = null;
     this.enemy = null;               // enemyEntityBehaviour - cached for Foe targets
+    // AUDIT 63 F2: Unity's `Destroy(component)` stops the component
+    // dead - it never Updates again and never receives activation.
+    // The port's behaviour object survives its own destroy event
+    // (JS has no fake-null), so the destroyed state is explicit.
+    this.isComponentDestroyed = false;
     this._destroyHandlers = [];
   }
 
@@ -86,6 +91,7 @@ export class QuestResourceBehaviour {
 
   /** Update (:132-203), the order verbatim. */
   update() {
+    if (this.isComponentDestroyed) return;   // AUDIT 63 F2: a destroyed component does not Update
     // Ensure target resource has this behaviour assigned - coupling
     // is otherwise lost when reloading a game
     if (this.targetResource != null) {
@@ -146,6 +152,7 @@ export class QuestResourceBehaviour {
    *  EVERY quest, and its result ASSIGNS over the direct click's
    *  (the follow-up-quest bootstrap door, C#'s own shape). */
   doClick() {
+    if (this.isComponentDestroyed) return false;   // AUDIT 63 F2: PlayerActivate.cs:1523-1528's GetComponent<QuestResourceBehaviour>() misses after Destroy, and the activation falls through to talk/guild routing
     let foundInActiveQuest = false;
     if (this.targetResource != null) {
       this.targetResource.setPlayerClicked();
@@ -206,6 +213,20 @@ export class QuestResourceBehaviour {
    *  teardown sequence does. */
   destroyGameObject() {
     this.host?.destroy?.();
+    this.isComponentDestroyed = true;   // AUDIT 63 F2: Destroy(gameObject) takes its components with it
+    this.notifyDestroyed();
+  }
+
+  /** MonoBehaviour.Destroy(component) - Quest.cs:522's teardown, the
+   *  COMPONENT alone. The GameObject stays in the scene, so
+   *  host.destroy() must NOT run; what does go is the host's
+   *  `questBehaviour` field, which is this port's stand-in for C#'s
+   *  `GetComponent<QuestResourceBehaviour>()` (machine.js writes it,
+   *  worldModes/world/exterior read it on the activation path). */
+  destroyComponent() {
+    if (this.isComponentDestroyed) return;
+    this.isComponentDestroyed = true;
+    if (this.host?.questBehaviour === this) this.host.questBehaviour = null;
     this.notifyDestroyed();
   }
 

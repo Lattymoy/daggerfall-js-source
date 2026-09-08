@@ -94,6 +94,34 @@ export function rayAabb(origin, dir, aabb) {
 }
 
 /**
+ * AUDIT 63 F37: the world box a RAY must test against one action
+ * object - the collider DFU's Physics.Raycast actually meets.
+ *
+ * A posed object measures LIVE. DaggerfallAction.TweenToEnd
+ * (Internal/DaggerfallAction.cs:361-379) is iTween.RotateBy (:378) and
+ * iTween.MoveTo (:379) on the GameObject, so its MeshCollider travels
+ * with the transform, and both ray sites read a live hit:
+ * PlayerActivate.cs:381-385 (ActionCheck -> Receive(Direct)) and
+ * WeaponManager.cs:459-464
+ * (WeaponEnvDamage -> Receive(Attack)). The port's precomputed `aabb`
+ * is the AT-REST placement box (dungeonContext writes it for the
+ * collision-trigger pass, which wants exactly that), so preferring it
+ * left a moved platform unclickable at its new pose while its ghost
+ * still answered - and shadowed - the ray at the old one.
+ *
+ * Recomputing (rather than translating a baseAabb the way _applyFlat
+ * does) is required: a model mover carries ActionRotation as well as
+ * ActionTranslation, and an offset-shifted box is wrong under
+ * rotation. Objects with no mesh - effects, relays, moveFlats - keep
+ * their stored box, which is the only one they have.
+ */
+export function objectAabb(o) {
+  if (!o) return null;
+  if (o.cpu && o.matrix) return worldAabb(o.cpu.positions, o.matrix);
+  return o.aabb ?? null;
+}
+
+/**
  * Build activation targets from an ActionSystem's live objects - ONE
  * source for both scenes (audit 2026-08-16: the scenes built targets
  * inline with worldAabb(o.cpu.positions, o.matrix) and CRASHED on
@@ -105,7 +133,7 @@ export function rayAabb(origin, dir, aabb) {
 export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) {
   const targets = [];
   for (const o of objects.values()) {
-    const aabb = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    const aabb = objectAabb(o);
     if (!aabb) continue;
     targets.push({ key: o.key, aabb, distance });
   }
@@ -130,7 +158,7 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
  * @returns {object|null} the nearest clicked quest foe
  */
 export function pickQuestFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
-  return pickFoeAlong(eye, dir, foes, collider, distance, (f) => !!f.questBehaviour);
+  return pickFoeAlong(eye, dir, foes, collider, distance, (f) => !!f.questBehaviour)?.foe ?? null;
 }
 
 /**
@@ -143,6 +171,17 @@ export function pickQuestFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVA
  * @returns {object|null} the nearest live foe the ray hits
  */
 export function pickFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, () => true)?.foe ?? null;
+}
+
+/** AUDIT 63 F33: the same pick, WITH the hit distance.
+ *  ActivateMobileEnemy's steal arm gates on `hit.distance >
+ *  PickpocketDistance` (PlayerActivate.cs:832-836) - DFU reads the
+ *  distance off the one RaycastHit its ray already produced, so the
+ *  pick has to hand it back rather than have the caller re-measure
+ *  against a different volume.
+ *  @returns {{foe: object, distance: number}|null} */
+export function pickFoeHit(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
   return pickFoeAlong(eye, dir, foes, collider, distance, () => true);
 }
 
@@ -166,7 +205,7 @@ function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
     best = f;
     bestD = d;
   }
-  return best;
+  return best ? { foe: best, distance: bestD } : null;
 }
 
 /**
@@ -175,6 +214,29 @@ function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
  * @returns {string|null} target key
  */
 export function pickActivatable(eye, dir, targets, collider) {
+  return pickActivatableHit(eye, dir, targets, collider)?.key ?? null;
+}
+
+/**
+ * AUDIT 63 F33 (review round): the SAME pick, with the winning hit's
+ * distance handed back.
+ *
+ * DFU fires ONE ray and dispatches on the ONE RaycastHit it produces
+ * (PlayerActivate.cs:314 `Physics.Raycast(ray, out hit, RayDistance,
+ * playerLayerMask)`); every check below it - the action door (:374),
+ * the loot container (:388), the static NPC (:402), the mobile NPC
+ * (:412) and the mobile ENEMY (:419) - reads `hit.transform` off that
+ * same hit (MobileEnemyCheck, :1243-1248). So a foe is dispatched only
+ * when the foe IS the nearest thing the ray met: a chest at arm's
+ * length always beats a foe standing behind it.
+ *
+ * The port has no unified raycast - each kind of target is picked from
+ * its own pool - so a host that wants DFU's answer has to compare the
+ * two picks by DISTANCE, which means this one has to return it.
+ *
+ * @returns {{key:string, distance:number}|null}
+ */
+export function pickActivatableHit(eye, dir, targets, collider) {
   let bestKey = null;
   let bestDist = Infinity;
   let bestAabb = null;
@@ -203,5 +265,5 @@ export function pickActivatable(eye, dir, targets, collider) {
       && hz >= b.min[2] - skin && hz <= b.max[2] + skin;
     if (!inside) return null;
   }
-  return bestKey;
+  return { key: bestKey, distance: bestDist };
 }

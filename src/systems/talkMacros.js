@@ -250,12 +250,33 @@ export function talkMacroHooks(ctx) {
  *  niladic handlers, each already carrying GetValue's ladder - so a
  *  row the talk source does not override answers its sentinel rather
  *  than nothing. `%pql` is absent because it is not a DFU macro. */
-export function talkMacroHandlers(ctx) {
-  const mcp = { source: talkMacroSource(ctx) };
+export function talkMacroHandlers(ctx, mcp = { source: talkMacroSource(ctx) }) {
   const hooks = talkMacroHooks(ctx);
   const table = {};
   for (const symbol of MACRO_SYMBOLS) table[symbol] = () => getMacroValue(symbol, mcp, hooks);
   return table;
+}
+
+/** DaggerfallMessageBox.SetTextTokens' expansion
+ *  (DaggerfallMessageBox.cs:432-441): `MacroHelper.ExpandMacros(ref
+ *  tokens, mcp)` before the label ever sees the tokens - which every
+ *  one of the four DaggerfallUI.MessageBox overloads
+ *  (DaggerfallUI.cs:1328-1362) routes through.
+ *
+ *  AUDIT 63 F3: the mcp is NULL here, and that is the whole point of a
+ *  separate door. All three of TalkToNpc's refusals
+ *  (TalkManager.cs:2626, :2632, :2645) call the mcp-less overload, so
+ *  MacroHelper.GetValue (:502-527) resolves every GLOBAL row - %pcn,
+ *  %pcf, %cn, the faction rows - and returns the `[nullMCP]` sentinel
+ *  for a source-method row like %oth (:1371-1375 returns null on a
+ *  null mcp). Expanding these with the live talk MCP would print a
+ *  real oath where DFU prints "%oth[nullMCP]" - a NEW departure, not a
+ *  fix. The HOOKS stay: MarkLocationOnMap, Honorific and
+ *  GreetingOrFollowUpText are MacroHelper globals that read the
+ *  TalkManager singleton directly whatever the mcp. */
+export function expandMessageBoxTokens(tokens, ctx) {
+  const copy = (tokens ?? []).map((t) => ({ ...t }));
+  return expandTalkMacros(copy, talkMacroHandlers(ctx, null));
 }
 
 /** MacroHelper's macro terminators (:412). Any non-alpha character

@@ -21,14 +21,14 @@ Nine sweeps. Two findings. Neither is in a path a player has seen.
 
 | # | Sweep | Result |
 |---|---|---|
-| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:343 is the classic renderer inside the factory, not the controller) |
+| 1 | Every property a HOST reads off the sky controller, against the keys its return object carries | **clean** (one false alarm: `sky.setPanorama` at shared.js:357 is the classic renderer inside the factory, not the controller) |
 | 1b | The same for `magic` (createPlayerMagic's return), `precip` and `labGrass` (class members), `hudCtx` (each host's literal), across all four hosts | **clean**, once shorthand keys (`readySpell,`) were counted - the first pass reported five misses that were my regex |
 | 2 | Every shader uniform in src/render: declared but never set, set but never declared | 167 declarations, **clean** |
 | 2b | Declared AND set, but never READ by any shader body | **F1** |
 | 3 | Every optional-chain read in scenes+ui whose property name is defined NOWHERE in the tree (the general form of GR3's fault) | 528 reads, 28 candidates, **all 28 shorthand keys** the scan missed (`fnt,` in makeFont, `compassBox,` in the HUD art, `flatPosition,` on the quest marker). Clean |
 | 4 | `window.__X` probe surfaces a tool or test reads that src never sets | 155 read, 36 unset - **every one probe-local**, set by the tool's own `page.evaluate`. Not findings; a limit of the scan |
 | 5 | `getPref` keys against PREF_DEFAULTS, both directions | 7 keys, all defaulted; `proceduralSky` unread by design (a documented migration key); **F2** |
-| 6 | GR3's other two revived consumers: does the value chain past the new getter go anywhere | **yes, both** - the terrain shader reads all five deck uniforms (`uShadowAmt/uCloudCover/uCloudSoft/uCloudTime/uCloudWind`, renderer.js:437-513) and `precip.enhanced` gates the lab rain path (`drawLab`). **Corrected by f3/render, below:** this row also claimed it gates `uEnh`, and that was FALSE - `draw()` returns into `drawLab` on its first line, so `uEnh` was uploaded as 0 on every frame the classic lane drew and never once as 1. Sweep 2b's own question, asked one level up: a uniform declared, set and READ by a shader body that no draw can reach |
+| 6 | GR3's other two revived consumers: does the value chain past the new getter go anywhere | **yes, both** - the terrain shader reads all five deck uniforms (`uShadowAmt/uCloudCover/uCloudSoft/uCloudTime/uCloudWind`, renderer.js:461-529) and `precip.enhanced` gates the lab rain path (`drawLab`). **Corrected by f3/render, below:** this row also claimed it gates `uEnh`, and that was FALSE - `draw()` returns into `drawLab` on its first line, so `uEnh` was uploaded as 0 on every frame the classic lane drew and never once as 1. Sweep 2b's own question, asked one level up: a uniform declared, set and READ by a shader body that no draw can reach |
 | 7 | Every enhanced door has a host that calls it | pinned since AUDIT UI 2; holds |
 | 8 | Line-cited Ledger rows resolve to the rows they name | pinned (CD1-5); holds after WIND1's renumbering |
 | 9 | The suite on today's tree | 6,225 green, with WIND1 on its branch |

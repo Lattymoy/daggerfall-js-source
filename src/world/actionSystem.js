@@ -83,6 +83,28 @@ export const DOOR_VERB_FLAGS = new Set([
   ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
 ]);
 
+/** AUDIT 63 F36/F40: `GetComponent<DaggerfallActionDoor>()`, the one
+ *  question DFU asks of a collider before calling it a door -
+ *  EnemyMotor.ObstacleCheck (EnemyMotor.cs:1159) and
+ *  EnemySenses.CanSeeTarget (EnemySenses.cs:913) both ask it, and
+ *  OpenDoors (EnemyMotor.cs:1425-1442) consumes the handle they store
+ *  with no flag test of its own.
+ *
+ *  It is NOT the door-VERB family above. RDBLayout.cs:247-259 attaches
+ *  the component to EVERY action-door model and only then, `if
+ *  (HasAction(obj))`, the action record - so the ordinary dungeon
+ *  door has no record at all and is still a DaggerfallActionDoor.
+ *  Conversely DaggerfallActionDoorSpecial (RDBLayout.cs:901) is a
+ *  SEPARATE MonoBehaviour (Internal/DaggerfallActionDoorSpecial.cs:24
+ *  vs Internal/DaggerfallActionDoor.cs:28), so the GetComponent misses
+ *  it. `kind === 'door' && !special` is the port's own spelling of that
+ *  component everywhere else it models it (attemptBash, activate);
+ *  this is that spelling with a name, and the Castle Daggerfall hack
+ *  calls it too since AUDIT 63 F44 - that site had been spelling the
+ *  GetComponent as `kind === 'door'` alone, which admits the special
+ *  door the C# lookup can never return. */
+export const isActionDoorObject = (o) => !!o && o.kind === 'door' && !o.special;
+
 // Delegated relays (P10/U6): Teleport, the text actions and
 // SetGlobalVar run through scene seams inside _runRelay. Activate
 // (0x1e) is a VERBATIM no-op - DFU's delegate body is `return;` - and
@@ -122,6 +144,37 @@ export const TRIGGER_GATE = Object.freeze({
   [TRIGGER_FLAGS.Door]: ['Door'],
 });
 export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
+
+/** AUDIT 63 F45 (review round): WHICH OBJECTS HAVE A
+ *  DaggerfallActionCollision AT ALL. RDBLayout.AddAction attaches the
+ *  component only for these four TriggerFlags
+ *  (Utility/RDBLayout.cs:992-996), and DaggerfallActionCollision -
+ *  driven by PlayerCollisionHandler.OnCharacterCollided, itself driven
+ *  only by Game/PlayerCollision.cs' OnControllerColliderHit - is the
+ *  ONLY collision caller of DaggerfallAction.Receive. So an object
+ *  carrying any other flag can never take a WalkOn/WalkInto Receive in
+ *  DFU, not merely be refused by Receive's own gate.
+ *
+ *  The distinction was invisible while everything downstream of the
+ *  gate was the only consequence: TRIGGER_GATE admits WalkOn/WalkInto
+ *  for exactly these four flags, so a bump on any other object played
+ *  nothing. It stopped being invisible when F38 gave recorded DOORS a
+ *  collision box, because Receive runs
+ *  CastleDaggerfallMagicDoorsSpecialOpenHack BEFORE the gate
+ *  (DaggerfallAction.cs:183 - the ROAD-B B4 ordering, which is
+ *  correct): a Castle Daggerfall foyer door carrying the ordinary
+ *  `Door` trigger flag has no DaggerfallActionCollision in DFU and can
+ *  only take the hack from the activate ray, where the port would have
+ *  unlocked and swung it open on a mere bump. The caller filters its
+ *  collision pass with this, so the port's reachable Receive set is
+ *  DFU's component set. */
+export const COLLISION_TRIGGER_FLAGS = Object.freeze([
+  TRIGGER_FLAGS.Collision01, TRIGGER_FLAGS.Collision03,
+  TRIGGER_FLAGS.MultiTrigger, TRIGGER_FLAGS.Collision09,
+]);
+/** RDBLayout.cs:992-996 - "if a collision type action or action flat,
+ *  add DaggerFallActionCollision component". */
+export const hasActionCollision = (o) => !!o && COLLISION_TRIGGER_FLAGS.includes(o.triggerFlag ?? TRIGGER_FLAGS.None);
 
 export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
@@ -183,6 +236,13 @@ export function lookAtLockText(lockValue, level, lockpickSkill) {
 export const TYPE_11_TEXT_INDEX = 8600;   // ShowText: TEXT.RSC record = Index + 8600
 export const TYPE_12_TEXT_INDEX = 5400;   // ShowTextWithInput: Index + 5400
 export const TYPE_99_TEXT_INDEX = 7700;   // DoorText: Index + 7700
+// AUDIT 63 F39: DoorText is the one action text that overrides the HUD
+// pop delay - DaggerfallAction.cs:875 `DaggerfallUI.AddHUDText(tokens,
+// 2.0f)` -> DaggerfallUI.cs:775-781 -> PopupText.cs:130-141, which
+// hands the delay to AddText(string, float) PER LINE (PopupText.cs:106).
+// The port's hudText.add defaults to PopupText's own popDelay of 1.0
+// (PopupText.cs:28), so the plaque was scrolling off in half the time.
+export const DOOR_TEXT_HUD_DELAY_S = 2.0;
 
 /** DaggerfallAction.actionTypeTwelveLookup, verbatim - the classic
  *  riddle answers per text id (case-insensitive match). */
@@ -707,9 +767,10 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *
    *  The numeric tests come first and the component lookup last, which
    *  is DFU's stated reason for putting the check on this path at all
-   *  ("very fast and doesn't require any scene searches"). `o.kind ===
-   *  'door'` IS the GetComponent - only addDoor mints a hinge-swinging
-   *  object with currentLockValue/state. IsLocked is currentLockValue >
+   *  ("very fast and doesn't require any scene searches").
+   *  `isActionDoorObject` IS the GetComponent - only addDoor mints a
+   *  hinge-swinging object with currentLockValue/state, and a SPECIAL
+   *  door is the other component (AUDIT 63 F44). IsLocked is currentLockValue >
    *  0 and IsClosed is the SWING state 'start' (DaggerfallActionDoor.cs
    *  :71-84), not the record's Move state. ToggleDoor() is called with
    *  its default activatedByPlayer = false, so the unlocked door opens
@@ -721,7 +782,15 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     if (!ctx.isPlayerInsideDungeon) return;
     if (ctx.currentMapId !== CASTLE_DAGGERFALL_MAP_ID) return;
     if (!CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS.includes(o.loadID)) return;
-    if (o.kind !== 'door') return;                        // GetComponent<DaggerfallActionDoor>()
+    // AUDIT 63 F44 (review round): the HELPER, which is what this line
+    // always claimed to be. `kind === 'door'` alone also admits a
+    // DaggerfallActionDoorSpecial - a SEPARATE MonoBehaviour
+    // (Internal/DaggerfallActionDoorSpecial.cs:24 vs
+    // Internal/DaggerfallActionDoor.cs:28) that
+    // `GetComponent<DaggerfallActionDoor>()` (DaggerfallAction.cs:270)
+    // can never return - and it has no lock at all, so IsLocked is not
+    // even a question it answers.
+    if (!isActionDoorObject(o)) return;                   // GetComponent<DaggerfallActionDoor>()
     if (!(o.currentLockValue > 0 && o.state === 'start')) return;   // IsLocked && IsClosed
     o.currentLockValue = 0;
     this.toggleDoor(o);

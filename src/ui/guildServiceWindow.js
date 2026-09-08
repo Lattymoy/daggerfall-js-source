@@ -188,7 +188,10 @@ export class GuildServiceWindow {
     audio.playOneShot(SOUND.ButtonClick, 1);
     switch (hit) {
       case 'GuildsJoin': this._join(); return;
-      case 'GuildsTalk': this.hooks.onTalk?.(); this._close(); return;
+      // AUDIT 63 F44: TalkButton_OnKeyboardEvent's KeyUp arm
+      // (:304-308) is `TalkToStaticNPC(serviceNPC)` and NOTHING else -
+      // no CloseWindow, exactly like the click arm below.
+      case 'GuildsTalk': this.hooks.onTalk?.(); return;
       case 'GuildsExit': this._close(); return;
       default: this._service();   // whichever of the nineteen service buttons hit
     }
@@ -207,7 +210,17 @@ export class GuildServiceWindow {
     // F141: PlayOneShot(SoundClips.ButtonClick) heads every handler -
     // Join (:501), Talk (:293), Service (:457), Exit (:477).
     if (!this.hooks.member() && inRect(GUILD_RECTS.join, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._join(); return true; }
-    if (inRect(GUILD_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.onTalk?.(); this._close(); return true; }
+    // AUDIT 63 F44: TalkButton_OnMouseClick (:291-295) is the ONE
+    // handler in this window that does not CloseWindow - Join (:502),
+    // Exit (:478) and every DoGuildService arm do - because
+    // TalkToStaticNPC PushWindows the conversation (TalkManager.cs:
+    // :757, :767) and the popup is meant to be waiting underneath when
+    // it ends. Its four sibling popups (DaggerfallTavernWindow.cs:265,
+    // DaggerfallMerchantServicePopupWindow.cs:139,
+    // DaggerfallMerchantRepairPopupWindow.cs:146,
+    // DaggerfallWitchesCovenPopupWindow.cs:164) all close first; this
+    // one deliberately does not.
+    if (inRect(GUILD_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.onTalk?.(); return true; }
     if (inRect(GUILD_RECTS.service, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._service(); return true; }
     if (inRect(GUILD_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     return false;

@@ -66,21 +66,32 @@ test('audit24 wave29: a BROKEN item cannot be equipped', () => {
   assert.equal(isBrokenItem({}), false);
   assert.equal(isBrokenItem(null), false);
 
-  // end to end through equipItem
+  // AUDIT 63 F23: and the TABLE does not refuse it. This block used to
+  // assert `equipItem(entity, sword) === null` for a 0-condition item,
+  // which pinned the port at the WRONG SEAM: ItemEquipTable.cs:94-154
+  // has no condition test at any point, which is exactly what lets
+  // PlayerEntity.cs:955-960 relink a classic save's worn 0-condition
+  // piece with `equipTable.EquipItem(newItem, true, false)`.
   const entity = { items: [], equip: null, armorValues: null };
   const sword = { group: 'Weapons', templateIndex: 120, material: 0, currentCondition: 0 };
   entity.items.push(sword);
-  assert.equal(equipItem(entity, sword), null, 'refused');
-  assert.equal(sword.equipSlot, undefined, 'and never took a slot');
+  assert.notEqual(equipItem(entity, sword), null, 'the TABLE equips it - ItemEquipTable.cs:94-154 has no condition test');
+  assert.notEqual(sword.equipSlot, undefined, 'and it takes its slot, as PlayerEntity.cs:959 needs');
+  assert.doesNotMatch(rd('src/systems/equip.js').slice(
+    rd('src/systems/equip.js').indexOf('export function equipItem('),
+    rd('src/systems/equip.js').indexOf('export function unequipSlot(')),
+  /if \(isBrokenItem\(item\)\) return null;/, 'no condition gate inside EquipItem');
 
   const sound = { group: 'Weapons', templateIndex: 120, material: 0, currentCondition: 1 };
   entity.items.push(sound);
   assert.notEqual(equipItem(entity, sound), null, 'condition 1 equips');
   assert.notEqual(sound.equipSlot, undefined);
 
-  // the gate runs BEFORE the prohibition chain in the UI too
+  // the refusal is the WINDOW's, and it runs BEFORE the prohibition chain
   const ui = rd('src/ui/nativeInventory.js');
   const fn = ui.slice(ui.indexOf('_refuseForbidden(it) {'), ui.indexOf('/** ShowInfoPopup'));
   assert.ok(fn.indexOf('isBrokenItem(it)') < fn.indexOf('isForbiddenEquip('), 'broken first, as DFU orders it');
   assert.match(fn, /ITEM_BROKEN_TEXT_ID/);
+  // ...and the enhanced pack's own door carries it too
+  assert.match(rd('src/ui/enhancedInventory.js'), /if \(isBrokenItem\(item\)\) \{ notice = /);
 });

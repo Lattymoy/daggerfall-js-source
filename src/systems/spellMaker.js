@@ -292,7 +292,14 @@ export const MUST_CHOOSE_NAME_ID = 1704;
 export const SPELL_INSCRIBED_ID = 1705;
 export const NO_EFFECTS_TEXT = 'You must add at least one effect to this spell.';
 
-const hasSpellbook = (entity) => (entity?.items ?? []).some(
+/** `Items.Contains(ItemGroups.MiscItems, (int)MiscItems.Spellbook)`.
+ *  EXPORTED for the SERVICE DOOR: DFU runs this test twice, once at
+ *  DaggerfallGuildServicePopupWindow.cs:391 (which decides whether the
+ *  maker opens at all) and once in the Buy ladder below
+ *  (DaggerfallSpellMakerWindow.cs:749-753, whose own comment says
+ *  "Presence of spellbook is also checked earlier"). AUDIT 63 F12 -
+ *  the port had only the inner one. */
+export const hasSpellbook = (entity) => (entity?.items ?? []).some(
   (it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
 
 /**

@@ -2521,7 +2521,7 @@ from the fifteen effect classes that call `new PotionRecipe(...)`:
 registered PotionMaker-only, with no `MagicSkill` and no spell-book
 description (`HealSpellPoints.cs:21-30`), and sets no `ClassicKey` at
 all. No SPELLS.STD row can name it - which is precisely what
-`effects.js:246-252` recorded when S15 undid an earlier mis-mapping of
+`effects.js:261-267` recorded when S15 undid an earlier mis-mapping of
 `(10,9)` onto it, and why the sink list has read *"restoreMagicka
 returns with potions"* ever since. It returns here. A potion bundle
 is not a spell record: DFU builds one from `EffectEntry(effect.Key,
@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:766`, `world.js:680`), fired
+`playerTicker.advance(60)` (`exterior.js:771`, `world.js:688`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:1749`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:1783`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,8 +3365,8 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:123`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1739`), and `BB_VS`
-samples the quad's top at v=1 (`renderer.js:277-282`). A browser decode
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1773`), and `BB_VS`
+samples the quad's top at v=1 (`renderer.js:299-304`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
 defect AUDIT 62 F26 fixed for the seasons mod's textures, one door over.
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1413` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1421` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5725,3 +5725,1312 @@ moves. `test/x11.test.js`'s position pin moves with the law (3.35 over
 feet at 2, and 0.675 crouched) and dies when the term is dropped. The
 `LightNormal.cs` line cites in `CANDLE` were seven lines stale against
 the reference tree and are re-resolved (`:89`, `:96`).
+
+## AUDIT 63 F8 - A CLASSIC IMPORT LOST EVERY GUILD MEMBERSHIP IT CARRIED (2026-09-08)
+
+`GuildManager.ImportMembershipData` (`GuildManager.cs:345-364`) does not
+copy a membership record: it REBUILDS the guild, `CreateGuildObj(
+GetGuildGroup(factionID), factionID)` (`:167-213`), and stores the
+OBJECT in the group's slot - so an imported membership IS the
+FightersGuild / Temple(Arkay) / KnightlyOrder(Horn) instance and
+`IsMember()` answers true.
+
+The port's slot carries the guild's NAME instead, because the key is the
+GROUP and one HolyOrder slot has to remember WHICH temple
+(`systems/guilds.js` `membershipKey` / `membershipOf`). `joinGuild`
+writes the port's guild-record name; `classicGuildMemberships` wrote the
+FACTION.TXT record name - "The Fighters Guild", "Arkay", "The Host of
+the Horn" - and the two vocabularies are disjoint. Every name-keyed
+consumer therefore took the NON-MEMBER arm for an imported character
+while the group slot stayed occupied: `updateRank` bailed so rank never
+moved again, `canAccessService` refused Training and Repair as
+"members only", Stendarr's `avoidDeath` and Akatosh's `guildFastTravel`
+never fired, the knightly free tavern room never fired - and
+`showsJoinButton` reads only the slot's rank, so the hall still drew the
+MEMBER face with no Join button. The player looked like a member and
+was refused everything, with no in-game way back in.
+
+`buildBook` resolves the guild the way `CreateGuildObj` does now -
+`createGuildForGroup(group, factionId, factionDict)`, the port's mirror
+including the templar-order walk to the divine - and stores ITS name,
+keyed by `membershipKey(guild)` so the import and the walk-in join
+cannot drift apart. A group with no guild is DFU's `default: return
+null`, which the port drops rather than filing a slot no consumer can
+read (DFU stores the null and NREs at `guild.Join()`).
+
+`test/classicsave.test.js`'s SAV2 pin used to assert the FACTION.TXT
+string - a pin that restated the port. It asserts the guild record's
+name and then reads it back through `hasJoined`, and the fixture grew a
+second live row on a TEMPLAR ORDER's faction id (FACTION.TXT's own shape:
+`:612` Arkay carries `ggroup -1`, its child `:629` The Order of Arkay
+carries 17) so the HolyOrder parent walk - the arm whose name was
+farthest off - is pinned too.
+
+## AUDIT 63 F9 - THE THIEVES GUILD AND DARK BROTHERHOOD HALLS WERE NEVER ON THE MAP (2026-09-08)
+
+Both guilds override `Join()` to register two location events and reveal
+their hall at once (`ThievesGuild.cs:168-173`, `DarkBrotherhood.cs
+:177-182`); `RegisterEvents` (`:197-206` / `:206-215`) subscribes
+`PlayerGPS.OnEnterLocationRect` and
+`StreamingWorld.OnAvailableLocationGameObject`, both handlers re-run the
+reveal (`:227-234` / `:236-243`), `Leave()` is `UnregisterEvents` alone,
+and `RestoreGuildData` (`:253-257` / `:262-266`) re-registers on load
+without revealing. `RevealGuildHallOnMap` (`:241-247` / `:250-256`)
+walks `BuildingDirectory.GetBuildingsOfFaction(factionId)`
+(`BuildingDirectory.cs:147-154`) and calls
+`PlayerGPS.DiscoverBuilding(building.buildingKey, GetGuildName())`.
+
+None of it was ported. The port had no faction-driven discovery at all,
+and a hideout is an unsigned House2 RESIDENCE - the door already gates on
+membership (`systems/buildingLocks.js`, `PlayerActivate.cs:1280-1285`) -
+so a member's own guild house was drawn nameless on the town map for
+ever, with no way to find it again.
+
+Two halves landed. First `PlayerGPS.DiscoverBuilding`'s OVERRIDE-NAME arm
+(`Internal/PlayerGPS.cs:917-973`), which `systems/discovery.js` did not
+have: an override ignores the already-discovered bail (`:927` is gated on
+`overrideName == null`), stashes the canonical name once
+(`if (!db.isOverrideName) db.oldDisplayName = db.displayName`, `:965-966`),
+sets `displayName` and `isOverrideName` (`:967-968`), and clears the flag
+again when the override says nothing new (`:971-972`). That flag is
+load-bearing: `ExteriorAutomap.cs:672-680`'s `!IsResidence ||
+isOverrideName` is the only thing that puts a plate on a residence, and
+the port's plate builder already implements it - it had no writer.
+
+Then the reveal itself, `systems/guildHallReveal.js`, over the FULL
+building set (`world/buildingSummaries.js`, which carries `factionId` and
+`buildingKey` per row - the talk directory is doors, the wrong pool), with
+the guild name READ rather than restated: `GetGuildName -> GetAffiliation`
+(`Guild.cs:165-176`) is FACTION.TXT's own name for faction 42 / 108. The
+port has no event bus, so the membership book IS the registration - the
+state `Join` writes and `Leave`/expulsion drops. Both exterior hosts drive
+it, at DFU's own moments: `scenes/world.js` on the join
+(`guildInitiationQuestEnded`, the port's only door into either guild) and
+on every location-rect entry - the same edge F062/F089 already play - and
+`scenes/exterior.js` once at load, because its one location becomes
+available exactly once, the precedent that host already sets for the
+graveyard ambient arming.
+
+## AUDIT 63 F10 - THE COURT TRIED A DRAINED DEFENDANT ON HIS UNDRAINED CHARM (2026-09-08)
+
+`DaggerfallCourtWindow.cs:385-386`:
+
+    int chanceToGoFree = playerEntity.RegionData[regionIndex].LegalRep +
+        (playerSkill + playerEntity.Stats.GetLiveStatValue(DFCareer.Stats.Personality)) / 2;
+
+Both halves of that sum are LIVE reads - `playerSkill` is
+`GetLiveSkillValue(Etiquette/Streetwise)` at `:376`/`:381`. The port read
+the skill live and the stat off `player.stats`, the PERMANENT map, so a
+Fortify Personality spell or a Personality-draining disease moved DFU's
+chance by half its magnitude and the port's not at all. `liveStat`
+(`systems/statMods.js`, the port of `DaggerfallStats.cs:155-164`) was
+already the reader everywhere else this stat is used. The `== null` guard
+keeps the port's no-stats fallback of 50 - `liveStat` falls back to a base
+of 0, so `liveStat(...) ?? 50` would have silently changed it.
+
+## AUDIT 63 F11 - CALCULATETRADEPRICE READ THE PERMANENT PERSONALITY AT EVERY CALLER (2026-09-08)
+
+`FormulaHelper.CalculateTradePrice` reads the player twice per branch and
+all four reads are live: `:1993` (selling) and `:1999` (buying) take
+`player.Stats.LivePersonality` beside `GetLiveSkillValue(Mercantile)`.
+The port passed the live Mercantile and the permanent Personality - two
+halves of one formula at two different layers - at all seven call sites:
+the temple's cure quote (`systems/guildServiceActions.js`) and the six in
+`scenes/worldModes.js` (the native trade window, the keyed shelf's buy and
+sell, the static-NPC service, the spellbook's buy mode, and repair).
+`systems/tavern.js` and `systems/tradeModes.js` take the object from their
+caller and needed no change.
+
+It is worst exactly where the service exists for it: the temple's customer
+is by definition diseased, seven of the seventeen diseases damage
+Personality, and the damage lives only in the mod channel. The buying
+branch is `(100 - LivePersonality)`, so DFU quotes a drained player MORE
+and the port quoted him the undrained price. All seven read `liveStat`
+now, and the pin drives a real drain and a real fortify through the real
+quote - the old pins all used Personality 50 with no active effects,
+where live and permanent agree, which is why they never caught it.
+
+## AUDIT 63 F12 - THE SPELL MAKER OPENED FOR A PLAYER WITH NO SPELLBOOK (2026-09-08)
+
+DFU tests for the spellbook TWICE. Once at the service door -
+`DaggerfallGuildServicePopupWindow.cs:389-395`: `CloseWindow()`, then
+`Items.Contains(ItemGroups.MiscItems, (int)MiscItems.Spellbook)` decides
+whether the maker is pushed at all, and without it the popup prints the
+localized `noSpellbook` string ("You have no spellbook!",
+`Internal_Strings.csv:656`). And once inside the window's Buy ladder
+(`DaggerfallSpellMakerWindow.cs:749-753`, whose own comment reads
+"Presence of spellbook is also checked earlier" - it names the door).
+
+The port had only the inner one, and its note beside the arm claimed
+parity: "the window opens either way, as DFU's does once the popup's own
+check passes" - describing a check the port never had. A Mages Guild
+member who had sold his book got the whole maker screen and was refused
+at Buy with TEXT.RSC 1703, where DFU closes the popup and boxes one line.
+The door gate is in, `hasSpellbook` is exported for it, the refusal
+carries `closesWindow: true` because DFU's `CloseWindow()` runs on BOTH
+branches, and the Buy-ladder gate stays exactly as it was - DFU keeps
+both.
+
+## AUDIT 63 F33 - A CLASS ENEMY COULD NOT BE PICKPOCKETED IN ANY HOST (2026-09-08)
+
+`PlayerActivate.ActivateMobileEnemy` (`:800-841`) had no port at all. A
+LIVING foe was not an activation target anywhere in the tree - the only
+foe the ray could reach was a corpse - so Info/Grab/Talk said nothing
+about the thing in front of you, and Steal mode could not pickpocket a
+class enemy. `CalculatePickpocketingChance`'s level-difference arm
+(`FormulaHelper.cs:262-265`, `chance += 5 * (player.Level - target.Level)`)
+was ported with exactly one caller in the tree, and that caller passed
+null: the arm was dead in the app while its pure-function pin stayed
+green.
+
+The law, in one place (`player/mobileEnemyActivate.js`) because five
+ladders carry it. Info, Grab and Talk pop `youSeeA`/`youSeeAn` with the
+localized enemy name and the vowel test over its first letter
+(`:806-826`), with no distance gate of any kind. Steal breaks out
+silently for a monster (`:827-828`, EnemyClass only), and then the
+distance test is NESTED INSIDE the attempt flag (`:830-836`) - an
+already-tried foe produces NO output at any range, the same nesting
+AUDIT 26 F048 forced on the townsperson arm - before the flag is set
+and `Pickpocket(mobileEnemyBehaviour)` runs.
+
+`Pickpocket` is ONE method in DFU with an optional target (`:1611-1673`),
+so `systems/talk.js`'s `pickpocketTownsperson` became that one law,
+`pickpocket(player, { target })`. Exactly two things turn on the target:
+the chance takes the enemy's level, and the crime/guard pair is skipped
+(`:1655` gates it on `target == null`). Everything else - the tally
+before the roll, the 33% split, the 1-6 gold, `TallyCrimeGuildRequirements`
+in the gold arm, the modal/HUD split - is target-independent in DFU and
+stays so. The enemy's failure tail replaces the crime with the room:
+`if (!IsHostile) MakeEnemiesHostile();` then
+`MakeEnemyHostileToAttacker(player)` (`:1661-1671`), the hostility read
+BEFORE the walk because the walk flips this foe too.
+`resetAllyTeamOnPlayerAttack` is NOT part of it - that belongs to
+`DaggerfallEntityBehaviour`'s damage path, and Pickpocket does not call
+it.
+
+All five ladders carry the arm - `scenes/world.js`, `scenes/exterior.js`,
+both of `scenes/worldModes.js`, and `scenes/dungeon.js`. Each calls it
+TWICE, and that is the port's shape rather than DFU's: DFU has ONE
+raycast and dispatches on what it hit, so an enemy wins only when it is
+the nearest hit, while the port picks each kind of target from its own
+pool. The NEAR call is decided against the rest of the ladder BY
+DISTANCE (see the review-round section below); the FAR call runs only
+once the ladder has found nothing at all, which is where DFU's un-gated
+Info line and the pickpocket's `youAreTooFarAway` live.
+
+The attempt flag rides the live foe entity and is NOT serialized:
+`PickpocketByPlayerAttempted` is read and written by `PlayerActivate`
+alone in the whole DFU tree and appears in no save record, so persisting
+it would itself be a departure.
+
+
+## AUDIT 63 F33 (REVIEW ROUND) - THE NEAR ENEMY CALL DISPATCHED FOE-FIRST, NOT NEAREST-HIT (2026-09-08)
+
+The first pass of F33 placed `tryMobileEnemyActivate(..., DEFAULT_ACTIVATION_DISTANCE, ...)`
+AHEAD of every ladder and let it consume unconditionally on any live foe
+inside 3.2 units. Its own justification - that the near call runs "at the
+reach every other target below is gated to, so the enemy takes the click
+only where DFU's one raycast would have hit it first" - was false: sharing
+a reach is not the same as being nearer, and the call never compared its
+hit distance with anything. A chest at 0.8 units and a Knight at 2.55 are
+both inside the band, and the foe took the click. That is the very failure
+the section claimed to avoid, reproduced inside the near band where it is
+far more common: a dungeon fight in front of a lever, a chest, a lootable
+corpse or a static NPC.
+
+DFU cannot do this. `PlayerActivate.Update` fires ONE ray
+(`:314`, `Physics.Raycast(ray, out hit, RayDistance, playerLayerMask)`)
+and every check in the Hit Checks region reads `hit.transform` off that
+single `RaycastHit` - the action door (`:374`), the loot container
+(`:388`), the static NPC (`:402`), the mobile NPC (`:412`) and, last,
+`MobileEnemyCheck` (`:419`, `:1243-1248`). `ActivateMobileEnemy` (`:800`)
+is reached ONLY when the foe is the thing the ray actually struck, so a
+chest at arm's length always beats a foe standing behind it, at every
+range.
+
+The port has no unified raycast, so a host has to answer the same
+question by comparing distances. `player/activate.js` gains
+`pickActivatableHit`, the same pick returning `{key, distance}`
+(`pickActivatable` is now one line over it), and
+`tryMobileEnemyActivate` takes `deps.nearerThan` - the distance of
+whatever the rest of the ladder picked, Infinity when it picked nothing.
+The foe consumes only when STRICTLY nearer.
+
+Each of the five ladders was re-ordered so its own pick happens before
+the near call rather than after it:
+
+- `scenes/dungeon.js` and both ladders in `scenes/worldModes.js` run
+  `pickActivatableHit` over the whole target set first and pass its
+  distance in; the winning key is then read off the same pick, so the
+  ray is cast once as before.
+- `scenes/world.js` and `scenes/exterior.js` compare against everything
+  their ladder can strike: the two corpse pools' pick, the dropped-pile
+  pick, the street's townsfolk (`townTalk.rayPersonDistance`, the
+  cylinder pick `tryActivate` itself uses) and the door/street-NPC/
+  bulletin-board set the interior transition picks from. That last one
+  needed a seam: `tryEnter`'s target build is now
+  `exteriorActivationTargets()`, and `exteriorActivationDistance(eye, dir)`
+  resolves it to one distance along the HOST's ray so both picks are
+  measured on one line, as DFU's one raycast is.
+
+The FAR call is unchanged - un-gated, at RayDistance, once nothing else
+took the click - because that is where `:806-826`'s Info line and
+`:832-836`'s `youAreTooFarAway` live.
+
+The pin is the scene the reviewer built: a chest AABB entered at 0.8 and
+a live Knight entered at 2.55, both under one ray. The foe alone is a hit
+and speaks; with the chest's 0.8 as `nearerThan` it must return false and
+say nothing, in Grab and in Steal (where `:837`'s attempt flag must also
+stay unset), and it must still take a click when the ladder's winner sits
+at 3.0. The source sweep now also requires every one of the five near
+calls to be handed a rival distance.
+
+## AUDIT 63 F33 (REVIEW ROUND) - THE "NO CRIME FOR AN ENEMY TARGET" PIN WAS VACUOUS (2026-09-08)
+
+The line meant to hold `:1654-1658` (`if (target == null) // target is a
+townsperson`, then `CrimeCommitted` and `SpawnCityGuards(true)`) read
+`assert.equal(thief().crimeCommitted, undefined)`. `thief()` is the
+fixture FACTORY: it built a brand-new player that no pickpocket had ever
+touched, so the assertion was true for any implementation. Writing
+`player.crimeCommitted = 'Pickpocketing'` into the enemy failure arm -
+the exact departure DFU forbids - left the suite green.
+
+The assertion now reads the entity the arm actually ran against (the
+player passed into the failing `activateMobileEnemy` call), and its twin
+asserts the TOWNSPERSON arm - `pickpocket(player, {})` with the same
+failing roll - DOES set `crimeCommitted`. The pin now distinguishes the
+two arms instead of restating that a fresh object has no fields, and dies
+under both mutations: writing the crime on the enemy arm, and deleting it
+from the townsperson arm.
+
+## AUDIT 63 F9 (REVIEW ROUND) - THE STREAMING HOST REVEALED BEFORE FACTION.TXT WAS READ (2026-09-08)
+
+`GetGuildName` is `GetAffiliation` (`Guild.cs:165-176`), a read of
+`PlayerEntity.FactionData` with `"unknown-guild"` (`:175`) returned when
+`GetFactionData` finds no record. That fallback answers a MISSING
+RECORD - `FactionData` is parsed long before any guild object exists in
+DFU, so `GetAffiliation` cannot be reached with the faction file unread.
+
+`scenes/exterior.js` already waited on the file
+(`Promise.resolve(townTalk.ensureFactions?.()).then(...)`).
+`scenes/world.js` did not: it only fire-and-forgets `townTalk.ensureLoaded()`
+at boot, and the enter-rect edge that drives `revealMemberGuildHalls`
+could run first. `factionName` would then resolve empty,
+`revealGuildHallsOnMap` would substitute the literal `'unknown-guild'`,
+and the override arm would write `displayName: 'unknown-guild',
+isOverrideName: true` into a discovery record that `snapshotDiscovery`
+saves - a placeholder plate on the town map surviving the load, until
+some later rect entry happened to re-override it. The two hosts did not
+carry one law.
+
+The streaming host now takes the same gate. The location it fired for -
+the discovery key and the building summaries - is resolved SYNCHRONOUSLY
+on the edge and captured, because the wait is a microtask and the player
+must not be re-read after it; only the reveal itself waits. A resolved
+faction dictionary that genuinely lacks the record still falls through to
+`'unknown-guild'`, which is DFU's own answer.
+
+## AUDIT 63 F13 - SYNTHETIC TIME: fast travel wore your magic items out (2026-09-08)
+
+`EntityEffectBroker` has a field the port had no equivalent of at all:
+`SyntheticTimeIncrease` (`EntityEffectBroker.cs:81`). Three places in
+DFU move the clock by hours or days and then tell the broker that the
+minutes were SYNTHESISED rather than lived -
+`DaggerfallCourtWindow_OnEndPrisonTime` (`:841-842`),
+`DaggerfallTravelPopUp_OnPostFastTravel` (`:846-847`) and
+`VampirismInfection.cs:161-162`'s fortnight. The catch-up still runs
+in full: spells expire, diseases advance, poisons tick. What sits the
+window out is exactly three enchantment arms, each of which reads the
+flag as the top clause of its own MagicRound:
+
+- `ItemDeteriorates.cs:76-80` - the third disjunct of the early return
+  that opens `MagicRound`, ahead of the `% conditionLossPerRounds`
+  gate at `:82-83`;
+- `HealthLeech.cs:101-105` - the identical three-way guard, ahead of
+  even the `timeLeechActive` computation;
+- `CastWhenHeld.cs:131-136` - `ApplyDurabilityLoss` wraps its ENTIRE
+  body, the degrade-rate read included.
+
+The port carried the `%4` cadences and none of the guards, and its
+catch-up is a real loop: `world.js`'s `fastTravelTo` advances the one
+clock, `shared.js`'s ticker runs `tickPlayerMinutes`, and
+`claimMagicRounds` hands `runMagicRoundsFor` a window capped only at
+`MAX_CATCHUP_ROUNDS = 2880`. A three-day journey is therefore 720
+hits at one per four rounds: an equipped `ItemDeteriorates` item or a
+Cast-When-Held ring loses 720 condition and is spliced out of the pack
+by `enchantLowerCondition`, and an "unless used weekly" `HealthLeech`
+item deals 720 points through the player's real damage sink. A prison
+sentence reaches the same place through `arrestFlow.js`'s
+`advanceDays`, which moves the clock without moving the round marker,
+so the next host frame claims the same capped 2880.
+
+**The flag lives in a leaf.** Its natural home is `worldTick.js` -
+this port's broker - but `worldTick` imports the enchantment pump and
+`enchantments.js` is deliberately kept off that cycle (its own note at
+the import). `systems/effectBroker.js` is a leaf with no imports at
+all, so the pump can read the flag and the broker can own its
+lifecycle without closing the ring.
+
+**Where it is lowered, and why not at the tail of the player's half.**
+DFU lowers the flag at the tail of the broker `Update` that ran the
+window, OUTSIDE the `if (catchupRounds > 0)` block (`:244-248`), so
+exactly one Update is shielded however many rounds it claimed. The
+port's Update is split in two: `worldTick` claims the window and runs
+the PLAYER, then each host fans the SAME window out to its foe pools
+(the ticker's subscribers; `dungeonContext`'s own two loops) - and
+`ItemDeteriorates`/`HealthLeech` are not player-gated in DFU or here.
+Lowering at the tail of the player's half would leave every foe in the
+window unshielded, and asking each of the four hosts to lower it after
+its own fan-out is a law a host can forget - and a FORGOTTEN LOWER IS A
+PERMANENT SHIELD, a worse failure than the bug. So the lowering is
+deferred by one claim: `claimSyntheticTimeIncrease`, called at the top
+of `claimMagicRounds`, retires a flag an earlier window already took
+and then takes it for this one. Same single window shielded, and no
+host can drop it. `resetMagicRoundMarker` clears it too - a load is a
+fresh broker and nothing in DFU serialises the field.
+
+**Four raise sites, and one that is deliberately NOT raised.**
+`fastTravelTo` arms BOTH of its advances: DFU raises the flag once at
+`DaggerfallTravelPopUp.cs:383`, after every `RaiseTime` the method
+makes - the trip at `:344` and all three arrival clamps at `:355`,
+`:367`, `:374` - so one broker Update covers the whole jump, where the
+port spends it in two windows. `arrestFlow`'s `onEndPrisonTime` raises
+it after `advanceDays`, which is `DaggerfallCourtWindow.cs:475-476`'s
+own order (the sentence `RaiseTime`, then the event); one home there
+covers both exterior hosts. `shared.js`'s infection-host `raiseTime`
+raises it for the vampire fortnight. `ReleaseFromPrison`'s own four
+hours (`:485`) get NO raise of their own - on a zero-day plea or an
+acquittal those 240 minutes run their rounds in full, exactly as DFU
+runs them.
+
+The comment on `shared.js`'s `raiseTime` was wrong and is corrected
+with the fix: it claimed the fortnight was "a CLOCK MOVE, not fourteen
+days of magic rounds - the broker is told to sit the jump out". The
+broker is told no such thing; it runs the capped catch-up like any
+other jump, and the flag buys those three exemptions and nothing else.
+
+`RegensHealth`, `UserTakesDamage`, `GoodRepWith`/`BadRepWith` and
+`RepairsObjects` stay ungated, because DFU gates none of them. DFU's
+second consumer of the flag - `OnEndSyntheticTimeIncrease` ->
+`RerollItemEffects` (`EntityEffectManager.cs:2175-2177`) - is not
+load-bearing here: the port's reroll runs inside
+`enchantmentMagicRound` on the `REROLL_MINIMUM_HOURS` cadence, which
+any window this large satisfies. If the guard is ever extended to skip
+the reroll collection, that forced pass has to be added with it.
+
+**REVIEW ROUND (2026-09-08).** `test/travelguild.test.js`'s TP1 pin
+owns the ORDER of the arrival clamp and `RaiseSkills`, and this lane
+weakened its clamp anchor to the bare substring
+`playerTicker.advance(clamp)` - three lines above the pin's own comment
+saying an anchor must be matched "with its LINE START and indentation,
+not as a bare substring", because "the campaign wrapped the call in
+`if (false)` and a substring test still found the text". The anchor is
+now the whole armed statement,
+`\n      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }`,
+asserted as a regex and then used as the index - so the pin owns the
+guard and the F13 raise as well as the order it was written for.
+
+
+## AUDIT 63 F14 - SOUL BOUND: forty-three souls for a man with none (2026-09-08)
+
+`SoulBound` is the one enchantment whose settings DFU builds from the
+PACK rather than from a table, and the port had neither half of that.
+
+**The list.** `SoulBound.GetEnchantmentSettings` (`:46-72`) calls
+`EnumerateFilledTraps` (`:105-127`) and emits a row only where the
+count is non-zero (`:52-55`). With no filled trap it returns an empty
+array, and `DaggerfallItemMakerWindow.EnumerateEnchantments`
+(`:252-274`) then never adds the key to `groupedSideEffectTemplates`
+at all - the effect is ABSENT from the side-effects list, not merely
+paramless. The port read `ENCHANTMENT_COSTS.SoulBound.costs`, a fixed
+43-entry table, with no inventory read anywhere: every soul in the
+game was selectable by a player carrying nothing. SoulBound prices
+NEGATIVE (down to -8000 for a Daedra Lord), and the maker sums powers
+and side effects together while the gold walk takes powers only, so
+that player could mint 8000 free enchantment points, every visit.
+
+The fix filters at the PICKER, not in the cost table.
+`enchantmentParamValues`/`enchantmentParamName`/`enchantmentCost` have
+three other consumers that must keep answering for all 43 params - the
+info panel of an item already carrying the enchantment, the legacy
+value of a minted or imported magic item, and the forced-set lookup -
+so `primaryPickerList` and `primaryPick` take an optional `souls` set
+instead (`null` means "do not ask", which is every non-maker caller).
+`mysticism.js` grows `enumerateFilledTraps` beside `fillEmptyTrap`,
+its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
+counts only when its soul is `!= None && < 43` (`:115`), while a
+filled Azura's Star is counted with no bound at all (`:121-125`).
+`ui/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
+picker seams read that snapshot - see the review round below for why.
+
+That makes a comment in `enchantmentCatalogue.js` false and it is
+rewritten with the law. The singleton shortcut
+(`DaggerfallItemMakerWindow.cs:832-838`) excludes SoulBound by name,
+"where player must select soul to correctly assign enforced
+side-effects" (`:833`), and the port's note said the clause "can never
+reach a length of one, so it is defensive and cannot fire". It was
+unreachable only because the port read the table: with exactly ONE
+filled trap the filtered list IS length one, and that clause is
+precisely what forces the secondary picker open so the forced set
+attaches.
+
+**The cost.** The registry row declared `PAYLOAD.Enchanted` and
+supplied no `enchanted` arm, so `doEnchantedPayloads`' `row.enchanted?.
+(env)` was an optional call on undefined and `RemoveFilledTrap` never
+ran - `grep trappedSoulType src/` found no writer anywhere in the
+enchanting path. A bound soul was free, and one gem could bind an
+unlimited number of items. `removeFilledTrap` now lives beside its
+mirror in `mysticism.js` with `SoulBound.cs:129-155`'s control flow
+verbatim: the range guard first (`:131-132`); then the FIRST ordinary
+soul trap holding that soul is removed and the walk RETURNS (`:135-147`
+- one trap, and an ordinary trap always beats the Star); only if none
+matched, EVERY matching Azura's Star is emptied (`:150-155` - that
+loop has no break, so two Stars holding the same soul both empty, and
+the Star is emptied rather than destroyed).
+
+It reaches the registry through the doors bag `effects.js` already
+uses (`setEnchantmentEffectDoors`), registered by `mysticism.js` at
+its tail: `enchantments.js` sits under `effects.js`, which
+`mysticism.js` imports, so the coupling can only run upward as a
+registration.
+
+**REVIEW ROUND (2026-09-08).** Three corrections, all to this lane's
+own work.
+
+*The host wiring had no pin.* The two `souls:` arguments in
+`ui/itemMakerWindow.js` were the ONLY place the filter reached the
+catalogue, and nothing in the suite constructed an `ItemMakerWindow` -
+`test/audit63_effects.test.js` drove `primaryPickerList`/`primaryPick`
+directly, so deleting both arguments restored the whole defect with the
+full suite byte-identical. Two window-level pins now drive the real
+window: an empty-handed maker's side-effects picker must not list the
+Soul Bound row, a one-trap maker's must, and picking it must open a
+one-row secondary picker naming that soul.
+
+*The label pairing had no pin either.* `primaryPick` pairs labels to
+params BEFORE the soul filter narrows the list, because the label list
+is positional over the whole 43-row table. Rewriting it to filter first
+and pair afterwards - which mis-names every surviving row - left all
+fourteen tests green: the one assertion aimed at it checked only that
+the labels came out SORTED, and `AlphaSortSecondaryList` sorts the
+options by label after the mispairing, so they do. The pin now asserts
+the label VALUE against DFU's own source for it -
+`SecondaryDisplayName = GetLocalizedEnemyName(EnemyBasics.Enemies[i].ID)`
+(`SoulBound.cs:64`), where `Utility/EnemyBasics.cs` gives ID 3 the
+"Giant Bat" entry (`:334-338`) and ID 23 the "Wraith" one (`:997-1001`).
+
+*The window re-read the pack too often, and the cite was wrong.*
+`EnumerateEnchantments` has exactly three lines in
+`DaggerfallItemMakerWindow.cs`: the tail of `Setup` (`:171`), `OnPush`
+(`:182`), and its own definition (`:239`). `Refresh` begins at `:190`
+and rebuilds the labels and the filtered item list only - it does NOT
+re-enumerate. DFU's soul list is therefore frozen for as long as the
+window is open, and the divergence was reachable: after `_enchant()`
+spends the last trap of a soul, DFU still offers that soul for a second
+item in the same session (its `RemoveFilledTrap` walks the pack and
+finds nothing), where the port dropped the row. The enumeration now
+happens once, in the constructor - which IS DFU's `Setup`+`OnPush`,
+since `scenes/worldModes.js`'s `guildServiceItemMaker` mounts a fresh
+window per open - and both picker seams read the frozen field.
+
+## AUDIT 63 F15 - A VAMPIRE CAUGHT THE PLAGUE FROM A QUEST (2026-09-08)
+
+`AssignBundle`'s FIRST per-effect gate is one line with two halves
+(`EntityEffectManager.cs:495-499`):
+
+    if (effect is DiseaseEffect && IsEntityImmuneToDisease() && !specialInfection ||
+        effect is Paralyze && IsEntityImmuneToParalysis())
+        continue;
+
+The port had ported the paralysis half (`effects.js`'s
+`isEntityImmuneToParalysis`, `EntityEffectManager.cs:644-660`) and not
+the disease half. Its only stand-in was a single `racialOverride` line
+inside `inflictDisease`, on the monster-hit path - so the quest action
+`make pc ill with` (`MakePcDiseased.cs:66-67` -> `AssignBundle`, which
+the port reaches as `world.js`'s `makePcDiseased` -> `startDisease`)
+gave a vampire, a werewolf or a Disease-immune custom class a full
+disease entry where DFU drops the effect outright. `BypassSavingThrows`
+does not relax that gate: the saving-throw block is later, at
+`:561-579`. Five vendored quests carry the action, the main quest's
+Caliron's Curse among them.
+
+`isEntityImmuneToDisease` now stands beside its twin in `effects.js`,
+all three of `:623-641`'s steps: career Disease tolerance `Immune` or
+`Entity.IsImmuneToDisease` (which `VampirismEffect.cs:123` and
+`LycanthropyEffect.cs:194` set on every constant pass - the port's
+stand-in is the racialOverride entry itself, and the pending marker
+counts with it); the PLAYER's live race template Disease bit, which is
+the compound race both curses OR in (`VampirismEffect.cs:335`,
+`LycanthropyEffect.cs:554`), unless the career overrides with
+`LowTolerance` or `CriticalWeakness`; otherwise not hard-immune, and
+the saving throw still applies. The career arm closes a live gap on
+the MONSTER-HIT path too: a custom class that buys "Immunity to
+Disease" at creation was catching plague off a rat.
+
+The gate sits at the TOP of `startDisease`, which is the port's
+`AssignBundle` position - every producer reaches it after its own
+rolls - and carries DFU's own `specialInfection` exception, because
+that clause is on the reference's line even though no current caller
+needs it (`infection.js` mints its own entry).
+
+**The inline line in `inflictDisease` is deleted, not moved.**
+`FormulaHelper.InflictDisease` (`:1689-1712`) has NO immunity test at
+all: it takes the level check, ROLLS the saving throw and ROLLS the
+disease pick, and only then does `AssignBundle` drop the effect. The
+port's early return consumed neither roll, so every immune target
+shifted the RNG stream. The two verifiers split here - one wanted the
+line left exactly where it stood for fear of perturbing seeded pins,
+the other wanted it gone for the roll order - and the reference
+settles it: DFU draws both rolls, so the line goes.
+
+**REVIEW ROUND (2026-09-08).** Moving the line left a stale cite in
+someone else's pin. `test/audit58_pins2.test.js`'s
+"IsImmuneToDisease reads the PENDING marker" test quoted
+"`diseases.js:232 if (target.racialOverride || target.racialOverridePending)`"
+- the exact line this fix deleted. The pin still passes, because
+`isEntityImmuneToDisease` reads the pending marker and `inflictDisease`
+now reaches it through `startDisease`, so the record cited source that
+no longer exists anywhere. Rather than renumber it, the cite is NAMED:
+effects.js's `isEntityImmuneToDisease`
+(`EntityEffectManager.IsEntityImmuneToDisease :623-641`), read from
+diseases.js's `startDisease` gate, which is `AssignBundle`'s own
+position (`:495-499`). The Testing.md row for that suite carries the
+same correction.
+
+
+## AUDIT 63 F16 - SILENCE LANDED WITHOUT A WORD (2026-09-08)
+
+DFU prints "You are silenced." from TWO places. `SilenceCheck`
+(`EntityEffectManager.cs:1932-1946`, called from `SetReadySpell` and
+`CastReadySpell`) is the cast-time gate, and the port had it. The
+other is `Silence.StartSilence` (`Silence.cs:80-96`), reached from
+`ConstantEffect()` and `Resume()`, which sets `IsSilenced` and then -
+for the player's manager only - speaks the same `youAreSilenced`
+string once and clears `awakeAlert`. That is the same shape
+`ConcealmentEffect.cs:66-72` uses for "You are invisible." and the
+port DOES print. A wraith's Silence therefore landed in total silence
+and the player learned of it only on the next cast attempt.
+
+The port's buff arm already had the exact seam - a start-message
+lookup by buff kind, inside the `if (!inc)` branch, after the chance
+gate and the saving throw - and the table simply had no `silenced`
+row. It has one now, and the table is renamed `BUFF_START_TEXT` for
+what it holds (`CONCEALMENT_START_TEXT` stays live as its alias).
+`sinks.say` is this port's rendering of `manager.EntityBehaviour ==
+GameManager.Instance.PlayerEntityBehaviour`: only the player's sink set
+wires it, the foe sets deliberately do not, so one line covers all four
+hosts at once. `mysticism.js`'s `SILENCED_TEXT` re-points at the same
+constant instead of minting a second copy - the direction is forced,
+since `mysticism.js` imports `effects.js` and not the reverse.
+
+The once-per-incumbency behaviour is not a guard inside `StartSilence`
+(it has none, unlike `ConcealmentEffect`): `AssignBundle` refuses to
+add an unflagged incumbent (`EntityEffectManager.cs:553-558`), so a
+merged instance never reaches `liveEffects` and `DoConstantEffects`
+never ticks it. A stacking recast still stacks its rounds and says
+nothing - which is what the port's `if (inc)` branch already did.
+
+## AUDIT 63 F17 - EVERY CONJURED ITEM LIVED A MINUTE TOO LONG (2026-09-08)
+
+`CreateItem.Start` (`:96-100`) runs `base.Start` - which runs
+`SetDuration` - and then `PromptPlayer()`, which only PUSHES the item
+picker; it does not block. `AssignBundle` carries straight on in the
+same loop iteration to "At this point effect is ready and gets initial
+magic round" / `effect.MagicRound();`
+(`EntityEffectManager.cs:593-594`), and `CreateItem` overrides neither
+`MagicRound` nor `RemoveRound` - so `BaseEntityEffect`'s pair runs
+(`EntityEffect.cs:572-575` -> `:583-588`, `return --roundsRemaining`).
+The picker's callback runs frames later, and `CreateTempItem` reads
+THAT value: `item.TimeForItemToDisappear = (uint)(gameMinutes +
+RoundsRemaining)` (`CreateItem.cs:237`). `RoundsRemaining` is
+duration-1.
+
+The port answered the FULL rolled duration, and said so in two
+comments and a pin, all three asserting the opposite of the reference
+("the initial magic round has not run yet"). It has. The arm answers
+`max(0, duration - 1)` now - `RemoveRound`'s own floor, dead-safe
+rather than behavioural, since a `SupportDuration` effect with both
+duration terms at zero is not a record the spell maker mints - and
+both hosts pass it through unchanged. `effects.js`'s own header
+already stated the law the Create Item note contradicted.
+
+The `x11b` pins move with the law and are tightened while they move:
+the round-trip expiry is `cast + 30` for a duration that rolls 31, and
+the sweep is now asserted one minute either side of it, so a revert to
+the full duration fails both lines rather than sliding past a strict
+`<`.
+
+## AUDIT 63 F18/F32 - THE ARMOUR ARTIFACT WAS WORTH DOUBLE (2026-09-08)
+
+`GetMaterialArmorValue` (`DaggerfallUnityItem.cs:1007-1059`) does not
+end at its material ladder. Three lines past it stands DFU's own
+comment and clause - "Armor artifact appear to use armor rating divided
+by 2 rounded down" / `if (IsArtifact && ItemGroup == ItemGroups.Armor)
+result /= 2;` (`:1054-1056`) - and the port stopped one line short of
+it, as its own header cite (":1007-1050") admitted. The member has
+exactly two callers in the whole reference tree and the port mirrored
+both: `UpdateEquippedArmorValues` (`DaggerfallEntity.cs:608/:612`,
+`armorValues[index] -= (sbyte)(armor.GetMaterialArmorValue() * 5)`) and
+`ArmourMod` (`DaggerfallUnityItemMCP.cs:157-159`, the `%mod` macro).
+Neither halved.
+
+There are exactly two non-shield armour artifacts - Lord's Mail
+(`ArtifactsSubTypes` 15) and Ebony Mail (18), both Cuirasses - and both
+were worth twice DFU's protection: Lord's Mail took 75 off the Chest
+where DFU takes 35, and its info panel printed "+15" where DFU prints
+"+7". `combat/formulas.js` adds `armorValues[struckBodyPart]` straight
+into the to-hit chance, so this was 40 points of chance-to-hit, not a
+cosmetic. Artifacts are reachable in ordinary play: the Daedric quests
+mint them through `quest/item.js` -> `createArtifact`, and a classic
+save carries the flag bit.
+
+## AUDIT 63 F19 - THE INFO PANEL READ A SHIELD'S MATERIAL (2026-09-08)
+
+The same member's FIRST statement is the other half of the same defect.
+`GetMaterialArmorValue` opens `if (!IsShield) { ...ladder... } else {
+return GetShieldArmorValue(); }` (`:1010`, `:1049-1052`), and
+`GetShieldArmorValue` (`:1061-1077`) is MATERIAL-BLIND: Buckler 1,
+Round 2, Kite 3, Tower 4. The port's `armourModString` called the bare
+ladder, so a Daedric Tower Shield's `%mod` read "+21" where DFU prints
+"+4" and a steel Buckler's read "+9" where DFU prints "+1". Every
+shield in the game contradicted the paperdoll, which was right
+(`equip.js` has always branched on `isShieldTemplate` for the table).
+
+WHERE THE FIX WENT IS THE POINT. Both arms are one C# member, so the
+port has one too: `armorMaterials.itemArmorValue` is
+`GetMaterialArmorValue` whole - shield early return, then ladder, then
+the artifact halving - and the two consumers call it. `materialArmorValue
+(material)` stays exported unchanged as the ladder, because
+`combat/enemyEquipment.js` has armour RECORDS and no items and
+`audit24_enemytable` pins the two modules on the same function object.
+Three details that are law, not taste: the `ItemGroup == ItemGroups
+.Armor` gate on the halving is load-bearing (the port's
+`updateEquippedArmorValues` also admits the clothing FOOTWEAR window,
+which C# excludes); `GetIsShield` (`:1804-1814`) requires the Armor
+group as well as the template; and the material default is Leather
+(0x0000, DFU's `nativeMaterialValue` is a plain int field whose zero IS
+Leather), not `ArmorMaterialTypes.None`.
+
+## AUDIT 63 F20 - EVERY POTION DREW THE SAME BOTTLE (2026-09-08)
+
+The `PotionRecipeKey` setter has TWO side effects and its own docblock
+names both: "populating the item value from the recipe price ... Also
+populates texture record for potions"
+(`DaggerfallUnityItem.cs:383-385`). The body is `this.value =
+potionRecipe.Price` (`:395`) and `if (IsPotion) worldTextureRecord =
+potionRecipe.TextureRecord` (`:396-397`). AUDIT 39 F103 ported the
+price. The record was dropped, and `PotionRecipe.cs:34` defaults it to
+11 - the Glass Bottle's own world record - so all twenty potions drew
+one icon on the shelf, in the pack and in every loot pile.
+
+Seventeen of the twenty registrations override it, and the column is
+now beside the price with the C# file and line for each:
+`ElementalResistance.cs:137-140` (34/34/34/14), `WaterBreathing.cs:51`
+and `WaterWalking.cs:52` (32), the three illusion forms (33),
+`CureDisease.cs:70-71` and `CurePoison.cs:54` (35),
+`HealHealth.cs:67-68` (15/16), `HealSpellPoints.cs:49` (12),
+`FortifyStrength.cs:57` (13), `FreeAction.cs:53` (14). Stamina, Slow
+Falling and Levitation are exactly the three whose classes never write
+one, and they keep the 11.
+
+Both of the setter's own gates ride with it. `if (potionRecipe != null)`
+(`:392`) means a key no recipe answers leaves BOTH the value and the
+record standing - so the two halves are resolved from ONE lookup in
+`createPotion` and cannot disagree. `if (IsPotion)` (`:396`) means the
+MiscItems-4 recipe SHEET that `randomlyAddPotionRecipe` mints takes the
+price and not the record, which is why that row still draws its own
+template.
+
+Two sites were carrying the gap further. The quest mint
+(`quest/item.js`) built the bottle inline, bypassing the setter
+entirely - a quest potion carried the Glass Bottle's basePrice of 1 -
+and flattened `Questing/Item.cs:350`'s two arms (`(itemKey != -1) ?
+ItemBuilder.CreatePotion(itemKey) : ItemBuilder.CreateRandomPotion()`)
+onto one keyless bottle. It routes through `loot.js`'s two makers now.
+The classic-save import deliberately does NOT derive the record from
+the recipe: `FromItemRecord` assigns the lowercase FIELD (`:1577-1579`),
+bypassing the setter, after `:1555-1556` has already taken the icon
+from the save record's own `image2` word - see F21.
+
+## AUDIT 63 F21 - THE OGHMA INFINIUM DREW THE "BOOK" TEMPLATE (2026-09-08)
+
+`inventoryItemImage` addressed every icon from the TEMPLATE. DFU reads
+the ITEM: `GetInventoryTextureArchive` (`:1727-1734`) returns the
+instance's `worldTextureArchive`/`playerTextureArchive`, and
+`GetInventoryTextureRecord` (`:1739-1762`) returns the instance
+`worldTextureRecord` in the world arm and then carries an explicit
+carve-out whose comment IS the bug report - "Use texture record
+retrieved from MAGIC.DEF for artifacts. Otherwise the below code will
+give the Oghma Infinium record 2, from the 'Book' template."
+(`:1745-1747`) - standing BEFORE the variants block. `SetArtifact`
+(`:606-609`) writes all four fields from `GetArtifactTextureIndices`,
+and the port's `createArtifact` already wrote the same four; nothing
+read them. Every one of the 23 artifacts drew its mundane base art,
+literally including DFU's named failure case.
+
+The function now reads the item where C# reads the item and the
+template where C# reads the template: the world arm takes the item's
+own pair (which is also what makes F20's potion record visible and what
+gives a world-textured artifact base like the Sanguine Rose its art),
+the artifact carve-out takes `playerTextureRecord` with
+`playerTextureArchive` beside it, and `GetItemImage`'s own two tail
+rules - the katana `+1` (`ItemHelper.cs:418-420`) and the `archive == 0
+&& record == 0` fallback to the TEMPLATE's world texture (`:425-429`) -
+moved out of the else arm to where C# has them, one level above
+`GetInventoryTexture*`, so they run after every arm including the
+artifact one.
+
+The import path had nothing for that arm to read. `FromItemRecord`
+splits both image words - `playerArchive = image1 >> 7; playerRecord =
+image1 & 0x7f`, the same for `image2` (`:1539-1547`) - and assigns all
+four (`:1552-1555`); `classicSave.js` carried none of them, though it
+already peeled `image1`'s low seven bits for the variant. All four
+import now, which also gives `mysticism.js` the pair Open's
+`CheckCastByItem` identifies the Skeleton's Key by (`Open.cs:176-180`,
+`WorldTextureArchive == 432 && WorldTextureRecord == 20`) - an imported
+classic key could never be the key before. NOT done: guarding the
+variant derivation for artifacts. `FromItemRecord:1588-1594` has no
+such guard, and the carve-out above makes the value unobservable, so
+adding one would be a departure.
+
+## AUDIT 63 F22 - THE TAVERN TREASURE PILE DID NOT EXIST (2026-09-08)
+
+`DaggerfallInterior.AddFlats` (`:846-909`) does one thing besides
+collecting markers and lights: for every editor flat whose type is
+`Treasure` (19), in a building that is a Tavern or wears the Thieves
+Guild (42) or Dark Brotherhood (108) faction id (`:879-883`), it stands
+a `RandomTreasure` `DaggerfallLoot` at the marker with the CLOTHING
+archive's record 0 as its picture (`:891-897` - `clothingArchive, 0`
+literally, no icon roll and not the 216 archive a player's own pile
+takes) and fills it with `LootTables.GenerateLoot(loot, (int)PlayerGPS
+.CurrentLocationType)` (`:899`). The port parsed the marker type -
+`INTERIOR_MARKER.TREASURE` at `world/interiorLayout.js` - and `grep -rn
+INTERIOR_MARKER src/` returned five readers, every one of them testing
+REST or ENTER. The constant had no reader anywhere, so every tavern and
+both guild halls were missing the free pile DFU places in them.
+
+THE INDEX IS THE LOCATION'S. `(int)PlayerGPS.CurrentLocationType` is
+`DFRegion.LocationTypes` (TownCity 0 ... Coven 13), and `GenerateLoot`
+deliberately indexes the same 19-entry, dungeon-named key array with it
+(`LootTables.cs:123-146`) - so `DUNGEON_LOOT_KEYS[locationType]` is
+right bug-for-bug, fed from the live location record and never from the
+building type. An index off the end (`LocationTypes.None` is 0xffff)
+makes `GenerateLoot` return false with the container still standing,
+which the `?? '-'` key reproduces: the empty matrix, and
+`addPileLootExtras`' J..O window refuses `-` too.
+
+The gate is in `worldModes.js`, where the discovery record with its
+`buildingType`/`factionId` lives; `interiorContext.js` only hands out
+the parented marker positions beside `enterMarkers`. `interior.js` is a
+standalone viewer with no player entity and no loot machinery, so the
+four-hosts rule does not reach it - `worldModes.js` is the only host
+that carries the interior gameplay surface, and both outdoor hosts
+mount it.
+
+Two shapes the piles needed that a player's drop does not.
+`CreateLootContainer` (`GameObjectHelper.cs:658-700`) is a different
+member from `CreateDroppedLootContainer`: the icon is GIVEN, the
+container exists BEFORE anything is generated into it, and
+`playerOwned` is never set - so an empty roll still leaves a visible,
+openable pile (`PlayerActivate.cs:957-961` gives RandomTreasure "no
+special handling"), and `CanChangeDropIcon` refuses to cycle its
+picture the way it refuses a corpse's. `droppedLoot.seedPile` is that
+member: `dropPile`'s `!items.length -> null` guard is
+CreateDroppedLootContainer's shape and would have mounted nothing.
+Minting them through this host's own pile pool means the four seams
+already wired to it - the activation targets, the Detect Treasure feed,
+the per-frame flat tick and draw, and the scene cache - pick them up
+with nothing new, which is what DT1 and ID1 built that pool for.
+
+The marker pass runs AFTER `restoreInteriorScene()`, in DFU's own
+order: the cache speaks first, and a container it holds keeps its
+identity (DFU mints a loadID from the building key and the marker's
+coordinates, `:885-889`; the port carries a `containerKey` through the
+snapshot for the same purpose). DFU reaches the same place from the
+other side - `AddFlats` mints on every entry and `RestoreCachedScene`
+overwrites by loadID - so the two orders agree on every container the
+cache carries.
+
+## AUDIT 63 F22 - THE REVIEW ROUND: THE TAVERN THAT REFILLED (2026-09-08)
+
+The first cut of F22 closed with the wrong sentence: that a container
+the cache does NOT hold is "simply rebuilt with fresh loot". It is not,
+and believing it left the port with an endless tavern pile - loot it,
+walk out, walk back in, loot it again.
+
+Three references say so, and all three were unported.
+
+`GameObjectHelper.RemoveLootContainer` (`:852-864`) does not destroy a
+RandomTreasure container. It **deactivates** it -
+`loot.gameObject.SetActive(false)` - so the GameObject stays in the
+scene holding its loadID and its `SerializableLootContainer`.
+`SerializableLootContainer.GetSaveData` (`:55-77`) has no empty guard
+at all: every registered container rides the record, whatever it holds.
+And `RestoreSaveData` ENDS with `if (loot.Items.Count == 0)
+GameObjectHelper.RemoveLootContainer(loot)` (`:157-160`) - a container
+that comes back empty is removed again, not re-rolled.
+
+Put together: an emptied treasure pile stays emptied for the life of
+the save. The port instead spliced the pile out of the pool the moment
+the window closed on it (`releaseEmptied`), filtered empty piles out of
+the interior scene snapshot, and skipped empty entries on restore - so
+the marker came back unclaimed and `AddFlats` stood a freshly rolled
+pile on it.
+
+The pool carries the whole chain now. `deactivate` is
+RemoveLootContainer's `SetActive(false)`: the pile stays in `_piles`
+with its `containerKey`, loses its billboard, and drops out of
+`batches`, `lootTargets`, `pileFor` and `activePiles` - the last being
+`ActiveGameObjectDatabase.GetActiveLoot` (`:266-268`, "the enabled
+DaggerfallLoot components from ACTIVE registered loot"), which is what
+`UpdateNearbyObjects` (`PlayerGPS.cs:765-776`) walks, so a deactivated
+container is out of Detect Treasure too. `releaseEmptied` deactivates a
+scene-built container instead of freeing it, and still frees a player's
+own dropped pile whole: that one carries a fresh `NextUID` that nothing
+re-mints, so the port's owner rule (AUDIT 17e F28) costs nothing there,
+while the scene-built one's identity is the marker itself and must
+survive. `snapshotScene` is the write half of the interior cache,
+living beside `restorePiles` so the two cannot disagree about which
+piles exist, and it keeps a container whatever it holds; `restorePiles`
+takes an empty container back and deactivates it on arrival, which is
+`RestoreSaveData:157-160` exactly.
+
+### PLAYERACTIVATE HAS ONE FALL-THROUGH, SO THE PORT HAS ONE
+
+The first cut branched the interior activation on `pile.container` and
+built a second, inline loot identity for the container arm. DFU does
+not branch: `PlayerActivate.cs:957-961` is a single fall-through - "No
+special handling for all other loot container types: (Nothing,
+RandomTreasure, DroppedLoot)" - followed by
+`InventoryWindow.LootTarget = loot`. What differs between a scene-built
+container and the player's own pile lives on the `DaggerfallLoot`:
+`CreateDroppedLootContainer` sets `playerOwned = true`
+(`GameObjectHelper.cs:766`) and `CreateLootContainer` (`:691-704`)
+never touches it, so a scene-built container keeps
+`DaggerfallLoot.cs:41`'s `false` and `CanChangeDropIcon`
+(`DaggerfallInventoryWindow.cs:2141-2145`) refuses to cycle its
+picture. `droppedLootHooks` reads the flag off the pile now, and gained
+`containerImage` - `InventoryContainerImages.Chest`, which is
+`DaggerfallLoot.cs:37`'s default AND what both makers pass
+(`GameObjectHelper.cs:754-756`, `DaggerfallInterior.cs:891-893`). It is
+the fallback arm of `UpdateRemoteTargetIcon` (`:885-889`), reached only
+when the target has no world flat of its own (`:880-884`), so carrying
+it changes no existing pile's picture. The interior host's arm is one
+line again, and the "ONE shape for all four hosts, so a fifth call site
+cannot ship a partial identity" law that `droppedLootHooks` was written
+under holds.
+
+### THE ARM MOVED TO THE MEMBER IT IS PART OF
+
+`AddFlats`' treasure arm is a `DaggerfallInterior` member, and it sat
+in `worldModes.js` where nothing could execute it: its two load-bearing
+decisions - the identity that stops a cached container being re-minted,
+and the container's own window identity - were pinned only by regexes
+over the port's own source lines, which restate the port and cannot
+die. `seedInteriorTreasure` is exported from `interiorContext.js` now,
+beside the walk that collects the markers, taking the three things the
+member reads off game state (the building's discovery record,
+`PlayerGPS.CurrentLocationType`, the player's level and gender) and the
+pool the containers stand in. The host keeps a six-line wrapper that
+hands them over. Every F22 law is executed by a pin now: the gate over
+six buildings in and out, the picture, the location-typed key, the
+out-of-range index, the cached marker, the emptied container's whole
+round trip, and the window's identity for both container kinds. Twelve
+mutations were run against the pins; twelve died.
+
+### AND THE TABLE ROW THAT WAS NOT A TABLE ROW
+
+F23's two re-aimed `Testing.md` rows had their new prose appended
+straight after the test count with no `|` between, so the count cell
+read `2 AUDIT 63 F23 re-aimed ...`. `test/manifest.test.js` matches a
+row as `^\| <file> \| (\d+) \|` and neither row could match - a
+second, independent failure hiding behind the Suite total. The pipe is
+back and the prose is in the description cell where it belongs.
+
+## AUDIT 63 F23 - THE BROKEN-ITEM GATE SAT ONE SEAM TOO LOW (2026-09-08)
+
+`equip.js` already says where its sibling law lives, and why: "WHERE
+THIS LIVES IS THE LAW: DFU hangs it on the inventory WINDOW, not on
+ItemEquipTable.EquipItem". The `currentCondition < 1` refusal is the
+same shape - `DaggerfallInventoryWindow.cs:1330-1341`, one statement
+above the prohibition chain - and `ItemEquipTable.EquipItem`
+(`ItemEquipTable.cs:94-154`) has no condition test at any point. AUDIT
+24 put it inside `equipItem`, at the table seam.
+
+Both window callers gate ahead of it and pop TEXT.RSC 29, so the extra
+gate was dead on every path DFU refuses on, and live only below them.
+The one consumer that showed: `PlayerEntity.cs:955-960` relinks a
+classic save's worn gear with `equipTable.EquipItem(newItem, true,
+false)` - the alwaysEquip arm - and `FromItemRecord:1563` takes
+`currentCondition` verbatim off the record, so a character who saved
+wearing a 0-condition piece loaded with that slot empty and that piece
+missing from the armour table. The port admitted the divergence in
+`classicSave.js` and on `Port-Ledger.md`'s SAV2 row, in section C
+(unported, routed) rather than section A (approved departures) - an
+unrecorded departure on the classic path, fixable from the reference
+alone. The gate is gone, the ledger clause is struck FIXED, and the two
+pins that asserted it at the table seam
+(`audit24_wave29.test.js`, `enhancedInventory.test.js`) are re-aimed at
+the window - they now assert the OPPOSITE at the table, which is the
+half `PlayerEntity.cs:959` depends on.
+
+Left where it was found, out of this finding's scope:
+`PlayerEntity.cs:959` and the `ItemHelper` equips all pass
+`playEquipSounds: false` and the port's `equipItem` has no such
+parameter - it rings `_equipSoundSink` for every caller.
+
+## AUDIT 63 F24 - THE FOURTH HOST'S ENEMIES WERE IN NO ENVELOPE (2026-09-08)
+
+`SaveLoadManager.cs:865` writes `saveData.enemyData =
+stateManager.GetEnemyData();` unconditionally in `BuildSaveData` and
+`:1006` reads it back unconditionally; `SerializableStateManager`
+walks every registered enemy with no world-context filter, and
+`SerializableEnemy.cs` carries an explicit Interior arm
+(`GetEnemyWorldContext` :236-243, and :186-196's raw-transform restore
+for it). AUDIT 26 F216/F217 gave the two EXTERIOR pools and the
+dungeon their snapshots under the heading "both hosts". The INTERIOR
+host was never named, and it has two live enemy pools:
+`interiorFoes` and `interiorGuards`, both real, both filled in
+ordinary play - the daedric punishment wave, a `CreateFoe` wave, a
+Sanguine Rose or Soul Bound stand, and the city watch called into a
+shop for a crime. `interiorSaveData()` returned the door identity and
+the building record; `currentSceneState()` cached loot containers,
+action doors and dropped piles. A quicksave taken mid-fight inside a
+building saved none of the fight, and the load walked back in alone -
+a free escape from any indoor crime, which is the exact defect F217
+closed outdoors.
+
+It is the SAVE envelope and nothing else. DFU's `CacheScene` stores
+`new object[0]` at the Enemy slot ("Only cache loot containers &
+action doors for scenes") and `OnTransitionExterior` destroys the
+interior's enemies, which is what `interiorFoes.destroy()` on the way
+out already is - so putting them in the re-entry cache would resurrect
+a shop fight through the door, and putting them in `interiorIdentity()`
+would hand A10's Recall bookmark an enemy list `Teleport.cs:107-112`
+never reads. Two new seams instead, `interiorPoolSnapshot(toNative)`
+and `restoreInteriorPools(saved, fromNative, yOffset)`. Positions ride
+NATIVES: a building is mounted in the EXTERIOR's unified frame (P8),
+which the floating origin shifts under the player, so the pools take
+the same converter `world.js` already hands its own two and the caller
+sheds the vertical compensation per record. The interior dropped-pile
+cache's raw `pos` is a same-frame re-entry law and is the wrong
+invariant to copy into an envelope.
+
+Two laws had to move with it, or the fix would have been worse than
+the hole:
+
+`GameObjectHelper.cs:1073-1076` - "Do not add foe during load process
+as enemy object may no longer be in starting state / Allow the load
+process to restore enemy state to whatever it was at time of save" -
+is the reason a load can restore enemies at all. Both of this host's
+quest adapters answered a hard-coded `loadInProgress: () => false`, so
+the re-entry's marker walk would have stood every marker quest foe
+WHOLE beside the ones the save brought back. The adapters read a latch
+now, raised by `restoreInterior` for the window its own walk runs in
+and lowered in a `finally`. It is raised only when the save carries
+the record: a pre-AUDIT-63 envelope has none, and suppressing its walk
+would leave a marker quest foe standing nowhere at all. That gate is
+the port's additive-field back-compat shape, the same one every other
+field in these envelopes uses.
+
+And `SerializableEnemy.cs:117`/`:129-133` record `questSpawn` and
+`QuestResourceBehaviour.GetSaveData()`, restored at `:205-218` - the
+component re-added, `RestoreSaveData` replayed, and destroyed again
+when the record names no quest (`:213-217`). Without the link a
+restored quest foe stands and fights and ticks no task. The record
+carries it, and `restoreWorld` takes a `reviveQuestBehaviour` callback
+from whichever caller owns a quest machine (the pool has no dep on
+one); the revived behaviour joins `interiorFoeStands` so a later hot
+re-mount sees it exactly as `Resources.FindObjectsOfTypeAll` would.
+
+## AUDIT 63 F25 / F31 - THE WEAPON HAND WAS HALF A PAIR (2026-09-08)
+
+`SerializablePlayer.cs:175-176` writes the sheath and the hand as one
+pair - `data.weaponDrawn = !weaponManager.Sheathed;` then
+`data.usingLeftHand = !weaponManager.UsingRightHand;` - and `:420-421`
+restores the pair. The port carried the FIRST line of each. Since a12
+gave it a real left-hand rig (`playerWeapon.toggleHand`, `H` bound in
+all four hosts, `applyWeapon` picking the used hand's item), a player
+fighting with the left-hand weapon loaded back swinging the right
+hand's item, or bare fists when the right hand was empty.
+
+The hand rides the pose bag beside `weaponDrawn` in both save hosts
+(`world.js`, `dungeonContext.js`) in the POSITIVE sense, because
+`PlayerWeapon` holds `usingRightHand`; it is the same bit. The restore
+sets the flag and NOTHING else: the C# restore calls no `ApplyWeapon`
+because `WeaponManager.Update`'s `UpdateHands` ends in one (`:699`) on
+the next frame, and the port's twin is `weaponRig.syncWorn`
+(`updateHands` + `applyWeapon(claws)`, every frame), which re-binds the
+screen weapon AND re-runs the shield override that forces the right
+hand (`:656`). A bare `applyWeapon()` here would drop the racial claws
+for a frame and would null a `bindWorn:false` rig's scripted weapon.
+
+F31 is the same law on the import lane.
+`StartGameBehaviour.StartFromClassicSave` :605-606 assigns
+`weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon;`. The
+port has parsed the byte since SAV2 (`saveVarsFile.js:183`, offset
+0x3D9) and written the conversion in `combat/playerWeapon.js`
+(`usingRightHandFromSaveVars`) with a header claiming "this is the
+import that classicSave's snapshot builder calls" - and the snapshot
+builder never called it, so an imported left-handed classic character
+arrived right-handed. It calls it now, and `applyPose` (which the
+quickload and the classic boot share) is the one landing for both.
+`classicSave.js`'s recorded divergence is narrowed to GodMode, which
+is still true, and the Port-Ledger row's "GodMode/UsingLeftHandWeapon
+read and dropped (no port consumer)" clause with it - the ground it
+gave ("no left-hand rig") stopped being true when a12 shipped.
+
+## AUDIT 63 F26 / F29 - THE TEAM AND THE WABBAJACK LATCH (2026-09-08)
+
+`SerializableEnemy.cs:125` records `data.team = (int)entity.Team + 1;`
+(the live `EnemyEntity.Team`) and `:121` `data.alliedToPlayer =
+mobileEnemy.Enemy.Team == MobileTeams.PlayerAlly;` (the per-mobile
+`MobileEnemy` STRUCT COPY, which this port spells `entity.mobileTeam`);
+`:157` re-seeds the struct copy through `ApplyEnemySettings` and
+`:179-181` restores the live team behind its own `if (team > 0)`
+back-compat sentinel. Neither foe record carried either field, and
+`exteriorFoes.restoreWorld` re-mints through `spawnFoe`, so a summoned
+ally standing beside the player at a quicksave - the Sanguine Rose's
+daedroth, the Skull of Corruption's double, or any foe a
+`ChangeFoeTeam` rewrote - came back on its species' static row,
+targeted the player, and lost `MeleeAttackFriendlyProtection` with it.
+Both fields ride both records now and restore independently: an
+`allied:` boolean cannot carry a `change foe X team 5`, which is one of
+the twelve `MobileTeams` the C# restores verbatim. The dungeon half is
+record fidelity - that host patches its live foes in place, so a
+same-context load already kept the team - and the exterior half is the
+observable one.
+
+`:124`/`:172` round-trip `EnemyEntity.WabbajackActive`, the
+once-per-creature latch `WabbajackEffect.cs:69` refuses on. The port
+stamps it at all four re-stand sites and saved it nowhere, so a load
+re-armed the artifact against a creature it had already scrambled. The
+restore gate is `!= null` and NOT a truthiness test: `:172` is an
+unconditional assignment over a rebuilt enemy, so a BACKWARD load has
+to lower a latch raised after the save. Only a pre-fix record, which
+carries no key at all, leaves the minted default standing.
+
+## AUDIT 63 F27 - THE SEDUCER RELOADED UNWINGED (2026-09-08)
+
+`SerializableEnemy.cs:126` records
+`mobileEnemy.SpecialTransformationCompleted` and `:225-228` replays it
+THROUGH THE SETTER - `mobileEnemy.SetSpecialTransformationCompleted()`
+- because the setter is what rewrites the per-mobile `MobileEnemy`
+struct copy (`Base/MobileUnit.cs:208-224`: Flying behaviour, the
+winged 400/5 corpse where the unwinged row carries 400/6, no idle
+table, a spell animation of frames 0-3), and its own doc comment says
+it is "Called when restoring save game if unit has raised
+transformation completed flag". Neither foe record carried the flag.
+A Seducer that had already spread its wings reloaded walking (both
+hosts recompute `ai.flies` from `basics.behaviour` every tick), with
+the unwinged corpse row, the reverted animation tables, no infighting
+suppression, and an eight-second clock free to play the one-shot a
+second time. Both records carry it now and both restores replay it
+through the setter, never a raw assignment.
+
+The dungeon needed two things the exterior did not. The setter must run
+BEFORE the corpse arm, because `spawnCorpse` reads
+`f.mobile.basics.corpseTexture` and a Seducer that died transformed
+otherwise gets the 400/6 flat. And that host patches its foes IN
+PLACE, where DFU restores over a re-instantiated mobile - so a saved
+FALSE means an untransformed Seducer and the port has to say so: a new
+`clearSpecialTransformationCompleted()` puts the shared basics row
+back and lowers the flag, and the caller re-mints
+`SeducerTransformBehaviour` so the transform clock starts over exactly
+as a fresh `SetupDemoEnemy.cs:191-195` component would. It is the same
+rewind SL2's un-kill arm already spells for death.
+
+## AUDIT 63 F28 - A DEAD QUEST'S ITEMS WERE WELDED INTO THE WAGON (2026-09-08)
+
+`SaveLoadManager.cs:1517-1518` - `// Clear any orphaned quest items` /
+`RemoveAllOrphanedItems();` - is the last act of `LoadGame` before
+`ClampLegalReputations` (`:1543`, which `restorePlayer` already runs).
+Its body (`:1560-1571`) sweeps `Items`, `WagonItems` and `OtherItems`
+in that order through `ItemCollection.RemoveOrphanedItems`
+(`:661-688`), which drops a quest item whose quest is gone
+(`GetQuest(item.QuestUID) == null`) or tombstoned, and any other item
+with no `shortName`. Nothing else in DFU cleans these up: `Item.Dispose`
+(`Item.cs:258-268`, the port's `removeItemFromPlayer` hook) reaches the
+MAIN pack alone. So an `allowDrop` quest item legitimately stashed in
+the cart outlived its quest for the life of the character - and once
+the tombstone expired, `itemTransfer`'s `CanDropQuestItems` refusal
+made it un-takeable and un-sellable too: permanent dead weight in the
+wagon. The port also ports the other orphan source the sweep exists
+for, `machine.js`'s "failed to load quest data - skip" arm.
+
+`removeOrphanedItems` / `removeAllOrphanedItems` live in
+`systems/save.js` and run inside `restoreSessionState`, the ONE
+composer both save hosts call. THE PLACE IS THE POINT. `restorePlayer`
+runs BEFORE that composer at both seams, so a sweep there would ask
+the OUTGOING session's quest machine - or, on a boot load, an empty
+one - and delete every legitimately restored quest item in the save
+being loaded. DFU's order is quest restore (`:1433`) then sweep
+(`:1518`), and the port's is the same. The port's items model
+equipment by a slot ON the item, so an equipped orphan is unequipped on
+its way out, the two lines `Item.Dispose`'s hook already runs.
+
+Two port-only gates, both back-compat and neither a behaviour
+departure: a host with no quest machine (the standalone `?dungeon`
+scene mounts none) sweeps nothing, and a save with no quest envelope -
+a pre-Q4-v shape DFU never writes - is left alone rather than swept
+against an unrelated live machine. The classic import does NOT sweep:
+`StartFromClassicSave` is not `LoadGame`, and an imported save has no
+restored machine to ask.
+
+## AUDIT 63 F30 - THE TELEPORT FLAG WAS WRITTEN, READ, AND NEVER SAVED OR LOWERED (2026-09-08)
+
+`PlayerEnterExit.PlayerTeleportedIntoDungeon` has one consumer:
+`DaggerfallAction.cs:262`'s
+`CastleDaggerfallMagicDoorsSpecialOpenHack`, whose stated purpose is
+"just to prevent player being locked inside throne room". The port
+writes it at the four `Teleport.cs:216`/`:246` arms and reads it
+through the dungeon host's action thunk, and it rode no envelope at
+all - `Port-Status-2026-09-02.md` claimed ROAD-A A4 had taken it, and
+the code says otherwise.
+
+`SerializablePlayer.cs:188-191` writes it ONLY under
+`IsPlayerInsideDungeon` and `:402-405` restores it ONLY when the save
+was `insideDungeon`. That is why it does NOT belong in `ENTITY_FIELDS`,
+which is copied blind in both directions: an exterior save loaded from
+inside the dungeon host would overwrite a legitimately true live flag,
+and every pre-fix save would clear it wholesale. It rides the DUNGEON
+host's own envelope, where "inside a dungeon" is true by construction
+on both sides, presence-gated so a pre-fix save takes the C#'s
+not-assigned arm. The reachable failure it closes is loading a
+teleported-in slot while standing in Castle Daggerfall having walked in
+the front door: the foyer doors stayed magically held, which is the
+situation the hack exists to prevent.
+
+The port also had NO clear. DFU lowers the flag on both exits -
+`PlayerEnterExit.cs:875` (`TransitionExterior`, beside
+`IsPlayerInsideTavern`) and `:1197` (`TransitionDungeonExterior`, with
+the three inside flags) - so one Recall into a dungeon latched it for
+the rest of the session, and persisting an uncleared latch would have
+been worse than dropping it. Both doors lower it now. A third clear
+went into `forceExitToExterior` and the review round took it out
+again; see F30 below.
+
+## AUDIT 63 REVIEW ROUND (2026-09-08)
+
+Four findings against the first pass, all four confirmed against the
+reference and closed. They are recorded under the headings they
+correct.
+
+### AUDIT 63 F28 - THE ORPHAN SWEEP DELETED EVERY NAMELESS ITEM (2026-09-08)
+
+The sweep's non-quest arm was written as `!it.name && !it.shortName`,
+offered as `ItemCollection.cs:675`'s `else if (string.IsNullOrEmpty(
+item.shortName))`. That equivalence is false for this port, and the
+comment two lines above the C# says why: the header on the loop is
+"Schedule removal if item relates to a null or tombstoned quest, **or
+has an invalid template**" (`ItemCollection.cs:663`). Every
+template-backed mint in DFU gets a `shortName` at construction -
+`SetItem` assigns `shortName = TextManager.Instance
+.GetLocalizedItemName(itemTemplate.index, itemTemplate.name)`
+(`DaggerfallUnityItem.cs:551`) - so the arm can only ever fire for an
+item whose TEMPLATE did not resolve.
+
+The port's `name` is not that. It is an OPTIONAL override:
+`resolveItemName` (`systems/itemInfo.js`) reads
+`templateByIndex(item.templateIndex)?.name` and the item's own `name`
+only refines it, and `loot.js`'s `named()` adds one on the
+`generateItems` path alone. Three ordinary production factories mint
+none at all - `createPotion`/`createRandomPotion` (the alchemist's
+shelf stock, an enemy's dropped bottle, a dungeon pile's),
+`randomlyAddMap` (every treasure map) and `randomlyAddPotionRecipe`.
+`restorePlayer` copies items shallowly, so no name appears on the way
+back either. The sweep therefore deleted every potion, treasure map
+and potion recipe from pack, wagon and repair on any load whose save
+carried a quest envelope - a data-loss regression the first pass
+introduced.
+
+The arm now tests the RESOLVED name, which is the port's real
+equivalent of `shortName`:
+
+```js
+orphaned = !it.name && !it.shortName && !templateByIndex(it.templateIndex)?.name;
+```
+
+Only an item whose template does not resolve is swept, which is
+`:663`'s own sentence. The pin was re-fixtured with it: a real
+`createRandomPotion` bottle, a real `randomlyAddMap` map and a real
+`randomlyAddPotionRecipe` recipe are asserted to SURVIVE the sweep,
+and the orphan the arm still takes is one carrying a `templateIndex`
+no template answers.
+
+### AUDIT 63 F24 - THE EXTERIOR HALF OF THE QUEST LINK WAS RECORDED AND DISCARDED (2026-09-08)
+
+`exteriorFoes.snapshotWorld` records `questResource` for BOTH pools
+that use the factory, and `restoreWorld` grew a `reviveQuestBehaviour`
+option to replay it - but only the interior caller passed one. The
+world host's exterior call handed no options bag, so the callback was
+null, `questBehaviour` resolved to null, and a restored exterior quest
+foe stood and fought with no `QuestResourceBehaviour` and ticked no
+task: exactly the regression the section above says it closed. The
+sentence claiming the exterior pool got the round-trip "for free,
+since both pools are the one factory" is struck; a shared factory is
+not a shared caller.
+
+`SerializableEnemy.cs:206-217` is one law for every `WorldContext`, so
+it now has ONE home: `scenes/questFoeHost.reviveQuestBehaviour(machine,
+data)`, beside `bindQuestFoeHost`, which is the mint-side half of the
+same link. Both hosts call it - `worldModes.restoreInteriorPools`
+wraps it to push the result onto `interiorFoeStands`, and `world.js`'s
+load arm passes it at the exterior `restoreWorld`. The exterior host
+needs no stand list of its own: its `ActiveGameObjectDatabase` walk
+(`questFoeInstances`) reads the live pool, so a revived foe is
+reachable the moment `spawnFoe` lands it.
+
+### AUDIT 63 F30 - THE THIRD CLEAR WAS NOT IN THE REFERENCE (2026-09-08)
+
+The first pass put a third `playerTeleportedIntoDungeon = false` into
+`forceExitToExterior`, justified as `Teleport.cs:151`'s
+`TransitionDungeonExteriorImmediate`. That justification does not
+hold: `TransitionDungeonExteriorImmediate` is five lines
+(`PlayerEnterExit.cs:1209-1215`) and all it does is raise
+`OnPreTransition` - the clear at `:1197` belongs to
+`TransitionDungeonExterior`, the full door, which it does not call.
+
+Worse, `forceExitToExterior` is not the Recall's teardown alone. It is
+also the port's teardown for the QUEST TELEPORT (`_respawnAtSite`) and
+for the teleport window (`teleportTo`), and neither re-raises the flag
+afterwards. DFU's counterpart for `teleport pc to` is
+`PlayerEnterExit.RespawnPlayer`, whose `Respawner` coroutine resets
+`isPlayerInside`, `isPlayerInsideDungeon`,
+`isPlayerInsideDungeonCastle` and `lastPlayerDungeonBlockIndex`
+(`:482-489`) and never touches this one; the teleport window is
+`StreamingWorld.TeleportToCoordinates`
+(`DaggerfallTeleportPopUp.cs:143`), which touches nothing. So a player
+who Recalled into a dungeon and was then quest-teleported into another
+kept the flag in DFU and lost it in the port - and, now that the
+dungeon envelope carries it, the lowered value was what got saved.
+
+The whole reference holds exactly TWO clears of this flag - `:875` and
+`:1197`, the two real doors - and the port now holds exactly two, at
+the same two doors. The Recall's own re-raise (`Teleport.cs:246`
+writes the anchor's value unconditionally on arrival) makes the
+missing third clear harmless where it was ever wanted.
+
+### AUDIT 63 F27 - THE SHARED-ROW GUARD WAS A TAUTOLOGY (2026-09-08)
+
+The pin meant to prove `setSpecialTransformationCompleted` does not
+write through to the SHARED `ENEMY_BASICS` row read
+`assert.equal(ENEMY_BASICS[29].behaviour, 'Flying' === m.basics
+.behaviour ? ENEMY_BASICS[29].behaviour : null)`. The line above had
+already asserted `m.basics.behaviour === 'Flying'`, so the ternary
+always yielded its left operand and the assertion reduced to `X ===
+X`. The neighbouring `deepEqual(m.basics.corpseTexture,
+ENEMY_BASICS[29].corpseTexture)` after the rewind was vacuous the same
+way - the preceding line had already asserted the two were the same
+object.
+
+The risk is real: `ENEMY_BASICS[29]` is a plain mutable object shared
+by every Seducer in the game. Both assertions now pin the REFERENCE's
+stock row directly - `EnemyBasics.cs:1223` `Behaviour =
+MobileBehaviour.General`, `:1227` `CorpseTexture(400, 6)` ("Has a
+winged and unwinged corpse, only using unwinged here"), `:1228`
+`HasIdle = true` - read while the unit is transformed, and the
+reference gate pins those three C# lines beside the five the setter
+rewrites (`Base/MobileUnit.cs:214-217`). Red-proofed against a mutant
+that keeps the copy but leaks the shared row's `corpseTexture` object
+by reference, which is precisely what the tautology could not see.

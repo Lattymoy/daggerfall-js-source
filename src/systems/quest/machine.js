@@ -357,6 +357,18 @@ export class QuestMachine {
       removeQuestorPostMessage: (uid) => this.deps.removeQuestorPostMessage?.(uid),
       removeQuestRumors: (uid) => this.deps.removeQuestRumors?.(uid),
       removeQuestInfoTopics: (uid) => this.deps.removeQuestInfoTopics?.(uid),
+      // AUDIT 63 F1: ActiveGameObjectDatabase.GetActiveStaticNPC
+      // QuestResourceBehaviours (ActiveGameObjectDatabase.cs:307-311),
+      // which AddQuestor walks to relink an individual's standing
+      // behaviour (Quest.cs:483-496). GetActiveComponents<T> is over
+      // GetActiveObjects, which keeps only `activeInHierarchy` objects
+      // (:32-46, :61-68), so the host composes the ACTIVE list.
+      staticNpcQuestBehaviours: () => this.deps.world?.staticNpcQuestBehaviours?.() ?? [],
+      // AUDIT 63 F0: PlayerGPS.UndiscoverBuilding, the tombstone's own
+      // caller (Quest.cs:655). The talk seam's caller
+      // (TalkManager.cs:2958) has always been wired; this is the
+      // second of DFU's three, in the same (key, buildingName) shape.
+      undiscoverBuilding: (buildingKey, buildingName) => this.deps.undiscoverBuilding?.(buildingKey, buildingName),
       addFace: (resource) => this.deps.addFace?.(resource),
       dropFace: (resource) => this.deps.dropFace?.(resource),
       // Q4-iv: EndQuest's notebook filing - the host wires
@@ -606,9 +618,20 @@ export class QuestMachine {
    *  questor gets nothing.
    *
    *  Unlike SetupIndividualStaticNPC, C# does NOT write the back-link
-   *  `person.QuestResourceBehaviour` here - only AssignResource runs,
-   *  and the port's assignResource fills that link exactly when it is
-   *  empty, which is the same shape. */
+   *  `person.QuestResourceBehaviour` here - only AssignResource runs
+   *  (QuestResourceBehaviour.cs:217-224 stamps questUID/targetSymbol
+   *  and nothing else). C# fills the link from Update's FIRST clause
+   *  instead ("Ensure target resource has this behaviour assigned",
+   *  :132-141), which is where the port fills it too.
+   *
+   *  AUDIT 63 F2 corrected the note that used to stand here - "the
+   *  port's assignResource fills that link exactly when it is empty",
+   *  which it never did - and, more to the point, gave that Update its
+   *  CALLER: the hosts ticked update() on the interior and dungeon
+   *  quest flats alone, never on a static NPC's behaviour, so the link
+   *  was in fact never filled and DropQuestor's
+   *  `personResource.QuestResourceBehaviour != null` test
+   *  (Quest.cs:522) could not be reached. */
   assignQuestResourceBehaviour(host, npcData) {
     const questorPerson = this.activeQuestor(npcData);
     if (questorPerson == null) return null;
@@ -1067,7 +1090,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:453. A pending marker over shipped work
+   *  src/scenes/worldModes.js:461. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

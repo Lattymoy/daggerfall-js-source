@@ -51,7 +51,12 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
   assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
-  const fn = s.slice(i, i + 3600);   // TK-iv widened it; AUDIT 26 F216/F222 widened it again (the pose + the foe/guard pools); IS1 again (the interior bag)
+  // AUDIT 63 F24: BOUND BY THE FUNCTION, NOT BY A MAGIC NUMBER - the
+  // same correction AUDIT 39r R28 made to the load half below. This
+  // window had been widened by hand three times (TK-iv, AUDIT 26
+  // F216/F222, IS1) and F24's interior enemy bag pushed the world half
+  // past 3600 again. The function's own close is the only honest edge.
+  const fn = s.slice(i, s.indexOf('\n  }\n', i));
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
   // AUDIT 26 F216/F217: the live pools ride the envelope in natives
@@ -72,7 +77,10 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // teleports through the travel core". The function's own close is the
   // only honest edge, and it never needs widening again.
   const lf = s.slice(j, s.indexOf('\n  }\n', j));
-  assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
+  // AUDIT 63 F28: `entity` joined the composer's bag - the orphaned
+  // quest-item sweep (SaveLoadManager.cs:1518) runs inside it, after
+  // the quest machine is restored.
+  assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');

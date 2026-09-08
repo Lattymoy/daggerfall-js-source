@@ -235,11 +235,26 @@ export const MAGIC_ONLY_KEYS = new Set([
   '43,255', '44,255',
 ]);
 
-export const CONCEALMENT_START_TEXT = Object.freeze({
+/** THE BUFF LANDING ALERTS - every line DFU speaks on the frame a
+ *  lasting self-buff becomes incumbent, once per incumbency, and only
+ *  when the manager is the player's (`manager.EntityBehaviour ==
+ *  GameManager.Instance.PlayerEntityBehaviour`).
+ *
+ *  AUDIT 63 F16 widened this from the six concealment rows. Silence has
+ *  TWO printers in DFU and the port had only one: SilenceCheck at cast
+ *  time (EntityEffectManager.cs:1932-1946, the port's hostMagic gate)
+ *  and StartSilence's own landing alert (Silence.cs:80-96,
+ *  "youAreSilenced"), which is the same awakeAlert shape
+ *  ConcealmentEffect.cs:66-72 uses. A wraith's Silence landed in total
+ *  silence and the player only learned of it on the next cast attempt. */
+export const BUFF_START_TEXT = Object.freeze({
   invisNormal: 'You are invisible.', invisTrue: 'You are invisible.',
   chameleonNormal: 'You are blending.', chameleonTrue: 'You are blending.',
   shadeNormal: 'You are a shade.', shadeTrue: 'You are a shade.',
+  silenced: 'You are silenced.',   // Silence.cs:91-95
 });
+/** The name this table shipped under, kept live for its importers. */
+export const CONCEALMENT_START_TEXT = BUFF_START_TEXT;
 /** Classic subType as DFU keys it: the record's sbyte cast to BYTE
  *  (ClassicSpellRecordDataToEffectBundleSettings does
  *  MakeClassicKey((byte)type, (byte)subType)). SPELLS.STD 0xFF reads
@@ -323,6 +338,44 @@ export function isEntityImmuneToParalysis(entity) {
   }
   return false;
 }
+/** EntityEffectManager.IsEntityImmuneToDisease (:623-641) - the twin of
+ *  the paralysis gate above, and the OTHER half of AssignBundle's one
+ *  hard-immunity clause (:495-499:
+ *  `if (effect is DiseaseEffect && IsEntityImmuneToDisease() &&
+ *   !specialInfection || effect is Paralyze && ...) continue;`).
+ *  Same three steps:
+ *  1. career Disease tolerance Immune, or Entity.IsImmuneToDisease -
+ *     which VampirismEffect.cs:123 and LycanthropyEffect.cs:194 both
+ *     set on every ConstantEffect pass, i.e. for as long as the curse
+ *     stands. The port's stand-in is the racialOverride entry itself
+ *     (there are exactly two, and both set the flag in DFU), and the
+ *     PENDING marker counts with it because the turn is already
+ *     irreversible - the pair inflictDisease used to read inline.
+ *  2. the PLAYER's live race template Disease bit - the compound race
+ *     both curses OR it into (VampirismEffect.cs:335,
+ *     LycanthropyEffect.cs:554) - unless the career overrides with
+ *     LowTolerance or CriticalWeakness.
+ *  3. otherwise not hard-immune, and the saving throw still applies.
+ *
+ *  AUDIT 63 F15: the port had this gate NOWHERE. Its only stand-in was
+ *  one racialOverride line inside inflictDisease, so the quest action
+ *  `make pc ill with` (world.js's makePcDiseased -> startDisease) gave
+ *  a vampire, a werewolf or a Disease-immune custom class the plague
+ *  where DFU drops the effect outright. */
+export function isEntityImmuneToDisease(entity) {
+  if (!entity) return false;
+  if (careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Disease) === 'Immune') return true;
+  if ((entity.racialOverride && !entity.racialOverride.ended) || entity.racialOverridePending) return true;
+  if (entity.isPlayer) {
+    const rt = entity.raceTemplate ?? raceById(entity.raceId) ?? raceByKey(entity.race) ?? null;
+    if (((rt?.immunityFlags ?? 0) & EFFECT_FLAGS.Disease) !== 0) {
+      const t = careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Disease);
+      return t !== 'LowTolerance' && t !== 'CriticalWeakness';
+    }
+  }
+  return false;
+}
+
 /** DaggerfallEntity.IsSilenced, minted by Silence.StartSilence (Silence.cs:87)
  *  and cleared at :105. A read-time fold over the active effects, the same
  *  shape as the concealment and paralysis predicates above, so nothing has to
@@ -747,7 +800,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
-    // :525). D9: the enchantment arc arrived (enchantments.js:272
+    // :525). D9: the enchantment arc arrived (enchantments.js:278
     // routes CastWhenHeld through this same applySpell with caster
     // `{ entity }` and ctx.heldItem set), so the caster check alone
     // stopped being the whole gate: a HeldMagicItem bundle is
@@ -1413,15 +1466,30 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // The window itself is the host's - this arm hands over the two
     // numbers it needs and the refund it owes.
-    // X11b: CREATE ITEM. `rounds` is the FULL rolled duration, which is
-    // the conjured item's lifetime in classic minutes: SetDuration runs
-    // inside Start (EntityEffect.cs:528-534), the picker is modal so no
-    // clock advances while it is up, and the initial magic round has
-    // not happened yet. Reading the post-initial-round value here would
-    // shorten every conjured item by exactly one minute.
+    // X11b: CREATE ITEM. `rounds` is the conjured item's lifetime in
+    // classic minutes, and it is the rolled duration MINUS ONE.
+    //
+    // AUDIT 63 F17 corrected the note that stood here, which claimed
+    // the opposite ("the initial magic round has not happened yet").
+    // It has. Start runs SetDuration and then only PUSHES the picker
+    // window (CreateItem.cs:96-100 -> :113-116); AssignBundle carries
+    // straight on in the same loop iteration to "At this point effect
+    // is ready and gets initial magic round" / `effect.MagicRound();`
+    // (EntityEffectManager.cs:593-594), and CreateItem overrides
+    // neither MagicRound nor RemoveRound - so BaseEntityEffect's
+    // (EntityEffect.cs:572-575 -> :583-588, `return --roundsRemaining`)
+    // fires and RoundsRemaining is duration-1. The picker's callback
+    // runs frames later, and CreateTempItem reads THAT value:
+    // `item.TimeForItemToDisappear = (uint)(gameMinutes + RoundsRemaining)`
+    // (CreateItem.cs:237). This file's own header at :1405-1409 already
+    // states the law the old note contradicted. The floor is
+    // RemoveRound's own (:584-585, a duration of 0 stays 0), and it is
+    // dead-safe rather than behavioural: a SupportDuration effect with
+    // both durationBase and durationMod at 0 is not a record the spell
+    // maker mints.
     if (isCreateItem(e)) {
       if (target?.mobileType != null) continue;   // "Target must be player - no effect on other entities" (:104-106)
-      out.createItem = { rounds: rollDuration(e, casterLevel) };
+      out.createItem = { rounds: Math.max(0, rollDuration(e, casterLevel) - 1) };
       continue;
     }
     if (isIdentifyEffect(e)) {
@@ -1516,10 +1584,17 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
             continue;
           }
           pushActive(target, { kind, roundsRemaining: rounds }, sinks, rolls);
-          // S21: the concealment start message fires once on NEW
-          // incumbency (ConcealmentEffect awakeAlert); a stack is
-          // silent. Only hosts wiring sinks.say (the player) hear it.
-          const msg = CONCEALMENT_START_TEXT[kind];
+          // S21: the start message fires once on NEW incumbency
+          // (ConcealmentEffect awakeAlert; Silence.cs:91-95 for the
+          // silence row) and a stack is silent - which is not a
+          // guard inside StartSilence but AssignBundle's own
+          // "do not add unflagged incumbent effects"
+          // (EntityEffectManager.cs:553-558), so a merged instance
+          // never reaches liveEffects and DoConstantEffects never
+          // ticks it. Only hosts wiring sinks.say (the player) hear
+          // it, which is this port's `manager.EntityBehaviour ==
+          // PlayerEntityBehaviour`.
+          const msg = BUFF_START_TEXT[kind];
           if (msg) sinks?.say?.(msg);
         }
         out.buffs = (out.buffs ?? 0) + 1;

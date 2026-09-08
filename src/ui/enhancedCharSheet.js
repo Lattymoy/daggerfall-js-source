@@ -65,9 +65,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { SKILL_NAMES } from '../systems/skills.js';
+import { SKILLS, SKILL_NAMES, skillValue } from '../systems/skills.js';
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js';
-import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
+import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
 import { carriedWeight } from './charsheet.js';
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
 
@@ -124,5 +124,17 @@ export function sheetModel(entity) {
       career: i < 3,
     })),
     skill: (id) => e.skills?.[id] ?? 0,
+    // AUDIT 63 F34: ShowSkillsDialog's hand-to-hand damage line
+    // (DaggerfallCharacterSheetWindow.cs:283-284, :309-318) - one
+    // extra row under whichever GROUP holds HandToHand, formatted
+    // `{0} dmg: {1}-{2}` (hthDamageFormatString,
+    // Internal_Strings.csv:1553) over CalculateHandToHandMin/MaxDamage
+    // of the LIVE skill value (GetLiveSkillValue, :313-314). The
+    // figure lives in the model so both skins read one law; the
+    // per-group gate is the renderer's, as it is DFU's.
+    handToHandDamage: {
+      min: handToHandMinDamage(skillValue(e, SKILLS.HandToHand)),
+      max: handToHandMaxDamage(skillValue(e, SKILLS.HandToHand)),
+    },
   };
 }

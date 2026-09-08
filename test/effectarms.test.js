@@ -63,7 +63,7 @@ test('X1 both buffs stack their rounds like every other incumbent, and the catal
 });
 
 // ── X1b: Open and Lock ────────────────────────────────────────────
-import { doorSpellFor, consumeDoorSpell, wireDoorSpells } from '../src/scenes/shared.js';
+import { doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells } from '../src/scenes/shared.js';
 import { triggerOpen, triggerLock, DOOR_SPELL_TEXT } from '../src/systems/mysticism.js';
 
 const castTouch = (ent, type, level = 5) => applySpell(
@@ -89,6 +89,29 @@ test('X1 Open/Lock: the cast ARMS and waits - DFU never acts at cast time', () =
   assert.equal(doorSpellFor(e2).kind, 'lock');
   // nothing armed = nothing to hand the door
   assert.equal(doorSpellFor(entity()), null);
+  assert.equal(exteriorOpenSpellFor(entity()), null);
+});
+
+test('AUDIT 63 F41: BOTH armed - the action door LOCKS, the building still opens', () => {
+  // Open and Lock are two independent IncumbentEffects (Open.cs:22,
+  // Lock.cs:22, IsLikeKind => other is Lock), each parked on
+  // forcedRoundsRemaining, so casting one then the other leaves BOTH
+  // armed. ActivateActionDoor then runs
+  //   if (HandleLockEffect(actionDoor)) return;
+  //   if (HandleOpenEffect(actionDoor)) return;
+  // (PlayerActivate.cs:693-696) - Lock is tested and RETURNS first, so
+  // the door is locked to the caster's level and swung shut
+  // (Lock.cs:100-129), not opened.
+  const e = entity();
+  assert.equal(castTouch(e, 17).armed, 'openArmed');
+  assert.equal(castTouch(e, 16).armed, 'lockArmed');
+  assert.equal(e.activeEffects.filter((a) => a.kind === 'openArmed' || a.kind === 'lockArmed').length, 2,
+    'nothing merges the two incumbents');
+  assert.equal(doorSpellFor(e).kind, 'lock', 'HandleLockEffect is tested first and returns');
+  // ...while the EXTERIOR door asks Open on its own
+  // (HandleOpenEffectOnExteriorDoor, PlayerActivate.cs:1036-1043, which
+  // has no Lock test at all), so an armed Lock cannot mask it there.
+  assert.equal(exteriorOpenSpellFor(e).kind, 'open');
 });
 
 test('X1 Open: the lock yields only to a caster whose LEVEL reaches it (Open.cs:118-121)', () => {
@@ -501,7 +524,13 @@ test('X3 Open: the EXTERIOR building door arm exists, spends the spell either wa
   // while this half did not exist.
   const wm = readFileSync(join(ROOT, 'src/scenes/worldModes.js'), 'utf8');
   const arm = wm.slice(wm.indexOf('let opened = unlocked;'), wm.indexOf('tallySkill(playerEntity, SKILLS.Lockpicking, 1)'));
-  assert.match(arm, /spell\?\.kind === 'open'/, 'an armed LOCK has no exterior arm in DFU and is left alone');
+  // AUDIT 63 F41: an armed LOCK still has no exterior arm - but the
+  // reason is DFU's ROUTING, not a priority inside the lookup.
+  // HandleOpenEffectOnExteriorDoor (PlayerActivate.cs:1036-1043) does its
+  // own FindIncumbentEffect<Open>; PlayerActivate calls HandleLockEffect
+  // only from ActivateActionDoor (:693). So this host reads Open
+  // directly, and an armed Lock can no longer hide it.
+  assert.match(arm, /const spell = exteriorOpenSpellFor\(playerEntity\);/, 'an armed LOCK has no exterior arm in DFU and is left alone');
   assert.match(arm, /triggerExteriorOpen\(lockValue, spell\.holderLevel\)/);
   // the consume is UNCONDITIONAL - not inside the success branch
   const consumeAt = arm.indexOf("consumeDoorSpell(playerEntity, 'open')");

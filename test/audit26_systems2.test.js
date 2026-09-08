@@ -363,7 +363,7 @@ test('AUDIT 26 F195: GotoPlace is pending until the map ticks, then opens its re
 import { useItem, TEMPLATES } from '../src/systems/useItem.js';
 import { questLetterName } from '../src/systems/itemInfo.js';
 
-/** A quest Item RESOURCE as the machine keeps it (quest/item.js:72-74). */
+/** A quest Item RESOURCE as the machine keeps it (quest/item.js:73-75). */
 const questResource = (item, { usedMessageID = -1, actionWatching = true } = {}) => ({
   useClicked: false, actionWatching, usedMessageID, daggerfallUnityItem: item,
 });

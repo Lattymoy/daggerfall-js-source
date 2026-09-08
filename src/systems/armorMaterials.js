@@ -29,8 +29,11 @@ export const isPlate = (m) => m >= ARMOR_MATERIAL.Iron;
 export const BODY_PARTS = Object.freeze({ Head: 0, RightArm: 1, LeftArm: 2, Chest: 3, Hands: 4, Legs: 5, Feet: 6 });
 export const NUMBER_BODY_PARTS = 7;
 
-/** GetMaterialArmorValue (DaggerfallUnityItem.cs:1007-1050): leather
- *  3, chain 6, plate iron 7 .. daedric 21. */
+/** GetMaterialArmorValue's MATERIAL LADDER (DaggerfallUnityItem.cs:
+ *  1010-1048): leather 3, chain 6, plate iron 7 .. daedric 21. The
+ *  whole member is itemArmorValue below - this half takes a bare
+ *  material because the enemy equipment table (combat/
+ *  enemyEquipment.js) has armor records and no items. */
 const PLATE_ARMOR_VALUES = [7, 9, 9, 11, 13, 15, 15, 17, 19, 21];
 export function materialArmorValue(material) {
   if (isLeather(material)) return 3;
@@ -49,6 +52,47 @@ export const SHIELD_PARTS = new Map([
   [112, [BODY_PARTS.Head, BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
 ]);
 export const isShieldTemplate = (templateIndex) => SHIELD_VALUES.has(templateIndex);
+
+/** AUDIT 63 F18/F19/F32: GetMaterialArmorValue WHOLE
+ *  (DaggerfallUnityItem.cs:1007-1059). The port had only the material
+ *  ladder above, and the two members that call GetMaterialArmorValue -
+ *  UpdateEquippedArmorValues (DaggerfallEntity.cs:608/:612) and
+ *  ArmourMod (DaggerfallUnityItemMCP.cs:157-159) - each carried half
+ *  of the rest or none of it. Both clauses that were missing live
+ *  here now, in DFU's own order:
+ *
+ *  - a SHIELD returns GetShieldArmorValue() and stops (:1049-1052),
+ *    material-blind (Buckler 1 .. Tower 4). IsShield is
+ *    GetIsShield (:1804-1814): ItemGroup Armor AND one of the four
+ *    shield templates, which is why the group rides the test.
+ *  - an ARMOUR ARTIFACT halves, rounded down - DFU's own comment is
+ *    "Armor artifact appear to use armor rating divided by 2 rounded
+ *    down" (:1054-1056). C# `result /= 2` on a non-negative int is a
+ *    truncation. It reaches only the NON-shield path (the shield arm
+ *    returned three lines earlier), so Auriel's Shield and Spell
+ *    Breaker keep their full value while Lord's Mail and Ebony Mail -
+ *    the only two non-shield armour artifacts - halve.
+ *  - `ItemGroup == ItemGroups.Armor` gates the halving, which is
+ *    load-bearing: UpdateEquippedArmorValues also admits the clothing
+ *    FOOTWEAR window (MensClothing/WomensClothing), and C# excludes it.
+ *
+ *  `item.artifact` is IsArtifact, the flags word's artifactMask bit
+ *  (:308-311), written by createArtifact (systems/loot.js) where DFU
+ *  writes the word (SetArtifact :617) and read back out of the classic
+ *  flags on import (systems/classicSave.js).
+ *
+ *  The material default is Leather (0x0000) because DFU's
+ *  nativeMaterialValue is a plain int field: an item minted without
+ *  one carries 0, which IS ArmorMaterialTypes.Leather. ArmorMaterialTypes
+ *  .None (-1) is never the implicit default. */
+export function itemArmorValue(item) {
+  if (item?.group === 'Armor' && isShieldTemplate(item?.templateIndex)) {
+    return SHIELD_VALUES.get(item.templateIndex) ?? 0;   // :1049-1052
+  }
+  let result = materialArmorValue(item?.material ?? ARMOR_MATERIAL.Leather);
+  if (item?.artifact && item?.group === 'Armor') result = Math.trunc(result / 2);   // :1054-1056
+  return result;
+}
 
 /** ItemBuilder.SetVariant's material-family clamps
  *  (ItemBuilder.cs:856-908). */

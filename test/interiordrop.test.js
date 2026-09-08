@@ -154,7 +154,11 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
   assert.match(m, /if \(key\.startsWith\('droppedLoot:'\)\) \{/, 'and activating one opens it');
   assert.match(m, /interiorDropped\.tickFlats\(dt\);/, 'the flats animate');
   assert.match(m, /const _dropBatches = interiorDropped\.batches\(\);/, 'and are drawn');
-  assert.match(m, /const droppedPiles = interiorDropped\._piles/, 'CacheScene builds them');
+  // AUDIT 63 F22 (review round): the POOL writes the record now, so
+  // the cache's two halves cannot disagree about which piles exist -
+  // GetSaveData has no empty guard (SerializableLootContainer.cs:55-77)
+  // and an emptied scene-built container must ride it.
+  assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\);/, 'CacheScene builds them');
   assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles \};/,
     'and RETURNS them - a built list the state does not carry is not cached at all');
   assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles\);/, 'RestoreCachedScene brings them back');
@@ -168,8 +172,14 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
 test('ID1: the interior Detect scan carries the piles - DT1\'s routed row, closed', () => {
   const m = wm();
   const feed = m.slice(m.indexOf('const detectFeed = createDetectFeed'), m.indexOf('let interiorCtx = null;'));
-  assert.match(feed, /piles: interiorDropped\._piles,/,
-    'GetActiveLoot has no kind gate - the player\'s own drop is a container like any other');
+  // AUDIT 63 F22 (review round): no KIND gate - the player's own drop
+  // is a container like any other - but GetActiveLoot is exactly what
+  // its name says (ActiveGameObjectDatabase.cs:266-268, "the enabled
+  // DaggerfallLoot components from ACTIVE registered loot"), so a
+  // container RemoveLootContainer deactivated (:852-864) is out of
+  // UpdateNearbyObjects' walk (PlayerGPS.cs:765-776).
+  assert.match(feed, /piles: interiorDropped\.activePiles\(\),/,
+    'GetActiveLoot has no kind gate, and does gate on active');
 });
 
 test('ID1: the quest reward mints on the ground the player is standing on', () => {

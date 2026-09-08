@@ -81,7 +81,7 @@ if (o.remote > 0) {
   await page.screenshot({ path: '/home/claude/trade-native-bought.png' });
   // THE SELL HALF NEEDS THE SELL WINDOW. In Buy mode a click on the
   // LOCAL list unstages a basket item back onto the shelf
-  // (nativeTrade.js:197) - it does not sell, and this probe used to
+  // (nativeTrade.js:220) - it does not sell, and this probe used to
   // assert that it did. Selling is its own mode, opened the way the
   // merchant's own offer opens it.
   o = JSON.parse(await page.evaluate(() => window.__openMerchantSell()));
