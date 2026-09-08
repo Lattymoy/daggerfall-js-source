@@ -122,10 +122,14 @@ function maskShift(mask) {
 /**
  * Decode a DDS file to RGBA8 mip levels.
  * @param {Uint8Array} bytes
+ * @param {{levels?:number}} [opts] - MW-LOAD: decode at most this many
+ *   levels from the top (default: the whole chain). A measurement that
+ *   reads level 0 only (the face match's head and hair candidates)
+ *   should not pay for the chain below it - a third again of the work.
  * @returns {{width:number, height:number,
  *   mips:{width:number, height:number, rgba:Uint8Array}[]}}
  */
-export function decodeDds(bytes) {
+export function decodeDds(bytes, { levels = Infinity } = {}) {
   if (!(bytes instanceof Uint8Array)) throw new TypeError('decodeDds expects a Uint8Array');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (bytes.byteLength < 128 || view.getUint32(0, true) !== DDS_MAGIC) {
@@ -134,7 +138,7 @@ export function decodeDds(bytes) {
   if (view.getUint32(4, true) !== 124) throw new Error('decodeDds: bad header size');
   const height = view.getUint32(12, true);
   const width = view.getUint32(16, true);
-  const mipMapCount = Math.max(1, view.getUint32(28, true));
+  const mipMapCount = Math.min(Math.max(1, view.getUint32(28, true)), Math.max(1, levels | 0 || Infinity));
   const pfFlags = view.getUint32(80, true);
   const fourCC = view.getUint32(84, true);
   const rgbBitCount = view.getUint32(88, true);

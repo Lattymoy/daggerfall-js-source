@@ -130,3 +130,24 @@ test('mwdds: rejects junk and unsupported formats', () => {
     /unsupported fourCC/,
   );
 });
+
+test('MW-LOAD: decodeDds({ levels }) stops the chain at the level asked for, and the whole chain stays the default', () => {
+  // The face match measures head and hair candidates at level 0 only,
+  // and a chain below it is a third again of the decode for nothing.
+  const bytes = new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.dds', import.meta.url)),
+  );
+  const whole = decodeDds(bytes);
+  const top = decodeDds(bytes, { levels: 1 });
+  assert.equal(top.width, whole.width);
+  assert.equal(top.height, whole.height);
+  assert.equal(top.mips.length, 1, 'one level');
+  assert.deepEqual(top.mips[0], whole.mips[0], 'and it is the same level 0');
+  assert.ok(whole.mips.length >= 1);
+  assert.equal(decodeDds(bytes, { levels: 0 }).mips.length, 1, 'zero asks for nothing sensible - level 0 still answers');
+  assert.equal(decodeDds(bytes, { levels: 99 }).mips.length, whole.mips.length, 'more than the file has is the file');
+  // the router forwards it, and only to the DDS reader (tga/bmp are one level)
+  const { decodeTextureImage } = readFileSync(new URL('../src/formats/mwTexture.js', import.meta.url), 'utf8').includes("decodeDds(bytes, { levels })")
+    ? { decodeTextureImage: true } : { decodeTextureImage: false };
+  assert.ok(decodeTextureImage, 'decodeTextureImage forwards levels to decodeDds');
+});

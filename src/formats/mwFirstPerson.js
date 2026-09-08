@@ -180,27 +180,33 @@ export const ARM_PARTS = Object.freeze(['hand', 'wrist', 'forearm', 'upperarm'])
  *  is the transform the reverted arc applied to the MODL path. */
 export const isFirstPersonId = (id) => String(id).toLowerCase().endsWith('1st');
 
+// MW-LOAD: every record reader below is ONE record off the walk, so the
+// per-kind extractors and extractArmRecords (one pass, every kind)
+// cannot disagree - they call the same function on the same bytes.
+function readBodyPart(bytes, rec) {
+  const e = { id: '', model: '', race: '', part: -1, female: false, playable: true, skin: false };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.race = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'BYDT' && sub.len >= 4) {
+      e.part = bytes[sub.start];
+      const flags = bytes[sub.start + 2];
+      e.female = (flags & 1) !== 0;            // BPF_Female = 1
+      e.playable = (flags & 2) === 0;          // BPF_NotPlayable = 2
+      e.skin = bytes[sub.start + 3] === 0;     // MT_Skin = 0
+      e.bodyKind = bytes[sub.start + 3];       // IG3: the raw MeshType - getShieldMesh gates on MT_Armor (2)
+    }
+  }
+  e.slot = MW_BODY_PARTS[e.part] ?? `#${e.part}`;
+  e.firstPerson = isFirstPersonId(e.id);
+  return e;
+}
+
 export function bodyParts(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
-    if (rec.type !== 'BODY') continue;
-    const e = { id: '', model: '', race: '', part: -1, female: false, playable: true, skin: false };
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len);
-      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
-      else if (sub.name === 'FNAM') e.race = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'BYDT' && sub.len >= 4) {
-        e.part = bytes[sub.start];
-        const flags = bytes[sub.start + 2];
-        e.female = (flags & 1) !== 0;            // BPF_Female = 1
-        e.playable = (flags & 2) === 0;          // BPF_NotPlayable = 2
-        e.skin = bytes[sub.start + 3] === 0;     // MT_Skin = 0
-        e.bodyKind = bytes[sub.start + 3];       // IG3: the raw MeshType - getShieldMesh gates on MT_Armor (2)
-      }
-    }
-    e.slot = MW_BODY_PARTS[e.part] ?? `#${e.part}`;
-    e.firstPerson = isFirstPersonId(e.id);
-    out.push(e);
+    if (rec.type === 'BODY') out.push(readBodyPart(bytes, rec));
   }
   return out;
 }
@@ -211,24 +217,29 @@ export function bodyParts(bytes) {
  *  (loadrace.hpp:50-70): 7 skill pairs (56) + 8x2 attributes (64), then
  *  maleHeight/femaleHeight/maleWeight/femaleWeight floats at 120..135
  *  and the flags int32 at 136 (Playable 0x1, Beast 0x2). */
+function readRace(bytes, rec) {
+  const e = { id: '', beast: false, playable: false, height: [1, 1], weight: [1, 1], radt: false };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'RADT' && sub.len >= 140) {
+      e.radt = true;
+      const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 140);
+      e.height = [dv.getFloat32(120, true), dv.getFloat32(124, true)];
+      e.weight = [dv.getFloat32(128, true), dv.getFloat32(132, true)];
+      const flags = dv.getInt32(136, true);
+      e.playable = (flags & 1) !== 0;
+      e.beast = (flags & 2) !== 0;
+    }
+  }
+  return e.id ? e : null;
+}
+
 export function raceRecords(bytes) {
   const out = new Map();
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'RACE') continue;
-    const e = { id: '', beast: false, playable: false, height: [1, 1], weight: [1, 1], radt: false };
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'RADT' && sub.len >= 140) {
-        e.radt = true;
-        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 140);
-        e.height = [dv.getFloat32(120, true), dv.getFloat32(124, true)];
-        e.weight = [dv.getFloat32(128, true), dv.getFloat32(132, true)];
-        const flags = dv.getInt32(136, true);
-        e.playable = (flags & 1) !== 0;
-        e.beast = (flags & 2) !== 0;
-      }
-    }
-    if (e.id) out.set(e.id, e);
+    const e = readRace(bytes, rec);
+    if (e) out.set(e.id, e);
   }
   return out;
 }
@@ -851,41 +862,46 @@ export const weaponAttachBone = (type) => WEAPON_ATTACH_BONE[type] ?? DEFAULT_WE
  * than read past, because a wrong offset silently yields a plausible
  * weapon type and this arc has already died of plausible.
  */
+function readWeapon(bytes, rec) {
+  const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false, speed: 1 };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'ENAM') e.enchanted = true;
+    else if (sub.name === 'WPDT') {
+      if (sub.len < 32) continue;   // refused, not read past
+      // MW-D22: mType is at byte EIGHT. loadweap.hpp's WPDTstruct is
+      // float mWeight (0-3), int32 mValue (4-7), int16 mType (8-9),
+      // uint16 mHealth (10-11), ... - 32 bytes. MW-D9 recorded "byte
+      // 10" (4+4 does not make 10), the reader read 10, and the
+      // fixture writer was authored FROM THE SAME GUESS - so every
+      // pin passed while retail play read mHealth as the type:
+      // a shortsword (type 0) found no record with health 0 and drew
+      // EMPTY HANDS, and a staff (type 5) drew whatever record's
+      // health is 5. Mac's play was the first retail check this
+      // number ever got, which is the whole TEST-THE-SHAPE lesson
+      // wearing bytes.
+      const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 32);
+      e.type = dv.getInt16(8, true);
+      // MW-D28: mSpeed at byte 12 (loadweap.hpp:70, after mHealth's
+      // uint16 at 10-11). It is the ONLY record field that changes an
+      // attack's played speed: character.cpp:1326 reads it for the
+      // drawn weapon and :1718/:1786/:1811 pass it as the speedmult of
+      // exactly the three attack sections - equip and unequip play at
+      // 1.0f (:1408, :1465).
+      e.speed = dv.getFloat32(12, true);
+    }
+  }
+  return e.id && e.model ? e : null;
+}
+
 export function weaponRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'WEAP') continue;
-    const e = { id: '', model: '', name: '', type: MW_WEAPON_TYPE.None, enchanted: false, speed: 1 };
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
-      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
-      else if (sub.name === 'ENAM') e.enchanted = true;
-      else if (sub.name === 'WPDT') {
-        if (sub.len < 32) continue;   // refused, not read past
-        // MW-D22: mType is at byte EIGHT. loadweap.hpp's WPDTstruct is
-        // float mWeight (0-3), int32 mValue (4-7), int16 mType (8-9),
-        // uint16 mHealth (10-11), ... - 32 bytes. MW-D9 recorded "byte
-        // 10" (4+4 does not make 10), the reader read 10, and the
-        // fixture writer was authored FROM THE SAME GUESS - so every
-        // pin passed while retail play read mHealth as the type:
-        // a shortsword (type 0) found no record with health 0 and drew
-        // EMPTY HANDS, and a staff (type 5) drew whatever record's
-        // health is 5. Mac's play was the first retail check this
-        // number ever got, which is the whole TEST-THE-SHAPE lesson
-        // wearing bytes.
-        const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 32);
-        e.type = dv.getInt16(8, true);
-        // MW-D28: mSpeed at byte 12 (loadweap.hpp:70, after mHealth's
-        // uint16 at 10-11). It is the ONLY record field that changes an
-        // attack's played speed: character.cpp:1326 reads it for the
-        // drawn weapon and :1718/:1786/:1811 pass it as the speedmult of
-        // exactly the three attack sections - equip and unequip play at
-        // 1.0f (:1408, :1465).
-        e.speed = dv.getFloat32(12, true);
-      }
-    }
-    if (e.id && e.model) out.push(e);
+    const e = readWeapon(bytes, rec);
+    if (e) out.push(e);
   }
   return out;
 }
@@ -898,29 +914,34 @@ export function weaponRecords(bytes) {
  *  points (loadclot.hpp) - refused at any other size. The part
  *  references are the same INDX/BNAM/CNAM list armor carries, and
  *  MODL is the ground mesh here too. */
+function readClothing(bytes, rec) {
+  const e = { id: '', model: '', name: '', type: -1, enchanted: false, parts: [] };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'ENAM') e.enchanted = true;
+    else if (sub.name === 'CTDT') {
+      if (sub.len !== 12) throw new Error(`CLOT ${e.id}: CTDT is ${sub.len} bytes`);
+      e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getUint32(0, true);
+    } else if (sub.name === 'INDX') {
+      if (sub.len !== 1) throw new Error(`CLOT ${e.id}: INDX is ${sub.len} bytes`);
+      e.parts.push({ part: bytes[sub.start], male: null, female: null });
+    } else if (sub.name === 'BNAM' && e.parts.length) {
+      e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
+    } else if (sub.name === 'CNAM' && e.parts.length) {
+      e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
+    }
+  }
+  return e.id && e.model ? e : null;
+}
+
 export function clothingRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'CLOT') continue;
-    const e = { id: '', model: '', name: '', type: -1, enchanted: false, parts: [] };
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
-      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
-      else if (sub.name === 'ENAM') e.enchanted = true;
-      else if (sub.name === 'CTDT') {
-        if (sub.len !== 12) throw new Error(`CLOT ${e.id}: CTDT is ${sub.len} bytes`);
-        e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getUint32(0, true);
-      } else if (sub.name === 'INDX') {
-        if (sub.len !== 1) throw new Error(`CLOT ${e.id}: INDX is ${sub.len} bytes`);
-        e.parts.push({ part: bytes[sub.start], male: null, female: null });
-      } else if (sub.name === 'BNAM' && e.parts.length) {
-        e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
-      } else if (sub.name === 'CNAM' && e.parts.length) {
-        e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
-      }
-    }
-    if (e.id && e.model) out.push(e);
+    const e = readClothing(bytes, rec);
+    if (e) out.push(e);
   }
   return out;
 }
@@ -950,34 +971,39 @@ export function raceBeastFlag(bytes, raceId) {
  *  draws needs Morrowind's armor class, and a struct nobody consumes
  *  is a guess waiting for its own MW-D22 (the byte-eight lesson, one
  *  screen up). mwItemMap resolves DF armor against these by token. */
+function readArmor(bytes, rec) {
+  const e = { id: '', model: '', name: '', enchanted: false, parts: [] };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+    else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'ENAM') e.enchanted = true;
+    // MW-D29: THE WORN HALF. An ARMO's MODL is the GROUND mesh - the
+    // thing a dropped cuirass looks like - and the worn shape is a
+    // list of PART REFERENCES: INDX (one byte, the sided
+    // PartReferenceType enum) opens a reference, then BNAM names the
+    // male BODY record and CNAM the female one, either optional
+    // (loadarmo.hpp's PartReferenceList; same layout on CLOT).
+    // Reading MODL as the worn mesh would dress the player in
+    // ground clutter, which is this format's byte-eight trap.
+    else if (sub.name === 'INDX') {
+      if (sub.len !== 1) throw new Error(`ARMO ${e.id}: INDX is ${sub.len} bytes`);
+      e.parts.push({ part: bytes[sub.start], male: null, female: null });
+    } else if (sub.name === 'BNAM' && e.parts.length) {
+      e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
+    } else if (sub.name === 'CNAM' && e.parts.length) {
+      e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
+    }
+  }
+  return e.id && e.model ? e : null;
+}
+
 export function armorRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'ARMO') continue;
-    const e = { id: '', model: '', name: '', enchanted: false, parts: [] };
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
-      else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
-      else if (sub.name === 'ENAM') e.enchanted = true;
-      // MW-D29: THE WORN HALF. An ARMO's MODL is the GROUND mesh - the
-      // thing a dropped cuirass looks like - and the worn shape is a
-      // list of PART REFERENCES: INDX (one byte, the sided
-      // PartReferenceType enum) opens a reference, then BNAM names the
-      // male BODY record and CNAM the female one, either optional
-      // (loadarmo.hpp's PartReferenceList; same layout on CLOT).
-      // Reading MODL as the worn mesh would dress the player in
-      // ground clutter, which is this format's byte-eight trap.
-      else if (sub.name === 'INDX') {
-        if (sub.len !== 1) throw new Error(`ARMO ${e.id}: INDX is ${sub.len} bytes`);
-        e.parts.push({ part: bytes[sub.start], male: null, female: null });
-      } else if (sub.name === 'BNAM' && e.parts.length) {
-        e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
-      } else if (sub.name === 'CNAM' && e.parts.length) {
-        e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
-      }
-    }
-    if (e.id && e.model) out.push(e);
+    const e = readArmor(bytes, rec);
+    if (e) out.push(e);
   }
   return out;
 }
@@ -1000,27 +1026,92 @@ export function armorRecords(bytes) {
  * @returns the number, or null when the .esm does not carry it - the
  *   caller decides, and a missing GMST is not a reason to refuse an arm.
  */
+function readGmst(bytes, rec) {
+  let name = '';
+  let value = null;
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') name = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'INTV' && sub.len >= 4) {
+      value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true);
+    } else if (sub.name === 'FLTV' && sub.len >= 4) {
+      value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
+    } else if (sub.name === 'STRV') value = zstr(bytes, sub.start, sub.len);
+  }
+  return { name, value };
+}
+
 export function gmstValue(bytes, id) {
   const want = String(id).toLowerCase();
   for (const rec of walkEsm(bytes)) {
     if (rec.type !== 'GMST') continue;
-    let name = '';
-    let value = null;
-    for (const sub of subrecords(bytes, rec)) {
-      if (sub.name === 'NAME') name = zstr(bytes, sub.start, sub.len).toLowerCase();
-      else if (sub.name === 'INTV' && sub.len >= 4) {
-        value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true);
-      } else if (sub.name === 'FLTV' && sub.len >= 4) {
-        value = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
-      } else if (sub.name === 'STRV') value = zstr(bytes, sub.start, sub.len);
-    }
-    if (name === want) return value;
+    const g = readGmst(bytes, rec);
+    if (g.name === want) return g.value;
   }
   return null;
 }
 
 /** The GMST id, spelled once. */
 export const GMST_SNEAK_DELTA = 'i1stpersonsneakdelta';
+
+/** MW-LOAD: the GMSTs the arm build reads. Spelled once so the derived
+ *  record set carries exactly what buildFpArm asks for and a new
+ *  question here is a version bump there. */
+export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
+
+/** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
+ *  reader above changes what it returns, so a derived set written by
+ *  an older build is refused and re-extracted rather than read wrong. */
+export const ARM_RECORDS_VERSION = 1;
+
+/**
+ * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
+ *
+ * buildFpArm asked six questions of each .esm - bodies, races, armors,
+ * clothes, weapons, one GMST - and each was its own walk of the whole
+ * file: 1.0-2.7 s per walk on Morrowind.esm measured, times six, times
+ * the three retail masters, on EVERY page load (the memo was
+ * per-session). The records do not change between two loads of the
+ * same bytes, so they are extracted once here and kept (dataSource's
+ * derived store) against the file's name, size and a sample stamp.
+ *
+ * The answer is plain data - arrays, an entries list for the races (a
+ * Map does not survive JSON), a name-to-value object for the GMSTs -
+ * and each list is exactly what the per-kind extractor returns for the
+ * same bytes: same readers, same order, same filters. `races` is the
+ * last-id-wins Map as entries; `gmst` holds the FIRST record of each
+ * asked id (gmstValue's rule) and omits ids the file does not carry.
+ */
+export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
+  const want = new Set(gmst.map((id) => String(id).toLowerCase()));
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], gmst: {} };
+  const races = new Map();
+  for (const rec of walkEsm(bytes)) {
+    switch (rec.type) {
+      case 'BODY': out.parts.push(readBodyPart(bytes, rec)); break;
+      case 'RACE': { const e = readRace(bytes, rec); if (e) races.set(e.id, e); break; }
+      case 'ARMO': { const e = readArmor(bytes, rec); if (e) out.armors.push(e); break; }
+      case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
+      case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
+      case 'GMST': {
+        const g = readGmst(bytes, rec);
+        if (want.has(g.name) && !Object.hasOwn(out.gmst, g.name)) out.gmst[g.name] = g.value;
+        break;
+      }
+      default: break;
+    }
+  }
+  out.races = [...races.entries()];
+  return out;
+}
+
+/** MW-LOAD: is this a record set this build can read - the shape it
+ *  writes, every list present? A derived set from another version, or
+ *  a torn one, answers false and is re-extracted. */
+export function isArmRecords(r) {
+  return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
+    && ['parts', 'races', 'armors', 'clothes', 'weapons'].every((k) => Array.isArray(r[k]))
+    && !!r.gmst && typeof r.gmst === 'object';
+}
 
 /**
  * RULE 32(a)'s vector, in the OBJECT ROOT's space: `Vec3f(0, 0, -offset)`
