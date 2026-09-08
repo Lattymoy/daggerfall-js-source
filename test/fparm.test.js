@@ -233,7 +233,7 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
   assert.match(draw, /const eye = firstPersonEye\(built\.arm\.mats, built\.cameraRef\);/,
     'the eye is the camera node, read fresh from the pose');
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph\)/,
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/,
     'and the model matrix is the basis change alone - no placement, no scale');
   assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
   // THE RETIRED MECHANISM, and the sentence goes with it: none of the

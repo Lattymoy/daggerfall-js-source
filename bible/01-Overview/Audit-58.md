@@ -253,7 +253,7 @@ string was RECOVERED from the reference, standing over a string somebody
 wrote, is the anti-lie law's exact failure mode, and it shipped with a
 pin. **The classic inventory and trade windows never drew the two
 target-icon panels** (`DaggerfallInventoryWindow.cs:49-50`, `:424-439`,
-`:859-890`), so the classic lane had no encumbrance readout at all - the
+`:860-890`), so the classic lane had no encumbrance readout at all - the
 rects were named in a header comment and nothing else. A repair-shop
 merchant skipped `DaggerfallMerchantRepairPopupWindow` entirely; the bank
 purchase list's arrows were never drawn; `ListPickerWindow` hardcoded 9

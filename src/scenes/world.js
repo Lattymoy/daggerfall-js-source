@@ -7077,6 +7077,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       adjustFallStart(player, r.offset[1]);
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
+      sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
@@ -7249,7 +7250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun });   // ES1: the enhanced sky's clouds and moons; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos });   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
@@ -7290,7 +7291,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect);
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
     // world repaints everything nearer). Skipped when exp fog owns
@@ -7310,7 +7311,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       farRing.draw(view, {
         origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
         lightDir: renderer._lightDir, ambient: renderer._ambient,
-        sunScale: renderer._sunScale, sunColor: renderer._sunColor,
+        sunScale: renderer._sunScale * sky.farSunFactor(), sunColor: renderer._sunColor,   // VC4: the ring stands outside the shadow map - a cover-derived dim
         // AUDIT EV F-R4: the same moon the streamed terrain takes -
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
@@ -7324,6 +7325,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
+    renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.

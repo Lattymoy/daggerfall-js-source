@@ -122,7 +122,12 @@ in all three modes + the builder run against the real TEXTURE.302.
 skyState (one field), declared INSIDE the shader, `uShadowAmt = 0`
 for classic and interiors. GATE: check + bootProbe (this is the slice
 that black-screened last time) + worldRenderGate under overcast via
-the weather door.
+the weather door. SUPERSEDED by VC4 (2026-09-07,
+`Volumetric-Clouds-Arc.md`): the noise projection became the
+volumetric slab's own transmittance off a world-space shadow map, the
+one block (`CLOUD_SHADOW_GLSL`, still declared INSIDE each shader)
+now interpolated into the mesh, character and billboard shaders too,
+`uCloudShadowRect.w = 0` the classic-and-interiors zero.
 
 **EE6 - ground lighting.** The normal texture (Sobel off the surfaces'
 own height) and the detail read, both behind the switch. GATE: check

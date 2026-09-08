@@ -500,7 +500,7 @@ test('audit18 hosts: BOTH exterior hosts thread the weather style into the sky',
     // the line. It is still the third argument and still the weather's.
     assert.match(src(host), /sky\.use\([^;]*minute, weatherSkyOffset === 0[,)]/,
       `${host} shows NITE on every night minute regardless of weather`);
-    assert.match(src(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun \}\);\s*\/\/ ES1/,
+    assert.match(src(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ ES1/,
       `${host} does not feed the enhanced sky its weather and clock`);
   }
 });

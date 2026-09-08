@@ -607,7 +607,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
     assert.match(s, /if \(!skyInside\) \{ skyInside = true; sky\.setInside\(true\); \}/, `${host}: InteriorTransitionEvent on the modal edge (AUDIT 61)`);
     assert.match(s, /if \(skyInside\) \{ skyInside = false; sky\.setInside\(false\); \}/, `${host}: ExteriorTransitionEvent before the sky’s frame`);
     assert.match(s, /isEnhanced\(\) && !sky\.dynamic \? strobe : 1/, `${host}: one lightning under the mod - the strobe stands down (AUDIT 61)`);
-    assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
+    assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
     assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\)\);/, `${host}: the flash on the light channel`);
     assert.match(s, /if \(sky\.pixelSnow\) precipOpts\.pixelSnow = sky\.pixelSnow;/, `${host}: the pixel snow`);
     // the flash composes AFTER the lanterns are stored
@@ -693,14 +693,14 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
         assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
       }
     }
-    assert.equal(modSetting('dynamic-skies', 'Enabled'), true, 'on by being installed');
+    assert.equal(modSetting('dynamic-skies', 'Enabled'), false, 'VC1 (2026-09-07): a choice in the Mods pane - the port\'s dome is the lane\'s sky');
     assert.equal(modSetting('dynamic-skies', 'densitySetting'), 1);
     assert.equal(setModSetting('dynamic-skies', 'densitySetting', 14), 10, 'clamped to the slider');
     assert.equal(setModSetting('dynamic-skies', 'densitySetting', 0), 1);
     assert.equal(setModSetting('dynamic-skies', 'MinParticleSize', 250.7), 250, 'an integer');
     assert.equal(modSetting('dynamic-skies', 'ActivatePixelSnow'), false);
     const all = modSettingsOf('dynamic-skies');
-    assert.equal(all.MinParticleSize, 250); assert.equal(all.Enabled, true);
+    assert.equal(all.MinParticleSize, 250); assert.equal(all.Enabled, false);   // VC1: the mod is a choice
     assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'the toggles read as before');
     assert.match(read('src/ui/enhancedMenu.js'), /if \(isIntKey\(def\)\) \{/, 'the pane steps the integer keys');
   } finally { _resetModSettings(); }

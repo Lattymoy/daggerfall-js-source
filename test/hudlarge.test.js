@@ -649,7 +649,7 @@ test('E5: every host that draws the bar shrinks its world pass AND its lens', ()
   // and so does EV8's far province ring, the other pass in this frame
   // that builds a projection of its own.
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /sky\.draw\([^;]*worldAspect\)/s, `${host}'s sky shares the lens`);
+    assert.match(src(host), /sky\.draw\([^;]*worldAspect[,)]/s, `${host}'s sky shares the lens`);
   }
   assert.match(src('scenes/world.js'), /fovY: fieldOfView\(\), aspect: worldAspect,/,
     'the far ring shares it too, or the horizon steps against the terrain');

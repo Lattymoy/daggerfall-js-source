@@ -132,7 +132,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   // expands it. An injected declaration - a string replace after the
   // template - does not count, because it hides from this reader as it
   // hid from the last one (AUDIT 47 F1).
-  const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js'];
+  const files = ['src/render/renderer.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js', 'src/render/volumetricClouds.js'];   // VC2/VC3: the noise generators, the slice viewer, the march and the composite
   // AUDIT 49: labGrass.js composes its stages as HEAD + FIELD + body, so
   // the reader composes them the same way before it looks
   {
@@ -153,11 +153,12 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
     const s = readFileSync(file, 'utf8');
     assert.ok(!/`\.replace\('uniform /.test(s), `${file}: a uniform must be declared in the template, not injected after it`);
     const shared = (s.match(/const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];
+    const field = (s.match(/const CLOUD_FIELD_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // VC4: the marches' shared field
     const re = /const ([A-Z_]+) = `#version 300 es([\s\S]*?)`(?:;|\.)/g;
     let m; let seen = 0;
     while ((m = re.exec(s))) {
       seen++;
-      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared);
+      const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field);
       const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
         .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
