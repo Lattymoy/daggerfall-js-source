@@ -377,12 +377,13 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(mills, /ENHANCED-ONLY DEPARTURE \(Ledger A\)/, 'windmills is still enhanced-only, and must still say so');
   assert.match(mills, /ALWAYS ON IN BOTH LANES/, 'and must say how the roads row differs from it');
   const ds = rootFile('src/scenes/dataSource.js');
-  assert.match(ds, /IT CURRENTLY HAS NO CONSUMER\./, 'the derived store’s true claim went with the false reason');
+  // MW-LOAD (2026-09-08): the store found its consumer - the header names it.
+  assert.match(ds, /ITS ONE CONSUMER IS MW-LOAD's arm record sets/, 'the derived store’s true claim went with the false reason');
   assert.match(prose('src/scenes/dataSource.js'), /roadsCache\.js/, 'and must say where the rebuilt roads cache instead');
   const walk = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`)
       : e.name.endsWith('.js') ? [`${dir}/${e.name}`] : []));
   const consumers = walk('src').filter((f) => f !== 'src/scenes/dataSource.js'
     && /storeDerived\(/.test(rootFile(f)));
-  assert.deepEqual(consumers, [], 'the derived store has a consumer now - dataSource.js’s header says it has none');
+  assert.deepEqual(consumers, [], 'a derived-store consumer outside dataSource.js - its header names only the MW-LOAD door inside');
 });

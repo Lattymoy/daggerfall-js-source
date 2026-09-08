@@ -70,3 +70,44 @@ test('mwbsa: retail Morrowind.bsa opens and looks sane', { skip: skipReal }, () 
   assert.ok(names.every((n) => n === normalizeBsaPath(n)));
   for (const n of names) assert.ok(bsa.get(n).byteLength >= 0);
 });
+
+// ── MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
+// are enabled"): THE ARCHIVE OPENS OFF A BLOB, BY RANGE. The store used to
+// hand back each archive as a whole ArrayBuffer - a structured clone of
+// 150-300 MB per archive, one to three seconds each measured - before a
+// mesh was asked for. Off a Blob the directory is a few-megabyte range
+// and an entry is a range of its own size. `get` stays synchronous and
+// answers only what `load` brought in; that contract is what every
+// reader speaks, and a reader that forgot to load is told so.
+test('MW-LOAD: open(blob) reads the directory by range and nothing else; load brings an entry in; get answers only what is loaded', async () => {
+  const reads = [];
+  const blob = new Blob([ARCHIVE]);
+  const spy = { size: blob.size, slice: (a, b) => { reads.push([a, b]); return blob.slice(a, b); } };
+  const a = await MwBsaFile.open(spy);
+  const whole = new MwBsaFile(ARCHIVE);
+  assert.equal(a.lazy, true); assert.equal(whole.lazy, false);
+  assert.deepEqual(a.list(), whole.list(), 'the same directory as the whole-buffer reader');
+  assert.equal(reads.length, 2, 'the header, then the directory + hash table - two ranges');
+  assert.deepEqual(reads[0], [0, 12]);
+  assert.ok(reads[1][1] < ARCHIVE.byteLength, 'the directory range stops short of the data buffer');
+  const name = whole.list()[0];
+  assert.equal(a.has(name), true);
+  assert.equal(a.loaded(name), false);
+  assert.throws(() => a.get(name), /not loaded - await load/, 'a reader that did not load is told, not handed garbage');
+  const bytes = await a.load(name);
+  assert.deepEqual([...bytes], [...whole.get(name)], 'the range is the entry');
+  assert.equal(a.loaded(name), true);
+  assert.equal(a.get(name), bytes, 'get answers the loaded copy');
+  assert.equal(await a.load(name), bytes, 'a second load is the first’s answer - one range read');
+  assert.equal(reads.length, 3, 'one entry, one range');
+  await a.loadAll([name, 'not/in/here.nif']);
+  assert.equal(reads.length, 3, 'loadAll loads what the archive carries and skips what it does not, without re-reading');
+  a.release();
+  assert.equal(a.loaded(name), false, 'released');
+  await assert.rejects(() => a.load('no/such.nif'), /no such file/);
+  // the whole-buffer reader speaks the same doors
+  assert.equal(whole.loaded(name), true);
+  assert.deepEqual([...await whole.load(name)], [...whole.get(name)]);
+  await assert.rejects(() => MwBsaFile.open({ size: 4, slice: () => blob.slice(0, 4) }), /too small/);
+  await assert.rejects(() => MwBsaFile.open(null), /expects a Blob/);
+});

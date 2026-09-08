@@ -173,6 +173,12 @@ export function hairFeatures(rgba, w, h, extentZ) {
  * Returns {head, hair, reasons:string[]} with null where no candidate
  * had features - the caller falls back to the walk for that half.
  */
+/** MW-LOAD: the version of THIS matcher's verdict. buildFpArm keeps a
+ *  verdict in the derived store against the stored set and the
+ *  identity; a change to how heads and hairs are measured or scored
+ *  is a bump here, so an older verdict is re-measured, never read. */
+export const FACE_MATCH_VERSION = 1;
+
 export function matchFace(portrait, heads, hairs, { female = false } = {}) {
   const reasons = [];
   if (!portrait) return { head: null, hair: null, reasons: ['portrait unreadable - the walk stands'] };
