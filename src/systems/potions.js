@@ -40,7 +40,7 @@ import { templateByIndex } from './itemTemplates.js';
 // U44: ONE HOME. Heal-SpellPoints is the only DFU effect with no
 // ClassicKey - PotionMaker-only, no MagicSkill, no spell-book text
 // (HealSpellPoints.cs:21-30) - so no SPELLS.STD row can name it and
-// no classic spell restores magicka, which is what effects.js:246-252
+// no classic spell restores magicka, which is what effects.js:261-267
 // recorded when S15 undid an earlier mis-mapping of (10,9) onto it. A
 // potion bundle is not a spell record: DFU builds one from
 // EffectEntry(effect.Key, settings), a STRING key, and the classic
@@ -273,8 +273,8 @@ export function gatherRecipe(recipe, availableTemplateIndices) {
 //  - the potion's EFFECT when drunk is the recipe->effect map, and it
 //    is potionBundle above (:138) - DrinkPotion's EffectBundleSettings
 //    (:903-947). U44 mounted it: scenes/hostMagic.js:525-532 builds the
-//    bundle, all three hosts hand `drinkPotion` down (world.js:2252,
-//    dungeonContext.js:1112, exterior.js:1816) and useItem.js:257
+//    bundle, all three hosts hand `drinkPotion` down (world.js:2293,
+//    dungeonContext.js:1144, exterior.js:1821) and useItem.js:257
 //    routes the bottle into it.
 //  - RandomlyAddPotionRecipe(25) is live in shopStock.js:203-209
 //    (AUDIT 26 F129, DaggerfallLoot.cs:165 - the Alchemist arm), so a

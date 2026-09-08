@@ -55,7 +55,7 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  *
  * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
  * everywhere in this port (chargen.js applyCharacter,
- * classicSave.js:624), so the card's old `female: !!playerEntity
+ * classicSave.js:665), so the card's old `female: !!playerEntity
  * .gender` was TRUE FOR EVERYONE - every build asked for the female
  * skeleton and the female body columns, and the male-record fallback
  * fills made it look almost right. The test is the string compare,
@@ -89,9 +89,9 @@ export function buildArmsFor(entity) {
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:1960), townTalk.say
- *                     (exterior.js:1167, world.js:2184) and
- *                     worldModes' own interior sink (worldModes.js:348,
+ *                     (dungeonContext.js:2004), townTalk.say
+ *                     (exterior.js:1172, world.js:2225) and
+ *                     worldModes' own interior sink (worldModes.js:356,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,

@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:113/:1002-1004 both import and run
+// 126/:1364-1366 and exterior.js:117/:1007-1009 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -124,7 +124,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:250) early-returns for a
+  // updateEquippedArmorValues (equip.js:262) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -184,7 +184,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:250) early-returns for a
+  // updateEquippedArmorValues (equip.js:262) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -391,9 +391,9 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1092-1103,
-    // the route itself :1101), dungeonContext.js through `overlayHover`
-    // (:4675), which dungeon.js:406 and worldModes.js:6595 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1147-1158,
+    // the route itself :1156), dungeonContext.js through `overlayHover`
+    // (:4816), which dungeon.js:430 and worldModes.js:6967 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

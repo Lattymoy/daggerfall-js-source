@@ -363,7 +363,7 @@ test('U42 sort: alphabetical, then point cost only if the alpha pass changed not
 });
 
 test('U42: every mutation lands on the player\'s OWN array - the save envelope sees it', () => {
-  // PlayerEntity.GetSpells() is the book itself and save.js:142 maps
+  // PlayerEntity.GetSpells() is the book itself and save.js:143 maps
   // that array in order. This pin fails if the window ever copies.
   const { entity, w } = book(spell('B', 5, { index: 7 }), spell('A', 5, { index: 9 }));
   const arr = entity.spells;
@@ -384,7 +384,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   // RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
   // is a struct, so GetSpell/SetSpell is a copy-then-write; the
   // port's records are shared objects, so the copy is explicit. The
-  // `custom` flag is what save.js:142 reads to store the whole
+  // `custom` flag is what save.js:143 reads to store the whole
   // record instead of a bare SPELLS.STD index.
   const shared = spell('Fireball', 20, { index: 12 });
   const { entity, w } = book(shared);
@@ -401,7 +401,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
 });
 
 test('U42 rename: the renamed COPY survives the save envelope', () => {
-  // The `custom` flag is not decoration - save.js:142 stores the whole
+  // The `custom` flag is not decoration - save.js:143 stores the whole
   // record for a custom spell and a bare SPELLS.STD index for every
   // other, so without it a reload would hand back the ORIGINAL name.
   // This drives the real envelope rather than asserting the flag.

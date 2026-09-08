@@ -2111,7 +2111,7 @@ registry", and the function does exactly that - but NOTHING IN `src/` CALLS
 IT. Its only importer is test/names.test.js, so no scene ever builds the
 exterior NPC registry and no exterior static NPC is a talk or activation
 target in the running game. The interior twin IS live
-(interiorContext.js:131 -> collectInteriorPeople), which is what made the
+(interiorContext.js:202 -> collectInteriorPeople), which is what made the
 gap invisible: the feature demonstrably works on one side. The corpus pin
 (76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
 a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:1009`)
+encounter pool has always exported its own at `exteriorFoes.js:1084`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once
