@@ -36,7 +36,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // way (probe pins ride it).
   // EE1: ENHANCED ENVIRONMENTS. The outdoors as ONE switch - the sky,
   // the ground's sampling and surfaces, the cloud shadows, the grass,
-  // the weather and the surface field - because they are one system:
+  // the weather (and, since CLK2, its evolution within the day) and the
+  // surface field - because they are one system:
   // the sky lights the ground, the ground holds the weather's water,
   // the grass stands in what the field says is there. Separate toggles
   // would let a player build a state none of them was written for.

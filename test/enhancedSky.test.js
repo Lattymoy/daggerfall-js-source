@@ -169,14 +169,17 @@ test('ES1 state: what the shader gets - the palette by elevation, the weather\'s
   // Weather darkens the CLOUDS, which is what a rendered storm reads as.
   assert.ok(storm.cloudLit[0] + storm.cloudLit[1] + storm.cloudLit[2] < clear.cloudLit[0] + clear.cloudLit[1] + clear.cloudLit[2],
     'a storm\'s clouds are darker than a clear day\'s');
-  // The phases come from the CLASSIC clock, not the day's minute: the
-  // same in-game day gives the same moons whatever the hour.
+  // The phases come from the CLASSIC clock. CLK3: as a NUMBER on it -
+  // the same in-game day's morning and evening are thirteen hours
+  // apart on a 32-day ring, a sliver, and both sit within one ring step
+  // of DFU's ladder for that day (which every system still reads whole).
   const day11 = 11 * CLASSIC_DAY;
   const morning = skyState({ minuteOfDay: at(7), classicMinutes: day11 + at(7) });
   const evening = skyState({ minuteOfDay: at(20), classicMinutes: day11 + at(20) });
-  assert.equal(morning.masser.phase, evening.masser.phase, 'one day, one phase');
-  assert.deepEqual(morning.masser.phase, lunarPhasesFromMinutes(day11 + at(7)).masser);
-  assert.notEqual(morning.masser.phase, skyState({ minuteOfDay: at(7), classicMinutes: day11 + 8 * CLASSIC_DAY }).masser.phase);
+  assert.ok(Math.abs(evening.masser.phase - morning.masser.phase - 13 / 24 / 4) < 1e-9, 'one day: thirteen hours of the ring between them');
+  const ring = (a, b) => Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+  assert.ok(ring(morning.masser.phase, lunarPhasesFromMinutes(day11 + at(7)).masser) <= 1, 'within a step of the ladder');
+  assert.notEqual(Math.round(morning.masser.phase), Math.round(skyState({ minuteOfDay: at(7), classicMinutes: day11 + 8 * CLASSIC_DAY }).masser.phase), 'eight days on, another phase');
   // A moon below the horizon is not drawn; by day it is faint at most.
   const full = skyState({ minuteOfDay: at(0), phases: { masser: LUNAR_PHASES.Full, secunda: LUNAR_PHASES.Full } });
   assert.ok(full.masser.vis > 0.5, 'a full moon at midnight is plainly there');
@@ -240,7 +243,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
 // Four of five taken: the banding, the clouds, the weather's snap, the
 // stars standing still. (The fifth - cloud shadow on the world - is a
 // world change, not a sky one, and stays on the board.)
-import { easeWeather, weatherRow, WEATHER_EASE_SECONDS, STAR_POLE } from '../src/render/enhancedSky.js';
+import { easeWeather, weatherRow, WEATHER_EASE_MINUTES, STAR_POLE } from '../src/render/enhancedSky.js';
 
 test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, and whole on the first call', () => {
   const clear = weatherRow('sunny'), storm = weatherRow('thunder');
@@ -254,8 +257,8 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
     last = row.cover;
   }
   const span = storm.cover - clear.cover;
-  assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `a minute in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
-  const half = easeWeather(clear, storm, WEATHER_EASE_SECONDS);
+  assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `an hour of clock in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
+  const half = easeWeather(clear, storm, WEATHER_EASE_MINUTES);
   assert.ok(half.cover > clear.cover && half.cover < storm.cover, 'at the time constant it is part way, not there');
   assert.ok(Math.abs(half.cover - (clear.cover + (storm.cover - clear.cover) * (1 - Math.exp(-1)))) < 1e-9, 'exponential, one time constant');
   // Every number the shader takes eases, colours included.
@@ -263,7 +266,7 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
   assert.equal(half.wind.length, 2);
   assert.equal(half.lit.length, 3);
   assert.ok(half.lit.every((v, i) => (v - clear.lit[i]) * (storm.lit[i] - clear.lit[i]) >= 0), 'the cloud colours ease too');
-  assert.ok(WEATHER_EASE_SECONDS >= 5 && WEATHER_EASE_SECONDS <= 30, `${WEATHER_EASE_SECONDS}s: a weather turns, it does not cut`);
+  assert.ok(WEATHER_EASE_MINUTES >= 1 && WEATHER_EASE_MINUTES <= 6, `${WEATHER_EASE_MINUTES} game minutes: a weather turns, it does not cut`);
   // skyState takes the eased row over the type's own.
   const eased = skyState({ minuteOfDay: 12 * 60, weather: 'sunny', row: half });
   assert.equal(eased.cloudCover, half.cover, 'the state is built from the eased row');
@@ -354,7 +357,7 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/);
   assert.match(fs, /clamp01\(lo \+ hi \* \(1 - lo\) \* 0\.7\)/);
   // The JS noise is the GLSL noise: same magic numbers, same octaves.
-  for (const n of ['123.34', '456.21', '45.32', '2.03', '17.1', '9.7']) {
+  for (const n of ['123.34', '456.21', '45.32', '2.0', '17.1', '9.7', '256']) {   // CLK1 review: the octave is exactly two and the lattice has a period, in both texts
     assert.ok(fs.includes(n), `${n} appears in both the shader and the JS`);
   }
   assert.ok(fbm(1.5, 2.5) >= 0 && fbm(1.5, 2.5) <= 1);

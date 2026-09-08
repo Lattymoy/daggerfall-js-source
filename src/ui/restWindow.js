@@ -62,6 +62,15 @@ import { bindings } from './input.js';               // B5: the live InputManage
 import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.GetBinding(Actions.Rest)
 import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';   // D3: the native-window idiom
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
+import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
+
+/** CLK4 (the Clock arc): on the ENHANCED skin the resting page is a
+ *  translucent veil over the world instead of DFU's opaque black, so
+ *  the time-lapse Mac chose - the sun sweeping, the clouds streaming,
+ *  a front building and passing on the clock - is a thing the player
+ *  watches. The selection page and the classic skin keep DFU's "Hide
+ *  world while resting" verbatim. */
+export const REST_VEIL = Object.freeze([0, 0, 0, 0.35]);
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -705,8 +714,10 @@ export class RestWindow {
     const m = nativeMetrics(canvas);
     // Setup :137-138, DFU's own comment: "Hide world while resting" -
     // ParentPanel.BackgroundColor = Color.black, opaque, so the world
-    // AND the HUD the host painted under this overlay go away.
-    drawMenuBackdrop(renderer, canvas);
+    // AND the HUD the host painted under this overlay go away. CLK4: a
+    // veil instead while RESTING on the enhanced skin (see REST_VEIL).
+    if (this.state === 'resting' && isEnhanced()) drawMenuBackdrop(renderer, canvas, REST_VEIL);
+    else drawMenuBackdrop(renderer, canvas);
     const st = this.status();
     if (st.panel === 'main') {
       drawImg(renderer, _art.base, m, restPanelX(_art.base.w), REST_PANEL_Y);

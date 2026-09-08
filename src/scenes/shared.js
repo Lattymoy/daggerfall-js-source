@@ -10,9 +10,9 @@ import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
-import { skyFrameForTime, isNight, setLightCurve } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve
+import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_SECONDS } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
@@ -220,8 +220,9 @@ export function createSkyController(gl, params) {
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
   const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
-  const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds
-  let weatherAt = null;
+  const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds (CLK1: game minutes x WIND_SECONDS_PER_MINUTE)
+  let weatherAt = null;     // the mod's real-second clock (DS1, 1:1 - BLBSkybox reads Time.deltaTime)
+  let lastMin = null;       // CLK1: the game minute the presentation last walked to
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
   // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
@@ -344,7 +345,7 @@ export function createSkyController(gl, params) {
     },
     /** WM2b: THE EASED WIND, and the ONE place anything but the sky can
      *  read it. `easeWeather` walks this row toward the sim's over
-     *  WEATHER_EASE_SECONDS, and the cloud deck is drawn with it - so a
+     *  WEATHER_EASE_MINUTES (CLK1: game minutes), and the cloud deck is drawn with it - so a
      *  consumer that takes the same vector is not merely correlated with
      *  the sky, it is driven by the same number. The windmills' rotor
      *  rate is the first (src/world/windmills.js).
@@ -421,14 +422,28 @@ export function createSkyController(gl, params) {
         const seconds = (now - t0) / 1000;
         // ES1c: the weather EASES. The sim flips its type between two
         // ticks; the sky walks its numbers toward the new row over
-        // WEATHER_EASE_SECONDS instead of changing in one frame. The
+        // WEATHER_EASE_MINUTES instead of changing in one frame. The
         // first call takes the row whole - a boot into rain is rain.
         // EE5: ?weather=<type> is a probe door, like ?window and ?skyframe
         // are for the panorama - the world render gate uses it to put
         // the sky under overcast and read the ground beneath.
         const weatherName = params.get('weather') ?? extra?.weather ?? 'sunny';
         const want = weatherRow(weatherName);
-        const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
+        // CLK1 (2026-09-08, Mac: "in sync with the world clock"): ONE
+        // CLOCK. The presentation walks on GAME MINUTES - the host's
+        // classicMinutes, the number the sun, the moons, the stars and
+        // the wind model already read - not on the wall's seconds it
+        // used to difference for itself (which ran on through a pause
+        // and stood still through a rest). A stopped clock freezes the
+        // sky; a rest, with the clock at hundreds of times its rate,
+        // sweeps the sun, streams the clouds and builds a front in a
+        // time-lapse; a jail term or a travel moves the clouds by the
+        // hours of wind they missed; a load to an EARLIER clock costs
+        // no minutes (the jump stamp takes the row whole either way).
+        const nowMin = extra?.classicMinutes ?? 0;
+        const dt = lastMin === null || nowMin < lastMin ? 0 : nowMin - lastMin;   // GAME MINUTES
+        lastMin = nowMin;
+        const dtReal = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));   // the mod's own frame (DS1)
         weatherAt = seconds;
         // WIND1: THE WIND IS ITS OWN STATE, and the sky's row takes it
         // rather than carrying a fixed vector per weather. The model
@@ -439,7 +454,7 @@ export function createSkyController(gl, params) {
         // clears. One seam (WM2b), one vector, everything together.
         //
         // And the SKY'S OWN EASE follows the front: a mild change still
-        // crosses in the old fourteen seconds, but a violent arrival
+        // crosses in WEATHER_EASE_MINUTES, but a violent arrival
         // takes the front's lead to build, so from the ground the wind
         // gets up first and the sky darkens behind it - the storm
         // rolling in. `dt` is stretched or shrunk to make the ease's
@@ -452,16 +467,19 @@ export function createSkyController(gl, params) {
         // seconds and THEN the wind rose over three hours: the storm
         // arrived and the wind followed it, the reverse of what was
         // asked for and of what the record claimed. `inLead()` is true
-        // from the change until the front's arrival.
-        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_SECONDS / (FRONT_LEAD_MIN * 60 / 12)) : dt;
+        // from the change until the front's arrival. CLK1: both sides in
+        // game minutes now - the ease's span over the lead's length, no
+        // time scale hard-coded between them.
+        const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / FRONT_LEAD_MIN) : dt;
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
-        // WIND2: the cloud DRIFT is integrated here, once, in real
-        // seconds - the one place the wind and the clock meet. Every deck
-        // reads this offset instead of multiplying wind by time, which
-        // with a wind that moves every frame made the clouds stream.
-        driftXZ[0] += weatherRowNow.wind[0] * dt;
-        driftXZ[1] += weatherRowNow.wind[1] * dt;
+        // WIND2: the cloud DRIFT is integrated here, once - the one place
+        // the wind and the clock meet. Every deck reads this offset
+        // instead of multiplying wind by time, which with a wind that
+        // moves every frame made the clouds stream. CLK1: on game
+        // minutes, through the one constant that keeps the row's units.
+        driftXZ[0] += weatherRowNow.wind[0] * dt * WIND_SECONDS_PER_MINUTE;
+        driftXZ[1] += weatherRowNow.wind[1] * dt * WIND_SECONDS_PER_MINUTE;
         if (dynamic) {
           // DS1: BLBSkybox.Update - the mod's own frame, on the sim's
           // WORD: a DFU mod sees WeatherManager's event, not the port's
@@ -476,7 +494,7 @@ export function createSkyController(gl, params) {
           // calendar recompute stays for a caller that passes no `sun`.
           const winter = seasonValue(dateFromClassicMinutes(nowMinutes)) === SEASONS.Winter;
           const st = dynamic.tick({
-            minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt,
+            minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,
             weatherScale: extra?.sun ?? weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
           });
           dynamicSky.setState(st);
@@ -566,6 +584,7 @@ function dynamicMoonState(dyn, minuteOfDay, cover = 0) {
   };
   return {
     night: isNight(minuteOfDay),
+    daylight: daylightScale(minuteOfDay),   // CLK3 review: the rig's curve (the mod's own while it is the sky), so the moonlight ramps here too
     masser: moon('Moon', dyn.phases?.masser?.phase ?? -1, mat._MoonColor),
     secunda: moon('Secunda', dyn.phases?.secunda?.phase ?? -1, mat._SecundaColor),
   };

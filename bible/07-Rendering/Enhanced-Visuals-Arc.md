@@ -314,7 +314,7 @@ sun) is owed to a data-bearing session.
 EV5 (2026-08-31): MOONLIGHT AND THE NIGHT. The enhanced sky computed
 both moons' directions, phases and visibilities every frame since ES1
 and the world's light consumed none of it - now it does. The pure
-half (enhancedSky.js): phaseLitFraction folds the 0..7 phase ring at
+half (enhancedSky.js): phaseLitFraction folds the 0..8 phase ring (a ladder step, or since CLK3 the clock's own fraction) at
 Full; moonlightTerm derives the term from skyState's OWN output - the
 MASSER leads (MOONLIGHT.masser 0.25 x phase-lit x vis, where vis is
 already daylight- and cloud-dimmed by the same eased cover the dome

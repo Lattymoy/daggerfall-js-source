@@ -55,7 +55,7 @@
 
 import { createRenderTarget, withTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
-import { WEATHER_EASE_SECONDS } from './enhancedSky.js';
+import { WEATHER_EASE_MINUTES } from './enhancedSky.js';
 
 /** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
 export const PIXEL_METRES = 819.2;
@@ -80,6 +80,16 @@ export const SHAPE_METRES = PIXEL_METRES * 15;
 export const DETAIL_METRES = PIXEL_METRES;
 export const VARIATION_METRES = PIXEL_METRES * 16;
 export const MOTTLE_METRES = PIXEL_METRES * 5;
+/** CLK1: the field's COMMON PERIOD - the least common multiple of the
+ *  four periods above (15, 1, 16 and 5 pixels: 240), so a position
+ *  moved by a whole number of it samples the same cloud. The drift and
+ *  the recenter shift are both unbounded integrals (a year of game
+ *  time is tens of thousands of kilometres of wind) and the shader
+ *  takes them as float32; they are wrapped to this period at upload,
+ *  so neither ever outgrows the mantissa. Pinned: every period divides
+ *  it. */
+export const FIELD_PERIOD_METRES = PIXEL_METRES * 240;
+export const wrapField = (v) => v - Math.floor(v / FIELD_PERIOD_METRES) * FIELD_PERIOD_METRES;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the
@@ -110,12 +120,12 @@ export const VC_PROFILE = Object.freeze({
 const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];
 
 /** The profile's ease - the SAME exponential the weather row takes
- *  (enhancedSky.js easeWeather), on the same `dt` the controller
- *  stretches across a front, so the slab rises and thickens at the
- *  pace the cover does. Pure. */
-export function easeProfile(from, to, dt, seconds = WEATHER_EASE_SECONDS) {
+ *  (enhancedSky.js easeWeather), on the same `dt` (game minutes, CLK1)
+ *  the controller stretches across a front, so the slab rises and
+ *  thickens at the pace the cover does. Pure. */
+export function easeProfile(from, to, dt, span = WEATHER_EASE_MINUTES) {
   if (!from) return { ...to };
-  const k = seconds <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / seconds);
+  const k = span <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / span);
   const out = {};
   for (const key of PROFILE_KEYS) out[key] = from[key] + (to[key] - from[key]) * k;
   return out;
@@ -424,7 +434,7 @@ export class VolumetricClouds {
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
-    this.drift = [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT];
+    this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // CLK1: wrapped to the field's period
     this.flash = flash;
     if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
     const o = shadowOrigin(this.cam[0], this.cam[1]);
@@ -485,7 +495,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, p.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
-    gl.uniform2f(u.uShift, this.shift[0], this.shift[1]);
+    gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // CLK1: wrapped to the field's period
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);
   }
 

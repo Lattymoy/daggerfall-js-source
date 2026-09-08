@@ -556,7 +556,10 @@ WHAT IS DFU'S AND WHAT IS OURS. The LAWS the sky reads are the port's
 own verbatim ones - the sun's arc is worldClock's (dawn at map east,
 noon overhead, dusk at map west, and the sky's sun IS the lit world's
 sun while it is up, pinned), day and night are DawnHour 6 / DuskHour
-18, the moons' phases are gameDate's DFU ladder with its offsets, the
+18, the moons' phases are gameDate's 32-day ratio with its offsets -
+since CLK3 taken as a CONTINUOUS number on the clock
+(`lunarPhaseFractionsFromMinutes`), never the day-step ladder every
+system still reads - the
 weather is the weather sim's own types. Everything that turns those
 into light is OURS: the palette, the moons' places, the stars, the
 clouds, the glow.
@@ -611,8 +614,9 @@ the sun as worldClock's arc CONTINUED below the horizon (twilight is a
 matter of degrees, and sunDirection clamps that away); the moons' places
 against their phases (full up at midnight, new never seen at night, the
 waning half high at dawn); the frame state (the hosts' clearColor and
-fillColor roles, the phases coming from the CLASSIC clock so one day is
-one phase, a moon under the world not drawn, an unknown weather falling
+fillColor roles, the phases coming from the CLASSIC clock as a NUMBER on
+it since CLK3 - a day walking a quarter of a ring step, the morning within
+a step of DFU's ladder - a moon under the world not drawn, an unknown weather falling
 to clear); and the seam. 2 mutants, 2 dead.
 
 FOUND ON THE WAY, AND CLOSED THE SAME DAY: below the horizon the dome
