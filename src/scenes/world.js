@@ -3679,8 +3679,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       // from THAT, instead of skinning the destination for the month
       // the player left and having the next frame's tickSeason tear
       // the whole just-built grid down again.
+      // TL3 (2026-09-08, Mac, the second time: "when traveling, sometimes
+      // you'll spawn inside building geometry"): THE ARRIVAL NEVER ASKED
+      // FOR THE REPOSITION. performTravel teleports with a reposition
+      // method (DaggerfallTravelPopUp.cs:333 - DirectionFromStartMarker,
+      // whose facing hint is the slice locationEntrance.js records as
+      // its own; without the hint DFU's arm is the plain random side,
+      // which is RandomStartMarker), and PositionPlayerToLocation then
+      // stands the player just outside the location's rectangle or at
+      // its nearest start marker. This call passed none, so `landing`
+      // was null and the arrival was the DEFAULT point - the pixel's
+      // centre, which for every location is the centre of the town, and
+      // for many the middle of a building. TL2's roof guard was gated
+      // on `landing` and so never ran on the one path it was written
+      // for. The same door the court release and the ship already take.
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes });
+        { arriveMinutes: worldMinutes() + computed.minutes, reposition: REPOSITION.RandomStartMarker });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -4418,7 +4432,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:418) and
+     *  on. Here routeAction's arm is optional (ui/input.js:430) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
@@ -6713,7 +6727,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:589, :586). So every HUD line raised in a modal
+      // (townTalk.js:598, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

@@ -40,7 +40,7 @@ import { makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
-import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code
+import { overlayAction, actionOf, isTextEntryTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
@@ -320,6 +320,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   function keydown(e) {
     if (overlay) {
+      // CG2 (Mac: "unable to type in your name"): a key typed into a DOM
+      // text field - the enhanced wizard's name boxes stand over the
+      // canvas as real <input>s - is the FIELD's. This rung used to
+      // preventDefault every key under an overlay, so the browser never
+      // inserted the character and the name stayed empty (the wizard's
+      // own capture listener steps aside for a field and lets the key
+      // bubble here). Consumed for the host's ladder (typing must not
+      // walk the player), untouched for the field.
+      if (isTextEntryTarget(e.target)) return true;
       e.preventDefault();
       // E says goodbye too - the touch layer's E button opens AND
       // closes talk (desktop-consistent; Esc/Enter unchanged). Choice

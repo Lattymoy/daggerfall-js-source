@@ -341,15 +341,24 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *      U31 that path is the `?dungeon` dev scene alone, which is why
  *      it stayed open so long - but small is not the same as absent. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
-  let _fired = false;
   // A DOM view needs a DOM. The headless suite constructs this window
   // to pin the fire-once law and has no document, so the fork asks
   // rather than assuming - and a host without one keeps the canvas
   // wizard, which is the never-traps law rather than a special case
   // for tests.
   if (isEnhanced() && typeof document !== 'undefined') {
-    return enhancedChargenOverlay(flow, { onDone, onCancel });
+    return enhancedChargenOverlay(flow, { onDone, onCancel, hudScale });
   }
+  return classicChargenWindow(flow, { onDone, onCancel, hudScale });
+}
+
+/** THE CLASSIC WIZARD's overlay: the canvas-drawn screens, keyed and
+ *  clicked through the shared seams. Also the enhanced wrapper's
+ *  FALLBACK (CG2): a view that will not mount hands the same flow and
+ *  the same callbacks here, so a failed import costs the design, never
+ *  the game. */
+function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
+  let _fired = false;
   return {
     flow,
     isChoiceWindow: true,   // raw key codes through the overlay seam
@@ -391,8 +400,8 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1147-1158,
-    // the route itself :1156), dungeonContext.js through `overlayHover`
+    // exterior.js through `townTalk.hover` (townTalk.js:1156-1167,
+    // the route itself :1165), dungeonContext.js through `overlayHover`
     // (:4816), which dungeon.js:430 and worldModes.js:6967 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
@@ -440,9 +449,10 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
  * tear an overlay down when it reports done, and a DOM node outlives
  * the object that reports it, so the order is: unmount, then fire.
  */
-function enhancedChargenOverlay(flow, { onDone, onCancel } = {}) {
+function enhancedChargenOverlay(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   let fired = false;
   let view = null;
+  let fallback = null;   // CG2: the classic window, built only if the enhanced view will not mount
   const finish = (why) => {
     if (fired) return;
     fired = true;
@@ -465,18 +475,29 @@ function enhancedChargenOverlay(flow, { onDone, onCancel } = {}) {
     view = mountEnhancedChargen(host, { flow, ...deps, onExit: finish });
     view.unmount = ((inner) => () => { inner(); host.remove(); })(view.unmount);
   }).catch((e) => {
-    console.warn('[chargen] the enhanced wizard would not mount', e);
+    // CG2: a wrapper whose view never mounted used to hold the slot for
+    // ever - `done` false, every key and pointer swallowed, nothing on
+    // screen. The classic wizard takes over on the same flow and the
+    // same callbacks: the design is lost, the game is not.
+    console.warn('[chargen] the enhanced wizard would not mount - the classic wizard takes over', e);
     host.remove();
+    fallback = classicChargenWindow(flow, {
+      hudScale,
+      onDone: (r) => { fired = true; onDone?.(r); },
+      onCancel: () => { fired = true; onCancel?.(); },
+    });
   });
   return {
     flow,
     isChoiceWindow: true,
     get done() { return fired; },
-    input() { /* the view's own keydown owns the keyboard */ },
-    click() { /* the view is a fixed opaque div; pointers never get here */ },
-    wheel() { /* the view scrolls itself */ },
-    tick() { /* no constellation animation on this side yet */ },
-    draw() { /* DOM, not canvas */ },
+    input(code, ev) { fallback?.input(code, ev); },   // the view's own keydown owns the keyboard (the fallback's the seam)
+    click(vx, vy) { fallback?.click(vx, vy); },       // the view is a fixed opaque div; pointers never get here
+    hover(vx, vy, e = null) { fallback?.hover(vx, vy, e); },
+    release() { fallback?.release(); },
+    wheel(dir) { fallback?.wheel(dir); },             // the view scrolls itself
+    tick(dt) { fallback?.tick(dt); },                 // no constellation animation on this side yet
+    draw(renderer, canvas, font, scale) { fallback?.draw(renderer, canvas, font, scale); },   // DOM, not canvas
     dispose() { view?.unmount(); view = null; host.remove(); },
   };
 }
