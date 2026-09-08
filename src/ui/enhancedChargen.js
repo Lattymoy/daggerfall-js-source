@@ -46,7 +46,7 @@ import { generateBackstory } from '../systems/biography.js';
 import { FACES_PER_RACE } from '../systems/races.js';
 import { bitmapCanvas } from './bitmapCanvas.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { overlayAction } from './input.js';
+import { overlayAction, isTextEntryTarget } from './input.js';   // CG2: one definition of 'a DOM field's key is the field's'
 import { SKILL_NAMES } from '../systems/skills.js';
 import { QUESTION_COUNT } from '../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
 import { HELP_TOPICS } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker
@@ -1325,8 +1325,7 @@ export function attachChargenText(f, textRsc) {
  */
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const t = e.target;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (isTextEntryTarget(e.target)) return;   // the field's key: it bubbles to the host, whose ladder (CG2) leaves it to the field
   const action = overlayAction(e);
   if (!action) return;
   e.preventDefault();

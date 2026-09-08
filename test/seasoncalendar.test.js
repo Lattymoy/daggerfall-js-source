@@ -353,7 +353,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // after it, exactly where DaggerfallTravelPopUp puts it.
   const i = world.indexOf('async function fastTravelTo');
   const fn = world.slice(i, world.indexOf('const toggleTravelMap', i));
-  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes });');
+  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes, reposition: REPOSITION.RandomStartMarker });');   // TL3: and the start-marker landing rides with it
   const raise = fn.indexOf('playerTicker.advance(computed.minutes)');
   assert.ok(teleport > 0, 'the arrival minute rides the teleport');
   assert.ok(raise > teleport, 'and RaiseTime still comes after it (:333 then :344)');
