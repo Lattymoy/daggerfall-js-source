@@ -169,14 +169,17 @@ test('ES1 state: what the shader gets - the palette by elevation, the weather\'s
   // Weather darkens the CLOUDS, which is what a rendered storm reads as.
   assert.ok(storm.cloudLit[0] + storm.cloudLit[1] + storm.cloudLit[2] < clear.cloudLit[0] + clear.cloudLit[1] + clear.cloudLit[2],
     'a storm\'s clouds are darker than a clear day\'s');
-  // The phases come from the CLASSIC clock, not the day's minute: the
-  // same in-game day gives the same moons whatever the hour.
+  // The phases come from the CLASSIC clock. CLK3: as a NUMBER on it -
+  // the same in-game day's morning and evening are thirteen hours
+  // apart on a 32-day ring, a sliver, and both sit within one ring step
+  // of DFU's ladder for that day (which every system still reads whole).
   const day11 = 11 * CLASSIC_DAY;
   const morning = skyState({ minuteOfDay: at(7), classicMinutes: day11 + at(7) });
   const evening = skyState({ minuteOfDay: at(20), classicMinutes: day11 + at(20) });
-  assert.equal(morning.masser.phase, evening.masser.phase, 'one day, one phase');
-  assert.deepEqual(morning.masser.phase, lunarPhasesFromMinutes(day11 + at(7)).masser);
-  assert.notEqual(morning.masser.phase, skyState({ minuteOfDay: at(7), classicMinutes: day11 + 8 * CLASSIC_DAY }).masser.phase);
+  assert.ok(Math.abs(evening.masser.phase - morning.masser.phase - 13 / 24 / 4) < 1e-9, 'one day: thirteen hours of the ring between them');
+  const ring = (a, b) => Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+  assert.ok(ring(morning.masser.phase, lunarPhasesFromMinutes(day11 + at(7)).masser) <= 1, 'within a step of the ladder');
+  assert.notEqual(Math.round(morning.masser.phase), Math.round(skyState({ minuteOfDay: at(7), classicMinutes: day11 + 8 * CLASSIC_DAY }).masser.phase), 'eight days on, another phase');
   // A moon below the horizon is not drawn; by day it is faint at most.
   const full = skyState({ minuteOfDay: at(0), phases: { masser: LUNAR_PHASES.Full, secunda: LUNAR_PHASES.Full } });
   assert.ok(full.masser.vis > 0.5, 'a full moon at midnight is plainly there');

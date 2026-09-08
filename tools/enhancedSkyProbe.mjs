@@ -69,17 +69,22 @@ const noonUp = await shoot('noon-up', 'hour=12&weather=sunny&yaw=90&pitch=78');
 const dawn = await shoot('dawn', 'hour=6.2&weather=sunny&yaw=0&pitch=8');
 const dusk = await shoot('dusk', 'hour=17.8&weather=sunny&yaw=180&pitch=8');
 const night = await shoot('midnight', 'hour=0&weather=sunny&yaw=90&pitch=20&day=3');
-// Point the camera AT Masser on a night it is up: the law says where.
+// Point the camera AT Masser on the night of the cycle it stands HIGHEST at
+// ten in the evening (the lab's pitch slider stops at 80, so the very top
+// is left alone): the law says where. CLK3: the phase is the clock's own
+// fraction now, so the pick is the best night, not the first that clears
+// a bar - the first was a moon eighteen degrees up.
 const moonNight = (() => {
+  let best = null;
   for (let day = 0; day < 32; day++) {
     const m = 22 * 60, cm = (405 * 360 + day) * MINUTES_PER_DAY + m;
     const st = skyState({ minuteOfDay: m, weather: 'sunny', classicMinutes: cm });
-    if (st.masser.dir[1] > 0.3 && st.masser.vis > 0.5) {
-      const d = st.masser.dir;
-      return { day, yaw: Math.atan2(d[0], d[2]) * 180 / Math.PI, pitch: Math.asin(d[1]) * 180 / Math.PI, phase: st.masser.phase };
+    const d = st.masser.dir;
+    if (st.masser.vis > 0.5 && d[1] > 0.3 && d[1] < 0.97 && (!best || d[1] > best.y)) {
+      best = { day, y: d[1], yaw: Math.atan2(d[0], d[2]) * 180 / Math.PI, pitch: Math.asin(d[1]) * 180 / Math.PI, phase: st.masser.phase };
     }
   }
-  return null;
+  return best;
 })();
 const moons = await shoot('evening-moons', `hour=22&weather=sunny&day=${moonNight.day}&yaw=${moonNight.yaw.toFixed(0)}&pitch=${moonNight.pitch.toFixed(0)}`);
 console.log(`  (Masser phase ${moonNight.phase}, at yaw ${moonNight.yaw.toFixed(0)} pitch ${moonNight.pitch.toFixed(0)} on day ${moonNight.day})`);

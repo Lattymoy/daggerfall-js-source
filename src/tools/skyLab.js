@@ -4,7 +4,7 @@
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
 // for the probe, and `?still` freezes the clouds' drift.
 import { EnhancedSkyRenderer, skyState, retroFor, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
-import { MINUTES_PER_DAY, lunarPhasesFromMinutes } from '../systems/gameDate.js';
+import { MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../systems/gameDate.js';   // CLK3: the clock's own fraction, as the dome takes it
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: the mod's pass in the lab too - ?sky=dynamic
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';
@@ -76,7 +76,7 @@ function frame() {
   // from, and AUDIT 21 F2's rule is that exactly one module accumulates
   // minutes - so the phases go in directly, which is what the slider
   // means anyway.
-  const phases = lunarPhasesFromMinutes(((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay);
+  const phases = lunarPhaseFractionsFromMinutes(((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay);
   const seconds = still ? 0 : (performance.now() - t0) / 1000;
   const nowReal = performance.now();
   const dtMin = still ? 0 : Math.min(1, (nowReal - labLast) / 1000) / WIND_SECONDS_PER_MINUTE;

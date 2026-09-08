@@ -37,7 +37,7 @@
 // a texture.
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
-import { lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
+import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -278,7 +278,7 @@ function rotX(v, a) {
  *  negative turn about Z. */
 export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
   const sun = sunSkyDirection(minuteOfDay);
-  const p = phase === LUNAR_PHASES.None ? 0 : phase;   // 0..7, New=0 ... Full=4
+  const p = phase === LUNAR_PHASES.None ? 0 : phase;   // 0..8, New=0 ... Full=4 - a ladder step or, since CLK3, the clock's own fraction
   const angle = (p / 8) * Math.PI * 2;
   return rotX(rotZ(sun, -angle), tilt);
 }
@@ -401,7 +401,11 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
   const twilight = clamp01((elevDeg + 12) / 16);   // 0 well below the horizon, 1 by day
   const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.25 * (1 - clamp01(elevDeg / 20))), twilight);
   const shade = mix3(nightShade, cloudShadeDay, twilight);
-  const ph = phases ?? lunarPhasesFromMinutes(classicMinutes);
+  // CLK3: the phase is CONTINUOUS on the clock - a moon that used to
+  // jump 45 degrees along its arc at midnight (and the moonlight with
+  // it) now walks there through the day. A caller's own `phases` (the
+  // tests' ladder steps) still go in whole.
+  const ph = phases ?? lunarPhaseFractionsFromMinutes(classicMinutes);
   const moon = (name, phase) => {
     const m = MOONS[name];
     const dir = moonSkyDirection(minuteOfDay, phase, m.tilt);

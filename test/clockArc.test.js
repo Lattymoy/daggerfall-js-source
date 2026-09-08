@@ -186,3 +186,68 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   assert.match(sim, /_rolledAtMinutes = lastChanged \* 60;/, 'stale by the change\'s own hour');
   assert.match(sim, /for \(let h = Math\.max\(_evolveHour \+ 1, hour - 23\); h <= hour; h\+\+\) \{/);
 });
+
+// ---- CLK3: day and night on the clock - the remaining steps ----------
+import { lunarPhaseFraction, lunarPhaseFractionsFromMinutes, lunarPhase, lunarPhasesFromMinutes, dateFromClassicMinutes, LUNAR_PHASES } from '../src/systems/gameDate.js';
+import { skyState, moonSkyDirection, phaseLitFraction, sunSkyDirection } from '../src/render/enhancedSky.js';
+import { dayFraction, daylightScale, sunDirection, DAWN_HOUR, DUSK_HOUR } from '../src/world/worldClock.js';
+
+test('CLK3: the moon\'s phase is continuous on the clock for the dome - no 45-degree jump at midnight - and never a ring step from DFU\'s ladder, which every system still reads', () => {
+  const base = 405 * 360 * MINUTES_PER_DAY;
+  // across midnight the dome's moon moves by minutes, not by a step
+  const before = skyState({ minuteOfDay: 1439, classicMinutes: base + 10 * MINUTES_PER_DAY + 1439 });
+  const after = skyState({ minuteOfDay: 0, classicMinutes: base + 11 * MINUTES_PER_DAY });
+  const angle = (a, b) => Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])));
+  assert.ok(angle(before.masser.dir, after.masser.dir) < 0.02, `Masser moves ${angle(before.masser.dir, after.masser.dir).toFixed(4)} rad across midnight - minutes' worth, not a step`);
+  assert.ok(Math.abs(phaseLitFraction(before.masser.phase) - phaseLitFraction(after.masser.phase)) < 0.01, 'and the moonlight with it');
+  // monotone through a day: the fraction only ever grows (mod the ring)
+  let last = null;
+  for (let m = 0; m < MINUTES_PER_DAY; m += 30) {
+    const p = lunarPhaseFractionsFromMinutes(base + 3 * MINUTES_PER_DAY + m).masser;
+    if (last !== null) assert.ok(((p - last + 8) % 8) > 0 && ((p - last + 8) % 8) < 0.02, 'a half hour is a sliver of the ring');
+    last = p;
+  }
+  // a full ring is 32 days: the fraction at day d + 32 is the fraction at day d
+  for (const d of [0, 7, 19]) {
+    const a = lunarPhaseFractionsFromMinutes(base + d * MINUTES_PER_DAY + 600), b = lunarPhaseFractionsFromMinutes(base + (d + 32) * MINUTES_PER_DAY + 600);
+    assert.ok(Math.abs(a.masser - b.masser) < 1e-9 && Math.abs(a.secunda - b.secunda) < 1e-9);
+  }
+  // never more than one ring step from DFU's own ladder, on every day of the cycle, both moons
+  for (let d = 0; d < 32; d++) {
+    const cm = base + d * MINUTES_PER_DAY;
+    const steps = lunarPhasesFromMinutes(cm), frac = lunarPhaseFractionsFromMinutes(cm);
+    for (const moon of ['masser', 'secunda']) {
+      const ring = (a, b) => Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+      assert.ok(ring(frac[moon], steps[moon]) <= 1 + 1e-9, `day ${d} ${moon}: fraction ${frac[moon].toFixed(2)} vs ladder ${steps[moon]}`);
+    }
+    // at midnight on a Full or New day the two agree exactly
+    if (steps.masser === LUNAR_PHASES.Full) assert.ok(Math.abs(frac.masser - 4) < 1e-9, 'Full is ratio 0: the fraction is 4 at midnight');
+    if (steps.masser === LUNAR_PHASES.New) assert.ok(Math.abs(frac.masser) < 1e-9, 'New is ratio 16: the fraction is 0 at midnight');
+  }
+  assert.equal(lunarPhaseFraction({ year: -1 }, 0), 0, 'year < 0: None, as the ladder answers');
+  assert.equal(lunarPhase(dateFromClassicMinutes(base), { masser: true }) >= 0, true, 'the ladder itself is untouched');
+  // the systems keep the step: the dome alone takes the fraction, a caller's own phases go in whole
+  const dome = read('src/render/enhancedSky.js');
+  assert.match(dome, /const ph = phases \?\? lunarPhaseFractionsFromMinutes\(classicMinutes\);/);
+  assert.doesNotMatch(dome, /lunarPhasesFromMinutes/, 'the ladder is not the dome\'s to read any more');
+  for (const f of ['src/systems/worldTick.js', 'src/systems/effects.js', 'src/systems/enchantments.js']) {
+    const s = read(f);
+    if (/lunarPhase/.test(s)) assert.doesNotMatch(s, /lunarPhaseFraction/, `${f}: a system reads DFU's step, never the dome's fraction`);
+  }
+  assert.match(read('src/tools/skyLab.js'), /const phases = lunarPhaseFractionsFromMinutes\(/, 'the lab hands the dome the same fraction');
+  assert.deepEqual(skyState({ minuteOfDay: 0, classicMinutes: base, phases: { masser: LUNAR_PHASES.Full, secunda: LUNAR_PHASES.New } }).masser.phase, LUNAR_PHASES.Full, 'a caller\'s own phases go in whole');
+  // THE SUN AND THE RIG ARE ONE CURVE ALREADY: the dome's sun rides worldClock's dayFraction, the rig's light the same fraction clamped
+  assert.match(dome, /export function sunSkyDirection\(minuteOfDay\) \{\s*\n\s*const x = Math\.PI \* dayFraction\(minuteOfDay\);/);
+  for (const h of [DAWN_HOUR, DUSK_HOUR]) {
+    assert.ok(Math.abs(sunSkyDirection(h * 60)[1]) < 1e-9, `${h}:00: the dome's sun is on the horizon`);
+    assert.ok(Math.abs(daylightScale(h * 60)) < 1e-9, 'and the rig\'s light is at zero - the same minute');
+  }
+  let lastY = -1, lastScale = -1;
+  for (let m = DAWN_HOUR * 60; m <= 12 * 60; m += 15) {
+    const y = sunSkyDirection(m)[1], sc = daylightScale(m);
+    assert.ok(y >= lastY - 1e-12 && sc >= lastScale - 1e-12, 'both climb through the morning together');
+    assert.ok(Math.abs(y - sunDirection(m)[1]) < 1e-6, 'the rig\'s sun and the dome\'s are one direction by day');
+    lastY = y; lastScale = sc;
+  }
+  assert.ok(sunSkyDirection(3 * 60)[1] < 0 && dayFraction(3 * 60) < 0, 'and the dome alone knows how far under the horizon the night\'s sun is');
+});

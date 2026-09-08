@@ -171,6 +171,32 @@ export const lunarPhasesFromMinutes = (gameMinutes) => {
   };
 };
 
+/** CLK3 (2026-09-08): THE PHASE AS A NUMBER ON THE CLOCK. DFU's phase is
+ *  a day-granularity STEP of the ladder above - the rule, kept for every
+ *  system that reads it (the lycanthrope's full moon, the enchantment
+ *  ctx). The enhanced dome draws a moon at a place behind the sun set by
+ *  its phase, and lights the world by it, and a step there is a moon
+ *  that JUMPS 45 degrees at midnight. This is the same 32-day ratio with
+ *  the minute of the day added, mapped onto the dome's 0..8 ring (New 0,
+ *  Full 4 - `moonSkyDirection`'s own scale): Full at ratio 0, the wanes
+ *  through the day's ratio 16 New, the waxes back to Full at 32. It
+ *  never disagrees with the ladder by more than one ring step (DFU's
+ *  bands are uneven: 32 days over eight steps). None (year < 0) is 0. */
+export function lunarPhaseFraction(date, minuteOfDay, { masser = true } = {}) {
+  if (date.year < 0) return 0;
+  const offset = masser ? 3 : -1;
+  const ratio = ((dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32) + (((minuteOfDay % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY) / MINUTES_PER_DAY;
+  return (4 + ratio / 4) % 8;
+}
+export const lunarPhaseFractionsFromMinutes = (gameMinutes) => {
+  const date = dateFromClassicMinutes(gameMinutes);
+  const minuteOfDay = ((gameMinutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return {
+    masser: lunarPhaseFraction(date, minuteOfDay, { masser: true }),
+    secunda: lunarPhaseFraction(date, minuteOfDay, { masser: false }),
+  };
+};
+
 /** IsDay (DaggerfallDateTime's own property): hour in [DawnHour,
  *  DuskHour) - 6:00 to 17:59. The V2b fast-travel gate and V2c's
  *  sunlight law both read it off the classic-minutes clock. */
