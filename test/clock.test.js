@@ -28,8 +28,20 @@ test('clock: verbatim hour gates and time parsing', () => {
   assert.equal(isCityLightsOn(7 * 60 + 59), true);
   assert.equal(isCityLightsOn(8 * 60), false);
 
+  // AUDIT 64 F8: the town glass rides the LANTERNS' flag, not the sun's
+  // - DaggerfallLocation.ApplyTimeAndSpace (:141-145) and DayNight.Set
+  // (:90/:120) both switch on IsCityLightsOn. So the discriminating
+  // hours, where IsNight and IsCityLightsOn disagree, are the pin.
+  assert.equal(windowStyleForTime(17 * 60), 'night');        // lights on, still an hour before dusk
+  assert.equal(windowStyleForTime(16 * 60 + 59), 'day');
+  assert.equal(windowStyleForTime(7 * 60), 'night');         // an hour after dawn, lanterns still lit
+  assert.equal(windowStyleForTime(8 * 60), 'day');
   assert.equal(windowStyleForTime(22 * 60), 'night');
   assert.equal(windowStyleForTime(12 * 60), 'day');
+  // The two halves of ONE flag, over the whole day.
+  for (let m = 0; m < 24 * 60; m++) {
+    assert.equal(windowStyleForTime(m) === 'night', isCityLightsOn(m), `minute ${m}`);
+  }
 
   assert.equal(parseTimeOfDay('22:00'), 1320);
   assert.equal(parseTimeOfDay('6:30'), 390);

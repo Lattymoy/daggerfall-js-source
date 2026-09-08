@@ -260,7 +260,7 @@ test('AUDIT-39r: the enhanced quiz answers on the PRESS - no invisible constella
   // skin), so on a real install the animation starts, qAnimIndex
   // latches, and the enhanced side - whose overlay tick() is a no-op -
   // never runs _celAnimEnd. answerClassQuestion then refuses every
-  // press until the wall-clock watchdog (chargen.js:562-568), and the
+  // press until the wall-clock watchdog (chargen.js:587-593), and the
   // press that finally clears it releases the OLD question and applies
   // the player's choice to the NEXT one.
   //

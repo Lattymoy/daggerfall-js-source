@@ -44,6 +44,9 @@ import {
   loadOrCreateBindings, actionForCode,
   getCombo, comboCode, comboModifiers, isPairedCode, modifierHeldFirstDict,
 } from '../systems/inputActions.js';
+// AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
+// on systems/ alone, so this module can take it without a cycle.
+import { hudShortcutKey } from './hudShortcuts.js';
 
 // The registry singleton - built on first read, so the module can be
 // imported by tests without touching storage until asked.
@@ -339,7 +342,7 @@ export function overlayAction(e) {
   // `'-': 'minus'`, `r: 'reroll'`, `R: 'reroll'` that used to stand
   // here were unreachable and read as a promise the module could not
   // keep. A consumer that wants those keys reads 'char:-' / 'char:r' /
-  // 'char:R' beside its own action name, as ui/chargen.js:1689 already
+  // 'char:R' beside its own action name, as ui/chargen.js:1813 already
   // did and ui/charsheet.js's LevelUpScreen now does. The branches are
   // deliberately NOT reordered: putting the table first would starve
   // every text field of '-', 'r' and 'R'. '+' and '=' are outside the
@@ -428,6 +431,14 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
     if (actionOf(e, keys) === 'QuickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 58 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window
     return false;
   }
+  // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
+  // :308-318): F10 flips Settings.LargeHUD, Shift-F10 flips renderHUD.
+  // They are DaggerfallShortcut bindings, not InputManager actions, so
+  // they sit beside the raw-code arms below and never reach
+  // routeAction's switch - and they sit BELOW the uiOverlayActive
+  // return above, because DaggerfallUI.cs:429-433 updates only the top
+  // window and DaggerfallHUD.Update is dead while one is open.
+  if (hudShortcutKey(e, keys)) return true;
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
   // no consumer here yet, and the debug HUD is the port's own. FIX-F:
   // a BOUND F8 is the binding's - this arm sat above the registry read

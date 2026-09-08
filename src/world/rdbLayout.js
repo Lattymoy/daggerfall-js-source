@@ -68,6 +68,17 @@ const EDITOR_FLATS_ARCHIVE = 199;
 import { RANDOM_TREASURE_ARCHIVE as FIXED_TREASURE_FLATS_ARCHIVE } from '../systems/loot.js';   // single source (DaggerfallLootDataTables; audit 2026-07-06b)
 
 // DFBlock.RdbActionFlags, defined members only (Enum.IsDefined parity).
+/** RDBLayout.NPCFlatArchives / IsNPCFlat (RDBLayout.cs:1250-1254).
+ *  A flat in one of these archives is a PERSON: AddFlat gives it a
+ *  StaticNPC with SetLayoutData(obj) (:1226-1231) - the overload that
+ *  stamps Context.Dungeon - and DaggerfallBillboard.cs:318-319 gives
+ *  it FlatTypes.NPC, which is the only reason it carries a trigger
+ *  BoxCollider at all (:343-349), i.e. the only reason the activation
+ *  ray can hit it. */
+export const NPC_FLAT_ARCHIVES = Object.freeze([334, 346, 357, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184]);
+const NPC_FLAT_ARCHIVE_SET = new Set(NPC_FLAT_ARCHIVES);
+export const isNpcFlat = (archive) => NPC_FLAT_ARCHIVE_SET.has(archive);
+
 export const ACTION_FLAGS = Object.freeze({
   None: 0x00, Translation: 0x01,
   PositiveX: 0x02, NegativeX: 0x03, PositiveY: 0x04, NegativeY: 0x05,
@@ -415,7 +426,30 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       } else {
-        flats.push({ archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action, position: obj.position });
+        // AUDIT 64 F13: the STATIC-NPC inputs ride every ordinary RDB
+        // flat, because AddFlat's two NPC acts do:
+        //   - `if (IsNPCFlat(archive)) { StaticNPC npc = ...;
+        //     npc.SetLayoutData(obj); }`               (RDBLayout.cs:1226-1231)
+        //   - `QuestMachine.Instance.SetupIndividualStaticNPC(go,
+        //     obj.Resources.FlatResource.FactionOrMobileId);` - OUTSIDE
+        //     the IsNPCFlat block, so it runs for EVERY flat
+        //                                              (RDBLayout.cs:1233-1236)
+        // SetLayoutData(RdbObject) (StaticNPC.cs:145-160) hashes the
+        // RAW, UN-NEGATED XPos/YPos/ZPos (the billboard's -YPos is the
+        // render transform only) and seeds the name off the FLAT
+        // RESOURCE's stream position (fr.position), not the object
+        // offset the action chains key on - so both ride here, named
+        // apart. The port had funnelled these into scenery with none
+        // of it, which is why the people in Castle Daggerfall, Wayrest
+        // and Sentinel were inert and NPC_CONTEXT.Dungeon had no writer.
+        flats.push({
+          archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action,
+          position: obj.position,
+          npc: isNpcFlat(fr.textureArchive),
+          factionID: fr.factionOrMobileId, flags: fr.flags,
+          flatPosition: fr.position,
+          rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
+        });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }

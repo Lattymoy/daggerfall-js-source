@@ -33,6 +33,7 @@
 //   used" comment means. It is kept in the enum and unreachable here.
 
 import { dayOfYearFromMinutes } from './gameDate.js';
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT 64 F10: DFRegion.LocationTypes, for the town arm's filter
 
 /** DFLocation.Holidays (:286-343). The value IS the id GetHolidayId
  *  returns; None = 0 means "not a holiday today". */
@@ -120,3 +121,105 @@ export const FREE_CURE_HOLIDAYS = Object.freeze([
   HOLIDAYS.South_Winds_Prayer, HOLIDAYS.First_Harvest, HOLIDAYS.Second_Harvest,
 ]);
 export const HALF_PRICE_CURE_HOLIDAY = HOLIDAYS.North_Winds_Festival;
+
+// ── AUDIT 64 F10: the ANNOUNCEMENT ────────────────────────────────
+// PlayerEnterExit.ShowHolidayText (:565-585) is the sixth reader of
+// GetHolidayId and the only one that is not a price or a lock: walking
+// into a town on one of the 53 holiday days pops a click-anywhere
+// parchment carrying TEXT.RSC record 8349 + holidayId. It is not fired
+// on the entry frame - PlayerEnterExit keeps three fields (:78-80) and
+// a three-part lifecycle: the PRIME on the town arm of
+// PlayerGPS_OnEnterLocationRect (:1404-1409), the DRAIN in Update
+// (:355-368), and the ten-second re-arm at ShowHolidayText's tail
+// (:584). The id arithmetic and the state machine live here; the box
+// itself belongs to the host, like the module's five other readers.
+
+/** `const int holidaysStartID = 8349` (PlayerEnterExit.cs:567). */
+export const HOLIDAYS_START_ID = 8349;
+
+/** ShowHolidayText's record id (PlayerEnterExit.cs:569-575):
+ *  8349 + GetHolidayId(classic minutes, PlayerGPS.CurrentRegionIndex),
+ *  or 0 for "no box" - the `if (holidayId != 0)` gate at :572. */
+export function holidayTextId(gameMinutes, regionIndex) {
+  const id = getHolidayId(gameMinutes, regionIndex);
+  return id === HOLIDAYS.None ? 0 : HOLIDAYS_START_ID + id;
+}
+
+/** The location types whose rect entry primes NOTHING. DFU's handler
+ *  splits three ways under `if (playerGPS && !isPlayerInside)`
+ *  (PlayerEnterExit.cs:1362): the dungeon/graveyard arm (:1364-1367 -
+ *  DungeonLabyrinth, DungeonKeep, DungeonRuin, Graveyard) prints two
+ *  flavour lines and primes nothing, the town arm (:1382-1383,
+ *  `else if (LocationType != Coven && != HomeYourShips)`) is the only
+ *  one that primes, and Coven/HomeYourShips fall out of both. */
+export const HOLIDAY_TEXT_SILENT_LOCATION_TYPES = Object.freeze([
+  LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep,
+  LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard,
+  LOCATION_TYPES.Coven, LOCATION_TYPES.HomeYourShips,
+]);
+
+/** True when a rect entry of this location type takes DFU's TOWN arm,
+ *  the only one that primes the holiday text. */
+export function holidayTextPrimesFor(locationType) {
+  return !HOLIDAY_TEXT_SILENT_LOCATION_TYPES.includes(locationType);
+}
+
+/** `holidayTextTimer = 2.5f` (:1406) - "short delay to give save game
+ *  fade-in time to finish". */
+export const HOLIDAY_TEXT_PRIME_DELAY = 2.5;
+/** `holidayTextTimer = 10f` (:584), set whether or not a box was shown
+ *  so a player bouncing across the city border does not re-run the
+ *  check every frame. */
+export const HOLIDAY_TEXT_REARM = 10;
+
+/** PlayerEnterExit's holiday-text fields (:78-80) and their lifecycle.
+ *  `location` stands for holidayTextLocation, DFU's
+ *  StreamingWorld.CurrentPlayerLocationObject reference - compared by
+ *  IDENTITY at :355, so the host hands in its own location object. */
+export class HolidayTextTimer {
+  constructor() {
+    this.location = null;
+    this.primed = false;
+    this.timer = 0;
+  }
+
+  /** The town arm's prime (PlayerEnterExit.cs:1404-1409). The
+   *  `!isPlayerInside` guard (:1362) and the location-type filter
+   *  (holidayTextPrimesFor) are the caller's, exactly as DFU's are the
+   *  handler's. */
+  enterLocationRect(location) {
+    if (this.timer <= 0 && !this.primed) {
+      this.timer = HOLIDAY_TEXT_PRIME_DELAY;
+      this.primed = true;
+    }
+    this.location = location;
+  }
+
+  /** PlayerEnterExit.Update's drain (:355-368). `currentLocation()` is
+   *  StreamingWorld.CurrentPlayerLocationObject, `onHUD()` is
+   *  GameManager.IsPlayerOnHUD (:400-403) - with a window on top the
+   *  fire is DEFERRED, not dropped: the timer stays at or below zero
+   *  and primed stays true. */
+  update(dt, deps) {
+    if (this.primed && this.location !== deps.currentLocation()) {
+      this.timer = 0;
+      this.primed = false;
+    }
+    if (this.timer > 0) this.timer -= dt;
+    if (this.timer <= 0 && this.primed && deps.onHUD()) {
+      this.primed = false;
+      this.show(deps);
+    }
+  }
+
+  /** ShowHolidayText (:565-585). `showRecord(id)` is the host's
+   *  DaggerfallMessageBox door - SetTextTokens(int) with
+   *  ClickAnywhereToClose and no screen dim (:573-579). The re-arm at
+   *  :584 sits OUTSIDE the `if (holidayId != 0)` block, so a
+   *  non-holiday entry blocks re-evaluation for the same ten seconds. */
+  show(deps) {
+    const textId = holidayTextId(deps.gameMinutes(), deps.regionIndex());
+    if (textId !== 0) deps.showRecord(textId);
+    this.timer = HOLIDAY_TEXT_REARM;
+  }
+}

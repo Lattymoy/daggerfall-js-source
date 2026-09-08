@@ -99,6 +99,12 @@ export const SCROLL_PANEL_PAD = 9;
 export const SCROLL_BAR_W = 8;
 /** ScrollingPanel_OnMouseScrollUp/Down (:675-682) - SIX pixels. */
 export const SCROLL_WHEEL_STEP = 6;
+/** AUDIT 64 F28: MultiFormatTextLabel's own HighlightColor default,
+ *  `DaggerfallUI.DaggerfallHighlightTextColor` = Color32(219,130,40)
+ *  (MultiFormatTextLabel.cs:36, DaggerfallUI.cs:54) - what a
+ *  TextHighlight token paints with when no caller has run
+ *  SetHighlightColor (DaggerfallMessageBox.cs:455-458). */
+export const DEFAULT_HIGHLIGHT_COLOR = Object.freeze([219 / 255, 130 / 255, 40 / 255, 1]);
 /** ROAD-Ar R14 - THE IMAGE PANEL SITS AT THE TOP MARGIN, AND THE
  *  WINDOW'S Position (0,5) IS DEAD BY DRAW TIME.
  *
@@ -139,6 +145,11 @@ export async function preloadMessageBoxArt({ renderer, fetchBytes, palette }) {
   } catch (e) { console.warn('[messagebox] SPOP.RCI/BUTTONS.RCI unavailable; boxes keep the flat panel', e); }
 }
 export const messageBoxArtLoaded = () => !!_art;
+/** The test seam every other art-gated window already carries
+ *  (`_setInventoryArtForTests`, `_setTradeArtForTests`, ...): the
+ *  nine SPOP.RCI slices are a file load, so a pin over what
+ *  drawMessageBox actually PAINTS has to stand them up. */
+export function _setMessageBoxArtForTests(art) { _art = art; }
 
 /** Lazily upload one BUTTONS.RCI record (they are warmed on use, the
  *  icon-drawer shape - most of the 21 never appear in a session). */
@@ -195,7 +206,35 @@ export function tokenRows(tokens) {
  *  53 multi-row records are entirely LEFT while 27 mix the two, so
  *  centring everything drew 80 of 676 of them wrong. */
 const normalizeRows = (lines) =>
-  (lines ?? []).map((l) => (typeof l === 'string' ? { text: l, center: true } : { text: l.text ?? '', center: l.center !== false }));
+  (lines ?? []).map((l) => {
+    if (typeof l === 'string') return { text: l, center: true };
+    // AUDIT 64 F28: a TAB-STOPPED row. MultiFormatTextLabel's
+    // PositionPrefix arm sets `cursorX = token.x` outright when the
+    // token carries one (:346-352), which is how GetLoansLine lays its
+    // four columns at 60/120/180 (DaggerfallBankingWindow.cs:559-577).
+    // A row of cells never centres - DFU centres a row only through
+    // JustifyCenter, which stamps HorizontalAlignment on the finished
+    // label (:341-344) - and it carries its own formatting, because
+    // Text and TextHighlight are per-token colours (:359-364).
+    if (Array.isArray(l.cells)) {
+      return {
+        text: l.cells.map((c) => c.text ?? '').join(''),
+        center: false,
+        cells: l.cells.map((c) => ({ x: c.x ?? 0, text: c.text ?? '' })),
+        highlight: !!l.highlight,
+      };
+    }
+    const row = { text: l.text ?? '', center: l.center !== false };
+    if (l.highlight) row.highlight = true;
+    return row;
+  });
+
+/** MultiFormatTextLabel's row width: `lastLabel.Position.x +
+ *  lastLabel.TextWidth` (:380-384), which for a tab-stopped row is the
+ *  LAST cell's stop plus its own width, not the sum of the cells. */
+const rowWidth = (font, r) => (r.cells
+  ? Math.max(0, ...r.cells.map((c) => c.x + measureText(font, c.text)))
+  : measureText(font, r.text));
 
 /** UpdatePanelSizes verbatim. `lines` are the already-wrapped rows the
  *  caller draws (strings, or { text, center } from linesById);
@@ -212,7 +251,7 @@ export function layoutMessageBox(font, lines, buttons = [], {
   // get (DaggerfallInputMessageBox's field is fixed at maxCharacters)
   // while the real rows are what draws.
   const measured = sizingRows ? normalizeRows(sizingRows) : rows;
-  const textW = measured.length ? Math.max(...measured.map((r) => measureText(font.fnt, r.text))) : 0;
+  const textW = measured.length ? Math.max(...measured.map((r) => rowWidth(font.fnt, r))) : 0;
   const rowCount = Math.max(rows.length, measured.length);
   // MultiFormatTextLabel.RefreshLayout (:381-396): totalHeight is the
   // last row's bottom, CAPPED at MaxTextHeight, while actualTextHeight
@@ -351,7 +390,9 @@ function drawFrame(renderer, m, box) {
 
 /** Draw a laid-out box. Returns false when the art is not up, so the
  *  caller keeps its flat-panel fallback. */
-export function drawMessageBox(renderer, m, font, box, { textColor = undefined, image = null } = {}) {
+export function drawMessageBox(renderer, m, font, box, {
+  textColor = undefined, image = null, highlightColor = DEFAULT_HIGHLIGHT_COLOR,
+} = {}) {
   if (!_art || !font) return false;
   drawFrame(renderer, m, box);
   // The IMAGE PANEL, under the label - the paintings' arm. It draws
@@ -375,11 +416,22 @@ export function drawMessageBox(renderer, m, font, box, { textColor = undefined, 
   const dy = box.scroll ? box.scroll.index : 0;
   if (clip) renderer.setScreenScissor(m.ox + clip[0] * m.s, m.oy + clip[1] * m.s, clip[2] * m.s, clip[3] * m.s);
   box.rows.forEach((r, i) => {
-    const lw = measureText(font.fnt, r.text);
+    const lw = rowWidth(font.fnt, r);
     const rx = r.center ? box.x + Math.round((box.w - lw) / 2) : labelX;
     const ry = box.textY + i * box.rowH - dy;
     if (clip && (ry + box.rowH <= clip[1] || ry >= clip[1] + clip[3])) return;
-    shadowText(renderer, font, r.text, m, rx, ry, { color: textColor });
+    // AUDIT 64 F28: a tab-stopped row draws one label per cell at the
+    // PositionPrefix's own x (MultiFormatTextLabel.cs:346-352), and a
+    // TextHighlight row takes the label's HighlightColor (:363) - which
+    // SetHighlightColor (DaggerfallMessageBox.cs:455-458) lets a caller
+    // override, as the banking status box does with
+    // DaggerfallUnityStatDrainedTextColor.
+    if (r.cells) {
+      const colour = r.highlight ? highlightColor : textColor;
+      for (const c of r.cells) shadowText(renderer, font, c.text, m, rx + c.x, ry, { color: colour });
+      return;
+    }
+    shadowText(renderer, font, r.text, m, rx, ry, { color: r.highlight ? highlightColor : textColor });
   });
   if (clip) renderer.clearScreenScissor();
   if (box.scroll) drawScrollThumb(renderer, m, box.scroll.bar, box.scroll.thumb);

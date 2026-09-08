@@ -49,6 +49,11 @@ import { VidFile, VID_BLOCK_TYPES } from '../formats/vidFile.js';
 import { NATIVE_W, NATIVE_H, drawImg, nativeMetrics } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';
+// AUDIT 64 F41: the two global events DaggerfallVidPlayerWindow raises
+// and their only two subscribers - DaggerfallSongPlayer.cs:76-77 and
+// AmbientEffectsPlayer.cs:92-93.
+import { music } from '../systems/music.js';
+import { muteAmbientForVideo, unmuteAmbientForVideo } from '../systems/ambientEffects.js';
 
 const VIDEO_BLOCKS = [
   VID_BLOCK_TYPES.Video_StartFrame,
@@ -288,6 +293,15 @@ export function playVideo(canvas, renderer, bytes, {
   return new Promise((resolve) => {
     const player = new VideoPlayer({ renderer, soundVolume, audioContext, now });
     if (!player.play(bytes)) { resolve(false); return; }
+    // AUDIT 64 F41: RaiseOnVideoStartGlobalEvent - raised AFTER the
+    // video actually opened (DaggerfallVidPlayerWindow.cs:110-112
+    // `video.Open(PlayOnStart); video.Playing = true;` then the raise,
+    // and :92-93 on the custom-video arm). The order matters here too:
+    // the `player.play` guard above resolves WITHOUT going through
+    // finish(), so a mute raised before it would never be lifted and
+    // one undecodable VID would silence the game for good.
+    music.setMuted(true);        // DaggerfallSongPlayer.cs:356-362
+    muteAmbientForVideo();       // AmbientEffectsPlayer.cs:536-549
 
     let anyKey = false;
     let backDown = false;   // F151: GetBackButtonDown, its own disjunct
@@ -296,6 +310,12 @@ export function playVideo(canvas, renderer, bytes, {
     const finish = (played) => {
       if (settled) return;
       settled = true;
+      // RaiseOnVideoEndGlobalEvent - DFU raises it on BOTH close paths
+      // (:134 any key / back button, :150 end of file). Here it heads
+      // finish(), which is the one door all three exits take: end of
+      // file, any key/back, and the AUDIT 19 error boundary.
+      music.setMuted(false);     // DaggerfallSongPlayer.cs:364-369
+      unmuteAmbientForVideo();   // AmbientEffectsPlayer.cs:551-554
       detach();
       try { player.dispose(); } catch { /* nothing to release */ }
       resolve(played);

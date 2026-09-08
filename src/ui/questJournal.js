@@ -585,7 +585,7 @@ export class QuestJournalWindow {
   // in src/ui takes `(renderer, canvas, font, s)` where s is the HUD
   // scale, and that is what the one caller passes: CharSheet.draw
   // forwards its own four arguments straight through to `this.child`
-  // (charsheet.js:257). So the logbook received the SCALE - a number -
+  // (charsheet.js:259). So the logbook received the SCALE - a number -
   // in its font slot, `largeFont ?? font` picked it because a number is
   // not nullish, and `measureText(3.fnt, title)` reached measureText
   // with undefined. Opening the character sheet and pressing LOGBOOK

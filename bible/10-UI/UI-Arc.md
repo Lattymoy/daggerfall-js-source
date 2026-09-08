@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1743 (the factory) and :1904 (a
+                        worldModes.js:1769 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:827, world.js:1470,
-                        exterior.js:1844. It is the only window TWO
+                        dungeonContext.js:903, world.js:1591,
+                        exterior.js:1965. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1509, dungeonContext.js:3180. A seam
+    / NOTEBOOK          world.js:1630, dungeonContext.js:3302. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -3116,10 +3116,15 @@ flying around the yard", which is the Destruction answer's own record.
 
 **THE REPUTATION BOX.** The last biography answer composes the
 backstory and pops TEXT.RSC 35 in a ClickAnywhereToClose box, its
-%r1..%r5 filled from `DigestRepChanges` - the per-group totals the
-twelve answers moved. Probed live: "Commoners: -5" over
-[-5, 0, 5, 5, 0]. The box is MODAL: any key closes it AND ends the
-screen, which is the pin that catches a half-wired dismissal.
+%r1..%r5 resolved from `DigestRepChanges` - the per-group totals the
+twelve answers moved. (CORRECTED, AUDIT 64 F30: this paragraph used to
+say 'Probed live: "Commoners: -5" over [-5, 0, 5, 5, 0]', which
+enshrined the port's defect. The five macros resolve through
+BiogFileMCP.GetChangeStr (:35-47) and speak WORDS - Unchanged / Lower /
+Higher, Internal_Strings.csv:453-455 - never the delta. The box reads
+"Commoners: Lower" over that array.) The box is MODAL: any key closes
+it AND ends the screen, which is the pin that catches a half-wired
+dismissal.
 
 Two of DFU's guards here are DEFENSIVE and unreachable, and are ported
 WITHOUT pins rather than with fake ones: DigestRepChanges' `rf` arm
@@ -6131,7 +6136,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:598, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:603, :586`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -7763,7 +7768,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2554 as a second book built by hand 342 lines below the
+worldModes.js:2581 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7846,7 +7851,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1756 and
+questJournal.js from charSheetNav:53, world.js:1893 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8473,7 +8478,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5109` and `dungeonContext.js:1271` answer the same
+`worldModes.js:5259` and `dungeonContext.js:1347` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8533,12 +8538,12 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:517` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:546` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:470` routed
+The port had the DOOR and not the room. `input.js:481` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -8577,7 +8582,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:517` reads
+is trivial, `TransportManager` is not - `motor.js:546` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -9717,9 +9722,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4708`,
+the other half went stale unnoticed. (The rest cite named `world.js:4956`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4714` now.)
+deleted the second and the cite is `world.js:4962` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9762,7 +9767,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1078` and `ui/spellbookWindow.js:427` already
+- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:427` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -9805,7 +9810,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1078`, `ui/spellbookWindow.js:427`
+section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:427`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -10136,7 +10141,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:543-569`), so in the art-less greeting chain a tone
+  (`townTalk.js:548-574`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -10337,6 +10342,1353 @@ page and consumes the click before any other arm, which is the message
 box's own behaviour and removes the pre-existing fall-through with it.
 The attribute buttons still pop their descriptions when no dialog is up
 (`:925-941`) - the consume belongs to the dialog, not to the sheet.
+
+## AUDIT 64 F23 - THE TRAVEL MAP'S L AND F WERE LITERAL KEY CODES (2026-09-08)
+
+`DaggerfallTravelMapWindow.Update` takes the modifier state once -
+
+    HotkeySequence.KeyModifiers keyModifiers = HotkeySequence.GetKeyboardKeyModifiers();
+                                                                          (:388)
+
+- and then asks the shortcut TABLE for both of the region page's keys:
+
+    if (DaggerfallShortcut.GetBinding(DaggerfallShortcut.Buttons.TravelMapList)
+            .IsUpWith(keyModifiers))                                       (:418)
+    else if (DaggerfallShortcut.GetBinding(DaggerfallShortcut.Buttons.TravelMapFind)
+            .IsUpWith(keyModifiers))                                       (:427)
+
+`IsUpWith` (`HotkeySequence.cs:169-172`) is the binding's key AND
+`CheckSetModifiers`, whose second clause rejects any virtual modifier the
+sequence did not ask for. Both rows are bare F and L
+(`DialogShortcuts.txt:81-82`), so in DFU Ctrl+L, Shift+F and Alt+F do
+nothing at all.
+
+`ui/travelMapWindow.js` compared `code === 'KeyL'` and `code === 'KeyF'`
+- no table read, no mask. The window sets `isChoiceWindow`, and the host
+routing such a window passes the raw `KeyboardEvent`, so the modifier
+flags were present at the branch and simply not consulted: Shift+F opened
+the find box and Ctrl+L the location picker. Shift is not a hypothetical
+here - it is the key held to scroll a zoomed region map (`:397-402`,
+mirrored in this window's own `hover`). And the two rows the port's
+shortcut table already declared for these buttons had no reader anywhere
+in the tree: written and never read.
+
+The branch is a `firstHotkey(['TravelMapList', 'TravelMapFind'], code, e)`
+switch now, in DFU's `if` / `else if` order, keeping the `LocationCount < 1`
+guard (`:420-421`) and the trailing swallow - DFU's region branch never
+reaches the Return/KeypadEnter arm at `:430-434`, and dropping that would
+let Enter reopen the region panel from inside a region page. Two side
+effects fall out of the table read: the modifier mask, and `normalizeCode`
+folding a keyed host's `char:l`/`char:f` onto the same codes.
+
+## AUDIT 64 F25 - THE BANK SAID "%a" AND "%ml" OUT LOUD (2026-09-08)
+
+`DaggerfallBankingWindow` is an `IMacroContextProvider` whose
+`GetMacroDataSource` answers a `BankingMacroDataSource`
+(`DaggerfallBankingWindow.cs:489-492`), and `GeneratePopup` builds every
+box but one with `messageBox.SetTextTokens((int)result, this)` (`:311`)
+— which runs `MacroHelper.ExpandMacros` over the record against the
+window's own `BankingMacroDataSource`: `Amount()` answers the `amount`
+argument the method has just stored on the window (`:306`, `:505-508`)
+and `MaxLoan()` answers `FormulaHelper.CalculateMaxBankLoan()`
+(`:509-512`). `grep -rn "override string MaxLoan"` over
+`Assets/Scripts` returns exactly one hit, that one, so `%ml` exists
+only inside a bank record.
+
+The port ran no macro pass at all. `_popup` stored `amount` on
+`this.box` where nothing read it and handed the raw record text
+straight to the parchment, because the rows come out of
+`townTalk.lines(id)` → `textRsc.variantLinesById`, which substitutes
+nothing. So the player read, verbatim:
+
+- `"our limit is %ml gold pieces."` (0295, any loan above level×50000 —
+  reachable by a level-1 character asking for 60,000);
+- `"generous sum of %a gold pieces."` (0298, the house sell offer DFU
+  feeds `GetHouseSellPrice(house)` at `:450`);
+- `"Your ship is worth %a gold pieces to us."` (0299, `GetShipSellPrice`
+  at `:470`).
+
+**The pass is the WHOLE table, not those two.** `ExpandMacros` resolves
+every symbol in the record, and the same bank records quote the global
+macros too — `Internal_RSC.csv:615-682`: 0282 PURCHASED_HOUSE
+`"a lovely home here in %cn."`, 0285 NOT_PORT_TOWN
+`"This is not a port town, %pcn."`, 0288 ALREADY_DEFAULTED with `%pcn`
+and `%reg`. 0282 fires on the ORDINARY buy-a-house path, so a
+`%a`/`%ml`-only pass would still have printed "%cn" to every new
+homeowner. `_popup` now maps its rows through
+`expandMacroValues` (MH1's one walk, the same one
+`guildServiceWindows.macroRows` rides) with `a` / `ml` from the window's
+own data source and `cn` / `pcn` / `reg` from three new host producers
+in `worldModes.js`'s single `openBank` — all three were already read in
+that block, the house deed's own side effects pass exactly the same
+pair. A symbol with no producer is left VERBATIM, which is
+`MacroHelper.GetValue`'s own ladder (`:503-527`) rather than a hole in
+the sentence. TOO_HEAVY is untouched: it takes `SetText`, never
+`SetTextTokens` (`:308-309`).
+
+Two changes the finding proposed are NOT here, and both were dropped on
+the reference:
+
+- **the "clamped repayment amount"**. Nothing a repay can raise carries
+  a macro — 0294 OVERPAID_LOAN quotes none, 0454 NOT_ENOUGH_GOLD quotes
+  none, and the third outcome is NONE (no box). And DFU's `ref amount`
+  is not the loan total either: `RepayLoan` clamps to `loanTotal`
+  (`DaggerfallBankManager.cs:525-529`) and then reassigns it twice more
+  (`:531-535`), so the value `RaiseTransactionEvent` carries is the
+  ACCOUNT-paid remainder. Encoding either would be a value DFU does not
+  produce, for a box that shows no number.
+- **feeding `_dismissBox`'s Yes result back through `_popup`**. Every
+  transaction the Yes arms run answers `TransactionResult.NONE` in DFU
+  — `DepositAll_LOC` (`:378-390`), `SellHouse` (`:464`), `SellShip`
+  (`:506`) — so the second box never appears. (`Withdraw_LOC`'s
+  `NOT_ENOUGH_ACCOUNT_LOC` is a different member and already reaches
+  `_popup` through `_commit`.)
+
+One value WAS aligned, because the pass makes it live:
+`GeneratePurchaseHousePopup` / `GeneratePurchaseShipPopup`
+(`:229-237`) call `GeneratePopup(result)` with the default `amount = 0`,
+where the port's purchase window forwarded the price. No record on that
+path quotes `%a` today, so nothing visible changes; what changes is that
+the number fed to the macro source is DFU's rather than happening not to
+be read. Two pins moved with it (`houses.test.js`, `bankpreview.test.js`).
+
+**REVIEW ROUND (2026-09-08).** The `BankingMacroDataSource` cites were
+off. Re-resolved against the file: `GetMacroDataSource` is `:489-492`
+(`:485-490` is the `#endregion` / `#region Macro handling` pair),
+`Amount()` is `:505-508` and `MaxLoan()` `:509-512` (`:499-502` is
+`private DaggerfallBankingWindow parent;` plus the constructor), the
+stored `this.amount = amount` is `:306`, and `GeneratePopup` runs
+`:299-337`. `MacroHelper.cs`'s own numbers all stood
+(`%a :50`, `%cn :67`, `%ml :139`, `%pcn :152`, `%reg :211`,
+`GetValue :503-527`, `CityName :567-574`, `PlayerName :779-782`,
+`RegionInContext :1049-1057`), as did `:311`, `:308-309`, `:313-334`,
+`:229-237`, `:247`, `:355`, `:364`, `:433-434` and `:455-464`. Nothing
+about the LAW changed — only where it is written down.
+
+## AUDIT 64 F26 - SELLING A HOUSE OUT OF TOWN DESTROYED THE DEED FOR NOTHING (2026-09-08)
+
+`DaggerfallBankManager.SellHouse` (`:450-465`) has four effects — credit
+`GetHouseSellPrice(house)` to the account, drop the interior from the
+permanent scenes, undiscover the building, reset the registry slot — and
+ALL FOUR are nested inside `if (buildingDirectory)` →
+`if (buildingDirectory.GetBuildingSummary(OwnedHouseKey, out house))`
+(`:454-462`). A
+miss, or a null directory, falls straight to
+`return TransactionResult.NONE` with the deed intact.
+`SellHouseButton_OnMouseClick` (`:440-453`) mirrors it: the
+SELL_HOUSE_OFFER box is raised only inside those same two nested
+successes, and there is no `else` on either.
+
+The port guarded on OWNERSHIP alone. That is a different question:
+`OwnsHouse` is keyed by REGION (`DaggerfallBankManager.cs:136`) while
+the building directory only ever holds the CURRENT location's buildings.
+So: buy a house in town A, walk into a bank in town B of the same
+region, press SELL HOUSE. The offer box appeared reading a price of 0
+(`houseSellPrice(0)`), Yes credited nothing, dropped the permanent
+interior, undiscovered the building and zeroed the slot. Ordinary play,
+no cheat, no gate.
+
+The fix is DFU's guard in both places:
+
+- `banking.sellHouse` takes `found` — `GetBuildingSummary`'s bool — and
+  returns `{ kind: 'none' }` before any effect when it is false. It
+  defaults TRUE so a caller that has already resolved the building need
+  not say so twice, which also keeps the existing pins honest.
+- `worldModes.openBank` hoists ONE `ownedHouseSummary()` resolver and
+  feeds the price, the new `ownedHouseResolved` hook and the sale from
+  it, so the three can no longer disagree — the H3 note in that block
+  records exactly that class of bug. Null covers both of DFU's arms: no
+  directory at all, and a key the directory does not hold.
+- `bankWindow._button('sellHouse')` asks `ownedHouseResolved` alongside
+  `ownsHouse`. The SHIP arm is untouched: `SellShipButton` (`:466-471`)
+  has one condition.
+
+**AND THE FIXED-CITY HOST.** `scenes/exterior.js` hard-coded
+`buildings: []` in its `buildingDirectory`, so an owned house never
+resolved even in its OWN town — that host sold every deed for nothing
+before the guard, and would have refused every sale after it. It now
+builds the real list from the two inputs the streaming host uses
+(`locationBuildings(dfLocation.exterior?.buildings, loc.blocks)`), which
+also makes BUY HOUSE's houses-for-sale roll answer truthfully there.
+
+**REVIEW ROUND (2026-09-08).** The lenient default is gone. `!== false`
+meant an unwired host kept the offer box, and DFU has no arm that does
+that: `if (buildingDirectory)` (`:446`) has no `else` any more than the
+two conditions around it, so a host whose `StreamingWorld` hands back no
+directory raises NO box. The hook now reads `=== true`, and the pin
+asserts silence there instead of blessing the port's own affordance.
+`grep -rn 'new BankWindow' src/` has exactly one production site
+(`scenes/worldModes.js`), which wires the resolver, so no host behaviour
+moves. `banking.sellHouse`'s `found = true` default is a different
+thing and stays: it is a parameter shape for callers that resolved the
+building themselves, not a reachable "no directory" arm. Cites
+re-resolved: `SellHouse` `:450-465` with the nested pair `:454-462` and
+the fall-through `return TransactionResult.NONE` at `:464`;
+`SellHouseButton_OnMouseClick` `:440-453`; `SellShipButton` `:466-471`.
+
+## AUDIT 64 F28 - THE CHARACTER SHEET'S GOLD BUTTON WAS INERT (2026-09-08)
+
+`DaggerfallBankingWindow.CreateBankingStatusBox` (`:520-550`, over
+`GetLoansLine` `:559-577`) is a
+public static member with exactly one caller —
+`DaggerfallCharacterSheetWindow.GoldButton_OnMouseClick` (`:787-792`) —
+and it is the only surface in the game that shows the player EVERY
+region's account at once. The bank window itself is single-region
+(`:247`), and the port's accounts are per region and real (62 of them,
+saved and restored), so a player who banked in three regions had no way
+to see two of them. The port hit-tested the verbatim `[4,43,132,8]`
+rect, played `ButtonClick`, and swallowed the click.
+
+The box, verbatim: `SetHighlightColor(DaggerfallUnityStatDrainedTextColor)`
+(`:523`); the header line FIRST and unconditionally (`:526-530`) then a
+`NewLineToken` (`:531`), so the blank row prints even in the empty case;
+a walk over every account kept when `GetAccountTotal(i) > 0 ||
+HasLoan(i)` (`:534`); each kept row four TAB-STOPPED columns at
+x = 0/60/120/180 (`GetLoansLine :559-577`), coloured `TextHighlight`
+when `HasDefaulted(i)` (`:536`); `ShortenName(name, 12)` = 11 characters and an
+ellipsis (`:552-557`); the loan column `GetLoanedTotal`, NOT the +10%
+repayment; the date `GetLoanDueDateString` — "" when nothing is owed
+(`DaggerfallBankManager.cs:573-582`). Nothing qualifying gives ONE row
+reading the localized `noAccount`, which `Internal_Strings.csv:860`
+spells **"None"**. `ClickAnywhereToClose = true` (`:548`).
+
+`banking.bankingStatusRows` is that walk. It is host-agnostic on
+purpose: `CharSheet` already holds the entity the accounts ride on, so
+the gold arm needs no host hook and works on every host that opens a
+sheet — which matters because all four reach the sheet through
+`charSheetDoor.js`. It answers the "None" row rather than throwing for a
+player who has never entered a bank and so has no accounts array yet.
+
+**THE MESSAGE BOX COULD NOT DRAW THIS.** `normalizeRows` accepted only
+`{ text, center }` and `drawMessageBox` drew one string per row at one x
+in one colour, so pasted through it the header would have read
+"RegionAccountLoanLoan Due Date" and a defaulted region would have lost
+its warning colour — space padding is not equivalent, the font is
+proportional. `messageBox.js` now takes a row of `cells`
+(`[{ x, text }]`) and a `highlight` flag: cells draw one label per cell
+at the `PositionPrefix`'s own x, which is
+`MultiFormatTextLabel.cs:346-352`'s `cursorX = token.x` outright, and
+the row's width is `lastLabel.Position.x + lastLabel.TextWidth`
+(`:380-384`) rather than the sum of its parts. A highlight row takes the
+label's `HighlightColor` (`:363`), which `SetHighlightColor`
+(`DaggerfallMessageBox.cs:455-458`) lets the caller override —
+`ActionTextBox` carries it, and the sheet passes
+`DaggerfallUnityStatDrainedTextColor` = (190,85,24) (`DaggerfallUI.cs:65`),
+the constant it already holds from Ledger F164. Rows without cells are
+untouched, field for field, so no existing box moves.
+
+The ENHANCED skin is out of scope and not a gap: since PX27 that door
+returns the pause window's Stats page, not a wrapper over `CharSheet`,
+so there is no gold rect there to route.
+
+**REVIEW ROUND (2026-09-08).** The on-screen half was unpinned. Three
+reverts of the DRAWING law — deleting `{ highlightColor: STAT_DRAINED_
+COLOR }` from the sheet's gold arm, deleting `drawMessageBox`'s `cells`
+branch so a row collapses to one concatenated string at one x, and
+flipping `normalizeRows`' cells arm to `center: true` — all left the
+suite green, because only the row DATA was pinned. Two pins now cover
+it: the gold-button test asserts the box carries `(190, 85, 24)`
+(`DaggerfallUI.cs:65`'s own numbers, not the port's constant name), and
+a new test stands the SPOP slices up behind a recording renderer and
+asserts what the glyph pass actually lays down — four labels per row at
+`labelX + 0/60/120/180`, the `TextHighlight` row in the caller's
+highlight colour (`:363`) and the plain row in `TextColor` (`:360`) —
+plus the same colour surviving the `ActionTextBox` hop. `messageBox.js`
+grew `_setMessageBoxArtForTests`, the seam a dozen other art-gated
+windows already carry. Five mutations run over the pair (drop the
+colour, delete the cells branch, centre a cells row, force `textColor`
+on the highlight arm, drop `ActionTextBox`'s forwarding): five dead.
+Cites re-resolved: the box is `:520-550`, the header line `:526-530`,
+the `NewLineToken` `:531`, the qualifying gate `:534`, the `HasDefaulted`
+ternary `:536`, the `!found` block `:541-546` and `GetLoansLine`
+`:559-577`. `MultiFormatTextLabel.cs:36/:341-344/:346-352/:359-364/
+:380-384`, `DaggerfallMessageBox.cs:455-458`, `DaggerfallUI.cs:54/:65`
+and `DaggerfallCharacterSheetWindow.cs:145-147/:787-792` all stood.
+
+## AUDIT 64 F55 - THE TOWN MAP FORGOT ITS VIEW MODE AND ITS BACKGROUND (2026-09-08)
+
+Two pieces of exterior-automap state outlive a close in DFU, and both
+were per-window in the port:
+
+- `currentExteriorAutomapViewMode` is a FIELD of the persistent
+  `ExteriorAutomap` MonoBehaviour (`ExteriorAutomap.cs:101`), a scene
+  object the window merely FINDS (`InitGlobalResources`,
+  `DaggerfallExteriorAutomapWindow.cs:922-941`). Its only writers are
+  the cycler (`:300-302`) and the three direct setters (`:320`, `:327`,
+  `:334`); `LoadAndCreateLocationExteriorAutomap` only READS it to pick
+  the layout (`:1588-1599`), so it survives a change of town too.
+- the background is `dummyPanelAutomap.BackgroundTexture` on the window
+  SINGLETON `DaggerfallUI` builds once (`DaggerfallUI.cs:531`) and
+  merely pushes on every M (`:647`); its only writers are the four
+  `Action…Background*` handlers (`:1262-1295`).
+
+Neither `OnPush` (`:481-540`) nor `OnPop` (`:545-563`) resets either
+one — `OnPush`'s single reset arm is `ResetCameraPosition()` plus the
+zoom, behind `ResetAutomapSettingsSignalForExternalScript`, and the
+new-location path raises only that signal (`ExteriorAutomap.cs:1650-1660`).
+
+The port builds a NEW window object on every open (`world.js`,
+`exterior.js`), and both values were seeded in the CONSTRUCTOR, so the
+grid button, Return/F2/F3/F4 and F5-F8 were all silently undone by the
+next M. The file had already hoisted `_revealUndiscoveredBuildings`,
+`_zoomLevel`/`_zoomLocation` and `_yawDeg` for exactly this reason, and
+the sibling dungeon window states the law outright at
+`automapWindow.js:326-335` with `_background`/`_renderMode` at module
+scope. `mode` and `background` are now ACCESSORS over module state,
+mirroring `revealUndiscoveredBuildings` — accessors rather than a
+constructor seed plus a write-back in `tick()`, because `ActionExit`
+closes inside `runVerb` and the background is set on a key EDGE, so a
+window can take its last change with no further tick. Neither is reset
+on a new location; the pin asserts that half too, because it is what
+discriminates against the plausible wrong fix.
+
+## AUDIT 64 F29 - THE BACKSTORY EXPANDED %qN AND NOTHING ELSE (2026-09-08)
+
+`BiogFile.GenerateBackstory` does not substitute the question macros
+and stop. Two lines before it walks the tokens it assigns
+`GameManager.Instance.PlayerEntity.BirthRaceTemplate =
+characterDocument.raceTemplate` with its own comment - "Need correct
+race set when parsing %ra macro" (`API/BiogFile.cs:212`) - and then
+runs the WHOLE macro table over the record:
+`MacroHelper.ExpandMacros(ref tokens, (IMacroContextProvider)this)`
+(`:215`). The BiogFile IS the context provider, and `BiogFileMCP`
+answers six rows for it: HomeProvinceName `%hpn` (`:87-115`),
+GeographicalFeature `%hpw` (`:117-141`), Name `%bn` (`:143-148`),
+ImperialName `%imp` (`:618-624`), FemaleName `%fn` (`:626-632`) and
+MaleName `%mn` (`:633-638`); `%ra` comes from MacroHelper's own
+PlayerRace (`Utility/MacroHelper.cs:942-945`), which is why the race is
+assigned first.
+
+The port ran ONE regex, `/%q(\d+)([ab]?)/g`, and handed the rows on.
+A census over `Internal_RSC.csv` records 4116-4133 - the eighteen class
+backstories, `DEFAULT_BACKSTORIES_START + classIndex` - says what that
+cost: only 4116-4119 are %q-only. 4120 carries %hpn %hpw; 4121 %bn %fn
+%ra; 4122 %imp; 4123 %fn %hpn %hpw; 4124 %hpn %hpw %imp; 4125 %hpw
+%imp; 4126 %hpn %hpw %imp %mn %ra; 4127 %hpn %hpw %imp; 4128 %fn; 4129
+and 4130 %hpw %imp; 4131 %fn %hpn %hpw; 4132 %fn %imp; 4133 %hpn %mn.
+FOURTEEN OF EIGHTEEN. A new Healer, Nightblade, Bard, Burglar, Rogue,
+Acrobat, Thief, Assassin, Monk, Archer, Ranger, Barbarian, Warrior or
+Knight opened the character sheet's HISTORY page and read raw "%imp",
+"%hpn", "%bn" text - and the backstory is written ONCE, at chargen, and
+round-trips through the save from then on.
+
+The port already owned every handler (`systems/quest/questMacros.js`
+:352 %ra, :458-459 %fn/%mn, :562 %bn, :565 %imp, :668-669 %hpn/%hpw)
+and its own comment at :475 named the missing half - "the SOURCES land
+with their arcs: the biography MCP (%q block, %hpn/%hpw/%bn...)". The
+source never landed, so the callers were call-throughs to nothing.
+
+WHAT SHIPPED. `systems/biography.js` grows `biogMacroSource(raceKey,
+seed)` - the six BiogFileMCP rows verbatim, with the two race switches
+carrying the Internal_Strings.csv:456-469 values (Black Marsh / High
+Rock / Morrowind / Sumurset / Elsweyr / Skyrim / Hammerfell /
+Valenwood; swamps / rolling hills / mountains / shores / desertland /
+mountains / desertland / forests) and `default: return null` beneath
+them - and `generateBackstory` runs the record through ONE
+`ExpandMacros` pass, `talkMacros.expandTalkMacros`, the walk the talk
+arc already carries. Three things follow from using the real walk:
+
+- **The per-call macro cache is C#'s** (`MacroHelper.cs:427-429`,
+  consulted at :457-462, with its own comment saying why: "some macros
+  evaluate differently each time"). A record naming `%fn` in two
+  tokens names the SAME woman. Running the regex first and an expander
+  second would also have let a %q value containing a '%' be expanded
+  twice, which DFU never does.
+- **The scan runs to the next MACRO_TERMINATORS character**, not to a
+  word boundary, so `%q12` and `%q1` separate without any
+  longest-first ordering.
+- **The error sentinels are the real ones.** `%hpn` for a race outside
+  1-8 renders `%hpn[nullMCP]`, `MacroHelper.GetValue`'s own shape
+  (`:509-512`) - unreachable for the eight playable races, and the
+  honest reading. (One verifier read ExpandMacros as appending a null
+  as empty; `GetValue` is where the null is turned into the sentinel,
+  before ExpandMacros ever sees it, so the sentinel is what DFU
+  prints.)
+
+THE %q BLOCK STAYS LOCAL AND EMPTY-ON-MISSING. DFU renders
+"%q1b[nullMCP]" for a question with fewer than three tokens; the port
+renders nothing. That divergence predates this fix, is pinned as it
+stands (`test/biography.test.js`), and is not re-decided here - the
+handler table's %q rows are overridden with the port's existing arms so
+the fix changes nothing about them. The stale comment that used to
+justify the empty form ("ExpandMacros appends a null value as empty")
+is corrected at the site.
+
+TWO SEAMS THE PORT NEEDED THAT DFU DOES NOT. `buildBackstory` is
+called from `ui/chargen.js` `_finishBiography`, BEFORE
+`systems/chargenSession.js` creates the entity, so `%ra` cannot read a
+player entity - it would answer the PREVIOUS character's race, or none.
+The chargen document's race is threaded in instead (`raceKey`,
+`raceName`), which is exactly the stand-in for BiogFile.cs:212's
+assignment; both skins thread it (`ui/chargenArt.js` `buildBackstory`,
+`ui/enhancedChargen.js` `attachChargenText`). And the SEED: DFU seeds
+each name draw with `(uint)parent.GetHashCode()`, the CLR identity hash
+on the BiogFile instance, which differs run to run inside DFU itself
+and has no port. One injectable per-biography seed stands in, with
+DFU's offsets kept verbatim over it - base for %bn and %imp, base+123
+for %fn, base+9543 for %mn, each RESEEDING before its single draw, so
+the three names stay distinct as DFU's are. Recorded as a Ledger A row.
+`%imp` is the literal six-name table `{ Pelagius, Cephorus, Uriel,
+Cassynder, Voragiel, Trabbatus }` indexed by `DFRandom.rand() % 6` -
+NOT SaveVars' emperorSonNames, despite `%imp` reading those elsewhere -
+and the three names go through `MacroHelper.GetNameBank` (`:344-366`),
+whose Argonian arm is the IMPERIAL bank.
+
+Pins: `test/audit64_chargen.test.js`, seven laws - the eight races'
+%hpn/%hpw against Internal_Strings, the %imp table and its `rand() % 6`
+index, the three seed offsets and their genders (including the Argonian
+bank), a 4126-shaped record leaving no '%' behind, the per-call cache
+across two tokens, %ra off the document, and the flow's threading of
+race and seed.
+
+## AUDIT 64 F30 - THE REPUTATION BOX PRINTED NUMBERS (2026-09-08)
+
+TEXT.RSC 35 is the box that closes the biography - "Your reputations
+have changed as follows:" and five rows. Its `%r1..%r5` resolve through
+`BiogFileMCP`'s CommonersRep / MerchantsRep / ScholarsRep /
+NobilityRep / UnderworldRep (`API/BiogFileMCP.cs:54-89`), and every one
+of the five is `return GetChangeStr(parent.changedReputations[index])`.
+`GetChangeStr` (`:35-47`) is three arms and no numbers: `val == 0` ->
+"unchanged", `val < 0` -> "lower", else "higher" - localized at
+`Internal_Strings.csv:453-455` to `Unchanged` / `Lower` / `Higher`.
+Both call sites hand the BiogFile in as the context provider
+(`CreateCharBiography.cs:150-155` and the auto-generate arm at
+`DaggerfallStartNewGameWizard.cs:441-448`), so both take that path.
+
+The port substituted the signed integer, and did it TWICE - once in
+`ui/chargenArt.js` `repBoxRows` and once restated in
+`ui/enhancedChargen.js` `attachChargenText`. So the closing screen of
+every chargen, on both skins and on both the questionnaire and the
+auto-generate arm, read "Commoners: -5" where classic reads
+"Commoners: Lower".
+
+The law has one home now: `repChangeStr` and a textRsc-parameterised
+`repBoxRowsFrom` in `ui/chargenArt.js`, with `repBoxRows` a wrapper
+over `_art.textRsc` (its null guards intact - `chargen.js`'s
+`if (!this.biogRepBox?.length) this._leaveBiography()` leans on them
+headless) and the enhanced skin binding `repBoxRowsFrom(textRsc, ...)`
+so the two can no longer drift. The per-group totals `digestRepChanges`
+computes are untouched: they are correct DFU (`BiogFile.cs:150-167`)
+and the summary tail still reads them as numbers.
+
+Pins: `test/audit64_chargen.test.js` - all three arms of GetChangeStr
+through record 35 on the classic path AND through
+`attachChargenText`'s flow object, so a revert in either skin goes red.
+The bible record that had pinned the defect ("Probed live: 'Commoners:
+-5'") is corrected above.
+
+## AUDIT 64 F31 - "+0;-0;0" HAS A THIRD SECTION (2026-09-08)
+
+`CreateCharAddBonusStats.UpdateSecondaryStatLabels` formats four of its
+seven labels with the C# custom numeric picture `"+0;-0;0"` -
+DamageModifier (`:156`), ToHitModifier (`:160`), HitPointsModifier
+(`:161`) and HealingRateModifier (`:162`). Three unnamed sections in
+such a picture are positive;negative;ZERO, and the third here is a bare
+`0`. The other three labels (MaxEncumbrance, SpellPoints, MagicResist)
+take a plain `ToString()`.
+
+`ui/chargen.js` `derived()` wrote `n >= 0 ? '+' + n : String(n)`, which
+folds zero into the positive arm and prints "+0". The zero band is the
+ordinary one: `floor(END/10) - 5` is 0 for endurance 50-59 (both the
+hit-point and healing-rate labels), `floor(AGI/10) - 5` the same over
+agility, and `floor((STR-50)/5)` is 0 for strength 50-54
+(`FormulaHelper.cs:66-73`, :102-128). Both draw paths read the one
+object - the classic CHAR02I0 blit and the enhanced pane - so a single
+`n > 0 ? '+' + n : String(n)` corrects both, which is what DFU's one
+label formatter does. The port already spoke this rule correctly
+elsewhere (`questMacros.js` `signedFmt`, `itemInfo.js`'s armour mod);
+the bonus-stats screen was the one site that got the zero arm wrong.
+
+The two pins that covered this block restated the port's own
+expression and only ever exercised negatives, so they were green before
+and after. `test/audit64_chargen.test.js` spells the picture out
+(`n > 0 ? '+n' : n < 0 ? 'n' : '0'`) and pins all three sections,
+including a literal `['0','0','0','0']` in the zero band.
+
+## AUDIT 64 F32 - THE CLASS-QUESTIONS BOX'S DEFAULT BUTTON IS NO (2026-09-08)
+
+A `DaggerfallMessageBox` has two keyboard lanes and the port had
+conflated them.
+
+1. **Every button carries a hotkey, always.** `AddButton` ends with
+   `button.Hotkey = DaggerfallShortcut.GetBinding(ToShortcutButton(
+   messageBoxButton))` (`DaggerfallMessageBox.cs:377`) - Yes 'Y', No
+   'N' in DialogShortcuts.txt, which the port already carries at
+   `systems/dialogShortcuts.js`.
+2. **Return clicks the DEFAULT button, if the box has one.** `Update`
+   (`:318-324`) calls `GetDefaultButton()` (`:394-403`) and
+   `TriggerMouseClick()`s it; with no default button it does nothing.
+
+`CreateCharClassQuestions.EndQuestions` (`:406-409`) builds its confirm
+box through the `CommonMessageBoxButtons.YesNo` constructor, and
+`AddCommonButtons`' YesNo arm is `AddButton(Yes); AddButton(No, true)`
+(`:630-632`) - the `true` is `defaultButton`. So RETURN AT THE END OF
+THE TEN QUESTIONS CLICKS NO, and `ConfirmDialog_OnButtonClick`
+(`:425-427`) answers No with `classIndex = noClassIndex` and drops the
+player onto the class list. The port routed 'confirm' to
+`_acceptQuestionClass()` - the exact inverse.
+
+The race and class-list description boxes are the CONTRAST, and they
+are why this is not a one-line change: `CreateCharRaceSelect.cs:107-108`
+and `CreateCharClassSelect.cs:87-88` both call `AddButton(Yes)` and
+`AddButton(No)` with no `defaultButton` argument, so
+`GetDefaultButton()` returns null and Return is INERT on those two.
+The port accepted on all three. Leaving that half unfixed would have
+given the wizard three different meanings for Return.
+
+WHAT SHIPPED. All three arms test the Y and N hotkeys FIRST (the
+letters beat the default button), then: on the questions box a bare
+Return falls through to the default button and CANCELS; on the race and
+class-list boxes it does nothing. The race box needed one more move -
+its mouse Yes rode the shared 'confirm' action in both skins
+(`chargenArt.js`'s race-box hit and the enhanced skin's Yes button), so
+nulling the keyboard arm would have killed the BUTTON. It has its own
+`{ confirmRace: true }` hit now, beside `cancelRace`, and both skins
+click that; the class-list box already had `{ confirmClass: true }`
+and the questions box `{ confirmQClass: true }`, so their mouse paths
+were untouched.
+
+REVIEW ROUND (2026-09-08) - THE FOURTH BOX. The first pass counted
+three message boxes on the wizard and missed one: the GENDER SCREEN
+itself. `CreateCharGenderSelect` is not a window that owns a box, it IS
+one - `public class CreateCharGenderSelect : DaggerfallMessageBox`
+(`CreateCharGenderSelect.cs:30`) - and its `Setup` builds it from two
+bare calls, `AddButton(MessageBoxButtons.Male)` and
+`AddButton(MessageBoxButtons.Female)` (`:53-54`), with no
+`defaultButton` argument on either. So `GetDefaultButton()` is null and
+Return is INERT there too, exactly as on the race and class-list boxes;
+what acts is the hotkey `AddButton` binds unconditionally (`:377`) -
+Male 'M', Female 'F' in DialogShortcuts.txt, both already in
+`systems/dialogShortcuts.js`. Each button's handler sets the gender and
+`CloseWindow()`s (`:59-71`), which is the `{ setGender }` hit the mouse
+path already answers with, so the two keys take the same door the
+buttons do. The port advanced on a bare 'confirm', which left Return
+with two meanings across the wizard's four boxes after F32 rather than
+one.
+
+The 'up'/'down' toggle stays: it moves the highlight only and is the
+port's own keyboard accommodation for a screen DFU drives with a
+pointer, the same accommodation the race map carries.
+
+RESIDUAL, recorded not hidden: Escape still rejects on all three boxes.
+DFU sets `AllowCancel = false` the moment a button is added ("Don't
+allow a messagebox with buttons to be cancelled with escape",
+`:381-383`), so Escape is inert there. That is the port's keyboard-
+reachability accommodation and it predates this fix; with Y/N in place
+N now covers rejection, and the Escape arm is a candidate for removal
+under a Ledger row rather than in this lane.
+
+Pins: `test/audit64_chargen.test.js` - Return on the questions box
+leaves `qClassIndex === NO_CLASS_INDEX` and the flow on the class list,
+`char:y` adopts, `char:n` rejects, the mouse `{ confirmQClass }` still
+adopts, and Return is inert on the race and class-list boxes with Y
+accepting on both. Three older pins that asserted the port's
+Return-accepts (`test/classpicker.test.js`,
+`test/classquestions.test.js`, `test/audit17g.test.js`) are re-aimed at
+the reference law rather than deleted.
+
+## AUDIT 64 F33 - THE SUMMARY'S BONUS POOL LEAKED BACKWARDS (2026-09-08)
+
+The wizard holds TWO `StatsRollout` instances: the bonus-stats
+window's (`CreateCharAddBonusStats.cs:83`) and the summary's own, which
+`SetCharacterSheet` zeroes on every push (`CreateCharSummary.cs:125`,
+`this.statsRollout.BonusPool = 0`). `SummaryWindow_OnClose`'s cancel
+arm (`DaggerfallStartNewGameWizard.cs:566-577`) copies exactly six
+things back - startingSkills, workingSkills, startingStats,
+workingStats, the three SKILL bonus counters (through
+`SetBonusSkillPoints`, `:575`) and faceIndex. The stat bonus pool is
+ABSENT, and that omission is load-bearing: the only other write into
+the stats window's rollout is `AddBonusSkillsWindow_OnClose`'s cancel
+arm (`:534-536`), which is a `.Copy` on the read-only getter and
+bypasses `SetStats` (`StatsRollout.cs:53-62`, `:183-191`), leaving
+`bonusPool` untouched; and that window's OK gate
+(`CreateCharAddBonusStats.cs:189`) refuses to close with a positive
+pool. So walking summary -> reflexes -> skills -> stats after
+un-spending a point, DFU shows pool 0 with the lowered value standing:
+the point is DESTROYED. The skill side is the deliberate contrast -
+those three counters ARE propagated.
+
+The port had ONE `this.statPool`. `_enterSummary` zeroed it, the
+summary's spinner raised it through the same `spendStat`, and the
+summary's 'back' arm is a bare state move - so the refunded point
+walked back onto the bonus-stats screen and could be spent again.
+
+WHAT SHIPPED. `ui/chargen.js` grows `sumStatPool`, the summary's own
+rollout pool, beside the `sumName`/`sumReflexes` pair AUDIT 18 added
+for the same reason (the fields that cancel arm omits). `_enterSummary`
+zeroes THAT and leaves `statPool` alone; `spendStat` selects the pool
+by screen through a `_statPool()`/`_setStatPool()` pair, so its three
+callers are unchanged and `stats`/`rolledStats` stay shared (the cancel
+arm does copy the VALUES back); `confirmSummary`'s gate reads the
+summary's pool, as `CreateCharSummary.cs:174` does. Both draws follow:
+`chargenArt.js`'s `statView` - shared by `drawSummary` and the
+bonus-stats page, and the feed for the spinner digit - reads the pool
+of the screen that is showing, and the enhanced skin's summary pane
+does the same for its section head and its OK label.
+
+Pins: `test/audit64_chargen.test.js` - the back-walk itself (spend
+down on the summary, three backs, `statPool === 0` with the lowered
+stat standing), the OK gate reading the summary's pool and ignoring the
+other rollout's, the re-push zeroing only the summary's, and
+`statView`'s per-screen digit. Two pins in `test/summary.test.js` that
+set and asserted the shared field are re-aimed at `sumStatPool`.
+
+REVIEW ROUND (2026-09-08) - THE SELECTION IS PER-INSTANCE TOO. The
+first pass split the POOL and left `statCursor` shared, which is the
+same fault one field over. `selectedStat` is a plain instance field of
+`StatsRollout` (`StatsRollout.cs:43`, `int selectedStat = 0;`) and
+`SelectStat` (`:210-217`) writes it together with `spinner.Position` on
+whichever rollout owns the spinner that was clicked - so the wizard's
+two instances (`CreateCharAddBonusStats.cs:87`,
+`CreateCharSummary.cs:37`) carry two selections. The cancel arm
+(`DaggerfallStartNewGameWizard.cs:559-578`) copies neither back, and
+the ONLY caller of `SelectStat(0)` is `SetStats` (`:183-191`), which
+the bonus-stats window reaches on a REROLL alone. So DFU's bonus-stats
+spinner sits where the player left it for the whole of the summary
+visit, and the summary's own starts at 0 on every push, because
+`SetCharacterSheet` assigns THIS window's rollout
+(`CreateCharSummary.cs:123`, `this.statsRollout.StartingStats = ...` -
+the setter that ends in `SelectStat(0)`).
+
+The port had one `statCursor`, so a click on the summary's spinner
+rewrote the bonus-stats window's row and `_enterSummary`'s reset walked
+it back to Strength on the way in. It is drawn in both skins:
+`chargenArt.statView` feeds `drawStatBlock` on both screens, and
+`statBlockHit` puts the spinner's own hit rect at the selected row.
+
+WHAT SHIPPED. `sumStatCursor` beside `sumStatPool`, and a
+`_statCursor()`/`_setStatCursor()` pair selecting by `this.state`
+exactly as the pool pair does. `spendStat` reads it, `applyHit`'s
+`{ setStatCursor }` writes it, `_enterSummary` zeroes the summary's
+alone, and `statView` and the summary's `statBlockHit` call read the
+showing screen's. The bonus-stats screen's own keyboard 'up'/'down',
+`loadRoll` and the reroll's `SelectStat(0)` keep writing `statCursor`,
+because that IS the bonus-stats rollout.
+
+Pins: `test/audit64_chargen.test.js` - the bonus-stats window left on
+Luck (index 7), a summary spinner moved to 3, and three cancels later
+the stats screen reading 7 with `statView` drawing on 7. Two
+`test/summary.test.js` pins that asserted the shared field on the
+summary are re-aimed at `sumStatCursor`, and the SelectStat(0) pin now
+also asserts the other rollout keeps its row.
+
+## AUDIT 64 F34 - DAGGERFALLHUD HAD TWO TEXT SURFACES AND THE PORT HAD ONE (2026-09-08)
+
+`DaggerfallHUD` owns `popupText` **and** `midScreenTextLabel`
+(`DaggerfallHUD.cs:32-33`, two distinct fields). The first is
+`PopupText` - the stacking seven-row queue at the top of the native
+panel, ported since U5 as `ui/hudText.js`. The second is a single
+`TextLabel`, `HorizontalAlignment.Center` at `Position (0, 146)`
+(`:175-177`, over `const int midScreenTextDefaultY = 146` at `:25`),
+with a timer of its own (`:50-51`, the `-1` sentinel and a 1.5 s
+delay) that **replaces** itself on every write and blanks itself once
+the timer passes the delay (`:259-267`).
+
+The port had no such surface at all - `grep` for `midScreen` in `src/`
+returned two comments - so every `SetMidScreenText` caller had been
+folded into the popup queue: the wrong place (native y=4 instead of
+y=146), the wrong lifetime (`PopupText.popDelay` 1.0 instead of 1.5)
+and the wrong semantics (a queue that stacks and scrolls where DFU
+shows one line). The reference proves the two are deliberately
+distinct in one file: `PlayerActivate.cs:527-529` speaks
+`PopupMessage(lockedExteriorDoor)` and then `LookAtInteriorLock(...)`,
+one line per surface.
+
+`ui/midScreenText.js` is the label. `set()` is `SetMidScreenText`
+verbatim (`:353-372`): the large-HUD reposition first, then text,
+`timer = 0`, `delay`, and the `Notebook.AddMessage(message)` tail
+(`:371`) that `PopupText.AddText` carries too (`PopupText.cs:123`).
+The reposition is the clause most easily got wrong and all three parts
+of it are load-bearing (`:356-365`) - it is guarded by the LargeHUD
+**setting** rather than by a drawn bar, `localY = (offset /
+LocalScale.y) - 7` is used only when it is `< 146` (a SHORT bar leaves
+it above and the label must stay at 146, not drop with the bar), and
+the assignment is `(int)localY`, a truncation. It is computed inside
+`set()` and persists; it is not recomputed per frame.
+
+The module is the shape of `DaggerfallUI.cs:783-789`'s static shim: one
+label per game reached by a free `setMidScreenText`, so a caller in any
+host speaks to the same surface with no sink threaded through it.
+`drawHud` observes the live screen state each frame, ticks the timer
+and draws the label - on both skins, since it is a message surface
+rather than a classic-skin element.
+
+Every caller in the reference was re-pointed:
+`PlayerActivate.cs:1424`'s mode line in **both** hosts that own one
+(`scenes/townTalk.js` and `scenes/dungeon.js` - one C# call site, so
+one surface everywhere); the `youAreTooFarAway` refusals at `:780`,
+`:790` and `:834` (`townTalk`, `player/mobileEnemyActivate.js`) and
+`:711`'s bulletin-board refusal (`scenes/worldModes.js`);
+`LookAtInteriorLock`'s whole difficulty ladder and `magicLock`
+(`:991-1007`) in `scenes/dungeonContext.js` and both exterior arms of
+`scenes/worldModes.js`; and `FPSWeapon.cs:365`'s `youHaveNoArrows` in
+`combat/weaponRig.js`.
+
+Two of those needed care rather than a rename. `weaponRig`'s `say`
+sink also carries the shield refusal (`WeaponManager.cs:704-705`),
+which really is a `PopupMessage`, so the arrow line takes the label
+directly and leaves the sink alone. `activateMobileEnemy` takes a
+second `midScreen` sink for `:834` alone, because the pickpocket
+RESULT one line below it (`:838 -> :1611`) is a message box and must
+not follow it onto the label. What stays on the popup queue is what
+the reference puts there: `lockedExteriorDoor` (`:527`) and the
+lockpick outcomes (`:553`/`:564`, `DaggerfallActionDoor.cs:170`/`:175`/
+`:189`).
+
+## AUDIT 64 F35 - THE SMALL HUD WAS PAINTED UNDER EVERY OPEN WINDOW (2026-09-08)
+
+`DaggerfallUI.cs:479-491` draws exactly one window per repaint -
+`uiManager.TopWindow.Draw()` - and repaints the HUD beneath it ONLY
+under `DaggerfallUnity.Settings.LargeHUD`, with its own comment saying
+so ("When using a large HUD, always repaint HUD before main window").
+With the classic small HUD the HUD is simply the bottom of that stack
+(pushed at `:407-408`, popped back to at `:831-835`) and it reaches
+the screen only down the top window's `previousWindow` chain -
+`DaggerfallPopupWindow.Draw` (`DaggerfallPopupWindow.cs:76-84`) runs
+`previousWindow.Draw()` before its own `base.Draw()` and paints
+nothing beneath when the field is null. **THE REVIEW ROUND CORRECTED
+THIS SECTION**: the law as first written here ("nothing of it is
+drawn while a window is open") is true only of the null-previous
+windows, not of every window - see the review-round section below.
+`:429-433` likewise updates only the top window, and that half IS
+unconditional. Every element is a component of the HUD's two panels
+(`DaggerfallHUD.cs:155-192`), so the vitals, the breath bar, the
+compass, the mode icon, the escort column, the active-spell rows, the
+arrow counter and the parent-panel tint all go together, either way.
+
+`drawHud` had no such gate: `cursorActive` reached only the enhanced
+skin's `hidden` flag and the crosshair. Because the port's windows
+paint no letterbox (`nativePanel.js`'s `SCREEN_DIM` is
+`DaggerfallPopupWindow.cs:27`'s `Color.clear`), at 1920x1080 the
+320x200 panel covers x160..1760 while the vitals sit at x=10 and the
+compass hangs off the right edge - so the classic bars stayed visible
+in the margins around an open inventory or pause window.
+
+The gate is `hudCovered = (windowCoversHud ?? cursorActive) &&
+!largeHud?.art` (`windowCoversHud` came in on the review round; it
+first shipped as `cursorActive` alone), and the LargeHUD arm is left
+reachable because it IS `:485-486`. Two members
+survive it and both sit above the gate: `ShowPlayerDamage`
+(`Game/ShowPlayerDamage.cs:20` - its own MonoBehaviour with its own
+`OnGUI`, outside the UI stack) and the `VitalsChangeDetector` update,
+which `CameraRecoiler` reads whatever window is top. The near-death
+tint does NOT survive: `HUDFlickerController` is a ParentPanel
+component (`DaggerfallHUD.cs:163`) that paints by writing
+`Parent.BackgroundColor` (`HUDFlickerController.cs:81-82`) - the HUD
+window's own panel - so its cycle keeps stepping while its colour is
+not painted. `drawNearDeathFlicker` took a `paint` argument for
+exactly that split.
+
+**Left open, and recorded rather than fixed.** The hosts' HUD TEXT
+layer (`hudText.tick`/`draw`, drawn outside `drawHud`) is a
+`NativePanel` component in DFU too (`DaggerfallHUD.cs:172-177`), so
+DFU neither draws nor ticks it under a window. F37 below gates its
+DRAW on `renderHUD`; the window half - and the fact that the port
+expires popup rows under a window DFU would never have ticked - is a
+separate member with its own pin and is left for the next round.
+
+## AUDIT 64 F36 - F10 WAS A BOUND KEY WITH NO CONSUMER (2026-09-08)
+
+`DaggerfallHUD.Update` polls `DaggerfallShortcut.Buttons
+.LargeHUDToggle` every frame and flips `DaggerfallUnity.Settings
+.LargeHUD` (`DaggerfallHUD.cs:308-312`), raising `OnLargeHUDToggle` on
+the change (`:237-238`). The port had the binding row
+(`systems/dialogShortcuts.js`, `LargeHUDToggle: 'F10'`), read the
+setting live every frame through `largeHudEnabled()`/
+`largeHudOptions`, and already carried the HUD-mode-flip detector
+reset that stands in for the event - and nothing anywhere wrote the
+setting from a key. Pressing F10 did nothing; the only door to the bar
+was the pause window's FULL SCREEN button.
+
+The write is `setValue('GUI', 'LargeHUD', !getBool('GUI', 'LargeHUD'))`
+- the in-memory assignment `:311` makes, published to the LIVE
+listeners. It deliberately does not save: DFU persists `settings.ini`
+elsewhere.
+
+## AUDIT 64 F37 - renderHUD / Shift-F10 HAD NO PORT (2026-09-08)
+
+`DaggerfallHUD.cs:47` holds `bool renderHUD = true`, `:314-318` flips
+it on the `HUDToggle` binding (`Shift-F10`), and `:347-351` overrides
+Draw with `if (renderHUD) base.Draw();`. Suppression is WHOLE - every
+ParentPanel and NativePanel component of the HUD window, and the
+large-HUD repaint too, since `DaggerfallUI.cs:485-486` goes through
+that same overridden Draw. Update is NOT suppressed: the flicker's
+`NextCycle` (`:328`) and the vitals bookkeeping keep running.
+
+`ui/hudShortcuts.js` holds the flag and both shortcut arms.
+`drawHud` reads it below the two MonoBehaviour members and above every
+paint; the enhanced skin is told to hide rather than skipped, because
+it is a persistent DOM overlay that stays painted unless told
+otherwise; and `lastLargeHudBar` is deliberately left standing, since
+HUDLarge's own Update keeps its Rectangle live for `ViewportChanger`
+and the panel click routing while its Draw is off. The popup column's
+DRAW is gated at each host's call site for the same reason
+(`popupText` is a NativePanel component, `:172-173`) while its tick
+keeps draining, which is Update's work.
+
+**The key seam, and the four-hosts trap.** There was no existing place
+where a HUD hotkey landed - none of `DaggerfallHUD.Update`'s five
+shortcut arms had a consumer. The port's keydown dispatch is split, so
+the arm sits in three places: `ui/input.js`'s `routeKey` (which covers
+`scenes/dungeon.js` and both modal arms of `scenes/worldModes.js`),
+and the private ladders of `scenes/world.js` and `scenes/exterior.js`,
+which never call `routeKey`. In `routeKey` it sits BELOW the
+`uiOverlayActive` return, because `DaggerfallUI.cs:429-433` updates
+only the top window; in the two host ladders it sits INSIDE the
+exterior-mode gate, because an interior or dungeon mode is mounted by
+`worldModes`, whose own `routeKey` call already answers - two live
+arms would flip the setting twice per press and cancel out. The module
+imports only `systems/` leaves so `ui/input.js` can take it without a
+cycle. `scenes/interior.js` draws no HUD and takes nothing.
+
+The other three arms of that block are named in the module header and
+NOT ported: `DebuggerToggle` (`:297-301`), `Pause` (`:303-306`, which
+this port reaches through the Escape action's pause door) and
+`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass).
+
+## AUDIT 64 F38 - THE ESCORT COLUMN WAS ANCHORED TO THE WRONG PANEL (2026-09-08)
+
+`DaggerfallHUD.cs:183-185` gives `escortingFaces` `NativePanel.Size`
+and `AutoSizeModes.ScaleToFit` and then adds it to the **ParentPanel** -
+unlike `activeSpells` (`:168-170`), `popupText` (`:172-173`) and
+`midScreenTextLabel` (`:175-177`), which are NativePanel children. The
+parent panel is the whole viewport at LocalScale (1,1)
+(`UserInterfaceWindow.cs:40`; `BaseScreenComponent.cs:1142`,
+`:1161-1166`, `:1180-1181`), and the panel sets neither alignment, so
+both stay at `BaseScreenComponent.cs:46-47`'s default `None` and the
+None arms of `GetRectangle` (`:1207-1209` and `:1224-1226`) put its
+rect origin at screen (0,0). `ScaleToFit` (`:1281-1314`) multiplies
+width and height and sets `LocalScale`; it applies no centring offset.
+Centring in DFU belongs to the NativePanel alone
+(`DaggerfallBaseWindow.cs:43-47`), which is what the port's
+`nativeMetrics` ox/oy models.
+
+`ui/hudEscortFaces.js` drew the column through `nativeMetrics`, so
+`HUDEscortingNPCFaces.cs:60-61`'s `startX 8, startY 36` were offset by
+the letterbox: at 1920x1080 the first face landed at (200, 220) where
+DFU puts it at (8, 36) x the fit scale. The offsets are dropped and
+the scale now comes from `hudScale`, the function every other
+ParentPanel-anchored HUD member already reads (the compass, the vitals
+inset, the breath bar), so no reader can infer a NativePanel
+relationship that does not exist. The file's doc block, which asserted
+the centred fit while citing `:183-185`, states the actual law now.
+
+## AUDIT 64 F39 - THE BREATH BAR WAS THE ONE VERTICALPROGRESS THAT DID NOT ROUND (2026-09-08)
+
+`VerticalProgress.DrawProgress` (`VerticalProgress.cs:68-74`) rounds
+the destination height to whole screen pixels before offsetting the
+rect - `float scaledAmount = Mathf.Round(dstRect.height * amount);
+dstRect.y += dstRect.height - scaledAmount; dstRect.height =
+scaledAmount;` - and leaves the source window (`1 * amount`, `:70`)
+unrounded. AUDIT 39 F137 ported that asymmetry for the three vitals
+bars as `mathfRound`. The breath bar is the same class
+(`HUDBreathBar.cs:26`, added at `:54`, sized and `Amount`-set at
+`:68-74`) and `drawBreathBar` computed its fill as a raw float.
+
+Because `hudScale` is an integer, `bh = LiveEndurance * s` is integral
+and an EVEN endurance makes the fill integral too - but an ODD
+endurance gives `MaxBreath = (END-1)/2` and a fractional fill, so the
+bar's top edge sat mid-pixel and the drawn bar differed from DFU by up
+to a pixel. `Mathf.Round` is half-to-EVEN, which is why `mathfRound`
+rather than `Math.round`: with LiveEndurance 41 at scale 1, ten breath
+is exactly 20.5, and DFU draws 20.
+
+## AUDIT 64 F42 - THE LARGE HUD'S ELEVEN PANELS ANSWERED IN SILENCE (2026-09-08)
+
+`DaggerfallUI.Instance.PlayOneShot(SoundClips.ButtonClick)` is the
+FIRST statement of every one of `HUDLarge`'s thirteen clickable-panel
+handlers - `HUDLarge.cs:399` and `:423` (the interaction-mode panel's
+left and right clicks) and `:445`, `:454`, `:463`, `:472`, `:481`,
+`:490`, `:499`, `:508`, `:517`, `:526`, `:535` - each inside the
+`IsLargeHUDInteractable()` guard (`:388-390`) and BEFORE the
+`PostMessage` / `ChangeInteractionMode` / `ToggleSheath` the panel
+exists to send. `ui/hudLarge.js` had ported the rects, the routing and
+the actions and played nothing, while thirty-two other port windows
+carried the same clip.
+
+`routeLargeHudClick` plays it on the HIT, inside the same guard and
+before `routeAction` - the reference's own order, and it matters:
+DFU plays the click before a message that may be refused, so a panel
+whose door a host has not wired still sounds. Only the two buttons DFU
+binds are asked for it (`OnMouseClick` and `OnRightMouseClick`); a
+middle click reaches no handler in the reference and makes no sound
+here.
+
+## AUDIT 64 F34 - REVIEW ROUND: THE LIVE SCREEN READ WAS UNPINNED (2026-09-08)
+
+`SetMidScreenText`'s large-HUD lift (`DaggerfallHUD.cs:356-365`) reads
+three LIVE values at set time - `Screen.height`,
+`midScreenTextLabel.LocalScale.y` and `LargeHUD.ScreenHeight` - and in
+the port only `drawHud` has them, so its one `midScreenText.observe(
+canvas.height, nativeMetrics(canvas).s, largeHudEnabled() ?
+lastLargeHudBar?.h : null)` IS the wiring. The lift was pinned on a
+bare `new MidScreenText()` with `observe` called by hand: the CLASS was
+covered and the CALL was not, so deleting it left the label stuck at
+146 in play with the suite green.
+
+The third F34 pin now draws a real docked bar and asserts the LIFTED
+row. At 2560x1080 the native scale is 5 and a docked `HUDLarge`
+(320x46, `AutoSizeModes.ScaleToFit` onto the screen's width) is
+46 x 2560/320 = 368 tall, so `(1080 - 368)/5 - 7` = 135.4, which IS
+below `midScreenTextDefaultY` and truncates to 135 - two frames apart,
+because `observe` feeds the PREVIOUS frame's bar.
+
+The timer half moved to `cursorActive` in the same round; its reasoning
+is in the F35 review-round section below, with `DaggerfallUI.cs:429-433`.
+
+`scenes/dungeon.js`'s new import also carried the interactionMode
+import's provenance note onto the midScreenText line; the note is back
+where it belongs.
+
+## AUDIT 64 F35 - REVIEW ROUND: THE previousWindow CHAIN, NOT "A WINDOW IS OPEN" (2026-09-08)
+
+The first cut of F35 above took `DaggerfallUI.cs:489-491`'s "draw the
+top window alone" as "no window may have the HUD under it", and gated
+the whole small HUD on `cursorActive`. That is one law short.
+`DaggerfallPopupWindow` (`DaggerfallPopupWindow.cs:19`, "can
+optionally render previous window hierarchy before its own") holds a
+`previousWindow` field (`:24`, set by the constructor at `:56-59`),
+and its `Draw` (`:76-84`) is
+
+    if (previousWindow != null) { previousWindow.Draw();
+                                  parentPanel.BackgroundColor = ScreenDimColor; }
+    base.Draw();
+
+with `ScreenDimColor` = `Color.clear` (`:27`, `:34`, `:58`). So the
+window under a popup IS painted, undimmed, and the chain recurses.
+
+**Every box `DaggerfallUI.MessageBox` opens carries the then-top
+window as its previous** - `new DaggerfallMessageBox(Instance
+.uiManager, Instance.uiManager.TopWindow, ...)` at
+`DaggerfallUI.cs:1330`, `:1339`, `:1348` and `:1357` - and during play
+that top IS `dfHUD`, the first window pushed (`:407-408`). DFU
+therefore paints the WHOLE small HUD under every in-play message box:
+the vitals, the breath bar, the compass, the arrow count, the Detect
+markers, the escort column, the crosshair, the active-spell rows, the
+near-death tint and F34's mid-screen label.
+
+What DOES blank it is a window pushed with a NULL previous, and that
+is every window `DaggerfallUI` opens from play: the persistent
+instances built at `:512-530` (pause options, character sheet,
+inventory, controls, joystick/mouse controls, travel map, automap,
+exterior automap, book reader, quest journal, player history, talk,
+spell book, spell/item/potion maker, court) and pushed at `:555-721`.
+`DaggerfallAction`'s own two boxes join them - `new
+DaggerfallMessageBox(DaggerfallUI.UIManager, null)`
+(`Internal/DaggerfallAction.cs:536`, ShowText) and the
+`DaggerfallInputMessageBox(..., null)` beside it (`:565`,
+ShowTextWithInput) - which is why the dungeon plaque covers the HUD
+where a quest popup does not.
+
+The port already recorded the painting half for the WINDOWS
+(`ui/windowStack.js`'s `eachCoveredWindow`, `scenes/townTalk.js`'s
+frame) and simply had not carried it to the HUD.
+
+**The shape.** `windowStack.js` gains `paintsPreviousWindow(win)` -
+`win.previousWindow === true`, the null arm being the default a window
+with no field takes - and `stack.hudCovered(slot)`, which answers true
+when ANY window over the HUD fails to paint its own previous: one cut
+anywhere in the chain and nothing above can splice it back (an
+inventory laid over a box, or a box laid over an inventory, both
+blank the HUD). `slot` is the host's live mirror of the top, taken
+for the same reason `reconcile` takes it.
+
+`ui/actionText.js`'s `ActionTextBox` - the port's DaggerfallMessageBox,
+and nearly all of its ~35 sites are `DaggerfallUI.MessageBox` in the
+reference - defaults `previousWindow: true`; `ActionInputBox` defaults
+null, its only reference construction being `:565`'s. The one
+`ActionTextBox` that must NOT carry the HUD is
+`scenes/dungeonContext.js`'s `actions.onShowText`, which passes
+`{ previousWindow: null }` with `:536` beside it.
+
+`drawHud` takes `windowCoversHud` and the four hosts answer it from
+their own stacks - `townTalk.hudCovered` and `worldModes.hudCovered`
+(both `paused && stack.hudCovered(slot)`), ORed in `world.js` and
+`exterior.js` exactly as `gamePaused` ORs their pause halves;
+`dungeonContext.js` asks `dungeonWindows`; `worldModes.js` asks
+`modeHudCovered()`, the same union `overlayHeld` takes. A caller that
+answers nothing falls back to `cursorActive`, the blunter law.
+
+**...and the TICK takes the other gate.** `DaggerfallUI.cs:429-433`
+updates `uiManager.TopWindow` ALONE, so `DaggerfallHUD.Update` - and
+with it the `midScreenTextTimer` tail at `:259-267` - is dead under
+ANY open window whatever the LargeHUD setting says: `:483-491`'s
+repaint is Draw, not Update. F34's `midScreenText.tick` was gated on
+`hudCovered`, which is false whenever the large HUD is on, so the
+label expired under a window where DFU freezes it. It is gated on
+`cursorActive` now, and the comment that already stated this law is
+the law the line implements.
+
+**Consequences reopened by the correction.** `hudActiveSpells`'
+`spellTip` is only shown while `cursorActive` (hud.js), so with the
+small HUD it was unreachable in every host; `ui/fadeLayer.js`'s tint
+paints under a box again. Both come back with the chain.
+
+**Pins.** `test/audit64_hud.test.js` gained five: a message box paints
+the whole small HUD; the stack's chain walk (both orders, the slot,
+the two DaggerfallAction boxes, and the four hosts' wiring); the
+enhanced skin's hide door and its escort column under both gates
+(`DaggerfallHUD.cs:347-351` and `:183-185` - the enhanced branch had
+no pin at all and both of its arms reverted green); `drawHud`'s live
+`observe` feeding a real large bar (the F34 lift was pinned only on a
+bare label); and the label's frozen timer under a window with the
+large HUD on. Each was proven red under the mutation that reverts it.
+
+**Still open.** The port's window model paints the WHOLE covered stack
+(`eachCoveredWindow`) rather than only what a live `previousWindow`
+chain would reach, so a window opened over a null-previous window is
+drawn over it where DFU would paint the null-previous window alone.
+That is the windows' member, not the HUD's; `hudCovered` above is
+correct regardless, because a cut anywhere blanks the HUD either way.
+
+## AUDIT 64 F47 - THE RIGHT MOUSE BUTTON DID NOTHING BUT THE LEFT ONE'S JOB (2026-09-08)
+
+`GetActionModeRightClick` (`DaggerfallInventoryWindow.cs:1871-1882`) is
+the whole of the classic inventory's fast gesture: Equip becomes
+Remove, Remove becomes Equip, Select becomes Remove, every other mode
+is returned as it stands. It is wired on exactly four component
+families - `localItemListScroller.OnItemRightClick` (`:378`), the
+remote scroller's (`:393`), `paperDoll.OnRightMouseClick` (`:468`) and
+`button.OnRightMouseClick` on every one of the twelve accessory
+buttons (`:551`) - and the four forwarders (`:1913-1916`,
+`:1959-1962`, `:2015-2018`, `:2070-2073`) hand its answer to the SAME
+shared handler the left forwarders feed `selectedActionMode`. So in
+Remove mode a right click on a pack item equips it and on the doll
+takes it off; in Equip mode a right click stores the item in the
+wagon, the chest or the pile.
+
+The port's window took the flag from every host - `townTalk.js`,
+`worldModes.js` and `dungeonContext.js` all pass `e.button === 2` -
+and spent it on one thing, the drop-icon panel's cycle direction.
+Everything downstream read `this.mode`, so a right click was
+indistinguishable from a left one.
+
+`_rightMode()` is the reference member; `click()` computes the mode
+once and `_pick(slot, mode)`, `_pickRemote(slot, mode)`, the accessory
+arm and the paperdoll arm all take it. The threading goes all the way
+down: `_pickRemote` passes it into `planTake`, whose `equip: mode ===
+'equip'` is `TransferItem(..., equip: actionMode == ActionModes.Equip)`
+(`:2039-2042`) - stopping at the window's own branches would have made
+a right-click take an item and silently fail to equip it. Select is
+not ported here on purpose: `MODES` carries no select mode, and DFU
+sets `ActionModes.Select` only in `DaggerfallTradeWindow`.
+
+The other half of the law is what a right click must NOT do.
+`exitButton` (`:318`), the four tab buttons (`:478-490`), the six
+action buttons (`:494-517`) and the scroller's two arrow Buttons
+(`ItemListScroller.cs:299`, `:307`) bind `OnMouseClick` alone, and
+`BaseScreenComponent.RightMouseClick` (`:927-934`) raises only
+`OnRightMouseClick` with no fallback - so in classic a right click on
+Exit, a tab or an action button does nothing at all. The port closed
+the window, switched tabs, selected modes and fired the wagon and
+drop-gold actions on it. Those three blocks are gated on `!right`
+now, and the rail arms with them (`VerticalScrollBar` overrides
+`MouseClick` only, `VerticalScrollBar.cs:142`). The drop-icon panel
+stays ungated: it is the one component in the window with all three
+handlers (`:437-439`).
+
+## AUDIT 64 F48 - THE CLASSIC INVENTORY NAMED NOTHING (2026-09-08)
+
+`DaggerfallBaseWindow.cs:50-56` builds `defaultToolTip` whenever
+`EnableToolTips` is on (it ships True), and the inventory window hands
+it to four surfaces: both `ItemListScroller`s (`:368`, `:383`, which
+pass it to every item button at `ItemListScroller.cs:340`), every
+accessory button (`:547`) and the paperdoll (`:470`). The text is the
+item's long name - `ItemListScroller.cs:462-465` for the scroller,
+with its `Books && !IsArtifact` GetBookTitle arm, and plain
+`item.LongName` for the accessory buttons (`:995`) and the doll
+(`:2191`).
+
+The port shipped that tooltip on the TRADE window and the potion
+maker at D7 and never on the screen DFU wrote it for, so the only way
+to find out what a slot held was to click it. `makeSlotToolTip` was
+already exported; the window builds one, ticks it (the hosts have
+called `w.tick?.(dt)` all along), feeds it from `hover()` and draws it
+LAST, which is `DaggerfallBaseWindow.cs:110-111`'s own order.
+
+Two details that are not the info panel's. First, the tooltip
+CLEARS: `ItemListScroller.cs:387` blanks an empty slot's text,
+`:981` blanks an empty accessory button and `:2200`/`:2204` blank the
+doll off an item layer, where the 37px info panel beside it is
+deliberately STICKY (U47, and DFU's too - it has no OnMouseLeave arm).
+Hanging the tip off the info panel's early returns would have left a
+stale name standing over dead space, so `_tipItemAt` is a resolver of
+its own, walked in DFU's component order and answering null for the
+gold button (`:515-520` gives it no ToolTip), the tabs, the action
+buttons, the arrows and the rail. Second, the text law is not uniform:
+`scrollerToolTipText` grew a `books` flag so the two lists take
+`ItemListScroller.cs:462-465` and the doll and accessory slots take
+bare `ResolveItemLongName`, which is what those two lines actually
+say. (No book is equippable, so the two agree in practice - but the
+port now says which is which.)
+
+REVIEW ROUND (2026-09-08). The DRAW was unpinned. Every one of the
+round's tooltip assertions reached the tip through `w._tip.tip.text`,
+i.e. through the ToolTip object's own state, so deleting the single
+`this._tip.draw(renderer, m, font)` line - the visible half of this
+finding, and the whole of `DaggerfallBaseWindow.cs:105-112`'s "Draw
+tooltip last" - left the entire inventory suite green: a window that
+resolves, feeds and times a tooltip nothing ever paints. `draw()` bails
+without ARENA2 art, so the order is pinned off the source the way F53's
+cell pass already is: the tooltip draw exists, it follows the
+message-box pass rather than hiding under it, and it is the LAST
+statement of `draw()`.
+
+## AUDIT 64 F49 - AN INFO CLICK ON A RECIPE NEVER LISTED ITS INGREDIENTS (2026-09-08)
+
+`ShowInfoPopup`'s chain (`DaggerfallInventoryWindow.cs:1601-1630`) is
+an if/else-if with FOUR arms, and the port had built three of them.
+The first, `if (item.IsPotionRecipe)` (`:1602-1609`), chains a second
+`DaggerfallMessageBox` whose tokens are
+`item.GetMacroDataSource().PotionRecipeIngredients(JustifyCenter)` -
+`DaggerfallUnityItemMCP.cs:245-260`, one `CreateTextToken` per
+ingredient holding `GetItemTemplate(ingredient.id)`'s name, each
+followed by a format token - marks it `ClickAnywhereToClose` and
+shows it. D7 had already given the recipe's FIRST box its two
+generated lines (`GetPotionRecipeTokens`, "Recipe for Potion of %po" /
+"Weight: %kg kilograms"), so an Info click named the potion and
+stopped, where the ingredient list is the whole point of the item.
+
+`_info` grows the arm above the enchanted `1016` push, with an early
+return, because DFU's chain is exclusive and the recipe wins over
+`legacyMagic`. It is CHAINED UNCONDITIONALLY: `PotionRecipeIngredients`
+answers an empty token array when `GetPotionRecipe(potionRecipeKey)`
+is null and `:1605-1608` adds and shows that box anyway, so an
+unresolvable key gets an empty second box rather than none. The data
+was all present - `POTION_RECIPES[].ingredients` are template indices
+in the recipe's own order, and `templateByIndex` was already imported.
+
+## AUDIT 64 F50 - THE MIDDLE BUTTON FELL THROUGH TO THE LEFT ONE (2026-09-08)
+
+DFU binds the middle mouse button on three surfaces of this window
+beyond the drop-icon panel: `localItemListScroller.OnItemMiddleClick`
+(`:379`) and the remote twin (`:394`), handled at `:2020-2023` and
+`:2075-2078` as a bare `NextVariant(item)`, and
+`paperDoll.OnMiddleMouseClick` (`:469`), handled at `:1964-1971` as
+`PaperDoll_GetItem` then `NextVariant`. That is how a garment's colour
+is cycled without entering Use mode. `NextVariant` (`:1405-1412`)
+refreshes unconditionally - the doll when the item is equipped, the
+list otherwise - so the refresh is not gated on the variant having
+moved.
+
+The port routed `middle` to the drop-icon panel and no further, so
+every other middle click ran the LEFT body: it closed the window,
+switched tabs, selected modes, equipped items and - the one a player
+would actually hit - unequipped a worn ring off the accessory strip,
+which classic cannot do at all. `BaseScreenComponent` dispatches
+middle through `MiddleMouseClick` alone (`:710-724`, `:930-937`) and
+never raises `OnMouseClick`, so a middle click on any component
+without a middle handler is inert. `_middleClick` handles the three
+surfaces and returns for everything else.
+
+The SOUND is not symmetric and the difference is load-bearing.
+`ItemButton_OnClick` (`ItemListScroller.cs:535-552`) raises the middle
+event with no `PlayOneShot`, so the lists are silent; but
+`PaperDoll_GetItem`'s first statement is
+`PlayOneShot(SoundClips.ButtonClick)` (`:1918-1925`), AHEAD of the
+`value == 0xff` bail, so a middle click anywhere on the doll clicks
+whether or not a layer is under the point.
+
+## AUDIT 64 F51 - THE 37-PIXEL PANEL SHOWED THE POPUP'S LONG WORDS (2026-09-08)
+
+`UpdateItemInfoPanel(TextFile.Token[])`
+(`DaggerfallInventoryWindow.cs:1142-1152`) is the info panel label's
+only writer, and every token bound for it goes through
+`.Replace(kgSrc, kgRep).Replace(damSrc, damRep).Replace(arSrc, arRep)`
+first - the six strings are the readonly fields at `:131-136`,
+resolved from `Internal_Strings.csv:838-843`: kilograms->kg, points of
+damage->damage, armor rating->armor. The panel is 37 pixels wide;
+`ShowInfoPopup` (`:1594-1601`) builds its own `GetItemInfo` tokens
+straight into a message box and gets no such pass, which is why the
+popup still reads "5 points of damage".
+
+The port shared one row builder between popup and panel and applied
+the pass nowhere, so the panel printed "Weight: 3 kilograms" into a
+third of the space it needs.
+
+`infoPanelShorten` in `systems/itemInfo.js` is the pass, with the six
+strings named and cited; `replaceAll` is C#'s `string.Replace`, which
+replaces every occurrence, and the `?? ''` is DFU's `text != null`
+guard at `:1148`. It is applied at the ONE point both of DFU's arms
+have produced their rows - the window wraps the whole
+`infoGold ? goldPanelRows(...) : itemInfoPanelRows(...)` ternary -
+because `UpdateItemInfoPanelGold` (`:2249-2259`) routes the gold
+tokens through the same member. It is a no-op on today's gold strings,
+which already spell "kg"; it is the structure that keeps the two arms
+from drifting. The popup door, `itemInfoRows`, is untouched.
+
+## AUDIT 64 F52 - THE INVENTORY LISTS TOOK NO WHEEL (2026-09-08)
+
+`ItemListScroller.SetupItemsList` wires
+`itemsListPanel.OnMouseScrollUp/Down` (`ItemListScroller.cs:314-316`)
+and the handlers (`:606-616`) step `itemListScrollBar.ScrollIndex` by
+one, with no sound - the `ButtonClick` belongs to the two arrow
+buttons alone (`:588-604`). Both of the inventory window's lists are
+plain `ItemListScroller`s (`:368`, `:383`), so both carry it.
+
+The port's window declared no `wheel` at all, while all four hosts
+have routed the notch to the active overlay for slices -
+`townTalk.js`, `worldModes.js`, `interior.js` and `dungeonContext.js`
+each call `overlay.wheel?.(Math.sign(e.deltaY))` - so the wheel
+reached this window and was dropped, leaving the arrows and the rail
+as the only way past item four in a bag, a loot pile or the wagon.
+
+The member is routed strictly by what the pointer is over, because
+`BaseScreenComponent.cs:725-733` dispatches per component rect and
+there is no "active list" in DFU to fall back on: a notch over the
+paperdoll, the mode buttons or the window's background scrolls
+nothing. `hover()` records the point (the hosts' `(-1,-1)`
+pointer-leave sentinel hits no rect). Two of the scroller's children
+take the wheel and one does not: the ITEMS panel, whose
+`itemListPanelRect` is `Rect(9, 0, 50, 152)` (`:24`) and therefore
+starts past the arrow column, and the `VerticalScrollBar` at
+`(1,18,6,117)` (`:277-284`), which OVERRIDES `MouseScrollUp/Down` with
+the same one-row step (`VerticalScrollBar.cs:152-162`); the two arrows
+are plain Buttons and override neither. The port's `scrollerHit`
+already draws that line - `slot` is the items panel, `thumb`/`page-up`
+/`page-down` the rail, `up`/`down` the arrows.
+
+Adjacent and NOT taken here: `ui/nativeTrade.js` has no `wheel`
+either, and `DaggerfallTradeWindow` inherits the same two scrollers
+through `SetupItemListScrollers`. That is the same missing member on
+the same C# class in a second window, and it wants its own finding.
+
+REVIEW ROUND (2026-09-08). A NOTCH IS NOT ONLY A SCROLL. The first
+pass ported the items panel's handler and stopped two lines short of
+the two more the same frame fires, so under a still cursor the list
+moved and everything that named it stayed pointing at the item that
+had scrolled away.
+
+The first is the hover. Every item button binds the SAME handler to
+its own wheel that it binds to the pointer entering it -
+`itemButtons[i].OnMouseScrollUp/Down += ItemButton_OnMouseEnter`
+(`ItemListScroller.cs:346-347`) - and the ORDER is what makes it
+work: `Panel.Update` (`Panel.cs:94-108`) runs `base.Update()`, which
+is the panel's own scroll dispatch, BEFORE it walks its children, and
+the item buttons are children of that panel (`:337`). So by the time
+the button's body runs at `:570-581` it reads `items[GetScrollIndex()
+* listWidth + Tag]` at the ALREADY-incremented index. That reaches
+`OnItemHover`, wired at `DaggerfallInventoryWindow.cs:381` and `:398`
+to `Local`/`RemoteItemListScroller_OnHover` (`:2225-2235`), both
+falling into `ItemListScroller_OnHover` (`:2237-2242`) ->
+`UpdateItemInfoPanel(item)`. The U47 panel follows the list, notch for
+notch, with no mouse movement at all. Past the end of the list the
+handler returns at `:574-575` without touching the panel, which is the
+same stickiness every other miss on this window carries.
+
+The second is the tooltip clock. `BaseScreenComponent.cs:727-736` ends
+its wheel block with `hoverTime = 0` under the comment "Not hovering
+while scrolling", and `hoverTime` is exactly what gates the tooltip
+draw at `:819`. That runs for EVERY component under the pointer on a
+notch, not only the ones that scroll, so a notch at the end of the list
+- or over the dead arrows, or over the paperdoll - silences the tip
+just as a notch that moves the list does. The text that comes back
+after the delay is the button's, which the scroll has just rewritten
+(`ItemsScrollBar_OnScroll` `:583-586` -> `UpdateItemsDisplay`'s
+`:464-466`, or `ClearItemsList`'s `:386` past the end).
+
+`_wheelRehover` is both, in DFU's order: the scroll index moves first,
+then the tip is hidden (the port's `hoverTime = 0` - `show()` alone
+keeps the clock running when the text is unchanged, which is precisely
+the stationary-cursor case) and re-fed from the point, and then the
+info panel is repointed at the item now under the cursor.
+
+## AUDIT 64 F53 - NOTHING TOLD THE LIT TORCH FROM THE UNLIT ONES (2026-09-08)
+
+`SetupItemListScrollers` hands BOTH of the inventory window's
+scrollers `BackgroundColourHandler = ItemBackgroundColourHandler`
+(`:372`, `:387`), and the handler (`:401-411`) is a three-arm else-if:
+`IsQuestItem` -> `questItemBackgroundColor`, else
+`playerEntity.LightSource == item` -> `lightSourceBackgroundColor`,
+else `IsSummoned` -> `summonedItemBackgroundColor`, else
+`Color.clear`. The three colours are `:154-156`. It is applied per
+cell at `ItemListScroller.cs:450-451` and cleared on the blank pass
+(`:389`), and `BaseScreenComponent.cs:784-787` paints it over the
+button's whole `Rectangle` - `itemButtonRects4`'s 50x38 cell - ahead
+of the background texture and ahead of the child icon panel.
+`SetMargins` (`:339`) insets the children, not the colour.
+
+The port's shared scroller drew icon and stack label and stopped, so a
+quest letter, a conjured arrow stack and the torch the player is
+actually holding all looked like ordinary loot. `itemScroller.js`
+grows `itemBackgroundColour(item, entity)` - the handler verbatim,
+including that the light-source arm is a reference IDENTITY compare -
+and `drawCellBackground`, which fills the whole cell and answers false
+for `Color.clear`. Both windows' cell loops paint it first.
+
+`ui/nativeTrade.js` takes it too, and with the ONE override the trade
+window has: `DaggerfallTradeWindow.cs:242-245` replaces the REMOTE
+scroller's handler in Repair mode with
+`RepairItemBackgroundColourHandler` (`:269-275`), which tints
+`repairItemBackgroundColor` (`:88`) on `currentCondition ==
+maxCondition` under `InstantRepairs` and on
+`RepairData.IsBeingRepaired()` otherwise. The local list is not
+overridden and keeps the inherited handler. Applying the inventory
+handler to the repair counter would have tinted by the wrong rule and
+dropped DFU's blue "done / in progress" cue.
+
+Still unported and NOT folded in here, each a separate member of the
+same initialiser and each wanting its own finding: the Buy-mode coins
+`BackgroundAnimationHandler` (`DaggerfallTradeWindow.cs:236-237`,
+handler `:277-280`); `MagicItemForegroundAnimationHander`, which is an
+INVENTORY-window member, not a trade-window one - assigned
+`DaggerfallInventoryWindow.cs:373` and `:388`, defined `:419-422`; and
+`RepairItemLabelTextHandler` (`DaggerfallTradeWindow.cs:244`, defined
+`:282-288`), the line immediately beside the `:243` this finding did
+port, which writes the "repair done / N days" misc label under the
+repair counter's blue tint.
+
+REVIEW ROUND (2026-09-08). That paragraph read `:373-375`/`:388-390`
+as a continuation of the `DaggerfallTradeWindow.cs` cite before it,
+which pointed the next lane at the racial-override and
+building-discovery block of the trade window's `Setup`. Bare
+`:`-cites only continue a file while the member really is in it, and
+`MagicItemForegroundAnimationHander` never was: `grep` finds it at
+`DaggerfallInventoryWindow.cs:373`, `:388` and `:419` and nowhere
+else. The file is spelled out now, and the third survivor of the same
+initialiser block - `RepairItemLabelTextHandler`, the line beside the
+one this finding ported - is named rather than left silent.
+
+## AUDIT 64 F54 - A TAKEN QUEST ITEM WAS BURIED AT THE BOTTOM OF THE PACK (2026-09-08)
+
+`DoTransferItem` chooses the destination position per item
+(`DaggerfallInventoryWindow.cs:1573-1579`): "Always place quest item
+pickups to front of list / Otherwise use preferred order" -
+`order = preferredOrder; if (item.IsQuestItem) order =
+AddPosition.Front; to.Transfer(item, from, order)`. `preferredOrder`
+is declared `DontCare` at `:192` and is never reassigned anywhere in
+the tree, so Front is the only position that is not an append.
+`ItemCollection.Transfer` (`:473-480`) forwards it to `AddItem`
+(`:217-252`), whose stack merge runs first and ignores the position
+and whose switch is DontCare `items.Add`, Front `items.Insert(0, ...)`,
+Back `items.Insert(Count, ...)`. Since `FilterLocalItems` and
+`FilterRemoteItems` are flat in-order walks of the collection, list
+position IS collection position, and the difference is the first
+visible row against the last.
+
+The port's `addItem` had no position parameter at all, so every
+transfer appended. It carries `ItemCollection.AddItem`'s three
+positions now (Back is the reference's default; DontCare and Back are
+the same append on an array-backed collection), and `_applyTransfer`
+passes `moved.questItem ? 'front' : 'dontCare'`. The MOVED record is
+what is tested, not the clicked one: a partial move mints a fresh item
+through `SplitStack` and `SplitStack_OnGotUserInput` (`:1546-1558`)
+hands that mint to `DoTransferItem`. The rule is not scoped to
+pickups - storing a droppable quest item into the wagon or the ground
+pile inserts at that collection's front too, and
+`DaggerfallTradeWindow`'s clicks reach the same inherited member - so
+it lives in the shared `_applyTransfer`, below the gold interception,
+which returns at `:1570` before the Front arm.
+
+The parameter had a second caller waiting. `quest/actions.js` has
+passed `front: true` from GivePc and GetItem for slices
+(`GivePc.cs:179`/`:186` and `GetItem.cs:83` are
+`AddItem(item.DaggerfallUnityItem, AddPosition.Front)`), threaded
+through `machine.js` and `questBridge.js`, and the one host that
+implements the hook dropped it on the floor. `scenes/world.js`'s
+`giveItemToPlayer` takes it now.
+`QuestResourceBehaviour.cs:421` passes no position, so
+`_transferWorldItemToPlayer` keeps AddItem's Back default.
 
 ## FIX-D: THE DIGIT FIVE (2026-09-08)
 

@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:771`, `world.js:722`), fired
+`playerTicker.advance(60)` (`exterior.js:887`, `world.js:764`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1455` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1576` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5028,7 +5028,7 @@ predicate read prettier.
 by the same sweep and each verified against the tree before deletion:
 the interior detect claim above; "there is nowhere to cash one yet" on
 the letter of credit, which B2 answered with `DepositAll_LOC`
-(`banking.js:461`, the window's own :377-389); "the BANKING arm stays
+(`banking.js:480`, the window's own :377-389); "the BANKING arm stays
 FLAGGED below", written nine lines above the live banking arm; and
 "every other arm is FLAGGED by name in
 `guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
@@ -5322,7 +5322,7 @@ blocked.
 Mac: "let's work on the horses and carts". The port has carried the CART
 as an inventory fact since the W-slice - the wagon's 750kg, the
 dungeon-exit prompt, the transfer guards - and the HORSE as an item
-nobody could sit on. `motor.js:517` passed `riding: false` into the
+nobody could sit on. `motor.js:546` passed `riding: false` into the
 climbing gate with the note "the transport arc pends", and
 `DaggerfallTransportWindow` is the last of DFU's 60 real windows the
 port does not have (UI-Arc.md's table).
@@ -7034,3 +7034,459 @@ reference gate pins those three C# lines beside the five the setter
 rewrites (`Base/MobileUnit.cs:214-217`). Red-proofed against a mutant
 that keeps the copy but leaks the shared row's `corpseTexture` object
 by reference, which is precisely what the tautology could not see.
+
+## AUDIT 64 F7 - THE RUNNING TALLY AND THE RUNNING DRAIN ARE DIFFERENT QUESTIONS (2026-09-08)
+
+`PlayerEntity` asks about running twice, with two different conditions:
+
+    if (playerMotor.IsRunning && !playerMotor.IsRiding)          // :311, the Running skill tally
+    else if (playerMotor.IsRunning && !playerMotor.IsStandingStill)  // :408, RunningFatigueLoss 88/min
+
+The tally (every 4th ClassicUpdate, `:311-320`) has NO standing test;
+the per-minute fatigue band (`:405-409`) does. The port collapsed both
+onto one `activity.running` flag that `worldTick.js` read at both sites,
+and the hosts built it with the FATIGUE arm's condition
+(`player.isRunning && !player.standing`) - so a grounded player holding
+Run in place tallied nothing where DFU tallies 4/s. The channel is split
+now: `runningTally` (`:311`) drives the tally, `running` (`:408`) keeps
+the band, and both travel through the dungeon channel
+(`dungeonContext.reportActivity` -> `_activity` -> `tickPlayerMinutes`).
+The `!IsRiding` term is redundant in the port because the motor's own
+`isRunning` latch already runs through `canRunUnlessRiding`, and it is
+kept verbatim for the same reason DFU keeps it.
+
+**The bigger half was a four-hosts miss on the same line.** Three hosts
+fed the motor's latched `player.isRunning`; the two DUNGEON arms -
+`worldModes.js`'s and the standalone `dungeon.js`'s, the identical line
+in both - fed the RAW physical key, `held(keys, 'Run') && moving &&
+!player.riding`. `PlayerMotor.IsRunning` (`:108-111`) is
+`PlayerSpeedChanger.isRunning`, latched from the run MODE only while
+grounded (`:107-118`), and the mode is driven by the AutoRun/ToggleRun
+latch (`:71-99`), never by the key. So an AUTORUNNING dungeon crawler -
+autorun is bound by default and implemented - read `held(keys,'Run')`
+false while `IsRunning` was true: no Running advancement at all, and
+`DefaultFatigueLoss` 11/min where `PlayerEntity.cs:408-409` charges
+`RunningFatigueLoss` 88, an eighth of the classic drain. The inverse
+(autorun toggled off with Shift held) over-drained while walking. Both
+dungeon arms carry their three siblings' pair now.
+
+`moving` went with the key rather than being kept: it is input-derived
+(`anyMove(mv)`) where DFU's `IsStandingStill` (`PlayerMotor.cs:113-125`)
+runs its zero-magnitude test only inside `if (grounded)` and is false
+whenever airborne, which is what `player.standing` already answers.
+
+Pins: 1 new and 1 rewritten in `test/audit23_hosts.test.js` (the tally
+gate and the fatigue gate proven to be different conditions - the
+standing runner tallies AND pays the default band; the moving one pays
+88), plus `test/tr1_transport.test.js`'s dungeon-host pin rewritten from
+the raw-key shape to the latched pair. Mutants: the tally gate reverted
+to `activity.running`, a dungeon host reverted to the raw key; 2 killed.
+
+## AUDIT 64 F10 - THE FESTIVAL PARCHMENT NOBODY RAISED (2026-09-08)
+
+`src/systems/holidays.js` had shipped `getHolidayId` with five readers
+- the temple's cure price, the tavern's meal, the spellbook, the trade
+half-price and the shop lock - every one of them a price or a lock
+decision. The sixth reader in Daggerfall Unity is not a price at all:
+`PlayerEnterExit.ShowHolidayText` (`Game/PlayerEnterExit.cs:565-585`)
+is a whole public member that pops a click-anywhere parchment when the
+player walks into a settlement on one of the year's 53 holidays.
+`grep -rn '8349' src/` matched only windmill vertex data; nothing in
+the port announced anything.
+
+The member is three parts, and the announcement is the smallest of
+them.
+
+**The id** (`:567-575`). `const int holidaysStartID = 8349`, then
+`GetHolidayId(WorldTime.ToClassicDaggerfallTime(),
+PlayerGPS.CurrentRegionIndex)`, and the box carries record
+`8349 + holidayId` through `SetTextTokens(int)` with
+`ClickAnywhereToClose = true` and a cleared screen dim. Ported as
+`HOLIDAYS_START_ID` and `holidayTextId(gameMinutes, regionIndex)`,
+which answers 0 for DFU's `if (holidayId != 0)` gate. The id
+arithmetic stays in `holidays.js`; the box belongs to the host, like
+the module's five other readers.
+
+**The prime** (`:1404-1409`). It is NOT fired on the frame of entry.
+`PlayerGPS_OnEnterLocationRect` (`:1357`) splits three ways under
+`if (playerGPS && !isPlayerInside)` (`:1362`): the dungeon/graveyard
+arm (`:1364-1367` - DungeonLabyrinth, DungeonKeep, DungeonRuin,
+Graveyard) prints two flavour lines and primes NOTHING; the town arm
+(`:1382-1383`, `else if (LocationType != Coven && != HomeYourShips)`)
+prints "You are entering %s", lists rented rooms, and only then does
+`if (holidayTextTimer <= 0 && !holidayTextPrimed) { holidayTextTimer =
+2.5f; holidayTextPrimed = true; }` followed by `holidayTextLocation =
+StreamingWorld.CurrentPlayerLocationObject`. The 2.5 s is DFU's own
+comment: "short delay to give save game fade-in time to finish". So a
+ruin, a coven or a mooring must announce no festival, which is what
+`holidayTextPrimesFor(locationType)` gates.
+
+**The drain** (`:355-368`), in `Update`: cancel when the remembered
+location object is no longer the current one, count the timer down, and
+fire only when it has run out AND `GameManager.IsPlayerOnHUD`
+(`GameManager.cs:400-403`) - with a window on top the box is DEFERRED,
+not dropped, since the timer stays at zero and `primed` stays true. And
+`ShowHolidayText`'s tail sets `holidayTextTimer = 10f` (`:584`)
+OUTSIDE the `if (holidayId != 0)` block, so an entry on an ordinary day
+also blocks re-evaluation for ten seconds - DFU's own comment says why:
+"so it doesn't show again and again if the player is repeatedly
+crossing the border of a city".
+
+All three live in `HolidayTextTimer` (`holidays.js`), whose three
+fields are `PlayerEnterExit`'s three (`:78-80`) and whose `location` is
+compared by IDENTITY, as DFU's `DaggerfallLocation` reference is.
+
+Both exterior hosts carry it, as the four-hosts rule requires.
+`src/scenes/world.js` primes on the rect-entry edge it already shares
+with the graveyard ambience and the guild-hall reveal, behind the type
+gate and inside the branch that only runs outdoors, remembering
+`_musicLoc` - the per-pixel `DFLocation` object that IS this host's
+`CurrentPlayerLocationObject`; it drains once per frame ABOVE the modal
+gate, because DFU's drain runs in `Update` and is not suspended by
+walking indoors, and its `IsPlayerOnHUD` is the port's `!gamePaused()`.
+`src/scenes/exterior.js` loads ONE location and stands in its rect for
+its whole life, so the entry edge there is load time - beside the same
+cemetery arming - and the cancel clause is inert; the drain runs in its
+frame loop identically. Both push the record through their own TEXT.RSC
+parchment door (`townTalk.recordTokens` -> the macro pass ->
+`tokenRows` -> `townTalk.showBox`, an `ActionTextBox`, which is the
+port's `ClickAnywhereToClose`); the mcp at DFU's call site is the
+default `null` (`DaggerfallMessageBox.cs:443-450`), so this is the
+null-mcp door.
+
+Pinned in `test/audit64_time_weather.test.js`: the id arithmetic and
+its zero, the type gate over all fifteen location types, the 2.5 s
+delay, the cancel on leaving, the deferral under an open window, the
+ten-second re-arm on a NON-holiday day, and both hosts' wiring.
+
+### AUDIT 64 F10 - REVIEW ROUND: THE HOST PINS HELD SHAPE, NOT ARGUMENT (2026-09-08)
+
+The first cut pinned the two hosts' wiring with four independent
+source fragments - `holidayTextPrimesFor(`,
+`_holidayText.enterLocationRect(`, `_holidayText.update(dt, {` and
+`showRecord: (id)`. Every one of them is a SHAPE. None of them named an
+ARGUMENT, and the two arguments are the whole feature:
+
+- **The location object.** `PlayerEnterExit.cs:1409` stores
+  `StreamingWorld.CurrentPlayerLocationObject` into
+  `holidayTextLocation`; `:355` cancels when
+  `holidayTextLocation != <that same expression>` - a C# REFERENCE
+  comparison. Hand the prime any other object and the cancel fires on
+  the very next frame (`:357-358` zero the timer and clear `primed`):
+  the parchment can never appear, in any town, on any holiday. The
+  review proved it - `enterLocationRect(_musicLoc)` ->
+  `enterLocationRect({})` left the whole suite green.
+- **The region index.** `ShowHolidayText` passes
+  `PlayerGPS.CurrentRegionIndex` (`:570`) into `GetHolidayId`, whose
+  row test is `regionIndexCelebratingHoliday[id] == 0xFF ||
+  regionIndexCelebratingHoliday[id] == regionIndex + 1`
+  (`Game/Formulas/FormulaHelper.cs:1841`). A constant there announces a
+  regional holiday in the wrong province - and `regionIndex:
+  () => _questRegionIndex()` -> `() => 0` was also green.
+
+The pins are now a WINDOW, not four fragments. Each host's
+`_holidayText.update(dt, { … });` block is read out of the source as
+text, the expression its `currentLocation` thunk returns is extracted,
+and the prime is required to pass THAT expression - so the two can
+never drift apart whatever either is renamed to. The `regionIndex`
+term is required to be the host's own `CurrentRegionIndex` idiom
+(`_questRegionIndex()` in `world.js`, `dfLocation.regionIndex` in
+`exterior.js` - the idiom every other region read in each host uses),
+the clock term to be classic minutes (`:569`), the HUD term to be the
+deferring `!gamePaused()` (`:364`), and the door to be `showRecord`.
+Beside them the region index now has a BEHAVIOURAL pin as well: Scour
+Day (row 1, region byte `0x19` = region ID 25 = region INDEX 24, day
+of year 2) fires in region 24 and is silent in every other, both
+through `holidayTextId` and through a full prime-and-drain of
+`HolidayTextTimer` - with the ten-second re-arm set either way.
+
+**And the placement, the lane's recorded departure from both
+verifiers, is pinned.** Both verifiers asked for the drain in the
+exterior host's frame loop only; it went ABOVE the modal gate instead,
+because `PlayerEnterExit.Update` (`:325`, the block at `:355-368`)
+carries no `isPlayerInside` guard and `IsPlayerOnHUD`
+(`GameManager.cs:400-402` -> `IsHUDTopWindow` `:915`) is a UI-window
+test, not a location test: a player who steps through a tavern door a
+second after crossing the city border still gets the parchment, inside.
+Nothing held that. Both hosts' `modes.frame(dt, now)` returns true in
+the interior and dungeon modes and the caller RETURNS - "the host's
+exterior path must not run" - so the verifiers' placement would stop
+the drain for exactly the case DFU keeps running. The test now compares
+the two source offsets and fails if the drain sinks below the gate, in
+either host, with that reason in the assertion message. Six mutations
+across the two hosts - wrong prime object, constant region index, drain
+moved into the exterior-only path - are dead in both.
+
+## AUDIT 64 F18 - THE FAST-TRAVEL ARRIVAL LANDED IN THE MIDDLE OF THE TOWN (2026-09-08)
+
+`performFastTravel` ends its jump with one call:
+
+    GameManager.Instance.StreamingWorld.TeleportToCoordinates(
+        (int)endPos.X, (int)endPos.Y,
+        StreamingWorld.RepositionMethods.DirectionFromStartMarker);
+                                    (DaggerfallTravelPopUp.cs:334)
+
+The port's `fastTravelTo` passed `{ arriveMinutes }` and nothing else, so
+`_teleportToPixel`'s `reposition` defaulted to `REPOSITION.None`, `landing`
+came out null, and the arrival fell to the last resort in the core -
+`[TERRAIN_SIZE / 2, dest.centerHeight + compensation + 2, TERRAIN_SIZE / 2]`.
+`TerrainHelper.GetLocationTerrainTileOrigin` centres a location in its
+terrain tile (`world/terrainTiles.js` carries it verbatim), so the tile
+centre IS the town centre: the ordinary way to move in this game put the
+player down inside the block grid, keeping the departure facing, with
+`floorLanding`'s downward ray free to take a rooftop as the first hit -
+and the core's own in-geometry refusal is gated on `landing`, so it could
+not fire on this path either.
+
+`RepositionMethods.DirectionFromStartMarker` and `.RandomStartMarker` are
+the SAME arm: `StreamingWorld.Update` falls one case through to the other
+and runs one `PositionPlayerToLocation()` (`:279-282`). The only thing
+that separates them is the facing hint, and the port had deliberately
+left that out - `world/locationEntrance.js`'s header recorded it as its
+own slice. It is ported now, because a half-method is what produced the
+miss in the first place:
+
+- `pickLocationSide` (`world/locationEntrance.js`) is `StreamingWorld.cs:1481-1521`
+  whole. With no hint it is `Random.Range(0, 4)`, which is the state every
+  other caller of the arm is in. With one it takes `worldDeltaX/worldDeltaZ`
+  - the destination pixel's world coordinates minus the departure's - and
+  weights the four sides `px : pz`, DFU's own comment at `:1500-1501`. A
+  journey EASTWARD (`worldDeltaX > 0`) lands on the location's WEST edge,
+  the side it came from, facing east.
+- `TeleportToMapPixel` caches `travelStartX/travelStartZ` off `LocalPlayerGPS`
+  BEFORE it moves the GPS to the destination, and only for
+  `DirectionFromStartMarker` (`:1078-1083`). `fastTravelTo` reads
+  `state.worldCoords(...)` ahead of the jump for exactly that reason;
+  `_teleportToPixel` carries the pair only for that method.
+
+`REPOSITION` (`systems/ship.js`) gained the third member
+(`StreamingWorld.cs:215-223`). The wilderness case is unchanged:
+`locationLandingFor` answers null for a pixel with no location, which is
+DFU's own "No location found, fail back to terrain origin" (`:1441-1446`).
+
+### REVIEW ROUND (2026-09-08) - the fix was right and only a third of it was pinned
+
+Two mutants survived the first round's pins, and both reverted the fix to
+the interim it had explicitly rejected - the plain `Random.Range(0, 4)` of
+`StreamingWorld.cs:1486`, reached because `pickLocationSide` falls back the
+moment either half of the pair is null (DFU's
+`travelStartX == null || travelStartZ == null`, `:1483`):
+
+- `const hint = ... ? travelStart : null` -> `const hint = null` in
+  `_teleportToPixel`. The guard is DFU's own -
+  `if (autoReposition == RepositionMethods.DirectionFromStartMarker)`
+  caches the pair for that method ALONE (`:1078-1083`) - so it is a law and
+  is pinned as one, in `test/audit64_travel.test.js`'s host test.
+- `worldPos: travelStart ? mapPixelToWorldCoords(px, py) : null` ->
+  `worldPos: null` in `locationLandingFor`. This half is
+  `LocalPlayerGPS.WorldX/WorldZ` as `PositionPlayerToLocation` reads them
+  (`:1491-1492`), which `TeleportToMapPixel` has already moved to the
+  DESTINATION pixel (`:1085-1086`). `test/prisonrelease.test.js`'s pin over
+  the same call had been TRIMMED to stop at `startMarkers,` when the two
+  arguments were added, so the fix's own wiring was matched by nothing in
+  the tree; it is grown back to the whole argument object, and
+  `audit64_travel.test.js` carries the same match.
+
+`world.js` has no runtime harness, so a source-text pin is the only
+instrument available here - but it has to cover the operative line rather
+than stop above it.
+
+A third mutant survived inside the ported law itself: the N-S branch's
+ELSE arm, `side = worldDeltaX > 0 ? 3 : 2;` (`:1516-1517`), had no case at
+all - the first round's four cases were `pz == 0` (the E-W branch, both
+arms) and `px == 0` (the N-S branch, if-arm only), so East and West could
+be swapped on that arm with the suite green. Nor did any case have
+`px == pz`, which left the strictness of `if (px > pz)` (`:1503`)
+unpinned - a `>=` mutant takes the E-W branch on a diagonal and answers
+South where DFU answers West. Three cases are added: `px:pz = 1:3` with the
+roll missing the front side (West, and East for the mirror), and `px == pz
+== 2` (West, via the N-S branch). All five mutants now die.
+
+## AUDIT 64 F19 - THE GUILD TELEPORT LANDED THERE TOO (2026-09-08)
+
+`TeleportAway` names its reposition explicitly -
+
+    TeleportToCoordinates((int)destinationPos.X, (int)destinationPos.Y,
+                          StreamingWorld.RepositionMethods.RandomStartMarker);
+                                    (DaggerfallTeleportPopUp.cs:143)
+
+- against an overload whose own default is `RepositionMethods.Origin`
+(`StreamingWorld.cs:368`). The port's `teleportTo` called
+`_teleportToPixel(pick.pixel.x, pick.pixel.y)` with no options at all, so
+a Mages Guild teleport took the same tile-centre landing F18 describes.
+
+The premise that produced both misses was written down in the port: the
+import comment above `locationArrivalLanding` in `scenes/world.js` said
+"TWO callers reach it here ... because DFU reaches it from one place".
+DFU reaches the arm from FIVE sites - `TransportManager.cs:378/:397`,
+`DaggerfallCourtWindow.cs:460`, `DaggerfallTeleportPopUp.cs:143`,
+`PlayerEnterExit.cs:516` and `DaggerfallTravelPopUp.cs:334` - and the
+comment now names them. Four reach it in this host: the court release,
+the ship's boarding, the guild teleport and the fast-travel arrival.
+
+The G5 comment block above `teleportTo` used to summarise TeleportAway as
+"the two calls DFU makes" and never named the third argument of the
+second one; `test/teleportpopup.test.js` then pinned the port's
+two-argument call as if it were the law. Both now read the reference.
+
+## AUDIT 64 F20 - THE ARRIVAL CLAMP HAD ONLY ONE OF ITS TWO ARMS (2026-09-08)
+
+    // Vampires and characters with Damage from Sunlight disadvantage never
+    // arrive between 6am and 6pm regardless of travel type
+    if (GameManager.Instance.PlayerEffectManager.HasVampirism()
+        || GameManager.Instance.PlayerEntity.Career.DamageFromSunlight)
+                                    (DaggerfallTravelPopUp.cs:350-351)
+
+The port passed `sunAverse: !!playerEntity.racialOverride?.sunDamage` -
+the vampire arm alone - and the comment beside it conceded the gap
+("Career DamageFromSunlight still rides its own arc"). The two arms are
+separately sourced in DFU (the racial one off the compound race, the
+career one off the class's own CFG bit) and the port already reads them
+as two: `passiveSpecials.js` burns on `careerSunDamage(career) ||
+override?.sunDamage`. So a custom class carrying "Damage / From Sunlight"
+- reachable through chargen (`specialAdvantages.js`) and through an
+imported classic save - arrived in broad daylight and took the burn the
+clamp exists to prevent. The producer now spells DFU's disjunction.
+
+The Ledger's fast-travel row had struck this item through as closed by
+"V2c shipped DamageFromSunlight itself". V2c shipped the per-round BURN,
+not the clamp's second arm; the closure was stale, not an approval.
+
+## AUDIT 64 F21 - AND THE DOOR HAD ONLY ONE OF ITS TWO RUNGS (2026-09-08)
+
+`dfuiOpenTravelMapWindow` is a ladder, and its fourth rung is the career
+flag's own refusal:
+
+    if (!GiveOffer())
+    {
+        if (GameManager.Instance.PlayerEntity.Career.DamageFromSunlight
+            && DaggerfallUnity.Instance.WorldTime.Now.IsDay)
+        {
+            ... mb.SetText(GetLocalizedText("sunlightDamageFastTravelDay"));
+            mb.Show();
+            return;
+        }
+        racialOverride = ...GetRacialOverrideEffect();
+        if (racialOverride != null && !racialOverride.CheckFastTravel(...))
+            return;
+                                    (DaggerfallUI.cs:612-626)
+
+The port's `toggleTravelMap` went straight from `giveOffer()` to
+`racialFastTravelBlock`, whose body tests `entity?.racialOverride?.sunDamage`
+and nothing else. The port's OWN comment, written at AUDIT 39, already
+named the rung it was missing ("GiveOffer, the sun-damage box and the
+racial override") - a comment describing code that was not there.
+
+The clause is inserted where DFU puts it, ABOVE the racial rung, as a
+rung of its own rather than a clause folded into `racialFastTravelBlock`:
+DFU reads `Career.DamageFromSunlight` here and the `RacialOverrideEffect`
+there, and `CheckFastTravel` is the override's own virtual method. Both
+sites show the SAME localized key, so both speak `SUNLIGHT_TRAVEL_TEXT`,
+and both now read one `nowMin` so they cannot disagree across a minute.
+
+F20 and F21 are one protection in two halves: the door forbids the
+daylight DEPARTURE, the clamp forbids the daylight ARRIVAL of a night
+departure. The port had neither.
+
+## AUDIT 64 F22 - THE CRIME RODE ALONG WITH YOU (2026-09-08)
+
+    private void DaggerfallTravelPopUp_OnPostFastTravel()
+    {
+        // Clear crime state post fast travel
+        CrimeCommitted = Crimes.None;
+    }
+                                    (PlayerEntity.cs:2455-2459, subscribed :211)
+
+DFU has TWO crime clearers and the port carried one. The other,
+`PlayerGPS_OnExitLocationRect` (`:2449-2453`), is `court.js`'s
+`clearCrimeOnLocationExit`, and it cannot stand in for this one across a
+jump: `_teleportToPixel` sets `_wasInLocationRect = false` itself (DFU's
+own `PlayerGPS.ResetState`, `:398-401`), so the rect edge never fires on
+an arrival. A player who committed a crime and then stepped far enough
+from the watch to clear `areEnemiesNearby` travelled with the flag set,
+and at the destination it was live: the watch's despawn law is gated on
+`crimeCommitted`, and the surrender box levies the departure town's
+charge - with the reputation hit landing in the ARRIVAL region.
+
+`RaiseOnPostFastTravelEvent()` is `performFastTravel`'s last statement
+(`DaggerfallTravelPopUp.cs:383`), after `RaiseSkills` (`:380`) and
+`FadeHUDFromBlack` (`:381`), so the clear sits at the true tail of
+`fastTravelTo` - not beside `setSyntheticTimeIncrease`, which AUDIT 63
+F13 deliberately hoisted for its own reason. It goes through
+`setCrimeCommitted`, because DFU assigns the `CrimeCommitted` PROPERTY
+(`:189`), whose setter is `SetCrimeCommitted` (`:2346-2354`).
+
+NOT extended to the teleport arm: `DaggerfallTeleportPopUp` never runs
+`performFastTravel` and raises no such event, so a guild teleport keeps
+the crime in DFU too.
+
+## AUDIT 64 F24 - THE REFUSAL SENTENCE WAS NOT DFU'S (2026-09-08)
+
+`systems/vampirism.js` declared
+
+    export const SUNLIGHT_TRAVEL_TEXT =
+      'You cannot travel during the day, the sunlight would destroy you.';
+
+under a comment claiming it was the localized key `sunlightDamageFastTravelDay`
+"as a literal". It was not: grepping the DFU tree for "sunlight would
+destroy" returns nothing. The key's value is
+
+    sunlightDamageFastTravelDay,You cannot initiate fast travel during the day.
+              (Text/Master Localization CSV Files/Internal_Strings.csv:657)
+
+and the shipped en table agrees (`Internal_Strings Shared Data.asset:2007`
+binds the key to m_Id 500; `Internal_Strings_en.asset:2350`). The standing
+departure this constant lives under is a MECHANISM one - the port holds en
+strings where DFU resolves a `TextManager` lookup - and it requires the
+constant to BE DFU's string. Same precedent as the already-given-house
+line, which was fixed by reading the en table rather than waived.
+
+One key, two call sites (`VampirismEffect.cs:202` and `DaggerfallUI.cs:619`),
+so F21's new career box speaks this same constant.
+
+## AUDIT 64 F27 - THE LOAN REMINDER WENT TO THE DEVTOOLS CONSOLE (2026-09-08)
+
+`LoanChecker.CheckOverdueLoans` posts its two reminder lines with
+`DaggerfallUI.AddHUDText(..., loanReminderHUDDelay)` on the 6/3/1-month
+crossing (`LoanChecker.cs:41-45`, `sendReminderMonths = { 6, 3, 1 }`).
+That popup is the ONLY warning the game gives before `OverdueLoan`
+(`:53-72`) raids the account and applies
+`PlayerEntity.Crimes.LoanDefault` reputation.
+
+The port emits both lines through `worldTick`'s `say` sink, and the sink
+is the host's. Four hosts carry it and TWO OF THEM LOGGED:
+
+| host | before |
+|---|---|
+| `scenes/world.js` — the streaming world | `console.log('[player]', msg)` |
+| `scenes/exterior.js` — the fixed city | `console.log('[player]', msg)` |
+| `scenes/worldModes.js` — interior/dungeon modes | `townTalk.say` |
+| `scenes/dungeonContext.js` — the standalone dungeon | `hudText.add` |
+
+The two that swallowed them are the OUTDOOR ones — where day changes
+actually happen, including every fast travel (`playerTicker.advance`)
+and every outdoor rest. `world.js` is not a probe host: `main.js` boots
+it for New Game and for Load. So a trip that crossed a six-month loan
+boundary printed to devtools and the player saw nothing.
+
+The same sink carries the rest of `worldTick`'s player lines, so all of
+them were silent above ground too: the magic-round disease and poison
+text, the lycanthropy round's two lines, the live-enchant `ctx.say`, and
+the torch's burn-out. And because `HudText.add` fires `onMessage` into
+the notebook (`PopupText.AddText:123`), the swallowed lines never
+reached the journal's Messages page either.
+
+Both outdoor sinks now reach the HUD. **And the DELAY is part of the
+line, not the host's choice**: `LoanChecker.cs:15` declares
+`const float loanReminderHUDDelay = 3` and passes it on BOTH AddHUDText
+calls, so `worldTick` carries `LOAN_REMINDER_HUD_DELAY` and every sink
+forwards a second argument — `townTalk.say` already did,
+`dungeonContext` and `worldModes` were widened to. Every other caller
+passes `undefined`, and `HudText.add`'s default parameter restores
+`PopupText.popDelay` = 1, so no other line changes.
+
+NOT folded in: the `onLevelUp` `console.log` beside each of those sinks.
+`PlayerEntity.RaiseSkills` (`:1414`) posts
+`dfuiOpenCharacterSheetWindow` and adds no HUD text at all, so
+`worldModes`' `say('You have gained a level!')` is a separate
+pre-existing departure and not a law to copy outward.

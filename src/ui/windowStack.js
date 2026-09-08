@@ -42,6 +42,28 @@ const MAX_MESSAGE_COUNT = 10;
  *  `pauseWhileOpen: false` - DaggerfallHUD's override - opts out. */
 export const pauseWhileOpen = (win) => !!win && win.pauseWhileOpen !== false;
 
+/** DaggerfallPopupWindow.previousWindow (DaggerfallPopupWindow.cs:24,
+ *  :56-59) - "can optionally render previous window hierarchy before
+ *  its own" (:19). `Draw` (:76-84) runs `previousWindow.Draw()` first
+ *  when the field is set and paints nothing beneath it when it is
+ *  null, so this ONE field decides whether the window a box was
+ *  pushed over reaches the screen at all.
+ *
+ *  Which port windows carry it, read off the reference:
+ *   - SET. Every box `DaggerfallUI.MessageBox` opens takes
+ *     `Instance.uiManager.TopWindow` as its previous
+ *     (DaggerfallUI.cs:1330/:1339/:1348/:1357), and during play that
+ *     top IS `dfHUD` (:407-408). That is the port's ActionTextBox.
+ *   - NULL. Every window DaggerfallUI pushes from play is one of the
+ *     persistent instances built at :512-530 with a null previous
+ *     (pause options, character sheet, inventory, controls, travel
+ *     map, automap, book reader, quest journal, ...), and
+ *     DaggerfallAction's own two boxes pass null as well
+ *     (Internal/DaggerfallAction.cs:536/:565).
+ *  A window with no field at all takes the null arm, which is what
+ *  every port window that is not a message box wants. */
+export const paintsPreviousWindow = (win) => !!win && win.previousWindow === true;
+
 /**
  * Build a stack.
  *
@@ -172,6 +194,29 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  (DaggerfallCourtWindow.cs:224). */
     eachCoveredWindow(fn) {
       for (let i = 0; i < windows.length - 1; i++) if (!isHud(windows[i])) fn(windows[i], i);
+    },
+
+    /** AUDIT 64 F35 (review round) - IS THE HUD PAINTED THIS FRAME?
+     *
+     *  The HUD is the window at the BOTTOM of this stack
+     *  (DaggerfallUI.cs:407-408) and DaggerfallUI's repaint draws
+     *  `uiManager.TopWindow.Draw()` alone (:489-491), so the HUD
+     *  reaches the screen ONLY down the previousWindow chain above it.
+     *  `DaggerfallPopupWindow.Draw` (DaggerfallPopupWindow.cs:76-84)
+     *  recurses while the field is set and stops dead where it is
+     *  null, so the chain reaches the HUD only when EVERY window over
+     *  it paints its own previous: one null-previous window anywhere
+     *  in the stack (an inventory laid over a box, or a box laid over
+     *  an inventory) cuts it, and nothing above can splice it back.
+     *
+     *  `slot` is the host's live mirror of the top, for the same
+     *  reason `reconcile` takes it: a host that filled its slot by
+     *  hand this frame has not pushed it yet. An empty stack and an
+     *  empty slot answer false - no window, nothing covering. */
+    hudCovered(slot = null) {
+      const open = windows.filter((w) => !isHud(w));
+      if (slot && !open.includes(slot)) open.push(slot);
+      return open.some((w) => !paintsPreviousWindow(w));
     },
 
     /** ChangeWindow (:123-131) - pop EVERYTHING, then add the one.

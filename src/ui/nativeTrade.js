@@ -29,7 +29,9 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
-  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip } from './itemScroller.js';
+  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip,
+  itemBackgroundColour, drawCellBackground } from './itemScroller.js';
+import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
@@ -98,6 +100,11 @@ export const TRADE_RECTS = Object.freeze({
 });
 // The ItemListScroller layout lives in itemScroller.js (the 17d UI
 // audit's corrected law, shared with the inventory window).
+
+/** AUDIT 64 F53: repairItemBackgroundColor (DaggerfallTradeWindow.cs
+ *  :88) - the blue this window's Repair counter tints a finished (or
+ *  in-progress) item with, in place of the inherited handler. */
+export const REPAIR_ITEM_BG = Object.freeze([0.17, 0.32, 0.7, 0.6]);
 
 let _art = null;
 /** LoadTextures (:751-771). Every mode's panel is loaded up front
@@ -205,6 +212,23 @@ export class NativeTradeWindow {
 
   /** DaggerfallBaseWindow's defaultToolTip rest clock. */
   tick(dt) { this._tip.update(dt); }
+
+  /** AUDIT 64 F53: which handler a cell takes. Every list on this
+   *  screen inherits ItemBackgroundColourHandler (:401-411 of the
+   *  inventory window) EXCEPT the remote one in Repair mode, where
+   *  Setup swaps in RepairItemBackgroundColourHandler
+   *  (DaggerfallTradeWindow.cs:243, defined :269-275): with
+   *  InstantRepairs it tints an item whose currentCondition has
+   *  reached maxCondition, and otherwise one that is being repaired -
+   *  the shop counter's "done" / "in progress" cue. */
+  _cellColour(item, remote) {
+    if (!(remote && this.mode === 'Repair')) return itemBackgroundColour(item, this.hooks.entity);
+    if (!item) return null;
+    const done = getBool('Controls', 'InstantRepairs')
+      ? (item.currentCondition ?? 0) === (item.maxCondition ?? 0)
+      : (this.hooks.isBeingRepaired ?? (() => false))(item);
+    return done ? REPAIR_ITEM_BG : null;
+  }
 
   /** The item under the cursor on either list. The hit-test is
    *  scrollerHit's - the same one the click uses - so the tip can
@@ -772,6 +796,12 @@ export class NativeTradeWindow {
       [R.localList, this.localScroll, this.localList()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
+        // AUDIT 64 F53: this window INHERITS SetupItemListScrollers
+        // (DaggerfallInventoryWindow.cs:368-399), so both lists carry
+        // ItemBackgroundColourHandler - except that Repair mode
+        // REPLACES the remote scroller's with its own
+        // (DaggerfallTradeWindow.cs:242-245).
+        drawCellBackground(renderer, m, rect, s, this._cellColour(it, rect === R.remoteList));
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
       });

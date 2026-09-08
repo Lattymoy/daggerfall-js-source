@@ -454,8 +454,8 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
   // at :2429 that never re-enters Update.
   //
   // The port's hosts implement that RaiseTime as playerTicker.advance(60)
-  // fired from inside sinks.drainFatigue (shared.js:727 ->
-  // exterior.js:771, world.js:727), which re-enters tickPlayerMinutes
+  // fired from inside sinks.drainFatigue (shared.js:746 ->
+  // exterior.js:887, world.js:769), which re-enters tickPlayerMinutes
   // from inside its own fatigue band. With the marker assigned
   // unconditionally the nested tick left it an hour AHEAD, the outer
   // frame's own setWorldMinutes then reset the clock BELOW it, and the
@@ -486,7 +486,7 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
       try { collapses++; ticker.advance(60); e.fatigue = 1e9; }
       finally { onExhausted.busy = false; }
     };
-    const sinks = {                                 // shared.js:720-728
+    const sinks = {                                 // shared.js:739-747
       drainFatigue: (n) => {
         if (n <= 0) return;
         e.fatigue = Math.max(0, (e.fatigue ?? 0) - n);
@@ -499,7 +499,7 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
           entity: e, classicMinutes: worldMinutes(), dt, sinks,
           rolls: () => 0.99, say: () => {},
         });
-        setWorldMinutes(r.classicMinutes);          // shared.js:761 - the write-back
+        setWorldMinutes(r.classicMinutes);          // shared.js:780 - the write-back
         return r;
       },
       advance(m) { return m > 0 ? this.tick(m / CLASSIC_MINUTES_PER_SECOND) : null; },

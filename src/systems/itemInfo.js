@@ -602,3 +602,45 @@ export function itemInfoPanelRows(item, rows, macros = {}) {
   const last = out[out.length - 1];
   return [{ ...last, text: (last.text ?? '').trim() }];
 }
+
+// ── AUDIT 64 F51: THE PANEL'S THREE SHORTENINGS ──────────────────
+//
+// UpdateItemInfoPanel(TextFile.Token[]) (DaggerfallInventoryWindow.cs
+// :1142-1152) runs every token bound for the 37-pixel-wide info panel
+// through `.Replace(kgSrc, kgRep).Replace(damSrc, damRep)
+// .Replace(arSrc, arRep)` before SetText - the six strings are the
+// readonly fields at :131-136, resolved from Internal_Strings.csv
+// :838-843. That member is the panel label's ONLY writer, and both of
+// DFU's arms end in it: the item overload (:1129-1140) and
+// UpdateItemInfoPanelGold (:2249-2259).
+//
+// The POPUP does not get this pass: ShowInfoPopup (:1594-1601) hands
+// raw GetItemInfo tokens to a DaggerfallMessageBox, which is why a
+// popup still reads "5 points of damage" while the panel reads
+// "5 damage". The port shared one row builder between the two and
+// applied the pass nowhere, so the panel showed the popup's long
+// words in a third of the space.
+
+/** Internal_Strings.csv:838 / :839. */
+export const PANEL_KG_SRC = 'kilograms';
+export const PANEL_KG_REP = 'kg';
+/** Internal_Strings.csv:840 / :841. */
+export const PANEL_DAM_SRC = 'points of damage';
+export const PANEL_DAM_REP = 'damage';
+/** Internal_Strings.csv:842 / :843. */
+export const PANEL_AR_SRC = 'armor rating';
+export const PANEL_AR_REP = 'armor';
+
+/** The pass itself (:1148-1150), in DFU's chain order - kg, then
+ *  damage, then armor. C#'s string.Replace replaces EVERY occurrence,
+ *  so replaceAll is the match, and DFU's `text != null` guard is the
+ *  `?? ''`. A null row list answers [], which is the no-hover panel. */
+export function infoPanelShorten(rows) {
+  return (rows ?? []).map((r) => ({
+    ...r,
+    text: (r.text ?? '')
+      .replaceAll(PANEL_KG_SRC, PANEL_KG_REP)
+      .replaceAll(PANEL_DAM_SRC, PANEL_DAM_REP)
+      .replaceAll(PANEL_AR_SRC, PANEL_AR_REP),
+  }));
+}

@@ -21,6 +21,15 @@ const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
 const DIM = [0.55, 0.52, 0.45, 1];
 
+/** The art-less fallback draws plain strings, so a row record - a
+ *  { text } or AUDIT 64 F28's tab-stopped { cells } - flattens to one.
+ *  The column stops are lost with the parchment; the words are not. */
+const flatten = (l) => {
+  if (typeof l === 'string') return l;
+  if (Array.isArray(l?.cells)) return l.cells.map((c) => c.text ?? '').join('  ');
+  return l?.text ?? '';
+};
+
 function drawPanel(renderer, canvas, font, s, lines, extra = null) {
   const w = Math.max(...lines.map((l) => measureText(font.fnt, l)), extra ? measureText(font.fnt, extra) : 0) * s + 24 * s;
   const lineH = 12 * s;
@@ -37,10 +46,28 @@ function drawPanel(renderer, canvas, font, s, lines, extra = null) {
 
 /** ShowText: ClickAnywhereToClose - any key closes. */
 export class ActionTextBox {
-  constructor(lines) {
+  /** AUDIT 64 F28: `highlightColor` is DaggerfallMessageBox
+   *  .SetHighlightColor (:455-458), the one thing a caller overrides
+   *  before Show() - the banking status box sets
+   *  DaggerfallUnityStatDrainedTextColor so a DEFAULTED region reads as
+   *  a warning (DaggerfallBankingWindow.cs:523). Unset keeps
+   *  MultiFormatTextLabel's own default. */
+  /** AUDIT 64 F35 (review round): DaggerfallPopupWindow.previousWindow
+   *  (DaggerfallPopupWindow.cs:24, :56-59). This class is the port's
+   *  DaggerfallMessageBox and nearly every one of its ~35 sites is a
+   *  `DaggerfallUI.MessageBox(...)` in the reference - a box built on
+   *  `Instance.uiManager.TopWindow` (DaggerfallUI.cs:1330/:1339/:1348/
+   *  :1357), which during play is `dfHUD` (:407-408). So the default
+   *  is SET, and `Draw` (:76-84) paints the HUD under the box.
+   *  DaggerfallAction's own ShowText box is the exception and passes
+   *  `null` (Internal/DaggerfallAction.cs:536); it says so at its call
+   *  site. */
+  constructor(lines, { highlightColor = undefined, previousWindow = true } = {}) {
     this.lines = lines;
+    this.highlightColor = highlightColor;
     this.done = false;
     this._next = [];
+    this.previousWindow = previousWindow;
   }
 
   /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
@@ -68,9 +95,10 @@ export class ActionTextBox {
       // ClickAnywhereToClose has NO buttons (DaggerfallMessageBox
       // .ClickAnywhereToClose) - the box is text only.
       const box = layoutMessageBox(font, this.lines);
-      if (drawMessageBox(renderer, m, font, box)) return;
+      const opts = this.highlightColor ? { highlightColor: this.highlightColor } : {};
+      if (drawMessageBox(renderer, m, font, box, opts)) return;
     }
-    drawPanel(renderer, canvas, font, s, this.lines);
+    drawPanel(renderer, canvas, font, s, this.lines.map(flatten));
   }
 }
 
@@ -83,6 +111,15 @@ export class ActionInputBox {
     this.onInput = onInput;
     this.value = '';
     this.done = false;
+    /** AUDIT 64 F35 (review round): the ONLY construction of this box
+     *  in the reference passes a null previous - `new
+     *  DaggerfallInputMessageBox(DaggerfallUI.UIManager, textID, 20,
+     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:565) -
+     *  so nothing is painted beneath it. Every other
+     *  DaggerfallInputMessageBox in DFU is raised from inside another
+     *  window and passes `this`, which roots at that window, not at
+     *  the HUD. */
+    this.previousWindow = null;
   }
 
   input(action) {

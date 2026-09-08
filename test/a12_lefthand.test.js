@@ -27,6 +27,7 @@ import {
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { WEAPON_TYPES, weaponTypeForItem } from '../src/combat/fpsWeapon.js';
+import { midScreenText } from '../src/ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's surface
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -211,9 +212,15 @@ test('a12 rig: a LEFT-hand bow is a real bow - the guard and the draw clip follo
   assert.equal(r.playerWeapon.sheathed, false);
   // FPSWeapon.UpdateWeapon's zero-arrow auto-sheathe reads the SCREEN
   // weapon, which is now the left hand's.
+  midScreenText._reset();
   r.draw();
   assert.equal(r.playerWeapon.sheathed, true);
-  assert.deepEqual(r._said, [USING_LEFT_HAND_TEXT, 'You have no arrows.']);
+  // AUDIT 64 F34: the hand line is WeaponManager's PopupMessage and
+  // stays on the queue; the arrow line is FPSWeapon.cs:365's
+  // SetMidScreenText and lands on the HUD's centred label.
+  assert.deepEqual(r._said, [USING_LEFT_HAND_TEXT]);
+  assert.equal(midScreenText.text, 'You have no arrows.');
+  midScreenText._reset();
 });
 
 test('a12 rig: bindWorn:false rigs flip the hand without losing their scripted weapon', () => {

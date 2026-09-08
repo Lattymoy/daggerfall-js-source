@@ -139,11 +139,16 @@ test('TR1: the wiring - the climb gate, the Horse bob style, and no Running tall
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     assert.match(read(host), /riding: !!player\.riding, levitating:/, `${host}: the Horse bob style (HeadBobber :107)`);
   }
-  // PlayerEntity.cs:311 - the two hosts that report the RAW run key
-  // need the riding term; world and exterior report the motor's own
-  // isRunning, which the gate above already covers.
+  // PlayerEntity.cs:311 - the tally's riding term. AUDIT 64 F7 retired
+  // the two dungeon hosts' RAW-key read: PlayerMotor.IsRunning is
+  // PlayerSpeedChanger's grounded latch over the run MODE (:107-118),
+  // which the AutoRun latch drives and the physical key does not, so
+  // the raw read lost the tally AND the 88/min band under autorun.
+  // Both dungeon hosts now carry their siblings' pair, and the tally
+  // channel keeps the `!riding` term this test guards.
   for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
-    assert.match(read(host), /running: held\(keys, 'Run'\) && moving && !player\.riding,/, `${host}: no Running tally while mounted`);
+    assert.match(read(host), /running: player\.isRunning && !player\.standing, runningTally: player\.isRunning && !player\.riding,/, `${host}: no Running tally while mounted`);
+    assert.equal(/running: held\(keys, 'Run'\)/.test(read(host)), false, `${host}: the raw Run key no longer reaches the tally`);
   }
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(read(host), /running: player\.isRunning && !player\.standing,/, `${host}: the motor's own flag, already gated`);

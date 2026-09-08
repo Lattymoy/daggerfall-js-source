@@ -91,10 +91,22 @@ export const VAMPIRE_CLAN_SPELLS = Object.freeze({
 
 /** CheckStartRest's refusal (:143-158): TEXT.RSC 36, "you must feed". */
 export const NOT_SATED_TEXT_ID = 36;
-/** CheckFastTravel's refusal (:129-141) - the localized key
- *  sunlightDamageFastTravelDay, as a literal (the standing
- *  no-localization departure). */
-export const SUNLIGHT_TRAVEL_TEXT = 'You cannot travel during the day, the sunlight would destroy you.';
+/** CheckFastTravel's refusal (:195-208) - the localized key
+ *  sunlightDamageFastTravelDay, carried as DFU's own en value (the
+ *  standing no-localization departure is a MECHANISM one: the port
+ *  holds the en string where DFU resolves a TextManager lookup, and
+ *  the string itself is DFU's).
+ *
+ *  AUDIT 64 F24: the value is verbatim
+ *  StreamingAssets/Text/Master Localization CSV Files/Internal_Strings.csv:657
+ *  (`sunlightDamageFastTravelDay,You cannot initiate fast travel during
+ *  the day.`), which is what the shipped en table also carries -
+ *  Localization/StringTables/Internal_Strings Shared Data.asset:2007
+ *  binds the key to m_Id 500 and Internal_Strings_en.asset:2350 gives
+ *  that id the same sentence. ONE key, TWO call sites: this refusal
+ *  (VampirismEffect.cs:202) and the career DamageFromSunlight box at
+ *  the travel map's door (DaggerfallUI.cs:619), so both speak it. */
+export const SUNLIGHT_TRAVEL_TEXT = 'You cannot initiate fast travel during the day.';
 
 /** The live curse entry, or null. VU1 moved the DECLARATION into
  *  systems/racialLive.js - an import-free leaf - because

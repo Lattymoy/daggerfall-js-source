@@ -4,7 +4,7 @@
 // time, on every host that has quests.
 //
 // CharSheet.draw forwards its own four arguments straight through to a
-// pushed child (charsheet.js:257), and townTalk hands it
+// pushed child (charsheet.js:259), and townTalk hands it
 // `(renderer, canvas, font, hudScale)`. Every window in src/ui takes
 // that shape - except QuestJournalWindow, whose fourth parameter was
 // `largeFont = null`. A number is not nullish, so `largeFont ?? font`

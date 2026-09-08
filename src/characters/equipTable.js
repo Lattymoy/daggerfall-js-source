@@ -42,7 +42,7 @@ export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowL
   // default; this is the branch that made the row conditional. With
   // the setting on the bow lands in EQUIP_SLOTS.LeftHand and bumps a
   // held 2H exactly as a shield does - which is what hud's arrow
-  // counter (hud.js:361-365) and playerWeapon.toggleHand (:238) have
+  // counter (hud.js:386-390) and playerWeapon.toggleHand (:238) have
   // assumed since AUDIT 28 made the key live.
   if (group === ITEM_GROUPS.Weapons && BOW_HAND_TEMPLATES.includes(item.templateIndex)) {
     return bowLeftHand ? ITEM_HANDS.LeftOnly : ITEM_HANDS.Both;

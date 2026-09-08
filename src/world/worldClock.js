@@ -15,8 +15,12 @@
 //   - Exterior ambient = lerp(ExteriorNightAmbientLight 0.25 *
 //     NightAmbientLightScale (settings default 1), ExteriorNoonAmbientLight
 //     0.9, daylightScale).
-//   - Window style: Night when IsNight, else Day (the ChangeClimate call
-//     sites' rule; Fog arrives with weather).
+//   - Window style: Night when IsCityLightsOn, else Day - the glass lights
+//     WITH the lanterns at 17:00 and unlights with them at 08:00, an hour
+//     before dusk and two hours after dawn (AUDIT 64 F8; the two writers of
+//     a window style, DaggerfallLocation.ApplyTimeAndSpace :141-145 and
+//     DayNight.Set :90/:120, both switch on IsCityLightsOn - nothing in DFU
+//     selects a window style from IsNight).
 //   - City light flicker (DaggerfallLight.AnimateLight): 14 ticks/second,
 //     target = Random.Range(startRange - Variance 1, startRange), step
 //     Speed 0.4 toward it; per light. Engine Random.Range is replaced by
@@ -167,8 +171,14 @@ export function skyFrameForTime(minuteOfDay) {
   return Math.max(0, Math.min(63, Math.round(dayFraction(minuteOfDay) * 63)));
 }
 
+/** AUDIT 64 F8 - DaggerfallLocation.cs:141-145 (ApplyTimeAndSpace, run off
+ *  the :124 `lastCityLightsFlag != Now.IsCityLightsOn` edge) and
+ *  DayNight.cs:90/:120 both pick the style from IsCityLightsOn
+ *  (DaggerfallDateTime.cs:155-157, hour >= 17 || hour < 8), NOT IsNight
+ *  (:171-173, hour < 6 || hour >= 18). The town glass therefore shares the
+ *  lanterns' edges, not the sun's. */
 export function windowStyleForTime(minuteOfDay) {
-  return isNight(minuteOfDay) ? 'night' : 'day';
+  return isCityLightsOn(minuteOfDay) ? 'night' : 'day';
 }
 
 /** Parse ?tod=HH:MM (or a bare minute count) to minuteOfDay; null if absent. */

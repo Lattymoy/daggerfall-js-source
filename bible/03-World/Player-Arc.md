@@ -635,8 +635,11 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   applies while swimming, that branch precedes it); the collider
   grew a per-call capsule height (foes share the instance - a
   mutable field would have resized THEM); standing back up runs the
-  CanStand probe (the STANDING capsule must fit - blocked under a
-  low ceiling the player stays crouched, and AUDIT 18 gave the
+  CanStand probe (AUDIT 64 F5: DFU's own query, an upward sphere
+  sweep of the controller radius over camCrouchToStandDist 0.45 from
+  the controller centre - it clears only feet+1.25, the CAMERA's
+  rise, not the 1.8 capsule DoStand raises regardless; blocked under
+  a low ceiling the player stays crouched, and AUDIT 18 gave the
   blocked request PlayerHeightChanger's own 0.10 s retry window:
   DFU's Update chain falls through to the do-nothing DoDismount,
   which only ticks camTimer and calls timerResetAction at timerMax,
@@ -735,17 +738,23 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   climbs, 78-deg blocks - pinned).
 - **The verbatim jump laws** (AcrobatMotor.HandleJumpInput):
   velY = 4.5 x jumpSpeedMultiplier (1 + Jumping x 0.5 / 100 -
-  systems/skills owns it; athleticism +0.1/+0.1 and the Jump spell
-  +0.6 are INTERIM 0, loud), gated on PlayerMotor.GroundedTime >=
-  0.1 s (the bunny-hop gate; jump input is now HELD in all four
-  hosts - DFU re-fires past the gate, intended), crouched jumps x0.8
-  (crouchingJumpDelta), a MOVING jump adds forward x jumpSpeed x
-  0.05 momentum (DFU's classic-momentum hack), slowfall cancels the
-  jump outright.
-- **airControl = false**: airborne horizontal momentum FREEZES at
-  liftoff - DFU recomputes x/z from input only in the grounded
-  branch. Mid-air steering does nothing (enhanced-jump/rappel air
-  control pends its slice). HitHead REVERSES a rising velY (not a
+  systems/skills owns it; X1 landed all three terms - athleticism
+  +0.1, improved athleticism +0.1 and the Jump spell +0.6 - so the
+  old "INTERIM 0" note here was stale), gated on
+  PlayerMotor.GroundedTime >= 0.1 s (the bunny-hop gate; jump input
+  is now HELD in all four hosts - DFU re-fires past the gate,
+  intended), crouched jumps x0.8 (crouchingJumpDelta), a MOVING jump
+  adds forward x jumpSpeed x 0.05 momentum (DFU's classic-momentum
+  hack), slowfall cancels the jump outright - and so does a Cart, and
+  so does exterior water (AUDIT 64 F1: AcrobatMotor.cs:64-70 is ONE
+  four-clause cancel, `OnExteriorWater == Swimming` included).
+- **airControl = false** (AcrobatMotor.cs:21): airborne horizontal
+  momentum FREEZES at liftoff - DFU recomputes x/z from input only in
+  the grounded branch, so mid-air steering does nothing. AUDIT 64 F2:
+  EXCEPT under the Jump spell - CheckAirControl's third disjunct is
+  IsEnhancedJumping (:145), which is the classic path and is ported;
+  only the rappel disjunct still pends, and that one is Ledger A
+  (AdvancedClimbing). HitHead REVERSES a rising velY (not a
   zero-stop).
 - **Falling damage** (CheckFallingDamage + PlayerHealth + the
   PlayerFootsteps sounds): falls track from CheckInitFall (a
@@ -948,7 +957,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:614). exterior.js and world.js have no submersion
+  (worldModes.js:618). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1481,3 +1490,375 @@ carry the component against the five that do not, and a `Door`-flagged
 foyer door proven to take the hack from a direct `receive` (so the gate
 alone would not have saved it) with the pass refusing the call ahead of
 it. Mutants: the filter dropped; 1 killed.
+
+## AUDIT 64 F0 - the exterior swim speed had no port (2026-09-08)
+
+`PlayerMotor.UpdateSpeed` is three statements
+(`Game/PlayerMotor.cs:383-389`):
+
+    speed = speedChanger.GetBaseSpeed();
+    speedChanger.ApplyInputSpeedAdjustment(ref speed);
+    if (playerEnterExit.IsPlayerSwimming && !PlayerEntity.IsWaterWalking)
+        speed = speedChanger.GetSwimSpeed(speed);
+
+The port had the first two. The third was missing outright, and the one
+place `swimSpeed()` was ever spent (`motor.js`'s LevitateMotor branch)
+is reached only when `levitateMotor.IsSwimming` is set - which only the
+two DUNGEON hosts raise. So the third statement was unreachable exactly
+where DFU reaches it.
+
+**Outdoors DFU does NOT engage the replacement motor.** `PlayerEnterExit
+.cs:414-421`'s not-in-dungeon arm sets `levitateMotor.IsSwimming = false`
+unconditionally ("Underwater swimming logic should only be processed in
+dungeons at this time") but clears `isPlayerSwimming` only
+`if (StreamingWorld.PlayerTileMapIndex != 0)` - and tile 0 IS the swim
+tile. So on deep exterior water `IsPlayerSwimming` stays TRUE while
+`levitateMotor.IsSwimming` is false: `FixedUpdate`'s swim/levitate early
+return (`:322-326`) is not taken, `UpdateSpeed` runs at `:335`, and the
+player walks the lake floor at `GetSwimSpeed`
+(`PlayerSpeedChanger.cs:418-422`: `base * LiveSwimming/200 + base/4`).
+The port carried the whole exterior-water model already - both exterior
+hosts set `player.onExteriorWater` from `_surf.water === Swimming` and
+`_heightAction` sinks the capsule to 0.30 through `_beginSink` - and
+crossed the water at the full grounded walk/run/sneak speed: at Swimming
+30, 2.5x too fast.
+
+The fix is UpdateSpeed's third statement, at DFU's own position. The
+gate is `this.sunk`, which is `controllerSink`, which `DoSinking` /
+`DoUnsinking` write in lockstep with `PlayerEnterExit.IsPlayerSwimming`
+(`PlayerHeightChanger.cs:419-423`, `:374-377`); the argument is the
+ALREADY input-adjusted `speed`, so run/sneak/crouch/ride scale first and
+the swim law multiplies the result. It sits ABOVE both `this.speed =
+speed` and `_trackHalfSpeed`, because DFU scales the `speed` FIELD and
+`IsMovingLessThanHalfSpeed` (`PlayerMotor.cs:168-181`) compares
+`GetBaseSpeed()/2` against that already-swim-scaled field: a swimmer
+under half the walk base must read `movingLessThanHalfSpeed` true, which
+is the stealth and footstep-cadence half of the same law.
+
+RESIDUE, recorded not invented: `sunk` is `IsPlayerSwimming` everywhere
+the sink arms it, but it does not carry MeteoricDragon's tile-0 latch -
+a player who surfaces onto tile 0 off-ground (aboard a ship whose hull
+the down-ray strikes as StaticGeometry) keeps `IsPlayerSwimming` true in
+DFU for frames where `OnExteriorWater != Swimming`.
+`exteriorSurface.js`'s `exteriorSwimLatch` models exactly that and still
+has no caller; closing that frame-width divergence is a separate,
+narrower slice.
+
+Pins: 2 in `test/audit64_motor.test.js`, both computing DFU's
+`GetWalkSpeed` and `GetSwimSpeed` from the C# constants
+(`PlayerSpeedChanger.cs:30-31`, `:389-393`, `:418-422`) rather than
+calling the port's helpers, so a mutation of those helpers cannot move
+the expectation with them. Mutant: the clause dropped; 1 killed.
+
+## AUDIT 64 F1 - the exterior-water jump cancel (2026-09-08)
+
+`AcrobatMotor.HandleJumpInput` cancels the jump on four conditions
+(`Game/Player/AcrobatMotor.cs:64-70`): `IsParalyzed`, `OnExteriorWater
+== OnExteriorWaterMethod.Swimming`, `IsSlowFalling`, and `TransportMode
+== Cart`. The port's gate carried slowfall and Cart, the hosts' zeroed
+input bag covers paralysis, and the water clause was covered nowhere -
+so standing in outdoor deep water the port granted the full
+`JUMP_SPEED * boost` leap DFU refuses outright. The clause is live for
+exactly F0's reason: the outdoor swimmer is grounded on the lake bed
+with the replacement motor disengaged, so control reaches
+`HandleJumpInput` at `PlayerMotor.cs:346`.
+
+Fixed with the clause itself, beside its three siblings. Pin: 1 in
+`test/audit64_motor.test.js`, which also proves the same motor jumps the
+instant the flag drops, so a mutation that cancels every jump reddens
+too. Mutant: the term dropped; 1 killed.
+
+## AUDIT 64 F0/F1 (the shared half) - the indoor answer nobody stated (2026-09-08)
+
+`PlayerMotor.Update` recomputes `onExteriorWaterMethod =
+GetOnExteriorWaterMethod()` every frame in every context
+(`PlayerMotor.cs:367`), and that method returns `None` indoors and
+underground because `GetOnExteriorGroundMethod` fails on
+`PlayerEnterExit.IsPlayerInside` (`:511-513`, `:585-587`). The port
+wrote `player.onExteriorWater` in the two EXTERIOR hosts only and never
+cleared it, so a value carried in off a lake would ride into an interior
+or a dungeon - keeping the 0.30 capsule today and, with F0 and F1
+landing, the swim speed and the jump cancel with it.
+
+The clear belongs in the hosts that ARE inside, not in
+`shared.applyMotorEffectFlags`: both exterior hosts call that helper
+BEFORE `player.update` and write `onExteriorWater` at the frame's tail
+AFTER it, so clearing there would zero the flag for every exterior step
+and take the existing sink with it. `worldModes.frame` returns early
+unless the mode is interior or dungeon - which is exactly
+`IsPlayerInside` - and `dungeon.js`'s walk arm is underground by
+construction, so each states DFU's indoor answer for itself. Pin: 1 in
+`test/audit64_motor.test.js` over both hosts.
+
+## AUDIT 64 F2 - the Jump spell gave no mid-air control (2026-09-08)
+
+`AcrobatMotor.CheckAirControl` (`:130-151`) recomputes airborne x/z from
+live input whenever `(rappelMotor.IsRappelling || airControl ||
+PlayerEntity.IsEnhancedJumping) && frictionMotor.PlayerControl`. Its one
+caller is `PlayerMotor.cs:349-353`, the airborne arm of `FixedUpdate`,
+with the `speed` `UpdateSpeed` just wrote. `airControl` ships false
+(`:21`) and the rappel disjunct is Ledger A (AdvancedClimbing), but
+`IsEnhancedJumping` is the plain Jumping effect - `DaggerfallEntity.cs
+:85`, raised and cleared by `Jumping.cs:84/:94` - and the port already
+reads it for the +0.6 liftoff term. So under a Jump spell DFU gives both
+the taller jump and mid-air steering, and the port gave only the jump:
+its airborne arm replayed the frozen liftoff momentum unconditionally.
+
+The arm is the grounded arm's own x/z pair, which is right: Unity's
+`TransformDirection` under a yaw-only player transform maps local
+(strafe, y, forward) to that same pair, and `moveDirection.y` is
+untouched so no gravity term rotates. Three details that are the law
+rather than incidental: it ASSIGNS rather than adds, which is what makes
+`HandleJumpInput`'s moving-jump boost (`:113-114`) survive only the
+liftoff frame; it runs on EVERY airborne frame, so a buffed player who
+walks off a ledge steers too and gating it on `jumping` would be wrong;
+and it takes no paralysis guard, because DFU takes the arm with
+inputX/inputY ZEROED (`:137-141`) - the velocity is killed, not frozen -
+which the hosts' zeroed bag already reproduces. `frictionMotor
+.PlayerControl` is deliberately not modelled: it is sticky-true on the
+classic path (`FrictionMotor.cs:68/:87` with both slide settings false),
+so a port of it would be a constant.
+
+The predicate is `isEnhancedJumping` in `systems/skills.js`, beside the
+`jumpSpeedMultiplier` that already made the same read, and reaches the
+motor as a constructor thunk at all three `new PlayerMotor` sites
+(world, exterior, dungeon - worldModes shares world's motor). A thunk
+rather than a per-frame flag precisely to dodge the four-hosts miss: a
+`player.enhancedJumping` field would have to be written in
+`applyMotorEffectFlags` AND in worldModes' dungeon arm AND in
+`dungeon.js`. A motor built with no dep keeps the frozen path, so the
+headless pins are untouched.
+
+Pins: 3 in `test/audit64_motor.test.js` (reversed input mid-flight
+assigns -walkSpeed; a buffed walk off a ledge steers with no jump; the
+dep is wired in all three hosts). Mutant: the disjunct dropped; 2
+killed.
+
+## AUDIT 64 F3 - AutoRun toggled the run mode and moved nobody (2026-09-08)
+
+DFU's autorun is two halves in two components. `PlayerSpeedChanger
+.ToggleRun`'s latch (`:82-99`) is the half the port had: the press flips
+`InputManager.ToggleAutorun`, hands it to `ToggleRun`, and forces the
+run mode on when the player was not already running. The other half is
+`InputManager.Update`'s `if (ToggleAutorun) ApplyVerticalForce(1);`
+(`InputManager.cs:542-545`) - the line that actually MOVES the player -
+and it had no port at all: `MoveAxes.update` derived both axes purely
+from the four held move keys, so pressing AutoRun (bound `Mouse2` on the
+shipped map) flipped the run MODE and the player stood still.
+
+Order is load-bearing. `:542` runs AHEAD of `FindKeyboardActions`
+(`:548`), and `ApplyVerticalForce` is `vertical = scale` without
+MovementAcceleration (`:1466-1468`), so the LAST write wins there: the
+latch alone is +1, autorun + MoveForwards is +1, and autorun +
+MoveBackwards is -1 because `:1852`'s `ApplyVerticalForce(-1)` is the
+later write. (The file's recorded neutral-difference answer for two
+opposing keys is untouched.) With acceleration the two forces SUM, and
+the autorun force must raise `posVerticalImpulse` (`:1472`) or
+`ApplyFriction` (`:1482-1483`) decays the axis by the same 9.8/s every
+frame and the net stays 0.
+
+The second half is the CLEAR, and DFU's two clears are different keys'
+semantics: `InputManager.cs:1850-1852` zeroes `ToggleAutorun` inside
+`FindKeyboardActions`' `GetKey` loop - MoveBackwards HELD - while
+`PlayerSpeedChanger.cs:96-99` clears `ToggleRun` on the press EDGE. The
+port ported only the second, so `_autorun` stayed true through a back
+cancel and the NEXT AutoRun press computed `!true = false` and turned
+the latch OFF where DFU re-latches: two presses for one. Both clears now
+stand, each with its own key semantics.
+
+All four hosts hand the latch to the axes (`{ ...mv, autorun:
+player.toggleAutorun }`), which is a one-frame lag against DFU's own
+script-order indeterminacy between `InputManager.Update` and
+`PlayerMotor.Update`. The overlay-frozen arms are left alone - that is
+AUDIT 28 W8's timeScale-0 law - and `moving = anyMove(mv)` was left
+alone too, because `:542-545` calls the force only and adds no
+`Actions.MoveForwards` to `currentActions`, so DFU's own `HasAction`
+gates are false under autorun. That last clause was true and the
+conclusion drawn from it was not - see the review round below, which
+struck the term entirely.
+
+REVIEW ROUND (2026-09-08), and three corrections to this section.
+
+(1) THE RESIDUE THAT WAS NOT ONE, struck. This section first recorded
+that `worldModes`'s own mousedown/mouseup handlers never call
+`mouseCode(e.button)`, so `held(keys, 'AutoRun')` was dead in that host
+at the shipped `Mouse2` default, and handed it to the input lane.
+`worldModes` has no `keys` Set of its own: it destructures one from
+`host` (`worldModes.js:354`), and its only two callers are `world.js`
+(`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
+and both of whose WINDOW-level handlers (`world.js:5112-5113`,
+`exterior.js:2504-2505`) call `mouseCode(e.button)` and add/delete
+unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
+maps button 2 to `Mouse2` (`input.js:281`), which is the shipped
+binding (`InputManager.cs:995`). The latch is live in that host; there
+was no gap to hand on and none is queued.
+
+(2) THE FOOTSTEP GATE, fixed. The paragraph above correctly says
+`:542-545` adds no `Actions` entry, so DFU's `HasAction` gates are
+false under autorun - and then wrongly left `moving = anyMove(mv)`
+standing as the footstep term in all four hosts. `PlayerFootsteps` does
+not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
+(`PlayerFootsteps.cs:264-265`), which is
+`Vector2(moveDirection.x, moveDirection.z).magnitude == 0` inside
+`if (grounded)` (`PlayerMotor.cs:113-125`) - and under autorun
+`ApplyVerticalForce` gives `InputManager.Vertical` a non-zero value
+that `GroundedMovement` writes straight into `moveDirection`, so DFU
+plays the stride. The port walked the autorunner forward in silence in
+every host. All four now pass `standingStill: player.standing`, the
+motor's own mirror of that getter (`world.js:8237` already did at its
+other footstep site) - which is also still the paralysis answer,
+because the hosts zero both axes for a frozen player.
+
+`motor.js` gained three writes to make that term honest everywhere it
+is read, because `_trackHalfSpeed` on the walk path had been its only
+writer and every early return above it left the term stale.
+`this.standing` is initialised `true` (a motor that has not stepped has
+moved nothing); the `cancelMovement` block sets it to `grounded`,
+because `PlayerMotor.cs:289` zeroes `moveDirection` there; and the
+swim/levitate branch sets it to `grounded` too, beside the
+`movingLessThanHalfSpeed` mirror already standing there and for the
+identical reason - `:322-326` zeroes `moveDirection` and returns above
+`UpdateSpeed`, so `:113-125` collapses to `grounded` for a swimmer or
+levitator. Without those a dungeon swimmer read a stale land value; the
+climb path is left as it was, which is the same stance the
+`movingLessThanHalfSpeed` mirror already takes there. The FREEZE block
+(`:296-307`) correctly keeps the last value - it returns without
+touching `moveDirection`.
+
+(3) THE `ToggleAutorun` CLEAR MOVED OUT FROM UNDER THE LEVITATION GATE.
+The clear above was written into `_captureSpeedAdjustment`, which
+`update()` calls only `if (!this.levitating)` - the faithful mirror of
+`PlayerMotor.cs:371-375`, whose early return sits directly above
+`speedChanger.CaptureInputSpeedAdjustment()`. But the clear is
+`InputManager.cs:1850-1852`, and `InputManager.Update` has no
+levitation test at all: in DFU a levitating player who holds
+MoveBackwards has `ToggleAutorun` zeroed and stops drifting when the
+key lifts, where the port kept the latch and - the hosts feeding
+`autorun: player.toggleAutorun` to `MoveAxes` unconditionally - resumed
+flying forward. The InputManager half is now its own
+`_captureInputActions`, called from `update()` ahead of and outside
+that gate. It carries all four press EDGES too - AutoRun,
+MoveBackwards, Run and Sneak - for the same reason: `ActionStarted`
+(`InputManager.cs:626-629`) reads
+`previousActions`/`currentActions`, which `InputManager.Update`
+rebuilds every frame (`:463-464`), so a key held across a levitation
+window must not read as a synthetic press on the frame the gate
+reopens. (That was observable on Run as well as on AutoRun: with
+`ToggleRun` raised, `:72-76` XORs `runningMode` by
+`ActionStarted(Run)`, so a Run key held through a levitation turned the
+run mode OFF when the player came down.) What stays inside the gated
+half is what `CaptureInputSpeedAdjustment` itself does with those
+edges - the HELD `HasAction` reads (`:72-78`), the mode toggles, the
+AutoRun arm and `ToggleRun`'s own clear. Running the clear ahead of the toggle arm is order-safe:
+`PlayerSpeedChanger.cs:82-83` refuses the AutoRun press while
+MoveBackwards is held anyway.
+
+Pins: 4 in `test/audit64_motor.test.js`, plus 5 from the review round
+in the same file - the whole chain (MoveAxes -> PlayerMotor ->
+FootstepMachine) driven under a latched autorun with no key held until
+a step comes back and with the paralysis bag proving the silence is
+still there; the four hosts' source read; the levitating back-cancel;
+the held key across a levitation window; the swimmer's `IsStandingStill`
+both ways. Two existing `AUDIT 39 #59`/`39r` pins in
+`test/audit39_worldstate.test.js` moved WITH the law (the frozen
+player's silence is DFU's own, and it runs through this getter:
+`FrictionMotor.cs:76-81` zeroes `inputX`/`inputY` on `IsParalyzed`).
+Mutants: the no-acceleration arm reverted, the impulse flag dropped,
+the `_autorun` clear removed, one host's gate put back to `!moving`,
+the clear returned under the levitation gate, the press edges returned
+under it, the swim `standing` mirror dropped, the `cancelMovement` one
+dropped; 8 killed. (Held-vs-edge on that clear is unobservable in isolation,
+because the AutoRun press is itself refused while MoveBackwards is down;
+the clear follows `InputManager.cs:1851` because that is where DFU puts
+it.)
+
+## AUDIT 64 F5 - CanStand was 0.55 stricter than DFU's (2026-09-08)
+
+`PlayerHeightChanger.CanStand` (`:525-531`) is one sphere cast:
+
+    float distance = camCrouchToStandDist;
+    Ray ray = new Ray(controller.transform.position, Vector3.up);
+    return !Physics.SphereCast(ray, controller.radius, distance);
+
+`camCrouchToStandDist` is `(controllerStandingHeight -
+controllerCrouchHeight) / 2f` = 0.45 (`:115`, `:54-55`). Crouched, the
+controller transform is the capsule CENTRE at feet+0.45, so the swept
+sphere tops out at 0.45 + 0.45 + 0.35 = feet+1.25: DFU clears room for
+the CAMERA's rise, not for the 1.8 capsule, and `DoStand` (`:265-283`)
+raises the capsule regardless and lets the head clip. The port instead
+demanded that the whole standing capsule fit at the current feet, so
+under a ceiling between roughly 1.25 and 1.8 the crouch key was a
+one-way trip where DFU pops the player up.
+
+Ported verbatim, over the collider's own `sphereCast` and from the LIVE
+controller centre (`this.pos[1] + this.height / 2`), which gives
+feet+0.45 on the first tick while still crouched and feet+0.9 on the
+retries after the flip - exactly what DFU re-evaluates each frame until
+`timerResetAction`. The pass condition is `!Number.isFinite(dist)`, not
+a comparison against the distance: the collider returns `Infinity` only
+on a clear sweep and a finite `dist` (0 on a start-overlap) for any hit,
+which is Unity's boolean. AUDIT 18's 0.10 s retry window is untouched.
+
+One accepted deviation at the site: Unity's `SphereCast` ignores
+colliders overlapping the START sphere, so a ceiling below feet+0.80
+would make DFU's `CanStand` return true where ours refuses. That band is
+inside the 0.9 crouched capsule and unreachable.
+
+RESIDUE, measured and left standing. The port's collider is engine-side
+(it depenetrates; Unity's CharacterController does not), and a 1.8
+capsule wedged between a floor and a ceiling in the newly-permitted band
+is displaced vertically rather than left clipping: with the feet at 0, a
+ceiling at 1.3-1.45 ejects the capsule to feet +0.2/+0.3 (the head
+sphere resolves from ABOVE the plane) and a ceiling at 1.45-1.8 sinks it
+to feet -0.1/-0.3. DFU's outcome is feet planted with the head clipping.
+Both bands are PRE-EXISTING and already reachable by walking a standing
+capsule into the same geometry - this law adds a second route to them,
+not the artifact. A mirror of `_resolveCapsule`'s existing "a body
+cannot be depenetrated UP into a ceiling" clamp was written and
+MEASURED: it fixes the sink band exactly (feet 0.000, eye 1.700 under a
+1.5 ceiling) but reddens `test/motorStairs.test.js`'s "a tread the
+capsule cannot STAND under stays blocked", because the step-up ladder
+depends on `_resolveCapsule` capping a raised rung under a ceiling and
+the clamp removes that cap. The collider law therefore belongs to a lane
+that owns `collider.js`, and it is recorded here rather than half-done.
+
+Pins: 3 in `test/audit64_motor.test.js` - the reference's own arithmetic
+(0.45, 0.35, feet+1.25), a 1.4 ceiling that must PERMIT the stand, and
+the 1.2 ceiling that DFU's own sweep still refuses. Mutant: the
+predicate reverted to the full-capsule fit; 1 killed.
+
+## AUDIT 64 F6 - a paralysed swimmer still sank from encumbrance (2026-09-08)
+
+`LevitateMotor.Update` returns outright when the player is paralyzed
+(`Game/LevitateMotor.cs:67-69`, "Cancel levitate movement if player is
+paralyzed"). That return sits ABOVE the input read (`:71-78`), ABOVE the
+`upDownVector` ladder whose first arm is the over-encumbered sink
+(`:81-89`), and ABOVE the one movement call in the component
+(`groundMotor.MoveWithMovingPlatform`, `:106`); `PlayerMotor.cs:321-326`
+returns above gravity for any swimmer regardless. So DFU gives a
+paralysed swimmer zero displacement of any kind.
+
+The port's swim/levitate branch had no paralysis test at all, and the
+sink is not an input term - it is generated inside the motor from
+`carriedWeight()` - so the hosts' zeroed paralysis bag, which does
+neutralise mx/mz and the float keys, could not touch it: past 62.5 kg a
+frozen swimmer was dragged to the bottom at swim speed.
+
+The guard is DFU's own return, placed immediately before the move. It
+sits BELOW the velY/`_airVelX`/`_airVelZ` zeroing, because that is
+`PlayerMotor.cs:325`'s `moveDirection = Vector3.zero` and runs
+unconditionally on the swim/levitate return - returning above it would
+leave stale air momentum for the frame the player leaves the water. It
+sits below the `movingLessThanHalfSpeed` mirror too, because
+`IsMovingLessThanHalfSpeed` is a computed PROPERTY in DFU, not a
+per-frame write. And it deliberately leaves `grounded`/`groundKey`
+stale: DFU issues no `Move` on this step, and Unity's `isGrounded`
+reports the last one. The minimal alternative - `&& !this.paralyzed` on
+the sink alone - was rejected: it only looks equivalent because all four
+hosts happen to zero the input bag, and it would still run a zero-delta
+`collider.move` where DFU runs nothing.
+
+Pins: 2 in `test/audit64_motor.test.js` - a paralysed 80 kg swimmer must
+not move at all, the same swimmer unfrozen must still sink (so the guard
+cannot silently revert AUDIT 26 F027), and the vector zeroing above the
+guard must still run. Mutant: the guard removed; 1 killed.

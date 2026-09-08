@@ -47,6 +47,7 @@
 // the live foe entity and dies with the pool, as DFU's does.
 
 import { PICKPOCKET_DISTANCE, TOO_FAR_AWAY_TEXT, pickFoeHit } from './activate.js';
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: :834 is the HUD's centred label, not the popup queue
 import { PLAYER_TARGET } from '../characters/enemyTargets.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
 import { pickpocket } from '../systems/talk.js';
@@ -69,7 +70,8 @@ export function youSeeEnemyText(name) {
  * @param distance   the hit distance the pick handed back
  * @param mode       the interaction mode ('info'|'grab'|'talk'|'steal')
  * @param player     the player entity
- * @param deps.hud            PopupMessage / SetMidScreenText sink
+ * @param deps.hud            PopupMessage sink (the info line, the pickpocket result)
+ * @param deps.midScreen      SetMidScreenText sink (the too-far refusal alone)
  * @param deps.modal          MessageBox sink (both Pickpocket successes)
  * @param deps.makeEnemiesHostile  the host's GameManager.MakeEnemiesHostile
  *   over its full live foe union
@@ -82,6 +84,13 @@ export function youSeeEnemyText(name) {
 export function activateMobileEnemy(foe, distance, mode, player, {
   hud = null, modal = null, makeEnemiesHostile = null, playerFeet = null,
   rolls = Math.random, nothingText = () => 'You found nothing valuable.',
+  // AUDIT 64 F34: the ONE line in this member that is
+  // SetMidScreenText (PlayerActivate.cs:834) rather than
+  // PopupMessage/MessageBox - the refusal, not the pickpocket result
+  // (:838 -> :1611). It is a second sink so re-pointing `hud` cannot
+  // drag the result onto the label with it; the default is the same
+  // static funnel DaggerfallUI.cs:783-789 gives every caller.
+  midScreen = setMidScreenText,
 } = {}) {
   if (!foe || foe.dead) return false;
   const entity = foe.entity ?? null;
@@ -97,7 +106,7 @@ export function activateMobileEnemy(foe, distance, mode, player, {
   if (!entity?.isClass) return true;
   // :830 - the flag wraps EVERYTHING below, the distance line included.
   if (entity.pickpocketAttempted) return true;
-  if (distance > PICKPOCKET_DISTANCE) { hud?.(TOO_FAR_AWAY_TEXT); return true; }
+  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }   // :834 - the mid-screen refusal
   entity.pickpocketAttempted = true;   // :837
   const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611
   if (r.modal) modal?.(r.message); else hud?.(r.message);

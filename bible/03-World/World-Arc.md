@@ -2143,3 +2143,421 @@ own doc comment, which taught the omission as correct ("nothing above
 ground can raise it yet" — false since Ledger V4 shipped the transformed
 host laws), and `bible/Home.md`'s "(inBeastForm N/A)". A doc comment that
 licenses a missing caller is what kept this alive through V4's landing.
+
+## AUDIT 64 F11 - RMBLAYOUT'S StaticBuilding ARRAY AND ActivateBuilding (2026-09-08)
+
+`RMBLayout.AddModels` builds one `StaticBuilding` per building
+subrecord, off the FIRST model of that record that actually loaded
+(`RMBLayout.cs:864-882`: "First model is main record structure, others
+are attachments like posts / Only main structure is needed to resolve
+building after hit-test"). `DaggerfallStaticBuildings.HasHit`
+(`DaggerfallStaticBuildings.cs:54-92`) box-tests the activation ray's
+hit point against them, and `PlayerActivate` runs the pair before
+anything else it might have hit above ground (`PlayerActivate.cs:340-361`
+-> `ActivateBuilding` at `:457-484`): in Info mode `DiscoverBuilding`,
+the discovered record's display name as HUD text, and — for a locked
+building below `Temple` that is not `HouseForSale` — the
+store/guild-closed popup with `openHours`/`closeHours` substituted
+(`:91-92`; the literals are `Internal_Strings.csv:36-37`, `":00"`
+suffixes and all).
+
+The port produced no StaticBuilding data anywhere. `src/world/rmbLayout.js`
+pushed `{modelId, modelIdNum, matrix, recordIndex}` and nothing else; a
+grep for `StaticBuilding` / `HasHit` / `storeClosed` / `guildClosed` over
+`src/` returned nothing; the exterior activation ray carried door AABBs,
+`person:` NPCs and `board:` bulletin boards, so an Info click on a shop's
+wall or roof did nothing at all.
+
+Now: `src/world/staticBuildings.js` is the member (box, world AABB, the
+hit test), both exterior hosts accumulate the array beside their doors
+and expose it as `buildingTargets()`, and `worldModes.js` runs the arm.
+
+Three things about the port are deliberate and easy to "improve" into
+departures:
+
+- **The arm does NOT consume the click.** `PlayerActivate` casts ONE ray
+  (`:314`, `RayDistance = 3072 * GlobalScale`, `:76`), tests the building
+  on that hit point and FALLS THROUGH to the static-door check
+  (`:364-368`) — so an Info click on a shop's door both names the
+  building and enters it. Pushing a `building:` key into
+  `exteriorActivationTargets()` would let the enclosing box out-distance
+  the door it contains and swallow every entry click. The port therefore
+  resolves the ray's own occluding hit and runs a non-consuming pre-arm
+  in `tryEnter`.
+- **The hit test is an AABB, not an oriented box.** `HasHit` rotates a
+  `BoxCollider` by the model matrix and then asks `c.bounds.Contains`,
+  and `Collider.bounds` is the WORLD AXIS-ALIGNED bounds of the rotated
+  box. An OBB test would be tighter than DFU on every rotated shop.
+- **The box IS the model's world silhouette.** `staticBuilding.size =
+  DFMesh.Size * GlobalScale` (`:873`), and `DFMesh.Size` and the DFMesh
+  POINTS are divided by the same `Arch3dFile` `pointDivisor`, so the two
+  are in identical units. `Arch3dFile.cs:695-697` stores the RAW native
+  point values into `PureMesh.Planes[].Points[]`; `:711-713` builds the
+  size from those same raw extremes (`maxX / pointDivisor - minX /
+  pointDivisor`); `:714` stores it as `PureMesh.Size` and `:846` copies
+  it over as `records[record].DFMesh.Size`. The DFMesh POINT buffer is
+  written by `WritePoint` (`:941-943`, whose own doc comment at `:935`
+  reads "Vector coordinates are divided by 256.0f"), which divides those
+  same raw points by the SAME `pointDivisor`. `MeshReader.cs:717` then
+  lays the vertices down off that already-divided buffer as
+  `new Vector3(dfPoint.X, -dfPoint.Y, dfPoint.Z) * scale` — so
+  `DFMesh.Size * GlobalScale` is exactly the vertex AABB extent in world
+  units. `RMBLayout`'s own alternative branch says it out loud: when a
+  custom GameObject supplies the model the same member is taken from
+  `goRenderer.bounds.size` (`:876-878`), a true world extent. The
+  shipped arithmetic copies `:873-874` verbatim and always did; what a
+  "size it from `archAabb`" edit would break is not the magnitude but
+  the source of truth (`archAabb` is the port's own vertex buffer, not
+  `DFMesh.Size`, and the two agree only while the mesh pipeline does).
+
+`BuildingIsUnlocked` is evaluated ONCE (`:358`) and handed to both
+`ActivateBuilding` and `ActivateStaticDoor`; the port's two arms now
+share one `resolveBuildingUnlocked` helper rather than a thinner second
+copy. `PlayerGPS.GetDiscoveredBuilding` (`:1064-1082`) got its first port
+caller (`src/systems/discovery.js`).
+
+## AUDIT 64 F12 - EXTERIOR EDITOR FLATS WERE DRAWN IN EVERY TOWN (2026-09-08)
+
+`MaterialReader.GetFlatType` maps archive 199 to `FlatTypes.Editor`
+(`MaterialReader.cs:980-981`), and `DaggerfallBillboard.Start`
+(`:77-84`) disables the mesh renderer of such a billboard — "Just
+disable mesh renderer as actual object can be part of action chain" —
+under `StartGameBehaviour.cs:45`'s `ShowEditorFlats = false`. That is
+why `AddMiscBlockFlats` (`RMBLayout.cs:340-379`) has no archive-199
+branch: it stands the marker and the COMPONENT hides it. The subrecord
+loop's `continue` (`RMBLayout.cs:409-410`) is a genuinely different law
+— that flat is never spawned at all.
+
+`src/world/rmbFlats.js` mirrored only the second law. Every misc
+archive-199 flat went straight into both exterior hosts' billboard
+batches, so the green MARKER/START placard stood in the grass outside
+Privateer's Hold and in every town — visible in the first minute of a
+new game. The two indoor hosts had had DFU's spawn-but-hide split since
+AUDIT 23 (`interiorLayout.js`, `rdbLayout.js`); this was the four-hosts
+miss.
+
+`collectBlockFlats` now stamps `editor: true` on the misc arm and keeps
+the flat — `locationStartMarkers`, the quest markers and the action
+chains all read it — and `exterior.js` / `world.js` refuse to batch one.
+The NPC pass and the animal-audio arm still see the whole list, because
+DFU still gives an editor flat with a non-zero FactionID its
+StaticNPC/QuestMachine hookup; only the renderer is off. Skipping in the
+exterior host before the group insert also keeps TEXTURE.199 out of
+`flatArchives`, so it is no longer fetched for nothing.
+
+`bible/01-Overview/Port-Ledger.md`'s section-B row argued the opposite
+from an incomplete read (it never reached `DaggerfallBillboard.Start`)
+and closed with its own escape clause — "If a side-by-side ever shows
+DFU's exterior clean, this row moves to a defect". No Unity build was
+needed; the branch was readable from the reference. That row is now a
+resolved defect, not a preserved quirk.
+
+## AUDIT 64 F13 - RDB NPC FLATS NEVER BECAME STATIC NPCs (2026-09-08)
+
+`RDBLayout.AddFlat` does two things the port had dropped whole:
+
+- `if (IsNPCFlat(archive)) { StaticNPC npc = go.AddComponent<StaticNPC>();
+  npc.SetLayoutData(obj); }` (`RDBLayout.cs:1226-1231`), where
+  `NPCFlatArchives = {334, 346, 357, 175..184}` (`:1250-1254`). That
+  overload (`StaticNPC.cs:145-160`) is the ONLY producer of
+  `Context.Dungeon` — which `src/systems/topicTree.js`'s castle-questor
+  arm reads and nothing in `src/` had ever written.
+- `QuestMachine.Instance.SetupIndividualStaticNPC(go,
+  obj.Resources.FlatResource.FactionOrMobileId)` (`:1233-1236`), OUTSIDE
+  the `IsNPCFlat` block, so it runs for EVERY RDB flat.
+
+The billboard is raycast-hittable in DFU only because of the first act:
+`DaggerfallBillboard.cs:318-319` gives an NPC-archive flat
+`FlatTypes.NPC` and `:343-349` gives that type its trigger
+`BoxCollider`. `PlayerActivate` reads the `StaticNPC` off the hit
+(`:1226-1229`) and `ActivateStaticNPC` (`:742-767`) has no
+interior/exterior gate at all — DFU's own comment names dungeon
+instances ("guard at entrance of Daggerfall Castle and Benefactor and
+Sheogorath in Mantellan Crux").
+
+The port drew those flats as scenery, carried none of the layout inputs,
+and its dungeon ray had no `person:` arm. Every person standing in
+Castle Daggerfall, Wayrest and Sentinel was inert.
+
+Now: `rdbLayout.js` exports `NPC_FLAT_ARCHIVES` / `isNpcFlat` and carries
+the overload's real inputs on every ordinary flat — the RAW, UN-NEGATED
+`XPos/YPos/ZPos` the hash reads (`StaticNPC.cs:149-151`; the billboard's
+`-YPos` is the render transform only) and the FLAT RESOURCE's stream
+position the nameSeed reads (`:154`), which is not the object offset the
+action chains key on. `dungeonContext.js` mints the people with
+`context: NPC_CONTEXT.Dungeon` and `buildingKey: 0` (`:157-159`), runs
+`setupStaticNpc` at LAYOUT over every flat with a faction so the away
+arm's `SetActive(false)` can withhold the billboard from a shared batch
+that has not been built yet, and exposes `npcTargets()`. `worldModes.js`
+pushes `person:` into the dungeon ray at `StaticNPCActivationDistance`
+and routes it into the existing `activateStaticNpc`.
+
+`ActivateStaticNPC`'s action exclusion is a dungeon-only clause and is
+ported with it: `PlayerActivate.cs:745-751` returns for an NPC carrying
+`ShowText` or `ShowTextWithInput` "as these usually have some bespoke
+task to perform". DFU still Receives that action off the same hit
+(`:378-383`), so the port leaves such a flat an ACTION target and never
+mints a person for it.
+
+**Left open.** The standalone `?dungeon` probe host (`scenes/dungeon.js`)
+gets the data — `npcTargets()` is on the shared context — but no
+`person:` arm, because that host mounts no `townTalk`, no faction
+dictionary and no quest bridge, so there is nothing for a click to route
+into. Adding a target there would consume clicks and answer nothing.
+
+## AUDIT 64 F14 - CITY GATES NEVER CLOSED AT NIGHT (2026-09-08)
+
+`RMBLayout` declares `CityGateOpenModelID = 446` /
+`CityGateClosedModelID = 447` beside the bulletin board (`:40-41`),
+forces both standalone out of the block combiner (`:857`) for the sole
+purpose of hanging a component on them, and hangs `DaggerfallCityGate`
+at `:959-963`. `IsCityGate` (`:1007-1011`) accepts BOTH ids — "Two
+variants of City Gate model known" — so a block that places the CLOSED
+one is tracked too.
+
+`DaggerfallCityGate` is the whole law (a repo-wide sweep of the
+reference finds no other runtime caller of `SetOpen`/`Toggle`):
+
+    bool isOpen = true;                                   (:19)
+    void Update() {                                       (:44-51)
+      bool isNight = ...WorldTime.Now.IsNight;
+      if (isNight && isOpen || !isNight && !isOpen) Toggle();
+    }
+
+`SetOpen` (`:21-38`) swaps the model through
+`GameObjectHelper.ChangeDaggerfallMeshGameObject` (`:217-253`), which
+re-points the mesh filter, the material array AND the `MeshCollider`
+(`:246-250`) — a closed gate BLOCKS — then re-runs
+`mesh.ApplyCurrentClimate()`. `IsNight` is
+`DaggerfallDateTime.cs:171-174` (`Hour < DawnHour || Hour >= DuskHour`),
+which `src/world/worldClock.js` already spells exactly.
+
+The port had the clock and drew the placed model forever. `grep -rn
+CityGate src/` returned nothing; the only trace of 446/447 was two mesh
+patch comments, which prove the port loads and draws both gate meshes
+and never swaps them.
+
+`src/world/cityGate.js` is the component; the constants and the
+predicate live in `rmbLayout.js`, as the reference splits them. Two
+details the state machine turns on, and the lane took VERIFIER 1's
+reading over VERIFIER 2's on the first:
+
+- **The initial drawn model is the BLOCK's, not the clock's.** `isOpen`
+  is born true, so the first frame of a DAY does nothing: a block that
+  laid 447 at noon keeps 447 standing until the first 18:00 -> 06:00
+  cycle opens it. Deciding the variant at build time from `isNight`
+  would open that gate a whole day early.
+- **The toggle must run on the first frame too**, not only on a night
+  edge, or a location built at 20:00 never closes.
+
+Both hosts pre-load BOTH variants (the streaming loader is async; a
+mid-frame fetch cannot swap in place), give each gate a private collider
+bucket — `player/collider.js` appends into a shared bucket and only
+`removeBucket` removes, so a per-gate swap is impossible without one —
+and recompute the placement's culling/sort box from the swapped model's
+own vertices. In `world.js` the bucket key hangs off the pixel key and
+`destroyPixel` drops it with the pixel.
+
+## AUDIT 64 F15 - THE ENTER MARKER'S REST FALLBACK (2026-09-08)
+
+`DaggerfallInterior.FindClosestEnterMarker` accepts `Enter` (199.8) OR
+`Rest` (199.4) under DFU's own comment — "Sometimes marker 199.4 is used
+where the 199.8 enter marker should be / Being a little forgiving and
+also accepting 199.4 as enter marker" — `if (markers[i].type != Enter &&
+markers[i].type != Rest) continue;` (`DaggerfallInterior.cs:242-246`;
+the enum is `:63-69`). `PlayerEnterExit.cs:739-757` consumes it twice:
+for the check position handed to `FindClosestInteriorDoor`, and for the
+no-door fallback landing whose failure destroys the interior.
+
+`src/scenes/interiorContext.js` built `enterMarkers` from `ENTER` alone.
+In a building carrying only a 199.4 marker the port found no marker at
+all: the check position stayed at the EXTERIOR door — picking a
+different interior door than DFU — and, with no interior door, the
+landing came back `null` and the E-press threw `no interior landing`, so
+the door refused to open. Even in a building with both, a rest marker
+nearer the entered door changes DFU's check position and hence which
+interior door is chosen; taverns and inns carry many.
+
+One line. The union is `enterMarkers`' alone: the bed count, the
+rest-marker list, `climbLadder` and the treasure markers all read
+`ctx.markers` by exact type. `src/scenes/interior.js`'s dev-viewer
+camera spawn is NOT this law (a `find`, not a distance search, with no
+DFU counterpart) and was left alone.
+
+Adjacent and NOT folded in: DFU's marker position is the billboard
+GameObject's, lifted by `Summary.Size.y/2`
+(`DaggerfallInterior.cs:867-869`), while `interiorLayout.js` stores the
+raw scaled flat origin — so the marker+up fallback height differs by
+half the editor flat's height. That is a separate finding.
+
+## AUDIT 64 F16 - FIXED TREASURE WAS RAYCAST TO THE FLOOR (2026-09-08)
+
+`AssignFixedTreasure` (`RDBLayout.cs:417-427`) calls `AddRandomTreasure`
+with `adjustPosition: false`, under the comment "Add fixed treasure flat
+with same archive & record and **use exact position**". That single
+`false` skips three things: `:1583-1584`'s
+`-randomTreasureMarkerDim/2` drop, `:1619-1620`'s
+`AlignBillboardToGround` (the ONLY grounding DFU ever does to a treasure
+pile), and `GameObjectHelper.cs:686-687`'s `+Summary.Size.y/2`. The
+container transform IS the marker point (`GameObjectHelper.cs:706`) and
+the centre-pivoted billboard is CENTRED on it — the 216 flat is restored
+exactly where its renderer-disabled marker would have drawn.
+
+`dungeonContext.js` built one `lootPiles` entry for the random (199.19)
+and fixed (216) markers alike and then ran `floorLanding` over every
+one, so a 216 marker on a table, in an alcove, on a ledge or over water
+was dragged down by up to that helper's whole 10-unit reach. The port's
+own ordinary RDB flat batch already knew an RDB flat's stored y is a
+CENTRE (`- size.h / 2`); it simply never applied the conversion here.
+
+The flag now rides the pile and the fixed arm takes `pos[1] - size.h/2`
+instead of the raycast. `pile.pos` is the pile's identity for the pickup
+AABB, `nearbyLootRecords` and the save-rewind re-mint, so both arms
+write it, and `pile.half` is set before the branch so every consumer
+reads one consistent record. The random arm is untouched — its
+`floorLanding` IS `AlignBillboardToGround`.
+
+The exactly analogous defect for quest items (`AddQuestItem` never rays;
+"an item on a table, cage or ledge STAYS UP where the port's ray snapped
+it to the floor") was found and fixed in AUDIT 26; fixed treasure was
+missed in that pass.
+
+## AUDIT 64 F17 - THE LADDER AND THE FURNITURE ARE ObjectType 3 ONLY (2026-09-08)
+
+`DaggerfallInterior.cs:30-31` declares `ladderModelId = 41409` and
+`propModelType = 3`, and gates the climb on BOTH: "Make ladder collider
+convex and ladder functionality, if set up as propModelType" —
+`if (obj.ModelIdNum == ladderModelId && obj.ObjectType == propModelType)`
+(`:491-496`). The two-part test is deliberate: `:439` sets
+`stopCombine` for EVERY 41409, so a non-prop one still gets its own
+GameObject and collider — it is only the `DaggerfallLadder` that the
+ObjectType clause withholds.
+
+`interiorLayout.js` read `objectType` for the prop bottom-Y rule
+(`:420`) and then discarded it, and `interiorContext.js` tested the id
+alone, so a non-prop 41409 that DFU leaves as inert scenery was a
+climb trigger in the port — `worldModes.js` turns every `ladders` entry
+into a `ladder:` activation target, and `climbLadder` teleports the
+player to the nearest 21/22 marker.
+
+The field is carried on every placement now, and it gates BOTH clauses
+DFU gates on it — the second being `:500`, `if (obj.ObjectType ==
+propModelType && buildingData.buildingType != AllValid)
+AddFurnitureAction(obj, ...)`, which is exactly what
+`interiorContext.js`'s shop-shelf / house-container chain reimplements.
+A non-prop shelf or wardrobe model was a lootable container in the port
+where DFU leaves it as geometry. (VERIFIER 1 said to gate only the
+ladder push; VERIFIER 2 read one line further in the same pass and is
+right — `:500` is a live clause on the same field, in the same loop.
+The `buildingType != AllValid` half is DFU's separate map-layout run,
+which this port has no counterpart for, and is deliberately not ported:
+adding it would strip containers from ordinary interiors.)
+
+The convex-collider half of `:493-495` has no port counterpart — this
+port's collider is a static triangle soup — so nothing is owed there.
+
+## AUDIT 64 F11 - REVIEW ROUND: THE BOX'S UNITS, AND THE LATCH THAT STRANDED EVERY REPEATED BLOCK (2026-09-08)
+
+Two corrections to the section above, both found by the review round.
+
+**The 1/256 reading was wrong and is struck.** The lane recorded, over
+both of its verifiers, that `staticBuilding.size = DFMesh.Size *
+GlobalScale` is one 256th of the model's world extent, on the theory
+that `Arch3dFile` divides the Size by `pointDivisor` while the vertices
+stay raw. It divides BOTH. `Arch3dFile.cs:695-697` stores the raw native
+`x/y/z` into `PureMesh.Planes[].Points[]`; `:711-713` builds the size out
+of those same raw extremes as `maxX / pointDivisor - minX /
+pointDivisor`; `:714` stores it as `PureMesh.Size` and `:846` copies it
+straight to `records[record].DFMesh.Size`. The DFMesh POINT buffer — the
+only one `MeshReader` ever sees — is written by `WritePoint`
+(`:941-943`), whose doc comment at `:935` reads "Vector coordinates are
+divided by 256.0f", dividing those same raw points by the SAME
+`pointDivisor`. `MeshReader.cs:717` then lays vertices down off that
+already-divided buffer as `new Vector3(dfPoint.X, -dfPoint.Y, dfPoint.Z)
+* scale`. Size and vertices are therefore in identical units, and
+`DFMesh.Size * GlobalScale` is exactly the model's world extent — the
+building's silhouette, which is what both verifiers said and what
+`RMBLayout`'s own custom-GameObject branch confirms by taking
+`goRenderer.bounds.size` for the same member (`:876-878`).
+
+The shipped arithmetic never changed — it copies `:873-874` — but the
+recorded reason, the recorded "the arm fires only for a ray that reaches
+the model origin" consequence, the source header of
+`src/world/staticBuildings.js`, both hosts' `dfMeshSize` doc comments and
+the `Port-Completion-Analysis.md` row all said the false thing and told
+the next audit that the correct reading was a departure. All are
+rewritten with the derivation above. The pin was also worthless:
+`assert.equal((4096 * 256 * GLOBAL_SCALE) / b.size[0], 256)` is a
+tautology over its own literals. It is replaced by one that recomputes
+the reference's chain — raw points -> `:711-713` Size, raw points ->
+`WritePoint` -> `MeshReader.cs:717` vertices — and asserts
+`staticBuildingBox`'s size equals the vertex extent on all three axes.
+
+**`firstModel` is per PLACED BLOCK, not per block file.** DFU's latch is
+a local reset once per subrecord INSIDE `AddModels`
+(`RMBLayout.cs:824-832`), and `AddModels` runs once per placed block with
+a fresh `buildingsOut` (`:819-820`) — so every grid cell gets its own
+full `StaticBuilding` array. The port kept ONE location-wide `Set`, keyed
+`${b.dfBlock.index}:${placed.recordIndex}`. `dfBlock.index` is the
+BLOCKS.BSA record index (`src/formats/blocksFile.js:180-181` stamps it,
+and `locationLayout.js` resolves every cell through
+`getBlockByName` -> `getBlock(index)`, so two cells holding the same block
+name share the object outright) — and RMB blocks repeat constantly in a
+town. That DFU's array is per cell is settled twice over: `RMBLayout.cs
+:187-193` walks the `modelBuildings` list `AddModels` just returned and
+stamps each with `BuildingDirectory.MakeBuildingKey((byte)layoutX,
+(byte)layoutY, (byte)building.recordIndex)` — the identity of a building
+is (cell x, cell y, subrecord), never (block file, subrecord). Only the FIRST placement of a repeated block got StaticBuildings;
+Info-clicking a building in any later copy of that block did nothing,
+which is the exact gap F11 was written to close. Both outdoor hosts
+carried it: `scenes/exterior.js` and `scenes/world.js`. The latch is now
+created inside the per-block loop in both and keyed on the subrecord
+index alone.
+
+One consequence had to be fixed with it. `scenes/world.js`'s
+`buildingDataForDoor` wrapper re-reads a hit's matrix off `buildingDoors`
+by `pixelKey + dfBlock + recordIndex` — a lookup that answers with the
+FIRST cell holding this block name — and DFU's building key is per block
+INSTANCE (`BuildingDirectory.MakeBuildingKey((byte)layoutX, (byte)layoutY,
+(byte)recordCount)`, `RMBLayout.cs:888`). A static-building hit already
+carries its own pixel-local matrix, so it now says so (`pixelLocal: true`
+at the `worldModes.js` call site) and the wrapper skips the lookup;
+a door hit is world-frame and still needs it. `scenes/exterior.js`'s
+wrapper never had the lookup and was already right.
+
+## AUDIT 64 F13 - REVIEW ROUND: THE DUNGEON'S BOOTSTRAP BEHAVIOURS WERE FINDABLE BY NOBODY (2026-09-08)
+
+F13 runs `SetupIndividualStaticNPC` over dungeon flats and stores the
+returned behaviour on the person (`dungeonContext.js`), but the context
+exposed only `npcTargets()` — the ray's filtered view. The raw `people`
+list was a closure local, so neither of `worldModes.js`'s two behaviour
+collectors could see it:
+
+- `sceneBehaviours()` is the port's
+  `Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()`
+  (`GameObjectHelper.cs:926`), the list `IsAlreadyPlaced` reads; and
+- `activeStaticNpcQuestBehaviours()` is
+  `ActiveGameObjectDatabase.GetActiveStaticNPCQuestResourceBehaviours`
+  (`ActiveGameObjectDatabase.cs:308-311`), the static-NPC cache.
+
+Both walked `interiorCtx?.people` and stopped. In DFU there is no such
+split: `RDBLayout.cs:1228-1237` adds `StaticNPC` to the NPC flat and then
+calls `SetupIndividualStaticNPC` on that SAME GameObject, so the
+bootstrap `QuestResourceBehaviour` is an ordinary scene component that
+`FindObjectsOfTypeAll` sees; and `StaticNPC.cs:127` registers EVERY
+`StaticNPC` with `ActiveGameObjectDatabase`, `Context.Dungeon` ones
+included, so the narrower cache holds it too. A quest Person bootstrapped
+onto a palace static NPC was therefore invisible to `IsAlreadyPlaced` and
+could be stood a SECOND time by the marker walk. The host record the fix
+already built (`{ staticNpcFactionId, isActive, setActive, destroy }`) was
+shaped precisely for the collector that never read it.
+
+`buildDungeonContext` now returns `people` beside `npcTargets()`, and
+both collectors walk it exactly as they walk the interior's.
+
+The F13 pin was also blind here: `assert.ok(m.includes('setupStaticNpc,'))`
+matched the INTERIOR mount, so deleting the dungeon mount left all
+thirteen pins green (verified by mutation). It now slices
+`worldModes.js` between `await buildDungeonContext(` and
+`dungeonCtx = ctx;` and asserts the hook inside that options block, and a
+second pin holds both collectors.

@@ -20,7 +20,10 @@ const CAREER = {
 const flow = () => new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0);
 /** race -> gender -> U18's class method -> class -> (no biography
  *  set) -> name */
-const toName = (f) => { f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm'); return f; };
+// AUDIT 64 F32 (review round): the gender screen is a message box
+// with no default button (CreateCharGenderSelect.cs:53-54), so the
+// second step is its Male HOTKEY, not Return.
+const toName = (f) => { f.input('confirm'); f.input('char:m'); f.input('confirm'); f.input('confirm'); return f; };
 
 test('17j F1: entering the name screen RESEEDS, so the random button is not deterministic', () => {
   // CreateCharNameSelect.cs:123-126 - ShowRandomButton runs on Setup
@@ -74,7 +77,7 @@ test('17j F2: the class screen cancels to RACE, skipping gender', () => {
   // ClassSelectWindow_OnClose (:353-370) - the cancel arm is
   // SetRaceSelectWindow, not the screen before it.
   const f = flow();
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // U18: through the method screen
+  f.input('confirm'); f.input('char:m'); f.input('confirm');   // U18: through the method screen
   assert.equal(f.state, 'class');
   f.input('back');
   assert.equal(f.state, 'race');
@@ -89,7 +92,7 @@ test('17j F3: the name screen can be backed out of, and DISCARDS the biography',
   // without it would apply every effect twice.
   const f = flow();
   f.biogFor = () => ({ questions: [{ text: 'Q1', answers: [{ effects: [{ type: 'gold', amount: 100 }] }] }] });
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> class (U18: via the method screen)
+  f.input('confirm'); f.input('char:m'); f.input('confirm');   // -> class (U18: via the method screen)
   f.input('confirm');                        // -> U19's bio-method screen
   f.input('down'); f.input('confirm');       // answer questions -> biography
   assert.equal(f.state, 'biography');
@@ -126,7 +129,7 @@ test('17j F4: changing race or gender EMPTIES the name box', () => {
   f.input('back');                          // name cancel is inert (no biography)
   f.state = 'gender';
   f.input('up');                             // flip the gender
-  f.input('confirm'); f.input('confirm'); f.input('confirm');    // -> method -> class -> name
+  f.input('char:f'); f.input('confirm'); f.input('confirm');    // -> method -> class -> name
   assert.equal(f.state, 'name');
   assert.equal(f.name, '', 'a changed gender empties the box');
 
@@ -135,7 +138,7 @@ test('17j F4: changing race or gender EMPTIES the name box', () => {
   g.name = 'Vanus Galerion';
   g.state = 'race';
   g.raceIndex = 3;                           // a different province
-  g.input('confirm'); g.input('confirm'); g.input('confirm'); g.input('confirm');
+  g.input('confirm'); g.input('char:m'); g.input('confirm'); g.input('confirm');
   assert.equal(g.name, '', 'a changed race empties it too');
 });
 

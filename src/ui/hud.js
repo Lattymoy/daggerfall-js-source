@@ -21,13 +21,16 @@ import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
-import { drawHudLarge, dockedLargeHudHeight } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
+import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
 // loss trails and gain bars, the smoother, and the one change detector.
 import {
   updateHudVitals, drawVitalsBars, vitalsSkin, vitalsIndicatorsEnabled, VITAL_KEYS,
+  mathfRound,   // AUDIT 64 F39: VerticalProgress.DrawProgress rounds EVERY fill, the breath bar's included
 } from './hudVitals.js';
+import { midScreenText } from './midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's SECOND text surface
+import { hudRenderEnabled } from './hudShortcuts.js';   // AUDIT 64 F37: the Draw override's renderHUD flag
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
@@ -291,7 +294,21 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
   const liveEnd = liveStat(vitals, 'endurance');
   const mb = maxBreath(vitals) || 1;
   const bh = liveEnd * s;
-  const fill = Math.max(0, Math.min(1, breath / mb)) * bh;
+  // AUDIT 64 F39 - THE DRAWN HEIGHT IS ROUNDED TO WHOLE SCREEN PIXELS.
+  // The breath bar IS a VerticalProgress (HUDBreathBar.cs:26, added as
+  // a child at :54, sized and Amount-set at :68-74), so its paint runs
+  // VerticalProgress.DrawProgress (VerticalProgress.cs:68-74):
+  // `float scaledAmount = Mathf.Round(dstRect.height * amount);
+  //  dstRect.y += dstRect.height - scaledAmount;
+  //  dstRect.height = scaledAmount;`. The port applied that law to the
+  // three vitals bars beside it (hudVitals.js's `filled`) and not to
+  // this one, so with an ODD LiveEndurance - where maxBreath is
+  // (END-1)/2 and the quotient is fractional - the bar's top edge fell
+  // off the pixel grid and the port drew up to a pixel more than DFU.
+  // Only the DESTINATION is rounded: srcRect stays `1 * amount`
+  // (:70), the same asymmetry hudVitals.js records, and dstRect.height
+  // itself (`bh`) is left alone.
+  const fill = mathfRound(bh * Math.max(0, Math.min(1, breath / mb)));   // Amount is Clamp01 at the setter (VerticalProgress.cs:27-31)
   const bx2 = HUD_BORDER + BREATH_BAR_LEFT * s;
   const bBottom = canvas.height + HUD_BORDER - BREATH_BAR_BOTTOM * s;
   const img = breathShortThreshold(liveEnd) > breath ? art.breathShort : art.breathNormal;
@@ -321,9 +338,17 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
  *
  *  `dt` is the caller's PAUSED dt for both: FadeBehaviour.OnGUI steps
  *  on Time.deltaTime exactly as the flicker does, so a fade started
- *  before a window opened holds still under it. */
+ *  before a window opened holds still under it.
+ *
+ *  AUDIT 64 F35/F37: `paint` splits DFU's Update half from its Draw
+ *  half. NextCycle is Update work (DaggerfallHUD.cs:328) and
+ *  FadeBehaviour is DaggerfallUI's own MonoBehaviour, but the COLOUR
+ *  they write is only ever shown by the HUD window's own Draw - the
+ *  panel is dfHUD.ParentPanel (DaggerfallUI.cs:409). So under an open
+ *  window with the small HUD, and under renderHUD = false, the state
+ *  advances here and nothing is painted. */
 let _flicker = new HudFlickerController();
-export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
+export function drawNearDeathFlicker(renderer, canvas, cur, dt, paint = true) {
   hudFade.tickFade(dt);
   const c = _flicker.nextCycle({
     health: cur.health, maxHealth: cur.maxHealth, healthLost: lastHealthLost(), dt,
@@ -334,7 +359,7 @@ export function drawNearDeathFlicker(renderer, canvas, cur, dt) {
   // `Parent.BackgroundColor = backColor` - the only write; a gated or
   // Dead cycle answers null and the panel keeps what it holds.
   if (c) hudFade.backgroundColor = c;
-  return hudFade.draw(renderer, canvas);
+  return paint ? hudFade.draw(renderer, canvas) : null;
 }
 
 /** The bows, by template (ItemEnums.cs Weapons: Short_Bow 129,
@@ -411,8 +436,8 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null,
-    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate
+  { font = null, cursorActive = false, windowCoversHud = null, detected = null, playerXZ = null, largeHud = null, hover = null,
+    readied = null, weapon = null, weaponSheathed = true } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -449,16 +474,92 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // above the `!art` return too, like the damage flash: a host whose
   // HUD art failed still takes damage.
   const rig = updateHudVitals(!!largeHud?.art, cur, dt, cursorActive);
+  // AUDIT 64 F35 - THE HUD IS NOT PAINTED UNDER A WINDOW THAT CUTS THE
+  // previousWindow CHAIN, UNLESS THE LARGE HUD IS ON.
+  // DaggerfallUI.cs:483-491 repaints the HUD before
+  // the top window ONLY under `DaggerfallUnity.Settings.LargeHUD`
+  // ("When using a large HUD, always repaint HUD before main window");
+  // otherwise the frame draws `uiManager.TopWindow.Draw()` alone and
+  // the HUD - a window at the BOTTOM of that same stack, pushed at
+  // :407-408 - reaches the screen only down that top window's
+  // previousWindow chain. Every element is a component of
+  // its two panels (DaggerfallHUD.cs:155-192: vitals, breathBar,
+  // compass, modeIcon, flickerController, activeSpells, popupText,
+  // midScreenTextLabel, escortingFaces, arrowCountTextLabel), so they
+  // all go with it. The port's windows paint no letterbox
+  // (nativePanel.js SCREEN_DIM = Color.clear, DaggerfallPopupWindow
+  // .cs:27/:33), so on any non-4:3 canvas the classic bars and the
+  // compass stayed visible in the margins around an open window.
+  //
+  // AUDIT 64 F37 - and the whole of Draw is suppressed while renderHUD
+  // is off (DaggerfallHUD.cs:47, :314-318, :347-351 `public override
+  // void Draw() { if (renderHUD) base.Draw(); }`), the large-HUD
+  // repaint included, since that repaint goes through the same
+  // overridden Draw.
+  //
+  // Only two members survive either gate, and both are above this
+  // line: ShowPlayerDamage (Game/ShowPlayerDamage.cs:20 - its own
+  // MonoBehaviour with its own OnGUI, outside the UI stack) and the
+  // VitalsChangeDetector update (its own MonoBehaviour, which
+  // CameraRecoiler reads whatever window is top).
+  //
+  // AUDIT 64 F35 (review round) - AND "A WINDOW IS OPEN" IS NOT THE
+  // QUESTION. `DaggerfallPopupWindow.Draw` (DaggerfallPopupWindow.cs
+  // :76-84) runs `previousWindow.Draw()` before its own, and every box
+  // `DaggerfallUI.MessageBox` opens is built on
+  // `Instance.uiManager.TopWindow` (DaggerfallUI.cs:1330/:1339/:1348/
+  // :1357) - which during play IS `dfHUD` (:407-408). So DFU paints
+  // the WHOLE small HUD under every in-play message box, and blanks it
+  // only for the null-previous windows it pushes from :512-530
+  // (inventory, character sheet, pause, controls, travel map,
+  // automap, book reader, quest journal, ...). The covering question
+  // is therefore the HOST's - `windowStack.hudCovered` walks its own
+  // stack and answers true the moment ANY window on it fails to paint
+  // its own previous - and this call falls back to `cursorActive` only
+  // for a caller that answers nothing (the old, blunter law).
+  const hudCovered = (windowCoversHud ?? cursorActive) && !largeHud?.art;
+  const hudDrawn = hudRenderEnabled() && !hudCovered;
   // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
   // paused game holds at 0 (timeScale) - the tint FREEZES under a
   // window rather than throbbing on. cursorActive is this HUD's
   // paused, exactly as the vitals line above treats it.
-  drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);   // AUDIT 28 W2d: the parent panel's tint, under everything
+  // AUDIT 64 F35/F37: the tint is HUDFlickerController's write to
+  // `Parent.BackgroundColor` (HUDFlickerController.cs:81-82) - the HUD
+  // window's OWN panel - so it is painted by that window's Draw and
+  // dies with it. Its cycle keeps stepping either way.
+  drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt, hudDrawn);   // AUDIT 28 W2d: the parent panel's tint, under everything
+  // AUDIT 64 F34: the mid-screen label. What SetMidScreenText reads
+  // off the live screen (:357-359) is fed every frame; the guard is
+  // the LargeHUD SETTING, not whether a bar happens to be drawn.
+  midScreenText.observe(canvas.height, nativeMetrics(canvas).s,
+    largeHudEnabled() ? (lastLargeHudBar?.h ?? 0) : null);
+  // The timer is Update's (:259-267) and the label is a NativePanel
+  // component (:177), so the tick dies with the covering window (DFU
+  // does not Update a non-top window, DaggerfallUI.cs:429-433) and the
+  // paint dies with either gate.
+  // AUDIT 64 F35 (review round): the two halves take DIFFERENT gates,
+  // and the tick's is the blunt one. `:429-433` Updates
+  // `uiManager.TopWindow` ALONE, so the HUD's Update - and with it
+  // midScreenTextTimer - is dead under ANY open window, message box
+  // and large HUD included: `:483-491`'s LargeHUD repaint is Draw, not
+  // Update. `hudCovered` is the PAINT's answer and would have kept the
+  // timer running under a window whenever the large HUD was on.
+  // It is drawn on BOTH skins: a message
+  // surface, not a classic-skin element. DFU adds it AFTER popupText
+  // (:173 then :177) so the label draws over the popup column; the
+  // port's hosts draw HudText after drawHud, an order that cannot be
+  // observed because the seven-row column tops out ~70 native px above
+  // this label's y=146.
+  if (!cursorActive) midScreenText.tick(dt);
+  if (hudDrawn) midScreenText.draw(renderer, canvas, font);
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   if (isEnhanced() && typeof document !== 'undefined') {
     drawEnhancedHud(vitals, heading01, dt, {
-      hidden: cursorActive,
+      // AUDIT 64 F37: the enhanced skin is a persistent DOM overlay -
+      // it stays painted unless told otherwise - so a hidden HUD must
+      // reach its hide door rather than be skipped by an early return.
+      hidden: cursorActive || !hudRenderEnabled(),
       // PX30b: the two things the reference's ability bar would hold.
       // drawHud already takes an options bag; a host that knows
       // neither passes neither, and the plaque never draws.
@@ -474,7 +575,10 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the
     // large-HUD force-off block never names it - so it draws under
     // this skin as well, from its own canvas layer.
-    drawEscortFaces(renderer, canvas);
+    // AUDIT 64 F35: escortingFaces is a ParentPanel component of the
+    // HUD window all the same (DaggerfallHUD.cs:183-185), so it dies
+    // with the window that covers it and with renderHUD.
+    if (hudDrawn) drawEscortFaces(renderer, canvas);
     return;
   }
   if (!art) return;
@@ -489,6 +593,13 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // and the one thing that outlives it - the crosshair - is drawn
   // here with the mode icon suppressed.
   if (largeHud?.art) {
+    // AUDIT 64 F37: renderHUD alone reaches here - `hudCovered` is
+    // false on this branch, because DaggerfallUI.cs:485-486's repaint
+    // IS the large-HUD arm. lastLargeHudBar is deliberately left as it
+    // stands: HUDLarge's Update keeps its Rectangle live for
+    // ViewportChanger and the panel click routing while its Draw is
+    // suppressed.
+    if (!hudDrawn) return;
     const s2 = hudScale(canvas.width, canvas.height);
     // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
     // the second rig, updated only while this branch is the live HUD.
@@ -519,6 +630,13 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     return;
   }
   lastLargeHudBar = null;
+  // AUDIT 64 F35/F37: THE CLASSIC HUD'S GATE. The bar rect is cleared
+  // first - it is the small HUD's frame either way - and then nothing
+  // below is painted: the vitals rects, the breath bar, the compass
+  // strip, the arrow count, the Detect markers, the escort column, the
+  // crosshair/mode icon and the active-spell rows are all components
+  // of the two HUD panels (DaggerfallHUD.cs:157-192).
+  if (!hudDrawn) return;
   const s = hudScale(canvas.width, canvas.height);
   const bottom = canvas.height - HUD_BORDER;
   // Vitals, left to right: health, fatigue, magicka (classic order),

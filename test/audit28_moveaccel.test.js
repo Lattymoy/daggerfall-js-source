@@ -86,12 +86,18 @@ test('AUDIT 28 W8: all four producers hand the motor the axes, advanced only on 
   }
   // The streaming hosts and the modal frame hold the axes still under an overlay (timeScale 0).
   for (const [host, flag] of [['src/scenes/world.js', '_overlayHeld'], ['src/scenes/exterior.js', '_overlayHeld'], ['src/scenes/worldModes.js', 'overlayHeld']]) {
-    assert.match(read(host), new RegExp(`const axes = ${flag} \\? \\{ forward: moveAxes\\.vertical, strafe: moveAxes\\.horizontal \\} : moveAxes\\.update\\(dt, mv\\);`), `${host}: the overlay hold`);
+    // AUDIT 64 F3: the held bag carries the autorun latch now
+    // (InputManager.cs:542-545), so the update call takes the spread.
+    assert.match(read(host), new RegExp(`const axes = ${flag} \\? \\{ forward: moveAxes\\.vertical, strafe: moveAxes\\.horizontal \\} : moveAxes\\.update\\(dt, \\{ \\.\\.\\.mv, autorun: player\\.toggleAutorun \\}\\);`), `${host}: the overlay hold`);
   }
   // The standalone dungeon host's producer already sits inside its own `if (!overlayHeld)`.
   const d = read('src/scenes/dungeon.js');
-  const at = d.indexOf('const axes = moveAxes.update(dt, mv);');
+  const at = d.indexOf('const axes = moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });');
   const gate = d.lastIndexOf('if (walkMode && !overlayHeld) {', at);
-  assert.ok(gate > 0 && at - gate < 3000, 'dungeon.js: the axes update is inside the walk-mode overlay gate');
+  // AUDIT 64: the budget is a proximity heuristic, not the law - the
+  // no-block-close assert below is what proves containment. F0/F1's
+  // onExteriorWater clear and F3's autorun note added prose between
+  // the gate and the update, so the budget moves with them.
+  assert.ok(gate > 0 && at - gate < 4000, 'dungeon.js: the axes update is inside the walk-mode overlay gate');
   assert.equal(d.slice(gate, at).split('\n    }\n').length, 1, 'dungeon.js: no block close between the gate and the update');
 });

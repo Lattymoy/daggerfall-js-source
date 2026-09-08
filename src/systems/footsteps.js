@@ -99,18 +99,29 @@ export class FootstepMachine {
   update(pos, m, set) {
     const here = [pos[0], pos[2]];
     if (this.last === null) this.last = here;
-    // on-foot gate (:222-227): levitation always silences; a mount
+    // on-foot gate (:221-225): levitation always silences; a mount
     // silences unless the player is in exterior water.
+    //
+    // AUDIT 64 F46: `lastPosition` is written in exactly TWO places in
+    // the whole of FixedUpdate - :245 (the lostGrounding landing reset)
+    // and :270 (after the accumulation) - plus Start's seed at :89. The
+    // three early returns (:221-225, :232-238, :264-265) leave the
+    // anchor DELIBERATELY STALE, so the whole horizontal delta covered
+    // under the gate lands on the first frame the gate opens and fires
+    // one immediate step at :269. The port used to rebase in all three,
+    // which suppressed the step DFU plays on dismount, on a levitation
+    // that ends grounded, and on a fall that goes straight into water
+    // (IsSwimming skips the :230-262 block, so the landing reset never
+    // runs). Only `rebase()` above still clears the anchor - the
+    // floating origin has no DFU counterpart.
     if (m.levitating || (m.onFoot === false && !m.onExteriorWater)) {
-      this.distance = 0;
-      this.last = here;
+      this.distance = 0;   // :223 - and no lastPosition write
       return null;
     }
     if (!m.swimming) {
       if (!m.grounded) {
-        this.distance = 0;
-        this.lostGrounding = true;
-        this.last = here;
+        this.distance = 0;          // :235-237 - distance and the flag,
+        this.lostGrounding = true;  // never the anchor
         return null;
       }
       if (this.lostGrounding) {
@@ -125,7 +136,7 @@ export class FootstepMachine {
         return { clip, volume: FOOTSTEP_VOLUME };
       }
     }
-    if (m.standingStill) { this.last = here; return null; }
+    if (m.standingStill) return null;   // :264-265, a bare return
     this.distance += Math.hypot(here[0] - this.last[0], here[1] - this.last[1]);
     this.last = here;
     if (this.distance <= WALK_STEP_INTERVAL) return null;

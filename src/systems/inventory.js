@@ -238,15 +238,28 @@ export function stacksWith(a, b) {
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
 }
 
-/** ItemCollection.AddItem: merge into an existing stack or append. */
-export function addItem(list, item) {
+/** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
+ *  existing stack or place the record at `position`.
+ *
+ *  AUDIT 64 F54: DFU's signature is
+ *  `AddItem(item, AddPosition position = AddPosition.Back, ...)`, and
+ *  the switch at :239-251 is three arms - DontCare `items.Add`, Front
+ *  `items.Insert(0, ...)`, Back `items.Insert(Count, ...)`. On an
+ *  array-backed collection DontCare and Back are the same append, so
+ *  both spell `push` here; only FRONT differs, and it is the position
+ *  DoTransferItem hands a quest item (:1573-1579). The stack merge
+ *  stays FIRST and ignores the position, exactly as :224-230 does -
+ *  which never fires for a quest item anyway, since IsStackable is
+ *  false for one (DaggerfallUnityItem.cs:681-694). */
+export function addItem(list, item, position = 'back') {
   for (const held of list) {
     if (stacksWith(held, item)) {
       held.stackCount = (held.stackCount ?? 1) + (item.stackCount ?? 1);
       return held;
     }
   }
-  list.push(item);
+  if (position === 'front') list.unshift(item);
+  else list.push(item);
   return item;
 }
 

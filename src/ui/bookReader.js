@@ -48,7 +48,7 @@
 // `label.Position.y < pagePanel.Size.y && label.Position.y +
 // label.Size.y > 0` (:193-194) - overlap, not containment - and the
 // pixel cut comes from RestrictedRenderArea, which is the renderer's
-// scissor bracket here (the same one chargenArt.js:1054 uses for the
+// scissor bracket here (the same one chargenArt.js:1072 uses for the
 // question scroll). The old whole-row clip popped the boundary line
 // in and out instead of sliding it.
 
