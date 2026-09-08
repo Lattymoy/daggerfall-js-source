@@ -958,6 +958,38 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
         hostile: f.ai.isHostile !== false, encountered: !!f.ai.hasEncounteredPlayer,
+        // AUDIT 63 F26: the TEAM, both halves. SerializableEnemy.cs:125
+        // `data.team = (int)entity.Team + 1;` (the live EnemyEntity's
+        // team) and :121 `data.alliedToPlayer = mobileEnemy.Enemy.Team
+        // == MobileTeams.PlayerAlly;` (the per-mobile MobileEnemy
+        // STRUCT COPY, which the port spells `entity.mobileTeam`). The
+        // pool re-mints through spawnFoe, so without these a Sanguine
+        // Rose / Skull of Corruption ally - or any `change foe team`
+        // rewrite - came back on its species' static row and turned on
+        // the player, with MeleeAttackFriendlyProtection gone with it.
+        team: f.entity.team, mobileTeam: f.entity.mobileTeam,
+        // AUDIT 63 F29: WabbajackActive (:124, restored :172) - the
+        // once-per-creature latch WabbajackEffect.cs:69 refuses on.
+        // Re-minting cleared it, so a load re-armed the artifact
+        // against a creature it had already scrambled.
+        wabbajackActive: !!f.entity.wabbajackActive,
+        // AUDIT 63 F27: MobileUnit.SpecialTransformationCompleted
+        // (:126, restored :225-228 THROUGH THE SETTER). A Seducer that
+        // had already spread its wings came back unwinged - walking
+        // where it should fly, the unwinged corpse row, the idle/spell
+        // tables back, infighting suppression lost and the one-shot
+        // clip able to play a second time.
+        specialTransformationCompleted: !!f.mobile?.specialTransformationCompleted,
+        // AUDIT 63 F24: the QUEST LINK. SerializableEnemy.cs:117
+        // `data.questSpawn = enemy.QuestSpawn;` and :129-133
+        // `data.questResource = questResourceBehaviour.GetSaveData();`,
+        // restored at :205-218 (re-add the behaviour, RestoreSaveData,
+        // and drop it again when the record names no quest). Without
+        // it a restored quest foe stands and fights but ticks no task
+        // - which is why the interior host's restore below can only
+        // suppress the marker walk (GameObjectHelper.cs:1073-1076)
+        // once the link travels. Null for an ordinary foe.
+        questResource: f.questBehaviour?.getSaveData?.() ?? null,
       };
     });
   }
@@ -965,10 +997,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  then overlay the saved truth - SerializableEnemy's own shape
    *  (rebuild, then SetHealth/SetMagicka/... per record). Async, as
    *  the mint is; the caller does not wait on the art. */
-  function restoreWorld(saved, fromNative, yOffset = 0) {
+  function restoreWorld(saved, fromNative, yOffset = 0, { reviveQuestBehaviour = null } = {}) {
     for (const sf of saved ?? []) {
       const [lx, lz] = fromNative(sf.nativeX, sf.nativeZ);
-      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
+      // AUDIT 63 F24: SerializableEnemy.cs:205-218 - a saved
+      // questSpawn gets its QuestResourceBehaviour back BEFORE the
+      // enemy goes live, and a record whose questUID/targetSymbol are
+      // empty is left plain (:213-217). The revival needs the quest
+      // machine, which this pool has no dep on, so the caller that
+      // owns one hands it in; a host without one restores plain foes.
+      const questBehaviour = (sf.questResource && reviveQuestBehaviour)
+        ? (reviveQuestBehaviour(sf.questResource) ?? null) : null;
+      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true, questBehaviour }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
         if (!f) return;
         f.ai.yaw = sf.yaw ?? f.ai.yaw;
         f.entity.maxHealth = sf.maxHealth ?? f.entity.maxHealth;
@@ -979,6 +1019,27 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects.map((a) => ({ ...a }));
         if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
         if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
+        // AUDIT 63 F26: the two team fields, assigned rather than
+        // routed through spawnFoe's `allied` boolean - DFU restores
+        // them independently (:157's alliedToPlayer re-seeds the
+        // struct copy, :179-181 sets entity.Team to ANY of the twelve
+        // MobileTeams, which `change foe X team 5` can produce) and a
+        // single boolean cannot carry that. Presence-gated, DFU's own
+        // `if (team > 0)` back-compat sentinel (:180).
+        if (sf.team != null) f.entity.team = sf.team;
+        if (sf.mobileTeam != null) f.entity.mobileTeam = sf.mobileTeam;
+        // AUDIT 63 F29: :172's straight assignment, both ways - the
+        // record is a boolean from now on, so a BACKWARD load clears a
+        // latch raised after the save exactly as the C# does. Only a
+        // pre-fix save (no key) leaves the fresh entity's default.
+        if (sf.wabbajackActive != null) f.entity.wabbajackActive = !!sf.wabbajackActive;
+        // AUDIT 63 F27: :227's SetSpecialTransformationCompleted - the
+        // SETTER, never a raw assignment, because the setter is what
+        // rewrites the per-mobile basics copy (Flying, the 400/5
+        // corpse, no idle, the 0-3 spell frames; Base/MobileUnit.cs
+        // :208-224). ai.flies needs no fixup - the pool re-reads
+        // basics.behaviour every tick, DFU's live CanFly read.
+        if (sf.specialTransformationCompleted && f.mobile) f.mobile.setSpecialTransformationCompleted();
       }).catch((e) => console.error('[encounter] restore failed:', e?.message ?? e));
     }
   }

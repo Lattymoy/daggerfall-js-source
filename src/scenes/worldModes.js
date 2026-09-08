@@ -226,7 +226,7 @@ import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, r
 import { createPotion, getMagicItemTemplates } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
-import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
+import { placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -1105,6 +1105,16 @@ export function createWorldModes(host) {
   // other. The dungeon mount (B2 below) is its twin.
   let questFlats = [];          // interior stands (the click sites index this list)
   let interiorFoeStands = [];   // IF: behaviours standFoe accepted, listed before the async build lands
+  /** AUDIT 63 F24 - SaveLoadManager.LoadInProgress (:109) as THIS host
+   *  can observe it. DFU's flag stands for the whole of LoadGame; the
+   *  only moment a load runs this host's marker walk is the interior
+   *  re-entry `restoreInterior` performs, so the window is raised
+   *  there and lowered when the re-entry returns. It is raised ONLY
+   *  when the save actually carries the enemy record this fix added -
+   *  a pre-AUDIT-63 envelope has none, and suppressing its walk would
+   *  leave a marker quest foe standing nowhere at all. That gate is
+   *  the port's additive-field back-compat shape, not a departure. */
+  let _enemyRestoreInProgress = false;
   let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
   /** `inDungeon` is not decoration - it selects the ANCHOR.
    *  AddQuestNPC raises the billboard by half its height
@@ -1283,7 +1293,15 @@ export function createWorldModes(host) {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
     findBehaviours: () => sceneBehaviours(),
-    loadInProgress: () => false,   // the modal host builds after a restore completes
+    // AUDIT 63 F24: SaveLoadManager.LoadInProgress, for real.
+    // GameObjectHelper.AddQuestFoe (:1073-1076) returns early during a
+    // load - "Do not add foe during load process as enemy object may
+    // no longer be in starting state / Allow the load process to
+    // restore enemy state to whatever it was at time of save" - and
+    // the interior enemy envelope (interiorPoolSnapshot below) is
+    // exactly that restore. Hard-coded false, the re-entry walk stood
+    // every marker foe WHOLE beside the ones the save brought back.
+    loadInProgress: () => _enemyRestoreInProgress,
     standNPC: ({ marker, person, flatData, position, behaviour }) =>
       standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
     standItem: ({ item, position, behaviour }) => {
@@ -1387,7 +1405,7 @@ export function createWorldModes(host) {
   const dungeonQuestAdapter = {
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
     findBehaviours: () => dungeonSceneBehaviours(),
-    loadInProgress: () => false,
+    loadInProgress: () => _enemyRestoreInProgress,   // AUDIT 63 F24: GameObjectHelper.cs:1073-1076, the dungeon adapter's twin
     standNPC: ({ marker, person, flatData, position, behaviour }) =>
       standDungeonQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
     standItem: ({ item, position, behaviour }) => {
@@ -4633,6 +4651,13 @@ export function createWorldModes(host) {
     interiorWindows.reconcile(interiorOverlay);
     interiorWindows.clear((w) => w.dispose?.());
     _insideTavern = false;     // ROAD-B B4: PlayerEnterExit.cs:874 - the tavern latch alone (the residence latch is NOT cleared there; see its declaration)
+    // AUDIT 63 F30: PlayerEnterExit.cs:875 - TransitionExterior
+    // lowers PlayerTeleportedIntoDungeon beside the tavern latch.
+    // The port had the four Teleport.cs writes and no clear at all,
+    // so one Recall into a dungeon latched the flag for the rest of
+    // the session (and, now that the dungeon envelope carries it,
+    // would have persisted a flag DFU had already lowered).
+    playerEntity.playerTeleportedIntoDungeon = false;
     interiorOverlay = null;
     player.collider = baseCollider();
     // RepositionPlayer(Offset): the door centre is where DFU puts the
@@ -4957,6 +4982,9 @@ export function createWorldModes(host) {
     dungeonLoc = null;
     mode = 'exterior';
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+    // AUDIT 63 F30: PlayerEnterExit.cs:1197 - TransitionDungeonExterior
+    // lowers PlayerTeleportedIntoDungeon with the three inside flags.
+    playerEntity.playerTeleportedIntoDungeon = false;
     questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
@@ -6869,6 +6897,69 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** AUDIT 63 F24 - THE INTERIOR HOST'S ENEMY HALF OF THE SAVE
+   *  ENVELOPE, which no lane ever took.
+   *
+   *  SaveLoadManager.cs:865 `saveData.enemyData = stateManager
+   *  .GetEnemyData();` is UNCONDITIONAL in BuildSaveData and :1006
+   *  restores it unconditionally; SerializableStateManager.cs walks
+   *  every registered enemy with no world-context filter, and
+   *  SerializableEnemy.cs has an explicit Interior arm (:236-243
+   *  GetEnemyWorldContext, :186-196 the raw-transform restore for
+   *  it). AUDIT 26 F216/F217 gave the two EXTERIOR pools and the
+   *  dungeon their snapshots and named "both hosts"; this host's two
+   *  pools - `interiorFoes` and `interiorGuards`, both real, both
+   *  spawned in ordinary play (the daedric punishment wave, a
+   *  CreateFoe wave, a Sanguine Rose stand, the watch called into a
+   *  shop for a crime) - rode nothing at all, so a quicksave taken
+   *  mid-fight in a building saved none of the fight and the load
+   *  walked back in alone.
+   *
+   *  IT IS THE SAVE ENVELOPE AND NOT THE SCENE CACHE. DFU's
+   *  CacheScene explicitly stores `new object[0]` at the Enemy slot
+   *  ("Only cache loot containers & action doors for scenes"), and
+   *  OnTransitionExterior destroys the interior's enemies - which is
+   *  what `interiorFoes.destroy()` on the way out already is. So
+   *  this hangs off the SAVE, never off `currentSceneState()` and
+   *  never off `interiorIdentity()` (A10's anchor shares that, and
+   *  Teleport.cs:107-112 reads the door pair alone).
+   *
+   *  POSITIONS RIDE NATIVES. A building is mounted in the EXTERIOR's
+   *  unified frame (P8), which the floating origin shifts under the
+   *  player, so the pools take the same converter the outer host's
+   *  own pools take and the caller sheds the compensation per
+   *  record. Raw scene-local feet are the re-entry cache's law, not
+   *  the envelope's. */
+  function interiorPoolSnapshot(toNative) {
+    if (mode !== 'interior' || !toNative) return null;
+    return {
+      foes: interiorFoes?.snapshotWorld(toNative) ?? [],
+      guards: interiorGuards?.snapshotWorld(toNative) ?? [],
+    };
+  }
+  /** The restore half - called AFTER `restoreInterior` has re-entered
+   *  the building and minted fresh pools, which is
+   *  SerializableEnemy's own rebuild-then-overlay order. The marker
+   *  walk that ran inside that re-entry stood NO foes (the
+   *  `loadInProgress` arm above, GameObjectHelper.cs:1073-1076), so
+   *  these records are the only enemies standing, and each one that
+   *  carried a quest link gets its QuestResourceBehaviour back
+   *  (SerializableEnemy.cs:205-218) - listed in `interiorFoeStands`
+   *  so a later hot re-mount sees it exactly as
+   *  Resources.FindObjectsOfTypeAll would. */
+  function restoreInteriorPools(saved, fromNative, yOffset = 0) {
+    if (mode !== 'interior' || !saved) return;
+    // AUDIT 63r F24: the arm itself is questFoeHost's, the ONE home
+    // both hosts share (the exterior pool's load runs the same lines);
+    // what is this host's alone is the stand list.
+    const reviveQuestBehaviour = (data) => {
+      const b = reviveQuestBehaviourFromSave(questBridge?.machine ?? null, data);
+      if (b) interiorFoeStands.push(b);
+      return b;
+    };
+    interiorFoes?.restoreWorld(saved.foes, fromNative, yOffset, { reviveQuestBehaviour });
+    interiorGuards?.restoreWorld(saved.guards, fromNative, yOffset);
+  }
   return {
     get mode() { return mode; },
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
@@ -7279,6 +7370,23 @@ export function createWorldModes(host) {
       player.collider = baseCollider();
       mode = 'exterior';
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
+      // AUDIT 63r F30: NO PlayerTeleportedIntoDungeon CLEAR HERE. The
+      // first pass put one in, reading Teleport.cs:151's
+      // TransitionDungeonExteriorImmediate as PlayerEnterExit.cs
+      // :1197's door - it is not: :1209-1215 is the whole method and
+      // it only raises OnPreTransition. Nor does the other caller of
+      // this teardown clear it: `teleport pc to` is
+      // PlayerEnterExit.RespawnPlayer, whose Respawner resets
+      // isPlayerInside / isPlayerInsideDungeon /
+      // isPlayerInsideDungeonCastle / lastPlayerDungeonBlockIndex
+      // (:482-489) and never touches this flag, and the teleport
+      // window is StreamingWorld.TeleportToCoordinates
+      // (DaggerfallTeleportPopUp.cs:143), which touches nothing. The
+      // flag has exactly TWO clears in the whole reference - :875
+      // TransitionExterior and :1197 TransitionDungeonExterior, the
+      // two real doors, both already lowered above - so a player who
+      // Recalled into a dungeon and is then quest-teleported into
+      // another keeps it, as the C# does.
       if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do
     },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
@@ -7446,6 +7554,8 @@ export function createWorldModes(host) {
       cacheInteriorScene();
       return interiorIdentity();
     },
+    interiorPoolSnapshot,
+    restoreInteriorPools,
     /** A10: the SAME two fields, with NO scene write. SetAnchor
      *  (Teleport.cs:107-112) reads ExteriorDoors and
      *  BuildingDiscoveryData and nothing else - it is not a save, it
@@ -7503,7 +7613,7 @@ export function createWorldModes(host) {
      *  discovery record and position. False when the door cannot be
      *  found or the entry fails; the no-door reposition arm
      *  (RestorePositionHelper :615-621) belongs to the caller. */
-    async restoreInterior(saved, pos = null) {
+    async restoreInterior(saved, pos = null, { fromNative = null, yOffset = 0 } = {}) {
       const d = saved?.door;
       if (!d || mode !== 'exterior') return false;
       const entries = doorTargets();
@@ -7515,12 +7625,21 @@ export function createWorldModes(host) {
         ? matches.find((e) => (buildingDataForDoor?.(e)?.buildingKey ?? 0) === d.buildingKey)
         : null) ?? matches[0] ?? null;
       if (!entry) return false;
+      // AUDIT 63 F24: the load window. With an enemy record in hand the
+      // re-entry's quest walk stands no foe (GameObjectHelper.cs
+      // :1073-1076) and the record below is the only enemy source -
+      // SerializableEnemy's rebuild-then-overlay order.
+      const hasEnemyRecord = saved.foes != null || saved.guards != null;
+      _enemyRestoreInProgress = hasEnemyRecord;
       try {
         await enterInteriorCore(entry, entries, { building: saved.building ?? null, pos });
       } catch (e) {
         console.error('[worldModes] restoreInterior failed:', e);
         return false;
+      } finally {
+        _enemyRestoreInProgress = false;
       }
+      if (mode === 'interior' && hasEnemyRecord && fromNative) restoreInteriorPools(saved, fromNative, yOffset);
       return mode === 'interior';
     },
     tryEnter,

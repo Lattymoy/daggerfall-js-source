@@ -28,8 +28,11 @@
 //   - a BROKEN worn item imports into the bag, not the doll - DFU's
 //     EquipTable.EquipItem(alwaysEquip) has no broken gate, the
 //     port's one equip law does;
-//   - GodMode and UsingLeftHandWeapon are read but dropped - the port
-//     has neither consumer (no cheat toggles, no left-hand rig);
+//   - GodMode is read but dropped - the port has no consumer (no
+//     cheat toggles). UsingLeftHandWeapon was dropped beside it while
+//     the port had no left-hand rig; a12 shipped one and AUDIT 63 F31
+//     wired the import (the pose's usingRightHand below,
+//     StartGameBehaviour.cs:605-606);
 //   - classic DISEASES import as nothing, verbatim: DFU's own arm is
 //     commented out ("TODO: Import classic disease effect") and only
 //     the 101/102 lycanthropy ids are read.
@@ -63,6 +66,7 @@ import { SPECIAL_ABILITY_BITS } from './specialAdvantages.js';
 import { spellPoints, spellPointMultiplier } from './chargen.js';
 import { levelUpSkillSum } from './advancement.js';
 import { ClassFile } from '../formats/classFile.js';
+import { usingRightHandFromSaveVars } from '../combat/playerWeapon.js';   // AUDIT 63 F31: StartGameBehaviour.cs:606's one line, kept with the hand
 
 /** EntityEnums.Races' transformed tail (races.js owns the selectable
  *  1-8 half; classic stores these three when the player is turned). */
@@ -694,6 +698,14 @@ export function classicSaveToSnapshot(saveGames, {
       pitch: 0,
       crouching: false,
       weaponDrawn: saveVars.weaponDrawn,
+      // AUDIT 63 F31: StartGameBehaviour.StartFromClassicSave :605-606
+      // `// Assign weapon hand being used` /
+      // `weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon;`.
+      // The byte has been parsed since SAV2 (formats/saveVarsFile.js
+      // :183, offset 0x3D9) and the conversion has sat in
+      // combat/playerWeapon.js with no production caller; this is the
+      // caller. world.js's applyPose consumes it beside weaponDrawn.
+      usingRightHand: usingRightHandFromSaveVars(saveVars),
     },
     readiedSpellIndex: null,
     world: null, locationKey: null, quest: null, talk: null,

@@ -2800,6 +2800,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         maxHealth: f.entity.maxHealth,
         fatigue: f.entity.fatigue ?? 0,
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
+        // AUDIT 63 F26: the TEAM pair - SerializableEnemy.cs:125
+        // `data.team = (int)entity.Team + 1;` (the live entity) and
+        // :121 alliedToPlayer (the per-mobile MobileEnemy struct copy,
+        // this port's `entity.mobileTeam`). Record fidelity here: this
+        // host's applyWorld patches the LIVE foes in place, so a
+        // same-context load already keeps the team - but the fields
+        // belong in the record, and the exterior pool's half of F26
+        // (which re-mints) is the observable one.
+        team: f.entity.team, mobileTeam: f.entity.mobileTeam,
+        // AUDIT 63 F29: WabbajackActive (:124, restored :172).
+        wabbajackActive: !!f.entity.wabbajackActive,
+        // AUDIT 63 F27: SpecialTransformationCompleted (:126, restored
+        // :225-228 through the setter).
+        specialTransformationCompleted: !!f.mobile?.specialTransformationCompleted,
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -2812,6 +2826,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
       actions: actions.collectSaveData(),
+      // AUDIT 63 F30: PlayerEnterExit.PlayerTeleportedIntoDungeon.
+      // SerializablePlayer.cs:188-191 writes it ONLY under
+      // `IsPlayerInsideDungeon` and :402-405 restores it ONLY when the
+      // save was `insideDungeon` - so it belongs in THIS host's
+      // envelope, where both gates are true by construction, and not
+      // in ENTITY_FIELDS, which is copied blind in both directions.
+      // Its sole consumer is DaggerfallAction.cs:262's
+      // CastleDaggerfallMagicDoorsSpecialOpenHack ("just to prevent
+      // player being locked inside throne room"): load a
+      // teleported-in slot while standing in Castle Daggerfall having
+      // walked in, and without this the foyer doors stayed held.
+      teleportedIntoDungeon: !!playerEntity.playerTeleportedIntoDungeon,
     };
   }
   function applyWorld(w) {
@@ -2837,6 +2863,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sf.maxHealth != null) { f.entity.maxHealth = sf.maxHealth; f.entity.health = Math.min(f.entity.health, sf.maxHealth); }
       if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;
       if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects.map((a) => ({ ...a, ...(a.effect ? { effect: { ...a.effect } } : {}), ...(a.statMods ? { statMods: { ...a.statMods } } : {}), ...(a.skillMods ? { skillMods: { ...a.skillMods } } : {}) }));
+      // AUDIT 63 F26 / F29: the team pair (:179-181 + :157) and the
+      // Wabbajack latch (:172), presence-gated. `!= null` and not a
+      // truthiness test for the latch, so a BACKWARD load lowers a
+      // flag raised after the save, which is what the C#'s
+      // unconditional assignment over a rebuilt enemy does.
+      if (sf.team != null) f.entity.team = sf.team;
+      if (sf.mobileTeam != null) f.entity.mobileTeam = sf.mobileTeam;
+      if (sf.wabbajackActive != null) f.entity.wabbajackActive = !!sf.wabbajackActive;
+      // AUDIT 63 F27: the Seducer's transformation, BEFORE the corpse
+      // arm below - spawnCorpse reads f.mobile.basics.corpseTexture,
+      // and only the setter has rewritten it to the winged 400/5 by
+      // then (SerializableEnemy.cs:225-228 -> Base/MobileUnit.cs
+      // :208-224). The inverse arm is this host's alone: DFU restores
+      // over a re-instantiated mobile, so a saved FALSE means an
+      // untransformed Seducer, and a host that patches in place has to
+      // undo the struct-copy rewrite and re-mint the transform clock -
+      // the same rewind SL2's un-kill arm below spells for death.
+      if (sf.specialTransformationCompleted && f.mobile && !f.mobile.specialTransformationCompleted) {
+        f.mobile.setSpecialTransformationCompleted();
+      } else if (sf.specialTransformationCompleted === false && f.mobile?.specialTransformationCompleted) {
+        f.mobile.clearSpecialTransformationCompleted();
+        if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
+      }
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved
@@ -2909,6 +2958,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (an open door no longer restores solid-and-closed, and a door
     // saved mid-rise keeps rising).
     actions.restoreSaveData(w.actions);
+    // AUDIT 63 F30: SerializablePlayer.cs:402-405's
+    // `if (data.playerPosition.insideDungeon) playerEnterExit
+    // .PlayerTeleportedIntoDungeon = data.playerPosition
+    // .playerTeleportedIntoDungeon;`. applyWorld runs only when the
+    // save's locationKey IS this dungeon, which is that gate; a
+    // pre-fix save carries no key and takes the C#'s not-assigned arm,
+    // leaving the live flag standing.
+    if (w.teleportedIntoDungeon != null) playerEntity.playerTeleportedIntoDungeon = !!w.teleportedIntoDungeon;
   }
 
   // Shared foe-damage path: melee and spells kill through the same
@@ -4397,7 +4454,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 26 F222/F223/F101: the pose. The HOST owns yaw/pitch/
         // crouch (opts.pose.read); this context owns the weapon, so
         // weaponDrawn lands here whichever host mounted it.
-        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed },
+        // AUDIT 63 F25: ...and the HAND beside it. SerializablePlayer
+        // .cs:175-176 writes weaponDrawn and usingLeftHand as one pair
+        // and :420-421 restores them as one pair; this host owns the
+        // weapon, so both halves land here.
+        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand },
         locationKey: _locationKey,
         // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
         // the save, so a load under the OTHER setting can warp to the
@@ -4435,7 +4496,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // order, SaveLoadManager.cs:1433-1449). A restored quest
       // envelope must latch the world host's _questStarted so
       // initAtGameStart never re-runs over the restored machine.
-      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave })) opts.onQuestRestored?.();
+      // AUDIT 63 F28: the orphaned-quest-item sweep rides the ONE
+      // composer, so this host runs it too (SaveLoadManager.cs:1518).
+      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       // A1: restorePlayer replaced the automap store, so the live
@@ -4472,6 +4535,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the yaw/pitch/crouch half through its own seam.
       if (extras.pose) {
         if (extras.pose.weaponDrawn != null) playerWeapon.sheathed = !extras.pose.weaponDrawn;
+        // AUDIT 63 F25: UsingRightHand = !usingLeftHand (:421). The
+        // flag only - the rig's per-frame syncWorn is DFU's
+        // UpdateHands+ApplyWeapon and re-binds the screen weapon (and
+        // re-forces the right hand under a shield, WeaponManager
+        // .cs:656). Presence-gated like every additive pose member.
+        if (extras.pose.usingRightHand != null) playerWeapon.usingRightHand = !!extras.pose.usingRightHand;
         opts.pose?.apply?.(extras.pose);
       }
       surfacePlayer();

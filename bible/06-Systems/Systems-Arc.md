@@ -6678,3 +6678,359 @@ Left where it was found, out of this finding's scope:
 `PlayerEntity.cs:959` and the `ItemHelper` equips all pass
 `playEquipSounds: false` and the port's `equipItem` has no such
 parameter - it rings `_equipSoundSink` for every caller.
+
+## AUDIT 63 F24 - THE FOURTH HOST'S ENEMIES WERE IN NO ENVELOPE (2026-09-08)
+
+`SaveLoadManager.cs:865` writes `saveData.enemyData =
+stateManager.GetEnemyData();` unconditionally in `BuildSaveData` and
+`:1006` reads it back unconditionally; `SerializableStateManager`
+walks every registered enemy with no world-context filter, and
+`SerializableEnemy.cs` carries an explicit Interior arm
+(`GetEnemyWorldContext` :236-243, and :186-196's raw-transform restore
+for it). AUDIT 26 F216/F217 gave the two EXTERIOR pools and the
+dungeon their snapshots under the heading "both hosts". The INTERIOR
+host was never named, and it has two live enemy pools:
+`interiorFoes` and `interiorGuards`, both real, both filled in
+ordinary play - the daedric punishment wave, a `CreateFoe` wave, a
+Sanguine Rose or Soul Bound stand, and the city watch called into a
+shop for a crime. `interiorSaveData()` returned the door identity and
+the building record; `currentSceneState()` cached loot containers,
+action doors and dropped piles. A quicksave taken mid-fight inside a
+building saved none of the fight, and the load walked back in alone -
+a free escape from any indoor crime, which is the exact defect F217
+closed outdoors.
+
+It is the SAVE envelope and nothing else. DFU's `CacheScene` stores
+`new object[0]` at the Enemy slot ("Only cache loot containers &
+action doors for scenes") and `OnTransitionExterior` destroys the
+interior's enemies, which is what `interiorFoes.destroy()` on the way
+out already is - so putting them in the re-entry cache would resurrect
+a shop fight through the door, and putting them in `interiorIdentity()`
+would hand A10's Recall bookmark an enemy list `Teleport.cs:107-112`
+never reads. Two new seams instead, `interiorPoolSnapshot(toNative)`
+and `restoreInteriorPools(saved, fromNative, yOffset)`. Positions ride
+NATIVES: a building is mounted in the EXTERIOR's unified frame (P8),
+which the floating origin shifts under the player, so the pools take
+the same converter `world.js` already hands its own two and the caller
+sheds the vertical compensation per record. The interior dropped-pile
+cache's raw `pos` is a same-frame re-entry law and is the wrong
+invariant to copy into an envelope.
+
+Two laws had to move with it, or the fix would have been worse than
+the hole:
+
+`GameObjectHelper.cs:1073-1076` - "Do not add foe during load process
+as enemy object may no longer be in starting state / Allow the load
+process to restore enemy state to whatever it was at time of save" -
+is the reason a load can restore enemies at all. Both of this host's
+quest adapters answered a hard-coded `loadInProgress: () => false`, so
+the re-entry's marker walk would have stood every marker quest foe
+WHOLE beside the ones the save brought back. The adapters read a latch
+now, raised by `restoreInterior` for the window its own walk runs in
+and lowered in a `finally`. It is raised only when the save carries
+the record: a pre-AUDIT-63 envelope has none, and suppressing its walk
+would leave a marker quest foe standing nowhere at all. That gate is
+the port's additive-field back-compat shape, the same one every other
+field in these envelopes uses.
+
+And `SerializableEnemy.cs:117`/`:129-133` record `questSpawn` and
+`QuestResourceBehaviour.GetSaveData()`, restored at `:205-218` - the
+component re-added, `RestoreSaveData` replayed, and destroyed again
+when the record names no quest (`:213-217`). Without the link a
+restored quest foe stands and fights and ticks no task. The record
+carries it, and `restoreWorld` takes a `reviveQuestBehaviour` callback
+from whichever caller owns a quest machine (the pool has no dep on
+one); the revived behaviour joins `interiorFoeStands` so a later hot
+re-mount sees it exactly as `Resources.FindObjectsOfTypeAll` would.
+
+## AUDIT 63 F25 / F31 - THE WEAPON HAND WAS HALF A PAIR (2026-09-08)
+
+`SerializablePlayer.cs:175-176` writes the sheath and the hand as one
+pair - `data.weaponDrawn = !weaponManager.Sheathed;` then
+`data.usingLeftHand = !weaponManager.UsingRightHand;` - and `:420-421`
+restores the pair. The port carried the FIRST line of each. Since a12
+gave it a real left-hand rig (`playerWeapon.toggleHand`, `H` bound in
+all four hosts, `applyWeapon` picking the used hand's item), a player
+fighting with the left-hand weapon loaded back swinging the right
+hand's item, or bare fists when the right hand was empty.
+
+The hand rides the pose bag beside `weaponDrawn` in both save hosts
+(`world.js`, `dungeonContext.js`) in the POSITIVE sense, because
+`PlayerWeapon` holds `usingRightHand`; it is the same bit. The restore
+sets the flag and NOTHING else: the C# restore calls no `ApplyWeapon`
+because `WeaponManager.Update`'s `UpdateHands` ends in one (`:699`) on
+the next frame, and the port's twin is `weaponRig.syncWorn`
+(`updateHands` + `applyWeapon(claws)`, every frame), which re-binds the
+screen weapon AND re-runs the shield override that forces the right
+hand (`:656`). A bare `applyWeapon()` here would drop the racial claws
+for a frame and would null a `bindWorn:false` rig's scripted weapon.
+
+F31 is the same law on the import lane.
+`StartGameBehaviour.StartFromClassicSave` :605-606 assigns
+`weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon;`. The
+port has parsed the byte since SAV2 (`saveVarsFile.js:183`, offset
+0x3D9) and written the conversion in `combat/playerWeapon.js`
+(`usingRightHandFromSaveVars`) with a header claiming "this is the
+import that classicSave's snapshot builder calls" - and the snapshot
+builder never called it, so an imported left-handed classic character
+arrived right-handed. It calls it now, and `applyPose` (which the
+quickload and the classic boot share) is the one landing for both.
+`classicSave.js`'s recorded divergence is narrowed to GodMode, which
+is still true, and the Port-Ledger row's "GodMode/UsingLeftHandWeapon
+read and dropped (no port consumer)" clause with it - the ground it
+gave ("no left-hand rig") stopped being true when a12 shipped.
+
+## AUDIT 63 F26 / F29 - THE TEAM AND THE WABBAJACK LATCH (2026-09-08)
+
+`SerializableEnemy.cs:125` records `data.team = (int)entity.Team + 1;`
+(the live `EnemyEntity.Team`) and `:121` `data.alliedToPlayer =
+mobileEnemy.Enemy.Team == MobileTeams.PlayerAlly;` (the per-mobile
+`MobileEnemy` STRUCT COPY, which this port spells `entity.mobileTeam`);
+`:157` re-seeds the struct copy through `ApplyEnemySettings` and
+`:179-181` restores the live team behind its own `if (team > 0)`
+back-compat sentinel. Neither foe record carried either field, and
+`exteriorFoes.restoreWorld` re-mints through `spawnFoe`, so a summoned
+ally standing beside the player at a quicksave - the Sanguine Rose's
+daedroth, the Skull of Corruption's double, or any foe a
+`ChangeFoeTeam` rewrote - came back on its species' static row,
+targeted the player, and lost `MeleeAttackFriendlyProtection` with it.
+Both fields ride both records now and restore independently: an
+`allied:` boolean cannot carry a `change foe X team 5`, which is one of
+the twelve `MobileTeams` the C# restores verbatim. The dungeon half is
+record fidelity - that host patches its live foes in place, so a
+same-context load already kept the team - and the exterior half is the
+observable one.
+
+`:124`/`:172` round-trip `EnemyEntity.WabbajackActive`, the
+once-per-creature latch `WabbajackEffect.cs:69` refuses on. The port
+stamps it at all four re-stand sites and saved it nowhere, so a load
+re-armed the artifact against a creature it had already scrambled. The
+restore gate is `!= null` and NOT a truthiness test: `:172` is an
+unconditional assignment over a rebuilt enemy, so a BACKWARD load has
+to lower a latch raised after the save. Only a pre-fix record, which
+carries no key at all, leaves the minted default standing.
+
+## AUDIT 63 F27 - THE SEDUCER RELOADED UNWINGED (2026-09-08)
+
+`SerializableEnemy.cs:126` records
+`mobileEnemy.SpecialTransformationCompleted` and `:225-228` replays it
+THROUGH THE SETTER - `mobileEnemy.SetSpecialTransformationCompleted()`
+- because the setter is what rewrites the per-mobile `MobileEnemy`
+struct copy (`Base/MobileUnit.cs:208-224`: Flying behaviour, the
+winged 400/5 corpse where the unwinged row carries 400/6, no idle
+table, a spell animation of frames 0-3), and its own doc comment says
+it is "Called when restoring save game if unit has raised
+transformation completed flag". Neither foe record carried the flag.
+A Seducer that had already spread its wings reloaded walking (both
+hosts recompute `ai.flies` from `basics.behaviour` every tick), with
+the unwinged corpse row, the reverted animation tables, no infighting
+suppression, and an eight-second clock free to play the one-shot a
+second time. Both records carry it now and both restores replay it
+through the setter, never a raw assignment.
+
+The dungeon needed two things the exterior did not. The setter must run
+BEFORE the corpse arm, because `spawnCorpse` reads
+`f.mobile.basics.corpseTexture` and a Seducer that died transformed
+otherwise gets the 400/6 flat. And that host patches its foes IN
+PLACE, where DFU restores over a re-instantiated mobile - so a saved
+FALSE means an untransformed Seducer and the port has to say so: a new
+`clearSpecialTransformationCompleted()` puts the shared basics row
+back and lowers the flag, and the caller re-mints
+`SeducerTransformBehaviour` so the transform clock starts over exactly
+as a fresh `SetupDemoEnemy.cs:191-195` component would. It is the same
+rewind SL2's un-kill arm already spells for death.
+
+## AUDIT 63 F28 - A DEAD QUEST'S ITEMS WERE WELDED INTO THE WAGON (2026-09-08)
+
+`SaveLoadManager.cs:1517-1518` - `// Clear any orphaned quest items` /
+`RemoveAllOrphanedItems();` - is the last act of `LoadGame` before
+`ClampLegalReputations` (`:1543`, which `restorePlayer` already runs).
+Its body (`:1560-1571`) sweeps `Items`, `WagonItems` and `OtherItems`
+in that order through `ItemCollection.RemoveOrphanedItems`
+(`:661-688`), which drops a quest item whose quest is gone
+(`GetQuest(item.QuestUID) == null`) or tombstoned, and any other item
+with no `shortName`. Nothing else in DFU cleans these up: `Item.Dispose`
+(`Item.cs:258-268`, the port's `removeItemFromPlayer` hook) reaches the
+MAIN pack alone. So an `allowDrop` quest item legitimately stashed in
+the cart outlived its quest for the life of the character - and once
+the tombstone expired, `itemTransfer`'s `CanDropQuestItems` refusal
+made it un-takeable and un-sellable too: permanent dead weight in the
+wagon. The port also ports the other orphan source the sweep exists
+for, `machine.js`'s "failed to load quest data - skip" arm.
+
+`removeOrphanedItems` / `removeAllOrphanedItems` live in
+`systems/save.js` and run inside `restoreSessionState`, the ONE
+composer both save hosts call. THE PLACE IS THE POINT. `restorePlayer`
+runs BEFORE that composer at both seams, so a sweep there would ask
+the OUTGOING session's quest machine - or, on a boot load, an empty
+one - and delete every legitimately restored quest item in the save
+being loaded. DFU's order is quest restore (`:1433`) then sweep
+(`:1518`), and the port's is the same. The port's items model
+equipment by a slot ON the item, so an equipped orphan is unequipped on
+its way out, the two lines `Item.Dispose`'s hook already runs.
+
+Two port-only gates, both back-compat and neither a behaviour
+departure: a host with no quest machine (the standalone `?dungeon`
+scene mounts none) sweeps nothing, and a save with no quest envelope -
+a pre-Q4-v shape DFU never writes - is left alone rather than swept
+against an unrelated live machine. The classic import does NOT sweep:
+`StartFromClassicSave` is not `LoadGame`, and an imported save has no
+restored machine to ask.
+
+## AUDIT 63 F30 - THE TELEPORT FLAG WAS WRITTEN, READ, AND NEVER SAVED OR LOWERED (2026-09-08)
+
+`PlayerEnterExit.PlayerTeleportedIntoDungeon` has one consumer:
+`DaggerfallAction.cs:262`'s
+`CastleDaggerfallMagicDoorsSpecialOpenHack`, whose stated purpose is
+"just to prevent player being locked inside throne room". The port
+writes it at the four `Teleport.cs:216`/`:246` arms and reads it
+through the dungeon host's action thunk, and it rode no envelope at
+all - `Port-Status-2026-09-02.md` claimed ROAD-A A4 had taken it, and
+the code says otherwise.
+
+`SerializablePlayer.cs:188-191` writes it ONLY under
+`IsPlayerInsideDungeon` and `:402-405` restores it ONLY when the save
+was `insideDungeon`. That is why it does NOT belong in `ENTITY_FIELDS`,
+which is copied blind in both directions: an exterior save loaded from
+inside the dungeon host would overwrite a legitimately true live flag,
+and every pre-fix save would clear it wholesale. It rides the DUNGEON
+host's own envelope, where "inside a dungeon" is true by construction
+on both sides, presence-gated so a pre-fix save takes the C#'s
+not-assigned arm. The reachable failure it closes is loading a
+teleported-in slot while standing in Castle Daggerfall having walked in
+the front door: the foyer doors stayed magically held, which is the
+situation the hack exists to prevent.
+
+The port also had NO clear. DFU lowers the flag on both exits -
+`PlayerEnterExit.cs:875` (`TransitionExterior`, beside
+`IsPlayerInsideTavern`) and `:1197` (`TransitionDungeonExterior`, with
+the three inside flags) - so one Recall into a dungeon latched it for
+the rest of the session, and persisting an uncleared latch would have
+been worse than dropping it. Both doors lower it now. A third clear
+went into `forceExitToExterior` and the review round took it out
+again; see F30 below.
+
+## AUDIT 63 REVIEW ROUND (2026-09-08)
+
+Four findings against the first pass, all four confirmed against the
+reference and closed. They are recorded under the headings they
+correct.
+
+### AUDIT 63 F28 - THE ORPHAN SWEEP DELETED EVERY NAMELESS ITEM (2026-09-08)
+
+The sweep's non-quest arm was written as `!it.name && !it.shortName`,
+offered as `ItemCollection.cs:675`'s `else if (string.IsNullOrEmpty(
+item.shortName))`. That equivalence is false for this port, and the
+comment two lines above the C# says why: the header on the loop is
+"Schedule removal if item relates to a null or tombstoned quest, **or
+has an invalid template**" (`ItemCollection.cs:663`). Every
+template-backed mint in DFU gets a `shortName` at construction -
+`SetItem` assigns `shortName = TextManager.Instance
+.GetLocalizedItemName(itemTemplate.index, itemTemplate.name)`
+(`DaggerfallUnityItem.cs:551`) - so the arm can only ever fire for an
+item whose TEMPLATE did not resolve.
+
+The port's `name` is not that. It is an OPTIONAL override:
+`resolveItemName` (`systems/itemInfo.js`) reads
+`templateByIndex(item.templateIndex)?.name` and the item's own `name`
+only refines it, and `loot.js`'s `named()` adds one on the
+`generateItems` path alone. Three ordinary production factories mint
+none at all - `createPotion`/`createRandomPotion` (the alchemist's
+shelf stock, an enemy's dropped bottle, a dungeon pile's),
+`randomlyAddMap` (every treasure map) and `randomlyAddPotionRecipe`.
+`restorePlayer` copies items shallowly, so no name appears on the way
+back either. The sweep therefore deleted every potion, treasure map
+and potion recipe from pack, wagon and repair on any load whose save
+carried a quest envelope - a data-loss regression the first pass
+introduced.
+
+The arm now tests the RESOLVED name, which is the port's real
+equivalent of `shortName`:
+
+```js
+orphaned = !it.name && !it.shortName && !templateByIndex(it.templateIndex)?.name;
+```
+
+Only an item whose template does not resolve is swept, which is
+`:663`'s own sentence. The pin was re-fixtured with it: a real
+`createRandomPotion` bottle, a real `randomlyAddMap` map and a real
+`randomlyAddPotionRecipe` recipe are asserted to SURVIVE the sweep,
+and the orphan the arm still takes is one carrying a `templateIndex`
+no template answers.
+
+### AUDIT 63 F24 - THE EXTERIOR HALF OF THE QUEST LINK WAS RECORDED AND DISCARDED (2026-09-08)
+
+`exteriorFoes.snapshotWorld` records `questResource` for BOTH pools
+that use the factory, and `restoreWorld` grew a `reviveQuestBehaviour`
+option to replay it - but only the interior caller passed one. The
+world host's exterior call handed no options bag, so the callback was
+null, `questBehaviour` resolved to null, and a restored exterior quest
+foe stood and fought with no `QuestResourceBehaviour` and ticked no
+task: exactly the regression the section above says it closed. The
+sentence claiming the exterior pool got the round-trip "for free,
+since both pools are the one factory" is struck; a shared factory is
+not a shared caller.
+
+`SerializableEnemy.cs:206-217` is one law for every `WorldContext`, so
+it now has ONE home: `scenes/questFoeHost.reviveQuestBehaviour(machine,
+data)`, beside `bindQuestFoeHost`, which is the mint-side half of the
+same link. Both hosts call it - `worldModes.restoreInteriorPools`
+wraps it to push the result onto `interiorFoeStands`, and `world.js`'s
+load arm passes it at the exterior `restoreWorld`. The exterior host
+needs no stand list of its own: its `ActiveGameObjectDatabase` walk
+(`questFoeInstances`) reads the live pool, so a revived foe is
+reachable the moment `spawnFoe` lands it.
+
+### AUDIT 63 F30 - THE THIRD CLEAR WAS NOT IN THE REFERENCE (2026-09-08)
+
+The first pass put a third `playerTeleportedIntoDungeon = false` into
+`forceExitToExterior`, justified as `Teleport.cs:151`'s
+`TransitionDungeonExteriorImmediate`. That justification does not
+hold: `TransitionDungeonExteriorImmediate` is five lines
+(`PlayerEnterExit.cs:1209-1215`) and all it does is raise
+`OnPreTransition` - the clear at `:1197` belongs to
+`TransitionDungeonExterior`, the full door, which it does not call.
+
+Worse, `forceExitToExterior` is not the Recall's teardown alone. It is
+also the port's teardown for the QUEST TELEPORT (`_respawnAtSite`) and
+for the teleport window (`teleportTo`), and neither re-raises the flag
+afterwards. DFU's counterpart for `teleport pc to` is
+`PlayerEnterExit.RespawnPlayer`, whose `Respawner` coroutine resets
+`isPlayerInside`, `isPlayerInsideDungeon`,
+`isPlayerInsideDungeonCastle` and `lastPlayerDungeonBlockIndex`
+(`:482-489`) and never touches this one; the teleport window is
+`StreamingWorld.TeleportToCoordinates`
+(`DaggerfallTeleportPopUp.cs:143`), which touches nothing. So a player
+who Recalled into a dungeon and was then quest-teleported into another
+kept the flag in DFU and lost it in the port - and, now that the
+dungeon envelope carries it, the lowered value was what got saved.
+
+The whole reference holds exactly TWO clears of this flag - `:875` and
+`:1197`, the two real doors - and the port now holds exactly two, at
+the same two doors. The Recall's own re-raise (`Teleport.cs:246`
+writes the anchor's value unconditionally on arrival) makes the
+missing third clear harmless where it was ever wanted.
+
+### AUDIT 63 F27 - THE SHARED-ROW GUARD WAS A TAUTOLOGY (2026-09-08)
+
+The pin meant to prove `setSpecialTransformationCompleted` does not
+write through to the SHARED `ENEMY_BASICS` row read
+`assert.equal(ENEMY_BASICS[29].behaviour, 'Flying' === m.basics
+.behaviour ? ENEMY_BASICS[29].behaviour : null)`. The line above had
+already asserted `m.basics.behaviour === 'Flying'`, so the ternary
+always yielded its left operand and the assertion reduced to `X ===
+X`. The neighbouring `deepEqual(m.basics.corpseTexture,
+ENEMY_BASICS[29].corpseTexture)` after the rewind was vacuous the same
+way - the preceding line had already asserted the two were the same
+object.
+
+The risk is real: `ENEMY_BASICS[29]` is a plain mutable object shared
+by every Seducer in the game. Both assertions now pin the REFERENCE's
+stock row directly - `EnemyBasics.cs:1223` `Behaviour =
+MobileBehaviour.General`, `:1227` `CorpseTexture(400, 6)` ("Has a
+winged and unwinged corpse, only using unwinged here"), `:1228`
+`HasIdle = true` - read while the unit is transformed, and the
+reference gate pins those three C# lines beside the five the setter
+rewrites (`Base/MobileUnit.cs:214-217`). Red-proofed against a mutant
+that keeps the copy but leaks the shared row's `corpseTexture` object
+by reference, which is precisely what the tautology could not see.

@@ -95,7 +95,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
-import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -3777,6 +3777,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the building with its pools alive, and P8's unified frame makes
     // the inside position a plain world position.
     const interior = modes?.interiorSaveData?.() ?? null;
+    // AUDIT 63 F24: ...and the interior host's LIVE ENEMIES with it.
+    // SaveLoadManager.cs:865's enemyData is unconditional, and the
+    // fourth host's two pools rode nothing. Natives through the same
+    // converter the outdoor pools take, with the compensation shed per
+    // record - the pile/foe/guard law three lines below.
+    const interiorPools = modes?.interiorPoolSnapshot?.((pos) => state.worldCoords(pos)) ?? null;
+    if (interior && interiorPools) {
+      const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: r.y - state.compensation[1] }));
+      interior.foes = shed(interiorPools.foes);
+      interior.guards = shed(interiorPools.guards);
+    }
     const snap = snapshotPlayer(playerEntity, {
       interior,
       classicMinutes: Math.floor(playerTicker.classicMinutes),
@@ -3800,7 +3811,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // already took (:180 -> snap.boardShipPosition). The mode lives
       // on the motor, host-owned like the weapon, so it rides the pose
       // bag rather than the entity envelope.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state(), transport: player.transportMode },
+      // AUDIT 63 F25: the SECOND line of that pair. DFU writes the
+      // sheath and the HAND together - SerializablePlayer.cs:175-176
+      // `data.weaponDrawn = !weaponManager.Sheathed;` /
+      // `data.usingLeftHand = !weaponManager.UsingRightHand;` - and
+      // restores them together at :420-421. The port carried only the
+      // first line, so a player fighting with the left-hand weapon
+      // loaded back on the right hand's item (or bare fists). The
+      // port stores the POSITIVE sense because PlayerWeapon holds
+      // `usingRightHand`; it is the same bit.
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, usingRightHand: weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -3828,6 +3848,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     townTalk.say(r.ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
     return r.ok;
   }
+  /** AUDIT 63r F24, the EXTERIOR half of SerializableEnemy.cs
+   *  :206-217 - questFoeHost.reviveQuestBehaviour is the shared law,
+   *  this is only the machine this host owns. No stand list is needed
+   *  here: the ActiveGameObjectDatabase walk (`questFoeInstances`)
+   *  reads the pool itself, so a revived foe is reachable the moment
+   *  spawnFoe lands it. */
+  const _reviveQuestBehaviour = (data) => reviveQuestBehaviour(questBridge?.machine ?? null, data);
   let _loading = false;
   /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
    *  own law, Load(PlayerEntity.Name, quickSaveName)); the BOOT load
@@ -3862,7 +3889,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // restoreSessionState (systems/save.js) so the dungeon host
       // runs the identical law; the TK-i/TK-ii/TK-iv null-arm
       // recordings moved with it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })) _questStarted = true;
+      // AUDIT 63 F28: `entity` is the orphaned-quest-item sweep's
+      // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
+      // runs inside the composer, after the quest machine is restored,
+      // exactly where LoadGame runs it.
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -3875,8 +3906,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // reposition arm (:615-621): say the line and keep the
         // teleport's default landing, never the inside position on the
         // outside collider.
+        // AUDIT 63 F24: the interior host's ENEMY record travels with
+        // the door identity now, so the re-entry takes the converters
+        // too - it suppresses its own marker-foe walk while the record
+        // is landing (GameObjectHelper.cs:1073-1076) and overlays the
+        // saved pools once the fresh ones are minted.
         const inside = extras.interior
-          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz]) ?? false)
+          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
+            fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
+          }) ?? false)
           : false;
         if (inside) {
           playerSpawned = true;
@@ -3895,7 +3933,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
         // above already tore the old pools down with the pixel.
-        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // AUDIT 63r F24: the exterior pool's quest link is RECORDED
+        // (exteriorFoes.snapshotWorld's `questResource`) but was
+        // restored nowhere - the option bag only reached the interior
+        // caller, so a reloaded exterior quest foe stood and fought
+        // while its task ticked forever. SerializableEnemy.cs:206-217
+        // is one law for every context: re-add the behaviour, restore
+        // it, and drop it again when the record names no quest.
+        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1],
+          { reviveQuestBehaviour: _reviveQuestBehaviour });
         cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
@@ -3919,6 +3965,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+    // AUDIT 63 F25/F31: the hand, SerializablePlayer.cs:421's
+    // `weaponManager.UsingRightHand = !data.usingLeftHand;`. The
+    // FLAG ONLY - the C# restore sets the property and calls no
+    // ApplyWeapon, because WeaponManager.Update's UpdateHands ends in
+    // ApplyWeapon (:699) on the very next frame; the port's twin is
+    // weaponRig.syncWorn (updateHands + applyWeapon(claws), every
+    // frame), which re-binds the screen weapon to the restored hand
+    // AND re-runs the shield override that forces the right hand
+    // (WeaponManager.cs:656). A bare applyWeapon() here would drop the
+    // racial claws for a frame and would null a bindWorn:false rig's
+    // scripted weapon. Presence-gated: a pre-field envelope (and the
+    // classic import before its own arm below) leaves the live hand.
+    if (pose.usingRightHand != null) weaponRig.playerWeapon.usingRightHand = !!pose.usingRightHand;
     // AUDIT 39 (SerializablePlayer.cs:423): the mount comes back
     // through the ONE builder, so the riding sprite, the hoof loop,
     // the ride bob and the no-climbing-from-a-saddle rule re-arm with
