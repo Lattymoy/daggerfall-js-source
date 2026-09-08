@@ -440,10 +440,19 @@ test('host: ReleaseFromPrison\'s last two lines are wired to the world', () => {
     'TeleportToCoordinates to the SAME map pixel, with RandomStartMarker');
   // ...and the core runs the arm once the destination pixel is built,
   // exactly where StreamingWorld.Update runs it (:266-295).
-  assert.match(world, /const landing = reposition === REPOSITION\.RandomStartMarker \? locationLandingFor\(px, py\) : null;/,
+  assert.match(world, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/,
+    'BOTH marker methods take the arm - StreamingWorld.Update\'s two cases fall through to one PositionPlayerToLocation() (:279-282)');
+  assert.match(world, /const landing = wantsLanding \? locationLandingFor\(px, py, \{ travelStart: hint \}\) : null;/,
     'the reposition method rides the teleport, as TeleportToMapPixel stores it');
-  assert.match(world, /const at = locationArrivalLanding\(dfLoc, \{ origin, startMarkers \}\);/,
-    'through the ported law, not a host guess');
+  // AUDIT 64 F18 (review): the WHOLE argument object, so the two the
+  // hint rides in on cannot be reduced to null. `worldPos` is
+  // LocalPlayerGPS.WorldX/WorldZ as PositionPlayerToLocation reads them,
+  // which TeleportToMapPixel has already moved to the DESTINATION pixel
+  // (StreamingWorld.cs:1085-1086); either half missing is DFU's
+  // `travelStartX == null || travelStartZ == null` (:1483) and the plain
+  // Random.Range(0, 4) at :1486.
+  assert.match(world, /const at = locationArrivalLanding\(dfLoc, \{\s*\n\s*origin,\s*\n\s*startMarkers,\s*\n\s*travelStart,\s*\n\s*worldPos: travelStart \? mapPixelToWorldCoords\(px, py\) : null,\s*\n\s*\}\);/,
+    'through the ported law, not a host guess - and with BOTH of the pair the law reads');
   assert.match(world, /preloadPrisonScreenArt\(/, 'and PRIS00I0 warms at boot like every other window');
   // the FLAGGED trio is GONE from the flow - retiring a flag deletes
   // the sentence that named it.

@@ -1,6 +1,6 @@
 // THE LOCATION ENTRANCE - StreamingWorld's RepositionMethods
-// .RandomStartMarker arm, ported as a law rather than left to the
-// hosts' own guesswork.
+// .RandomStartMarker / .DirectionFromStartMarker arm, ported as a law
+// rather than left to the hosts' own guesswork.
 //
 // StreamingWorld.cs:1437-1593. PositionPlayerToLocation() finds the
 // location standing on the current map pixel, builds its terrain-tile
@@ -13,20 +13,26 @@
 // markers are asked for and the location has any - moves to the
 // marker nearest that outside point instead (:1568-1588).
 //
-// Two callers reach it in DFU and the port owes both: the fast-travel
-// arrival, and DaggerfallCourtWindow.PositionPlayerAtLocationEntrance
-// (:452-463), which is where the player is put down after a prison
-// sentence, a banishment or an acquittal. This module is the pure
+// FIVE callers reach the arm in DFU, and they are not one caller:
+// TransportManager.cs:378/:397 (the ship's boarding),
+// DaggerfallCourtWindow.cs:460 (the release after a sentence, a
+// banishment or an acquittal), DaggerfallTeleportPopUp.cs:143 (the
+// guild's Teleportation service), PlayerEnterExit.cs:516 (the
+// respawner's exterior arm) and DaggerfallTravelPopUp.cs:334 (the
+// fast-travel arrival). Four pass RandomStartMarker; fast travel
+// alone passes DirectionFromStartMarker. This module is the pure
 // half; the host supplies the pixel, the origin and the markers.
 //
-// NOT ported here, deliberately: the travelStartX/travelStartZ
-// FACING HINT (:1481-1519). It exists only so a fast travel that
-// began far to the east arrives on the location's east side, and its
-// two inputs are set by the travel arm alone - `travelStartX == null`
-// is the state every other caller is in, and it is the state the
-// court release is always in, so DFU runs the plain
-// `Random.Range(0, 4)` for it. The hint is recorded as its own slice
-// rather than half-built here.
+// AUDIT 64 F18: the travelStartX/travelStartZ FACING HINT
+// (:1481-1521) IS ported now, and it is the only thing that separates
+// the two methods - Update() runs the SAME PositionPlayerToLocation()
+// for both (:279-282). TeleportToMapPixel caches the pair from
+// LocalPlayerGPS before it moves the GPS to the destination, and only
+// for DirectionFromStartMarker (:1076-1083); every other caller
+// arrives with `travelStartX == null` and takes the plain
+// `Random.Range(0, 4)`. The hint weights the four sides by how far the
+// journey ran E-W against N-S, so a trip that began far to the west
+// arrives on the destination's WEST side, facing in.
 
 import { RMB_SIDE } from './locationLayout.js';
 
@@ -77,6 +83,51 @@ export function locationStartMarkers(blocks) {
 }
 
 /**
+ * THE SIDE PICK (StreamingWorld.cs:1481-1521), the whole of what
+ * separates RepositionMethods.DirectionFromStartMarker from
+ * .RandomStartMarker - Update() runs the same PositionPlayerToLocation()
+ * for both (:279-282).
+ *
+ * `travelStart` is the travelStartX/travelStartZ pair, which
+ * TeleportToMapPixel caches off LocalPlayerGPS - the player's world
+ * coordinates as they LEFT - and only for DirectionFromStartMarker
+ * (:1076-1083). `worldPos` is LocalPlayerGPS.WorldX/WorldZ as they read
+ * by the time this runs, which the same method has already moved to the
+ * DESTINATION pixel (:1084-1086). Either missing is DFU's
+ * `travelStartX == null || travelStartZ == null` (:1483) and takes the
+ * plain Random.Range(0, 4).
+ *
+ * The weighting is DFU's own comment (:1500-1501): "if travel start is
+ * distant enough, chances of hitting square sides are approximatively
+ * px/(px+pz) and pz/(px+pz)".
+ *
+ * @returns {number} an index into LOCATION_SIDES - DFU's own 0 North,
+ *   1 South, 2 East, 3 West.
+ */
+export function pickLocationSide({ travelStart = null, worldPos = null, roll = Math.random } = {}) {
+  /** Random.Range(int, int) - the INT overload, [0, n). */
+  const rnd = (n) => Math.min(n - 1, Math.floor(roll() * n));
+  if (travelStart?.x == null || travelStart?.z == null || worldPos?.x == null || worldPos?.z == null) {
+    return rnd(4);   // :1483-1487 - "Randomly pick one side of location to spawn"
+  }
+  // :1491-1492 - PlayerGPS's WorldX/WorldZ are ints
+  const worldDeltaX = Math.trunc(worldPos.x) - Math.trunc(travelStart.x);
+  const worldDeltaZ = Math.trunc(worldPos.z) - Math.trunc(travelStart.z);
+  if (worldDeltaX === 0 && worldDeltaZ === 0) return rnd(4);   // :1494-1495
+  const px = Math.abs(worldDeltaX);
+  const pz = Math.abs(worldDeltaZ);
+  const random = rnd(px + pz);   // :1502
+  if (px > pz) {
+    // :1503-1510 - mainly E-W; do we hit the square's front side?
+    if (random < px) return worldDeltaX > 0 ? 3 : 2;
+    return worldDeltaZ > 0 ? 1 : 0;
+  }
+  // :1511-1518 - mainly N-S
+  if (random < pz) return worldDeltaZ > 0 ? 1 : 0;
+  return worldDeltaX > 0 ? 3 : 2;
+}
+
+/**
  * PositionPlayerToLocation (StreamingWorld.cs:1470-1593), verbatim
  * apart from the travel facing hint noted in the header.
  *
@@ -89,7 +140,11 @@ export function locationStartMarkers(blocks) {
  *   markers below are already in.
  * @param {Array<[number,number,number]>} [opts.startMarkers] location-local
  * @param {boolean} [opts.useNearestStartMarker] TownCity || HomeYourShips
- * @param {Function} [opts.roll] UnityEngine.Random.Range(0, 4)'s stream
+ * @param {{x:number,z:number}} [opts.travelStart] travelStartX/travelStartZ -
+ *   the DirectionFromStartMarker facing hint (:1076-1083)
+ * @param {{x:number,z:number}} [opts.worldPos] LocalPlayerGPS.WorldX/WorldZ,
+ *   already moved to the destination pixel (:1084-1086)
+ * @param {Function} [opts.roll] UnityEngine.Random.Range's stream
  * @returns {{pos:[number,number,number], yaw:number, side:string, usedStartMarker:boolean}}
  *   `yaw` is RADIANS, the port's own camera unit.
  */
@@ -98,11 +153,12 @@ export function positionPlayerToLocation({
   origin = [0, 0, 0],
   startMarkers = [],
   useNearestStartMarker = false,
+  travelStart = null,
+  worldPos = null,
   roll = Math.random,
 } = {}) {
-  // :1519 - Random.Range(0, 4) with no travel origin recorded, which
-  // is every caller but the fast-travel arrival.
-  const side = LOCATION_SIDES[Math.min(3, Math.floor(roll() * 4))];
+  // :1481-1521
+  const side = LOCATION_SIDES[pickLocationSide({ travelStart, worldPos, roll })];
 
   // :1521-1526
   const halfWidth = mapWidth * 0.5 * RMB_SIDE;
@@ -151,10 +207,11 @@ export function entranceOptionsForLocationType(locationType) {
 
 /**
  * PositionPlayerToLocation's OUTER overload (StreamingWorld.cs:1437-1467) -
- * the arm Update() runs for RepositionMethods.RandomStartMarker once the
- * terrain update has finished (:274-295). It reads the DFLocation that
- * stands on the pixel, derives the two booleans off its LocationType and
- * hands the private overload the location's block dimensions.
+ * the arm Update() runs for RepositionMethods.RandomStartMarker AND
+ * .DirectionFromStartMarker alike (:279-282), once the terrain update has
+ * finished (:274-295). It reads the DFLocation that stands on the pixel,
+ * derives the two booleans off its LocationType and hands the private
+ * overload the location's block dimensions.
  *
  * GetPlayerLocationObject answering null is DFU's "No location found,
  * fail back to terrain origin" (:1441-1446); this reports it as `null`
@@ -168,12 +225,12 @@ export function entranceOptionsForLocationType(locationType) {
  * on the deck rather than at a terrain origin.
  *
  * @param {object} dfLocation MapsFile.getLocation output
- * @param {object} [opts] origin / startMarkers / roll, as
- *   positionPlayerToLocation takes them
+ * @param {object} [opts] origin / startMarkers / travelStart / worldPos /
+ *   roll, as positionPlayerToLocation takes them
  * @returns {{pos:[number,number,number], yaw:number, side:string,
  *            usedStartMarker:boolean, grounded:boolean}|null}
  */
-export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], roll } = {}) {
+export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], travelStart = null, worldPos = null, roll } = {}) {
   const ext = dfLocation?.exterior?.exteriorData;
   if (!ext) return null;   // :1441-1446 - no location object, no landing
   const opts = entranceOptionsForLocationType(dfLocation.mapTableData?.locationType ?? 0);
@@ -183,6 +240,8 @@ export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], 
     origin,
     startMarkers,
     useNearestStartMarker: opts.useNearestStartMarker,
+    travelStart,
+    worldPos,
     ...(roll ? { roll } : {}),
   });
   return { ...at, grounded: opts.grounded };

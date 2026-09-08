@@ -30,8 +30,18 @@
 import { ownsShip, shipCoords } from './banking.js';
 import { TRANSPORT_MODES } from './transport.js';
 
-/** StreamingWorld.RepositionMethods, the two this arm uses. */
-export const REPOSITION = Object.freeze({ None: 'None', RandomStartMarker: 'RandomStartMarker' });
+/** StreamingWorld.RepositionMethods (StreamingWorld.cs:215-223). The
+ *  ship arm uses the
+ *  first two; AUDIT 64 F18 added the third, which is fast travel's own
+ *  (DaggerfallTravelPopUp.cs:334) and runs the SAME
+ *  PositionPlayerToLocation as RandomStartMarker (StreamingWorld.cs:279-282),
+ *  differing only by the travelStartX/travelStartZ facing hint
+ *  (StreamingWorld.cs:1076-1083, world/locationEntrance.js's pickLocationSide). */
+export const REPOSITION = Object.freeze({
+  None: 'None',
+  RandomStartMarker: 'RandomStartMarker',
+  DirectionFromStartMarker: 'DirectionFromStartMarker',
+});
 
 /**
  * IsOnShip (:79-84): a remembered boarding AND the player standing on

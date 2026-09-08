@@ -10337,3 +10337,41 @@ page and consumes the click before any other arm, which is the message
 box's own behaviour and removes the pre-existing fall-through with it.
 The attribute buttons still pop their descriptions when no dialog is up
 (`:925-941`) - the consume belongs to the dialog, not to the sheet.
+
+## AUDIT 64 F23 - THE TRAVEL MAP'S L AND F WERE LITERAL KEY CODES (2026-09-08)
+
+`DaggerfallTravelMapWindow.Update` takes the modifier state once -
+
+    HotkeySequence.KeyModifiers keyModifiers = HotkeySequence.GetKeyboardKeyModifiers();
+                                                                          (:388)
+
+- and then asks the shortcut TABLE for both of the region page's keys:
+
+    if (DaggerfallShortcut.GetBinding(DaggerfallShortcut.Buttons.TravelMapList)
+            .IsUpWith(keyModifiers))                                       (:418)
+    else if (DaggerfallShortcut.GetBinding(DaggerfallShortcut.Buttons.TravelMapFind)
+            .IsUpWith(keyModifiers))                                       (:427)
+
+`IsUpWith` (`HotkeySequence.cs:169-172`) is the binding's key AND
+`CheckSetModifiers`, whose second clause rejects any virtual modifier the
+sequence did not ask for. Both rows are bare F and L
+(`DialogShortcuts.txt:81-82`), so in DFU Ctrl+L, Shift+F and Alt+F do
+nothing at all.
+
+`ui/travelMapWindow.js` compared `code === 'KeyL'` and `code === 'KeyF'`
+- no table read, no mask. The window sets `isChoiceWindow`, and the host
+routing such a window passes the raw `KeyboardEvent`, so the modifier
+flags were present at the branch and simply not consulted: Shift+F opened
+the find box and Ctrl+L the location picker. Shift is not a hypothetical
+here - it is the key held to scroll a zoomed region map (`:397-402`,
+mirrored in this window's own `hover`). And the two rows the port's
+shortcut table already declared for these buttons had no reader anywhere
+in the tree: written and never read.
+
+The branch is a `firstHotkey(['TravelMapList', 'TravelMapFind'], code, e)`
+switch now, in DFU's `if` / `else if` order, keeping the `LocationCount < 1`
+guard (`:420-421`) and the trailing swallow - DFU's region branch never
+reaches the Return/KeypadEnter arm at `:430-434`, and dropping that would
+let Enter reopen the region panel from inside a region page. Two side
+effects fall out of the table read: the modifier mask, and `normalizeCode`
+folding a keyed host's `char:l`/`char:f` onto the same codes.

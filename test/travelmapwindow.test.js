@@ -450,6 +450,38 @@ test('U41: a fuzzy find offers the picker; a nonsense find answers the not-found
   } finally { _setTravelMapArtForTests(null); }
 });
 
+test('AUDIT 64 F23: L and F come from the DaggerfallShortcut table, modifier mask and all', () => {
+  // Update (:388, :418, :427): the two keys are
+  // `DaggerfallShortcut.GetBinding(Buttons.TravelMapList/TravelMapFind)
+  // .IsUpWith(keyModifiers)`, and IsUpWith (HotkeySequence.cs:169-172)
+  // is the binding's key AND CheckSetModifiers - whose second clause
+  // (:158-162) rejects any virtual modifier the sequence did not ask
+  // for. Both rows are bare F/L (DialogShortcuts.txt:81-82), so in DFU
+  // Ctrl+L and Shift+F do NOTHING. Shift is not hypothetical here: it
+  // is the key held to scroll a zoomed region map (:397-402).
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+
+    w.input('KeyF', { shiftKey: true });
+    assert.equal(w.top, null, 'Shift+F is not the TravelMapFind binding');
+    w.input('KeyL', { ctrlKey: true });
+    assert.equal(w.picker, null, 'Ctrl+L is not the TravelMapList binding');
+    w.input('KeyL', { altKey: true });
+    assert.equal(w.picker, null, 'nor is Alt+L');
+
+    // ...and the bare keys still are.
+    w.input('KeyF');
+    assert.equal(w.top, 'find', 'F alone opens the find box (:427-428)');
+    w.input('Escape');
+    w.input('KeyL');
+    assert.ok(w.picker, 'L alone opens the location list (:418-425)');
+  } finally { _setTravelMapArtForTests(null); }
+});
+
 test('U41: the arrows page a four-screen region, and a pageless one refuses to open', () => {
   restoreDiscovery(null);
   const pages = ['FMAPAI01.IMG', 'FMAPBI01.IMG', 'FMAPCI01.IMG', 'FMAPDI01.IMG'];

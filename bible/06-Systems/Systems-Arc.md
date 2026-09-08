@@ -7216,3 +7216,230 @@ the two source offsets and fails if the drain sinks below the gate, in
 either host, with that reason in the assertion message. Six mutations
 across the two hosts - wrong prime object, constant region index, drain
 moved into the exterior-only path - are dead in both.
+
+## AUDIT 64 F18 - THE FAST-TRAVEL ARRIVAL LANDED IN THE MIDDLE OF THE TOWN (2026-09-08)
+
+`performFastTravel` ends its jump with one call:
+
+    GameManager.Instance.StreamingWorld.TeleportToCoordinates(
+        (int)endPos.X, (int)endPos.Y,
+        StreamingWorld.RepositionMethods.DirectionFromStartMarker);
+                                    (DaggerfallTravelPopUp.cs:334)
+
+The port's `fastTravelTo` passed `{ arriveMinutes }` and nothing else, so
+`_teleportToPixel`'s `reposition` defaulted to `REPOSITION.None`, `landing`
+came out null, and the arrival fell to the last resort in the core -
+`[TERRAIN_SIZE / 2, dest.centerHeight + compensation + 2, TERRAIN_SIZE / 2]`.
+`TerrainHelper.GetLocationTerrainTileOrigin` centres a location in its
+terrain tile (`world/terrainTiles.js` carries it verbatim), so the tile
+centre IS the town centre: the ordinary way to move in this game put the
+player down inside the block grid, keeping the departure facing, with
+`floorLanding`'s downward ray free to take a rooftop as the first hit -
+and the core's own in-geometry refusal is gated on `landing`, so it could
+not fire on this path either.
+
+`RepositionMethods.DirectionFromStartMarker` and `.RandomStartMarker` are
+the SAME arm: `StreamingWorld.Update` falls one case through to the other
+and runs one `PositionPlayerToLocation()` (`:279-282`). The only thing
+that separates them is the facing hint, and the port had deliberately
+left that out - `world/locationEntrance.js`'s header recorded it as its
+own slice. It is ported now, because a half-method is what produced the
+miss in the first place:
+
+- `pickLocationSide` (`world/locationEntrance.js`) is `StreamingWorld.cs:1481-1521`
+  whole. With no hint it is `Random.Range(0, 4)`, which is the state every
+  other caller of the arm is in. With one it takes `worldDeltaX/worldDeltaZ`
+  - the destination pixel's world coordinates minus the departure's - and
+  weights the four sides `px : pz`, DFU's own comment at `:1500-1501`. A
+  journey EASTWARD (`worldDeltaX > 0`) lands on the location's WEST edge,
+  the side it came from, facing east.
+- `TeleportToMapPixel` caches `travelStartX/travelStartZ` off `LocalPlayerGPS`
+  BEFORE it moves the GPS to the destination, and only for
+  `DirectionFromStartMarker` (`:1078-1083`). `fastTravelTo` reads
+  `state.worldCoords(...)` ahead of the jump for exactly that reason;
+  `_teleportToPixel` carries the pair only for that method.
+
+`REPOSITION` (`systems/ship.js`) gained the third member
+(`StreamingWorld.cs:215-223`). The wilderness case is unchanged:
+`locationLandingFor` answers null for a pixel with no location, which is
+DFU's own "No location found, fail back to terrain origin" (`:1441-1446`).
+
+### REVIEW ROUND (2026-09-08) - the fix was right and only a third of it was pinned
+
+Two mutants survived the first round's pins, and both reverted the fix to
+the interim it had explicitly rejected - the plain `Random.Range(0, 4)` of
+`StreamingWorld.cs:1486`, reached because `pickLocationSide` falls back the
+moment either half of the pair is null (DFU's
+`travelStartX == null || travelStartZ == null`, `:1483`):
+
+- `const hint = ... ? travelStart : null` -> `const hint = null` in
+  `_teleportToPixel`. The guard is DFU's own -
+  `if (autoReposition == RepositionMethods.DirectionFromStartMarker)`
+  caches the pair for that method ALONE (`:1078-1083`) - so it is a law and
+  is pinned as one, in `test/audit64_travel.test.js`'s host test.
+- `worldPos: travelStart ? mapPixelToWorldCoords(px, py) : null` ->
+  `worldPos: null` in `locationLandingFor`. This half is
+  `LocalPlayerGPS.WorldX/WorldZ` as `PositionPlayerToLocation` reads them
+  (`:1491-1492`), which `TeleportToMapPixel` has already moved to the
+  DESTINATION pixel (`:1085-1086`). `test/prisonrelease.test.js`'s pin over
+  the same call had been TRIMMED to stop at `startMarkers,` when the two
+  arguments were added, so the fix's own wiring was matched by nothing in
+  the tree; it is grown back to the whole argument object, and
+  `audit64_travel.test.js` carries the same match.
+
+`world.js` has no runtime harness, so a source-text pin is the only
+instrument available here - but it has to cover the operative line rather
+than stop above it.
+
+A third mutant survived inside the ported law itself: the N-S branch's
+ELSE arm, `side = worldDeltaX > 0 ? 3 : 2;` (`:1516-1517`), had no case at
+all - the first round's four cases were `pz == 0` (the E-W branch, both
+arms) and `px == 0` (the N-S branch, if-arm only), so East and West could
+be swapped on that arm with the suite green. Nor did any case have
+`px == pz`, which left the strictness of `if (px > pz)` (`:1503`)
+unpinned - a `>=` mutant takes the E-W branch on a diagonal and answers
+South where DFU answers West. Three cases are added: `px:pz = 1:3` with the
+roll missing the front side (West, and East for the mirror), and `px == pz
+== 2` (West, via the N-S branch). All five mutants now die.
+
+## AUDIT 64 F19 - THE GUILD TELEPORT LANDED THERE TOO (2026-09-08)
+
+`TeleportAway` names its reposition explicitly -
+
+    TeleportToCoordinates((int)destinationPos.X, (int)destinationPos.Y,
+                          StreamingWorld.RepositionMethods.RandomStartMarker);
+                                    (DaggerfallTeleportPopUp.cs:143)
+
+- against an overload whose own default is `RepositionMethods.Origin`
+(`StreamingWorld.cs:368`). The port's `teleportTo` called
+`_teleportToPixel(pick.pixel.x, pick.pixel.y)` with no options at all, so
+a Mages Guild teleport took the same tile-centre landing F18 describes.
+
+The premise that produced both misses was written down in the port: the
+import comment above `locationArrivalLanding` in `scenes/world.js` said
+"TWO callers reach it here ... because DFU reaches it from one place".
+DFU reaches the arm from FIVE sites - `TransportManager.cs:378/:397`,
+`DaggerfallCourtWindow.cs:460`, `DaggerfallTeleportPopUp.cs:143`,
+`PlayerEnterExit.cs:516` and `DaggerfallTravelPopUp.cs:334` - and the
+comment now names them. Four reach it in this host: the court release,
+the ship's boarding, the guild teleport and the fast-travel arrival.
+
+The G5 comment block above `teleportTo` used to summarise TeleportAway as
+"the two calls DFU makes" and never named the third argument of the
+second one; `test/teleportpopup.test.js` then pinned the port's
+two-argument call as if it were the law. Both now read the reference.
+
+## AUDIT 64 F20 - THE ARRIVAL CLAMP HAD ONLY ONE OF ITS TWO ARMS (2026-09-08)
+
+    // Vampires and characters with Damage from Sunlight disadvantage never
+    // arrive between 6am and 6pm regardless of travel type
+    if (GameManager.Instance.PlayerEffectManager.HasVampirism()
+        || GameManager.Instance.PlayerEntity.Career.DamageFromSunlight)
+                                    (DaggerfallTravelPopUp.cs:350-351)
+
+The port passed `sunAverse: !!playerEntity.racialOverride?.sunDamage` -
+the vampire arm alone - and the comment beside it conceded the gap
+("Career DamageFromSunlight still rides its own arc"). The two arms are
+separately sourced in DFU (the racial one off the compound race, the
+career one off the class's own CFG bit) and the port already reads them
+as two: `passiveSpecials.js` burns on `careerSunDamage(career) ||
+override?.sunDamage`. So a custom class carrying "Damage / From Sunlight"
+- reachable through chargen (`specialAdvantages.js`) and through an
+imported classic save - arrived in broad daylight and took the burn the
+clamp exists to prevent. The producer now spells DFU's disjunction.
+
+The Ledger's fast-travel row had struck this item through as closed by
+"V2c shipped DamageFromSunlight itself". V2c shipped the per-round BURN,
+not the clamp's second arm; the closure was stale, not an approval.
+
+## AUDIT 64 F21 - AND THE DOOR HAD ONLY ONE OF ITS TWO RUNGS (2026-09-08)
+
+`dfuiOpenTravelMapWindow` is a ladder, and its fourth rung is the career
+flag's own refusal:
+
+    if (!GiveOffer())
+    {
+        if (GameManager.Instance.PlayerEntity.Career.DamageFromSunlight
+            && DaggerfallUnity.Instance.WorldTime.Now.IsDay)
+        {
+            ... mb.SetText(GetLocalizedText("sunlightDamageFastTravelDay"));
+            mb.Show();
+            return;
+        }
+        racialOverride = ...GetRacialOverrideEffect();
+        if (racialOverride != null && !racialOverride.CheckFastTravel(...))
+            return;
+                                    (DaggerfallUI.cs:612-626)
+
+The port's `toggleTravelMap` went straight from `giveOffer()` to
+`racialFastTravelBlock`, whose body tests `entity?.racialOverride?.sunDamage`
+and nothing else. The port's OWN comment, written at AUDIT 39, already
+named the rung it was missing ("GiveOffer, the sun-damage box and the
+racial override") - a comment describing code that was not there.
+
+The clause is inserted where DFU puts it, ABOVE the racial rung, as a
+rung of its own rather than a clause folded into `racialFastTravelBlock`:
+DFU reads `Career.DamageFromSunlight` here and the `RacialOverrideEffect`
+there, and `CheckFastTravel` is the override's own virtual method. Both
+sites show the SAME localized key, so both speak `SUNLIGHT_TRAVEL_TEXT`,
+and both now read one `nowMin` so they cannot disagree across a minute.
+
+F20 and F21 are one protection in two halves: the door forbids the
+daylight DEPARTURE, the clamp forbids the daylight ARRIVAL of a night
+departure. The port had neither.
+
+## AUDIT 64 F22 - THE CRIME RODE ALONG WITH YOU (2026-09-08)
+
+    private void DaggerfallTravelPopUp_OnPostFastTravel()
+    {
+        // Clear crime state post fast travel
+        CrimeCommitted = Crimes.None;
+    }
+                                    (PlayerEntity.cs:2455-2459, subscribed :211)
+
+DFU has TWO crime clearers and the port carried one. The other,
+`PlayerGPS_OnExitLocationRect` (`:2449-2453`), is `court.js`'s
+`clearCrimeOnLocationExit`, and it cannot stand in for this one across a
+jump: `_teleportToPixel` sets `_wasInLocationRect = false` itself (DFU's
+own `PlayerGPS.ResetState`, `:398-401`), so the rect edge never fires on
+an arrival. A player who committed a crime and then stepped far enough
+from the watch to clear `areEnemiesNearby` travelled with the flag set,
+and at the destination it was live: the watch's despawn law is gated on
+`crimeCommitted`, and the surrender box levies the departure town's
+charge - with the reputation hit landing in the ARRIVAL region.
+
+`RaiseOnPostFastTravelEvent()` is `performFastTravel`'s last statement
+(`DaggerfallTravelPopUp.cs:383`), after `RaiseSkills` (`:380`) and
+`FadeHUDFromBlack` (`:381`), so the clear sits at the true tail of
+`fastTravelTo` - not beside `setSyntheticTimeIncrease`, which AUDIT 63
+F13 deliberately hoisted for its own reason. It goes through
+`setCrimeCommitted`, because DFU assigns the `CrimeCommitted` PROPERTY
+(`:189`), whose setter is `SetCrimeCommitted` (`:2346-2354`).
+
+NOT extended to the teleport arm: `DaggerfallTeleportPopUp` never runs
+`performFastTravel` and raises no such event, so a guild teleport keeps
+the crime in DFU too.
+
+## AUDIT 64 F24 - THE REFUSAL SENTENCE WAS NOT DFU'S (2026-09-08)
+
+`systems/vampirism.js` declared
+
+    export const SUNLIGHT_TRAVEL_TEXT =
+      'You cannot travel during the day, the sunlight would destroy you.';
+
+under a comment claiming it was the localized key `sunlightDamageFastTravelDay`
+"as a literal". It was not: grepping the DFU tree for "sunlight would
+destroy" returns nothing. The key's value is
+
+    sunlightDamageFastTravelDay,You cannot initiate fast travel during the day.
+              (Text/Master Localization CSV Files/Internal_Strings.csv:657)
+
+and the shipped en table agrees (`Internal_Strings Shared Data.asset:2007`
+binds the key to m_Id 500; `Internal_Strings_en.asset:2350`). The standing
+departure this constant lives under is a MECHANISM one - the port holds en
+strings where DFU resolves a `TextManager` lookup - and it requires the
+constant to BE DFU's string. Same precedent as the already-given-house
+line, which was fixed by reading the en table rather than waived.
+
+One key, two call sites (`VampirismEffect.cs:202` and `DaggerfallUI.cs:619`),
+so F21's new career box speaks this same constant.

@@ -78,14 +78,14 @@ import {
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
-import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';
+import { racialRestBlock, racialFastTravelBlock, cureVampirism, SUNLIGHT_TRAVEL_TEXT } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202)
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
-import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
+import { playerInSunlight, playerInHolyPlace, careerSunDamage } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags; AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
 import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
@@ -103,7 +103,7 @@ import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAM
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
-import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
+import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -161,10 +161,10 @@ import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocat
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-// The RandomStartMarker arm (StreamingWorld's PositionPlayerToLocation),
-// the law and its two location-type reads. TWO callers reach it here -
-// the court release and the ship's boarding - because DFU reaches it
-// from one place: TeleportToCoordinates(x, y, RandomStartMarker).
+// The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
+// law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
+// from FIVE sites, not one, and FOUR of them are here - the court
+// release, the ship's boarding, the guild teleport and fast travel.
 import { locationArrivalLanding, locationStartMarkers } from '../world/locationEntrance.js';
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
@@ -3097,7 +3097,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  Null is DFU's "No location found, fail back to terrain origin"
    *  (:1441-1446) - the caller's own default landing stands in for it. */
-  function locationLandingFor(px, py, { noMarkers = false } = {}) {
+  function locationLandingFor(px, py, { noMarkers = false, travelStart = null } = {}) {
     const key = `${px},${py}`;
     const dfLoc = locationIndex.get(key);
     if (!dfLoc?.exterior?.exteriorData) return null;
@@ -3111,7 +3111,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
       })))
       : [];
-    const at = locationArrivalLanding(dfLoc, { origin, startMarkers });
+    // AUDIT 64 F18: the side pick's DirectionFromStartMarker inputs.
+    // `worldPos` is LocalPlayerGPS.WorldX/WorldZ as PositionPlayerToLocation
+    // reads them - TeleportToMapPixel has already moved the GPS to the
+    // DESTINATION pixel (StreamingWorld.cs:1084-1086) - and `travelStart`
+    // is the pair it cached off the departure a line earlier (:1078-1083).
+    const at = locationArrivalLanding(dfLoc, {
+      origin,
+      startMarkers,
+      travelStart,
+      worldPos: travelStart ? mapPixelToWorldCoords(px, py) : null,
+    });
     if (!at) return null;
     // The location frame IS the built pixel's local frame; only the
     // vertical compensation the streamer carries has to be added back.
@@ -3130,7 +3140,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
   const OBSTRUCTED_ABOVE = 3;
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None } = {}) {
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, travelStart = null } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -3184,7 +3194,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // HERE, against the pixel that has just been built - its location
     // origin, its blocks' start markers, and the streamer's new
     // compensation - and never against the pixel being left.
-    const landing = reposition === REPOSITION.RandomStartMarker ? locationLandingFor(px, py) : null;
+    //
+    // AUDIT 64 F18: BOTH marker methods take this arm - Update()'s two
+    // cases fall through to the one PositionPlayerToLocation() call
+    // (:279-282) - and the travel hint is carried only by the one
+    // TeleportToMapPixel caches it for (:1078-1083).
+    const wantsLanding = reposition === REPOSITION.RandomStartMarker
+      || reposition === REPOSITION.DirectionFromStartMarker;
+    const hint = reposition === REPOSITION.DirectionFromStartMarker ? travelStart : null;
+    const landing = wantsLanding ? locationLandingFor(px, py, { travelStart: hint }) : null;
     const local = landing?.pos ?? localPos;
     // `grounded` is StreamingWorld.RepositionPlayer's own last argument
     // (:1587, :1592), which the location arm derives from the
@@ -3213,7 +3231,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // by construction. On a valid marker the floor IS the flat and
     // nothing changes.
     if (walkMode && landing && pos[1] - raw[1] > OBSTRUCTED_ABOVE) {
-      const edge = locationLandingFor(px, py, { noMarkers: true });
+      const edge = locationLandingFor(px, py, { noMarkers: true, travelStart: hint });
       if (edge) {
         const eraw = edge.pos;
         pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
@@ -3278,7 +3296,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    * What it keeps is the two calls DFU makes. TransitionExterior
    * FIRST when the player is inside (:140-141) - you cannot teleport
-   * out of a building - and then TeleportToCoordinates, which raises
+   * out of a building - and then TeleportToCoordinates(x, y,
+   * RepositionMethods.RandomStartMarker) (:143), which raises
    * OnInitWorld, whose weather half applies the destination climate's
    * ARRAY slot. That is the same handler fast travel's arrival runs,
    * so the destination's weather lands the same way; what does NOT
@@ -3580,7 +3599,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     _teleporting = true;
     try {
       modes?.forceExitToExterior();
-      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
+      // AUDIT 64 F19: TeleportAway names the reposition EXPLICITLY -
+      // `TeleportToCoordinates((int)destinationPos.X, (int)destinationPos.Y,
+      // RepositionMethods.RandomStartMarker)` (:143), where the overload's
+      // own default is Origin (StreamingWorld.cs:368) - so this is the
+      // third caller of PositionPlayerToLocation the port has a host for,
+      // not a landing choice of the port's. Without it the guild teleport
+      // put the player down at the terrain tile's dead centre, which for a
+      // city is inside its block grid.
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
+        { reposition: REPOSITION.RandomStartMarker });
       if (!weatherOverride) {
         applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
         if (currentWeather() !== weather) applyWeather(currentWeather());
@@ -3685,8 +3713,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       // from THAT, instead of skinning the destination for the month
       // the player left and having the next frame's tickSeason tear
       // the whole just-built grid down again.
+      // AUDIT 64 F18: performFastTravel's teleport is
+      // `TeleportToCoordinates((int)endPos.X, (int)endPos.Y,
+      // RepositionMethods.DirectionFromStartMarker)` (:334) and the port
+      // passed no reposition at all, so the ordinary way to move landed
+      // the player at the destination tile's dead CENTRE - inside a city's
+      // block grid, with the departure facing kept and floorLanding free
+      // to snap onto a roof. The method is PositionPlayerToLocation: an
+      // edge landing a tenth of a block outside the rectangle, facing in,
+      // snapped to the nearest start marker for a city.
+      //
+      // travelStart is TeleportToMapPixel's own cache (:1078-1083), taken
+      // off LocalPlayerGPS BEFORE the GPS moves to the destination - so it
+      // is read here, ahead of the jump, and it is what tilts the side
+      // pick towards the side the journey came from.
+      const travelStart = state.worldCoords(walkMode ? player.pos : cam.pos);
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes });
+        { arriveMinutes: worldMinutes() + computed.minutes,
+          reposition: REPOSITION.DirectionFromStartMarker,
+          travelStart });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -3728,8 +3773,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // V2b: the vampirism arc LANDED - a sun-damaged racial
         // override arrives at dusk, never in daylight (the law has
         // supported this parameter since the F-slice; only the wiring
-        // waited). Career DamageFromSunlight still rides its own arc.
-        sunAverse: !!playerEntity.racialOverride?.sunDamage,
+        // waited).
+        //
+        // AUDIT 64 F20: and the SECOND arm of DFU's disjunction, which
+        // the wiring left out - DaggerfallTravelPopUp.cs:351 is
+        // `HasVampirism() || PlayerEntity.Career.DamageFromSunlight`,
+        // under the comment at :350 ("Vampires and characters with
+        // Damage from Sunlight disadvantage never arrive between 6am
+        // and 6pm regardless of travel type"). The two are separately
+        // sourced - the racial arm off the compound race, the career
+        // arm off the class's own CFG bit - which is exactly how the
+        // per-round burn already reads them (passiveSpecials.js:113).
+        sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
@@ -3755,6 +3810,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       // raised by the arrival is pushed onto a screen that is still
       // black, and the fade it clears is the one that has not started.
       hudFade.fadeHUDFromBlack();
+      // AUDIT 64 F22 - DaggerfallTravelPopUp_OnPostFastTravel
+      // (PlayerEntity.cs:2455-2459): "Clear crime state post fast
+      // travel". PlayerEntity subscribes it at :211, and it is a
+      // SECOND clearer, distinct from PlayerGPS_OnExitLocationRect
+      // (:2449-2453, court.js's clearCrimeOnLocationExit) - which the
+      // teleport core structurally cannot raise, because it drops
+      // _wasInLocationRect itself (ResetState, PlayerGPS.cs:398-401)
+      // so no rect edge fires across the jump. Without this the
+      // departure town's crime rides to the destination: the watch's
+      // despawn law is gated on it (cityGuards.js) and the arrest box
+      // levies it (arrestFlow.js), in the ARRIVAL region.
+      //
+      // Raised where DFU raises it - RaiseOnPostFastTravelEvent
+      // (DaggerfallTravelPopUp.cs:383) is the method's last statement,
+      // after RaiseSkills (:380) and FadeHUDFromBlack (:381) - and
+      // through the ONE setter, because DFU assigns the
+      // `CrimeCommitted` PROPERTY (:2458), whose setter is
+      // SetCrimeCommitted (:189, :2346-2354).
+      //
+      // NOT the teleport arm: DaggerfallTeleportPopUp is a plain
+      // popup that never runs performFastTravel, so a guild teleport
+      // keeps the crime in DFU too.
+      setCrimeCommitted(playerEntity, CRIMES.None);
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -4134,10 +4212,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // `give pc _item_ notify` offer is handed over HERE and the press
     // is spent: the map does not open, and the next press travels.
     if (giveOffer()) return;
+    // ONE clock for both sun rungs, so the two cannot disagree across a
+    // minute boundary the way two separate reads could.
+    const nowMin = Math.floor(worldMinutes());
+    // AUDIT 64 F21: the CAREER rung, the one the comment above has
+    // named since AUDIT 39 and the code never carried -
+    // DaggerfallUI.cs:614-621: `if (PlayerEntity.Career.DamageFromSunlight
+    // && WorldTime.Now.IsDay)` shows the sunlightDamageFastTravelDay box
+    // (:619) and RETURNS, and it sits ABOVE the racial override's
+    // CheckFastTravel at :624-626. It is a separate rung, not a clause
+    // of the racial one: DFU reads Career.DamageFromSunlight (DFCareer.cs's
+    // own CFG bit, specialAdvantages.js:266 here) where CheckFastTravel
+    // reads the RacialOverrideEffect. Same localized key at both sites,
+    // so the box says the same sentence.
+    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) {
+      townTalk.say(SUNLIGHT_TRAVEL_TEXT);
+      return;
+    }
     // V2b: CheckFastTravel at the map's own door, where DFU calls it
     // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
     // travel by day, and the refusal is the override's own line.
-    const ftb = racialFastTravelBlock(playerEntity, Math.floor(worldMinutes()));
+    const ftb = racialFastTravelBlock(playerEntity, nowMin);
     if (ftb) { townTalk.say(ftb.text); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
