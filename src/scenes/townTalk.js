@@ -40,6 +40,8 @@ import { makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
+import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
+import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
 import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
@@ -315,7 +317,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function setMode(m) {
     if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
     setInteractionMode(m);
-    hud.add(`Interaction is now in ${m} mode.`);
+    // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
+    // with `DaggerfallUI.SetMidScreenText(interactionIsNowInMode)` - the
+    // centred label, not the popup queue.
+    setMidScreenText(`Interaction is now in ${m} mode.`);
   }
 
   function keydown(e) {
@@ -594,14 +599,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // 3.2 alone). The old 6.4 pre-gate answered a person down a long
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE) return false;
-    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }
+    // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
     // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
     // (PlayerActivate.cs:785-795), so an already-attempted townsperson
     // produces NO output at any range - the port gated distance first
     // and printed a line DFU never shows.
     if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
-        && bestDist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }
+        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 64 F34: :790, the same surface
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
@@ -612,7 +618,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // F048's nesting, so the already-attempted arm is SILENT here
       // too, whatever the range.
       if (target.person.pickpocketAttempted) return;
-      if (dist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return; }
+      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return; }   // AUDIT 64 F34: :790, the same surface
       target.person.pickpocketAttempted = true;
       const r = pickpocket(playerEntity, {
         rolls,
@@ -1056,7 +1062,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // tickOverlay (dungeonContext:2692-2696) has always had one.
     if (overlay?.done) dropOverlay();
     const s = hudScale(canvas.width, canvas.height);
-    if (font) hud.draw(renderer, canvas, font, s);
+    // AUDIT 64 F37: popupText is a NativePanel component of the HUD
+    // window (DaggerfallHUD.cs:172-173), so the Draw override
+    // (:347-351) hides the popup column with everything else. Only
+    // the DRAW half is gated - PopupText.Update retires rows from
+    // DaggerfallHUD.Update, which renderHUD does not touch.
+    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s);
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
     // before its own, and every box DaggerfallUI.MessageBox opens
@@ -1223,7 +1234,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  in the notebook's message ring (:123). The notebook is built by
      *  the quest bridge, which is built after this host, so the host
      *  hands the sink back down once it exists. */
-    set hudMessageSink(fn) { hud.onMessage = fn; },
+    set hudMessageSink(fn) { hud.onMessage = fn; midScreenText.onMessage = fn; },   // AUDIT 64 F34: SetMidScreenText carries the SAME Notebook.AddMessage tail (DaggerfallHUD.cs:371)
     get hudMessageSink() { return hud.onMessage; },
     /** AUDIT 63 F5: PlayerEntity.Notebook.AddNote(List<Token>) for the
      *  talk window's Copy-to-logbook button (DaggerfallTalkWindow.cs
@@ -1240,9 +1251,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      if (font_) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));
+      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));   // AUDIT 64 F37: the same Draw gate as the frame above
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
+    /** AUDIT 64 F35 (review round): ...and the OTHER question the same
+     *  stack answers - does what is open blank the HUD? A window is up
+     *  (the latch) AND something on this stack cut the previousWindow
+     *  chain (`hudCovered`, DaggerfallPopupWindow.cs:76-84). The slot
+     *  goes with it because a window filled by hand has not been
+     *  reconciled onto the stack yet. */
+    get hudCovered() { return talkPaused() && windows.hudCovered(overlay); },
     /** U38: the loaded HUD font, for the components drawHud draws
      *  (the crosshair's mode label). This module already owns the ONE
      *  FONT0003 both exterior hosts use; handing it out beats a second

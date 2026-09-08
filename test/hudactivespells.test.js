@@ -262,7 +262,10 @@ test('activeSpells: the rows ride the ONE HUD call, on BOTH its branches, and al
   // are drawn on both branches, over the bar.
   assert.equal((hud.match(/drawSpellIconRows\(/g) ?? []).length, 3, 'defined once, called on both branches');
   const large = hud.indexOf('if (largeHud?.art) {');
-  const ret = hud.indexOf('return;', large);
+  // AUDIT 64 F37 put the renderHUD gate's own `return;` at the head of
+  // this branch, so the branch's END is the small-HUD branch's first
+  // line rather than the first `return` after the fork.
+  const ret = hud.indexOf('lastLargeHudBar = null;', large);
   assert.ok(hud.slice(large, ret).includes('drawSpellIconRows('), 'the large-HUD branch draws them too');
   assert.match(hud, /largeHudRect: lastLargeHudBar/, 'and hands them the bar to dodge');
   // the sheet loads with the rest of the HUD art, not with the

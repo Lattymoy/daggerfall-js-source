@@ -282,25 +282,34 @@ test('AUDIT 63 F33: the arm\'s gate ORDER - class, then the attempt flag, then t
   // a MONSTER breaks out silently and still consumes (:827-828)
   const rat = { dead: false, mobileType: 5, entity: { isClass: false, level: 1 }, ai: {} };
   const said = [];
-  assert.equal(activateMobileEnemy(rat, 1, 'steal', thief(), { hud: (t) => said.push(t) }), true);
+  assert.equal(activateMobileEnemy(rat, 1, 'steal', thief(),
+    { hud: (t) => said.push(t), midScreen: (t) => said.push(t) }), true);
   assert.deepEqual(said, []);
   // the distance test is NESTED INSIDE the flag (:830-836): an
   // already-attempted foe says nothing AT ANY RANGE
   const done = classFoe({ entity: { pickpocketAttempted: true } });
-  assert.equal(activateMobileEnemy(done, PICKPOCKET_DISTANCE + 50, 'steal', thief(), { hud: (t) => said.push(t) }), true);
+  assert.equal(activateMobileEnemy(done, PICKPOCKET_DISTANCE + 50, 'steal', thief(),
+    { hud: (t) => said.push(t), midScreen: (t) => said.push(t) }), true);
   assert.deepEqual(said, []);
-  // an untried foe beyond 3.2 gets the one line and no roll
+  // an untried foe beyond 3.2 gets the one line and no roll. AUDIT 64
+  // F34: PlayerActivate.cs:834 speaks THAT line through
+  // DaggerfallUI.SetMidScreenText - the HUD's centred label - while the
+  // pickpocket RESULT below is a PopupMessage/MessageBox (:838 ->
+  // :1611), so the arm carries two sinks and this one takes midScreen.
   const far = classFoe();
-  assert.equal(activateMobileEnemy(far, PICKPOCKET_DISTANCE + 0.01, 'steal', thief(), { hud: (t) => said.push(t) }), true);
-  assert.deepEqual(said, [TOO_FAR_AWAY_TEXT]);
+  const mid = [];
+  assert.equal(activateMobileEnemy(far, PICKPOCKET_DISTANCE + 0.01, 'steal', thief(),
+    { hud: (t) => said.push(t), midScreen: (t) => mid.push(t) }), true);
+  assert.deepEqual(said, [], 'the refusal does not queue a popup row');
+  assert.deepEqual(mid, [TOO_FAR_AWAY_TEXT]);
   assert.equal(far.entity.pickpocketAttempted, undefined, 'the flag is set only when the roll runs (:837)');
   // one attempt per foe (:830)
   const once = classFoe();
   const p = thief();
-  activateMobileEnemy(once, 1, 'steal', p, { rolls: seq(0.99, 0.5, 0.5), hud: () => {}, makeEnemiesHostile: () => {} });
+  activateMobileEnemy(once, 1, 'steal', p, { rolls: seq(0.99, 0.5, 0.5), hud: () => {}, midScreen: () => {}, makeEnemiesHostile: () => {} });
   assert.equal(once.entity.pickpocketAttempted, true);
   const after = [];
-  activateMobileEnemy(once, 1, 'steal', p, { hud: (t) => after.push(t), modal: (t) => after.push(t) });
+  activateMobileEnemy(once, 1, 'steal', p, { hud: (t) => after.push(t), midScreen: (t) => after.push(t), modal: (t) => after.push(t) });
   assert.deepEqual(after, [], 'the second click is silent');
 });
 

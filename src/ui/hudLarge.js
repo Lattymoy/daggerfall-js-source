@@ -112,7 +112,7 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:7025 and scenes/exterior.js:3602, the only two
+// scenes/world.js:7036 and scenes/exterior.js:3613, the only two
 // hosts that carry the call, each over a useFwd that is the camera's
 // own forward from cam.yaw and cam.pitch - or, since TI1, the touch
 // tap's ray, which IS a pixel unprojected, but through the frame's
@@ -153,6 +153,8 @@ import { getBool, getFloat, getInt } from '../systems/settings.js';
 import { getInteractionMode } from '../player/interactionMode.js';
 import { cursorActive } from '../player/pointerLock.js';
 import { routeAction } from './input.js';
+import { audio } from '../systems/audio.js';   // AUDIT 64 F42: PlayOneShot(SoundClips.ButtonClick) heads every HUDLarge handler
+import { SOUND } from '../systems/soundClips.js';
 
 /** mainPanelRect (:34) - the bar's own native size. */
 export const LARGE_HUD_W = 320;
@@ -671,6 +673,23 @@ export function routeLargeHudClick(px, py, button, ctx, { windowUp = false } = {
   if (!largeHudEnabled() || windowUp || !cursorActive()) return false;
   const hit = largeHudClick(largeHudBar(), px, py, button);
   if (!hit) return false;
+  // AUDIT 64 F42 - EVERY PANEL CLICKS. `DaggerfallUI.Instance
+  // .PlayOneShot(SoundClips.ButtonClick)` is the FIRST statement of
+  // all thirteen HUDLarge handlers, inside the IsLargeHUDInteractable
+  // guard and BEFORE the PostMessage / ChangeInteractionMode /
+  // ToggleSheath: HUDLarge.cs:399 and :423 (InteractionModePanel left
+  // and right) and :445, :454, :463, :472, :481, :490, :499, :508,
+  // :517, :526, :535 (head, options, spellbook, inventory, sheath,
+  // use-magic-item, transport, map left, map right, rest, compass).
+  // It fires on the HIT, whether or not a host has wired the action,
+  // because DFU plays it before the message that may be refused.
+  //
+  // Only the two DFU binds - OnMouseClick and OnRightMouseClick
+  // (HUDLarge.cs's panel registration) - make a sound; a middle click
+  // reaches no handler at all, and this port's largeHudClick sends
+  // every non-right button to the LEFT action, so the sound is asked
+  // of the two buttons DFU actually binds.
+  if (button === 0 || button === 2) audio.playOneShot(SOUND.ButtonClick, 1);
   routeAction(hit.action, ctx);
   return true;
 }

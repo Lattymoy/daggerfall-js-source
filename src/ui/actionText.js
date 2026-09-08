@@ -52,11 +52,22 @@ export class ActionTextBox {
    *  DaggerfallUnityStatDrainedTextColor so a DEFAULTED region reads as
    *  a warning (DaggerfallBankingWindow.cs:523). Unset keeps
    *  MultiFormatTextLabel's own default. */
-  constructor(lines, { highlightColor = undefined } = {}) {
+  /** AUDIT 64 F35 (review round): DaggerfallPopupWindow.previousWindow
+   *  (DaggerfallPopupWindow.cs:24, :56-59). This class is the port's
+   *  DaggerfallMessageBox and nearly every one of its ~35 sites is a
+   *  `DaggerfallUI.MessageBox(...)` in the reference - a box built on
+   *  `Instance.uiManager.TopWindow` (DaggerfallUI.cs:1330/:1339/:1348/
+   *  :1357), which during play is `dfHUD` (:407-408). So the default
+   *  is SET, and `Draw` (:76-84) paints the HUD under the box.
+   *  DaggerfallAction's own ShowText box is the exception and passes
+   *  `null` (Internal/DaggerfallAction.cs:536); it says so at its call
+   *  site. */
+  constructor(lines, { highlightColor = undefined, previousWindow = true } = {}) {
     this.lines = lines;
     this.highlightColor = highlightColor;
     this.done = false;
     this._next = [];
+    this.previousWindow = previousWindow;
   }
 
   /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
@@ -100,6 +111,15 @@ export class ActionInputBox {
     this.onInput = onInput;
     this.value = '';
     this.done = false;
+    /** AUDIT 64 F35 (review round): the ONLY construction of this box
+     *  in the reference passes a null previous - `new
+     *  DaggerfallInputMessageBox(DaggerfallUI.UIManager, textID, 20,
+     *  " > ", false, true, null)` (Internal/DaggerfallAction.cs:565) -
+     *  so nothing is painted beneath it. Every other
+     *  DaggerfallInputMessageBox in DFU is raised from inside another
+     *  window and passes `this`, which roots at that window, not at
+     *  the HUD. */
+    this.previousWindow = null;
   }
 
   input(action) {

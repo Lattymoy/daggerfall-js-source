@@ -59,6 +59,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -1009,6 +1010,16 @@ export function createWorldModes(host) {
    *  true of both terms. Once `reconcile` has run, the latch alone
    *  answers and it answers for the whole DEPTH. */
   const interiorPaused = () => interiorWindows.paused() || pauseWhileOpen(interiorOverlay);
+  /** AUDIT 64 F35 (review round): the HUD's paint gate, shaped exactly
+   *  like `overlayHeld`'s mode half above and asked of the same two
+   *  stacks. A window being up is not enough to blank the HUD - DFU
+   *  paints it under every `DaggerfallUI.MessageBox` box, whose
+   *  previousWindow is the then-top HUD (DaggerfallUI.cs:1330 over
+   *  DaggerfallPopupWindow.cs:76-84) - so each term asks its own
+   *  stack whether the chain still reaches the HUD. townTalk's term
+   *  is ORed in at the draw site, as `overlayHeld` does. */
+  const modeHudCovered = () => (mode === 'interior' && interiorPaused() && interiorWindows.hudCovered(interiorOverlay))
+    || (mode === 'dungeon' && !!dungeonCtx?.hudCovered);
   // V2c: THE SUNLIGHT SEAM (THE FOUR HOSTS RULE). This host owns the
   // mode machine for BOTH town pages - world.js and exterior.js each
   // build it at boot - so the one registration here answers
@@ -2108,7 +2119,8 @@ export function createWorldModes(host) {
     // RayDistance, so this is the board's own second test.
     const d = rayAabb(eye, dir, aabb);
     if (d === null || d > BULLETIN_BOARD_ACTIVATION_DISTANCE) {
-      townTalk?.say?.(TOO_FAR_AWAY_TEXT);
+      // AUDIT 64 F34: PlayerActivate.cs:711 - SetMidScreenText.
+      setMidScreenText(TOO_FAR_AWAY_TEXT);
       return;
     }
     // PlayerGPS.CurrentLocalizedLocationName (:721). Standing in the
@@ -4196,12 +4208,16 @@ export function createWorldModes(host) {
         if (!opened && !isBash) {
           const lockpick = skillValue(playerEntity, SKILLS.Lockpicking);
           if (getInteractionMode() !== 'steal') {
+            // AUDIT 64 F34: :527-529 deliberately splits these two
+            // across the HUD's TWO surfaces - `PopupMessage(locked
+            // ExteriorDoor)` then `LookAtInteriorLock(...)`, which is
+            // SetMidScreenText (:996-1007). One line per surface.
             townTalk?.say?.(LOCKED_EXTERIOR_DOOR_TEXT);
-            townTalk?.say?.(lookAtLockText(lockValue, playerEntity.level, lockpick));
+            setMidScreenText(lookAtLockText(lockValue, playerEntity.level, lockpick));
             return true;
           }
           if (locId && lockpick <= getLastLockpickAttempt(locId, bd.buildingKey)) {
-            townTalk?.say?.(lookAtLockText(lockValue, playerEntity.level, lockpick));
+            setMidScreenText(lookAtLockText(lockValue, playerEntity.level, lockpick));   // AUDIT 64 F34: LookAtInteriorLock, the same surface
             return true;
           }
           tallySkill(playerEntity, SKILLS.Lockpicking, 1);
@@ -5991,6 +6007,11 @@ export function createWorldModes(host) {
           // not appear. This frame ends `return true`, so world.js's
           // own drawHud (which does pass it) never runs in here.
           cursorActive: overlayHeld,
+          // AUDIT 64 F35 (review round): and the PAINT's own gate - a
+          // message box paints the HUD under it (DaggerfallUI.cs:1330
+          // over DaggerfallPopupWindow.cs:76-84), a null-previous
+          // window (:512-530) does not. Same union `overlayHeld` takes.
+          windowCoversHud: !!townTalk?.hudCovered || modeHudCovered(),
           // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
           readied: magic?.readied?.() ?? null,
           weapon: interiorWeapon.playerWeapon.weapon ?? null,
@@ -7711,6 +7732,10 @@ export function createWorldModes(host) {
     // this host's arithmetic - `interiorPaused` is the one place the
     // question is asked (see its note at the stack's construction).
     get overlayHeld() { return (mode === 'interior' && interiorPaused()) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
+    /** AUDIT 64 F35 (review round): the same union, asked of the
+     *  previousWindow chain instead of the pause latch - see
+     *  `modeHudCovered`. The outer hosts OR this with townTalk's. */
+    get hudCovered() { return modeHudCovered(); },
     /** AUDIT 58 (f3/input): the mode machine's own "a window I draw is
      *  up" read, published so the HOST's single bindCursorToggle can OR
      *  it into its guard. One reader of Actions.ActivateCursor per host

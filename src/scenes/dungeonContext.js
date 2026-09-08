@@ -51,6 +51,8 @@ import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic bottom bar
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
+import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
+import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -1332,12 +1334,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // wave 22: this host has a HudText of its own, so it needs the same
   // notebook sink PopupText.AddText carries (:123).
   hudText.onMessage = (t) => opts.hudMessageSink?.(t);
+  // AUDIT 64 F34: SetMidScreenText ends with the SAME
+  // `Notebook.AddMessage(message)` PopupText.AddText carries
+  // (DaggerfallHUD.cs:371 / PopupText.cs:123), so the label files into
+  // the journal's Messages page through the same host sink.
+  midScreenText.onMessage = (t) => opts.hudMessageSink?.(t);
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
   // text on a refused locked door (LookAtInteriorLock, chance-tiered
   // over the LIVE lockpicking skill).
   actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
-  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  // AUDIT 64 F34: LookAtInteriorLock speaks the whole difficulty
+  // ladder and `magicLock` through SetMidScreenText
+  // (PlayerActivate.cs:996-1007), never the popup queue.
+  actions.onLockedDoor = (o) => setMidScreenText(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
   // R1: the STEAL-mode pick attempt's doors - the tally
   // (TallySkill(Lockpicking, 1), DaggerfallActionDoor.cs:165), and the
   // attempt line + the picked-lock sound (ActivateLockUnlock :178-183;
@@ -1406,7 +1416,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (DaggerfallAction.cs) - PushWindow, not "only if the slot is
     // free". A dungeon's own plaque read as silence whenever anything
     // else was open.
-    pushDungeonWindow(new ActionTextBox(lines));
+    // AUDIT 64 F35 (review round): ...and it is the ONE box in the
+    // port that passes a NULL previousWindow - `new
+    // DaggerfallMessageBox(DaggerfallUI.UIManager, null)`
+    // (Internal/DaggerfallAction.cs:536), where DaggerfallUI.MessageBox
+    // passes the then-top. So this plaque covers the HUD where a quest
+    // popup does not.
+    pushDungeonWindow(new ActionTextBox(lines, { previousWindow: null }));
   };
   actions.onShowTextInput = (id, submit) => {
     const lines = rscLines(id);
@@ -4105,6 +4121,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const detected = detectFeed.tick(dt);
     drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
       { font: hudFont, cursorActive: !!activeOverlay,
+        // AUDIT 64 F35 (review round): the PAINT's gate, which is not
+        // "a window is open" - a message box carries the HUD under it
+        // (DaggerfallUI.cs:1330 over DaggerfallPopupWindow.cs:76-84).
+        windowCoversHud: !!activeOverlay && dungeonWindows.hudCovered(activeOverlay),
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
@@ -4112,7 +4132,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         weapon: playerWeapon.weapon ?? null,
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
-    if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
+    // AUDIT 64 F37: popupText is a NativePanel component of the HUD
+    // window (DaggerfallHUD.cs:172-173) and the Draw override
+    // (:347-351) suppresses it with everything else; the tick is
+    // Update's and keeps draining.
+    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the
     // hosts re-engage a dropped lock on the next gesture (DFU shape),
     // so an unlocked frame is transient, not a mode to advertise.
@@ -4731,6 +4755,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** AUDIT 64 F35 (review round): the HUD's own question, asked of
+     *  the same stack - a window is up AND something on it cut the
+     *  previousWindow chain (DaggerfallPopupWindow.cs:76-84). Published
+     *  because worldModes' dungeon arm mounts this context and draws
+     *  the HUD for it. */
+    get hudCovered() { return dungeonPaused() && dungeonWindows.hudCovered(activeOverlay); },
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },

@@ -10971,3 +10971,372 @@ the stats screen reading 7 with `statView` drawing on 7. Two
 `test/summary.test.js` pins that asserted the shared field on the
 summary are re-aimed at `sumStatCursor`, and the SelectStat(0) pin now
 also asserts the other rollout keeps its row.
+
+## AUDIT 64 F34 - DAGGERFALLHUD HAD TWO TEXT SURFACES AND THE PORT HAD ONE (2026-09-08)
+
+`DaggerfallHUD` owns `popupText` **and** `midScreenTextLabel`
+(`DaggerfallHUD.cs:32-33`, two distinct fields). The first is
+`PopupText` - the stacking seven-row queue at the top of the native
+panel, ported since U5 as `ui/hudText.js`. The second is a single
+`TextLabel`, `HorizontalAlignment.Center` at `Position (0, 146)`
+(`:175-177`, over `const int midScreenTextDefaultY = 146` at `:25`),
+with a timer of its own (`:50-51`, the `-1` sentinel and a 1.5 s
+delay) that **replaces** itself on every write and blanks itself once
+the timer passes the delay (`:259-267`).
+
+The port had no such surface at all - `grep` for `midScreen` in `src/`
+returned two comments - so every `SetMidScreenText` caller had been
+folded into the popup queue: the wrong place (native y=4 instead of
+y=146), the wrong lifetime (`PopupText.popDelay` 1.0 instead of 1.5)
+and the wrong semantics (a queue that stacks and scrolls where DFU
+shows one line). The reference proves the two are deliberately
+distinct in one file: `PlayerActivate.cs:527-529` speaks
+`PopupMessage(lockedExteriorDoor)` and then `LookAtInteriorLock(...)`,
+one line per surface.
+
+`ui/midScreenText.js` is the label. `set()` is `SetMidScreenText`
+verbatim (`:353-372`): the large-HUD reposition first, then text,
+`timer = 0`, `delay`, and the `Notebook.AddMessage(message)` tail
+(`:371`) that `PopupText.AddText` carries too (`PopupText.cs:123`).
+The reposition is the clause most easily got wrong and all three parts
+of it are load-bearing (`:356-365`) - it is guarded by the LargeHUD
+**setting** rather than by a drawn bar, `localY = (offset /
+LocalScale.y) - 7` is used only when it is `< 146` (a SHORT bar leaves
+it above and the label must stay at 146, not drop with the bar), and
+the assignment is `(int)localY`, a truncation. It is computed inside
+`set()` and persists; it is not recomputed per frame.
+
+The module is the shape of `DaggerfallUI.cs:783-789`'s static shim: one
+label per game reached by a free `setMidScreenText`, so a caller in any
+host speaks to the same surface with no sink threaded through it.
+`drawHud` observes the live screen state each frame, ticks the timer
+and draws the label - on both skins, since it is a message surface
+rather than a classic-skin element.
+
+Every caller in the reference was re-pointed:
+`PlayerActivate.cs:1424`'s mode line in **both** hosts that own one
+(`scenes/townTalk.js` and `scenes/dungeon.js` - one C# call site, so
+one surface everywhere); the `youAreTooFarAway` refusals at `:780`,
+`:790` and `:834` (`townTalk`, `player/mobileEnemyActivate.js`) and
+`:711`'s bulletin-board refusal (`scenes/worldModes.js`);
+`LookAtInteriorLock`'s whole difficulty ladder and `magicLock`
+(`:991-1007`) in `scenes/dungeonContext.js` and both exterior arms of
+`scenes/worldModes.js`; and `FPSWeapon.cs:365`'s `youHaveNoArrows` in
+`combat/weaponRig.js`.
+
+Two of those needed care rather than a rename. `weaponRig`'s `say`
+sink also carries the shield refusal (`WeaponManager.cs:704-705`),
+which really is a `PopupMessage`, so the arrow line takes the label
+directly and leaves the sink alone. `activateMobileEnemy` takes a
+second `midScreen` sink for `:834` alone, because the pickpocket
+RESULT one line below it (`:838 -> :1611`) is a message box and must
+not follow it onto the label. What stays on the popup queue is what
+the reference puts there: `lockedExteriorDoor` (`:527`) and the
+lockpick outcomes (`:553`/`:564`, `DaggerfallActionDoor.cs:170`/`:175`/
+`:189`).
+
+## AUDIT 64 F35 - THE SMALL HUD WAS PAINTED UNDER EVERY OPEN WINDOW (2026-09-08)
+
+`DaggerfallUI.cs:479-491` draws exactly one window per repaint -
+`uiManager.TopWindow.Draw()` - and repaints the HUD beneath it ONLY
+under `DaggerfallUnity.Settings.LargeHUD`, with its own comment saying
+so ("When using a large HUD, always repaint HUD before main window").
+With the classic small HUD the HUD is simply the bottom of that stack
+(pushed at `:407-408`, popped back to at `:831-835`) and it reaches
+the screen only down the top window's `previousWindow` chain -
+`DaggerfallPopupWindow.Draw` (`DaggerfallPopupWindow.cs:76-84`) runs
+`previousWindow.Draw()` before its own `base.Draw()` and paints
+nothing beneath when the field is null. **THE REVIEW ROUND CORRECTED
+THIS SECTION**: the law as first written here ("nothing of it is
+drawn while a window is open") is true only of the null-previous
+windows, not of every window - see the review-round section below.
+`:429-433` likewise updates only the top window, and that half IS
+unconditional. Every element is a component of the HUD's two panels
+(`DaggerfallHUD.cs:155-192`), so the vitals, the breath bar, the
+compass, the mode icon, the escort column, the active-spell rows, the
+arrow counter and the parent-panel tint all go together, either way.
+
+`drawHud` had no such gate: `cursorActive` reached only the enhanced
+skin's `hidden` flag and the crosshair. Because the port's windows
+paint no letterbox (`nativePanel.js`'s `SCREEN_DIM` is
+`DaggerfallPopupWindow.cs:27`'s `Color.clear`), at 1920x1080 the
+320x200 panel covers x160..1760 while the vitals sit at x=10 and the
+compass hangs off the right edge - so the classic bars stayed visible
+in the margins around an open inventory or pause window.
+
+The gate is `hudCovered = (windowCoversHud ?? cursorActive) &&
+!largeHud?.art` (`windowCoversHud` came in on the review round; it
+first shipped as `cursorActive` alone), and the LargeHUD arm is left
+reachable because it IS `:485-486`. Two members
+survive it and both sit above the gate: `ShowPlayerDamage`
+(`Game/ShowPlayerDamage.cs:20` - its own MonoBehaviour with its own
+`OnGUI`, outside the UI stack) and the `VitalsChangeDetector` update,
+which `CameraRecoiler` reads whatever window is top. The near-death
+tint does NOT survive: `HUDFlickerController` is a ParentPanel
+component (`DaggerfallHUD.cs:163`) that paints by writing
+`Parent.BackgroundColor` (`HUDFlickerController.cs:81-82`) - the HUD
+window's own panel - so its cycle keeps stepping while its colour is
+not painted. `drawNearDeathFlicker` took a `paint` argument for
+exactly that split.
+
+**Left open, and recorded rather than fixed.** The hosts' HUD TEXT
+layer (`hudText.tick`/`draw`, drawn outside `drawHud`) is a
+`NativePanel` component in DFU too (`DaggerfallHUD.cs:172-177`), so
+DFU neither draws nor ticks it under a window. F37 below gates its
+DRAW on `renderHUD`; the window half - and the fact that the port
+expires popup rows under a window DFU would never have ticked - is a
+separate member with its own pin and is left for the next round.
+
+## AUDIT 64 F36 - F10 WAS A BOUND KEY WITH NO CONSUMER (2026-09-08)
+
+`DaggerfallHUD.Update` polls `DaggerfallShortcut.Buttons
+.LargeHUDToggle` every frame and flips `DaggerfallUnity.Settings
+.LargeHUD` (`DaggerfallHUD.cs:308-312`), raising `OnLargeHUDToggle` on
+the change (`:237-238`). The port had the binding row
+(`systems/dialogShortcuts.js`, `LargeHUDToggle: 'F10'`), read the
+setting live every frame through `largeHudEnabled()`/
+`largeHudOptions`, and already carried the HUD-mode-flip detector
+reset that stands in for the event - and nothing anywhere wrote the
+setting from a key. Pressing F10 did nothing; the only door to the bar
+was the pause window's FULL SCREEN button.
+
+The write is `setValue('GUI', 'LargeHUD', !getBool('GUI', 'LargeHUD'))`
+- the in-memory assignment `:311` makes, published to the LIVE
+listeners. It deliberately does not save: DFU persists `settings.ini`
+elsewhere.
+
+## AUDIT 64 F37 - renderHUD / Shift-F10 HAD NO PORT (2026-09-08)
+
+`DaggerfallHUD.cs:47` holds `bool renderHUD = true`, `:314-318` flips
+it on the `HUDToggle` binding (`Shift-F10`), and `:347-351` overrides
+Draw with `if (renderHUD) base.Draw();`. Suppression is WHOLE - every
+ParentPanel and NativePanel component of the HUD window, and the
+large-HUD repaint too, since `DaggerfallUI.cs:485-486` goes through
+that same overridden Draw. Update is NOT suppressed: the flicker's
+`NextCycle` (`:328`) and the vitals bookkeeping keep running.
+
+`ui/hudShortcuts.js` holds the flag and both shortcut arms.
+`drawHud` reads it below the two MonoBehaviour members and above every
+paint; the enhanced skin is told to hide rather than skipped, because
+it is a persistent DOM overlay that stays painted unless told
+otherwise; and `lastLargeHudBar` is deliberately left standing, since
+HUDLarge's own Update keeps its Rectangle live for `ViewportChanger`
+and the panel click routing while its Draw is off. The popup column's
+DRAW is gated at each host's call site for the same reason
+(`popupText` is a NativePanel component, `:172-173`) while its tick
+keeps draining, which is Update's work.
+
+**The key seam, and the four-hosts trap.** There was no existing place
+where a HUD hotkey landed - none of `DaggerfallHUD.Update`'s five
+shortcut arms had a consumer. The port's keydown dispatch is split, so
+the arm sits in three places: `ui/input.js`'s `routeKey` (which covers
+`scenes/dungeon.js` and both modal arms of `scenes/worldModes.js`),
+and the private ladders of `scenes/world.js` and `scenes/exterior.js`,
+which never call `routeKey`. In `routeKey` it sits BELOW the
+`uiOverlayActive` return, because `DaggerfallUI.cs:429-433` updates
+only the top window; in the two host ladders it sits INSIDE the
+exterior-mode gate, because an interior or dungeon mode is mounted by
+`worldModes`, whose own `routeKey` call already answers - two live
+arms would flip the setting twice per press and cancel out. The module
+imports only `systems/` leaves so `ui/input.js` can take it without a
+cycle. `scenes/interior.js` draws no HUD and takes nothing.
+
+The other three arms of that block are named in the module header and
+NOT ported: `DebuggerToggle` (`:297-301`), `Pause` (`:303-306`, which
+this port reaches through the Escape action's pause door) and
+`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass).
+
+## AUDIT 64 F38 - THE ESCORT COLUMN WAS ANCHORED TO THE WRONG PANEL (2026-09-08)
+
+`DaggerfallHUD.cs:183-185` gives `escortingFaces` `NativePanel.Size`
+and `AutoSizeModes.ScaleToFit` and then adds it to the **ParentPanel** -
+unlike `activeSpells` (`:168-170`), `popupText` (`:172-173`) and
+`midScreenTextLabel` (`:175-177`), which are NativePanel children. The
+parent panel is the whole viewport at LocalScale (1,1)
+(`UserInterfaceWindow.cs:40`; `BaseScreenComponent.cs:1142`,
+`:1161-1166`, `:1180-1181`), and the panel sets neither alignment, so
+both stay at `BaseScreenComponent.cs:46-47`'s default `None` and the
+None arms of `GetRectangle` (`:1207-1209` and `:1224-1226`) put its
+rect origin at screen (0,0). `ScaleToFit` (`:1281-1314`) multiplies
+width and height and sets `LocalScale`; it applies no centring offset.
+Centring in DFU belongs to the NativePanel alone
+(`DaggerfallBaseWindow.cs:43-47`), which is what the port's
+`nativeMetrics` ox/oy models.
+
+`ui/hudEscortFaces.js` drew the column through `nativeMetrics`, so
+`HUDEscortingNPCFaces.cs:60-61`'s `startX 8, startY 36` were offset by
+the letterbox: at 1920x1080 the first face landed at (200, 220) where
+DFU puts it at (8, 36) x the fit scale. The offsets are dropped and
+the scale now comes from `hudScale`, the function every other
+ParentPanel-anchored HUD member already reads (the compass, the vitals
+inset, the breath bar), so no reader can infer a NativePanel
+relationship that does not exist. The file's doc block, which asserted
+the centred fit while citing `:183-185`, states the actual law now.
+
+## AUDIT 64 F39 - THE BREATH BAR WAS THE ONE VERTICALPROGRESS THAT DID NOT ROUND (2026-09-08)
+
+`VerticalProgress.DrawProgress` (`VerticalProgress.cs:68-74`) rounds
+the destination height to whole screen pixels before offsetting the
+rect - `float scaledAmount = Mathf.Round(dstRect.height * amount);
+dstRect.y += dstRect.height - scaledAmount; dstRect.height =
+scaledAmount;` - and leaves the source window (`1 * amount`, `:70`)
+unrounded. AUDIT 39 F137 ported that asymmetry for the three vitals
+bars as `mathfRound`. The breath bar is the same class
+(`HUDBreathBar.cs:26`, added at `:54`, sized and `Amount`-set at
+`:68-74`) and `drawBreathBar` computed its fill as a raw float.
+
+Because `hudScale` is an integer, `bh = LiveEndurance * s` is integral
+and an EVEN endurance makes the fill integral too - but an ODD
+endurance gives `MaxBreath = (END-1)/2` and a fractional fill, so the
+bar's top edge sat mid-pixel and the drawn bar differed from DFU by up
+to a pixel. `Mathf.Round` is half-to-EVEN, which is why `mathfRound`
+rather than `Math.round`: with LiveEndurance 41 at scale 1, ten breath
+is exactly 20.5, and DFU draws 20.
+
+## AUDIT 64 F42 - THE LARGE HUD'S ELEVEN PANELS ANSWERED IN SILENCE (2026-09-08)
+
+`DaggerfallUI.Instance.PlayOneShot(SoundClips.ButtonClick)` is the
+FIRST statement of every one of `HUDLarge`'s thirteen clickable-panel
+handlers - `HUDLarge.cs:399` and `:423` (the interaction-mode panel's
+left and right clicks) and `:445`, `:454`, `:463`, `:472`, `:481`,
+`:490`, `:499`, `:508`, `:517`, `:526`, `:535` - each inside the
+`IsLargeHUDInteractable()` guard (`:388-390`) and BEFORE the
+`PostMessage` / `ChangeInteractionMode` / `ToggleSheath` the panel
+exists to send. `ui/hudLarge.js` had ported the rects, the routing and
+the actions and played nothing, while thirty-two other port windows
+carried the same clip.
+
+`routeLargeHudClick` plays it on the HIT, inside the same guard and
+before `routeAction` - the reference's own order, and it matters:
+DFU plays the click before a message that may be refused, so a panel
+whose door a host has not wired still sounds. Only the two buttons DFU
+binds are asked for it (`OnMouseClick` and `OnRightMouseClick`); a
+middle click reaches no handler in the reference and makes no sound
+here.
+
+## AUDIT 64 F34 - REVIEW ROUND: THE LIVE SCREEN READ WAS UNPINNED (2026-09-08)
+
+`SetMidScreenText`'s large-HUD lift (`DaggerfallHUD.cs:356-365`) reads
+three LIVE values at set time - `Screen.height`,
+`midScreenTextLabel.LocalScale.y` and `LargeHUD.ScreenHeight` - and in
+the port only `drawHud` has them, so its one `midScreenText.observe(
+canvas.height, nativeMetrics(canvas).s, largeHudEnabled() ?
+lastLargeHudBar?.h : null)` IS the wiring. The lift was pinned on a
+bare `new MidScreenText()` with `observe` called by hand: the CLASS was
+covered and the CALL was not, so deleting it left the label stuck at
+146 in play with the suite green.
+
+The third F34 pin now draws a real docked bar and asserts the LIFTED
+row. At 2560x1080 the native scale is 5 and a docked `HUDLarge`
+(320x46, `AutoSizeModes.ScaleToFit` onto the screen's width) is
+46 x 2560/320 = 368 tall, so `(1080 - 368)/5 - 7` = 135.4, which IS
+below `midScreenTextDefaultY` and truncates to 135 - two frames apart,
+because `observe` feeds the PREVIOUS frame's bar.
+
+The timer half moved to `cursorActive` in the same round; its reasoning
+is in the F35 review-round section below, with `DaggerfallUI.cs:429-433`.
+
+`scenes/dungeon.js`'s new import also carried the interactionMode
+import's provenance note onto the midScreenText line; the note is back
+where it belongs.
+
+## AUDIT 64 F35 - REVIEW ROUND: THE previousWindow CHAIN, NOT "A WINDOW IS OPEN" (2026-09-08)
+
+The first cut of F35 above took `DaggerfallUI.cs:489-491`'s "draw the
+top window alone" as "no window may have the HUD under it", and gated
+the whole small HUD on `cursorActive`. That is one law short.
+`DaggerfallPopupWindow` (`DaggerfallPopupWindow.cs:19`, "can
+optionally render previous window hierarchy before its own") holds a
+`previousWindow` field (`:24`, set by the constructor at `:56-59`),
+and its `Draw` (`:76-84`) is
+
+    if (previousWindow != null) { previousWindow.Draw();
+                                  parentPanel.BackgroundColor = ScreenDimColor; }
+    base.Draw();
+
+with `ScreenDimColor` = `Color.clear` (`:27`, `:34`, `:58`). So the
+window under a popup IS painted, undimmed, and the chain recurses.
+
+**Every box `DaggerfallUI.MessageBox` opens carries the then-top
+window as its previous** - `new DaggerfallMessageBox(Instance
+.uiManager, Instance.uiManager.TopWindow, ...)` at
+`DaggerfallUI.cs:1330`, `:1339`, `:1348` and `:1357` - and during play
+that top IS `dfHUD`, the first window pushed (`:407-408`). DFU
+therefore paints the WHOLE small HUD under every in-play message box:
+the vitals, the breath bar, the compass, the arrow count, the Detect
+markers, the escort column, the crosshair, the active-spell rows, the
+near-death tint and F34's mid-screen label.
+
+What DOES blank it is a window pushed with a NULL previous, and that
+is every window `DaggerfallUI` opens from play: the persistent
+instances built at `:512-530` (pause options, character sheet,
+inventory, controls, joystick/mouse controls, travel map, automap,
+exterior automap, book reader, quest journal, player history, talk,
+spell book, spell/item/potion maker, court) and pushed at `:555-721`.
+`DaggerfallAction`'s own two boxes join them - `new
+DaggerfallMessageBox(DaggerfallUI.UIManager, null)`
+(`Internal/DaggerfallAction.cs:536`, ShowText) and the
+`DaggerfallInputMessageBox(..., null)` beside it (`:565`,
+ShowTextWithInput) - which is why the dungeon plaque covers the HUD
+where a quest popup does not.
+
+The port already recorded the painting half for the WINDOWS
+(`ui/windowStack.js`'s `eachCoveredWindow`, `scenes/townTalk.js`'s
+frame) and simply had not carried it to the HUD.
+
+**The shape.** `windowStack.js` gains `paintsPreviousWindow(win)` -
+`win.previousWindow === true`, the null arm being the default a window
+with no field takes - and `stack.hudCovered(slot)`, which answers true
+when ANY window over the HUD fails to paint its own previous: one cut
+anywhere in the chain and nothing above can splice it back (an
+inventory laid over a box, or a box laid over an inventory, both
+blank the HUD). `slot` is the host's live mirror of the top, taken
+for the same reason `reconcile` takes it.
+
+`ui/actionText.js`'s `ActionTextBox` - the port's DaggerfallMessageBox,
+and nearly all of its ~35 sites are `DaggerfallUI.MessageBox` in the
+reference - defaults `previousWindow: true`; `ActionInputBox` defaults
+null, its only reference construction being `:565`'s. The one
+`ActionTextBox` that must NOT carry the HUD is
+`scenes/dungeonContext.js`'s `actions.onShowText`, which passes
+`{ previousWindow: null }` with `:536` beside it.
+
+`drawHud` takes `windowCoversHud` and the four hosts answer it from
+their own stacks - `townTalk.hudCovered` and `worldModes.hudCovered`
+(both `paused && stack.hudCovered(slot)`), ORed in `world.js` and
+`exterior.js` exactly as `gamePaused` ORs their pause halves;
+`dungeonContext.js` asks `dungeonWindows`; `worldModes.js` asks
+`modeHudCovered()`, the same union `overlayHeld` takes. A caller that
+answers nothing falls back to `cursorActive`, the blunter law.
+
+**...and the TICK takes the other gate.** `DaggerfallUI.cs:429-433`
+updates `uiManager.TopWindow` ALONE, so `DaggerfallHUD.Update` - and
+with it the `midScreenTextTimer` tail at `:259-267` - is dead under
+ANY open window whatever the LargeHUD setting says: `:483-491`'s
+repaint is Draw, not Update. F34's `midScreenText.tick` was gated on
+`hudCovered`, which is false whenever the large HUD is on, so the
+label expired under a window where DFU freezes it. It is gated on
+`cursorActive` now, and the comment that already stated this law is
+the law the line implements.
+
+**Consequences reopened by the correction.** `hudActiveSpells`'
+`spellTip` is only shown while `cursorActive` (hud.js), so with the
+small HUD it was unreachable in every host; `ui/fadeLayer.js`'s tint
+paints under a box again. Both come back with the chain.
+
+**Pins.** `test/audit64_hud.test.js` gained five: a message box paints
+the whole small HUD; the stack's chain walk (both orders, the slot,
+the two DaggerfallAction boxes, and the four hosts' wiring); the
+enhanced skin's hide door and its escort column under both gates
+(`DaggerfallHUD.cs:347-351` and `:183-185` - the enhanced branch had
+no pin at all and both of its arms reverted green); `drawHud`'s live
+`observe` feeding a real large bar (the F34 lift was pinned only on a
+bare label); and the label's frozen timer under a window with the
+large HUD on. Each was proven red under the mutation that reverts it.
+
+**Still open.** The port's window model paints the WHOLE covered stack
+(`eachCoveredWindow`) rather than only what a live `previousWindow`
+chain would reach, so a window opened over a null-previous window is
+drawn over it where DFU would paint the null-previous window alone.
+That is the windows' member, not the HUD's; `hudCovered` above is
+correct regardless, because a cut anywhere blanks the HUD either way.

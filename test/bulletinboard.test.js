@@ -208,7 +208,9 @@ test('worldModes puts the board in the SAME ray, at the ray\'s reach', () => {
     'and a board under the ray ENDS the activation, as C#\'s hit does');
   const arm = m.slice(m.indexOf('function activateBulletinBoard'), m.indexOf('function activateStaticNpc'));
   assert.ok(arm.includes('if (d === null || d > BULLETIN_BOARD_ACTIVATION_DISTANCE) {'), 'the :709 gate');
-  assert.ok(arm.includes('townTalk?.say?.(TOO_FAR_AWAY_TEXT);'), 'the :712 refusal, and it returns');
+  // AUDIT 64 F34: PlayerActivate.cs:711 speaks it through
+  // DaggerfallUI.SetMidScreenText - the centred label, not the queue.
+  assert.ok(arm.includes('setMidScreenText(TOO_FAR_AWAY_TEXT);'), 'the :711 refusal, and it returns');
   assert.ok(arm.includes('bulletinBoardRows(locationName, bulletinBoardNews?.() ?? null, tokenRows)'),
     'the news is fetched BEFORE the box is composed (:716)');
   assert.ok(arm.includes('townTalk?.showOverlay?.(new ChoiceWindow'),

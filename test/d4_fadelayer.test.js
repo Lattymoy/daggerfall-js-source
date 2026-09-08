@@ -158,7 +158,10 @@ test('D4: the HUD parent panel is ONE colour with TWO writers', () => {
   const tick = hud.indexOf('hudFade.tickFade(dt);');
   const cycle = hud.indexOf('_flicker.nextCycle({');
   const write = hud.indexOf('if (c) hudFade.backgroundColor = c;');
-  const draw = hud.indexOf('return hudFade.draw(renderer, canvas);');
+  // AUDIT 64 F35/F37: the panel is painted by the HUD window's own
+  // Draw (DaggerfallUI.cs:409's FadeTargetPanel IS dfHUD.ParentPanel),
+  // so the draw took a gate; the ORDER pinned here is unchanged.
+  const draw = hud.indexOf('paint ? hudFade.draw(renderer, canvas) : null;');
   assert.ok(tick > 0 && cycle > tick && write > cycle && draw > write,
     'TickFade, then NextCycle, then the one panel draw');
   assert.match(hud, /fadeInProgress: hudFade\.fadeInProgress,/);

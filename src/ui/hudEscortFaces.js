@@ -34,8 +34,7 @@
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { RACES, raceArt } from '../systems/races.js';
-import { bitmapToColor32 } from './hud.js';
-import { nativeMetrics } from './nativePanel.js';
+import { bitmapToColor32, hudScale } from './hud.js';   // AUDIT 64 F38: the ParentPanel scale every screen-anchored HUD member reads
 // FactionFile.FactionIDs.Children (514) - the one faction whose
 // Persons portrait as children; ONE home, characters/staticNpc.js.
 import { CHILDREN_FACTION_ID } from '../characters/staticNpc.js';
@@ -255,14 +254,40 @@ export function restoreEscortFacesSaveData(faces) {
   refreshFaces();
 }
 
-/** The faces column, in native 320x200 units on the fitted virtual
- *  screen (DaggerfallHUD.cs:183-185 gives the panel NativePanel.Size
- *  and ScaleToFit; the port's native windows all ride the integer
- *  nativeMetrics fit, the recorded convention). Special panels draw
- *  at the fixed 48x48; racial and child heads at their art's size. */
+/**
+ * The faces column, anchored to the SCREEN'S OWN ORIGIN.
+ *
+ * AUDIT 64 F38 - THIS PANEL IS NOT A NATIVEPANEL CHILD. DaggerfallHUD
+ * .cs:183-185 gives escortingFaces `NativePanel.Size` and
+ * `AutoSizeModes.ScaleToFit` and then adds it to the PARENT panel -
+ * `ParentPanel.Components.Add(escortingFaces)` - unlike activeSpells
+ * (:168-170), popupText (:172-173) and midScreenTextLabel (:175-177),
+ * which really are NativePanel children. The parent panel is the whole
+ * viewport at LocalScale (1,1) (UserInterfaceWindow.cs:40 "Parent
+ * panel fits to entire viewport"; BaseScreenComponent.cs:1142,
+ * :1161-1166, :1180-1181), and escortingFaces sets neither alignment,
+ * so both stay at their BaseScreenComponent.cs:46-47 default None and
+ * the None arms of GetRectangle (:1207-1209 and the vertical twin
+ * :1224-1226) put its rect origin at screen (0,0). ScaleToFit
+ * (:1281-1314) multiplies width/height and sets LocalScale - it
+ * applies NO centring offset; centring in DFU belongs to the
+ * NativePanel alone (DaggerfallBaseWindow.cs:43-47, Center/Middle),
+ * which is what nativeMetrics' ox/oy models.
+ *
+ * So HUDEscortingNPCFaces.cs:60-61's startX/startY (8, 36) land at 8*scale,
+ * 36*scale from the TOP-LEFT OF THE SCREEN - not from the letterboxed
+ * native box, which displaced the whole column by (ox, oy) on every
+ * non-4:3 canvas. Only the SCALE rides the port's recorded integer-fit
+ * convention, and it is read from hudScale, the same function every
+ * other ParentPanel-anchored HUD member already uses (the compass, the
+ * vitals inset, the breath bar).
+ *
+ * Special panels draw at the fixed 48x48; racial and child heads at
+ * their art's size.
+ */
 export function drawEscortFaces(renderer, canvas) {
   if (!_panels.length) return;
-  const m = nativeMetrics(canvas);
+  const m = { s: hudScale(canvas.width, canvas.height) };
   const sizes = _panels.map((p) => (p?.special
     ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
     : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
@@ -271,7 +296,7 @@ export function drawEscortFaces(renderer, canvas) {
     const p = _panels[i];
     if (!p?.img || !placed[i].enabled || !sizes[i]) continue;
     renderer.drawScreenQuad(p.img.tex, {
-      x: m.ox + placed[i].x * m.s, y: m.oy + placed[i].y * m.s,
+      x: placed[i].x * m.s, y: placed[i].y * m.s,
       w: sizes[i].w * m.s, h: sizes[i].h * m.s,
     });
   }

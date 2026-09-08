@@ -11,6 +11,7 @@
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
@@ -281,7 +282,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
-      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
+      // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
+      // SetMidScreenText's, in EVERY host (one C# call site).
+      if (!ctx.uiOverlayActive && im !== getInteractionMode()) { setInteractionMode(im); setMidScreenText(`Interaction is now in ${im} mode.`); }
     }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).

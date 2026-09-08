@@ -257,6 +257,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
@@ -4847,6 +4848,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // sibling door; preventDefault only when the dial answers, so
       // classic Tab keeps its default.
       if (e.code === 'Tab' && hudCtx.toggleDial()) { e.preventDefault(); return; }
+      // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
+      // :308-318). This host runs its own ladder and never calls
+      // routeKey, which is where the other two hosts take these keys,
+      // so the arm lives here too or F10/Shift-F10 would work in a
+      // dungeon and not in the street - the FOUR HOSTS trap. It stays
+      // INSIDE the mode gate: an interior or dungeon mode is mounted
+      // by scenes/worldModes.js, whose own routeKey call already
+      // answers these keys, and two live arms would flip the setting
+      // twice per press and cancel out.
+      if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
       // dispatch chain (:541-548) that the port bound at I1 and then
@@ -8136,6 +8147,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: gamePaused(),
+          // AUDIT 64 F35 (review round): the PAINT's gate is not the
+          // pause. DFU paints the whole small HUD under every
+          // `DaggerfallUI.MessageBox` box, whose previousWindow is the
+          // then-top HUD (DaggerfallUI.cs:1330 over
+          // DaggerfallPopupWindow.cs:76-84), and blanks it only for the
+          // null-previous windows it pushes from :512-530. Same union
+          // `gamePaused` takes, asked of the two stacks' chains.
+          windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values
