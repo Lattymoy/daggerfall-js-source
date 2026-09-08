@@ -16,7 +16,7 @@ the sky began) - hours in, a small change of wind threw the whole
 field across the sky. The rain and the windmills never had this fault:
 the rain accumulates `windOff` (the lab's design) and the mills
 integrate their angle ("THE ANGLE IS INTEGRATED, NOT COMPUTED",
-windmills.js:199). The sky and the ground now do the same: the
+windmills.js:206). The sky and the ground now do the same: the
 controller integrates one `driftXZ += wind * dt` where the wind and the
 clock meet, hands it to the sky state, and every deck reads the drift.
 `uDrift` beside `uWind`, `uCloudDrift` beside `uCloudWind`; a caller

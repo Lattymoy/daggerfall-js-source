@@ -43,7 +43,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   const shared = read('src/scenes/shared.js');
   const use = shared.slice(shared.indexOf('use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {'), shared.indexOf('let frame = params.has(\'window\')'));
   assert.match(use, /const nowMin = extra\?\.classicMinutes \?\? 0;\s*\n\s*const dt = lastMin === null \|\| nowMin < lastMin \? 0 : nowMin - lastMin;   \/\/ GAME MINUTES\s*\n\s*lastMin = nowMin;/, 'dt is the clock\'s delta, in minutes; a clock that went backwards costs none');
-  assert.match(use, /const dtReal = weatherAt === null \? 0 : Math\.min\(1, Math\.max\(0, seconds - weatherAt\)\);/, 'the wall\'s delta survives for one reader');
+  assert.match(use, /const dtReal = weatherAt === null \? 0 : Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\);/, 'the wall\'s delta survives for one reader, clamped as Time.deltaTime is (MODS AUDIT)');
   assert.match(use, /dynamic\.tick\(\{\s*\n\s*minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,/, 'the mod (1:1) takes it - BLBSkybox reads Time.deltaTime');
   assert.equal((use.match(/dtReal/g) || []).length, 2, 'and nothing else does');
   assert.match(use, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ FRONT_LEAD_MIN\) : dt;/, 'minutes over minutes');

@@ -1,6 +1,6 @@
 // AUDIT 51: 1:1 PARITY WITH BASIC ROADS, BY ORACLE. tools/roadsOracle.py
 // is PaintPath transliterated from the mod's C# line for line; its
-// fixture holds the tilemap the MOD paints for 651 cases - every road
+// fixture holds the tilemap the MOD paints for 907 cases - every road
 // mask, every track mask, every corner byte, random rivers with
 // streams, mixed pixels, and location rects. Our painter runs the same
 // cases and must match BYTE FOR BYTE. A difference is a parity bug by
@@ -19,7 +19,7 @@ function quadrants() {
 }
 const expand = (rle) => { const out = new Uint8Array(128 * 128); let i = 0; for (const [v, n] of rle) { out.fill(v, i, i + n); i += n; } return out; };
 
-test('AUDIT 51: our painter matches the mod\u2019s PaintPath byte for byte over 651 cases', () => {
+test('AUDIT 51: our painter matches the mod\u2019s PaintPath byte for byte over 907 cases', () => {
   let checked = 0; const diffs = [];
   for (const { case: c, tilemap: rle } of oracle.cases) {
     const want = expand(rle);
@@ -34,20 +34,23 @@ test('AUDIT 51: our painter matches the mod\u2019s PaintPath byte for byte over 
     }
     checked++;
   }
-  assert.equal(checked, 651);
-  assert.deepEqual(diffs.slice(0, 12), [], `${diffs.length} of 651 cases differ from the mod`);
+  assert.equal(checked, 907);
+  assert.deepEqual(diffs.slice(0, 12), [], `${diffs.length} of 907 cases differ from the mod`);
 });
 
 // AUDIT 51: THE SMOOTHER IS THE MOD'S - SmoothRoadsJob, ported. Road and
 // water_temp tiles only, the tile's four corners, a five-point mean in
-// place in scan order. And the one recorded divergence, put back on the
-// index it is actually about by AUDIT 58 (f2/hosts): the TILEMAP is
+// place in scan order, on the two layouts that own them: the TILEMAP is
 // x + y*tDim (JobA.Idx(x, y, tDim), TerrainHelper.cs:170) and the
 // HEIGHTMAP is y + x*hDim (JobA.Idx(y, x, hDim), TerrainSampler.cs:123
-// - what terrainSampler.js:139 writes). The mod's sample base is the
-// transpose of the second; his tile read needed nothing. This pin used
-// to compute its expected corners from `10 * H + 63` - the smoother's
-// own wrong base - so it could not see the defect it was written for.
+// - what terrainSampler.js:139 writes). The mod reads both in their own
+// layout and so does the port. MODS AUDIT (2026-09-08): there is NO
+// divergence - AUDIT 51 and AUDIT 58 both recorded one ("the mod's
+// sample base is the transpose"), and it was AUDIT 58's own fix of the
+// PORT's base (y*hDim + x, wrong) to x*hDim + y that made the port equal
+// to the mod's Idx(y, x, hDim). This pin used to compute its expected
+// corners from `10 * H + 63` - the smoother's own wrong base - so it
+// could not see the defect it was written for.
 test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corners, five-point mean, in place', async () => {
   const { smoothRoadHeights, SMOOTHED_TILES } = await import('../src/world/roadPainter.js');
   assert.deepEqual([...SMOOTHED_TILES].sort((a, b) => a - b), [46, 0xff], 'road and water_temp, as his `tile == road || tile == water_temp`');
@@ -72,12 +75,33 @@ test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corne
   // the rect is skipped, as his locationRect.Contains skips it
   const s2 = Float32Array.from(before); const t2 = new Uint8Array(128 * 128); t2[64 * 128 + 64] = 46;
   assert.equal(smoothRoadHeights(s2, t2, H, { xMin: 60, xMax: 70, yMin: 60, yMax: 70 }), 0, 'a road tile inside the rect is not smoothed');
-  // the divergence, on record and now on the RIGHT index: the tile read
-  // stays the painter's (y*tDim + x, which IS his Idx(x, y, tDim)) and
-  // the corner base is the sampler's (x*hDim + y = Idx(y, x, hDim)).
+  // both indices his: the tile read is the painter's (y*tDim + x, which
+  // IS his Idx(x, y, tDim)) and the corner base is the sampler's
+  // (x*hDim + y, which IS his Idx(y, x, hDim)).
   const src = readFileSync(new URL('../src/world/roadPainter.js', import.meta.url), 'utf8');
-  assert.match(src, /const tile = tilemap\[y \* tDim \+ x\];/, 'the tile is read at y*tDim + x - the painter\u2019s own layout, unchanged');
-  assert.match(src, /const idx = x \* hDim \+ y;/, 'and the corner base is the HEIGHTMAP\u2019s - TerrainSampler.cs:123');
+  assert.match(src, /const tile = tilemap\[y \* tDim \+ x\];/, 'the tile is read at y*tDim + x - the painter\u2019s own layout, his Idx(x, y, tDim)');
+  assert.match(src, /const idx = x \* hDim \+ y;/, 'and the corner base is the HEIGHTMAP\u2019s - his Idx(y, x, hDim), TerrainSampler.cs:123');
+  assert.match(src, /NO DIVERGENCE\./, 'and the record says so');
+  assert.ok(!/DELIBERATE DIVERGENCE/.test(src), 'the false entry is gone');
+});
+
+// MODS AUDIT (2026-09-08): THE RECT'S EDGE. His skip is
+// `locationRect.Contains(new Vector2(x, y))` - Unity's Rect.Contains,
+// min-inclusive and MAX-EXCLUSIVE - and the port's was max-inclusive:
+// the column x == xMax and the row y == yMax were smoothed by the mod
+// and skipped here. The rect is DFU's (xMax = xmax + extraClearance,
+// terrainTiles.js:257), so the boundary is a real tile column.
+test('MODS AUDIT: the smoother skips the rect as Rect.Contains does - min in, max OUT', async () => {
+  const { smoothRoadHeights } = await import('../src/world/roadPainter.js');
+  const H = 129;
+  const mk = () => { const s = new Float32Array(H * H); for (let i = 0; i < s.length; i++) s[i] = (i % 2) ? 50 : 30; return s; };
+  const rect = { xMin: 60, xMax: 70, yMin: 60, yMax: 70 };
+  const at = (x, y) => { const t = new Uint8Array(128 * 128); t[y * 128 + x] = 46; return t; };
+  assert.equal(smoothRoadHeights(mk(), at(60, 65), H, rect), 0, 'x == xMin is inside (min inclusive)');
+  assert.equal(smoothRoadHeights(mk(), at(69, 65), H, rect), 0, 'x == xMax - 1 is inside');
+  assert.equal(smoothRoadHeights(mk(), at(70, 65), H, rect), 4, 'x == xMax is OUTSIDE - the mod smooths it');
+  assert.equal(smoothRoadHeights(mk(), at(65, 70), H, rect), 4, 'y == yMax is OUTSIDE');
+  assert.equal(smoothRoadHeights(mk(), at(65, 60), H, rect), 0, 'y == yMin is inside');
 });
 
 // AUDIT 58 (f2/hosts): THE DIRECTIONAL PIN neither older test could

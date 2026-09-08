@@ -18,6 +18,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
+import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
@@ -200,7 +201,7 @@ export function createSkyController(gl, params) {
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds) enhancedSky.cloudsExternal = true;
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
-  const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;
+  const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -443,7 +444,7 @@ export function createSkyController(gl, params) {
         const nowMin = extra?.classicMinutes ?? 0;
         const dt = lastMin === null || nowMin < lastMin ? 0 : nowMin - lastMin;   // GAME MINUTES
         lastMin = nowMin;
-        const dtReal = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));   // the mod's own frame (DS1)
+        const dtReal = weatherAt === null ? 0 : Math.min(MAX_DELTA_SECONDS, Math.max(0, seconds - weatherAt));   // the mod's own frame (DS1): Time.deltaTime, clamped as Unity clamps it
         weatherAt = seconds;
         // WIND1: THE WIND IS ITS OWN STATE, and the sky's row takes it
         // rather than carrying a fixed vector per weather. The model
@@ -496,6 +497,7 @@ export function createSkyController(gl, params) {
           const st = dynamic.tick({
             minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,
             weatherScale: extra?.sun ?? weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
+            playerPos: extra?.pos ?? null,   // FlashOnce reads playerTransform.position live (MODS AUDIT)
           });
           dynamicSky.setState(st);
           dynamicDeck = { cover: weatherRowNow.cover, soft: Math.max(1e-3, weatherRowNow.soft), wind: weatherRowNow.wind, time: seconds, drift: driftXZ, amount: 0 };

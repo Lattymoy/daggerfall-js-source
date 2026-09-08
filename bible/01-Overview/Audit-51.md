@@ -47,49 +47,70 @@ neighbours, IN PLACE and in scan order, over [1, hDim-3], skipping the
 rect. Mine smoothed every path tile's corners from a copy of the
 original heights. Ported.
 
-**One deliberate divergence, recorded - and AUDIT 58 (f2/hosts,
-2026-09-03) moved it onto the index it was always about.** The kernel
-joins TWO layouts and they differ, both of them DFU's: the TILEMAP is
-`JobA.Idx(x, y, tDim)` = `x + y*tDim` (TerrainHelper.cs:170, with
-JobHelpers.cs:19-22 `Idx(r, c, dim) = r + c*dim`), and the HEIGHTMAP is
-`JobA.Idx(y, x, hDim)` = `y + x*hDim` (TerrainSampler.cs:123;
-DefaultTerrainSampler.cs:77-78 takes x from `Col` and y from `Row`) -
-which is what `terrainSampler.js:139` writes and what every consumer in
-this tree reads. The mod walks the heightmap with x from `Row`, so its
-SAMPLE BASE is the transpose; its tile read is its own painter's layout
-and needs nothing. In the mod a north-south road smooths an east-west
-strip.
+**No divergence - and the record said there was one, twice (MODS
+AUDIT, 2026-09-08).** The kernel joins TWO layouts, both DFU's: the
+TILEMAP is `JobA.Idx(x, y, tDim)` = `x + y*tDim` (TerrainHelper.cs:170,
+with JobHelpers.cs:19-22 `Idx(r, c, dim) = r + c*dim`), and the
+HEIGHTMAP is `JobA.Idx(y, x, hDim)` = `y + x*hDim` (TerrainSampler
+.cs:123; DefaultTerrainSampler.cs:77-78 takes x from `Col` and y from
+`Row`) - which is what `terrainSampler.js:139` writes and what every
+consumer in this tree reads. The mod reads its tile at `Idx(x, y, tDim)`
+and its corner base at `Idx(y, x, hDim)`: each index in the layout that
+owns it. The port reads the tile at `y*tDim + x` and the base at
+`x*hDim + y` - the same two expressions. Byte for byte his.
 
-This paragraph used to say the correction was on the TILE read, where
-`y*tDim + x` **is** his `Idx(x, y, tDim)` - the same expression, so the
-correction was a no-op - while the transpose it named sat live on the
-height write. Roads are ALWAYS ON in both lanes, so for three audits
-every road bed went unsmoothed and a mirrored strip of open ground was
-blurred instead. Both pins were blind because both computed their
-expected corners from the smoother's own base. Ours now reads the tile
-at `y*tDim + x` (unchanged) and the corner base at `x*hDim + y`, and
-`test/roadsParity.test.js` asks the question in world terms instead: a
-north-south road must move a north-south bed.
+This section first said the mod's SAMPLE base was "the transpose" and
+the port corrected it on the tile read. AUDIT 58 (f2/hosts, 2026-09-03)
+then found the PORT's base was `y*hDim + x` - every road bed unsmoothed
+and a mirrored east-west strip of open ground blurred, in both lanes -
+fixed it to `x*hDim + y`, and kept the story: "the mod's transpose is on
+the sample base, and the port corrects it there". It does not and it
+never did - `Idx(y, x, hDim)` IS `x*hDim + y`. AUDIT 58's fix made the
+port EQUAL to the mod; the divergence it recorded as corrected was a
+false entry in the departure record, entrenched by a pin on the
+comment's own text (`roadsParity.test.js`). The comment, both bible
+pages and the pin now say what the code does: nothing to correct.
+
+**The rect's edge (MODS AUDIT).** His skip is `locationRect.Contains(new
+Vector2(x, y))` - Unity's Rect.Contains, min-inclusive and MAX-EXCLUSIVE.
+Ours was `x < xMax + 1`: the column `x == xMax` and the row `y == yMax`
+were smoothed by the mod and skipped here, one tile column and one tile
+row per location. Now `x < rect.xMax`, as the painter's ring test in the
+same file always was; pinned at the boundary.
 
 ## Cleared
 
 - **Data:** the four vendored arrays are byte-identical to the ones
-  extracted from the shipped .dfmod (sha256 recorded in the test run).
+  extracted from the shipped .dfmod - and, since the MODS AUDIT of
+  2026-09-08, to `ajrb/dfunity-mods` master by sha256, PINNED in
+  `test/vendorIntegrity.test.js` (this bullet used to say "recorded in
+  the test run"; no test carried a hash).
 - **Paint order:** roads, rivers-with-joins, streams, tracks; the first
   to paint a tile wins; a non-zero tile stops every painter. Oracle-
   covered.
 - **Corner byte:** `(east & 0x5) | (west & 0x50)`. His InRange guard is
   `index > 0 && index < size` - at x = 999 his east neighbour is the
-  next row's x = 0, a wrap; ours clamps by x. Recorded, not replicated:
-  a wrap is not a design either.
+  next row's x = 0, a wrap, and at x = 0 his west neighbour is the
+  previous row's x = 999, the same wrap the other way; at the last
+  pixel (999, 499) `pathsData[index + 1]` is index 500,000 on a
+  500,000-byte array, out of bounds. Ours clamps by x on both sides
+  (`roadPainter.js` pathCorners). Recorded, not replicated: a wrap is
+  not a design either (the x = 0 side and the overrun added by the
+  MODS AUDIT; this bullet had only the x = 999 wrap).
 - **Settings:** SmoothRoads on, RiversAndStreams off, as shipped.
 - **Tile orientation:** row 0 south; `x = index % 128`; his `JobA.Col`.
 
 ## Standing
 
 The terrain painter is the mod's to the byte on every case the oracle
-holds. The four arrays are his to the byte. The smoother is his but for
-a corrected transpose. What is not 1:1 and never was in scope: the
-travel-map overlay is drawn in our colours through our map, and the two
-switches live in code rather than Settings. Rivers and streams are off,
-as shipped.
+holds - 907 since the MODS AUDIT of 2026-09-08, which found the oracle
+and the port sharing one omission: `PaintPathWithSubPathJoins` carried
+the corner join and four of the mod's seventy-six centre-join
+statements, so the 48 river-and-stream cases passed against a
+truncated mod. The other seventy-two are ported into both, generated
+from the C# by one script, and 256 river-by-stream cases reach every
+arm (`bible/03-World/Roads.md`, MODS AUDIT). The four arrays are his to
+the byte, by hash. The smoother is his, with no divergence. What is not
+1:1 and never was in scope: the travel-map overlay is drawn in our
+colours through our map, and the two switches live in code rather than
+Settings. Rivers and streams are off, as shipped.

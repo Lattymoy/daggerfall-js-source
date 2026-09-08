@@ -372,19 +372,22 @@ a handle-holding Proxy-GL.
 ## Audit 51 (2026-09-02) - parity by oracle
 
 `01-Overview/Audit-51.md`. The painter matches the mod's PaintPath byte
-for byte over 651 cases; the smoother is SmoothRoadsJob but for a
-corrected transpose; the arrays are his to the byte. ROADS 22's claim
+for byte over 651 cases (907 since the MODS AUDIT below); the smoother
+is SmoothRoadsJob; the arrays are his to the byte. ROADS 22's claim
 that the mod paints no ring is corrected there: it paves the rect's
 padding, roads only.
 
-AUDIT 58 (f2/hosts, 2026-09-03) corrected WHICH index that transpose is
-on. The tilemap is `x + y*tDim` and the heightmap is `y + x*hDim`
-(TerrainSampler.cs:123 against TerrainHelper.cs:170) - the mod's
-transpose is on the SAMPLE base, and the "correction" recorded here was
-made on the tile read, where `y*tDim + x` is literally his
-`Idx(x, y, tDim)`. So the divergence was written down as closed while
-the defect it named ran in both lanes: no road bed was smoothed and an
-east-west strip of open ground was blurred in its place.
+AUDIT 58 (f2/hosts, 2026-09-03) found the PORT's smoother base
+transposed (`y*hDim + x`; no road bed smoothed and an east-west strip
+of open ground blurred, in both lanes) and fixed it to `x*hDim + y`.
+It recorded that fix as putting "the mod's transpose" onto the right
+index - and the MODS AUDIT of 2026-09-08 found there is no such thing:
+the mod's base is `JobA.Idx(y, x, hDim)` = `y + x*hDim`, the very
+expression AUDIT 58 wrote. The tilemap is `x + y*tDim` and the
+heightmap is `y + x*hDim` (TerrainSampler.cs:123 against
+TerrainHelper.cs:170), the mod reads each in its own layout, and so
+does the port. The divergence on record from AUDIT 51 to the MODS
+AUDIT was a false entry; the smoother is his with nothing corrected.
 
 ## Audit 45 (2026-09-01)
 
@@ -565,3 +568,85 @@ roadless after the sweep and goes straight back, the worker having the
 network by then because message order is kept. Pinned; three mutants
 dead, one of them the early return that would have skipped the sweep
 on the common path.
+
+## MODS AUDIT (2026-09-08) - the 1:1 re-audit against the C#
+
+Mac: "go ahead and audit the other mods while youre at it to ensure they
+are 1:1." An Opus explorer with the live `BasicRoadsTexturing.cs`,
+`BasicRoadsMod.cs`, `BasicRoadsPathEditor.cs` and the four upstream
+`.bytes` in hand, line by line against the port. Twenty-one laws in its
+table; seventeen FAITHFUL, and the four that were not are below with
+what was done about each.
+
+**The sub-path joins were five per cent ported, and the oracle shared
+the omission.** `PaintPathWithSubPathJoins` (BRT:468-671) is PaintPath
+followed by a river's joins with a stream: the four map-pixel corner
+joins (`SetPathTile(index, water)`), then seventy-six centre-join
+statements around the river's ICorner and CardOut slots - the N-S arms
+at the elbow and one and two tiles beyond it, the whole E-W block, and
+under `if (pathTiles[CardOut] != null)` the NE-SW and NW-SE blocks
+(water at the bend, an ICorner or a CardOut by whether the stream
+continues cardinally, `if/else` and `else if` chains). The port carried
+the corner join and the first four N-S statements; so did
+`tools/roadsOracle.py`, so `roadsParity.test.js` compared the port with
+a truncated mod and its 48 river-and-stream cases passed vacuously.
+Both have the other seventy-two now, GENERATED from the C# by one
+script (`tools/roadsJoins.py`, a structural translator: each
+`if` with its `then`, `else` and `else if` parsed by indentation and
+emitted as braces for JS and blocks for Python), so neither is a second
+hand-transliteration that could share a second omission. The join runs
+where his runs - AFTER PaintPath, as `paintPathWithSubPathJoins` around
+`paintPath`, not inside it - and touches `hasPath` as his does not: a
+corner join's water no longer stops the stream painter behind it. The
+oracle gained 256 cases, every single river direction and every
+adjacent pair against the same sixteen stream bytes, water on, which
+reach every arm of the E-W and CardOut blocks: 907 cases, 0 differ.
+Observable only with RiversAndStreams on (off, as shipped): a stream
+meeting a river east-west or diagonally now gets his join tiles.
+
+**The smoother's rect skip was one tile wide.** `Rect.Contains` is
+max-exclusive; the port's test was `x < xMax + 1`. Fixed and pinned at
+the boundary. (Audit-51.md, A1.)
+
+**The "deliberate divergence" did not exist.** `Idx(y, x, hDim)` IS
+`x*hDim + y`. The 38-line comment, Audit-51.md, this page's Audit 51
+section and the pin on the comment's text all asserted a departure the
+code did not have; all four now say the smoother is his with nothing
+corrected, and the pin asserts `NO DIVERGENCE` is what the module says.
+
+**The arrays are his by hash now.** `test/vendorIntegrity.test.js` pins
+the sha256 of all four against `ajrb/dfunity-mods` master, verified
+this audit; Audit-51.md's "sha256 recorded in the test run" named a pin
+that did not exist. The hashes are in the vendor README too.
+
+Recorded, not ported - each a behaviour the mod has that no player of
+this port can meet, or a departure Mac already ruled:
+
+- `trackTilesSplat` (BRT:68-75, BRM:39-50): a second track table
+  selected when the Splatmap mod (GUID 21a4ed84-...) is present. No
+  splat mod exists in this tree; the mod's own condition is false here.
+- The messaging API (`getPathData`, `getRoadPoint`, `getTrackPoint`,
+  `getPathsPoint`, `scheduleRoadsJob`; BRM:18-22, 64-110; BRT:142-156)
+  for other DFU mods - Travel Options asks it whether a pixel carries a
+  road. No mod bus here and no consumer; `systems/travel.js` keeps
+  `byRoad` a permanent false by the Ledger row.
+- The fixed-city host (`?exterior`, `scenes/exterior.js`) runs no tile
+  pipeline at all - no `generateTileData`, no `paintRoads` - so it
+  stands its location with no approach road where DFU+mod would paint
+  one. The mod is a `TerrainTexturing` override and paints wherever DFU
+  streams terrain; the port's second host has no terrain lane. A scope
+  question for the host, not a painter defect; named here so it is not
+  mistaken for one.
+- The corner byte's edge: his `InRange` admits the row wrap at x = 0 as
+  well as x = 999, and an out-of-bounds read at the last pixel; ours
+  clamps by x both sides (Audit-51.md's bullet had the x = 999 side).
+- The editing substitution (`editing == "path"/"water"`, BRT:216-247)
+  and the editor's own path overlay - the two editing switches were
+  dropped deliberately (`modsettings.test.js`).
+- The fallback inversion (his missing asset is a blank array; ours is
+  the port's own network) - Ledger row, by Mac's call.
+
+One thing for Mac: `vendor/roads-hazelnut/README.md` still carries the
+placeholder `[Mac: paste the text of the permission, or the link to it,
+here.]` under the permission record. The pin (`modsettings.test.js`)
+asserts only `/by Hazelnut/`.

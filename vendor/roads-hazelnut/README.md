@@ -19,6 +19,14 @@ Mac (Lattymoy) on 2026-09-02. Record of the permission:
 
 > [Mac: paste the text of the permission, or the link to it, here.]
 
+Integrity (sha256, verified against github.com/ajrb/dfunity-mods master
+on 2026-09-08 and pinned by `test/vendorIntegrity.test.js`):
+
+- `roadData.bytes` 249ee50c54c564b9f89e3cf0cb28f87e0ab1c5603cdd4f794afc4e96a6b6af8a
+- `trackData.bytes` dce018b03bee20f846bfca0854ae38cf737b8a684e92bf95cd7468df403385a6
+- `riverData.bytes` 6b867c189be672874334557573d8c40598beb050277dd18f81a2c33b9b9ac8ab
+- `streamData.bytes` 567ebda53a121435f5c26c12c6141d2d596c54af82fe3a08109f25544cef349f
+
 The port's painter is a port of the mod's (`src/world/roadPainter.js`,
 tables and geometry read from `BasicRoadsTexturing.cs`), credited in
 `bible/03-World/Roads.md`. Thank you, Hazelnut.
