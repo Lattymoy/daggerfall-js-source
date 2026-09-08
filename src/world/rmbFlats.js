@@ -15,7 +15,18 @@
 //   - Ground scenery reads GroundScenery[x][15 - y], skips records < 1
 //     (0 is a marker), places at (x*256, natureFlatsOffsetY, y*256+256)*scale
 //     with the climate nature archive.
-//   - Editor flats (archive 199) are skipped for subrecord exteriors.
+//   - Editor flats (archive 199) are two DIFFERENT laws. A SUBRECORD
+//     exterior flat is never spawned at all (RMBLayout.cs:409-410's
+//     `continue`). A MISC block flat IS spawned - AddMiscBlockFlats
+//     (:340-379) skips only the lights archive - and it is the
+//     BILLBOARD COMPONENT that hides it: MaterialReader.GetFlatType
+//     maps archive 199 to FlatTypes.Editor (:980-981) and
+//     DaggerfallBillboard.Start disables the mesh renderer for it
+//     (:77-84, "Just disable mesh renderer as actual object can be
+//     part of action chain"; StartGameBehaviour.cs:45
+//     `ShowEditorFlats = false`). So the misc flat is carried here
+//     with `editor: true` - the start markers, quest markers and
+//     action chains read it - and the hosts refuse to DRAW it.
 //   - Scaled billboard size: change = trunc(size * scale / 256) per axis,
 //     final = (size + change) * GlobalScale. Billboards are bottom-anchored:
 //     AlignToBase raises the centre by half the final height.
@@ -55,7 +66,8 @@ export function scaledBillboardSize(size, scale) {
  * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
  * @param {number} natureArchive - climate nature archive
  *   (dfLocation.climate.natureArchive).
- * @returns {Array<{archive:number,record:number,x:number,y:number,z:number}>}
+ * @returns {Array<{archive:number,record:number,x:number,y:number,z:number,
+ *   editor?:boolean}>}
  */
 export function collectBlockFlats(dfBlock, natureArchive) {
   const rmb = dfBlock.rmbBlock;
@@ -66,6 +78,10 @@ export function collectBlockFlats(dfBlock, natureArchive) {
     flats.push({
       archive: obj.textureArchive,
       record: obj.textureRecord,
+      // AUDIT 64 F12: stood as data, never drawn - DaggerfallBillboard
+      // .cs:77-84 disables the renderer of a FlatTypes.Editor billboard
+      // (MaterialReader.cs:980-981 maps archive 199 to Editor).
+      editor: obj.textureArchive === EDITOR_FLATS_ARCHIVE,
       x: obj.xPos * GLOBAL_SCALE,
       y: (-obj.yPos + BLOCK_FLATS_OFFSET_Y) * GLOBAL_SCALE,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,

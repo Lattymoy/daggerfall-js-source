@@ -54,7 +54,9 @@ import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { modSetting } from '../systems/modSettings.js';   // SIB1: the mod's own switch
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
-import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
+import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
+import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
+import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
@@ -288,7 +290,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   const modelIds = new Set();
   const archives = new Set([groundArchive, LIGHTS_ARCHIVE]);
   for (const b of loc.blocks) {
-    for (const placed of b.layout.models) modelIds.add(placed.modelIdNum);
+    for (const placed of b.layout.models) {
+      modelIds.add(placed.modelIdNum);
+      // AUDIT 64 F14: a city gate swaps between BOTH variants at dawn
+      // and dusk (DaggerfallCityGate.cs:29-34), so both meshes have to
+      // be resident, climate-remapped and their archives fetched before
+      // the first swap - a block that places 446 alone would otherwise
+      // find no 447 to close with.
+      if (isCityGate(placed.modelIdNum)) {
+        modelIds.add(CITY_GATE_OPEN_MODEL_ID);
+        modelIds.add(CITY_GATE_CLOSED_MODEL_ID);
+      }
+    }
   }
   status(`loading ${modelIds.size} models`);
   await Promise.all([...modelIds].map((id) => getGpuMesh(id)));
@@ -396,6 +409,21 @@ export async function bootExterior(canvas, renderer, params, status) {
   const cullOn = !cullDisabled();
   const _planes = new Float32Array(24);
   const _pv = new Float32Array(16);
+  /** AUDIT 64 F11: DFMesh.Size for a model id - `modelData.DFMesh.Size`
+   *  at RMBLayout.cs:873. Arch3dFile.cs:711-713 divides the raw extent by
+   *  pointDivisor and WritePoint (:941-943) divides the VERTICES by the
+   *  same, so `size * GlobalScale` is the model's world extent - the
+   *  building's silhouette, which is what HasHit boxes. */
+  const dfMeshSizes = new Map();
+  const dfMeshSize = (id) => {
+    let sz = dfMeshSizes.get(id);
+    if (sz === undefined) {
+      const index = arch.getRecordIndex(id);
+      sz = index === -1 ? null : (arch.getMesh(index)?.size ?? null);
+      dfMeshSizes.set(id, sz);
+    }
+    return sz;
+  };
   const archAabbs = new Map();
   const archAabb = (id, positions) => {
     let b = archAabbs.get(id);
@@ -422,10 +450,27 @@ export async function bootExterior(canvas, renderer, params, status) {
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
   const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
   const bulletinBoards = [];    // the blocks' BULLETIN BOARDS (model 41739), world-frame boxes
+  const cityGates = [];         // AUDIT 64 F14: {gate, entry, matrix, bucketKey} - DaggerfallCityGate's placements
+  /** AUDIT 64 F11: RMBLayout's StaticBuilding array (:864-882) - ONE
+   *  per building subrecord, off the first model of that record that
+   *  actually loaded (the `continue` at :854 skips a model this ARCH3D
+   *  lacks BEFORE the firstModel block, which is why the latch below
+   *  sits after this host's own missing-mesh skip). PlayerActivate box-
+   *  tests these against the activation ray's hit point and, on a hit,
+   *  runs ActivateBuilding (:340-361). */
+  const staticBuildings = [];
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
+    // subrecord inside AddModels (RMBLayout.cs:824-832), and AddModels
+    // runs once per PLACED block with a fresh `buildingsOut`
+    // (:819-820) - so every grid cell gets its own full StaticBuilding
+    // array. A location-wide latch keyed on the BLOCKS.BSA record index
+    // would collide across the many cells that hold the same block name
+    // and leave every repeat with no buildings at all.
+    const firstModelOfRecord = new Set();   // recordIndex - this BLOCK INSTANCE's latch
     for (const placed of b.layout.models) {
       // WM2f: the mill's companion building is part of an enhanced-skin
       // departure; the 1:1 lane must not see it.
@@ -434,8 +479,35 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
       const cpu = cpuModels.get(placed.modelIdNum);
-      drawList.push({ mesh, matrix, order: placed.modelIdNum, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) });   // EV3; EV6: sort key
-      collider.addMesh('world', cpu.positions, cpu.indices, matrix);
+      const entry = { mesh, matrix, order: placed.modelIdNum, box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), matrix) };   // EV3; EV6: sort key
+      drawList.push(entry);
+      // AUDIT 64 F11: the StaticBuilding for this subrecord, if this is
+      // its first LOADED model (RMBLayout.cs:866-882).
+      if (placed.recordIndex != null) {
+        const rk = placed.recordIndex;
+        if (!firstModelOfRecord.has(rk)) {
+          firstModelOfRecord.add(rk);
+          const sbox = staticBuildingBox(dfMeshSize(placed.modelIdNum));
+          staticBuildings.push({
+            recordIndex: placed.recordIndex, dfBlock: b.dfBlock, matrix,
+            aabb: staticBuildingWorldAabb(sbox, matrix),
+          });
+        }
+      }
+      // AUDIT 64 F14: THE CITY GATES. RMBLayout stands 446/447
+      // standalone (:857) to hang DaggerfallCityGate on them
+      // (:959-963), and that component swaps the model - draw mesh,
+      // materials AND MeshCollider (GameObjectHelper.cs:236-250) - at
+      // dusk and dawn. The port has no components, so the placement
+      // keeps its own collider BUCKET (the shared 'world' one cannot
+      // give a single mesh back) and joins the list the frame loop
+      // ticks below.
+      const bucketKey = isCityGate(placed.modelIdNum)
+        ? `gate:${b.dfBlock.index}:${placed.recordIndex}:${cityGates.length}` : 'world';
+      collider.addMesh(bucketKey, cpu.positions, cpu.indices, matrix);
+      if (isCityGate(placed.modelIdNum)) {
+        cityGates.push({ gate: makeCityGate(placed.modelIdNum), entry, matrix, bucketKey });
+      }
       // THE BULLETIN BOARDS. RMBLayout stands model 41739 STANDALONE
       // (:857, :935) so it can carry DaggerfallBulletinBoard (:966-970)
       // - the component PlayerActivate's ray looks for (:393-398).
@@ -510,6 +582,18 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
     for (const flat of blockFlats) {
+      // AUDIT 64 F12: an EDITOR flat (archive 199) is stood but never
+      // rendered - DaggerfallBillboard.Start disables the mesh renderer
+      // of a FlatTypes.Editor billboard (DaggerfallBillboard.cs:77-84;
+      // MaterialReader.cs:980-981 maps 199 to Editor;
+      // StartGameBehaviour.cs:45 `ShowEditorFlats = false`). The port
+      // had batched the MARKER/START placards into every town.
+      // Skipping here also keeps 199 out of `flatArchives` below.
+      // The NPC pass (collectExteriorNpcs, further down) still reads
+      // the WHOLE list: DFU still hands an editor flat with a non-zero
+      // FactionID its StaticNPC/QuestMachine hookup - only the renderer
+      // is off.
+      if (flat.editor) continue;
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -537,6 +621,35 @@ export async function bootExterior(canvas, renderer, params, status) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
   }
+  /** AUDIT 64 F14: DaggerfallCityGate.Update, once per gate
+   *  (DaggerfallCityGate.cs:44-51). SetOpen's model change
+   *  (:26-37) is ChangeDaggerfallMeshGameObject
+   *  (GameObjectHelper.cs:217-253): the draw mesh, the material array
+   *  AND the MeshCollider (:246-250) - so the closed gate is a WALL,
+   *  which is the whole point of it closing. The port's stand-in for
+   *  `mesh.ApplyCurrentClimate()` (:36) is the remapSubMeshes pass
+   *  both variants already went through above. The culling/sort box is
+   *  recomputed from the swapped model's own vertices. */
+  const tickCityGates = (minute) => {
+    const night = isNight(minute);
+    for (const g of cityGates) {
+      if (!updateCityGate(g.gate, night)) continue;
+      const mesh = gpuMeshes.get(g.gate.modelId);
+      const cpu = cpuModels.get(g.gate.modelId);
+      if (!mesh || !cpu) continue;
+      g.entry.mesh = mesh;
+      g.entry.order = g.gate.modelId;
+      g.entry.box = transformedAabb(archAabb(g.gate.modelId, cpu.positions), g.matrix);
+      collider.removeBucket(g.bucketKey);
+      collider.addMesh(g.bucketKey, cpu.positions, cpu.indices, g.matrix);
+    }
+  };
+  // The first tick is not optional: Update() runs on frame one, so a
+  // location entered at 20:00 closes its gates immediately (a location
+  // entered by day keeps whatever the block data laid - isOpen is born
+  // true and the day arm does nothing).
+  tickCityGates(minuteNow());
+
   // EV6: the draw list sorts by MESH at build, so the frame's draws of
   // one archetype run back to back and the renderer's VAO shadow skips
   // the rebind. Opaque geometry under a depth test - order costs
@@ -2937,6 +3050,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       portTownAndUnknown: dfLocation.exterior?.exteriorData?.portTownAndUnknown ?? 0,
     }),
     baseCollider: () => collider,
+    /** AUDIT 64 F11: the location's StaticBuildings, in the frame the
+     *  activation ray is cast in (this host builds everything in the
+     *  location frame, as its doors and boards are). */
+    buildingTargets: () => staticBuildings,
     // E2: one entered door -> its merged building identity (the T3c
     // pool merge) + the directory name by buildingKey.
     buildingDataForDoor: (hit) => {
@@ -3817,6 +3934,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    tickCityGates(minute);   // AUDIT 64 F14: DaggerfallCityGate.Update, every frame as DFU's is
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
     // thunder and snow) disables the clear night sky, so the DAY sky at
     // frame 0 is drawn instead. weatherSkyOffset IS the WeatherStyle

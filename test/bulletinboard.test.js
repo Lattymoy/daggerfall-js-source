@@ -185,8 +185,8 @@ test('the reach gate is a SECOND test after the pick, and it refuses', () => {
 
 test('world.js collects the boards a pixel stands and hands them over shifted', () => {
   const w = src('src/scenes/world.js');
-  assert.ok(w.includes("import { isBulletinBoard } from '../world/rmbLayout.js'"),
-    'the model test comes from RMBLayout\'s home, not a second 41739');
+  assert.ok(w.includes("import { isBulletinBoard, isCityGate,") && w.includes("} from '../world/rmbLayout.js';"),
+    'the model test comes from RMBLayout\'s home, not a second 41739 (AUDIT 64 F14 added isCityGate to the same import - RMBLayout.cs declares both)');
   assert.ok(w.includes('if (isBulletinBoard(placed.modelIdNum)) pixelBoards.push({ box });'),
     'the board is caught where the placement is stood, with the box already in the pixel frame');
   assert.ok(w.includes('boards: pixelBoards,'), 'the list rides the pixel, so destroyPixel takes it away');
@@ -217,7 +217,7 @@ test('worldModes puts the board in the SAME ray, at the ray\'s reach', () => {
 
 test('the probe exterior host stands its boards too - the standing host rule', () => {
   const e = src('src/scenes/exterior.js');
-  assert.ok(e.includes("import { isBulletinBoard } from '../world/rmbLayout.js'"));
+  assert.ok(e.includes("import { isBulletinBoard, isCityGate,") && e.includes("} from '../world/rmbLayout.js';"));
   assert.ok(e.includes('if (isBulletinBoard(placed.modelIdNum)) {'),
     "caught where the placement is stood, world-frame like this host's doors");
   assert.ok(e.includes('boardTargets: () => bulletinBoards,'));

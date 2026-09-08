@@ -135,13 +135,13 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
-import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
+import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT, OPEN_HOURS, CLOSE_HOURS } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';   // BG1: the shop quality + the householder's greeting
-import { discoverBuilding, undiscoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
+import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, isMember } from '../systems/guilds.js';
@@ -232,6 +232,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: Finaliz
 import { openDoorsStep } from '../characters/enemyMotor.js';   // AUDIT 63 F42: EnemyMotor.OpenDoors (EnemyMotor.cs:1424-1442), which lives in the motor and runs wherever an enemy does
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
+import { staticBuildingsHasHit } from '../world/staticBuildings.js';   // AUDIT 64 F11: DaggerfallStaticBuildings.HasHit
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js';   // ROAD-D D10: GetPortraitIndexFromStaticNPCBillboard
 import { GENDERS } from '../characters/nameHelper.js';
@@ -341,7 +342,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, buildingTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration - the modal frames' own axes
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
@@ -1394,6 +1395,13 @@ export function createWorldModes(host) {
   const sceneBehaviours = () => {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
+    // AUDIT 64 F13 (review round): the DUNGEON's static NPCs carry the
+    // same bootstrap behaviour - RDBLayout.cs:1228-1237 adds StaticNPC
+    // and then runs SetupIndividualStaticNPC on that GameObject, so its
+    // QuestResourceBehaviour is in FindObjectsOfTypeAll's answer exactly
+    // like an interior one. Miss it and IsAlreadyPlaced stands the
+    // Person a SECOND time on the marker walk.
+    for (const pn of dungeonCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
     for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
     return out;
   };
@@ -1419,6 +1427,11 @@ export function createWorldModes(host) {
       out.push(b);
     };
     for (const pn of interiorCtx?.people ?? []) take(pn.questBehaviour);
+    // AUDIT 64 F13 (review round): and the dungeon's, for the same
+    // reason - StaticNPC.cs:127 registers EVERY StaticNPC with
+    // ActiveGameObjectDatabase, dungeon ones included, so the
+    // static-NPC cache holds their behaviours too.
+    for (const pn of dungeonCtx?.people ?? []) take(pn.questBehaviour);
     for (const s of questFlats) take(s.behaviour);
     for (const s of dungeonQuestFlats) take(s.behaviour);
     return out;
@@ -3936,9 +3949,104 @@ export function createWorldModes(host) {
     return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider())?.distance ?? Infinity;
   }
 
+  /** BuildingIsUnlocked's ONE evaluation (PlayerActivate.cs:358): DFU
+   *  computes it once off the hit BuildingSummary and hands the same
+   *  answer to both ActivateBuilding (:360) and ActivateStaticDoor
+   *  (:368). AUDIT 64 F11 gave it a second caller, so it is spelled
+   *  once here rather than copied - a thinner second copy is exactly
+   *  the "constant restated where DFU reads a live value" shape. */
+  function resolveBuildingUnlocked(bd) {
+    const minutes = Math.floor(worldMinutes());
+    const dict = townTalk?.factionDict ?? null;
+    return buildingIsUnlocked(bd, {
+      hour: Math.floor((minutes % 1440) / 60),
+      holidayId: getHolidayId(minutes, bd.regionIndex ?? 0),
+      guildForBuilding: (factionId) => {
+        const guild = guildOfFaction(factionId, resolveVariantGuild(dict), dict);
+        if (!guild) return null;
+        const m = membershipOf(activeMemberships(playerEntity), guild);
+        return { hallAccessAnytime: hallAccessAnytime(guild, m), isMember: isMember(m) };
+      },
+      isActiveQuestBuilding: (b) => {
+        if (!questBridge || !isResidence(b.buildingType)) return false;   // residencesOnly, DFU's default
+        const mapId = questSceneCtx?.()?.mapId ?? 0;
+        return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
+      },
+      // H1: your own front door is not locked against you
+      // (buildingLocks.js:65 - the first thing the ladder tests).
+      // The hook has been in that law's contract since R1 with
+      // nothing able to answer it.
+      isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, key),
+      // D6: and your own SHIP is not locked against you either
+      // (buildingLocks.js's last arm - PlayerActivate.cs:1307-1308).
+      // The key was simply absent here, so it defaulted false and
+      // that arm could never fire; now that the shipyard can sell
+      // one, the door it opens has to answer.
+      ownsShip: ownsShip(playerEntity),
+    });
+  }
+
+  /** ActivateBuilding (PlayerActivate.cs:457-484), the arm the port has
+   *  never had. PlayerActivate box-tests its ONE activation raycast's
+   *  hit point against the block's StaticBuilding array (:343) and, on
+   *  a hit, runs this - then FALLS THROUGH to the static-door check
+   *  (:364-368), so an Info click on a shop's door both names the
+   *  building and enters it. There is no distance test of its own here;
+   *  the ray's RayDistance is the whole reach.
+   *
+   *  Info only (:461). DiscoverBuilding (:465) - discovery.js:65 already
+   *  no-ops a re-discover, as PlayerGPS.cs:926-927 does - then the
+   *  discovered record's display name as HUD text (:468-471), and for a
+   *  LOCKED building below Temple that is not HouseForSale the
+   *  store/guild-closed popup with the opening hours substituted
+   *  (:473-483; Internal_Strings.csv:36-37 gives both literals, ":00"
+   *  suffixes and all). */
+  function activateBuilding(bd, unlocked) {
+    if (getInteractionMode() !== 'info') return;
+    const locId = discoveryLocationId?.() ?? null;
+    if (!locId) return;
+    discoverBuilding(locId, bd, null, questBuildingSource);
+    const db = getDiscoveredBuilding(locId, bd.buildingKey);
+    if (!db) return;
+    townTalk?.say?.(db.displayName);
+    if (!unlocked && bd.buildingType < BUILDING_TYPES.Temple
+      && bd.buildingType !== BUILDING_TYPES.HouseForSale) {
+      const which = bd.buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store';
+      townTalk?.say?.(`${which} is closed. Open from ${OPEN_HOURS[bd.buildingType]}:00 to ${CLOSE_HOURS[bd.buildingType]}:00.`);
+    }
+  }
+
   async function tryEnter() {
     const eye = player.eye;
     const dir = eyeDir();
+    // AUDIT 64 F11: THE STATIC-BUILDING HIT, and it does NOT consume the
+    // click. PlayerActivate casts one ray (:314, RayDistance = 3072 *
+    // GlobalScale, :76), box-tests its hit POINT against the block's
+    // StaticBuildings (:343) and runs ActivateBuilding WITHOUT
+    // returning - the static-door check at :364-368 then runs on the
+    // same hit. Making the building a competing activation target would
+    // be wrong twice over: every building door lies inside its own
+    // building box, so the enclosing box would win on distance and
+    // swallow every entry click.
+    const bhit = buildingTargets ? (() => {
+      const list = buildingTargets();
+      if (!list.length) return null;
+      const wall = baseCollider().raycast(eye, dir, RAY_DISTANCE);
+      if (!(wall < RAY_DISTANCE)) return null;
+      return staticBuildingsHasHit(list, [
+        eye[0] + dir[0] * wall, eye[1] + dir[1] * wall, eye[2] + dir[2] * wall,
+      ]);
+    })() : null;
+    if (bhit) {
+      const bd = buildingDataForDoor?.({
+        dfBlock: bhit.dfBlock, recordIndex: bhit.recordIndex, pixelKey: bhit.pixelKey,
+        // the StaticBuilding's own matrix is in the host's layout frame
+        // already; it identifies THIS block instance, which is what
+        // DFU's per-cell building key is built from (RMBLayout.cs:888).
+        door: { matrix: bhit.matrix }, pixelLocal: true,
+      }) ?? null;
+      if (bd && bd.buildingType != null) activateBuilding(bd, resolveBuildingUnlocked(bd));
+    }
     const { entries, npcs, boards, targets } = exteriorActivationTargets();
     const key = pickActivatable(eye, dir, targets, baseCollider());
     if (key === null) return false;
@@ -4013,34 +4121,7 @@ export function createWorldModes(host) {
       // player where DFU always has BuildingSummary.
       if (bd && bd.buildingType != null) {
         if (locId) discoverBuilding(locId, bd, null, questBuildingSource);   // AUDIT 63 F49: PlayerEnterExit.cs:1032's call takes the quest name-override arm (PlayerGPS.cs:945-959)
-        const minutes = Math.floor(worldMinutes());
-        const dict = townTalk?.factionDict ?? null;
-        const unlocked = buildingIsUnlocked(bd, {
-          hour: Math.floor((minutes % 1440) / 60),
-          holidayId: getHolidayId(minutes, bd.regionIndex ?? 0),
-          guildForBuilding: (factionId) => {
-            const guild = guildOfFaction(factionId, resolveVariantGuild(dict), dict);
-            if (!guild) return null;
-            const m = membershipOf(activeMemberships(playerEntity), guild);
-            return { hallAccessAnytime: hallAccessAnytime(guild, m), isMember: isMember(m) };
-          },
-          isActiveQuestBuilding: (b) => {
-            if (!questBridge || !isResidence(b.buildingType)) return false;   // residencesOnly, DFU's default
-            const mapId = questSceneCtx?.()?.mapId ?? 0;
-            return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
-          },
-          // H1: your own front door is not locked against you
-          // (buildingLocks.js:65 - the first thing the ladder tests).
-          // The hook has been in that law's contract since R1 with
-          // nothing able to answer it.
-          isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, key),
-          // D6: and your own SHIP is not locked against you either
-          // (buildingLocks.js's last arm - PlayerActivate.cs:1307-1308).
-          // The key was simply absent here, so it defaulted false and
-          // that arm could never fire; now that the shipyard can sell
-          // one, the door it opens has to answer.
-          ownsShip: ownsShip(playerEntity),
-        });
+        const unlocked = resolveBuildingUnlocked(bd);
         // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
         // spell is tried on a locked building BEFORE the mode ladder,
         // and it spends itself either way (Open.cs:158's CancelEffect
@@ -4765,6 +4846,12 @@ export function createWorldModes(host) {
           // the street. The standalone ?dungeon probe passes none and
           // the context keeps its own refusal.
           onTeleport: host.onTeleport ? () => host.onTeleport() : null,
+          // AUDIT 64 F13: SetupIndividualStaticNPC's call site for the
+          // DUNGEON (RDBLayout.cs:1233-1236), the same seam the
+          // interior mount already hands down - per flat, at layout,
+          // so the away arm's SetActive(false) can still take the
+          // billboard out of the batch and the ray.
+          setupStaticNpc,
           foes: host.foes, playerClass: host.playerClass,
           playerSpell: host.playerSpell, playerWeapon: host.playerWeapon,
           // AUDIT 24 (the seven-slice sweep): THE OUTER HOST OWNS
@@ -4985,6 +5072,21 @@ export function createWorldModes(host) {
     // same shape (one factory builds both lists), and PlayerActivate
     // has no scene gate on the quest-resource arm at all (:326-339).
     targets.push(...questFlatTargets(dungeonQuestFlats));
+    // AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat gives
+    // an NPC-archive flat (334/346/357/175-184) a StaticNPC
+    // (RDBLayout.cs:1226-1231) and DaggerfallBillboard.cs:318-319/:343-349
+    // gives that FlatTypes.NPC a trigger BoxCollider - which is the only
+    // reason PlayerActivate's one ray can hit it (NPCCheck :1226-1229 ->
+    // ActivateStaticNPC :742-767). There is NO interior/exterior gate on
+    // that path, and DFU's own comment names dungeon instances ("guard
+    // at entrance of Daggerfall Castle and Benefactor and Sheogorath in
+    // Mantellan Crux"). Same reach and same routing as the other two
+    // rays: StaticNPCActivationDistance (:87) into activateStaticNpc,
+    // which carries the Info/PresentNPCInfo split.
+    const dNpcs = dungeonCtx.npcTargets?.() ?? [];
+    dNpcs.forEach((pn, i) => {
+      targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
+    });
     const _pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
     // AUDIT 63 F33 (review round): the NEAR half, decided against the
     // ladder's candidate - the foe consumes only when strictly nearer.
@@ -4996,6 +5098,11 @@ export function createWorldModes(host) {
     // arm the standalone dungeon scene carries, kept in step here.
     if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
       dungeonCtx.takeLoot(key);   // opens the inventory with the pile as the remote target
+      return true;
+    }
+    // ...and the NPC arm ENDS the activation, as the other two rays' do.
+    if (key.startsWith('person:')) {
+      activateStaticNpc(dNpcs[Number(key.split(':')[1])]);
       return true;
     }
     if (key.startsWith('questflat:')) {

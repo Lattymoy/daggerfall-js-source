@@ -36,7 +36,11 @@ import { EDITOR_FLATS_ARCHIVE } from './rmbFlats.js';
 import { getStaticDoors } from './staticDoors.js';
 import { trs } from './mat4.js';
 
-const PROP_MODEL_TYPE = 3;
+// DaggerfallInterior.cs:31 `const int propModelType = 3;`. Read here
+// for the prop bottom-Y rule (:420) and carried on every placement,
+// because DFU gates the ladder (:492) and the whole furniture-action
+// chain (:500) on the SAME clause.
+export const PROP_MODEL_TYPE = 3;
 const DOOR_MODEL_BASE_ID = 9000;
 
 // DFU InteriorMarkerTypes (editor flat texture records), same values.
@@ -96,7 +100,7 @@ export function isBadInteriorModel(blockIndex, recordIndex, modelIdNum) {
  * @param {(modelIdNum:number) => object} getModel - resolves a model id to
  *   dfMeshToModel output (positions for the prop bottom-Y, doors for
  *   triggers).
- * @returns {{placements:Array<{modelIdNum:number,matrix:Float32Array}>,
+ * @returns {{placements:Array<{modelIdNum:number,objectType:number,matrix:Float32Array}>,
  *   actionDoors:Array<{modelIdNum:number,matrix:Float32Array,openRotation:number}>,
  *   flats:Array<{archive:number,record:number,x:number,y:number,z:number}>,
  *   markers:Array<{type:number,x:number,y:number,z:number}>,
@@ -155,7 +159,7 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
       -obj.zRotation / ROTATION_DIVISOR,
     );
 
-    placements.push({ modelIdNum: obj.modelIdNum, matrix });
+    placements.push({ modelIdNum: obj.modelIdNum, objectType: obj.objectType, matrix });
 
     // Any static doors on this model become triggers under its matrix.
     const staticDoors = getStaticDoors(model, blockIndex, recordIndex, matrix);

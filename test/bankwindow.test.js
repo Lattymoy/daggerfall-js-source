@@ -334,7 +334,10 @@ test('D6: the host mounts BOTH arms of the ONE popup, and PurchaseShip has a cal
   // ...and the door of the ship it sells answers the lock ladder: the
   // key was simply absent at the call, so buildingLocks' last arm
   // (PlayerActivate.cs:1307-1308) could never fire
-  assert.match(wm, /^ {10}ownsShip: ownsShip\(playerEntity\),$/m,
+  // AUDIT 64 F11 factored the one BuildingIsUnlocked evaluation
+  // (PlayerActivate.cs:358) into resolveBuildingUnlocked, so the arm is
+  // two levels shallower - the law it pins is unchanged.
+  assert.match(wm, /^ {6}ownsShip: ownsShip\(playerEntity\),$/m,
     'buildingIsUnlocked is handed no ownsShip, so it defaults false');
 });
 

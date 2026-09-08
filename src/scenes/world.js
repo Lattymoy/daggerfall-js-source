@@ -32,7 +32,9 @@ import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
-import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
+import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
+import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
+import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
@@ -603,12 +605,50 @@ export async function bootWorld(canvas, renderer, params, status) {
   const built = new Map(); // key -> pixel entry
   // EV3: one local AABB per model ARCHETYPE, scanned once ever - the
   // per-placement box is then eight corner transforms at build time.
+  /** AUDIT 64 F11: DFMesh.Size for a model id - `modelData.DFMesh.Size`
+   *  at RMBLayout.cs:873. Arch3dFile.cs:711-713 divides the raw extent by
+   *  pointDivisor and WritePoint (:941-943) divides the VERTICES by the
+   *  same, so `size * GlobalScale` is the model's world extent - the
+   *  building's silhouette, which is what HasHit boxes. */
+  const dfMeshSizes = new Map();
+  const dfMeshSize = (id) => {
+    let sz = dfMeshSizes.get(id);
+    if (sz === undefined) {
+      const index = arch.getRecordIndex(id);
+      sz = index === -1 ? null : (arch.getMesh(index)?.size ?? null);
+      dfMeshSizes.set(id, sz);
+    }
+    return sz;
+  };
   const archAabbs = new Map();
   const archAabb = (id, positions) => {
     let b = archAabbs.get(id);
     if (!b) archAabbs.set(id, b = localAabb(positions));
     return b;
   };
+  /** AUDIT 64 F14: DaggerfallCityGate.Update over every built pixel's
+   *  gates (DaggerfallCityGate.cs:44-51). SetOpen (:26-37) changes the
+   *  model through ChangeDaggerfallMeshGameObject
+   *  (GameObjectHelper.cs:217-253), which re-points the mesh, the
+   *  materials AND the MeshCollider (:246-250) - a closed gate blocks -
+   *  and then re-runs ApplyCurrentClimate, which is the remapSubMeshes
+   *  pass both variants took at pixel build. */
+  const tickCityGates = (minute) => {
+    const night = isNight(minute);
+    for (const p of built.values()) {
+      for (const g of p.cityGates ?? []) {
+        if (!updateCityGate(g.gate, night)) continue;
+        const m = g.meshes.get(g.gate.modelId);
+        if (!m) continue;
+        g.entry.gpu = m.gpu;
+        g.entry._order = g.gate.modelId;
+        g.entry._box = transformedAabb(archAabb(g.gate.modelId, m.cpu.positions), g.local);
+        collider.removeBucket(g.bucketKey);
+        collider.addMesh(g.bucketKey, m.cpu.positions, m.cpu.indices, g.local, g.translation);
+      }
+    }
+  };
+
   // The sails sweep well past the tower's own box; the pad keeps a
   // mill's rotor from vanishing while its tower still shows.
   const MILL_SAIL_PAD = 30;
@@ -787,6 +827,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MaterialReader.ChangeClimate semantics).
     const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
+    // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
+    // pixel-local like its doors, boards and street NPCs.
+    const pixelBuildings = [];
     const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
@@ -807,6 +851,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const b of loc.blocks) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+        // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
+        // subrecord inside AddModels (RMBLayout.cs:824-832), and
+        // AddModels runs once per PLACED block with a fresh
+        // `buildingsOut` (:819-820) - so every grid cell gets its own
+        // full StaticBuilding array. A pixel-wide latch keyed on the
+        // BLOCKS.BSA record index would collide across the many cells
+        // that hold the same block name and leave every repeat with no
+        // buildings at all.
+        const pixelFirstModel = new Set();   // recordIndex - this BLOCK INSTANCE's latch
         // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places
         // none, so rmbLayout adds them; the tower joins the static model
         // list and only the SAIL needs a matrix per frame. Enhanced skin
@@ -843,8 +896,28 @@ export async function bootWorld(canvas, renderer, params, status) {
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           unionBox(box);
-          models.push({ gpu, local, _box: box, _order: placed.modelIdNum });   // EV6: sort key
-          collider.addMesh(key, cpu.positions, cpu.indices, local,
+          const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
+          models.push(entry);
+          // AUDIT 64 F14: a city gate takes a collider bucket of its own
+          // (the pixel's shared bucket has no per-mesh removal), keyed
+          // off the pixel key so destroyPixel drops it with the pixel.
+          // AUDIT 64 F11: the StaticBuilding for this subrecord, if this
+          // is its first LOADED model (the `continue` at RMBLayout.cs:854
+          // skips a missing model before the firstModel block, which is
+          // why the latch sits after this host's own `if (!gpu) continue`).
+          if (placed.recordIndex != null) {
+            const rk = placed.recordIndex;
+            if (!pixelFirstModel.has(rk)) {
+              pixelFirstModel.add(rk);
+              const sbox = staticBuildingBox(dfMeshSize(placed.modelIdNum));
+              pixelBuildings.push({
+                recordIndex: placed.recordIndex, dfBlock: b.dfBlock, matrix: local,
+                aabb: staticBuildingWorldAabb(sbox, local),
+              });
+            }
+          }
+          const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
+          collider.addMesh(gateKey, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
@@ -854,6 +927,38 @@ export async function bootWorld(canvas, renderer, params, status) {
           // pixel keeps the boards it stood - pixel-local, like its
           // NPCs and lights - and the activation ray reads that list.
           if (isBulletinBoard(placed.modelIdNum)) pixelBoards.push({ box });
+          // AUDIT 64 F14: ...and the CITY GATES, stood standalone for
+          // exactly the same reason (RMBLayout.cs:857) so
+          // DaggerfallCityGate can ride them (:959-963) and swap the
+          // model - draw AND MeshCollider (GameObjectHelper.cs:236-250)
+          // - at dusk and dawn. Both variants must be resident and
+          // climate-remapped BEFORE the first swap (the per-pixel
+          // loader is async; a mid-frame fetch cannot swap in place),
+          // and the gate needs a collider bucket of its own because the
+          // pixel's shared one has no per-mesh removal. Its box joins
+          // the pixel union for BOTH variants so culling stays truthful
+          // whichever is drawn.
+          if (isCityGate(placed.modelIdNum)) {
+            const otherId = placed.modelIdNum === CITY_GATE_OPEN_MODEL_ID
+              ? CITY_GATE_CLOSED_MODEL_ID : CITY_GATE_OPEN_MODEL_ID;
+            const otherGpu = await getGpuMesh(otherId);
+            const otherCpu = cpuModels.get(otherId);
+            if (otherGpu && otherCpu) {
+              await remapSubMeshes(otherGpu.subMeshes, texRemap, climateArchive, pipeline);
+              unionBox(transformedAabb(archAabb(otherId, otherCpu.positions), local));
+            }
+            pixelGates.push({
+              gate: makeCityGate(placed.modelIdNum), entry, local, bucketKey: gateKey,
+              // Both variants held here, so the frame tick is synchronous
+              // - the streaming loader is not, and a mid-frame fetch
+              // cannot swap in place.
+              meshes: new Map([
+                [placed.modelIdNum, { gpu, cpu }],
+                [otherId, otherGpu && otherCpu ? { gpu: otherGpu, cpu: otherCpu } : null],
+              ]),
+              translation: () => state.pixelTranslation(px, py),
+            });
+          }
           // Building models expose their static doors for E-transitions.
           if (cpu.doors && cpu.doors.length) {
             // StaticDoor.blockIndex must be TRUTHFUL (RMBLayout.cs:848
@@ -910,6 +1015,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           // leave. Their batches are appended to this pixel's list the
           // moment the pass has answered for them.
           if (npcFlatSet.has(flat)) continue;
+          // AUDIT 64 F12: ...and an EDITOR flat (archive 199) is never
+          // DRAWN at all. AddMiscBlockFlats has no 199 branch
+          // (RMBLayout.cs:340-379) because the hide is the billboard
+          // component's: DaggerfallBillboard.Start disables the mesh
+          // renderer of a FlatTypes.Editor flat (:77-84,
+          // MaterialReader.cs:980-981, StartGameBehaviour.cs:45). It
+          // stays in `blockFlats` - the start markers
+          // (locationStartMarkers), quest markers and action chains all
+          // read it - it simply never reaches a batch.
+          if (flat.editor) continue;
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
@@ -1052,6 +1167,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
+      cityGates: pixelGates,   // AUDIT 64 F14: DaggerfallCityGate's placements (446/447), ticked each frame
+      buildings: pixelBuildings,   // AUDIT 64 F11: RMBLayout's StaticBuildings, pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -1212,6 +1329,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
+    // AUDIT 64 F14: a gate's own collider bucket leaves with its pixel.
+    for (const g of p.cityGates ?? []) collider.removeBucket(g.bucketKey);
     // T3d fix: the pixel's doors leave with it - they accumulated
     // across every rebuild (duplicate E-targets + unbounded growth
     // on long streams; the directory's dedup had been masking it).
@@ -6519,6 +6638,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return out;
     },
+    /** AUDIT 64 F11: the StaticBuildings of every built pixel, shifted
+     *  through the LIVE floating-origin translation the boards and
+     *  street NPCs ride - DFU's hit test consumes a world-space
+     *  raycast's point (PlayerActivate.cs:314, :343). The pixel key and
+     *  the pixel-local matrix ride along, because the identity lookup
+     *  (buildingDataForDoor) works in the pixel's own location frame. */
+    buildingTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.buildings?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const bl of p.buildings) {
+          out.push({
+            ...bl, pixelKey: `${p.px},${p.py}`,
+            aabb: {
+              min: [bl.aabb.min[0] + t[0], bl.aabb.min[1] + t[1], bl.aabb.min[2] + t[2]],
+              max: [bl.aabb.max[0] + t[0], bl.aabb.max[1] + t[1], bl.aabb.max[2] + t[2]],
+            },
+          });
+        }
+      }
+      return out;
+    },
     // ActivateBulletinBoard's news (:716) - the mill's SIGN face,
     // ported at TK-i and until now called by nothing.
     bulletinBoardNews: () => rumorMill.getNewsOrRumorsForBulletinBoard(),
@@ -6533,7 +6675,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const dfLoc = locationIndex.get(hit.pixelKey);
       const p = built.get(hit.pixelKey);
       if (!dfLoc || !p?.locBlocks || !p.locOrigin) return null;
-      const raw = buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
+      // AUDIT 64 F11 (review round): a STATIC-BUILDING hit already
+      // carries its own PIXEL-LOCAL matrix, so it must not be re-read
+      // off buildingDoors - that lookup matches on the BLOCKS.BSA
+      // record and would answer with the first cell holding this block
+      // name, while DFU's key is per block INSTANCE
+      // (`MakeBuildingKey((byte)layoutX, (byte)layoutY, (byte)recordCount)`,
+      // RMBLayout.cs:888). A door hit is world-frame (shiftedDoor), so
+      // it still needs the raw entry.
+      const raw = hit.pixelLocal ? null
+        : buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const m = (raw ?? hit).door.matrix;
       const d = buildingDataForDoor(dfLoc.exterior.buildings, p.locBlocks, {
         dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
@@ -7387,6 +7538,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    tickCityGates(minute);   // AUDIT 64 F14: DaggerfallCityGate.Update, every frame as DFU's is - and on the first frame after a pixel builds, which is what closes a gate streamed in at 20:00
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
     // thunder and snow) disables the clear night sky, so the DAY sky at

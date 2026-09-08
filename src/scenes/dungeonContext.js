@@ -27,7 +27,8 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
+import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
+import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
@@ -259,6 +260,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   };
   const texRemap = new Map();
   const flatGroups = new Map();
+  /** AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat
+   *  (RDBLayout.cs:1204-1247) does two things to a flat that the port
+   *  had dropped whole:
+   *    :1226-1231  a flat in NPCFlatArchives (334/346/357/175-184,
+   *                :1250-1254) gets a StaticNPC with SetLayoutData(obj)
+   *                - the overload that stamps Context.Dungeon
+   *                (StaticNPC.cs:145-160) - which is what makes the
+   *                people in Castle Daggerfall, Wayrest and Sentinel
+   *                clickable, nameable and talkable, and what
+   *                systems/topicTree.js's castle-questor arm reads.
+   *    :1233-1236  SetupIndividualStaticNPC runs for EVERY flat, NOT
+   *                only the NPC ones - the away arm deactivates the
+   *                home copy of an individual a quest has placed
+   *                elsewhere, and everyone else gets the bootstrap
+   *                QuestResourceBehaviour a follow-up quest is handed
+   *                out through.
+   *  The billboard IS hittable in DFU only because of the first act:
+   *  DaggerfallBillboard.cs:318-319 gives an NPC-archive flat
+   *  FlatTypes.NPC and :343-349 gives that type a trigger BoxCollider. */
+  const people = [];
   const lights = [];
   const waterQuads = [];
   const exitDoors = [];
@@ -497,6 +518,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // collider bucket (systems/automap.js).
     }
     for (const f of b.layout.flats) {
+      // AUDIT 64 F13, first act: the StaticNPC identity, in the parent
+      // frame like every other coordinate here. `y` stays the RDB flat's
+      // raw pivot (the batch below base-centres it); the activation box
+      // takes the same conversion once the archive answers its size.
+      const pn = f.npc ? {
+        x: f.x + b.originX, y: f.y, z: f.z + b.originZ,
+        textureArchive: f.archive, textureRecord: f.record,
+        factionID: f.factionID, flags: f.flags,
+        // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED record ints.
+        rawX: f.rawX, rawY: f.rawY, rawZ: f.rawZ,
+        // StaticNPC.cs:154 seeds the name off the FLAT RESOURCE's
+        // stream position, not the object offset the actions key on.
+        position: f.flatPosition,
+        // StaticNPC.cs:159. buildingKey stays 0 (:157) - the struct
+        // default, and a dungeon has no building.
+        context: NPC_CONTEXT.Dungeon,
+        // PlayerActivate.cs:745-751 keeps its own copy of the flat's
+        // action: an NPC "carrying specific non-dialog actions" is not
+        // activated as a person at all.
+        action: f.action,
+        active: true, questBehaviour: null,
+      } : null;
+      if (pn) people.push(pn);
+      // ...and the second act, for EVERY flat carrying a faction id.
+      if (f.factionID) {
+        const host = {
+          staticNpcFactionId: f.factionID,
+          isActive: () => (pn ? pn.active !== false : true),
+          setActive: (a) => { if (pn) pn.active = !!a; },
+          destroy: () => { if (pn) pn.active = false; },
+        };
+        const setup = opts.setupStaticNpc?.(f, host);
+        if (setup && setup !== true && pn) pn.questBehaviour = setup;
+        // QuestMachine.cs:1334-1341's away arm has already called
+        // SetActive(false), and a disabled GameObject is out of the
+        // draw, out of the ray and out of its own action chain - so the
+        // flat is WITHHELD here, which a centre already baked into a
+        // shared batch could not be.
+        if (setup === false) continue;
+      }
       const key = `${f.archive}_${f.record}`;
       // WAVE D: a MOVE-flag flat is drawn by its OWN single-flat batch
       // (registerFlatAction mints it) - a member of a grouped batch
@@ -2245,7 +2306,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // map chance comes from a six-entry table indexed by the loot
         // key, only J..O roll at all, and the potion chance is FOUR.
         addPileLootExtras(items, lootKey);
-        lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, batch: null });
+        lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, isFixed, batch: null });
       }
     }
   }
@@ -2273,6 +2334,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
   }
+  // AUDIT 64 F13: the people's ACTIVATION EXTENT, off the same archive
+  // the batch above read - `personAabb` wants a base and a swept
+  // square, and an RDB flat's stored y is its CENTRE (the batch's own
+  // `- size.h / 2`). A person whose archive gave no size is not a
+  // target at all, exactly as the two other people rays already say.
+  for (const pn of people) {
+    if (!pn.active) continue;
+    const t = await getTexture(pn.textureArchive);
+    if (!t || pn.textureRecord >= t.recordCount) continue;
+    const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+    pn.width = size.w;
+    pn.height = size.h;
+    pn.y -= size.h / 2;
+  }
+
   // WAVE D: and one batch per MOVE-flag flat, minted at the flat's
   // placed origin so the tween's offset is exactly the origin uniform.
   // Same base-centering and same AnimateBillboard arming as the grouped
@@ -2312,9 +2388,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || pile.record >= t.recordCount) continue;
     uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
     const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
-    const g = floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
-    pile.pos = g;
     pile.half = [size.w / 2, size.h / 2];
+    // AUDIT 64 F16: a FIXED (archive 216) pile is not grounded.
+    // AssignFixedTreasure (RDBLayout.cs:417-427) passes
+    // adjustPosition:false - "Add fixed treasure flat with same archive
+    // & record and use exact position" - so RDBLayout.cs:1583-1584's
+    // -randomTreasureMarkerDim/2 drop, :1619-1620's
+    // AlignBillboardToGround AND GameObjectHelper.cs:686-687's
+    // +Summary.Size.y/2 are ALL skipped: the container transform IS the
+    // marker point (GameObjectHelper.cs:706) and the centre-pivoted
+    // billboard is CENTRED on it. This batch is base-anchored, so the
+    // centre converts by -h/2 - the same conversion the ordinary RDB
+    // flat batch above already applies. The port had raycast every pile
+    // to the floor, dropping a 216 marker on a table, ledge or alcove
+    // by up to floorLanding's whole 10-unit reach. `pile.pos` is the
+    // pile's identity for the pickup AABB, nearbyLootRecords and the
+    // save-rewind re-mint, so both arms write it.
+    const g = pile.isFixed
+      ? [pile.pos[0], pile.pos[1] - size.h / 2, pile.pos[2]]
+      : floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
+    pile.pos = g;
     // Bottom-anchored shader: the base IS the ground point (the +h/2
     // center-anchor holdover floated piles - C11 audit 08-17).
     pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1], g[2]]]);
@@ -4978,6 +5071,34 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         onUse: (item) => opts.useMagicItem?.(item),
       });
       if (win) activeOverlay = win;
+    },
+    /** AUDIT 64 F13: this dungeon's static NPCs, for the two dungeon
+     *  rays. The ShowText / ShowTextWithInput exclusion is
+     *  PlayerActivate.cs:745-751 - "Do not activate static NPCs
+     *  carrying specific non-dialog actions as these usually have some
+     *  bespoke task to perform ... Examples are guard at entrance of
+     *  Daggerfall Castle and Benefactor and Sheogorath in Mantellan
+     *  Crux". DFU still Receives that action off the same hit
+     *  (:378-383), so the port leaves those flats as ACTION targets
+     *  and never mints a person for them. */
+    /** AUDIT 64 F11..F17 review round: THE RAW static-NPC list, for the
+     *  two behaviour collectors worldModes owns. RDBLayout.cs:1228-1237
+     *  adds StaticNPC to every NPC flat and then calls
+     *  SetupIndividualStaticNPC on the same GameObject, so a dungeon
+     *  static NPC's bootstrap QuestResourceBehaviour is a component in
+     *  the scene like any other: it is in
+     *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
+     *  (GameObjectHelper.cs:926 - the list IsAlreadyPlaced reads) and,
+     *  because StaticNPC.cs:127 registers the object with
+     *  ActiveGameObjectDatabase, in
+     *  GetActiveStaticNPCQuestResourceBehaviours too
+     *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
+     *  RAY's filtered view and cannot serve either. */
+    people,
+    npcTargets() {
+      return people.filter((pn) => pn.active !== false && pn.width
+        && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
+          || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // U26: activating one now OPENS THE INVENTORY with the pile as the

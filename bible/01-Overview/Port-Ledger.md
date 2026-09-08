@@ -187,25 +187,25 @@ and different per town.
 ## B. Verbatim quirks preserved (real-data reality)
 
 World:
-- THE GREEN "MARKER / START" PLACARD OUTSIDE PRIVATEER'S HOLD. The first-hour
-  probe's screenshot of the world, taken the moment the player steps out of
-  the starting dungeon, has an editor marker standing in the grass. It is
-  real data and it is faithfully drawn: `CUSTAA30.RMB` - the ONE block of
-  the Privateer's Hold exterior - carries exactly one misc flat, and it is
-  archive **199 record 10**, the editor START marker (read off the shipped
-  BLOCKS.BSA, not inferred). DFU draws it too, as far as its source can be
-  read: `RMBLayout.AddMiscBlockFlats` (:340-379) skips only the LIGHTS
-  archive and hands everything else to
-  `GameObjectHelper.CreateDaggerfallBillboardGameObject` (:313), which has no
-  archive-199 branch either - the 199 filter sits in `AddExteriorBlockFlats`
-  (:409, the building SUBRECORD loop) and in RDBLayout, both of which the
-  port already mirrors (`world/rmbFlats.js:85`, `world/rdbLayout.js:357`).
-  So the port's misc-flat loop matches DFU's line for line, and NOT filtering
-  here is the faithful reading. FLAGGED, and honestly: what has been checked
-  is the data and both sources; what has NOT been checked is DFU actually
-  rendering it on screen, which needs a Unity build nobody here can run. If a
-  side-by-side ever shows DFU's exterior clean, this row moves to a defect
-  and `collectBlockFlats`' first loop gains the same guard its second one has.
+- THE GREEN "MARKER / START" PLACARD OUTSIDE PRIVATEER'S HOLD - **RESOLVED
+  AGAINST THE SOURCE, 2026-09-08: a DEFECT, not a preserved quirk** (AUDIT
+  64 F12; the fix and the full reading are in bible/03-World/World-Arc.md).
+  This row read that `CUSTAA30.RMB`'s one misc flat is archive **199 record
+  10** and that DFU draws it too, because `RMBLayout.AddMiscBlockFlats`
+  (:340-379) skips only the LIGHTS archive and
+  `GameObjectHelper.CreateDaggerfallBillboardGameObject` (:313) "has no
+  archive-199 branch either" - the 199 filter sitting in
+  `AddExteriorBlockFlats` (:409, the building SUBRECORD loop) alone. It
+  closed with its own escape clause: "what has NOT been checked is DFU
+  actually rendering it on screen, which needs a Unity build nobody here
+  can run." No Unity build was needed. The branch it never reached is
+  `DaggerfallBillboard.Start` (:77-84): archive 199 is `FlatTypes.Editor`
+  (MaterialReader.cs:980-981) and Start disables such a billboard's mesh
+  renderer - "Just disable mesh renderer as actual object can be part of
+  action chain" - under `StartGameBehaviour.cs:45`'s `ShowEditorFlats =
+  false`. That is WHY AddMiscBlockFlats has no 199 branch: layout stands
+  the marker, the COMPONENT hides it. `collectBlockFlats` stamps `editor:
+  true` now and both exterior hosts refuse to batch it.
 
 Chargen:
 - `characterDocument.isCustom` is assigned in exactly ONE place in the whole
@@ -329,7 +329,7 @@ World layout:
   filtering misplaced model 31000 at 60 block/record combos across 27
   blocks (kept verbatim, like FixRdbData); action doors pin to the 9000
   model range via DoorModelIndex % 5 (900x..980x duplicates have differing
-  origins); editor flats (199) are spawned as data but hidden from render.
+  origins); editor flats (199) are spawned as data but hidden from render - in ALL FOUR hosts since AUDIT 64 F12 (the two exterior ones had drawn them).
 - Rest (16f audit): the sub-tick interval is waitTimePerHour /
   minutesPerTick - DFU divides by the CONSTANT 10, not the 6 ticks an
   hour takes, so a rested hour passes in 0.45 real seconds (loiter
