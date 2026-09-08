@@ -18,7 +18,10 @@ const CAREERS = ['Mage', 'Spellsword', 'Battlemage'].map((n) => ({ name: n, care
 /** at the class screen, with a description source attached */
 function atClass({ describe = (i) => [{ text: `Class ${i} description`, center: false }] } = {}) {
   const f = new ChargenFlow(CAREERS, () => 0);
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // race -> gender -> U18's method -> class
+  // AUDIT 64 F32 (review round): the gender screen IS a message box
+  // with no default button (CreateCharGenderSelect.cs:53-54), so M is
+  // what closes it - Return there is inert.
+  f.input('confirm'); f.input('char:m'); f.input('confirm');   // race -> gender -> U18's method -> class
   f.describeClass = describe;
   return f;
 }
@@ -103,7 +106,14 @@ test('U17: Return uses the selected item, the same door as the double click', ()
   assert.equal(f.classConfirm, null);
   assert.equal(f.state, 'class');
   f.input('confirm');
-  f.input('confirm');                       // Yes
+  // AUDIT 64 F32: this box is built with two bare AddButton calls
+  // (CreateCharClassSelect.cs:87-88), so GetDefaultButton() is null
+  // and Return does NOTHING here (DaggerfallMessageBox.cs:318-324);
+  // the Y hotkey AddButton binds unconditionally (:377) is the accept.
+  f.input('confirm');
+  assert.ok(f.classConfirm, 'bare Return is inert on a box with no default button');
+  assert.equal(f.state, 'class');
+  f.input('char:y');                        // Yes
   assert.notEqual(f.state, 'class');
 });
 

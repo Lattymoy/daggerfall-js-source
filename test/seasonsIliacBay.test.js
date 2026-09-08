@@ -808,11 +808,11 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
   // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)
   const world = read('src/scenes/world.js');
-  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, modEvent = null \} = \{\}\)/);
+  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, travelStart = null, modEvent = null \} = \{\}\)/);
   assert.match(world, /if \(seasonsActive && modEvent === 'travel'\) await seasons\.onPostFastTravel\(\)/);
   assert.match(world, /if \(seasonsActive && modEvent === 'load'\) await seasons\.onLoad\(\)/);
   assert.match(world, /if \(seasonsActive && modEvent === 'travel'\) seasons\.onUpdateTerrainsEnd\(\);/);
-  assert.match(world, /reposition: REPOSITION\.RandomStartMarker, modEvent: 'travel' \}\);/, 'fastTravelTo: the travel');
+  assert.match(world, /reposition: REPOSITION\.DirectionFromStartMarker,\s*\n\s*travelStart, modEvent: 'travel' \}\);/, 'fastTravelTo: the travel (AUDIT 64 F18: DFU\'s own method for it)');
   assert.match(world, /await _teleportToPixel\(w\.pixel\.x, w\.pixel\.y, null, \{ modEvent: 'load' \}\);/, 'the quickload: a load');
   assert.match(world, /await _teleportToPixel\(px\.x, px\.y, null, \{ modEvent: 'load' \}\);/, 'the classic import: a load');
   assert.equal((world.match(/modEvent: '(travel|load)'/g) || []).length, 3, 'and no other caller names an event');

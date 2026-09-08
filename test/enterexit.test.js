@@ -209,7 +209,7 @@ test('TL2: a marker whose floor is a roof falls back to the edge landing', async
   // than OBSTRUCTED_ABOVE over it is a roof, and the landing is refused
   // for the edge landing, which stands outside the blocks by construction.
   assert.match(w, /const OBSTRUCTED_ABOVE = 3;/);
-  assert.match(w, /if \(walkMode && landing && pos\[1\] - raw\[1\] > OBSTRUCTED_ABOVE\) \{\s*\n\s*const edge = locationLandingFor\(px, py, \{ noMarkers: true \}\);/);
+  assert.match(w, /if \(walkMode && landing && pos\[1\] - raw\[1\] > OBSTRUCTED_ABOVE\) \{\s*\n\s*const edge = locationLandingFor\(px, py, \{ noMarkers: true, travelStart: hint \}\);/);
   assert.match(w, /pos = floorLanding\(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT\);/, 'and the edge is floored the same way');
   // noMarkers really removes the markers from the choice.
   assert.match(w, /const startMarkers = b\?\.locBlocks && !noMarkers/);

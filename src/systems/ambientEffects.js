@@ -72,6 +72,31 @@ export function presetForExterior(weather, night) {
   return night ? 'clearNight' : 'sunnyDay';     // IsDay / IsNight
 }
 
+/** AUDIT 64 F41: DFU reaches every live AmbientEffectsPlayer through a
+ *  STATIC event - DaggerfallVidPlayerWindow.OnVideoStart/OnVideoEnd,
+ *  subscribed per instance at AmbientEffectsPlayer.cs:92-93. The port
+ *  has no static events, and the video player can reach none of the
+ *  three hosts that own an instance privately (dungeonContext.js:3550,
+ *  exterior.js:3399, world.js:6973), so the registry IS that event:
+ *  every instance joins on construction and leaves on dispose(). A
+ *  mute wired into one host only would leave the rain audible over a
+ *  video raised from another. */
+const liveAmbients = new Set();
+
+/** AmbientEffectsPlayer_OnVideoStart (:536-549): null both loop
+ *  handles, stop the loop source, and raise IsMuted. Fanned out to
+ *  every live instance, which is what Unity's static event does. */
+export function muteAmbientForVideo() {
+  for (const a of liveAmbients) a.setMuted(true);
+}
+
+/** AmbientEffectsPlayer_OnVideoEnd (:551-554): `IsMuted = false;` and
+ *  nothing else - the nulled handles are what make Update re-open the
+ *  loop on the next tick, which is DFU's own retry. */
+export function unmuteAmbientForVideo() {
+  for (const a of liveAmbients) a.setMuted(false);
+}
+
 export class AmbientEffects {
   constructor({ minWait, maxWait }, engine = defaultAudio, rng = Math.random, classicRand = rand) {
     this.minWait = minWait;
@@ -84,6 +109,9 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    /** AmbientEffectsPlayer.cs:31 `public bool IsMuted = false;` - the
+     *  flag the video handlers raise and Update's first line reads. */
+    this.isMuted = false;
     /** WX2: the rain loop's gain, 0..1. Unity's AudioSource plays the
      *  loop at its serialized volume, and so does this on the classic
      *  path, which never sets it: 1. Under the enhanced environments the
@@ -103,6 +131,9 @@ export class AmbientEffects {
      *  void. Dynamic Skies' LightningFlashListener is its one reader. */
     this.onPlayEffect = null;
     this._startWaiting();
+    // F41: Start()'s `OnVideoStart += ...; OnVideoEnd += ...`
+    // (AmbientEffectsPlayer.cs:92-93). dispose() is the unsubscribe.
+    liveAmbients.add(this);
   }
 
   /** PlayerGPS_OnEnterLocationRect / OnExitLocationRect (:518-534),
@@ -149,7 +180,9 @@ export class AmbientEffects {
    *      `Presets` stays frozen at Rain.
    *    - AmbientEffectsPlayer.Update (:134-137) then keeps the loop alive for
    *      as long as Presets says Rain or Storm, and nothing ever stops it:
-   *      Update's only early return is `IsMuted` (:109-110).
+   *      Update's only early return is `IsMuted` (:109-110) - which the
+   *      port now carries (AUDIT 64 F41, `setMuted` below), and which is
+   *      raised only for the length of a VID.
    *
    *  F088 argued the COMPONENT is disabled indoors - that it hangs off
    *  PlayerEnterExit.ExteriorParent, which DisableAllParents deactivates
@@ -178,9 +211,28 @@ export class AmbientEffects {
     this._startWaiting();
   }
 
+  /** AmbientEffectsPlayer_OnVideoStart (:536-548) / _OnVideoEnd
+   *  (:551-554). Muting nulls both loop handles AND stops the sounding
+   *  loop source; unmuting clears the flag alone, so update()'s lazy
+   *  starts re-open whichever loop the preset still wants. */
+  setMuted(v) {
+    if (v) {
+      // :538-547 - the handles go first, then the source is stopped.
+      if (this._rainLoop) { this._rainLoop.stop(); }
+      if (this._cricketsLoop) { this._cricketsLoop.stop(); }
+      this._rainLoop = null;
+      this._cricketsLoop = null;
+      this._rainGainSet = null;
+      this.isMuted = true;   // :548
+    } else {
+      this.isMuted = false;  // :553 - and nothing else
+    }
+  }
+
   /** Scene teardown. */
   dispose() {
     this.setPreset('none');
+    liveAmbients.delete(this);   // F41: leaves the static event with the scene
   }
 
   /** The shared one-shot channel: skipped while a clip still plays. */
@@ -240,6 +292,13 @@ export class AmbientEffects {
    * submerged (the P12 head-under flag) }.
    */
   update(dt, deps = {}) {
+    // AUDIT 64 F41: Update's FIRST statement is `if (IsMuted) return;`
+    // (AmbientEffectsPlayer.cs:108-110). It is not decoration: the
+    // quest-video seam holds no frame, so without it the lazy loop
+    // starts below would re-open the rain on the very next tick, and
+    // the one-shot/cemetery/water arms would keep firing under the
+    // video too - all of which DFU skips while muted.
+    if (this.isMuted) return;
     // loops start lazily for their presets (Update, verbatim)
     if ((this.preset === 'rain' || this.preset === 'storm') && !this._rainLoop) {
       this._rainLoop = this.engine.loop(AMBIENT_RAIN_LOOP, 1);

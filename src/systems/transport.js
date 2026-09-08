@@ -3,7 +3,7 @@
 // PlayerSpeedChanger, PlayerEntity and ClimbingMotor. The port has
 // carried the CART as an inventory fact since the W-slice (the wagon's
 // 750kg, the dungeon-exit prompt) and the HORSE as an item nobody
-// could sit on: `motor.js:517` passed `riding: false` with the note
+// could sit on: `motor.js:546` passed `riding: false` with the note
 // "the transport arc pends". This is that arc's first slice - the
 // MODE and everything that keys off it. The riding sprite and its
 // audio (TR2) and the transport window (TR3) sit on top of this.

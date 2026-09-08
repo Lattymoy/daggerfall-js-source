@@ -21,7 +21,8 @@ const flow = () => new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0);
 /** race -> gender -> U18's method -> class -> name -> face -> stats
  *  -> skills -> reflexes -> summary */
 function toSummary(f = flow()) {
-  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> name
+  // AUDIT 64 F32 (review round): the gender box takes M, not Return.
+  f.input('confirm'); f.input('char:m'); f.input('confirm'); f.input('confirm');   // -> name
   f.name = 'Vanus';
   f.input('confirm');                                           // -> face
   f.input('confirm');                                           // -> stats
@@ -54,7 +55,10 @@ test('U16: OK is gated on ALL FOUR pools, not just the stat one', () => {
   // points back DOWN off any of them.
   for (const pool of ['stat', 'primary', 'major', 'minor']) {
     const f = toSummary();
-    if (pool === 'stat') f.statPool = 1; else f.pools[pool] = 1;
+    // AUDIT 64 F33: BonusPool here is the SUMMARY window's own
+    // StatsRollout (CreateCharSummary.cs:174), not the bonus-stats
+    // window's.
+    if (pool === 'stat') f.sumStatPool = 1; else f.pools[pool] = 1;
     f.input('confirm');
     assert.equal(f.state, 'summary', `an unspent ${pool} point holds the window`);
     assert.ok(f.poolBox, 'and pops TEXT.RSC 14 instead');
@@ -70,10 +74,15 @@ test('U16: entering the summary ZEROES all four pools, as SetCharacterSheet does
   // reached the summary without opening the skills screen at all.
   const f = flow();
   f.state = 'reflexes';
-  f.statPool = 4;
+  f.sumStatPool = 4;
   assert.equal(f.pools, undefined, 'the skills screen was never entered');
   f.input('confirm');
-  assert.equal(f.statPool, 0);
+  // AUDIT 64 F33: :125 zeroes the SUMMARY's rollout. The bonus-stats
+  // window's own pool is a different instance and the summary never
+  // writes it - which is what stops an un-spent point walking back
+  // onto that screen (DaggerfallStartNewGameWizard.cs:566-577 copies
+  // the stat VALUES back and not the pool).
+  assert.equal(f.sumStatPool, 0);
   assert.deepEqual(f.pools, { primary: 0, major: 0, minor: 0 });
 });
 
@@ -102,7 +111,7 @@ test('U16: RESTART cannot double-apply the biography', () => {
   // effects still in the list.
   const f = flow();
   f.biogFor = () => ({ questions: [{ text: 'Q1', answers: [{ effects: [{ type: 'gold', amount: 100 }] }] }] });
-  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> U19's bio-method screen
+  f.input('confirm'); f.input('char:m'); f.input('confirm'); f.input('confirm');   // -> U19's bio-method screen
   f.input('down'); f.input('confirm');                                              // answer questions -> biography
   assert.equal(f.state, 'biography');
   f.answerBiography(0);
@@ -111,7 +120,7 @@ test('U16: RESTART cannot double-apply the biography', () => {
   f.state = 'summary';
   f.restartSummary();
   assert.equal(f.state, 'race');
-  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> the bio-method screen again
+  f.input('confirm'); f.input('char:m'); f.input('confirm'); f.input('confirm');   // -> the bio-method screen again
   f.input('down'); f.input('confirm');                                              // -> biography again
   assert.equal(f.state, 'biography');
   assert.deepEqual(f.biographyEffects, [], 'the previous run\'s effects are gone');
@@ -169,7 +178,12 @@ test('U16: the stats and skills rollouts have INDEPENDENT selections', () => {
   const skill = chargenHit(f, 100, 84);
   assert.deepEqual(skill, { setSkillCursor: 3 }, 'the first major skill row');
   f.applyHit(skill);
-  assert.equal(f.statCursor, 2, 'the skill click left the stat selection alone');
+  // AUDIT 64 F33 (review round): on the summary the stat selection is
+  // the SUMMARY rollout's own `selectedStat` (StatsRollout.cs:43 is a
+  // plain instance field, and the summary holds a second instance,
+  // CreateCharSummary.cs:37) - the bonus-stats window's does not move.
+  assert.equal(f.sumStatCursor, 2, 'the skill click left the stat selection alone');
+  assert.equal(f.statCursor, 0, 'and the OTHER rollout was never touched');
   assert.equal(f.skillCursor, 3);
 });
 
@@ -207,12 +221,16 @@ test('U16: arriving at the summary puts the stat selection back on the first row
   // SelectStat(0) (StatsRollout.cs:190) - the spinner does not stay
   // where the stats screen left it.
   const f = toSummary();
-  assert.equal(f.statCursor, 0);
+  assert.equal(f.sumStatCursor, 0);
   f.state = 'reflexes';
-  f.statCursor = 5; f.skillCursor = 4;
+  f.sumStatCursor = 5; f.statCursor = 5; f.skillCursor = 4;
   f.input('confirm');
   assert.equal(f.state, 'summary');
-  assert.equal(f.statCursor, 0, 'SelectStat(0)');
+  assert.equal(f.sumStatCursor, 0, 'SelectStat(0)');
+  // AUDIT 64 F33 (review round): SetCharacterSheet assigns THIS
+  // window's rollout (CreateCharSummary.cs:123), so the bonus-stats
+  // window's selection is left where the player put it.
+  assert.equal(f.statCursor, 5, 'the other rollout keeps its own row');
   // AUDIT 18: and the SKILL selection is NOT reset - SetCharacterSheet
   // assigns SetSkills, and SelectPrimarySkill lives in
   // SkillsRollout.SetupControls alone.

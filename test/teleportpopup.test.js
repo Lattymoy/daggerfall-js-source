@@ -161,7 +161,13 @@ test('G5: the host arm keeps the ARRIVAL and drops the JOURNEY', () => {
 
   // what it KEEPS
   assert.ok(body.includes('forceExitToExterior()'), 'TransitionExterior first');
-  assert.ok(body.includes('_teleportToPixel(pick.pixel.x, pick.pixel.y)'), 'then the coordinates');
+  // AUDIT 64 F19: TeleportAway names the reposition explicitly -
+  // `TeleportToCoordinates((int)destinationPos.X, (int)destinationPos.Y,
+  // RepositionMethods.RandomStartMarker)` (:143), against the overload's
+  // own default of Origin (StreamingWorld.cs:368). So the pin is the
+  // REFERENCE's third argument, not the port's two-argument call.
+  assert.match(body, /_teleportToPixel\(pick\.pixel\.x, pick\.pixel\.y, null,\s*\n\s*\{ reposition: REPOSITION\.RandomStartMarker \}\);/,
+    'then the coordinates, with RandomStartMarker (DaggerfallTeleportPopUp.cs:143)');
   assert.ok(body.indexOf('forceExitToExterior') < body.indexOf('_teleportToPixel'),
     'and in that order - you cannot teleport out of a building');
   // OnInitWorld's weather half runs for a teleport exactly as it does

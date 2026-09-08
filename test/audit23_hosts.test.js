@@ -16,7 +16,7 @@ import { TownPopulation } from '../src/systems/townPopulation.js';
 import { BANK_TYPES } from '../src/characters/nameHelper.js';
 import { NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { maxFatigue } from '../src/systems/statMods.js';
+import { maxFatigue, FATIGUE_LOSS } from '../src/systems/statMods.js';   // AUDIT 64 F7: the two running bands
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -98,12 +98,39 @@ test('AUDIT 23 C4: the 112-day boundary normalizes reputations through the tick'
 
 test('AUDIT 23 entity-5: Running tallies every 4th classic update while running', () => {
   // PlayerEntity.cs:309-320 - 4 x 0.0625s per tally.
+  // AUDIT 64 F7: the tally rides its OWN channel, `runningTally`
+  // (:311, IsRunning && !IsRiding), not the fatigue band's `running`
+  // (:408, IsRunning && !IsStandingStill).
   const entity = tickEntity();
-  tickPlayerMinutes({ entity, classicMinutes: 0, dt: 1.0, sinks: sinks(), activity: { running: true }, rolls: () => 0.5 });
+  tickPlayerMinutes({ entity, classicMinutes: 0, dt: 1.0, sinks: sinks(), activity: { runningTally: true }, rolls: () => 0.5 });
   assert.equal(entity.skillUses[SKILLS.Running], 4, 'one second of running = 4 tallies');
   const idle = tickEntity();
-  tickPlayerMinutes({ entity: idle, classicMinutes: 0, dt: 1.0, sinks: sinks(), activity: { running: false }, rolls: () => 0.5 });
-  assert.equal(idle.skillUses[SKILLS.Running], 0, 'standing still tallies nothing');
+  tickPlayerMinutes({ entity: idle, classicMinutes: 0, dt: 1.0, sinks: sinks(), activity: { runningTally: false }, rolls: () => 0.5 });
+  assert.equal(idle.skillUses[SKILLS.Running], 0, 'no run mode tallies nothing');
+});
+
+test('AUDIT 64 F7: the tally gate and the fatigue gate are DIFFERENT conditions', () => {
+  // PlayerEntity.cs:311 `IsRunning && !IsRiding` (no standing test) vs
+  // :408-409 `IsRunning && !IsStandingStill`. A grounded player holding
+  // Run in place is IsRunning && IsStandingStill: DFU tallies Running
+  // 4/s and charges DefaultFatigueLoss, never RunningFatigueLoss.
+  const still = tickEntity();
+  const stillSinks = sinks();
+  tickPlayerMinutes({ entity: still, classicMinutes: 0, dt: 1.0, sinks: stillSinks,
+    activity: { running: false, runningTally: true }, rolls: () => 0.5 });
+  assert.equal(still.skillUses[SKILLS.Running], 4, 'the standing runner still tallies (PlayerEntity.cs:311 has no standing test)');
+  // ...and a MOVING run pays the 88/min band the standing one does not.
+  const drains = [];
+  const bandSinks = { ...sinks(), drainFatigue: (n) => drains.push(n) };
+  tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 59.9, dt: 1.0, sinks: bandSinks,
+    activity: { running: true, runningTally: true }, rolls: () => 0.5 });
+  assert.ok(drains.includes(FATIGUE_LOSS.Running), `the moving runner pays RunningFatigueLoss (got ${drains})`);
+  const drains2 = [];
+  const standSinks = { ...sinks(), drainFatigue: (n) => drains2.push(n) };
+  tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 59.9, dt: 1.0, sinks: standSinks,
+    activity: { running: false, runningTally: true }, rolls: () => 0.5 });
+  assert.equal(drains2.includes(FATIGUE_LOSS.Running), false, 'the STANDING runner pays the default band, not 88');
+  assert.ok(drains2.includes(FATIGUE_LOSS.Default), `the standing runner pays DefaultFatigueLoss (got ${drains2})`);
 });
 
 test('AUDIT 23 C14 + combat-4: the exterior swing arms drain, tally fully, and never double-count', () => {
@@ -194,6 +221,9 @@ test('AUDIT 23 motor-1/2: standing ignores Jump; a free swim forces the crouch a
   // PlayerMotor.cs:121 + PlayerHeightChanger.cs:192-207.
   const collider = {
     penetrationAt: () => 0, heightAt: () => 0, raycast: () => Infinity,
+    // AUDIT 64 F5: CanStand's upward SphereCast (PlayerHeightChanger
+    // .cs:525-531) - Infinity is Unity's clear sweep.
+    sphereCast: () => ({ dist: Infinity }),
     move: (pos) => pos, floorLanding: () => null,
   };
   const m = new PlayerMotor(collider);

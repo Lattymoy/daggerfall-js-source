@@ -30,6 +30,10 @@ import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
 import { ensureReactionState } from './talk.js';
 import { createRandomBook } from './books.js';   // A2: ItemBuilder.CreateRandomBook, one member
+import { expandTalkMacros, MACRO_SYMBOLS } from './talkMacros.js';   // AUDIT 64 F29: MacroHelper.ExpandMacros' walk, one home
+import { getMacroValue } from './quest/questMacros.js';              // AUDIT 64 F29: MacroHelper.GetValue's ladder
+import { setSeed, rand } from '../formats/dfRandom.js';              // AUDIT 64 F29: DFRandom.Seed / rand() the four name macros ride
+import { GENDERS, getNameBank, fullName } from '../characters/nameHelper.js';
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
@@ -189,6 +193,61 @@ export function digestRepChanges(effects, groups = 5) {
   return changed;
 }
 
+/** AUDIT 64 F29 - THE BIOGRAPHY'S MACRO DATA SOURCE (BiogFileMCP.cs).
+ *  `BiogFile.GenerateBackstory` does not substitute %qN and stop: it
+ *  runs the WHOLE macro table over the record with the BiogFile as
+ *  the context provider - `MacroHelper.ExpandMacros(ref tokens,
+ *  (IMacroContextProvider)this)` (BiogFile.cs:215), one line after it
+ *  assigns `PlayerEntity.BirthRaceTemplate = characterDocument.
+ *  raceTemplate` with its own comment, "Need correct race set when
+ *  parsing %ra macro" (:212). Fourteen of the eighteen shipping class
+ *  backstories (Internal_RSC.csv 4116-4133) name at least one of
+ *  %hpn %hpw %bn %imp %fn %mn %ra, so the port's %qN-only regex left
+ *  raw macro text standing in a Healer's, a Bard's, a Thief's or a
+ *  Knight's history for the rest of the game.
+ *
+ *  The six source rows are BiogFileMCP's own; the strings are
+ *  Internal_Strings.csv:456-469, which is what the localized keys in
+ *  the two switches resolve to.
+ *
+ *  THE SEED IS A LEDGER A DEPARTURE. `DFRandom.Seed =
+ *  (uint)parent.GetHashCode()` (BiogFileMCP.cs:145, :621, :629, :635)
+ *  is the CLR's identity hash on the BiogFile instance - a value that
+ *  differs run to run inside DFU itself and has no port. The port
+ *  takes ONE injectable per-generation seed and keeps DFU's offsets
+ *  verbatim over it: base for %bn and %imp, base+123 for %fn,
+ *  base+9543 for %mn, each RESEEDING before its single draw, so the
+ *  three names stay distinct exactly as DFU's are. */
+const HOME_PROVINCE = Object.freeze({   // HomeProvinceName (:87-115)
+  Argonian: 'Black Marsh', Breton: 'High Rock', DarkElf: 'Morrowind',
+  HighElf: 'Sumurset', Khajiit: 'Elsweyr', Nord: 'Skyrim',
+  Redguard: 'Hammerfell', WoodElf: 'Valenwood',
+});
+const GEOGRAPHICAL_FEATURE = Object.freeze({   // GeographicalFeature (:117-141)
+  Argonian: 'swamps', Breton: 'rolling hills', DarkElf: 'mountains',
+  HighElf: 'shores', Khajiit: 'desertland', Nord: 'mountains',
+  Redguard: 'desertland', WoodElf: 'forests',
+});
+/** ImperialName (:618-624) - the literal table, NOT SaveVars'
+ *  emperorSonNames, despite %imp reading those elsewhere. */
+const IMPERIAL_NAMES = Object.freeze(
+  ['Pelagius', 'Cephorus', 'Uriel', 'Cassynder', 'Voragiel', 'Trabbatus']);
+
+export function biogMacroSource(raceKey, seed) {
+  const bank = () => getNameBank(raceKey);   // MacroHelper.GetNameBank (:344-366)
+  return {
+    homeProvinceName: () => HOME_PROVINCE[raceKey] ?? null,
+    geographicalFeature: () => GEOGRAPHICAL_FEATURE[raceKey] ?? null,
+    // Name %bn (:143-148)
+    name() { setSeed(seed); return fullName(bank(), GENDERS.Male); },
+    // ImperialName %imp (:618-624)
+    imperialName() { setSeed(seed); return IMPERIAL_NAMES[rand() % 6]; },
+    // FemaleName %fn (:626-632) / MaleName %mn (:633-638)
+    femaleName() { setSeed(seed + 123); return fullName(bank(), GENDERS.Female); },
+    maleName() { setSeed(seed + 9543); return fullName(bank(), GENDERS.Male); },
+  };
+}
+
 /** GenerateBackstory (:169-232). The class's TEXT.RSC record
  *  (DEFAULT_BACKSTORIES_START + classIndex) is prose with %q1..%q12,
  *  %q1a..%q12a and %q1b..%q12b macros; each expands to the FIRST text
@@ -198,8 +257,18 @@ export function digestRepChanges(effects, groups = 5) {
  *  prefix), so %qN is that list's first entry, %qNa its second and
  *  %qNb its third (BiogFileMCP.cs:150-161, :306-317, :462-473).
  *
+ *  AUDIT 64 F29: and the record's OTHER macros expand too, through
+ *  the one ExpandMacros walk (talkMacros.expandTalkMacros) over the
+ *  whole handler table, with `biogMacroSource` behind the six
+ *  BiogFileMCP rows and `playerRaceName` behind %ra - the stand-in
+ *  for BiogFile.cs:212's BirthRaceTemplate assignment, because the
+ *  port builds the backstory while the CHARGEN DOCUMENT still owns
+ *  the race and no player entity exists yet.
+ *
+ *  `ctx` is `{ raceKey, raceName, seed }` from the chargen flow.
+ *
  *  Returns the backstory ROWS. `textRsc` is a loaded TextRsc. */
-export function generateBackstory(textRsc, backstoryId, effects) {
+export function generateBackstory(textRsc, backstoryId, effects, ctx = {}) {
   if (!textRsc) return [];
   const perQuestion = [];
   for (const e of effects ?? []) {
@@ -221,17 +290,41 @@ export function generateBackstory(textRsc, backstoryId, effects) {
   // the optional 'a', so record 4130 (Ranger) rendered its %q1b as the
   // PRIMARY token plus a literal 'b' ("...daggerb."), and 4123
   // (Burglar) the same for %q3b. A question with no token of that
-  // kind expands to NOTHING, which is what leaves classic's prose
-  // reading cleanly (ExpandMacros appends a null value as empty).
+  // kind expands to NOTHING here, which leaves the prose reading
+  // cleanly. AUDIT 64 F29 corrects the reason this comment used to
+  // give: MacroHelper.GetValue (:503-528) renders a null handler
+  // answer as `symbolStr + "[nullMCP]"`, so DFU prints the sentinel
+  // and the empty form is the port's own, older divergence - kept
+  // here, unre-decided, and NOT routed through the ladder below.
   const macro = (digits, suffix) => {
     const list = perQuestion[Number(digits) - 1] ?? [];
     const id = list[suffix === 'b' ? 2 : suffix === 'a' ? 1 : 0];
     return id == null ? '' : firstLine(id);
   };
-  return textRsc.linesById(backstoryId).map((row) => ({
-    ...row,
-    text: row.text.replace(/%q(\d+)([ab]?)/g, (_, digits, suffix) => macro(digits, suffix)),
-  }));
+  // AUDIT 64 F29: ONE ExpandMacros pass over the WHOLE record
+  // (MacroHelper.cs:419-494), so the per-call macro cache C# keeps
+  // (:427-429, :457-462) names the SAME woman for a record that says
+  // %fn twice, and a %q value that happens to carry a '%' is never
+  // re-expanded - both of which a regex-then-expander pair would get
+  // wrong.
+  //
+  // THE %q BLOCK STAYS LOCAL, and deliberately: MacroHelper.GetValue
+  // renders a null source answer as `symbolStr + "[nullMCP]"`
+  // (:509-512), so DFU shows "%q1b[nullMCP]" for a question with
+  // fewer than three tokens where this port shows nothing. That
+  // divergence is older than this fix and pinned as it stands
+  // (test/biography.test.js); it is not re-decided here. Everything
+  // ELSE rides the real ladder, sentinels and all.
+  const mcp = { source: biogMacroSource(ctx.raceKey ?? null, ctx.seed ?? 0) };
+  const hooks = { playerRaceName: () => ctx.raceName ?? null };   // %ra, MacroHelper.cs:942-945
+  const handlers = {};
+  for (const symbol of MACRO_SYMBOLS) handlers[symbol] = () => getMacroValue(symbol, mcp, hooks);
+  for (let n = 1; n <= 12; n++) {
+    for (const suffix of ['', 'a', 'b']) handlers[`%q${n}${suffix}`] = () => macro(n, suffix);
+  }
+  const rows = textRsc.linesById(backstoryId).map((row) => ({ ...row }));
+  expandTalkMacros(rows, handlers);
+  return rows;
 }
 
 /** ApplyEffects (:447-456). */

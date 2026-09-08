@@ -27,7 +27,8 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
+import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
+import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
@@ -50,6 +51,8 @@ import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic bottom bar
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
+import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
+import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -208,7 +211,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // SAME live block lookup the music context takes below - it is the
     // same question, asked at the door instead of at the song.
     insideDungeonCastle: () => (lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false),
-    damagePlayer: hurtPlayer,
+    // AUDIT 64 F40: DaggerfallAction.cs:739 (DrainHealth21) and :768
+    // (DrainHealth, flags 22-25) SEND `RemoveHealth`, and Unity's
+    // SendMessage reaches EVERY component on PlayerObject - both
+    // PlayerHealth.cs:36-44 (the flash, rung by the action system)
+    // AND PlayerFootsteps.cs:348-364 (the 40% pain cry). The cry
+    // belongs HERE, on the trap sink, not inside hurtPlayer: that
+    // function also carries the fall (:4493), and PlayerHealth.cs:57
+    // CALLS its own RemoveHealth, so a fall flashes and stays silent.
+    // The roll rides the RAW damage - PlayerFootsteps knows nothing of
+    // the shield pool, and its heavyDamage test (:356) is on `amount`.
+    damagePlayer: (dmg) => {
+      hurtPlayer(dmg);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+    },
     castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
       playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
@@ -259,6 +275,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   };
   const texRemap = new Map();
   const flatGroups = new Map();
+  /** AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat
+   *  (RDBLayout.cs:1204-1247) does two things to a flat that the port
+   *  had dropped whole:
+   *    :1226-1231  a flat in NPCFlatArchives (334/346/357/175-184,
+   *                :1250-1254) gets a StaticNPC with SetLayoutData(obj)
+   *                - the overload that stamps Context.Dungeon
+   *                (StaticNPC.cs:145-160) - which is what makes the
+   *                people in Castle Daggerfall, Wayrest and Sentinel
+   *                clickable, nameable and talkable, and what
+   *                systems/topicTree.js's castle-questor arm reads.
+   *    :1233-1236  SetupIndividualStaticNPC runs for EVERY flat, NOT
+   *                only the NPC ones - the away arm deactivates the
+   *                home copy of an individual a quest has placed
+   *                elsewhere, and everyone else gets the bootstrap
+   *                QuestResourceBehaviour a follow-up quest is handed
+   *                out through.
+   *  The billboard IS hittable in DFU only because of the first act:
+   *  DaggerfallBillboard.cs:318-319 gives an NPC-archive flat
+   *  FlatTypes.NPC and :343-349 gives that type a trigger BoxCollider. */
+  const people = [];
   const lights = [];
   const waterQuads = [];
   const exitDoors = [];
@@ -497,6 +533,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // collider bucket (systems/automap.js).
     }
     for (const f of b.layout.flats) {
+      // AUDIT 64 F13, first act: the StaticNPC identity, in the parent
+      // frame like every other coordinate here. `y` stays the RDB flat's
+      // raw pivot (the batch below base-centres it); the activation box
+      // takes the same conversion once the archive answers its size.
+      const pn = f.npc ? {
+        x: f.x + b.originX, y: f.y, z: f.z + b.originZ,
+        textureArchive: f.archive, textureRecord: f.record,
+        factionID: f.factionID, flags: f.flags,
+        // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED record ints.
+        rawX: f.rawX, rawY: f.rawY, rawZ: f.rawZ,
+        // StaticNPC.cs:154 seeds the name off the FLAT RESOURCE's
+        // stream position, not the object offset the actions key on.
+        position: f.flatPosition,
+        // StaticNPC.cs:159. buildingKey stays 0 (:157) - the struct
+        // default, and a dungeon has no building.
+        context: NPC_CONTEXT.Dungeon,
+        // PlayerActivate.cs:745-751 keeps its own copy of the flat's
+        // action: an NPC "carrying specific non-dialog actions" is not
+        // activated as a person at all.
+        action: f.action,
+        active: true, questBehaviour: null,
+      } : null;
+      if (pn) people.push(pn);
+      // ...and the second act, for EVERY flat carrying a faction id.
+      if (f.factionID) {
+        const host = {
+          staticNpcFactionId: f.factionID,
+          isActive: () => (pn ? pn.active !== false : true),
+          setActive: (a) => { if (pn) pn.active = !!a; },
+          destroy: () => { if (pn) pn.active = false; },
+        };
+        const setup = opts.setupStaticNpc?.(f, host);
+        if (setup && setup !== true && pn) pn.questBehaviour = setup;
+        // QuestMachine.cs:1334-1341's away arm has already called
+        // SetActive(false), and a disabled GameObject is out of the
+        // draw, out of the ray and out of its own action chain - so the
+        // flat is WITHHELD here, which a centre already baked into a
+        // shared batch could not be.
+        if (setup === false) continue;
+      }
       const key = `${f.archive}_${f.record}`;
       // WAVE D: a MOVE-flag flat is drawn by its OWN single-flat batch
       // (registerFlatAction mints it) - a member of a grouped batch
@@ -1271,12 +1347,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // wave 22: this host has a HudText of its own, so it needs the same
   // notebook sink PopupText.AddText carries (:123).
   hudText.onMessage = (t) => opts.hudMessageSink?.(t);
+  // AUDIT 64 F34: SetMidScreenText ends with the SAME
+  // `Notebook.AddMessage(message)` PopupText.AddText carries
+  // (DaggerfallHUD.cs:371 / PopupText.cs:123), so the label files into
+  // the journal's Messages page through the same host sink.
+  midScreenText.onMessage = (t) => opts.hudMessageSink?.(t);
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
   // text on a refused locked door (LookAtInteriorLock, chance-tiered
   // over the LIVE lockpicking skill).
   actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
-  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  // AUDIT 64 F34: LookAtInteriorLock speaks the whole difficulty
+  // ladder and `magicLock` through SetMidScreenText
+  // (PlayerActivate.cs:996-1007), never the popup queue.
+  actions.onLockedDoor = (o) => setMidScreenText(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
   // R1: the STEAL-mode pick attempt's doors - the tally
   // (TallySkill(Lockpicking, 1), DaggerfallActionDoor.cs:165), and the
   // attempt line + the picked-lock sound (ActivateLockUnlock :178-183;
@@ -1345,7 +1429,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (DaggerfallAction.cs) - PushWindow, not "only if the slot is
     // free". A dungeon's own plaque read as silence whenever anything
     // else was open.
-    pushDungeonWindow(new ActionTextBox(lines));
+    // AUDIT 64 F35 (review round): ...and it is the ONE box in the
+    // port that passes a NULL previousWindow - `new
+    // DaggerfallMessageBox(DaggerfallUI.UIManager, null)`
+    // (Internal/DaggerfallAction.cs:536), where DaggerfallUI.MessageBox
+    // passes the then-top. So this plaque covers the HUD where a quest
+    // popup does not.
+    pushDungeonWindow(new ActionTextBox(lines, { previousWindow: null }));
   };
   actions.onShowTextInput = (id, submit) => {
     const lines = rscLines(id);
@@ -1391,7 +1481,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
   let _mouseState = 'no events';
   let _inputState = '';
-  const _activity = { running: false, swimming: false, climbing: false, jumped: false, movingLessThanHalfSpeed: true };   // AUDIT 26 F083: + climbing   // P11 fatigue state; P13 sneak state; C6 jump edge
+  const _activity = { running: false, runningTally: false, swimming: false, climbing: false, jumped: false, movingLessThanHalfSpeed: true };   // AUDIT 64 F7: the tally's gate is PlayerEntity.cs:311, the fatigue band's is :408   // AUDIT 26 F083: + climbing   // P11 fatigue state; P13 sneak state; C6 jump edge
   let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
   // U7: the rest session's scene seams. tickVitals = one rested hour
   // (the S20 rates + the Medical tally, clamped); enemiesNearby is
@@ -1726,7 +1816,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:955,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:967,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -1737,7 +1827,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:473), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:497), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -2200,7 +2290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:808 against :839; worldModes.js:5495 against :5504).
+    // (dungeon.js:873 against :904; worldModes.js:5709 against :5718).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2245,7 +2335,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // map chance comes from a six-entry table indexed by the loot
         // key, only J..O roll at all, and the potion chance is FOUR.
         addPileLootExtras(items, lootKey);
-        lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, batch: null });
+        lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, isFixed, batch: null });
       }
     }
   }
@@ -2273,6 +2363,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
   }
+  // AUDIT 64 F13: the people's ACTIVATION EXTENT, off the same archive
+  // the batch above read - `personAabb` wants a base and a swept
+  // square, and an RDB flat's stored y is its CENTRE (the batch's own
+  // `- size.h / 2`). A person whose archive gave no size is not a
+  // target at all, exactly as the two other people rays already say.
+  for (const pn of people) {
+    if (!pn.active) continue;
+    const t = await getTexture(pn.textureArchive);
+    if (!t || pn.textureRecord >= t.recordCount) continue;
+    const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+    pn.width = size.w;
+    pn.height = size.h;
+    pn.y -= size.h / 2;
+  }
+
   // WAVE D: and one batch per MOVE-flag flat, minted at the flat's
   // placed origin so the tween's offset is exactly the origin uniform.
   // Same base-centering and same AnimateBillboard arming as the grouped
@@ -2312,9 +2417,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || pile.record >= t.recordCount) continue;
     uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
     const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
-    const g = floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
-    pile.pos = g;
     pile.half = [size.w / 2, size.h / 2];
+    // AUDIT 64 F16: a FIXED (archive 216) pile is not grounded.
+    // AssignFixedTreasure (RDBLayout.cs:417-427) passes
+    // adjustPosition:false - "Add fixed treasure flat with same archive
+    // & record and use exact position" - so RDBLayout.cs:1583-1584's
+    // -randomTreasureMarkerDim/2 drop, :1619-1620's
+    // AlignBillboardToGround AND GameObjectHelper.cs:686-687's
+    // +Summary.Size.y/2 are ALL skipped: the container transform IS the
+    // marker point (GameObjectHelper.cs:706) and the centre-pivoted
+    // billboard is CENTRED on it. This batch is base-anchored, so the
+    // centre converts by -h/2 - the same conversion the ordinary RDB
+    // flat batch above already applies. The port had raycast every pile
+    // to the floor, dropping a 216 marker on a table, ledge or alcove
+    // by up to floorLanding's whole 10-unit reach. `pile.pos` is the
+    // pile's identity for the pickup AABB, nearbyLootRecords and the
+    // save-rewind re-mint, so both arms write it.
+    const g = pile.isFixed
+      ? [pile.pos[0], pile.pos[1] - size.h / 2, pile.pos[2]]
+      : floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
+    pile.pos = g;
     // Bottom-anchored shader: the base IS the ground point (the +h/2
     // center-anchor holdover floated piles - C11 audit 08-17).
     pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1], g[2]]]);
@@ -2634,8 +2756,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:7788,
-              // exterior.js:3962 and worldModes.js:5627 already ran;
+              // playerArrowHitFoe is the one copy world.js:8121,
+              // exterior.js:4162 and worldModes.js:5833 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3551,7 +3673,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activity: _activity,
       fatigueMultiplier: fatigueLossMultiplier(),
       rolls: Math.random,
-      say: (msg) => hudText.add(msg),
+      // AUDIT 64 F27: the DELAY is the law's, not the host's -
+      // AddHUDText takes it (LoanChecker.cs:15's loanReminderHUDDelay),
+      // and HudText.add's default parameter restores
+      // PopupText.popDelay for every line that passes none.
+      say: (msg, delay) => hudText.add(msg, delay),
       // CG2: a dungeon IS inside - HandleStartingCrimeGuildQuests
       // gates on !IsPlayerInside, so the invitation letter waits at
       // the door rather than finding the player underground. The
@@ -4008,6 +4134,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const detected = detectFeed.tick(dt);
     drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
       { font: hudFont, cursorActive: !!activeOverlay,
+        // AUDIT 64 F35 (review round): the PAINT's gate, which is not
+        // "a window is open" - a message box carries the HUD under it
+        // (DaggerfallUI.cs:1330 over DaggerfallPopupWindow.cs:76-84).
+        windowCoversHud: !!activeOverlay && dungeonWindows.hudCovered(activeOverlay),
         detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
         largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
         // AUDIT 39: the enhanced HUD's two hand plaques - see world.js.
@@ -4015,7 +4145,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         weapon: playerWeapon.weapon ?? null,
         weaponSheathed: !!playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
     hudText.tick(dt);
-    if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
+    // AUDIT 64 F37: popupText is a NativePanel component of the HUD
+    // window (DaggerfallHUD.cs:172-173) and the Draw override
+    // (:347-351) suppresses it with everything else; the tick is
+    // Update's and keeps draining.
+    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the
     // hosts re-engage a dropped lock on the next gesture (DFU shape),
     // so an unlocked frame is transient, not a mode to advertise.
@@ -4388,7 +4522,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:266-268 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:275-277 runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is
@@ -4464,11 +4598,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
-    reportActivity({ running = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
+    reportActivity({ running = false, runningTally = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
       // AUDIT 58: PlayLargeSplash is PlayOneShot(SplashLargeSound, 0,
       // FootstepVolumeScale) - PlayerFootsteps.cs:323-326.
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge, FOOTSTEP_VOLUME);   // PlayLargeSplash on entry
-      _activity.running = running;
+      _activity.running = running; _activity.runningTally = runningTally;   // AUDIT 64 F7: the tally's gate is PlayerEntity.cs:311 (IsRunning && !IsRiding, no standing test), the band's is :408
       _activity.swimming = swimming;
       _activity.climbing = climbing;   // AUDIT 26 F083: ClimbingFatigueLoss's live flag
       _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)
@@ -4610,7 +4744,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:813) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:889) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with
@@ -4634,6 +4768,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** AUDIT 64 F35 (review round): the HUD's own question, asked of
+     *  the same stack - a window is up AND something on it cut the
+     *  previousWindow chain (DaggerfallPopupWindow.cs:76-84). Published
+     *  because worldModes' dungeon arm mounts this context and draws
+     *  the HUD for it. */
+    get hudCovered() { return dungeonPaused() && dungeonWindows.hudCovered(activeOverlay); },
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
@@ -4982,6 +5122,34 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       });
       if (win) activeOverlay = win;
     },
+    /** AUDIT 64 F13: this dungeon's static NPCs, for the two dungeon
+     *  rays. The ShowText / ShowTextWithInput exclusion is
+     *  PlayerActivate.cs:745-751 - "Do not activate static NPCs
+     *  carrying specific non-dialog actions as these usually have some
+     *  bespoke task to perform ... Examples are guard at entrance of
+     *  Daggerfall Castle and Benefactor and Sheogorath in Mantellan
+     *  Crux". DFU still Receives that action off the same hit
+     *  (:378-383), so the port leaves those flats as ACTION targets
+     *  and never mints a person for them. */
+    /** AUDIT 64 F11..F17 review round: THE RAW static-NPC list, for the
+     *  two behaviour collectors worldModes owns. RDBLayout.cs:1228-1237
+     *  adds StaticNPC to every NPC flat and then calls
+     *  SetupIndividualStaticNPC on the same GameObject, so a dungeon
+     *  static NPC's bootstrap QuestResourceBehaviour is a component in
+     *  the scene like any other: it is in
+     *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
+     *  (GameObjectHelper.cs:926 - the list IsAlreadyPlaced reads) and,
+     *  because StaticNPC.cs:127 registers the object with
+     *  ActiveGameObjectDatabase, in
+     *  GetActiveStaticNPCQuestResourceBehaviours too
+     *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
+     *  RAY's filtered view and cannot serve either. */
+    people,
+    npcTargets() {
+      return people.filter((pn) => pn.active !== false && pn.width
+        && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
+          || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
+    },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // U26: activating one now OPENS THE INVENTORY with the pile as the
     // remote target, which is what PlayerActivate does - the old
@@ -5124,6 +5292,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const c of corpses) if (c) renderer.destroyBillboardBatch(c);
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
+      // AUDIT 64 F41: the scene ambience leaves with the scene too -
+      // it holds the dungeon loop handles AND a row in the module's
+      // live-instance registry (the port's stand-in for DFU's static
+      // OnVideoStart/OnVideoEnd subscription, AmbientEffectsPlayer.cs
+      // :92-93), which OnDisable/OnDestroy drops in Unity.
+      sceneAmbience.dispose();
       // U26 / EVERY ALLOCATION HAS AN OWNER: the dropped piles own a
       // billboard batch each and leave with the dungeon. NT1 (F213):
       // dead FIRST - the documented removal protocol (droppedLoot.js

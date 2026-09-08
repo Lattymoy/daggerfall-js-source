@@ -128,17 +128,22 @@ test('AUDIT 28 W2d: drawn as the parent panel\'s tint UNDER the bars in both HUD
   // MonoBehaviours that do not care which HUD is on screen. The order
   // they pinned survives: detector, tint, then whatever draws.
   const det = hud.indexOf('const rig = updateHudVitals(!!largeHud?.art, cur, dt, cursorActive);');
-  const flick = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt);', det);
+  // AUDIT 64 F35/F37 gave the call its paint gate - the tint is
+  // HUDFlickerController's write to the HUD window's OWN panel
+  // (HUDFlickerController.cs:81-82), so it is painted by that window's
+  // Draw and dies with a covering window or with renderHUD - while the
+  // cycle above keeps stepping. The ORDER pinned here is unchanged.
+  const flick = hud.indexOf('drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt, hudDrawn);', det);
   const fork = hud.indexOf('if (isEnhanced() && typeof document', det);
   const largeDraw = hud.indexOf('lastLargeHudBar = drawHudLarge(', det);
-  assert.ok(det > 0 && flick > det && flick - det < 400, 'the tint right after the detector');
+  assert.ok(det > 0 && flick > det && flick - det < 3600, 'the tint right after the detector');   // AUDIT 64: the window/renderHUD gates are derived between them, in comment - and the review round's previousWindow law (DaggerfallPopupWindow.cs:76-84) is recorded there too, which is what widened the span
   assert.ok(fork > flick, 'and both above the skin fork, so the default skin runs them');
   assert.ok(hud.indexOf('if (!art) return;') > flick, '...and above the art gate, like the damage flash');
   assert.ok(largeDraw > flick, 'the bar draws over the tint');
   assert.match(hud, /healthLost: lastHealthLost\(\)/);
   // F-A6: a paused frame steps the flicker with dt 0, as Time.timeScale
   // holds DFU's - the one call, for every branch below it.
-  assert.equal((hud.match(/drawNearDeathFlicker\(renderer, canvas, cur, cursorActive \? 0 : dt\)/g) || []).length, 1);
+  assert.equal((hud.match(/drawNearDeathFlicker\(renderer, canvas, cur, cursorActive \? 0 : dt, hudDrawn\)/g) || []).length, 1);
   assert.match(hud, /enabled: getBool\('Enhancements', 'NearDeathWarning'\)/);
   assert.match(read('src/ui/hudVitals.js'), /_lastHealthLost = ev\.health\?\.lost \?\? 0;/);
   assert.equal(LIVE['Enhancements/NearDeathWarning'], 'src/ui/hud.js');

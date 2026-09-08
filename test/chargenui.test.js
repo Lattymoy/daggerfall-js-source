@@ -37,7 +37,13 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   assert.equal(flow.state, 'gender');
   flow.input('down');                          // toggles
   assert.equal(flow.gender, 'female');
+  // AUDIT 64 F32 (review round): CreateCharGenderSelect is a
+  // DaggerfallMessageBox with two bare AddButton calls
+  // (CreateCharGenderSelect.cs:53-54), so it has no default button and
+  // Return is inert; F is what closes it.
   flow.input('confirm');
+  assert.equal(flow.state, 'gender', 'no default button -> Return does nothing');
+  flow.input('char:f');
   assert.equal(flow.state, 'classMethod');     // U18: the method screen first
   flow.input('confirm');
   assert.equal(flow.state, 'class');
@@ -123,7 +129,7 @@ test('chargen ui: reroll replaces the working set on the active screen', () => {
   const flow = new ChargenFlow([{ name: 'W', career }], seq(0.999));
   // the classic order (U15 + U18's method screen): race -> gender ->
   // method -> class -> (no biography set) name -> face -> stats
-  for (const a of ['confirm', 'confirm', 'confirm', 'confirm', 'char:X', 'confirm', 'confirm']) flow.input(a);
+  for (const a of ['confirm', 'char:m', 'confirm', 'confirm', 'char:X', 'confirm', 'confirm']) flow.input(a);
   assert.equal(flow.state, 'stats');
   assert.equal(flow.statPool, 14);             // max pool at seq(0.999)
   flow.input('plus');

@@ -42,6 +42,8 @@ import { maxFatigue, liveStat, FATIGUE_MULTIPLIER } from '../systems/statMods.js
 import { templateByIndex } from '../systems/itemTemplates.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { bankingStatusRows } from '../systems/banking.js';   // AUDIT 64 F28: CreateBankingStatusBox's rows
+import { REGION_NAMES } from '../formats/mapsFile.js';       // GetLocalizedRegionName
 
 // U8a: the module-level art cache - hosts preload once at boot; a
 // failed load leaves the text fallback in charge.
@@ -111,9 +113,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:343-344) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:346-347) - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:229) owns the hyphen. The bare
+    // character branch (ui/input.js:232) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -188,7 +190,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:243-244) and the raw e.code a
+ *  the overlayAction names (ui/input.js:246-247) and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -469,6 +471,26 @@ export class CharSheet {
         return true;
       }
     }
+    // AUDIT 64 F28: THE GOLD BUTTON. GoldButton_OnMouseClick
+    // (DaggerfallCharacterSheetWindow.cs:787-792) plays ButtonClick and
+    // Shows DaggerfallBankingWindow.CreateBankingStatusBox(this) - a
+    // public static member with this one caller, and the only surface
+    // in the game that shows EVERY region's account, loan and due date
+    // at once (the bank window itself reads one region, :247). The
+    // sheet already holds the entity the accounts ride on, so this
+    // needs no host hook and works on every host that opens a sheet.
+    // ClickAnywhereToClose (:548) is the ActionTextBox's own contract,
+    // and `previous = this` is what mounting it as a CHILD means:
+    // dismissing it returns to the sheet.
+    if (inRect(R.gold, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.child = new ActionTextBox(
+        bankingStatusRows(this.entity?.bankAccounts, { regionName: (i) => REGION_NAMES[i] ?? '' }),
+        // SetHighlightColor(DaggerfallUnityStatDrainedTextColor) (:523)
+        { highlightColor: STAT_DRAINED_COLOR },
+      );
+      return true;
+    }
     if (inRect(R.exit, vx, vy)) {
       audio.playOneShot(SOUND.ButtonClick, 1);   // ExitButton_OnMouseClick :943
       if (this._checkIfDoneLeveling()) this.done = true;
@@ -485,8 +507,8 @@ export class CharSheet {
     for (const which of NAV_BUTTONS) {
       if (inRect(R[which], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._open(which); return true; }
     }
-    // The remaining DFU buttons (name/level/gold/health/affiliations)
-    // pend their popups; consume the click so it never escapes the
+    // The remaining DFU buttons (name/level/health/affiliations) pend
+    // their popups; consume the click so it never escapes the
     // window. They still CLICK - every DaggerfallCharacterSheetWindow
     // button assigns ButtonClick (:772-952).
     if (Object.values(R).some((r) => inRect(r, vx, vy))) {

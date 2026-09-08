@@ -33,7 +33,9 @@ import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
-import { isBulletinBoard } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears
+import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
+import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
+import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
@@ -79,14 +81,14 @@ import {
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
-import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';
+import { racialRestBlock, racialFastTravelBlock, cureVampirism, SUNLIGHT_TRAVEL_TEXT } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202)
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
-import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
+import { playerInSunlight, playerInHolyPlace, careerSunDamage } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags; AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
 import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
@@ -104,7 +106,7 @@ import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAM
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
-import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
+import { seasonValue, SEASONS, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -162,10 +164,10 @@ import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocat
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-// The RandomStartMarker arm (StreamingWorld's PositionPlayerToLocation),
-// the law and its two location-type reads. TWO callers reach it here -
-// the court release and the ship's boarding - because DFU reaches it
-// from one place: TeleportToCoordinates(x, y, RandomStartMarker).
+// The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
+// law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
+// from FIVE sites, not one, and FOUR of them are here - the court
+// release, the ship's boarding, the guild teleport and fast travel.
 import { locationArrivalLanding, locationStartMarkers } from '../world/locationEntrance.js';
 import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScreen.js';   // PRIS00I0 - the serving-time screen   // ROAD-B B5: CORT01I0 - the courtroom the trial is pushed over
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
@@ -183,7 +185,7 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // S
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
-import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
+import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
@@ -211,6 +213,7 @@ import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariant
 import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
 import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 // AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
@@ -237,7 +240,7 @@ import { poisonCount } from '../systems/poisons.js';   // U41: the warning's oth
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
-  windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -256,6 +259,7 @@ import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   //
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings } from '../ui/input.js';
 import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
@@ -640,12 +644,50 @@ export async function bootWorld(canvas, renderer, params, status) {
   const built = new Map(); // key -> pixel entry
   // EV3: one local AABB per model ARCHETYPE, scanned once ever - the
   // per-placement box is then eight corner transforms at build time.
+  /** AUDIT 64 F11: DFMesh.Size for a model id - `modelData.DFMesh.Size`
+   *  at RMBLayout.cs:873. Arch3dFile.cs:711-713 divides the raw extent by
+   *  pointDivisor and WritePoint (:941-943) divides the VERTICES by the
+   *  same, so `size * GlobalScale` is the model's world extent - the
+   *  building's silhouette, which is what HasHit boxes. */
+  const dfMeshSizes = new Map();
+  const dfMeshSize = (id) => {
+    let sz = dfMeshSizes.get(id);
+    if (sz === undefined) {
+      const index = arch.getRecordIndex(id);
+      sz = index === -1 ? null : (arch.getMesh(index)?.size ?? null);
+      dfMeshSizes.set(id, sz);
+    }
+    return sz;
+  };
   const archAabbs = new Map();
   const archAabb = (id, positions) => {
     let b = archAabbs.get(id);
     if (!b) archAabbs.set(id, b = localAabb(positions));
     return b;
   };
+  /** AUDIT 64 F14: DaggerfallCityGate.Update over every built pixel's
+   *  gates (DaggerfallCityGate.cs:44-51). SetOpen (:26-37) changes the
+   *  model through ChangeDaggerfallMeshGameObject
+   *  (GameObjectHelper.cs:217-253), which re-points the mesh, the
+   *  materials AND the MeshCollider (:246-250) - a closed gate blocks -
+   *  and then re-runs ApplyCurrentClimate, which is the remapSubMeshes
+   *  pass both variants took at pixel build. */
+  const tickCityGates = (minute) => {
+    const night = isNight(minute);
+    for (const p of built.values()) {
+      for (const g of p.cityGates ?? []) {
+        if (!updateCityGate(g.gate, night)) continue;
+        const m = g.meshes.get(g.gate.modelId);
+        if (!m) continue;
+        g.entry.gpu = m.gpu;
+        g.entry._order = g.gate.modelId;
+        g.entry._box = transformedAabb(archAabb(g.gate.modelId, m.cpu.positions), g.local);
+        collider.removeBucket(g.bucketKey);
+        collider.addMesh(g.bucketKey, m.cpu.positions, m.cpu.indices, g.local, g.translation);
+      }
+    }
+  };
+
   // The sails sweep well past the tower's own box; the pad keeps a
   // mill's rotor from vanishing while its tower still shows.
   const MILL_SAIL_PAD = 30;
@@ -828,6 +870,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MaterialReader.ChangeClimate semantics).
     const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
+    // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
+    // pixel-local like its doors, boards and street NPCs.
+    const pixelBuildings = [];
     const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
@@ -848,6 +894,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const b of loc.blocks) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+        // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
+        // subrecord inside AddModels (RMBLayout.cs:824-832), and
+        // AddModels runs once per PLACED block with a fresh
+        // `buildingsOut` (:819-820) - so every grid cell gets its own
+        // full StaticBuilding array. A pixel-wide latch keyed on the
+        // BLOCKS.BSA record index would collide across the many cells
+        // that hold the same block name and leave every repeat with no
+        // buildings at all.
+        const pixelFirstModel = new Set();   // recordIndex - this BLOCK INSTANCE's latch
         // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places
         // none, so rmbLayout adds them; the tower joins the static model
         // list and only the SAIL needs a matrix per frame. Enhanced skin
@@ -884,8 +939,28 @@ export async function bootWorld(canvas, renderer, params, status) {
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
           unionBox(box);
-          models.push({ gpu, local, _box: box, _order: placed.modelIdNum });   // EV6: sort key
-          collider.addMesh(key, cpu.positions, cpu.indices, local,
+          const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
+          models.push(entry);
+          // AUDIT 64 F14: a city gate takes a collider bucket of its own
+          // (the pixel's shared bucket has no per-mesh removal), keyed
+          // off the pixel key so destroyPixel drops it with the pixel.
+          // AUDIT 64 F11: the StaticBuilding for this subrecord, if this
+          // is its first LOADED model (the `continue` at RMBLayout.cs:854
+          // skips a missing model before the firstModel block, which is
+          // why the latch sits after this host's own `if (!gpu) continue`).
+          if (placed.recordIndex != null) {
+            const rk = placed.recordIndex;
+            if (!pixelFirstModel.has(rk)) {
+              pixelFirstModel.add(rk);
+              const sbox = staticBuildingBox(dfMeshSize(placed.modelIdNum));
+              pixelBuildings.push({
+                recordIndex: placed.recordIndex, dfBlock: b.dfBlock, matrix: local,
+                aabb: staticBuildingWorldAabb(sbox, local),
+              });
+            }
+          }
+          const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
+          collider.addMesh(gateKey, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
@@ -895,6 +970,38 @@ export async function bootWorld(canvas, renderer, params, status) {
           // pixel keeps the boards it stood - pixel-local, like its
           // NPCs and lights - and the activation ray reads that list.
           if (isBulletinBoard(placed.modelIdNum)) pixelBoards.push({ box });
+          // AUDIT 64 F14: ...and the CITY GATES, stood standalone for
+          // exactly the same reason (RMBLayout.cs:857) so
+          // DaggerfallCityGate can ride them (:959-963) and swap the
+          // model - draw AND MeshCollider (GameObjectHelper.cs:236-250)
+          // - at dusk and dawn. Both variants must be resident and
+          // climate-remapped BEFORE the first swap (the per-pixel
+          // loader is async; a mid-frame fetch cannot swap in place),
+          // and the gate needs a collider bucket of its own because the
+          // pixel's shared one has no per-mesh removal. Its box joins
+          // the pixel union for BOTH variants so culling stays truthful
+          // whichever is drawn.
+          if (isCityGate(placed.modelIdNum)) {
+            const otherId = placed.modelIdNum === CITY_GATE_OPEN_MODEL_ID
+              ? CITY_GATE_CLOSED_MODEL_ID : CITY_GATE_OPEN_MODEL_ID;
+            const otherGpu = await getGpuMesh(otherId);
+            const otherCpu = cpuModels.get(otherId);
+            if (otherGpu && otherCpu) {
+              await remapSubMeshes(otherGpu.subMeshes, texRemap, climateArchive, pipeline);
+              unionBox(transformedAabb(archAabb(otherId, otherCpu.positions), local));
+            }
+            pixelGates.push({
+              gate: makeCityGate(placed.modelIdNum), entry, local, bucketKey: gateKey,
+              // Both variants held here, so the frame tick is synchronous
+              // - the streaming loader is not, and a mid-frame fetch
+              // cannot swap in place.
+              meshes: new Map([
+                [placed.modelIdNum, { gpu, cpu }],
+                [otherId, otherGpu && otherCpu ? { gpu: otherGpu, cpu: otherCpu } : null],
+              ]),
+              translation: () => state.pixelTranslation(px, py),
+            });
+          }
           // Building models expose their static doors for E-transitions.
           if (cpu.doors && cpu.doors.length) {
             // StaticDoor.blockIndex must be TRUTHFUL (RMBLayout.cs:848
@@ -951,6 +1058,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           // leave. Their batches are appended to this pixel's list the
           // moment the pass has answered for them.
           if (npcFlatSet.has(flat)) continue;
+          // AUDIT 64 F12: ...and an EDITOR flat (archive 199) is never
+          // DRAWN at all. AddMiscBlockFlats has no 199 branch
+          // (RMBLayout.cs:340-379) because the hide is the billboard
+          // component's: DaggerfallBillboard.Start disables the mesh
+          // renderer of a FlatTypes.Editor flat (:77-84,
+          // MaterialReader.cs:980-981, StartGameBehaviour.cs:45). It
+          // stays in `blockFlats` - the start markers
+          // (locationStartMarkers), quest markers and action chains all
+          // read it - it simply never reaches a batch.
+          if (flat.editor) continue;
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
@@ -1055,7 +1172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:369-387). FLATS.CFG is awaited because
+    // (interiorContext.js:386-404). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -1093,6 +1210,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       npcBatches: [], npcQuestPass: false,   // E3: their billboards (a subset of `batches`) and the one-shot SetupIndividualStaticNPC latch
       boards: pixelBoards,   // the block's bulletin boards (41739), pixel-local boxes
+      cityGates: pixelGates,   // AUDIT 64 F14: DaggerfallCityGate's placements (446/447), ticked each frame
+      buildings: pixelBuildings,   // AUDIT 64 F11: RMBLayout's StaticBuildings, pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -1257,6 +1376,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
+    // AUDIT 64 F14: a gate's own collider bucket leaves with its pixel.
+    for (const g of p.cityGates ?? []) collider.removeBucket(g.bucketKey);
     // T3d fix: the pixel's doors leave with it - they accumulated
     // across every rebuild (duplicate E-targets + unbounded growth
     // on long streams; the directory's dedup had been masking it).
@@ -1460,7 +1581,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -1523,7 +1644,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player is standing.
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
-    say: (msg) => console.log('[player]', msg),
+    // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
+    // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
+    // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
+    // warning before a default raids the account and takes
+    // Crimes.LoanDefault reputation - and the same sink carries the
+    // magic-round disease/poison lines, the lycanthropy round and the
+    // torch's burn-out. Two of the four ticker hosts spoke and two
+    // console.logged; this is the outdoor one where day changes (and
+    // every fast travel) actually happen. The delay rides through:
+    // townTalk.say forwards it to HudText.add, whose default parameter
+    // restores PopupText.popDelay when it is undefined.
+    say: (msg, delay) => townTalk.say(msg, delay),
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
       // DFU posts dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -
@@ -1591,6 +1723,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _wasInLocationRect = false;
   const _musicLocationType = () => _musicLoc?.mapTableData?.locationType ?? 0xffff;
   const _musicLocationIndex = () => _musicLoc?.locationIndex ?? -1;
+  // AUDIT 64 F10 - PlayerEnterExit's holiday-text fields (:78-80). The
+  // location it remembers is StreamingWorld.CurrentPlayerLocationObject,
+  // which in this host IS `_musicLoc`: the per-pixel DFLocation object
+  // the rect test already reads, compared by identity as DFU's is.
+  const _holidayText = new HolidayTextTimer();
   const musicDirector = createMusicDirector();
   ensureAudio(fetchBytes);
   // C9: the exterior FP weapon (host rule - every motor host carries
@@ -2434,10 +2571,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1964 mounts the same one, gated on
+  // and dungeonContext.js:2054 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4371
+  // that context through modes.dungeonCtx - so worldModes.js:4503
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3137,7 +3274,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  Null is DFU's "No location found, fail back to terrain origin"
    *  (:1441-1446) - the caller's own default landing stands in for it. */
-  function locationLandingFor(px, py, { noMarkers = false } = {}) {
+  function locationLandingFor(px, py, { noMarkers = false, travelStart = null } = {}) {
     const key = `${px},${py}`;
     const dfLoc = locationIndex.get(key);
     if (!dfLoc?.exterior?.exteriorData) return null;
@@ -3151,7 +3288,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         originX: bl.originX, originZ: bl.originZ, flats: collectBlockFlats(bl.dfBlock, 0),
       })))
       : [];
-    const at = locationArrivalLanding(dfLoc, { origin, startMarkers });
+    // AUDIT 64 F18: the side pick's DirectionFromStartMarker inputs.
+    // `worldPos` is LocalPlayerGPS.WorldX/WorldZ as PositionPlayerToLocation
+    // reads them - TeleportToMapPixel has already moved the GPS to the
+    // DESTINATION pixel (StreamingWorld.cs:1084-1086) - and `travelStart`
+    // is the pair it cached off the departure a line earlier (:1078-1083).
+    const at = locationArrivalLanding(dfLoc, {
+      origin,
+      startMarkers,
+      travelStart,
+      worldPos: travelStart ? mapPixelToWorldCoords(px, py) : null,
+    });
     if (!at) return null;
     // The location frame IS the built pixel's local frame; only the
     // vertical compensation the streamer carries has to be added back.
@@ -3180,7 +3327,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // per-pixel build raises that. Every teleport used to raise the
   // travel event: a forced apply and a rebuild of the season's atlases
   // on each, and the load's own two-step apply never on a load.
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, modEvent = null } = {}) {
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, travelStart = null, modEvent = null } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -3235,7 +3382,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // HERE, against the pixel that has just been built - its location
     // origin, its blocks' start markers, and the streamer's new
     // compensation - and never against the pixel being left.
-    const landing = reposition === REPOSITION.RandomStartMarker ? locationLandingFor(px, py) : null;
+    //
+    // AUDIT 64 F18: BOTH marker methods take this arm - Update()'s two
+    // cases fall through to the one PositionPlayerToLocation() call
+    // (:279-282) - and the travel hint is carried only by the one
+    // TeleportToMapPixel caches it for (:1078-1083).
+    const wantsLanding = reposition === REPOSITION.RandomStartMarker
+      || reposition === REPOSITION.DirectionFromStartMarker;
+    const hint = reposition === REPOSITION.DirectionFromStartMarker ? travelStart : null;
+    const landing = wantsLanding ? locationLandingFor(px, py, { travelStart: hint }) : null;
     const local = landing?.pos ?? localPos;
     // `grounded` is StreamingWorld.RepositionPlayer's own last argument
     // (:1587, :1592), which the location arm derives from the
@@ -3264,7 +3419,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // by construction. On a valid marker the floor IS the flat and
     // nothing changes.
     if (walkMode && landing && pos[1] - raw[1] > OBSTRUCTED_ABOVE) {
-      const edge = locationLandingFor(px, py, { noMarkers: true });
+      const edge = locationLandingFor(px, py, { noMarkers: true, travelStart: hint });
       if (edge) {
         const eraw = edge.pos;
         pos = floorLanding(collider, eraw, ARRIVAL_REACH, ARRIVAL_LIFT);
@@ -3329,7 +3484,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    * What it keeps is the two calls DFU makes. TransitionExterior
    * FIRST when the player is inside (:140-141) - you cannot teleport
-   * out of a building - and then TeleportToCoordinates, which raises
+   * out of a building - and then TeleportToCoordinates(x, y,
+   * RepositionMethods.RandomStartMarker) (:143), which raises
    * OnInitWorld, whose weather half applies the destination climate's
    * ARRAY slot. That is the same handler fast travel's arrival runs,
    * so the destination's weather lands the same way; what does NOT
@@ -3631,7 +3787,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     _teleporting = true;
     try {
       modes?.forceExitToExterior();
-      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
+      // AUDIT 64 F19: TeleportAway names the reposition EXPLICITLY -
+      // `TeleportToCoordinates((int)destinationPos.X, (int)destinationPos.Y,
+      // RepositionMethods.RandomStartMarker)` (:143), where the overload's
+      // own default is Origin (StreamingWorld.cs:368) - so this is the
+      // third caller of PositionPlayerToLocation the port has a host for,
+      // not a landing choice of the port's. Without it the guild teleport
+      // put the player down at the terrain tile's dead centre, which for a
+      // city is inside its block grid.
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
+        { reposition: REPOSITION.RandomStartMarker });
       if (!weatherOverride) {
         applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
         if (currentWeather() !== weather) applyWeather(currentWeather());
@@ -3750,8 +3915,30 @@ export async function bootWorld(canvas, renderer, params, status) {
       // for many the middle of a building. TL2's roof guard was gated
       // on `landing` and so never ran on the one path it was written
       // for. The same door the court release and the ship already take.
+      // AUDIT 64 F18 (integrated over TL3 the same day): TL3 took
+      // RandomStartMarker as the method; the lane read :334 as
+      // DirectionFromStartMarker with the cached departure, and that is
+      // the arm kept - TL3's landing rides with it, and SIB2's travel
+      // event too.
+      // AUDIT 64 F18: performFastTravel's teleport is
+      // `TeleportToCoordinates((int)endPos.X, (int)endPos.Y,
+      // RepositionMethods.DirectionFromStartMarker)` (:334) and the port
+      // passed no reposition at all, so the ordinary way to move landed
+      // the player at the destination tile's dead CENTRE - inside a city's
+      // block grid, with the departure facing kept and floorLanding free
+      // to snap onto a roof. The method is PositionPlayerToLocation: an
+      // edge landing a tenth of a block outside the rectangle, facing in,
+      // snapped to the nearest start marker for a city.
+      //
+      // travelStart is TeleportToMapPixel's own cache (:1078-1083), taken
+      // off LocalPlayerGPS BEFORE the GPS moves to the destination - so it
+      // is read here, ahead of the jump, and it is what tilts the side
+      // pick towards the side the journey came from.
+      const travelStart = state.worldCoords(walkMode ? player.pos : cam.pos);
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
-        { arriveMinutes: worldMinutes() + computed.minutes, reposition: REPOSITION.RandomStartMarker, modEvent: 'travel' });
+        { arriveMinutes: worldMinutes() + computed.minutes,
+          reposition: REPOSITION.DirectionFromStartMarker,
+          travelStart, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -3793,8 +3980,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // V2b: the vampirism arc LANDED - a sun-damaged racial
         // override arrives at dusk, never in daylight (the law has
         // supported this parameter since the F-slice; only the wiring
-        // waited). Career DamageFromSunlight still rides its own arc.
-        sunAverse: !!playerEntity.racialOverride?.sunDamage,
+        // waited).
+        //
+        // AUDIT 64 F20: and the SECOND arm of DFU's disjunction, which
+        // the wiring left out - DaggerfallTravelPopUp.cs:351 is
+        // `HasVampirism() || PlayerEntity.Career.DamageFromSunlight`,
+        // under the comment at :350 ("Vampires and characters with
+        // Damage from Sunlight disadvantage never arrive between 6am
+        // and 6pm regardless of travel type"). The two are separately
+        // sourced - the racial arm off the compound race, the career
+        // arm off the class's own CFG bit - which is exactly how the
+        // per-round burn already reads them (passiveSpecials.js:113).
+        sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
@@ -3820,6 +4017,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       // raised by the arrival is pushed onto a screen that is still
       // black, and the fade it clears is the one that has not started.
       hudFade.fadeHUDFromBlack();
+      // AUDIT 64 F22 - DaggerfallTravelPopUp_OnPostFastTravel
+      // (PlayerEntity.cs:2455-2459): "Clear crime state post fast
+      // travel". PlayerEntity subscribes it at :211, and it is a
+      // SECOND clearer, distinct from PlayerGPS_OnExitLocationRect
+      // (:2449-2453, court.js's clearCrimeOnLocationExit) - which the
+      // teleport core structurally cannot raise, because it drops
+      // _wasInLocationRect itself (ResetState, PlayerGPS.cs:398-401)
+      // so no rect edge fires across the jump. Without this the
+      // departure town's crime rides to the destination: the watch's
+      // despawn law is gated on it (cityGuards.js) and the arrest box
+      // levies it (arrestFlow.js), in the ARRIVAL region.
+      //
+      // Raised where DFU raises it - RaiseOnPostFastTravelEvent
+      // (DaggerfallTravelPopUp.cs:383) is the method's last statement,
+      // after RaiseSkills (:380) and FadeHUDFromBlack (:381) - and
+      // through the ONE setter, because DFU assigns the
+      // `CrimeCommitted` PROPERTY (:2458), whose setter is
+      // SetCrimeCommitted (:189, :2346-2354).
+      //
+      // NOT the teleport arm: DaggerfallTeleportPopUp is a plain
+      // popup that never runs performFastTravel, so a guild teleport
+      // keeps the crime in DFU too.
+      setCrimeCommitted(playerEntity, CRIMES.None);
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -4199,10 +4419,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // `give pc _item_ notify` offer is handed over HERE and the press
     // is spent: the map does not open, and the next press travels.
     if (giveOffer()) return;
+    // ONE clock for both sun rungs, so the two cannot disagree across a
+    // minute boundary the way two separate reads could.
+    const nowMin = Math.floor(worldMinutes());
+    // AUDIT 64 F21: the CAREER rung, the one the comment above has
+    // named since AUDIT 39 and the code never carried -
+    // DaggerfallUI.cs:614-621: `if (PlayerEntity.Career.DamageFromSunlight
+    // && WorldTime.Now.IsDay)` shows the sunlightDamageFastTravelDay box
+    // (:619) and RETURNS, and it sits ABOVE the racial override's
+    // CheckFastTravel at :624-626. It is a separate rung, not a clause
+    // of the racial one: DFU reads Career.DamageFromSunlight (DFCareer.cs's
+    // own CFG bit, specialAdvantages.js:266 here) where CheckFastTravel
+    // reads the RacialOverrideEffect. Same localized key at both sites,
+    // so the box says the same sentence.
+    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) {
+      townTalk.say(SUNLIGHT_TRAVEL_TEXT);
+      return;
+    }
     // V2b: CheckFastTravel at the map's own door, where DFU calls it
     // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
     // travel by day, and the refusal is the override's own line.
-    const ftb = racialFastTravelBlock(playerEntity, Math.floor(worldMinutes()));
+    const ftb = racialFastTravelBlock(playerEntity, nowMin);
     if (ftb) { townTalk.say(ftb.text); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
@@ -4483,20 +4720,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:229), which until now
+     *  panel of the large HUD (ui/hudLarge.js:231), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:430) and
+     *  on. Here routeAction's arm is optional (ui/input.js:480) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:351), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:391), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
@@ -4671,7 +4908,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     keys.add(e.code);
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:156-177), and no host passed one - so
+    // held-keys Set (ui/input.js:159-180), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -4697,6 +4934,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // sibling door; preventDefault only when the dial answers, so
       // classic Tab keeps its default.
       if (e.code === 'Tab' && hudCtx.toggleDial()) { e.preventDefault(); return; }
+      // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
+      // :308-318). This host runs its own ladder and never calls
+      // routeKey, which is where the other two hosts take these keys,
+      // so the arm lives here too or F10/Shift-F10 would work in a
+      // dungeon and not in the street - the FOUR HOSTS trap. It stays
+      // INSIDE the mode gate: an interior or dungeon mode is mounted
+      // by scenes/worldModes.js, whose own routeKey call already
+      // answers these keys, and two live arms would flip the setting
+      // twice per press and cancel out.
+      if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
       // dispatch chain (:541-548) that the port bound at I1 and then
@@ -4863,7 +5110,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:205, "a right-click on a window is the window's...
+  // (dungeon.js:206, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5082,7 +5329,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6796-6808 -
+  // worldModes answers it in BOTH modes (worldModes.js:7017-7029 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6078,7 +6325,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // changes instead. That is the loop row's consequence, not a
     // second departure.
     playSong: (name) => music.playSong(name),
-    giveItemToPlayer: (dfItem) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem); surfacePlayer(); },
+    giveItemToPlayer: (dfItem, front = false) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem, front ? 'front' : 'back'); surfacePlayer(); },   // AUDIT 64 F54: GivePc.cs:179/:186 and GetItem.cs:83 pass AddPosition.Front; QuestResourceBehaviour.cs:421 passes none (Back)
     removeItemFromPlayer: (dfItem) => {
       const items = playerEntity.items ?? [];
       const i = _heldItemIndex(dfItem);
@@ -6510,6 +6757,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return out;
     },
+    /** AUDIT 64 F11: the StaticBuildings of every built pixel, shifted
+     *  through the LIVE floating-origin translation the boards and
+     *  street NPCs ride - DFU's hit test consumes a world-space
+     *  raycast's point (PlayerActivate.cs:314, :343). The pixel key and
+     *  the pixel-local matrix ride along, because the identity lookup
+     *  (buildingDataForDoor) works in the pixel's own location frame. */
+    buildingTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.buildings?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const bl of p.buildings) {
+          out.push({
+            ...bl, pixelKey: `${p.px},${p.py}`,
+            aabb: {
+              min: [bl.aabb.min[0] + t[0], bl.aabb.min[1] + t[1], bl.aabb.min[2] + t[2]],
+              max: [bl.aabb.max[0] + t[0], bl.aabb.max[1] + t[1], bl.aabb.max[2] + t[2]],
+            },
+          });
+        }
+      }
+      return out;
+    },
     // ActivateBulletinBoard's news (:716) - the mill's SIGN face,
     // ported at TK-i and until now called by nothing.
     bulletinBoardNews: () => rumorMill.getNewsOrRumorsForBulletinBoard(),
@@ -6524,7 +6794,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const dfLoc = locationIndex.get(hit.pixelKey);
       const p = built.get(hit.pixelKey);
       if (!dfLoc || !p?.locBlocks || !p.locOrigin) return null;
-      const raw = buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
+      // AUDIT 64 F11 (review round): a STATIC-BUILDING hit already
+      // carries its own PIXEL-LOCAL matrix, so it must not be re-read
+      // off buildingDoors - that lookup matches on the BLOCKS.BSA
+      // record and would answer with the first cell holding this block
+      // name, while DFU's key is per block INSTANCE
+      // (`MakeBuildingKey((byte)layoutX, (byte)layoutY, (byte)recordCount)`,
+      // RMBLayout.cs:888). A door hit is world-frame (shiftedDoor), so
+      // it still needs the raw entry.
+      const raw = hit.pixelLocal ? null
+        : buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const m = (raw ?? hit).door.matrix;
       const d = buildingDataForDoor(dfLoc.exterior.buildings, p.locBlocks, {
         dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
@@ -6547,7 +6826,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:93, so the
+  // only reader of `load` in the whole tree is dungeon.js:94, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6805,6 +7084,26 @@ export async function bootWorld(canvas, renderer, params, status) {
       arrested: Boolean(playerEntity.arrested),
     }, modes?.musicContext?.() ?? null);
 
+    // AUDIT 64 F10 - PlayerEnterExit.Update's holiday-text drain
+    // (:355-368): the cancel when the current location object changed
+    // (:355-359), the countdown (:362-363), and the fire once the timer
+    // has run out while the player is on the HUD (:364-368). It sits
+    // ABOVE the modal gate because DFU's runs in Update, which is not
+    // suspended by walking indoors; IsPlayerOnHUD (:400-403) is the
+    // port's `!gamePaused()` - a window on top DEFERS the box.
+    _holidayText.update(dt, {
+      currentLocation: () => _musicLoc,
+      onHUD: () => !gamePaused(),
+      gameMinutes: () => Math.floor(playerTicker.classicMinutes),   // ToClassicDaggerfallTime (:569)
+      regionIndex: () => _questRegionIndex(),   // PlayerGPS.CurrentRegionIndex (:570)
+      // SetTextTokens(int) with ClickAnywhereToClose (:574-575) - the
+      // host's own TEXT.RSC parchment door, the one the quest boxes use.
+      showRecord: (id) => {
+        const rows = plainLines(tokenRows(expandMessageBoxTokens(townTalk.recordTokens(id), talkMcp()))) ?? [];
+        if (rows.length) townTalk.showBox(rows);
+      },
+    });
+
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
@@ -6821,7 +7120,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:598, :586). So every HUD line raised in a modal
+      // (townTalk.js:603, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -6919,6 +7218,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
+        // AUDIT 64 F7 - PlayerEntity.cs:311, the TALLY's own gate:
+        // `playerMotor.IsRunning && !playerMotor.IsRiding`, with NO
+        // standing test. The fatigue arm at :408 is the one that
+        // reads !IsStandingStill; the port drove both off one flag,
+        // so the Running skill did not advance while the run key was
+        // held standing still.
+        runningTally: player.isRunning && !player.riding,
         swimming: player.swimming,
         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
@@ -6934,8 +7240,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         const mv = moveHeld(keys);
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
-        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:547's shape - a frozen player takes no stride
+        // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
+        // ApplyVerticalForce(1);` runs in Update ahead of
+        // FindKeyboardActions, so the latch drives the vertical axis
+        // forward with no key held. The latch itself lives in the motor
+        // (PlayerSpeedChanger's half), so this reads last step's value -
+        // DFU's own script-order indeterminacy between InputManager.Update
+        // and PlayerMotor.Update.
+        const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -7017,7 +7329,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
           const _step = footsteps.update(player.pos, {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-            standingStill: !moving,
+            // AUDIT 64 F3 (review): PlayerFootsteps gates on
+            // `playerMotor.IsStandingStill` (PlayerFootsteps.cs:264-265), which
+            // is `Vector2(moveDirection.x, moveDirection.z).magnitude == 0`
+            // inside `if (grounded)` (PlayerMotor.cs:113-125) - NOT a HasAction
+            // read. Under AutoRun, InputManager.cs:542-545's ApplyVerticalForce
+            // writes a non-zero moveDirection with no move key down, so DFU
+            // plays the stride; `!anyMove(keys)` silenced it. `player.standing`
+            // IS that getter (grounded && no forward/strafe axis), so it also
+            // keeps the paralysed player silent - the hosts zero both axes.
+            standingStill: player.standing,
             halfSpeed: player.movingLessThanHalfSpeed,
             // :221-227 - a mount silences the stride UNLESS the player
             // is in exterior water, which is the one arm that needs
@@ -7356,9 +7677,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
     }
+    // AUDIT 64 F9 - DaggerfallLocation.cs:141-145 is the only window-style
+    // rule a town runs (its WindowTextureStyle feeds SetClimate at :218/:221)
+    // and it reads the clock alone; WeatherManager never touches a window
+    // style, so no weather term may sit between the ?window= dev override
+    // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
-      params.has('window') ? params.get('window')
-        : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    tickCityGates(minute);   // AUDIT 64 F14: DaggerfallCityGate.Update, every frame as DFU's is - and on the first frame after a pixel builds, which is what closes a gate streamed in at 20:00
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
     // thunder and snow) disables the clear night sky, so the DAY sky at
@@ -7569,6 +7895,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
+        // .PlayerGPS_OnEnterLocationRect primes the holiday text
+        // (:1404-1409), but only on its TOWN arm (:1382-1383), so a
+        // dungeon, a graveyard, a coven or a mooring primes nothing;
+        // the whole handler is under `!isPlayerInside` (:1362), which
+        // is this branch of the frame loop.
+        if (holidayTextPrimesFor(_musicLocationType())) _holidayText.enterLocationRect(_musicLoc);
       } else if (!_inRect) {
         ambience.setCemeteryNearby(false);
       }
@@ -7903,7 +8236,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // (hud.js:402-427) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null
@@ -7952,6 +8285,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: gamePaused(),
+          // AUDIT 64 F35 (review round): the PAINT's gate is not the
+          // pause. DFU paints the whole small HUD under every
+          // `DaggerfallUI.MessageBox` box, whose previousWindow is the
+          // then-top HUD (DaggerfallUI.cs:1330 over
+          // DaggerfallPopupWindow.cs:76-84), and blanks it only for the
+          // null-previous windows it pushes from :512-530. Same union
+          // `gamePaused` takes, asked of the two stacks' chains.
+          windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values

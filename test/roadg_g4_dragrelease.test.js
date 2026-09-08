@@ -411,7 +411,10 @@ test('G4-11: EVERY host hands its overlay slot the DOM event with the hover', ()
     ['src/scenes/worldModes.js', /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/],
     ['src/scenes/dungeonContext.js', /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
     ['src/scenes/dungeon.js', /ctx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/],
-    ['src/scenes/interior.js', /overlay\.hover\?\.\(v\[0\], v\[1\], e\);/],
+    // AUDIT 64 F48: this route carries the (-1,-1) pointer-leave
+    // sentinel now, like the other five - a hover that CLEARS on a
+    // miss (the shared ToolTip) needs the miss to arrive at all.
+    ['src/scenes/interior.js', /overlay\.hover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/],
   ];
   for (const [file, re] of ROUTES) {
     assert.match(read(file), re, `${file} drops the event from its hover route`);

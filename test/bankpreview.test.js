@@ -90,7 +90,9 @@ test('D6: a NULL house list IS the shipyard (:181-185) - two ShipTypes at flat p
   assert.equal(bought, SHIP_TYPES.Small, 'a truthiness guard makes the small ship the one row that cannot be bought');
   assert.equal(w.done, true, 'CloseWindow runs before the outcome is known (F138)');
   assert.equal(shown.result, TRANSACTION_RESULT.PURCHASED_SHIP);
-  assert.equal(shown.amount, 100000);
+  // AUDIT 64 F25: GeneratePurchaseShipPopup (:229-232) hands
+  // GeneratePopup the result alone, so its `amount` is the default 0.
+  assert.equal(shown.amount, 0);
   // ...and a houses hook still means houses
   const h = new BankPurchaseWindow({ houses: () => [{ buildingKey: 1, meshRadius: 10 }] });
   assert.equal(h.isShips, false);

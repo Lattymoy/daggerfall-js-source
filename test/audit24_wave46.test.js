@@ -199,11 +199,17 @@ test('audit24 wave46: a fall flashes the screen and does NOT make you cry out', 
   assert.match(fall, /flashPlayerDamage\(\);/, 'the fall flashes');
   assert.doesNotMatch(fall.slice(0, fall.indexOf('\n}')), /playerPainVoice/, 'and does not cry');
 
-  // the traps SEND it, so they get both... except the port's action
-  // system has no audio seam, so the voice is RECORDED as owed there
-  // rather than quietly skipped
+  // the traps SEND it, so they get BOTH. The flash is the action
+  // system's own (it models SendMessage's PlayerHealth receiver); the
+  // cry is the HOST's, because the audio device is - AUDIT 64 F40
+  // wired it onto the one sink that carries the message.
   const act = rd('src/world/actionSystem.js');
   assert.match(act, /flashPlayerDamage\(\)/, 'the traps flash');
+  const dc = rd('src/scenes/dungeonContext.js');
+  const sink = dc.slice(dc.indexOf('damagePlayer:'), dc.indexOf('castSpell:'));
+  assert.match(sink, /hurtPlayer\(dmg\)/, 'the trap bills the health');
+  assert.match(sink, /playPlayerVoice\(audio, playerPainVoice\(playerEntity, dmg\)\)/,
+    'and the trap CRIES - DaggerfallAction.cs:739/:768 send the same message EnemyAttack.cs:406 does');
 });
 
 test('audit24 wave46: every blow and every ARROW now owes all three', () => {
@@ -255,10 +261,11 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
       assert.deepEqual(missed.billed, [], `${file} door ${i + 1}: and no health billed`);
     });
   }
-  // the dungeon's two sites are inline rather than properties (its
-  // melee resolution and its arrow arm), so they stay counted
+  // the dungeon's three sites are inline rather than properties (its
+  // melee resolution, its arrow arm and - AUDIT 64 F40 - the damage
+  // trap's sink), so they stay counted
   const cries = (f) => rd(f).split('\n').filter((l) => l.trim().startsWith('playPlayerVoice(audio, playerPainVoice(')).length;
-  assert.equal(cries('src/scenes/dungeonContext.js'), 2, 'dungeon: the blow AND the arrow');
+  assert.equal(cries('src/scenes/dungeonContext.js'), 3, 'dungeon: the blow, the arrow AND the damage trap');
   // the two arrow-on-player sites, which had NONE of this
   const w = rd('src/scenes/world.js');
   const arrow = w.slice(w.indexOf('onPlayerHit: (m) =>'));

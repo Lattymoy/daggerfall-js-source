@@ -11,7 +11,7 @@ called a bug.
 ## Cleared - checked and found sound
 
 **The marching squares do not erase the roads.** `assignTiles`
-(terrainTiles.js:196) skips any non-zero tile, not just the 0xFF
+(terrainTiles.js:194) skips any non-zero tile, not just the 0xFF
 location tiles - so tile 46 written before it survives it. This was the
 audit's first suspect because DFU's job carries the same guard and a
 port that had narrowed it to 0xFF would paint roads and then erase
@@ -25,7 +25,7 @@ them, with every pin green.
 caller, `TerrainGenClient`, constructed once in world.js. The four-hosts
 rule is satisfied by there being one host that streams terrain.
 
-**North is row 127.** terrainSampler.js:150-151 states the continuity
+**North is row 127.** terrainSampler.js:155-156 states the continuity
 law, the painter cites it, the pin drives N alone and reads row 127.
 
 **The line is held.** No byte of Hazelnut's data is in the tree; the

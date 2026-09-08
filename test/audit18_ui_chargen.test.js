@@ -52,7 +52,7 @@ const BIOG = () => ({ backstoryId: 0, questions: [{ text: ['q'], answers: [{ tex
 function toName(f, bio = false) {
   if (bio) f.biogFor = () => BIOG();
   f.input('confirm');   // race
-  f.input('confirm');   // gender
+  f.input('char:m');    // gender (AUDIT 64 F32 review round: the box's Male hotkey)
   f.input('confirm');   // classMethod -> the list
   f.input('confirm');   // class row 0
   if (bio) {

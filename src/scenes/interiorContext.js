@@ -17,7 +17,7 @@
 //   - enter markers and interior static doors for the landing math.
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { layoutInterior, INTERIOR_MARKER } from '../world/interiorLayout.js';
+import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/interiorLayout.js';
 import { multiply, transformPoint, identity } from '../world/mat4.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
@@ -351,7 +351,24 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         rotors.push({ gpu: part.gpu, child: part.child, parent: matrix, state: { angle: 0 } });
       }
     }
-    if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
+    // AUDIT 64 F17: DaggerfallInterior.cs:491-496 gates the ladder on
+    // BOTH the model id AND ObjectType == propModelType ("Make ladder
+    // collider convex and ladder functionality, if set up as
+    // propModelType"); :439 keeps EVERY 41409 standalone scenery, so a
+    // non-prop 41409 draws and collides but never climbs. The port had
+    // tested the id alone, making it a climb trigger that teleports to
+    // the nearest 21/22 marker where DFU leaves inert geometry.
+    if (p.modelIdNum === LADDER_MODEL_ID && p.objectType === PROP_MODEL_TYPE) {
+      ladders.push({ cpu, matrix });
+    }
+    // AUDIT 64 F17: DaggerfallInterior.cs:500 gates the whole
+    // AddFurnitureAction chain on the same clause -
+    // `if (obj.ObjectType == propModelType && buildingData.buildingType
+    // != AllValid) AddFurnitureAction(...)`. (The AllValid half is
+    // DFU's separate map-layout run, which this port has no counterpart
+    // for, so it is not ported.) A non-prop shelf/wardrobe model was a
+    // lootable container here where DFU leaves it as geometry.
+    if (p.objectType !== PROP_MODEL_TYPE) continue;
     if (isShopShelfModel(p.modelIdNum)) {
       if (opts.houseOwned) {
         // HC1 - AddFurnitureAction's OWNED arm (:816-819): in a house
@@ -615,8 +632,20 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const [x, y, z] = parentPt(m.x, m.y, m.z);
     return { ...m, x, y, z };
   });
+  /** AUDIT 64 F15: FindClosestEnterMarker accepts Rest as well as
+   *  Enter. DaggerfallInterior.cs:242-246 - "Must be an enter marker
+   *  199.8 / Sometimes marker 199.4 is used where the 199.8 enter
+   *  marker should be / Being a little forgiving and also accepting
+   *  199.4 as enter marker" - `if (markers[i].type != Enter &&
+   *  markers[i].type != Rest) continue;`. The port had filtered ENTER
+   *  alone, so a building carrying only a 199.4 marker found no marker
+   *  at all: the check position stayed at the EXTERIOR door (picking a
+   *  different interior door than DFU) and, with no interior door, the
+   *  landing came back null and the E-press threw. The union is
+   *  enterMarkers' alone - every other marker consumer below and in
+   *  the hosts reads `markers` by exact type. */
   const enterMarkers = markers
-    .filter((m) => m.type === INTERIOR_MARKER.ENTER)
+    .filter((m) => m.type === INTERIOR_MARKER.ENTER || m.type === INTERIOR_MARKER.REST)
     .map((m) => [m.x, m.y, m.z]);
   /** AUDIT 63 F22: the TREASURE markers, in the same parent frame.
    *  DaggerfallInterior.AddFlats (:872-902) hangs a RandomTreasure

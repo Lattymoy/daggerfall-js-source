@@ -134,6 +134,15 @@ export function hasDiscoveredBuilding(locationId, buildingKey) {
   return _discovered.get(locationId)?.has(buildingKey) ?? false;
 }
 
+/** PlayerGPS.GetDiscoveredBuilding (:1064-1082): the stored record for
+ *  one building, or null when it has not been discovered. AUDIT 64 F11
+ *  gave it its first caller - ActivateBuilding reads the display name
+ *  off it (PlayerActivate.cs:468-471). */
+export function getDiscoveredBuilding(locationId, buildingKey) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  return rec ? { ...rec } : null;
+}
+
 /** FactionFile.FactionIDs.The_Thieves_Guild / The_Dark_Brotherhood
  *  (FactionFile.cs:91, :135) - the two hideout factions
  *  UndiscoverBuilding shields UNCONDITIONALLY. */

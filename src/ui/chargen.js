@@ -239,7 +239,7 @@ export class ChargenFlow {
     // reputation box - and _finishBiography reads a missing box as
     // "nothing to show" and walks past it. Same shape as the three
     // above; the defaults are unchanged.
-    this.buildBackstory = (backstoryId, effects) => buildBackstory(backstoryId, effects);
+    this.buildBackstory = (backstoryId, effects, ctx) => buildBackstory(backstoryId, effects, ctx);
     this.repBoxRows = (changed) => repBoxRows(changed);
     // The summary's unspent-points refusal, on the same terms - the
     // fifth and last of the flow's TEXT.RSC readers, and the one that
@@ -254,6 +254,18 @@ export class ChargenFlow {
     // once, and a click on a skill would have moved the stat spinner.
     this.statCursor = 0;
     this.skillCursor = 0;
+    // AUDIT 64 F33: the SUMMARY's own StatsRollout bonus pool - a
+    // second instance, not a view of the bonus-stats window's.
+    this.sumStatPool = 0;
+    // AUDIT 64 F33 (review round): and its own SPINNER SELECTION.
+    // `selectedStat` is a
+    // plain instance field of StatsRollout (StatsRollout.cs:43), so the
+    // two rollouts carry two of them, and SummaryWindow_OnClose's
+    // cancel arm (DaggerfallStartNewGameWizard.cs:559-578) copies the
+    // stat VALUES back and not the selection. Sharing one field let a
+    // click on the summary's spinner rewrite the bonus-stats window's
+    // row, and _enterSummary's reset clobber it on the way in.
+    this.sumStatCursor = 0;
     // U17: SkillsRollout carries THREE LeftRightSpinners, one per
     // group, each with its OWN selected skill and its own remaining
     // pool (SkillsRollout.cs:44-46, 240-262, 356-372). The port drew a
@@ -391,11 +403,24 @@ export class ChargenFlow {
   /** U10: the seven derived values CHAR02I0's right column shows
    *  (CreateCharAddBonusStats.cs:94-100), each through the
    *  FormulaHelper home. Signed modifiers print with their sign, as
-   *  DFU's labels do. */
+   *  DFU's labels do.
+   *
+   *  AUDIT 64 F31: with C#'s picture, not a `>= 0` guess. The four
+   *  signed labels are `.ToString("+0;-0;0")`
+   *  (CreateCharAddBonusStats.cs:156, :160, :161, :162), and the
+   *  THIRD unnamed section of a custom numeric picture is the one
+   *  used for ZERO - a bare `0`, no sign. The port folded zero into
+   *  the positive arm and printed "+0", which is the band most rolled
+   *  characters land in: HitPointsModifier and HealingRateModifier
+   *  are `floor(END/10) - 5` (FormulaHelper.cs:111-128), zero for
+   *  endurance 50-59, ToHitModifier the same over agility, and
+   *  DamageModifier `floor((STR-50)/5)` (:66-73), zero for strength
+   *  50-54. The other three labels take plain `ToString()` and are
+   *  unsigned already. */
   derived() {
     if (!this.stats) return null;
     const st = this.stats;
-    const sign = (n) => (n >= 0 ? `+${n}` : String(n));
+    const sign = (n) => (n > 0 ? `+${n}` : String(n));   // "+0;-0;0"
     const mult = spellPointMultiplier(this.career.abilityFlagsAndSpellPointsBitfield ?? 0x1000);
     return {
       damage: sign(damageModifier(st.strength)),
@@ -1174,7 +1199,19 @@ export class ChargenFlow {
    *  box rows the screen simply ends. */
   _finishBiography() {
     const b = this.biogFor(this.classIndex);
-    this.backStory = this.buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
+    // AUDIT 64 F29: the backstory's OTHER macros need the chargen
+    // DOCUMENT's race, which is what BiogFile.cs:212 hands the macro
+    // pass ("Need correct race set when parsing %ra macro") one line
+    // before ExpandMacros - and here there is no player entity yet to
+    // read it off. The seed stands in for `(uint)parent.GetHashCode()`
+    // (BiogFileMCP.cs:145/:621/:629/:635), the CLR identity hash that
+    // has no port: one injectable draw per biography, DFU's +123 /
+    // +9543 offsets kept over it (Ledger A).
+    this.backStory = this.buildBackstory?.(b.backstoryId, this.biographyEffects, {
+      raceKey: this.race?.key ?? null,
+      raceName: this.race?.name ?? null,
+      seed: this.seedRandom(),
+    }) ?? [];
     this.repChanges = digestRepChanges(this.biographyEffects);
     this.biogRepBox = this.repBoxRows?.(this.repChanges) ?? null;
     if (!this.biogRepBox?.length) this._leaveBiography();
@@ -1279,13 +1316,32 @@ export class ChargenFlow {
    *  the SUMMARY from its spinners, which is a third caller and the
    *  reason it stopped being written inline. */
   spendStat(delta) {
-    const key = STAT_KEYS_ORDER[this.statCursor];
+    // AUDIT 64 F33: DFU has TWO StatsRollout instances - the bonus-
+    // stats window's (CreateCharAddBonusStats.cs:83) and the summary's
+    // (CreateCharSummary.cs) - and the spinner handlers act on
+    // whichever window owns them. One function over two backing
+    // fields is that shape; `stats`/`rolledStats` stay SHARED because
+    // the cancel arm does copy the stat VALUES back
+    // (DaggerfallStartNewGameWizard.cs:570-571).
+    const key = STAT_KEYS_ORDER[this._statCursor()];
+    const pool = this._statPool();
     const r = delta > 0
-      ? statUp(this.stats[key], this.statPool)
-      : statDown(this.stats[key], this.rolledStats[key], this.statPool);
+      ? statUp(this.stats[key], pool)
+      : statDown(this.stats[key], this.rolledStats[key], pool);
     this.stats[key] = r.working;
-    this.statPool = r.pool;
+    this._setStatPool(r.pool);
   }
+
+  /** The bonus pool of the screen that is showing: the SUMMARY's own
+   *  (AUDIT 64 F33) or the bonus-stats window's. */
+  _statPool() { return this.state === 'summary' ? this.sumStatPool : this.statPool; }
+  _setStatPool(v) { if (this.state === 'summary') this.sumStatPool = v; else this.statPool = v; }
+
+  /** And its spinner row: StatsRollout.selectedStat (StatsRollout.cs:43)
+   *  is per-instance too, and SelectStat (:210-217) writes only the
+   *  rollout whose spinner was clicked. */
+  _statCursor() { return this.state === 'summary' ? this.sumStatCursor : this.statCursor; }
+  _setStatCursor(v) { if (this.state === 'summary') this.sumStatCursor = v; else this.statCursor = v; }
 
   /** The flat keyboard cursor and the three group selections are two
    *  views of one thing: moving the cursor onto a row IS selecting
@@ -1333,8 +1389,33 @@ export class ChargenFlow {
     // selections are NOT reset: SetCharacterSheet only assigns
     // SetSkills, and SelectPrimarySkill and its siblings live in
     // SkillsRollout.SetupControls alone.
-    this.statCursor = 0;
-    this.statPool = 0;
+    //
+    // AUDIT 64 F33 (review round): and it is the SUMMARY's rollout that
+    // SetCharacterSheet writes (CreateCharSummary.cs:123 assigns THIS
+    // window's `statsRollout.StartingStats`), so SelectStat(0) lands on
+    // the summary's own `selectedStat` and the bonus-stats window's
+    // spinner does not move. The port zeroed the shared field, which
+    // walked the other screen's row back to Strength.
+    this.sumStatCursor = 0;
+    // AUDIT 64 F33: the SUMMARY's own pool, zeroed on every push
+    // (`this.statsRollout.BonusPool = 0`, CreateCharSummary.cs:125) -
+    // and NOT the bonus-stats window's, which is a second rollout
+    // instance the summary never writes. That distinction is
+    // load-bearing on the way BACK: SummaryWindow_OnClose's cancel arm
+    // (DaggerfallStartNewGameWizard.cs:566-577) copies six things -
+    // startingSkills, workingSkills, startingStats, workingStats, the
+    // three SKILL bonus counters (through SetBonusSkillPoints, :575)
+    // and faceIndex - and the stat bonus pool is absent from that
+    // list, while the only other write into the stats window's
+    // rollout, AddBonusSkillsWindow_OnClose's cancel arm (:534-536),
+    // is a `.Copy` on the read-only getter that bypasses SetStats
+    // (StatsRollout.cs:53-62, :183-191) and leaves bonusPool alone.
+    // So a point un-spent on the summary is DESTROYED, not refunded:
+    // the stats screen still reads 0 (its own OK gate,
+    // CreateCharAddBonusStats.cs:189, guarantees it) with the lowered
+    // value standing. The port had ONE shared field, so that point
+    // came back and could be spent twice over.
+    this.sumStatPool = 0;
     this.pools = { primary: 0, major: 0, minor: 0 };
     this.poolBox = null;
     // AUDIT 18: the name box and the reflex picker are the summary's
@@ -1358,7 +1439,9 @@ export class ChargenFlow {
    *  DOWN off any of them. Unspent points pop TEXT.RSC 14 as a
    *  ClickAnywhereToClose box rather than closing the window. */
   confirmSummary() {
-    if (this.statPool > 0 || this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) {
+    // AUDIT 64 F33: `statsRollout.BonusPool` here is the SUMMARY's
+    // rollout (CreateCharSummary.cs:174).
+    if (this.sumStatPool > 0 || this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) {
       this.poolBox = this.bonusPointsRows?.() ?? [''];
       return;
     }
@@ -1446,9 +1529,18 @@ export class ChargenFlow {
       // U11: the confirm box is MODAL - it eats the map's keys, and
       // its own confirm/back are Yes and No.
       if (this.raceConfirm) {
-        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496) clicks for
-        // keys exactly as the mouse path does (messageBoxHit).
-        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this.raceConfirm = null; this.state = 'gender'; }
+        // AUDIT 64 F32: the KEYBOARD lane of a DaggerfallMessageBox is
+        // two things and the port had conflated them. Every AddButton
+        // binds a HOTKEY unconditionally (DaggerfallMessageBox.cs:377,
+        // `DaggerfallShortcut.GetBinding(ToShortcutButton(...))` -
+        // Yes 'Y', No 'N', dialogShortcuts.js:300), and RETURN clicks
+        // the DEFAULT button, if there is one (:318-324 through
+        // GetDefaultButton :394-403). This box is built with two bare
+        // `AddButton(Yes)`/`AddButton(No)` calls
+        // (CreateCharRaceSelect.cs:107-108), so it has NO default
+        // button and Return is INERT here; Y and N are what act.
+        if (hotkeyHit('Yes', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.applyHit({ confirmRace: true }); }
+        else if (hotkeyHit('No', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.raceConfirm = null; }
         else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.raceConfirm = null; }
         return;
       }
@@ -1477,10 +1569,24 @@ export class ChargenFlow {
       return;
     }
     if (s === 'gender') {
-      if (action === 'up' || action === 'down') this.gender = this.gender === 'male' ? 'female' : 'male';
-      // U18: the accept arm is SetChooseClassGenWindow (:305-316) -
-      // the method screen sits between gender and the list.
-      else if (action === 'confirm') this._enterClassMethod();
+      // AUDIT 64 F32 (review round): the wizard's FOURTH message box.
+      // CreateCharGenderSelect IS a DaggerfallMessageBox
+      // (CreateCharGenderSelect.cs:30) built from two bare
+      // `AddButton(MessageBoxButtons.Male)` / `AddButton(Female)` calls
+      // (:53-54) - no `defaultButton`, so GetDefaultButton() returns
+      // null (DaggerfallMessageBox.cs:394-403) and Return is INERT
+      // here, exactly as on the race and class-list boxes. What DOES
+      // act is the hotkey every AddButton binds unconditionally
+      // (:377): M and F (DialogShortcuts.txt Male/Female,
+      // dialogShortcuts.js:302). Each button's handler sets the gender
+      // AND closes the window (:59-71), which is what { setGender }
+      // already does - so the two keys take the same door the mouse
+      // does, and the bare 'confirm' that used to advance is gone.
+      // 'up'/'down' stay as the port's own selection accommodation for
+      // a keyboard that has no pointer; they move the highlight only.
+      if (hotkeyHit('Male', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.applyHit({ setGender: 'male' }); }
+      else if (hotkeyHit('Female', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.applyHit({ setGender: 'female' }); }
+      else if (action === 'up' || action === 'down') this.gender = this.gender === 'male' ? 'female' : 'male';
       else if (action === 'back') this.state = 'race';
       return;
     }
@@ -1500,8 +1606,22 @@ export class ChargenFlow {
     if (s === 'classQuestions') {
       // the description box is MODAL, its confirm and back Yes and No
       if (this.qConfirm) {
-        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496), as the other boxes
-        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this._acceptQuestionClass(); }
+        // AUDIT 64 F32: THIS box is the one with a default button, and
+        // the default is NO. EndQuestions builds it through the
+        // CommonMessageBoxButtons.YesNo helper
+        // (CreateCharClassQuestions.cs:406-409), and AddCommonButtons'
+        // YesNo arm is `AddButton(Yes); AddButton(No, true)`
+        // (DaggerfallMessageBox.cs:630-632) - the `true` is
+        // defaultButton. Update triggers the default button on
+        // Return/KeypadEnter (:318-324), and ConfirmDialog_OnButtonClick
+        // answers No with `classIndex = noClassIndex`
+        // (CreateCharClassQuestions.cs:425-427). So Return at the end
+        // of the ten questions DISCARDS the generated class and drops
+        // to the class list; the port accepted with it, the exact
+        // inverse. Y and N are the hotkeys (:377), and they are tested
+        // FIRST so the letter beats the default button.
+        if (hotkeyHit('Yes', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this._acceptQuestionClass(); }
+        else if (hotkeyHit('No', action, e) || action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this._cancelQuestionClass(); }
         else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._cancelQuestionClass(); }
         return;
       }
@@ -1532,8 +1652,12 @@ export class ChargenFlow {
       // U17: the description box is MODAL over the list, like the race
       // screen's - its own confirm and back are Yes and No.
       if (this.classConfirm) {
-        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496), as the race box
-        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; this._acceptStandardClass(); }
+        // AUDIT 64 F32: as the race box - two bare AddButton calls
+        // (CreateCharClassSelect.cs:87-88), so no default button and
+        // Return is inert; Y and N carry the keyboard
+        // (DaggerfallMessageBox.cs:377).
+        if (hotkeyHit('Yes', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; this._acceptStandardClass(); }
+        else if (hotkeyHit('No', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; }
         else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; }
         return;
       }
@@ -1709,9 +1833,9 @@ export class ChargenFlow {
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:229), so the 'reroll' row
+      // typed-character class (ui/input.js:232), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
-      // mouse rect (ui/chargenArt.js:1449) ever reached this. The hint
+      // mouse rect (ui/chargenArt.js:1476) ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
       // arm stays for that mouse rect.
       else if (action === 'reroll' || action === 'char:r' || action === 'char:R') this.reroll();
@@ -1847,6 +1971,11 @@ export class ChargenFlow {
       this.raceConfirm = hit.describe?.length ? hit.describe : null;
       return true;
     }
+    // AUDIT 64 F32: the race box's YES is its own hit now. It used to
+    // ride the shared 'confirm' action, which made the mouse Yes and
+    // a bare Return the same door - and DFU's Return is inert on this
+    // box (no default button, CreateCharRaceSelect.cs:107-108).
+    if (hit.confirmRace) { this.raceConfirm = null; this.state = 'gender'; return true; }
     if (hit.cancelRace) { this.raceConfirm = null; return true; }
     if (hit.setGender != null) {
       // U14: the Male/Female BUTTON sets the gender AND closes the
@@ -1860,7 +1989,10 @@ export class ChargenFlow {
     }
     if (hit.saveRoll) { this.saveRoll(); return true; }
     if (hit.loadRoll) { this.loadRoll(); return true; }
-    if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
+    // AUDIT 64 F33 (review round): SelectStat writes the rollout whose
+    // spinner was clicked (StatsRollout.cs:210-217), and the summary's
+    // is a second instance.
+    if (hit.setStatCursor != null) { this._setStatCursor(hit.setStatCursor); return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
     if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }
     if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
@@ -2016,6 +2148,7 @@ export class ChargenFlow {
       title('GENDER');
       line((this.gender === 'male' ? '> ' : '  ') + 'Male', 1, this.gender === 'male' ? hot : white);
       line((this.gender === 'female' ? '> ' : '  ') + 'Female', 2, this.gender === 'female' ? hot : white);
+      line('M male, F female', 4, dim);   // AUDIT 64 F32 (review round): the hotkeys AddButton binds (DaggerfallMessageBox.cs:377); this box has no default button, so ENTER is inert
     } else if (this.state === 'race') {
       title('CHOOSE YOUR RACE');
       RACE_TEMPLATES.forEach((r, i) => line((i === this.raceIndex ? '> ' : '  ') + r.name, i, i === this.raceIndex ? hot : white));
@@ -2068,7 +2201,7 @@ export class ChargenFlow {
       title(`QUESTION ${Math.min(this.qAnswered + 1, 10)} OF 10`);
       if (this.qConfirm) {
         this.qConfirm.slice(0, 12).forEach((r, i) => line(r.text ?? r, i, white));
-        line('ENTER yes, ESC no', 13, dim);
+        line('Y yes, N no', 13, dim);   // AUDIT 64 F32: the hotkeys AddButton binds (DaggerfallMessageBox.cs:377); ENTER here is the DEFAULT button, which is No
       } else if (this.qDisplay) {
         this.qDisplay.lines.slice(0, 14).forEach((t, i) => line(t.trim(), i, white));
         line('A / B / C to answer', 15, dim);

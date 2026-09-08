@@ -18,7 +18,7 @@
 import { audio, decodableCopy } from './audio.js';   // AUDIT 39: one decode door, one slice law
 import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './songManager.js';
-import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
+import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
 
@@ -48,6 +48,25 @@ export class MusicService {
     this.player?.resyncGain?.();
     this._audio?.resyncGain?.();
   }
+
+  /** AUDIT 64 F41: DaggerfallSongPlayer's two video handlers
+   *  (DaggerfallSongPlayer.cs:356-362 and :364-369, subscribed at
+   *  :76-77 to DaggerfallVidPlayerWindow's OnVideoStart/OnVideoEnd).
+   *  The flag lives beside the gain accessors both players read, so
+   *  every write path honours it - `_ensureMaster`, `resyncGain` and
+   *  AudioSongPlayer's per-start `trackGain()` - exactly as DFU's
+   *  Update re-asserts `IsMuted ? 0f : MusicVolume` at :106. The
+   *  resync below is what makes a SOUNDING song drop at once.
+   *
+   *  NOT `stop()`: that clears `_current`/`_pending`, so the song
+   *  would restart from the top when the video ends. DFU restores the
+   *  gain on a song that never stopped advancing. */
+  setMuted(v) {
+    setMusicMuted(v);
+    this.resyncGain();
+  }
+
+  get muted() { return isMusicMuted(); }
 
   /** The one bootstrap. Safe to call from every host, every entry.
    *

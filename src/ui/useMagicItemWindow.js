@@ -4,7 +4,7 @@
 // item with a CastWhenUsed legacy enchantment, or any potion - and
 // picking one uses it.
 //
-// The port had the door and not the room: input.js:470 routes the
+// The port had the door and not the room: input.js:481 routes the
 // action to `ctx.openUseMagicItem`, hudLarge.js:151 gives the large
 // HUD's button its rect, inputActions.js binds KeyU - and no host
 // implemented the method, so a bound key did nothing. The anti-lie law
@@ -28,6 +28,8 @@ import { ListPickerWindow } from './listPicker.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { isPotion } from '../systems/useItem.js';
 import { isEnchanted as defaultIsEnchanted } from '../systems/inventory.js';
+import { audio } from '../systems/audio.js';   // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
+import { SOUND } from '../systems/soundClips.js';
 
 /**
  * UpdateUsableMagicItems (:58-81), verbatim: walk the pack in order;
@@ -67,6 +69,14 @@ export function createUseMagicItemWindow({ items = [], onUse = null, onClose = n
     // UseMagicItem key does, which is the host's toggle.
     allowCancel: false,
     onPick: (index) => {
+      // AUDIT 64 F43: MagicItemPicker_OnItemPicked (:123-125) HEADS
+      // the handler with PlayOneShot(SoundClips.ButtonClick) - before
+      // the close and before the use. Neither ListBox nor
+      // DaggerfallListPickerWindow plays anything, so this handler is
+      // the only click on the pick, and it must not move into
+      // listPicker.js: the base window's other consumers are silent
+      // in DFU too.
+      audio.playOneShot(SOUND.ButtonClick, 1);
       // :88-90 - the window closes BEFORE the item is used, so a use
       // that opens its own box (a potion's message) is not covered by
       // a list that is on its way out.

@@ -45,8 +45,11 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   // constant for it now (player/activate.js), so the literal these two
   // lines used to carry - a full stop where the table spells an
   // ellipsis - is gone from the source.
-  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
-  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return true; }"));
+  // AUDIT 64 F34 MOVED IT AGAIN: :780 and :790 speak it through
+  // DaggerfallUI.SetMidScreenText - the HUD's centred label, DFU's
+  // other text surface - not through PopupText's queue.
+  assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }"));
+  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }"));
 });
 
 test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured space keeps it', () => {

@@ -5,7 +5,7 @@
 // game that charged correctly, because it booted the exterior host
 // WITHOUT a class parameter - so the chargen wizard mounted, took
 // townTalk's overlay slot, and townTalk.keydown (first in that host's
-// keydown ladder, exterior.js:2148-2149) swallowed every
+// keydown ladder, exterior.js:2269-2270) swallowed every
 // page.keyboard.press the probe made. Staging passed, the offer box
 // appeared, and the Yes never arrived, which reads exactly like a
 // broken commit.
@@ -43,7 +43,7 @@ const gotoUrls = (src) => [...src.matchAll(/page\.goto\(\s*[`']([^`']*)[`']/g)].
 
 /** The hosts that mount the chargen wizard when the entity has not
  *  been made: the exterior page and the streaming world page
- *  (exterior.js:1019-1029 and world.js's copy of the same fork). The
+ *  (exterior.js:1140-1150 and world.js's copy of the same fork). The
  *  standalone dungeon route runs its own wizard through a different
  *  slot and is covered by the same rule. */
 const MOUNTS_CHARGEN = /exterior|world|nomenu|shot/;
@@ -191,7 +191,7 @@ test('T3: the eyeball-tool allowlist is honest on both sides', () => {
 });
 
 // ---------------------------------------------------------------------------
-// ROAD-E E8: THE THREE STALE PROBES OF Port-Ledger.md:613, closed.
+// ROAD-E E8: THE THREE STALE PROBES OF Port-Ledger.md:614, closed.
 //
 // A probe that drives a window the port no longer HAS is the same lie
 // as a probe that cannot fail: it reports a failure the game does not

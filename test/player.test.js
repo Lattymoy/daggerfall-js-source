@@ -340,6 +340,7 @@ test('player: P18 timed height transition - the flip lands at the END going down
   // owns the geometry-driven CanStand cases).
   const floor = {
     penetrationAt: () => 0,
+    sphereCast: () => ({ dist: Infinity }),   // AUDIT 64 F5: CanStand's clear upward sweep (PlayerHeightChanger.cs:525-531)
     move(pos, dx, dy, dz) {
       pos[0] += dx; pos[2] += dz; pos[1] += dy;
       if (pos[1] <= 0) { pos[1] = 0; return { grounded: true, groundKey: 'floor' }; }

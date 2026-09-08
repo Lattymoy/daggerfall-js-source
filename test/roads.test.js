@@ -464,7 +464,7 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   assert.ok(n > 0, 'some corners were smoothed');
   // under the road (column 63/64, plus the edge tiles' corners 62..66): flatter
   // AUDIT 58 (f2/hosts): read back through the SAMPLER's layout,
-  // sample(x, y) = s[x * hDim + y] (terrainSampler.js:139, DFU's
+  // sample(x, y) = s[x * hDim + y] (terrainSampler.js:144, DFU's
   // JobA.Idx(y, x, hDim) at TerrainSampler.cs:123) - NOT the tilemap's
   // x + y*tDim, which is what this pin used to use and what let the
   // smoother's own (then wrong) corner base agree with itself.

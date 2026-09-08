@@ -13,13 +13,14 @@
 
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { drawText, measureText } from './text.js';
-import { loadImg, drawImgCrop } from './nativePanel.js';
+import { loadImg, drawImgCrop, drawRect } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { thumbSpan, drawScrollThumb, VerticalScrollBar } from './verticalScrollBar.js';
 import { itemLongName } from '../systems/itemInfo.js';   // D7: ResolveItemLongName, the tooltip's text
 import { bookTitle } from '../systems/books.js';         // D7: GetBookTitle, the Books arm
 import { ToolTip } from './toolTip.js';                  // D7: itemButtons[i].ToolTip = toolTip (:340)
+import { isSummoned } from '../systems/inventory.js';    // AUDIT 64 F53: IsSummoned, the handler's third arm
 
 export const LIST_SLOTS = 4;
 export const CELL_X = 9;         // itemListPanelRect.x - the buttons' column
@@ -172,6 +173,53 @@ export function playScrollerArrowClick(kind) {
   return true;
 }
 
+// ── AUDIT 64 F53: THE CELL'S BACKGROUND COLOUR ───────────────────
+//
+// DaggerfallInventoryWindow.cs:368-399 hands BOTH of the inventory
+// window's scrollers `BackgroundColourHandler = ItemBackgroundColour-
+// Handler`, and ItemListScroller.cs:450-451 applies it per cell
+// (`itemButtons[i].BackgroundColor = backgroundColourHandler(item)`),
+// clearing it again on the blank pass (:389). BaseScreenComponent.cs
+// :784-787 paints that colour over the button's WHOLE Rectangle
+// before the background texture and before the child icon panel - so
+// it is a tinted 50x38 cell UNDER the icon, not an inset patch:
+// SetMargins (ItemListScroller.cs:339) insets the children only.
+//
+// The port drew icon + stack label and nothing else, so a lit torch
+// looked like every unlit one, a quest letter like ordinary loot and
+// a conjured arrow like a real one.
+
+/** questItemBackgroundColor (DaggerfallInventoryWindow.cs:154). */
+export const QUEST_ITEM_BG = Object.freeze([0, 0.25, 0, 0.5]);
+/** lightSourceBackgroundColor (:155). */
+export const LIGHT_SOURCE_BG = Object.freeze([0.6, 0.5, 0, 0.5]);
+/** summonedItemBackgroundColor (:156). */
+export const SUMMONED_ITEM_BG = Object.freeze([0.18, 0.32, 0.48, 0.5]);
+
+/** ItemBackgroundColourHandler (:401-411), verbatim - an else-if
+ *  chain, so a quest item that is ALSO the lit light source reads
+ *  green. `playerEntity.LightSource == item` is a REFERENCE compare,
+ *  which is why this takes the entity rather than a boolean.
+ *  Color.clear comes back as null, so a caller draws no quad. */
+export function itemBackgroundColour(item, entity) {
+  if (!item) return null;
+  if (item.questItem) return QUEST_ITEM_BG;
+  if (entity?.lightSource === item) return LIGHT_SOURCE_BG;
+  if (isSummoned(item)) return SUMMONED_ITEM_BG;
+  return null;
+}
+
+/** Paint one cell's background colour, BEFORE the icon and the stack
+ *  label (BaseScreenComponent.cs:784-787 draws the colour ahead of
+ *  the background texture and the child panels). The rect is the
+ *  BUTTON's - itemButtonRects4's 50x38 (ItemListScroller.cs:50-56) -
+ *  with no margin inset. Answers false for Color.clear. */
+export function drawCellBackground(renderer, m, rect, slot, colour) {
+  if (!colour) return false;
+  drawRect(renderer, m, rect[0] + CELL_X, rect[1] + slot * SLOT_H, CELL_W, SLOT_H, colour);
+  return true;
+}
+
 /** A per-window icon drawer over the host texture pipeline
  *  ({ getTexture, uploadRecord, textures }): lazily warms each
  *  template's world-texture record + captures its native size, then
@@ -263,10 +311,10 @@ export function safeScrollIndex(scroll, len) {
  *  artifact tome reading as the artifact rather than as its title.
  *  DFU passes `item.LongName` as GetBookTitle's fallback, so an
  *  unmapped book id keeps the long name it already had. */
-export function scrollerToolTipText(item, { getQuest = null } = {}) {
+export function scrollerToolTipText(item, { getQuest = null, books = true } = {}) {
   if (!item) return null;
   const long = itemLongName(item, { getQuest });
-  if (item.group === 'Books' && !item.artifact) return bookTitle(item.message ?? -1) ?? long;
+  if (books && item.group === 'Books' && !item.artifact) return bookTitle(item.message ?? -1) ?? long;
   return long;
 }
 

@@ -40,14 +40,35 @@ export const TICK_INTERVAL_MS = 100;
  *  MUSIC_GAIN stays the port's own headroom against the effects bus,
  *  which DFU gets from Unity's mixer and we do not have. */
 export const MUSIC_GAIN = 0.22;
-export const musicGain = () => MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1);
+
+/** AUDIT 64 F41: DaggerfallSongPlayer's video mute.
+ *  DaggerfallVidPlayerWindow raises OnVideoStart/OnVideoEnd (:93, :112
+ *  / :134, :150) and DaggerfallSongPlayer.cs:76-77 subscribes both:
+ *  :356-362 `oldGain = Gain; Gain = 0; IsMuted = true;` and :364-369
+ *  `Gain = oldGain; IsMuted = false;`. The song KEEPS RUNNING and
+ *  keeps advancing - only its level goes to zero, so the video ends
+ *  mid-song rather than at the top of one.
+ *
+ *  It is a FLAG rather than a one-shot ramp because DFU re-asserts it
+ *  every Update (:106 `audioSource.volume = IsMuted ? 0f :
+ *  MusicVolume`), and the port has three independent writers that
+ *  would each undo a ramp - `_ensureMaster`, `resyncGain`, and
+ *  AudioSongPlayer's per-start `trackGain()`. Reading it inside the
+ *  two gain accessors covers all of them, including a song STARTED
+ *  while the video runs. DFU's saved `oldGain` needs no port: the
+ *  level is recomputed from the setting on unmute either way. */
+let musicMuted = false;
+export const isMusicMuted = () => musicMuted;
+export const setMusicMuted = (v) => { musicMuted = Boolean(v); };
+
+export const musicGain = () => (musicMuted ? 0 : MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1));
 
 /** THE SETTING ALONE, no synth trim (2026-08-27, Mac: "fix it also").
  *  MUSIC_GAIN exists because the FM bank's raw oscillators sum hot and
  *  the classic songs are mixed under it; a REPLACEMENT is a mastered
  *  file with its own headroom, and under the trim a user's music pack
  *  played at a fifth of itself (0.22 x the 0.5 default). */
-export const trackGain = () => getFloat('Controls', 'MusicVolume', 0, 1);
+export const trackGain = () => (musicMuted ? 0 : getFloat('Controls', 'MusicVolume', 0, 1));
 
 /** Lead given to a loop's new origin. It must be SMALLER than the
  *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a

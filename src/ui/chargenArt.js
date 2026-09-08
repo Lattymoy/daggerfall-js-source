@@ -566,19 +566,37 @@ function drawReflexBlock(renderer, m, flow, origin) {
 }
 
 /** U13: the class's backstory prose, its %qN macros expanded from the
- *  player's own answers (GenerateBackstory). */
-export const buildBackstory = (backstoryId, effects) =>
-  generateBackstory(_art?.textRsc ?? null, backstoryId, effects).map((r) => r.text);
+ *  player's own answers (GenerateBackstory) - and, AUDIT 64 F29, the
+ *  record's %hpn/%hpw/%bn/%imp/%fn/%mn/%ra with them, off the chargen
+ *  document's own race (`ctx`). */
+export const buildBackstory = (backstoryId, effects, ctx) =>
+  generateBackstory(_art?.textRsc ?? null, backstoryId, effects, ctx).map((r) => r.text);
 
-/** U13: TEXT.RSC 35's rows with %r1..%r5 filled from DigestRepChanges
- *  - the box that closes the biography screen. */
-export function repBoxRows(changed) {
-  const t = _art?.textRsc;
-  if (!t || !changed) return null;
-  return t.linesById(35).map((r) => ({
+/** AUDIT 64 F30 - BiogFileMCP.GetChangeStr (:35-47). The five %rN
+ *  macros of TEXT.RSC 35 resolve to WORDS, never to the delta itself:
+ *  0 -> "unchanged", < 0 -> "lower", else "higher"
+ *  (Internal_Strings.csv:453-455 `lower,Lower` / `higher,Higher` /
+ *  `unchanged,Unchanged`). The port printed the signed integer, so
+ *  the closing screen of every chargen read "Commoners: -5" where
+ *  classic reads "Commoners: Lower". */
+export const repChangeStr = (v) => (v === 0 ? 'Unchanged' : v < 0 ? 'Lower' : 'Higher');
+
+/** U13: TEXT.RSC 35's rows with %r1..%r5 resolved through GetChangeStr
+ *  over DigestRepChanges' totals (BiogFileMCP.cs:54-89, MacroHelper.cs
+ *  :205 `%r1 -> CommonersRep`) - the box that closes the biography
+ *  screen. Parameterised on the record source so the enhanced skin,
+ *  which is handed its own textRsc, binds THIS code rather than a
+ *  second copy of it. */
+export function repBoxRowsFrom(textRsc, changed) {
+  if (!textRsc || !changed) return null;
+  return textRsc.linesById(35).map((r) => ({
     ...r,
-    text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),
+    text: r.text.replace(/%r([1-5])/g, (_, n) => repChangeStr(Number(changed[Number(n) - 1] ?? 0))),
   }));
+}
+
+export function repBoxRows(changed) {
+  return repBoxRowsFrom(_art?.textRsc ?? null, changed);
 }
 
 function drawBiography(renderer, m, font, flow) {
@@ -1180,7 +1198,16 @@ function drawStatBlock(renderer, m, font, view) {
 }
 
 /** The flow's own rollout view (the stats screen + U16's summary). */
-const statView = (flow) => ({ stats: flow.stats, rolled: flow.rolledStats, cursor: flow.statCursor, pool: flow.statPool });
+// AUDIT 64 F33: statView is shared by the bonus-stats screen and the
+// SUMMARY, which draw two DIFFERENT StatsRollout instances - so the
+// pool digit follows the screen (CreateCharSummary.cs:125's own
+// rollout, zeroed on every push) - and so does the SPINNER ROW, which
+// is `selectedStat`, another per-instance field (StatsRollout.cs:43).
+export const statView = (flow) => ({
+  stats: flow.stats, rolled: flow.rolledStats,
+  cursor: flow.state === 'summary' ? (flow.sumStatCursor ?? 0) : flow.statCursor,
+  pool: flow.state === 'summary' ? (flow.sumStatPool ?? 0) : flow.statPool,
+});
 /** U20a: the BUILDER's, in freeEdit. */
 const customStatView = (flow) => ({ stats: flow.custom.stats, rolled: flow.custom.stats, cursor: flow.custom.statCursor, pool: flow.custom.statPool, freeEdit: true });
 
@@ -1242,7 +1269,7 @@ export function chargenHit(flow, vx, vy) {
   if (s === 'race') {
     if (flow._raceBox) {
       const hit = messageBoxHit(flow._raceBox, vx, vy);
-      if (hit === MB_BUTTONS.Yes) return 'confirm';        // CloseWindow - the race stands
+      if (hit === MB_BUTTONS.Yes) return { confirmRace: true };   // CloseWindow - the race stands (AUDIT 64 F32: its own hit, not the shared 'confirm')
       if (hit === MB_BUTTONS.No) return { cancelRace: true };   // CancelWindow - back to the map
       return null;   // the box is modal: the map underneath is dead
     }
@@ -1465,7 +1492,7 @@ export function chargenHit(flow, vx, vy) {
     // with the same bare 'plus'/'minus' its own screen uses. On the
     // summary that is ambiguous, so the branch that ANSWERED names
     // itself - it is the only place that knows.
-    const st = statBlockHit(flow.statCursor, vx, vy);
+    const st = statBlockHit(flow.sumStatCursor ?? 0, vx, vy);
     if (st) return typeof st === 'string' ? { statStep: st === 'plus' ? 1 : -1 } : st;
     return skillBlockHit(flow, vx, vy);
   }

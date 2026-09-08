@@ -142,7 +142,7 @@ site and `systems/artifactEffects.js` owns the reflection, wired at
 
 The same hand-check disposes of the loudest-looking misses elsewhere.
 `DaggerfallResistances` is `spellcast.js:88`'s `elementalResistanceChance`;
-`NewLocationAlert` is `systems/discovery.js:176`'s `discoverLocation`;
+`NewLocationAlert` is `systems/discovery.js:185`'s `discoverLocation`;
 `CivilianEntity` and `MobilePersonNPC` are `characters/mobilePerson.js`
 (whose `SetPerson` face tables D10 took at `:42`); `PlayerCompass` is
 `ui/hud.js`'s HUDCompass port. Exactly two misses survive the check:
@@ -172,7 +172,7 @@ which **63 are cited in `src/`**.
 
 The two that are not: **`DaggerfallJoystickControlsWindow`** and
 **`DaggerfallUnityMouseControlsWindow`**. Both are recorded pending in
-the same place - `Port-Ledger.md:603`, the struck keybinding-registry
+the same place - `Port-Ledger.md:604`, the struck keybinding-registry
 row, whose surviving clause reads "STILL PENDING: the mouse/advanced and
 joystick sub-windows (both answer with a note - no gamepad layer)". The
 other half of that clause, key combos, shipped at ROAD-A A8 - and its
@@ -216,7 +216,7 @@ destination** (`systems/guildServiceFlow.js`, gated by
 
 The superseded page's two magic gaps are closed and verified here:
 `minimumCastingCost` is live at `systems/spellcost.js:181` and is
-written by both curses (`systems/vampirism.js:151`,
+written by both curses (`systems/vampirism.js:163`,
 `systems/lycanthropy.js:199`), so vampire clan spells price at the
 floor; and the 24-effect enchantment catalogue reads
 `ENCHANTMENT_COSTS` **24** with `ITEM_MAKER_EFFECT_FLAGS` 24 beside it.
@@ -297,32 +297,32 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | Area | then | now | what moved, and what is left |
 |---|---|---|---|
 | **formats-core** | Verbatim | **Verbatim** | 46/50 API classes cited, `API/Save` 14/14. The malformed-CIF runaway parse was in the AUDIT-44 wave. Residue: `DFValidator`, `PowerOfTwo`. |
-| **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). Ledger row `:600`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call. |
-| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1215` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
+| **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). Ledger row `:601`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call. |
+| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1531` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
-| **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:123-131` the gated call, `:174` the guard). |
-| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:4516`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:2682` carries the sweep and `hostMagic.js:601` its missile half. |
-| **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:62`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
+| **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:137-145` the gated call, `:174` the guard). |
+| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:4753`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:2819` carries the sweep and `hostMagic.js:601` its missile half. |
+| **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:63`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
 | **scenes-dungeon** | Deep, one lifecycle leak | **Near-1:1** | The three process-global seams return on destroy. ROAD-D D8 made this the fourth caller of `playerArrowHitFoe`, moved its action flats, mounted the enchant ctx off the shared `scenes/hostEnchant.js`, and routed its chargen through the one construction seam. |
 | **scenes-support** | Near-1:1 | **Near-1:1** | ROAD-D D9 stood the city-watch fallback through `FoeSpawner.PlaceFoeFreely` on its own collider. Court reads the live region. |
 | **render-core** | Partial (presentation) | **Near-1:1** | The auto-emissive table is present and byte-exact at 182 records / 24 archives. Fog pass-space was the wave. |
 | **render-modules** | Verbatim (classic) / Partial (enhanced) | **unchanged, and still un-oracled** | The port-original modules (frustum, far ring, precipitation, enhanced sky) have no parity oracle by construction. This is the one structural verification hole the campaign did not touch. |
-| **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:331,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
+| **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:341,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
 | **combat** | Math exact / wiring broken | **Verbatim** | Four hosts resolve a player arrow. ROAD-A A12 shipped the left-hand weapon (ToggleHand/SwitchHand/`usingRightHand`, the classic import's `usingLeftHandWeapon`, the mirrored draw). |
 | **characters-ai** | Verbatim | **Verbatim** | `stopDistance` picks `CLASSIC_MELEE_DISTANCE_VS_AI` per pass (`enemyMotor.js:1251`, `enemyAttack.js:177`). ROAD-A A5 took enemy levitation, invisibility/Shade as live sources, foe fall damage and the Seducer transform pair. |
-| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4029` passes `voxelfolk`, `scenes/interiorContext.js:455` consumes it. |
+| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:4171` passes `voxelfolk`, `scenes/interiorContext.js:472` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
 | **sys-guilds** | Law exact / two structural holes | **Verbatim** | ROAD-D D9 shipped `KnightlyOrder.RestoreGuildData`'s flag migration through the one load door. `SERVICE_DESTINATION` 20/20. |
 | **sys-items** | Law exact / live money bugs | **Verbatim** | ROAD-A A2 took the daily `stockedDate` restock, book prices off `BookFile`, condition-0 shelf arrows and `SplitStack`'s fresh mint; ROAD-D D7 took the live pack, native Repair, the recipe panel and item tooltips. |
 | **sys-talk** | Engines verbatim / six host seams unfilled | **Verbatim** | `getQuestorName()` is the seeded name bank (`systems/npcSession.js:588-595`) - the last of the superseded page's empty reads. ROAD-A A9 also mounted bulletin boards and the `GrammarManager.ProcessGrammar` pass. |
-| **sys-sim** | Law line-for-line / clock seam broken | **Near-1:1** | `preventEnemySpawns` is live on the fast-travel path (`world.js:1724`, `:1667`). Ledger row `:549`'s residue list is spent - see list 2. |
+| **sys-sim** | Law line-for-line / clock seam broken | **Near-1:1** | `preventEnemySpawns` is live on the fast-travel path (`world.js:1861`, `:1667`). Ledger row `:550`'s residue list is spent - see list 2. |
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:451` runs `updateHudVitals` and `:456` `drawNearDeathFlicker`, both above the enhanced branch at `:459` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:470`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
-| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:759` over `RECTS.pickScroll`, `spellbookWindow.js:887` over the 7-wide rail). |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:476` runs `updateHudVitals` and `:530` `drawNearDeathFlicker`, both above the enhanced branch at `:557` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:571`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:887` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:64` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
@@ -331,11 +331,11 @@ reference surface absent · **Departure** = deliberate, ledgered.
 
 **The pause primitive, precisely.** ROAD-B B1 built the stack DFU's
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
-(`ui/windowStack.js:85`, `:101`, `:279`). It is mounted in the two hosts
-that own overlay slots - `worldModes.js:62` and `dungeonContext.js:35` -
-and `world.js:178` reaches it by mounting `worldModes`. But `grep -rn
+(`ui/windowStack.js:107`, `:101`, `:279`). It is mounted in the two hosts
+that own overlay slots - `worldModes.js:63` and `dungeonContext.js:36` -
+and `world.js:180` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
-`windowStack.js:219`: **no host reads the primitive.** Every host still
+`windowStack.js:264`: **no host reads the primitive.** Every host still
 gates on its own `overlayHeld`/depth expression. The class is narrowed,
 not retired, and it is narrowed by a member that is itself a dead seam
 of the shape this port keeps finding.
@@ -388,22 +388,22 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - no 1:1 target.**
 
-- ~~**`src/scenes/dungeonContext.js:1727`** - the two window seams this
+- ~~**`src/scenes/dungeonContext.js:1817`** - the two window seams this
   host cannot mount (`onTeleport`'s INTERIM shape). *There is no
   standalone dungeon scene in DFU to port from; `?dungeon` is the
   port's own dev route. Closing it means porting the trade window and
   bundle picker into a dev-only route - an owner decision, not a parity
   defect.*~~ **SHIPPED (DR1, 2026-09-03), and the "blocked" adjudication
   was the wrong one** - the reasoning is in section 2 item 7, which
-  carries the same closure against Ledger row `:612`. The two WINDOWS
+  carries the same closure against Ledger row `:613`. The two WINDOWS
   have DFU originals even though the HOST does not, so
   `scenes/dungeonContext.js` mounts `NativeTradeWindow` in Identify mode
   and the Dispel Magic bundle picker through `mountSpellWindow` ->
   `pushDungeonWindow` (the banner is at `src/scenes/dungeonContext.js`'s
   "DR1: THE TWO WINDOW SEAMS, MOUNTED"), pinned by three DR1 cases in
-  `test/x11b.test.js`. This was also Ledger row `:612`'s adjudication,
+  `test/x11b.test.js`. This was also Ledger row `:613`'s adjudication,
   and that row is struck with it.
-- **`src/ui/enhancedMenu.js:1768`** - the rest of the keyboard; the
+- **`src/ui/enhancedMenu.js:1769`** - the rest of the keyboard; the
   wizard walks to `done` with no pointer. *The enhanced menu is the
   enhanced skin, a Ledger A departure, so no C# line is owed. The flag
   names its own blocker: focus order across a rail, a settings list and
@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:1591`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:1712`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -437,7 +437,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1481`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1602`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -456,13 +456,13 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   interior pause off the same one walk), and the pause window's
   Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
   C#'s empty-machine answer for the narrower reason written at its own
-  site. (The `src/scenes/worldModes.js:1810` row below is struck: ROAD-E
+  site. (The `src/scenes/worldModes.js:1836` row below is struck: ROAD-E
   E3 ran that pass above ground in the streaming host, and what the
   sentence names is this host's layout order alone.)*
 
 **Blocked - data, an asset, or a layer the port does not have.**
 
-- ~~**`src/scenes/world.js:2934`** - the port's default landing stands
+- ~~**`src/scenes/world.js:3071`** - the port's default landing stands
   in for `GetPlayerTravelPosition`, flagged for the first session with
   ARENA2.~~ **SHIPPED (ship landing, 2026-09-03).** *The owner supplied
   the real MAPS.BSA and the claim it rested on was FALSE: map pixel
@@ -504,7 +504,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching
-  sub-windows are recorded pending at `Port-Ledger.md:603`. The flag's
+  sub-windows are recorded pending at `Port-Ledger.md:604`. The flag's
   second bullet - the port's own key departures - was retired as stale
   by I2 and the table now carries DFU's defaults.*
 
@@ -526,7 +526,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   into DFU's own order so `DoRangedAttack`'s band condition selects
   before the 1/40 roll fires, where the port rolled first and picked
   second.*
-- ~~**`src/scenes/worldModes.js:1810`** - above ground only:
+- ~~**`src/scenes/worldModes.js:1836`** - above ground only:
   `QuestMachine.SetupIndividualStaticNPC`. *Multi-host. The law is
   ported and idle at `systems/quest/machine.js:739` including the
   away arm's `setActive(false)`, but there is no moment to run it: both
@@ -554,7 +554,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   stack, because DFU's do. The envelope carries `goldPieces`, and a
   pre-slice save's stack is absorbed on restore. D9's correction stood
   and is why nothing was added to `filterByTab`.*
-- ~~**`src/ui/chargenArt.js:731`** - the picker's scroll bar has no HIT.
+- ~~**`src/ui/chargenArt.js:749`** - the picker's scroll bar has no HIT.
   *D2 shipped the DRAW: `drawPickerScrollThumb` lays DFU's three
   carried strips over `RECTS.pickScroll`. The hit needs a scroll-index
   hit result threaded through `ui/chargen.js`'s flow for all three
@@ -602,7 +602,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   INTERIM 0 behind a flag blaming a decode that had ALREADY SHIPPED".~~
   **CLOSED (ROAD-F GS2, 2026-09-03).**
   *The work was already done. D9 shipped `AcrobatMotor.cs:96-101`'s nested
-  `ImprovedAthleticism` term at `skills.js:189-201`, over the two
+  `ImprovedAthleticism` term at `skills.js:189-209`, over the two
   constants named from `AcrobatMotor.cs:14-15` - and the sentence the
   list quoted was a past-tense retirement record that happened to
   contain the marker. `tools/flagSites.mjs` deliberately does not try
@@ -638,12 +638,12 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
-regenerated onto the new sites: ~~`exterior.js:1150` -> `:1089`~~
+regenerated onto the new sites: ~~`exterior.js:1271` -> `:1089`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this
-host cannot take, `exterior.js:1484`), ~~`exterior.js:1527` ->
+host cannot take, `exterior.js:1605`), ~~`exterior.js:1648` ->
 `:1346`~~ (**CLOSED at QX1**: this host took the quest bridge, so the
-pause window's Quests tab has a machine to read), `world.js:2980` ->
-`:2934`, ~~`worldModes.js:1807` -> `:1687`~~ (**CLOSED at ROAD-F GS1**,
+pause window's Quests tab has a machine to read), `world.js:3117` ->
+`:2934`, ~~`worldModes.js:1833` -> `:1687`~~ (**CLOSED at ROAD-F GS1**,
 below), `pauseWindow.js:58` -> `:61`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
@@ -656,7 +656,7 @@ re-resolved, which is why the `exterior.js` row above now reads
 only live inventory.
 
 **ROAD-F (2026-09-03) took the last two this page still owed.**
-- ~~**`src/scenes/worldModes.js:1880`** - above ground only: the GUILD
+- ~~**`src/scenes/worldModes.js:1906`** - above ground only: the GUILD
   SERVICE popup.~~ **SHIPPED (GS1).** *`StaticNPCClick` pushes the
   popup on `Services.HasGuildService` ALONE
   (`PlayerActivate.cs:1552-1568`) - the `BuildingDiscoveryData` beside
@@ -767,8 +767,8 @@ held there by `test/citedrift.test.js` - the wave that wrote this
 section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
-Section C's table is **247 rows** between `Port-Ledger.md:486` and
-`:732` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
+Section C's table is **247 rows** between `Port-Ledger.md:487` and
+`:733` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
 are not, four are VidFile quirks filed under the wrong section
 (ported-as-is, no route), three carry a **Kept** verdict (the climate
 swap dimensions, the secondary picker's cancel path, the rep window's
@@ -781,7 +781,7 @@ their own text that they are closed (`RegionPowerAndConditionsUpdate`,
 vampirism/lycanthropy).
 
 That accounts for 17 of the 21, leaving **4 unstruck rows that carry a
-route** - plus `:603`, struck at its head but carrying a live PENDING
+route** - plus `:604`, struck at its head but carrying a live PENDING
 clause in its tail, for **six rows that still owe work: items 1-6
 below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
@@ -793,7 +793,7 @@ ships, which is the warning the section's own preamble opens with.
 
 *Genuinely open:*
 
-1. **`:521` FaceUVTool's 1,803-UV residual at matched precision** ->
+1. **`:522` FaceUVTool's 1,803-UV residual at matched precision** ->
    Readers arc. **NARROWED (E-group, 2026-09-02), not closed.** The
    surface is fenced from DFU's own sources: `API/Vector3.cs` is double
    throughout, so the whole basis walk was already matched and cannot
@@ -806,32 +806,32 @@ ships, which is the warning the section's own preamble opens with.
    widening the measurement was taken against was never a committed
    patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
    The 1,803 itself still needs ARENA2 plus mono to re-measure.
-2. **`:534` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
+2. **`:535` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
    `systems/dialogShortcuts.js:194`/`:314` carries `ResetBonusPool` with
    its `Ctrl-U` default since A8. Nothing in `ui/chargen.js`,
    `ui/chargenArt.js` or `systems/customClass.js` consumes it. This is
    the smallest open row in the section.
-3. **`:504` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
+3. **`:505` remainder: the overlay mouse-UP seam** -> UI arc. A7 shipped
    the thumb drag and the picker's double-click law; the port has no
    overlay mouse-up seam, so the latch drops on the first hover after
    the button comes up (`ListPickerWindow.release()`,
    `ui/listPicker.js:263`, exists and is unwired). The spellbook's own
    drag stays the F159/F170/F180 departure; the closeout narrowed its
    superseded REASON without removing the departure.
-4. ~~**`:547` the quest machine** -> `playSound`'s busy-skip, the one
+4. ~~**`:548` the quest machine** -> `playSound`'s busy-skip, the one
    recorded delta, because the port's one-shot engine has no busy
    state.~~ **CLOSED (E-group, 2026-09-02):** `systems/audio.js` grew
    the `QuestAudioSource` DFU's QuestMachine carries, IsPlaying reading
    the end time of the clip `playOneShot` already reported, and the
    world host's hook is PlaySound.cs:110-116 line for line.
-5. **`:600` the classic `.SAV` reader** -> the phone path: no zip arm in
+5. **`:601` the classic `.SAV` reader** -> the phone path: no zip arm in
    the saves picker, a desktop-first charter call.
-6. **`:603` (struck, with a live clause) the keybinding registry** ->
+6. **`:604` (struck, with a live clause) the keybinding registry** ->
    the mouse/advanced and joystick sub-windows, the two of DFU's 65
    game windows the port does not cite.
-7. ~~**`:612` the standalone dungeon host has no trade window** -> a
+7. ~~**`:613` the standalone dungeon host has no trade window** -> a
    dungeon-host lane. **Adjudicated by the closeout as BLOCKED** (see
    list 1): there is no DFU original for a standalone dungeon scene, so
    this is an owner decision about a dev route, not a routed gap.~~
@@ -849,7 +849,7 @@ ships, which is the warning the section's own preamble opens with.
    mount omits is one of DFU's own Buy/Repair/Sell mode gates, named in
    the struck row. Three DR1 pins in `x11b.test.js`, each red when its
    arm's mount is reverted to the PR1 refusal.
-8. ~~**`:613` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
+8. ~~**`:614` three stale probes**~~ **CLOSED (E-group, 2026-09-02).**
    `tools/shopProbe.mjs` is RETIRED - it drove the keyed browse window
    U8c/U40 replaced, and its subject is covered twice over by
    `tradeModeProbe`/`nativeTradeProbe`. `tools/toneProbe.mjs` and
@@ -863,31 +863,31 @@ ships, which is the warning the section's own preamble opens with.
 
 *Stale - the row is a claim the tree has outrun:*
 
-9. **`:499` UseItem's unbuilt destinations.** Every arm the row names is
+9. **`:500` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:167`, `:245-255`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:670-674`, `scenes/world.js:2731`), the
-   (`ui/nativeInventory.js:670-674`, `scenes/world.js:2677`), the
+   (`ui/nativeInventory.js:703-707`, `scenes/world.js:2868`), the
+   (`ui/nativeInventory.js:703-707`, `scenes/world.js:2814`), the
    quest-item click (`useItem.js:199`, `:212-213`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.
-10. **`:549` fast-travel residue.** Its three named survivors are spent:
+10. **`:550` fast-travel residue.** Its three named survivors are spent:
     the horse and cart mint on the general store's own shelf
     (`systems/shopStock.js:10`, "general stores always shelve a Horse
     and a Small Cart"), the ship purchase shipped at D6
     (`ui/bankWindow.js` + the ships arm of `ui/bankPurchaseWindow.js`
     over the shared `openBankMarket` mount, with `purchaseShip` finally
     having a caller), and `PreventEnemySpawns`-on-arrival is live at
-    `scenes/world.js:3663` (the arrival clamp anchoring the encounter
+    `scenes/world.js:3828` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1966` (the
-    `scenes/world.js:3616` (the arrival clamp anchoring the encounter
+    `scenes/world.js:3772` (the arrival clamp anchoring the encounter
     clock, so the traveled window is not replayed) and `:1912` (the
     ":524-525" clear that lets spawns resume). AUDIT 58 re-resolved this
     pair - both cites had drifted off the lines they name.
-11. **`:554` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
+11. **`:555` `PatchRegionIndex` legacy-save fix.** Ported verbatim at
     `src/formats/mapsFile.js:104`, with the C# line range cited.
-12. **`:598` the magic crafting windows.** The row's FLAGGED residue is
+12. **`:599` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
     `ui/spellbookWindow.js:135-137`, drawn at `:935`), the icon picker
@@ -897,29 +897,29 @@ ships, which is the warning the section's own preamble opens with.
     window is a keyed text window here.~~ **THAT SHIPPED TOO (E-group,
     2026-09-02): the window is native, and the row's last unstruck
     clause goes with it.**
-13. **`:548` the talk manager.** The row's own tail already says both
+13. **`:549` the talk manager.** The row's own tail already says both
     named PENDING gaps closed at TK-vi; A9 then took the questor name
     bank behind `%pqn`, which the row's parent list still implies is
     owed. `AddNonQuestRumor`'s producer - the regional faction sim -
     shipped at S41-S44/RS1.
-14. **`:578` the small-residue trio** (biography GP arm, arrow roll
+14. **`:579` the small-residue trio** (biography GP arm, arrow roll
     notes, the faceUV zero-length guard) -> their arcs. The biography GP
     arm has a Ledger A row of its own and is inert on all 18 shipping
-    `BIOG*.TXT` files; the faceUV guard rides row `:521`.
+    `BIOG*.TXT` files; the faceUV guard rides row `:522`.
 
 ## 3. The deliberate departures, which are not on the road
 
 `Road-To-1-1.md` names these at its head so nobody re-opens them, and
-`Port-Ledger.md` section A carries **87 rows, 7 struck - 80 standing
-approved departures** (the 72nd is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 4th is MOBILE TOUCH INPUT, TI1, 2026-09-05, inserted under the windmill row and likewise; the 9th is DS1 - Dynamic Skies vendored 1:1 with permission, 2026-09-04 - inserted directly under the enhanced sky's row it stands beside, which moved every row below it down one; the 10th is SIB1 - Seasons of the Iliac Bay ported 1:1 with permission, 2026-09-05, its textures the player's to supply - inserted directly under DS1, moving every row below down one more; the 11th is ECV1 - Enhanced Combat Visuals, 2026-09-07, the enhanced skin's draw of a concealed foe - inserted directly under SIB1, moving every row below down one more; the 12th is VC - Volumetric Clouds, 2026-09-07, the arc's row, inserted directly under ECV1, moving every row below down one more; the 13th is CLK2 - the weather evolving within the day on the enhanced lane, 2026-09-08, the Clock arc's row, inserted directly under VC, moving every row below down one more; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 58 F5; the 75th is the pause window's version line, appended by AUDIT 58's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down; rows 76-83 are AUDIT 58's seams lane, which found EIGHT more files declaring a departure as already RECORDED - music replacement, the fuzzy find, travel weather, the conversation save, the colour picker, async art in two windows, the town map's plate and arrow, and the input ladder's E and swing - against a section A that rowed none of them; rows 84-86 are ROAD-G G7's records lane, which widened the doctrine gate from the DEPARTURE token to the `Ledger A` CITE and found seventeen files claiming an approval this page did not name - the `AdvancedClimbing` scaffolding, the merchant service popup's accelerators and the port's scalar clock are the three that were genuinely owed a row rather than a roster line or a corrected comment; the 87th is WATER1 - Enhanced Water, 2026-09-08, the water surface over the exterior water tiles on the enhanced lane, appended at the foot of the section) plus the DUNGEON SEED bullet, now naming its two files, and the
+`Port-Ledger.md` section A carries **88 rows, 7 struck - 81 standing
+approved departures** (the 72nd is WIND1, 2026-09-02, added after this page's measurement and counted here so the tally follows the tree; the 4th is MOBILE TOUCH INPUT, TI1, 2026-09-05, inserted under the windmill row and likewise; the 9th is DS1 - Dynamic Skies vendored 1:1 with permission, 2026-09-04 - inserted directly under the enhanced sky's row it stands beside, which moved every row below it down one; the 10th is SIB1 - Seasons of the Iliac Bay ported 1:1 with permission, 2026-09-05, its textures the player's to supply - inserted directly under DS1, moving every row below down one more; the 11th is ECV1 - Enhanced Combat Visuals, 2026-09-07, the enhanced skin's draw of a concealed foe - inserted directly under SIB1, moving every row below down one more; the 12th is VC - Volumetric Clouds, 2026-09-07, the arc's row, inserted directly under ECV1, moving every row below down one more; the 13th is CLK2 - the weather evolving within the day on the enhanced lane, 2026-09-08, the Clock arc's row, inserted directly under VC, moving every row below down one more; the 2nd is the re-integrated road system, inserted directly under the struck ROADS row it supersedes, added by AUDIT 58 F5; the 75th is the pause window's version line, appended by AUDIT 58's records lane, which found `src/ui/pauseWindow.js` citing a Ledger A approval that had never been written down; rows 76-83 are AUDIT 58's seams lane, which found EIGHT more files declaring a departure as already RECORDED - music replacement, the fuzzy find, travel weather, the conversation save, the colour picker, async art in two windows, the town map's plate and arrow, and the input ladder's E and swing - against a section A that rowed none of them; rows 84-86 are ROAD-G G7's records lane, which widened the doctrine gate from the DEPARTURE token to the `Ledger A` CITE and found seventeen files claiming an approval this page did not name - the `AdvancedClimbing` scaffolding, the merchant service popup's accelerators and the port's scalar clock are the three that were genuinely owed a row rather than a roster line or a corrected comment; the 87th is AUDIT 64 F29's biography name seed, 2026-09-08, appended at the table's foot - `(uint)BiogFile.GetHashCode()` is a CLR identity hash and belongs to neither arm of the ENGINE-PRNG rule; the 88th is WATER1 - Enhanced Water, 2026-09-08, the water surface over the exterior water tiles on the enhanced lane, appended at the foot of the section) plus the DUNGEON SEED bullet, now naming its two files, and the
 houses-for-sale A-note. They are design choices, each internally
 faithful to whatever reference it does have, and none of them is a gap.
 
 - **The voxel character engine** (Mac's system, Port-Doctrine). 86
   designs across seven tables - 42 of the 43 monster mobiles, 19 class,
   25 villager - and a 1,791-line rig across 7 modules. Still not shipped
-  by a game host: `worldModes.js:4029` passes `voxelfolk`,
-  `scenes/interiorContext.js:455` gates on it, and no default route sets
+  by a game host: `worldModes.js:4171` passes `voxelfolk`,
+  `scenes/interiorContext.js:472` gates on it, and no default route sets
   it. The departure is faithful and is not in the player's hands.
 - **The enhanced skin and visuals** - 9 `ui/enhanced*.js` modules, 8,940
   lines, plus `render/enhancedSky.js` (ES1-ES1f), the foe target frame
@@ -973,7 +973,7 @@ faithful to whatever reference it does have, and none of them is a gap.
   already double, so the basis walk is not part of this departure at
   all. Measured once against stock DFU over the whole ARCH3D corpus:
   52,505 of 1,917,087 UVs (2.74%) differ. The 1,803 that survive matched
-  precision are ledger row `:521`, narrowed at E8 and the only part of
+  precision are ledger row `:522`, narrowed at E8 and the only part of
   this that is still open work.
 - **Removed, then re-integrated (AUDIT 58 F5 corrects this bullet):** the
   port's own road system was removed whole on 2026-08-29 (~5,200 lines),

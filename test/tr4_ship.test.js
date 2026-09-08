@@ -156,7 +156,9 @@ test('TR4-SHIPLAND: the boarding arrival routes through the location arm, not th
   const world = read('src/scenes/world.js');
   assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition \}\);/,
     'the boarding carries RandomStartMarker into the teleport');
-  assert.match(world, /const landing = reposition === REPOSITION\.RandomStartMarker \? locationLandingFor\(px, py\) : null;/,
+  assert.match(world, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/,
+    'BOTH marker methods take the arm - StreamingWorld.Update\'s two cases fall through to one PositionPlayerToLocation() (:279-282)');
+  assert.match(world, /const landing = wantsLanding \? locationLandingFor\(px, py, \{ travelStart: hint \}\) : null;/,
     'and the core runs the location arm for it');
   assert.match(world, /const local = landing\?\.pos \?\? localPos;/,
     'the location landing OUTRANKS the caller\'s own local position');

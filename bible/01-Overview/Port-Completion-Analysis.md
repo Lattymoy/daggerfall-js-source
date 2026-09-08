@@ -102,8 +102,9 @@ The HONEST still-open list as of the re-verification:
    the grep. Corrected rather than left standing.) This row is
    CLOSED.
 7. **CfaFile** (horse/cart FP sprites), **HeadBobber** (a settings
-   toggle exists, no bobber), **DilateCoastalClimate**, city gates
-   closing at night, HUDActiveSpells + escorting faces, the
+   toggle exists, no bobber), **DilateCoastalClimate**, ~~city gates
+   closing at night~~ SHIPPED (AUDIT 64 F14 - world/cityGate.js, both
+   exterior hosts), HUDActiveSpells + escorting faces, the
    transformed move-sound loop - the small-residue tail.
 
 Everything else this page lists as missing was verified SHIPPED and
@@ -215,7 +216,7 @@ reader that touches a shipping ARENA2 file. What remains:
 - Three readers missing: `PaintFile` (PAINT.DAT, ~90 - paintings currently
   print raw `%sub`/`%adj` macros on screen), `CfaFile` (~70 - horse/cart FP
   sprites), `BssFile` (~50 - large-HUD compass strips). All three also need
-  an ingest-diet arm in `scenes/dataSource.js:74-80`.
+  an ingest-diet arm in `scenes/dataSource.js:73-79`.
 - Five SHIPPED readers sit outside the differential parity harness
   (FlatsFile, BookFile, VidFile, FlcFile, RumorFile), and
   `tools/parity/README.md` still describes them as having no port
@@ -238,8 +239,9 @@ Static assembly is finished and verbatim. The gaps are dynamic:
 - `DilateCoastalClimate` never runs - every ocean-adjacent pixel keeps
   climate 223 (~60).
 - ~~Neither automap~~ SHIPPED (both - see the struck table rows).
-- Long tail: editor markers (archive 199) unidentified and wrongly
-  rendered, city gates never close at night, smaller-dungeon generation,
+- Long tail: ~~editor markers (archive 199) unidentified and wrongly
+  rendered~~ SHIPPED (AUDIT 64 F12), ~~city gates never close at
+  night~~ SHIPPED (AUDIT 64 F14), smaller-dungeon generation,
   `AddSpawnPoints`, per-record interior light intensity/colour,
   `NewLocationAlert`, bulletin boards, `SmoothLocationNeighbourhood`.
 
@@ -251,8 +253,13 @@ Motor core is close to 1:1. Everything around it is thin:
   (systems/buildingLocks.js: open hours, BuildingIsUnlocked, the lock
   value, R1's lockpicking and the bash).
 - The four interaction modes reach only mobile townsfolk in the exterior
-  hosts; entering a building never discovers it; Info mode on a building
-  has no port (~330).
+  hosts; entering a building never discovers it; ~~Info mode on a
+  building has no port~~ SHIPPED (AUDIT 64 F11 - RMBLayout's
+  StaticBuilding array, DaggerfallStaticBuildings.HasHit and
+  PlayerActivate.ActivateBuilding; the box is DFMesh.Size * GlobalScale,
+  which IS the model's world silhouette because Arch3dFile divides the
+  Size and the points by the same pointDivisor - see World-Arc.md)
+  (~330).
 - `HeadBobber` absent (~170). Levitation inert above ground. Paralysis
   does not stop the player outside the dungeon host.
 - ~~`IsPlayerInSunlight` / `InDarkness` / `InHolyPlace` never computed~~
@@ -292,8 +299,10 @@ Also close to 1:1 on the classic path. Gaps:
   (characters/interiorPeople.js gates on hours/ownership).
 - Mobile townspeople get no face record, so every talk portrait falls back
   to record 0 (~35).
-- Dungeon static NPC flats get no StaticNPC identity - no talk target, no
-  individual-questor hook (~40).
+- ~~Dungeon static NPC flats get no StaticNPC identity - no talk target,
+  no individual-questor hook~~ SHIPPED (AUDIT 64 F13; the standalone
+  ?dungeon probe host still has no person arm - it mounts no talk
+  engine) (~40).
 
 ## NOT YET SWEPT (sized from source LOC only)
 

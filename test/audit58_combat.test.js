@@ -287,7 +287,7 @@ test('AUDIT 58: GetItemHands READS BowLeftHandWithSwitching - both arms, and the
   assert.equal(getItemHands(bow), ITEM_HANDS.LeftOnly, 'read live, like hud.arrowCountLabel reads it');
   assert.equal(getItemHands({ group: ITEM_GROUPS.Weapons, templateIndex: 129 }), ITEM_HANDS.LeftOnly, 'the short bow too');
   assert.equal(getItemHands({ group: ITEM_GROUPS.Weapons, templateIndex: 120 }), ITEM_HANDS.Either, 'and nothing else moved');
-  // ...so the table puts it where hud.js:361-365 looks for it.
+  // ...so the table puts it where hud.js:386-390 looks for it.
   const t = createEquipTable();
   assert.equal(t.getEquipSlot(bow), EQUIP_SLOTS.LeftHand);
   const entity = { items: [] };

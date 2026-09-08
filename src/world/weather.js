@@ -18,11 +18,20 @@
 //     SetSunlightScale order). Fog weather is IsOvercast-only -> 0.65.
 //   - IsSnowFreeClimate: Desert 224, Desert2 225, Rainforest 227,
 //     Subtropical 229.
-// EQUIVALENCES (documented): the Fog WINDOW style (R2) is applied for
-// WeatherType.Fog - DFU defines the style but never wires it; outdoor
-// fog COLOR is the sky's horizon fill (west pixel 0) - upstream leaves
-// it a literal TODO wishing for exactly this; shadowStrength has no
-// consumer here (no shadow maps).
+// AUDIT 64 F9: WindowStyle.Fog is DECLARED by DFU
+// (DaggerfallUnityEnums.cs:87-94) and spent by MaterialReader's switch
+// (MaterialReader.cs:927-929, over FogWindowColor 117,117,117 :113 and
+// FogWindowIntensity 0.5f :117), but nothing in the tree ever HANDS it
+// Fog: the only writers of a window style are DaggerfallLocation.cs:143/145
+// and DayNight.cs:120 (both IsCityLightsOn ? Night : Day),
+// DaggerfallInterior.cs:473/517/1270 (Disabled) and
+// DaggerfallBankPurchasePopUp.cs:267 (Day), and WeatherManager.cs mentions
+// no window at all. So weather does NOT choose a window style here either;
+// the table row survives in windowEmission.js for the ?window= dev
+// override, exactly as Custom does.
+// EQUIVALENCES (documented): outdoor fog COLOR is the sky's horizon fill
+// (west pixel 0) - upstream leaves it a literal TODO wishing for exactly
+// this; shadowStrength has no consumer here (no shadow maps).
 
 import { UMRandom } from '../formats/umRandom.js';
 
@@ -111,11 +120,6 @@ export function weatherSunlightScale(weather, isWinter) {
   else if (weather === 'snow') scale = 0.45;
   else if (weather === 'overcast' || weather === 'fog') scale = 0.65;
   return scale;
-}
-
-/** Fog window style (R2) applies for heavy-fog weather; else clock rules. */
-export function windowStyleForWeather(weather) {
-  return weather === 'fog' ? 'fog' : null;
 }
 
 /** Precipitation flags for the particles milestone. */

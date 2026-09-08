@@ -131,7 +131,7 @@ function walkChargen(onDone) {
   // U15: the CLASSIC ORDER - race, gender, class, biography, name,
   // face, stats, skills, reflexes.
   key('Enter');                       // race (Breton) -> gender
-  key('Enter');                       // gender (male) -> U18's class method
+  key('KeyM');                        // AUDIT 64 F32 (review round): the gender box's Male HOTKEY closes it; Return is inert (no default button)
   key('Enter');                       // method (choose from a list) -> class
   key('Enter');                       // class -> (no biog set) name
   for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);

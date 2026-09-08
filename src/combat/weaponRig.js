@@ -44,6 +44,7 @@ import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -89,9 +90,9 @@ export function buildArmsFor(entity) {
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2004), townTalk.say
- *                     (exterior.js:1178, world.js:2271) and
- *                     worldModes' own interior sink (worldModes.js:364,
+ *                     (dungeonContext.js:2094), townTalk.say
+ *                     (exterior.js:1299, world.js:2408) and
+ *                     worldModes' own interior sink (worldModes.js:366,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -272,7 +273,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
     if (hasDaggerfallArrows(entity.items)) return;
     playerWeapon.sheathed = true;
-    say('You have no arrows.');
+    // AUDIT 64 F34: FPSWeapon.cs:365 is SetMidScreenText, not the popup
+    // queue - and `say` here is shared with the shield refusal below,
+    // which really is a PopupMessage, so this line takes the label
+    // directly rather than re-pointing the sink.
+    setMidScreenText('You have no arrows.');
   }
 
   return {

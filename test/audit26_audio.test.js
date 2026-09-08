@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import { equipSoundFor } from '../src/characters/weapons.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { FootstepMachine } from '../src/systems/footsteps.js';
+import { CAPSULE_HEIGHT, CROUCH_HEIGHT } from '../src/player/motor.js';   // AUDIT 64 F4: the stances the live centre answers
 import {
   AmbientEffects, CEMETERY_AMBIENT_SOUNDS, CEMETERY_AMBIENT_WAITS, EXTERIOR_AMBIENT_WAITS,
 } from '../src/systems/ambientEffects.js';
@@ -179,9 +180,29 @@ test('F090: the dungeon water footsteps HYSTERESE - in at 0.57, out at 0.95', ()
 test('F090: both dungeon hosts drive the LATCH, not the raw threshold', () => {
   for (const f of ['scenes/dungeon.js', 'scenes/worldModes.js']) {
     const s = src(f);
-    assert.ok(s.includes('waterStep(player.pos[1] + 0.9,'), `${f} asks the machine`);
+    // AUDIT 64 F4: PlayerFootsteps.cs:189/:201 read
+    // `playerMotor.transform.position.y`, the LIVE controller CENTRE -
+    // ControllerHeightChange (PlayerHeightChanger.cs:477-478) keeps the
+    // feet planted while the height changes, so the centre is feet +
+    // controller.height/2 in EVERY stance. The hosts baked the standing
+    // half-height (0.9) as a literal, which is a pin that restates the
+    // port; the live expression is what the reference reads.
+    assert.ok(s.includes('waterStep(player.pos[1] + player.height / 2,'), `${f} asks the machine at the LIVE capsule centre`);
+    assert.equal(/waterStep\(player\.pos\[1\] \+ 0\.9/.test(s), false, `${f} no longer bakes the standing half-height`);
     assert.equal(/dungeonShallow: [^\n]*0\.57\) </.test(s), false, `${f} no longer recomputes the enter threshold`);
   }
+});
+
+test('AUDIT 64 F4: the shallow threshold moves with the stance, so a crouched player splashes where a standing one does not', () => {
+  // PlayerFootsteps.cs:189 - `(transform.position.y - 0.57f) < waterY`.
+  // Feet at 0, water surface a hair below the feet: crouched the centre
+  // is 0.45 (0.45 - 0.57 = -0.12 < -0.05, shallow), standing it is 0.9
+  // (0.9 - 0.57 = 0.33, dry). The old `+ 0.9` form cannot express it.
+  const feet = 0, surf = feet - 0.05;
+  const crouched = new FootstepMachine();
+  const standing = new FootstepMachine();
+  assert.equal(crouched.waterStep(feet + CROUCH_HEIGHT / 2, surf, false), true, 'the crouched centre is under the line');
+  assert.equal(standing.waterStep(feet + CAPSULE_HEIGHT / 2, surf, false), false, 'the standing centre is not');
 });
 
 // ── F184 ──────────────────────────────────────────────────────────

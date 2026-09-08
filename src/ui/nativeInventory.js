@@ -49,7 +49,7 @@
 // systems/court.js:209 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:251 (DeductGoldAmount, PlayerEntity.cs
-// :1324-1354), banked at systems/banking.js:463/:476, and described by
+// :1324-1354), banked at systems/banking.js:482/:495, and described by
 // the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
@@ -57,8 +57,9 @@
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
-import { useItem, isLightSource } from '../systems/useItem.js';   // U25
-import { itemInfoRows, itemInfoPanelRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { useItem, isLightSource, isPotionRecipe, nextVariant } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
+import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
+import { itemInfoRows, itemInfoPanelRows, infoPanelShorten, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25; AUDIT 64 F51
 import { paintingImage, setPaintingArtDeps } from './paintingImage.js';   // ROAD-A7: the painting's picture
 import { goldAmount, deductGold } from '../systems/court.js';
 import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
@@ -87,7 +88,8 @@ import {
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex,
-  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick } from './itemScroller.js';
+  preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
+  makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
@@ -345,6 +347,17 @@ export class NativeInventoryWindow {
     // panel shows and the INDEX into that archive's dropIconIdxs list,
     // -1 when nothing has been picked.
     this.dropIcon = openDropIcon(hooks, this.chooseOne);
+    // AUDIT 64 F52: the wheel is routed by what the pointer is OVER
+    // (BaseScreenComponent.cs:725-733 dispatches by the component's own
+    // rect), so the window remembers the last point hover() was given.
+    // The hosts' (-1,-1) pointer-leave sentinel must hit no rect.
+    this._mouse = [-1, -1];
+    // AUDIT 64 F48: the window's shared ToolTip. DaggerfallBaseWindow
+    // .cs:50-56 builds `defaultToolTip` and DaggerfallInventoryWindow
+    // hands it to both scrollers (:368, :383), to every accessory
+    // button (:547) and to the paperdoll (:470) - four surfaces, one
+    // tip. The gold button and the tab/action buttons get none.
+    this._tip = makeSlotToolTip();
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     this._accessoryIcon = makeAccessoryIconDrawer(hooks.icons, () => hooks.entity);   // the twelve worn slots
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
@@ -549,6 +562,26 @@ export class NativeInventoryWindow {
       this.infoItem = it;
       return;
     }
+    // AUDIT 64 F49: ShowInfoPopup's FIRST arm (:1602-1609). A POTION
+    // RECIPE chains a second, ClickAnywhereToClose box holding
+    // PotionRecipeIngredients (DaggerfallUnityItemMCP.cs:245-260) -
+    // one ingredient TEMPLATE name per line, each followed by a
+    // JustifyCenter, which is this side's `center: true`. The chain
+    // is if/else-if, so the recipe wins over the legacyMagic 1016 arm
+    // below; and it is UNCONDITIONAL - MCP :249-258 answers an empty
+    // token array when GetPotionRecipe(key) is null and :1607-1608
+    // still adds and shows the box, so an unknown key gets an EMPTY
+    // second box rather than none. (A recipe is MiscItems, never
+    // Paintings, so sitting below the painting arm is inert.)
+    if (isPotionRecipe(it)) {
+      const recipe = potionRecipeByKey(it.potionRecipeKey ?? 0);
+      this.boxes = [
+        { rows: infoRows },
+        { rows: (recipe?.ingredients ?? []).map((id) => ({ text: templateByIndex(id)?.name ?? '', center: true })) },
+      ];
+      this.infoItem = it;
+      return;
+    }
     this.boxes = [{ rows: infoRows }];
     if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
     this.infoItem = it;
@@ -681,12 +714,24 @@ export class NativeInventoryWindow {
     }));
   }
 
-  _pick(slot) {
+  /** AUDIT 64 F47: GetActionModeRightClick (DaggerfallInventoryWindow
+   *  .cs:1871-1882) - the mode a RIGHT click runs on. Equip becomes
+   *  Remove, Remove becomes Equip, and every other mode is unchanged.
+   *  (Select->Remove is DFU's third arm and has no port here: `MODES`
+   *  carries no select mode - ActionModes.Select is set only by
+   *  DaggerfallTradeWindow.) Unconditional: no setting, no gate. */
+  _rightMode() {
+    if (this.mode === 'equip') return 'remove';
+    if (this.mode === 'remove') return 'equip';
+    return this.mode;
+  }
+
+  _pick(slot, mode = this.mode) {
     this._clampScroll();
     const it = this._filtered()[this.scroll + slot];
     if (!it) return;
-    if (this.mode === 'info') { this._info(it); return; }
-    if (this.mode === 'remove') {
+    if (mode === 'info') { this._info(it); return; }
+    if (mode === 'remove') {
       // LocalItemListScroller_OnItemClick Remove's
       // `TransferItem(item, localItems, remoteItems, canHold, true)`
       // (DaggerfallInventoryWindow.cs:1999). U56: the guards, their
@@ -711,8 +756,8 @@ export class NativeInventoryWindow {
       applyTransfer(it, plan, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
       return;
     }
-    if (this.mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
-    if (this.mode === 'equip' && this.hooks.entity) {
+    if (mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
+    if (mode === 'equip' && this.hooks.entity) {
       // U25 / LocalItemListScroller_OnItemClick (:1976-1985): an EQUIP
       // click on a LIGHT SOURCE does not equip it, it USES it - which
       // is how a torch is lit in play. The port flagged this from U8g
@@ -739,7 +784,7 @@ export class NativeInventoryWindow {
     if (refusal.text) this.boxes = [{ rows: [{ text: refusal.text, center: true }] }];
   }
 
-  _pickRemote(slot) {
+  _pickRemote(slot, mode = this.mode) {
     this._clampScroll();
     const remote = this._remote();
     const it = remote[this.remoteScroll + slot];
@@ -751,9 +796,9 @@ export class NativeInventoryWindow {
     // Only the REMOTE list does this; LocalItemListScroller_OnItemClick
     // (:1974-2007) has no such call.
     if (it.questItem) this.hooks.getQuest?.(it.questUID)?.getItem?.(it.questSymbol)?.setPlayerClicked();
-    if (this.mode === 'info') { this._info(it); return; }
-    if (this.mode === 'use') { this._use(it, remote); return; }   // U25 (:2048-2051)
-    if (this.mode === 'remove' || this.mode === 'equip') {
+    if (mode === 'info') { this._info(it); return; }
+    if (mode === 'use') { this._use(it, remote); return; }   // U25 (:2048-2051)
+    if (mode === 'remove' || mode === 'equip') {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true)). U56: same ladder, other
@@ -761,7 +806,11 @@ export class NativeInventoryWindow {
       // included, which DFU has once and both callers run.
       const bag = this.hooks.items();
       const plan = planTake(it, {
-        bag, entity: this.hooks.entity, mode: this.mode,
+        // AUDIT 64 F47: the LADDER's own mode too - itemTransfer.js's
+        // `equip: mode === 'equip'` is TransferItem(..., equip:
+        // actionMode == ActionModes.Equip) (:2040), so a right-click
+        // that swapped Remove into Equip must equip what it takes.
+        bag, entity: this.hooks.entity, mode,
         chooseOne: this.chooseOne, usingWagon: this.usingWagon,
         getQuest: this.hooks.getQuest ?? null,
       });
@@ -850,6 +899,129 @@ export class NativeInventoryWindow {
     return null;
   }
 
+  /** DaggerfallBaseWindow.cs:101-102 - the shared tooltip's own
+   *  Update, which is where the rest clock runs. */
+  tick(dt) { this._tip.update(dt); }
+
+  /** AUDIT 64 F48: the four surfaces DFU tooltips, in its own
+   *  component order, and the text law each of them carries.
+   *
+   *  `books` is the ONE difference between them: the scroller's text
+   *  is ItemListScroller.cs:462-465, whose Books-and-not-artifact arm
+   *  reads GetBookTitle; the accessory buttons (:995) and the
+   *  paperdoll (:2191) take plain `item.LongName` with no such arm.
+   *
+   *  Everything else - the gold button (:515-520), the tabs, the six
+   *  action buttons, the two target-icon panels, the scroll arrows
+   *  and the rail - was never given a ToolTip, so it answers null. */
+  _tipItemAt(vx, vy) {
+    const R = INV_RECTS;
+    if (inRect(R.paperDoll, vx, vy) && this.hooks.entity) {
+      const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
+      return { item: (slot != null ? this.hooks.entity.equip?.slots?.[slot] : null) ?? null, books: false };
+    }
+    const acc = this._accessoryAt(vx, vy);
+    if (acc != null) return { item: this.hooks.entity?.equip?.slots?.[acc] ?? null, books: false };
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
+    if (hit) return { item: hit.kind === 'slot' ? (this._filtered()[this.scroll + hit.slot] ?? null) : null, books: true };
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    if (rhit) return { item: rhit.kind === 'slot' ? (this._remote()[this.remoteScroll + rhit.slot] ?? null) : null, books: true };
+    return { item: null, books: true };
+  }
+
+  /** AUDIT 64 F52: ItemsListPanel_OnMouseScrollUp/Down
+   *  (ItemListScroller.cs:314-316, :606-616). The wheel is wired to
+   *  the scroller's ITEMS panel - itemListPanelRect (:24) is
+   *  Rect(9,0,50,152), so it starts past the arrow column - and moves
+   *  ScrollIndex by ONE row per notch with NO sound: the ButtonClick
+   *  belongs to the two arrow buttons alone (:588-604), which is why
+   *  playScrollerArrowClick must not be called here.
+   *
+   *  The RAIL scrolls as well, and for its own reason: the scroller's
+   *  VerticalScrollBar (:277-284, Position (1,18) Size (6,117)) is a
+   *  sibling component that OVERRIDES MouseScrollUp/Down
+   *  (VerticalScrollBar.cs:152-162) with the same one-row step. The
+   *  two ARROWS are plain Buttons, which override neither, so a notch
+   *  over them scrolls nothing (BaseScreenComponent.cs:725-733
+   *  dispatches by each component's own rect).
+   *
+   *  Off both scrollers - the paperdoll, the mode buttons, the tabs,
+   *  the window's background - nothing scrolls at all; there is no
+   *  "active list" in DFU to fall back on.
+   *
+   *  A NOTCH IS NOT ONLY A SCROLL - see _wheelRehover below, which is
+   *  the other half of the same frame. */
+  wheel(dir) {
+    if (!dir || this.topBox) return;
+    const [vx, vy] = this._mouse;
+    const R = INV_RECTS;
+    const kind = dir > 0 ? 'down' : 'up';
+    const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
+    if (hit) {
+      if (wheelable(hit.kind)) this.scroll = applyScroll(this.scroll, kind, this._filtered().length);
+      this._wheelRehover(vx, vy, hit.kind === 'slot' ? this._filtered()[this.scroll + hit.slot] : null);
+      return;
+    }
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    if (rhit && wheelable(rhit.kind)) {
+      this.remoteScroll = applyScroll(this.remoteScroll, kind, this._remote().length);
+    }
+    this._wheelRehover(vx, vy,
+      rhit?.kind === 'slot' ? this._remote()[this.remoteScroll + rhit.slot] : null);
+  }
+
+  /** AUDIT 64 F52 (review round): the wheel notch fires TWO more
+   *  handlers than the items panel's own scroll, and both of them run
+   *  AFTER ScrollIndex has already moved.
+   *
+   *  THE ORDER IS THE POINT. Panel.Update (Panel.cs:94-108) runs
+   *  `base.Update()` - the panel's OWN scroll dispatch, which is what
+   *  ItemsListPanel_OnMouseScrollUp/Down hangs off - BEFORE it walks
+   *  its children. The item buttons are children of that panel
+   *  (ItemListScroller.cs:337), so by the time a button's own handler
+   *  runs the index has already changed.
+   *
+   *  (a) THE HOVER REPOINTS. Every item button binds the SAME handler
+   *  to the wheel that it binds to the pointer entering it:
+   *  `itemButtons[i].OnMouseScrollUp/Down += ItemButton_OnMouseEnter`
+   *  (ItemListScroller.cs:346-347). Its body (:570-581) reads
+   *  `items[GetScrollIndex() * listWidth + Tag]` - the NEW index - and
+   *  raises OnItemHover, wired at DaggerfallInventoryWindow.cs:381 and
+   *  :398 to Local/RemoteItemListScroller_OnHover (:2225-2235), both
+   *  of which fall into ItemListScroller_OnHover (:2237-2242) ->
+   *  UpdateItemInfoPanel(item). So the U47 panel follows the list
+   *  under a stationary cursor. Past the end of the list the handler
+   *  returns at :574-575 and the panel is left standing, which is the
+   *  same stickiness every other miss on this window has.
+   *
+   *  (b) THE TOOLTIP CLOCK RESTARTS. BaseScreenComponent.cs:727-736
+   *  ends its wheel block with `hoverTime = 0` under the comment "Not
+   *  hovering while scrolling", and hoverTime is what gates the draw
+   *  at :819. That runs for EVERY component under the pointer on a
+   *  notch, not only the ones that scroll - so a notch over the
+   *  paperdoll or over the dead scroll arrows silences the tip just as
+   *  a notch over a slot does. The text itself is re-read from the
+   *  button, whose ToolTipText the scroll has just rewritten
+   *  (ItemsScrollBar_OnScroll :583-586 -> UpdateItemsDisplay's
+   *  :464-466, or ClearItemsList's :386 for a slot that scrolled past
+   *  the end), so the tip that comes back after the delay names the
+   *  item that scrolled under the cursor. */
+  _wheelRehover(vx, vy, item) {
+    // BaseScreenComponent.cs:734-735. hide() is the port's hoverTime =
+    // 0: show() alone would keep the clock running when the text is
+    // unchanged, which is exactly the stationary-cursor case.
+    this._tip.hide();
+    if (vx >= 0 && vy >= 0) {
+      const t = this._tipItemAt(vx, vy);
+      this._tip.show(t.item, vx, vy, { getQuest: this.hooks.getQuest ?? null, books: t.books });
+    }
+    // ItemButton_OnMouseEnter (ItemListScroller.cs:570-581). A null
+    // item - an empty slot, or an index past the list - returns
+    // without touching the panel (:574-575, :579).
+    if (item) { this.infoItem = item; this.infoGold = false; }
+  }
+
   /**
    * U47 - THE HOVER INFO PANEL. DFU fills the 37x32 panel from
    * OnMouseEnter on every list slot, the paperdoll and the gold
@@ -867,6 +1039,23 @@ export class NativeInventoryWindow {
    * with it; hovering behind one changes nothing.
    */
   hover(vx, vy) {
+    // AUDIT 64 F52: the wheel is routed by the pointer's LAST position
+    // (BaseScreenComponent.cs:725-733 dispatches per component rect),
+    // so record it ahead of every guard below.
+    this._mouse = [vx, vy];
+    // AUDIT 64 F48: the shared ToolTip is fed on EVERY path, hit or
+    // miss - DFU clears ToolTipText rather than leaving it standing
+    // (ItemListScroller.cs:387 for a blank slot, DaggerfallInventory-
+    // Window.cs:981 for an empty accessory button, :2200/:2204 for
+    // bare skin), which is the opposite of the info panel below, whose
+    // stickiness (U47) is DFU's too. A pushed message box owns the
+    // pointer, so it hides the tip; the hosts' (-1,-1) pointer-leave
+    // sentinel does the same.
+    if (this.topBox || vx < 0 || vy < 0) this._tip.hide();
+    else {
+      const t = this._tipItemAt(vx, vy);
+      this._tip.show(t.item, vx, vy, { getQuest: this.hooks.getQuest ?? null, books: t.books });
+    }
     if (this.topBox) return;
     const R = INV_RECTS;
     // The GOLD button (:2243-2247). Not an item - two generated lines,
@@ -908,6 +1097,60 @@ export class NativeInventoryWindow {
     }
   }
 
+  /** AUDIT 64 F50: the MIDDLE button's three surfaces.
+   *
+   *  DFU: `localItemListScroller.OnItemMiddleClick` (:379) and the
+   *  remote twin (:394), handled at :2020-2023 / :2075-2078 as a bare
+   *  `NextVariant(item)`; and `paperDoll.OnMiddleMouseClick` (:469),
+   *  handled at :1964-1971 as PaperDoll_GetItem then NextVariant.
+   *
+   *  THE SOUND IS NOT SYMMETRIC. The lists are silent - ItemButton_
+   *  OnClick (ItemListScroller.cs:535-552) raises the event with no
+   *  PlayOneShot. The DOLL is not: PaperDoll_GetItem's FIRST statement
+   *  is `PlayOneShot(SoundClips.ButtonClick)` (:1920), ahead of the
+   *  0xff bail, so a middle click anywhere on the doll clicks whether
+   *  or not a layer is under it.
+   *
+   *  NextVariant (:1405-1412) refreshes UNCONDITIONALLY - the doll
+   *  when the item is equipped, the list otherwise - so the refresh is
+   *  not gated on the variant having moved. The port's list cell
+   *  re-derives its icon from `item.variant` every frame, so only the
+   *  doll's refresh has anything to do here. */
+  _middleClick(vx, vy) {
+    const R = INV_RECTS;
+    if (inRect(R.paperDoll, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);   // PaperDoll_GetItem (:1920)
+      if (!this.hooks.entity) return true;
+      const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
+      const worn = slot != null ? this.hooks.entity.equip?.slots?.[slot] : null;
+      if (!worn) return true;   // `value == 0xff` / a null item: return (:1968-1970)
+      nextVariant(worn);
+      refreshPaperDoll(this.hooks.entity);   // item.IsEquipped -> paperDoll.Refresh() (:1408-1409)
+      return true;
+    }
+    // Only a slot that HOLDS an item acts (ItemListScroller.cs:537-546);
+    // the arrows and the rail bind no middle handler at all.
+    const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
+    if (hit) {
+      if (hit.kind === 'slot') {
+        this._clampScroll();
+        const it = this._filtered()[this.scroll + hit.slot];
+        if (it) nextVariant(it);
+      }
+      return true;
+    }
+    const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
+    if (rhit) {
+      if (rhit.kind === 'slot') {
+        this._clampScroll();
+        const it = this._remote()[this.remoteScroll + rhit.slot];
+        if (it) nextVariant(it);
+      }
+      return true;
+    }
+    return false;
+  }
+
   /** G5: `right` is I4's flag and `middle` is this slice's - the
    *  remote target icon panel is the one component in the window with
    *  THREE separate click handlers (:437-439), so the middle button
@@ -924,19 +1167,41 @@ export class NativeInventoryWindow {
       this._cycleDropIcon(middle ? 0 : (right ? -1 : 1));
       return true;
     }
-    if (inRect(R.exit, vx, vy)) { this._close(); return true; }
-    for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
-    for (const mode of MODES) {
-      if (!inRect(R[mode], vx, vy)) continue;
-      audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
-      // U25: WAGON and GOLD are not mode buttons at all - they ACT
-      // (:1234-1285), which is why selecting them as a mode was
-      // always wrong.
-      if (mode === 'wagon') { this._wagon(); return true; }
-      if (mode === 'gold') { this._dropGold(); return true; }
-      this.mode = mode;
-      return true;
+    // AUDIT 64 F50: the MIDDLE button never reaches a left-click body.
+    // BaseScreenComponent.cs:710-724 dispatches it through
+    // MiddleMouseClick alone (:930-937) with no fallback to
+    // OnMouseClick, and the window binds OnMiddleMouseClick on exactly
+    // three surfaces beyond the drop-icon panel above: both item lists
+    // (:379, :394) and the paperdoll (:469). Everything else - Exit,
+    // the tabs, the six action buttons, the accessory strip - is inert
+    // under it.
+    if (middle) return this._middleClick(vx, vy);
+    // AUDIT 64 F47: and the RIGHT button reaches only the four
+    // families DFU wires OnRightMouseClick on (:378, :393, :468,
+    // :551). Exit (:318), the tab buttons (:478-490) and the six
+    // action buttons (:494-517) take OnMouseClick alone, so a right
+    // click on them does nothing at all in classic - the port used to
+    // close the window, switch tabs and select a mode.
+    if (!right) {
+      if (inRect(R.exit, vx, vy)) { this._close(); return true; }
+      for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
+      for (const mode of MODES) {
+        if (!inRect(R[mode], vx, vy)) continue;
+        audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
+        // U25: WAGON and GOLD are not mode buttons at all - they ACT
+        // (:1234-1285), which is why selecting them as a mode was
+        // always wrong.
+        if (mode === 'wagon') { this._wagon(); return true; }
+        if (mode === 'gold') { this._dropGold(); return true; }
+        this.mode = mode;
+        return true;
+      }
     }
+    // AUDIT 64 F47: GetActionModeRightClick's answer feeds every one
+    // of the four arms below, exactly as the four right handlers
+    // (:1913-1916, :1959-1962, :2015-2018, :2070-2073) hand it to the
+    // shared OnMouseClick/OnItemClick the left handlers use.
+    const mode = right ? this._rightMode() : this.mode;
     // AccessoryItemsButton_OnMouseClick (:1883-1906). The click sound
     // plays FIRST, ahead of the empty-slot bail, in DFU's order - and
     // Info then plays ShowInfoPopup's own (:1596), which is two clicks
@@ -947,10 +1212,10 @@ export class NativeInventoryWindow {
       audio.playOneShot(SOUND.ButtonClick, 1);
       const worn = this.hooks.entity?.equip?.slots?.[acc];
       if (!worn) return true;
-      if (this.mode === 'equip') { unequipSlot(this.hooks.entity, acc); refreshPaperDoll(this.hooks.entity); }
-      else if (this.mode === 'info') this._info(worn);
+      if (mode === 'equip') { unequipSlot(this.hooks.entity, acc); refreshPaperDoll(this.hooks.entity); }
+      else if (mode === 'info') this._info(worn);
       // UseItem(item) with NO collection, as the doll's arm passes none
-      else if (this.mode === 'use') this._use(worn, null);
+      else if (mode === 'use') this._use(worn, null);
       return true;
     }
     // U8g: the paperdoll takes clicks - Remove unequips the topmost
@@ -963,13 +1228,13 @@ export class NativeInventoryWindow {
         // (DaggerfallInventoryWindow.cs:1932-1952): EQUIP (and Select)
         // unequips, Info reads, Use uses. REMOVE has no branch at all
         // - a Remove-mode doll click is inert. U8g had this inverted.
-        if (this.mode === 'equip') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
-        else if (this.mode === 'info') this._info(table[slot]);
+        if (mode === 'equip') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
+        else if (mode === 'info') this._info(table[slot]);
         // U25: Use uses. DFU passes NO COLLECTION from the doll
         // (UseItem(item) with collection defaulting to null), so the
         // arms that consume an item - a potion, a drug, a map, the
         // oil - deliberately do nothing to a WORN one.
-        else if (this.mode === 'use') this._use(table[slot], null);
+        else if (mode === 'use') this._use(table[slot], null);
       }
       return true;
     }
@@ -977,16 +1242,19 @@ export class NativeInventoryWindow {
     // needs the scroll index and the list length.
     const hit = scrollerHit(R.localList, vx, vy, this.scroll, this._filtered().length);
     if (hit) {
-      if (hit.kind === 'slot') this._pick(hit.slot);
+      if (hit.kind === 'slot') this._pick(hit.slot, mode);
       // ROAD-A7: the two ARROWS click (ItemListScroller.cs:590-604);
-      // the rail and the thumb are silent.
-      else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length); }
+      // the rail and the thumb are silent. AUDIT 64 F47: and neither
+      // takes a RIGHT click - the arrow Buttons bind OnMouseClick
+      // alone (:299, :307) and VerticalScrollBar overrides MouseClick
+      // only (VerticalScrollBar.cs:142), so the rail is inert on it.
+      else if (!right) { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length); }
       return true;
     }
     const rhit = scrollerHit(R.remoteList, vx, vy, this.remoteScroll, this._remote().length);
     if (rhit) {
-      if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
-      else { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
+      if (rhit.kind === 'slot') this._pickRemote(rhit.slot, mode);
+      else if (!right) { playScrollerArrowClick(rhit.kind); this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length); }
       return true;
     }
     return false;
@@ -1061,6 +1329,12 @@ export class NativeInventoryWindow {
       [INV_RECTS.remoteList, this.remoteScroll, this._remote()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
+        // AUDIT 64 F53: ItemBackgroundColourHandler (:401-411), which
+        // BOTH scrollers carry (:372, :387) and which the cell paints
+        // FIRST - BaseScreenComponent.cs:784-787 fills the button's
+        // rect with the colour before its background texture and
+        // before the child icon panel.
+        drawCellBackground(renderer, m, rect, s, itemBackgroundColour(it, this.hooks.entity));
         this._icon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art.font4, m, it, rect, s);
       });
@@ -1085,12 +1359,18 @@ export class NativeInventoryWindow {
       // U47: the GOLD button's own two lines, which are generated and
       // need no TEXT.RSC - so they draw even in a host with none.
       const carriedGold = this.infoGold ? goldAmount(this.hooks.entity ?? {}) : 0;
-      const panelRows = this.infoGold
+      // AUDIT 64 F51: BOTH arms end in ONE member. DFU's
+      // UpdateItemInfoPanel(TextFile.Token[]) (:1142-1152) is the
+      // panel label's only writer, and UpdateItemInfoPanelGold
+      // (:2249-2259) routes the gold tokens through it too - so the
+      // three shortenings apply to whichever arm ran. (The POPUP does
+      // not get them: ShowInfoPopup :1594-1601 builds its own tokens.)
+      const panelRows = infoPanelShorten(this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
         // ROAD-A7: the PANEL's read, not the popup's - :1135-1137
         // keeps only a painting's title here.
-        : ((this.infoItem && this.hooks.rows) ? itemInfoPanelRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
-      if (panelRows) {
+        : ((this.infoItem && this.hooks.rows) ? itemInfoPanelRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null));
+      if (panelRows.length) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
         const rows = panelRows;
         const lineH = (font.fnt?.fixedHeight ?? 6) * INFO_LABEL.scale + INFO_LABEL.extraLeading;
@@ -1115,5 +1395,9 @@ export class NativeInventoryWindow {
           : (pic ? { image: { width: pic.w, height: pic.h } } : {}));
       drawMessageBox(renderer, m, font, laid, pic ? { image: pic.tex } : {});
     }
+    // AUDIT 64 F48: the shared tooltip draws LAST, over the panel and
+    // over the box (DaggerfallBaseWindow.cs:110-111 draws defaultToolTip
+    // after every other component).
+    this._tip.draw(renderer, m, font);
   }
 }

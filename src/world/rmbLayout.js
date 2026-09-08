@@ -28,6 +28,20 @@ export const GROUND_OFFSET = -1;
 export const GROUND_TILE_SIZE = 256;   // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
 export const GROUND_TILE_DIM = 16;
 
+/** RMBLayout.CityGateOpenModelID / CityGateClosedModelID
+ *  (RMBLayout.cs:40-41), declared beside the bulletin board because
+ *  DFU treats them alike: both are forced STANDALONE out of the block
+ *  combiner (:857) so AddStandaloneModel can hang a component on them -
+ *  DaggerfallCityGate at :959-963, DaggerfallBulletinBoard at :965-969.
+ *  The gate component's whole law is world/cityGate.js. */
+export const CITY_GATE_OPEN_MODEL_ID = 446;
+export const CITY_GATE_CLOSED_MODEL_ID = 447;
+/** IsCityGate (RMBLayout.cs:1007-1011) - "Two variants of City Gate
+ *  model known", so BOTH ids answer true and a block that places the
+ *  CLOSED variant is tracked too. */
+export const isCityGate = (modelID) =>
+  modelID === CITY_GATE_OPEN_MODEL_ID || modelID === CITY_GATE_CLOSED_MODEL_ID;
+
 /** RMBLayout.BulletinBoardModelID (RMBLayout.cs:42). DFU stands this
  *  model STANDALONE rather than folding it into the block combiner
  *  (:857, :935) precisely so it can carry its own activation

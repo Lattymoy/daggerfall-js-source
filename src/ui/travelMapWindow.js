@@ -100,6 +100,7 @@ import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { typedChar, bindings } from './input.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
 import { actionForCode } from '../systems/inputActions.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -1130,14 +1131,34 @@ export class TravelMapWindow {
       return;
     }
     if (this.regionSelected) {
-      if (code === 'KeyL') {
-        if ((this.currentDFRegion?.locationCount ?? 0) < 1) return;
-        // OrderBy(p => p) (:424-425) - ordinal here, see the header
-        this._showLocationPicker(this._currentRegionMapNames().sort(), true);
-        return;
+      // AUDIT 64 F23 - Update (:418, :427) asks the SHORTCUT TABLE, not
+      // a key code: `DaggerfallShortcut.GetBinding(Buttons.TravelMapList)
+      // .IsUpWith(keyModifiers)` and the same for TravelMapFind, with
+      // keyModifiers taken at :388. IsUpWith (HotkeySequence.cs:169-172)
+      // is the binding's key AND CheckSetModifiers, whose second clause
+      // rejects any virtual modifier the sequence did not ask for - and
+      // both rows are bare F/L (DialogShortcuts.txt:81-82), so Ctrl+L
+      // and Shift+F do NOTHING in DFU. Shift is not hypothetical here:
+      // it is the held key that scrolls a zoomed region map (:397-402,
+      // `hover` below). The two rows already existed in the port's
+      // table (systems/dialogShortcuts.js) and nothing read them.
+      //
+      // Order is DFU's if / else-if: List is asked before Find, and
+      // firstHotkey walks the array in that order.
+      switch (firstHotkey(['TravelMapList', 'TravelMapFind'], code, e)) {
+        case 'TravelMapList':
+          if ((this.currentDFRegion?.locationCount ?? 0) < 1) return;   // (:420-421)
+          // OrderBy(p => p) (:424-425) - ordinal here, see the header
+          this._showLocationPicker(this._currentRegionMapNames().sort(), true);
+          return;
+        case 'TravelMapFind':
+          this._findLocationButtonClick();   // (:427-428)
+          return;
+        default:
+          // DFU's region branch never reaches the Return/KeypadEnter arm
+          // (:430-434), so every other key is swallowed here.
+          return;
       }
-      if (code === 'KeyF') { this._findLocationButtonClick(); return; }
-      return;
     }
     if (code === 'Enter' || code === 'NumpadEnter') {
       if (this.identifying) this._openRegionPanel(this._getPlayerRegion());

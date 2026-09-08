@@ -118,7 +118,13 @@ test('17g F5: a keyboard confirm opens the race box, not a silent skip', () => {
   assert.equal(f.raceConfirm, null);
   assert.equal(f.state, 'race');
   f.input('confirm');                                // reopen
-  f.input('confirm');                                // YES
+  // AUDIT 64 F32: this box takes two bare AddButton calls
+  // (CreateCharRaceSelect.cs:107-108), so GetDefaultButton() is null
+  // and Return is inert on it (DaggerfallMessageBox.cs:318-324); the
+  // Y hotkey AddButton binds unconditionally (:377) is the accept.
+  f.input('confirm');
+  assert.ok(f.raceConfirm?.length, 'Return does nothing here');
+  f.input('char:y');                                 // YES
   assert.equal(f.state, 'gender');
   // with NO description (art-less), confirm must still advance
   const g = new ChargenFlow([{ name: 'C', career: CAREER }], () => 0);

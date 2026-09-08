@@ -16,6 +16,7 @@ import { createWeaponRig, envAttack } from '../src/combat/weaponRig.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { equipSoundFor } from '../src/characters/weapons.js';
+import { midScreenText } from '../src/ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's surface
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -108,13 +109,20 @@ test('weaponRig: clickAttack carries the sheathed gate (the C10 fold fix - the i
 
 test('weaponRig: an unsheathed bow with zero arrows auto-sheathes with the classic line', () => {
   const lines = [];
+  midScreenText._reset();
   const r = rig({ say: (l) => lines.push(l) });
   r.playerWeapon.weapon = { name: 'Short Bow', templateIndex: 129, material: 0 };
   r.toggleSheath();
   assert.equal(r.playerWeapon.sheathed, false);
   r.draw();   // the guard runs from the draw path
   assert.equal(r.playerWeapon.sheathed, true);
-  assert.deepEqual(lines, ['You have no arrows.']);
+  // AUDIT 64 F34: FPSWeapon.cs:365 is DaggerfallUI.SetMidScreenText -
+  // the HUD's centred label - and the rig's `say` sink is the popup
+  // queue the shield refusal (WeaponManager.cs:704-705) really uses,
+  // so the line must NOT arrive there.
+  assert.deepEqual(lines, []);
+  assert.equal(midScreenText.text, 'You have no arrows.');
+  midScreenText._reset();
 });
 
 test('weaponRig: envAttack - a door in reach bashes and consumes; others Receive(Attack); walls occlude', () => {

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WEATHER_TYPES, FOG_SETTINGS, fogForWeather, skyOffsetForWeather,
-  weatherSunlightScale, windowStyleForWeather, precipitationForWeather,
+  weatherSunlightScale, precipitationForWeather,
   isSnowFreeClimate, fogFactor, weatherRng, LightningPlayer,
 } from '../src/world/weather.js';
 
@@ -40,8 +40,11 @@ test('weather: verbatim tables and SetWeather mapping', () => {
   for (const c of [224, 225, 227, 229]) assert.equal(isSnowFreeClimate(c), true);
   for (const c of [223, 226, 228, 231]) assert.equal(isSnowFreeClimate(c), false);
 
-  assert.equal(windowStyleForWeather('fog'), 'fog');
-  assert.equal(windowStyleForWeather('rain'), null);
+  // AUDIT 64 F9: weather chooses NO window style. WindowStyle.Fog is
+  // declared (DaggerfallUnityEnums.cs:87-94) and spent by MaterialReader
+  // (:927-929) but never assigned by anything in DFU, and
+  // Game/WeatherManager.cs never mentions a window at all - so this
+  // module exports no window-style rule.
   assert.equal(precipitationForWeather('thunder'), 'storm');
   assert.equal(precipitationForWeather('snow'), 'snow');
   assert.equal(precipitationForWeather('overcast'), null);

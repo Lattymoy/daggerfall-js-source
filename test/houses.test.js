@@ -365,7 +365,12 @@ test('H2: the window lists, scrolls, selects and buys', async () => {
   assert.equal(bought, market[LIST_ROWS + 1]);
   assert.equal(win.done, true, 'the list closed at buy time, not at box-dismiss');
   assert.equal(shown.result, TRANSACTION_RESULT.PURCHASED_HOUSE);
-  assert.equal(shown.amount, housePrice(10 + LIST_ROWS + 1));
+  // AUDIT 64 F25: and the amount GeneratePopup is given is ZERO, not
+  // the price - GeneratePurchaseHousePopup (DaggerfallBankingWindow
+  // .cs:234-237) passes GeneratePopup only the result, and its
+  // `amount` parameter defaults to 0 (:297). It matters now that the
+  // window really runs a %a macro pass over the box.
+  assert.equal(shown.amount, 0);
 });
 
 test('H2: a refused purchase closes the list too - the message shows over the BANK (F138)', async () => {

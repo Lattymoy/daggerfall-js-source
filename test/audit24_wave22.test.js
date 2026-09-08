@@ -41,8 +41,12 @@ test('audit24 wave22: the two hosts hand their HudText the notebook sink', () =>
     'AddText files AFTER it queues, as C# does');
   assert.match(rd('src/scenes/world.js'),
     /townTalk\.hudMessageSink = \(t\) => questBridge\?\.notebook\?\.addMessage\(t\);/);
-  assert.match(rd('src/scenes/townTalk.js'), /set hudMessageSink\(fn\) \{ hud\.onMessage = fn; \}/);
+  // AUDIT 64 F34: SetMidScreenText ends with the SAME
+  // Notebook.AddMessage tail (DaggerfallHUD.cs:371), so the one host
+  // sink now feeds both of DaggerfallHUD's text surfaces.
+  assert.match(rd('src/scenes/townTalk.js'), /set hudMessageSink\(fn\) \{ hud\.onMessage = fn; midScreenText\.onMessage = fn; \}/);
   assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /midScreenText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);
   assert.match(rd('src/scenes/worldModes.js'),
     /hudMessageSink: \(t\) => questBridge\?\.notebook\?\.addMessage\(t\),/);
 });

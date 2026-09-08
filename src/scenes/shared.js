@@ -1309,7 +1309,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
      *  drains through exactly these doors, exhaustion presenter and
      *  all, and a pool that built its own would miss the collapse. */
     get sinks() { return sinks; },
-    tick(dt, activity = { running: false, swimming: false }, realSeconds = dt) {
+    tick(dt, activity = { running: false, runningTally: false, swimming: false }, realSeconds = dt) {
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
@@ -1788,7 +1788,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:239`, the standalone host, has always had the right
+ *  `dungeon.js:240`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *
