@@ -587,7 +587,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
   assert.match(shared, /onAmbientEffect\(playerPos, storm = true\) \{ dynamic\?\.onAmbientEffect\(playerPos, storm\); \}/);
   assert.match(shared, /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \}/, 'AUDIT 61: the transition seam on the controller');
   assert.match(shared, /dynamicMoonState\(dynamic, minuteOfDay, weatherRowNow\.cover\)/, 'AUDIT 61: the eased cover stands in for the mod’s clouds');
-  assert.match(shared, /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons');
+  assert.match(read('src/render/dynamicSkiesBridge.js'), /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons (DS2: in the bridge)');
   assert.match(read('src/render/dynamicSkiesRenderer.js'), /gl\.uniform3f\(u\._CloudTopColorBoost, 0, 0, 0\)/, 'AUDIT 61: the top boost is inert, as the readme says it is');
   assert.match(shared, /lightningLight\(\) \{ return dynamic\?\.lightningLight \?\? null; \}/);
   assert.match(shared, /dynamic\?\.weatherJump\(\);/, 'a load forces the mod’s re-apply');

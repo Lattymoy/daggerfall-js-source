@@ -185,6 +185,7 @@ directory by `test/audit18_bible_docs.test.js`:
   handles. Still unseen: all of it, in a browser, with ARENA2.
 - `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
 - `dynamicSkiesRenderer.js` - DS1: Dynamic Skies' own skybox (BLBProceduralSkybox, translated line for line), the enhanced lane's sky while the vendored mod's switch is on; the same draw contract as `enhancedSky.js`.
+- `dynamicSkiesBridge.js` - DS2: the mod's state in the port's shapes - `dynamicMoonState` (the world's moonlight off the mod's orbits, DS1) and `cloudsStateUnderMod` (the volumetric clouds' six fields off the mod's sun, moons and horizon over the port's colours); one home the controller and the sky lab both import.
   pass, no textures and no game data - a palette record keyed by the
   sun's elevation, the port's own sun arc, DFU's lunar phases placing
   the two moons, stars and weather-driven clouds. Behind the enhanced

@@ -61,10 +61,10 @@ function insideGate(text, gate, needle) {
 
 test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none of them gates the release', () => {
   const press = [
-    ['src/scenes/worldModes.js', /if \(e\.button === 2 && !modalWindowUp\(\)\) modalAttackSink\(\)\?\.\(0, 0, true\);/],
-    ['src/scenes/dungeon.js', /if \(e\.button === 2 && !ctx\.uiOverlayActive\) ctx\.playerAttackInput\(0, 0, true\);/],
-    ['src/scenes/world.js', /if \(e\.button === 2 && !townTalk\.overlayActive && walkMode/],
-    ['src/scenes/exterior.js', /if \(e\.button === 2 && !townTalk\.overlayActive && walkMode/],
+    ['src/scenes/worldModes.js', /if \(isSwingButton\(e\.button\) && !modalWindowUp\(\)\) modalAttackSink\(\)\?\.\(0, 0, true\);/],
+    ['src/scenes/dungeon.js', /if \(isSwingButton\(e\.button\) && !ctx\.uiOverlayActive\) ctx\.playerAttackInput\(0, 0, true\);/],
+    ['src/scenes/world.js', /if \(isSwingButton\(e\.button\) && !townTalk\.overlayActive && walkMode/],   // FIX-F: the registry's button
+    ['src/scenes/exterior.js', /if \(isSwingButton\(e\.button\) && !townTalk\.overlayActive && walkMode/],
   ];
   for (const [host, re] of press) {
     assert.match(src(host), re, `${host}: the modal RMB press must be refused while a window is up`);
@@ -72,10 +72,10 @@ test('AUDIT 26 F205: every host gates the RMB press on "no window up" - and none
   // ...and the RELEASE is never gated: a window opened mid-swing must
   // still let go, which is why the four mouseup arms carry no window test.
   const release = [
-    ['src/scenes/worldModes.js', /if \(e\.button === 2\) modalAttackSink\(\)\?\.\(0, 0, false\);/],
-    ['src/scenes/dungeon.js', /if \(e\.button === 2\) ctx\.playerAttackInput\(0, 0, false\);/],
-    ['src/scenes/world.js', /if \(e\.button === 2 && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
-    ['src/scenes/exterior.js', /if \(e\.button === 2 && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
+    ['src/scenes/worldModes.js', /if \(isSwingButton\(e\.button\)\) modalAttackSink\(\)\?\.\(0, 0, false\);/],
+    ['src/scenes/dungeon.js', /if \(isSwingButton\(e\.button\)\) ctx\.playerAttackInput\(0, 0, false\);/],
+    ['src/scenes/world.js', /if \(isSwingButton\(e\.button\) && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
+    ['src/scenes/exterior.js', /if \(isSwingButton\(e\.button\) && walkMode && modeNow\(\) === 'exterior'\) weaponRig\.attackInput\(0, 0, false\);/],
   ];
   for (const [host, re] of release) assert.match(src(host), re, `${host}: the release stays ungated`);
   // ONE expression for "a mode window is up" - the attack seam and the

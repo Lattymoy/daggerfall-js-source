@@ -510,3 +510,38 @@ front is the port's own, separately recorded. `_MoonPhaseOption`,
 never uploaded, correctly: the shader consumes them as keywords, which
 are baked. `half` is `float` on desktop Unity, so the port's `highp`
 is a no-op there.
+
+## DS2: THE PORT'S CLOUDS OVER THE MOD'S SKY (2026-09-08)
+
+Mac: "The procedural sky mod doesn't apply our enhanced clouds." It
+did not by design - VC3's first decision stood the volumetric clouds
+on the port's dome only ("the new clouds do not draw under it"), and
+the controller built them off `enhancedSky &&`. Under the mod the
+player got its two textured cloud sheets and none of the port's field.
+
+The clouds ride the LANE now: built under either sky (`enhancedLane &&
+cloudsDoor !== 'off'`), and under the mod its two sheets stand down the
+way the dome's decks do - `DynamicSkiesRenderer.cloudsExternal` uploads
+`_CloudTopOpacity` and `_CloudOpacity` as 0 while the material keeps
+the preset's numbers (the dome's `uCloudCover` law, one pass over).
+`?clouds=off` gives the mod its sheets back. The clouds read six
+fields of a state (`cloudLight`: sunDir, sun, masser, secunda; the
+march: cloudLit, cloudShade, horizon), and `cloudsStateUnderMod`
+(`render/dynamicSkiesBridge.js`) answers them: the port's own
+`skyState` for the colours - the eased row's lit and shade, the
+palette's sun at the hour - and the mod for the geometry and the
+horizon: ITS sun direction, ITS moons where its orbits put them (the
+same `dynamicMoonState` the world's moonlight has taken since DS1,
+moved into the bridge with it so the sky lab can import both without
+the whole controller), and ITS fog colour as the horizon the clouds
+fade into. The ground's deck under the mod takes the clouds' shadow
+map (`Object.assign(dynamicDeck, clouds.shadow)`) - "the mod casts
+none" in the seam section above is no longer the whole story: the mod
+casts none, and the port's clouds over it cast theirs. The composite
+lands after the mod's REDUCE_COLOR posterise and its sRGB encode, over
+display values either way, as it lands over the dome.
+
+The lab draws the same: `?sky=dynamic` shows the clouds over the mod's
+pass, with the synthesised state. The Dynamic Skies probe still passes
+(11/11); the VC and enhanced-sky probes unchanged. Pinned in
+ds2_cloudsUnderMod.test.js; the VC3 seam pins re-aimed at the lane.

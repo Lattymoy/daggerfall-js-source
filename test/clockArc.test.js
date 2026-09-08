@@ -56,7 +56,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /const dtMin = still \? 0 : Math\.min\(1, \(nowReal - labLast\) \/ 1000\) \/ WIND_SECONDS_PER_MINUTE;/);
   assert.match(lab, /labDrift\[0\] \+= rowWind\[0\] \* dtMin \* WIND_SECONDS_PER_MINUTE;/);
-  assert.match(lab, /clouds\.setState\(sky\.state, \{ cover: sky\.state\.cloudCover, soft: sky\.state\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0\);/);
+  assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0\);/);
   assert.match(lab, /skyState\(\{ minuteOfDay, weather: \$\('weather'\)\.value, phases, seconds, drift: labDrift \}\)/);
   // the seconds-named constant is gone from the tree's readers
   for (const f of ['src/render/enhancedSky.js', 'src/render/volumetricClouds.js', 'src/scenes/shared.js', 'src/world/windmills.js']) assert.doesNotMatch(read(f), /WEATHER_EASE_SECONDS/, `${f}: no reader of the old constant`);
@@ -332,7 +332,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   assert.ok(lastScale > 0.05, 'and is up by half past six');
   assert.equal(moonlightTerm(skyState({ minuteOfDay: 12 * 60, classicMinutes: base + nightOf * MINUTES_PER_DAY + 12 * 60 })), null, 'none at noon');
   assert.equal(skyState({ minuteOfDay: 720, classicMinutes: base }).daylight, daylightScale(720), 'the state carries the rig\'s curve');
-  assert.match(read('src/scenes/shared.js'), /daylight: daylightScale\(minuteOfDay\),/, 'and the mod\'s moon state carries it too');
+  assert.match(read('src/render/dynamicSkiesBridge.js'), /daylight: daylightScale\(minuteOfDay\),/, 'and the mod\'s moon state carries it too (DS2: in the bridge now)');
   assert.ok(MOONLIGHT.dayFade > 0 && MOONLIGHT.dayFade < 0.2);
   // (5) THE DECK HAS A PERIOD: both decks whole, the field the same a period away, the drift wrapped where it becomes the state
   assert.equal(DECK_PERIOD % DECK_LATTICE, 0, 'the near deck');

@@ -36,6 +36,15 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['dfu-quests', 'dfu-books', 'dfu-settings']),
       link: 'https://github.com/Interkarma/daggerfall-unity',
     }),
+    Object.freeze({
+      title: 'Silkscreen',
+      version: '1.001',
+      author: 'The Silkscreen Project Authors',
+      what: 'One glyph: the digit five of the enhanced skin\'s numbers. Pixelify Sans draws its 5 with a cut corner that reads as an 8, so the five is Silkscreen\'s, subset to that code point and carried inline (FIX-D).',
+      terms: 'SIL Open Font License 1.1 (the OFL travels with the glyph in vendor/silkscreen-five/).',
+      vendor: Object.freeze(['silkscreen-five']),
+      link: 'https://github.com/googlefonts/silkscreen',
+    }),
   ]),
   mods: Object.freeze([
     Object.freeze({

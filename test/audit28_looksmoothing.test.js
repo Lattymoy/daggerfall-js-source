@@ -98,7 +98,8 @@ test('AUDIT 28 W7: the setting is the default source (0..0.9, ships 0.5), LIVE, 
 test('AUDIT 28 W7: all four hosts route both look sites (mouse, touch) through the filter and tick it on the frame\'s dt before the camera is read', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
     const s = read(host);
-    assert.equal((s.match(/lookFilter\.add\(/g) || []).length, 2, `${host}: two look sites through the filter`);
+    const sites = host === 'src/scenes/interior.js' ? 2 : 3;   // FIX-F: the keyboard look is a third site in the three hosts that own a filter
+    assert.equal((s.match(/lookFilter\.add\(/g) || []).length, sites, `${host}: ${sites} look sites through the filter`);
     assert.equal((s.match(/cam\.yaw \+= [^\n]*lookScale\(\)/g) || []).length, 0, `${host}: no raw delta reaches the camera`);
     // F-C1 moved the tick behind the paused gate; it still rides the
     // frame's dt, immediately after it.
@@ -137,8 +138,8 @@ test('AUDIT 28 F-C1/F-C2: settle drops the owed look (SetFacing -> Init), and ev
     assert.match(s, new RegExp(`if \\(!\\(?${esc(paused)}\\)?\\) \\{\\s*\\n\\s*if \\(${esc(swing)}\\) lookFilter\\.settle\\(\\);\\s*\\n\\s*else lookFilter\\.tick\\(dt, cam\\);`), `${host}: the three answers`);
     if (host !== 'src/scenes/interior.js') {
       // The raw button, tracked on the window and never gated - HasAction(SwingWeapon).
-      assert.match(s, /addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 2\) rightHeld = true;/, `${host}: down`);
-      assert.match(s, /addEventListener\('mouseup', \(e\) => \{ if \(e\.button === 2\) rightHeld = false;/, `${host}: up`);
+      assert.match(s, /addEventListener\('mousedown', \(e\) => \{ if \(isSwingButton\(e\.button\)\) rightHeld = true;/, `${host}: down`);
+      assert.match(s, /addEventListener\('mouseup', \(e\) => \{ if \(isSwingButton\(e\.button\)\) rightHeld = false;/, `${host}: up`);
     }
   }
   assert.match(read('src/scenes/dungeonContext.js'), /get weaponIsBow\(\) \{ return !!playerWeapon\.machine\?\.isBow; \}/);

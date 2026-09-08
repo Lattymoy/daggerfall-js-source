@@ -65,6 +65,14 @@ if (dungeon?.exits?.length) {
   await page.waitForTimeout(1200);
   const after = await page.evaluate(() => window.__mode());
   check(after === 'exterior', `and the player is OUT, standing in the world (mode: ${after})`);
+  // FIX-C: STANDING, not in the sky and not in the ground. Wait for the
+  // roads sweep and the rebuild it queues (the start pixel comes back
+  // first), then read the player against the terrain under the feet.
+  await page.waitForTimeout(4000);
+  const st = JSON.parse(await page.evaluate(() => window.__standing()));
+  check(st.spawned === true, `the player has SPAWNED (the boot gate fired, or the dungeon start counted) - ${JSON.stringify(st)}`);
+  check(st.built === true && Number.isFinite(st.ground), `the pixel under the player is BUILT with terrain under the feet - ${JSON.stringify(st)}`);
+  check(Number.isFinite(st.ground) && st.y >= st.ground - 1 && st.y <= st.ground + 6, `the player stands ON that terrain, not ${st.y - st.ground} above it - ${JSON.stringify(st)}`);
 }
 
 const real = errors.filter((e) => !/CURSOR\.IMG|Failed to load resource/.test(e));

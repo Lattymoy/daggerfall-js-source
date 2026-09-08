@@ -147,6 +147,10 @@ tree took (VC4b-VC4e):
    the scattering, the moons, the stars and the shadow deck, and the
    ease and the front already drive it. The mod stays 1:1 behind its
    switch, clouds and all; the new clouds do not draw under it.
+   **DS2 (2026-09-08) reversed the last clause on Mac's word** ("the
+   procedural sky mod doesn't apply our enhanced clouds"): the clouds
+   ride the lane, the mod's sheets stand down under them, `?clouds=off`
+   restores them - `07-Rendering/Dynamic-Skies.md` DS2.
 2. **A sky-space map, not a per-pixel march.** Clouds are at infinity
    for translation, so a hemisphere map is camera-independent: the
    march can be spread across frames without reprojection, the

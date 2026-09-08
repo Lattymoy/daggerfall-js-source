@@ -729,6 +729,7 @@ export class DynamicSkiesRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** the vendored textures by file name, once uploaded */
     this.textures = new Map();
+    this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
     this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);   // likewise
     this.clearColor = new Float32Array([0.4667, 0.5137, 0.7176]);   // FogSunny's day colour until the first state
@@ -800,7 +801,7 @@ export class DynamicSkiesRenderer {
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
     gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);
-    for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0);
+    for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 : (mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0));   // DS2: opacity 0 to the shader under the volumetric clouds; the material keeps the preset's
     for (const name of COLOR_PROPERTIES) {
       const c = mat[name] ?? MATERIAL_DEFAULTS[name];
       if (VEC3_COLOR.has(name)) this._color3(u[name], c);

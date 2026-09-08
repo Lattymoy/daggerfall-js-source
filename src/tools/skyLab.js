@@ -4,6 +4,7 @@
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
 // for the probe, and `?still` freezes the clouds' drift.
 import { EnhancedSkyRenderer, skyState, retroFor, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
+import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS2: the clouds' state under the mod, as the game builds it
 import { MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../systems/gameDate.js';   // CLK3: the clock's own fraction, as the dome takes it
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: the mod's pass in the lab too - ?sky=dynamic
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';
@@ -34,7 +35,7 @@ if (!dynamicOn) sky.retro = retroFor(location.search);   // ES1e: the lab shows 
 // VC3: the volumetric clouds over the dome, as the game draws them; built on the first frame
 const cloudsDoor = params.get('clouds');
 let clouds = null;
-if (!dynamicOn && cloudsDoor !== 'off') sky.cloudsExternal = true;
+if (cloudsDoor !== 'off') sky.cloudsExternal = true;   // DS2: the mod's sheets stand down under the clouds too
 const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);
@@ -106,9 +107,15 @@ function frame() {
   gl.enable(gl.CULL_FACE); gl.enable(gl.DEPTH_TEST);
   const yaw = Number($('yaw').value) * Math.PI / 180, pitch = Number($('pitch').value) * Math.PI / 180;
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
-  if (!dynamicOn && cloudsDoor !== 'off') {
+  if (cloudsDoor !== 'off') {
     clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
-    clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, dtMin, labDrift, 0);   // CLK1: game minutes, the lab's own integral
+    // DS2: under the mod the clouds take the synthesised state the game
+    // gives them - the mod's sun, moons and horizon, the port's colours
+    const row = WEATHER_SKY[$('weather').value] ?? WEATHER_SKY.sunny;
+    const cst = dynamicOn
+      ? cloudsStateUnderMod(sky.state, dynamicMoonState(dyn, minuteOfDay, row.cover), { minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift })
+      : sky.state;
+    clouds.setState(cst, { cover: cst.cloudCover, soft: cst.cloudSoft }, $('weather').value, dtMin, labDrift, 0);   // CLK1: game minutes, the lab's own integral
     clouds.update([0, 0, w, h]);
     if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture
     else clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);

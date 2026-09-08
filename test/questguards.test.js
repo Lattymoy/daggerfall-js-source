@@ -354,7 +354,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   // is raised once per release, still before the ready clears.
   // AUDIT 58: the tail also zeroes readySpellCastingCost, as DFU's own
   // release handler does at :2137-2141.
-  assert.match(hm, /const done = \(v\) => \{ onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; \};/,
+  assert.match(hm, /const done = \(v\) => \{ lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; \};/,   // FIX-F: lastSpell first (:2136), as DFU's own order
     'every release path raises CAST before the ready clears');
   assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 5,
     'four range arms plus the unknown-range refusal all leave through it');

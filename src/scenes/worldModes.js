@@ -58,7 +58,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX, trs, multiply, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
-import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
+import { routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey, isSwingButton, swingHeld } from '../ui/input.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -317,7 +317,15 @@ export function createWorldModes(host) {
     // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads them
     // (`player` is the host destructure below; this runs at death, long
     // after it binds - the U45 TDZ shape only bites immediate reads).
-    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) });   // D1
+    if (!(interiorOverlay instanceof DeathScreen)) {
+      // FIX-E: the one forced overwrite of this slot releases what it
+      // overwrites - dungeonContext's presenter has always said so, and
+      // this one did not: an enhanced door (a fixed, inset-0 host at
+      // z-index 13) left in the slot stayed in the DOM over the death,
+      // the video and whatever followed, eating every pointer event.
+      interiorOverlay?.dispose?.();
+      interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) });   // D1
+    }
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
   // registered its presenter, and used to overwrite it for good - a
@@ -5594,7 +5602,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:5888's own wave-46 note); the interior
+          // a blow (world.js:5890's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6360,12 +6368,12 @@ export function createWorldModes(host) {
         : null;
   addEventListener('mousemove', (e) => {
     const sink = modalAttackSink();
-    if (sink && document.pointerLockElement === canvas && (e.buttons & 2)) {
+    if (sink && document.pointerLockElement === canvas && swingHeld(e.buttons)) {   // FIX-F: the registry's button
       sink(e.movementX, e.movementY, true);
     }
   });
   addEventListener('mouseup', (e) => {
-    if (e.button === 2) modalAttackSink()?.(0, 0, false);   // the RELEASE is never gated - a window opened mid-swing must still let go
+    if (isSwingButton(e.button)) modalAttackSink()?.(0, 0, false);   // the RELEASE is never gated - a window opened mid-swing must still let go
   });
   addEventListener('mousedown', (e) => {
     // I4: a right-click on a window is the WINDOW's (the remove
@@ -6375,7 +6383,7 @@ export function createWorldModes(host) {
     // (UserInterfaceManager.cs:179-185), so the click never reaches
     // WeaponManager - and here it reached interceptAttack first, so a
     // readied spell was CAST by a right-click meant to remove an item.
-    if (e.button === 2 && !modalWindowUp()) modalAttackSink()?.(0, 0, true);
+    if (isSwingButton(e.button) && !modalWindowUp()) modalAttackSink()?.(0, 0, true);
   });
 
   /** U43: the interior host's routeKey context - the same shape the
@@ -6670,6 +6678,8 @@ export function createWorldModes(host) {
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    recastSpell() { magic?.recastSpell(); },        // FIX-F: routeKey's arms (EntityEffectManager.cs:257-270)
+    abortSpell() { magic?.abortReadySpell(); },
     // AUDIT 58 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin

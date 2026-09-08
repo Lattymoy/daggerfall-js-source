@@ -840,7 +840,9 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // ...and when the network lands, tears down every pixel built without
   // one so the stream rebuilds it - on BOTH arrival paths, since the
   // mod-data path returns early.
-  assert.match(world, /function rebuildRoadless\(\) \{[\s\S]{0,300}if \(!p\.withRoads\) \{ destroyPixel\(p\.px, p\.py, \{ collectLoose: false \}\); roadless\+\+; \}/);
+  // FIX-C: the arrival MARKS the sweep; the frame RUNS it (between builds), and the sweep re-queues what it tears down
+  assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/);
+  assert.match(world, /function sweepRoadless\(\) \{[\s\S]{0,400}for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\s*\n\s*queue\.push\(\.\.\.again\.sort\(/);
   assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
   assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
   // A pixel IN FLIGHT when the network landed arrives roadless after the

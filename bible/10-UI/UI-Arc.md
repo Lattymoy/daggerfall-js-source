@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1735 (the factory) and :1904 (a
+                        worldModes.js:1743 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:827, world.js:1436,
+                        dungeonContext.js:827, world.js:1470,
                         exterior.js:1844. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1475, dungeonContext.js:3180. A seam
+    / NOTEBOOK          world.js:1509, dungeonContext.js:3180. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7763,7 +7763,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2546 as a second book built by hand 342 lines below the
+worldModes.js:2554 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7846,7 +7846,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1722 and
+questJournal.js from charSheetNav:53, world.js:1756 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8473,7 +8473,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5101` and `dungeonContext.js:1271` answer the same
+`worldModes.js:5109` and `dungeonContext.js:1271` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8538,7 +8538,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:431` routed
+The port had the DOOR and not the room. `input.js:470` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9717,9 +9717,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4661`,
+the other half went stale unnoticed. (The rest cite named `world.js:4708`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4667` now.)
+deleted the second and the cite is `world.js:4714` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10337,6 +10337,114 @@ page and consumes the click before any other arm, which is the message
 box's own behaviour and removes the pre-existing fall-through with it.
 The attribute buttons still pop their descriptions when no dialog is up
 (`:925-941`) - the consume belongs to the dialog, not to the sheet.
+
+## FIX-D: THE DIGIT FIVE (2026-09-08)
+
+Mac: "the enhanced font number 5 looks like an 8." It does, and it is
+the glyph. The enhanced skin is set in Pixelify Sans (PX1), whose 5 is
+drawn with a cut top-left corner; rendered here at 12, 15, 26 and 36px,
+at weights 400 through 700, with and without the HUD's 2px shadow and
+at the HUD scale's fractional sizes, it reads as an 8 or an S in every
+row - so not the smoothing (`-webkit-font-smoothing: none` is a macOS
+no-op elsewhere), not the synthetic bold the damage numbers ask for,
+not the shadow. The face ships no alternate: its GSUB carries ccmp,
+frac, liga and locl, and its only five is `five`.
+
+So the five is another face's. Silkscreen (OFL 1.1, the Silkscreen
+Project Authors) is a pixel face whose digits stand at Pixelify's
+height and stroke, and its 5 is a 5. It is subset to the one code point
+U+0035 (520 bytes, `vendor/silkscreen-five/` with its OFL and the
+pyftsubset line), carried as a data URI in `ui/pixelifyFive.js` under
+its own family name `Pixelify Five`, declared over `unicode-range:
+U+0035` only, and put FIRST in every Pixelify stack (`PIXEL_STACK`, the
+nine roots in the skin and the two on the landing page): the browser
+takes the 5 from it and every other glyph falls through to Pixelify.
+No request is made for it - the Ledger's "one third-party request" row
+stands - and the OFL's Reserved Font Name is not used as the family.
+
+Candidates were rendered side by side inside Pixelify strings (VT323,
+DotGothic16, Press Start 2P, Silkscreen) before choosing; Press Start
+2P's 5 is a different weight, VT323's and DotGothic's sit lower. The
+landing page's no-raster law (U60) now admits exactly one `url()`: the
+font data URI, which is typography, not a picture.
+
+## FIX-E: THE END OF A RUN NAVIGATES, WHATEVER THE VIDEO DOES (2026-09-08)
+
+Mac: "When dying and returning to the main menu, the game bugs and
+you're unable to make selections." The return to the menu is a real
+page navigation (`location.href = location.pathname`), so nothing
+leaks across it; the failure lived in the window BEFORE it. D1's seam
+`endRunToTitleMenu` claimed the frame FIRST - the host loop dead from
+that instant, its keydown ladder still attached and consuming every
+key under the death overlay (townTalk's overlay rung preventDefaults
+them all), the pointer still locked - and then put two unbounded
+awaits between the kill and the navigation: `playVideo`, whose promise
+settles only from its own rAF frame (a backgrounded tab, a lost GL
+context or a stalled audio clock never delivers one), and a `getBytes`
+with no timeout. The catch covered a rejection, not a promise that
+never settles. That state had no way out: a frozen last frame under
+"YOU HAVE DIED", keys eaten, no menu.
+
+The seam is the infection videos' shape now (AUDIT 39 #160): the HOLD
+(`holdFrame`), which the host survives idle; the navigation in a
+`finally`, so every path out navigates; and a watchdog (30 s, well
+past ANIM0012's length), so "never settles" is a bounded wait. And the
+death screen's own two choices are honest: its "F11 load" reached
+nothing above ground - the world host runs its own ladder and its
+QuickLoad arm stood BELOW the townTalk rung, while ui/input.js's
+routeKey lets QuickLoad through the overlay gate for the dungeon and
+interior hosts precisely so that hint is true - so the world's arm
+stands above the rung now; the fixed city, which has no save path,
+draws "ENTER end" alone. The interior host's forced overwrite of its
+overlay slot disposes what it overwrites (an enhanced door left there
+is a fixed inset-0 host at z-index 13 over everything after), as the
+dungeon's presenter has always done. Pinned in fixe_deathMenu.test.js:
+the hold, the release on every path, the watchdog, the arm's place,
+the dispose, the hint.
+
+## FIX-F: THE KEYBINDS - THE DOOR, AND THE ROWS NOTHING READ (2026-09-08)
+
+Mac: "Changing keybinds in classic/enhanced do not work." The binding
+LAW was sound - a rebind round-trips registry, staging, apply, storage
+and reload - and two things around it were not.
+
+THE ENHANCED SKIN HAD NO DOOR. The only rebinding UI in the port is
+the classic canvas ControlsWindow, reached from the classic pause
+window's CONTROLS button, and U51's enhanced pause listed Resume, Save,
+Load, Settings, Mods, About and Exit - never Controls. On the DEFAULT
+skin a player could not change a key at all. `ui/enhancedControls.js`
+is the pane: the same law (`systems/controlsConfig.js` - staging,
+duplicates, apply; `inputActions.js` - the registry and its save) with
+a DOM view in the skin's own classes; Escape → System → Controls in
+the pause, and Controls on the boot menu's rail. Click a binding to arm
+capture; the next keydown binds (Escape too - ReservedKeys is empty),
+a modifier-held key binds the combo; ✕ or right-click prompts to
+remove; DEFAULTS behind a confirm; duplicates coloured and blocking
+CONTINUE with the classic window's own words; CONTINUE applies and
+saves; leaving discards. The capture listener is a document keydown at
+capture phase that stops propagation, so the hosts' ladders never see
+the key, and the target is a button, so CG2's field rule stays false.
+The advanced six ride in a second group. Fourteen pins in
+enhancedControls.test.js.
+
+THE CLASSIC GRID OFFERED ROWS NOTHING READ. SwingWeapon: every host
+swung on the raw right button while the registry carried Mouse1 →
+SwingWeapon (InputManager.cs:1010) - the swing is the registry's now
+(`isSwingButton`, `swingHeld`, in all four hosts and routeMouseDrag).
+TurnLeft/TurnRight/LookUp/LookDown: InputManager.FindKeyboardActions
+(:1854-1865) sets keyboardLookX/Y and PlayerMouseLook takes it as a
+look unit a frame; `keyboardLook` feeds the hosts' look filter at that
+rate per second (`keyboardLookRate`, ui/lookSettings.js - one
+departure of kind, recorded there: DFU's keyboard turn is frame-rate
+bound, and additive with the mouse rather than DFU's override-for-the-
+frame). RecastSpell/AbortSpell: EntityEffectManager.cs:257-270 - Q
+readies the last spell cast (the book in the pack, no animation
+playing), E drops the readied one; `hostMagic` tracks `lastSpell` and
+carries both, and the two arms are in every host's dispatch. The F8
+debug arm sat ABOVE the registry read and ate a bound F8; the interior
+host read a raw M for the automap - both through `actionOf` now. Slide
+and CenterView have no consumer in DFU either (only the enum names
+them) and stay as offered. Pinned in fixf_keybinds.test.js.
 
 ## CG2: A DOM TEXT FIELD OWNS ITS KEY (2026-09-08)
 
