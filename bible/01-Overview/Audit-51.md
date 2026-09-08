@@ -53,7 +53,7 @@ TILEMAP is `JobA.Idx(x, y, tDim)` = `x + y*tDim` (TerrainHelper.cs:170,
 with JobHelpers.cs:19-22 `Idx(r, c, dim) = r + c*dim`), and the
 HEIGHTMAP is `JobA.Idx(y, x, hDim)` = `y + x*hDim` (TerrainSampler
 .cs:123; DefaultTerrainSampler.cs:77-78 takes x from `Col` and y from
-`Row`) - which is what `terrainSampler.js:139` writes and what every
+`Row`) - which is what `terrainSampler.js:144` writes and what every
 consumer in this tree reads. The mod reads its tile at `Idx(x, y, tDim)`
 and its corner base at `Idx(y, x, hDim)`: each index in the layout that
 owns it. The port reads the tile at `y*tDim + x` and the base at

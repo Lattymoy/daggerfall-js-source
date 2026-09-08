@@ -143,7 +143,21 @@ export function generateTileData(heightmapData, mapPixelX, mapPixelY, hDim = HEI
     const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tdDim))));
     const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tdDim))));
     // x & y swapped in heightmap for TerrainData.SetHeights().
-    const height = heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT;
+    //
+    // WATER1 (2026-09-08): THE COMPARE IS FLOAT32'S, AS DFU'S IS. The
+    // sampler clamps the sea to SCALED_OCEAN_ELEVATION and stores
+    // scaledHeight / MaxTerrainHeight in a Float32Array; this job
+    // multiplies it back. In C# every step is a float: 27.2f / 1539f *
+    // 1539f rounds BACK to 27.2f and `<=` holds. In JS the product is a
+    // double - fround(27.2 / 1539) * 1539 = 27.20000077 - and against
+    // the double 27.2 the compare FAILED for every clamped sea sample:
+    // through this job an open ocean was 0 water corners in 16641
+    // (test/terrain.test.js pins the flat-sea case), and every ocean
+    // tile the port ever drew was the beach band's dirt. The height is
+    // rounded to float32 and compared against the reference's float32
+    // thresholds (terrainSampler.js: the constants are the floats), which
+    // is the arithmetic the reference does.
+    const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);
 
     if (height <= SCALED_OCEAN_ELEVATION) {
       tileData[index] = WATER;
@@ -151,7 +165,7 @@ export function generateTileData(heightmapData, mapPixelX, mapPixelY, hDim = HEI
     }
     // A little +/- randomness so the beach line isn't too regular.
     const jitter = UMRandom.createFromIndex(index >>> 0).nextFloatRange(-1.5, 1.5);
-    if (height <= SCALED_BEACH_ELEVATION + jitter) {
+    if (height <= Math.fround(SCALED_BEACH_ELEVATION + jitter)) {
       tileData[index] = DIRT;
       continue;
     }

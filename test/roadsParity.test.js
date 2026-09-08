@@ -43,7 +43,7 @@ test('AUDIT 51: our painter matches the mod\u2019s PaintPath byte for byte over 
 // place in scan order, on the two layouts that own them: the TILEMAP is
 // x + y*tDim (JobA.Idx(x, y, tDim), TerrainHelper.cs:170) and the
 // HEIGHTMAP is y + x*hDim (JobA.Idx(y, x, hDim), TerrainSampler.cs:123
-// - what terrainSampler.js:139 writes). The mod reads both in their own
+// - what terrainSampler.js:144 writes). The mod reads both in their own
 // layout and so does the port. MODS AUDIT (2026-09-08): there is NO
 // divergence - AUDIT 51 and AUDIT 58 both recorded one ("the mod's
 // sample base is the transpose"), and it was AUDIT 58's own fix of the
@@ -90,7 +90,7 @@ test('AUDIT 51: the smoother is SmoothRoadsJob - road and water only, four corne
 // min-inclusive and MAX-EXCLUSIVE - and the port's was max-inclusive:
 // the column x == xMax and the row y == yMax were smoothed by the mod
 // and skipped here. The rect is DFU's (xMax = xmax + extraClearance,
-// terrainTiles.js:257), so the boundary is a real tile column.
+// terrainTiles.js:271), so the boundary is a real tile column.
 test('MODS AUDIT: the smoother skips the rect as Rect.Contains does - min in, max OUT', async () => {
   const { smoothRoadHeights } = await import('../src/world/roadPainter.js');
   const H = 129;
@@ -109,7 +109,7 @@ test('MODS AUDIT: the smoother skips the rect as Rect.Contains does - min in, ma
 // base, so a transposed write agreed with itself and stayed green for
 // three audits. This one asks the question in WORLD terms instead:
 // paint a north-south road and read the samples back through the
-// SAMPLER's own layout (terrainSampler.js:139, sample(x, y) =
+// SAMPLER's own layout (terrainSampler.js:144, sample(x, y) =
 // s[x * hDim + y]). A N-S road lies down tile columns 63/64, so what
 // moves must be sample-x 62..66 spanning the road's length in y - and
 // nothing at sample-y 62..66. Under the transposed base it is exactly

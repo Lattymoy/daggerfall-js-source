@@ -197,6 +197,12 @@ directory by `test/audit18_bible_docs.test.js`:
   enhanced travel map (self-contained, save/restore, mirrorProjectionX
   on its camera like every world pass - see `src/ui/overworldMap.js`
   for the window that drives it).
+- `waterSurface.js` - WATER1 THE WATER SURFACE: the enhanced pass over the
+  exterior water tiles - the terrain grid drawn again and lifted, the
+  water-corner table that inverts the marching squares, the wave, Fresnel,
+  glint and rain shader (`drawWaterSurface` in renderer.js), drawn after
+  every opaque pass of a pixel and before the first flat, in both exterior
+  hosts. Switch `enhancedWater`, `?water=off`. `07-Rendering/Water-Arc.md`.
 - `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning. TWO PROFILES,

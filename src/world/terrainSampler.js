@@ -37,8 +37,13 @@ const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY
 export const BASE_HEIGHT_SCALE = 8;
 const NOISE_MAP_SCALE = 4;
 const EXTRA_NOISE_SCALE = 10;
-export const SCALED_OCEAN_ELEVATION = 3.4 * BASE_HEIGHT_SCALE;
-export const SCALED_BEACH_ELEVATION = 5.0 * BASE_HEIGHT_SCALE;
+// WATER-AUDIT (2026-09-08): THE REFERENCE'S FLOATS. `3.4f * baseHeightScale`
+// is 27.200000762939453 in C#, not the double 27.2 - and the tile job's
+// ocean compare is float32's (terrainTiles.js generateTileData), so the
+// one constant every reader shares is the float, or the port carries
+// two values of "the ocean elevation". The beach's 40 is exact either way.
+export const SCALED_OCEAN_ELEVATION = Math.fround(3.4 * BASE_HEIGHT_SCALE);
+export const SCALED_BEACH_ELEVATION = Math.fround(5.0 * BASE_HEIGHT_SCALE);
 
 /** Verbatim TerrainHelper.CubicInterpolator. */
 export function cubicInterpolator(v0, v1, v2, v3, frac) {

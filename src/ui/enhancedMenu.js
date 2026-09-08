@@ -896,6 +896,12 @@ function paneEnhanced(body) {
     + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
     + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
     + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
+  // WATER1: the water's own switch, beside the environments it stands in.
+  live.append(prefRow('enhancedWater', 'Enhanced water',
+    'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
+    + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
+    + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
+    + 'flat water tile. Takes effect when the world next loads.'));
 
   // EE13 (Mac: a season test option that spawns you somewhere random, so
   // the outdoors can be checked without a walk to a season). A season, a

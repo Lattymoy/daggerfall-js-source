@@ -450,3 +450,34 @@ test('terrain: nature on Daggerfall environs - integration pins', { skip: skipRe
   assert.equal(wild[0].record, 4);
   approx(wild[0].y, 373.096, 1e-3);
 });
+
+test('WATER1: a sea clamped to the ocean elevation is WATER through generateTileData - float32 arithmetic, as DFU\'s', async () => {
+  // THE DEFECT: the sampler stores 27.2 / 1539 in a Float32Array and
+  // the tile job multiplies it back in double arithmetic: 27.20000077,
+  // which is not <= the double 27.2. C# rounds the product back to
+  // 27.2f. Every clamped sea sample fell through to the beach band, so
+  // an open ocean was 16641 dirt corners and not one water tile -
+  // found by the water lab's first render, where the sea was sand.
+  const { generateTileData } = await import('../src/world/terrainTiles.js');
+  const sea = new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION).fill(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);
+  assert.ok(sea[0] * MAX_TERRAIN_HEIGHT > SCALED_OCEAN_ELEVATION, 'the double product overshoots the threshold - the trap this pins');
+  const td = generateTileData(sea, 500, 250);
+  let water = 0;
+  for (const v of td) if (v === 0) water++;
+  assert.equal(water, td.length, 'every corner of a flat sea is water');
+  // and a sample two float32 steps above the clamp is the beach, not water -
+  // a guard against an over-broad fix (an epsilon), not the mutation killer
+  // above (WATER-AUDIT)
+  const shore = new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION).fill(Math.fround(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT) * (1 + 2e-7));
+  const td2 = generateTileData(shore, 500, 250);
+  let water2 = 0;
+  for (const v of td2) if (v === 0) water2++;
+  assert.equal(water2, 0, 'a step above the sea is land');
+  const src = readFileSync(new URL('../src/world/terrainTiles.js', import.meta.url), 'utf8');
+  assert.match(src, /const height = Math\.fround\(heightmapData\[hy \+ hx \* hDim\] \* MAX_TERRAIN_HEIGHT\);/, 'the height is the reference\'s float');
+  assert.match(src, /if \(height <= SCALED_OCEAN_ELEVATION\) \{/, 'against the reference\'s float threshold');
+  assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
+  assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) \{/, 'and the beach the same');
+  // WATER-AUDIT: the jitter is float32 per operation, as NextFloat(min, max) is
+  assert.match(readFileSync(new URL('../src/formats/umRandom.js', import.meta.url), 'utf8'), /return Math\.fround\(Math\.fround\(this\.nextFloat\(\) \* Math\.fround\(max - min\)\) \+ min\);/);
+});
