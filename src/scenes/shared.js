@@ -6,6 +6,7 @@
 // the shape that has recurred at every audit since 17h.
 
 import { DFPalette } from '../formats/dfPalette.js';
+import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
@@ -14,10 +15,12 @@ import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
+import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
+import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
@@ -195,12 +198,20 @@ export function createSkyController(gl, params) {
   // pass that nothing marks, and needs no mark: the renderer's EV6
   // program/VAO shadows reset at every beginFrame, and no renderer entry
   // point runs between this construction and the first).
+  // DS2 (2026-09-08, Mac: "the procedural sky mod doesn't apply our
+  // enhanced clouds"): THE CLOUDS RIDE THE LANE, NOT THE DOME. They are
+  // built whenever the enhanced lane has a sky - the port's dome or the
+  // mod's skybox - and under the mod its two textured cloud sheets stand
+  // down the way the dome's decks do (cloudsExternal), so one field of
+  // cloud is drawn over either sky and the ground takes its shadow from
+  // the same map. `?clouds=off` gives the mod its own sheets back.
   const cloudsDoor = params.get('clouds');
-  const clouds = enhancedSky && cloudsDoor !== 'off'
+  const clouds = enhancedLane && cloudsDoor !== 'off'
     ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
-  if (clouds) enhancedSky.cloudsExternal = true;
+  if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
-  const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;
+  if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
+  const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -443,7 +454,7 @@ export function createSkyController(gl, params) {
         const nowMin = extra?.classicMinutes ?? 0;
         const dt = lastMin === null || nowMin < lastMin ? 0 : nowMin - lastMin;   // GAME MINUTES
         lastMin = nowMin;
-        const dtReal = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));   // the mod's own frame (DS1)
+        const dtReal = weatherAt === null ? 0 : Math.min(MAX_DELTA_SECONDS, Math.max(0, seconds - weatherAt));   // the mod's own frame (DS1): Time.deltaTime, clamped as Unity clamps it
         weatherAt = seconds;
         // WIND1: THE WIND IS ITS OWN STATE, and the sky's row takes it
         // rather than carrying a fixed vector per weather. The model
@@ -496,10 +507,19 @@ export function createSkyController(gl, params) {
           const st = dynamic.tick({
             minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,
             weatherScale: extra?.sun ?? weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
+            playerPos: extra?.pos ?? null,   // FlashOnce reads playerTransform.position live (MODS AUDIT)
           });
           dynamicSky.setState(st);
           dynamicDeck = { cover: weatherRowNow.cover, soft: Math.max(1e-3, weatherRowNow.soft), wind: weatherRowNow.wind, time: seconds, drift: driftXZ, amount: 0 };
           dynamicMoons = dynamicMoonState(dynamic, minuteOfDay, weatherRowNow.cover);
+          // DS2: the clouds over the mod's sky - the port's cloud colours
+          // on the eased row, lit by the MOD's sun and moons, fading to
+          // the MOD's horizon; and the ground's deck takes their shadow.
+          if (clouds) {
+            clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: weatherName, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: weatherRowNow }),
+              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null);
+            if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
+          }
           return;
         }
         enhancedSky.setState(skyState({
@@ -561,35 +581,6 @@ export function createSkyController(gl, params) {
     },
   };
 }
-
-/** DS1: the moons as moonlightTerm reads them, from the mod's own
- *  state: each moon's place is the shader's orbit (the CPU twin in
- *  systems/dynamicSkies.js), its phase is DFU's ladder, its visibility
- *  is "up, and not in daylight" on the shader's own `day` term
- *  (Remap(sunY, NightEnd..NightStart)), its colour the preset's. Night
- *  is the port's law, as for the enhanced dome. */
-function dynamicMoonState(dyn, minuteOfDay, cover = 0) {
-  const mat = dyn.mat;
-  const sunY = dyn._sunDir?.[1] ?? 0;
-  const span = mat._NightStartHeight - mat._NightEndHeight;
-  const day = span === 0 ? (sunY >= mat._NightStartHeight ? 1 : 0) : Math.max(0, Math.min(1, (sunY - mat._NightEndHeight) / span));
-  // AUDIT 61: the dome dims its moonlight by the clouds (`1 - cover *
-  // 0.35`, enhancedSky.js); the mod's clouds are textures the CPU
-  // cannot sample, so the port's eased cover row - the same number the
-  // ground's readers take - stands in for them.
-  const cloud = 1 - cover * 0.35;
-  const moon = (which, phase, color) => {
-    const dir = dyn.moonDirection(which);
-    return { dir, vis: dir[1] > 0 ? (1 - day) * cloud : 0, phase, color: [color[0], color[1], color[2]] };
-  };
-  return {
-    night: isNight(minuteOfDay),
-    daylight: daylightScale(minuteOfDay),   // CLK3 review: the rig's curve (the mod's own while it is the sky), so the moonlight ramps here too
-    masser: moon('Moon', dyn.phases?.masser?.phase ?? -1, mat._MoonColor),
-    secunda: moon('Secunda', dyn.phases?.secunda?.phase ?? -1, mat._SecundaColor),
-  };
-}
-
 
 // =====================================================================
 // THE FOUR-HOST SEAMS (AUDIT 18)
@@ -1513,16 +1504,39 @@ export function fatigueLossMultiplierFor(entity) {
  *
  *  NEVER TRAPS: a missing or undecodable video costs the video, not
  *  the return to the menu. */
-export async function endRunToTitleMenu(renderer) {
-  claimFrame();   // P0: the death video owns the canvas - the host loop stops here
+// FIX-E (2026-09-08, Mac: "when dying and returning to the main menu,
+// the game bugs and you're unable to make selections"): THE KILL CAME
+// BEFORE THE NAVIGATION, WITH NOTHING IN BETWEEN THAT HAD TO END. This
+// seam claimed the frame first - the host loop dead from that instant,
+// its keydown ladder still attached and eating every key under the
+// death overlay, the pointer still locked - and then put two unbounded
+// awaits between the kill and `location.href`: a video whose promise
+// settles only from its own rAF frame (a backgrounded tab, a lost GL
+// context or a stalled audio clock never delivers one) and a fetch with
+// no timeout. The catch covered a REJECTION, not a promise that never
+// settles, so that state had no way out: a frozen frame, a black hole
+// for keys, no menu. Now it is the infection videos' shape: the HOLD,
+// which the host survives; the return in a `finally`, so every path out
+// navigates; and a watchdog, so "never settles" is a bounded wait.
+export const DEATH_VIDEO_WATCHDOG_MS = 30000;   // ANIM0012 runs well under this; a video that has not ended by then is not going to
+async function playDeathVideo(renderer) {
+  const { playVideo } = await import('../ui/videoPlayer.js');
+  const { getBytes } = await import('./dataSource.js');
+  return playVideo(renderer.canvas, renderer, await getBytes('ANIM0012.VID'));
+}
+export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watchdogMs = DEATH_VIDEO_WATCHDOG_MS, setTimer = (fn, ms) => setTimeout(fn, ms) } = {}) {
+  const releaseFrame = holdFrame();   // the death video owns the canvas; the host waits and lives to be navigated away from
   try {
-    const { playVideo } = await import('../ui/videoPlayer.js');
-    const { getBytes } = await import('./dataSource.js');
-    await playVideo(renderer.canvas, renderer, await getBytes('ANIM0012.VID'));
+    await Promise.race([
+      play(renderer),
+      new Promise((resolve) => setTimer(() => resolve('watchdog'), watchdogMs)),
+    ]);
   } catch (e) {
     console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
+  } finally {
+    releaseFrame();
+    exitToTitleMenu();
   }
-  exitToTitleMenu();
 }
 
 /**
@@ -1766,7 +1780,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *           'look'   - nobody is swinging; the drag is a look
  */
 export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
-  if (!walkMode || !(buttons & 2)) return 'look';
+  if (!walkMode || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 

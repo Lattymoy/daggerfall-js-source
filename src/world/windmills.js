@@ -51,19 +51,22 @@
 // ── THE WIND IS ALREADY IN THE PORT, WITH ONE HOME ───────────────
 //
 // ES1c gave the enhanced sky a per-weather wind vector (dome units a
-// second) and, because nothing about a sky changes in a frame, an
-// EASED one: the controller keeps a row and walks it toward the row
-// the sim asks for over WEATHER_EASE_MINUTES (game minutes since CLK1). That row is the port's
-// only answer to "how hard is it blowing right now", so this module
-// imports WEATHER_SKY rather than restating a single number of it,
-// and takes the EASED row - the same object the shader is drawing the
-// clouds with - as its input.
+// second) and the controller's `wind()` is the ONE door every consumer
+// reads it through. Since WIND1 the vector behind that door is the
+// wind MODEL's (systems/wind.js): a day's calm, rolled and breathing,
+// with a weather change as a FRONT the wind leads - so this module
+// anchors its fair-weather rate to the model's own fair day
+// (WIND_ROW_FAIR) and its stall to the model's floor (WIND_ROW_CALM),
+// not to the sky table's fixed sunny row that nothing has read since
+// (MODS AUDIT, 2026-09-08: the gain was still derived from that row,
+// and the stall sat ABOVE the model's floor while the prose here said
+// no row was below it).
 //
 // The property that buys is the one worth having: THE BLADES AND THE
-// CLOUDS ARE DRIVEN BY THE SAME WIND. A storm rolls in, the sky's
-// deck picks up over WEATHER_EASE_MINUTES of game clock (fourteen real
-// seconds at the default TimeScale), and the mill in the field below
-// picks up with it on the same curve, because it is the same number. Nothing is synchronised and nothing needs to be.
+// CLOUDS ARE DRIVEN BY THE SAME WIND. A front builds, the sky's deck
+// picks up on the model's rise, and the mill in the field below picks
+// up with it on the same curve, because it is the same number. Nothing
+// is synchronised and nothing needs to be.
 //
 // ── THIS MODULE IS PURE ──────────────────────────────────────────
 //
@@ -75,7 +78,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
-import { WEATHER_SKY } from '../render/enhancedSky.js';
+import { WIND_ROW_CALM, WIND_ROW_FAIR } from '../systems/wind.js';
 import { multiply, trs, quatToMat4, transformPoint } from './mat4.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -151,16 +154,18 @@ export const CALM_ROTOR_DEG_PER_SEC = 13;
  *  never past the furl) rather than asserting these numbers back.
  *
  *  STALL_WIND: a real mill needs enough wind to break friction, so the
- *  rate is measured from a floor rather than scaled from zero. NO
- *  SHIPPED SKY ROW IS BELOW IT - fog is the calmest at |wind| 0.0063
- *  and crawls at about three degrees a second, which is the intent:
- *  the floor is what makes fog a CRAWL instead of a proportional
- *  fifth-speed, and it stops a becalmed row dead if one is ever tuned.
+ *  rate is measured from a floor rather than scaled from zero. The
+ *  floor is the wind model's own: WIND_ROW_CALM is the row at zero
+ *  strength, a dead calm, and the mill stands still there and turns
+ *  the moment the wind is anything at all - the stillest day the model
+ *  rolls crawls at about two degrees a second, and no day it rolls
+ *  stalls (its calm never reaches zero). Derived, so a re-tuned model
+ *  cannot put its floor above the stall and stop every mill unseen.
  *
  *  FURL_DEG_PER_SEC: a miller furls the sails in a gale rather than
- *  let the mill tear itself apart. Without a cap, thunder drives the
- *  blades to a blur that reads as a bug. */
-export const STALL_WIND = 0.005;
+ *  let the mill tear itself apart. Without a cap, a full thunder front
+ *  drives the blades to a blur that reads as a bug. */
+export const STALL_WIND = WIND_ROW_CALM;
 export const FURL_DEG_PER_SEC = 40;
 
 /** The magnitude of a sky wind row, and the ONE home of that reading:
@@ -172,14 +177,16 @@ export function windSpeed(wind) {
 }
 
 /** Degrees a second per unit of wind ABOVE the stall, chosen so that
- *  the fair-weather row turns at exactly CALM_ROTOR_DEG_PER_SEC.
+ *  the model's FAIR DAY turns at exactly CALM_ROTOR_DEG_PER_SEC.
  *
- *  Derived, never typed: the day someone re-tunes WEATHER_SKY.sunny -
- *  and ES1's rows have been re-tuned once already - a written-down
- *  gain would quietly stop meaning "13 in fair weather", which is the
- *  only thing it is for. */
+ *  Derived, never typed: the day someone re-tunes the wind model - and
+ *  the sky's rows were re-tuned once, then replaced whole by WIND1 - a
+ *  written-down gain would quietly stop meaning "13 in fair weather",
+ *  which is the only thing it is for. WIND_ROW_FAIR is the model's mean
+ *  strength with no front up; a still day turns slower, a brisk one
+ *  faster, and a full thunder front (strength 1) runs past the furl. */
 export const ROTOR_GAIN =
-  CALM_ROTOR_DEG_PER_SEC / (windSpeed(WEATHER_SKY.sunny.wind) - STALL_WIND);
+  CALM_ROTOR_DEG_PER_SEC / (WIND_ROW_FAIR - STALL_WIND);
 
 /** Degrees a second, from the eased sky wind. Monotone in the speed,
  *  zero at and below the stall, never past the furl. */

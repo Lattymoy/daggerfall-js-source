@@ -402,7 +402,7 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
     'and cites the driver that actually carries the gate, not Update');
   assert.match(src('src/scenes/dungeon.js'), /if \(!overlayHeld\) ctx\.automapTick\?\.\(dt, cam\.pos, fwd\);/,
     'the standalone dungeon host has always had it');
-  assert.match(ij, /if \(e\.code === 'KeyM'\) \{ toggleAutomap\(\); e\.preventDefault\(\); return; \}/, 'and routes the key');
+  assert.match(ij, /if \(actionOf\(e, keys\) === 'AutoMap'\) \{ toggleAutomap\(\); e\.preventDefault\(\); return; \}/, 'and routes the key (FIX-F: the registry\'s, not a raw M)');
   assert.match(ij, /insideBuilding: true,/);
 
   // THE POINTER SEAM, the c2/S4 rule applied to the slot this window

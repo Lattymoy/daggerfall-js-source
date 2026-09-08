@@ -42,8 +42,9 @@ const DIM = [0.5, 0.5, 0.45, 1];
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load' } = {}) {
     this.done = false;
+    this.hint = hint;   // FIX-E: a host with no quickload (the fixed city) draws no F11 - a hint that is a lie is worse than none
     // MERGE AUDIT: the death clip is the character's OWN race/gender
     // Pain3 whenever CombatVoices is on (it ships on), so the sequence
     // needs an identity. It reads the shared player entity here - ONE
@@ -68,6 +69,6 @@ export class DeathScreen {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.05, 0.01, 0.01, 0.35 + 0.6 * fade]);
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    drawText(renderer, font, 'ENTER end   F11 load', (canvas.width - measureText(font.fnt, 'ENTER end   F11 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    drawText(renderer, font, this.hint, (canvas.width - measureText(font.fnt, this.hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
   }
 }

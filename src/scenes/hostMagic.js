@@ -36,6 +36,8 @@
 //                               where the dungeon answers a constant.
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1
+import { hasSpellbook } from '../systems/spellMaker.js';   // FIX-F: RecastSpell's book test (EntityEffectManager.cs:260)
+const NO_SPELLBOOK_TEXT = 'You have no spellbook!';   // TextManager noSpellbook (Systems-Arc: the localized string, verbatim)
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach, missileHitsFoe,   // ROAD-H tail: the reach along the normalised direction; the foe's CAPSULE at contact
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
@@ -121,6 +123,7 @@ export function createPlayerMagic({
   // the 0.2s of hand motion is a window in which nothing can be
   // readied and nothing can be cast.
   let castInProgress = false;
+  let lastSpell = null;   // FIX-F: EntityEffectManager's lastSpell (:2136) - what RecastSpell readies
   // ROAD-E6: the LIVE aim. DFU instantiates the missile at the release
   // frame from the caster's transform AT THAT MOMENT (the missile's
   // Start runs DoTouch/DoMissile on the frame it is spawned,
@@ -363,7 +366,7 @@ export function createPlayerMagic({
     const eye = lastAim ? lastAim.eye : p.eye;
     const dir = lastAim ? lastAim.dir : p.dir;
     // :2141 - readySpellDoesNotCostSpellPoints clears with the ready.
-    const done = (v) => { onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; };   // :2137-2141
+    const done = (v) => { lastSpell = sp; onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; };   // :2136-2141 (lastSpell = readySpell, the raise, then the clear)
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; AssignBundle at :2117.
@@ -633,6 +636,26 @@ export function createPlayerMagic({
 
   return {
     readySpell,
+    /** FIX-F: RecastSpell (EntityEffectManager.cs:257-266) - the last
+     *  spell cast is readied again, through SetReadySpell's own gates,
+     *  if there was one, no cast animation is playing (castInProgress
+     *  is PlayerSpellCasting.IsPlayingAnim's stand-in) and the pack
+     *  holds a spellbook; without the book, the localized noSpellbook
+     *  line. Answers whether it readied. */
+    recastSpell() {
+      if (!lastSpell || castInProgress) return false;
+      if (!hasSpellbook(playerEntity)) { say(NO_SPELLBOOK_TEXT); return false; }
+      readySpell(lastSpell);
+      return readiedSpell === lastSpell;
+    },
+    /** FIX-F: AbortSpell -> AbortReadySpell (:268-270, :361-365): only
+     *  with a spell readied; the ready and its free flag drop, and the
+     *  cost with them (the port keeps the cost beside the ready). */
+    abortReadySpell() {
+      if (!readiedSpell) return false;
+      readiedSpell = null; readiedFree = false; readiedCost = 0;
+      return true;
+    },
     castInput,
     update,
     castByItemSelf,   // E2: the enchantCtx applySpellToSelf seam

@@ -191,7 +191,7 @@ topics and organisation info are all *computed and thrown away*.
 **7. The static-NPC conversation is never opened.**
 `TalkManager.cs:2616-2663`. Every non-service static NPC and the guild
 popup's TALK button route here; the port answers "You get no
-response." (`worldModes.js:635`). Again the engine is complete - only
+response." (`worldModes.js:643`). Again the engine is complete - only
 the window mount is missing. (~140 LOC.)
 
 The shape of 4-7 is worth naming on its own: **the port has repeatedly

@@ -54,6 +54,24 @@ export const CALM_BLEND_MIN = 180;
 export const WIND_ROW_CALM = 0.0046;
 export const WIND_ROW_SPAN = 0.0262;
 
+/** A day's calm is rolled in [CALM_MIN, CALM_MIN + CALM_SPAN) - a still
+ *  day to a brisk one - and breathes about DRIFT_MEAN by DRIFT_SWING
+ *  over its hours. Named so the FAIR DAY below is derived from the
+ *  roll rather than measured off it. */
+export const CALM_MIN = 0.06;
+export const CALM_SPAN = 0.50;
+export const DRIFT_MEAN = 0.85;
+export const DRIFT_SWING = 0.15;
+
+/** MODS AUDIT: THE FAIR DAY, in the row's units - the model's mean
+ *  strength with no front up (the calm roll's midpoint at the drift's
+ *  mean), so a consumer that anchors a rate to "fair weather" anchors it
+ *  to the wind that actually blows. The windmill's 13 deg/s is this row
+ *  (world/windmills.js ROTOR_GAIN); before WIND1 it was the sky table's
+ *  fixed sunny vector, which no consumer has read since. */
+export const FAIR_STRENGTH = (CALM_MIN + CALM_SPAN / 2) * DRIFT_MEAN;
+export const WIND_ROW_FAIR = WIND_ROW_CALM + FAIR_STRENGTH * WIND_ROW_SPAN;
+
 /** mulberry32: a small seeded generator, so a day's calm and a front's
  *  roll are the same whenever the same day is replayed. */
 export function seededRng(seed) {
@@ -115,9 +133,9 @@ export function createWindModel({ seed = 7 } = {}) {
 
   const rollDay = (d) => {
     const r = seededRng(seed * 1000003 + d);
-    prevCalm = day === null ? 0.06 + r() * 0.50 : calm;
+    prevCalm = day === null ? CALM_MIN + r() * CALM_SPAN : calm;
     day = d;
-    calm = 0.06 + r() * 0.50;                  // a still day to a brisk one
+    calm = CALM_MIN + r() * CALM_SPAN;                  // a still day to a brisk one
     heading = r() * Math.PI * 2;               // the day's prevailing wind
   };
 
@@ -161,7 +179,7 @@ export function createWindModel({ seed = 7 } = {}) {
 
     /** 0..1: the day's calm, with the front on top of it. */
     strength() {
-      const drift = 0.85 + 0.15 * Math.sin(nowMin / 1440 * Math.PI * 4 + calm * 9);   // the day's own slow breath
+      const drift = DRIFT_MEAN + DRIFT_SWING * Math.sin(nowMin / 1440 * Math.PI * 4 + calm * 9);   // the day's own slow breath
       // The day's calm arrives over its first CALM_BLEND_MIN, from
       // yesterday's - so a still morning after a windy night is a wind
       // dying down, not a switch.

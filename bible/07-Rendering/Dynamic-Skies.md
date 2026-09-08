@@ -205,7 +205,23 @@ ten more the manifest never ships (eighteen in all), the `*Night.json`
 presets, the NoSun/Simple materials (unreachable), the
 sun-shafts scripts (not wired by the mod), the preset-mod door
 (FindPresetMod - no other mod to find), the compiled `.dll`, the C#
-(ported and cited instead).
+(ported and cited instead). And, named by the MODS AUDIT of 2026-09-08,
+the mod's own DEAD members - unreachable in the shipped mod, so not
+ported: `getSunColor` (:607-641), the `AtmosphereLerp`/`SunFogLerp`
+coroutines (:479-508) with `AbortAtmosphereLerp` (:471-478) and
+`calculateScaledLerpDuration` (:510-513) - all behind `HandleDawnDusk`'s
+first-line `return`; `getVanillaFogSettings` (:1143-1159) and
+`setFogSettings` (:1160-1178), no callers; `SetPalettizationMaterial`
+(:1818), `vgaPalette` (:1826+) and `InitLut` (:2333) with
+`BLBFastPalette.cs`, the call site commented at :158; `OnMidday`
+(:380-382); and `onEnable`/`onDisable`/`OnLoadEvent` (:282-301), spelled
+in lower case so Unity never calls them. Also not carried: `Awake`'s
+`Mod.IsReady`, `LateUpdate`'s per-frame `clearFlags = Skybox` (the
+reason the port's pass takes no host fog - see the MODS AUDIT section),
+`LightningFlash.LateUpdate`'s colour re-force (no observable effect),
+the settings file's two section names and descriptions (the pane is a
+flat key list; the per-key descriptions are verbatim), and the
+`$type` discriminators (re-expressed as the presence of `min`/`max`).
 
 The question, for Mac: two texture families name Daggerfall -
 `VanillaStars` and the `CdM*` cloud sheets ("created with Daggerfall's
@@ -402,8 +418,130 @@ The 0.2 s flash duration is set at `BLBSkybox.cs:183`
 (`lightningFlash.flashDuration = 0.2f;` inside the lightning-effect
 setup), not `:184` - `:184` is the blank line before the setup's
 `Debug.Log`. The lane's new pin cited `:184` twice while the production
-comment beside it (`src/systems/dynamicSkies.js:738`) already read
+comment beside it (`src/systems/dynamicSkies.js:745`) already read
 `:183`; the two test cites and the Testing.md row are corrected to `:183`
 and now agree with the port. No behaviour and no other cite moved: the
 five `LightningFlash.cs` lines (`:52`, `:55`, `:61`, `:77`, `:79`)
 re-derived clean.
+
+## MODS AUDIT (2026-09-08) - the 1:1 re-audit against 04506e2
+
+Mac: "go ahead and audit the other mods while youre at it to ensure they
+are 1:1." An Opus explorer fetched `BLBSkybox.cs` (2,378 lines), the
+nine `Scripts/*.cs`, the shader and both includes from
+`drcarademono/dynamic-skies` at `04506e2` and walked the port against
+them: every lifecycle member, all 88 `Set*` calls of `ApplySkyboxSettings`
+in order, the fog, the day parts, the moons, the light curve, the
+lightning, the snow; every uniform the shader reads (96, all declared
+at the same width), the keywords, the colour space, the posterise, the
+cloud blend order, the horizon and the stars; the settings file key by
+key; the presets' nineteen textures against the vendored nineteen; and
+the seam. The vendored files were md5'd against upstream - all
+eighteen comparable ones identical, now sha256-pinned
+(`test/vendorIntegrity.test.js`). The `*Night.json` question was
+settled from upstream too: all seven exist in the repo's `Resources/`
+and the shipped manifest lists NONE, so `GetAsset` returns null and
+index 1 is index 0 - the port's `[s, s]` is exactly right. Every earlier
+cite re-derived clean.
+
+Four departures found, all fixed:
+
+**The double flash's second half was drawn where the player WAS.**
+`FlashOnce` (LightningFlash.cs:83-111) reads `playerTransform.position`
+at :95, and `DoubleFlashRoutine` calls it twice ~0.3 s apart, so the
+second half follows the player. The port copied the position at the
+roll and used it for both halves; the comment beside it described the
+mod. `LightningFlash.tick(dt, playerPos)` takes the frame's position
+now and each entry prefers it (the roll's copy stands for a caller
+without one); the controller hands `extra.pos` through - the same
+camera position VC4 already carried for the clouds.
+
+**A flash rolled under a non-Thunder word froze at the door.** AUDIT 62
+F29 tore the routine down on entering under Thunder; the mod's teardown
+is `if (pendingWeatherType == Thunder)` (:1264), and under any other
+word the leaked subscription (AUDIT 61) can roll a flash whose
+coroutine then RUNS ON indoors on Unity's clock, finishing unseen. The
+port advanced routines from the exterior frame alone, so the burst
+froze mid-step and lit on the first frame back out - F29's failure, in
+the case F29's guard does not cover. `setInside(true)` stamps the real
+clock; the first exterior tick charges the seconds spent inside to the
+routine (a routine rolled and never entered lights at its roll first,
+as `StartCoroutine` runs to the first yield) before its own frame.
+
+**The mod's skybox pass takes no fog, and the port fogged it.** The
+hosts wrote `fogMix = 1 - fogFactor` on the pass when a fog row's
+`excludeSky` was false (the mod's own heavy-fog preset is the one), and
+the fragment mixed the world's fog colour over the encoded dome. The
+mod's shader computes `UNITY_CALC_FOG_FACTOR_RAW(_FogDistance)` at :872
+and every consumer of the factor is commented out (:874-879); and
+`BLBSkybox.LateUpdate` (:320-335) forces the camera's clearFlags back to
+Skybox every outdoor frame - which exists precisely so that DFU's
+heavy-fog handling cannot put a fog colour where the sky is. Under
+heavy fog a mod player sees the mod's Fog preset; the port double-fogged
+it. The mix, its two uniforms and their uploads are gone from the
+dynamic pass; the hosts still write `fogMix` on whichever pass they
+hold (the enhanced sky reads it), and this pass has nothing to apply
+it to.
+
+**`Time.deltaTime` is clamped to `Time.maximumDeltaTime`.** The port
+clamped the mod's real frame at 1 s; Unity's default maximum is 1/3 s,
+and the only consumer is the lightning routine with 0.2 s and 0.1 s
+steps, so a hitch between the two retired a step Unity would have
+carried over. `MAX_DELTA_SECONDS = 1 / 3` (`systems/dynamicSkies.js`),
+read by the controller. The one unverified link: DFU's project
+`maximumDeltaTime` was not read (no DFU tree here); the default is
+assumed.
+
+Two structural corrections with no behavioural effect: `SunSizeConvergence`
+is `public int` on `BLBSkyboxSetting`, so `JsonUtility` truncates at the
+parse - `parseSkyboxSetting` truncates there now, not only at `SetInt`
+(every shipped preset carries 10.0); and `Init` runs `setLunarPhases`
+then `ChangeLunarPhases` (:138-139) BEFORE `OnWeatherChange` - the
+runtime's constructor takes an optional clock and applies the orbits
+when it has one; the controller has none at construction, so the first
+`use()` stays Init's `WorldTime.Now`, and its tick applies them first.
+
+Recorded, not changed: `SetFogDistance` also writes
+`RenderSettings.fogEndDistance` from the PENDING weather's row (:1084);
+the hosts take the same row through `fogSettingsFor()` off the host's
+word, which under the port's front can be a blend of two rows - the
+front is the port's own, separately recorded. `_MoonPhaseOption`,
+`_MoonSpinOption` and `_SecundaSpinOption` are written into `mat` and
+never uploaded, correctly: the shader consumes them as keywords, which
+are baked. `half` is `float` on desktop Unity, so the port's `highp`
+is a no-op there.
+
+## DS2: THE PORT'S CLOUDS OVER THE MOD'S SKY (2026-09-08)
+
+Mac: "The procedural sky mod doesn't apply our enhanced clouds." It
+did not by design - VC3's first decision stood the volumetric clouds
+on the port's dome only ("the new clouds do not draw under it"), and
+the controller built them off `enhancedSky &&`. Under the mod the
+player got its two textured cloud sheets and none of the port's field.
+
+The clouds ride the LANE now: built under either sky (`enhancedLane &&
+cloudsDoor !== 'off'`), and under the mod its two sheets stand down the
+way the dome's decks do - `DynamicSkiesRenderer.cloudsExternal` uploads
+`_CloudTopOpacity` and `_CloudOpacity` as 0 while the material keeps
+the preset's numbers (the dome's `uCloudCover` law, one pass over).
+`?clouds=off` gives the mod its sheets back. The clouds read six
+fields of a state (`cloudLight`: sunDir, sun, masser, secunda; the
+march: cloudLit, cloudShade, horizon), and `cloudsStateUnderMod`
+(`render/dynamicSkiesBridge.js`) answers them: the port's own
+`skyState` for the colours - the eased row's lit and shade, the
+palette's sun at the hour - and the mod for the geometry and the
+horizon: ITS sun direction, ITS moons where its orbits put them (the
+same `dynamicMoonState` the world's moonlight has taken since DS1,
+moved into the bridge with it so the sky lab can import both without
+the whole controller), and ITS fog colour as the horizon the clouds
+fade into. The ground's deck under the mod takes the clouds' shadow
+map (`Object.assign(dynamicDeck, clouds.shadow)`) - "the mod casts
+none" in the seam section above is no longer the whole story: the mod
+casts none, and the port's clouds over it cast theirs. The composite
+lands after the mod's REDUCE_COLOR posterise and its sRGB encode, over
+display values either way, as it lands over the dome.
+
+The lab draws the same: `?sky=dynamic` shows the clouds over the mod's
+pass, with the synthesised state. The Dynamic Skies probe still passes
+(11/11); the VC and enhanced-sky probes unchanged. Pinned in
+ds2_cloudsUnderMod.test.js; the VC3 seam pins re-aimed at the lane.

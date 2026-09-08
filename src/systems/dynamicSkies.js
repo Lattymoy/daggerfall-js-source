@@ -181,7 +181,7 @@ export function parseSkyboxSetting(jsonText) {
   const o = JSON.parse(jsonText);
   const sub = (k) => (typeof o[k] === 'string' ? JSON.parse(o[k]) : {});
   return {
-    SunSize: num(o, 'SunSize'), SunSizeConvergence: num(o, 'SunSizeConvergence'),
+    SunSize: num(o, 'SunSize'), SunSizeConvergence: Math.trunc(num(o, 'SunSizeConvergence')),   // `public int` on BLBSkyboxSetting: JsonUtility truncates at the parse
     AtmosphereLerpDuration: num(o, 'AtmosphereLerpDuration'),
     AtmosphereNormalThickness: num(o, 'AtmosphereNormalThickness'),
     AtmosphereDawnDuskThickness: num(o, 'AtmosphereDawnDuskThickness'),
@@ -722,6 +722,13 @@ export function fogColorNow(setting, atmosphereLerpDuration, sunY) {
  *  Time.time - lastUpdateTime >= 1.0 (:192-203). */
 export const FOG_COLOR_INTERVAL_SECONDS = 1.0;
 
+/** Unity's Time.maximumDeltaTime, its default 1/3 s: the most a frame's
+ *  Time.deltaTime can carry, so a hitch longer than that is spread over
+ *  the frames that follow rather than charged at once. The mod's only
+ *  real-second consumer is the lightning routine (0.2 s and 0.1 s steps),
+ *  where a 1 s clamp retired a step Unity would have carried over. */
+export const MAX_DELTA_SECONDS = 1 / 3;
+
 // ── LightningFlash.cs + LightningFlashListener.cs ─────────────────
 
 /** LightningFlash: a point light over the player, 50% of the time an
@@ -744,7 +751,11 @@ export class LightningFlash {
 
   _range(min, max) { return min + this.rng() * (max - min); }
 
-  /** StartFlash(): the player's position is read at the flash. */
+  /** StartFlash(). `playerPos` is the position at the roll; FlashOnce
+   *  reads `playerTransform.position` LIVE at each flash (:95), so a
+   *  double flash's second half follows the player - `tick` takes the
+   *  frame's position and each entry prefers it (MODS AUDIT: the port
+   *  froze the roll's copy for both halves). */
   startFlash(playerPos) {
     if (!playerPos) return false;
     if (this.rng() < 0.5 / this.timeScale) {
@@ -773,7 +784,8 @@ export class LightningFlash {
   /** Advance the routines by a frame. Returns the light for the point-
    *  light channel ({x, y, z, range, color = colour x intensity}) while
    *  it is on, else null. */
-  tick(dt) {
+  tick(dt, playerPos = null) {
+    this._livePos = playerPos;
     for (const r of this._routines) {
       // The frame that starts a routine turns the light on and is NOT
       // charged against the duration: Unity's `yield return new
@@ -797,7 +809,7 @@ export class LightningFlash {
   }
 
   _enter(r) {
-    if (r.steps[r.step][0] === 'on') this._flashOnce(r.playerPos);
+    if (r.steps[r.step][0] === 'on') this._flashOnce(this._livePos ?? r.playerPos);
   }
 
   /** InteriorTransitionEvent's teardown: StopAllCoroutines and the

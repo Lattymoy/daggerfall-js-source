@@ -111,7 +111,7 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:306-307) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:343-344) - and
     // overlayAction can never answer 'minus', because its typed-
     // character branch (ui/input.js:229) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own

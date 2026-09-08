@@ -295,7 +295,7 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
     // DC1 grew the constructor: every host now leads with the LIVE
     // eyeHeight/capsuleHeight pair (playerdeath.test.js pins each
     // host's exact form); this pin keeps holding the onReset tail.
-    assert.match(code(h), /new DeathScreen\(\{ eyeHeight: [^\n]*, onReset: \(\) => endRunToTitleMenu\(renderer\) \}\)/,
+    assert.match(code(h), /new DeathScreen\(\{ eyeHeight: [^\n]*, onReset: \(\) => endRunToTitleMenu\(renderer\)(?:, hint: '[^']*')? \}\)/,   // FIX-E: the fixed city names its hint
       `${h} must wire the death screen to the shared end-of-run seam`);
   }
 });

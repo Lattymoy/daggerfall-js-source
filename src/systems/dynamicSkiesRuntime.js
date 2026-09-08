@@ -30,7 +30,7 @@ export class DynamicSkies {
    *   { densitySetting, ActivatePixelSnow, MinParticleSize, MaxParticleSize, MaxParticles }
    * @param {() => number} rng Unity's Random.value / Random.Range
    */
-  constructor(assets, settings = {}, rng = Math.random) {
+  constructor(assets, settings = {}, rng = Math.random, { classicMinutes = null } = {}) {
     this.rng = rng;
     this.settings = settings;
     // loadAllSkyboxSettings: one preset per WeatherType; the *Night.json
@@ -68,6 +68,13 @@ export class DynamicSkies {
     this.playerInside = false;
     // InitSnow
     this.pixelSnow = settings.ActivatePixelSnow ? pixelSnowSettings(settings) : null;
+    // setLunarPhases, ChangeLunarPhases (:138-139): the orbits are on the
+    // material the moment Init returns, before the first Update - given
+    // the clock (MODS AUDIT: the port left MATERIAL_DEFAULTS until the
+    // first tick; nothing drew in between, but it is his order).
+    this.phases = classicMinutes === null ? null : applyLunarPhases(this.mat, dateFromClassicMinutes(classicMinutes));
+    this._seconds = null;      // the last frame's real clock (Time.time)
+    this._insideSince = null;  // when the player went in, on that clock
     // Init: currentWeather = None, force, OnWeatherChange(None), SetFogDistance
     this.onWeatherChange('sunny');
     this.setFogDistance('sunny');
@@ -194,6 +201,14 @@ export class DynamicSkies {
     } else if (!inside && this.pendingWeatherType === 'thunder') {
       this.lightningSubscriptions++;
     }
+    // MODS AUDIT: under any OTHER weather the teardown does not run (:1264
+    // is `if (pendingWeatherType == Thunder)`), and a flash the leaked
+    // subscription rolled keeps running as a coroutine on Unity's clock
+    // while the player is inside - it finishes and switches its light
+    // off unseen. The port's routine is advanced by the exterior frame
+    // alone, so it would freeze mid-burst and pay out at the door; the
+    // real seconds spent inside are charged to it on the first frame out.
+    if (inside) this._insideSince = this._seconds;
   }
 
   /**
@@ -204,6 +219,14 @@ export class DynamicSkies {
    */
   tick(f) {
     const dt = f.dt ?? 0;
+    if (this._insideSince !== null) {
+      if (f.seconds !== undefined && f.seconds > this._insideSince) {
+        this.lightningFlash.tick(0);   // a routine rolled and never entered lights at its roll, as StartCoroutine runs to the first yield
+        this.lightningFlash.tick(f.seconds - this._insideSince);
+      }
+      this._insideSince = null;
+    }
+    this._seconds = f.seconds ?? this._seconds;
     // The WeatherManager event, as the sim's word changes. THE FIRST
     // word (and the word after a jump) is a LOAD: Init leaves its own
     // Sunny apply pending, and OnWeatherChange's `if (pendingWeather)
@@ -241,7 +264,7 @@ export class DynamicSkies {
     this.mat._WorldTime = worldTimeSeconds(minuteOfDay);
     this.applyPendingWeatherSettings();
     // the lightning light (LightningFlash's coroutines)
-    this.lightningLight = this.lightningFlash.tick(dt);
+    this.lightningLight = this.lightningFlash.tick(dt, f.playerPos ?? null);
     const lightColor = sunLightColor(minuteOfDay, this.lightCurve, f.weatherScale ?? 1);
     return {
       mat: this.mat,

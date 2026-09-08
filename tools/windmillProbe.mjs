@@ -1,24 +1,33 @@
-// WM1 - THE WINDMILL PROBE: what is actually inside model 41600.
+// WM1 - THE WINDMILL PROBE: what is actually inside an ARCH3D model.
 //
 // Not part of the suite. Run against your own ARENA2:
 //
 //   ARENA2_PATH=/path/to/ARENA2 node tools/windmillProbe.mjs
 //   ARENA2_PATH=... node tools/windmillProbe.mjs 41600 41601 21411
 //
-// WM1 shipped the LAW that turns a rotor (systems/... no: world/windmills.js)
-// and flagged the half it could not answer: WHICH models carry a rotor, and
-// WHERE its hub sits. Those are questions about ARCH3D.BSA, and the container
-// WM1 was written in had no ARENA2 - so rather than guess at a mesh and pin the
-// guess, this prints the mesh.
+// THE QUESTION THIS WAS WRITTEN FOR IS RETIRED (MODS AUDIT, 2026-09-08).
+// WM1 shipped the law that turns a rotor (world/windmills.js) and
+// flagged the half it could not answer - WHICH classic models carry a
+// sail, and WHERE its hub sits - and this tool was going to answer it
+// by drawing model 41600 out of the player's ARCH3D.BSA. WM2d then
+// found that classic Daggerfall stands NO windmill: 41600 is Kamer's
+// own replacement id, read out of HIS WorldData overrides, and no such
+// record exists in a stock ARCH3D.BSA (asking for it here prints the
+// reader's refusal). The sail is his Blade.dae, vendored with
+// permission and baked by scripts/bakeWindmill.mjs; the hub is his
+// prefab's offset (ROTOR_HUB); WINDMILL_MODELS is gone. The default id
+// list below is kept as it was so the record of WM1's question stays
+// legible - the tool still does what it says for any classic id you
+// give it (21411 is a real farm building), and `--selftest` needs
+// neither ARENA2 nor pngjs.
 //
-// It answers three things, and the third is why it draws:
+// It answers three things about a model, and the third is why it draws:
 //
-//  1. THE SUBMESHES. A DF mesh is grouped by texture, so if the sail carries
-//     its own texture record the split is already done and WM2 is a one-line
-//     selection.
-//  2. THE CONNECTED COMPONENTS. If the sail is a separate island of geometry
-//     - no vertex shared with the tower - then the split is done a second way,
-//     and more robustly, because it does not depend on the art.
+//  1. THE SUBMESHES. A DF mesh is grouped by texture, so a part with its
+//     own texture record is already split off.
+//  2. THE CONNECTED COMPONENTS. A separate island of geometry - no vertex
+//     shared with the rest - is split a second way, and more robustly,
+//     because it does not depend on the art.
 //  3. A PICTURE. This project's own rule: "the road avoids the ridge" is a
 //     claim about a picture and a passing assertion is not a picture. Same
 //     here - "component 2 is the sail" is a claim only an eye can settle, so

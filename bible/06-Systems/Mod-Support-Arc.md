@@ -130,7 +130,9 @@ file in the archive. `41600.prefab` reads out as:
 - `Spin_Up` attached to the BLADE, not the root
 
 `Blade.dae`'s bounding box is symmetric about the origin
-(x[-17.03, 17.05], z[-17.05, 17.04]), which independently confirms the
+(x[-17.03, 17.05], y[-17.04, 17.05], z[-1.75, 1.56] - the MODS AUDIT of
+2026-09-08 re-measured it; this note had the sail's plane as x/z, and
+it is x/y, the thin axis being z), which independently confirms the
 blade pivots on its own centre.
 
 The COLLADA subset is the easiest possible: v1.4.1, one `<geometry>`,

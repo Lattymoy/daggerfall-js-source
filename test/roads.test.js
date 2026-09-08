@@ -467,11 +467,11 @@ test('ROADS 10: road corners are blurred, the rest of the terrain is untouched, 
   // sample(x, y) = s[x * hDim + y] (terrainSampler.js:139, DFU's
   // JobA.Idx(y, x, hDim) at TerrainSampler.cs:123) - NOT the tilemap's
   // x + y*tDim, which is what this pin used to use and what let the
-  // smoother's transposed corner base agree with itself.
+  // smoother's own (then wrong) corner base agree with itself.
   const spread = (x0, x1, s) => { let lo = Infinity, hi = -Infinity; for (let y = 10; y < 118; y++) for (let x = x0; x <= x1; x++) { const v = s[x * H + y]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
   assert.ok(spread(63, 64, samples) < spread(63, 64, before), `the road bed is flatter (${spread(63, 64, samples).toFixed(1)} vs ${spread(63, 64, before)})`);
   // far from the road: byte-identical, in BOTH directions - the second
-  // loop is the mirrored east-west strip the transposed base blurred.
+  // loop is the mirrored east-west strip the port's old base blurred.
   for (let x = 0; x < 50; x++) for (let y = 0; y < H; y++) assert.equal(samples[x * H + y], before[x * H + y], `off-road sample ${x},${y} moved`);
   for (let x = 0; x < 50; x++) for (let y = 60; y < 68; y++) assert.equal(samples[x * H + y], before[x * H + y], `the mirrored strip at sample ${x},${y} moved`);
   // no path tiles: nothing happens
@@ -840,7 +840,9 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // ...and when the network lands, tears down every pixel built without
   // one so the stream rebuilds it - on BOTH arrival paths, since the
   // mod-data path returns early.
-  assert.match(world, /function rebuildRoadless\(\) \{[\s\S]{0,300}if \(!p\.withRoads\) \{ destroyPixel\(p\.px, p\.py, \{ collectLoose: false \}\); roadless\+\+; \}/);
+  // FIX-C: the arrival MARKS the sweep; the frame RUNS it (between builds), and the sweep re-queues what it tears down
+  assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/);
+  assert.match(world, /function sweepRoadless\(\) \{[\s\S]{0,400}for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\s*\n\s*queue\.push\(\.\.\.again\.sort\(/);
   assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
   assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
   // A pixel IN FLIGHT when the network landed arrives roadless after the

@@ -587,7 +587,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
   assert.match(shared, /onAmbientEffect\(playerPos, storm = true\) \{ dynamic\?\.onAmbientEffect\(playerPos, storm\); \}/);
   assert.match(shared, /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \}/, 'AUDIT 61: the transition seam on the controller');
   assert.match(shared, /dynamicMoonState\(dynamic, minuteOfDay, weatherRowNow\.cover\)/, 'AUDIT 61: the eased cover stands in for the mod’s clouds');
-  assert.match(shared, /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons');
+  assert.match(read('src/render/dynamicSkiesBridge.js'), /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons (DS2: in the bridge)');
   assert.match(read('src/render/dynamicSkiesRenderer.js'), /gl\.uniform3f\(u\._CloudTopColorBoost, 0, 0, 0\)/, 'AUDIT 61: the top boost is inert, as the readme says it is');
   assert.match(shared, /lightningLight\(\) \{ return dynamic\?\.lightningLight \?\? null; \}/);
   assert.match(shared, /dynamic\?\.weatherJump\(\);/, 'a load forces the mod’s re-apply');
@@ -704,4 +704,72 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
     assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'the toggles read as before');
     assert.match(read('src/ui/enhancedMenu.js'), /if \(isIntKey\(def\)\) \{/, 'the pane steps the integer keys');
   } finally { _resetModSettings(); }
+});
+
+// ── MODS AUDIT (2026-09-08): the 1:1 re-audit against BLBSkybox.cs ────
+test('MODS AUDIT: FlashOnce reads the player LIVE - a double flash\u2019s second half follows the player (LightningFlash.cs:95)', () => {
+  // a double: rolls [< 0.5] [< 0.33] then FlashOnce's draws at 0.5
+  const d = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
+  assert.equal(d.startFlash([0, 0, 0]), true);
+  const first = d.tick(0.05, [0, 0, 0]);
+  assert.ok(near(first.x, 0) && near(first.y, 30), 'the first half over the roll\u2019s position');
+  d.tick(0.05, [100, 0, 0]);            // first half ends
+  assert.equal(d.tick(0.05, [100, 0, 0]), null, 'the gap');
+  d.tick(0.04, [100, 0, 0]);
+  const second = d.tick(0.06, [100, 0, 0]);
+  assert.ok(second, 'the second half');
+  assert.ok(near(second.x, 100), `the second half is over where the player IS (${second.x}), not where the roll was`);
+  // and with no live position the roll's copy stands (a caller without one)
+  const e = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
+  e.startFlash([7, 0, 0]); e.tick(0.05); e.tick(0.05); e.tick(0.05); e.tick(0.04);
+  assert.ok(near(e.tick(0.06).x, 7));
+  assert.match(read('src/scenes/shared.js'), /playerPos: extra\?\.pos \?\? null,/, 'the controller hands the frame\u2019s position through');
+});
+
+test('MODS AUDIT: a flash rolled under a NON-Thunder word runs on indoors, on Unity\u2019s clock - it does not freeze at the door and pay out on the way back', () => {
+  const d = new DynamicSkies(assets(), {}, () => 0.25);
+  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
+  const at = (s, weather, dt = 1 / 60) => d.tick({ minuteOfDay: 12 * 60, classicMinutes: base + 12 * 60, weather, seconds: s, dt, weatherScale: 1 });
+  at(0, 'sunny'); at(0.1, 'thunder'); at(0.2, 'thunder');
+  // the recorded leak: in and out under Thunder leaves a second subscription; back to sunny drops one
+  d.setInside(true); at(0.3, 'thunder'); d.setInside(false); at(0.4, 'thunder'); at(0.5, 'sunny');
+  assert.equal(d.lightningListening, true, 'the leaked subscription (AUDIT 61) is live under sunny');
+  assert.equal(d.onAmbientEffect([1, 2, 3]), true, 'and it rolls a flash under a sunny word');
+  at(0.51, 'sunny', 0.01);
+  assert.ok(d.lightningLight, 'lit');
+  // the player goes in under sunny: no teardown (:1264 is Thunder-only)
+  d.setInside(true);
+  assert.ok(d.lightningFlash._routines.length > 0, 'the routine is NOT stopped - the mod\u2019s teardown is Thunder-only');
+  // ...and comes out five real seconds later: the coroutine ran to its end unseen
+  d.setInside(false);
+  at(5.5, 'sunny', 0.01);
+  assert.equal(d.lightningLight, null, 'the light is off - the burst finished indoors');
+  assert.equal(d.lightningFlash._routines.length, 0, 'and the routine is gone');
+  // a routine rolled and never ticked before the door lights at its roll and still runs out
+  assert.equal(d.onAmbientEffect([1, 2, 3]), true);
+  d.setInside(true); d.setInside(false);
+  at(9, 'sunny', 0.01);
+  assert.equal(d.lightningLight, null);
+});
+
+test('MODS AUDIT: the mod\u2019s skybox pass takes NO host fog (LateUpdate :320-335 forces clearFlags Skybox; the shader\u2019s fog factor has no reader)', () => {
+  assert.ok(!/uFogMix/.test(FS), 'no fog mix in the fragment');
+  assert.ok(!UNIFORM_NAMES.includes('uFogMix') && !UNIFORM_NAMES.includes('uFogColor'));
+  assert.match(FS, /NO HOST FOG OVER THE DOME/);
+  // the hosts still write fogMix on whichever pass they hold (the enhanced sky reads it)
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(host), /sky\.renderer\.fogMix = fogNow\.excludeSky \? 0 : 1 - fogFactor\(fogNow, 800\);/);
+});
+
+test('MODS AUDIT: SunSizeConvergence is an int on the struct; the frame clamp is Time.maximumDeltaTime; Init runs ChangeLunarPhases when it has a clock', async () => {
+  const { MAX_DELTA_SECONDS } = await import('../src/systems/dynamicSkies.js');
+  const s = parseSkyboxSetting(JSON.stringify({ SunSizeConvergence: 7.9 }));
+  assert.equal(s.SunSizeConvergence, 7, '`public int SunSizeConvergence` - JsonUtility truncates at the parse, not at SetInt');
+  assert.equal(MAX_DELTA_SECONDS, 1 / 3, 'Unity\u2019s default maximumDeltaTime');
+  assert.match(read('src/scenes/shared.js'), /Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\)/);
+  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
+  const d = new DynamicSkies(assets(), {}, () => 0.25, { classicMinutes: base + 12 * 60 });
+  assert.deepEqual(d.mat._MoonOrbitAngle.slice(0, 2), [270, 90], 'ApplyOrbitCalculations ran inside Init (:138-139), before OnWeatherChange');
+  assert.ok(d.phases, 'and the phases are on the instance');
+  const e = new DynamicSkies(assets(), {}, () => 0.25);
+  assert.equal(e.phases, null, 'without a clock nothing is applied - the first tick is Init\u2019s WorldTime.Now');
 });
