@@ -37,6 +37,7 @@
 // verbatim so sequences match.
 
 import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
+import { isEntityImmuneToDisease } from './effects.js';   // AUDIT 63 F15: AssignBundle's hard-immunity gate (EntityEffectManager.cs:495-499), beside its paralysis twin
 import { INFECTION, startInfection } from './infection.js';   // V1: the three special infections OnMonsterHit mints
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
@@ -120,7 +121,18 @@ export const SPIDER_TOUCH_SPELL_INDEX = 66;
  * currentDay = classic minutes / 1440 at infection; the infection day
  * itself is incubation (the first symptom day is the NEXT day).
  */
-export function startDisease(target, diseaseType, currentDay, rolls = Math.random) {
+export function startDisease(target, diseaseType, currentDay, rolls = Math.random, { specialInfection = false } = {}) {
+  // AUDIT 63 F15: AssignBundle's FIRST per-effect gate
+  // (EntityEffectManager.cs:495-499) - a DiseaseEffect is dropped
+  // outright for a hard-immune entity, and BypassSavingThrows does NOT
+  // relax it (that block is later, at :561-579). This is the port's
+  // AssignBundle position: every producer reaches startDisease after
+  // its own rolls, so the gate sits here rather than in one caller.
+  // `specialInfection` is DFU's own exception on that line - the
+  // vampirism/lycanthropy infections ignore disease resistance - and no
+  // current caller needs it (infection.js mints its own entry), but the
+  // clause is the reference's and a future producer must be able to say so.
+  if (!specialInfection && isEntityImmuneToDisease(target)) return null;
   if (!target.isPlayer || (target.level ?? 0) < 2) return null;   // Start: EndDisease for non-player hosts
   if (target.activeEffects?.some((a) => a.kind === 'disease' && a.disease === diseaseType && !a.ended)) return null;   // AddState no-op
   const data = DISEASE_DATA[diseaseType];
@@ -225,11 +237,14 @@ export function updateDiseases(entity, currentDay, sinks, rolls = Math.random, o
  */
 export function inflictDisease(target, diseaseList, { rolls = Math.random, currentDay = 0, onContract = null } = {}) {
   if (!diseaseList || !diseaseList.length || !target.isPlayer) return null;
-  // V2a: IsImmuneToDisease - the racial override's ConstantEffect
-  // sets it every frame (LycanthropyEffect.cs:136); a lycanthrope
-  // catches nothing, and the pending marker counts because the turn
-  // is already irreversible (V1's infectionAccepted reads the same pair)
-  if (target.racialOverride || target.racialOverridePending) return null;
+  // AUDIT 63 F15: the immunity test that used to stand HERE has moved
+  // to startDisease, the port's AssignBundle position. DFU's
+  // InflictDisease (FormulaHelper.cs:1689-1712) carries NO immunity
+  // clause at all: it takes the level test, ROLLS the saving throw and
+  // ROLLS the disease pick, and only then does AssignBundle drop the
+  // effect (EntityEffectManager.cs:495-499). Returning early here
+  // consumed neither roll, which is a divergence of the RNG stream for
+  // every immune target - so the line is gone rather than moved.
   if (target.level === 1) return null;   // classic: no diseases at level 1
   if (savingThrow(2, EFFECT_FLAGS.Disease, target, 0, rolls) === 0) return null;   // resisted
   const diseaseType = diseaseList[Math.floor(rolls() * diseaseList.length)];   // Range(0, length)

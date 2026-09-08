@@ -56,6 +56,7 @@ import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the b
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
@@ -3690,6 +3691,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // RaiseTime through the ONE clock: the U24 advance runs the same
       // tick, so magic rounds and disease days catch up inside the jump.
+      //
+      // AUDIT 63 F13: and they catch up under
+      // EntityEffectBroker.SyntheticTimeIncrease, which
+      // DaggerfallTravelPopUp_OnPostFastTravel raises
+      // (EntityEffectBroker.cs:846-847). DFU raises it ONCE, at :383,
+      // AFTER every RaiseTime this method makes - the trip (:344) and
+      // all three arrival clamps (:355, :367, :374) - so the single
+      // broker Update that follows covers the whole jump. The port
+      // spends that jump in TWO advances, each of which claims its own
+      // window, so the flag is raised before each of them; the claim
+      // itself retires it (effectBroker.js).
+      setSyntheticTimeIncrease(true);
       playerTicker.advance(computed.minutes);
       // W1 review: DFU fast travel never fires the respawner's direct
       // re-roll - TeleportToCoordinates raises OnInitWorld, whose
@@ -3712,7 +3725,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // waited). Career DamageFromSunlight still rides its own arc.
         sunAverse: !!playerEntity.racialOverride?.sunDamage,
       });
-      if (clamp > 0) playerTicker.advance(clamp);
+      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
       // the arrival clamp, so a trip that lands at 7:10am raises

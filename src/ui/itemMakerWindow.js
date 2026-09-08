@@ -79,6 +79,7 @@ import {
 } from '../systems/enchantmentCatalogue.js';
 import { deductGold, totalGoldAmount } from '../systems/court.js';
 import { splitStack } from '../systems/inventory.js';
+import { enumerateFilledTraps } from '../systems/mysticism.js';   // AUDIT 63 F14: SoulBound.EnumerateFilledTraps (:105-127) - the maker's lists are built from the pack
 
 /** DaggerfallInventoryWindow.TabPages, in the order the four buttons
  *  sit in (:29-32). */
@@ -233,6 +234,18 @@ export class ItemMakerWindow {
     this.picker = null;
     this._pickerType = null;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
+    // AUDIT 63 F14/REVIEW: DFU enumerates the filled traps ONCE per
+    // window lifetime - at the tail of Setup (DaggerfallItemMakerWindow
+    // .cs:171) and again in OnPush (:182). Refresh (:190-215) rebuilds
+    // the labels and the filtered item list and does NOT re-enumerate,
+    // and those two are EnumerateEnchantments' only callers besides its
+    // own definition at :239. The port mounts a fresh window per open
+    // (scenes/worldModes.js's guildServiceItemMaker), so construction IS
+    // Setup+OnPush: the enumeration is frozen here for the window's life.
+    // It matters after _enchant() spends a trap - DFU still offers that
+    // soul for a second item in the same session (its RemoveFilledTrap
+    // simply finds nothing), where a live re-read would drop the row.
+    this._souls = this._filledSouls();
   }
 
   _close() { this.done = true; this.hooks.onClose?.(); }
@@ -240,6 +253,16 @@ export class ItemMakerWindow {
 
   items() {
     return (this.hooks.packItems?.() ?? []).filter((it) => itemMakerFilter(it, this.tab, this.selected));
+  }
+
+  /** AUDIT 63 F14 - the souls SoulBound may offer. DFU reads
+   *  `GameManager.Instance.PlayerEntity.Items` directly inside
+   *  EnumerateFilledTraps (SoulBound.cs:107, :121), i.e. the WHOLE
+   *  pack, not the tab-filtered list `items()` above answers. Called
+   *  ONCE, from the constructor, which is DFU's Setup/OnPush lifetime
+   *  (:171, :182); both picker seams read the frozen `_souls`. */
+  _filledSouls() {
+    return enumerateFilledTraps(this.hooks.packItems?.() ?? (this.hooks.player ?? this.hooks.entity)?.items ?? []);
   }
 
   /** PlayerEntity.GetGoldAmount (:1313-1316) - coins PLUS letters of
@@ -283,6 +306,10 @@ export class ItemMakerWindow {
     this.selectingPowers = selectingPowers;
     const types = primaryPickerList(selectingPowers, {
       item: this.selected, powers: this.powers, sideEffects: this.sideEffects,
+      // AUDIT 63 F14: EnumerateEnchantments builds groupedSideEffectTemplates
+      // from the enumeration frozen at Setup/OnPush (:171, :182), so this
+      // reads the window's own snapshot, not the live pack.
+      souls: this._souls,
     });
     this._pickerType = null;
     this.picker = new ListPickerWindow({
@@ -301,6 +328,7 @@ export class ItemMakerWindow {
   _pickPrimary(type) {
     const pick = primaryPick(type, {
       powers: this.powers, sideEffects: this.sideEffects, selectingPowers: this.selectingPowers,
+      souls: this._souls,   // AUDIT 63 F14: GetFilteredEnchantments re-reads the SAME enumerated array (:543-556)
     });
     if (!pick) return;
     if (pick.kind === 'add') { this._add(pick.settings); return; }

@@ -26,6 +26,7 @@ import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
@@ -1511,11 +1512,17 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       });
     },
     // DaggerfallDateTime.RaiseTime + `SyntheticTimeIncrease = true`
-    // (:161-162): the fortnight is a CLOCK MOVE, not fourteen days of
-    // magic rounds - the broker is told to sit the jump out, so a
-    // new vampire does not wake up starved and diseased. The port's
-    // advanceWorldMinutes is that same bare move.
-    raiseTime: (seconds) => advanceWorldMinutes(seconds / 60),
+    // (VampirismInfection.cs:161-162). AUDIT 63 F13 corrected what this
+    // comment used to claim - that the broker "sits the jump out". It
+    // does not: the fortnight runs the full capped catch-up like any
+    // other jump (EntityEffectBroker.cs:224-241 has no synthetic arm),
+    // and the flag buys exactly three exemptions - ItemDeteriorates
+    // (:76-80), HealthLeech (:101-105) and CastWhenHeld's durability
+    // loss (:131-136). So the new vampire's magic items survive the
+    // fortnight; his diseases and spells still age through it.
+    // advanceWorldMinutes is the bare clock move, and the marker it
+    // leaves behind is what makes the next host frame claim the window.
+    raiseTime: (seconds) => { setSyntheticTimeIncrease(true); return advanceWorldMinutes(seconds / 60); },
     // "Death is not eternal" (:187-188) - a DaggerfallMessageBox on
     // TEXT.RSC 401. The LINES are shared; the BOX is the host's, the
     // same split D1's DeathScreen mount uses, because the dungeon

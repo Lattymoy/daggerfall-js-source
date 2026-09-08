@@ -6029,3 +6029,333 @@ on the edge and captured, because the wait is a microtask and the player
 must not be re-read after it; only the reveal itself waits. A resolved
 faction dictionary that genuinely lacks the record still falls through to
 `'unknown-guild'`, which is DFU's own answer.
+
+## AUDIT 63 F13 - SYNTHETIC TIME: fast travel wore your magic items out (2026-09-08)
+
+`EntityEffectBroker` has a field the port had no equivalent of at all:
+`SyntheticTimeIncrease` (`EntityEffectBroker.cs:81`). Three places in
+DFU move the clock by hours or days and then tell the broker that the
+minutes were SYNTHESISED rather than lived -
+`DaggerfallCourtWindow_OnEndPrisonTime` (`:841-842`),
+`DaggerfallTravelPopUp_OnPostFastTravel` (`:846-847`) and
+`VampirismInfection.cs:161-162`'s fortnight. The catch-up still runs
+in full: spells expire, diseases advance, poisons tick. What sits the
+window out is exactly three enchantment arms, each of which reads the
+flag as the top clause of its own MagicRound:
+
+- `ItemDeteriorates.cs:76-80` - the third disjunct of the early return
+  that opens `MagicRound`, ahead of the `% conditionLossPerRounds`
+  gate at `:82-83`;
+- `HealthLeech.cs:101-105` - the identical three-way guard, ahead of
+  even the `timeLeechActive` computation;
+- `CastWhenHeld.cs:131-136` - `ApplyDurabilityLoss` wraps its ENTIRE
+  body, the degrade-rate read included.
+
+The port carried the `%4` cadences and none of the guards, and its
+catch-up is a real loop: `world.js`'s `fastTravelTo` advances the one
+clock, `shared.js`'s ticker runs `tickPlayerMinutes`, and
+`claimMagicRounds` hands `runMagicRoundsFor` a window capped only at
+`MAX_CATCHUP_ROUNDS = 2880`. A three-day journey is therefore 720
+hits at one per four rounds: an equipped `ItemDeteriorates` item or a
+Cast-When-Held ring loses 720 condition and is spliced out of the pack
+by `enchantLowerCondition`, and an "unless used weekly" `HealthLeech`
+item deals 720 points through the player's real damage sink. A prison
+sentence reaches the same place through `arrestFlow.js`'s
+`advanceDays`, which moves the clock without moving the round marker,
+so the next host frame claims the same capped 2880.
+
+**The flag lives in a leaf.** Its natural home is `worldTick.js` -
+this port's broker - but `worldTick` imports the enchantment pump and
+`enchantments.js` is deliberately kept off that cycle (its own note at
+the import). `systems/effectBroker.js` is a leaf with no imports at
+all, so the pump can read the flag and the broker can own its
+lifecycle without closing the ring.
+
+**Where it is lowered, and why not at the tail of the player's half.**
+DFU lowers the flag at the tail of the broker `Update` that ran the
+window, OUTSIDE the `if (catchupRounds > 0)` block (`:244-248`), so
+exactly one Update is shielded however many rounds it claimed. The
+port's Update is split in two: `worldTick` claims the window and runs
+the PLAYER, then each host fans the SAME window out to its foe pools
+(the ticker's subscribers; `dungeonContext`'s own two loops) - and
+`ItemDeteriorates`/`HealthLeech` are not player-gated in DFU or here.
+Lowering at the tail of the player's half would leave every foe in the
+window unshielded, and asking each of the four hosts to lower it after
+its own fan-out is a law a host can forget - and a FORGOTTEN LOWER IS A
+PERMANENT SHIELD, a worse failure than the bug. So the lowering is
+deferred by one claim: `claimSyntheticTimeIncrease`, called at the top
+of `claimMagicRounds`, retires a flag an earlier window already took
+and then takes it for this one. Same single window shielded, and no
+host can drop it. `resetMagicRoundMarker` clears it too - a load is a
+fresh broker and nothing in DFU serialises the field.
+
+**Four raise sites, and one that is deliberately NOT raised.**
+`fastTravelTo` arms BOTH of its advances: DFU raises the flag once at
+`DaggerfallTravelPopUp.cs:383`, after every `RaiseTime` the method
+makes - the trip at `:344` and all three arrival clamps at `:355`,
+`:367`, `:374` - so one broker Update covers the whole jump, where the
+port spends it in two windows. `arrestFlow`'s `onEndPrisonTime` raises
+it after `advanceDays`, which is `DaggerfallCourtWindow.cs:475-476`'s
+own order (the sentence `RaiseTime`, then the event); one home there
+covers both exterior hosts. `shared.js`'s infection-host `raiseTime`
+raises it for the vampire fortnight. `ReleaseFromPrison`'s own four
+hours (`:485`) get NO raise of their own - on a zero-day plea or an
+acquittal those 240 minutes run their rounds in full, exactly as DFU
+runs them.
+
+The comment on `shared.js`'s `raiseTime` was wrong and is corrected
+with the fix: it claimed the fortnight was "a CLOCK MOVE, not fourteen
+days of magic rounds - the broker is told to sit the jump out". The
+broker is told no such thing; it runs the capped catch-up like any
+other jump, and the flag buys those three exemptions and nothing else.
+
+`RegensHealth`, `UserTakesDamage`, `GoodRepWith`/`BadRepWith` and
+`RepairsObjects` stay ungated, because DFU gates none of them. DFU's
+second consumer of the flag - `OnEndSyntheticTimeIncrease` ->
+`RerollItemEffects` (`EntityEffectManager.cs:2175-2177`) - is not
+load-bearing here: the port's reroll runs inside
+`enchantmentMagicRound` on the `REROLL_MINIMUM_HOURS` cadence, which
+any window this large satisfies. If the guard is ever extended to skip
+the reroll collection, that forced pass has to be added with it.
+
+**REVIEW ROUND (2026-09-08).** `test/travelguild.test.js`'s TP1 pin
+owns the ORDER of the arrival clamp and `RaiseSkills`, and this lane
+weakened its clamp anchor to the bare substring
+`playerTicker.advance(clamp)` - three lines above the pin's own comment
+saying an anchor must be matched "with its LINE START and indentation,
+not as a bare substring", because "the campaign wrapped the call in
+`if (false)` and a substring test still found the text". The anchor is
+now the whole armed statement,
+`\n      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }`,
+asserted as a regex and then used as the index - so the pin owns the
+guard and the F13 raise as well as the order it was written for.
+
+
+## AUDIT 63 F14 - SOUL BOUND: forty-three souls for a man with none (2026-09-08)
+
+`SoulBound` is the one enchantment whose settings DFU builds from the
+PACK rather than from a table, and the port had neither half of that.
+
+**The list.** `SoulBound.GetEnchantmentSettings` (`:46-72`) calls
+`EnumerateFilledTraps` (`:105-127`) and emits a row only where the
+count is non-zero (`:52-55`). With no filled trap it returns an empty
+array, and `DaggerfallItemMakerWindow.EnumerateEnchantments`
+(`:252-274`) then never adds the key to `groupedSideEffectTemplates`
+at all - the effect is ABSENT from the side-effects list, not merely
+paramless. The port read `ENCHANTMENT_COSTS.SoulBound.costs`, a fixed
+43-entry table, with no inventory read anywhere: every soul in the
+game was selectable by a player carrying nothing. SoulBound prices
+NEGATIVE (down to -8000 for a Daedra Lord), and the maker sums powers
+and side effects together while the gold walk takes powers only, so
+that player could mint 8000 free enchantment points, every visit.
+
+The fix filters at the PICKER, not in the cost table.
+`enchantmentParamValues`/`enchantmentParamName`/`enchantmentCost` have
+three other consumers that must keep answering for all 43 params - the
+info panel of an item already carrying the enchantment, the legacy
+value of a minted or imported magic item, and the forced-set lookup -
+so `primaryPickerList` and `primaryPick` take an optional `souls` set
+instead (`null` means "do not ask", which is every non-maker caller).
+`mysticism.js` grows `enumerateFilledTraps` beside `fillEmptyTrap`,
+its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
+counts only when its soul is `!= None && < 43` (`:115`), while a
+filled Azura's Star is counted with no bound at all (`:121-125`).
+`ui/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
+picker seams read that snapshot - see the review round below for why.
+
+That makes a comment in `enchantmentCatalogue.js` false and it is
+rewritten with the law. The singleton shortcut
+(`DaggerfallItemMakerWindow.cs:832-838`) excludes SoulBound by name,
+"where player must select soul to correctly assign enforced
+side-effects" (`:833`), and the port's note said the clause "can never
+reach a length of one, so it is defensive and cannot fire". It was
+unreachable only because the port read the table: with exactly ONE
+filled trap the filtered list IS length one, and that clause is
+precisely what forces the secondary picker open so the forced set
+attaches.
+
+**The cost.** The registry row declared `PAYLOAD.Enchanted` and
+supplied no `enchanted` arm, so `doEnchantedPayloads`' `row.enchanted?.
+(env)` was an optional call on undefined and `RemoveFilledTrap` never
+ran - `grep trappedSoulType src/` found no writer anywhere in the
+enchanting path. A bound soul was free, and one gem could bind an
+unlimited number of items. `removeFilledTrap` now lives beside its
+mirror in `mysticism.js` with `SoulBound.cs:129-155`'s control flow
+verbatim: the range guard first (`:131-132`); then the FIRST ordinary
+soul trap holding that soul is removed and the walk RETURNS (`:135-147`
+- one trap, and an ordinary trap always beats the Star); only if none
+matched, EVERY matching Azura's Star is emptied (`:150-155` - that
+loop has no break, so two Stars holding the same soul both empty, and
+the Star is emptied rather than destroyed).
+
+It reaches the registry through the doors bag `effects.js` already
+uses (`setEnchantmentEffectDoors`), registered by `mysticism.js` at
+its tail: `enchantments.js` sits under `effects.js`, which
+`mysticism.js` imports, so the coupling can only run upward as a
+registration.
+
+**REVIEW ROUND (2026-09-08).** Three corrections, all to this lane's
+own work.
+
+*The host wiring had no pin.* The two `souls:` arguments in
+`ui/itemMakerWindow.js` were the ONLY place the filter reached the
+catalogue, and nothing in the suite constructed an `ItemMakerWindow` -
+`test/audit63_effects.test.js` drove `primaryPickerList`/`primaryPick`
+directly, so deleting both arguments restored the whole defect with the
+full suite byte-identical. Two window-level pins now drive the real
+window: an empty-handed maker's side-effects picker must not list the
+Soul Bound row, a one-trap maker's must, and picking it must open a
+one-row secondary picker naming that soul.
+
+*The label pairing had no pin either.* `primaryPick` pairs labels to
+params BEFORE the soul filter narrows the list, because the label list
+is positional over the whole 43-row table. Rewriting it to filter first
+and pair afterwards - which mis-names every surviving row - left all
+fourteen tests green: the one assertion aimed at it checked only that
+the labels came out SORTED, and `AlphaSortSecondaryList` sorts the
+options by label after the mispairing, so they do. The pin now asserts
+the label VALUE against DFU's own source for it -
+`SecondaryDisplayName = GetLocalizedEnemyName(EnemyBasics.Enemies[i].ID)`
+(`SoulBound.cs:64`), where `Utility/EnemyBasics.cs` gives ID 3 the
+"Giant Bat" entry (`:334-338`) and ID 23 the "Wraith" one (`:997-1001`).
+
+*The window re-read the pack too often, and the cite was wrong.*
+`EnumerateEnchantments` has exactly three lines in
+`DaggerfallItemMakerWindow.cs`: the tail of `Setup` (`:171`), `OnPush`
+(`:182`), and its own definition (`:239`). `Refresh` begins at `:190`
+and rebuilds the labels and the filtered item list only - it does NOT
+re-enumerate. DFU's soul list is therefore frozen for as long as the
+window is open, and the divergence was reachable: after `_enchant()`
+spends the last trap of a soul, DFU still offers that soul for a second
+item in the same session (its `RemoveFilledTrap` walks the pack and
+finds nothing), where the port dropped the row. The enumeration now
+happens once, in the constructor - which IS DFU's `Setup`+`OnPush`,
+since `scenes/worldModes.js`'s `guildServiceItemMaker` mounts a fresh
+window per open - and both picker seams read the frozen field.
+
+## AUDIT 63 F15 - A VAMPIRE CAUGHT THE PLAGUE FROM A QUEST (2026-09-08)
+
+`AssignBundle`'s FIRST per-effect gate is one line with two halves
+(`EntityEffectManager.cs:495-499`):
+
+    if (effect is DiseaseEffect && IsEntityImmuneToDisease() && !specialInfection ||
+        effect is Paralyze && IsEntityImmuneToParalysis())
+        continue;
+
+The port had ported the paralysis half (`effects.js`'s
+`isEntityImmuneToParalysis`, `EntityEffectManager.cs:644-660`) and not
+the disease half. Its only stand-in was a single `racialOverride` line
+inside `inflictDisease`, on the monster-hit path - so the quest action
+`make pc ill with` (`MakePcDiseased.cs:66-67` -> `AssignBundle`, which
+the port reaches as `world.js`'s `makePcDiseased` -> `startDisease`)
+gave a vampire, a werewolf or a Disease-immune custom class a full
+disease entry where DFU drops the effect outright. `BypassSavingThrows`
+does not relax that gate: the saving-throw block is later, at
+`:561-579`. Five vendored quests carry the action, the main quest's
+Caliron's Curse among them.
+
+`isEntityImmuneToDisease` now stands beside its twin in `effects.js`,
+all three of `:623-641`'s steps: career Disease tolerance `Immune` or
+`Entity.IsImmuneToDisease` (which `VampirismEffect.cs:123` and
+`LycanthropyEffect.cs:194` set on every constant pass - the port's
+stand-in is the racialOverride entry itself, and the pending marker
+counts with it); the PLAYER's live race template Disease bit, which is
+the compound race both curses OR in (`VampirismEffect.cs:335`,
+`LycanthropyEffect.cs:554`), unless the career overrides with
+`LowTolerance` or `CriticalWeakness`; otherwise not hard-immune, and
+the saving throw still applies. The career arm closes a live gap on
+the MONSTER-HIT path too: a custom class that buys "Immunity to
+Disease" at creation was catching plague off a rat.
+
+The gate sits at the TOP of `startDisease`, which is the port's
+`AssignBundle` position - every producer reaches it after its own
+rolls - and carries DFU's own `specialInfection` exception, because
+that clause is on the reference's line even though no current caller
+needs it (`infection.js` mints its own entry).
+
+**The inline line in `inflictDisease` is deleted, not moved.**
+`FormulaHelper.InflictDisease` (`:1689-1712`) has NO immunity test at
+all: it takes the level check, ROLLS the saving throw and ROLLS the
+disease pick, and only then does `AssignBundle` drop the effect. The
+port's early return consumed neither roll, so every immune target
+shifted the RNG stream. The two verifiers split here - one wanted the
+line left exactly where it stood for fear of perturbing seeded pins,
+the other wanted it gone for the roll order - and the reference
+settles it: DFU draws both rolls, so the line goes.
+
+**REVIEW ROUND (2026-09-08).** Moving the line left a stale cite in
+someone else's pin. `test/audit58_pins2.test.js`'s
+"IsImmuneToDisease reads the PENDING marker" test quoted
+"`diseases.js:232 if (target.racialOverride || target.racialOverridePending)`"
+- the exact line this fix deleted. The pin still passes, because
+`isEntityImmuneToDisease` reads the pending marker and `inflictDisease`
+now reaches it through `startDisease`, so the record cited source that
+no longer exists anywhere. Rather than renumber it, the cite is NAMED:
+effects.js's `isEntityImmuneToDisease`
+(`EntityEffectManager.IsEntityImmuneToDisease :623-641`), read from
+diseases.js's `startDisease` gate, which is `AssignBundle`'s own
+position (`:495-499`). The Testing.md row for that suite carries the
+same correction.
+
+
+## AUDIT 63 F16 - SILENCE LANDED WITHOUT A WORD (2026-09-08)
+
+DFU prints "You are silenced." from TWO places. `SilenceCheck`
+(`EntityEffectManager.cs:1932-1946`, called from `SetReadySpell` and
+`CastReadySpell`) is the cast-time gate, and the port had it. The
+other is `Silence.StartSilence` (`Silence.cs:80-96`), reached from
+`ConstantEffect()` and `Resume()`, which sets `IsSilenced` and then -
+for the player's manager only - speaks the same `youAreSilenced`
+string once and clears `awakeAlert`. That is the same shape
+`ConcealmentEffect.cs:66-72` uses for "You are invisible." and the
+port DOES print. A wraith's Silence therefore landed in total silence
+and the player learned of it only on the next cast attempt.
+
+The port's buff arm already had the exact seam - a start-message
+lookup by buff kind, inside the `if (!inc)` branch, after the chance
+gate and the saving throw - and the table simply had no `silenced`
+row. It has one now, and the table is renamed `BUFF_START_TEXT` for
+what it holds (`CONCEALMENT_START_TEXT` stays live as its alias).
+`sinks.say` is this port's rendering of `manager.EntityBehaviour ==
+GameManager.Instance.PlayerEntityBehaviour`: only the player's sink set
+wires it, the foe sets deliberately do not, so one line covers all four
+hosts at once. `mysticism.js`'s `SILENCED_TEXT` re-points at the same
+constant instead of minting a second copy - the direction is forced,
+since `mysticism.js` imports `effects.js` and not the reverse.
+
+The once-per-incumbency behaviour is not a guard inside `StartSilence`
+(it has none, unlike `ConcealmentEffect`): `AssignBundle` refuses to
+add an unflagged incumbent (`EntityEffectManager.cs:553-558`), so a
+merged instance never reaches `liveEffects` and `DoConstantEffects`
+never ticks it. A stacking recast still stacks its rounds and says
+nothing - which is what the port's `if (inc)` branch already did.
+
+## AUDIT 63 F17 - EVERY CONJURED ITEM LIVED A MINUTE TOO LONG (2026-09-08)
+
+`CreateItem.Start` (`:96-100`) runs `base.Start` - which runs
+`SetDuration` - and then `PromptPlayer()`, which only PUSHES the item
+picker; it does not block. `AssignBundle` carries straight on in the
+same loop iteration to "At this point effect is ready and gets initial
+magic round" / `effect.MagicRound();`
+(`EntityEffectManager.cs:593-594`), and `CreateItem` overrides neither
+`MagicRound` nor `RemoveRound` - so `BaseEntityEffect`'s pair runs
+(`EntityEffect.cs:572-575` -> `:583-588`, `return --roundsRemaining`).
+The picker's callback runs frames later, and `CreateTempItem` reads
+THAT value: `item.TimeForItemToDisappear = (uint)(gameMinutes +
+RoundsRemaining)` (`CreateItem.cs:237`). `RoundsRemaining` is
+duration-1.
+
+The port answered the FULL rolled duration, and said so in two
+comments and a pin, all three asserting the opposite of the reference
+("the initial magic round has not run yet"). It has. The arm answers
+`max(0, duration - 1)` now - `RemoveRound`'s own floor, dead-safe
+rather than behavioural, since a `SupportDuration` effect with both
+duration terms at zero is not a record the spell maker mints - and
+both hosts pass it through unchanged. `effects.js`'s own header
+already stated the law the Create Item note contradicted.
+
+The `x11b` pins move with the law and are tightened while they move:
+the round-trip expiry is `cast + 30` for a duration that rolls 31, and
+the sweep is now asserted one minute either side of it, so a revert to
+the full duration fails both lines rather than sliding past a strict
+`<`.

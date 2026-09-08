@@ -59,6 +59,7 @@ import { RACES } from './races.js';
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-round item payload pump
+import { claimSyntheticTimeIncrease, resetSyntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease (:81, :244-248)
 import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: careers' regen/sun/holy/magery + the vampire's fire
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
@@ -130,6 +131,16 @@ export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;
  *          `for (int i = 0; i < catchupRounds; i++)`
  */
 export function claimMagicRounds(fromMinute, toMinute) {
+  // AUDIT 63 F13: the broker Update's synthetic-time bookkeeping
+  // (EntityEffectBroker.cs:244-248). ONE claimed window is shielded per
+  // raise, whatever its round count - DFU lowers the flag outside the
+  // `if (catchupRounds > 0)` block, and so does this, because the claim
+  // happens before the window is even measured. The lowering is deferred
+  // to the NEXT claim so that the host's foe fan-out (which runs after
+  // the player's half, and whose ItemDeteriorates/HealthLeech arms are
+  // not player-gated) is still inside the shielded window; see
+  // effectBroker.js's header for why that beats a per-host tail call.
+  claimSyntheticTimeIncrease();
   const nextFloor = Math.floor(toMinute);
   const here = Math.floor(fromMinute);
   // Anchor on first use, and RE-anchor whenever the clock has moved BACKWARDS
@@ -721,6 +732,10 @@ export function setWorldMinutes(v) {
  *  frame against effects that already expired in the saved game. */
 export function resetMagicRoundMarker(v = null) {
   _lastMagicRoundMinute = v === null ? null : Math.floor(v);
+  // AUDIT 63 F13: a load is a fresh broker, and nothing in DFU
+  // serialises SyntheticTimeIncrease - a flag raised in the session
+  // being replaced must not shield the restored one's first window.
+  resetSyntheticTimeIncrease();
   return _lastMagicRoundMinute;
 }
 

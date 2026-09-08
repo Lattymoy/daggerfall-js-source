@@ -49,6 +49,7 @@
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
+import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
 import { classicCastingCost } from './spellcost.js';   // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
 import { skillValue } from './skills.js';
 import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js';   // G4: the legacy value sum reads M4's costs
@@ -250,7 +251,11 @@ export function legacyEnchantmentValue(enchantments, { spellOfIndex = null, soul
 let _defaultCtx = null;
 export function setDefaultEnchantCtx(ctx) { _defaultCtx = ctx; }
 const mergeCtx = (ctx) => (ctx && _defaultCtx ? { ..._defaultCtx, ...ctx } : ctx ?? _defaultCtx);
-const _fx = { applySpell: null, removeItemPinnedEffects: null };
+// AUDIT 63 F14: removeFilledTrap rides the same bag, registered by
+// mysticism.js (the soul-trap law's home, beside fillEmptyTrap) - this
+// leaf sits UNDER effects.js, which mysticism.js imports, so the
+// coupling can only run upward as a registration.
+const _fx = { applySpell: null, removeItemPinnedEffects: null, removeFilledTrap: null };
 export function setEnchantmentEffectDoors(doors) { Object.assign(_fx, doors); }
 
 /** rerollMinimumHours (EntityEffectManager.cs:42): a held bundle's
@@ -362,6 +367,13 @@ const REGISTRY = new Map([
       // (The bundle-driven rounds - RegensHealth, ItemDeteriorates,
       // HealthLeech idle - DO run for any entity and stay ungated.)
       if (!entity?.isPlayer) return;
+      // AUDIT 63 F13: ApplyDurabilityLoss wraps its ENTIRE body -
+      // the rate read included - in
+      // `if (!EntityEffectBroker.SyntheticTimeIncrease)`
+      // (CastWhenHeld.cs:131-136), so a fast travel, a prison
+      // sentence or the vampire fortnight costs a Cast-When-Held
+      // item no wear at all.
+      if (syntheticTimeIncrease()) return;
       const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
       if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
     },
@@ -498,11 +510,23 @@ const REGISTRY = new Map([
     flags: PAYLOAD.Held,   // BadRepWith.cs:38
     magicRound({ param, entity }) { applyRepMod(entity, param, -REP_ADJUSTMENT); },
   }],
-  /** SoulBound.cs - Enchanted consumes the filled trap (item maker,
-   *  pends); Breaks releases the soul as a live foe
-   *  (CreateFoeSpawner(false, soulType, 1) - B1's spawner seam). */
+  /** SoulBound.cs - Enchanted consumes the filled trap (item maker);
+   *  Breaks releases the soul as a live foe
+   *  (CreateFoeSpawner(false, soulType, 1) - B1's spawner seam).
+   *
+   *  AUDIT 63 F14: the Enchanted half had been "pends" since the row
+   *  was written - the flag was declared and no arm supplied, so
+   *  doEnchantedPayloads' `row.enchanted?.(env)` was an optional call
+   *  on undefined and binding a soul cost the player nothing. The law
+   *  itself (SoulBound.cs:90-96 -> RemoveFilledTrap :129-155) lives in
+   *  mysticism.js beside fillEmptyTrap, its mirror, and arrives here
+   *  through the doors bag. The pack is DFU's
+   *  `GameManager.Instance.PlayerEntity.Items` (:135/:150); the port's
+   *  Enchanted env carries `collection` (null from enchanting.js) over
+   *  the owner's own pack. */
   [T.SoulBound, {
     flags: PAYLOAD.Enchanted | PAYLOAD.Breaks,
+    enchanted({ param, entity, collection }) { _fx.removeFilledTrap?.(collection ?? entity?.items, param); },
     breaks({ param, ctx }) { if (param >= 0) ctx?.spawnFoe?.(param); },
   }],
   /** ItemDeteriorates.cs - MagicRound: -1 condition every 4 rounds.
@@ -517,6 +541,12 @@ const REGISTRY = new Map([
   [T.ItemDeteriorates, {
     flags: PAYLOAD.Held,   // ItemDeteriorates.cs:38
     magicRound({ param, round, entity, item, ctx }) {
+      // AUDIT 63 F13: the synthetic-time guard is the THIRD disjunct of
+      // the early return that opens MagicRound (ItemDeteriorates.cs:76-80),
+      // ahead of the `% conditionLossPerRounds` gate at :82-83 - the
+      // 2880 rounds a fast travel or a prison sentence synthesises cost
+      // an equipped item nothing.
+      if (syntheticTimeIncrease()) return;
       if (round % CONDITION_PER_ROUNDS !== 0) return;
       if (param === 1 && !(ctx?.inSunlight?.() ?? false)) return;
       if (param === 2 && !(ctx?.inHolyPlace?.() ?? false)) return;
@@ -571,6 +601,11 @@ const REGISTRY = new Map([
       return null;
     },
     magicRound({ param, round, item, ctx, nowMinutes }) {
+      // AUDIT 63 F13: the same three-way guard at the TOP of MagicRound
+      // (HealthLeech.cs:101-105), ahead of the timeLeechActive
+      // computation - so the leech takes no blood across a fast travel,
+      // a prison sentence or the vampire fortnight.
+      if (syntheticTimeIncrease()) return;
       if (param !== 1 && param !== 2) return;
       const since = (nowMinutes ?? 0) - (item?.timeHealthLeechLastUsed ?? 0);
       const active = param === 1 ? since > MINUTES_PER_DAY : since > MINUTES_PER_DAY * 7;

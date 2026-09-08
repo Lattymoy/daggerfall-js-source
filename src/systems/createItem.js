@@ -16,11 +16,22 @@
 // live effect entry to tick; the ITEM is the effect.
 //
 // THE LIFETIME. `TimeForItemToDisappear = gameMinutes + RoundsRemaining`
-// (:236-237). RoundsRemaining is the FULL rolled duration, because
-// SetDuration runs inside Start (EntityEffect.cs:528-534) and the
-// picker is modal - the clock does not advance while it is up, and the
-// initial magic round has not run yet. A round is a classic minute, so
-// the duration in rounds IS the lifetime in minutes.
+// (:237). A round is a classic minute, and the picker is modal so the
+// clock does not advance while it is up - but RoundsRemaining is the
+// rolled duration MINUS ONE, not the full roll.
+//
+// AUDIT 63 F17 corrected this paragraph, which claimed the full
+// duration on the ground that "the initial magic round has not run
+// yet". It has: Start runs SetDuration and then only pushes the picker
+// (CreateItem.cs:96-100 -> :113-116), and AssignBundle continues
+// synchronously to `effect.MagicRound();` (EntityEffectManager.cs:594,
+// "At this point effect is ready and gets initial magic round").
+// CreateItem overrides neither MagicRound nor RemoveRound, so
+// BaseEntityEffect's pair runs (EntityEffect.cs:572-575 -> :583-588,
+// `return --roundsRemaining`) and the picker's callback reads
+// duration-1 frames later. The port answers that value at
+// systems/effects.js's Create Item arm; every conjured item had been
+// living exactly one classic minute too long.
 //
 // THE PICKER CANNOT BE CANCELLED (`itemPicker.AllowCancel = false`,
 // :70). The magicka is already spent; DFU makes you choose. And

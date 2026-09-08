@@ -475,9 +475,20 @@ export function isExclusiveTo(type, list = [], param) {
  * item unless it allows multiple primaries; a weapon-only effect on a
  * non-weapon; and anything the current lists are exclusive to.
  */
-export function primaryPickerList(selectingPowers, { item = null, powers = [], sideEffects = [] } = {}) {
+export function primaryPickerList(selectingPowers, { item = null, powers = [], sideEffects = [], souls = null } = {}) {
   const own = selectingPowers ? powers : sideEffects;
+  const soulSet = souls === null ? null : new Set(souls);
   return (selectingPowers ? powerTypes() : sideEffectTypes()).filter((type) => {
+    // AUDIT 63 F14: SoulBound is the one effect whose settings are
+    // built from the PACK rather than from a table - GetEnchantmentSettings
+    // enumerates the player's filled traps and emits a row only where
+    // the count is non-zero (SoulBound.cs:51-55), so an empty-handed
+    // player yields ZERO settings and EnumerateEnchantments never adds
+    // the key to groupedSideEffectTemplates at all
+    // (DaggerfallItemMakerWindow.cs:252-274). The effect is then absent
+    // from this list, not merely paramless. `souls: null` means "do not
+    // ask" - every other caller of this seam keeps its old answer.
+    if (type === 'SoulBound' && soulSet && soulSet.size === 0) return false;
     if (!hasItemMakerFlag(type, ITEM_MAKER_FLAGS.AllowMultiplePrimaryInstances)
       && own.some((e) => e.type === type)) return false;
     if (hasItemMakerFlag(type, ITEM_MAKER_FLAGS.WeaponOnly) && item?.group !== 'Weapons') return false;
@@ -491,22 +502,46 @@ export function primaryPickerList(selectingPowers, { item = null, powers = [], s
  * THE SINGLETON SHORTCUT (:832-838) comes first: an effect with
  * exactly ONE setting is added straight to the list and no secondary
  * picker opens - which is what the six single-cost effects do. DFU
- * also excludes SoulBound from that shortcut by name, but SoulBound
- * mints forty-three settings and can never reach a length of one, so
- * the clause is defensive and cannot fire (kept, Ledger B).
+ * also excludes SoulBound from that shortcut by name, "where player
+ * must select soul to correctly assign enforced side-effects" (:833).
+ *
+ * AUDIT 63 F14 CORRECTED THIS COMMENT. It used to say SoulBound "mints
+ * forty-three settings and can never reach a length of one, so the
+ * clause is defensive and cannot fire". That was true only because the
+ * port read the static cost table where DFU reads the PACK: with
+ * exactly one filled soul trap DFU's GetFilteredEnchantments returns
+ * length 1 (SoulBound.cs:51-55), and :834's `!= EnchantmentTypes.
+ * SoulBound` is precisely what forces the secondary picker open so the
+ * forced side-effect set attaches. The clause is live, and `souls`
+ * below is what makes it reachable.
+ *
+ * `souls` (a set/array of trapped soul ids, from mysticism.js's
+ * enumerateFilledTraps) filters SoulBound's options to the souls the
+ * player actually carries; null means "do not ask", which is what
+ * every non-maker caller wants - the COST and NAME seams must keep
+ * answering for all 43 params so a looted or imported soul-bound item
+ * still prices and still prints its soul.
  *
  * Answers { kind: 'add', settings } or { kind: 'choose', options }.
  */
-export function primaryPick(type, { powers = [], sideEffects = [], selectingPowers = true } = {}) {
-  const params = enchantmentParamValues(type);
+export function primaryPick(type, { powers = [], sideEffects = [], selectingPowers = true, souls = null } = {}) {
+  const labels = enchantmentParams(type);
+  // The label list is positional over the FULL param list, so it is
+  // paired up BEFORE the soul filter narrows it - a filtered list
+  // re-indexed against the unfiltered labels would print the wrong
+  // creature beside every soul.
+  let params = enchantmentParamValues(type).map((param, i) => ({ param, label: labels[i] ?? String(param) }));
+  if (type === 'SoulBound' && souls !== null) {
+    const soulSet = new Set(souls);
+    params = params.filter((p) => soulSet.has(p.param));   // SoulBound.cs:52-55
+  }
   if (params.length === 0) return null;
   if (params.length === 1 && type !== 'SoulBound') {
-    return { kind: 'add', settings: enchantmentSettings(type, params[0]) };
+    return { kind: 'add', settings: enchantmentSettings(type, params[0].param) };
   }
   const own = selectingPowers ? powers : sideEffects;
-  const labels = enchantmentParams(type);
-  let options = params.map((param, i) => ({
-    param, label: labels[i] ?? String(param), settings: enchantmentSettings(type, param),
+  let options = params.map(({ param, label }) => ({
+    param, label, settings: enchantmentSettings(type, param),
   }));
   if (hasItemMakerFlag(type, ITEM_MAKER_FLAGS.AlphaSortSecondaryList)) {
     options = options.slice().sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));

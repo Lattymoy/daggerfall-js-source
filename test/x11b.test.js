@@ -257,11 +257,17 @@ test('X11b effect: it hands the host a picker and lands NOTHING on the entity', 
   assert.equal(out.skipped, 0, 'the library honours it now');
   assert.ok(out.createItem, 'the window seam fires');
   assert.deepEqual(e.activeEffects, [], 'no entry - the ITEM carries the clock, not an effect');
-  // the rounds handed over are the FULL rolled duration. blankEffectSettings
-  // puts every spinner at 1, so durationBase 20 rolls 20 + 1*floor(1/1) = 21.
-  // The initial magic round has NOT run (the picker is modal), so reading a
-  // decremented value here would shorten every conjured item by a minute.
-  assert.equal(out.createItem.rounds, 21);
+  // AUDIT 63 F17: the rounds handed over are the rolled duration MINUS
+  // ONE. blankEffectSettings puts every spinner at 1, so durationBase 20
+  // rolls 20 + 1*floor(1/1) = 21 - and AssignBundle then spends one of
+  // them at once ("At this point effect is ready and gets initial magic
+  // round", EntityEffectManager.cs:593-594 -> EntityEffect.cs:572-575 ->
+  // :583-588 `return --roundsRemaining`), because CreateItem overrides
+  // neither MagicRound nor RemoveRound and its Start only PUSHES the
+  // picker (CreateItem.cs:96-100). CreateTempItem reads that decremented
+  // value at CreateItem.cs:237. This pin used to assert 21 with the
+  // opposite reasoning, and was the defect's guard.
+  assert.equal(out.createItem.rounds, 20);
   // "Target must be player - no effect on other entities"
   const foe = player({ mobileType: 4 });
   const r = castCreateItem(foe);
@@ -275,10 +281,15 @@ test('X11b effect: the whole round trip, cast to bagged item', () => {
   const made = grantCreatedItem(e, 22, { gender: 'male', nowMinutes: 700, rounds: out.createItem.rounds, rolls: seq() });
   assert.equal(made.name, 'Dagger');
   assert.equal(e.items.length, 1);
-  assert.equal(made.timeForItemToDisappear, 700 + 31);
-  // ...and it goes away on schedule, through the same sweep the tick runs
+  // AUDIT 63 F17: durationBase 30 rolls 31, the initial magic round
+  // spends one, so the item disappears at cast + 30 (CreateItem.cs:237).
+  assert.equal(made.timeForItemToDisappear, 700 + 30);
+  // ...and it goes away on schedule, through the same sweep the tick
+  // runs. Tight to the minute either side of 730, so a revert to the
+  // full duration (expiry 731) fails BOTH lines: ItemCollection's own
+  // test is strict `<` (ItemCollection.cs:132).
   assert.deepEqual(removeExpiredItems(e, 730), []);
-  assert.deepEqual(removeExpiredItems(e, 732), [made]);
+  assert.deepEqual(removeExpiredItems(e, 731), [made]);
   assert.equal(e.items.length, 0);
 });
 
