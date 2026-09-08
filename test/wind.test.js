@@ -71,7 +71,7 @@ test('WIND1: one seam - the row takes the model\'s vector, and the sky eases on 
   // change the factor is exactly 0, so the sky crossed in fourteen
   // seconds and the wind rose after it: the storm arrived and the wind
   // followed. The reverse of what was asked.
-  assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_SECONDS \/ \(FRONT_LEAD_MIN \* 60 \/ 12\)\) : dt;/);
+  assert.match(shared, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ FRONT_LEAD_MIN\) : dt;/, 'CLK1: both in game minutes, no time scale between them');
   assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName\);/, 'ticked on the GAME clock');
   // The rows' fixed vectors stay as the classic-sky fallback and are no
   // longer what a consumer sees under the enhanced one.
@@ -102,7 +102,7 @@ test('WIND2: the clouds move by an INTEGRATED drift, and the wind leads the sky 
   m.tick(1440 + FRONT_LEAD_MIN, 'thunder');
   assert.equal(m.inLead(), false, 'and not once it has arrived');
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt;/, 'the drift is integrated ONCE, where the wind and the clock meet');
+  assert.match(shared, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt \* WIND_SECONDS_PER_MINUTE;/, 'the drift is integrated ONCE, where the wind and the clock meet (CLK1: game minutes through the one constant)');
   assert.match(shared, /drift: driftXZ,/, 'and handed to the sky state');
   const sky = read('src/render/enhancedSky.js');
   assert.doesNotMatch(sky, /wind \* uTime|w\[0\] \* time|wind\[0\] \* time/, 'no deck multiplies wind by time any more');

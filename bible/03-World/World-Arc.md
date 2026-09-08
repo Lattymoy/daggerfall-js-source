@@ -1167,7 +1167,7 @@ thunderstorm and at 13 in a dead calm, because nothing is driving them.
 Ours are driven, and by something the port already had. ES1c gave the
 enhanced sky a per-weather wind vector and, because nothing about a sky
 changes in a frame, an EASED one - the controller keeps a row and walks
-it toward the row the sim asks for over `WEATHER_EASE_SECONDS`. That
+it toward the row the sim asks for over `WEATHER_EASE_MINUTES` (game minutes since CLK1, 2026-09-08). That
 row is the port's only answer to "how hard is it blowing right now", so
 this module imports `WEATHER_SKY` and takes the eased row itself rather
 than restating a number of it.

@@ -346,12 +346,28 @@ export function withMoonAmbient(ambient, moon) {
  *  one time constant. Pure and injectable: `dt` in, the eased row out.
  *  (The same lesson as the danger meter's slew - a slow, meaningful
  *  state should arrive slowly, and nothing about a sky changes in a
- *  frame.) */
-export const WEATHER_EASE_SECONDS = 14;
+ *  frame.)
+ *
+ *  CLK1 (2026-09-08, Mac: "in sync with the world clock"): the ease
+ *  runs on GAME MINUTES, the clock the sun, the moons and the wind
+ *  model already read - not on the wall's seconds the controller used
+ *  to keep for itself. Fourteen real seconds at the default TimeScale
+ *  of 12 (worldTick.js CLASSIC_MINUTES_PER_SECOND) is 2.8 game
+ *  minutes, so the look at the default scale is the one ES1c shipped;
+ *  a rest, a travel, a jail term or a `?timescale` now move the sky
+ *  with the clock. The constant is the span in minutes; `dt` is
+ *  minutes. */
+export const WEATHER_EASE_MINUTES = 2.8;
+/** CLK1: the rows' wind vectors are dome units per REAL SECOND at the
+ *  default scale (the lab's slider, WIND1's calibration); the drift
+ *  integrates on game minutes now, and a game minute is five real
+ *  seconds there (60 / TimeScale 12). One constant, so every deck
+ *  keeps the speed it was tuned at and follows the clock. */
+export const WIND_SECONDS_PER_MINUTE = 60 / 12;
 
-export function easeWeather(from, to, dt, seconds = WEATHER_EASE_SECONDS) {
+export function easeWeather(from, to, dt, span = WEATHER_EASE_MINUTES) {
   if (!from) return { ...to };
-  const k = seconds <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / seconds);
+  const k = span <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / span);
   const n = (a, b) => a + (b - a) * k;
   const v3 = (a, b) => [n(a[0], b[0]), n(a[1], b[1]), n(a[2], b[2])];
   return {

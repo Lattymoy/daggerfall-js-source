@@ -3,7 +3,7 @@
 // the fog on sliders - the tuning surface and the eyeball tool, no game
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
 // for the probe, and `?still` freezes the clouds' drift.
-import { EnhancedSkyRenderer, skyState, retroFor } from '../render/enhancedSky.js';
+import { EnhancedSkyRenderer, skyState, retroFor, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
 import { MINUTES_PER_DAY, lunarPhasesFromMinutes } from '../systems/gameDate.js';
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: the mod's pass in the lab too - ?sky=dynamic
 import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';
@@ -55,6 +55,13 @@ const noiseView = params.get('noise');
 let cloudNoise = null;
 if (params.has('nopanel')) document.getElementById('panel').style.display = 'none';   // the probe measures the frame, not the sliders
 const t0 = performance.now();
+// CLK1: the lab keeps a GAME-MINUTE clock of its own (the world's rate at
+// the default TimeScale: a game minute per five real seconds) and its own
+// drift integral on the weather row's fixed vector - the shape the
+// controller has, without a wind model. `?still` stops both.
+let labLast = t0;
+let labMinutes = 0;
+const labDrift = [0, 0];
 
 function frame() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -71,6 +78,13 @@ function frame() {
   // means anyway.
   const phases = lunarPhasesFromMinutes(((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay);
   const seconds = still ? 0 : (performance.now() - t0) / 1000;
+  const nowReal = performance.now();
+  const dtMin = still ? 0 : Math.min(1, (nowReal - labLast) / 1000) / WIND_SECONDS_PER_MINUTE;
+  labLast = nowReal;
+  labMinutes += dtMin;
+  const rowWind = (WEATHER_SKY[$('weather').value] ?? WEATHER_SKY.sunny).wind;
+  labDrift[0] += rowWind[0] * dtMin * WIND_SECONDS_PER_MINUTE;
+  labDrift[1] += rowWind[1] * dtMin * WIND_SECONDS_PER_MINUTE;
   if (noiseView) {
     cloudNoise ??= new CloudNoise(gl, [0, 0, w, h]);
     gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -86,7 +100,7 @@ function frame() {
     const labMinutes = ((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay;
     sky.setState(dyn.tick({ minuteOfDay, classicMinutes: labMinutes, weather: $('weather').value, seconds, dt: still ? 0 : 1 / 60, weatherScale: weatherSunlightScale($('weather').value, false) }));
   } else {
-    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, phases, seconds }));
+    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift }));
   }
   sky.fogMix = Number($('fog').value);
   sky.fogColor = sky.clearColor;
@@ -96,7 +110,7 @@ function frame() {
   sky.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
   if (!dynamicOn && cloudsDoor !== 'off') {
     clouds ??= new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, w, h]);
-    clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, still ? 0 : 1 / 60, sky.state.drift ?? [0, 0], 0);
+    clouds.setState(sky.state, { cover: sky.state.cloudCover, soft: sky.state.cloudSoft }, $('weather').value, dtMin, labDrift, 0);   // CLK1: game minutes, the lab's own integral
     clouds.update([0, 0, w, h]);
     if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture
     else clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);

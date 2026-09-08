@@ -12,7 +12,7 @@ import {
   QUALITY, SWEEP_FRAMES, WORLD_PER_DRIFT, VC_PROFILE, easeProfile, cloudLight, MARCH_FS, COMPOSITE_FS, SHADOW_FS, MARCH_UNIFORMS, COMPOSITE_UNIFORMS, SHADOW_UNIFORMS,
   SHADOW_EXTENT, PIXEL_METRES, shadowOrigin,
 } from '../src/render/volumetricClouds.js';
-import { easeWeather, WEATHER_SKY, WEATHER_EASE_SECONDS } from '../src/render/enhancedSky.js';
+import { easeWeather, WEATHER_SKY, WEATHER_EASE_MINUTES } from '../src/render/enhancedSky.js';
 import { WEATHER_TYPES } from '../src/world/weather.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -32,7 +32,7 @@ test('VC3: the profile - one row per weather, eased on the weather ease\'s own e
   const fr = (row.cover - WEATHER_SKY.sunny.cover) / (WEATHER_SKY.overcast.cover - WEATHER_SKY.sunny.cover);
   const fp = (prof.base - VC_PROFILE.sunny.base) / (VC_PROFILE.overcast.base - VC_PROFILE.sunny.base);
   assert.ok(Math.abs(fr - fp) < 1e-12, `the row crossed ${fr}, the profile ${fp}`);
-  assert.ok(Math.abs(fp - (1 - Math.exp(-3.5 / WEATHER_EASE_SECONDS))) < 1e-12, 'the exponential itself');
+  assert.ok(Math.abs(fp - (1 - Math.exp(-3.5 / WEATHER_EASE_MINUTES))) < 1e-12, 'the exponential itself');
   assert.deepEqual(easeProfile(null, VC_PROFILE.rain, 1), VC_PROFILE.rain, 'a boot takes the profile whole, as the row does');
   assert.deepEqual(easeProfile(VC_PROFILE.rain, VC_PROFILE.rain, 0), VC_PROFILE.rain, 'no dt, no move');
 });

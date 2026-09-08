@@ -240,7 +240,7 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
 // Four of five taken: the banding, the clouds, the weather's snap, the
 // stars standing still. (The fifth - cloud shadow on the world - is a
 // world change, not a sky one, and stays on the board.)
-import { easeWeather, weatherRow, WEATHER_EASE_SECONDS, STAR_POLE } from '../src/render/enhancedSky.js';
+import { easeWeather, weatherRow, WEATHER_EASE_MINUTES, STAR_POLE } from '../src/render/enhancedSky.js';
 
 test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, and whole on the first call', () => {
   const clear = weatherRow('sunny'), storm = weatherRow('thunder');
@@ -255,7 +255,7 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
   }
   const span = storm.cover - clear.cover;
   assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `a minute in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
-  const half = easeWeather(clear, storm, WEATHER_EASE_SECONDS);
+  const half = easeWeather(clear, storm, WEATHER_EASE_MINUTES);
   assert.ok(half.cover > clear.cover && half.cover < storm.cover, 'at the time constant it is part way, not there');
   assert.ok(Math.abs(half.cover - (clear.cover + (storm.cover - clear.cover) * (1 - Math.exp(-1)))) < 1e-9, 'exponential, one time constant');
   // Every number the shader takes eases, colours included.
@@ -263,7 +263,7 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
   assert.equal(half.wind.length, 2);
   assert.equal(half.lit.length, 3);
   assert.ok(half.lit.every((v, i) => (v - clear.lit[i]) * (storm.lit[i] - clear.lit[i]) >= 0), 'the cloud colours ease too');
-  assert.ok(WEATHER_EASE_SECONDS >= 5 && WEATHER_EASE_SECONDS <= 30, `${WEATHER_EASE_SECONDS}s: a weather turns, it does not cut`);
+  assert.ok(WEATHER_EASE_MINUTES >= 1 && WEATHER_EASE_MINUTES <= 6, `${WEATHER_EASE_MINUTES} game minutes: a weather turns, it does not cut`);
   // skyState takes the eased row over the type's own.
   const eased = skyState({ minuteOfDay: 12 * 60, weather: 'sunny', row: half });
   assert.equal(eased.cloudCover, half.cover, 'the state is built from the eased row');

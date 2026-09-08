@@ -30,8 +30,10 @@ Mapped before a line was written (the map is the design's ground):
   takes it; grass, models, billboards, water and the far ring take a
   global `sunFactor` dim instead. And the dome snapped to ES1e's retro
   pixel (pi/512 on an equi-angular cube, 26 Bayer levels) by default.
-- **The weather already arrives slowly**: a 14 s ease, stretched ~64x
-  across a front's 15-real-minute lead, so cover BUILDS over a quarter
+- **The weather already arrives slowly**: a 14 s ease (2.8 game minutes
+  since CLK1, 2026-09-08 - the same look at the default scale, and on
+  the world clock), stretched ~64x
+  across a front's three-game-hour lead (fifteen real minutes at the default scale), so cover BUILDS over a quarter
   of an hour and the wind leads it. The new clouds inherit that clock.
 - **No offscreen machinery**: the world draws straight to the default
   framebuffer at DPR 1. A cloud pass that is amortised or reprojected
