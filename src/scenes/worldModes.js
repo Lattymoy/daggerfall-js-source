@@ -38,7 +38,7 @@ import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
-import { buildInteriorContext } from './interiorContext.js';
+import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -431,7 +431,7 @@ export function createWorldModes(host) {
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => interiorFoePool().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     loot: () => nearbyLootRecords({
-      piles: interiorDropped._piles,
+      piles: interiorDropped.activePiles(),   // AUDIT 63 F22: GetActiveLoot (ActiveGameObjectDatabase.cs:266-268) - a deactivated container is out of the walk
       containers: [...(interiorCtx?.shelves ?? []), ...(interiorCtx?.containers ?? [])],
       foes: interiorFoePool(),   // AUDIT 58: the WATCH's corpses are lootable containers too
     }),
@@ -2458,12 +2458,12 @@ export function createWorldModes(host) {
     // LootContainerData_v1 carries and the dungeon already snapshots.
     // Without this, walking out of a shop and back in emptied the
     // floor.
-    const droppedPiles = interiorDropped._piles
-      .filter((pile) => pile.items.length)
-      // G5: the archive travels with the record - LootContainerData_v1
-      // carries the PAIR, and a pile whose icon the player cycled onto
-      // TEXTURE.205 must come back wearing it.
-      .map((pile) => ({ pos: [...pile.pos], archive: pile.archive, record: pile.record, items: pile.items.map((it) => ({ ...it })) }));
+    // AUDIT 63 F22 (review round): the pool writes its own record, so
+    // the cache's two halves cannot disagree about which piles exist -
+    // an emptied scene container must ride it (GetSaveData has no empty
+    // guard, SerializableLootContainer.cs:55-77) or AddFlats' next run
+    // mints a fresh roll on its marker.
+    const droppedPiles = interiorDropped.snapshotScene();
     return { lootContainers, actionDoors, droppedPiles };
   }
 
@@ -2525,6 +2525,23 @@ export function createWorldModes(host) {
     // and a scene that really holds no piles must not keep the last
     // building's.
     interiorDropped.restorePiles(data.droppedPiles);
+  }
+
+  /** AUDIT 63 F22: AddFlats' RandomTreasure arm (DaggerfallInterior
+   *  .cs:872-902) runs in its own member beside the marker walk; this
+   *  host supplies the three things that member reads off the game
+   *  state - the building's discovery record, PlayerGPS
+   *  .CurrentLocationType, and the player's level and gender - and its
+   *  own dropped-loot pool as the scene the containers stand in. */
+  function seedTreasureMarkers(locationType) {
+    seedInteriorTreasure({
+      markers: interiorCtx?.treasureMarkers ?? [],
+      building: interiorBuilding,
+      locationType,
+      pool: interiorDropped,
+      level: playerEntity.level,
+      gender: playerEntity.gender,
+    });
   }
 
   /** B2: the bank. Accounts are PER REGION and live on the entity, so
@@ -4296,6 +4313,15 @@ export function createWorldModes(host) {
       // P1: RestoreCachedScene (:804) - after the identity is known,
       // because the scene NAME is built from the building key.
       restoreInteriorScene();
+      // AUDIT 63 F22: AddFlats' RandomTreasure arm, AFTER the cache
+      // restore for the same reason DFU runs RestoreCachedScene after
+      // the interior is built: a container the cache holds is restored
+      // onto its own identity, and one the cache does NOT hold -
+      // because the player emptied it and DaggerfallInventoryWindow
+      // removed it (:715-722) - is simply rebuilt with fresh loot,
+      // which is what SerializableStateManager.RestoreLootContainerData
+      // (:427-459) does by having no entry to apply.
+      seedTreasureMarkers(hit.dfLocation?.mapTableData?.locationType ?? -1);
       // Q4-v: the quest layer mounts with the interior (RMBLayout's
       // AddQuestResourceObjects moment - the walk runs once the site's
       // buildingKey is known).
@@ -4480,7 +4506,18 @@ export function createWorldModes(host) {
         // (PlayerActivate's default loot handling), which is the same
         // OnPush law the dungeon and both exterior hosts ride.
         const pile = interiorDropped.pileFor(key);
-        if (pile?.items.length) mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
+        // AUDIT 63 F22 (review round): ONE fall-through, because DFU
+        // has one - PlayerActivate.cs:957-961 gives RandomTreasure and
+        // DroppedLoot alike "no special handling" and simply hands the
+        // container to the window as its remote target. What differs
+        // between a scene-built container and the player's own pile is
+        // the CONTAINER's own fields (playerOwned, ContainerImage),
+        // and droppedLootHooks carries them; branching here instead
+        // shipped a second, partial loot identity past the one shape
+        // all four hosts are meant to share. A scene-built container
+        // opens even when the table gave it nothing, and pileFor
+        // answers null for one the window already emptied.
+        if (pile) mountInterior(interiorInventory({ loot: droppedLootHooks(pile) }));   // G5
         return true;
       }
       if (key.startsWith('container:')) {

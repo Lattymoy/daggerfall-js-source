@@ -42,6 +42,72 @@ import { SOUND } from '../systems/soundClips.js';
 import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
 import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands } from '../systems/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
 import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S9
+// AUDIT 63 F22: AddFlats' own RandomTreasure arm - the gate, the
+// picture and the table index all live with the walk that finds the
+// markers, which is the member DFU puts them in.
+import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // FactionFile.cs:91/:135
+import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot.js';
+
+/** AUDIT 63 F22: DaggerfallInterior.AddFlats' treasure arm
+ *  (DaggerfallInterior.cs:872-902), the one thing that walk does
+ *  besides collecting markers and lights - and the one reader
+ *  INTERIOR_MARKER.TREASURE never had. For every editor flat of type
+ *  Treasure, in a building that is a Tavern or wears the Thieves
+ *  Guild / Dark Brotherhood faction id (:879-883), DFU stands a
+ *  RandomTreasure DaggerfallLoot at the marker with the CLOTHING
+ *  archive's record 0 as its picture (:891-897, `clothingArchive, 0`
+ *  literally - no icon roll, and not the 216 treasure archive a
+ *  player's own pile takes) and fills it with `LootTables.GenerateLoot
+ *  (loot, (int)PlayerGPS.CurrentLocationType)` (:899).
+ *
+ *  THE INDEX IS THE LOCATION'S, not the building's and not a dungeon
+ *  type: GenerateLoot (LootTables.cs:121-167) indexes its 19-entry key
+ *  array with DFRegion.LocationTypes, which is the same array the
+ *  dungeon piles index with DungeonTypes - bug-for-bug, so TownCity 0
+ *  reads 'K' and Tavern 6 reads 'M'. An index off the end (None =
+ *  0xffff, or no location at all) makes GenerateLoot return false with
+ *  the container still standing, which is what the '-' key
+ *  reproduces: the empty matrix, and addPileLootExtras' J..O window
+ *  refuses it too.
+ *
+ *  The pool is the HOST's dropped-loot pool, so the piles ride every
+ *  seam already wired to it - the activation targets, the Detect
+ *  Treasure feed, the per-frame flat tick and the scene cache - and
+ *  the identity is `treasure:<marker index>`, standing in for the
+ *  loadID DFU mints from the building key and the marker's own
+ *  coordinates (:885-889). A marker the pool has already stood a
+ *  container on is SKIPPED: the cache restore has run by then, and
+ *  DFU reaches the same place from the other side (AddFlats mints,
+ *  RestoreCachedScene overwrites by loadID and removes an emptied one,
+ *  SerializableLootContainer.cs:157-160).
+ *
+ *  interior.js needs nothing: the standalone viewer has no player
+ *  entity and no loot machinery at all.
+ *
+ *  @param markers   - ctx.treasureMarkers, parented
+ *  @param building  - the discovery record (buildingType, factionId)
+ *  @param locationType - PlayerGPS.CurrentLocationType
+ *  @param pool      - the host's createDroppedLoot pool
+ *  @param level/gender - the PLAYER's (LootTables.cs:229/:237)
+ */
+export function seedInteriorTreasure({ markers, building, locationType, pool, level, gender }) {
+  if (!markers?.length || !pool) return [];
+  if (!(building?.buildingType === BUILDING_TYPES.Tavern
+    || building?.factionId === THIEVES_GUILD_FACTION_ID
+    || building?.factionId === DARK_BROTHERHOOD_FACTION_ID)) return [];
+  const lootKey = DUNGEON_LOOT_KEYS[locationType] ?? '-';
+  const minted = [];
+  markers.forEach((pos, i) => {
+    const key = `treasure:${i}`;
+    if (pool.containerSeeded(key)) return;   // the cache already holds this container
+    // LootTables.cs:146-159 - the matrix, then the J..O map/potion/
+    // recipe tail, on the PLAYER's level and gender.
+    const items = addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey);
+    minted.push(pool.seedPile(items, pos, { archive: DROP_ICON_ARCHIVES.clothing, record: 0 }, key));
+  });
+  return minted;
+}
 
 /**
  * The A1 door-audio seams for a BUILDING interior's ActionSystem.
@@ -552,6 +618,20 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const enterMarkers = markers
     .filter((m) => m.type === INTERIOR_MARKER.ENTER)
     .map((m) => [m.x, m.y, m.z]);
+  /** AUDIT 63 F22: the TREASURE markers, in the same parent frame.
+   *  DaggerfallInterior.AddFlats (:872-902) hangs a RandomTreasure
+   *  DaggerfallLoot on every editor flat of type Treasure when the
+   *  building is a Tavern or wears the Thieves Guild / Dark
+   *  Brotherhood faction (:879-883) - the port parsed the marker type
+   *  (INTERIOR_MARKER.TREASURE = 19) and no reader in src/ ever asked
+   *  for it, so those piles did not exist. The BUILDING gate is the
+   *  host's, where the discovery record lives; this only carries the
+   *  positions, and CreateLootContainer lifts the billboard by half
+   *  its own size (GameObjectHelper.cs:685-687), i.e. the marker point
+   *  is the pile's BOTTOM - which is the port's `feet` contract. */
+  const treasureMarkers = markers
+    .filter((m) => m.type === INTERIOR_MARKER.TREASURE)
+    .map((m) => [m.x, m.y, m.z]);
 
   // HC1 - the spawn points into the parent frame, like every other
   // coordinate here. NO DFU CORE CALLER consumes GetRandomSpawnPoint
@@ -647,6 +727,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     containers,
     shelves,   // E2: shop shelf models (stocked lazily by the mode host)
     enterMarkers,
+    treasureMarkers,   // AUDIT 63 F22: AddFlats' RandomTreasure arm, gated by the host
     spawnPoints,
     /** GetRandomSpawnPoint (DaggerfallInterior.cs:1298-1311): null is
      *  DFU's `return false` - the caller uses its own fallback. The

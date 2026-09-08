@@ -137,7 +137,31 @@ export function inventoryItemImage(item, identity = undefined) {
   if (!t) return null;
   let archive, record;
   if (usesWorldTexture(item, t)) {
-    archive = t.worldTextureArchive; record = t.worldTextureRecord;
+    // AUDIT 63 F20/F21: GetInventoryTextureArchive/Record's WORLD arms
+    // return the ITEM's own fields (DaggerfallUnityItem.cs:1730-1731,
+    // :1742-1743), not the template's. The template only SEEDS them
+    // (SetItem :556-557); three writers overwrite them afterwards -
+    // SetArtifact (:608-609, world = player, which is how the Sanguine
+    // Rose and every other world-textured artifact base get their art),
+    // the PotionRecipeKey setter (:396-397, `if (IsPotion)
+    // worldTextureRecord = potionRecipe.TextureRecord` - the bottle's
+    // icon per recipe), and FromItemRecord (:1555-1556, the classic
+    // save's own image2 bitfield). Reading the template alone erased
+    // all three: every potion drew the same glass bottle.
+    archive = Number.isFinite(item.worldTextureArchive) ? item.worldTextureArchive : t.worldTextureArchive;
+    record = Number.isFinite(item.worldTextureRecord) ? item.worldTextureRecord : t.worldTextureRecord;
+  } else if (item.artifact && Number.isFinite(item.playerTextureRecord)) {
+    // AUDIT 63 F21: GetInventoryTextureRecord's artifact carve-out
+    // (:1745-1747), verbatim including DFU's own reason - "Use texture
+    // record retrieved from MAGIC.DEF for artifacts. Otherwise the
+    // below code will give the Oghma Infinium record 2, from the
+    // 'Book' template." It stands BEFORE the variants block, and the
+    // archive beside it is the item's own playerTextureArchive
+    // (:1733), which SetArtifact wrote from GetArtifactTextureIndices
+    // (432/433 by gender). The port recomputed both from the base
+    // template, so the Oghma Infinium really did draw 209/2.
+    archive = Number.isFinite(item.playerTextureArchive) ? item.playerTextureArchive : playerArchiveFor(item, t, identity);
+    record = item.playerTextureRecord;
   } else {
     archive = playerArchiveFor(item, t, identity);
     if ((t.variants ?? 0) > 0) {
@@ -158,12 +182,17 @@ export function inventoryItemImage(item, identity = undefined) {
     } else {
       record = t.playerTextureRecord;
     }
-    // "Katanas need +1 for inventory image as they use right-hand
-    // image instead of left" (ItemHelper.cs:418-421) - the INVENTORY
-    // branch only; the paperdoll has its own Either-hand rule.
-    if (item.group === 'Weapons' && item.templateIndex === KATANA_TEMPLATE) record += 1;
   }
-  // "Use world texture archive if inventory texture not set"
+  // "Katanas need +1 for inventory image as they use right-hand image
+  // instead of left" (ItemHelper.cs:418-420) - the INVENTORY branch
+  // only; the paperdoll has its own Either-hand rule. AUDIT 63 F21:
+  // this and the fallback below are GetItemImage's, one level ABOVE
+  // GetInventoryTexture*, so they run after every arm of the chain -
+  // including the artifact carve-out - exactly as C# has them.
+  if (item.group === 'Weapons' && item.templateIndex === KATANA_TEMPLATE) record += 1;
+  // "Use world texture archive if inventory texture not set" - and the
+  // TEMPLATE's, deliberately (ItemHelper.cs:425-429 reads
+  // item.ItemTemplate, not the item).
   if (archive === 0 && record === 0) { archive = t.worldTextureArchive; record = t.worldTextureRecord; }
   return { archive, record };
 }

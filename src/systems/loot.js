@@ -31,7 +31,7 @@ import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex,
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price)
-import { potionRecipeByKey } from './potions.js';   // F103: PotionRecipeKey's price side effect
+import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
@@ -506,10 +506,31 @@ export const POTION_TEMPLATE_INDEX = GROUP_TEMPLATE_INDICES.UselessItems1[1];
  *  setter's own null guard does. */
 const potionValue = (recipeKey, item) => potionRecipeByKey(recipeKey)?.price ?? itemBaseValue(item);
 
-/** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key. */
+/** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key.
+ *
+ *  AUDIT 63 F20: the setter has TWO side effects, and its own docblock
+ *  names both - "populating the item value from the recipe price ...
+ *  Also populates texture record for potions"
+ *  (DaggerfallUnityItem.cs:383-385). The port took the price (:395)
+ *  and dropped `if (IsPotion) worldTextureRecord =
+ *  potionRecipe.TextureRecord` (:396-397), so every one of the twenty
+ *  potions drew the Glass Bottle template's 205/11 instead of its own
+ *  icon. The recipe is resolved ONCE here so the two halves cannot
+ *  disagree, and both stay behind the setter's own null guard (:392):
+ *  a key no recipe answers leaves the template's value and the
+ *  template's record standing. */
 export function createPotion(recipeKey) {
   const potion = { group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey };
-  return mintCondition({ ...potion, value: potionValue(recipeKey, potion) });
+  const recipe = potionRecipeByKey(recipeKey);
+  if (!recipe) return mintCondition({ ...potion, value: itemBaseValue(potion) });
+  return mintCondition({
+    ...potion,
+    value: recipe.price,
+    // `if (IsPotion)` (:396) - IsPotion is UselessItems1 + Glass_Bottle
+    // (:352-355), which this mint always is and the MiscItems-4 recipe
+    // sheet in randomlyAddPotionRecipe never is.
+    worldTextureRecord: recipe.textureRecord ?? POTION_DEFAULT_TEXTURE_RECORD,
+  });
 }
 
 /** ItemBuilder.CreateRandomPotion (:761-766). */

@@ -27,7 +27,7 @@ import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identif
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { isPotion, isPotionRecipe, isParchment, TEMPLATES } from './useItem.js';
 import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLongName's quest-letter arm (ItemHelper.cs:335-348)
-import { materialArmorValue, isShieldTemplate } from './armorMaterials.js';
+import { itemArmorValue, isShieldTemplate } from './armorMaterials.js';
 import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { getInt } from './settings.js';   // AUDIT 28 W3: HelmAndShieldMaterialDisplay
@@ -188,9 +188,18 @@ export function weaponDamageString(item) {
 /** ArmourMod() (:157-160): GetMaterialArmorValue with a C# "+0;-0;0"
  *  format - a PLUS SIGN on a positive value, and a bare 0 on zero.
  *  DFU's own comment: "Armour mod is double what classic displays,
- *  but this is correct according to Allofich." */
+ *  but this is correct according to Allofich."
+ *
+ *  AUDIT 63 F19/F18: `GetMaterialArmorValue` is the WHOLE member
+ *  (DaggerfallUnityItem.cs:1007-1059), not its material ladder - this
+ *  line called the ladder alone, so a Daedric Tower Shield's %mod read
+ *  "+21" where DFU prints "+4" (the shield early return at :1049-1052
+ *  is material-blind) and Lord's Mail read "+15" where DFU prints "+7"
+ *  (the artifact halving at :1054-1056). Both arms live in
+ *  armorMaterials.itemArmorValue now, shared with the equipped-armour
+ *  table, so the info panel and the paperdoll cannot disagree again. */
 export function armourModString(item) {
-  const v = materialArmorValue(item?.material ?? ARMOR_MATERIAL.Leather);
+  const v = itemArmorValue(item);
   return v > 0 ? `+${v}` : v < 0 ? `-${Math.abs(v)}` : '0';
 }
 

@@ -6359,3 +6359,322 @@ the round-trip expiry is `cast + 30` for a duration that rolls 31, and
 the sweep is now asserted one minute either side of it, so a revert to
 the full duration fails both lines rather than sliding past a strict
 `<`.
+
+## AUDIT 63 F18/F32 - THE ARMOUR ARTIFACT WAS WORTH DOUBLE (2026-09-08)
+
+`GetMaterialArmorValue` (`DaggerfallUnityItem.cs:1007-1059`) does not
+end at its material ladder. Three lines past it stands DFU's own
+comment and clause - "Armor artifact appear to use armor rating divided
+by 2 rounded down" / `if (IsArtifact && ItemGroup == ItemGroups.Armor)
+result /= 2;` (`:1054-1056`) - and the port stopped one line short of
+it, as its own header cite (":1007-1050") admitted. The member has
+exactly two callers in the whole reference tree and the port mirrored
+both: `UpdateEquippedArmorValues` (`DaggerfallEntity.cs:608/:612`,
+`armorValues[index] -= (sbyte)(armor.GetMaterialArmorValue() * 5)`) and
+`ArmourMod` (`DaggerfallUnityItemMCP.cs:157-159`, the `%mod` macro).
+Neither halved.
+
+There are exactly two non-shield armour artifacts - Lord's Mail
+(`ArtifactsSubTypes` 15) and Ebony Mail (18), both Cuirasses - and both
+were worth twice DFU's protection: Lord's Mail took 75 off the Chest
+where DFU takes 35, and its info panel printed "+15" where DFU prints
+"+7". `combat/formulas.js` adds `armorValues[struckBodyPart]` straight
+into the to-hit chance, so this was 40 points of chance-to-hit, not a
+cosmetic. Artifacts are reachable in ordinary play: the Daedric quests
+mint them through `quest/item.js` -> `createArtifact`, and a classic
+save carries the flag bit.
+
+## AUDIT 63 F19 - THE INFO PANEL READ A SHIELD'S MATERIAL (2026-09-08)
+
+The same member's FIRST statement is the other half of the same defect.
+`GetMaterialArmorValue` opens `if (!IsShield) { ...ladder... } else {
+return GetShieldArmorValue(); }` (`:1010`, `:1049-1052`), and
+`GetShieldArmorValue` (`:1061-1077`) is MATERIAL-BLIND: Buckler 1,
+Round 2, Kite 3, Tower 4. The port's `armourModString` called the bare
+ladder, so a Daedric Tower Shield's `%mod` read "+21" where DFU prints
+"+4" and a steel Buckler's read "+9" where DFU prints "+1". Every
+shield in the game contradicted the paperdoll, which was right
+(`equip.js` has always branched on `isShieldTemplate` for the table).
+
+WHERE THE FIX WENT IS THE POINT. Both arms are one C# member, so the
+port has one too: `armorMaterials.itemArmorValue` is
+`GetMaterialArmorValue` whole - shield early return, then ladder, then
+the artifact halving - and the two consumers call it. `materialArmorValue
+(material)` stays exported unchanged as the ladder, because
+`combat/enemyEquipment.js` has armour RECORDS and no items and
+`audit24_enemytable` pins the two modules on the same function object.
+Three details that are law, not taste: the `ItemGroup == ItemGroups
+.Armor` gate on the halving is load-bearing (the port's
+`updateEquippedArmorValues` also admits the clothing FOOTWEAR window,
+which C# excludes); `GetIsShield` (`:1804-1814`) requires the Armor
+group as well as the template; and the material default is Leather
+(0x0000, DFU's `nativeMaterialValue` is a plain int field whose zero IS
+Leather), not `ArmorMaterialTypes.None`.
+
+## AUDIT 63 F20 - EVERY POTION DREW THE SAME BOTTLE (2026-09-08)
+
+The `PotionRecipeKey` setter has TWO side effects and its own docblock
+names both: "populating the item value from the recipe price ... Also
+populates texture record for potions"
+(`DaggerfallUnityItem.cs:383-385`). The body is `this.value =
+potionRecipe.Price` (`:395`) and `if (IsPotion) worldTextureRecord =
+potionRecipe.TextureRecord` (`:396-397`). AUDIT 39 F103 ported the
+price. The record was dropped, and `PotionRecipe.cs:34` defaults it to
+11 - the Glass Bottle's own world record - so all twenty potions drew
+one icon on the shelf, in the pack and in every loot pile.
+
+Seventeen of the twenty registrations override it, and the column is
+now beside the price with the C# file and line for each:
+`ElementalResistance.cs:137-140` (34/34/34/14), `WaterBreathing.cs:51`
+and `WaterWalking.cs:52` (32), the three illusion forms (33),
+`CureDisease.cs:70-71` and `CurePoison.cs:54` (35),
+`HealHealth.cs:67-68` (15/16), `HealSpellPoints.cs:49` (12),
+`FortifyStrength.cs:57` (13), `FreeAction.cs:53` (14). Stamina, Slow
+Falling and Levitation are exactly the three whose classes never write
+one, and they keep the 11.
+
+Both of the setter's own gates ride with it. `if (potionRecipe != null)`
+(`:392`) means a key no recipe answers leaves BOTH the value and the
+record standing - so the two halves are resolved from ONE lookup in
+`createPotion` and cannot disagree. `if (IsPotion)` (`:396`) means the
+MiscItems-4 recipe SHEET that `randomlyAddPotionRecipe` mints takes the
+price and not the record, which is why that row still draws its own
+template.
+
+Two sites were carrying the gap further. The quest mint
+(`quest/item.js`) built the bottle inline, bypassing the setter
+entirely - a quest potion carried the Glass Bottle's basePrice of 1 -
+and flattened `Questing/Item.cs:350`'s two arms (`(itemKey != -1) ?
+ItemBuilder.CreatePotion(itemKey) : ItemBuilder.CreateRandomPotion()`)
+onto one keyless bottle. It routes through `loot.js`'s two makers now.
+The classic-save import deliberately does NOT derive the record from
+the recipe: `FromItemRecord` assigns the lowercase FIELD (`:1577-1579`),
+bypassing the setter, after `:1555-1556` has already taken the icon
+from the save record's own `image2` word - see F21.
+
+## AUDIT 63 F21 - THE OGHMA INFINIUM DREW THE "BOOK" TEMPLATE (2026-09-08)
+
+`inventoryItemImage` addressed every icon from the TEMPLATE. DFU reads
+the ITEM: `GetInventoryTextureArchive` (`:1727-1734`) returns the
+instance's `worldTextureArchive`/`playerTextureArchive`, and
+`GetInventoryTextureRecord` (`:1739-1762`) returns the instance
+`worldTextureRecord` in the world arm and then carries an explicit
+carve-out whose comment IS the bug report - "Use texture record
+retrieved from MAGIC.DEF for artifacts. Otherwise the below code will
+give the Oghma Infinium record 2, from the 'Book' template."
+(`:1745-1747`) - standing BEFORE the variants block. `SetArtifact`
+(`:606-609`) writes all four fields from `GetArtifactTextureIndices`,
+and the port's `createArtifact` already wrote the same four; nothing
+read them. Every one of the 23 artifacts drew its mundane base art,
+literally including DFU's named failure case.
+
+The function now reads the item where C# reads the item and the
+template where C# reads the template: the world arm takes the item's
+own pair (which is also what makes F20's potion record visible and what
+gives a world-textured artifact base like the Sanguine Rose its art),
+the artifact carve-out takes `playerTextureRecord` with
+`playerTextureArchive` beside it, and `GetItemImage`'s own two tail
+rules - the katana `+1` (`ItemHelper.cs:418-420`) and the `archive == 0
+&& record == 0` fallback to the TEMPLATE's world texture (`:425-429`) -
+moved out of the else arm to where C# has them, one level above
+`GetInventoryTexture*`, so they run after every arm including the
+artifact one.
+
+The import path had nothing for that arm to read. `FromItemRecord`
+splits both image words - `playerArchive = image1 >> 7; playerRecord =
+image1 & 0x7f`, the same for `image2` (`:1539-1547`) - and assigns all
+four (`:1552-1555`); `classicSave.js` carried none of them, though it
+already peeled `image1`'s low seven bits for the variant. All four
+import now, which also gives `mysticism.js` the pair Open's
+`CheckCastByItem` identifies the Skeleton's Key by (`Open.cs:176-180`,
+`WorldTextureArchive == 432 && WorldTextureRecord == 20`) - an imported
+classic key could never be the key before. NOT done: guarding the
+variant derivation for artifacts. `FromItemRecord:1588-1594` has no
+such guard, and the carve-out above makes the value unobservable, so
+adding one would be a departure.
+
+## AUDIT 63 F22 - THE TAVERN TREASURE PILE DID NOT EXIST (2026-09-08)
+
+`DaggerfallInterior.AddFlats` (`:846-909`) does one thing besides
+collecting markers and lights: for every editor flat whose type is
+`Treasure` (19), in a building that is a Tavern or wears the Thieves
+Guild (42) or Dark Brotherhood (108) faction id (`:879-883`), it stands
+a `RandomTreasure` `DaggerfallLoot` at the marker with the CLOTHING
+archive's record 0 as its picture (`:891-897` - `clothingArchive, 0`
+literally, no icon roll and not the 216 archive a player's own pile
+takes) and fills it with `LootTables.GenerateLoot(loot, (int)PlayerGPS
+.CurrentLocationType)` (`:899`). The port parsed the marker type -
+`INTERIOR_MARKER.TREASURE` at `world/interiorLayout.js` - and `grep -rn
+INTERIOR_MARKER src/` returned five readers, every one of them testing
+REST or ENTER. The constant had no reader anywhere, so every tavern and
+both guild halls were missing the free pile DFU places in them.
+
+THE INDEX IS THE LOCATION'S. `(int)PlayerGPS.CurrentLocationType` is
+`DFRegion.LocationTypes` (TownCity 0 ... Coven 13), and `GenerateLoot`
+deliberately indexes the same 19-entry, dungeon-named key array with it
+(`LootTables.cs:123-146`) - so `DUNGEON_LOOT_KEYS[locationType]` is
+right bug-for-bug, fed from the live location record and never from the
+building type. An index off the end (`LocationTypes.None` is 0xffff)
+makes `GenerateLoot` return false with the container still standing,
+which the `?? '-'` key reproduces: the empty matrix, and
+`addPileLootExtras`' J..O window refuses `-` too.
+
+The gate is in `worldModes.js`, where the discovery record with its
+`buildingType`/`factionId` lives; `interiorContext.js` only hands out
+the parented marker positions beside `enterMarkers`. `interior.js` is a
+standalone viewer with no player entity and no loot machinery, so the
+four-hosts rule does not reach it - `worldModes.js` is the only host
+that carries the interior gameplay surface, and both outdoor hosts
+mount it.
+
+Two shapes the piles needed that a player's drop does not.
+`CreateLootContainer` (`GameObjectHelper.cs:658-700`) is a different
+member from `CreateDroppedLootContainer`: the icon is GIVEN, the
+container exists BEFORE anything is generated into it, and
+`playerOwned` is never set - so an empty roll still leaves a visible,
+openable pile (`PlayerActivate.cs:957-961` gives RandomTreasure "no
+special handling"), and `CanChangeDropIcon` refuses to cycle its
+picture the way it refuses a corpse's. `droppedLoot.seedPile` is that
+member: `dropPile`'s `!items.length -> null` guard is
+CreateDroppedLootContainer's shape and would have mounted nothing.
+Minting them through this host's own pile pool means the four seams
+already wired to it - the activation targets, the Detect Treasure feed,
+the per-frame flat tick and draw, and the scene cache - pick them up
+with nothing new, which is what DT1 and ID1 built that pool for.
+
+The marker pass runs AFTER `restoreInteriorScene()`, in DFU's own
+order: the cache speaks first, and a container it holds keeps its
+identity (DFU mints a loadID from the building key and the marker's
+coordinates, `:885-889`; the port carries a `containerKey` through the
+snapshot for the same purpose). DFU reaches the same place from the
+other side - `AddFlats` mints on every entry and `RestoreCachedScene`
+overwrites by loadID - so the two orders agree on every container the
+cache carries.
+
+## AUDIT 63 F22 - THE REVIEW ROUND: THE TAVERN THAT REFILLED (2026-09-08)
+
+The first cut of F22 closed with the wrong sentence: that a container
+the cache does NOT hold is "simply rebuilt with fresh loot". It is not,
+and believing it left the port with an endless tavern pile - loot it,
+walk out, walk back in, loot it again.
+
+Three references say so, and all three were unported.
+
+`GameObjectHelper.RemoveLootContainer` (`:852-864`) does not destroy a
+RandomTreasure container. It **deactivates** it -
+`loot.gameObject.SetActive(false)` - so the GameObject stays in the
+scene holding its loadID and its `SerializableLootContainer`.
+`SerializableLootContainer.GetSaveData` (`:55-77`) has no empty guard
+at all: every registered container rides the record, whatever it holds.
+And `RestoreSaveData` ENDS with `if (loot.Items.Count == 0)
+GameObjectHelper.RemoveLootContainer(loot)` (`:157-160`) - a container
+that comes back empty is removed again, not re-rolled.
+
+Put together: an emptied treasure pile stays emptied for the life of
+the save. The port instead spliced the pile out of the pool the moment
+the window closed on it (`releaseEmptied`), filtered empty piles out of
+the interior scene snapshot, and skipped empty entries on restore - so
+the marker came back unclaimed and `AddFlats` stood a freshly rolled
+pile on it.
+
+The pool carries the whole chain now. `deactivate` is
+RemoveLootContainer's `SetActive(false)`: the pile stays in `_piles`
+with its `containerKey`, loses its billboard, and drops out of
+`batches`, `lootTargets`, `pileFor` and `activePiles` - the last being
+`ActiveGameObjectDatabase.GetActiveLoot` (`:266-268`, "the enabled
+DaggerfallLoot components from ACTIVE registered loot"), which is what
+`UpdateNearbyObjects` (`PlayerGPS.cs:765-776`) walks, so a deactivated
+container is out of Detect Treasure too. `releaseEmptied` deactivates a
+scene-built container instead of freeing it, and still frees a player's
+own dropped pile whole: that one carries a fresh `NextUID` that nothing
+re-mints, so the port's owner rule (AUDIT 17e F28) costs nothing there,
+while the scene-built one's identity is the marker itself and must
+survive. `snapshotScene` is the write half of the interior cache,
+living beside `restorePiles` so the two cannot disagree about which
+piles exist, and it keeps a container whatever it holds; `restorePiles`
+takes an empty container back and deactivates it on arrival, which is
+`RestoreSaveData:157-160` exactly.
+
+### PLAYERACTIVATE HAS ONE FALL-THROUGH, SO THE PORT HAS ONE
+
+The first cut branched the interior activation on `pile.container` and
+built a second, inline loot identity for the container arm. DFU does
+not branch: `PlayerActivate.cs:957-961` is a single fall-through - "No
+special handling for all other loot container types: (Nothing,
+RandomTreasure, DroppedLoot)" - followed by
+`InventoryWindow.LootTarget = loot`. What differs between a scene-built
+container and the player's own pile lives on the `DaggerfallLoot`:
+`CreateDroppedLootContainer` sets `playerOwned = true`
+(`GameObjectHelper.cs:766`) and `CreateLootContainer` (`:691-704`)
+never touches it, so a scene-built container keeps
+`DaggerfallLoot.cs:41`'s `false` and `CanChangeDropIcon`
+(`DaggerfallInventoryWindow.cs:2141-2145`) refuses to cycle its
+picture. `droppedLootHooks` reads the flag off the pile now, and gained
+`containerImage` - `InventoryContainerImages.Chest`, which is
+`DaggerfallLoot.cs:37`'s default AND what both makers pass
+(`GameObjectHelper.cs:754-756`, `DaggerfallInterior.cs:891-893`). It is
+the fallback arm of `UpdateRemoteTargetIcon` (`:885-889`), reached only
+when the target has no world flat of its own (`:880-884`), so carrying
+it changes no existing pile's picture. The interior host's arm is one
+line again, and the "ONE shape for all four hosts, so a fifth call site
+cannot ship a partial identity" law that `droppedLootHooks` was written
+under holds.
+
+### THE ARM MOVED TO THE MEMBER IT IS PART OF
+
+`AddFlats`' treasure arm is a `DaggerfallInterior` member, and it sat
+in `worldModes.js` where nothing could execute it: its two load-bearing
+decisions - the identity that stops a cached container being re-minted,
+and the container's own window identity - were pinned only by regexes
+over the port's own source lines, which restate the port and cannot
+die. `seedInteriorTreasure` is exported from `interiorContext.js` now,
+beside the walk that collects the markers, taking the three things the
+member reads off game state (the building's discovery record,
+`PlayerGPS.CurrentLocationType`, the player's level and gender) and the
+pool the containers stand in. The host keeps a six-line wrapper that
+hands them over. Every F22 law is executed by a pin now: the gate over
+six buildings in and out, the picture, the location-typed key, the
+out-of-range index, the cached marker, the emptied container's whole
+round trip, and the window's identity for both container kinds. Twelve
+mutations were run against the pins; twelve died.
+
+### AND THE TABLE ROW THAT WAS NOT A TABLE ROW
+
+F23's two re-aimed `Testing.md` rows had their new prose appended
+straight after the test count with no `|` between, so the count cell
+read `2 AUDIT 63 F23 re-aimed ...`. `test/manifest.test.js` matches a
+row as `^\| <file> \| (\d+) \|` and neither row could match - a
+second, independent failure hiding behind the Suite total. The pipe is
+back and the prose is in the description cell where it belongs.
+
+## AUDIT 63 F23 - THE BROKEN-ITEM GATE SAT ONE SEAM TOO LOW (2026-09-08)
+
+`equip.js` already says where its sibling law lives, and why: "WHERE
+THIS LIVES IS THE LAW: DFU hangs it on the inventory WINDOW, not on
+ItemEquipTable.EquipItem". The `currentCondition < 1` refusal is the
+same shape - `DaggerfallInventoryWindow.cs:1330-1341`, one statement
+above the prohibition chain - and `ItemEquipTable.EquipItem`
+(`ItemEquipTable.cs:94-154`) has no condition test at any point. AUDIT
+24 put it inside `equipItem`, at the table seam.
+
+Both window callers gate ahead of it and pop TEXT.RSC 29, so the extra
+gate was dead on every path DFU refuses on, and live only below them.
+The one consumer that showed: `PlayerEntity.cs:955-960` relinks a
+classic save's worn gear with `equipTable.EquipItem(newItem, true,
+false)` - the alwaysEquip arm - and `FromItemRecord:1563` takes
+`currentCondition` verbatim off the record, so a character who saved
+wearing a 0-condition piece loaded with that slot empty and that piece
+missing from the armour table. The port admitted the divergence in
+`classicSave.js` and on `Port-Ledger.md`'s SAV2 row, in section C
+(unported, routed) rather than section A (approved departures) - an
+unrecorded departure on the classic path, fixable from the reference
+alone. The gate is gone, the ledger clause is struck FIXED, and the two
+pins that asserted it at the table seam
+(`audit24_wave29.test.js`, `enhancedInventory.test.js`) are re-aimed at
+the window - they now assert the OPPOSITE at the table, which is the
+half `PlayerEntity.cs:959` depends on.
+
+Left where it was found, out of this finding's scope:
+`PlayerEntity.cs:959` and the `ItemHelper` equips all pass
+`playEquipSounds: false` and the port's `equipItem` has no such
+parameter - it rings `_equipSoundSink` for every caller.

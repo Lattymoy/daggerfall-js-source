@@ -24,7 +24,7 @@ import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
-import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
+import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
@@ -211,7 +211,21 @@ export const FORBIDDEN_EQUIPMENT_TEXT_ID = 1068;
 export const ITEM_BROKEN_TEXT_ID = 29;
 /** `if (item.currentCondition < 1)` - strictly less than one, so a
  *  condition of exactly 1 still equips. An item with no condition
- *  recorded is not broken (the port mints many without one). */
+ *  recorded is not broken (the port mints many without one).
+ *
+ *  AUDIT 63 F23 / WHERE THIS LIVES IS THE LAW, the same rule the
+ *  prohibition chain above rides: the condition refusal is
+ *  DaggerfallInventoryWindow.EquipItem's (:1330-1341, one statement
+ *  ABOVE the prohibition chain), and ItemEquipTable.EquipItem
+ *  (ItemEquipTable.cs:94-154) has no condition test at any point.
+ *  This predicate is therefore for the two WINDOW callers
+ *  (ui/nativeInventory.js's _refuseForbidden and
+ *  ui/enhancedInventory.js's wear) and for nobody below them - the
+ *  port had it inside equipItem, at the table seam, and every caller
+ *  DFU lets equip past the window paid for it. The one that showed:
+ *  PlayerEntity.cs:959 imports a classic save's worn gear with
+ *  `equipTable.EquipItem(newItem, true, false)`, so a character who
+ *  saved wearing a 0-condition piece loaded with that slot empty. */
 export const isBrokenItem = (item) => item?.currentCondition != null && item.currentCondition < 1;
 
 /** EquipItem verbatim: the unequipped list, or null when the item
@@ -221,11 +235,9 @@ export function equipItem(entity, item) {
   const slot = getEquipSlot(entity, item);   // computed ONCE up front (the DFU order)
   if (slot === EQUIP_SLOTS.None) return null;
   if (item.group === 'Weapons' && item.templateIndex === ARROW) return null;   // cannot equip arrows
-  // AUDIT 24 (wave 29): DaggerfallInventoryWindow.cs:1330-1341 - a
-  // BROKEN item pops TEXT.RSC 29 and returns, before the prohibition
-  // chain is even reached. The port had no such gate, so an item worn
-  // down to 0 condition could be taken off and put straight back on.
-  if (isBrokenItem(item)) return null;
+  // AUDIT 63 F23: NO condition gate here. ItemEquipTable.cs:94-154
+  // has none; the refusal is the inventory WINDOW's (:1330-1341) and
+  // lives at the two window callers - see isBrokenItem above.
   if ((item.stackCount ?? 1) > 1) {
     // SplitStack(item, 1): the worn single is its own record
     item.stackCount--;
@@ -318,7 +330,7 @@ export function seedStartingEquipment(entity) {
 
 // AUDIT 17e F32: these tables lived here AND in ui/paperDoll.js with
 // divergent constants; they now have one home.
-export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue };
+export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue };
 
 /** GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153): only
  *  these seven slots map to an armor body part. */
@@ -352,7 +364,12 @@ export function updateEquippedArmorValues(entity, item, equipping) {
     const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot])
       : (FOOTWEAR ? BODY_PARTS.Feet : null);   // clothing footwear -> Feet
     if (part == null) return;
-    av[part] += sign * materialArmorValue(item.material ?? 0) * 5;
+    // AUDIT 63 F18/F32: DaggerfallEntity.cs:608/:612 call
+    // `armor.GetMaterialArmorValue() * 5`, the WHOLE member - so the
+    // artifact halving (DaggerfallUnityItem.cs:1054-1056) rides this
+    // line. The port called the bare material ladder, and Lord's Mail
+    // and Ebony Mail granted double DFU's protection.
+    av[part] += sign * itemArmorValue(item) * 5;
   } else {
     const bonus = SHIELD_VALUES.get(item.templateIndex);
     for (const part of SHIELD_PARTS.get(item.templateIndex)) av[part] += sign * bonus * 5;

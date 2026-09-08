@@ -322,6 +322,21 @@ export function classicItemFromRecord(record) {
     // identified, at (25 * value) >> 8.
     artifact: (d.flags & ITEM_ARTIFACT_MASK) > 0,
     isIdentified: (d.flags & ITEM_IDENTIFIED_MASK) > 0,
+    // AUDIT 63 F21: FromItemRecord's four TEXTURE fields
+    // (DaggerfallUnityItem.cs:1539-1547 decode, :1552-1555 assign) -
+    // the record's two image words split into archive (>> 7) and
+    // record (& 0x7f). The import carried neither, so every classic
+    // item's inventory icon was recomputed from its base TEMPLATE:
+    // an imported artifact drew the mundane base art the IsArtifact
+    // carve-out exists to prevent (:1745-1747), an imported potion
+    // lost the icon its recipe gave it, and an imported Skeleton's Key
+    // could never be the key - Open.CheckCastByItem identifies it by
+    // `WorldTextureArchive == 432 && WorldTextureRecord == 20`
+    // (Open.cs:176-180), which systems/mysticism.js ports.
+    playerTextureArchive: d.image1 >> 7,
+    playerTextureRecord: d.image1 & 0x7f,
+    worldTextureArchive: d.image2 >> 7,
+    worldTextureRecord: d.image2 & 0x7f,
   };
   // "If item is an arrow, typeDependentData is the stack count" -
   // Weapons group index 18.
@@ -439,9 +454,13 @@ export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
     // Equip through the port's one equip law when the character
     // record's equip slots name this RecordID - DFU runs this check
     // for EVERY record, wagon-held included (:955-960), so no wagon
-    // guard here. (Recorded divergence: the port's law refuses a
-    // BROKEN item where DFU's alwaysEquip arm has no such gate - it
-    // imports into the bag instead.)
+    // guard here. AUDIT 63 F23: `equipTable.EquipItem(newItem, true,
+    // false)` (:959) is the ALWAYS-EQUIP arm and ItemEquipTable.cs
+    // :94-154 has no condition test, so a worn 0-condition piece
+    // relinks into its slot. The port used to refuse it - the BROKEN
+    // gate sat one seam too low, inside equipItem instead of on the
+    // inventory window where DaggerfallInventoryWindow.cs:1330-1341
+    // keeps it - and the piece landed in the bag with its slot empty.
     if (equippedIds.has(record.recordRoot.recordId)) {
       equipItem(scratch, item);
     }
