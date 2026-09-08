@@ -230,8 +230,27 @@ let _zoomLocation = null;
  *  the rotation in the automap script precisely because the
  *  orthographicSize line beside that assignment is commented out. */
 let _yawDeg = 0;
+/** AUDIT 64 F55 - THE VIEW MODE AND THE BACKGROUND ARE PERSISTENT TOO.
+ *  `currentExteriorAutomapViewMode` is a field of the PERSISTENT
+ *  ExteriorAutomap component (ExteriorAutomap.cs:101), written only by
+ *  the cycler (:300-302) and the three direct setters (:320, :327,
+ *  :334) and merely READ by the layout switch (:1588-1599) - so it
+ *  survives a change of town as well as a close. The background is
+ *  `dummyPanelAutomap.BackgroundTexture` on the window SINGLETON
+ *  DaggerfallUI builds once (DaggerfallUI.cs:531) and merely pushes on
+ *  every M (:647), written only by the four Action...Background*
+ *  handlers (DaggerfallExteriorAutomapWindow.cs:1262-1295). Neither
+ *  OnPush (:481-540, whose only reset arm is ResetCameraPosition plus
+ *  the zoom) nor OnPop (:545-563) touches either one. The port builds
+ *  a NEW window per open, so both live at module scope here - the same
+ *  law automapWindow.js:326-335 already states for the dungeon map. */
+let _viewMode = VIEW_MODES[0];
+let _background = 'original';
 let _texVer = 0;   // module-level, the A1 lesson: versioned keys never collide across instances
-export function _resetZoomForTests() { _zoomLevel = -1; _zoomLocation = null; _yawDeg = 0; }
+export function _resetZoomForTests() {
+  _zoomLevel = -1; _zoomLocation = null; _yawDeg = 0;
+  _viewMode = VIEW_MODES[0]; _background = 'original';
+}
 
 // ---- the native art (the U23 preload shape) --------------------------
 let _art = null;
@@ -515,8 +534,13 @@ export class ExteriorAutomapWindow {
     // PageUp/Down, a keypad key or ANY modifier, which is nine tenths
     // of DFU's ExtAutomap table.
     this.isChoiceWindow = true;
-    this.mode = VIEW_MODES[0];
-    this.background = 'original';
+    // AUDIT 64 F55: `mode` and `background` are NOT seeded here - both
+    // are accessors over the module state above, because DFU keeps the
+    // one on the persistent component and the other on the window
+    // singleton. A constructor seed plus a write-back would lose the
+    // last edge: ActionExit closes inside runVerb (`this.done = true;
+    // this.dispose()`) and the background is set on a key edge, so a
+    // window can take its last change with no further tick().
     this.chrome = new AutomapChrome(EXTERIOR_ACTIONS);
     // "Store toggle closed binding for this window" - read ONCE at push
     // (window :489-495), so rebinding AutoMap while the map stands open
@@ -568,6 +592,21 @@ export class ExteriorAutomapWindow {
   get revealUndiscoveredBuildings() { return _revealUndiscoveredBuildings; }
 
   set revealUndiscoveredBuildings(on) { _revealUndiscoveredBuildings = !!on; }
+
+  /** AUDIT 64 F55: the same shape for the two the file had missed.
+   *  ExteriorAutomap.cs:101's currentExteriorAutomapViewMode and the
+   *  window singleton's dummyPanelAutomap.BackgroundTexture both
+   *  outlive a close in DFU, and the new-location path resets NEITHER
+   *  (ExteriorAutomap.cs:1650-1660 raises only
+   *  ResetAutomapSettingsSignalForExternalScript, which the window
+   *  spends on ResetCameraPosition and the zoom, :512-524). */
+  get mode() { return _viewMode; }
+
+  set mode(m) { _viewMode = m; }
+
+  get background() { return _background; }
+
+  set background(b) { _background = b; }
 
   // ---- the verb table (ui/automapChrome.js answers NAMES) -----------
 

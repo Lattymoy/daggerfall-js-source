@@ -245,9 +245,12 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
   // that - see test/tdz.test.js, which is the gate for the class. So
   // this pin now asks for the SHAPE (outer HUD, loud fallback) rather
   // than a spelling that could not run.
-  assert.match(modes, /const say = \(l\) => \{ if \((?:host\.)?townTalk\?\.say\) (?:host\.)?townTalk\.say\(l\); else console\.warn/,
-    'the interior say reaches the outer HUD, and falls back loudly');
-  assert.ok(modes.indexOf('const say = (l) =>') < modes.indexOf('const interiorTicker = createPlayerTicker'),
+  // AUDIT 64 F27 widened the arity: AddHUDText's delay is part of the
+  // line (LoanChecker.cs:15's loanReminderHUDDelay rides both reminder
+  // calls, :42-45), so the sink forwards a second argument.
+  assert.match(modes, /const say = \(l, delay\) => \{ if \((?:host\.)?townTalk\?\.say\) (?:host\.)?townTalk\.say\(l, delay\); else console\.warn/,
+    'the interior say reaches the outer HUD with its delay, and falls back loudly');
+  assert.ok(modes.indexOf('const say = (l, delay) =>') < modes.indexOf('const interiorTicker = createPlayerTicker'),
     'and is DECLARED before the ticker that takes it - the dead zone that broke the boot');
   assert.equal(/say: \(l\) => console\.warn\('\[interior\]', l\)/.test(modes), false,
     'the weapon rig no longer speaks to the console');

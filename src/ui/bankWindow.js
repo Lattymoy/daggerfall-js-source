@@ -46,10 +46,11 @@ import {
   TRANSACTION_TYPE, TRANSACTION_RESULT,
   bankButtonEnabled, toggleTransactionInput, parseTransactionAmount,
   borrowDecision, buyHouseDecision, buyShipDecision, sellDecision,
-  accountTotal, loanedTotal, loanDueDate,
+  accountTotal, loanedTotal, loanDueDate, calculateMaxBankLoan,
   depositGold, withdrawGold, depositAllLetters, withdrawLetter,
   repayLoan, borrowLoan, shipSellPrice,
 } from '../systems/banking.js';
+import { expandMacroValues } from '../systems/quest/questMacros.js';   // MH1: the ONE walk
 
 /** mainPanel.Size (:77) - and the size BANK00I0.IMG ships. */
 export const BANK_PANEL_W = 225, BANK_PANEL_H = 181;
@@ -110,7 +111,12 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + B
  *   wagonGold()    -> the cart's gold, for the parenthesised label
  *   rows(textId)   -> the host's TEXT.RSC reader
  *   dueDateText(minutes) -> GetLoanDueDateString
+ *   playerName(), cityName(), regionName()  -> AUDIT 64 F25: the three
+ *                    GLOBAL macro producers the bank records quote
+ *                    (%pcn, %cn, %reg); an unwired one leaves its
+ *                    token verbatim
  *   ownsHouse(), ownsShip(), housesForSale(), isPortTown(), houseSellPrice()
+ *   ownedHouseResolved() -> AUDIT 64 F26: GetBuildingSummary's bool
  *   openPurchase()  -> H2: mounts the purchase window; false if it cannot
  *   onClose()
  */
@@ -135,13 +141,49 @@ export class BankWindow {
     });
   }
 
-  /** GeneratePopup (:299-330). NONE says nothing at all; TOO_HEAVY is
-   *  the one result with no record behind it. */
+  /** AUDIT 64 F25 - THE MACRO PASS EVERY BOX RUNS.
+   *
+   *  DaggerfallBankingWindow is an IMacroContextProvider whose
+   *  GetMacroDataSource answers a BankingMacroDataSource (:489-492),
+   *  and GeneratePopup builds every box but TOO_HEAVY with
+   *  `messageBox.SetTextTokens((int)result, this)` (:311), which runs
+   *  MacroHelper.ExpandMacros over the record against the window's own
+   *  BankingMacroDataSource: `Amount()` answers the `amount` argument
+   *  GeneratePopup has just stored (:306, :505-508) and `MaxLoan()`
+   *  answers FormulaHelper.CalculateMaxBankLoan() (:509-512) - the ONE
+   *  override of that member in all of DFU, so %ml exists only in a
+   *  bank record. The port stored `amount` where nothing read it and
+   *  handed the raw record text to the box, so the player read a
+   *  literal "%a" on both sell offers and "%ml" on any over-cap loan.
+   *
+   *  ExpandMacros is the WHOLE table, not those two: the same records
+   *  carry the global macros too (Internal_RSC.csv:615-682 - 282's
+   *  %cn, 285's %pcn, 288's %pcn and %reg), and 282 fires on the
+   *  ordinary buy-a-house path, so a %a/%ml-only pass would still print
+   *  "%cn" to every new homeowner. A symbol the host supplies no
+   *  producer for is left VERBATIM, which is GetValue's own ladder
+   *  (MacroHelper.cs:503-527) rather than a hole in the sentence. */
+  _macros(amount) {
+    return {
+      a: String(amount),                                        // MacroHelper.cs:50
+      ml: () => String(calculateMaxBankLoan(this.hooks.level?.() ?? 1)),   // :139
+      cn: this.hooks.cityName?.() ?? null,                      // :67, CityName :567-574
+      pcn: this.hooks.playerName?.() ?? null,                   // :152, PlayerName :779-782
+      reg: this.hooks.regionName?.() ?? null,                   // :211, RegionInContext :1049-1057
+    };
+  }
+
+  /** GeneratePopup (:299-337). NONE says nothing at all; TOO_HEAVY is
+   *  the one result with no record behind it - it takes SetText, never
+   *  SetTextTokens (:308-309), so no macro pass runs over it. */
   _popup(result, amount = 0) {
     if (result === TRANSACTION_RESULT.NONE) return;
+    const values = this._macros(amount);
     const rows = result === TRANSACTION_RESULT.TOO_HEAVY
       ? [{ text: CANNOT_CARRY_GOLD, center: true }]
-      : this.hooks.rows?.(result) ?? [];
+      : (this.hooks.rows?.(result) ?? []).map((r) => (typeof r === 'string'
+        ? expandMacroValues(r, values)
+        : { ...r, text: expandMacroValues(r.text, values) }));
     // THREE results ask rather than tell (:313-334), not one: the
     // letter deposit and BOTH sell offers. H3 - the two sell arms
     // raised a click-anywhere box and no sale, so a player could
@@ -223,7 +265,22 @@ export class BankWindow {
       return;
     }
     if (name === 'sellHouse') {
-      const d = sellDecision('house', { owns: this.hooks.ownsHouse?.(), price: this.hooks.houseSellPrice?.() ?? 0 });
+      // AUDIT 64 F26: SellHouseButton_OnMouseClick (:440-453) is THREE
+      // nested conditions, not one - OwnsHouse (:443), the current
+      // BuildingDirectory existing at all (:446), and that directory
+      // resolving OwnedHouseKey (:449) - with no else on any of them.
+      // Ownership is region-keyed (DaggerfallBankManager.cs:136) while
+      // the directory holds only this location's buildings, so the
+      // inner two are independently false in every other town of the
+      // region, and the port raised an offer priced at 0 there. A host
+      // that wires no resolver is a host with NO building directory,
+      // which is :446's silent false arm - hence `=== true`, not a
+      // lenient default DFU has no counterpart for.
+      const resolved = this.hooks.ownedHouseResolved?.() === true;
+      const d = sellDecision('house', {
+        owns: !!this.hooks.ownsHouse?.() && resolved,
+        price: this.hooks.houseSellPrice?.() ?? 0,
+      });
       if (d.kind === 'offer') this._popup(d.result, d.price);
       return;
     }

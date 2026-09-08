@@ -79,6 +79,14 @@ export { MINUTES_PER_DAY };
 /** Classic minutes advance 12x real seconds (one classic minute per 5s). */
 export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;
 
+/** AUDIT 64 F27: `const float loanReminderHUDDelay = 3` (LoanChecker.cs:15),
+ *  passed on BOTH of CheckOverdueLoans' AddHUDText calls (:42-45). The
+ *  reminder is the ONLY warning before a default costs
+ *  Crimes.LoanDefault reputation, so it holds three times as long as
+ *  PopupText.popDelay's default second - the same reason
+ *  ShopQualityHUDDelay exists. */
+export const LOAN_REMINDER_HUD_DELAY = 3;
+
 // AUDIT 21 F4: THE BROKER'S OWN MARKER, which the port did not have.
 //
 // This used to anchor on `Math.floor(classicMinutes)` - whatever the clock
@@ -325,8 +333,8 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
       // Internal_Strings.csv:861-862, both lines, verbatim - DFU
       // AddHUDTexts them one after the other and the second carries
       // the region name.
-      say(`You have a loan of ${r.owed} gold pieces due in`);
-      say(`less than ${r.months} months in ${REGION_NAMES[r.regionIndex] ?? ''}`);
+      say(`You have a loan of ${r.owed} gold pieces due in`, LOAN_REMINDER_HUD_DELAY);
+      say(`less than ${r.months} months in ${REGION_NAMES[r.regionIndex] ?? ''}`, LOAN_REMINDER_HUD_DELAY);
       loanReminders.push(r);
     }
     for (const regionIndex of overdue) {

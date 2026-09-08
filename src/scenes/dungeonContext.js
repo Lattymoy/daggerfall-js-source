@@ -3644,7 +3644,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activity: _activity,
       fatigueMultiplier: fatigueLossMultiplier(),
       rolls: Math.random,
-      say: (msg) => hudText.add(msg),
+      // AUDIT 64 F27: the DELAY is the law's, not the host's -
+      // AddHUDText takes it (LoanChecker.cs:15's loanReminderHUDDelay),
+      // and HudText.add's default parameter restores
+      // PopupText.popDelay for every line that passes none.
+      say: (msg, delay) => hudText.add(msg, delay),
       // CG2: a dungeon IS inside - HandleStartingCrimeGuildQuests
       // gates on !IsPlayerInside, so the invitation letter waits at
       // the door rather than finding the player underground. The

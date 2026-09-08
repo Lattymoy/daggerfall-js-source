@@ -7443,3 +7443,50 @@ line, which was fixed by reading the en table rather than waived.
 
 One key, two call sites (`VampirismEffect.cs:202` and `DaggerfallUI.cs:619`),
 so F21's new career box speaks this same constant.
+
+## AUDIT 64 F27 - THE LOAN REMINDER WENT TO THE DEVTOOLS CONSOLE (2026-09-08)
+
+`LoanChecker.CheckOverdueLoans` posts its two reminder lines with
+`DaggerfallUI.AddHUDText(..., loanReminderHUDDelay)` on the 6/3/1-month
+crossing (`LoanChecker.cs:41-45`, `sendReminderMonths = { 6, 3, 1 }`).
+That popup is the ONLY warning the game gives before `OverdueLoan`
+(`:53-72`) raids the account and applies
+`PlayerEntity.Crimes.LoanDefault` reputation.
+
+The port emits both lines through `worldTick`'s `say` sink, and the sink
+is the host's. Four hosts carry it and TWO OF THEM LOGGED:
+
+| host | before |
+|---|---|
+| `scenes/world.js` — the streaming world | `console.log('[player]', msg)` |
+| `scenes/exterior.js` — the fixed city | `console.log('[player]', msg)` |
+| `scenes/worldModes.js` — interior/dungeon modes | `townTalk.say` |
+| `scenes/dungeonContext.js` — the standalone dungeon | `hudText.add` |
+
+The two that swallowed them are the OUTDOOR ones — where day changes
+actually happen, including every fast travel (`playerTicker.advance`)
+and every outdoor rest. `world.js` is not a probe host: `main.js` boots
+it for New Game and for Load. So a trip that crossed a six-month loan
+boundary printed to devtools and the player saw nothing.
+
+The same sink carries the rest of `worldTick`'s player lines, so all of
+them were silent above ground too: the magic-round disease and poison
+text, the lycanthropy round's two lines, the live-enchant `ctx.say`, and
+the torch's burn-out. And because `HudText.add` fires `onMessage` into
+the notebook (`PopupText.AddText:123`), the swallowed lines never
+reached the journal's Messages page either.
+
+Both outdoor sinks now reach the HUD. **And the DELAY is part of the
+line, not the host's choice**: `LoanChecker.cs:15` declares
+`const float loanReminderHUDDelay = 3` and passes it on BOTH AddHUDText
+calls, so `worldTick` carries `LOAN_REMINDER_HUD_DELAY` and every sink
+forwards a second argument — `townTalk.say` already did,
+`dungeonContext` and `worldModes` were widened to. Every other caller
+passes `undefined`, and `HudText.add`'s default parameter restores
+`PopupText.popDelay` = 1, so no other line changes.
+
+NOT folded in: the `onLevelUp` `console.log` beside each of those sinks.
+`PlayerEntity.RaiseSkills` (`:1414`) posts
+`dfuiOpenCharacterSheetWindow` and adds no HUD text at all, so
+`worldModes`' `say('You have gained a level!')` is a separate
+pre-existing departure and not a law to copy outward.

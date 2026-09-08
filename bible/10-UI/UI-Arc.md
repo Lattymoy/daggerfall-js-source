@@ -10375,3 +10375,264 @@ reaches the Return/KeypadEnter arm at `:430-434`, and dropping that would
 let Enter reopen the region panel from inside a region page. Two side
 effects fall out of the table read: the modifier mask, and `normalizeCode`
 folding a keyed host's `char:l`/`char:f` onto the same codes.
+
+## AUDIT 64 F25 - THE BANK SAID "%a" AND "%ml" OUT LOUD (2026-09-08)
+
+`DaggerfallBankingWindow` is an `IMacroContextProvider` whose
+`GetMacroDataSource` answers a `BankingMacroDataSource`
+(`DaggerfallBankingWindow.cs:489-492`), and `GeneratePopup` builds every
+box but one with `messageBox.SetTextTokens((int)result, this)` (`:311`)
+— which runs `MacroHelper.ExpandMacros` over the record against the
+window's own `BankingMacroDataSource`: `Amount()` answers the `amount`
+argument the method has just stored on the window (`:306`, `:505-508`)
+and `MaxLoan()` answers `FormulaHelper.CalculateMaxBankLoan()`
+(`:509-512`). `grep -rn "override string MaxLoan"` over
+`Assets/Scripts` returns exactly one hit, that one, so `%ml` exists
+only inside a bank record.
+
+The port ran no macro pass at all. `_popup` stored `amount` on
+`this.box` where nothing read it and handed the raw record text
+straight to the parchment, because the rows come out of
+`townTalk.lines(id)` → `textRsc.variantLinesById`, which substitutes
+nothing. So the player read, verbatim:
+
+- `"our limit is %ml gold pieces."` (0295, any loan above level×50000 —
+  reachable by a level-1 character asking for 60,000);
+- `"generous sum of %a gold pieces."` (0298, the house sell offer DFU
+  feeds `GetHouseSellPrice(house)` at `:450`);
+- `"Your ship is worth %a gold pieces to us."` (0299, `GetShipSellPrice`
+  at `:470`).
+
+**The pass is the WHOLE table, not those two.** `ExpandMacros` resolves
+every symbol in the record, and the same bank records quote the global
+macros too — `Internal_RSC.csv:615-682`: 0282 PURCHASED_HOUSE
+`"a lovely home here in %cn."`, 0285 NOT_PORT_TOWN
+`"This is not a port town, %pcn."`, 0288 ALREADY_DEFAULTED with `%pcn`
+and `%reg`. 0282 fires on the ORDINARY buy-a-house path, so a
+`%a`/`%ml`-only pass would still have printed "%cn" to every new
+homeowner. `_popup` now maps its rows through
+`expandMacroValues` (MH1's one walk, the same one
+`guildServiceWindows.macroRows` rides) with `a` / `ml` from the window's
+own data source and `cn` / `pcn` / `reg` from three new host producers
+in `worldModes.js`'s single `openBank` — all three were already read in
+that block, the house deed's own side effects pass exactly the same
+pair. A symbol with no producer is left VERBATIM, which is
+`MacroHelper.GetValue`'s own ladder (`:503-527`) rather than a hole in
+the sentence. TOO_HEAVY is untouched: it takes `SetText`, never
+`SetTextTokens` (`:308-309`).
+
+Two changes the finding proposed are NOT here, and both were dropped on
+the reference:
+
+- **the "clamped repayment amount"**. Nothing a repay can raise carries
+  a macro — 0294 OVERPAID_LOAN quotes none, 0454 NOT_ENOUGH_GOLD quotes
+  none, and the third outcome is NONE (no box). And DFU's `ref amount`
+  is not the loan total either: `RepayLoan` clamps to `loanTotal`
+  (`DaggerfallBankManager.cs:525-529`) and then reassigns it twice more
+  (`:531-535`), so the value `RaiseTransactionEvent` carries is the
+  ACCOUNT-paid remainder. Encoding either would be a value DFU does not
+  produce, for a box that shows no number.
+- **feeding `_dismissBox`'s Yes result back through `_popup`**. Every
+  transaction the Yes arms run answers `TransactionResult.NONE` in DFU
+  — `DepositAll_LOC` (`:378-390`), `SellHouse` (`:464`), `SellShip`
+  (`:506`) — so the second box never appears. (`Withdraw_LOC`'s
+  `NOT_ENOUGH_ACCOUNT_LOC` is a different member and already reaches
+  `_popup` through `_commit`.)
+
+One value WAS aligned, because the pass makes it live:
+`GeneratePurchaseHousePopup` / `GeneratePurchaseShipPopup`
+(`:229-237`) call `GeneratePopup(result)` with the default `amount = 0`,
+where the port's purchase window forwarded the price. No record on that
+path quotes `%a` today, so nothing visible changes; what changes is that
+the number fed to the macro source is DFU's rather than happening not to
+be read. Two pins moved with it (`houses.test.js`, `bankpreview.test.js`).
+
+**REVIEW ROUND (2026-09-08).** The `BankingMacroDataSource` cites were
+off. Re-resolved against the file: `GetMacroDataSource` is `:489-492`
+(`:485-490` is the `#endregion` / `#region Macro handling` pair),
+`Amount()` is `:505-508` and `MaxLoan()` `:509-512` (`:499-502` is
+`private DaggerfallBankingWindow parent;` plus the constructor), the
+stored `this.amount = amount` is `:306`, and `GeneratePopup` runs
+`:299-337`. `MacroHelper.cs`'s own numbers all stood
+(`%a :50`, `%cn :67`, `%ml :139`, `%pcn :152`, `%reg :211`,
+`GetValue :503-527`, `CityName :567-574`, `PlayerName :779-782`,
+`RegionInContext :1049-1057`), as did `:311`, `:308-309`, `:313-334`,
+`:229-237`, `:247`, `:355`, `:364`, `:433-434` and `:455-464`. Nothing
+about the LAW changed — only where it is written down.
+
+## AUDIT 64 F26 - SELLING A HOUSE OUT OF TOWN DESTROYED THE DEED FOR NOTHING (2026-09-08)
+
+`DaggerfallBankManager.SellHouse` (`:450-465`) has four effects — credit
+`GetHouseSellPrice(house)` to the account, drop the interior from the
+permanent scenes, undiscover the building, reset the registry slot — and
+ALL FOUR are nested inside `if (buildingDirectory)` →
+`if (buildingDirectory.GetBuildingSummary(OwnedHouseKey, out house))`
+(`:454-462`). A
+miss, or a null directory, falls straight to
+`return TransactionResult.NONE` with the deed intact.
+`SellHouseButton_OnMouseClick` (`:440-453`) mirrors it: the
+SELL_HOUSE_OFFER box is raised only inside those same two nested
+successes, and there is no `else` on either.
+
+The port guarded on OWNERSHIP alone. That is a different question:
+`OwnsHouse` is keyed by REGION (`DaggerfallBankManager.cs:136`) while
+the building directory only ever holds the CURRENT location's buildings.
+So: buy a house in town A, walk into a bank in town B of the same
+region, press SELL HOUSE. The offer box appeared reading a price of 0
+(`houseSellPrice(0)`), Yes credited nothing, dropped the permanent
+interior, undiscovered the building and zeroed the slot. Ordinary play,
+no cheat, no gate.
+
+The fix is DFU's guard in both places:
+
+- `banking.sellHouse` takes `found` — `GetBuildingSummary`'s bool — and
+  returns `{ kind: 'none' }` before any effect when it is false. It
+  defaults TRUE so a caller that has already resolved the building need
+  not say so twice, which also keeps the existing pins honest.
+- `worldModes.openBank` hoists ONE `ownedHouseSummary()` resolver and
+  feeds the price, the new `ownedHouseResolved` hook and the sale from
+  it, so the three can no longer disagree — the H3 note in that block
+  records exactly that class of bug. Null covers both of DFU's arms: no
+  directory at all, and a key the directory does not hold.
+- `bankWindow._button('sellHouse')` asks `ownedHouseResolved` alongside
+  `ownsHouse`. The SHIP arm is untouched: `SellShipButton` (`:466-471`)
+  has one condition.
+
+**AND THE FIXED-CITY HOST.** `scenes/exterior.js` hard-coded
+`buildings: []` in its `buildingDirectory`, so an owned house never
+resolved even in its OWN town — that host sold every deed for nothing
+before the guard, and would have refused every sale after it. It now
+builds the real list from the two inputs the streaming host uses
+(`locationBuildings(dfLocation.exterior?.buildings, loc.blocks)`), which
+also makes BUY HOUSE's houses-for-sale roll answer truthfully there.
+
+**REVIEW ROUND (2026-09-08).** The lenient default is gone. `!== false`
+meant an unwired host kept the offer box, and DFU has no arm that does
+that: `if (buildingDirectory)` (`:446`) has no `else` any more than the
+two conditions around it, so a host whose `StreamingWorld` hands back no
+directory raises NO box. The hook now reads `=== true`, and the pin
+asserts silence there instead of blessing the port's own affordance.
+`grep -rn 'new BankWindow' src/` has exactly one production site
+(`scenes/worldModes.js`), which wires the resolver, so no host behaviour
+moves. `banking.sellHouse`'s `found = true` default is a different
+thing and stays: it is a parameter shape for callers that resolved the
+building themselves, not a reachable "no directory" arm. Cites
+re-resolved: `SellHouse` `:450-465` with the nested pair `:454-462` and
+the fall-through `return TransactionResult.NONE` at `:464`;
+`SellHouseButton_OnMouseClick` `:440-453`; `SellShipButton` `:466-471`.
+
+## AUDIT 64 F28 - THE CHARACTER SHEET'S GOLD BUTTON WAS INERT (2026-09-08)
+
+`DaggerfallBankingWindow.CreateBankingStatusBox` (`:520-550`, over
+`GetLoansLine` `:559-577`) is a
+public static member with exactly one caller —
+`DaggerfallCharacterSheetWindow.GoldButton_OnMouseClick` (`:787-792`) —
+and it is the only surface in the game that shows the player EVERY
+region's account at once. The bank window itself is single-region
+(`:247`), and the port's accounts are per region and real (62 of them,
+saved and restored), so a player who banked in three regions had no way
+to see two of them. The port hit-tested the verbatim `[4,43,132,8]`
+rect, played `ButtonClick`, and swallowed the click.
+
+The box, verbatim: `SetHighlightColor(DaggerfallUnityStatDrainedTextColor)`
+(`:523`); the header line FIRST and unconditionally (`:526-530`) then a
+`NewLineToken` (`:531`), so the blank row prints even in the empty case;
+a walk over every account kept when `GetAccountTotal(i) > 0 ||
+HasLoan(i)` (`:534`); each kept row four TAB-STOPPED columns at
+x = 0/60/120/180 (`GetLoansLine :559-577`), coloured `TextHighlight`
+when `HasDefaulted(i)` (`:536`); `ShortenName(name, 12)` = 11 characters and an
+ellipsis (`:552-557`); the loan column `GetLoanedTotal`, NOT the +10%
+repayment; the date `GetLoanDueDateString` — "" when nothing is owed
+(`DaggerfallBankManager.cs:573-582`). Nothing qualifying gives ONE row
+reading the localized `noAccount`, which `Internal_Strings.csv:860`
+spells **"None"**. `ClickAnywhereToClose = true` (`:548`).
+
+`banking.bankingStatusRows` is that walk. It is host-agnostic on
+purpose: `CharSheet` already holds the entity the accounts ride on, so
+the gold arm needs no host hook and works on every host that opens a
+sheet — which matters because all four reach the sheet through
+`charSheetDoor.js`. It answers the "None" row rather than throwing for a
+player who has never entered a bank and so has no accounts array yet.
+
+**THE MESSAGE BOX COULD NOT DRAW THIS.** `normalizeRows` accepted only
+`{ text, center }` and `drawMessageBox` drew one string per row at one x
+in one colour, so pasted through it the header would have read
+"RegionAccountLoanLoan Due Date" and a defaulted region would have lost
+its warning colour — space padding is not equivalent, the font is
+proportional. `messageBox.js` now takes a row of `cells`
+(`[{ x, text }]`) and a `highlight` flag: cells draw one label per cell
+at the `PositionPrefix`'s own x, which is
+`MultiFormatTextLabel.cs:346-352`'s `cursorX = token.x` outright, and
+the row's width is `lastLabel.Position.x + lastLabel.TextWidth`
+(`:380-384`) rather than the sum of its parts. A highlight row takes the
+label's `HighlightColor` (`:363`), which `SetHighlightColor`
+(`DaggerfallMessageBox.cs:455-458`) lets the caller override —
+`ActionTextBox` carries it, and the sheet passes
+`DaggerfallUnityStatDrainedTextColor` = (190,85,24) (`DaggerfallUI.cs:65`),
+the constant it already holds from Ledger F164. Rows without cells are
+untouched, field for field, so no existing box moves.
+
+The ENHANCED skin is out of scope and not a gap: since PX27 that door
+returns the pause window's Stats page, not a wrapper over `CharSheet`,
+so there is no gold rect there to route.
+
+**REVIEW ROUND (2026-09-08).** The on-screen half was unpinned. Three
+reverts of the DRAWING law — deleting `{ highlightColor: STAT_DRAINED_
+COLOR }` from the sheet's gold arm, deleting `drawMessageBox`'s `cells`
+branch so a row collapses to one concatenated string at one x, and
+flipping `normalizeRows`' cells arm to `center: true` — all left the
+suite green, because only the row DATA was pinned. Two pins now cover
+it: the gold-button test asserts the box carries `(190, 85, 24)`
+(`DaggerfallUI.cs:65`'s own numbers, not the port's constant name), and
+a new test stands the SPOP slices up behind a recording renderer and
+asserts what the glyph pass actually lays down — four labels per row at
+`labelX + 0/60/120/180`, the `TextHighlight` row in the caller's
+highlight colour (`:363`) and the plain row in `TextColor` (`:360`) —
+plus the same colour surviving the `ActionTextBox` hop. `messageBox.js`
+grew `_setMessageBoxArtForTests`, the seam a dozen other art-gated
+windows already carry. Five mutations run over the pair (drop the
+colour, delete the cells branch, centre a cells row, force `textColor`
+on the highlight arm, drop `ActionTextBox`'s forwarding): five dead.
+Cites re-resolved: the box is `:520-550`, the header line `:526-530`,
+the `NewLineToken` `:531`, the qualifying gate `:534`, the `HasDefaulted`
+ternary `:536`, the `!found` block `:541-546` and `GetLoansLine`
+`:559-577`. `MultiFormatTextLabel.cs:36/:341-344/:346-352/:359-364/
+:380-384`, `DaggerfallMessageBox.cs:455-458`, `DaggerfallUI.cs:54/:65`
+and `DaggerfallCharacterSheetWindow.cs:145-147/:787-792` all stood.
+
+## AUDIT 64 F55 - THE TOWN MAP FORGOT ITS VIEW MODE AND ITS BACKGROUND (2026-09-08)
+
+Two pieces of exterior-automap state outlive a close in DFU, and both
+were per-window in the port:
+
+- `currentExteriorAutomapViewMode` is a FIELD of the persistent
+  `ExteriorAutomap` MonoBehaviour (`ExteriorAutomap.cs:101`), a scene
+  object the window merely FINDS (`InitGlobalResources`,
+  `DaggerfallExteriorAutomapWindow.cs:922-941`). Its only writers are
+  the cycler (`:300-302`) and the three direct setters (`:320`, `:327`,
+  `:334`); `LoadAndCreateLocationExteriorAutomap` only READS it to pick
+  the layout (`:1588-1599`), so it survives a change of town too.
+- the background is `dummyPanelAutomap.BackgroundTexture` on the window
+  SINGLETON `DaggerfallUI` builds once (`DaggerfallUI.cs:531`) and
+  merely pushes on every M (`:647`); its only writers are the four
+  `Action…Background*` handlers (`:1262-1295`).
+
+Neither `OnPush` (`:481-540`) nor `OnPop` (`:545-563`) resets either
+one — `OnPush`'s single reset arm is `ResetCameraPosition()` plus the
+zoom, behind `ResetAutomapSettingsSignalForExternalScript`, and the
+new-location path raises only that signal (`ExteriorAutomap.cs:1650-1660`).
+
+The port builds a NEW window object on every open (`world.js`,
+`exterior.js`), and both values were seeded in the CONSTRUCTOR, so the
+grid button, Return/F2/F3/F4 and F5-F8 were all silently undone by the
+next M. The file had already hoisted `_revealUndiscoveredBuildings`,
+`_zoomLevel`/`_zoomLocation` and `_yawDeg` for exactly this reason, and
+the sibling dungeon window states the law outright at
+`automapWindow.js:326-335` with `_background`/`_renderMode` at module
+scope. `mode` and `background` are now ACCESSORS over module state,
+mirroring `revealUndiscoveredBuildings` — accessors rather than a
+constructor seed plus a write-back in `tick()`, because `ActionExit`
+closes inside `runVerb` and the background is set on a key EDGE, so a
+window can take its last change with no further tick. Neither is reset
+on a new location; the pin asserts that half too, because it is what
+discriminates against the plausible wrong fix.

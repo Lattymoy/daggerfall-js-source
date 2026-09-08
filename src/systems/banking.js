@@ -40,7 +40,10 @@
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
-import { DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY } from './gameDate.js';
+import {
+  DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY,
+  dateString, dateFromClassicMinutes,   // AUDIT 64 F28: GetLoanDueDateString's two halves
+} from './gameDate.js';
 
 /** TransactionResult (:29-51). The values ARE TEXT.RSC record ids for
  *  everything the bank says out loud - 0282-0299 is one contiguous
@@ -239,12 +242,28 @@ export function purchaseHouse(accounts, houses, regionIndex, house, player, {
 /** SellHouse (:450-465), the mirror: the bank ACCOUNT is credited
  *  (not the purse - DFU pays a deed into the account), the interior
  *  stops being permanent, the building is undiscovered, and the slot
- *  resets to a fresh record that still remembers its region. */
-export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0 } = {}, {
+ *  resets to a fresh record that still remembers its region.
+ *
+ *  AUDIT 64 F26 - AND THE SALE ONLY HAPPENS WHEN THE BUILDING RESOLVES.
+ *  Every one of those four effects is nested inside
+ *  `if (buildingDirectory)` -> `if (buildingDirectory.GetBuildingSummary
+ *  (OwnedHouseKey, out house))` (:454-462); a miss - or a host with no
+ *  directory at all - falls straight to `return TransactionResult.NONE`
+ *  with the deed intact. That is not an edge case: OwnsHouse is keyed
+ *  by REGION (:136) while the directory only ever holds the CURRENT
+ *  location's buildings, so a player who buys a house in one town and
+ *  walks into a bank in another town of the same region has an owned
+ *  house that does not resolve. Without the guard the port credited
+ *  houseSellPrice(0) = 0, dropped the permanent interior, undiscovered
+ *  the building and zeroed the slot - the deed destroyed for nothing.
+ *  `found` is GetBuildingSummary's bool; it defaults TRUE so a caller
+ *  that has already resolved the building need not say so twice. */
+export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0, found = true } = {}, {
   removePermanentScene = null, undiscoverBuilding = null,
 } = {}) {
   const slot = houses[regionIndex];
   if (!(slot.buildingKey > 0)) return { kind: 'none' };
+  if (!found) return { kind: 'none' };   // :454-456 falls to :464 - the miss arm has no effects at all
   const price = houseSellPrice(meshRadius);
   accounts[regionIndex].accountGold += price;
   removePermanentScene?.(slot.mapId, slot.buildingKey);
@@ -644,6 +663,74 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
     result: kind === 'ship' ? TRANSACTION_RESULT.SELL_SHIP_OFFER : TRANSACTION_RESULT.SELL_HOUSE_OFFER,
     price,
   };
+}
+
+/**
+ * AUDIT 64 F28 - THE BANKING STATUS BOX (DaggerfallBankingWindow
+ * .CreateBankingStatusBox, :520-550, over GetLoansLine :559-577).
+ *
+ * A public static member with exactly ONE caller - the character
+ * sheet's gold button (DaggerfallCharacterSheetWindow.cs:787-792) -
+ * and the only surface in the game that shows the player EVERY
+ * region's account at once. The bank window itself is single-region
+ * (:247), so a player with money banked in three regions had no way to
+ * see two of them.
+ *
+ * The shape, verbatim:
+ *  - the header line FIRST and unconditionally (:526-530), then a
+ *    NewLineToken (:531) - so the blank row prints even when nothing
+ *    else does;
+ *  - a walk over every account, kept when `GetAccountTotal(i) > 0 ||
+ *    HasLoan(i)` (:534);
+ *  - each kept row is four TAB-STOPPED columns at x = 0/60/120/180
+ *    (GetLoansLine :559-577), coloured TextHighlight when
+ *    HasDefaulted(i) and plain Text otherwise (:536);
+ *  - the loan column is GetLoanedTotal, NOT the +10% repayment, and
+ *    the date column is GetLoanDueDateString - "" when nothing is
+ *    owed (DaggerfallBankManager.cs:573-582);
+ *  - when nothing qualified, ONE row reading the localized "noAccount"
+ *    (:541-546), which Internal_Strings.csv:860 gives as "None".
+ *
+ * `regionName(i)` is GetLocalizedRegionName; the rows carry
+ * `{ cells: [{x, text}], highlight }` because the port's message box
+ * needed a tab-stopped, per-row-coloured row to draw this at all.
+ */
+export const BANKING_STATUS_COLUMNS = Object.freeze([0, 60, 120, 180]);
+/** Internal_Strings.csv:856-859 - region/account/loan/dueDate. */
+export const BANKING_STATUS_HEADERS = Object.freeze(['Region', 'Account', 'Loan', 'Loan Due Date']);
+/** Internal_Strings.csv:860 - the empty case is one word. */
+export const NO_ACCOUNT_TEXT = 'None';
+
+/** ShortenName (:552-557): `length <= maxLength` keeps the name whole,
+ *  otherwise maxLength-1 characters and an ellipsis. */
+export const shortenName = (name, maxLength) => (String(name ?? '').length <= maxLength
+  ? String(name ?? '')
+  : `${String(name).slice(0, maxLength - 1)}...`);
+
+const loansLine = (cells, highlight = false) => ({
+  center: false,
+  highlight,
+  cells: cells.map((text, i) => ({ x: BANKING_STATUS_COLUMNS[i], text: String(text ?? '') })),
+});
+
+export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
+  const rows = [loansLine(BANKING_STATUS_HEADERS), { text: '', center: false }];
+  let found = false;
+  for (let i = 0; i < (accounts?.length ?? 0); i++) {
+    if (!(accountTotal(accounts, i) > 0 || hasLoan(accounts, i))) continue;
+    const due = loanDueDate(accounts, i);
+    rows.push(loansLine([
+      shortenName(regionName(i), 12),
+      String(accountTotal(accounts, i)),
+      String(loanedTotal(accounts, i)),
+      // GetLoanDueDateString (:573-582) - the same expression the bank
+      // window's own dueDateText carries.
+      due > 0 ? dateString(dateFromClassicMinutes(due)) : '',
+    ], hasDefaulted(accounts, i)));
+    found = true;
+  }
+  if (!found) rows.push({ text: NO_ACCOUNT_TEXT, center: false });
+  return rows;
 }
 
 // CLOSEOUT: two of the three slices this once waited on have landed,

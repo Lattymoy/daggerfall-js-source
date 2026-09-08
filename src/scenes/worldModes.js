@@ -358,7 +358,9 @@ export function createWorldModes(host) {
   // is the gate for the whole class now: it parses src/ with rollup's
   // own parseAst and reports any const or let read in the SAME
   // execution scope as, and before, its declaration.
-  const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
+  // AUDIT 64 F27: the delay rides through here too - AddHUDText's
+  // second argument is part of the line (LoanChecker.cs:15/:42-45).
+  const say = (l, delay) => { if (townTalk?.say) townTalk.say(l, delay); else console.warn('[interior]', l); };
   // V5's interiorRestDeps retired into the fuller one below (search
   // `place: interiorRestPlaceHere`), which carries the same two
   // host-only halves plus the place bag, MoveToBed, the quest tick and
@@ -2646,6 +2648,19 @@ export function createWorldModes(host) {
     playerEntity.houses ??= createHouses(regions);
     const b = interiorBuilding;
     const bankRegion = () => b?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0;
+    /** AUDIT 64 F26: ONE resolver for the owned house, because DFU's
+     *  window and manager both ask the same question -
+     *  `buildingDirectory.GetBuildingSummary(OwnedHouseKey, out house)`
+     *  (DaggerfallBankingWindow.cs:446-450, DaggerfallBankManager.cs:453)
+     *  - and the price, the offer box and the sale must never disagree
+     *  about the answer. Null covers BOTH of DFU's arms: no directory
+     *  at all (:452) and a key the directory does not hold. */
+    const ownedHouseSummary = () => {
+      const dir = buildingDirectory?.();
+      const key = ownedHouseKey(playerEntity.houses ?? [], bankRegion());
+      if (!key || !dir?.buildings?.length) return null;
+      return dir.buildings.find((bs) => bs.buildingKey === key) ?? null;
+    };
     let win = null;
     // D6: ONE mount for BOTH arms of DaggerfallBankPurchasePopUp -
     // there is only one popup class in DFU and the arms differ only in
@@ -2680,6 +2695,17 @@ export function createWorldModes(host) {
       player: bankPurse(),
       wagonGold: () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0,
       rows: (id, pick) => townTalk?.lines?.(id, pick) ?? [],
+      // AUDIT 64 F25: SetTextTokens runs MacroHelper over every bank
+      // record (DaggerfallBankingWindow.cs:311), so the three GLOBAL
+      // symbols those records quote need producers as much as the
+      // window's own %a/%ml do: %pcn PlayerName (MacroHelper.cs:779),
+      // %cn CityName (:565-572, the location falling back to the
+      // region), %reg RegionInContext (:1049-1057). All three are
+      // already read in this block - the house deed's side effects
+      // below pass exactly the same pair.
+      playerName: () => playerEntity.name ?? '',
+      cityName: () => townTalk?.cityName?.() ?? buildingDirectory?.()?.locationName ?? '',
+      regionName: () => buildingDirectory?.()?.regionName ?? '',
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
@@ -2719,11 +2745,9 @@ export function createWorldModes(host) {
               addPermanentScene(sceneCache(), interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
             },
           });
-          // the price rides along the way the houses arm's does. DFU's
-          // GeneratePurchaseShipPopup passes only the result, so its
-          // `amount` macro field is 0 here - inert either way, because
-          // the port's rows come from the text record with no macro
-          // amount fed in at all.
+          // the price rides along the way the houses arm's does; the
+          // window drops it, because GeneratePurchaseShipPopup passes
+          // GeneratePopup the default amount 0 (AUDIT 64 F25).
           return { result: r.result, amount: r.price ?? 0 };
         },
       }),
@@ -2734,24 +2758,27 @@ export function createWorldModes(host) {
       // list, and the location directory already carries `modelIdNum`
       // on every building - the owned one just had to be found in it.
       houseSellPrice: () => {
-        const dir = buildingDirectory?.();
-        const key = ownedHouseKey(playerEntity.houses ?? [], bankRegion());
-        if (!key || !dir?.buildings?.length) return 0;
-        const owned = dir.buildings.find((b) => b.buildingKey === key);
+        const owned = ownedHouseSummary();
         return owned ? houseSellPrice(houseMeshRadius(owned)) : 0;
       },
+      // AUDIT 64 F26: SellHouseButton_OnMouseClick raises SELL_HOUSE_OFFER
+      // ONLY inside the two nested successes (DaggerfallBankingWindow
+      // .cs:443-451) and has no else, so an owned-but-unresolved house
+      // gets no box at all - not a box priced at zero.
+      ownedHouseResolved: () => ownedHouseSummary() !== null,
       ownsShip: () => ownsShip(playerEntity),
       ownedShip: () => ownedShipType(playerEntity),
       // The two SALES themselves. Both credit the bank ACCOUNT rather
       // than the purse - DFU pays a deed into the account - and both
       // drop what they made permanent.
       sellHouse: () => {
-        const dir = buildingDirectory?.();
         const region = bankRegion();
-        const key = ownedHouseKey(playerEntity.houses ?? [], region);
-        const owned = dir?.buildings?.find((b) => b.buildingKey === key) ?? null;
+        // AUDIT 64 F26: the SAME resolver the price and the offer box
+        // ask, and its miss is DFU's own no-op (DaggerfallBankManager
+        // .cs:452-462) rather than a sale at a price of zero.
+        const owned = ownedHouseSummary();
         return sellHouse(playerEntity.bankAccounts, playerEntity.houses, region,
-          { meshRadius: owned ? houseMeshRadius(owned) : 0 }, {
+          { meshRadius: owned ? houseMeshRadius(owned) : 0, found: owned !== null }, {
             removePermanentScene: (mapId, k) => removePermanentScene(sceneCache(), interiorSceneName(mapId, k)),
             // the deed named the building "<player>'s residence"; selling
             // takes that name back off the map

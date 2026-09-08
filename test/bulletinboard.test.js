@@ -230,7 +230,7 @@ test('the probe exterior host stands its boards too - the standing host rule', (
   // on a BLANK parchment, not "the location name alone": the head row
   // composes empty and bulletinBoard.js:97 shifts the starter row off,
   // leaving one empty line. This host knows its own location outright.
-  assert.match(e, /buildingDirectory: \(\) => \(\{[\s\S]{0,400}?locationName: dfLocation\.name \?\? locationName,/,
+  assert.match(e, /buildingDirectory: \(\) => \(\{[\s\S]{0,1200}?locationName: dfLocation\.name \?\? locationName,/,
     'the probe host hands the arm the location name it already holds');
   // and the CONTENT of the no-news arm, which the absence pin above
   // could never observe - one centred row, the location's own name.

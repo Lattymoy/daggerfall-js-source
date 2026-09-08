@@ -287,7 +287,16 @@ export class BankPurchaseWindow {
     if (item == null) return;
     this._close();
     const r = this.hooks.buy?.(item) ?? { result: TRANSACTION_RESULT.NONE };
-    this.hooks.showResult?.(r.result, r.amount ?? 0);
+    // AUDIT 64 F25: the amount is ZERO, not the price.
+    // GeneratePurchaseHousePopup / GeneratePurchaseShipPopup
+    // (DaggerfallBankingWindow.cs:229-237) call GeneratePopup(result)
+    // with the default `amount = 0`, so %a in a purchase record would
+    // expand to "0" in DFU. It was inert while the port ran no macro
+    // pass at all; it is not inert now that GeneratePopup expands one,
+    // so the value fed in matches DFU rather than happening not to be
+    // read. (282/283/454 quote no %a today - 282 quotes %cn - so this
+    // fixes no visible line; it removes a value that disagrees.)
+    this.hooks.showResult?.(r.result, 0);
   }
 
   click(vx, vy) {

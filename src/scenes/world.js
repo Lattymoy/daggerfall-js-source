@@ -1597,7 +1597,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player is standing.
     isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
-    say: (msg) => console.log('[player]', msg),
+    // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
+    // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
+    // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
+    // warning before a default raids the account and takes
+    // Crimes.LoanDefault reputation - and the same sink carries the
+    // magic-round disease/poison lines, the lycanthropy round and the
+    // torch's burn-out. Two of the four ticker hosts spoke and two
+    // console.logged; this is the outdoor one where day changes (and
+    // every fast travel) actually happen. The delay rides through:
+    // townTalk.say forwards it to HudText.add, whose default parameter
+    // restores PopupText.popDelay when it is undefined.
+    say: (msg, delay) => townTalk.say(msg, delay),
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
       // DFU posts dfuiOpenCharacterSheetWindow (RaiseSkills :1414) -

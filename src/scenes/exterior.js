@@ -121,7 +121,7 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt, tokenRows } from '../ui/messageBox.js';   // U11; AUDIT 64 F10: MultiFormatTextLabel's row law for the holiday parchment
 import { expandMessageBoxTokens } from '../systems/talkMacros.js';   // AUDIT 64 F10: SetTextTokens' null-mcp ExpandMacros pass
 import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
-import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
+import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // AUDIT 64 F26: BuildingDirectory's real building list in this host too
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -905,7 +905,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // CG2: this host has no interior mode at all - the player is always
     // outdoors here, so the crime-guild letter may always land.
     isInside: () => false,
-    say: (msg) => console.log('[player]', msg),
+    // AUDIT 64 F27: the SECOND outdoor host with the same miss -
+    // LoanChecker's reminders (LoanChecker.cs:42-45) and every other
+    // line this sink carries are DaggerfallUI.AddHUDText popups, so
+    // they reach the HUD here as they do in the interior and dungeon
+    // hosts, delay and all.
+    say: (msg, delay) => townTalk.say(msg, delay),
     onExhausted: onExhaustedExterior,
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
@@ -3037,12 +3042,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     // else. Without this key the "location name alone" arm above drew
     // a BLANK parchment - one empty row, the starter label shifted off
     // (bulletinBoard.js:97). This host knows its own location outright,
-    // so it hands over the same bag the world host builds; `buildings`
-    // is empty (that list is the houses-for-sale roll's, and every
-    // consumer guards on `?.buildings?.length`), while the mapId,
+    // so it hands over the same bag the world host builds - the mapId,
     // region and port-town byte are the host's real ones.
     buildingDirectory: () => ({
-      buildings: [],
+      // AUDIT 64 F26: ...and `buildings` is no longer empty. DFU's
+      // StreamingWorld.GetCurrentBuildingDirectory hands back the whole
+      // location's list, which is what SellHouse's
+      // GetBuildingSummary(OwnedHouseKey) (DaggerfallBankManager.cs:453)
+      // and SellHouseButton's own lookup (DaggerfallBankingWindow.cs:446)
+      // search; an empty list means an owned house never resolves even
+      // in its OWN town, so this host sold every deed for nothing
+      // before F26's guard and would refuse every sale after it. Same
+      // two inputs the world host uses (world.js:6217).
+      buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
       locationName: dfLocation.name ?? locationName,
