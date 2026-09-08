@@ -113,7 +113,11 @@ test('U18: the gender accept arm goes to the METHOD screen, not the list', () =>
   // GenderSelectWindow_OnClose -> SetChooseClassGenWindow (:305-316)
   const f = flowWithQuestions();
   f.state = 'gender';
+  // AUDIT 64 F32 (review round): the accept is the Male/Female HOTKEY -
+  // the box has no default button, so Return is inert on it.
   f.input('confirm');
+  assert.equal(f.state, 'gender', 'CreateCharGenderSelect.cs:53-54 - two bare AddButton calls');
+  f.input('char:m');
   assert.equal(f.state, 'classMethod');
   // and the gender BUTTON closes to the same place (the U14 law)
   const g = flowWithQuestions();
@@ -181,12 +185,15 @@ test('U18: the description box - Yes adopts, No falls to the list, modal through
   f.input('back');
   assert.equal(f.state, 'class', 'No -> SetClassSelectWindow');
   assert.equal(f.qClassIndex, NO_CLASS_INDEX, 'and the pick is dropped');
-  // Yes on a fresh run
+  // Yes on a fresh run - AUDIT 64 F32: through the Y HOTKEY, which is
+  // what DaggerfallMessageBox.AddButton binds on every button (:377).
+  // Bare Return on THIS box clicks the DEFAULT button, and
+  // AddCommonButtons' YesNo arm makes that No (:630-632).
   const g = flowWithQuestions();
   g.describeClass = (i) => [{ text: `class ${i}`, center: false }];
   g._enterClassQuestions();
   for (let i = 0; i < QUESTION_COUNT; i++) g.answerClassQuestion(2);
-  g.input('confirm');
+  g.input('char:y');
   assert.equal(g.classIndex, idx, 'Yes adopts the generated class');
 });
 

@@ -41,7 +41,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { RACE_TEMPLATES } from '../systems/races.js';
-import { CLASS_DESCRIPTION_TEXT_ID, SUMMARY_BONUS_TEXT_ID, PLAYER_REFLEXES } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
+import { CLASS_DESCRIPTION_TEXT_ID, SUMMARY_BONUS_TEXT_ID, PLAYER_REFLEXES, repBoxRowsFrom } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
 import { generateBackstory } from '../systems/biography.js';
 import { FACES_PER_RACE } from '../systems/races.js';
 import { bitmapCanvas } from './bitmapCanvas.js';
@@ -244,7 +244,10 @@ function raceStage() {
     flush();
     const a = el('div', 'acts');
     const yes = el('button', 'act primary', `Play as ${flow.race.name}`);
-    yes.onclick = () => { flow.input('confirm'); paint(); };
+    // AUDIT 64 F32: the box's own hit, not the shared 'confirm' - on
+    // which Return is inert here (no default button,
+    // CreateCharRaceSelect.cs:107-108).
+    yes.onclick = () => { flow.applyHit({ confirmRace: true }); paint(); };
     const no = el('button', 'act', 'Choose again');
     no.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
     a.append(yes, no);
@@ -1067,7 +1070,7 @@ function summaryStage() {
   who.append(idcol);
   list.append(who);
 
-  list.append(sectionHead('Attributes', flow.statPool));
+  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0));   // AUDIT 64 F33: the SUMMARY's own rollout pool
   STAT_KEYS_ORDER.forEach((key, i) => {
     list.append(reviewRow(key[0].toUpperCase() + key.slice(1), flow.stats?.[key] ?? 0, (dir) => {
       flow.applyHit({ setStatCursor: i });
@@ -1111,7 +1114,7 @@ function summaryStage() {
   }
   d.append(fa);
 
-  const left = (flow.statPool ?? 0) + Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);
+  const left = (flow.sumStatPool ?? 0) + Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);   // AUDIT 64 F33
   const a = el('div', 'acts');
   const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Begin your life');
   ok.onclick = () => { flow.confirmSummary(); if (flow.done) onExit('done'); else paint(); };
@@ -1291,14 +1294,14 @@ export function attachChargenText(f, textRsc) {
   // and no box at all, and the flow's own arm reads a missing box as
   // "nothing to show" and walks straight past it. Silent, and
   // permanent: the backstory is written once.
-  f.buildBackstory = (backstoryId, effects) =>
-    generateBackstory(textRsc, backstoryId, effects).map((r) => r.text);
+  f.buildBackstory = (backstoryId, effects, ctx) =>
+    generateBackstory(textRsc, backstoryId, effects, ctx).map((r) => r.text);
   f.bonusPointsRows = () => textRsc.linesById(SUMMARY_BONUS_TEXT_ID);
-  f.repBoxRows = (changed) => (changed
-    ? textRsc.linesById(35).map((r) => ({
-      ...r, text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),
-    }))
-    : null);
+  // AUDIT 64 F30: the rendering law has ONE home now - this skin used
+  // to restate the substitution and so printed the signed integer
+  // where BiogFileMCP.GetChangeStr (:35-47) speaks Lower/Higher/
+  // Unchanged, and could drift from the classic skin besides.
+  f.repBoxRows = (changed) => repBoxRowsFrom(textRsc, changed);
   return f;
 }
 

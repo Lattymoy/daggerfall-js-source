@@ -3116,10 +3116,15 @@ flying around the yard", which is the Destruction answer's own record.
 
 **THE REPUTATION BOX.** The last biography answer composes the
 backstory and pops TEXT.RSC 35 in a ClickAnywhereToClose box, its
-%r1..%r5 filled from `DigestRepChanges` - the per-group totals the
-twelve answers moved. Probed live: "Commoners: -5" over
-[-5, 0, 5, 5, 0]. The box is MODAL: any key closes it AND ends the
-screen, which is the pin that catches a half-wired dismissal.
+%r1..%r5 resolved from `DigestRepChanges` - the per-group totals the
+twelve answers moved. (CORRECTED, AUDIT 64 F30: this paragraph used to
+say 'Probed live: "Commoners: -5" over [-5, 0, 5, 5, 0]', which
+enshrined the port's defect. The five macros resolve through
+BiogFileMCP.GetChangeStr (:35-47) and speak WORDS - Unchanged / Lower /
+Higher, Internal_Strings.csv:453-455 - never the delta. The box reads
+"Commoners: Lower" over that array.) The box is MODAL: any key closes
+it AND ends the screen, which is the pin that catches a half-wired
+dismissal.
 
 Two of DFU's guards here are DEFENSIVE and unreachable, and are ported
 WITHOUT pins rather than with fake ones: DigestRepChanges' `rf` arm
@@ -10636,3 +10641,333 @@ closes inside `runVerb` and the background is set on a key EDGE, so a
 window can take its last change with no further tick. Neither is reset
 on a new location; the pin asserts that half too, because it is what
 discriminates against the plausible wrong fix.
+
+## AUDIT 64 F29 - THE BACKSTORY EXPANDED %qN AND NOTHING ELSE (2026-09-08)
+
+`BiogFile.GenerateBackstory` does not substitute the question macros
+and stop. Two lines before it walks the tokens it assigns
+`GameManager.Instance.PlayerEntity.BirthRaceTemplate =
+characterDocument.raceTemplate` with its own comment - "Need correct
+race set when parsing %ra macro" (`API/BiogFile.cs:212`) - and then
+runs the WHOLE macro table over the record:
+`MacroHelper.ExpandMacros(ref tokens, (IMacroContextProvider)this)`
+(`:215`). The BiogFile IS the context provider, and `BiogFileMCP`
+answers six rows for it: HomeProvinceName `%hpn` (`:87-115`),
+GeographicalFeature `%hpw` (`:117-141`), Name `%bn` (`:143-148`),
+ImperialName `%imp` (`:618-624`), FemaleName `%fn` (`:626-632`) and
+MaleName `%mn` (`:633-638`); `%ra` comes from MacroHelper's own
+PlayerRace (`Utility/MacroHelper.cs:942-945`), which is why the race is
+assigned first.
+
+The port ran ONE regex, `/%q(\d+)([ab]?)/g`, and handed the rows on.
+A census over `Internal_RSC.csv` records 4116-4133 - the eighteen class
+backstories, `DEFAULT_BACKSTORIES_START + classIndex` - says what that
+cost: only 4116-4119 are %q-only. 4120 carries %hpn %hpw; 4121 %bn %fn
+%ra; 4122 %imp; 4123 %fn %hpn %hpw; 4124 %hpn %hpw %imp; 4125 %hpw
+%imp; 4126 %hpn %hpw %imp %mn %ra; 4127 %hpn %hpw %imp; 4128 %fn; 4129
+and 4130 %hpw %imp; 4131 %fn %hpn %hpw; 4132 %fn %imp; 4133 %hpn %mn.
+FOURTEEN OF EIGHTEEN. A new Healer, Nightblade, Bard, Burglar, Rogue,
+Acrobat, Thief, Assassin, Monk, Archer, Ranger, Barbarian, Warrior or
+Knight opened the character sheet's HISTORY page and read raw "%imp",
+"%hpn", "%bn" text - and the backstory is written ONCE, at chargen, and
+round-trips through the save from then on.
+
+The port already owned every handler (`systems/quest/questMacros.js`
+:352 %ra, :458-459 %fn/%mn, :562 %bn, :565 %imp, :668-669 %hpn/%hpw)
+and its own comment at :475 named the missing half - "the SOURCES land
+with their arcs: the biography MCP (%q block, %hpn/%hpw/%bn...)". The
+source never landed, so the callers were call-throughs to nothing.
+
+WHAT SHIPPED. `systems/biography.js` grows `biogMacroSource(raceKey,
+seed)` - the six BiogFileMCP rows verbatim, with the two race switches
+carrying the Internal_Strings.csv:456-469 values (Black Marsh / High
+Rock / Morrowind / Sumurset / Elsweyr / Skyrim / Hammerfell /
+Valenwood; swamps / rolling hills / mountains / shores / desertland /
+mountains / desertland / forests) and `default: return null` beneath
+them - and `generateBackstory` runs the record through ONE
+`ExpandMacros` pass, `talkMacros.expandTalkMacros`, the walk the talk
+arc already carries. Three things follow from using the real walk:
+
+- **The per-call macro cache is C#'s** (`MacroHelper.cs:427-429`,
+  consulted at :457-462, with its own comment saying why: "some macros
+  evaluate differently each time"). A record naming `%fn` in two
+  tokens names the SAME woman. Running the regex first and an expander
+  second would also have let a %q value containing a '%' be expanded
+  twice, which DFU never does.
+- **The scan runs to the next MACRO_TERMINATORS character**, not to a
+  word boundary, so `%q12` and `%q1` separate without any
+  longest-first ordering.
+- **The error sentinels are the real ones.** `%hpn` for a race outside
+  1-8 renders `%hpn[nullMCP]`, `MacroHelper.GetValue`'s own shape
+  (`:509-512`) - unreachable for the eight playable races, and the
+  honest reading. (One verifier read ExpandMacros as appending a null
+  as empty; `GetValue` is where the null is turned into the sentinel,
+  before ExpandMacros ever sees it, so the sentinel is what DFU
+  prints.)
+
+THE %q BLOCK STAYS LOCAL AND EMPTY-ON-MISSING. DFU renders
+"%q1b[nullMCP]" for a question with fewer than three tokens; the port
+renders nothing. That divergence predates this fix, is pinned as it
+stands (`test/biography.test.js`), and is not re-decided here - the
+handler table's %q rows are overridden with the port's existing arms so
+the fix changes nothing about them. The stale comment that used to
+justify the empty form ("ExpandMacros appends a null value as empty")
+is corrected at the site.
+
+TWO SEAMS THE PORT NEEDED THAT DFU DOES NOT. `buildBackstory` is
+called from `ui/chargen.js` `_finishBiography`, BEFORE
+`systems/chargenSession.js` creates the entity, so `%ra` cannot read a
+player entity - it would answer the PREVIOUS character's race, or none.
+The chargen document's race is threaded in instead (`raceKey`,
+`raceName`), which is exactly the stand-in for BiogFile.cs:212's
+assignment; both skins thread it (`ui/chargenArt.js` `buildBackstory`,
+`ui/enhancedChargen.js` `attachChargenText`). And the SEED: DFU seeds
+each name draw with `(uint)parent.GetHashCode()`, the CLR identity hash
+on the BiogFile instance, which differs run to run inside DFU itself
+and has no port. One injectable per-biography seed stands in, with
+DFU's offsets kept verbatim over it - base for %bn and %imp, base+123
+for %fn, base+9543 for %mn, each RESEEDING before its single draw, so
+the three names stay distinct as DFU's are. Recorded as a Ledger A row.
+`%imp` is the literal six-name table `{ Pelagius, Cephorus, Uriel,
+Cassynder, Voragiel, Trabbatus }` indexed by `DFRandom.rand() % 6` -
+NOT SaveVars' emperorSonNames, despite `%imp` reading those elsewhere -
+and the three names go through `MacroHelper.GetNameBank` (`:344-366`),
+whose Argonian arm is the IMPERIAL bank.
+
+Pins: `test/audit64_chargen.test.js`, seven laws - the eight races'
+%hpn/%hpw against Internal_Strings, the %imp table and its `rand() % 6`
+index, the three seed offsets and their genders (including the Argonian
+bank), a 4126-shaped record leaving no '%' behind, the per-call cache
+across two tokens, %ra off the document, and the flow's threading of
+race and seed.
+
+## AUDIT 64 F30 - THE REPUTATION BOX PRINTED NUMBERS (2026-09-08)
+
+TEXT.RSC 35 is the box that closes the biography - "Your reputations
+have changed as follows:" and five rows. Its `%r1..%r5` resolve through
+`BiogFileMCP`'s CommonersRep / MerchantsRep / ScholarsRep /
+NobilityRep / UnderworldRep (`API/BiogFileMCP.cs:54-89`), and every one
+of the five is `return GetChangeStr(parent.changedReputations[index])`.
+`GetChangeStr` (`:35-47`) is three arms and no numbers: `val == 0` ->
+"unchanged", `val < 0` -> "lower", else "higher" - localized at
+`Internal_Strings.csv:453-455` to `Unchanged` / `Lower` / `Higher`.
+Both call sites hand the BiogFile in as the context provider
+(`CreateCharBiography.cs:150-155` and the auto-generate arm at
+`DaggerfallStartNewGameWizard.cs:441-448`), so both take that path.
+
+The port substituted the signed integer, and did it TWICE - once in
+`ui/chargenArt.js` `repBoxRows` and once restated in
+`ui/enhancedChargen.js` `attachChargenText`. So the closing screen of
+every chargen, on both skins and on both the questionnaire and the
+auto-generate arm, read "Commoners: -5" where classic reads
+"Commoners: Lower".
+
+The law has one home now: `repChangeStr` and a textRsc-parameterised
+`repBoxRowsFrom` in `ui/chargenArt.js`, with `repBoxRows` a wrapper
+over `_art.textRsc` (its null guards intact - `chargen.js`'s
+`if (!this.biogRepBox?.length) this._leaveBiography()` leans on them
+headless) and the enhanced skin binding `repBoxRowsFrom(textRsc, ...)`
+so the two can no longer drift. The per-group totals `digestRepChanges`
+computes are untouched: they are correct DFU (`BiogFile.cs:150-167`)
+and the summary tail still reads them as numbers.
+
+Pins: `test/audit64_chargen.test.js` - all three arms of GetChangeStr
+through record 35 on the classic path AND through
+`attachChargenText`'s flow object, so a revert in either skin goes red.
+The bible record that had pinned the defect ("Probed live: 'Commoners:
+-5'") is corrected above.
+
+## AUDIT 64 F31 - "+0;-0;0" HAS A THIRD SECTION (2026-09-08)
+
+`CreateCharAddBonusStats.UpdateSecondaryStatLabels` formats four of its
+seven labels with the C# custom numeric picture `"+0;-0;0"` -
+DamageModifier (`:156`), ToHitModifier (`:160`), HitPointsModifier
+(`:161`) and HealingRateModifier (`:162`). Three unnamed sections in
+such a picture are positive;negative;ZERO, and the third here is a bare
+`0`. The other three labels (MaxEncumbrance, SpellPoints, MagicResist)
+take a plain `ToString()`.
+
+`ui/chargen.js` `derived()` wrote `n >= 0 ? '+' + n : String(n)`, which
+folds zero into the positive arm and prints "+0". The zero band is the
+ordinary one: `floor(END/10) - 5` is 0 for endurance 50-59 (both the
+hit-point and healing-rate labels), `floor(AGI/10) - 5` the same over
+agility, and `floor((STR-50)/5)` is 0 for strength 50-54
+(`FormulaHelper.cs:66-73`, :102-128). Both draw paths read the one
+object - the classic CHAR02I0 blit and the enhanced pane - so a single
+`n > 0 ? '+' + n : String(n)` corrects both, which is what DFU's one
+label formatter does. The port already spoke this rule correctly
+elsewhere (`questMacros.js` `signedFmt`, `itemInfo.js`'s armour mod);
+the bonus-stats screen was the one site that got the zero arm wrong.
+
+The two pins that covered this block restated the port's own
+expression and only ever exercised negatives, so they were green before
+and after. `test/audit64_chargen.test.js` spells the picture out
+(`n > 0 ? '+n' : n < 0 ? 'n' : '0'`) and pins all three sections,
+including a literal `['0','0','0','0']` in the zero band.
+
+## AUDIT 64 F32 - THE CLASS-QUESTIONS BOX'S DEFAULT BUTTON IS NO (2026-09-08)
+
+A `DaggerfallMessageBox` has two keyboard lanes and the port had
+conflated them.
+
+1. **Every button carries a hotkey, always.** `AddButton` ends with
+   `button.Hotkey = DaggerfallShortcut.GetBinding(ToShortcutButton(
+   messageBoxButton))` (`DaggerfallMessageBox.cs:377`) - Yes 'Y', No
+   'N' in DialogShortcuts.txt, which the port already carries at
+   `systems/dialogShortcuts.js`.
+2. **Return clicks the DEFAULT button, if the box has one.** `Update`
+   (`:318-324`) calls `GetDefaultButton()` (`:394-403`) and
+   `TriggerMouseClick()`s it; with no default button it does nothing.
+
+`CreateCharClassQuestions.EndQuestions` (`:406-409`) builds its confirm
+box through the `CommonMessageBoxButtons.YesNo` constructor, and
+`AddCommonButtons`' YesNo arm is `AddButton(Yes); AddButton(No, true)`
+(`:630-632`) - the `true` is `defaultButton`. So RETURN AT THE END OF
+THE TEN QUESTIONS CLICKS NO, and `ConfirmDialog_OnButtonClick`
+(`:425-427`) answers No with `classIndex = noClassIndex` and drops the
+player onto the class list. The port routed 'confirm' to
+`_acceptQuestionClass()` - the exact inverse.
+
+The race and class-list description boxes are the CONTRAST, and they
+are why this is not a one-line change: `CreateCharRaceSelect.cs:107-108`
+and `CreateCharClassSelect.cs:87-88` both call `AddButton(Yes)` and
+`AddButton(No)` with no `defaultButton` argument, so
+`GetDefaultButton()` returns null and Return is INERT on those two.
+The port accepted on all three. Leaving that half unfixed would have
+given the wizard three different meanings for Return.
+
+WHAT SHIPPED. All three arms test the Y and N hotkeys FIRST (the
+letters beat the default button), then: on the questions box a bare
+Return falls through to the default button and CANCELS; on the race and
+class-list boxes it does nothing. The race box needed one more move -
+its mouse Yes rode the shared 'confirm' action in both skins
+(`chargenArt.js`'s race-box hit and the enhanced skin's Yes button), so
+nulling the keyboard arm would have killed the BUTTON. It has its own
+`{ confirmRace: true }` hit now, beside `cancelRace`, and both skins
+click that; the class-list box already had `{ confirmClass: true }`
+and the questions box `{ confirmQClass: true }`, so their mouse paths
+were untouched.
+
+REVIEW ROUND (2026-09-08) - THE FOURTH BOX. The first pass counted
+three message boxes on the wizard and missed one: the GENDER SCREEN
+itself. `CreateCharGenderSelect` is not a window that owns a box, it IS
+one - `public class CreateCharGenderSelect : DaggerfallMessageBox`
+(`CreateCharGenderSelect.cs:30`) - and its `Setup` builds it from two
+bare calls, `AddButton(MessageBoxButtons.Male)` and
+`AddButton(MessageBoxButtons.Female)` (`:53-54`), with no
+`defaultButton` argument on either. So `GetDefaultButton()` is null and
+Return is INERT there too, exactly as on the race and class-list boxes;
+what acts is the hotkey `AddButton` binds unconditionally (`:377`) -
+Male 'M', Female 'F' in DialogShortcuts.txt, both already in
+`systems/dialogShortcuts.js`. Each button's handler sets the gender and
+`CloseWindow()`s (`:59-71`), which is the `{ setGender }` hit the mouse
+path already answers with, so the two keys take the same door the
+buttons do. The port advanced on a bare 'confirm', which left Return
+with two meanings across the wizard's four boxes after F32 rather than
+one.
+
+The 'up'/'down' toggle stays: it moves the highlight only and is the
+port's own keyboard accommodation for a screen DFU drives with a
+pointer, the same accommodation the race map carries.
+
+RESIDUAL, recorded not hidden: Escape still rejects on all three boxes.
+DFU sets `AllowCancel = false` the moment a button is added ("Don't
+allow a messagebox with buttons to be cancelled with escape",
+`:381-383`), so Escape is inert there. That is the port's keyboard-
+reachability accommodation and it predates this fix; with Y/N in place
+N now covers rejection, and the Escape arm is a candidate for removal
+under a Ledger row rather than in this lane.
+
+Pins: `test/audit64_chargen.test.js` - Return on the questions box
+leaves `qClassIndex === NO_CLASS_INDEX` and the flow on the class list,
+`char:y` adopts, `char:n` rejects, the mouse `{ confirmQClass }` still
+adopts, and Return is inert on the race and class-list boxes with Y
+accepting on both. Three older pins that asserted the port's
+Return-accepts (`test/classpicker.test.js`,
+`test/classquestions.test.js`, `test/audit17g.test.js`) are re-aimed at
+the reference law rather than deleted.
+
+## AUDIT 64 F33 - THE SUMMARY'S BONUS POOL LEAKED BACKWARDS (2026-09-08)
+
+The wizard holds TWO `StatsRollout` instances: the bonus-stats
+window's (`CreateCharAddBonusStats.cs:83`) and the summary's own, which
+`SetCharacterSheet` zeroes on every push (`CreateCharSummary.cs:125`,
+`this.statsRollout.BonusPool = 0`). `SummaryWindow_OnClose`'s cancel
+arm (`DaggerfallStartNewGameWizard.cs:566-577`) copies exactly six
+things back - startingSkills, workingSkills, startingStats,
+workingStats, the three SKILL bonus counters (through
+`SetBonusSkillPoints`, `:575`) and faceIndex. The stat bonus pool is
+ABSENT, and that omission is load-bearing: the only other write into
+the stats window's rollout is `AddBonusSkillsWindow_OnClose`'s cancel
+arm (`:534-536`), which is a `.Copy` on the read-only getter and
+bypasses `SetStats` (`StatsRollout.cs:53-62`, `:183-191`), leaving
+`bonusPool` untouched; and that window's OK gate
+(`CreateCharAddBonusStats.cs:189`) refuses to close with a positive
+pool. So walking summary -> reflexes -> skills -> stats after
+un-spending a point, DFU shows pool 0 with the lowered value standing:
+the point is DESTROYED. The skill side is the deliberate contrast -
+those three counters ARE propagated.
+
+The port had ONE `this.statPool`. `_enterSummary` zeroed it, the
+summary's spinner raised it through the same `spendStat`, and the
+summary's 'back' arm is a bare state move - so the refunded point
+walked back onto the bonus-stats screen and could be spent again.
+
+WHAT SHIPPED. `ui/chargen.js` grows `sumStatPool`, the summary's own
+rollout pool, beside the `sumName`/`sumReflexes` pair AUDIT 18 added
+for the same reason (the fields that cancel arm omits). `_enterSummary`
+zeroes THAT and leaves `statPool` alone; `spendStat` selects the pool
+by screen through a `_statPool()`/`_setStatPool()` pair, so its three
+callers are unchanged and `stats`/`rolledStats` stay shared (the cancel
+arm does copy the VALUES back); `confirmSummary`'s gate reads the
+summary's pool, as `CreateCharSummary.cs:174` does. Both draws follow:
+`chargenArt.js`'s `statView` - shared by `drawSummary` and the
+bonus-stats page, and the feed for the spinner digit - reads the pool
+of the screen that is showing, and the enhanced skin's summary pane
+does the same for its section head and its OK label.
+
+Pins: `test/audit64_chargen.test.js` - the back-walk itself (spend
+down on the summary, three backs, `statPool === 0` with the lowered
+stat standing), the OK gate reading the summary's pool and ignoring the
+other rollout's, the re-push zeroing only the summary's, and
+`statView`'s per-screen digit. Two pins in `test/summary.test.js` that
+set and asserted the shared field are re-aimed at `sumStatPool`.
+
+REVIEW ROUND (2026-09-08) - THE SELECTION IS PER-INSTANCE TOO. The
+first pass split the POOL and left `statCursor` shared, which is the
+same fault one field over. `selectedStat` is a plain instance field of
+`StatsRollout` (`StatsRollout.cs:43`, `int selectedStat = 0;`) and
+`SelectStat` (`:210-217`) writes it together with `spinner.Position` on
+whichever rollout owns the spinner that was clicked - so the wizard's
+two instances (`CreateCharAddBonusStats.cs:87`,
+`CreateCharSummary.cs:37`) carry two selections. The cancel arm
+(`DaggerfallStartNewGameWizard.cs:559-578`) copies neither back, and
+the ONLY caller of `SelectStat(0)` is `SetStats` (`:183-191`), which
+the bonus-stats window reaches on a REROLL alone. So DFU's bonus-stats
+spinner sits where the player left it for the whole of the summary
+visit, and the summary's own starts at 0 on every push, because
+`SetCharacterSheet` assigns THIS window's rollout
+(`CreateCharSummary.cs:123`, `this.statsRollout.StartingStats = ...` -
+the setter that ends in `SelectStat(0)`).
+
+The port had one `statCursor`, so a click on the summary's spinner
+rewrote the bonus-stats window's row and `_enterSummary`'s reset walked
+it back to Strength on the way in. It is drawn in both skins:
+`chargenArt.statView` feeds `drawStatBlock` on both screens, and
+`statBlockHit` puts the spinner's own hit rect at the selected row.
+
+WHAT SHIPPED. `sumStatCursor` beside `sumStatPool`, and a
+`_statCursor()`/`_setStatCursor()` pair selecting by `this.state`
+exactly as the pool pair does. `spendStat` reads it, `applyHit`'s
+`{ setStatCursor }` writes it, `_enterSummary` zeroes the summary's
+alone, and `statView` and the summary's `statBlockHit` call read the
+showing screen's. The bonus-stats screen's own keyboard 'up'/'down',
+`loadRoll` and the reroll's `SelectStat(0)` keep writing `statCursor`,
+because that IS the bonus-stats rollout.
+
+Pins: `test/audit64_chargen.test.js` - the bonus-stats window left on
+Luck (index 7), a summary spinner moved to 3, and three cancels later
+the stats screen reading 7 with `statView` drawing on 7. Two
+`test/summary.test.js` pins that asserted the shared field on the
+summary are re-aimed at `sumStatCursor`, and the SelectStat(0) pin now
+also asserts the other rollout keeps its row.
