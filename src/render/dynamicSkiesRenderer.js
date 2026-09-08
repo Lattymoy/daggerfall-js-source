@@ -88,7 +88,7 @@ const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
  *  read by the shader and fetched by nobody, so its upload was a silent
  *  no-op and the mod's red-only boost never happened). Pinned against
  *  the FS's own declarations in test/dynamicSkies.test.js. */
-export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', '_WorldSpaceLightPos0', '_LightColor0', 'uFogColor', 'uFogMix',
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', '_WorldSpaceLightPos0', '_LightColor0',
   '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
   ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
 
@@ -109,8 +109,6 @@ uniform float uYaw, uPitch, uTanHalfFov, uAspect;
 uniform vec3 _WorldSpaceLightPos0;   // toward the sun (SunlightManager's rotation, unclamped)
 uniform vec3 _LightColor0;           // SunLight colour x intensity, linear
 // the host's fog over the dome (post-process fog with excludeSkybox false)
-uniform vec3 uFogColor;
-uniform float uFogMix;
 
 // ── Properties, as the shader declares them ──────────────────────
 uniform float _Exposure;
@@ -675,11 +673,18 @@ void main() {
     col.b = (ceil(col.b / (_stepSize - (lerpScale_pow * _stepSize) + 0.001)) * (_stepSize - (lerpScale_pow * _stepSize) + 0.001));
   }
 
-  // The host's fog over the dome (DFU's post-process fog with
-  // excludeSkybox false - heavy fog), in the world's own colour.
+  // NO HOST FOG OVER THE DOME (MODS AUDIT). The mod's pass applies none:
+  // UNITY_CALC_FOG_FACTOR_RAW(_FogDistance) is computed at :872 and every
+  // consumer of unityFogFactor is commented out (:874-879), and
+  // BLBSkybox.LateUpdate (:320-335) forces the camera's clearFlags back
+  // to Skybox every outdoor frame - so under heavy fog (the one preset
+  // with ExcludeSkybox false) the player sees the mod's own Fog preset,
+  // never DFU's fog colour in the sky's place. The port used to mix the
+  // world's fog over the encoded dome here; the host still writes
+  // fogMix on whichever pass it holds, and this pass has nothing to
+  // apply it to.
   vec3 lin = clamp(col.rgb, 0.0, 1.0);
   vec3 enc = vec3(linearToSrgb(lin.r), linearToSrgb(lin.g), linearToSrgb(lin.b));
-  enc = mix(enc, uFogColor, uFogMix);
   outColor = vec4(enc, 1.0);
 }`;
 
@@ -724,8 +729,9 @@ export class DynamicSkiesRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** the vendored textures by file name, once uploaded */
     this.textures = new Map();
-    this.fogMix = 0;
-    this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
+    this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
+    this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
+    this.fogColor = new Float32Array([0.5, 0.5, 0.5]);   // likewise
     this.clearColor = new Float32Array([0.4667, 0.5137, 0.7176]);   // FogSunny's day colour until the first state
     this.fillColor = new Float32Array([0.4667, 0.5137, 0.7176]);
     this.state = null;
@@ -795,9 +801,7 @@ export class DynamicSkiesRenderer {
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
     gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);
-    gl.uniform3fv(u.uFogColor, this.fogColor);
-    gl.uniform1f(u.uFogMix, this.fogMix);
-    for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0);
+    for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 : (mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0));   // DS2: opacity 0 to the shader under the volumetric clouds; the material keeps the preset's
     for (const name of COLOR_PROPERTIES) {
       const c = mat[name] ?? MATERIAL_DEFAULTS[name];
       if (VEC3_COLOR.has(name)) this._color3(u[name], c);

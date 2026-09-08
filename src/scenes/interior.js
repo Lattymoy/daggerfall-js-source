@@ -34,7 +34,7 @@ import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/ho
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { swallowBrowserKey } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js
+import { swallowBrowserKey, actionOf } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -193,7 +193,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // overlay gate, where DFU's Update returns before PollInput
     // (:487-503).
     keys.add(e.code);
-    if (e.code === 'KeyM') { toggleAutomap(); e.preventDefault(); return; }
+    if (actionOf(e, keys) === 'AutoMap') { toggleAutomap(); e.preventDefault(); return; }   // FIX-F: the registry's key, not a raw M - the one host that read the literal
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });

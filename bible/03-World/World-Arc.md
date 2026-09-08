@@ -2030,6 +2030,21 @@ is whether ArenaFireDaemon at a fresh AudioSource's 500-unit reach is
 audible across the whole farm, which is what his numbers say and what
 the port now does.
 
+## WM5 - THE MODS AUDIT, and the windmills get a page (2026-09-08)
+
+Mac: "go ahead and audit the other mods while youre at it to ensure they
+are 1:1." The windmill arc's record now lives on `03-World/Windmills.md`
+- the law table against Kamer's archive, the seams, and what the audit
+found: the rotor's anchor derived from a sky-table vector nothing had
+read since WIND1 (re-anchored on the wind model's own fair day, the
+stall at its floor), the Ledger row stale in five places, the blade's
+bounding box mislabelled, the probe still asking WM2d's retired
+question, and four items recorded rather than changed - the roller's
+node matrix, the automap and navgrid bytes his override edits, the
+building bound the port draws around his added subrecord, and the
+interior file's header counts, which may mean the vendored room is
+short and which only the archive can settle.
+
 ## AUDIT 63 F49 - DISCOVERBUILDING'S QUEST NAME-OVERRIDE ARM (2026-09-08)
 
 `PlayerGPS.DiscoverBuilding` has five clauses and the port carried two.

@@ -2982,7 +2982,7 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE
   // `readySpell = null` (:2135), which is the ordering F2 rests on.
-  assert.match(hm, /const done = \(v\) => \{ onCastReadySpell\?\.\(sp\); readiedSpell = null;/,
+  assert.match(hm, /const done = \(v\) => \{ lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null;/,   // FIX-F: lastSpell (:2136) before the raise (:2137)
     'the cast callback must fire while the spell is still readied');
 });
 

@@ -20,7 +20,7 @@
 // module table this file reads, called from dungeonContext.js:1013,
 // world.js:1504 and exterior.js:1049 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
-// that is DFU's own answer rather than a stand-in: shared.js:104
+// that is DFU's own answer rather than a stand-in: shared.js:107
 // records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';

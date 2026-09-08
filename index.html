@@ -21,10 +21,14 @@
   <style>
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* FIX-D: Pixelify Sans's 5 reads as an 8; the digit five is Silkscreen's
+       (OFL, vendor/silkscreen-five/), one glyph as a data URI, the same
+       face src/ui/pixelifyFive.js gives the game. */
+    @font-face { font-family: 'Pixelify Five'; unicode-range: U+0035; font-display: swap; src: url(data:font/woff2;base64,d09GMgABAAAAAAIIAA0AAAAABKQAAAG5AAEAQgAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcIAZgADQRCAo8UQE2AiQDCAsGAAQgBYQEByAb0gMRFZQRZF8mbyrtyKnsmUtW0uh5eajRkkYiwmd9zzwevvZ7PXd3A4jjU0BFqJDHE1p0Mq4uqiyrUX1VpBcA/QCAwLv/sfo5F6Rn9t09Ls65/8pEjkFdE/m2A84AIXIHmiZwJJFm0pbQC2cFlGjCRS2xqAUWJRAZpScLgtmEN4H2INg9T6DZqHGxacuuvRoVqAhYvaSloI70IIWdVRLHLfgNBOxl356deyxZYUWpr+rJNb8JiK/pmJSRkNErC/QqJlEUgRWVXLV6ESBEVQESKEjoRA+gAFJrOROtuU2rFi1ORpsvt1y9+lW3f3N7TL8NBMKGS6Nj8yes/za5Bg8HfwuvHq+zWX05l2uol0Dwz5V3RP1cQJeUzrud3rstkMyqCwJGSQINDsuiNGGRJvRaJGn3iGytlxSz0U6dvbHww+rNxh0babDbhyLLJzB13YBvnsCnqKuRDUnSwnPAMmETnOcpx2EEPp+mbgw1LSumfKYqw0bLELM6SbGdRm08TAsa7XeSzTUZDFX+dPS7X+6RR5RVmJvg9p8MY4EtHAlMk2kyC+YFf/8E/GKovmqrnuLEDhW0/Ak2MwEAAA==) format('woff2'); }
     body {
       margin: 0; min-height: 100dvh; position: relative;
       color: #d8cfae; background: #0a0c11;
-      font-family: 'Pixelify Sans', monospace; font-size: 16px; line-height: 1.6;
+      font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-size: 16px; line-height: 1.6;
       -webkit-font-smoothing: none;
       /* U63: Pixelify Sans ships an `fi` LIGATURE whose glyph reads as a
          capital A - "files" becomes "Ales", "first" becomes "Arst".
@@ -70,7 +74,7 @@
        wordmark over a rule, one thing to press. */
     .door { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px 118px; text-align: center; }
     .wordmark { font-size: clamp(64px, 12vw, 112px); line-height: 1; }
-    .wordmark small { display: block; font-family: 'Pixelify Sans', monospace; font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase; color: #7d7460; margin-top: 10px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+    .wordmark small { display: block; font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em; text-transform: uppercase; color: #7d7460; margin-top: 10px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
     .dek { max-width: 46ch; margin: 0 auto 24px; }
     .gate { max-width: 54ch; margin: 0 auto 26px; color: #a89f88; font-size: 15px; }
     .gate b { color: #d8cfae; font-weight: 400; }

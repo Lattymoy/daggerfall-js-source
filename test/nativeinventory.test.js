@@ -489,6 +489,6 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   const kd = body.slice(body.indexOf("\n  addEventListener('keydown', (e) => {"));
   assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf('if (overlay)'),
     'interior.js swallows BEFORE the overlay arm returns');
-  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (e.code === 'KeyM')"),
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (actionOf(e, keys) === 'AutoMap')"),   // FIX-F: the registry's key
     'interior.js swallows BEFORE the automap arm returns');
 });

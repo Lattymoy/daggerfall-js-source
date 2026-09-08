@@ -31,6 +31,7 @@
    drift this file exists to prevent. scripts/landingHtml.mjs injects
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
+import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
 export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
@@ -82,6 +83,8 @@ export const fontsUrl = (families) =>
 export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
 export const ENHANCED_CSS = `
+/* ── FIX-D: the digit five is Silkscreen's - see ui/pixelifyFive.js */
+${PIXELIFY_FIVE_FACE}
 /* ── TOKENS ── see ENHANCED_TOKENS above */
 ${ENHANCED_TOKENS}
 
@@ -1087,7 +1090,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    pixels do not tween, so there are no transitions in this block. */
 .px-home { position: fixed; inset: 0; overflow: hidden; background: #0a0c11;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;   /* the fi ligature - see .shell */
-  font-family: 'Pixelify Sans', monospace; color: #d8cfae;
+  font-family: ${PIXEL_STACK}; color: #d8cfae;
   -webkit-font-smoothing: none; }
 /* PX2: the pause face - a scrim, not the night; the paused frame is
    the ground. */
@@ -1248,6 +1251,43 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-sys .ctl { display: flex; align-items: center; gap: 8px; }
 .px-sys .ctl .val { color: #7d7460; font-size: 14px; letter-spacing: 0.1em;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* ── FIX-F: THE CONTROLS PANE ── the rebinding grid the enhanced skin
+   never had. Paint only: the markup is the shell's own
+   (.card/.row/.row-main/.row-name/.ctl/.act/.acts) so the pane reads
+   as every other page on both faces, and the ctl- prefixed rules add
+   three things a keybind row needs and a settings row does not — a
+   binding button wide enough for "LSHIFT + T", the two duplicate
+   colours the classic grid paints (red inside the shown set, blue
+   across the two — systems/controlsConfig.js's INTERNAL_DUPE_COLOR
+   and CROSS_DUPE_COLOR), and the armed state. NO FACE IS DECLARED
+   HERE: the .shell and .px-win rules already put Pixelify over
+   everything inside them, and a second declaration would be the drift
+   FIX-D closed. */
+.ctl-key { min-width: 154px; text-align: center; font-variant-numeric: tabular-nums; }
+.ctl-key.ctl-arm { color: var(--brass); border-color: var(--brass); }
+.ctl-key.ctl-dupe { color: var(--blood); border-color: var(--blood); }
+.ctl-key.ctl-cross { color: #4a9ae8; border-color: #4a9ae8; }
+.ctl-clear { min-width: 44px; padding: 8px 10px; text-align: center; }
+.ctl-clear:hover { color: var(--blood); border-color: var(--blood); }
+.ctl-notice { margin: 10px 0 0; font-size: 13px; color: var(--dim); }
+.ctl-notice.bad { color: var(--blood); }
+.ctl-group h3 { margin-bottom: 2px; }
+.ctl-row:last-child { border-bottom: 0; }
+/* ...and the window's face, where the same markup is drawn in whole
+   pixels (the .px-sys block above). */
+.px-sys .ctl-key { font-size: 15px; letter-spacing: 0.08em; text-indent: 0.08em;
+  padding: 6px 12px; min-width: 150px; }
+.px-sys .ctl-key.ctl-arm { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .ctl-clear { font-size: 15px; letter-spacing: 0; text-indent: 0;
+  padding: 6px 10px; min-width: 44px; }
+.px-sys .ctl-notice { font-size: 15px; color: #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-sys .ctl-notice.bad { color: var(--blood); }
+.px-sys .ctl-head .acts { flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .ctl-key, .px-sys .ctl-key { min-width: 104px; }
+}
 .px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
 .px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
 .px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;
@@ -1292,7 +1332,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-wordmark { font-family: 'Jacquard 12', var(--brand); font-weight: 400; margin: 0;
   font-size: 96px; line-height: 1; text-align: center;
   text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
-.px-wordmark small { display: block; font-family: 'Pixelify Sans', monospace;
+.px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
   text-transform: uppercase; color: #7d7460; margin-top: 8px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
@@ -1381,7 +1421,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    so it wins the ties, and it moves NO geometry - the 44px targets
    AUDIT F1's tap probe measures, the phone sheet, the second-tap
    gesture and the dot all keep their sizes and their laws. */
-.shell { font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+.shell { font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   /* U63 (found on the site, which wears the same face): Pixelify Sans
      ships an fi LIGATURE whose glyph reads as a capital A - "files"
      renders "Ales", "first" renders "Arst", "Difficulty" renders
@@ -1478,7 +1518,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    IT IS A READOUT. pointer-events none everywhere, because nothing
    here is pressed; the game is underneath and stays reachable. */
 .hud { position: fixed; inset: 0; z-index: 4; pointer-events: none;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
   /* PX30c: ONE variable the whole HUD reads, so a scale change moves
@@ -1879,7 +1919,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the chosen arm in the gold pair with its flanking diamonds. */
 .px-dial { position: fixed; inset: 0; z-index: 14; background: rgba(10,12,17,0.4);
   display: grid; place-items: center; grid-template-rows: 1fr auto;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   opacity: 0; backdrop-filter: blur(0px) saturate(100%);
   -webkit-backdrop-filter: blur(0px) saturate(100%);
   transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
@@ -1968,7 +2008,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    four-fifths), gold. */
 .pack-shell { position: absolute; inset: 0; z-index: 1; background: rgba(10,12,17,0.45);
   display: grid; place-items: center;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   opacity: 0; backdrop-filter: blur(0px) saturate(100%); -webkit-backdrop-filter: blur(0px) saturate(100%);
   transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
     -webkit-backdrop-filter 0.22s steps(5, end); }
@@ -1992,7 +2032,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      like every other pixel glyph on the HUD. Cormorant was the serif
      odd one out; Jacquard 12 crits were unmistakable and unreadable in
      the half second a number lives. */
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-size: calc(26px * var(--hud-scale, 1)); font-weight: 600;
   letter-spacing: 0.04em; color: #e6dcb8; text-shadow: 2px 2px 0 rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
   animation: hitnum-rise var(--rise, 950ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards; will-change: transform, opacity; }
@@ -2496,7 +2536,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .loothover { position: fixed; left: 50%; bottom: 16%; transform: translateX(-50%);
   z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .loothover.on { display: block; }
@@ -2619,7 +2659,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    glass panels at the established scrims, the travel card in the
    pack's plaque language. The GL frame and every travel law
    underneath are untouched. */
-#enhanced-travelmap, .ovroot { font-family: 'Pixelify Sans', monospace;
+#enhanced-travelmap, .ovroot { font-family: ${PIXEL_STACK};
   -webkit-font-smoothing: none; color: #d8cfae; }
 .ovroot button { transition: none; border-radius: 0; }
 .ovtop { background: rgba(10,12,17,0.45); border-bottom: 2px solid rgba(125,116,96,0.35); }

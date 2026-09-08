@@ -5035,6 +5035,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = new ActionTextBox(statusInfoRows(rscLines, opts.questBridge?.machine?.macroContext?.() ?? null))
         .addNext(healthStatusRows(playerEntity, rscLines));
     },
+    // FIX-F: routeKey's RecastSpell / AbortSpell arms (EntityEffectManager.cs:257-270) - the dungeon's ctx
+    recastSpell() { magic.recastSpell(); },
+    abortSpell() { magic.abortReadySpell(); },
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst

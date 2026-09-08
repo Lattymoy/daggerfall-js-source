@@ -239,7 +239,7 @@ test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .b
   const fn = src.slice(src.indexOf('export async function registerMorrowindData()'));
   assert.match(fn, /const names = await storedMorrowindNames\(\);/,
     'the whole stored set is read once');
-  assert.match(fn, /const print = mwFingerprint\(names\);/, 'and fingerprinted whole');
+  assert.match(fn, /const print = mwFingerprint\(names, sizes\);/, 'and fingerprinted whole - names and, since MW-LOAD, sizes');
   assert.doesNotMatch(fn.slice(0, fn.indexOf('_mwCount = next;')),
     /_mwGeneration\+\+[\s\S]*?next !== _mwCount/, 'the bump never rides the archive count again');
   // the count the settings row prints is still ARCHIVES ("Morrowind

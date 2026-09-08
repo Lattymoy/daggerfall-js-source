@@ -222,5 +222,5 @@ test('I4: the window wiring - one flow factory, the right-click seam, both panel
   assert.match(code('scenes/townTalk.js'), /if \(!overlay\) return false;/);
   assert.match(code('scenes/dungeonContext.js'), /overlayClick\(vx, vy, right = false, middle = false\)/);
   // and a right-click on an OPEN window is never also a swing
-  assert.match(code('scenes/dungeon.js'), /e\.button === 2 && !ctx\.uiOverlayActive/);
+  assert.match(code('scenes/dungeon.js'), /isSwingButton\(e\.button\) && !ctx\.uiOverlayActive/);   // FIX-F: the swing's button is the registry's
 });

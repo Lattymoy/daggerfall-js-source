@@ -47,7 +47,10 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // game data" a page about the game can hold.
   // <img\s, not <img: the Ko-fi comment SAYS "<img>" while explaining
   // why the cup is drawn in box-shadow instead of being one.
-  assert.doesNotMatch(landing, /<img\s|<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but CSS');
+  // FIX-D: one url() is allowed, and it is not a picture - the digit five's
+  // @font-face data URI (a 520-byte OFL glyph; see below). Every other url()
+  // is still forbidden.
+  assert.doesNotMatch(landing.replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, ''), /<img\s|<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but CSS');
   assert.doesNotMatch(landing, /\.(png|jpe?g|gif|webp|svg|bmp)\b/i, 'no image file is referenced at all');
   assert.equal(execFileSync('git', ['ls-files', 'public/site'], { cwd: root, encoding: 'utf8' }).trim(), '',
     'public/site/ is empty - the retired pictures may not quietly return without re-earning their doctrine rows');
@@ -101,7 +104,7 @@ test('U63: the landing page owns no colour - every one is the SKIN\'s, token or 
   for (const t of used) assert.ok(declared.has(t), `var(--${t}) is not a token the skin declares`);
   assert.doesNotMatch(css, /^\s*--[\w-]+:/m, 'the landing declares no custom property - the skin does');
   // U63: and it is set in the PIXEL faces, which is what the menu wears.
-  assert.match(css, /font-family: 'Pixelify Sans', monospace/, 'the body face is the menu\'s list face');
+  assert.match(css, /font-family: 'Pixelify Five', 'Pixelify Sans', monospace/, 'the body face is the menu\'s list face (the five first - FIX-D)');
   assert.match(css, /font-family: 'Jacquard 12', var\(--brand\)/, 'and the headings are the menu\'s wordmark face');
 });
 
@@ -436,4 +439,38 @@ test('U64: the live site is the custom domain, and the build does not care which
   const internal = [...landing.matchAll(/href="(\.\/[^"]*)"/g)].map((m) => m[1]);
   assert.ok(internal.includes('./play/'), 'Play is relative');
   assert.doesNotMatch(landing, /https?:\/\/(daggerfalljs\.dev|lattymoy\.github\.io)/, 'the page names no host of its own');
+});
+
+// ── FIX-D: THE DIGIT FIVE (2026-09-08, Mac: "the enhanced font number 5
+// looks like an 8") ───────────────────────────────────────────────
+// Pixelify Sans draws its 5 with a cut top-left corner; rendered at 12,
+// 15, 26 and 36px, at 400 through 700, with and without the HUD's
+// shadow, it reads as an 8 or an S every time - the glyph, not the
+// smoothing. The face ships no alternate (GSUB: ccmp, frac, liga, locl).
+// So the five is Silkscreen's (OFL), subset to U+0035, carried as a data
+// URI under its own family and put FIRST in every Pixelify stack: the
+// browser takes the 5 from it and everything else from Pixelify.
+test('FIX-D: the digit five is Silkscreen\u2019s - one glyph, a data URI, first in every Pixelify stack, on the site AND in the game', async () => {
+  const { PIXELIFY_FIVE_FACE, PIXELIFY_FIVE_WOFF2_BASE64, PIXEL_STACK, PIXELIFY_FIVE_FAMILY } = await import('../src/ui/pixelifyFive.js');
+  assert.equal(PIXELIFY_FIVE_FAMILY, 'Pixelify Five');
+  assert.equal(PIXEL_STACK, "'Pixelify Five', 'Pixelify Sans', monospace", 'the five first, then the face, then mono');
+  assert.match(PIXELIFY_FIVE_FACE, /unicode-range: U\+0035;/, 'the face covers the ONE code point - every other glyph falls through to Pixelify');
+  const bytes = Buffer.from(PIXELIFY_FIVE_WOFF2_BASE64, 'base64');
+  assert.equal(bytes.subarray(0, 4).toString('latin1'), 'wOF2', 'a woff2');
+  assert.ok(bytes.length < 1024, `one glyph, ${bytes.length} bytes - not a font`);
+  assert.deepEqual([...bytes], [...readFileSync(new URL('../vendor/silkscreen-five/pixelify-five.woff2', import.meta.url))], 'the data URI is the vendored subset, byte for byte');
+  assert.match(read('vendor/silkscreen-five/OFL.txt'), /SIL Open Font License, Version 1\.1/, 'the licence travels with the glyph');
+  assert.match(read('vendor/silkscreen-five/README.md'), /Silkscreen/);
+  // the game: the face is the first rule of the skin, and no rule sets Pixelify without the five ahead of it
+  assert.ok(ENHANCED_CSS.trimStart().startsWith('/* ── FIX-D'), 'the face is declared before any rule that could use it');
+  assert.ok(ENHANCED_CSS.includes(PIXELIFY_FIVE_FACE));
+  assert.doesNotMatch(read('src/ui/enhancedStyle.js'), /'Pixelify Sans', monospace/, 'no bare Pixelify stack survives in the skin - every one is PIXEL_STACK');
+  assert.ok((ENHANCED_CSS.match(/'Pixelify Five', 'Pixelify Sans', monospace/g) || []).length >= 9, 'the nine Pixelify roots all carry the five');
+  // the site: the same bytes, inline (index.html cannot import the module)
+  const m = landing.match(/@font-face \{ font-family: 'Pixelify Five'; unicode-range: U\+0035; font-display: swap; src: url\(data:font\/woff2;base64,([A-Za-z0-9+/=]+)\) format\('woff2'\); \}/);
+  assert.ok(m, 'the landing declares the five face');
+  assert.equal(m[1], PIXELIFY_FIVE_WOFF2_BASE64, 'and it is the same glyph the game carries');
+  assert.doesNotMatch(landing, /font-family: 'Pixelify Sans', monospace/, 'no bare Pixelify stack survives on the site either');
+  // the one request is still one request: the five is a data URI, not a fetch
+  assert.equal((ENHANCED_FONTS_URL.match(/family=/g) || []).length, 4, 'four families requested, as before - Silkscreen is not among them');
 });

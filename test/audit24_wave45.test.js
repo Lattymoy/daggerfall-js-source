@@ -111,7 +111,7 @@ test('audit24 wave45: worldModes owns the drag indoors - that half was always ri
   assert.match(wm, /mode === 'interior' \? \(\(dx, dy, held\)/);
   // and it feeds on the same RMB bitmask
   const body = mousemoveBody(wm);
-  assert.ok(body.includes('(e.buttons & 2)'), 'the same button');
+  assert.ok(body.includes('swingHeld(e.buttons)'), 'the same button - the registry\'s (FIX-F)');
   assert.ok(body.includes('sink(e.movementX, e.movementY, true)'), 'and it swings');
   // it never touches the camera - it is a sink, not a look handler
   assert.doesNotMatch(body, /cam\.yaw|cam\.pitch/);
@@ -123,7 +123,7 @@ test('audit24 wave45: the standalone dungeon host keeps its own shape, and it is
   // reference the two streaming hosts have now been brought to.
   const d = rd('src/scenes/dungeon.js');
   const body = mousemoveBody(d);
-  assert.ok(body.includes('(e.buttons & 2)'), 'the RMB test');
+  assert.ok(body.includes('swingHeld(e.buttons)'), 'the swing-button test (FIX-F: the registry\'s button)');
   assert.ok(body.includes('ctx.playerAttackInput(e.movementX, e.movementY, true); return;'),
     'attack, then RETURN - the shape');
   assert.doesNotMatch(body, /modeNow\(\)/, 'no mode gate - it has no modal sibling');

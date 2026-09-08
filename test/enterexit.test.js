@@ -165,7 +165,7 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   assert.match(w, /const ground = landing \? landing\.grounded : grounded;/, 'grounded off the LocationType when there is a landing');
   // TL1: the arrival looks further for its floor than a door step does.
   assert.match(w, /let pos = walkMode && \(!local \|\| ground\) \? floorLanding\(collider, raw, ARRIVAL_REACH, ARRIVAL_LIFT\) : raw;/, 'fast travel / teleport arrivals');   // TL2: `let`, so an obstructed marker can fall back
-  assert.match(w, /const stand = floorLanding\(collider, \[cam\.pos\[0\], heightAt\(cam\.pos\[0\], cam\.pos\[2\]\) \+ 2, cam\.pos\[2\]\]\);/, 'the first drop-in');
+  assert.match(w, /const stand = floorLanding\(collider, \[0, heightAt\(0, 0\) \+ 2, 0\]\);/, 'the first drop-in - FIX-C: DFU\'s Origin reposition, the terrain\'s corner (StreamingWorld.cs:290-292, :1330-1349)');
   // And a saved position is restored as saved - a load or an anchor
   // recall keeps its own y (DFU restores the transform verbatim).
   assert.match(w, /const ly = \(w\.y \?\? 2\) \+ state\.compensation\[1\];/);

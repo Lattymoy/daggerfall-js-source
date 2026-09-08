@@ -31,3 +31,18 @@ export const lookScale = () => LOOK_BASE * getFloat('Controls', 'MouseLookSensit
  *  +1 does not. A multiplier rather than a branch keeps both call
  *  sites in every host a single expression. */
 export const lookInvert = () => (getBool('Controls', 'InvertMouseVertical') ? -1 : 1);
+
+/** FIX-F: THE KEYBOARD LOOK - TurnLeft/TurnRight and LookUp/LookDown.
+ *  InputManager.FindKeyboardActions (:1854-1865) sets keyboardLookX/Y
+ *  to +-1 and UpdateLook (:1510-1511) hands that to PlayerMouseLook in
+ *  place of the mouse delta, where ApplyLook (:126-132) multiplies it
+ *  by `sensitivity.x * sensitivityScale` - so a held turn key is ONE
+ *  look unit a frame, a unit being a degree per sensitivity point:
+ *  at DFU's default sensitivity 2 that is 2 degrees a frame, 120 a
+ *  second at 60 fps. The port pays it per SECOND (a departure of
+ *  kind, recorded: DFU's keyboard turn is frame-rate bound, its
+ *  controller branch two lines above is not, and a port on a browser's
+ *  uncapped rAF cannot be the first). Radians a second at the live
+ *  sensitivity. */
+export const KEYBOARD_LOOK_UNITS_PER_SECOND = 60;
+export const keyboardLookRate = () => (Math.PI / 180) * KEYBOARD_LOOK_UNITS_PER_SECOND * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0);

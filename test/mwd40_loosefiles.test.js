@@ -52,7 +52,7 @@ test('MW-D40: the store keeps archives by basename and loose files by canonical 
   // and the loose duck ranks BEFORE every .bsa in loadMorrowindArchives
   const load = src.slice(src.indexOf('export async function loadMorrowindArchives'));
   const looseAt = load.indexOf('makeLooseArchive(loose)');
-  const bsaAt = load.indexOf('new MwBsaFile(');
+  const bsaAt = load.indexOf('MwBsaFile.open(');   // MW-LOAD: opened off the stored Blob, by range
   assert.ok(looseAt > 0 && bsaAt > looseAt, 'loose data files override archives - the engine\'s own load law');
 });
 

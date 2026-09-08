@@ -142,7 +142,7 @@ test('audit24 wave25: the factionListener comments name PlayerActivate, and clai
   assert.doesNotMatch(m, /TalkManager reads the map/);
   assert.doesNotMatch(m, /TalkManager's Q4 signal/);
   assert.match(m, /PlayerActivate\.StaticNPCClick reads the map/);
-  assert.match(m, /src\/scenes\/worldModes\.js:465/);
+  assert.match(m, /src\/scenes\/worldModes\.js:469/);   // FIX-F/E moved worldModes by eight lines
   assert.doesNotMatch(rd('bible/06-Systems/Quest-Arc.md').slice(0, 40000), /TalkManager reads the map at\n  Q4/);
   // and the reader really is there
   assert.match(rd('src/scenes/worldModes.js'), /factionListeners\.has\(pn\.factionID\)\) return;/);

@@ -336,12 +336,12 @@ export function decodeBmp(bytes) {
 /** ImageManager's routing (imagemanager.cpp:104-118): the path's own
  *  extension picks the decoder, "targa" aliases to "tga", and a format
  *  with no reader is an error the caller turns into the warning image. */
-export function decodeTextureImage(path, bytes) {
+export function decodeTextureImage(path, bytes, { levels = Infinity } = {}) {
   const p = String(path || '');
   const dot = p.lastIndexOf('.');
   let ext = dot >= 0 ? p.slice(dot + 1).toLowerCase() : '';
   if (ext === 'targa') ext = 'tga';   // "Non-standard, but Morrowind supports this"
-  if (ext === 'dds') return decodeDds(bytes);
+  if (ext === 'dds') return decodeDds(bytes, { levels });   // MW-LOAD: tga/bmp carry one level anyway
   if (ext === 'tga') return decodeTga(bytes);
   if (ext === 'bmp') return decodeBmp(bytes);
   throw new Error(`no decoder for ".${ext}"`);

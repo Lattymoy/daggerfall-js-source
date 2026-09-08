@@ -146,14 +146,14 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold, goldAmount, totalGoldAmount, deductGold, deductGoldPieces, setCrimeCommitted, legalRepOf, changeLegalRep, CRIMES } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter; QX1: the quest layer's gold, legal-rep and crime doors
-import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -924,7 +924,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
     // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads them.
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) }));   // D1
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer), hint: 'ENTER end' }));   // D1; FIX-E: this dev host has no save path, so no F11 is offered
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. No submersion model above ground; townTalk closes later
@@ -2339,6 +2339,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       // (GameManager.cs:550-553); the cast is the attack click. The
       // C-cast key retired with I2.
       if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
+      // FIX-F: Q readies the last spell cast, E drops the readied one
+      // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
+      if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return; }
+      if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return; }
       // S40: Rest (R). The dungeon host has answered this key since
       // U7; above ground it did nothing at all, so a character outside
       // a dungeon could neither heal nor pass an hour.
@@ -2497,8 +2501,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
   // un-draw (Mouse0) could never read true. mouseCode owns the
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2; FIX-F: the swing's button is the registry's
+  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button) && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -3449,6 +3453,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!gamePaused()) {
       if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
+      // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
+      // here per second at the live sensitivity (ui/lookSettings.js),
+      // into the same filter the mouse feeds, owed to the NEXT tick as
+      // a mouse delta is. Additive with the mouse rather than DFU's
+      // override-for-the-frame (:1510-1511): a held turn key beside a
+      // moving mouse is not a case a player reaches on purpose.
+      const kb = keyboardLook(keys);
+      if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame

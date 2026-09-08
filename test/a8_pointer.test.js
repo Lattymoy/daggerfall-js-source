@@ -162,7 +162,7 @@ test('ROAD-Ar R10: the swing departure on record is the ROUTING, not the button'
   const codeOnly = (s) => s.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   for (const h of swingers) {
     const s = readFileSync(join(root, h), 'utf8');
-    assert.match(s, /e\.button === 2/, `${h} swings on the raw button`);
+    assert.match(s, /isSwingButton\(e\.button\)/, `${h} swings on the registry's button (FIX-F: it was the raw right button)`);
     assert.ok(!/held\(keys, 'SwingWeapon'\)/.test(codeOnly(s)),
       `${h} does not route the swing through the binding - if it now does, retire this pin`);
     assert.ok(!/Mouse2 st(ill|ays)/.test(s), `${h} no longer records the phantom departure`);

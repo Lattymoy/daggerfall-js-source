@@ -47,6 +47,9 @@ test('P0: both unwinds claim BEFORE they act - the old loop dies even if navigat
   const s = code('scenes/shared.js');
   assert.match(s, /export function exitToTitleMenu\(\) \{\n\s+claimFrame\(\);/,
     'the bare-URL unwind kills the loop first');
-  assert.match(s, /export async function endRunToTitleMenu\(renderer\) \{\n\s+claimFrame\(\);/,
-    'the death video owns the canvas - the host loop stops before it plays');
+  // FIX-E: the death seam HOLDS rather than claims - the host waits idle
+  // and lives to be navigated away from; the claim is exitToTitleMenu's,
+  // reached in a finally on every path out (fixe_deathMenu.test.js).
+  assert.match(s, /export async function endRunToTitleMenu\(renderer, \{[^\n]*\} = \{\}\) \{\n\s+const releaseFrame = holdFrame\(\);/,
+    'the death video owns the canvas - the host loop holds while it plays');
 });

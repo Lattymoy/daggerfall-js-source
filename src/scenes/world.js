@@ -249,14 +249,15 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
-import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode } from '../ui/input.js';   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings } from '../ui/input.js';
+import { actionForCode } from '../systems/inputActions.js';   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
@@ -395,12 +396,45 @@ export async function bootWorld(canvas, renderer, params, status) {
   // arrival; the terrain never did. Every pixel painted without a
   // network is torn down here, and the stream rebuilds it with one.
   // Called on BOTH arrival paths - the mod's data and our own network.
-  function rebuildRoadless() {
-    let roadless = 0;
-    for (const [, p] of [...built]) {
-      if (!p.withRoads) { destroyPixel(p.px, p.py, { collectLoose: false }); roadless++; }
-    }
-    if (roadless) console.log(`[roads] ${roadless} pixel(s) built before the network landed - rebuilt with roads`);
+  //
+  // FIX-C (2026-09-08, Mac: "players on first start either spawn in the
+  // ground or the sky"): THIS SWEEP WAS THE FIRST START'S BUG. It tore
+  // the pixels down and re-queued NOTHING - `destroyPixel` deletes the
+  // terrain, the collider bucket and the `built` entry, and the stream
+  // never asks for a key it still holds in `loaded` - so the start pixel
+  // could not come back until the player walked four pixels away. The
+  // boot walk is the one arrival that never re-inits the streamer (every
+  // load, travel and teleport goes through _teleportToPixel, which
+  // does), so only a NEW GAME saw it, and it saw it two ways on one
+  // race: the network landing before the first frame emptied `built`
+  // of the start key and the boot gate below never fired - the camera
+  // stood forty units up over a hole, the motor frozen (the sky); the
+  // network landing after the stand deleted the ground and the collider
+  // from under a standing player with nothing to bring them back (the
+  // ground). The season re-skin (tickSeason) is the same teardown done
+  // right: destroy, re-queue nearest-first, hold the motor on the
+  // player's own pixel until it stands again. This is that shape. And
+  // it runs on the FRAME rather than in the fetch's `.then`, for the
+  // reason the season's does: a pixel in flight must publish before its
+  // key is torn down (`building`), and the hold reads state the boot
+  // walk has not declared while the fetch can still resolve.
+  let roadsSweepDue = false;
+  function rebuildRoadless() { roadsSweepDue = true; }
+  function sweepRoadless() {
+    const again = [];
+    for (const [, p] of [...built]) if (!p.withRoads) again.push({ px: p.px, py: p.py });
+    if (!again.length) return;
+    const under = `${state.current.x},${state.current.y}`;
+    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
+    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
+    queue.push(...again.sort((p, q) => {
+      const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
+      if (ca !== cb) return ca - cb;
+      return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
+        - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
+    }));
+    console.log(`[roads] ${again.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
   loadModRoads().then((his) => {
     if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
@@ -4820,6 +4854,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // accelerator (DaggerfallCourtWindow.cs:301-304).
   let backButtonHeld = false;
   addEventListener('keydown', (e) => {
+    // FIX-E: QUICKLOAD WORKS FROM UNDER ANY OVERLAY - the death screen's
+    // own "F11 load" hint, and the one arm ui/input.js's routeKey lets
+    // through its overlay gate (the dungeon and interior hosts). This
+    // host runs its own ladder, and its QuickLoad arm stood BELOW the
+    // townTalk rung that consumes every key under an overlay, so on
+    // every death above ground the hint was a lie. A typed field's key
+    // is still the field's (CG2). Read off the code alone: the ring is
+    // filled below the overlay gate (G3), and a key under a window
+    // joins none - so no combo, as DFU's Update returns before PollInput.
+    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') { e.preventDefault(); hudCtx.quickLoad(); return; }
     if (e.code === 'Escape') backButtonHeld = true;
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
@@ -4901,6 +4945,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // M2/I2: the CastSpell action opens the spellbook
       // (GameManager.cs:550-553); the cast is the attack click.
       if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
+      // FIX-F: Q readies the last spell cast, E drops the readied one
+      // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
+      if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return; }
+      if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return; }
       // V5: Rest, the last dead binding above ground. It was routed in
       // the DUNGEON's chain and nowhere else, so KeyR outdoors did
       // nothing at all - and with it comes CanRest's town half: the
@@ -5061,8 +5109,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
   // un-draw (Mouse0) could never read true. mouseCode owns the
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
+  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2; FIX-F: the swing's button is the registry's (Mouse1 -> SwingWeapon by default)
+  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button) && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -5129,6 +5177,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
+    // FIX-C probe surface: is the player STANDING - spawned, on a built
+    // pixel, at its ground - or in the sky (never spawned) or the ground
+    // (no terrain under the feet). classicStartProbe reads it after the exit.
+    window.__standing = () => JSON.stringify({
+      spawned: playerSpawned, y: +player.pos[1].toFixed(2),
+      ground: heightAt(player.pos[0], player.pos[2]), built: built.has(`${state.current.x},${state.current.y}`),
+    });
     // M3 probe surface: the live climb state (the wall probe + the
     // check machine ride the real collider and the real skill rolls).
     window.__climb = () => JSON.stringify({
@@ -6781,6 +6836,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();
     if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
+    // FIX-C: the dungeon stand IS the spawn. Nothing in worldModes writes
+    // this flag, so the exterior gate above the motor was still armed the
+    // first time a new character stepped out of Privateer's Hold, and
+    // re-snapped the door landing (exitDungeonNow's repositionFeetY, which
+    // keeps a door's height above the terrain) to the terrain under the
+    // entrance - into whatever the structure stands on.
+    if (entered) playerSpawned = true;
   }
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
@@ -6944,6 +7006,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!gamePaused()) {
       if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
+      // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
+      // here per second at the live sensitivity (ui/lookSettings.js),
+      // into the same filter the mouse feeds, owed to the NEXT tick as
+      // a mouse delta is. Additive with the mouse rather than DFU's
+      // override-for-the-frame (:1510-1511): a held turn key beside a
+      // moving mouse is not a case a player reaches on purpose.
+      const kb = keyboardLook(keys);
+      if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
       _lockChest = lockOn.tick(dt, cam, cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame
@@ -7101,9 +7172,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       const _seasonHeld = _seasonHoldKey !== null;
       if (!playerSpawned && built.has(startKey)) {
-        // Stand on the terrain once the start pixel's collider is up -
-        // FixStanding from 2u above it, not a drop from there.
-        const stand = floorLanding(collider, [cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]]);
+        // FIX-C: THE FIRST STAND IS DFU'S. StartNewCharacter
+        // (StartGameBehaviour.cs:404-409) puts an exterior start through
+        // `TeleportToCoordinates` + `SetAutoReposition(RepositionMethods
+        // .Origin, Vector3.zero)`, and Update applies it once the terrain
+        // stands (StreamingWorld.cs:290-292): `RepositionPlayer(MapPixelX,
+        // MapPixelY, Vector3.zero)` - the terrain's ORIGIN corner, at the
+        // terrain's sampled height plus the controller's half height and
+        // 0.15 (:1330-1349). Not the pixel's centre, which this gate stood
+        // on: a location is centred in its pixel (terrainTiles
+        // getLocationTerrainTileOrigin), so the centre is the middle of
+        // the town, and for many a building. The port's FixStanding is
+        // floorLanding from two units up; the corner is the local origin.
+        const stand = floorLanding(collider, [0, heightAt(0, 0) + 2, 0]);
         player.spawn(stand[0], stand[1], stand[2]);
         playerSpawned = true;
       }
@@ -7506,6 +7587,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exterior frame with the weather drain - the reference runs it in
     // the location's own Update, which is the same place.
     tickSeason();
+    if (roadsSweepDue && !building) { roadsSweepDue = false; sweepRoadless(); }   // FIX-C: the roads sweep, on the frame, between builds
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     // W1/S41: the DRAIN ticks on the exterior frame, which is
     // WeatherManager.Update's own shape - it returns while the player

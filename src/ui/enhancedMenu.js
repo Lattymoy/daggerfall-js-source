@@ -123,6 +123,13 @@ import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey } from '../systems/modSettings.js';   // ROADS 24; DS1: the integer keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
+// FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
+// rebinding pane. The enhanced skin is the DEFAULT and had no door to
+// the key bindings at all - the only one in the port opens off the
+// CLASSIC pause window. The pane is its own module because it owns a
+// document-level capture listener and a staged copy of both binding
+// dicts, neither of which belongs in a screen that repaints itself.
+import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -140,7 +147,7 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // packed armory, for trying gear on the rigs without playing there.
 // Boot-only for the same reason Continue and New Game are: it answers
 // "which game", which is settled once one is running.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanced', 'Settings', 'Mods', 'About'];
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanced', 'Settings', 'Controls', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -153,7 +160,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanc
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit'];
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Controls', 'Mods', 'About', 'Exit'];
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -1213,7 +1220,10 @@ function creditsCard() {
 }
 
 // ── SHELL ────────────────────────────────────────────────────────
-function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming = null; render(); }
+function go(id) {
+  if (id !== 'controls') discardControlsStaging();   // FIX-F: the staged dicts do not survive the walk away
+  section = id; pickedKey = null; sheetOpen = false; confirming = null; render();
+}
 
 // ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ────────────────────────
 // The boot door's FACE. The prototype of record is menu-pixel.html;
@@ -1338,7 +1348,7 @@ function pauseWindow() {
   for (const [id, label] of PAUSE_TABS) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { pauseTab = id; render(); };
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); pauseTab = id; render(); };
     tabs.append(b);
   }
   win.append(tabs);
@@ -1365,10 +1375,20 @@ function pauseWindow() {
 // rail becomes a chip strip across the top, the rows scroll beneath,
 // and the help/reset card rises as the SHEET the phone layout already
 // proved. Boot keeps the fullscreen shell, where there is room.
-const SYSTEM_PANES = Object.freeze([
+// FIX-F: CONTROLS sits beside Settings on BOTH rails, exactly as Mods
+// and About do - the same pane function, registered the same way, so
+// the front door and the pause door reach one implementation. It is
+// the row whose absence was the bug.
+export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
-  ['settings', 'Settings'], ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
+  ['settings', 'Settings'], ['controls', 'Controls'],
+  ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
 ]);
+
+/** FIX-F: the pane, closed over the shell's own repaint - the shape
+ *  every other pane already has, handed in because the pane module
+ *  must not import the shell that imports it. */
+const paneControlsPane = (body) => paneControls(body, { render });
 
 function pauseSystem(body) {
   const wrap = el('div', 'px-journal');
@@ -1377,7 +1397,12 @@ function pauseSystem(body) {
     const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
-      : () => { sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; render(); };
+      : () => {
+        // FIX-F: leaving the Controls pane without CONTINUE DISCARDS -
+        // that is what a staged copy is for.
+        if (id !== 'controls') discardControlsStaging();
+        sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; render();
+      };
     rail.append(b);
   }
   wrap.append(rail);
@@ -1391,7 +1416,10 @@ function pauseSystem(body) {
   } else if (confirming) {
     detail.append(confirmCard());
   } else {
-    ({ save: paneSave, load: paneLoad, mods: paneMods, about: paneAbout, exit: paneExit })[sysSec](detail);
+    ({
+      save: paneSave, load: paneLoad, controls: paneControlsPane,
+      mods: paneMods, about: paneAbout, exit: paneExit,
+    })[sysSec](detail);
   }
   wrap.append(detail);
   body.append(wrap);
@@ -1835,6 +1863,7 @@ function renderInto() {
         test: paneTest,
         save: paneSave, exit: paneExit,
         mods: paneMods, about: paneAbout, enhanced: paneEnhanced,
+        controls: paneControlsPane,
       })[section](body);
     }
     pane.append(body);
@@ -1871,6 +1900,13 @@ function onKey(e) {
   // picker is exactly that, and Escape over it must close the picker,
   // not walk this screen's back stack out from under it.
   if (assetPickerOpen()) return;
+  // FIX-F: ...and so does an ARMED REBIND. This handler is on the
+  // GLOBAL in capture, so it runs before the Controls pane's own
+  // document listener and would eat the one key DFU is most careful
+  // to let through: ReservedKeys is empty in DaggerfallControlsWindow
+  // (:73), so Escape BINDS rather than backing out. Stand down while a
+  // capture is waiting; the pane stops the key itself.
+  if (captureArmed()) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (overlayAction(e) !== 'back') return;
@@ -1960,6 +1996,7 @@ export function mountEnhancedMenu(host, {
   pickedKey = null;
   sheetOpen = false;
   confirming = null;
+  discardControlsStaging();   // FIX-F: a second visit never inherits the first one's staged binds
   _eff = null;
   render();
   keyHandler = onKey;
@@ -1990,6 +2027,10 @@ export function mountEnhancedMenu(host, {
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
+      // FIX-F: and the rebind pane's own capture listener, which is on
+      // the DOCUMENT and would outlive this screen exactly as the one
+      // above would.
+      discardControlsStaging();
       keyHandler = null;
       lockHandler = null;
       resizeHandler = null;

@@ -7,6 +7,13 @@ our painter on the same cases and compares byte for byte. A difference
 is a parity bug by definition, not a matter of reading.
 
 Regenerate:  python3 tools/roadsOracle.py > test/fixtures/roads-oracle.json
+
+MODS AUDIT (2026-09-08): PaintPathWithSubPathJoins' centre-join body
+below is GENERATED from the C# by tools/roadsJoins.py, which emits the
+same tree for src/world/roadPainter.js - the two are one reading of the
+source. The first transliteration carried four of his seventy-six
+statements and the painter the same four, so the fixture could not see
+the other seventy-two.
 """
 import json, random
 
@@ -113,10 +120,131 @@ class Job:
                 self.SetPathTile(index, water, False, False)
         if subPathDataPt != 0 and pathTiles[ICorner] is not None:
             offset = 0 if pathTiles[CardOut] is None else 1
+            # N-S path
             if (pathDataPt & N) != 0 and (subPathDataPt & W) != 0 and x == midLo - offset and y == midHi and (pathDataPt & W) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
             if (pathDataPt & N) != 0 and (subPathDataPt & E) != 0 and x == midHi + offset and y == midHi and (pathDataPt & E) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
             if (pathDataPt & S) != 0 and (subPathDataPt & W) != 0 and x == midLo - offset and y == midLo and (pathDataPt & W) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
             if (pathDataPt & S) != 0 and (subPathDataPt & E) != 0 and x == midHi + offset and y == midLo and (pathDataPt & E) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+
+            if (pathDataPt & N) != 0 and (subPathDataPt & NW) != 0 and x == midLo - offset and y == midHi + 1 and (pathDataPt & W) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+            if (pathDataPt & N) != 0 and (subPathDataPt & NW) != 0 and x == midLo - offset and y == midHi + 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+            if (pathDataPt & N) != 0 and (subPathDataPt & NE) != 0 and x == midHi + offset and y == midHi + 1 and (pathDataPt & E) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+            if (pathDataPt & N) != 0 and (subPathDataPt & NE) != 0 and x == midHi + offset and y == midHi + 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+
+            if (pathDataPt & S) != 0 and (subPathDataPt & SW) != 0 and x == midLo - offset and y == midLo - 1 and (pathDataPt & W) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+            if (pathDataPt & S) != 0 and (subPathDataPt & SW) != 0 and x == midLo - offset and y == midLo - 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+            if (pathDataPt & S) != 0 and (subPathDataPt & SE) != 0 and x == midHi + offset and y == midLo - 1 and (pathDataPt & E) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+            if (pathDataPt & S) != 0 and (subPathDataPt & SE) != 0 and x == midHi + offset and y == midLo - 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+
+            # E-W path
+            if (pathDataPt & W) != 0 and (subPathDataPt & N) != 0 and x == midLo and y == midHi + offset and (pathDataPt & N) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+            if (pathDataPt & E) != 0 and (subPathDataPt & N) != 0 and x == midHi and y == midHi + offset and (pathDataPt & N) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+            if (pathDataPt & W) != 0 and (subPathDataPt & S) != 0 and x == midLo and y == midLo - offset and (pathDataPt & S) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+            if (pathDataPt & E) != 0 and (subPathDataPt & S) != 0 and x == midHi and y == midLo - offset and (pathDataPt & S) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+
+            if (pathDataPt & E) != 0 and (subPathDataPt & NE) != 0 and x == midHi + 1 and y == midHi + offset and (pathDataPt & N) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+            if (pathDataPt & E) != 0 and (subPathDataPt & NE) != 0 and x == midHi + 2 and y == midHi + offset: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+            if (pathDataPt & E) != 0 and (subPathDataPt & SE) != 0 and x == midHi + 1 and y == midLo - offset and (pathDataPt & S) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+            if (pathDataPt & E) != 0 and (subPathDataPt & SE) != 0 and x == midHi + 2 and y == midLo - offset: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+
+            if (pathDataPt & W) != 0 and (subPathDataPt & NW) != 0 and x == midLo - 1 and y == midHi + offset and (pathDataPt & N) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+            if (pathDataPt & W) != 0 and (subPathDataPt & NW) != 0 and x == midLo - 2 and y == midHi + offset: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+            if (pathDataPt & W) != 0 and (subPathDataPt & SW) != 0 and x == midLo - 1 and y == midLo - offset and (pathDataPt & S) == 0: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+            if (pathDataPt & W) != 0 and (subPathDataPt & SW) != 0 and x == midLo - 2 and y == midLo - offset: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+
+            if pathTiles[CardOut] is not None:
+                # NE-SW path
+                if (pathDataPt & NE) != 0 and (subPathDataPt & SE) != 0 and x == midHi and y == midLo and (pathDataPt & SE) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NE) != 0 and (subPathDataPt & SE) != 0 and x == midHi + offset and y == midLo and (pathDataPt & SE) == 0:
+                    if (pathDataPt & E) == 0 and (subPathDataPt & E) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], False, True)
+                elif (pathDataPt & NE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 1 and y == midLo: self.PaintPathTile(x, y, index, pathTiles[CardOut], True, False)
+
+                if (pathDataPt & NE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 1 and y == midHi: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 2 and y == midHi: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+
+                if (pathDataPt & SW) != 0 and (subPathDataPt & SE) != 0 and x == midHi and y == midLo and (pathDataPt & SE) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SW) != 0 and (subPathDataPt & SE) != 0 and x == midHi and y == midLo - offset and (pathDataPt & SE) == 0:
+                    if (pathDataPt & S) == 0 and (subPathDataPt & S) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], True, False)
+                elif (pathDataPt & SW) != 0 and (subPathDataPt & S) != 0 and x == midHi and y == midLo - 1: self.PaintPathTile(x, y, index, pathTiles[CardOut], False, True)
+
+                if (pathDataPt & SW) != 0 and (subPathDataPt & S) != 0 and x == midLo and y == midLo - 1: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SW) != 0 and (subPathDataPt & S) != 0 and x == midLo and y == midLo - 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+
+
+                if (pathDataPt & NE) != 0 and (subPathDataPt & NW) != 0 and x == midLo and y == midHi and (pathDataPt & NW) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NE) != 0 and (subPathDataPt & NW) != 0 and x == midLo and y == midHi + offset and (pathDataPt & NW) == 0:
+                    if (pathDataPt & N) == 0 and (subPathDataPt & N) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], True, True)
+                elif (pathDataPt & NE) != 0 and (subPathDataPt & N) != 0 and x == midLo and y == midHi + 1: self.PaintPathTile(x, y, index, pathTiles[CardOut], False, False)
+
+                if (pathDataPt & NE) != 0 and (subPathDataPt & N) != 0 and x == midHi and y == midHi + 1: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NE) != 0 and (subPathDataPt & N) != 0 and x == midHi and y == midHi + 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+
+                if (pathDataPt & SW) != 0 and (subPathDataPt & NW) != 0 and x == midLo and y == midHi and (pathDataPt & SE) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SW) != 0 and (subPathDataPt & NW) != 0 and x == midLo - offset and y == midHi and (pathDataPt & SE) == 0:
+                    if (pathDataPt & W) == 0 and (subPathDataPt & W) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], False, False)
+                elif (pathDataPt & SW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 1 and y == midHi: self.PaintPathTile(x, y, index, pathTiles[CardOut], True, True)
+
+                if (pathDataPt & SW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 1 and y == midLo: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 2 and y == midLo: self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+
+
+                # NW-SE path
+                if (pathDataPt & NW) != 0 and (subPathDataPt & SW) != 0 and x == midLo and y == midLo and (pathDataPt & SW) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NW) != 0 and (subPathDataPt & SW) != 0 and x == midLo - offset and y == midLo and (pathDataPt & SW) == 0:
+                    if (pathDataPt & E) == 0 and (subPathDataPt & W) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], False, False)
+                elif (pathDataPt & NW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 1 and y == midLo: self.PaintPathTile(x, y, index, pathTiles[CardOut], True, False)
+
+                if (pathDataPt & NW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 1 and y == midHi: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NW) != 0 and (subPathDataPt & W) != 0 and x == midLo - 2 and y == midHi: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+
+                if (pathDataPt & SE) != 0 and (subPathDataPt & SW) != 0 and x == midLo and y == midLo and (pathDataPt & SW) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SE) != 0 and (subPathDataPt & SW) != 0 and x == midLo and y == midLo - offset and (pathDataPt & SW) == 0:
+                    if (pathDataPt & S) == 0 and (subPathDataPt & S) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], True, False)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], True, False)
+                elif (pathDataPt & SE) != 0 and (subPathDataPt & S) != 0 and x == midLo and y == midLo - 1: self.PaintPathTile(x, y, index, pathTiles[CardOut], False, False)
+
+                if (pathDataPt & SE) != 0 and (subPathDataPt & S) != 0 and x == midHi and y == midLo - 1: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SE) != 0 and (subPathDataPt & S) != 0 and x == midHi and y == midLo - 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
+
+
+                if (pathDataPt & NW) != 0 and (subPathDataPt & NE) != 0 and x == midHi and y == midHi and (pathDataPt & NE) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NW) != 0 and (subPathDataPt & NE) != 0 and x == midHi and y == midHi + offset and (pathDataPt & NE) == 0:
+                    if (pathDataPt & N) == 0 and (subPathDataPt & N) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], True, True)
+                elif (pathDataPt & NW) != 0 and (subPathDataPt & N) != 0 and x == midHi and y == midHi + 1: self.PaintPathTile(x, y, index, pathTiles[CardOut], False, True)
+
+                if (pathDataPt & NW) != 0 and (subPathDataPt & N) != 0 and x == midLo and y == midHi + 1: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & NW) != 0 and (subPathDataPt & N) != 0 and x == midLo and y == midHi + 2: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, False)
+
+                if (pathDataPt & SE) != 0 and (subPathDataPt & NE) != 0 and x == midHi and y == midHi and (pathDataPt & NE) == 0: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SE) != 0 and (subPathDataPt & NE) != 0 and x == midHi + offset and y == midHi and (pathDataPt & NE) == 0:
+                    if (pathDataPt & E) == 0 and (subPathDataPt & E) != 0:
+                        self.PaintPathTile(x, y, index, pathTiles[ICorner], True, True)
+                    else:
+                        self.PaintPathTile(x, y, index, pathTiles[CardOut], False, True)
+                elif (pathDataPt & SE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 1 and y == midHi: self.PaintPathTile(x, y, index, pathTiles[CardOut], True, True)
+
+                if (pathDataPt & SE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 1 and y == midLo: self.SetPathTile(index, water, False, False)
+                if (pathDataPt & SE) != 0 and (subPathDataPt & E) != 0 and x == midHi + 2 and y == midLo: self.PaintPathTile(x, y, index, pathTiles[ICorner], False, True)
         return hasPath
 
     def run(self, roadPt, roadCorners, trackPt, trackCorners, riverPt, riverCorners, streamPt, streamCorners, renderWater):
@@ -152,6 +280,14 @@ for c in range(16): cases.append(dict(roadCorners=((c & 3) | ((c >> 2) << 4)) & 
 for i in range(48): cases.append(dict(road=rnd.randrange(256), roadCorners=rnd.randrange(256) & 0x55, track=rnd.randrange(256), trackCorners=rnd.randrange(256) & 0x55))
 for i in range(48): cases.append(dict(river=rnd.randrange(256), riverCorners=rnd.randrange(256) & 0x55, stream=rnd.randrange(256), streamCorners=rnd.randrange(256) & 0x55, water=True))
 for i in range(16): cases.append(dict(road=rnd.randrange(256), river=rnd.randrange(256), stream=rnd.randrange(256), track=rnd.randrange(256), water=True))
+# MODS AUDIT: the sub-path joins - every single river direction and every
+# adjacent pair, against the same sixteen stream bytes, water on. The
+# random 48 above touched a few of the mod's 76 join statements; these
+# 256 reach the E-W block and both CardOut blocks with every arm.
+SINGLES = (N, NE, E, SE, S, SW, W, NW)
+PAIRS = tuple(SINGLES[i] | SINGLES[(i + 1) % 8] for i in range(8))
+for rv in SINGLES + PAIRS:
+    for st in SINGLES + PAIRS: cases.append(dict(river=rv, stream=st, water=True))
 for m in (N, N | S, E | W, NE, N | E, S | W): cases.append(dict(road=m, rect=[48, 79, 48, 79]))
 for m in (N, N | S, NE): cases.append(dict(track=m, rect=[48, 79, 48, 79]))
 for m in (N | S, E): cases.append(dict(river=m, water=True, rect=[48, 79, 48, 79]))

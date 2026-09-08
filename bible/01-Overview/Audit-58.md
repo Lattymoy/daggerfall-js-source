@@ -153,7 +153,7 @@ the audit's sharpest terrain finding is the record beside it -
 **`Audit-51.md` recorded a departure for exactly this transposition and
 recorded it on the wrong index**, on the tile read, where `y*tDim + x` IS
 the mod's own `Idx(x, y, tDim)` and there was nothing to correct. The
-correction is at `src/world/roadPainter.js:300` now, with the layout
+correction is at `src/world/roadPainter.js:451` now, with the layout
 spelled out at `:273-281`, and the Audit-51 row says so.
 
 F3, F4 and F5 above are the rest of this band.

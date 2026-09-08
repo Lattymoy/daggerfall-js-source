@@ -39,19 +39,18 @@ const MW_STORE = 'morrowind';
  *  store that recovery touches, deliberately, because handing new data
  *  an artifact derived from the old folder is worse than rebuilding.
  *
- *  IT CURRENTLY HAS NO CONSUMER. The road network was the first and
- *  the only one, and its travel and render halves were removed on
+ *  ITS ONE CONSUMER IS MW-LOAD's arm record sets (loadMorrowindArmRecords,
+ *  below). The road network was the first consumer and, for a while,
+ *  the only one: its travel and render halves were removed on
  *  2026-08-29 (Mac's call). ROADS 22-25 brought roads BACK on
  *  2026-09-02 - Port-Ledger section A, the ROADS 22-25 row - and they
  *  did NOT come back through this door: the rebuilt network bakes into
  *  its own IndexedDB database (`src/world/roadsCache.js`, DB
- *  'daggerfall-roads', with its own GENERATOR_VERSION), so this generic
- *  store still has no caller. The store, its sweep and its version
- *  stay: they are
- *  generic plumbing, the next derived artifact will want exactly this
- *  contract, and tearing out an IndexedDB store to reclaim nothing
- *  would churn the schema and four unrelated suites that pin the store
- *  list. Said out loud here so nobody reads it as live. */
+ *  'daggerfall-roads', with its own GENERATOR_VERSION). The store sat
+ *  without a caller until 2026-09-08, when the Morrowind masters'
+ *  record sets (extracted once, refused by their own envelope when
+ *  stale) became exactly the derived artifact this contract was kept
+ *  for. Said out loud here so nobody reads the roads as living here. */
 const DERIVED_STORE = 'derived';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
@@ -310,10 +309,15 @@ async function storeAssets(store, files, accept, keyOf = null) {
     // (meshes/maxhorse/xhorse1.nif), which the directory picker
     // carries on webkitRelativePath. Default stays the basename law.
     const key = keyOf ? keyOf(f, base) : base;
-    const buf = await f.arrayBuffer();
+    // MW-LOAD: a Morrowind file is stored as the BLOB it arrived as, not
+    // its bytes - IndexedDB keeps a Blob on disk and hands back a handle,
+    // so an archive is opened by RANGE at boot (mwBsaFile.js) instead of
+    // being cloned whole. The other stores keep their bytes: a music or
+    // texture file is read whole the one time it plays or paints.
+    const val = store === MW_STORE ? blobOf(f) : await f.arrayBuffer();
     await new Promise((res, rej) => {
       const tx = d.transaction(store, 'readwrite');
-      tx.objectStore(store).put(buf, key);
+      tx.objectStore(store).put(val, key);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -338,16 +342,49 @@ async function assetNames(store) {
   }
 }
 
-/** Bytes for one stored asset, or null. */
-async function assetBytes(store, fileName) {
+/** The stored value for one asset - an ArrayBuffer or, for a Morrowind
+ *  file since MW-LOAD, a Blob - or null. */
+async function assetValue(store, fileName) {
   const d = await getDb();
-  const stored = await new Promise((res, rej) => {
+  return new Promise((res, rej) => {
     const tx = d.transaction(store, 'readonly');
     const req = tx.objectStore(store).get(fileName);
     req.onsuccess = () => res(req.result ?? null);
     req.onerror = () => rej(req.error);
   });
-  return stored ? new Uint8Array(stored) : null;
+}
+const isBlob = (v) => typeof Blob !== 'undefined' && v instanceof Blob;
+/** A File from a picker is a Blob already; anything else is wrapped. */
+const blobOf = (f) => (isBlob(f) ? f : new Blob([f]));
+
+/** Bytes for one stored asset, or null - a Blob read whole. */
+async function assetBytes(store, fileName) {
+  const stored = await assetValue(store, fileName);
+  if (!stored) return null;
+  return new Uint8Array(isBlob(stored) ? await stored.arrayBuffer() : stored);
+}
+
+/** MW-LOAD: one stored asset as a Blob, or null. A value stored as bytes
+ *  by an attach from before MW-LOAD is wrapped - materialised whole this
+ *  once - and REWRITTEN as a Blob behind the read, so the next boot
+ *  opens it by range like a fresh attach. */
+async function assetBlob(store, fileName) {
+  const stored = await assetValue(store, fileName);
+  if (!stored) return null;
+  if (isBlob(stored)) return stored;
+  const blob = new Blob([stored]);
+  try {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      tx.objectStore(store).put(blob, fileName);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) {
+    console.warn(`[mw] ${fileName}: could not be re-stored as a Blob -`, e?.message ?? e);
+  }
+  return blob;
 }
 
 /** Drop a whole domain. Deliberately NOT part of clearStoredData: that
@@ -379,9 +416,9 @@ export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
  *  strictly better than a store-level stamp that can only answer
  *  "different", never "damaged".
  *
- *  No caller: the one consumer this ever had was the removed road bake,
- *  and the re-integrated roads cache into their own DB - see
- *  DERIVED_STORE. */
+ *  Callers: MW-LOAD's loadMorrowindArmRecords (this file). The removed
+ *  road bake was the first; the re-integrated roads cache into their
+ *  own DB - see DERIVED_STORE. */
 export async function storeDerived(key, bytes) {
   const d = await getDb();
   await new Promise((res, rej) => {
@@ -394,6 +431,26 @@ export async function storeDerived(key, bytes) {
 }
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
 export const clearDerived = () => clearAssets(DERIVED_STORE);
+
+/** MW-LOAD: a derived artifact that is plain data. The envelope is the
+ *  key itself: what comes back is the value only when it was written
+ *  under this exact key, so a reader that changes its key (a version
+ *  in it) can never read an older writer's answer. Unreadable or
+ *  absent answers null - the caller rebuilds. */
+export async function storeDerivedJson(key, value) {
+  return storeDerived(key, new TextEncoder().encode(JSON.stringify({ key, value })));
+}
+export async function loadDerivedJson(key) {
+  try {
+    const bytes = await loadDerived(key);
+    if (!bytes) return null;
+    const env = JSON.parse(new TextDecoder().decode(bytes));
+    return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
+  } catch (e) {
+    console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
+    return null;
+  }
+}
 
 /** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
  *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data
@@ -422,6 +479,10 @@ export function makeLooseArchive(files) {
     names: [...files.keys()],
     has: (p) => files.has(norm(p)),
     get: (p) => files.get(norm(p)) ?? null,
+    // MW-LOAD: the lazy archive's doors, answered from the resident map
+    // - a loose file is small and already in hand
+    loaded: (p) => files.has(norm(p)),
+    load: async (p) => files.get(norm(p)) ?? null,
   };
 }
 
@@ -457,7 +518,96 @@ export const loadMorrowindFile = async (fileName) => {
   if (bytes) _mwFileCache.files.set(fileName, bytes);
   return bytes;
 };
-export const clearStoredMorrowind = () => { _mwArchiveCache = null; _mwFileCache = null; return clearAssets(MW_STORE); };
+export const clearStoredMorrowind = async () => {
+  _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null;
+  await clearDerivedPrefix(ARM_RECORDS_PREFIX);   // MW-LOAD: the record sets are ANSWERS ABOUT the files
+  return clearAssets(MW_STORE);
+};
+
+// MW-LOAD: THE ARM RECORDS, EXTRACTED ONCE AND KEPT.
+//
+// buildFpArm read every stored .esm whole (80 MB for Morrowind.esm, a
+// second or more out of the store) and walked it six ways for its
+// records, on every page load - the walk memo was per-session. The
+// records are a function of the bytes, so they are derived once by
+// mwFirstPerson's extractArmRecords and written to DERIVED_STORE under
+// a key that names the file, its size and a stamp over its head and
+// tail (a mod's re-export of the same size still moves the stamp; a
+// full hash would read the whole file and be the cost this removes).
+// A hit is one small get and a JSON parse, and the .esm bytes are never
+// read at all; a miss extracts, stores, and logs the cost once. The
+// answer is refused - and re-extracted - when its envelope does not
+// carry this key or the reader's own shape, so a stale set from an
+// older build can never be read as current.
+const ARM_RECORDS_PREFIX = 'mw-arm-records';
+let _mwRecordsCache = null;   // { gen, files: Map<name, records> }
+
+/** FNV-1a over the first and last 64 KB of a Blob - two range reads. */
+async function sampleStamp(blob) {
+  const span = 64 * 1024;
+  const parts = blob.size <= 2 * span
+    ? [new Uint8Array(await blob.arrayBuffer())]
+    : [new Uint8Array(await blob.slice(0, span).arrayBuffer()),
+      new Uint8Array(await blob.slice(blob.size - span, blob.size).arrayBuffer())];
+  let h = 0x811c9dc5;
+  for (const bytes of parts) {
+    for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; }
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+/** Drop every derived key under a prefix (a getAllKeys sweep). */
+async function clearDerivedPrefix(prefix) {
+  try {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(DERIVED_STORE, 'readwrite');
+      const os = tx.objectStore(DERIVED_STORE);
+      const req = os.getAllKeys();
+      req.onsuccess = () => {
+        for (const k of req.result ?? []) if (typeof k === 'string' && k.startsWith(`${prefix}:`)) os.delete(k);
+      };
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) {
+    console.warn(`[mw] derived ${prefix} sweep failed -`, e?.message ?? e);
+  }
+}
+
+/**
+ * The arm-build record set of one stored .esm/.esp, by name: the
+ * derived set if the store has one for these bytes, else extracted from
+ * the file and stored. Null when the file is not stored. Memoised per
+ * attach generation, so a rebuild within a session is a Map get.
+ * @param {string} fileName
+ * @returns {Promise<object|null>} extractArmRecords' shape
+ */
+export const loadMorrowindArmRecords = async (fileName) => {
+  if (!_mwRecordsCache || _mwRecordsCache.gen !== _mwGeneration) _mwRecordsCache = { gen: _mwGeneration, files: new Map() };
+  if (_mwRecordsCache.files.has(fileName)) return _mwRecordsCache.files.get(fileName);
+  const blob = await assetBlob(MW_STORE, fileName);
+  if (!blob) return null;
+  const { extractArmRecords, isArmRecords, ARM_RECORDS_VERSION } = await import('../formats/mwFirstPerson.js');
+  const key = `${ARM_RECORDS_PREFIX}:v${ARM_RECORDS_VERSION}:${fileName}:${blob.size}:${await sampleStamp(blob)}`;
+  const cached = await loadDerivedJson(key);
+  let records = isArmRecords(cached) ? cached : null;
+  if (!records) {
+    const t0 = performance.now();
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const t1 = performance.now();
+    records = extractArmRecords(bytes);
+    const t2 = performance.now();
+    try {
+      await storeDerivedJson(key, records);
+    } catch (e) {
+      console.warn(`[mw] ${fileName}: derived records could not be stored -`, e?.message ?? e);
+    }
+    console.info(`[mw] ${fileName}: arm records extracted in ${Math.round(t2 - t0)} ms (read ${Math.round(t1 - t0)}, walk ${Math.round(t2 - t1)}) and kept`);
+  }
+  _mwRecordsCache.files.set(fileName, records);
+  return records;
+};
 
 export const hasStoredMorrowind = async () =>
   (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
@@ -495,14 +645,16 @@ export async function loadMorrowindArchives() {
   }
   for (const n of names) {
     try {
-      archives.push(new MwBsaFile(await loadMorrowindFile(n)));
+      // MW-LOAD: opened by range off the stored Blob - the directory
+      // now, an entry's bytes when a reader loads it. Nothing of the
+      // archive's data buffer is read here.
+      const blob = await assetBlob(MW_STORE, n);
+      if (!blob) continue;
+      archives.push(await MwBsaFile.open(blob));
     } catch (err) {
       console.warn(`morrowind archive ${n}: ${err.message}`);
     }
   }
-  // The .bsa BYTES now live inside the mapped archives; drop the file
-  // cache's copies so one attach does not hold the set twice.
-  if (_mwFileCache) for (const n of names) _mwFileCache.files.delete(n);
   _mwArchiveCache = { gen: _mwGeneration, archives };
   return archives;
 }
@@ -522,6 +674,11 @@ export const morrowindDataCount = () => Math.max(_mwCount, 0);
  */
 let _mwGeneration = 0;
 export const morrowindDataGeneration = () => _mwGeneration;
+/** MW-LOAD: the stored set's fingerprint (sorted names and sizes), for
+ *  a derived key that must name the SET rather than one file - the
+ *  face match's verdict is measured over every archive. Null until
+ *  registerMorrowindData has counted. */
+export const morrowindDataFingerprint = () => _mwFingerprint;
 /**
  * MW-D40: the generation answers for the WHOLE STORED SET, never the
  * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
@@ -532,16 +689,36 @@ export const morrowindDataGeneration = () => _mwGeneration;
  * ESM door dead until the page was reloaded. The sorted names also
  * move when a re-attach swaps one file for another of the same count,
  * which a length never does.
+ *
+ * MW-LOAD: AND THE SIZES. A re-attach that swaps a file for another of
+ * the SAME NAME - a newer Morrowind.esm, a modded one, a repacked
+ * archive - moved no name, so the generation stood and every swap
+ * cache (the mapped archives, the file bytes, and now the record sets
+ * kept in the derived store) kept answering for the file that was
+ * gone. A stored Morrowind file is a Blob handle since MW-LOAD, so its
+ * size is free to ask; a file of the same name and size is taken to be
+ * the same file (a same-size edit is the one case this leaves to the
+ * derived set's own sample stamp).
  */
 let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
-const mwFingerprint = (names) => [...names].sort().join('\n');
+const mwFingerprint = (names, sizes = []) => [...names].sort().map((n, i) => `${n}\t${sizes[i] ?? ''}`).join('\n');
+/** The stored sizes, in the SORTED order mwFingerprint walks. */
+async function storedMorrowindSizes(names) {
+  const out = [];
+  for (const n of [...names].sort()) {
+    const v = await assetBlob(MW_STORE, n);
+    out.push(v ? v.size : -1);
+  }
+  return out;
+}
 
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
   const names = await storedMorrowindNames();
   const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
-  const print = mwFingerprint(names);
+  const sizes = await storedMorrowindSizes(names);
+  const print = mwFingerprint(names, sizes);
   // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
   // AND LEARNING A SET IS NOT A CHANGE.
   //
@@ -558,7 +735,7 @@ export async function registerMorrowindData() {
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
   // until there is a previous set to compare against.
-  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches
+  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches; MW-LOAD: and the record memo
   _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;

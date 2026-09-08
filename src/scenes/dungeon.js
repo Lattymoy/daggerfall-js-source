@@ -41,7 +41,7 @@ import { pickFoe,   // TI1: the lock-on pick
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
+import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
@@ -52,7 +52,7 @@ import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
-import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { MoveAxes } from '../player/moveAxes.js';   // AUDIT 28 W8: MovementAcceleration
 import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: CameraRecoilStrength
@@ -371,7 +371,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // (Mouse2, the wheel) and the drawn bow's ActivateCenterObject
   // un-draw (Mouse0) could never read true. mouseCode owns the
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
-  addEventListener('mousedown', (e) => { if (e.button === 2) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
+  addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // FIX-F: the swing's button is the registry's   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
@@ -387,7 +387,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // character and left them standing wherever they were.
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
-  addEventListener('mouseup', (e) => { if (e.button === 2) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
@@ -434,7 +434,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (v) ctx.overlayPointer?.('move', v[0], v[1], 0);      // ROAD-C c2/S4
       return;
     }
-    if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
+    if (document.pointerLockElement === canvas && swingHeld(e.buttons)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
     // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
@@ -582,6 +582,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (!(ctx.uiOverlayActive)) {
       if ((rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
+      // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
+      // here per second at the live sensitivity (ui/lookSettings.js),
+      // into the same filter the mouse feeds, owed to the NEXT tick as
+      // a mouse delta is. Additive with the mouse rather than DFU's
+      // override-for-the-frame (:1510-1511): a held turn key beside a
+      // moving mouse is not a case a player reaches on purpose.
+      const kb = keyboardLook(keys);
+      if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
       _lockChest = lockOn.tick(dt, cam, walkMode ? player.eye : cam.pos, lookFilter);   // TI1: the lock pays its facing into the same filter, owed to the NEXT tick like a look
     }
     // TI1: the tap's one-frame press. Armed 2 on the tap: this frame

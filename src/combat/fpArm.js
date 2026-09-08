@@ -64,7 +64,7 @@ import {
   sourcesKeyTime, sourcesVelocity, sourceVelocityOf,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
-import { portraitFeatures, headFeatures, hairFeatures, matchFace } from '../formats/mwFaceMatch.js';
+import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { raceArt } from '../systems/races.js';
@@ -75,6 +75,94 @@ import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME } from '../formats/mwItemMap.js';
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { diffuseAt } from '../formats/mwNifMesh.js';
+
+// MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
+// are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
+// ONE READER.
+//
+// Every boot used to pull each stored .bsa out of IndexedDB as one whole
+// ArrayBuffer - 150-300 MB apiece, three of them on a retail set, one to
+// three seconds each measured - and hold them for the session, so that
+// this file could read a few dozen entries out of them. dataSource now
+// OPENS each archive off its stored Blob (MwBsaFile.open): the directory
+// arrives by range, and an ENTRY's bytes arrive by range when somebody
+// loads them.
+//
+// What that costs this file is one law. `get` is still synchronous and
+// still answers what is in hand - the contract every reader here already
+// speaks - but on a lazily opened archive it THROWS ("not loaded - await
+// load(path) first") for an entry nobody asked for. So every synchronous
+// read below is now preceded, IN THE SAME FUNCTION, by the load that
+// brings its bytes in, and the two helpers here are the whole mechanism.
+// There is no second copy of the `find` law in any preload: the archive
+// a path is loaded from is the archive it is read from, by construction.
+//
+// The resident archives - every test fixture's {has, get} duck, the
+// loose-file archive, a whole-buffer MwBsaFile - answer `loaded` true for
+// everything they carry and `load` out of memory, so one body of code
+// drives both and no fixture had to move.
+
+/** MW-LOAD: bring in every path the archives carry, through the SAME
+ *  `find` law the synchronous read uses - the first archive whose `has`
+ *  answers owns the path. Deduped and CONCURRENT: one lazy entry is a
+ *  ranged read of about a millisecond, and forty of them in a row is
+ *  forty round trips, which is the load time this whole change is about.
+ *  Never throws - a path that will not load is reported by the read that
+ *  follows, in that read's own words. An archive with no `load` door is
+ *  already resident, which is the old two-door duck. */
+async function loadFromArchives(archives, paths) {
+  const seen = new Set();
+  const jobs = [];
+  for (const path of paths ?? []) {
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
+    const arc = (archives ?? []).find((a) => a.has(path));
+    if (!arc || typeof arc.load !== 'function') continue;
+    if (typeof arc.loaded === 'function' && arc.loaded(path)) continue;
+    jobs.push(Promise.resolve(arc.load(path)).catch(() => null));
+  }
+  if (jobs.length) await Promise.all(jobs);
+}
+
+/** MW-LOAD: `find`, asserting the bytes are in hand. A path no archive
+ *  carries answers null exactly as `find` does, and every caller already
+ *  reports that as "not in your archives". A path an archive DOES carry
+ *  and has not loaded is a missed preload - a defect in this file - and
+ *  it is named here, with the path, rather than left to surface as a
+ *  bare throw from inside MwBsaFile.get two frames down. */
+function findLoaded(archives, path) {
+  const arc = (archives ?? []).find((a) => a.has(path));
+  if (arc && typeof arc.loaded === 'function' && !arc.loaded(path)) {
+    throw new Error(`MW-LOAD: ${path} was read before it was loaded - the preload that covers this read missed it`);
+  }
+  return arc;
+}
+
+/** MW-LOAD: the texture bytes collectArmTextures reads synchronously.
+ *  It walks rule 36's OWN ladder - correctTexturePath over the same
+ *  `exists` probe, which is a DIRECTORY question and needs no bytes at
+ *  all - and loads whatever the ladder lands on. A texture the archives
+ *  do not carry loads nothing and stays the magenta warning image, which
+ *  is collectArmTextures' own answer and not a new one. Skips what the
+ *  decode memo already holds, so a rebuild loads nothing twice. */
+async function preloadArmTextures(pieces, archives, gen = null) {
+  const paths = [];
+  const seen = new Set();
+  const exists = (p) => archives.some((a) => a.has(p));
+  for (const piece of pieces ?? []) {
+    const file = piece.material && piece.material.textureFile;
+    if (!file || seen.has(file)) continue;
+    seen.add(file);
+    if (gen !== null && TEXTURE_CACHE.has(`${gen}:${file}`)) continue;
+    paths.push(correctTexturePath(file, exists));
+  }
+  await loadFromArchives(archives, paths);
+}
+
+/** MW-LOAD: the stage clock. performance.now() where there is one (every
+ *  browser and Node 16+), Date.now() as the floor. */
+const mwNow = () => (typeof performance !== 'undefined' && performance && typeof performance.now === 'function'
+  ? performance.now() : Date.now());
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
  *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
@@ -498,6 +586,36 @@ const TEXTURE_CACHE = new Map();
 /** AUDIT 32 F2: the face match per identity per data generation. */
 const FACE_MATCH_CACHE = new Map();
 
+/** MW-LOAD: the races Map of a derived record set, made once per set -
+ *  the set is JSON and carries the races as entries. */
+const RACES_MAP = new WeakMap();
+/** MW-LOAD: one kind off a derived record set (extractArmRecords'
+ *  shape), in the shape the walk's own reader returns for it - the
+ *  races as raceRecords' Map, the GMST as the walk's `{ v }`. A kind
+ *  the set does not carry is a thrown name, never an empty answer. */
+export function armRecordsOf(records, kind) {
+  switch (kind) {
+    case 'parts': return records.parts;
+    case 'races': {
+      let m = RACES_MAP.get(records);
+      if (!m) { m = new Map(records.races); RACES_MAP.set(records, m); }
+      return m;
+    }
+    case 'armors': return records.armors;
+    case 'clothes': return records.clothes;
+    case 'weapons': return records.weapons;
+    case 'gmst-sneak': return { v: Object.hasOwn(records.gmst, GMST_SNEAK_DELTA) ? records.gmst[GMST_SNEAK_DELTA] : null };
+    default: throw new Error(`fpArm: no derived answer for walk kind "${kind}" (MW-LOAD)`);
+  }
+}
+
+/** MW-LOAD: FNV-1a of a string, for a derived key that names a set. */
+const fnv = (str) => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, '0');
+};
+
 /** MW-D37: the mean colour of a CLOT record's worn texture (its first
  *  part reference's BODY mesh, male side) - what the dye-aware garment
  *  pick compares against Daggerfall's dye band. Memoised per data
@@ -510,23 +628,34 @@ const CLOT_COLOUR_CACHE = new Map();
  *  Now one record is measured when the resolver asks for it (the
  *  resolver only asks about its own type's pool), memoised per data
  *  generation, and the same function serves the build and the icon. */
+/** MW-LOAD: the mesh a CLOT record's colour is measured off - its first
+ *  part reference's BODY mesh, male side, falling back to the record's
+ *  own model. Split out so the preload and the measure derive the path
+ *  from ONE line of code and cannot drift apart. */
+function clothingMeshPath(rec, parts) {
+  const ref = (rec.parts ?? []).find((r) => r.male || r.female);
+  const body = ref ? (parts ?? []).find((b) => String(b.id || '').toLowerCase() === (ref.male || ref.female)) : null;
+  const model = body ? body.model : rec.model;
+  return `meshes/${model}`;
+}
+
 function clothingColourOf(rec, parts, archives, gen) {
   const key = `${gen}:${rec.id}`;
   if (CLOT_COLOUR_CACHE.has(key)) return CLOT_COLOUR_CACHE.get(key);
   let rgb = null;
   try {
-    const ref = (rec.parts ?? []).find((r) => r.male || r.female);
-    const body = ref ? (parts ?? []).find((b) => String(b.id || '').toLowerCase() === (ref.male || ref.female)) : null;
-    const model = body ? body.model : rec.model;
-    const path = `meshes/${model}`;
-    const arc = archives.find((a) => a.has(path));
+    // MW-LOAD: both reads below are covered by preloadClothingColour,
+    // which prepareClothingColours runs over the resolver's own pool
+    // before this synchronous callback is ever handed to it.
+    const path = clothingMeshPath(rec, parts);
+    const arc = findLoaded(archives, path);
     if (arc) {
       const batches = flattenNif(parseNif(arc.get(path).slice()));
       const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
       if (file) {
         const exists = (p) => archives.some((a) => a.has(p));
         const tpath = correctTexturePath(file, exists);
-        const tarc = archives.find((a) => a.has(tpath));
+        const tarc = findLoaded(archives, tpath);
         if (tarc) {
           const m0 = decodeTextureImage(tpath, tarc.get(tpath).slice()).mips[0];
           const f = hairFeatures(m0.rgba, m0.width, m0.height, 0);   // alpha-weighted mean
@@ -534,9 +663,52 @@ function clothingColourOf(rec, parts, archives, gen) {
         }
       }
     }
-  } catch { rgb = null; }
+  } catch (err) {
+    // MW-LOAD: a measure that ran ahead of its bytes is NOT a null to
+    // remember. The memo outlives the whole data generation, and a
+    // cached null here would make the dye pick wrong for the session
+    // even after the preload had brought the texture in.
+    if (err && /^MW-LOAD:/.test(err.message || '')) return null;
+    rgb = null;
+  }
   CLOT_COLOUR_CACHE.set(key, rgb);
   return rgb;
+}
+
+/** MW-LOAD: the bytes clothingColourOf reads synchronously, brought in
+ *  first - the part mesh, and THEN the texture the parsed mesh names,
+ *  because which texture that is cannot be known until the mesh is
+ *  parsed. Two loads deep, exactly as the measure is two reads deep. */
+async function preloadClothingColour(rec, parts, archives, gen) {
+  if (CLOT_COLOUR_CACHE.has(`${gen}:${rec.id}`)) return;
+  const path = clothingMeshPath(rec, parts);
+  await loadFromArchives(archives, [path]);
+  try {
+    const arc = archives.find((a) => a.has(path));
+    if (!arc) return;
+    const batches = flattenNif(parseNif(arc.get(path).slice()));
+    const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
+    if (!file) return;
+    await loadFromArchives(archives, [correctTexturePath(file, (p) => archives.some((a) => a.has(p)))]);
+  } catch { /* the measure below answers null in its own words */ }
+}
+
+/** MW-LOAD: PREPARE THE COLOURS THE RESOLVER WILL ASK FOR, and do it
+ *  WITHOUT a second copy of "which records are that garment's pool".
+ *  `resolve` is the caller's own resolution, run once with a colourOf
+ *  that RECORDS every candidate it is handed and answers from the memo
+ *  alone - so the probe run is pure and its verdict is thrown away -
+ *  and the recorded records are then measured asynchronously. The real
+ *  run that follows finds every answer already in the memo.
+ *  mwClothingRecord's pool law stays in mwItemMap, where it lives. */
+async function prepareClothingColours(resolve, parts, archives, gen) {
+  const asked = [];
+  const probe = (rec) => {
+    asked.push(rec);
+    return CLOT_COLOUR_CACHE.get(`${gen}:${rec.id}`) ?? null;
+  };
+  try { resolve(probe); } catch { /* the real run reports what this cannot */ }
+  for (const rec of asked) await preloadClothingColour(rec, parts, archives, gen);
 }
 
 /** MW-D38: the icon cache, per data generation / record / size / dye. */
@@ -571,6 +743,9 @@ export function iconFrame(bounds, { air = 1.12 } = {}) {
 async function measurePart(record, archives, kind) {
   const exists = (p) => archives.some((a) => a.has(p));
   const path = `meshes/${record.model}`;
+  // MW-LOAD: covers this function's first synchronous read (the part
+  // mesh); the texture's own load is below, once the parse names it.
+  await loadFromArchives(archives, [path]);
   const arc = archives.find((a) => a.has(path));
   if (!arc) return null;
   let parseNif; let flattenNif;
@@ -583,11 +758,16 @@ async function measurePart(record, archives, kind) {
   const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
   if (!file) return null;
   const tpath = correctTexturePath(file, exists);
+  // MW-LOAD: covers the decode below - the ladder's winning candidate,
+  // which is only nameable now that the mesh has been parsed.
+  await loadFromArchives(archives, [tpath]);
   const tarc = archives.find((a) => a.has(tpath));
   if (!tarc) return null;
   let img;
   // MW-D34: by extension - the ladder legitimately answers .tga/.bmp.
-  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice()); } catch { return null; }
+  // MW-LOAD: level 0 only - it is the one level measured below, and
+  // the chain under it was a third again of the decode for nothing.
+  try { img = decodeTextureImage(tpath, tarc.get(tpath).slice(), { levels: 1 }); } catch { return null; }
   const m0 = img.mips[0];
   if (kind === 'head') {
     // AUDIT 32 F1: sampled through the mesh's own UVs, so the texture's
@@ -686,6 +866,33 @@ export function weaponRestSide(arm, bone) {
 export const DF_ARROW_TEMPLATE = 131;
 export function hasDaggerfallArrows(items) {
   return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
+}
+
+/**
+ * MW-LOAD: THE ARCHIVE PATHS resolveWeaponParts WILL READ, before it
+ * reads them - the picked weapon's model, and the ammunition's when the
+ * type takes one and the player has it.
+ *
+ * It asks the SAME two record questions resolveWeaponParts asks, in the
+ * same order, off the same records (dfWeaponToMw, then pickWeaponRecord
+ * on the type; ammoTypeFor, then pickWeaponRecord on the ammo type), so
+ * the preload cannot drift from the read. Everything else that function
+ * decides - the attach bone, rule 13's mirror, getArrowBone's two
+ * branches - is answered off skeleton bytes the caller already holds and
+ * needs nothing from an archive.
+ */
+export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons }) {
+  const paths = [];
+  const mwType = dfWeaponToMw(weapon, WEAPONS);
+  if (mwType === MW_WEAPON_TYPE.None) return paths;
+  const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);
+  if (rec) paths.push(`meshes/${rec.model}`);
+  const ammoType = ammoTypeFor(mwType);
+  if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
+    const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+    if (ammoRec) paths.push(`meshes/${ammoRec.model}`);
+  }
+  return paths;
 }
 
 export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
@@ -791,6 +998,8 @@ async function buildTpBody({
   const settingsSkeleton = tpSkeletonPath({ female, beast });
   const skeletonPath = correctActorModelPath(settingsSkeleton, exists);
   try {
+    // MW-LOAD: covers the skeleton read on the next line.
+    await loadFromArchives(archives, [skeletonPath]);
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
@@ -809,6 +1018,14 @@ async function buildTpBody({
     for (const row of rows) {
       if (!row.record) missing.push(`${row.slot}: no third-person record for this actor`);
     }
+    // MW-LOAD: ONE round of ranged reads for everything the block below
+    // reads synchronously - every third-person skin part and worn add
+    // (the loop's own `meshes/${row.model}`), and the weapon and arrow
+    // meshes resolveWeaponParts reads further down.
+    await loadFromArchives(archives, [
+      ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+    ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
       const path = `meshes/${row.model}`;
@@ -831,6 +1048,10 @@ async function buildTpBody({
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
+    // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
+    // ladder over the names the assembled pieces carry, which are only
+    // knowable now that the NIFs are parsed.
+    await preloadArmTextures(arm.pieces, archives, gen);
     const textures = collectArmTextures(arm.pieces, archives, gen);
 
     const sourcePaths = tpAnimSources(skeletonPath, exists);
@@ -842,6 +1063,9 @@ async function buildTpBody({
         notes: missing, rows,
       };
     }
+    // MW-LOAD: covers cachedClipReport's bytesOf below - the .kf
+    // animation sources, read synchronously inside the callback.
+    await loadFromArchives(archives, sourcePaths);
     const sources = [];
     for (const p of sourcePaths) {
       const one = await cachedClipReport(gen, skeletonPath, p, () => find(p).get(p).slice(), arm.skeleton);
@@ -900,8 +1124,29 @@ export async function buildFpArm({
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
   let skeletonPath = null;
+  // MW-LOAD: THE STAGE CLOCK. Mac's question was "where does the time
+  // go", and a single number cannot answer it. Four disjoint spans and
+  // their total, in milliseconds, printed once at the end of a build
+  // that succeeded and carried on the result as `timings` so a probe or
+  // a pin can read them:
+  //   archives - opening every stored .bsa (the ranged directory reads)
+  //   esm      - reading the .esm bytes and walking their records
+  //   meshes   - loading and parsing the skeleton, the body parts, the
+  //              weapon, the .kf sources and the third-person body (the
+  //              face match's own reads ride here)
+  //   textures - loading and decoding every texture the arm's pieces
+  //              name (the face match's and the garment colour
+  //              measures' own decodes ride the mesh stage, where the
+  //              records that need them are resolved)
+  // ONE line, never per file: a log per entry is what makes a slow boot
+  // slower and a console unreadable.
+  const t0 = mwNow();
+  const spans = { archives: 0, esm: 0, meshes: 0, textures: 0 };
+  let stageMark = t0;
+  const stage = (name) => { const n = mwNow(); spans[name] += n - stageMark; stageMark = n; };
   try {
     const archives = await d.loadMorrowindArchives();
+    stage('archives');
     if (!archives.length) return { ok: false, stage: 'data', error: 'no Morrowind .bsa attached' };
 
     // EVERY .esm, not the first one.
@@ -922,8 +1167,17 @@ export async function buildFpArm({
     if (!esmNames.length) {
       return { ok: false, stage: 'data', error: 'no Morrowind .esm attached - the body records live there, not in the .bsa' };
     }
+    // MW-LOAD: THE RECORDS COME THROUGH THE DERIVED DOOR when the deps
+    // carry it - dataSource's loadMorrowindArmRecords: one pass of the
+    // master, kept in the derived store, the master's bytes never read
+    // again on a later boot. A deps without the door (a test's), or a
+    // file the store cannot answer for, reads the bytes and walks them
+    // as before, so every pin on the walk still runs the walk.
     const esmBytes = [];
-    for (const n of esmNames) esmBytes.push({ name: n, bytes: await d.loadMorrowindFile(n) });
+    for (const n of esmNames) {
+      const records = typeof d.loadMorrowindArmRecords === 'function' ? await d.loadMorrowindArmRecords(n) : null;
+      esmBytes.push(records ? { name: n, records } : { name: n, bytes: await d.loadMorrowindFile(n) });
+    }
     // MW-D32 / IG2: the ESM WALK MEMO, hoisted above every record scan
     // so ALL of them ride it - the records do not change between two
     // rebuilds of the same data, only the pieces do. Keyed on the
@@ -937,6 +1191,8 @@ export async function buildFpArm({
     // real store's monotonic stamp turns the swap caches on.
     const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
     const walk = (e, kind, fn) => {
+      // MW-LOAD: a derived record set answers by kind and never walks.
+      if (e.records) return armRecordsOf(e.records, kind);
       // No generation (a test's deps) = no memo: two fixtures of the
       // same name AND length but different bytes are an everyday test
       // arrangement, and the byteLength fingerprint cannot tell them
@@ -997,6 +1253,11 @@ export async function buildFpArm({
     // all - the composer resolves DF pieces against them by token.
     const armors = esmBytes.flatMap((e) => walk(e, 'armors', armorRecords));
     const clothes = esmBytes.flatMap((e) => walk(e, 'clothes', clothingRecords));
+    // MW-D9: THE WEAPON RECORDS. MW-LOAD hoisted them here, beside the
+    // other three walks, because weaponPartPaths needs them to name the
+    // weapon and arrow meshes BEFORE resolveWeaponParts reads them -
+    // and because one stage of the clock should hold every esm walk.
+    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -1006,7 +1267,15 @@ export async function buildFpArm({
       if (typeof g.v === 'number') sneakDelta = g.v;
     }
 
-    const find = (p) => archives.find((a) => a.has(p));
+    stage('esm');
+    // MW-LOAD: `find` asserts the bytes are in hand now. Every read it
+    // serves below - the skeleton here, the skin parts, the worn adds,
+    // the .kf sources, and the weapon inside resolveWeaponParts - has a
+    // load ahead of it in this function, and findLoaded is what says so
+    // out loud if one ever stops having one.
+    const find = (p) => findLoaded(archives, p);
+    // MW-LOAD: covers the skeleton read on the next line.
+    await loadFromArchives(archives, [skeletonPath]);
     const skelArc = find(skeletonPath);
     if (!skelArc) return { ok: false, stage: 'skeleton', error: `${skeletonPath} is not in your archives` };
     const skeletonBytes = skelArc.get(skeletonPath).slice();
@@ -1017,6 +1286,14 @@ export async function buildFpArm({
     // MW-D37: the garments' measured colours, so the dye can choose -
     // lazily, one candidate at a time (AUDIT 34 F1).
     const colourOf = (c) => clothingColourOf(c, parts, archives, gen);
+    // MW-LOAD: covers clothingColourOf's two synchronous reads (a
+    // garment's part mesh and its texture) for every candidate the
+    // resolver will hand it - the pool is discovered by running the
+    // very same composition with a recording probe, so this file does
+    // not carry a second copy of mwClothingRecord's pool law.
+    await prepareClothingColours(
+      (probe) => composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf: probe }),
+      parts, archives, gen);
     const worn = composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });
     // MW-D35: THE FACE, MATCHED to the classic portrait on this data.
     // Null halves fall back to the walk inside playerBodyRows.
@@ -1030,8 +1307,25 @@ export async function buildFpArm({
     } else {
       const fkey = `${gen}:${race}:${female ? 'f' : 'm'}:${faceIndex | 0}`;
       faceMatch = FACE_MATCH_CACHE.get(fkey);
+      // MW-LOAD: AND KEPT ACROSS PAGE LOADS. The verdict is a function
+      // of the stored set (every archive's heads and hairs), the
+      // identity and the matcher - so it keys on the set's fingerprint
+      // (names and sizes), the identity and FACE_MATCH_VERSION, in the
+      // derived store, and a set that changes is measured again. The
+      // measuring is a mesh parse and a texture decode per candidate,
+      // a dozen or more of each, on every page load until now.
+      const print = typeof d.morrowindDataFingerprint === 'function' ? d.morrowindDataFingerprint() : null;
+      const dkey = print !== null && typeof d.loadDerivedJson === 'function' && typeof d.storeDerivedJson === 'function'
+        ? `mw-face-match:v${FACE_MATCH_VERSION}:${race}:${female ? 'f' : 'm'}:${faceIndex | 0}:${fnv(print)}` : null;
+      if (!faceMatch && dkey) {
+        const kept = await d.loadDerivedJson(dkey);
+        if (kept && (kept.head || kept.hair)) { faceMatch = kept; FACE_MATCH_CACHE.set(fkey, kept); }
+      }
       if (!faceMatch) {
         faceMatch = await matchFaceFor({ race, female, faceIndex, parts, archives, deps: d });
+        if (dkey && (faceMatch.head || faceMatch.hair)) {
+          try { await d.storeDerivedJson(dkey, faceMatch); } catch (e) { console.warn('[mw] face verdict could not be kept -', e?.message ?? e); }
+        }
         // AUDIT 32 F3: a MISS is not memoised. The enhanced door opens
         // before ARENA2 is picked, so the first build of a session can
         // find no portrait archive at all; caching that verdict would
@@ -1066,6 +1360,24 @@ export async function buildFpArm({
     for (const w of wanted) {
       if (!w.path) { missing.push(`${w.slot}: no record for this actor`); continue; }
     }
+    // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
+    // as addSingleAnimSource filters it. MW-LOAD resolved it here, one
+    // block early, so its files ride the same round of ranged reads as
+    // the meshes rather than costing a second round trip of their own.
+    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
+    // MW-LOAD: ONE ROUND OF RANGED READS, concurrent, for every
+    // synchronous read in the rest of this build - the first-person
+    // skin parts (the fpRows loop), the worn adds the fp camera keeps
+    // (the fpWornAdds loop), the weapon and its arrow (read inside
+    // resolveWeaponParts, named by weaponPartPaths), and the .kf
+    // animation sources (read by sourceBytes). Forty entries in
+    // sequence is forty round trips; forty at once is one wait.
+    await loadFromArchives(archives, [
+      ...fpRows.map((w) => w.path),
+      ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+      ...sourcePaths,
+    ]);
     for (const w of fpRows) {
       const arc = find(w.path);
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
@@ -1083,8 +1395,8 @@ export async function buildFpArm({
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
-    // as the build.
-    const allWeapons = esmBytes.flatMap((e) => walk(e, 'weapons', weaponRecords));
+    // as the build. Its two reads are covered by the preload above,
+    // through weaponPartPaths.
     const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
@@ -1092,9 +1404,6 @@ export async function buildFpArm({
     const arrowInfo = resolvedWeapon.arrowInfo;
     const mwType = resolvedWeapon.mwType;
 
-    // MW-D14: the SOURCE LIST, in push order, existence-filtered exactly
-    // as addSingleAnimSource filters it.
-    const sourcePaths = fpAnimSources(skeletonPath, (p) => archives.some((a) => a.has(p)));
     const sourceBytes = sourcePaths.map((p) => ({ name: p, bytes: find(p).get(p).slice() }));
 
     if (!partBytes.length) {
@@ -1112,12 +1421,18 @@ export async function buildFpArm({
       };
     }
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
+    stage('meshes');
     // MW-D11: the textures the assembled pieces NAME, resolved through
     // rule 36's path law and decoded now - while the archives are still
     // open. The release moved below this for that reason: which textures
     // a mesh wants is not knowable until the mesh is parsed, and parsing
     // twice to keep the release where it was would cost seconds.
+    // MW-LOAD: and for the same reason the texture LOAD can only happen
+    // here - preloadArmTextures covers every read collectArmTextures
+    // makes, walking rule 36's ladder with `has` alone.
+    if (arm.ok) await preloadArmTextures(arm.pieces, archives, gen);
     const textures = arm.ok ? collectArmTextures(arm.pieces, archives, gen) : new Map();
+    stage('textures');
     // MW-D38: THE CATALOG the item icons resolve against - the same
     // archives and records this build used, kept on the result so an
     // icon never re-walks an esm.
@@ -1127,6 +1442,7 @@ export async function buildFpArm({
     const third = arm.ok
       ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen })
       : null;
+    stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
     // dataSource's generation-keyed cache now (the same array every
     // build gets), and emptying it made the NEXT swap re-read and
@@ -1248,6 +1564,18 @@ export async function buildFpArm({
     if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
     if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
 
+    stage('meshes');
+    // MW-LOAD: the one line, at the end of a build that succeeded.
+    const timings = {
+      archives: Math.round(spans.archives),
+      esm: Math.round(spans.esm),
+      meshes: Math.round(spans.meshes),
+      textures: Math.round(spans.textures),
+      total: Math.round(mwNow() - t0),
+    };
+    console.log(`[mw] arm built in ${timings.total} ms - archives ${timings.archives}, `
+      + `esm ${timings.esm}, meshes ${timings.meshes}, textures ${timings.textures}`);
+
     return {
       ok: true,
       arm,
@@ -1313,6 +1641,9 @@ export async function buildFpArm({
       raceScale,
       // MW-D24: the third-person body, or its named refusal.
       third,
+      // MW-LOAD: the stage clock's own numbers, in milliseconds, so a
+      // probe or a pin reads exactly what the log line printed.
+      timings,
     };
   } catch (err) {
     return { ok: false, stage: 'build', error: err && err.message ? err.message : String(err) };
@@ -1646,6 +1977,81 @@ export function createFpArm() {
     finally { releaseGpu(mesh); }
     return img;
   }
+  /** MW-D38: THE RECORD an item's icon draws, resolved through the ONE
+   *  item map. Split out at MW-LOAD so the synchronous getter and the
+   *  asynchronous preload in front of it ask the very same question of
+   *  the very same catalogue, rather than two copies of it. */
+  function iconRecordOf(cat, item) {
+    try {
+      if (item.group === 'Weapons') {
+        const mwType = dfWeaponToMw(item, WEAPONS);
+        return mwType !== MW_WEAPON_TYPE.None ? pickWeaponRecord(cat.weapons, mwType, materialName(item)) : null;
+      }
+      if (item.group === 'Armor') {
+        return mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
+      }
+      if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+        // AUDIT 34 F1: the icon measures through the same door the
+        // build does, so the icon and the worn piece are ONE record.
+        const colourOf = (c) => clothingColourOf(c, cat.parts, cat.archives, cat.gen);
+        return mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf }).record;
+      }
+    } catch { return null; }
+    return null;
+  }
+
+  // MW-LOAD: THE ICON'S TWO-PHASE DOOR, and it is here rather than in
+  // itemIcon because itemIcon must stay synchronous - the pack asks it
+  // per tile, per paint, and the frame-path pin forbids an await in
+  // that whole region of this object.
+  //
+  // Everything the icon reads comes off the archives: the garment
+  // colour measures that pick the record, the record's ground mesh, and
+  // that mesh's textures. On a lazily opened archive none of it is in
+  // hand when the pack first asks. So the FIRST ask kicks the loads and
+  // answers null - which is already what every other miss here means,
+  // and the classic sprite stands in the meantime - the kick notifies
+  // the listeners exactly as a settled build does (the pack repaints on
+  // that subscription, MW-D36), and the repaint's ask reads bytes in
+  // hand. `iconPending` keeps it to ONE kick per icon rather than one
+  // per paint; `iconReady` keeps it to one per icon for the session.
+  //
+  // A resident archive - every fixture, the loose-file duck, a
+  // whole-buffer .bsa - never enters the door at all.
+  const iconPending = new Set();
+  const iconReady = new Set();
+  const archivesAreLazy = (archives) => (archives ?? []).some((a) => a && a.lazy === true);
+  function preloadIcon(cat, item, key) {
+    if (iconPending.has(key) || iconReady.has(key)) return;
+    iconPending.add(key);
+    (async () => {
+      try {
+        if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+          // the dye pick measures textures; prepare its pool first, the
+          // same probe run the build uses.
+          await prepareClothingColours(
+            (probe) => mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf: probe }),
+            cat.parts, cat.archives, cat.gen);
+        }
+        const rec = iconRecordOf(cat, item);
+        if (rec && rec.model) {
+          const path = `meshes/${rec.model}`;
+          await loadFromArchives(cat.archives, [path]);
+          const arc = cat.archives.find((a) => a.has(path));
+          // renderGroundMesh parses this mesh and then asks
+          // collectArmTextures for the names it carries: same two-deep
+          // shape as every other texture preload here.
+          if (arc) await preloadArmTextures(flattenNif(parseNif(arc.get(path).slice())), cat.archives, cat.gen);
+        }
+      } catch { /* the classic icon stands - itemIcon's own answer to a miss */ }
+      finally {
+        iconPending.delete(key);
+        iconReady.add(key);
+        for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+      }
+    })();
+  }
+
   function releaseThirdMesh() { releaseGpu(thirdMesh); thirdMesh = null; }
   /** Pack the posed third-person pieces and put them on the GPU - the
    *  ONE upload both the wheel (update) and the inventory figure use.
@@ -2323,7 +2729,12 @@ export function createFpArm() {
           // target is gone, and the newer state already carries its own
           // wornKey. Walk away.
           if (built !== token) return false;
-          const find = (p) => archives.find((a) => a.has(p));
+          const find = (p) => findLoaded(archives, p);
+          // MW-LOAD: covers the weapon and arrow meshes both resolves
+          // below read synchronously - this rig's and, further down, the
+          // third-person one's. The two resolves pick the SAME records
+          // off the same allWeapons, so one load serves both.
+          await loadFromArchives(archives, weaponPartPaths({ weapon: item, hasAmmo, allWeapons: token.allWeapons }));
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
             skeletonBytes: token.skeletonBytes,
@@ -2334,6 +2745,8 @@ export function createFpArm() {
           // Textures the NEW pieces name, resolved while the archives
           // are open; what the arm already decoded stays.
           const fresh = arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+          // MW-LOAD: covers collectArmTextures' reads for the new pieces.
+          await preloadArmTextures(fresh, archives);
           for (const [file, tex] of collectArmTextures(fresh, archives)) {
             if (!token.textures.has(file)) token.textures.set(file, tex);
           }
@@ -2370,6 +2783,8 @@ export function createFpArm() {
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);
             const tFresh = t.arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
+            // MW-LOAD: same cover for the third-person rig's new pieces.
+            await preloadArmTextures(tFresh, archives);
             for (const [file, tex] of collectArmTextures(tFresh, archives)) {
               if (!t.textures.has(file)) t.textures.set(file, tex);
             }
@@ -2977,26 +3392,24 @@ export function createFpArm() {
     itemIcon(item, { size = 96 } = {}) {
       if (!(built && built.ok && built.catalog && renderer) || !item) return null;
       const cat = built.catalog;
-      let rec = null; let dye = '';
-      try {
-        if (item.group === 'Weapons') {
-          const mwType = dfWeaponToMw(item, WEAPONS);
-          if (mwType !== MW_WEAPON_TYPE.None) rec = pickWeaponRecord(cat.weapons, mwType, materialName(item));
-        } else if (item.group === 'Armor') {
-          rec = mwArmorRecords(cat.armors, item.templateIndex, item.material ?? 0).records[0] ?? null;
-        } else if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
-          dye = String(item.dye ?? 0);
-          // AUDIT 34 F1: the icon measures through the same door the
-          // build does, so the icon and the worn piece are ONE record.
-          const colourOf = (c) => clothingColourOf(c, cat.parts, cat.archives, cat.gen);
-          rec = mwClothingRecord(cat.clothes, CLOTHING_NAME[item.templateIndex], { dye: item.dye ?? 0, colourOf }).record;
-        }
-      } catch { rec = null; }
+      // MW-LOAD: the door above. A lazily opened archive holds none of
+      // what this getter reads until it is asked to; the first ask kicks
+      // those loads and answers null, and the repaint the kick triggers
+      // asks again with everything in hand.
+      const askKey = `${cat.gen}:${item.group ?? ''}:${item.templateIndex}:${item.material ?? ''}:${item.dye ?? ''}`;
+      if (archivesAreLazy(cat.archives) && !iconReady.has(askKey)) {
+        preloadIcon(cat, item, askKey);
+        return null;
+      }
+      const dye = (item.group === 'MensClothing' || item.group === 'WomensClothing') ? String(item.dye ?? 0) : '';
+      const rec = iconRecordOf(cat, item);
       if (!rec || !rec.model) return null;
       const ckey = `${cat.gen}:${rec.id}:${size}:${dye}`;
       if (ITEM_ICON_CACHE.has(ckey)) return ITEM_ICON_CACHE.get(ckey);
       let img = null;
       try {
+        // MW-LOAD: covered by preloadIcon above on a lazy archive, and
+        // resident by construction on every other kind.
         const path = `meshes/${rec.model}`;
         const arc = cat.archives.find((a) => a.has(path));
         if (arc) img = renderGroundMesh(arc.get(path).slice(), cat.archives, cat.gen, size);

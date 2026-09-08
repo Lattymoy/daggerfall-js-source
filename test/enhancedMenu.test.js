@@ -118,7 +118,10 @@ test('the two rails differ only where the question does', () => {
   };
   const boot = list('SECTIONS_BOOT');
   const pause = list('SECTIONS_PAUSE');
-  const shared = ['Load Game', 'Settings', 'Mods', 'About'];
+  // FIX-F: CONTROLS joined the shared set. It is the same question on
+  // both rails - "which key does what" - and it was reachable from
+  // NEITHER before, which is the bug it was added to close.
+  const shared = ['Load Game', 'Settings', 'Controls', 'Mods', 'About'];
   for (const s2 of shared) {
     assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
     assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);

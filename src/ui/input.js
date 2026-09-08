@@ -282,6 +282,43 @@ export const MOUSE_CODES = Object.freeze(['Mouse0', 'Mouse2', 'Mouse1']);
 /** The binding code for a MouseEvent.button, or null past the third. */
 export function mouseCode(button) { return MOUSE_CODES[button] ?? null; }
 
+/** FIX-F: THE SWING BUTTON IS A BINDING. Every host swung on the raw
+ *  `e.button === 2` / `e.buttons & 2` while the registry carried
+ *  Mouse1 -> SwingWeapon (InputManager.cs:1010) and the controls
+ *  window offered the row - so a player who rebound the swing got a
+ *  row that did nothing. These two read the live registry: which
+ *  MouseEvent.button is the swing now, and whether MouseEvent.buttons
+ *  holds it. A swing bound to a KEY answers false to both - the drag
+ *  gesture is the mouse's (WeaponManager reads the button through the
+ *  same HasAction, but the swing's DIRECTION is the mouse delta). */
+export function swingButton() {
+  const b = bindings();
+  for (const dict of [b.primary, b.secondary]) {
+    for (const [code, a] of dict) if (a === 'SwingWeapon' && MOUSE_CODES.includes(code)) return MOUSE_CODES.indexOf(code);
+  }
+  return -1;
+}
+export const isSwingButton = (button) => button === swingButton();
+/** MouseEvent.buttons' bit for a MouseEvent.button: left 1, MIDDLE 4, right 2. */
+const BUTTONS_BIT = Object.freeze([1, 4, 2]);
+export function swingHeld(buttons) {
+  const b = swingButton();
+  return b >= 0 && (buttons & BUTTONS_BIT[b]) !== 0;
+}
+
+/** FIX-F: THE KEYBOARD LOOK, InputManager.FindKeyboardActions'
+ *  four arms (:1854-1865): x is +1 for TurnRight and -1 for TurnLeft,
+ *  y +1 for LookUp and -1 for LookDown; both held cancels, as the
+ *  later `case` overwriting the earlier does not - DFU's dictionary
+ *  order is the binding order, which a port cannot promise, so the
+ *  one honest reading of "both" is nothing. */
+export function keyboardLook(keys) {
+  return {
+    x: (held(keys, 'TurnRight') ? 1 : 0) - (held(keys, 'TurnLeft') ? 1 : 0),
+    y: (held(keys, 'LookUp') ? 1 : 0) - (held(keys, 'LookDown') ? 1 : 0),
+  };
+}
+
 /** The four movement axes in one read - each host's frame builds this
  *  once and derives forward/strafe/moving/standingStill from it,
  *  instead of twelve raw keys.has() calls. */
@@ -403,8 +440,10 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // window and DaggerfallHUD.Update is dead while one is open.
   if (hudShortcutKey(e, keys)) return true;
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
-  // no consumer here yet, and the debug HUD is the port's own.
-  if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
+  // no consumer here yet, and the debug HUD is the port's own. FIX-F:
+  // a BOUND F8 is the binding's - this arm sat above the registry read
+  // and ate whatever a player put on the key.
+  if (e.code === 'F8' && !actionOf(e, keys)) { ctx.toggleDebugHud?.(); return true; }
   // PX15: THE DIAL, the port's own too - Tab raises the enhanced
   // compass rose. `=== true` matters: a host without the arm, or the
   // classic skin (the opener's own gate), answers false and Tab keeps
@@ -488,6 +527,12 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // GameManager.cs:550-553 - the CastSpell ACTION opens the
     // spellbook window; the cast itself is the attack click.
     case 'CastSpell': ctx.toggleSpellbook(); return true;
+    // FIX-F: EntityEffectManager.cs:257-270 - Q readies the last spell
+    // cast (the spellbook in the pack, no animation playing), E drops
+    // the readied one. Both were bound, offered in the controls window,
+    // and read by nothing.
+    case 'RecastSpell': return ctx.recastSpell ? (ctx.recastSpell(), true) : false;
+    case 'AbortSpell': return ctx.abortSpell ? (ctx.abortSpell(), true) : false;
     case 'Rest': ctx.toggleRest?.(); return true;
     // U43: the two journal doors. GameManager's chain has had both
     // since the quest machine landed (:541-548) and the bindings have

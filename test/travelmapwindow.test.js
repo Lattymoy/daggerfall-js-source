@@ -929,8 +929,8 @@ test('U41: a right-click on the map is the map\'s, never a swing', () => {
   // exterior hosts need the dungeon host's gate (dungeon.js:206)
   for (const host of ['world', 'exterior']) {
     const src = readFileSync(new URL(`../src/scenes/${host}.js`, import.meta.url), 'utf8');
-    const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('e.button === 2'));
-    assert.ok(line, `${host} binds RMB`);
+    const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('isSwingButton(e.button)'));
+    assert.ok(line, `${host} binds the swing button (FIX-F: the registry's)`);
     assert.ok(line.includes('!townTalk.overlayActive'), `${host}'s RMB swing is gated on the overlay`);
   }
 });

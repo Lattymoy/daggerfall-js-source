@@ -7,6 +7,7 @@ import {
   windSpeed, rotorRate, rotorPhase, advanceRotor, rotorMatrix, mountRotor, ROTOR_HUB,
 } from '../src/world/windmills.js';
 import { WEATHER_SKY, easeWeather, weatherRow } from '../src/render/enhancedSky.js';
+import { WIND_ROW_CALM, WIND_ROW_FAIR, WIND_ROW_SPAN, FAIR_STRENGTH, CALM_MIN, DRIFT_MEAN, DRIFT_SWING, createWindModel } from '../src/systems/wind.js';
 import { identity, trs, transformPoint } from '../src/world/mat4.js';
 import { PLACEMENTS } from '../src/world/windmillMesh.js';
 import { readFileSync } from 'node:fs';
@@ -36,30 +37,40 @@ test('WM1: windSpeed is the row LENGTH, not either component', () => {
   assert.equal(windSpeed([0, 0]), 0);
 });
 
-test('WM1: fair weather turns at the classic 13 deg/s, from the sky\'s own row', () => {
+test('WM1: fair weather turns at the classic 13 deg/s, from the WIND MODEL\'s own fair day (MODS AUDIT)', () => {
   // THE ANCHOR. Not 13 asserted back at itself: the gain is derived, so
-  // this reads the shipped sunny row through the whole chain and only
-  // passes if that derivation is right. Re-tune WEATHER_SKY.sunny and
-  // this still passes - which is the point - but break the derivation
-  // and it fails.
-  assert.ok(near(rotorRate(WEATHER_SKY.sunny.wind), CALM_ROTOR_DEG_PER_SEC, 1e-12),
-    `sunny turns at ${rotorRate(WEATHER_SKY.sunny.wind)}, not ${CALM_ROTOR_DEG_PER_SEC}`);
+  // this reads the model's fair row through the whole chain and only
+  // passes if that derivation is right. Re-tune the model and this
+  // still passes - which is the point - but break the derivation and
+  // it fails. And the fair row is the MODEL's: a wind model whose fair
+  // day drifted off the anchor would fail the second assertion, which
+  // is what the sky table's sunny row did after WIND1 - the gain was
+  // derived from a vector no consumer read any more.
+  assert.ok(near(rotorRate([WIND_ROW_FAIR, 0]), CALM_ROTOR_DEG_PER_SEC, 1e-12),
+    `the fair day turns at ${rotorRate([WIND_ROW_FAIR, 0])}, not ${CALM_ROTOR_DEG_PER_SEC}`);
+  assert.ok(near(WIND_ROW_FAIR, WIND_ROW_CALM + FAIR_STRENGTH * WIND_ROW_SPAN), 'the fair row is the model\'s vector at its fair strength');
+  const m = createWindModel({ seed: 3 });
+  let sum = 0, n = 0;
+  for (let d = 0; d < 40; d++) { m.tick(d * 1440 + 14 * 60, 'sunny'); sum += m.strength(); n++; }   // forty fair afternoons, no front
+  assert.ok(Math.abs(sum / n - FAIR_STRENGTH) < 0.06, `the model's fair afternoons average ${sum / n}, the anchor says ${FAIR_STRENGTH}`);
   assert.ok(ROTOR_GAIN > 0);
+  assert.ok(!/WEATHER_SKY/.test(readFileSync(new URL('../src/world/windmills.js', import.meta.url), 'utf8')), 'the mill reads no sky-table row: the table stopped feeding it at WIND1');
 });
 
 test('WM1: the rotor is still at and below the stall, and never past the furl', () => {
+  assert.equal(STALL_WIND, WIND_ROW_CALM, 'the stall is the model\'s floor - a dead calm, and nothing the model rolls is below it');
   assert.equal(rotorRate([STALL_WIND, 0]), 0, 'at the stall exactly, still');
   assert.equal(rotorRate([STALL_WIND * 0.5, 0]), 0);
   assert.equal(rotorRate([0, 0]), 0);
-  // A gale is capped, not scaled - thunder would otherwise blur.
-  assert.equal(rotorRate(WEATHER_SKY.thunder.wind), FURL_DEG_PER_SEC);
+  // A gale is capped, not scaled - a full thunder front would otherwise blur.
+  assert.equal(rotorRate([WIND_ROW_CALM + WIND_ROW_SPAN, 0]), FURL_DEG_PER_SEC, 'strength 1 (a full front) runs past the furl');
   assert.equal(rotorRate([10, 10]), FURL_DEG_PER_SEC, 'no wind runs past the furl');
 });
 
 test('WM1: the rate is monotone in the wind, and strictly so below the furl', () => {
-  const rows = Object.entries(WEATHER_SKY)
-    .map(([k, v]) => [k, windSpeed(v.wind), rotorRate(v.wind)])
-    .sort((a, b) => a[1] - b[1]);
+  const rows = [['dead calm', 0], ['stillest day', CALM_MIN * (DRIFT_MEAN - DRIFT_SWING)], ['fair', FAIR_STRENGTH], ['brisk', 0.56], ['front', 1]]
+    .map(([k, s]) => [k, WIND_ROW_CALM + s * WIND_ROW_SPAN])
+    .map(([k, w]) => [k, w, rotorRate([w, 0])]);
   for (let i = 1; i < rows.length; i++) {
     assert.ok(rows[i][2] >= rows[i - 1][2],
       `${rows[i][0]} blows harder than ${rows[i - 1][0]} and turns slower`);
@@ -68,13 +79,14 @@ test('WM1: the rate is monotone in the wind, and strictly so below the furl', ()
         `${rows[i][0]} and ${rows[i - 1][0]} turn identically below the furl`);
     }
   }
-  // ...and the shipped rows really do span the interesting range: the
-  // calmest crawls, the wildest furls. A tuning that flattened them all
-  // to one speed would satisfy the monotone check above and nothing else.
-  assert.ok(rotorRate(WEATHER_SKY.fog.wind) > 0, 'fog stills the mill outright');
-  assert.ok(rotorRate(WEATHER_SKY.fog.wind) < CALM_ROTOR_DEG_PER_SEC / 2,
-    'fog should CRAWL - that is what the stall floor is for');
-  assert.equal(rotorRate(WEATHER_SKY.rain.wind), FURL_DEG_PER_SEC);
+  // ...and the model's range really is the interesting one: the
+  // stillest day it can roll crawls, the wildest front furls. A tuning
+  // that flattened them all to one speed would satisfy the monotone
+  // check above and nothing else.
+  assert.equal(rows[0][2], 0, 'a dead calm stands the mill still');
+  assert.ok(rows[1][2] > 0, 'the stillest day the model rolls does not stall the mill');
+  assert.ok(rows[1][2] < CALM_ROTOR_DEG_PER_SEC / 2, 'the stillest day should CRAWL - that is what the stall floor is for');
+  assert.equal(rows[4][2], FURL_DEG_PER_SEC);
 });
 
 // ---------------------------------------------------------------------------

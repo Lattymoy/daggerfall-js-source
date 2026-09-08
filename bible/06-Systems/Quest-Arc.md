@@ -5485,7 +5485,7 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:74-75`), and those two doors are the
+ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
 (`machine.js:799`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
