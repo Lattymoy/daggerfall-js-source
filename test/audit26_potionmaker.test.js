@@ -57,7 +57,15 @@ test('F176: an enchanted ingredient never reaches the grid, and the walk refuses
   const w = new PotionMakerWindow({ packItems: () => [magic, plain] });
   const grid = w.ingredients();
   assert.equal(grid.length, 1, 'IsIngredient && !IsEnchanted (:147-149)');
-  assert.equal(grid[0], plain);
+  // AUDIT 63 F43 (review) MOVED THIS PIN OFF IDENTITY. Refresh's line
+  // is `ingredients.AddItem(item.Clone())` (:149), so the grid holds
+  // CLONES and never the live collection's records - the identity
+  // assertion here was restating the port's old aliasing. What the
+  // reference says is that the plain reagent is the one that survived
+  // the filter and that the player's own item is not the object the
+  // grid hands out.
+  assert.deepEqual(grid[0], plain);
+  assert.notEqual(grid[0], plain, 'the grid entry is the Clone (:149), not the pack item');
   // the consume walk carries the GROUP so the host can look the item
   // up with allowEnchantedItem: false (:338, :345)
   const calls = [];

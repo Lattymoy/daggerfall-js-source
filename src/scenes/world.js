@@ -45,7 +45,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
-import { createTownTalk } from './townTalk.js';
+import { createTownTalk, rayPersonDistance } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ctx BODY and DFU's loose-foe placement, one copy for the two hosts that mount them
@@ -56,6 +56,7 @@ import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the b
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
@@ -94,7 +95,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
-import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -112,7 +113,11 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
-import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
+import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
+import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -202,8 +207,10 @@ import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
+import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 // AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
 // common-rumor macro pass, as TalkManager.cs:1417-1419 brackets its own.
@@ -215,7 +222,8 @@ import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer,
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): the PC's clan, off the curse entry
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
-import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
+import { expandRandomTextRecord as expandTalkRecord, expandMessageBoxTokens } from '../systems/talkMacros.js';   // AUDIT 63 F3: DaggerfallMessageBox's null-mcp ExpandMacros pass
+import { TOKEN_TEXT } from '../formats/textRsc.js';   // AUDIT 63 F3: TextFile.Formatting.Text, for DaggerfallMessageBox.SetText(string)'s one-token tokenization
 import { OATH_RACE_INDEX, raceDisplayName } from '../systems/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
@@ -1005,7 +1013,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:298-316). FLATS.CFG is awaited because
+    // (interiorContext.js:369-387). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -1557,6 +1565,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // after all four are built (they reference each other), so townTalk
   // reads it lazily through the getter below.
   let talkEngineRef = null;
+  /** AUDIT 63 F0: PlayerGPS.UndiscoverBuilding for the CURRENT
+   *  location, the one closure DFU's quest-side callers share.
+   *  TalkManager.cs:2958 (the add-dialog scrub) and Quest.cs:655 (the
+   *  tombstone sweep) pass the identical (key, onlyIfResidence:true,
+   *  buildingName) triple, so the topic tree and the quest bridge take
+   *  the SAME function rather than each minting one.
+   *
+   *  Keying on the current location is the law, not a shortcut:
+   *  PlayerGPS.cs:987-999 resolves the dict from CurrentLocation and
+   *  returns early when none is loaded, so a quest that tombstones
+   *  while the player is elsewhere is a no-op in DFU too. */
+  const undiscoverBuildingHere = (buildingKey, buildingName) => undiscoverBuilding(
+    `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null);
+  /** AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override
+   *  pair (PlayerGPS.cs:945-959) - CurrentMapID and
+   *  TalkManager.IsBuildingQuestResource. Every DiscoverBuilding
+   *  caller in DFU takes this arm, so ONE object rides to all three
+   *  the port has (the door at worldModes' building entry, the talk
+   *  map reveal, and the quest bridge's own hook) rather than each
+   *  minting its own. Both members are deferred reads: `topicTree` and
+   *  `_questLoc` are declared further down and this object is only
+   *  ever CALLED at discovery time. scenes/exterior.js mounts no topic
+   *  tree (its own note at the stamp seam records the same stance), so
+   *  that host hands nothing and the member behaves as it always did. */
+  const questBuildingSource = {
+    currentMapID: () => _questLoc()?.mapTableData?.mapId ?? 0,
+    isBuildingQuestResource: (mapID, buildingKey) => topicTree.isBuildingQuestResource(mapID, buildingKey),
+  };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
@@ -1569,6 +1605,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // like onCrime - npcSession mounts below, and the first topics set
     // (the streaming update) runs long after boot.
     onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
+    // AUDIT 63 F49: TalkManager.cs:1290's map reveal is a plain
+    // DiscoverBuilding, which asks IsBuildingQuestResource for itself
+    // (PlayerGPS.cs:945-959) - so the seam rides to every caller, not
+    // just the door.
+    questBuildingSource,
     // AUDIT 58 (talk lane): the mode keys sit UNDER the window gate, and
     // this host's second slot is the mode machine's - a window held
     // there is invisible to townTalk's own `overlay`. `modes` is
@@ -2347,10 +2388,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1920 mounts the same one, gated on
+  // and dungeonContext.js:1964 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4106
+  // that context through modes.dungeonCtx - so worldModes.js:4371
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -2435,11 +2476,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:275-280) never looks the record up in `foes`, and
+    // (exteriorFoes.js:289-294) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1202-1206) gives it -
+    // got exactly what removeGuard (cityGuards.js:1214-1218) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:746) and spliced out at the end of it (:928).
+    // (cityGuards.js:758) and spliced out at the end of it (:940).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -3650,6 +3691,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // RaiseTime through the ONE clock: the U24 advance runs the same
       // tick, so magic rounds and disease days catch up inside the jump.
+      //
+      // AUDIT 63 F13: and they catch up under
+      // EntityEffectBroker.SyntheticTimeIncrease, which
+      // DaggerfallTravelPopUp_OnPostFastTravel raises
+      // (EntityEffectBroker.cs:846-847). DFU raises it ONCE, at :383,
+      // AFTER every RaiseTime this method makes - the trip (:344) and
+      // all three arrival clamps (:355, :367, :374) - so the single
+      // broker Update that follows covers the whole jump. The port
+      // spends that jump in TWO advances, each of which claims its own
+      // window, so the flag is raised before each of them; the claim
+      // itself retires it (effectBroker.js).
+      setSyntheticTimeIncrease(true);
       playerTicker.advance(computed.minutes);
       // W1 review: DFU fast travel never fires the respawner's direct
       // re-roll - TeleportToCoordinates raises OnInitWorld, whose
@@ -3672,7 +3725,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // waited). Career DamageFromSunlight still rides its own arc.
         sunAverse: !!playerEntity.racialOverride?.sunDamage,
       });
-      if (clamp > 0) playerTicker.advance(clamp);
+      if (clamp > 0) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       // TP1 - performFastTravel's tail (:380): RaiseSkills fires AFTER
       // the arrival clamp, so a trip that lands at 7:10am raises
@@ -3724,6 +3777,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the building with its pools alive, and P8's unified frame makes
     // the inside position a plain world position.
     const interior = modes?.interiorSaveData?.() ?? null;
+    // AUDIT 63 F24: ...and the interior host's LIVE ENEMIES with it.
+    // SaveLoadManager.cs:865's enemyData is unconditional, and the
+    // fourth host's two pools rode nothing. Natives through the same
+    // converter the outdoor pools take, with the compensation shed per
+    // record - the pile/foe/guard law three lines below.
+    const interiorPools = modes?.interiorPoolSnapshot?.((pos) => state.worldCoords(pos)) ?? null;
+    if (interior && interiorPools) {
+      const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: r.y - state.compensation[1] }));
+      interior.foes = shed(interiorPools.foes);
+      interior.guards = shed(interiorPools.guards);
+    }
     const snap = snapshotPlayer(playerEntity, {
       interior,
       classicMinutes: Math.floor(playerTicker.classicMinutes),
@@ -3747,7 +3811,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // already took (:180 -> snap.boardShipPosition). The mode lives
       // on the motor, host-owned like the weapon, so it rides the pose
       // bag rather than the entity envelope.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, camera: mwCamera.state(), transport: player.transportMode },
+      // AUDIT 63 F25: the SECOND line of that pair. DFU writes the
+      // sheath and the HAND together - SerializablePlayer.cs:175-176
+      // `data.weaponDrawn = !weaponManager.Sheathed;` /
+      // `data.usingLeftHand = !weaponManager.UsingRightHand;` - and
+      // restores them together at :420-421. The port carried only the
+      // first line, so a player fighting with the left-hand weapon
+      // loaded back on the right hand's item (or bare fists). The
+      // port stores the POSITIVE sense because PlayerWeapon holds
+      // `usingRightHand`; it is the same bit.
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, usingRightHand: weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -3775,6 +3848,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     townTalk.say(r.ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
     return r.ok;
   }
+  /** AUDIT 63r F24, the EXTERIOR half of SerializableEnemy.cs
+   *  :206-217 - questFoeHost.reviveQuestBehaviour is the shared law,
+   *  this is only the machine this host owns. No stand list is needed
+   *  here: the ActiveGameObjectDatabase walk (`questFoeInstances`)
+   *  reads the pool itself, so a revived foe is reachable the moment
+   *  spawnFoe lands it. */
+  const _reviveQuestBehaviour = (data) => reviveQuestBehaviour(questBridge?.machine ?? null, data);
   let _loading = false;
   /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
    *  own law, Load(PlayerEntity.Name, quickSaveName)); the BOOT load
@@ -3809,7 +3889,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // restoreSessionState (systems/save.js) so the dungeon host
       // runs the identical law; the TK-i/TK-ii/TK-iv null-arm
       // recordings moved with it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })) _questStarted = true;
+      // AUDIT 63 F28: `entity` is the orphaned-quest-item sweep's
+      // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
+      // runs inside the composer, after the quest machine is restored,
+      // exactly where LoadGame runs it.
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -3822,8 +3906,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // reposition arm (:615-621): say the line and keep the
         // teleport's default landing, never the inside position on the
         // outside collider.
+        // AUDIT 63 F24: the interior host's ENEMY record travels with
+        // the door identity now, so the re-entry takes the converters
+        // too - it suppresses its own marker-foe walk while the record
+        // is landing (GameObjectHelper.cs:1073-1076) and overlays the
+        // saved pools once the fresh ones are minted.
         const inside = extras.interior
-          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz]) ?? false)
+          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz], {
+            fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
+          }) ?? false)
           : false;
         if (inside) {
           playerSpawned = true;
@@ -3842,7 +3933,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
         // above already tore the old pools down with the pixel.
-        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // AUDIT 63r F24: the exterior pool's quest link is RECORDED
+        // (exteriorFoes.snapshotWorld's `questResource`) but was
+        // restored nowhere - the option bag only reached the interior
+        // caller, so a reloaded exterior quest foe stood and fought
+        // while its task ticked forever. SerializableEnemy.cs:206-217
+        // is one law for every context: re-add the behaviour, restore
+        // it, and drop it again when the record names no quest.
+        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1],
+          { reviveQuestBehaviour: _reviveQuestBehaviour });
         cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
@@ -3866,6 +3965,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.pitch = pose.pitch ?? cam.pitch;
     if (pose.crouching != null) player.crouching = !!pose.crouching;
     if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+    // AUDIT 63 F25/F31: the hand, SerializablePlayer.cs:421's
+    // `weaponManager.UsingRightHand = !data.usingLeftHand;`. The
+    // FLAG ONLY - the C# restore sets the property and calls no
+    // ApplyWeapon, because WeaponManager.Update's UpdateHands ends in
+    // ApplyWeapon (:699) on the very next frame; the port's twin is
+    // weaponRig.syncWorn (updateHands + applyWeapon(claws), every
+    // frame), which re-binds the screen weapon to the restored hand
+    // AND re-runs the shield override that forces the right hand
+    // (WeaponManager.cs:656). A bare applyWeapon() here would drop the
+    // racial claws for a frame and would null a bindWorn:false rig's
+    // scripted weapon. Presence-gated: a pre-field envelope (and the
+    // classic import before its own arm below) leaves the live hand.
+    if (pose.usingRightHand != null) weaponRig.playerWeapon.usingRightHand = !!pose.usingRightHand;
     // AUDIT 39 (SerializablePlayer.cs:423): the mount comes back
     // through the ONE builder, so the riding sprite, the hoof loop,
     // the ride bob and the no-climbing-from-a-saddle rule re-arm with
@@ -4105,6 +4217,42 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...extra,
     });
   }
+  /** AUDIT 63 F9: RevealGuildHallOnMap on this host (ThievesGuild.cs
+   *  :241-247 / DarkBrotherhood.cs:250-256). DFU runs it from Join and
+   *  from the two location events its RegisterEvents subscribes
+   *  (:197-206), so it fires here on the join and on every entry into a
+   *  location rect - the streaming host's own edge, the same pair
+   *  F062/F089 already play. The building pool is the FULL set
+   *  (BuildingDirectory.GetBuildingsOfFaction, :147-154), which is the
+   *  summaries walk the town map builds from, not the talk directory's
+   *  doors. */
+  const revealMemberGuildHalls = () => {
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key);
+    const b = built.get(key);
+    if (!dfLoc || !b?.locBlocks) return;
+    // The location this edge fired for, resolved NOW - the wait below
+    // is a microtask and the player must not be re-read after it.
+    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+    // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
+    // reveal WAITS on it - the same gate the fixed-city host already
+    // carries (exterior.js). GetGuildName -> GetAffiliation
+    // (Guild.cs:165-176) reads PlayerEntity.FactionData, which DFU has
+    // parsed long before any guild object exists, and its
+    // "unknown-guild" fallback (:175) answers a MISSING RECORD, never
+    // an unread faction file. This host only fire-and-forgets
+    // townTalk.ensureLoaded() at boot, so an enter-rect edge could run
+    // first and stamp `displayName: 'unknown-guild', isOverrideName:
+    // true` into the discovery record snapshotDiscovery saves - a
+    // placeholder plate on the town map that outlives the load.
+    Promise.resolve(townTalk.ensureFactions?.()).then(() => {
+      revealGuildHallsOnMap(activeMemberships(playerEntity), locationId, buildings,
+        { factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '' });
+    }).catch(() => {});
+  };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
   // :633-650): M outside opens the TOWN map only when the current
   // map pixel carries a location - empty wilderness opens nothing.
@@ -4630,7 +4778,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:200, "a right-click on a window is the window's...
+  // (dungeon.js:205, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -4842,7 +4990,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6424-6436 -
+  // worldModes answers it in BOTH modes (worldModes.js:6796-6808 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -5127,6 +5275,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     // _questRegionIndex; the write now agrees with it.
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questRegionIndex(), amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+    /** AUDIT 63 F1: ActiveGameObjectDatabase.GetActiveStaticNPCQuest
+     *  ResourceBehaviours (ActiveGameObjectDatabase.cs:307-311) - the
+     *  list AddQuestor walks to relink an individual's standing
+     *  behaviour (Quest.cs:483-496). DFU's cache spans every static
+     *  NPC in the scene, so the answer is the UNION of the modal
+     *  hosts' (interior people, interior and dungeon marker stands)
+     *  and this host's own STREET NPCs, which carry the same bootstrap
+     *  behaviour (exteriorNpcs.js's quest pass) and stand individuals
+     *  too. Inactive hosts are dropped - GetActiveComponents keeps
+     *  only activeInHierarchy objects (:32-46). */
+    staticNpcQuestBehaviours: () => {
+      const out = modes?.activeStaticNpcQuestBehaviours?.() ?? [];
+      for (const entry of built.values()) {
+        for (const pn of entry.npcs ?? []) {
+          const b = pn.questBehaviour;
+          if (!b || typeof b.host?.staticNpcFactionId !== 'number') continue;
+          if (b.host.isActive?.() === false) continue;
+          out.push(b);
+        }
+      }
+      return out;
+    },
     // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
     // has declared these since Q3-iii and no host answered - the
     // placement law sat fully ported in sceneMount.js with no caller,
@@ -5303,7 +5473,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // F099: TalkManager.cs:2958 passes onlyIfResidence=TRUE and the
     // quest Place's buildingName - the bridge used to drop both, so
     // the store's refusals were never reachable from the talk seam.
-    undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null),
+    undiscoverBuilding: undiscoverBuildingHere,
     talkPartner: () => npcSession.lastTargetStaticNPC ?? npcSession.lastTargetMobileNPC ?? null,
     onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
   });
@@ -5311,6 +5481,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the tree and the pipeline all answer for. Its questor door is what
   // finally opens a quest offer from a plain static-NPC click.
   const npcSession = new NPCSession({
+    // AUDIT 63 F47: TalkManager.cs:2620-2628 - the racial override is
+    // TalkToNpc's FIRST door ("Also doing suppression here to prevent
+    // talk window flashing open and closed in some cases", :2620-2621),
+    // BEFORE the reaction/rejection gate at :2630 and before any
+    // greeting is computed. This dep had no writer, so the port ran the
+    // whole greeting body - the mid-greeting rejection's DFRandom draw,
+    // ResetNPCKnowledge and the three tone resets - and only refused at
+    // the window door. LycanthropyEffect.cs:423-437 is the one override
+    // that answers true.
+    suppressTalk: () => racialSuppressTalk(playerEntity)?.text ?? null,
     factionData: (id) => _questStore()?.dict.get(id) ?? null,
     factionName: (id) => _questStore()?.dict.get(id)?.name ?? '',
     peopleOfCurrentRegion: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
@@ -5366,9 +5546,41 @@ export async function bootWorld(canvas, renderer, params, status) {
     resetNPCKnowledge: () => topicTree.resetNPCKnowledge(),
     resetToneSession: () => answerPipeline.resetToneSession(),
     resetQuestionSession: () => answerPipeline.startNewConversation(),
-    messageBox: (x) => townTalk.say(typeof x === 'number'
-      ? (townTalk.lines(x).map((r) => r.text ?? r).join(' ') || 'You get no response.')
-      : (Array.isArray(x) ? tokensToString(x) : String(x ?? ''))),
+    /** AUDIT 63 F3: DaggerfallUI.MessageBox, all three overloads
+     *  TalkToNpc uses (DaggerfallUI.cs:1328, :1346, :1355). Every one
+     *  builds a DaggerfallMessageBox and lands in
+     *  DaggerfallMessageBox.SetTextTokens (:432-441), whose body is
+     *  `if (expandMacros) MacroHelper.ExpandMacros(ref tokens, mcp);
+     *  label.SetText(tokens);` - so the box ALWAYS expands, and it is
+     *  a modal ClickAnywhereToClose parchment, never AddHUDText.
+     *
+     *  This seam did neither. It joined raw tokens with ' ' and handed
+     *  the result to hud.add, so the mid-greeting rejection
+     *  (TalkManager.cs:2641-2646, ~31% of first conversations with a
+     *  non-Province-parented static NPC at rep 0) printed literal
+     *  %pcf/%pcn/%cn from the 8550-8571 guild table as a HUD line -
+     *  the same table the ACCEPTED arm two rows up already expands.
+     *
+     *  Three arms, each DFU's:
+     *  - int   -> GetRSCTokens(id), the WHOLE record with no draw
+     *            (DaggerfallMessageBox.cs:443-450 / TextProvider.cs
+     *            :167-188). The old `lines(x)` was GetRandomTokens'
+     *            sibling and additionally burned a rolls() value per
+     *            refusal that DFU never spends.
+     *  - array -> the tokens as given (:1355-1362).
+     *  - string-> SetText(string) tokenizes into one Text token and
+     *            falls into the same SetTextTokens (:405-408), so the
+     *            suppressTalk message expands too.
+     *  The macro pass is NULL-mcp - see expandMessageBoxTokens. */
+    messageBox: (x) => {
+      const tokens = typeof x === 'number' ? townTalk.recordTokens(x)
+        : (Array.isArray(x) ? x : [{ formatting: TOKEN_TEXT, text: String(x ?? '') }]);
+      // tokenRows answers { text, center } records (TEXT.RSC carries
+      // its own per-row alignment); plainLines is the port's
+      // established flattening for ActionTextBox's string rows.
+      const rows = plainLines(tokenRows(expandMessageBoxTokens(tokens, talkMcp()))) ?? [];
+      townTalk.showBox(rows.length ? rows : ['You get no response.']);
+    },
     pushTalkWindow: () => {},   // TK-v opens the window
     onTargetChanged: () => {},  // TK-v repaints the portrait and name
     rolls: Math.random,
@@ -5500,7 +5712,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       .find((b) => b.buildingKey === buildingKey) ?? null,
     discoverBuilding: (buildingKey) => discoverBuilding(
       `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
-      (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey }),
+      (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey },
+      null, questBuildingSource),   // AUDIT 63 F49: the quest name-override arm (PlayerGPS.cs:945-959)
     // S44: the real member (PersistentFactionData.cs:675-689). This hook
     // answered a hardcoded `false` from the talk arc onward, so
     // answerPipeline's faction-relation gate could never fire once.
@@ -5564,6 +5777,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
     removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
+    // AUDIT 63 F0: Quest.cs:655's tombstone sweep - the SECOND of
+    // DFU's two quest-side UndiscoverBuilding callers, through the same
+    // closure the talk seam above takes.
+    undiscoverBuilding: undiscoverBuildingHere,
     forceTopicListsUpdate: () => topicTree.forceTopicListsUpdate(),
     // FE1: the HUD escorting faces - AddFace/DropFace's world half
     // (declared by the bridge since Q4, mounted now) and the
@@ -5578,8 +5795,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // constructed long before the HUD; and SILENT, because
       // AddMembership pushes no welcome window the way the walk-in join
       // does.
-      guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
+      const initiated = guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
         !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes));
+      // AUDIT 63 F9: both guilds override Join() to reveal their hall
+      // on the town map at once (ThievesGuild.cs:168-173,
+      // DarkBrotherhood.cs:177-182) - the join is one of DFU's three
+      // moments, and the only one that does not wait for a location.
+      if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
@@ -5873,6 +6095,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The notebook only exists once the bridge is built, so the sink is
   // handed down here.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
+  // AUDIT 63 F5: and the talk window's Copy-to-logbook sink, which
+  // is DaggerfallTalkWindow.OnPop's `PlayerEntity.Notebook.AddNote(
+  // copiedEntries)` (DaggerfallTalkWindow.cs:319), handed down for
+  // the same reason at the same moment.
+  townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   // V2d: THE RACIAL-QUEST SEAM. worldTick's minute walk rolls the
   // curse quests (38-day non-cure, 84-day cure) but the machine is
   // THIS host's, so racialQuests reaches it through a registered host
@@ -6055,6 +6282,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
     discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+    questBuildingSource,   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override pair (PlayerGPS.cs:945-959)
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town
@@ -6227,7 +6455,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:88, so the
+  // only reader of `load` in the whole tree is dungeon.js:93, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -6485,7 +6713,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:587, :586). So every HUD line raised in a modal
+      // (townTalk.js:589, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -6505,6 +6733,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the load gate (QuestMachine.cs:310-316 refuses to tick while
     // SaveLoadManager.LoadInProgress - no popups mid-restore).
     if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
+    // AUDIT 63 F2: the STREET StaticNPCs' QuestResourceBehaviours, the
+    // exterior half of the loop worldModes drives for interior people.
+    // Unity Updates a MonoBehaviour whatever the timeScale, so this
+    // sits OUTSIDE the pause gate above, as the modal hosts' behaviour
+    // loops do. Two clauses of QuestResourceBehaviour.Update ride on
+    // it: the back-link recouple (:132-141), which Quest.cs:522's
+    // DropQuestor test reads, and the hidden/destroyed Person arm
+    // (:143-152).
+    for (const entry of built.values()) {
+      for (const pn of entry.npcs ?? []) pn.questBehaviour?.update();
+    }
 
     // AUDIT 39 (S19 host gap): PARALYSIS, above ground. Every DFU gate
     // reads PlayerEntity.IsParalyzed with no interior/exterior test -
@@ -6578,7 +6817,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         const axes = _overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, mv);
-        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:523's shape - a frozen player takes no stride
+        const moving = !paralyzed && anyMove(mv);   // AUDIT 39: dungeon.js:547's shape - a frozen player takes no stride
         // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
         // gates movement and the jump only (DecideHeightAction has no check).
         // AUDIT 39r: and so does the SPEED-ADJUSTMENT capture. DFU zeroes the
@@ -6740,17 +6979,52 @@ export async function bootWorld(canvas, renderer, params, status) {
           // toggled, and the activation ends there - the ladder has no
           // arm for a living enemy but the quest one above, which ran.
           const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE) : null;
+          // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs
+          // :800-841) - the LIVING-foe arm the ladder never had.
+          // AUDIT 63 F33 (review round): the NEAR call is decided
+          // against the REST OF THE LADDER by distance, not run ahead
+          // of it. DFU casts ONE ray (:314) and reaches the enemy
+          // check (:419) only for the thing that ray actually hit, so
+          // a townsperson, a corpse, a dropped pile, a street NPC, a
+          // bulletin board or a door standing nearer than the foe takes
+          // the click - `_rivalDist` below is those picks' own winning
+          // distance. The FAR call at the bottom carries the un-gated
+          // Info line (:806-826) and the pickpocket's too-far refusal
+          // (:832-836), which DFU takes out to RayDistance.
+          const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
+            [...exteriorFoes.foes, ...cityGuards.guards], collider, reach,
+            getInteractionMode(), playerEntity, {
+              nearerThan,
+              hud: (t) => townTalk.say(t),
+              modal: (t) => townTalk.showOverlay(new ActionTextBox(String(t).split('\n'))),
+              makeEnemiesHostile: _makeEnemiesHostile,
+              playerFeet: walkMode ? player.pos : cam.pos,
+              nothingText: () => townTalk.randomText(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
+            });
+          // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
+          // The watch and the encounter foes leave the same container
+          // type, so which body you open is PlayerActivate's nearest
+          // hit, not which pool the host happens to ask first - and
+          // until this wave the host never asked the encounter pool
+          // at all, so its corpses could not be opened by anyone.
+          const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
+          const _lootPick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider);
+          const _dropPick = _lootPick ? null : pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+          // Every OTHER thing this ray can strike, at its own distance:
+          // the street's townsfolk (townTalk's own cylinder pick), the
+          // corpse and pile picks above, and the door/NPC/board set the
+          // interior transition picks from.
+          const _rivalDist = Math.min(
+            _lootPick?.distance ?? Infinity,
+            _dropPick?.distance ?? Infinity,
+            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
+            modes.exteriorActivationDistance(cam.pos, useFwd),
+          );
           if (_lockFoe) lockOn.toggle(_lockFoe);
+          else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
           else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-            // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
-            // The watch and the encounter foes leave the same container
-            // type, so which body you open is PlayerActivate's nearest
-            // hit, not which pool the host happens to ask first - and
-            // until this wave the host never asked the encounter pool
-            // at all, so its corpses could not be opened by anyone.
-            const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-            const lootKey = pickActivatable(cam.pos, useFwd, corpseTargets, collider);
-            const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+            const lootKey = _lootPick?.key ?? null;
+            const dropKey = _dropPick?.key ?? null;
             if (lootKey) {
               const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
@@ -6775,6 +7049,9 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
+            // AUDIT 63 F33: nothing else took the click, so the FAR
+            // half of the enemy arm runs before the door transition.
+            else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
             else modes.tryEnter().catch((e) => console.error(e));
           }
         }
@@ -7154,6 +7431,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // its own 1-80s counter beside the ordinary wilderness one.
       if (_inRect && !_wasInLocationRect) {
         ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+        // AUDIT 63 F9: and the SAME entry event is what a Thieves Guild
+        // or Dark Brotherhood member's RegisterEvents subscribes to
+        // (ThievesGuild.cs:197-206, handler :227-229), so the hall
+        // reveal follows the member into every town.
+        revealMemberGuildHalls();
       } else if (!_inRect) {
         ambience.setCemeteryNearby(false);
       }
@@ -7176,6 +7458,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         distanceToPlayer: Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]),
         sheathed: weaponRig.playerWeapon.sheathed,
         invisible: isInvisible(playerEntity),
+        inBeastForm: !!playerEntity.isInBeastForm,   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
         enemiesNearby: () => areEnemiesNearby(enchantFoes()),
       }));
       for (const { person, out } of live) {
@@ -7380,11 +7663,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:560-565), so this seam ROUTES by pool exactly
+        // (cityGuards.js:572-577), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:993). DFU makes no pool distinction:
+        // (cityGuards.js:1005). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

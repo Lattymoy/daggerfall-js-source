@@ -59,7 +59,7 @@ let deleting = null;   // AUDIT 39: DeleteButton's deleteSpellIndex - the row th
  * `spellEffects` hands back the effect RECORDS, not just their type -
  * every one carries `magnitudeBaseLow/High` with their per-level
  * step, `durationBase/Mod/PerLevel`, and `chanceBase/Mod/PerLevel`
- * (systems/effects.js:446-454 reads exactly these). The first draft
+ * (systems/effects.js:499-507 reads exactly these). The first draft
  * printed the two NAMES and threw the rest away, which is the same
  * fault the chronicle's flattened date was: the data was already
  * there.

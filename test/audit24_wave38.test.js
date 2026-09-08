@@ -300,15 +300,18 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const w = rd(f);
     assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/, f);
-    assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
+    // AUDIT 63 F33 (review round): the pick hands its DISTANCE back now
+    // (pickActivatableHit), because the living-foe arm has to lose to a
+    // nearer corpse - still ONE pick over the two pools.
+    assert.match(w, /pickActivatableHit\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
     assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/, f);
-    assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
+    assert.doesNotMatch(w, /pickActivatableHit?\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
       `${f}: the watch-only pick is gone`);
   }
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1023-1025 turns the key into
+  // miss: cityGuards.js:1035-1037 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
   // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:158-181)
   // tests only `corpseDisabled` and `entity.items` - never death - so

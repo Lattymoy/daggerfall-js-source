@@ -61,9 +61,14 @@ test('U23: each button rect routes to its own handler', () => {
   assert.equal(w.click(...at(GUILD_RECTS.join)), true);
   assert.deepEqual(log, ['join', 'close']);   // onJoin returning null closes, as DFU's does
 
+  // AUDIT 63 F44: TalkButton_OnMouseClick (:291-295) is PlayOneShot +
+  // TalkToStaticNPC and NOTHING else - the one handler in this window
+  // that does not CloseWindow, so the popup is still standing under
+  // the pushed conversation.
   const b = makeWindow();
   b.w.click(...at(GUILD_RECTS.talk));
-  assert.deepEqual(b.log, ['talk', 'close']);
+  assert.deepEqual(b.log, ['talk']);
+  assert.equal(b.w.done, false, 'the popup survives its own TALK button');
 
   const c = makeWindow();
   c.w.click(...at(GUILD_RECTS.service));

@@ -46,17 +46,19 @@ test('T4: the discovery store - the record lands whole, once, per location', () 
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 66051), false);
   assert.equal(discoverBuilding('17:Daggerfall', shelf), true);
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 66051), true);
-  // The DiscoveredBuilding columns this port has sources for
-  // (PlayerGPS.cs:92-103 minus the quest extras; R1 grew
+  // The DiscoveredBuilding columns (PlayerGPS.cs:92-103; R1 grew
   // lastLockpickAttempt, the exterior anti-grind record; ROAD-C c2/S10
   // grew customUserDisplayName, the town map's rename - PlayerGPS.cs:97
   // - which is born EMPTY, never undefined, so the plate's
-  // `custom || name` fallback can never read a hole).
+  // `custom || name` fallback can never read a hole; AUDIT 63 F49 grew
+  // the override pair, PlayerGPS.cs:96-97, born down and null).
   assert.deepEqual(discoveredBuildings('17:Daggerfall'), [{
     buildingKey: 66051, displayName: 'The Odd Blades', factionId: 0, quality: 12, buildingType: 9,
-    lastLockpickAttempt: 0, customUserDisplayName: '',
+    lastLockpickAttempt: 0, customUserDisplayName: '', isOverrideName: false, oldDisplayName: null,
   }]);
-  // Already discovered is a no-op (:926-928 - the override arm pends quests).
+  // Already discovered is a no-op WHEN NO OVERRIDE IS PASSED - the
+  // `overrideName == null &&` half of :926-927 is what makes the bank's
+  // house rename land on a house the player has already entered.
   assert.equal(discoverBuilding('17:Daggerfall', { ...shelf, name: 'Renamed' }), false);
   assert.equal(discoveredBuildings('17:Daggerfall')[0].displayName, 'The Odd Blades');
   // The same buildingKey in ANOTHER location is its own discovery -

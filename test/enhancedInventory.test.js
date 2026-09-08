@@ -274,13 +274,20 @@ test('U54: the tile sets no width attribute - these sprites are not square', () 
   assert.match(css, /\.tile img \{ image-rendering: pixelated; max-width: 30px; max-height: 30px; \}/);
 });
 
-test('U53: a broken item says so, and the chain refuses it', () => {
+test('U53: a broken item says so, and the WINDOW refuses it', () => {
   const e = hero();
   const dagger = e.items[1];
   dagger.currentCondition = 0;
   assert.equal(itemLine(dagger).broken, true);
-  assert.equal(equipItem(e, dagger), null, 'DaggerfallInventoryWindow.cs:1330-1341');
-  assert.equal(model(e).worn.size, 0);
+  // AUDIT 63 F23: the refusal is the pack's own `wear()` door, which is
+  // DaggerfallInventoryWindow.EquipItem's seam (:1330-1341) - not
+  // equipItem's, because ItemEquipTable.cs:94-154 has no condition
+  // test. This assertion used to read `equipItem(e, dagger) === null`,
+  // pinning the gate one seam too low.
+  assert.match(read('src/ui/enhancedInventory.js'),
+    /function wear\(item\) \{[\s\S]*?if \(isBrokenItem\(item\)\) \{ notice = `\$\{item\.name\} is broken and cannot be worn\.`; return render\(\); \}/);
+  assert.notEqual(equipItem(e, dagger), null, 'the TABLE below it does not refuse - ItemEquipTable.cs:94-154');
+  assert.equal(model(e).worn.size, 1, 'so the slot fills, which is what PlayerEntity.cs:959 relies on');
 });
 
 // ── THE FORK ─────────────────────────────────────────────────────

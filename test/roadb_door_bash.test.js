@@ -76,7 +76,12 @@ test('ROAD-B: ActivateStaticDoor is one member with two callers, as C# has it', 
 
 test('ROAD-B: a bash skips the Open spell, the mode ladder and the Lockpicking tally', () => {
   // :519-520 `!buildingUnlocked && !isBash && HandleOpenEffect...`
-  assert.match(ARM, /if \(!opened && !isBash\) \{\n\s*const spell = doorSpellFor\(playerEntity\);/,
+  // AUDIT 63 F41: the exterior arm reads Open DIRECTLY now -
+  // HandleOpenEffectOnExteriorDoor (PlayerActivate.cs:1036-1043) runs its
+  // own FindIncumbentEffect<Open> and never asks about Lock, so an armed
+  // Lock must not mask it here (doorSpellFor answers the ACTION door,
+  // where :693-696 tests Lock first).
+  assert.match(ARM, /if \(!opened && !isBash\) \{\n\s*const spell = exteriorOpenSpellFor\(playerEntity\);/,
     'a swing never spends the readied Open spell');
   // :523-524 `if (!buildingUnlocked && !isBash)` wraps the WHOLE
   // refusal / steal-pick ladder, so a swing trains nothing and never

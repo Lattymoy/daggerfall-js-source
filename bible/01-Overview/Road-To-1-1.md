@@ -203,22 +203,22 @@ blind to the others until the squash: E6 took the spell hands' release
 frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
 (`characters/enemyCasting.js:91`), closing section C's `playSound` row
 with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:48`);
-E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:268`);
+E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:289`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96`) by building the console host they
 were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:2999`, the two ship pixels): the owner supplied the
-(`scenes/world.js:2972`, the two ship pixels): the owner supplied the
+(`scenes/world.js:3040`, the two ship pixels): the owner supplied the
+(`scenes/world.js:3013`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:1746`) with the
+guild-service popup above ground (`scenes/worldModes.js:1872`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:1735`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:1779`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals

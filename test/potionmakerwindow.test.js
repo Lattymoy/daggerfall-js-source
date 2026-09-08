@@ -205,7 +205,10 @@ test('M2: a recipe pick REFUSES on any missing ingredient, else CLEARS and fills
   const all = win({ recipeKeys: [slowKey] });
   all.w._fillFrom(byName('slowFalling'));
   assert.deepEqual(all.w.cauldron.map((i) => i.templateIndex).sort((a, b) => a - b), [24, 26, 59]);
-  assert.equal(all.w.nameLabel, 'slowFalling', 'nameLabel = recipeName (:307)');
+  // AUDIT 63 F42: `recipeName` is the ROW the picker drew, and the
+  // rows are `potionRecipe.DisplayName` (:171-172) - so the label is
+  // "Slow Falling", not the localization key the port calls `name`.
+  assert.equal(all.w.nameLabel, 'Slow Falling', 'nameLabel = recipeName (:307)');
   assert.equal(all.w.box, null);
 
   // only two present: "reqIngredients" and NOTHING is added (:297-301)

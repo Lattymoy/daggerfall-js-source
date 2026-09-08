@@ -4,7 +4,7 @@
 // The engine under the window has been ~95% ported since TK-v - the
 // tree assembles listTopicTellMeAbout / Person / Thing, the pipeline
 // answers every QuestionType - and the window mounted ONE of its five
-// pages (Where-is > Location) while nativeTalk.js:196 pended the rest
+// pages (Where-is > Location) while nativeTalk.js:206 pended the rest
 // as INTERIM no-ops. "Any news?", "Where am I?", quest topics and
 // work were computed and thrown away; every non-service static NPC
 // answered "You get no response." over a fully-computed greeting.
@@ -189,7 +189,7 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   // rather than the shape it used to have: ONE talk door, and the
   // only thing the two callers differ on is the flag.
   assert.match(modes, /\{ menu: true, isSpyMaster \}\);/, 'one door, the flag passed in');
-  assert.match(modes, /onTalk: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: false \}\)/,
+  assert.match(modes, /onTalk: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: false, returnTo: win \}\)/,
     'the Talk button is not the Spymaster');
   assert.match(modes, /talkAsSpymaster: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: true \}\)/,
     'and the 402 greeting\'s dismissal is');
@@ -198,9 +198,18 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   // townTalk's showOverlay, which IS CloseWindow-then-Push, so only
   // the INTERIOR slot needs clearing by hand.
   assert.match(modes, /\/\/ The popup yields to the conversation, as DFU's CloseWindow-/);
-  assert.match(modes, /^\s*interiorOverlay = null;$/m);
+  // AUDIT 63 F44 RE-TARGETED THIS LINE. It was an anchored
+  // `interiorOverlay = null;`, which F44 rewrote to the guarded form -
+  // and the anchored pin went on passing only because the exit-building
+  // teardown further down the file happens to be a bare one, i.e. it
+  // was silently holding a law it does not name. The guard is the law:
+  // the GUILD popup DFU never closes (DaggerfallGuildServicePopupWindow.cs
+  // :291-295) is pushed over, not taken down, wherever a stack exists.
+  assert.match(modes, /if \(!pushed\) interiorOverlay = null;/);
   // ONE window-opener - the mobile path and the static path share it
-  assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null \} = \{\}\)/);
+  // AUDIT 63 F44: the door also carries the push/onClosed pair, for
+  // the ONE caller DFU pushes over rather than replaces.
+  assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null, push = false, onClosed = null \} = \{\}\)/);
   // ROAD-D D10: the mobile arm carries its portrait too - always
   // CommonFaces, at SetPerson's record (TalkManager.cs:817).
   assert.match(town, /openTalkWindow\(t\.text, \{\n\s*npcSeed: _talkNpc\?\._talkSeed \?\? 0, npcName: _talkNpc\?\.nameNPC \?\? '',\n\s*portrait: \{ archive: 'CommonFaces', record: _talkNpc\?\.personFaceRecordId \?\? 0 \},\n\s*\}\);/);

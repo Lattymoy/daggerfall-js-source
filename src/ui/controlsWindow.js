@@ -259,7 +259,7 @@ export class ControlsWindow {
    *  (HorizontalSlider.cs:148-154) drops `draggingThumb` the frame the
    *  button comes up; the port has no held-button poll, so the hosts
    *  deliver that edge as `overlay.release?.()` and a nesting window
-   *  has to pass it on (ui/itemMakerWindow.js:202's shape). The popup
+   *  has to pass it on (ui/itemMakerWindow.js:203's shape). The popup
    *  latches its thumb on the press and `hover` above pumps the drag
    *  from every move, so this is the only edge that ends it. */
   release() { this.advanced?.release(); }

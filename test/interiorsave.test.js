@@ -151,7 +151,10 @@ test('IS1: the load path never caches the dying scene', () => {
 test("IS1: the load re-enters the building or takes DFU's reposition arm", () => {
   const world = read('src/scenes/world.js');
   const body = world.slice(world.indexOf('async function worldQuickLoad'), world.indexOf('function applyPose'));
-  assert.match(body, /modes\?\.restoreInterior\?\.\(extras\.interior, \[lx, ly, lz\]\)/,
+  // AUDIT 63 F24: the converters ride in beside the position - the
+  // re-entry now lands the interior host's saved ENEMY record too, in
+  // natives, exactly as the two outdoor pools do.
+  assert.match(body, /modes\?\.restoreInterior\?\.\(extras\.interior, \[lx, ly, lz\], \{\n\s+fromNative: \(nx, nz\) => state\.localFromWorld\(nx, nz\), yOffset: state\.compensation\[1\],\n\s+\}\)/,
     'the saved position rides into the core - RestorePosition lands it raw');
   assert.ok(body.includes("townTalk.say('Building has no exterior doors. Repositioning player.');"),
     "DFU's own line, verbatim (RestorePositionHelper :619)");

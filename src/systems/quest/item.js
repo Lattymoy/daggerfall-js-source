@@ -30,6 +30,7 @@ import { parseInt as questParseInt } from './parseUtils.js';
 import { itemsTable } from './tables.js';
 import {
   createRegularMagicItem, createArtifact, getMagicItemTemplates,
+  createPotion, createRandomPotion,   // AUDIT 63 F20: Item.cs:350's own two makers
   ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
 } from '../loot.js';
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
@@ -242,9 +243,16 @@ export class Item extends QuestResource {
         ? (createBook(itemKey) ?? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }))
         : createRandomBook(rolls);
     } else if (itemClass === 1 && itemSubClass === 1) {
-      // Potions: CreatePotion(key)/CreateRandomPotion - the recipe
-      // registry is the potion maker's slice; corpus-dead, minimal.
-      result = mintCondition({ group: 'UselessItems1', templateIndex: GROUP_TEMPLATE_INDICES.UselessItems1[1], potionRecipeKey: itemKey });
+      // Item.cs:347-351 verbatim: `(itemKey != -1) ?
+      // ItemBuilder.CreatePotion(itemKey) : ItemBuilder.CreateRandomPotion()`.
+      // AUDIT 63 F20: this arm used to mint the bottle inline, which
+      // bypassed the PotionRecipeKey setter's BOTH side effects
+      // (DaggerfallUnityItem.cs:395-397) - a quest potion carried the
+      // Glass Bottle's basePrice of 1 and the bottle's own icon - and
+      // flattened the itemKey === -1 branch onto a keyless bottle
+      // where DFU rolls a random recipe. Both makers are loot.js's,
+      // which is where the setter lives.
+      result = itemKey !== -1 ? createPotion(itemKey) : createRandomPotion(rolls);
     } else {
       // Random subclass, then the generic template item
       const groupName = ITEM_GROUP_NAME_BY_CLASS[itemClass];

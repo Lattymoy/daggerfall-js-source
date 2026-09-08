@@ -30,7 +30,7 @@ import { CLASSIC_GAME_START_TIME } from '../src/systems/gameDate.js';
 import { setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
 import { raisePlayerSkills, MASTERY_TEXT_ID } from '../src/scenes/shared.js';
 import {
-  CharSheet, MUST_DISTRIBUTE_BONUS_POINTS, SKILL_HIGHLIGHT_COLOR,
+  CharSheet, MUST_DISTRIBUTE_BONUS_POINTS, SKILL_HIGHLIGHT_COLOR, SKILL_DIALOG_HIGHLIGHT_COLOR,
   STATS_ROLLOUT_SELECT, STATS_ROLLOUT_SPINNER, STAT_MODIFIED_COLOR,
 } from '../src/ui/charsheet.js';
 import { ActionTextBox } from '../src/ui/actionText.js';
@@ -237,9 +237,16 @@ test('a11: a LEVEL-UP close leaves the highlights standing for the next visit', 
 
 test('a11: the skills page draws a raised row in the highlight colour', () => {
   // TextProvider.GetSkillSummary :492-495 formats the WHOLE row as
-  // TextHighlight, which MultiFormatTextLabel paints in
-  // DaggerfallUI.DaggerfallHighlightTextColor (DaggerfallUI.cs:54).
+  // TextHighlight, which MultiFormatTextLabel paints in the LABEL's
+  // HighlightColor (:363) - DaggerfallUI.DaggerfallHighlightTextColor
+  // (DaggerfallUI.cs:54) by default.
   assert.deepEqual(SKILL_HIGHLIGHT_COLOR.map((c) => Math.round(c * 255)), [219, 130, 40, 255]);
+  // AUDIT 63 F35: ...but ShowSkillsDialog OVERRIDES it before showing
+  // the box - `SetHighlightColor(DaggerfallUnityStatIncreasedTextColor)`
+  // (DaggerfallCharacterSheetWindow.cs:321) = Color32(178,207,255,255)
+  // (DaggerfallUI.cs:66) - so THIS dialog's raised row is blue.
+  assert.deepEqual(SKILL_DIALOG_HIGHLIGHT_COLOR.map((c) => Math.round(c * 255)), [178, 207, 255, 255]);
+  assert.notDeepEqual(SKILL_DIALOG_HIGHLIGHT_COLOR, SKILL_HIGHLIGHT_COLOR);
   const p = mkPlayer(SKILLS.LongBlade);
   raiseSkills(p, CLASSIC_GAME_START_TIME + 400, seq(0), () => {});
   // WHICH rows are lit is the law; the draw is a colour lookup over it.
@@ -247,7 +254,7 @@ test('a11: the skills page draws a raised row in the highlight colour', () => {
   assert.deepEqual(lit, [[SKILLS.LongBlade, true], [SKILLS.Axe, false], [SKILLS.CriticalStrike, false]]);
   // and the page really asks, per row, rather than drawing one colour
   assert.match(src('src/ui/charsheet.js'),
-    /getSkillRecentlyIncreased\(e, id\) \? SKILL_HIGHLIGHT_COLOR/);
+    /getSkillRecentlyIncreased\(e, id\) \? SKILL_DIALOG_HIGHLIGHT_COLOR/);
 });
 
 // ── 3. The levelling arm, on the sheet ──────────────────────────────

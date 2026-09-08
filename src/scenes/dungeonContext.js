@@ -28,7 +28,7 @@ import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -37,7 +37,7 @@ import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROA
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendArrow } from '../systems/inventory.js';
-import { worldAabb } from '../player/activate.js';
+import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
@@ -410,6 +410,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // non-door) turns a plain model into a hinged special door -
           // own bucket, swings on the chain or the player's hand.
           const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
+          // AUDIT 63 F38: a special door is a plain model that went
+          // through AddActionModelHelper, so AddAction (RDBLayout.cs:897)
+          // gave it DaggerfallActionCollision on a Collision01/03/09 or
+          // MultiTrigger flag exactly as it does any other model
+          // (RDBLayout.cs:992-996). It needs a box to be walked into.
+          o.aabb = aabb;
+          o.restOnlyTrigger = true;
           dynamicDraws.push({ gpu, object: o });
           automapEntries.push(amapRow(o.key, aabb, true, cpu, matrix));   // A1
           continue;
@@ -460,6 +467,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
         loadID: d.loadID,   // ROAD-B B4: RDBLayout.cs:242 - the Castle Daggerfall foyer hack names its two doors by this
       });
+      // AUDIT 63 F38: an action door WITH a record is a
+      // DaggerfallActionCollision too. RDBLayout.cs:255-259 runs
+      // AddActionModelHelper on the door GameObject `if (HasAction(obj))`,
+      // that reaches AddAction (:897), and AddAction attaches the
+      // collision component on Collision01/Collision03/MultiTrigger/
+      // Collision09 (:992-996) with no door exclusion - which is why
+      // DaggerfallActionDoor.cs:263 can note "Some Castle Wayrest doors
+      // have 'MultiTrigger' trigger flag". Without a box the port's
+      // collision pass skipped every door, so bumping such a door never
+      // fired its record: no plaque line and no trespass check. The box
+      // marks the door as walkable-into; restOnlyTrigger is the door's
+      // OWN law, since Open() calls MakeTrigger(true)
+      // (DaggerfallActionDoor.cs:293, :354-358) and a swinging or open
+      // door can no longer be collided with at all.
+      if (d.action) {
+        o.aabb = worldAabb(cpu.positions, matrix);
+        o.restOnlyTrigger = true;
+      }
       dynamicDraws.push({ gpu, object: o });
       // ROAD-C c2/S1: ACTION DOORS ARE NOT ON THE AUTOMAP. DFU's
       // automap copy has none - AddModels skips them outright
@@ -648,11 +673,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  at it and OpenDoors deals with it. The AI holds collider bucket
    *  KEYS and this host owns the registry that turns one into an action
    *  object, which is the same resolution the OpenDoors arm below
-   *  already does with senses.LastKnownDoor. */
+   *  already does with senses.LastKnownDoor.
+   *
+   *  AUDIT 63 F36: the question is `GetComponent<DaggerfallActionDoor>()`
+   *  (EnemyMotor.cs:1159), not the door-verb ACTION family. This arm
+   *  tested DOOR_VERB_FLAGS.has(o.actionFlag), which the ordinary
+   *  dungeon door fails - RDBLayout.cs:247-259 gives every action-door
+   *  model the component and only a door that ALSO has a record gets
+   *  one - so a plain closed door stayed `obstacleDetected` and the foe
+   *  detoured around it instead of walking at it. */
   const isActionDoor = (key) => {
     if (key == null) return false;
-    const o = actions?.objects.get(key);
-    return !!o && DOOR_VERB_FLAGS.has(o.actionFlag);
+    return isActionDoorObject(actions?.objects.get(key));
   };
   /** EnemyEntity.cs:350-386 + SetEnemySpells (:453-461), the tail of
    *  SetEnemyCareer: a monster takes its per-career list, a CastsMagic
@@ -1325,7 +1357,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   actions.onDoorText = (id) => {
     const lines = rscLines(id);
     if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
-    for (const l of lines) hudText.add(l);
+    // AUDIT 63 F39: AddHUDText(tokens, 2.0f) (DaggerfallAction.cs:875)
+    // carries its delay PER LINE through PopupText.cs:130-141; the bare
+    // add() took PopupText's 1.0 popDelay and halved every plaque.
+    for (const l of lines) hudText.add(l, DOOR_TEXT_HUD_DELAY_S);
   };
   // ROAD-B: THE TRESPASS CHECK IS A REAL SWITCH NOW.
   // DaggerfallAction.cs:882-890 - a DoorText record whose
@@ -1343,6 +1378,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // hostile, whether the bash opened it or not. The castle read is the
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
+  // AUDIT 63 F33: the same GameManager.MakeEnemiesHostile call, for the
+  // standalone host's ActivateMobileEnemy arm (PlayerActivate.cs
+  // :1667-1669 - the failed pickpocket's room-wide aggro).
+  const makeAreaHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null, lastPlayerHeight = CAPSULE_HEIGHT;   // ROAD-H H2: the LIVE player capsule the last frame carried - explodeAt measures the AoE sphere against it (DaggerfallMissile.cs:481)
   // (enhancedNav is declared beside `foes` at the top of this function -
   // see the note there for why it cannot live here.)
@@ -1668,7 +1707,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   //
   // FS1 - SHIPPED (wave D, THE FOUR HOSTS RULE): THE ENCHANT CTX IS
   // MOUNTED HERE NOW, below the engine it casts through.
-  // setDefaultEnchantCtx (systems/enchantments.js:250) used to have
+  // setDefaultEnchantCtx (systems/enchantments.js:252) used to have
   // exactly ONE caller in the tree, scenes/world.js, so in the
   // standalone ?dungeon host every item-enchantment arm that needs a
   // host ran against no ctx at all: CastWhenUsed's CasterOnly assign
@@ -1687,7 +1726,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:894,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:955,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -1698,7 +1737,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:450), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:473), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -1727,7 +1766,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *      walk takes DFU's "Identify spell remains free" line
    *      (:479-481) and _modeAction returns at :458 before it reads a
    *      price context. There is no merchant underground to sell the
-   *      paid service anyway - that is DFU's shape too, not a gap. */
+   *      paid service anyway - that is DFU's shape too, not a gap.
+   *    AUDIT 63 F48's steal hooks (pickpocketSkill, tallyPickpocket,
+   *      tallyCrimeGuild, crimeTheft, spawnCityGuards, say) - DFU only
+   *      ADDS the steal button in Buy mode (DaggerfallTradeWindow.cs
+   *      :316-322) and DoSteal re-checks it (:909), so this mount can
+   *      never reach them. There is no shop to rob underground. */
   function openIdentifySpellWindow({ chance, cost }) {
     return new NativeTradeWindow({
       mode: 'Identify',
@@ -2156,7 +2200,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:784 against :815; worldModes.js:5128 against :5137).
+    // (dungeon.js:808 against :839; worldModes.js:5495 against :5504).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2590,8 +2634,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:7372,
-              // exterior.js:3866 and worldModes.js:5252 already ran;
+              // playerArrowHitFoe is the one copy world.js:7655,
+              // exterior.js:3943 and worldModes.js:5619 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2791,6 +2835,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         maxHealth: f.entity.maxHealth,
         fatigue: f.entity.fatigue ?? 0,
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
+        // AUDIT 63 F26: the TEAM pair - SerializableEnemy.cs:125
+        // `data.team = (int)entity.Team + 1;` (the live entity) and
+        // :121 alliedToPlayer (the per-mobile MobileEnemy struct copy,
+        // this port's `entity.mobileTeam`). Record fidelity here: this
+        // host's applyWorld patches the LIVE foes in place, so a
+        // same-context load already keeps the team - but the fields
+        // belong in the record, and the exterior pool's half of F26
+        // (which re-mints) is the observable one.
+        team: f.entity.team, mobileTeam: f.entity.mobileTeam,
+        // AUDIT 63 F29: WabbajackActive (:124, restored :172).
+        wabbajackActive: !!f.entity.wabbajackActive,
+        // AUDIT 63 F27: SpecialTransformationCompleted (:126, restored
+        // :225-228 through the setter).
+        specialTransformationCompleted: !!f.mobile?.specialTransformationCompleted,
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -2803,6 +2861,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
       actions: actions.collectSaveData(),
+      // AUDIT 63 F30: PlayerEnterExit.PlayerTeleportedIntoDungeon.
+      // SerializablePlayer.cs:188-191 writes it ONLY under
+      // `IsPlayerInsideDungeon` and :402-405 restores it ONLY when the
+      // save was `insideDungeon` - so it belongs in THIS host's
+      // envelope, where both gates are true by construction, and not
+      // in ENTITY_FIELDS, which is copied blind in both directions.
+      // Its sole consumer is DaggerfallAction.cs:262's
+      // CastleDaggerfallMagicDoorsSpecialOpenHack ("just to prevent
+      // player being locked inside throne room"): load a
+      // teleported-in slot while standing in Castle Daggerfall having
+      // walked in, and without this the foyer doors stayed held.
+      teleportedIntoDungeon: !!playerEntity.playerTeleportedIntoDungeon,
     };
   }
   function applyWorld(w) {
@@ -2828,6 +2898,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sf.maxHealth != null) { f.entity.maxHealth = sf.maxHealth; f.entity.health = Math.min(f.entity.health, sf.maxHealth); }
       if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;
       if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects.map((a) => ({ ...a, ...(a.effect ? { effect: { ...a.effect } } : {}), ...(a.statMods ? { statMods: { ...a.statMods } } : {}), ...(a.skillMods ? { skillMods: { ...a.skillMods } } : {}) }));
+      // AUDIT 63 F26 / F29: the team pair (:179-181 + :157) and the
+      // Wabbajack latch (:172), presence-gated. `!= null` and not a
+      // truthiness test for the latch, so a BACKWARD load lowers a
+      // flag raised after the save, which is what the C#'s
+      // unconditional assignment over a rebuilt enemy does.
+      if (sf.team != null) f.entity.team = sf.team;
+      if (sf.mobileTeam != null) f.entity.mobileTeam = sf.mobileTeam;
+      if (sf.wabbajackActive != null) f.entity.wabbajackActive = !!sf.wabbajackActive;
+      // AUDIT 63 F27: the Seducer's transformation, BEFORE the corpse
+      // arm below - spawnCorpse reads f.mobile.basics.corpseTexture,
+      // and only the setter has rewritten it to the winged 400/5 by
+      // then (SerializableEnemy.cs:225-228 -> Base/MobileUnit.cs
+      // :208-224). The inverse arm is this host's alone: DFU restores
+      // over a re-instantiated mobile, so a saved FALSE means an
+      // untransformed Seducer, and a host that patches in place has to
+      // undo the struct-copy rewrite and re-mint the transform clock -
+      // the same rewind SL2's un-kill arm below spells for death.
+      if (sf.specialTransformationCompleted && f.mobile && !f.mobile.specialTransformationCompleted) {
+        f.mobile.setSpecialTransformationCompleted();
+      } else if (sf.specialTransformationCompleted === false && f.mobile?.specialTransformationCompleted) {
+        f.mobile.clearSpecialTransformationCompleted();
+        if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
+      }
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved
@@ -2900,6 +2993,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (an open door no longer restores solid-and-closed, and a door
     // saved mid-rise keeps rising).
     actions.restoreSaveData(w.actions);
+    // AUDIT 63 F30: SerializablePlayer.cs:402-405's
+    // `if (data.playerPosition.insideDungeon) playerEnterExit
+    // .PlayerTeleportedIntoDungeon = data.playerPosition
+    // .playerTeleportedIntoDungeon;`. applyWorld runs only when the
+    // save's locationKey IS this dungeon, which is that gate; a
+    // pre-fix save carries no key and takes the C#'s not-assigned arm,
+    // leaving the live flag standing.
+    if (w.teleportedIntoDungeon != null) playerEntity.playerTeleportedIntoDungeon = !!w.teleportedIntoDungeon;
   }
 
   // Shared foe-damage path: melee and spells kill through the same
@@ -3159,10 +3260,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const R = 0.45, H = 1.8;   // the player capsule
     for (const o of actions.objects.values()) {
       if (!o.aabb) continue;
+      // AUDIT 63 F45: DFU's collision pass is a COMPONENT, not a loop -
+      // AddAction attaches DaggerfallActionCollision only on
+      // Collision01/Collision03/MultiTrigger/Collision09
+      // (RDBLayout.cs:992-996), and that component is the only
+      // collision caller of Receive. Everything downstream of Receive's
+      // trigger gate already agreed (TRIGGER_GATE admits WalkOn/WalkInto
+      // for exactly those four), but the Castle Daggerfall hack runs
+      // AHEAD of that gate (DaggerfallAction.cs:183), so once F38 gave
+      // recorded doors a box a `Door`-flagged foyer door would have
+      // unlocked and swung open on a bump - a Receive DFU's component
+      // set makes unreachable. Refusing the CALL, not the gate, keeps
+      // ROAD-B B4's ordering intact for the objects that do collide.
+      if (!hasActionCollision(o)) continue;
       if (o.restOnlyTrigger && o.state !== 'start') continue;   // a mover in flight: bounds stale, and classic triggers on the step, not the ride
       o._colTimer = (o._colTimer ?? COLLISION_TIMEOUT_S) + dt;
       if (o._colTimer < COLLISION_TIMEOUT_S) continue;
-      const a = o.aabb;
+      // AUDIT 63 F38: a DOOR is measured live. Its BoxCollider rides the
+      // transform, and a door's record can carry a Move of its own that
+      // translates the closed door away from its placement
+      // (_applyMatrix's moveT arm) - DFU collides with it where it now
+      // stands. Every other kind keeps its stored box: movers only reach
+      // here parked at 'start', where the two are identical, and flats
+      // travel their box in _applyFlat.
+      const a = o.kind === 'door' ? objectAabb(o) : o.aabb;
       const overlapXZ = playerFeet[0] + R > a.min[0] && playerFeet[0] - R < a.max[0]
         && playerFeet[2] + R > a.min[2] && playerFeet[2] - R < a.max[2];
       if (!overlapXZ) continue;
@@ -3602,11 +3723,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
       // CanOpenDoors foe whose sight ray to the player is blocked by
       // an action DOOR opens it when unlocked and within 2m. The
-      // senses recorded the blocking bucket key; only a door-flagged
-      // action object counts (walls block sight with the level key).
+      // senses recorded the blocking bucket key; only a
+      // DaggerfallActionDoor counts (walls block sight with the level
+      // key). AUDIT 63 F36: EnemySenses.cs:913 stores `actionDoor` off
+      // GetComponent<DaggerfallActionDoor>() and EnemyMotor.cs:1425-1442
+      // consumes senses.LastKnownDoor with no flag test - a RECORD-LESS
+      // door is still one (RDBLayout.cs:247-259), and a special door
+      // (a separate MonoBehaviour) is not.
       if (!_fParalyzed && foeDeps && f.ai.doorKey != null && ENEMY_BASICS[f.mobileType]?.canOpenDoors) {
         const _door = actions?.objects.get(f.ai.doorKey);
-        if (_door && DOOR_VERB_FLAGS.has(_door.actionFlag)) {
+        if (isActionDoorObject(_door)) {
           foeDeps.openDoorsStep(f.ai.feet, true, {
             state: _door.state, currentLockValue: _door.currentLockValue,
             center: [_door.matrix[12], _door.matrix[13], _door.matrix[14]],
@@ -4011,6 +4137,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dynamicDraws,
     actions,
     hudSay: (t) => hudText.add(t),   // R1: the host's one-line channel (the F1-F4 mode line)
+    hudBox: (rows) => pushDungeonWindow(new ActionTextBox(rows)),   // AUDIT 63 F33: DaggerfallUI.MessageBox, for the enemy arm's success boxes
+    randomText: (id) => textRsc?.randomTextById(id, Math.random) ?? '',   // AUDIT 63 F33: TextProvider.GetRandomText (:250-269) - the 8999 pool
+    makeAreaHostile,   // AUDIT 63 F33: GameManager.MakeEnemiesHostile over this host's pool
     collider,
     texRemap,
     billboardBatches,
@@ -4385,7 +4514,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 26 F222/F223/F101: the pose. The HOST owns yaw/pitch/
         // crouch (opts.pose.read); this context owns the weapon, so
         // weaponDrawn lands here whichever host mounted it.
-        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed },
+        // AUDIT 63 F25: ...and the HAND beside it. SerializablePlayer
+        // .cs:175-176 writes weaponDrawn and usingLeftHand as one pair
+        // and :420-421 restores them as one pair; this host owns the
+        // weapon, so both halves land here.
+        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand },
         locationKey: _locationKey,
         // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
         // the save, so a load under the OTHER setting can warp to the
@@ -4423,7 +4556,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // order, SaveLoadManager.cs:1433-1449). A restored quest
       // envelope must latch the world host's _questStarted so
       // initAtGameStart never re-runs over the restored machine.
-      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave })) opts.onQuestRestored?.();
+      // AUDIT 63 F28: the orphaned-quest-item sweep rides the ONE
+      // composer, so this host runs it too (SaveLoadManager.cs:1518).
+      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       // A1: restorePlayer replaced the automap store, so the live
@@ -4460,6 +4595,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the yaw/pitch/crouch half through its own seam.
       if (extras.pose) {
         if (extras.pose.weaponDrawn != null) playerWeapon.sheathed = !extras.pose.weaponDrawn;
+        // AUDIT 63 F25: UsingRightHand = !usingLeftHand (:421). The
+        // flag only - the rig's per-frame syncWorn is DFU's
+        // UpdateHands+ApplyWeapon and re-binds the screen weapon (and
+        // re-forces the right hand under a shield, WeaponManager
+        // .cs:656). Presence-gated like every additive pose member.
+        if (extras.pose.usingRightHand != null) playerWeapon.usingRightHand = !!extras.pose.usingRightHand;
         opts.pose?.apply?.(extras.pose);
       }
       surfacePlayer();
@@ -4469,7 +4610,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:781) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:813) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with

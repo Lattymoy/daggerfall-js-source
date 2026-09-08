@@ -253,6 +253,9 @@ export class MobileUnit {
   constructor(mobileType, basics, frameCount, rolls = Math.random, gender = 'male') {
     this.mobileType = mobileType;
     this.basics = basics;
+    /** AUDIT 63 F27: the SHARED row this unit stood on, kept so the
+     *  save-restore rewind below can put it back. */
+    this._sharedBasics = basics;
     this.gender = gender;   // C17: the female-thief idle route + host archives
     this.frameCount = frameCount;
     this.rolls = rolls;
@@ -308,6 +311,27 @@ export class MobileUnit {
       e.spellAnimFrames = [0, 1, 2, 3];
     }
     this.specialTransformationCompleted = true;
+  }
+
+  /**
+   * AUDIT 63 F27 - the RESTORE's other arm, which DFU gets for free
+   * and this port has to spell.
+   *
+   * SerializableEnemy.cs:225-228 applies SetSpecialTransformationCompleted
+   * only when the SAVED flag is true - but it applies it over a
+   * mobile DFU has just re-instantiated (SerializableStateManager.cs
+   * RestoreEnemyData), so a saved FALSE lands an untransformed
+   * Seducer. Hosts that patch their live foes in place (the dungeon's
+   * applyWorld, whose un-kill arm is the same shape) have to undo the
+   * :208-224 struct-copy rewrite by hand: back to the shared row, the
+   * flag down, and the caller re-mints SeducerTransformBehaviour so
+   * the eight-second clock starts over exactly as a fresh
+   * SetupDemoEnemy.cs:191-195 component would.
+   */
+  clearSpecialTransformationCompleted() {
+    this.basics = this._sharedBasics;
+    this._basicsOwned = false;
+    this.specialTransformationCompleted = false;
   }
 
   /** MobileUnit.IsPlayingOneShot (Base/MobileUnit.cs:153-168) - Hurt,

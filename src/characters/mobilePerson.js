@@ -86,9 +86,14 @@ export const PERSON_FACE_RECORDS = Object.freeze({
  *
  * @param distanceToPlayer PlayerMotor.DistanceToPlayer (:217, and
  *        PlayerMotor.cs:452-455) - the host measures it.
- * @param inBeastForm carried because it is a term of the law; the
- *        hosts leave it at the default, since lycanthropy is a routed
- *        Ledger C item and nothing above ground can raise it yet.
+ * @param inBeastForm PlayerEntity.IsInBeastForm (:222), the flag
+ *        declared at PlayerEntity.cs:193 and written every
+ *        ConstantEffect round by LycanthropyEffect.cs:241 (mirrored by
+ *        systems/lycanthropy.js). Both exterior hosts hand it live -
+ *        DFU's population suppression (PopulationManager.cs:174-191)
+ *        holds only the PROMOTE arm, so walkers already on the street
+ *        keep ticking against a transformed player and this term is
+ *        exactly who they are for.
  */
 export function personWantsToStop({
   playerStandingStill = false,

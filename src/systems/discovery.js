@@ -1,10 +1,10 @@
 // T4: PlayerGPS's building discovery - the state the 35% map-reveal
 // writes and the town map will read. DiscoverBuilding
 // (PlayerGPS.cs:917-975) and the DiscoveredBuilding record (:92-103),
-// trimmed to the columns this port has sources for: the quest
-// name-override machinery (:947-971) and customUserDisplayName pend
-// their arcs (quests, the automap UI). R1: lastLockpickAttempt is
-// LIVE - the exterior lockpicking anti-grind law (:1099-1126).
+// with the quest name-override machinery (:947-971) LIVE since
+// AUDIT 63 F49 and customUserDisplayName live since c2/S10. R1:
+// lastLockpickAttempt is LIVE too - the exterior lockpicking
+// anti-grind law (:1099-1126).
 //
 // ONE module-level store, because there is one world - the same call
 // worldTick's clock made (AUDIT 21 F2). DFU namespaces locations by
@@ -18,17 +18,52 @@ import { isResidence } from '../world/buildingNames.js';   // RMBLayout.IsReside
 
 let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
 
-/** DiscoverBuilding (:917-975): a no-op when already discovered
- *  (:926-928 - the override arm pends quests); otherwise the record
- *  lands whole. `building` is a talk-directory entry - it carries
- *  exactly the fields DFU's GetBaseBuildingDiscoveryData reads off
- *  its own building directory. */
-export function discoverBuilding(locationId, building) {
+/** DiscoverBuilding (:917-975): the record lands whole.
+ *  `building` is a talk-directory entry - it carries exactly the
+ *  fields DFU's GetBaseBuildingDiscoveryData reads off its own
+ *  building directory.
+ *
+ *  AUDIT 63 F49: THE QUEST NAME-OVERRIDE ARM, which this member used
+ *  to drop entire. Three of DFU's clauses were cut and are restored
+ *  here:
+ *
+ *  1. `overrideName` (:917) is a real parameter, and it BYPASSES the
+ *     already-discovered early-out (:926-927 `if (overrideName == null
+ *     && HasDiscoveredBuilding(buildingKey)) return;`). That clause is
+ *     exactly what lets DaggerfallBankManager.cs:440 rename a house
+ *     the player has already entered.
+ *  2. With no override supplied, DFU asks
+ *     TalkManager.IsBuildingQuestResource (:946-959) and promotes the
+ *     quest Place's buildingName to the override when the PC was told
+ *     the name (`pcLearnedAboutExistence`) and that name differs from
+ *     the directory's. This module is pure, so the pair arrives
+ *     injected as `questSource` - the same
+ *     { currentMapID, isBuildingQuestResource } shape the automap's
+ *     stampResidenceQuestNames already takes. IsBuildingQuestResource
+ *     keys on CurrentMapID, NOT on this store's `region:location`
+ *     string, so the map id rides with it. A host with no topic tree
+ *     (scenes/exterior.js) passes nothing and the member behaves
+ *     exactly as it did.
+ *  3. The stamp (:961-972) - oldDisplayName on the first override,
+ *     isOverrideName raised, and the unconditional collapse when
+ *     old === display. `isOverrideName` had no writer anywhere in
+ *     src/ before this, so the automap's two reads
+ *     (ExteriorAutomap.cs:676-677) were permanently falsy and a
+ *     discovered quest residence drew NO plate at all.
+ *
+ *  The record is REBUILT on the override pass, never merged into the
+ *  stored one: GetBaseBuildingDiscoveryData (:931-933, :1285-1330)
+ *  mints a fresh DiscoveredBuilding from the directory on every call
+ *  and :973 assigns it over the slot, so a re-discovery with an
+ *  override resets lastLockpickAttempt and customUserDisplayName
+ *  along with the name. `oldDisplayName` starts null, not '', because
+ *  :971's collapse must not fire for a nameless building. */
+export function discoverBuilding(locationId, building, overrideName = null, questSource = null) {
   if (!building || building.buildingKey == null) return false;
   let loc = _discovered.get(locationId);
   if (!loc) { loc = new Map(); _discovered.set(locationId, loc); }
-  if (loc.has(building.buildingKey)) return false;
-  loc.set(building.buildingKey, {
+  if (overrideName == null && loc.has(building.buildingKey)) return false;   // :926-927
+  const rec = {
     buildingKey: building.buildingKey,
     displayName: building.name ?? '',
     factionId: building.factionId ?? 0,
@@ -36,7 +71,25 @@ export function discoverBuilding(locationId, building) {
     buildingType: building.buildingType ?? 0,
     lastLockpickAttempt: 0,   // R1: PlayerGPS.cs:101 - the failed-attempt skill record
     customUserDisplayName: '',   // c2/S10: the exterior automap's rename (PlayerGPS.cs:97)
-  });
+    isOverrideName: false,   // PlayerGPS.cs:97 - the automap's plate ladder reads it
+    oldDisplayName: null,    // PlayerGPS.cs:96 - the name the override displaced
+  };
+  // :945-959 - only when no override was handed in; the caller's name
+  // has priority.
+  if (overrideName == null && questSource?.isBuildingQuestResource) {
+    const mapID = questSource.currentMapID?.() ?? 0;
+    const r = questSource.isBuildingQuestResource(mapID, building.buildingKey);
+    if (r?.isQuestResource && r.pcLearnedAboutExistence && r.overrideBuildingName !== rec.displayName) {
+      overrideName = r.overrideBuildingName;
+    }
+  }
+  if (overrideName != null) {   // :961-967
+    if (!rec.isOverrideName) rec.oldDisplayName = rec.displayName;
+    rec.displayName = overrideName;
+    rec.isOverrideName = true;
+  }
+  if (rec.oldDisplayName === rec.displayName) rec.isOverrideName = false;   // :969-970
+  loc.set(building.buildingKey, rec);
   return true;
 }
 
@@ -173,7 +226,10 @@ export function restoreDiscovery(snap) {
     // restores with an EMPTY custom name, never `undefined`, so the
     // plate's `custom || name` fallback cannot read a hole.
     _discovered.set(locId, new Map(
-      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', ...r }])));
+      // AUDIT 63 F49: the override columns join the same discipline -
+      // a record written before the quest arm shipped restores with
+      // the flag down and no displaced name, never `undefined`.
+      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }])));
   }
   for (const [k, r] of Object.entries(snap.locations ?? {})) {
     _locations.set(Number(k), { ...r });

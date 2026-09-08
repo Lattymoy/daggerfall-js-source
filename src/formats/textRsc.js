@@ -263,6 +263,19 @@ export class TextRsc {
     return tokens;
   }
 
+  /** TextProvider.GetRSCTokens(int id) (TextProvider.cs:167-188): the
+   *  WHOLE record's tokens - `TextFile.ReadTokens(ref buffer, 0,
+   *  TextFile.Formatting.EndOfRecord)` over the raw bytes, subrecord
+   *  separators and all. No variant draw, so no `rolls()` value is
+   *  burned; that is the distinction from variantTokensById above.
+   *  AUDIT 63 F3: DaggerfallMessageBox.SetTextTokens(int) reads this,
+   *  not GetRandomTokens. */
+  tokensById(id) {
+    const raw = this.bytesById(id);
+    if (!raw) return [];
+    return readTokens(raw, 0, RSC.EndOfRecord) ?? [];
+  }
+
   /** One variant's TOKEN stream, no step-back - the raw
    *  `tokenStreams[index]` TextProvider.cs:231 measures. */
   _variantTokens(id, index) {

@@ -246,8 +246,10 @@ export class Quest {
   }
 
   /** AddQuestor (Quest.cs:450-498): unnamed symbol THROWS, a
-   *  duplicate or missing Person warns and returns. The
-   *  individual-NPC scene relink half rides Q3 (no scene objects). */
+   *  duplicate or missing Person warns and returns, and an INDIVIDUAL
+   *  NPC's standing behaviour is relinked in the current scene
+   *  (:481-497, AUDIT 63 F1 - the half that used to ride a stale "Q3,
+   *  no scene objects" note). */
   addQuestor(personSymbol) {
     if (!personSymbol || !personSymbol.name) {
       throw new Error('AddQuestor() must receive a named symbol.');
@@ -266,16 +268,50 @@ export class Quest {
     }
     person.isQuestor = true;
     this.questors.set(personSymbol.name, { symbol: personSymbol.clone(), name: person.displayName });
+    // Quest.cs:481-497 - "Dynamically relink individual NPC and
+    // associated QuestResourceBehaviour (if any) in current scene".
+    // The list is the ACTIVE static-NPC behaviours
+    // (ActiveGameObjectDatabase.cs:307-311 over GetActiveObjects'
+    // activeInHierarchy filter); the match is the raw faction id
+    // (`person.FactionData.id == npc.Data.factionID`), which the port
+    // carries on the host as staticNpcFactionId; and the body is
+    // AssignResource plus the back-link, with NO start()/cacheTarget:
+    // C# calls CacheTarget only from Start and RestoreSaveData
+    // (QuestResourceBehaviour.cs:124-129, :283), so after the relink
+    // DFU's behaviour still holds whatever targetResource it had -
+    // usually none. QuestResourceBehaviour.cs:246-249 names this
+    // clause as the re-link route for follow-up quests.
+    if (person.isIndividualNPC) {
+      const factionId = person.factionData?.id ?? null;
+      if (factionId != null) {
+        for (const behaviour of this.hooks?.staticNpcQuestBehaviours?.() ?? []) {
+          if (behaviour?.host?.staticNpcFactionId !== factionId) continue;
+          behaviour.assignResource(person);
+          person.questResourceBehaviour = behaviour;
+        }
+      }
+    }
   }
 
   /** DropQuestor (Quest.cs:505-524): unnamed symbol THROWS; the
    *  entry is removed but person.isQuestor stays true, as C# leaves
-   *  it. The behaviour-destroy half rides Q3. */
+   *  it; and a NON-individual questor's QuestResourceBehaviour is
+   *  DESTROYED (:519-523, AUDIT 63 F2 - the half that used to ride a
+   *  stale "Q3" note). Individual NPCs keep a permanent behaviour, as
+   *  C#'s own comment says (:520). */
   dropQuestor(personSymbol) {
     if (!personSymbol || !personSymbol.name) {
       throw new Error('DropQuestor() must receive a named symbol.');
     }
     this.questors.delete(personSymbol.name);
+    // Quest.cs:521-523. `MonoBehaviour.Destroy(...QuestResource-
+    // Behaviour)` destroys the COMPONENT, never the GameObject - the
+    // StaticNPC keeps standing - so this is destroyComponent(), not
+    // destroyGameObject(). getResource tolerates the bare `{ name }`
+    // symbol _dropAllQuestors mints, so the tombstone path is safe.
+    const person = this.getPerson(personSymbol);
+    const behaviour = person?.questResourceBehaviour ?? null;
+    if (behaviour && !person.isIndividualNPC) behaviour.destroyComponent();
   }
 
   /** DropAllQuestors (Quest.cs:529-537), from the tombstone. C#
@@ -342,8 +378,33 @@ export class Quest {
     if (messageQuestor) this.hooks?.addQuestorPostMessage?.(this.uid, messageQuestor);
     this.hooks?.removeQuestRumors?.(this.uid);
     this.hooks?.removeQuestInfoTopics?.(this.uid);
-    // Q3 FLAG: the quest-residence undiscover sweep (Quest.cs:650-656)
-    // rides Place site binding - no Places resolve to buildings yet.
+    // AUDIT 63 F0: Quest.cs:649-656, "undiscover all quest residences
+    // used by this quest" - the sweep this member used to skip behind a
+    // Q3 flag whose premise ("no Places resolve to buildings yet") has
+    // been false since place.js filled siteDetails.buildingKey/
+    // buildingName for every Building site.
+    //
+    // EVERY Place, unfiltered, exactly as C# does: it walks
+    // GetAllResources(typeof(Place)) and lets PlayerGPS.cs:1000-1016
+    // make the three refusals (onlyIfResidence, the TG/DB hideouts,
+    // and matchName vs the stored displayName). The port's
+    // discovery.js:undiscoverBuilding carries all three, so a
+    // town/dungeon Place answering buildingKey 0 is refused there and
+    // not here. `true` is C#'s onlyIfResidence (Quest.cs:655).
+    //
+    // The name fallback is NULL, not '': SiteDetails.buildingName is a
+    // struct string field (DaggerfallUnityStructs.cs:424-441) that the
+    // three unassigning sites - SelectRemoteDungeonSite (Place.cs:921),
+    // SelectRemoteLocationExteriorSite (:967) and SetupFixedLocation
+    // (:1088) - leave null, and PlayerGPS.cs:1015-1016
+    // (`if (matchName != null && matchName != db.displayName) return;`)
+    // only fires when the name is non-null. A fixed Building Place
+    // carries a real key (Place.cs:1066) with a null name, so its
+    // discovered residence IS undiscovered; '' would refuse it.
+    for (const r of this.resources.values()) {
+      if (!r.isPlace) continue;
+      this.hooks?.undiscoverBuilding?.(r.siteDetails?.buildingKey ?? 0, r.siteDetails?.buildingName ?? null);
+    }
     this._dropAllQuestors();
   }
 

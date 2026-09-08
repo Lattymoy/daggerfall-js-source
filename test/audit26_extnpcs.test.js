@@ -146,10 +146,15 @@ test('AUDIT 26 F019: the wiring - collectExteriorNpcs has production callers in 
 
 test('AUDIT 26 F019: the exterior activation ray clicks them (PlayerActivate.cs:87, :741-767)', () => {
   const wm = src('src/scenes/worldModes.js');
-  const from = wm.indexOf('async function tryEnter()');
+  // AUDIT 63 F33 (review round): the ray's TARGET BUILD moved into
+  // exteriorActivationTargets() so the living-foe arm can be decided
+  // against its distance - tryEnter still runs the pick and the arms.
+  // The law is unchanged and the slice now spans both halves.
+  const from = wm.indexOf('function exteriorActivationTargets()');
   const to = wm.indexOf('function rayAabbProbe(');
-  assert.ok(from > 0 && to > from, 'tryEnter changed shape');
+  assert.ok(from > 0 && to > from, 'the exterior ray changed shape');
   const ray = wm.slice(from, to);
+  assert.ok(ray.includes('async function tryEnter()'), 'tryEnter no longer follows the target build');
   assert.ok(ray.includes('npcTargets?.()'), 'the exterior ray never asks the host for its static NPCs');
   assert.ok(ray.includes('personAabb(pn)'), 'the NPCs are not activation targets');
   assert.ok(ray.includes('distance: STATIC_NPC_ACTIVATION_DISTANCE'),

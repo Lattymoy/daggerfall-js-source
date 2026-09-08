@@ -40,6 +40,10 @@ import {
 import { BUILDING_KEY_0 } from '../src/systems/talkTopics.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { SKILLS } from '../src/systems/skills.js';
+// AUDIT 63 F8: the import's membership rows are read back through the
+// consumers, not just compared as strings.
+import { GUILDS, hasJoined } from '../src/systems/guilds.js';
+import { templeOf } from '../src/systems/guildVariants.js';
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from '../src/systems/infection.js';
 
 // ---------------------------------------------------------------- helpers
@@ -902,7 +906,7 @@ import {
 } from '../src/systems/classicSave.js';
 import { SAVE_VERSION } from '../src/systems/save.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
-import { GUILD_GROUPS } from '../src/formats/factionFile.js';
+import { GUILD_GROUPS, FACTION_TYPES } from '../src/formats/factionFile.js';
 import { CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';   // AUDIT 39: PotionRecipe.classicRecipeKeys
 
 // A parameterized 107-byte item record data block.
@@ -934,7 +938,7 @@ function recordElement(type, recordId, parentRecordId, data = new Uint8Array(0),
 // conjured item, a filled soul gem, guild + old-guild rows, an
 // OldClass record, a bank record and the position record.
 function buildImportTree({ charOpts = {}, diseaseId = null, guildTime = 1440 * 10,
-  bankDataLength = 40, oldClassFlags = null, charName = null } = {}) {
+  bankDataLength = 40, oldClassFlags = null, charName = null, templeFactionId = null } = {}) {
   const header = new Writer(SAVE_TREE_HEADER_LENGTH);
   header.i32(0, SAVE_TREE_VERSION);
   header.i32(4, 0); header.i32(8, 0); header.i32(12, 0);
@@ -955,6 +959,13 @@ function buildImportTree({ charOpts = {}, diseaseId = null, guildTime = 1440 * 1
   const oldGuildRow = new Writer(13);
   oldGuildRow.u8(0, 5); oldGuildRow.u8(2, 9); oldGuildRow.u16(3, 400);
   oldGuildRow.u32(5, guildTime);
+
+  // AUDIT 63 F8: a second LIVE row, on a TEMPLAR ORDER's faction id, so
+  // the import's HolyOrder arm (CreateGuildObj -> Temple.GetDivine's
+  // parent walk, GuildManager.cs:167-213) is exercised too.
+  const templeRow = new Writer(13);
+  templeRow.u8(0, 6); templeRow.u8(2, 9); templeRow.u16(3, templeFactionId ?? 0);
+  templeRow.u32(5, guildTime);
 
   const oldClass = buildClassRecord();
   if (oldClassFlags) {
@@ -993,6 +1004,9 @@ function buildImportTree({ charOpts = {}, diseaseId = null, guildTime = 1440 * 1
     recordElement(RECORD_TYPES.BankAccount, 44, 0, bank.bytes),
     recordElement(RECORD_TYPES.CharacterPositionRecord, 45, 0, new Uint8Array(0), {}),
   ];
+  if (templeFactionId != null) {
+    parts.push(recordElement(RECORD_TYPES.GuildMembership, 42, 2, templeRow.bytes));
+  }
   if (diseaseId != null) {
     const dz = new Writer(47);
     dz.u8(0, diseaseId);
@@ -1007,6 +1021,16 @@ function buildImportTree({ charOpts = {}, diseaseId = null, guildTime = 1440 * 1
 const FAKE_FACTIONS = new Map([
   [368, { id: 368, name: 'The Fighters Guild', type: 2, ggroup: GUILD_GROUPS.FightersGuild, rep: 0, flags: 3, power: 60, children: [] }],
   [400, { id: 400, name: 'The Mages Guild', type: 2, ggroup: GUILD_GROUPS.MagesGuild, rep: 5, flags: 1, power: 70, children: [] }],
+]);
+
+// AUDIT 63 F8: FACTION.TXT's own shape for a temple (:612 Arkay, ggroup
+// -1, and its child :629 "The Order of Arkay" ggroup 17) - the divine
+// carries no group and the templar order under it does. Kept OUT of
+// FAKE_FACTIONS so the faction-merge snapshot pins keep their two rows.
+const TEMPLE_FACTIONS = new Map([
+  ...FAKE_FACTIONS,
+  [21, { id: 21, name: 'Arkay', type: FACTION_TYPES.God, ggroup: GUILD_GROUPS.None, rep: 0, flags: 129, power: 45, children: [82] }],
+  [82, { id: 82, name: 'The Order of Arkay', type: 9, parent: 21, ggroup: GUILD_GROUPS.HolyOrder, rep: 0, flags: 0, power: 30, children: [] }],
 ]);
 
 function importSaveGames(treeOpts = {}) {
@@ -1200,11 +1224,27 @@ test('SAV2: a renamed classic spell rides whole as a made spell', () => {
 });
 
 test('SAV2: guild memberships - group resolution, day conversion, the vampire book flip', () => {
-  const tree = buildImportTree({ guildTime: 1440 * 123 });
-  const mortalStore = classicGuildMemberships(tree, FAKE_FACTIONS, false);
+  const tree = buildImportTree({ guildTime: 1440 * 123, templeFactionId: 82 });
+  const mortalStore = classicGuildMemberships(tree, TEMPLE_FACTIONS, false);
   const fg = mortalStore.mortal[GUILD_GROUPS.FightersGuild];
   assert.ok(fg, 'the live membership lands in the mortal book');
-  assert.equal(fg.guild, 'The Fighters Guild');
+  // AUDIT 63 F8: ImportMembershipData (GuildManager.cs:345-364) stores
+  // the guild OBJECT CreateGuildObj(:167-213) builds, so the imported
+  // slot IS the guild and IsMember answers true. The port's slot names
+  // the guild, and the name has to be the guild RECORD's - "The
+  // Fighters Guild" is FACTION.TXT's record name and no consumer of
+  // membershipOf/hasJoined matches it.
+  assert.equal(fg.guild, GUILDS.FightersGuild.name);
+  assert.ok(hasJoined(mortalStore.mortal, GUILDS.FightersGuild),
+    'an imported row answers hasJoined for the guild it names');
+  // The HolyOrder arm: the row carries a TEMPLAR ORDER's faction id
+  // (82), which Temple.GetDivine walks to its divine parent (21 Arkay).
+  const temple = mortalStore.mortal[GUILD_GROUPS.HolyOrder];
+  assert.ok(temple, 'the temple row lands in the shared HolyOrder slot');
+  assert.equal(temple.guild, templeOf('Arkay').name);
+  assert.ok(hasJoined(mortalStore.mortal, templeOf('Arkay')));
+  assert.equal(hasJoined(mortalStore.mortal, templeOf('Mara')), false,
+    'and only for THAT temple - the group slot is shared by all eight');
   assert.equal(fg.rank, 3);
   // 123 classic days from the epoch -> daySinceZero through the one
   // date home (epoch 3E405's own day count rides the conversion).
@@ -1213,7 +1253,8 @@ test('SAV2: guild memberships - group resolution, day conversion, the vampire bo
   assert.ok(mg, 'the OldGuild membership lands in the OTHER book');
   assert.equal(mg.rank, 5);
 
-  const vampStore = classicGuildMemberships(tree, FAKE_FACTIONS, true);
+  const vampStore = classicGuildMemberships(tree, TEMPLE_FACTIONS, true);
+  assert.ok(hasJoined(vampStore.vampire, GUILDS.FightersGuild));
   assert.ok(vampStore.vampire[GUILD_GROUPS.FightersGuild], 'a vampire keeps the live book on the vampire side');
   assert.ok(vampStore.mortal[GUILD_GROUPS.MagesGuild]);
 });

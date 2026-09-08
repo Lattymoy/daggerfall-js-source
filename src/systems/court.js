@@ -18,8 +18,8 @@
 //   beyond the player's gold converts to days at 40/day.
 // - Guilty (type 2): fine >>= 1, days >>= 1, deduct, serve or walk.
 //   Not guilty: Debate (Etiquette) or Lie (Streetwise), tally;
-//   chance = legalRep + (skill + Personality)/2 clamp 5..95; fail ->
-//   guilty with the fine roll (legalRep + Dice100: < 25 fine x2,
+//   chance = legalRep + (skill + LIVE Personality)/2 clamp 5..95;
+//   fail -> guilty with the fine roll (legalRep + Dice100: < 25 fine x2,
 //   > 75 fine >>= 1); pass -> free to go.
 // - Serving/banishment raise rep by half the crime's loss - 1
 //   (RaiseReputationForDoingSentence; the classic double-raise on
@@ -30,16 +30,16 @@
 // the field only 2 (:137) or 0 (:139), so its own `punishmentType ==
 // 1` arms at :329 and :399 are dead code, and :279 says so in DFU's
 // own words - "Seems like an execution sentence can't be given in
-// classic. It can't be given here, either." court.js:76, :409 and
+// classic. It can't be given here, either." court.js:77, :409 and
 // :431 carry the same unreachable arm for the same reason (an arm
 // that is absent and an arm that is wrong read alike from the call
 // site). The prison time-skip riding the host clock callback is the
 // port's seam shape, not a remainder.
 // BANISHMENT'S CONSEQUENCES SHIPPED: `SeverePunishmentFlags |= 1` is
-// written at scenes/arrestFlow.js:421-424 (severePunishment, off
+// written at scenes/arrestFlow.js:434-437 (severePunishment, off
 // OnPop) and read every catch-up minute by encounters.js:220
 // passiveGuardSpawns - PlayerEntity.cs:507's 10% banished-player
-// guard roll - fed at scenes/world.js:1667-1669. (The guild rescues -
+// guard roll - fed at scenes/world.js:1708-1710. (The guild rescues -
 // Thieves/Dark Brotherhood - landed at CR1, guildRescue below.)
 
 import { rand } from '../formats/dfRandom.js';
@@ -52,6 +52,7 @@ import { changeReputation } from './factionRep.js';     // S25
  *  every crime write goes through (V4): a transformed lycanthrope is
  *  never tagged - SuppressCrime turns the write into Crimes.None. */
 import { racialSuppressCrime } from './lycanthropy.js';
+import { liveStat } from './statMods.js';   // DaggerfallStats.GetLiveStatValue (:155-164)
 export function setCrimeCommitted(entity, crime) {
   entity.crimeCommitted = racialSuppressCrime(entity) ? 0 : crime;
   return entity.crimeCommitted;
@@ -426,7 +427,14 @@ export function pleaNotGuilty(court, player, useDebate, { rolls = Math.random } 
   const playerSkill = skillValue(player, skillId);
   tallySkill(player, skillId, 1);
   const legalRep = legalRepOf(player, court.regionIndex);
-  let chance = legalRep + Math.trunc((playerSkill + (player.stats?.personality ?? 50)) / 2);
+  // AUDIT 63 F10: DaggerfallCourtWindow.cs:385-386 reads the stat LIVE -
+  // `Stats.GetLiveStatValue(DFCareer.Stats.Personality)` - beside the live
+  // skill already taken at :376/:381, so a fortified or drained defendant
+  // is tried on the modified value. liveStat is that reader
+  // (DaggerfallStats.cs:155-164). The `== null` guard keeps the port's
+  // no-stats fallback of 50: liveStat falls back to a base of 0.
+  const personality = player.stats?.personality == null ? 50 : liveStat(player, 'personality');
+  let chance = legalRep + Math.trunc((playerSkill + personality) / 2);
   chance = Math.max(5, Math.min(95, chance));
   if (Math.floor(rolls() * 100) >= chance) {   // FailedRoll
     // The same three-way cascade, on the failed defense (:394-402).

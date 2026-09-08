@@ -28,8 +28,11 @@
 //   - a BROKEN worn item imports into the bag, not the doll - DFU's
 //     EquipTable.EquipItem(alwaysEquip) has no broken gate, the
 //     port's one equip law does;
-//   - GodMode and UsingLeftHandWeapon are read but dropped - the port
-//     has neither consumer (no cheat toggles, no left-hand rig);
+//   - GodMode is read but dropped - the port has no consumer (no
+//     cheat toggles). UsingLeftHandWeapon was dropped beside it while
+//     the port had no left-hand rig; a12 shipped one and AUDIT 63 F31
+//     wired the import (the pose's usingRightHand below,
+//     StartGameBehaviour.cs:605-606);
 //   - classic DISEASES import as nothing, verbatim: DFU's own arm is
 //     commented out ("TODO: Import classic disease effect") and only
 //     the 101/102 lycanthropy ids are read.
@@ -54,7 +57,8 @@ import {
   ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
 } from './loot.js';
 import { equipItem } from './equip.js';
-import { guildGroupOfFaction, daySinceZero } from './guilds.js';
+import { guildGroupOfFaction, membershipKey, daySinceZero } from './guilds.js';
+import { createGuildForGroup } from './guildVariants.js';   // GuildManager.CreateGuildObj (:167-213)
 import { dateFromClassicMinutes } from './gameDate.js';
 import { createVampirismCurse } from './vampirism.js';
 import { createLycanthropyCurse } from './lycanthropy.js';
@@ -62,6 +66,7 @@ import { SPECIAL_ABILITY_BITS } from './specialAdvantages.js';
 import { spellPoints, spellPointMultiplier } from './chargen.js';
 import { levelUpSkillSum } from './advancement.js';
 import { ClassFile } from '../formats/classFile.js';
+import { usingRightHandFromSaveVars } from '../combat/playerWeapon.js';   // AUDIT 63 F31: StartGameBehaviour.cs:606's one line, kept with the hand
 
 /** EntityEnums.Races' transformed tail (races.js owns the selectable
  *  1-8 half; classic stores these three when the player is turned). */
@@ -321,6 +326,21 @@ export function classicItemFromRecord(record) {
     // identified, at (25 * value) >> 8.
     artifact: (d.flags & ITEM_ARTIFACT_MASK) > 0,
     isIdentified: (d.flags & ITEM_IDENTIFIED_MASK) > 0,
+    // AUDIT 63 F21: FromItemRecord's four TEXTURE fields
+    // (DaggerfallUnityItem.cs:1539-1547 decode, :1552-1555 assign) -
+    // the record's two image words split into archive (>> 7) and
+    // record (& 0x7f). The import carried neither, so every classic
+    // item's inventory icon was recomputed from its base TEMPLATE:
+    // an imported artifact drew the mundane base art the IsArtifact
+    // carve-out exists to prevent (:1745-1747), an imported potion
+    // lost the icon its recipe gave it, and an imported Skeleton's Key
+    // could never be the key - Open.CheckCastByItem identifies it by
+    // `WorldTextureArchive == 432 && WorldTextureRecord == 20`
+    // (Open.cs:176-180), which systems/mysticism.js ports.
+    playerTextureArchive: d.image1 >> 7,
+    playerTextureRecord: d.image1 & 0x7f,
+    worldTextureArchive: d.image2 >> 7,
+    worldTextureRecord: d.image2 & 0x7f,
   };
   // "If item is an arrow, typeDependentData is the stack count" -
   // Weapons group index 18.
@@ -438,9 +458,13 @@ export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
     // Equip through the port's one equip law when the character
     // record's equip slots name this RecordID - DFU runs this check
     // for EVERY record, wagon-held included (:955-960), so no wagon
-    // guard here. (Recorded divergence: the port's law refuses a
-    // BROKEN item where DFU's alwaysEquip arm has no such gate - it
-    // imports into the bag instead.)
+    // guard here. AUDIT 63 F23: `equipTable.EquipItem(newItem, true,
+    // false)` (:959) is the ALWAYS-EQUIP arm and ItemEquipTable.cs
+    // :94-154 has no condition test, so a worn 0-condition piece
+    // relinks into its slot. The port used to refuse it - the BROKEN
+    // gate sat one seam too low, inside equipItem instead of on the
+    // inventory window where DaggerfallInventoryWindow.cs:1330-1341
+    // keeps it - and the piece landed in the bag with its slot empty.
     if (equippedIds.has(record.recordRoot.recordId)) {
       equipItem(scratch, item);
     }
@@ -472,8 +496,25 @@ export function classicGuildMemberships(saveTree, factionDict, vampire = false) 
       const d = record.parsedData;
       const group = guildGroupOfFaction(factionDict, d.factionId);
       if (group == null || group < 0) continue;
-      book[group] = {
-        guild: factionDict?.get?.(d.factionId)?.name ?? '',
+      // AUDIT 63 F8: ImportMembershipData (GuildManager.cs:345-364)
+      // rebuilds the guild OBJECT - `CreateGuildObj(GetGuildGroup(
+      // factionID), factionID)` (:167-213) - and stores THAT in the
+      // group's slot, so the imported membership IS the FightersGuild /
+      // Temple(Arkay) / KnightlyOrder(Horn) instance and IsMember
+      // answers true. The port's slot carries the guild's NAME to say
+      // which temple or order fills the shared group slot
+      // (guilds.js:546-549 `membershipOf`), and that name has to be the
+      // PORT's guild-record name - the one joinGuild writes - not the
+      // FACTION.TXT record name ("The Fighters Guild", "Arkay"), which
+      // no consumer matches. `createGuildForGroup` is CreateGuildObj,
+      // including the templar-order walk to the divine; a group with no
+      // guild is DFU's `default: return null`, and the port's
+      // null-not-throw convention drops the row rather than storing a
+      // slot no consumer can read.
+      const guild = createGuildForGroup(group, d.factionId, factionDict);
+      if (!guild) continue;
+      book[membershipKey(guild)] = {
+        guild: guild.name,
         rank: d.rank,
         lastRankChange: daySinceZero(dateFromClassicMinutes(d.timeOfLastRankChange)),
       };
@@ -657,6 +698,14 @@ export function classicSaveToSnapshot(saveGames, {
       pitch: 0,
       crouching: false,
       weaponDrawn: saveVars.weaponDrawn,
+      // AUDIT 63 F31: StartGameBehaviour.StartFromClassicSave :605-606
+      // `// Assign weapon hand being used` /
+      // `weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon;`.
+      // The byte has been parsed since SAV2 (formats/saveVarsFile.js
+      // :183, offset 0x3D9) and the conversion has sat in
+      // combat/playerWeapon.js with no production caller; this is the
+      // caller. world.js's applyPose consumes it beside weaponDrawn.
+      usingRightHand: usingRightHandFromSaveVars(saveVars),
     },
     readiedSpellIndex: null,
     world: null, locationKey: null, quest: null, talk: null,
@@ -745,7 +794,7 @@ export function classicSaveToSnapshot(saveGames, {
     lightSourceIndex: -1,
 
     sGroupReputations,
-    reactionMods: null,
+    reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),   // AUDIT 63 F6: PlayerEntity.cs:129 - the array exists from construction and is never serialized, so an imported character lands the eleven-zero shape rather than no array at all
     crimeCommitted: saveVars.crimeCommitted,
     haveShownSurrenderDialogue: false,
     legalRep,

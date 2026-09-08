@@ -103,7 +103,9 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
   // position already IS feet.
   assert.match(x, /const idleH = idleSpriteHeight\(tex\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(behaviour === 'Flying' && !feetGiven\) pending\.feet\[1\] -= idleH \/ 2 \+ 0\.1;\n\s+const ai = new EnemyAI\(/,
     'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre as a delta');
-  assert.match(x, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');
+  // AUDIT 63 F24 widened the option bag with the revived quest link;
+  // `feetGiven: true` is the clause this pin is about and still stands.
+  assert.match(x, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true, questBehaviour \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');
   assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \? 0 : 0\.1\), pos\[2\]\] \};/, 'and takes no walker lift either (a flyer never grounds - 0.1 per load, cumulative)');
   assert.match(x, /height: enemyControllerHeight\(idleH, behaviour\),/);
   assert.match(x, /org\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the exterior draw pins a flyer\'s centre');

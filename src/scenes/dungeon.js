@@ -32,8 +32,13 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js'; 
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import { pickFoe,   // TI1: the lock-on pick
-  pickActivatable, activationTargets,
+  pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
+  DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE,   // AUDIT 63 F33: the enemy arm's two reaches
 } from '../player/activate.js';
+// AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
+// standalone dungeon's copy of the living-foe arm.
+import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
+import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode } from '../ui/input.js';   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
@@ -215,9 +220,25 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const _lockFoe = pickFoe(eye, dir, ctx.foes, ctx.collider, LOCK_PICK_DISTANCE);
       if (_lockFoe) { lockOn.toggle(_lockFoe); return null; }
     }
+    // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841).
+    // The NEAR call runs against the LADDER'S OWN WINNER and takes the
+    // click only when the foe is strictly nearer, because DFU reaches
+    // :419 only for the one thing its single ray hit (:314); the FAR
+    // call runs once nothing else has taken it at all.
+    const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(eye, dir, ctx.foes, ctx.collider,
+      reach, getInteractionMode(), playerEntity, {
+        nearerThan,
+        hud: (t) => ctx.hudSay?.(t),
+        modal: (t) => ctx.hudBox?.(String(t).split('\n')),
+        makeEnemiesHostile: () => ctx.makeAreaHostile?.(),
+        playerFeet: player.pos,
+        nothingText: () => ctx.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',   // GetRandomText(8999)
+      });
     const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
-    const key = pickActivatable(eye, dir, targets, ctx.collider);
+    const _pick = pickActivatableHit(eye, dir, targets, ctx.collider);
+    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return null;
+    const key = _pick?.key ?? null;
     // U26: the player's OWN dropped piles are loot targets too, and
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did
@@ -227,6 +248,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       return key;
     }
     if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // R1: Steal mode picks a locked door; X1: an armed Open/Lock fires here
+    // AUDIT 63 F33: the FAR half - the Info line (:806-826, no distance
+    // gate) and the pickpocket's too-far refusal (:832-836).
+    else _enemyArm(RAY_DISTANCE);
     return key;
   };
   const keys = new Set();

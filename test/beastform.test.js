@@ -66,7 +66,10 @@ test('V4: setCrimeCommitted is the ONE crime write, and a transformed lycanthrop
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/cityGuards.js']) {
     assert.ok(!/playerEntity\.crimeCommitted = [^0]/.test(read(f)), `${f} routes through the setter`);
   }
-  assert.ok(read('src/systems/talk.js').includes('if (!racialSuppressCrime(player))'),
+  // AUDIT 63 F33 generalized Pickpocket to DFU's one method with an
+  // optional target, and PlayerActivate.cs:1655 gates the crime write on
+  // `target == null` - so the inline suppression gate rides beside it.
+  assert.ok(read('src/systems/talk.js').includes('if (!target && !racialSuppressCrime(player))'),
     'talk.js gates inline (court.js imports it - the one setter would cycle)');
 });
 

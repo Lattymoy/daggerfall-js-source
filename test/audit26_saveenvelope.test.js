@@ -59,7 +59,9 @@ test('audit26 F222: both hosts write the pose and land it on load', () => {
   // AUDIT 39 moved the tail of this pin: the TRANSPORT MODE joined the
   // bag (SerializablePlayer.cs:179, the line beside the weapon), so the
   // camera is no longer the last field.
-  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
+  // AUDIT 63 F25 widened it once more: the HAND rides beside the
+  // sheath, which is how SerializablePlayer.cs:175-176 writes the pair.
+  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed, usingRightHand: weaponRig\.playerWeapon\.usingRightHand, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
   // SAV3 moved the landing into the ONE pose-apply (quickload + the
   // classic import share it) - the inversion law lives there now.
   assert.match(w, /if \(pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !pose\.weaponDrawn;/,
@@ -67,8 +69,8 @@ test('audit26 F222: both hosts write the pose and land it on load', () => {
   assert.match(w, /applyPose\(extras\.pose\);/, 'the quickload lands through it');
   assert.match(w, /applyPose\(bundle\.snap\.pose\);/, 'and the classic import too');
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /pose: \{ \.\.\.\(opts\.pose\?\.read\?\.\(\) \?\? \{\}\), weaponDrawn: !playerWeapon\.sheathed \}/,
-    'the dungeon context folds its own weapon in and takes yaw/pitch/crouch from the host seam');
+  assert.match(d, /pose: \{ \.\.\.\(opts\.pose\?\.read\?\.\(\) \?\? \{\}\), weaponDrawn: !playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand \}/,
+    'the dungeon context folds its own weapon AND the hand in, and takes yaw/pitch/crouch from the host seam');
   assert.match(d, /opts\.pose\?\.apply\?\.\(extras\.pose\);/);
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /read: \(\) => \(\{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching \}\)/,
@@ -136,8 +138,11 @@ test('audit26 F216/F217: both exterior pools snapshot in natives and restore thr
   for (const field of ['mobileType', 'gender', 'nativeX', 'nativeZ', 'yaw', 'health', 'maxHealth', 'magicka', 'fatigue', 'activeEffects', 'hostile', 'encountered']) {
     assert.ok(ef.includes(`${field}:`), `the foe record carries ${field}`);
   }
-  assert.match(ef, /function restoreWorld\(saved, fromNative, yOffset = 0\)/);
-  assert.match(ef, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true \}\)/,   // REVIEW 2026-09-05: the snapshot holds FEET
+  // AUDIT 63 F24 widened the restore: the saved quest link is revived
+  // before the mint (SerializableEnemy.cs:205-218), through a callback
+  // the caller that owns a quest machine hands in.
+  assert.match(ef, /function restoreWorld\(saved, fromNative, yOffset = 0, \{ reviveQuestBehaviour = null \} = \{\}\)/);
+  assert.match(ef, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true, questBehaviour \}\)/,   // REVIEW 2026-09-05: the snapshot holds FEET
     'the restore re-mints through the pool\'s ONE spawn chain, then overlays the saved truth');
   const cg = rd('src/scenes/cityGuards.js');
   assert.match(cg, /function snapshotWorld\(toNative\)/);

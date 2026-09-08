@@ -13,7 +13,8 @@
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { defineLiveMaxMagicka } from './chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too
-import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
+import { rebuildEquipState, isEquipped, unequipSlot } from './equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
+import { templateByIndex } from './itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
@@ -684,6 +685,70 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
   };
 }
 
+/**
+ * AUDIT 63 F28 - ItemCollection.RemoveOrphanedItems (Items/
+ * ItemCollection.cs:661-688), verbatim order: a QUEST item goes when
+ * its quest is gone (`QuestMachine.GetQuest(item.QuestUID) == null`)
+ * or tombstoned (`quest.QuestTombstoned`); anything else goes when it
+ * has no name.
+ *
+ * AUDIT 63r F28: WHAT `shortName` IS. DFU's second arm is offered by
+ * its own comment as "or has an invalid template" (ItemCollection.cs
+ * :663), and that is exactly what it catches: SetItem assigns
+ * `shortName = GetLocalizedItemName(itemTemplate.index,
+ * itemTemplate.name)` (DaggerfallUnityItem.cs:551) on EVERY
+ * template-backed mint, so an item only reads empty there when its
+ * template did not resolve. The port's `name` is an OPTIONAL override
+ * - resolveItemName (itemInfo.js) falls back to the template - and
+ * whole classes of ordinary item are minted without one
+ * (createPotion/createRandomPotion, randomlyAddMap,
+ * randomlyAddPotionRecipe: loot.js). So the arm must test the
+ * RESOLVED name, template included, or every alchemist's bottle,
+ * treasure map and potion recipe is deleted from pack, wagon and
+ * repair on the next load.
+ *
+ * The port's items model equipment by a slot ON the item, so a bare
+ * splice would leave a ghost on the doll: RemoveItem's own unequip
+ * (the same two lines quest Item.Dispose already runs at world.js's
+ * removeItemFromPlayer hook) runs here too.
+ *
+ * @returns how many were removed.
+ */
+export function removeOrphanedItems(entity, collection, getQuest) {
+  let n = 0;
+  for (let i = (collection?.length ?? 0) - 1; i >= 0; i--) {
+    const it = collection[i];
+    if (!it) continue;
+    let orphaned = false;
+    if (it.questItem) {
+      const q = getQuest?.(it.questUID) ?? null;
+      orphaned = !q || !!q.questTombstoned;
+    } else {
+      // ItemCollection.cs:675 `else if (string.IsNullOrEmpty(item
+      // .shortName))` - an INVALID TEMPLATE, never a missing override.
+      orphaned = !it.name && !it.shortName && !templateByIndex(it.templateIndex)?.name;
+    }
+    if (!orphaned) continue;
+    if (entity && isEquipped(it)) unequipSlot(entity, it.equipSlot);
+    collection.splice(i, 1);
+    n++;
+  }
+  return n;
+}
+
+/** AUDIT 63 F28 - SaveLoadManager.RemoveAllOrphanedItems (:1560-1571):
+ *  Items, WagonItems, OtherItems in that order, and the one log line
+ *  when anything went (:1567-1570). */
+export function removeAllOrphanedItems(entity, getQuest) {
+  if (!entity) return 0;
+  let count = 0;
+  count += removeOrphanedItems(entity, entity.items, getQuest);
+  count += removeOrphanedItems(entity, entity.wagonItems, getQuest);
+  count += removeOrphanedItems(entity, entity.otherItems, getQuest);
+  if (count > 0) console.log(`Removed ${count} orphaned items.`);
+  return count;
+}
+
 /** The restore half. Keeps the port's RECORDED null-arm departure: DFU
  *  calls RestoreConversationData(null) on a save with no conversation
  *  block, which RESETS the mill (TalkManager.cs:2440-2443 mints a
@@ -691,7 +756,7 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
  *  standing on a pre-TK save (world.js quickLoad, recorded there).
  *  Returns whether a quest envelope was present, for the world host's
  *  _questStarted latch. */
-export function restoreSessionState(extras, { questBridge = null, talk = null } = {}) {
+export function restoreSessionState(extras, { questBridge = null, talk = null, entity = null } = {}) {
   // restore(null) is a no-op and the live machine stands (Q4-v law).
   questBridge?.restore(extras?.quest ?? null);
   // U41: SetTravelMapFromSaveData(null) is DFU's own arm for a save
@@ -709,6 +774,32 @@ export function restoreSessionState(extras, { questBridge = null, talk = null } 
     talk.session.restoreSaveData(extras.talk);
     // RestoreConversationData's mill-orphan sweep (:2522-2533)
     talk.mill.removeOrphanedQuestRumors((id) => !!questBridge?.machine.getQuest(id));
+  }
+  // AUDIT 63 F28: `// Clear any orphaned quest items` /
+  // `RemoveAllOrphanedItems();` - SaveLoadManager.cs:1517-1518, the
+  // last act of LoadGame before ClampLegalReputations (:1543, which
+  // restorePlayer already runs). It sweeps the three player
+  // collections of items whose quest is gone or tombstoned; nothing
+  // else in DFU cleans them up, and Item.Dispose (Item.cs:258-268,
+  // the port's removeItemFromPlayer hook) only ever reaches the MAIN
+  // pack, so a droppable quest item stashed in the wagon outlived its
+  // quest for the life of the character - and, once the quest was
+  // expired, could not be taken back out either (itemTransfer.js's
+  // CanDropQuestItems refusal).
+  //
+  // IT MUST RUN HERE AND NOT IN restorePlayer: the C#'s order is quest
+  // restore (:1433) THEN sweep (:1518), so the lookup is against the
+  // RESTORED quests. restorePlayer runs before this composer at both
+  // host seams, where the machine still holds the OUTGOING session's
+  // quests (or, on a boot load, none at all).
+  //
+  // Two port-only gates, both back-compat and neither a behaviour
+  // departure: no machine to ask (the standalone ?dungeon scene mounts
+  // none) and no quest envelope in the save (a pre-Q4-v save, a shape
+  // DFU never writes - its items would sweep against an unrelated live
+  // machine). Either way the live pack stands, as it did before.
+  if (entity && questBridge?.machine && extras?.quest != null) {
+    removeAllOrphanedItems(entity, (uid) => questBridge.machine.getQuest?.(uid) ?? null);
   }
   return !!extras?.quest;
 }

@@ -306,7 +306,7 @@ test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', 
   // AUDIT 58: this comment used to say the faction side PROPAGATES. It
   // does not - PlayerEntity.cs:2239/:2241 calls the TWO-argument
   // ChangeReputation and PersistentFactionData.cs:390 defaults propagate
-  // to false, which is what court.js:175-179 records AUDIT 23 as having
+  // to false, which is what court.js:176-180 records AUDIT 23 as having
   // corrected. The ONLY asymmetry is direct increment (legal) vs clamped
   // ChangeReputation (faction); neither side fans out. The pin that can
   // actually see the flag needs a hierarchy this one-record fixture does

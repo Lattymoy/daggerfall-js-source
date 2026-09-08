@@ -116,12 +116,31 @@ test('M1: mixing matches by KEY - there is no ingredient comparison (:311-334)',
   assert.equal(mixCauldron([1, 2, 3]).recipe, undefined);
 });
 
-test('M1: the RECIPES button shows what the player has LEARNED (:376-382)', () => {
+test('M1: the RECIPES button shows what the CARRIED recipes resolve to (:376-382)', () => {
   assert.deepEqual(knownRecipes([]), [], 'an empty list is empty, not everything');
   assert.deepEqual(knownRecipes(), []);
   const slowKey = potionRecipeKey(byName('slowFalling').ingredients);
   const healKey = potionRecipeKey(byName('healing').ingredients);
-  assert.deepEqual(knownRecipes([slowKey, healKey]).map((r) => r.name), ['slowFalling', 'healing']);
+  // AUDIT 63 F42: Refresh sorts the picker by DISPLAY name (:170
+  // `recipes.Sort((x, y) => (x.DisplayName.CompareTo(y.DisplayName)))`),
+  // so the rows are alphabetical however the keys arrived - 'Healing'
+  // before 'Slow Falling', which is NOT the order they were handed in.
+  assert.deepEqual(knownRecipes([slowKey, healKey]).map((r) => r.displayName),
+    ['Healing', 'Slow Falling'], 'sorted by DisplayName (:170)');
+  assert.deepEqual(knownRecipes([healKey, slowKey]).map((r) => r.displayName),
+    ['Healing', 'Slow Falling'], 'the same order from the other input order');
+  // the whole catalogue, handed in catalogue order, comes back
+  // alphabetical by DisplayName - an unsorted return fails here
+  const all = knownRecipes(POTION_RECIPES.map((r) => potionRecipeKey(r.ingredients)));
+  assert.equal(all.length, POTION_RECIPES.length);
+  assert.deepEqual(all.map((r) => r.displayName),
+    [...all.map((r) => r.displayName)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+  assert.equal(all[0].displayName, 'Chameleon Form');
+  assert.equal(all[all.length - 1].displayName, 'Water Walking');
+  // de-duped: `if (!recipes.Contains(potionRecipe))` (:166-168) - two
+  // copies of the same scroll are ONE row
+  assert.deepEqual(knownRecipes([slowKey, slowKey, healKey]).map((r) => r.displayName),
+    ['Healing', 'Slow Falling']);
   // an unknown key is dropped rather than becoming a null row
   assert.deepEqual(knownRecipes([slowKey, 999999]).map((r) => r.name), ['slowFalling']);
 });

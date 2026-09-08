@@ -122,7 +122,14 @@ test('audit58 pins2: specialInfectionChance is 0.6 AT the boundary, and it is in
 });
 
 test('audit58 pins2: IsImmuneToDisease reads the PENDING marker, not only the live override', () => {
-  // diseases.js:232 `if (target.racialOverride || target.racialOverridePending)`.
+  // AUDIT 63 F15 MOVED the law this pin owns, so it is named rather
+  // than numbered: the disjunct is no longer a line inside
+  // inflictDisease at all - it is the second arm of effects.js's
+  // isEntityImmuneToDisease (EntityEffectManager.IsEntityImmuneToDisease
+  // :623-641), read from diseases.js's startDisease gate, which is
+  // AssignBundle's own position (:495-499). inflictDisease now takes
+  // both rolls before the effect is dropped, as DFU's does, so this
+  // pin drives it end to end and still answers null.
   // The suite's one immunity assertion (lycanthropy.test.js) runs
   // AFTER the turn consumed the marker and asserts
   // `racialOverridePending === undefined` two lines above it, so the

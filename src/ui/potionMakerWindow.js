@@ -36,7 +36,7 @@ import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
 import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
-import { isEnchanted } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148)
+import { isEnchanted, addItem } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148); AddItem is Refresh's merge (:149)
 import { SOUND } from '../systems/soundClips.js';
 import {
   CAULDRON_CAPACITY, cauldronAccepts, mixCauldron, consumeCauldron,
@@ -117,9 +117,13 @@ export function slotAt(origin, buttons, x, y, offsetX = 0) {
 /**
  * hooks:
  *   packItems()    -> the player's items (the ingredient list filters them)
- *   wagonItems()   -> the cart, for the consume walk's fallback
+ *   wagonItems()   -> the cart. Refresh (:143) walks PlayerEntity.Items
+ *                    AND PlayerEntity.WagonItems into the one
+ *                    `ingredients` collection, so the cart feeds the
+ *                    GRID as well as the consume walk's fallback.
  *   gold()         -> the label
- *   recipeKeys()   -> the potion recipes the player has learned
+ *   recipeKeys()   -> the PotionRecipeKey of every recipe ITEM the
+ *                    player carries, pack and wagon (:150-151, :164-169)
  *   addPotion(recipe, key)  the host mints and banks the potion
  *   takeOne(templateIndex, where) -> bool  the host's removal
  *   icons, entity, onClose
@@ -155,20 +159,53 @@ export class PotionMakerWindow {
 
   _close() { this.done = true; this.hooks.onClose?.(); }
 
-  /** The pack's ingredients, minus the UNITS already in the cauldron.
+  /** The carried ingredients, minus the UNITS already in the cauldron.
    *  AUDIT 26 F174/F176: DFU's Refresh collects `item.IsIngredient &&
    *  !item.IsEnchanted` (:147-149) - an enchanted gem cannot be
    *  ground into a potion - and AddToCauldron splits ONE unit off a
    *  stack (:251-264), so the remainder stays visible and addable.
    *  The old cut filtered on the template flag alone and removed the
    *  whole stack OBJECT by identity: a stack of N elderberries
-   *  vanished while one unit sat in the pot. */
+   *  vanished while one unit sat in the pot.
+   *
+   *  AUDIT 63 F43: the walk is DFU's own TWO collections, in DFU's
+   *  order - `foreach (ItemCollection playerItems in new
+   *  ItemCollection[] { PlayerEntity.Items, PlayerEntity.WagonItems })`
+   *  (:143-153) - so reagents kept in the cart are on the grid. They
+   *  go into ONE ItemCollection through AddItem (:149), whose
+   *  FindExistingStack merge (ItemCollection.cs:224-229, :699-718)
+   *  folds a pack stack and a wagon stack of the same reagent into a
+   *  single slot: ingredients are stackable (FormulaHelper.cs:2103)
+   *  unless IsStackable's own refusals bite first
+   *  (DaggerfallUnityItem.cs:681-695 - equipped, quest, enchanted, or
+   *  a summoned non-arrow), which is why the merge below goes through
+   *  inventory.js's addItem rather than a second copy of the rule.
+   *  Two elderberries in the pack and three in the cart are ONE slot
+   *  reading five, which is what the stack label draws; a QUEST
+   *  elderberry keeps a slot of its own. */
   ingredients() {
     const potted = new Map();
     for (const c of this.cauldron) potted.set(c.templateIndex, (potted.get(c.templateIndex) ?? 0) + 1);
-    const out = [];
-    for (const it of this.hooks.packItems?.() ?? []) {
+    // THROUGH THE PORT'S ONE AddItem, which is what DFU's line is:
+    // `ingredients.AddItem(item.Clone())` (:149), and AddItem
+    // (ItemCollection.cs:217-253) merges through FindExistingStack
+    // (:699-718). That member OPENS with `if (!item.IsStackable())
+    // return null` and closes on `checkItem.IsStackable()`, and
+    // IsStackable (DaggerfallUnityItem.cs:681-695) refuses an equipped,
+    // a QUEST or an enchanted item, and a summoned non-arrow, before it
+    // ever reaches FormulaHelper.IsItemStackable. inventory.js's
+    // isStackable/stacksWith carry all of that (X11b, AUDIT 39 F105);
+    // an inline re-derivation here filtered on the identity terms
+    // alone, so a quest-item reagent folded into a plain one. The
+    // spread IS the Clone, so no live pack or wagon item is mutated by
+    // the merge.
+    const merged = [];
+    for (const it of [...(this.hooks.packItems?.() ?? []), ...(this.hooks.wagonItems?.() ?? [])]) {
       if (!isIngredient(it) || isEnchanted(it)) continue;
+      addItem(merged, { ...it });
+    }
+    const out = [];
+    for (const it of merged) {
       const held = it.stackCount ?? 1;
       const take = Math.min(potted.get(it.templateIndex) ?? 0, held);
       if (take > 0) potted.set(it.templateIndex, (potted.get(it.templateIndex) ?? 0) - take);
@@ -241,7 +278,9 @@ export class PotionMakerWindow {
     const known = knownRecipes(this.hooks.recipeKeys?.() ?? []);
     if (!known.length) { this.box = { rows: [{ text: NO_RECIPES, center: true }] }; return; }
     this.picker = new ListPickerWindow({
-      items: known.map((r) => r.name),
+      // AUDIT 63 F42: the picker's rows are DisplayName (:171-172),
+      // not the recipe's localization key - `name` is that key.
+      items: known.map((r) => r.displayName),
       onPick: (i) => { this._fillFrom(known[i]); this.picker = null; },
       onCancel: () => { this.picker = null; },
       // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
@@ -271,7 +310,10 @@ export class PotionMakerWindow {
       if (at < 0) continue;
       this._addToCauldron(pool.splice(at, 1)[0]);
     }
-    this.nameLabel = recipe.name;
+    // AUDIT 63 F42: RecipePicker_OnItemPicked hands the picked ROW's
+    // text back as `recipeName` (:384-390) and AddRecipeToCauldron
+    // writes it to the label (:307) - the DisplayName, not the key.
+    this.nameLabel = recipe.displayName;
   }
 
   input(code) {

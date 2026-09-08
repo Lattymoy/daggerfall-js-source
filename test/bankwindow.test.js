@@ -124,13 +124,30 @@ test('B2: ONE transaction at a time - every button dies while a field is open (:
   // the law says the same, directly
   assert.equal(toggleTransactionInput(T.Depositing_gold, T.Withdrawing_gold), T.Depositing_gold);
   assert.equal(toggleTransactionInput(T.Depositing_gold, T.None), T.None, 'only through None');
-  // Escape cancels the field WITHOUT closing the window
+  // AUDIT 63 F45: ONE Escape closes the bank even with the amount
+  // half-typed. DaggerfallBankingWindow is a DaggerfallPopupWindow
+  // that never clears AllowCancel, so DaggerfallPopupWindow.Update
+  // (:70-74) cancels on the back button regardless of the field, and
+  // CancelWindow (:88-93) posts wmCloseWindow. There is no
+  // field-cancel anywhere in DaggerfallBankingWindow.Update
+  // (:212-227) - the value is simply discarded with the window.
   w.input('Escape');
-  assert.equal(w.transactionType, T.None);
-  assert.equal(w.done, false, 'Escape closed the FIELD, not the bank');
-  // ...and now Escape does close it
-  w.input('Escape');
-  assert.equal(w.done, true);
+  assert.equal(w.done, true, 'one press, not two - the back button is not gated on the field');
+
+  // ...and the asymmetry the F140 row pinned is still the law: the
+  // EXIT BUTTON is the one control the enabled field disables
+  // (ExitButton_OnMouseClick :473-478 `if (!transactionInput.Enabled)
+  // CloseWindow()`), so the same state that closes on Escape does
+  // nothing on a click.
+  const g = win();
+  clickRect(g.w, 'depositGold');
+  assert.equal(g.w.transactionType, T.Depositing_gold);
+  clickRect(g.w, 'exit');
+  assert.equal(g.w.done, false, 'the exit BUTTON is gated where the back button is not');
+  g.w.input('KeyE');
+  assert.equal(g.w.done, false, 'and so is the port\'s own accelerator for it');
+  g.w.input('Escape');
+  assert.equal(g.w.done, true);
 });
 
 test('B2: the field is numeric, nine wide, and Enter commits (:185-190, :212-223)', () => {

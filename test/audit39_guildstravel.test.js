@@ -80,7 +80,7 @@ test('F96: the host runs the listener off the quest-end event, before the HUD sw
   const w = src('scenes/world.js');
   const at = w.indexOf('onQuestEnded: (q) => {');
   assert.ok(at > 0, 'the escort sweep is no longer the only quest-end consumer');
-  const arm = w.slice(at, at + 900);
+  const arm = w.slice(at, at + 1400);   // AUDIT 63 F9 put the hall reveal between the two calls
   assert.match(arm, /guildInitiationQuestEnded\(activeMemberships\(playerEntity\), q\?\.questName \?\? '',\s*\n\s*!!q\?\.questSuccess,/,
     'success and name come off the quest, and the book is the vampire-aware one');
   assert.ok(arm.indexOf('guildInitiationQuestEnded(') < arm.indexOf('escortQuestEnded(q)'),

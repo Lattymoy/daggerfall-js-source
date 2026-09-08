@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1621 (the factory) and :1904 (a
+                        worldModes.js:1735 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:795, world.js:1428,
-                        exterior.js:1839. It is the only window TWO
+                        dungeonContext.js:827, world.js:1436,
+                        exterior.js:1844. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1467, dungeonContext.js:3079. A seam
+    / NOTEBOOK          world.js:1475, dungeonContext.js:3180. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -1322,11 +1322,17 @@ which sheet that adds up to; the door is the only caller of
 `charSheetHooks` left.
 
 THE DENSITY ARGUMENT IS THIS SCREEN'S WHOLE POINT. Daggerfall has 35
-skills where Skyrim has 18, and the classic sheet answers that by
-showing NINE - keys 1-4 pop a text panel over the art and
-`_drawSkillPage` slices to `ids.slice(0, 9)`, because a 320x200 panel
-has nowhere else to put them, so comparing a Major against a
-Miscellaneous means pressing two keys and remembering the first number.
+skills where Skyrim has 18, and the classic sheet answers that with a
+POPUP PER GROUP - keys 1-4 pop a text panel over the art, so comparing
+a Major against a Miscellaneous means pressing two keys and remembering
+the first number, and the Miscellaneous page is 23 skills crowded two
+to a line. (CORRECTED, AUDIT 63 F35: this paragraph used to say the
+classic sheet "answers that by showing NINE ... because a 320x200 panel
+has nowhere else to put them", which described the port's own
+`ids.slice(0, 9)` rather than the reference. DFU's ShowSkillsDialog
+loops the WHOLE group into an auto-sizing message box and fits all 23
+on the same 320x200 screen through its twoColumn arm; the slice was a
+defect and is gone. The density argument survives on the crowding.)
 This shows every skill the character has a career for, in DFU's own
 three groups, with the twenty-odd Miscellaneous ones one press away.
 Disclosure, not deletion - the prototype's rule, and the reason this is
@@ -3924,7 +3930,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:61,88 - worth checking
+career is spread as plain CFG data, save.js:62,88 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -5286,7 +5292,8 @@ failed. The window raises it as a click-anywhere box over the still-
 open trade screen, which is DFU's own order: a bare `CloseWindow()`
 in a message-box handler pops the TOP window - the CONFIRM box, not
 the trade window, UserInterfaceWindow.cs:127-132); the
-wagon/info/select/steal buttons remain consumed no-ops; and a
+wagon/info/select buttons remain consumed no-ops (STEAL was one of them
+until AUDIT 63 F48 ported DoSteal); and a
 guild-run shop passes `guildFactionId: null`, so Tales and Tallow
 cannot yet fire - the guild-store arm is its own slice.
 
@@ -5359,7 +5366,13 @@ partial spend, verbatim.
 
 **The recipes button fills what it can.** A player missing one herb
 gets the other three in the pot rather than a refusal, and knowing no
-recipes at all is a message box rather than an empty picker.
+recipes at all is a message box rather than an empty picker. (AUDIT 26
+F173 later corrected the first half - `AddRecipeToCauldron` refuses the
+WHOLE recipe with `reqIngredients` on any missing ingredient. And AUDIT
+63 F42: the second half described a state the port could never leave,
+because the picker's source was a field nothing ever wrote; the list is
+built from the CARRIED recipe items now, so the empty arm is what DFU's
+own is - a character holding no scrolls.)
 
 One Ledger row added, for a departure the port INHERITS rather than
 makes: classic creates a useless "Unknown Powers" potion on a failed
@@ -6118,7 +6131,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:587, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:589, :586`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -7750,7 +7763,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2432 as a second book built by hand 342 lines below the
+worldModes.js:2546 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7803,7 +7816,7 @@ window over, and both halves of it were here too.
 IT READ THE NAMES AND THREW AWAY THE NUMBERS. `spellEffects` hands
 back the effect RECORDS, and every one carries `magnitudeBaseLow/High`
 with its per-level step, `durationBase/Mod`, and `chanceBase/Mod` -
-the exact fields systems/effects.js:446-454 reads to resolve a live
+the exact fields systems/effects.js:499-507 reads to resolve a live
 effect. The first draft printed the two names and dropped the rest,
 which is the chronicle's flattened date wearing a different hat. Each
 part now appears only when the effect HAS it, because "0 to 0" is
@@ -7833,7 +7846,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1681 and
+questJournal.js from charSheetNav:53, world.js:1722 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8460,7 +8473,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:4749` and `dungeonContext.js:1239` answer the same
+`worldModes.js:5101` and `dungeonContext.js:1271` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9189,7 +9202,7 @@ to the wrong code.
   so the edge was a silent no-op and one press glued a slider to the
   pointer for the rest of the popup's life, with the runaway value then
   written by the grid's save. `ControlsWindow.release()` forwards it now,
-  the ROAD-E E1 shape `ui/itemMakerWindow.js:202` has carried since
+  the ROAD-E E1 shape `ui/itemMakerWindow.js:203` has carried since
   Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
 - **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
   (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
@@ -9704,9 +9717,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4488`,
+the other half went stale unnoticed. (The rest cite named `world.js:4636`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4494` now.)
+deleted the second and the cite is `world.js:4642` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9975,3 +9988,352 @@ the tap path must consult THAT name and no other. Reformatting `tapCodes`
 onto one line and renaming its parameter leaves it green; a second Set
 kept in lock-step by `down`/`up`, with the tap guarded on that one -
 behaviourally identical, so invisible to all three drives - turns it red.
+
+## AUDIT 63 F42 - THE POTION MAKER'S RECIPES BUTTON WAS PERMANENTLY DEAD (2026-09-08)
+
+`worldModes.js` fed `PotionMakerWindow` its recipe list from
+`playerEntity.potionRecipeKeys`. Nothing in `src/` has ever assigned
+that field - `grep -rn potionRecipeKeys src/` returned the read and one
+unrelated module-level helper in `systems/potions.js` that lists the
+whole catalogue - so `knownRecipes()` was empty for every character in
+every session and the RECIPES button, one of the mixer's two buttons,
+answered "You have no recipes." for ever. The comment above the hook
+said a recipe scroll fills it through `useItem`; `useItem.js`'s recipe
+arm returns `cannotUseThis` and writes nothing, and that arm is CORRECT
+- which is the whole point.
+
+**DFU has no "learned recipes" concept.** `Refresh` (`:143-153`) walks
+`new ItemCollection[] { PlayerEntity.Items, PlayerEntity.WagonItems }`
+and collects `else if (item.IsPotionRecipe) recipeItems.Add(item)`
+(`:150-151`), then resolves each through
+`GetPotionRecipe(recipeItem.PotionRecipeKey)` (`:164-169`). The CARRIED
+SCROLL IS THE KNOWLEDGE. The port already mints those scrolls with a
+key (`loot.js`'s `randomlyAddPotionRecipe`, the alchemist shelves, the
+enemy tail), restores it on a classic load (`classicSave.js`) and
+carries the predicate (`useItem.js`'s `isPotionRecipe`); what was
+missing was the walk.
+
+Two further clauses of the same block came alive with it, and both were
+wrong:
+
+- **The picker was neither de-duped nor sorted.** `:166-168` is
+  `if (!recipes.Contains(potionRecipe)) recipes.Add(potionRecipe)` and
+  `:170` is `recipes.Sort((x, y) => (x.DisplayName.CompareTo(y.DisplayName)))`.
+  `knownRecipes` now does both. De-duping the KEYS is DFU's object
+  de-dupe, because key -> recipe is 1:1 through the lookup.
+- **The picker and the name label spoke the localization KEY.** DFU
+  adds `potionRecipe.DisplayName` to the list box (`:171-172`) and
+  `RecipePicker_OnItemPicked` hands that same string back as
+  `recipeName` into `AddRecipeToCauldron`, which writes it to the label
+  (`:307`). The port's rows carry both fields and drew `name` - so the
+  newly reachable picker would have printed `waterWalking` and
+  `healTrue`, and the label with it. The `potionmakerwindow` pin that
+  asserted `nameLabel === 'slowFalling'` had encoded the port's
+  internal name; it reads `'Slow Falling'` now, against `:307`.
+
+## AUDIT 63 F43 - THE MIXER'S GRID DID NOT SEE THE CART (2026-09-08)
+
+The same `Refresh` loop, the other half. `ingredients()` walked
+`hooks.packItems()` alone; the `wagonItems` hook was declared in the
+window's JSDoc, wired by the host, and never invoked anywhere in the
+file. So reagents kept in the cart were invisible and unusable, and
+`consumeCauldron`'s wagon fallback - ported, and pinned - was
+unreachable in ordinary play, because nothing wagon-borne could enter
+the cauldron to fall back for.
+
+The service gate makes it worse than narrow: `MakePotionService`
+(`DaggerfallGuildServicePopupWindow.cs:670-686`, the port's AUDIT 26
+F201 fix) admits a player when pack OR WAGON holds any ingredient. A
+player whose reagents are all in the cart passed that gate and was
+handed an empty mixer - the exact outcome F201 was closed to prevent,
+restored by the other half of the same law.
+
+**The walk is DFU's two collections in DFU's order, and it MERGES.**
+`ingredients.AddItem(item.Clone())` (`:149`) goes into one
+`ItemCollection`, and `AddItem` folds into an existing stack when
+`FindExistingStack` matches (`ItemCollection.cs:224-229`, `:699-718`:
+ItemGroup + GroupIndex + message + PotionRecipeKey +
+TimeForItemToDisappear), which ingredients always are
+(`FormulaHelper.IsItemStackable`, `:2103`; the enchanted case is
+already filtered out by `:148`). Two elderberries in the pack and three
+in the cart are ONE grid slot reading five in DFU, not two slots
+reading two and three - and the port draws that count, so the
+difference is on screen and it also moves the slot count, the scroll
+clamp and the tooltip's index. The merged entry is a copy, so the live
+pack item is never mutated. Pack-first order matters twice: it is the
+grid's layout, and it is the order `consumeCauldron` spends in, so what
+the grid shows remaining is what the mix will find.
+
+(The two verifiers split here - one asked for the merge, one for a
+plain concatenation. The merge is what `AddItem` does, and it is
+visible in the stack label, so the merge is what shipped.)
+
+**REVIEW ROUND (2026-09-08): the merge goes through the port's own
+`AddItem`, not a second copy of it.** The shipped block re-derived
+`FindExistingStack`'s five identity terms inline and so kept only the
+`IsEnchanted` disqualifier - but `FindExistingStack`
+(`ItemCollection.cs:699-702`, `:714`) is guarded at BOTH ends by
+`IsStackable`, and `IsStackable` (`DaggerfallUnityItem.cs:681-695`)
+refuses an EQUIPPED item, a QUEST item, an enchanted one and a summoned
+non-arrow before `FormulaHelper.IsItemStackable` is ever consulted. A
+quest-item reagent therefore folded into a plain stack of the same
+reagent, where DFU keeps the two apart. `systems/inventory.js` has
+carried the whole ladder since X11b and AUDIT 39 F105 - `isStackable`,
+`stacksWith`, and `addItem`, which IS `ItemCollection.AddItem` - so the
+window now writes `addItem(merged, { ...it })`: the spread is DFU's
+`item.Clone()` (`:149`), and the refusals come back with the home.
+
+## AUDIT 63 F44 - THE GUILD POPUP CLOSED ITSELF ON TALK (2026-09-08)
+
+`DaggerfallGuildServicePopupWindow.TalkButton_OnMouseClick` (`:291-295`)
+is `PlayOneShot(ButtonClick); TalkManager.TalkToStaticNPC(serviceNPC);`
+and NOTHING else, and its `OnKeyboardEvent` KeyUp arm (`:304-308`) is
+the same. That is deliberate and specific: every other exit from that
+window calls `CloseWindow` - Join `:502`, Exit `:478`, every
+`DoGuildService` arm - and all four sibling popups close before talking
+(`DaggerfallTavernWindow.cs:265`,
+`DaggerfallMerchantServicePopupWindow.cs:139`,
+`DaggerfallMerchantRepairPopupWindow.cs:146`,
+`DaggerfallWitchesCovenPopupWindow.cs:164`). `TalkToStaticNPC` is a
+`uiManager.PushWindow` (`TalkManager.cs:757`, `:767`) and
+`DaggerfallTalkWindow`'s exit is `CloseWindow`
+(`DaggerfallTalkWindow.cs:1598`, `:1611`), so DFU pops back to the
+guild popup when the conversation ends. The port returned the player to
+the world, and the service had to be re-opened by clicking the NPC
+again.
+
+**THE WINDOW'S OWN `_close()` WAS NOT THE CAUSE.** Both verifiers found
+the same thing and the finder had not: by the time `_close()` ran,
+`onTalk` had already replaced the slot - `popupTalkToStaticNpc` nulls
+`interiorOverlay` itself and mounts the talk window through
+`showOverlay`, the REPLACING door - so `closeSpellWindow`'s two identity
+guards both missed and the call was inert. Deleting it alone would have
+changed nothing a player sees. The fix is both halves:
+
+- the window no longer closes on either TALK arm, so it stops lying
+  about its own lifecycle (and the `guildservicewindow` pin that
+  asserted `['talk', 'close']` - a pin restating the port - now asserts
+  `['talk']` against `:291-295`);
+- `openTalkWindow` takes `{ push, onClosed }` and routes the mount to
+  `pushOverlay`, the port's genuine `PushWindow` with its suspend and
+  restore, for the ONE caller that asks. Above ground the popup IS
+  `townTalk`'s overlay, so it is suspended beneath the conversation and
+  drains back. The interior slot has no stack, so there the popup is
+  taken down and re-mounted from the talk window's close callback -
+  the same instance, which is safe because `OnPush`'s heal/recharge
+  ran once in the constructor and DFU's `OnPush` does not re-run on
+  return, and guarded on `done` in the U24 identity shape so a talk
+  window that dispatched onward cannot resurrect a dismissed popup.
+
+The coven and the Spymaster keep the replacement, because
+`DaggerfallWitchesCovenPopupWindow.cs:164` really does `CloseWindow`
+first and the Spymaster greeting is a dismissed box (`:443-449`,
+`:711-713`).
+
+**REVIEW ROUND (2026-09-08): the restore had to survive the whole
+conversation, and the plumbing had to be pinned.** Two gaps, both in
+the interior half:
+
+- The callback was handed to `openTalkWindow`'s FIRST mount and lost by
+  every later one. `showOverlay` writes `_onOverlayClosed` on each call
+  (`townTalk.js:534-560`), so in the art-less greeting chain a tone
+  press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
+  `pagedList`) re-mounted with `onClosed` null and threw the restore
+  away - the player escaped the conversation and the popup DFU keeps
+  waiting underneath was gone. The exterior route never had this,
+  because its window is genuinely PUSHED and `showOverlay` is a
+  one-level replacement over the suspended stack; the interior slot has
+  no stack, so the callback is the only thing holding the popup. It is
+  threaded through `showGreeting`, `openCategories`, `pagedList`,
+  `answerWhereIs` and `showAnswer` now, so every mount in the chain
+  carries it.
+- Nothing pinned that `onClosed` reached the mount at all. The pins
+  held the door's signature and the `push ? pushOverlay : showOverlay`
+  choice, and dropping the argument from both mount calls left the
+  suite green while killing the whole interior half. The F44 pins now
+  hold the two mount calls and the four re-mounts as well.
+
+And `talkpages.test.js`'s anchored `interiorOverlay = null;` pin, which
+F44 rewrote into `if (!pushed) interiorOverlay = null;`, had gone on
+passing only because the exit-building teardown further down
+`worldModes.js` happens to be a bare one - a pin silently re-targeted at
+a law it does not name. It asserts the guarded form now.
+
+## AUDIT 63 F45 - THE BANK'S BACK BUTTON WAS GATED ON THE TYPING FIELD (2026-09-08)
+
+Click DEPOSIT GOLD, type an amount, press Escape: the port cancelled
+the FIELD and kept the window open, so closing the bank took two
+presses. DFU takes one, and discards the amount.
+
+`DaggerfallBankingWindow` is a `DaggerfallPopupWindow` (`:24`) and never
+assigns `AllowCancel`, so `DaggerfallPopupWindow.Update` (`:70-74`) runs
+`if (allowCancel && InputManager.Instance.GetBackButtonUp())
+CancelWindow()` on every frame and `CancelWindow` (`:88-93`) posts
+`wmCloseWindow`. Nothing on that path consults the text field:
+`GetBackButtonUp` is a raw `Input.GetKeyUp(KeyCode.Escape)`
+(`InputManager.cs:1070-1073`), and `TextBox` only ABSORBS Escape so it
+does not become a typed character (`TextBox.cs:404-406`) - it sets no
+suppression flag. `DaggerfallBankingWindow.Update` (`:212-227`) handles
+Return and KeypadEnter and nothing else; there is no field-cancel
+anywhere in the file.
+
+**The two paths are MEANT to disagree.** The one control the enabled
+field disables is the EXIT BUTTON: `ExitButton_OnMouseClick`
+(`:473-478`) plays its sound and then `if (!transactionInput.Enabled)
+CloseWindow()`. AUDIT 26 F140 fixed that button and, in its closing
+sentence, justified the gate by pointing at the port's own Escape - it
+made DFU's gated control agree with the port's ungated one instead of
+reading the base class. That Ledger row is annotated now; F140's fix to
+the button stands, and the Escape half is DFU's. The port's `KeyE` is
+its own accelerator for the exit button (Ledger A, in the file header)
+and keeps the button's gate, since the branch order no longer supplies
+it. No `ButtonClick` on Escape: `CancelWindow` plays none.
+
+The `bankwindow` pin that asserted "Escape closed the FIELD, not the
+bank" restated the departure; it now presses Escape ONCE with the field
+open and asserts the window is gone, and separately that the exit rect
+in that same state does nothing - the asymmetry itself.
+
+## AUDIT 63 F48 - THE SHOP'S STEAL BUTTON DID NOTHING (2026-09-08)
+
+`DaggerfallTradeWindow.DoSteal` (`:907-932`) had no counterpart. The
+port consumed the whole action panel as a no-op, so at any open shop a
+player could stage a basket, press a button DFU's own INVE08I0 art
+PAINTS, and get nothing at all: no shoplifting roll, no free goods, no
+Theft crime, no guards, no Pickpocket tally, no Thieves Guild credit.
+`systems/inventory.js`'s `transferAll` - `ItemCollection.TransferAll`
+(`ItemCollection.cs:452`), ported for exactly this call - had no caller
+anywhere in `src/`, and `dialogShortcuts.js` registered `TradeSteal`
+with the letter T for nobody to read.
+
+The member, in order:
+
+    if (WindowMode == Buy && cost > 0) {
+        weightAndNumItems = (int)basketItems.GetWeight() + basketItems.Count;
+        chance = CalculateShopliftingChance(player, quality, weightAndNumItems);
+        TallySkill(Pickpocket, 1);                    // :914 - ALWAYS, BEFORE the roll
+        if (Dice100.FailedRoll(chance)) {             // got away with it
+            AddHUDText("stealSuccess", 2);
+            PlayerEntity.Items.TransferAll(basketItems);
+            TallyCrimeGuildRequirements(true, 1);     // :921 - SUCCESS ONLY
+        } else {
+            AddHUDText("stealFailure", 2);
+            CrimeCommitted = Theft; SpawnCityGuards(true);
+        }
+        CloseWindow();
+    }
+
+**It is the MIRROR of `AttemptPrivatePropertyTheft`, not a caller of
+it.** That member (`DaggerfallInventoryWindow.cs:1848-1863`, ported in
+`systems/theft.js` and already wired in `worldModes.js`) tallies the
+guild unconditionally and tallies Pickpocket only when undetected -
+exactly inverted. So `theft.js` gains a SIBLING, `shopliftAttempt`,
+beside it, with the inversion written down in its header; the two are
+not folded together.
+
+Four details the fix turns on:
+
+- **the gate is `cost > 0`, not the basket count** - and because
+  `CalculateCost` floors a base value at 1 (`FormulaHelper.cs:1890-1893`),
+  only the empty basket is ever refused;
+- **the button exists only in Buy mode** (`:316-322`), so in Sell,
+  SellMagic, Repair and Identify the rect falls through to the consumed
+  panel and is SILENT - there is no button there to play a click;
+- **the transfer runs BEFORE the close**, because `_close` is
+  `CloseWindow -> OnPop -> ClearSelectedItems` (`:404-408`, `:589-600`)
+  whose Buy arm walks the basket back onto the shelf. On the success arm
+  `TransferAll` has already emptied it so the clear is a no-op; on the
+  caught arm the still-full basket goes back to the shelf, which IS
+  DFU's `OnPop`;
+- **the strings are in the tree** - `stealSuccess,You are successful.`
+  and `stealFailure,You are not successful...`
+  (`Internal_Strings.csv:825-826`), spoken at `AddHUDText`'s 2-second
+  delay through the same HUD seam the shop-quality lines take.
+
+The effects are host hooks, as every other consequence on this screen
+is: the shop/guild mount in `worldModes.js` wires them to the four sinks
+the private-property theft already uses. The dungeon's Identify-spell
+mount leaves them unwired and says why - `DoSteal`'s own Buy gate can
+never be satisfied there, and there is no shop underground.
+
+**REVIEW ROUND (2026-09-08): the host wiring is pinned now.** The
+window half was well covered, but deleting all six hook lines from
+`openTradeWindow` left the suite green - STEAL would have become a
+silent free-goods button again with nothing red. `audit63_windows`
+asserts the six against the source, beside the F42 host pin and in the
+shape `theft.test.js` already uses for the private-property arm, and -
+per the four-hosts rule - asserts that `dungeonContext.js`'s
+Identify mount deliberately carries none of them.
+
+## AUDIT 63 F34/F35 - THE SKILLS DIALOG SHOWED NINE OF TWENTY-THREE, AND NEVER DREW ITS LAST LINE (2026-09-08)
+
+`ShowSkillsDialog` (`DaggerfallCharacterSheetWindow.cs:276-325`) loops
+`for (int i = 0; i < skills.Count; i++)` with no cap, and its tokens go
+into a `DaggerfallMessageBox` that AUTO-SIZES to them and centres itself
+(`:320-324`). `MiscSkillsButton_OnMouseClick` (`:835`) is the one caller
+that passes `twoColumn: true`, precisely because `GetMiscSkills`
+(`DaggerfallEntity.cs:559-577`) returns all 35 - 12 = 23 non-career
+skills; the twoColumn arm (`:286-305`) is ROW-MAJOR, emitting the even
+entry at token x=0 and the odd one at x=136 on the SAME line with the
+newline after the right entry.
+
+The port drew one column and `ids.slice(0, 9)`. On the Miscellaneous
+page 14 skills the character owns were simply invisible, with no scroll,
+no sub-paging and no second column - and this arc page said so as if it
+were classic behaviour ("the classic sheet answers that by showing NINE
+... because a 320x200 panel has nowhere else to put them"). DFU fits 23
+on the same 320x200 screen. That paragraph is corrected above; the
+enhanced sheet's density argument survives on the crowding, not on
+hidden skills.
+
+**F34, the same function's last clause.** `showHandToHandDamage`
+(`:279`, set at `:283-284`) walks the WHOLE group, and when the group
+contains Hand-to-Hand the dialog appends one more line after a
+NewLineToken (`:309-318`): `hthDamageFormatString` -
+`{0} dmg: {1}-{2}`, `Internal_Strings.csv:1553` - over the skill's name
+and `CalculateHandToHandMin/MaxDamage` of
+`Skills.GetLiveSkillValue(HandToHand)`. Neither skin drew it, which left
+`handToHandMinDamage`/`handToHandMaxDamage` with no display consumer at
+all. The value is the LIVE skill, so a lycanthrope's +30 and an
+`EnhancesSkill` enchantment both move the printed damage; the token's
+formatting is plain `Text` (`:316`), so the line never takes the
+highlight colour. The classic skin draws it under whichever page holds
+the skill; the enhanced skin takes the figure from `sheetModel` and
+renders it under whichever GROUP holds the skill, which is DFU's own
+per-group gate.
+
+**And the highlight colour was the wrong constant.** `GetSkillSummary`
+formats a recently-raised row as `TextHighlight` and
+`MultiFormatTextLabel` paints those with the label's `HighlightColor`
+(`:363`) - but this window overrides it before showing the box:
+`messageBox.SetHighlightColor(DaggerfallUI.DaggerfallUnityStatIncreasedTextColor)`
+(`:321`), which is `Color32(178, 207, 255, 255)` (`DaggerfallUI.cs:66`),
+the same pale blue the increased-stat labels take. The port painted
+`DaggerfallHighlightTextColor`'s orange (`:54`), the UI-wide default
+this dialog replaces. `SKILL_DIALOG_HIGHLIGHT_COLOR` is the override;
+`SKILL_HIGHLIGHT_COLOR` stays as the default it overrides.
+
+Geometry: the two-column page sizes and centres itself the way its
+message box does rather than reusing the sheet-anchored plate the
+single-column pages keep - 23 skills is 12 lines plus the hand-to-hand
+row, 131 tall and 246 wide (DFU's own 136 column pitch plus a column of
+text), centred on the 320x200 panel with no scroll and no new key. Pages
+1-3 stay where they were: 3, 3 and 6 rows never needed the slice.
+
+**REVIEW ROUND (2026-09-08): the dialog eats the click that dismisses
+it.** DFU's box is `messageBox.ClickAnywhereToClose = true` (`:323`) and
+`DaggerfallMessageBox.ParentPanel_OnMouseClick` (`:645-663`) calls
+`CloseWindow()` on ANY click while the box is `uiManager.TopWindow`; the
+character sheet beneath is not the top window and receives nothing. The
+port draws the page as a plate ON the sheet rather than as a pushed
+window, and `CharSheet.click` had no arm for it, so the click fell
+through to whatever rect lay underneath. With the old sheet-anchored
+plate (ending at x=138) that was the four skill buttons and the
+navigation row; with F35's centred two-column plate it also reaches the
+eight `StatsRollout` select rects (x 141..169), so a player dismissing
+the Miscellaneous list got the AUDIT 58 attribute-description box
+mounted on top of the skills they were reading. `click()` now closes the
+page and consumes the click before any other arm, which is the message
+box's own behaviour and removes the pre-existing fall-through with it.
+The attribute buttons still pop their descriptions when no dialog is up
+(`:925-941`) - the consume belongs to the dialog, not to the sheet.

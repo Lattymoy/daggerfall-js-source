@@ -347,7 +347,7 @@ test('AUDIT 58: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239
   // the TWO-argument overload, and PersistentFactionData.cs:390 declares
   // `bool ChangeReputation(int factionID, int amount, bool propagate = false)`.
   // So the faction half of the drift is a single clamped write, not a
-  // walk. Adding `, true` at court.js:192-193 survived the whole suite,
+  // walk. Adding `, true` at court.js:193-194 survived the whole suite,
   // because the only fixture on that arm was a ONE-record dict with no
   // hierarchy: a propagating walk over it has nowhere to go. This one is
   // a root with two children, which is exactly what a walk would move -

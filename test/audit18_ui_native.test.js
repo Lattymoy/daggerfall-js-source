@@ -393,9 +393,21 @@ test('audit18 ui-native F12: CharSheet.click - the exit button closes, every DFU
   const s2 = new CharSheet(e);
   assert.ok(s2.click(20, 110));      // primary (11,106,115,8)
   assert.equal(s2.page, 1);
-  assert.ok(s2.click(20, 140));      // misc (11,136,115,8)
-  assert.equal(s2.page, 4);
-  assert.ok(!s2.done, 'a skill click never closes the sheet');
+  // AUDIT 63 F35 (review) MOVED THIS PIN ONTO THE REFERENCE. The
+  // dialog the first click raised is a DaggerfallMessageBox with
+  // `ClickAnywhereToClose = true` (DaggerfallCharacterSheetWindow.cs
+  // :323), and ParentPanel_OnMouseClick (DaggerfallMessageBox.cs
+  // :645-663) CloseWindow()s on ANY click while it is TopWindow - the
+  // sheet beneath is not the top window and cannot receive the click
+  // at all. So the SECOND click dismisses the dialog; it does not
+  // re-page it, which is what this pin used to assert of the port's
+  // fall-through.
+  assert.ok(s2.click(20, 140));      // misc (11,136,115,8), over the open dialog
+  assert.equal(s2.page, 0, 'the box ate the click and closed (:323)');
+  const s3 = new CharSheet(e);
+  assert.ok(s3.click(20, 140));      // ...and from a closed sheet it pages
+  assert.equal(s3.page, 4);
+  assert.ok(!s2.done && !s3.done, 'a skill click never closes the sheet');
   // every other DFU button rect is consumed (return true) so the click
   // cannot fall through to requestLook
   for (const [name, rect] of Object.entries(CHARSHEET_RECTS)) {

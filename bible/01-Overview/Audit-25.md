@@ -148,7 +148,7 @@ These are the items where the port is not merely incomplete but
 and `standFoe` are consumed by `systems/quest/actions.js` (CreateFoe,
 :2024-2101) and `systems/quest/sceneMount.js:177`, and **no host
 supplies any of them**. Every hit in `src/` is a consumer or a
-documented absence - `worldModes.js:234` "standFoe is absent",
+documented absence - `worldModes.js:242` "standFoe is absent",
 `machine.js:162` "ABSENT createFoeGameObjects = the spawn law idles".
 Consequence: no quest that requires killing or meeting a Foe resource
 can be completed, and every `killed`/`injured` trigger is unreachable.
@@ -157,7 +157,7 @@ can be completed, and every `killed`/`injured` trigger is unreachable.
 **2. The dungeon half of the quest scene mount does not exist.**
 `Place.cs:302-360` (ConfigureFromPlayerLocation), `:511-533`
 (AddQuestResourceObjects(SiteTypes.Dungeon)), `:539-556`
-(IsPlayerHere). The interior adapter ships (`worldModes.js:288-300`,
+(IsPlayerHere). The interior adapter ships (`worldModes.js:296-308`,
 ~70 LOC); the dungeon one does not. Persons, Items and Foes placed at
 a dungeon never stand, and `PcAt`/`IsPlayerHere` never see the player
 as inside one - which is where the majority of the quest corpus sends
@@ -181,7 +181,7 @@ composer both hosts call - two call sites of one envelope is exactly
 how the halves drifted.)
 
 **5-6. The talk window mounts one of its five pages.**
-`nativeTalk.js:196` is explicit: "Tell me about / People / Things /
+`nativeTalk.js:206` is explicit: "Tell me about / People / Things /
 Work: INTERIM no-ops (pend)". Only Where-is/Location works. The
 ENGINE underneath is ~95% ported across five modules and 3,000 JS
 lines with mutation campaigns - so "Any news?", "Where am I?", quest
@@ -191,7 +191,7 @@ topics and organisation info are all *computed and thrown away*.
 **7. The static-NPC conversation is never opened.**
 `TalkManager.cs:2616-2663`. Every non-service static NPC and the guild
 popup's TALK button route here; the port answers "You get no
-response." (`worldModes.js:627`). Again the engine is complete - only
+response." (`worldModes.js:635`). Again the engine is complete - only
 the window mount is missing. (~140 LOC.)
 
 The shape of 4-7 is worth naming on its own: **the port has repeatedly
@@ -331,7 +331,7 @@ guard was doing the row's job for it.
 **The classic effect library: 60 of 82 keys land.** DFU carries 82
 classic-keyed effect classes (153 effect classes in total; the other
 71 are the diseases, the enchantment payloads and the Special folder,
-which have no classic key). `applySpell` (`effects.js:416-763`) lands
+which have no classic key). `applySpell` (`effects.js:469-816`) lands
 60 and falls to `out.skipped++` for 22: ~~CreateItem (2,255),
 Disintegrate (5,255), the three Dispels (6,0-2), SoulTrap (12,255),
 Light (15,255), Lock (16,255), Open (17,255), SpellAbsorption

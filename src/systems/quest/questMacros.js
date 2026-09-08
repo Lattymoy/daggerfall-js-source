@@ -959,7 +959,16 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
       const resource = parentQuest.getResource({ name: macro.symbol });
       if (!resource) continue;
       const result = resource.expandMacro?.(macro.type);
-      if (typeof result === 'string') words[w] = words[w].replace(macro.token, result);
+      // AUDIT 63 F0: QuestMacroHelper.cs:120-122 is
+      // `if (resource.ExpandMacro(macro.type, out result))
+      //    words[word] = words[word].Replace(macro.token, result);`
+      // - the guard is the BOOLEAN, and a resource may answer true
+      // with a NULL textOut (Place.cs:257 and Person.cs:315 both hand
+      // back siteDetails.buildingName, which the three unassigning
+      // site builders leave null). String.Replace treats a null
+      // newValue as String.Empty, so the token is REMOVED, not left
+      // standing. `false` alone is C#'s "did not expand".
+      if (typeof result === 'string' || result === null) words[w] = words[w].replace(macro.token, result ?? '');
       if (revealDialogLinks && macro.type === MACRO_TYPES.NameMacro1) {
         const hooks = parentQuest.hooks;
         // AUDIT 24 systems: the reveal arms take the THREE-argument
@@ -1010,7 +1019,9 @@ export function expandLetterSignoff(parentQuest, tokens) {
             const resource = parentQuest.getResource({ name: macro.symbol });
             if (resource) {
               const result = resource.expandMacro?.(macro.type);
-              if (typeof result === 'string') words[w] = words[w].replace(macro.token, result);
+              // AUDIT 63 F0: the sibling seam, QuestMacroHelper.cs
+              // :207-209 - a true/null pair removes the token too.
+              if (typeof result === 'string' || result === null) words[w] = words[w].replace(macro.token, result ?? '');
               if (macro.type === MACRO_TYPES.NameMacro1) {
                 const hooks = parentQuest.hooks;
                 if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');

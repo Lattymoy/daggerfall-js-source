@@ -22,10 +22,10 @@
 // PrecipitationOverride and SeverePunishmentFlags are here because
 // nothing else has them. The weather override stays inert - classic
 // never sets it - but SeverePunishmentFlags is LIVE both ways as of
-// the arrest arc: scenes/arrestFlow.js:421-424 sets bit 1 on
+// the arrest arc: scenes/arrestFlow.js:434-437 sets bit 1 on
 // banishment (DaggerfallCourtWindow.cs:272) and encounters.js:220
 // passiveGuardSpawns reads it every catch-up minute through
-// scenes/world.js:1667-1669 (PlayerEntity.cs:507).
+// scenes/world.js:1708-1710 (PlayerEntity.cs:507).
 
 /** PlayerEntity.RegionDataFlags (:1588-1619), all thirty. */
 export const REGION_FLAGS = Object.freeze({
