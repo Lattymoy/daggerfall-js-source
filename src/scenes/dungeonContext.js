@@ -1343,6 +1343,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // hostile, whether the bash opened it or not. The castle read is the
   // ActionSystem's own dep (above); this is the sink.
   actions.onMakeEnemiesHostile = () => makeEnemiesHostile(foes);
+  // AUDIT 63 F33: the same GameManager.MakeEnemiesHostile call, for the
+  // standalone host's ActivateMobileEnemy arm (PlayerActivate.cs
+  // :1667-1669 - the failed pickpocket's room-wide aggro).
+  const makeAreaHostile = () => makeEnemiesHostile(foes);
   let lastPlayerFeet = null, lastPlayerHeight = CAPSULE_HEIGHT;   // ROAD-H H2: the LIVE player capsule the last frame carried - explodeAt measures the AoE sphere against it (DaggerfallMissile.cs:481)
   // (enhancedNav is declared beside `foes` at the top of this function -
   // see the note there for why it cannot live here.)
@@ -4011,6 +4015,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dynamicDraws,
     actions,
     hudSay: (t) => hudText.add(t),   // R1: the host's one-line channel (the F1-F4 mode line)
+    hudBox: (rows) => pushDungeonWindow(new ActionTextBox(rows)),   // AUDIT 63 F33: DaggerfallUI.MessageBox, for the enemy arm's success boxes
+    randomText: (id) => textRsc?.randomTextById(id, Math.random) ?? '',   // AUDIT 63 F33: TextProvider.GetRandomText (:250-269) - the 8999 pool
+    makeAreaHostile,   // AUDIT 63 F33: GameManager.MakeEnemiesHostile over this host's pool
     collider,
     texRemap,
     billboardBatches,

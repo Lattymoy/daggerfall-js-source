@@ -54,7 +54,8 @@ import {
   ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
 } from './loot.js';
 import { equipItem } from './equip.js';
-import { guildGroupOfFaction, daySinceZero } from './guilds.js';
+import { guildGroupOfFaction, membershipKey, daySinceZero } from './guilds.js';
+import { createGuildForGroup } from './guildVariants.js';   // GuildManager.CreateGuildObj (:167-213)
 import { dateFromClassicMinutes } from './gameDate.js';
 import { createVampirismCurse } from './vampirism.js';
 import { createLycanthropyCurse } from './lycanthropy.js';
@@ -472,8 +473,25 @@ export function classicGuildMemberships(saveTree, factionDict, vampire = false) 
       const d = record.parsedData;
       const group = guildGroupOfFaction(factionDict, d.factionId);
       if (group == null || group < 0) continue;
-      book[group] = {
-        guild: factionDict?.get?.(d.factionId)?.name ?? '',
+      // AUDIT 63 F8: ImportMembershipData (GuildManager.cs:345-364)
+      // rebuilds the guild OBJECT - `CreateGuildObj(GetGuildGroup(
+      // factionID), factionID)` (:167-213) - and stores THAT in the
+      // group's slot, so the imported membership IS the FightersGuild /
+      // Temple(Arkay) / KnightlyOrder(Horn) instance and IsMember
+      // answers true. The port's slot carries the guild's NAME to say
+      // which temple or order fills the shared group slot
+      // (guilds.js:546-549 `membershipOf`), and that name has to be the
+      // PORT's guild-record name - the one joinGuild writes - not the
+      // FACTION.TXT record name ("The Fighters Guild", "Arkay"), which
+      // no consumer matches. `createGuildForGroup` is CreateGuildObj,
+      // including the templar-order walk to the divine; a group with no
+      // guild is DFU's `default: return null`, and the port's
+      // null-not-throw convention drops the row rather than storing a
+      // slot no consumer can read.
+      const guild = createGuildForGroup(group, d.factionId, factionDict);
+      if (!guild) continue;
+      book[membershipKey(guild)] = {
+        guild: guild.name,
         rank: d.rank,
         lastRankChange: daySinceZero(dateFromClassicMinutes(d.timeOfLastRankChange)),
       };

@@ -294,17 +294,25 @@ export function getReactionToPlayer(faction, player) {
   return reaction;
 }
 
-/** PlayerActivate.Pickpocket on a TOWNSPERSON, verbatim: tally the
- *  skill, roll the chance, 67% of successes pinch 1-6 gold (the
- *  Currency stack), 33% find nothing valuable (random text 8999);
- *  failure sets CrimeCommitted = Pickpocketing AND spawns the watch -
- *  G1 shipped that half, townTalk.js:512's `if (!r.success) onCrime?.()`
- *  into the single SpawnCityGuards entry (world.js:1713 _spawnGuards,
- *  exterior.js the same seam), which is PlayerActivate.cs:1656-1658's
- *  two lines in order. Enemy pickpocketing (PlayerActivate.cs:830-838)
- *  has no host arm yet: formulas.js's CalculatePickpocketingChance
- *  already takes targetLevel, so it is one call away from whatever
- *  gives the enemy activate ladder a steal mode.
+/** PlayerActivate.Pickpocket (:1611-1673), ONE law for both targets as
+ *  DFU has one method: tally the skill, roll the chance, 67% of
+ *  successes pinch 1-6 gold (the Currency stack), 33% find nothing
+ *  valuable (random text 8999); failure sets CrimeCommitted =
+ *  Pickpocketing AND spawns the watch - G1 shipped that half,
+ *  townTalk.js's `if (!r.success) onCrime?.()` into the single
+ *  SpawnCityGuards entry (world.js _spawnGuards, exterior.js the same
+ *  seam), which is PlayerActivate.cs:1654-1658's two lines in order.
+ *
+ *  AUDIT 63 F33: `target` is DFU's optional
+ *  `DaggerfallEntityBehaviour target = null`, and exactly two things
+ *  turn on it - the chance takes the enemy's level (:1621 ->
+ *  FormulaHelper.cs:262-265, `chance += 5 * (player.Level -
+ *  target.Level)`), and the crime/guard pair is skipped, because
+ *  :1655 gates it on `target == null // target is a townsperson`. The
+ *  ROOM's aggro that replaces it (:1661-1671) is the HOST's, beside
+ *  its motors. Everything else - the tally, the 33% split, the gold,
+ *  TallyCrimeGuildRequirements in the gold arm, the modal split - is
+ *  target-independent in DFU and stays so here.
  *  Returns { success, gold, message, modal } for the scene's UI
  *  routing. ROAD-D D10 added `modal`, and it is DFU's own split, not
  *  a convenience: BOTH success arms raise a real parchment
@@ -314,9 +322,10 @@ export function getReactionToPlayer(faction, player) {
  *  notSuccessfulMessage)` :1650) - the one arm that has to stay out
  *  of the way, because the guards are spawning behind it.
  *  rolls: Math.random-compatible (Random.Range + Dice100). */
-export function pickpocketTownsperson(player, { rolls = Math.random, nothingText = () => 'You found nothing valuable.' } = {}) {
+export function pickpocket(player, { target = null, rolls = Math.random, nothingText = () => 'You found nothing valuable.' } = {}) {
   tallySkill(player, SKILLS.Pickpocket, 1);
-  const chance = calculatePickpocketingChance(skillValue(player, SKILLS.Pickpocket), player.level, null);
+  const chance = calculatePickpocketingChance(skillValue(player, SKILLS.Pickpocket), player.level,
+    target ? target.level ?? 0 : null);
   if (dice100(chance, rolls())) {
     if (!dice100(33, rolls())) {   // Dice100.FailedRoll(33)
       const gold = Math.floor(rolls() * 6) + 1;   // Random.Range(0,6) + 1
@@ -335,7 +344,7 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
   // rides inline here - court.js imports THIS module, so the one
   // setter cannot be (a transformed werewolf cannot reach this window
   // anyway; the talk door refuses first).
-  if (!racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
+  if (!target && !racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
   return { success: false, gold: 0, modal: false, message: 'You are not successful.' };
 }
 

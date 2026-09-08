@@ -18,7 +18,7 @@
 // host must advance rather than reaching for a clock it does not own.
 import { SKILLS, skillValue, permanentSkillValue } from './skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from './advancement.js';
-import { FATIGUE_LOSS } from './statMods.js';
+import { FATIGUE_LOSS, liveStat } from './statMods.js';
 // AUDIT 39 F100: all three windows gate on GetGoldAmount (PlayerEntity.cs
 // :1313-1316 = goldPieces + letters of credit), never on the purse alone -
 // Training.cs:79, CureDisease.cs:122, Donation.cs:60 - and all three then
@@ -237,9 +237,17 @@ export function cureDiseaseOffer(entity, guild, membership, {
   // names the wrong holiday; the CODE tests North_Winds_Festival, and
   // the code is what ships.
   if (holidayId === HALF_PRICE_CURE_HOLIDAY) costBeforeBargaining = Math.trunc(costBeforeBargaining / 2);
+  // AUDIT 63 F11: CalculateTradePrice reads the player LIVE on both of
+  // its terms and on both of its branches - FormulaHelper.cs:1993
+  // (selling) and :1999 (buying) take `player.Stats.LivePersonality`,
+  // which is GetLiveStatValue(Personality) (DaggerfallStats.cs:55,
+  // :155-164) - beside the live Mercantile on the line above. The
+  // temple's customer is by definition diseased, and a disease's PER
+  // damage lives only in the mod channel, so the permanent read quoted
+  // a price that never moved.
   const cost = calculateTradePrice(costBeforeBargaining, quality, {
     mercantile: skillValue(entity, SKILLS.Mercantile),
-    personality: entity.stats?.personality ?? 50,
+    personality: entity.stats?.personality == null ? 50 : liveStat(entity, 'personality'),
   }, false);
   return {
     kind: 'offer', diseases: numberOfDiseases, cost, holidayId,

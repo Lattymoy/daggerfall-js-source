@@ -26,7 +26,12 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
+import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
+// AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
+// living-enemy arm of the activation ladder, in the two hosts this
+// file owns as well as the three outside it.
+import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
+import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
@@ -213,6 +218,7 @@ import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker; E8: on INFO01I0 art
+import { hasSpellbook } from '../systems/spellMaker.js';   // AUDIT 63 F12: MakeSpells' door gate (DaggerfallGuildServicePopupWindow.cs:391)
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
@@ -1593,9 +1599,16 @@ export function createWorldModes(host) {
    *  window, so the latch simply lives in it: its lifetime IS the
    *  window's, by construction, and no drain has to remember it. */
   function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}) {
+    // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
+    // BOTH branches - FormulaHelper.cs:1993 (selling) and :1999 (buying)
+    // take `player.Stats.LivePersonality` (DaggerfallStats.cs:55 ->
+    // GetLiveStatValue, :155-164) beside GetLiveSkillValue(Mercantile).
+    // Every price this host quotes - trade, keyed shelf, static-NPC
+    // service, spellbook buy mode, repair - goes through that one
+    // formula, so all of them read the stat at the same layer.
     const skills = () => ({
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality ?? 50,
+      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
     });
     return new NativeTradeWindow({
       mode,
@@ -1832,7 +1845,7 @@ export function createWorldModes(host) {
     const cost = calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
     return calculateTradePrice(cost, b.quality, {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality ?? 50,
+      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
     }, false);
   }
   // E3: the sell offer - CalculateCost(value)*stack through the
@@ -1843,7 +1856,7 @@ export function createWorldModes(host) {
     const cost = calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
     return calculateTradePrice(cost, b.quality, {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality ?? 50,
+      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
     }, true);
   }
   // ── U23: THE STATIC NPC SEAM ────────────────────────────────────
@@ -2729,7 +2742,7 @@ export function createWorldModes(host) {
         : false),
       skills: () => ({
         mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-        personality: playerEntity.stats?.personality ?? 50,
+        personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
       }),
       // SetHealth, through the entity's own ceiling.
       heal: (n) => { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); },
@@ -3292,11 +3305,13 @@ export function createWorldModes(host) {
       return openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
     }
     // S1: the spell maker. DFU pushes its own singleton window from
-    // the service popup (DaggerfallGuildServicePopupWindow:389-394);
-    // the port mounts the keyed window in the interior slot. The
-    // spellbook check lives in the purchase ladder, where DFU also
-    // runs it (the window opens either way, as DFU's does once the
-    // popup's own check passes).
+    // the service popup (DaggerfallGuildServicePopupWindow:389-395);
+    // the port mounts the keyed window in the interior slot. DFU runs
+    // the spellbook test TWICE - once at the door (:391, which decides
+    // whether the maker opens at all) and once in the purchase ladder
+    // (DaggerfallSpellMakerWindow.cs:749-753, "Presence of spellbook is
+    // also checked earlier") - and the port carries both: the door
+    // gate below, the ladder's at spellMaker.js validateSpellPurchase.
     // M2: the potion maker. Same seam as the spell maker below - the
     // temple and Mages Guild both offer it - and M2 wired the
     // destination immediately below: PotionMakerWindow in the interior
@@ -3396,7 +3411,7 @@ export function createWorldModes(host) {
         shopName: () => b?.name ?? '',
         skills: () => ({
           mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-          personality: playerEntity.stats?.personality ?? 50,
+          personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
         }),
         classicMinutes: () => Math.floor(worldMinutes()),
         rows,
@@ -3413,6 +3428,15 @@ export function createWorldModes(host) {
     // the host's TEXT.RSC reader - the five boxes this window shows
     // are classic records 1702-1708.
     if (destination === 'guildServiceSpellMaker' && spellMakerArtLoaded() && _shopFont) {
+      // AUDIT 63 F12: DaggerfallGuildServicePopupWindow.cs:389-395 -
+      // `CloseWindow()` FIRST, then the branch, so the refusal box
+      // stands over a CLOSED popup either way. Without a
+      // MiscItems.Spellbook in the pack the maker never opens and the
+      // door prints the localized "noSpellbook" string
+      // (Internal_Strings.csv:656), not the ladder's TEXT.RSC 1703.
+      if (!hasSpellbook(playerEntity)) {
+        return { rows: [{ text: 'You have no spellbook!', center: true }], closesWindow: true };
+      }
       let makerWin = null;
       makerWin = new SpellMakerWindow({
         entity: playerEntity,
@@ -3518,7 +3542,7 @@ export function createWorldModes(host) {
       priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0),
     }) * (it.stackCount ?? 1);
     // GetTradePrice: Repair shares the Buy branch (:497-498)
-    return calculateTradePrice(raw, b?.quality ?? 0, { mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality ?? 50 }, false);
+    return calculateTradePrice(raw, b?.quality ?? 0, { mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality') }, false);
   }
   /** D7: the native INVE12I0 Repair screen when the art is up, the
    *  keyed list when it is not - the same split openShelf takes for
@@ -3714,9 +3738,14 @@ export function createWorldModes(host) {
     [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const objAabb = (o) => worldAabb(o.cpu.positions, o.matrix);
 
-  async function tryEnter() {
-    const eye = player.eye;
-    const dir = eyeDir();
+  /** AUDIT 63 F33 (review round): the exterior activation ray's whole
+   *  target set, split out of tryEnter so the living-foe arm can be
+   *  decided AGAINST it. DFU dispatches ActivateMobileEnemy (:419)
+   *  only for the one thing its single ray hit (:314), so a door, a
+   *  street NPC or a bulletin board nearer than the foe takes the
+   *  click - the two exterior hosts cannot answer that without the
+   *  distance this set resolves to. */
+  function exteriorActivationTargets() {
     const entries = doorTargets();
     const targets = entries.map((entry, i) => ({
       key: i, aabb: doorWorldAabb(entry.door),
@@ -3749,6 +3778,22 @@ export function createWorldModes(host) {
     // but not reach therefore consumes the click, exactly as C# does.
     const boards = boardTargets?.() ?? [];
     boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE }));
+    return { entries, npcs, boards, targets };
+  }
+
+  /** The distance the exterior ray's nearest activatable sits at, or
+   *  Infinity - the rival the living-foe arm must beat (AUDIT 63 F33).
+   *  The host passes ITS ray (the tap's, or the crosshair's) so the two
+   *  picks are measured along one line, as DFU's one raycast is. */
+  function exteriorActivationDistance(eye = player.eye, dir = eyeDir()) {
+    if (mode !== 'exterior') return Infinity;
+    return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider())?.distance ?? Infinity;
+  }
+
+  async function tryEnter() {
+    const eye = player.eye;
+    const dir = eyeDir();
+    const { entries, npcs, boards, targets } = exteriorActivationTargets();
     const key = pickActivatable(eye, dir, targets, baseCollider());
     if (key === null) return false;
     // ...and the NPC arm ENDS the activation, exactly as the interior
@@ -4277,6 +4322,24 @@ export function createWorldModes(host) {
       const f = pickFoe(eye, dir, interiorFoePool(), interiorCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
     }
+    // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
+    // the arm this ladder never had - a LIVING foe under the ray was
+    // not an activation target in any host. The NEAR call is decided
+    // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
+    // enemy check (:419) only for the one thing its single ray hit
+    // (:314), so a nearer door, chest, shelf, lever or static NPC
+    // takes the click and the foe behind it does not. The FAR call
+    // sits at the bottom of the ladder for the Info line and the
+    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    const _enemyArm = (reach, nearerThan = Infinity) => (interiorCtx ? tryMobileEnemyActivate(eye, dir, interiorFoePool(), interiorCtx.collider,
+      reach, getInteractionMode(), playerEntity, {
+        nearerThan,
+        hud: (t) => say(t),
+        modal: (t) => mountInterior(new ActionTextBox(String(t).split('\n'))),
+        makeEnemiesHostile: () => makeEnemiesHostile(interiorEnemyDatabase()),
+        playerFeet: player.pos,
+        nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
+      }) : false);
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
     const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
@@ -4314,8 +4377,15 @@ export function createWorldModes(host) {
     // port's picker simply does not select it, so a too-far click
     // falls through to whatever is behind it and says nothing.
     targets.push(...questFlatTargets(questFlats));
-    const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
-    if (key === null) return false;
+    const _pick = pickActivatableHit(eye, dir, targets, interiorCtx.collider);
+    // AUDIT 63 F33 (review round): the NEAR half, now that the ladder
+    // has produced its candidate - the foe consumes only below it.
+    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    const key = _pick?.key ?? null;
+    // nothing else took the click: the FAR half of the enemy arm
+    // (PlayerActivate.cs:806-826 has no distance gate at all, and
+    // :832-836 is the pickpocket's own refusal).
+    if (key === null) return _enemyArm(RAY_DISTANCE);
     if (key.startsWith('ladder:')) {
       // Verbatim ClimbLadder: closest markers, below-top -> top,
       // above-bottom -> bottom.
@@ -4700,6 +4770,24 @@ export function createWorldModes(host) {
       const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
     }
+    // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
+    // the arm this ladder never had - a LIVING foe under the ray was
+    // not an activation target in any host. The NEAR call is decided
+    // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
+    // enemy check (:419) only for the one thing its single ray hit
+    // (:314), so a nearer exit door, lever, chest or lootable corpse
+    // takes the click and the foe behind it does not. The FAR call
+    // sits at the bottom of the ladder for the Info line and the
+    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    const _enemyArm = (reach, nearerThan = Infinity) => (dungeonCtx ? tryMobileEnemyActivate(eye, dir, dungeonCtx.foes, dungeonCtx.collider,
+      reach, getInteractionMode(), playerEntity, {
+        nearerThan,
+        hud: (t) => say(t),
+        modal: (t) => mountInterior(new ActionTextBox(String(t).split('\n'))),
+        makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
+        playerFeet: player.pos,
+        nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
+      }) : false);
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
@@ -4710,8 +4798,13 @@ export function createWorldModes(host) {
     // same shape (one factory builds both lists), and PlayerActivate
     // has no scene gate on the quest-resource arm at all (:326-339).
     targets.push(...questFlatTargets(dungeonQuestFlats));
-    const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
-    if (key === null) return false;
+    const _pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
+    // AUDIT 63 F33 (review round): the NEAR half, decided against the
+    // ladder's candidate - the foe consumes only when strictly nearer.
+    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    const key = _pick?.key ?? null;
+    // the FAR half of the enemy arm, once nothing else has taken it
+    if (key === null) return _enemyArm(RAY_DISTANCE);
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
     if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
@@ -7337,6 +7430,7 @@ export function createWorldModes(host) {
       return mode === 'interior';
     },
     tryEnter,
+    exteriorActivationDistance,   // AUDIT 63 F33 (review): the rival distance the living-foe arm must beat
     attemptExteriorDoorBash,   // ROAD-B: WeaponEnvDamage's static-door arm (PlayerActivate.cs:1056-1079)
     frame,
     installShotProbes,

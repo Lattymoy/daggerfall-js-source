@@ -18,8 +18,8 @@
 //   beyond the player's gold converts to days at 40/day.
 // - Guilty (type 2): fine >>= 1, days >>= 1, deduct, serve or walk.
 //   Not guilty: Debate (Etiquette) or Lie (Streetwise), tally;
-//   chance = legalRep + (skill + Personality)/2 clamp 5..95; fail ->
-//   guilty with the fine roll (legalRep + Dice100: < 25 fine x2,
+//   chance = legalRep + (skill + LIVE Personality)/2 clamp 5..95;
+//   fail -> guilty with the fine roll (legalRep + Dice100: < 25 fine x2,
 //   > 75 fine >>= 1); pass -> free to go.
 // - Serving/banishment raise rep by half the crime's loss - 1
 //   (RaiseReputationForDoingSentence; the classic double-raise on
@@ -52,6 +52,7 @@ import { changeReputation } from './factionRep.js';     // S25
  *  every crime write goes through (V4): a transformed lycanthrope is
  *  never tagged - SuppressCrime turns the write into Crimes.None. */
 import { racialSuppressCrime } from './lycanthropy.js';
+import { liveStat } from './statMods.js';   // DaggerfallStats.GetLiveStatValue (:155-164)
 export function setCrimeCommitted(entity, crime) {
   entity.crimeCommitted = racialSuppressCrime(entity) ? 0 : crime;
   return entity.crimeCommitted;
@@ -426,7 +427,14 @@ export function pleaNotGuilty(court, player, useDebate, { rolls = Math.random } 
   const playerSkill = skillValue(player, skillId);
   tallySkill(player, skillId, 1);
   const legalRep = legalRepOf(player, court.regionIndex);
-  let chance = legalRep + Math.trunc((playerSkill + (player.stats?.personality ?? 50)) / 2);
+  // AUDIT 63 F10: DaggerfallCourtWindow.cs:385-386 reads the stat LIVE -
+  // `Stats.GetLiveStatValue(DFCareer.Stats.Personality)` - beside the live
+  // skill already taken at :376/:381, so a fortified or drained defendant
+  // is tried on the modified value. liveStat is that reader
+  // (DaggerfallStats.cs:155-164). The `== null` guard keeps the port's
+  // no-stats fallback of 50: liveStat falls back to a base of 0.
+  const personality = player.stats?.personality == null ? 50 : liveStat(player, 'personality');
+  let chance = legalRep + Math.trunc((playerSkill + personality) / 2);
   chance = Math.max(5, Math.min(95, chance));
   if (Math.floor(rolls() * 100) >= chance) {   // FailedRoll
     // The same three-way cascade, on the failed defense (:394-402).

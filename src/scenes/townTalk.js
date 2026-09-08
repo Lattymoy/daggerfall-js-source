@@ -44,7 +44,7 @@ import { overlayAction, actionOf } from '../ui/input.js';   // AUDIT 58: the mod
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
-  getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
+  getPeopleOfCurrentRegion, getReactionToPlayer, pickpocket, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
 // AUDIT 58 (talk lane): the reach refusal is ONE localized key -
@@ -614,7 +614,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (target.person.pickpocketAttempted) return;
       if (dist > PICKPOCKET_DISTANCE) { hud.add(TOO_FAR_AWAY_TEXT); return; }
       target.person.pickpocketAttempted = true;
-      const r = pickpocketTownsperson(playerEntity, {
+      const r = pickpocket(playerEntity, {
         rolls,
         nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
       });

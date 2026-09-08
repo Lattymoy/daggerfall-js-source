@@ -64,7 +64,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
-import { createTownTalk } from './townTalk.js';   // T3b
+import { createTownTalk, rayPersonDistance } from './townTalk.js';   // T3b   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
@@ -89,7 +89,11 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createExteriorFoes } from './exteriorFoes.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
+import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
+// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
+import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
+import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
@@ -155,6 +159,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
 import { activeMemberships } from '../systems/guilds.js';   // F117
+import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';   // QX1: the quest layer's reputation doors
@@ -3255,6 +3260,23 @@ export async function bootExterior(canvas, renderer, params, status) {
   // arming edge is here rather than on a poll. Without it a graveyard
   // opened as ?exterior was silent while the streaming host howled.
   ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+  // AUDIT 63 F9 (the same host rule, the other law): a Thieves Guild or
+  // Dark Brotherhood member's RegisterEvents (ThievesGuild.cs:197-206,
+  // DarkBrotherhood.cs:206-215) subscribes StreamingWorld
+  // .OnAvailableLocationGameObject as well as the rect entry, and both
+  // handlers run RevealGuildHallOnMap (:227-234 / :236-243). This host
+  // has one location and it becomes available exactly once, at load -
+  // the same edge the graveyard arming above takes - so the reveal
+  // fires here. The name is GetAffiliation's FACTION.TXT read
+  // (Guild.cs:170-176), so it waits on the faction file the way the
+  // static-NPC door does (worldModes.js's ensureFactions arm).
+  Promise.resolve(townTalk.ensureFactions?.()).then(() => {
+    revealGuildHallsOnMap(activeMemberships(playerEntity),
+      `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
+      buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
+        { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex) }),
+      { factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '' });
+  }).catch(() => {});
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
@@ -3540,15 +3562,46 @@ export async function bootExterior(canvas, renderer, params, status) {
         // toggled, and the activation ends there - the ladder has no
         // arm for a living enemy but the quest one above, which ran.
         const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, exteriorFoePool(), collider, LOCK_PICK_DISTANCE) : null;
+        // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
+        // this host's copy of the arm - the four-hosts rule, and the
+        // pickpocket of a class enemy is the same law in every one of
+        // them. AUDIT 63 F33 (review round): the NEAR call is decided
+        // against the REST OF THE LADDER by distance, not run ahead of
+        // it - DFU casts ONE ray (:314) and reaches the enemy check
+        // (:419) only for the thing that ray hit, so a townsperson, a
+        // corpse, a pile, a street NPC, a board or a door standing
+        // nearer than the foe takes the click. FAR after the ladder has
+        // found nothing at all.
+        const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
+          exteriorFoePool(), collider, reach, getInteractionMode(), playerEntity, {
+            nearerThan,
+            hud: (t) => townTalk.say(t),
+            modal: (t) => townTalk.showOverlay(new ActionTextBox(String(t).split('\n'))),
+            makeEnemiesHostile: _makeEnemiesHostile,
+            playerFeet: walkMode ? player.pos : cam.pos,
+            nothingText: () => townTalk.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
+          });
+        // AUDIT 24 (wave 38)'s law, on this host: BOTH corpse pools go
+        // into ONE pick, because which body you open is
+        // PlayerActivate's nearest hit and not which pool the host
+        // happens to ask first.
+        const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
+        const _lootPick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider);
+        const _dropPick = _lootPick ? null : pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+        // The rival the foe must beat: the corpse and pile picks above,
+        // the street's townsfolk (townTalk's own cylinder pick) and the
+        // door/NPC/board set the interior transition picks from.
+        const _rivalDist = Math.min(
+          _lootPick?.distance ?? Infinity,
+          _dropPick?.distance ?? Infinity,
+          ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
+          modes.exteriorActivationDistance(cam.pos, useFwd),
+        );
         if (_lockFoe) lockOn.toggle(_lockFoe);
+        else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
         else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-          // AUDIT 24 (wave 38)'s law, on this host: BOTH corpse pools go
-          // into ONE pick, because which body you open is
-          // PlayerActivate's nearest hit and not which pool the host
-          // happens to ask first.
-          const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-          const lootKey = pickActivatable(cam.pos, useFwd, corpseTargets, collider);
-          const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+          const lootKey = _lootPick?.key ?? null;
+          const dropKey = _dropPick?.key ?? null;
           if (lootKey) { (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
           // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
           // because the door handed every LOOT call the classic window,
@@ -3569,6 +3622,8 @@ export async function bootExterior(canvas, renderer, params, status) {
               loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
             }));
           }
+          // AUDIT 63 F33: the FAR half - nothing else took the click.
+          else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
           else modes.tryEnter().catch((e) => console.error(e));
         }
       }

@@ -300,9 +300,12 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const w = rd(f);
     assert.match(w, /const corpseTargets = \[\.\.\.cityGuards\.lootTargets\(\), \.\.\.exteriorFoes\.lootTargets\(\)\]/, f);
-    assert.match(w, /pickActivatable\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
+    // AUDIT 63 F33 (review round): the pick hands its DISTANCE back now
+    // (pickActivatableHit), because the living-foe arm has to lose to a
+    // nearer corpse - still ONE pick over the two pools.
+    assert.match(w, /pickActivatableHit\(cam\.pos, useFwd, corpseTargets, collider\)/, f);
     assert.match(w, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/, f);
-    assert.doesNotMatch(w, /pickActivatable\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
+    assert.doesNotMatch(w, /pickActivatableHit?\(cam\.pos, useFwd, cityGuards\.lootTargets\(\), collider\)/,
       `${f}: the watch-only pick is gone`);
   }
 

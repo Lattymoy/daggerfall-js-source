@@ -5725,3 +5725,307 @@ moves. `test/x11.test.js`'s position pin moves with the law (3.35 over
 feet at 2, and 0.675 crouched) and dies when the term is dropped. The
 `LightNormal.cs` line cites in `CANDLE` were seven lines stale against
 the reference tree and are re-resolved (`:89`, `:96`).
+
+## AUDIT 63 F8 - A CLASSIC IMPORT LOST EVERY GUILD MEMBERSHIP IT CARRIED (2026-09-08)
+
+`GuildManager.ImportMembershipData` (`GuildManager.cs:345-364`) does not
+copy a membership record: it REBUILDS the guild, `CreateGuildObj(
+GetGuildGroup(factionID), factionID)` (`:167-213`), and stores the
+OBJECT in the group's slot - so an imported membership IS the
+FightersGuild / Temple(Arkay) / KnightlyOrder(Horn) instance and
+`IsMember()` answers true.
+
+The port's slot carries the guild's NAME instead, because the key is the
+GROUP and one HolyOrder slot has to remember WHICH temple
+(`systems/guilds.js` `membershipKey` / `membershipOf`). `joinGuild`
+writes the port's guild-record name; `classicGuildMemberships` wrote the
+FACTION.TXT record name - "The Fighters Guild", "Arkay", "The Host of
+the Horn" - and the two vocabularies are disjoint. Every name-keyed
+consumer therefore took the NON-MEMBER arm for an imported character
+while the group slot stayed occupied: `updateRank` bailed so rank never
+moved again, `canAccessService` refused Training and Repair as
+"members only", Stendarr's `avoidDeath` and Akatosh's `guildFastTravel`
+never fired, the knightly free tavern room never fired - and
+`showsJoinButton` reads only the slot's rank, so the hall still drew the
+MEMBER face with no Join button. The player looked like a member and
+was refused everything, with no in-game way back in.
+
+`buildBook` resolves the guild the way `CreateGuildObj` does now -
+`createGuildForGroup(group, factionId, factionDict)`, the port's mirror
+including the templar-order walk to the divine - and stores ITS name,
+keyed by `membershipKey(guild)` so the import and the walk-in join
+cannot drift apart. A group with no guild is DFU's `default: return
+null`, which the port drops rather than filing a slot no consumer can
+read (DFU stores the null and NREs at `guild.Join()`).
+
+`test/classicsave.test.js`'s SAV2 pin used to assert the FACTION.TXT
+string - a pin that restated the port. It asserts the guild record's
+name and then reads it back through `hasJoined`, and the fixture grew a
+second live row on a TEMPLAR ORDER's faction id (FACTION.TXT's own shape:
+`:612` Arkay carries `ggroup -1`, its child `:629` The Order of Arkay
+carries 17) so the HolyOrder parent walk - the arm whose name was
+farthest off - is pinned too.
+
+## AUDIT 63 F9 - THE THIEVES GUILD AND DARK BROTHERHOOD HALLS WERE NEVER ON THE MAP (2026-09-08)
+
+Both guilds override `Join()` to register two location events and reveal
+their hall at once (`ThievesGuild.cs:168-173`, `DarkBrotherhood.cs
+:177-182`); `RegisterEvents` (`:197-206` / `:206-215`) subscribes
+`PlayerGPS.OnEnterLocationRect` and
+`StreamingWorld.OnAvailableLocationGameObject`, both handlers re-run the
+reveal (`:227-234` / `:236-243`), `Leave()` is `UnregisterEvents` alone,
+and `RestoreGuildData` (`:253-257` / `:262-266`) re-registers on load
+without revealing. `RevealGuildHallOnMap` (`:241-247` / `:250-256`)
+walks `BuildingDirectory.GetBuildingsOfFaction(factionId)`
+(`BuildingDirectory.cs:147-154`) and calls
+`PlayerGPS.DiscoverBuilding(building.buildingKey, GetGuildName())`.
+
+None of it was ported. The port had no faction-driven discovery at all,
+and a hideout is an unsigned House2 RESIDENCE - the door already gates on
+membership (`systems/buildingLocks.js`, `PlayerActivate.cs:1280-1285`) -
+so a member's own guild house was drawn nameless on the town map for
+ever, with no way to find it again.
+
+Two halves landed. First `PlayerGPS.DiscoverBuilding`'s OVERRIDE-NAME arm
+(`Internal/PlayerGPS.cs:917-973`), which `systems/discovery.js` did not
+have: an override ignores the already-discovered bail (`:927` is gated on
+`overrideName == null`), stashes the canonical name once
+(`if (!db.isOverrideName) db.oldDisplayName = db.displayName`, `:965-966`),
+sets `displayName` and `isOverrideName` (`:967-968`), and clears the flag
+again when the override says nothing new (`:971-972`). That flag is
+load-bearing: `ExteriorAutomap.cs:672-680`'s `!IsResidence ||
+isOverrideName` is the only thing that puts a plate on a residence, and
+the port's plate builder already implements it - it had no writer.
+
+Then the reveal itself, `systems/guildHallReveal.js`, over the FULL
+building set (`world/buildingSummaries.js`, which carries `factionId` and
+`buildingKey` per row - the talk directory is doors, the wrong pool), with
+the guild name READ rather than restated: `GetGuildName -> GetAffiliation`
+(`Guild.cs:165-176`) is FACTION.TXT's own name for faction 42 / 108. The
+port has no event bus, so the membership book IS the registration - the
+state `Join` writes and `Leave`/expulsion drops. Both exterior hosts drive
+it, at DFU's own moments: `scenes/world.js` on the join
+(`guildInitiationQuestEnded`, the port's only door into either guild) and
+on every location-rect entry - the same edge F062/F089 already play - and
+`scenes/exterior.js` once at load, because its one location becomes
+available exactly once, the precedent that host already sets for the
+graveyard ambient arming.
+
+## AUDIT 63 F10 - THE COURT TRIED A DRAINED DEFENDANT ON HIS UNDRAINED CHARM (2026-09-08)
+
+`DaggerfallCourtWindow.cs:385-386`:
+
+    int chanceToGoFree = playerEntity.RegionData[regionIndex].LegalRep +
+        (playerSkill + playerEntity.Stats.GetLiveStatValue(DFCareer.Stats.Personality)) / 2;
+
+Both halves of that sum are LIVE reads - `playerSkill` is
+`GetLiveSkillValue(Etiquette/Streetwise)` at `:376`/`:381`. The port read
+the skill live and the stat off `player.stats`, the PERMANENT map, so a
+Fortify Personality spell or a Personality-draining disease moved DFU's
+chance by half its magnitude and the port's not at all. `liveStat`
+(`systems/statMods.js`, the port of `DaggerfallStats.cs:155-164`) was
+already the reader everywhere else this stat is used. The `== null` guard
+keeps the port's no-stats fallback of 50 - `liveStat` falls back to a base
+of 0, so `liveStat(...) ?? 50` would have silently changed it.
+
+## AUDIT 63 F11 - CALCULATETRADEPRICE READ THE PERMANENT PERSONALITY AT EVERY CALLER (2026-09-08)
+
+`FormulaHelper.CalculateTradePrice` reads the player twice per branch and
+all four reads are live: `:1993` (selling) and `:1999` (buying) take
+`player.Stats.LivePersonality` beside `GetLiveSkillValue(Mercantile)`.
+The port passed the live Mercantile and the permanent Personality - two
+halves of one formula at two different layers - at all seven call sites:
+the temple's cure quote (`systems/guildServiceActions.js`) and the six in
+`scenes/worldModes.js` (the native trade window, the keyed shelf's buy and
+sell, the static-NPC service, the spellbook's buy mode, and repair).
+`systems/tavern.js` and `systems/tradeModes.js` take the object from their
+caller and needed no change.
+
+It is worst exactly where the service exists for it: the temple's customer
+is by definition diseased, seven of the seventeen diseases damage
+Personality, and the damage lives only in the mod channel. The buying
+branch is `(100 - LivePersonality)`, so DFU quotes a drained player MORE
+and the port quoted him the undrained price. All seven read `liveStat`
+now, and the pin drives a real drain and a real fortify through the real
+quote - the old pins all used Personality 50 with no active effects,
+where live and permanent agree, which is why they never caught it.
+
+## AUDIT 63 F12 - THE SPELL MAKER OPENED FOR A PLAYER WITH NO SPELLBOOK (2026-09-08)
+
+DFU tests for the spellbook TWICE. Once at the service door -
+`DaggerfallGuildServicePopupWindow.cs:389-395`: `CloseWindow()`, then
+`Items.Contains(ItemGroups.MiscItems, (int)MiscItems.Spellbook)` decides
+whether the maker is pushed at all, and without it the popup prints the
+localized `noSpellbook` string ("You have no spellbook!",
+`Internal_Strings.csv:656`). And once inside the window's Buy ladder
+(`DaggerfallSpellMakerWindow.cs:749-753`, whose own comment reads
+"Presence of spellbook is also checked earlier" - it names the door).
+
+The port had only the inner one, and its note beside the arm claimed
+parity: "the window opens either way, as DFU's does once the popup's own
+check passes" - describing a check the port never had. A Mages Guild
+member who had sold his book got the whole maker screen and was refused
+at Buy with TEXT.RSC 1703, where DFU closes the popup and boxes one line.
+The door gate is in, `hasSpellbook` is exported for it, the refusal
+carries `closesWindow: true` because DFU's `CloseWindow()` runs on BOTH
+branches, and the Buy-ladder gate stays exactly as it was - DFU keeps
+both.
+
+## AUDIT 63 F33 - A CLASS ENEMY COULD NOT BE PICKPOCKETED IN ANY HOST (2026-09-08)
+
+`PlayerActivate.ActivateMobileEnemy` (`:800-841`) had no port at all. A
+LIVING foe was not an activation target anywhere in the tree - the only
+foe the ray could reach was a corpse - so Info/Grab/Talk said nothing
+about the thing in front of you, and Steal mode could not pickpocket a
+class enemy. `CalculatePickpocketingChance`'s level-difference arm
+(`FormulaHelper.cs:262-265`, `chance += 5 * (player.Level - target.Level)`)
+was ported with exactly one caller in the tree, and that caller passed
+null: the arm was dead in the app while its pure-function pin stayed
+green.
+
+The law, in one place (`player/mobileEnemyActivate.js`) because five
+ladders carry it. Info, Grab and Talk pop `youSeeA`/`youSeeAn` with the
+localized enemy name and the vowel test over its first letter
+(`:806-826`), with no distance gate of any kind. Steal breaks out
+silently for a monster (`:827-828`, EnemyClass only), and then the
+distance test is NESTED INSIDE the attempt flag (`:830-836`) - an
+already-tried foe produces NO output at any range, the same nesting
+AUDIT 26 F048 forced on the townsperson arm - before the flag is set
+and `Pickpocket(mobileEnemyBehaviour)` runs.
+
+`Pickpocket` is ONE method in DFU with an optional target (`:1611-1673`),
+so `systems/talk.js`'s `pickpocketTownsperson` became that one law,
+`pickpocket(player, { target })`. Exactly two things turn on the target:
+the chance takes the enemy's level, and the crime/guard pair is skipped
+(`:1655` gates it on `target == null`). Everything else - the tally
+before the roll, the 33% split, the 1-6 gold, `TallyCrimeGuildRequirements`
+in the gold arm, the modal/HUD split - is target-independent in DFU and
+stays so. The enemy's failure tail replaces the crime with the room:
+`if (!IsHostile) MakeEnemiesHostile();` then
+`MakeEnemyHostileToAttacker(player)` (`:1661-1671`), the hostility read
+BEFORE the walk because the walk flips this foe too.
+`resetAllyTeamOnPlayerAttack` is NOT part of it - that belongs to
+`DaggerfallEntityBehaviour`'s damage path, and Pickpocket does not call
+it.
+
+All five ladders carry the arm - `scenes/world.js`, `scenes/exterior.js`,
+both of `scenes/worldModes.js`, and `scenes/dungeon.js`. Each calls it
+TWICE, and that is the port's shape rather than DFU's: DFU has ONE
+raycast and dispatches on what it hit, so an enemy wins only when it is
+the nearest hit, while the port picks each kind of target from its own
+pool. The NEAR call is decided against the rest of the ladder BY
+DISTANCE (see the review-round section below); the FAR call runs only
+once the ladder has found nothing at all, which is where DFU's un-gated
+Info line and the pickpocket's `youAreTooFarAway` live.
+
+The attempt flag rides the live foe entity and is NOT serialized:
+`PickpocketByPlayerAttempted` is read and written by `PlayerActivate`
+alone in the whole DFU tree and appears in no save record, so persisting
+it would itself be a departure.
+
+
+## AUDIT 63 F33 (REVIEW ROUND) - THE NEAR ENEMY CALL DISPATCHED FOE-FIRST, NOT NEAREST-HIT (2026-09-08)
+
+The first pass of F33 placed `tryMobileEnemyActivate(..., DEFAULT_ACTIVATION_DISTANCE, ...)`
+AHEAD of every ladder and let it consume unconditionally on any live foe
+inside 3.2 units. Its own justification - that the near call runs "at the
+reach every other target below is gated to, so the enemy takes the click
+only where DFU's one raycast would have hit it first" - was false: sharing
+a reach is not the same as being nearer, and the call never compared its
+hit distance with anything. A chest at 0.8 units and a Knight at 2.55 are
+both inside the band, and the foe took the click. That is the very failure
+the section claimed to avoid, reproduced inside the near band where it is
+far more common: a dungeon fight in front of a lever, a chest, a lootable
+corpse or a static NPC.
+
+DFU cannot do this. `PlayerActivate.Update` fires ONE ray
+(`:314`, `Physics.Raycast(ray, out hit, RayDistance, playerLayerMask)`)
+and every check in the Hit Checks region reads `hit.transform` off that
+single `RaycastHit` - the action door (`:374`), the loot container
+(`:388`), the static NPC (`:402`), the mobile NPC (`:412`) and, last,
+`MobileEnemyCheck` (`:419`, `:1243-1248`). `ActivateMobileEnemy` (`:800`)
+is reached ONLY when the foe is the thing the ray actually struck, so a
+chest at arm's length always beats a foe standing behind it, at every
+range.
+
+The port has no unified raycast, so a host has to answer the same
+question by comparing distances. `player/activate.js` gains
+`pickActivatableHit`, the same pick returning `{key, distance}`
+(`pickActivatable` is now one line over it), and
+`tryMobileEnemyActivate` takes `deps.nearerThan` - the distance of
+whatever the rest of the ladder picked, Infinity when it picked nothing.
+The foe consumes only when STRICTLY nearer.
+
+Each of the five ladders was re-ordered so its own pick happens before
+the near call rather than after it:
+
+- `scenes/dungeon.js` and both ladders in `scenes/worldModes.js` run
+  `pickActivatableHit` over the whole target set first and pass its
+  distance in; the winning key is then read off the same pick, so the
+  ray is cast once as before.
+- `scenes/world.js` and `scenes/exterior.js` compare against everything
+  their ladder can strike: the two corpse pools' pick, the dropped-pile
+  pick, the street's townsfolk (`townTalk.rayPersonDistance`, the
+  cylinder pick `tryActivate` itself uses) and the door/street-NPC/
+  bulletin-board set the interior transition picks from. That last one
+  needed a seam: `tryEnter`'s target build is now
+  `exteriorActivationTargets()`, and `exteriorActivationDistance(eye, dir)`
+  resolves it to one distance along the HOST's ray so both picks are
+  measured on one line, as DFU's one raycast is.
+
+The FAR call is unchanged - un-gated, at RayDistance, once nothing else
+took the click - because that is where `:806-826`'s Info line and
+`:832-836`'s `youAreTooFarAway` live.
+
+The pin is the scene the reviewer built: a chest AABB entered at 0.8 and
+a live Knight entered at 2.55, both under one ray. The foe alone is a hit
+and speaks; with the chest's 0.8 as `nearerThan` it must return false and
+say nothing, in Grab and in Steal (where `:837`'s attempt flag must also
+stay unset), and it must still take a click when the ladder's winner sits
+at 3.0. The source sweep now also requires every one of the five near
+calls to be handed a rival distance.
+
+## AUDIT 63 F33 (REVIEW ROUND) - THE "NO CRIME FOR AN ENEMY TARGET" PIN WAS VACUOUS (2026-09-08)
+
+The line meant to hold `:1654-1658` (`if (target == null) // target is a
+townsperson`, then `CrimeCommitted` and `SpawnCityGuards(true)`) read
+`assert.equal(thief().crimeCommitted, undefined)`. `thief()` is the
+fixture FACTORY: it built a brand-new player that no pickpocket had ever
+touched, so the assertion was true for any implementation. Writing
+`player.crimeCommitted = 'Pickpocketing'` into the enemy failure arm -
+the exact departure DFU forbids - left the suite green.
+
+The assertion now reads the entity the arm actually ran against (the
+player passed into the failing `activateMobileEnemy` call), and its twin
+asserts the TOWNSPERSON arm - `pickpocket(player, {})` with the same
+failing roll - DOES set `crimeCommitted`. The pin now distinguishes the
+two arms instead of restating that a fresh object has no fields, and dies
+under both mutations: writing the crime on the enemy arm, and deleting it
+from the townsperson arm.
+
+## AUDIT 63 F9 (REVIEW ROUND) - THE STREAMING HOST REVEALED BEFORE FACTION.TXT WAS READ (2026-09-08)
+
+`GetGuildName` is `GetAffiliation` (`Guild.cs:165-176`), a read of
+`PlayerEntity.FactionData` with `"unknown-guild"` (`:175`) returned when
+`GetFactionData` finds no record. That fallback answers a MISSING
+RECORD - `FactionData` is parsed long before any guild object exists in
+DFU, so `GetAffiliation` cannot be reached with the faction file unread.
+
+`scenes/exterior.js` already waited on the file
+(`Promise.resolve(townTalk.ensureFactions?.()).then(...)`).
+`scenes/world.js` did not: it only fire-and-forgets `townTalk.ensureLoaded()`
+at boot, and the enter-rect edge that drives `revealMemberGuildHalls`
+could run first. `factionName` would then resolve empty,
+`revealGuildHallsOnMap` would substitute the literal `'unknown-guild'`,
+and the override arm would write `displayName: 'unknown-guild',
+isOverrideName: true` into a discovery record that `snapshotDiscovery`
+saves - a placeholder plate on the town map surviving the load, until
+some later rect entry happened to re-override it. The two hosts did not
+carry one law.
+
+The streaming host now takes the same gate. The location it fired for -
+the discovery key and the building summaries - is resolved SYNCHRONOUSLY
+on the edge and captured, because the wait is a microtask and the player
+must not be re-read after it; only the reveal itself waits. A resolved
+faction dictionary that genuinely lacks the record still falls through to
+`'unknown-guild'`, which is DFU's own answer.

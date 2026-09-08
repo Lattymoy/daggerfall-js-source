@@ -45,7 +45,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
-import { createTownTalk } from './townTalk.js';
+import { createTownTalk, rayPersonDistance } from './townTalk.js';   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ctx BODY and DFU's loose-foe placement, one copy for the two hosts that mount them
@@ -112,7 +112,11 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
-import { pickActivatable, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
+// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
+import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
+import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -202,6 +206,7 @@ import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
+import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
@@ -4140,6 +4145,42 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...extra,
     });
   }
+  /** AUDIT 63 F9: RevealGuildHallOnMap on this host (ThievesGuild.cs
+   *  :241-247 / DarkBrotherhood.cs:250-256). DFU runs it from Join and
+   *  from the two location events its RegisterEvents subscribes
+   *  (:197-206), so it fires here on the join and on every entry into a
+   *  location rect - the streaming host's own edge, the same pair
+   *  F062/F089 already play. The building pool is the FULL set
+   *  (BuildingDirectory.GetBuildingsOfFaction, :147-154), which is the
+   *  summaries walk the town map builds from, not the talk directory's
+   *  doors. */
+  const revealMemberGuildHalls = () => {
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key);
+    const b = built.get(key);
+    if (!dfLoc || !b?.locBlocks) return;
+    // The location this edge fired for, resolved NOW - the wait below
+    // is a microtask and the player must not be re-read after it.
+    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+    // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
+    // reveal WAITS on it - the same gate the fixed-city host already
+    // carries (exterior.js). GetGuildName -> GetAffiliation
+    // (Guild.cs:165-176) reads PlayerEntity.FactionData, which DFU has
+    // parsed long before any guild object exists, and its
+    // "unknown-guild" fallback (:175) answers a MISSING RECORD, never
+    // an unread faction file. This host only fire-and-forgets
+    // townTalk.ensureLoaded() at boot, so an enter-rect edge could run
+    // first and stamp `displayName: 'unknown-guild', isOverrideName:
+    // true` into the discovery record snapshotDiscovery saves - a
+    // placeholder plate on the town map that outlives the load.
+    Promise.resolve(townTalk.ensureFactions?.()).then(() => {
+      revealGuildHallsOnMap(activeMemberships(playerEntity), locationId, buildings,
+        { factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '' });
+    }).catch(() => {});
+  };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
   // :633-650): M outside opens the TOWN map only when the current
   // map pixel carries a location - empty wilderness opens nothing.
@@ -5682,8 +5723,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // constructed long before the HUD; and SILENT, because
       // AddMembership pushes no welcome window the way the walk-in join
       // does.
-      guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
+      const initiated = guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
         !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes));
+      // AUDIT 63 F9: both guilds override Join() to reveal their hall
+      // on the town map at once (ThievesGuild.cs:168-173,
+      // DarkBrotherhood.cs:177-182) - the join is one of DFU's three
+      // moments, and the only one that does not wait for a location.
+      if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
@@ -6861,17 +6907,52 @@ export async function bootWorld(canvas, renderer, params, status) {
           // toggled, and the activation ends there - the ladder has no
           // arm for a living enemy but the quest one above, which ran.
           const _lockFoe = _tapDir ? pickFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE) : null;
+          // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs
+          // :800-841) - the LIVING-foe arm the ladder never had.
+          // AUDIT 63 F33 (review round): the NEAR call is decided
+          // against the REST OF THE LADDER by distance, not run ahead
+          // of it. DFU casts ONE ray (:314) and reaches the enemy
+          // check (:419) only for the thing that ray actually hit, so
+          // a townsperson, a corpse, a dropped pile, a street NPC, a
+          // bulletin board or a door standing nearer than the foe takes
+          // the click - `_rivalDist` below is those picks' own winning
+          // distance. The FAR call at the bottom carries the un-gated
+          // Info line (:806-826) and the pickpocket's too-far refusal
+          // (:832-836), which DFU takes out to RayDistance.
+          const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
+            [...exteriorFoes.foes, ...cityGuards.guards], collider, reach,
+            getInteractionMode(), playerEntity, {
+              nearerThan,
+              hud: (t) => townTalk.say(t),
+              modal: (t) => townTalk.showOverlay(new ActionTextBox(String(t).split('\n'))),
+              makeEnemiesHostile: _makeEnemiesHostile,
+              playerFeet: walkMode ? player.pos : cam.pos,
+              nothingText: () => townTalk.randomText(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
+            });
+          // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
+          // The watch and the encounter foes leave the same container
+          // type, so which body you open is PlayerActivate's nearest
+          // hit, not which pool the host happens to ask first - and
+          // until this wave the host never asked the encounter pool
+          // at all, so its corpses could not be opened by anyone.
+          const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
+          const _lootPick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider);
+          const _dropPick = _lootPick ? null : pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+          // Every OTHER thing this ray can strike, at its own distance:
+          // the street's townsfolk (townTalk's own cylinder pick), the
+          // corpse and pile picks above, and the door/NPC/board set the
+          // interior transition picks from.
+          const _rivalDist = Math.min(
+            _lootPick?.distance ?? Infinity,
+            _dropPick?.distance ?? Infinity,
+            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
+            modes.exteriorActivationDistance(cam.pos, useFwd),
+          );
           if (_lockFoe) lockOn.toggle(_lockFoe);
+          else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
           else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-            // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
-            // The watch and the encounter foes leave the same container
-            // type, so which body you open is PlayerActivate's nearest
-            // hit, not which pool the host happens to ask first - and
-            // until this wave the host never asked the encounter pool
-            // at all, so its corpses could not be opened by anyone.
-            const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-            const lootKey = pickActivatable(cam.pos, useFwd, corpseTargets, collider);
-            const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+            const lootKey = _lootPick?.key ?? null;
+            const dropKey = _dropPick?.key ?? null;
             if (lootKey) {
               const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
@@ -6896,6 +6977,9 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
+            // AUDIT 63 F33: nothing else took the click, so the FAR
+            // half of the enemy arm runs before the door transition.
+            else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
             else modes.tryEnter().catch((e) => console.error(e));
           }
         }
@@ -7273,6 +7357,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // its own 1-80s counter beside the ordinary wilderness one.
       if (_inRect && !_wasInLocationRect) {
         ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+        // AUDIT 63 F9: and the SAME entry event is what a Thieves Guild
+        // or Dark Brotherhood member's RegisterEvents subscribes to
+        // (ThievesGuild.cs:197-206, handler :227-229), so the hall
+        // reveal follows the member into every town.
+        revealMemberGuildHalls();
       } else if (!_inRect) {
         ambience.setCemeteryNearby(false);
       }
