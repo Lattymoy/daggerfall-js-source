@@ -40,6 +40,9 @@ import { CLIMATE_INDICES } from './travel.js';   // {0,0,0,1,2,3,4,5,5,5} by (cl
 import { CLIMATES, CLIMATE_BASE_TYPES, getWorldClimateSettings } from '../formats/mapsFile.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from './gameDate.js';
 import { WEATHER_TYPES } from '../world/weather.js';
+import { seededRng } from './wind.js';   // CLK2: the evolution's own generator - never the classic lane's sequence
+import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
+import { getPref } from './uiPrefs.js';
 
 export { WEATHER_TYPES };
 
@@ -170,15 +173,13 @@ export function setWeather(type) {
   return true;
 }
 
+/** The six zones' climates, in the slots' order (WeatherManager.cs:421-426). */
+export const ZONE_CLIMATES = Object.freeze([CLIMATES.Desert, CLIMATES.Mountain, CLIMATES.Rainforest, CLIMATES.Swamp, CLIMATES.Subtropical, CLIMATES.Woodlands]);
+
 /** SetClimateWeathers (WeatherManager.cs:419-427): one roll per zone
  *  for the season, into the six classic slots. */
 export function setClimateWeathers(season, rolls = Math.random) {
-  _climateWeathers[0] = rollWeather(CLIMATES.Desert, season, rolls);
-  _climateWeathers[1] = rollWeather(CLIMATES.Mountain, season, rolls);
-  _climateWeathers[2] = rollWeather(CLIMATES.Rainforest, season, rolls);
-  _climateWeathers[3] = rollWeather(CLIMATES.Swamp, season, rolls);
-  _climateWeathers[4] = rollWeather(CLIMATES.Subtropical, season, rolls);
-  _climateWeathers[5] = rollWeather(CLIMATES.Woodlands, season, rolls);
+  for (let zone = 0; zone < 6; zone++) _climateWeathers[zone] = rollWeather(ZONE_CLIMATES[zone], season, rolls);   // Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands - the roll order kept
 }
 
 /** SetWeatherFromWeatherClimateArray (:429-440): the player's climate
@@ -319,6 +320,7 @@ export function restoreWeather(weather) {
   _climateWeathersRolled = true;
   _updateFromClimateArray = false;
   _jumps++;   // WX2a: a load lands the player under the saved sky, whole
+  _evolveHour = null;   // CLK2: the evolution re-anchors on the loaded clock, rolling nothing
 }
 
 /** SAV3: the classic-save import's weather arm. StartFromClassicSave
@@ -337,6 +339,64 @@ export function importClimateWeathers(converted) {
   return true;
 }
 
+// ---- CLK2 (2026-09-08): THE WEATHER EVOLVES WITHIN THE DAY -----------
+// Mac: "in sync with the world clock". DFU rolls the six zones ONCE per
+// game day (PlayerEntity.cs:447-448) and shipped WeatherManager's hourly
+// poll commented out (the W1 row); the classic lane keeps that verbatim
+// above. The ENHANCED lane adds an evolution ON THE CLOCK: at every game
+// hour boundary, wherever the player is (the tick's place, beside the
+// day roll), each zone re-rolls from the same table for its climate and
+// the season with EVOLVE_CHANCE_PER_HOUR, by a SEEDED generator keyed on
+// the hour and the zone - never the classic lane's sequence (ECV1's
+// rule), and replayable: the same hour of the same day evolves the same
+// way whoever watches. A changed slot raises DFU's own drain flag, so
+// the change lands through the existing machine: a front when the
+// player stands under it, a jump when it happened out of sight (the
+// stale-drain law, stamped at the HOUR the change belongs to). Behind
+// Enhanced Environments; `?evolve=off` the kill switch. A Ledger row.
+export const EVOLVE_CHANCE_PER_HOUR = 0.12;   // a zone's sky turns, on average, every eight hours or so on top of the day's roll
+const EVOLVE_SEED = 0x5EED;
+let _evolveOverride = null;   // tests: true/false; null reads the lane
+let _evolveDoor = null;       // the lane's answer, read once
+let _evolveHour = null;       // the absolute game hour the evolution last ran at (null: re-anchor without rolling)
+
+/** Tests and the lab: force the evolution on or off (null: the lane decides). */
+export function setWeatherEvolution(on) { _evolveOverride = on == null ? null : !!on; }
+export function weatherEvolutionOn() {
+  if (_evolveOverride !== null) return _evolveOverride;
+  _evolveDoor ??= isEnhanced() && !!getPref('enhancedEnvironments')
+    && new URLSearchParams(globalThis.location?.search ?? '').get('evolve') !== 'off';
+  return _evolveDoor;
+}
+
+/**
+ * The hourly evolution - from the tick, after the day roll. Walks every
+ * hour boundary crossed since the last call, at most the last 24 (a
+ * longer jump's earlier hours are the day roll's to have re-rolled);
+ * a rewound clock re-anchors and rolls nothing. Answers true when a
+ * zone changed.
+ */
+export function evolveClimateWeathers(nowMinutes) {
+  const hour = Math.floor(nowMinutes / 60);
+  if (!weatherEvolutionOn() || !_climateWeathersRolled || _evolveHour === null || hour < _evolveHour) { _evolveHour = hour; return false; }
+  if (hour === _evolveHour) return false;
+  const season = seasonValue(dateFromClassicMinutes(nowMinutes));
+  let lastChanged = null;
+  for (let h = Math.max(_evolveHour + 1, hour - 23); h <= hour; h++) {
+    for (let zone = 0; zone < 6; zone++) {
+      const r = seededRng((h * 6 + zone) ^ EVOLVE_SEED);
+      if (r() >= EVOLVE_CHANCE_PER_HOUR) continue;
+      const next = rollWeather(ZONE_CLIMATES[zone], season, r);
+      if (next !== _climateWeathers[zone]) { _climateWeathers[zone] = next; lastChanged = h; }
+    }
+  }
+  _evolveHour = hour;
+  if (lastChanged === null) return false;
+  _updateFromClimateArray = true;    // WeatherManager's own flag: the next exterior frame drains it
+  _rolledAtMinutes = lastChanged * 60;   // WX2a: stale by the change's OWN hour, not the tick that found it
+  return true;
+}
+
 /** Test seam: back to the fresh-boot state. */
 export function resetWeatherSim() {
   _climateWeathers = new Uint8Array(6);
@@ -346,4 +406,7 @@ export function resetWeatherSim() {
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
   _rolledAtMinutes = null;
+  _evolveOverride = null;
+  _evolveDoor = null;
+  _evolveHour = null;
 }
