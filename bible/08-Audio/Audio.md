@@ -370,3 +370,275 @@ the old form could not express: with the feet at 0 and the surface at
 where the standing centre 0.9 does not. Pins: 2 in
 `test/audit26_audio.test.js`. Mutant: `+ 0.9` restored in one host; 1
 killed.
+
+## AUDIT 64 F40 - the damage trap wounds you in silence (2026-09-08)
+
+`RemoveHealth` has exactly three SENDERS in Daggerfall Unity, and all
+three reach both of its receivers, because Unity's `SendMessage`
+delivers to every component on the object: `EnemyAttack.cs:406` (a blow
+or an arrow) and `DaggerfallAction.cs:739` (DrainHealth21, action flag
+21) and `:768` (DrainHealth, flags 22-25) - the damage traps.
+The receivers are `PlayerHealth.cs:36-44` (the screen flash and
+`DecreaseHealth`) and `PlayerFootsteps.cs:348-364`, whose body is the
+`CombatVoices` gate, `Dice100.SuccessRoll(40)`, `GetRaceGenderPainSound`
+with `heavyDamage = amount >= MaxHealth / 4`, and a `Random.Range(0,
+0.3f)` pitch lift.
+
+The port played the cry on the EnemyAttack path in every host and on
+neither trap arm. `world/actionSystem.js` models the FLASH half of the
+message (its two Hurt arms already cited `:739` and `:768`), and the one
+host that supplies the damage sink - the dungeon - passed `hurtPlayer`
+bare, so a dungeon damage trap took health, flashed the screen and said
+nothing.
+
+The cry is on the SINK, not inside `hurtPlayer`, and that is the whole
+subtlety: the same function carries FALL damage, and a fall is the one
+damaging path DFU leaves silent - `PlayerHealth.cs:57` CALLS its own
+`RemoveHealth` in C# rather than sending it, so PlayerFootsteps never
+hears it. The roll rides the RAW damage too: PlayerFootsteps knows
+nothing of the shield pool or of death, and its `heavyDamage` test is on
+the amount the message carried.
+
+Pins: `test/audit64_audio.test.js` (the three senders and the two
+receivers read out of the reference; the port's sink carrying both
+halves; `hurtPlayer` still voiceless) and the wave-46 census, whose
+dungeon cry count moves from two to three and whose "RECORDED as owed"
+comment is retired.
+
+## AUDIT 64 F41 - a full-screen VID played over the music and the rain (2026-09-08)
+
+`DaggerfallVidPlayerWindow` raises two GLOBAL events -
+`RaiseOnVideoStartGlobalEvent` at `:93` (the custom-video arm) and
+`:112` (after `video.Open(...); video.Playing = true;`), and
+`RaiseOnVideoEndGlobalEvent` at `:134` and `:150`, the two close paths -
+and exactly two components subscribe:
+
+  - `DaggerfallSongPlayer.cs:76-77`, whose handlers are `:356-362`
+    (`oldGain = Gain; Gain = 0; IsMuted = true;`) and `:364-369`
+    (`Gain = oldGain; IsMuted = false;`). The song KEEPS RUNNING and keeps
+    advancing; only its level goes to zero, and `:106` re-asserts
+    `audioSource.volume = IsMuted ? 0f : MusicVolume` every Update.
+  - `AmbientEffectsPlayer.cs:92-93`, whose handlers are `:536-548` (null
+    `rainLoop`/`cricketsLoop`, `loopAudioSource.Stop()`, clear clip and
+    loop, `IsMuted = true`) and `:551-554` (`IsMuted = false;` alone).
+    `Update`'s FIRST statement is `if (IsMuted) return;` (`:108-110`).
+
+The port raised nothing and nothing listened, so the current song plus
+the exterior rain or cricket loop played on top of every video - the
+vampire and lycanthropy dreams, a quest `play video`, and ANIM0012 on
+death. Holding or claiming the frame does not help: the music scheduler
+is its own `setInterval` and `audio.loop` is a WebAudio buffer source,
+both independent of the host's frame loop, and the quest-video seam
+holds no frame at all.
+
+THE MUSIC HALF IS A FLAG, NOT A RAMP. Three writers set the master gain
+independently (`SongPlayer._ensureMaster`, `SongPlayer.resyncGain`, and
+`AudioSongPlayer`'s per-start `trackGain()`), so a one-shot ramp to zero
+would be undone by the next `playSong` - which is exactly what DFU's
+per-Update re-assertion prevents. The flag lives beside the two gain
+accessors in `systems/songPlayer.js` and both read it;
+`MusicService.setMuted(v)` sets it and resyncs, so a SOUNDING song drops
+at once and a song STARTED under the video is silent too. It is
+deliberately not `music.stop()`: that clears `_current`/`_pending` and
+would restart the song from the top, where DFU resumes mid-song.
+
+THE AMBIENT HALF IS FOUR-HOSTS. Three hosts each own an `AmbientEffects`
+privately (`dungeonContext.js`, `exterior.js`, `world.js`) and the video
+player can reach none of them; DFU gets the fan-out free from a static
+event with a subscription per instance. So the module carries a
+live-instance registry - joined in the constructor, left in `dispose()`
+- and `muteAmbientForVideo()`/`unmuteAmbientForVideo()` are the two
+events. The mute stops and nulls both loop handles; `update()` gained
+DFU's `if (this.isMuted) return;` as its first statement, without which
+the lazy loop starts would re-open the rain on the very next tick. The
+unmute clears the flag alone: the nulled handles ARE the retry. The
+dungeon host now disposes its scene ambience with the context, which is
+both the unsubscribe and the loop free.
+
+THE SEAM'S ORDER MATTERS. The mute is raised on the line AFTER
+`player.play(bytes)` succeeds, because that guard's early return does
+not go through `finish()` - a mute raised before it would never be
+lifted and one undecodable VID would silence the game for good. DFU
+raises the start event only after `video.Open` for the same reason. The
+unmute heads `finish()`, the one door all three exits take: end of file,
+any key/back, and the AUDIT 19 error boundary.
+
+The header quirk note that argued FROM `IsMuted` while the port did not
+carry the flag now says that it does.
+
+Pins: `test/audit64_audio.test.js` - the reference's five raise sites and
+both handler pairs read out of DFU; the accessors going to zero and back
+without a stop; a muted instance whose loop is stopped, NOT re-opened by
+two further ticks, and re-opened on unmute; two live instances both
+reached and a disposed one not; and `playVideo` driven headlessly, muted
+for every frame, restored at the close, and never muted by bytes that
+would not open.
+
+REVIEW ROUND (2026-09-08). Three of those pins passed under mutations
+that revert the fix, and all three now die:
+
+  - THE MUSIC PIN HAD NO SOUNDING SONG. It asserted only the two
+    accessors and the flag, all three of which `setMusicMuted(v)` alone
+    satisfies - so deleting the `resyncGain()` from `MusicService
+    .setMuted` (which is the F41 bug itself: `_ensureMaster` writes the
+    master ONCE at the song's start, so without the resync an
+    already-playing song keeps full gain for the whole video, where
+    `DaggerfallSongPlayer.cs:106` re-asserts the level every Update)
+    left the suite green, and so did replacing it with `this.stop()` -
+    the exact shape the code comment says it rejects. The pin now drives
+    a `MusicService` with a live `SongPlayer` and `AudioSongPlayer` on a
+    fake context, in a playing state with a `_current`, and reads the
+    master gain BACK after the mute: zero on both live players, the
+    starting level again on unmute, `_current` and `playing` untouched
+    across the pair. Both mutants are red.
+  - THE AMBIENT HALF WAS WIRED INTO `playVideo` AND UNPINNED. The two
+    ambient tests called `muteAmbientForVideo()`/`unmuteAmbientForVideo()`
+    directly, so nothing tied `ui/videoPlayer.js` to the ambient
+    subscriber at all; swapping the two calls - or deleting both -
+    passed, and would have left `isMuted` true on every live
+    `AmbientEffects` for the rest of the session (`update()` returns at
+    its first statement, so the rain, the crickets, the wilderness
+    one-shots, the cemetery layer and the water arms go silent for good
+    after one VID). The `playVideo` pin now holds a live instance and
+    records `isMuted` beside `music.muted` on every frame, asserts both
+    restored at the close, and asserts a video that never opened left
+    the ambience hearing.
+  - THE HOST DOOR WAS UNPINNED. `sceneAmbience.dispose()` in
+    `dungeonContext.js`'s `destroy()` is the port's stand-in for Unity's
+    `OnDisable`/`OnDestroy` unsubscribe, and deleting it passed the whole
+    suite while reinstating the leak (`buildDungeonContext` runs once per
+    dungeon entry and the registry is a strong `Set`, so each entry
+    retains a dead instance for every later mute to walk). A pin now
+    names it, and carries the four-hosts check with it: `exterior.js`
+    and `world.js` build exactly one instance each and expose no
+    teardown at all, so there is no repeated build to leak there, and
+    `dungeon.js`, `worldModes.js` and `interior.js` own none.
+
+## AUDIT 64 F43 - the use-magic-item pick had no click (2026-09-08)
+
+`DaggerfallUseMagicItemWindow.cs:123` `MagicItemPicker_OnItemPicked`
+HEADS with `DaggerfallUI.Instance.PlayOneShot(SoundClips.ButtonClick)`
+(`:125`), before `CloseWindow()` and before the item is used. The port's
+`onPick` closed and used with no sound.
+
+The click belongs to this handler and not to the shared picker: neither
+`ListBox` nor `DaggerfallListPickerWindow` plays a clip, so every DFU
+route into this window (double click, Return, the picker's own use)
+sounds exactly once and from here - and the other consumers of the
+port's `ListPickerWindow` (guild training, the item and potion makers,
+the teleport list) stay silent, as DFU's base window is.
+
+Pins: `test/audit64_audio.test.js` - the reference's ordering, then a
+pick over a stubbed sink recording exactly one `ButtonClick` BEFORE the
+close and the use, plus `listPicker.js` still carrying no `playOneShot`.
+
+## AUDIT 64 F44 - the classic load window was the one silent window in the menu (2026-09-08)
+
+`DaggerfallLoadClassicGameWindow.cs` sounds three handlers and only
+three: `LoadGameButton_OnMouseClick` (`:213-217`),
+`SaveGame_OnMouseClick` (`:219-223`) and `SaveGame_OnMouseDoubleClick`
+(`:225-230`), each headed with `PlayOneShot(SoundClips.ButtonClick)`.
+The exit button is `DaggerfallUI.AddButton(..., WindowMessages.
+wmCloseWindow, ...)` (`:162`) - no handler at all, and so no clip.
+
+The port's window answered the same clicks and imported no audio; its
+sibling in the same menu host (`ui/saveWindow.js`) has clicked since it
+shipped, which is what made the omission audible. The clip is played
+INSIDE the window, the shape every other ported native window uses, on
+the slot arm and on the Load arm. The exit arm and the dead rects stay
+silent, and the start window - `DaggerfallStartWindow.cs`, whose three
+handlers play nothing - was left alone.
+
+A DOUBLE CLICK ON A SLOT SOUNDS TWICE (review round, 2026-09-08). The
+first cut played one clip per pointer event, "whichever of the two the
+click is". That is not what the reference does.
+`BaseScreenComponent.cs:681-692` raises the double click IN ADDITION to
+the single one, on the very same press:
+
+    if (mouseOverComponent && leftMouseDown)
+    {
+        MouseClick(scaledMousePosition);            // :684, unconditional
+        ...
+        if (leftClickTime - lastLeftClickTime < doubleClickDelay)
+            MouseDoubleClick(scaledMousePosition);  // :692
+    }
+
+Both raisers (`:903-912`, `:943-947`) are silent themselves, and a slot
+button carries BOTH handlers (`:132-133` on the image button, `:139-140`
+on the text button) - each headed with its own
+`PlayOneShot(SoundClips.ButtonClick)` at `:221` and `:227`. So the
+second press of a double click sounds two clips in DFU (three across the
+whole gesture), and the port sounded one. `LoadClassicWindow.click` now
+plays the `MouseClick` clip on every slot press and a second one when
+`isDouble`, before returning the load. `SelectSaveGame` running twice on
+the same index (`:222` then `:228`) is idempotent, so only the clip is
+observable.
+
+Pins: `test/audit64_audio.test.js` - the three sounded reference lines,
+the soundless exit button, and the two slot subscriptions read out of
+DFU; `BaseScreenComponent`'s unconditional `MouseClick` and its nested
+`MouseDoubleClick` read out of DFU beside them; then a slot click, a
+double click and a Load recording FOUR clips across those three presses,
+a lone double click recording two, and Exit, an unmounted slot and bare
+background recording none.
+
+## AUDIT 64 F45 - the foe-vs-foe parry rang ten percent quiet (2026-09-08)
+
+`EnemyAttack.cs:366-375`'s zero-damage fork picks between two sounds,
+and they do NOT share a volume: `EnemySounds.PlayMissSound` (`:143-156`)
+ends `PlayOneShot(weapon.GetSwingSound())`, taking `PlayOneShot`'s
+default `volumeScale = 1f` (`DaggerfallAudioSource.cs:188`), while
+`PlayParrySound` (`:134-141`) ends `PlayOneShot(sound, 1, 1.1f)`. The
+shared host law played both arms at 1.
+
+`PARRY_VOLUME = 1.1` gets its own name beside `PARRY_1` rather than
+borrowing `ENEMY_HIT_VOLUME`: that constant is `EnemySounds.cs:130`
+(`PlayHitSound`), a different line of the reference that happens to
+share the value, and AUDIT 58's pin holds it to the `hitSoundFor` sites.
+
+The player-side copies pass 1.1 on BOTH of their arms and are right to:
+the player's miss arm is `FPSWeapon.PlaySwingSound`
+(`FPSWeapon.cs:304`, `PlayOneShot(SwingWeaponSound, 0, 1.1f)`), not
+`EnemySounds.PlayMissSound`. The asymmetry is the whole finding.
+
+Pins: `test/audit64_audio.test.js` - the two reference lines and
+`PlayOneShot`'s default read out of DFU, then a parried arrow ringing at
+the target at 1.1 and a whiff ringing at the attacker at 1.
+
+## AUDIT 64 F46 - the footstep stride anchor was rebased where DFU leaves it stale (2026-09-08)
+
+`PlayerFootsteps.FixedUpdate` writes `lastPosition` in exactly two
+places - `:245`, inside the lost-grounding landing reset, and `:270`,
+after the accumulation - plus the one-time seed in `Start` (`:89`). Its
+three early returns write NOTHING: the on-foot/levitation gate
+(`:221-225`, `distance = 0f; return;`), the lost-grounding arm
+(`:232-238`, distance and the flag only) and `if (IsStandingStill)
+return;` (`:264-265`).
+
+That staleness is load-bearing. The whole horizontal delta covered under
+a gate lands on the first frame the gate opens, `:269` runs it past the
+2.5-unit threshold, and one footstep fires immediately. Concretely:
+
+  - DISMOUNTING. DFU shrinks the controller to dismount, so the player
+    stays grounded and the `:245` reset never runs; the first walking
+    frame after a ride plays a step. Both exterior hosts feed the port's
+    `onFoot` flag from the live transport mode, so this is ordinary play.
+  - LEVITATION ENDING AT FLOOR LEVEL, the same shape.
+  - A FALL THAT ENDS IN WATER. `if (!IsSwimming)` (`:230`) skips the
+    whole grounding block, so `lostGrounding` is never cleared and the
+    landing reset never runs - `:269` bills the fall's horizontal travel
+    into the first swimming frame.
+
+The port rebased in all three arms and could therefore never produce any
+of those steps. All three writes are gone. What stays: the lazy seed
+(DFU's `Start`), the landing reset, the accumulation, and `rebase()`
+with its single caller in the streaming host - the floating-origin
+recentre, which has no DFU counterpart because DFU's world does not move
+under the player.
+
+Pins: `test/audit64_audio.test.js` - the reference's own write census
+(`lastPosition` assigned at 89, 245, 270 and at no line of the three
+early returns), then a six-stride ride whose dismount frame plays, a
+fall into water whose first swimming frame plays with `lostGrounding`
+still up, and a standing-still frame that leaves the anchor where it was
+while `rebase()` still re-seeds.

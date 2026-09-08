@@ -188,6 +188,14 @@ export function backstabChanceOf(player, isEnemyFacingAwayFromPlayer) {
 // ---- WeaponManager.cs:609-615, the ZERO-damage connected swing ----
 export const PARRY_1 = 428;          // SoundClips.Parry1
 export const PARRY_SOUND_COUNT = 9;  // Random.Range(0, 9)
+// AUDIT 64 F45: the two arms of the zero-damage fork do NOT share a
+// volume. EnemySounds.cs:134-141 PlayParrySound ends
+// `PlayOneShot(sound, 1, 1.1f)`; EnemySounds.cs:143-156 PlayMissSound
+// ends `PlayOneShot(weapon.GetSwingSound())`, i.e. PlayOneShot's
+// default volumeScale 1f (DaggerfallAudioSource.cs:188). Its own name,
+// not ENEMY_HIT_VOLUME - that constant is EnemySounds.cs:130
+// (PlayHitSound), a different DFU line that happens to share the value.
+export const PARRY_VOLUME = 1.1;     // EnemySounds.cs:139
 
 /**
  * A swing that CONNECTED but dealt no damage. DFU:
@@ -503,7 +511,13 @@ export function applyDamageToNonPlayer(attacker, target, {
     const z = zeroDamageHitSound({ weapon, arrowHit: bowAttack, parrySounds: parries, roll: rolls() });
     if (z) {
       const where = z.at === 'enemy' ? at : (attacker.ai?.feet ?? at);
-      audio?.play3d?.(z.sound, where, 1, { maxDistance: 16 });
+      // AUDIT 64 F45: and the two arms differ in VOLUME as well as in
+      // place - parry at EnemySounds.cs:139's 1.1f, miss at
+      // EnemySounds.cs:143-156's default 1f. The player-side copies
+      // pass 1.1 on BOTH arms and are right to: the player's miss arm
+      // is FPSWeapon.PlaySwingSound (FPSWeapon.cs:304, 1.1f), not
+      // EnemySounds.PlayMissSound.
+      audio?.play3d?.(z.sound, where, z.at === 'enemy' ? PARRY_VOLUME : 1, { maxDistance: 16 });
     }
   }
   // :378-385 the Strikes payload, then :387 DecreaseHealth. The

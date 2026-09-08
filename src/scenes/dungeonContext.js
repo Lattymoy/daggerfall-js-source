@@ -211,7 +211,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // SAME live block lookup the music context takes below - it is the
     // same question, asked at the door instead of at the song.
     insideDungeonCastle: () => (lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false),
-    damagePlayer: hurtPlayer,
+    // AUDIT 64 F40: DaggerfallAction.cs:739 (DrainHealth21) and :768
+    // (DrainHealth, flags 22-25) SEND `RemoveHealth`, and Unity's
+    // SendMessage reaches EVERY component on PlayerObject - both
+    // PlayerHealth.cs:36-44 (the flash, rung by the action system)
+    // AND PlayerFootsteps.cs:348-364 (the 40% pain cry). The cry
+    // belongs HERE, on the trap sink, not inside hurtPlayer: that
+    // function also carries the fall (:4493), and PlayerHealth.cs:57
+    // CALLS its own RemoveHealth, so a fall flashes and stays silent.
+    // The roll rides the RAW damage - PlayerFootsteps knows nothing of
+    // the shield pool, and its heavyDamage test (:356) is on `amount`.
+    damagePlayer: (dmg) => {
+      hurtPlayer(dmg);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+    },
     castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
       playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
@@ -5276,6 +5289,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const c of corpses) if (c) renderer.destroyBillboardBatch(c);
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
+      // AUDIT 64 F41: the scene ambience leaves with the scene too -
+      // it holds the dungeon loop handles AND a row in the module's
+      // live-instance registry (the port's stand-in for DFU's static
+      // OnVideoStart/OnVideoEnd subscription, AmbientEffectsPlayer.cs
+      // :92-93), which OnDisable/OnDestroy drops in Unity.
+      sceneAmbience.dispose();
       // U26 / EVERY ALLOCATION HAS AN OWNER: the dropped piles own a
       // billboard batch each and leave with the dungeon. NT1 (F213):
       // dead FIRST - the documented removal protocol (droppedLoot.js
