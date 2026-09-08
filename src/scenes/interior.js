@@ -230,7 +230,14 @@ export async function bootInterior(canvas, renderer, params, status) {
     // mounted HERE could latch a thumb drag on the press and never
     // move it. The four-hosts rule again: a seam three hosts carry and
     // the fourth does not is a latch nothing errors on.
-    if (v) { overlay.pointer?.('move', v[0], v[1], 0); overlay.hover?.(v[0], v[1], e); }
+    if (v) overlay.pointer?.('move', v[0], v[1], 0);
+    // AUDIT 64 F48 (the four-hosts rule again, one seam over): the
+    // MISS is an event too. townTalk.js, worldModes.js and dungeon.js
+    // all hand `hover` the (-1,-1) pointer-leave sentinel; this host
+    // dropped it, so a window whose hover CLEARS on a miss - the
+    // shared ToolTip, DaggerfallInventoryWindow.cs:981/:2200 - would
+    // keep its last text standing here alone.
+    overlay.hover?.(v ? v[0] : -1, v ? v[1] : -1, e);
   });
   addEventListener('pointerup', (e) => {
     if (!overlay) return;

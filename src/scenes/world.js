@@ -6228,7 +6228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // changes instead. That is the loop row's consequence, not a
     // second departure.
     playSong: (name) => music.playSong(name),
-    giveItemToPlayer: (dfItem) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem); surfacePlayer(); },
+    giveItemToPlayer: (dfItem, front = false) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem, front ? 'front' : 'back'); surfacePlayer(); },   // AUDIT 64 F54: GivePc.cs:179/:186 and GetItem.cs:83 pass AddPosition.Front; QuestResourceBehaviour.cs:421 passes none (Back)
     removeItemFromPlayer: (dfItem) => {
       const items = playerEntity.items ?? [];
       const i = _heldItemIndex(dfItem);

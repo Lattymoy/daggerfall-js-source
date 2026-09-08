@@ -377,6 +377,21 @@ function _applyTransfer(item, plan, from, to, rolls = Math.random) {
   const moved = _splitOff(item, plan, from, rolls);
   const at = from.indexOf(moved);
   if (at >= 0) from.splice(at, 1);
-  addItem(to, moved);
+  // AUDIT 64 F54: DoTransferItem's own position
+  // (DaggerfallInventoryWindow.cs:1573-1579) - "Always place quest
+  // item pickups to front of list / Otherwise use preferred order":
+  // `order = preferredOrder; if (item.IsQuestItem) order =
+  // AddPosition.Front;` then `to.Transfer(item, from, order)`
+  // (ItemCollection.cs:473-480 forwards it to AddItem).
+  // `preferredOrder` is DontCare and is never reassigned anywhere in
+  // the tree, so Front is the ONLY position that is not an append.
+  // It is the MOVED record that is tested, not the clicked one: a
+  // partial move mints a fresh item through SplitStack and DFU's
+  // SplitStack_OnGotUserInput (:1546-1558) hands THAT to
+  // DoTransferItem. The rule is not scoped to pickups - storing a
+  // droppable quest item into the wagon or the ground pile inserts at
+  // that collection's front too, and DaggerfallTradeWindow's clicks
+  // inherit the same member.
+  addItem(to, moved, moved?.questItem ? 'front' : 'dontCare');
   return moved;
 }

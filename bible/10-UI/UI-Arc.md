@@ -11340,3 +11340,352 @@ chain would reach, so a window opened over a null-previous window is
 drawn over it where DFU would paint the null-previous window alone.
 That is the windows' member, not the HUD's; `hudCovered` above is
 correct regardless, because a cut anywhere blanks the HUD either way.
+
+## AUDIT 64 F47 - THE RIGHT MOUSE BUTTON DID NOTHING BUT THE LEFT ONE'S JOB (2026-09-08)
+
+`GetActionModeRightClick` (`DaggerfallInventoryWindow.cs:1871-1882`) is
+the whole of the classic inventory's fast gesture: Equip becomes
+Remove, Remove becomes Equip, Select becomes Remove, every other mode
+is returned as it stands. It is wired on exactly four component
+families - `localItemListScroller.OnItemRightClick` (`:378`), the
+remote scroller's (`:393`), `paperDoll.OnRightMouseClick` (`:468`) and
+`button.OnRightMouseClick` on every one of the twelve accessory
+buttons (`:551`) - and the four forwarders (`:1913-1916`,
+`:1959-1962`, `:2015-2018`, `:2070-2073`) hand its answer to the SAME
+shared handler the left forwarders feed `selectedActionMode`. So in
+Remove mode a right click on a pack item equips it and on the doll
+takes it off; in Equip mode a right click stores the item in the
+wagon, the chest or the pile.
+
+The port's window took the flag from every host - `townTalk.js`,
+`worldModes.js` and `dungeonContext.js` all pass `e.button === 2` -
+and spent it on one thing, the drop-icon panel's cycle direction.
+Everything downstream read `this.mode`, so a right click was
+indistinguishable from a left one.
+
+`_rightMode()` is the reference member; `click()` computes the mode
+once and `_pick(slot, mode)`, `_pickRemote(slot, mode)`, the accessory
+arm and the paperdoll arm all take it. The threading goes all the way
+down: `_pickRemote` passes it into `planTake`, whose `equip: mode ===
+'equip'` is `TransferItem(..., equip: actionMode == ActionModes.Equip)`
+(`:2039-2042`) - stopping at the window's own branches would have made
+a right-click take an item and silently fail to equip it. Select is
+not ported here on purpose: `MODES` carries no select mode, and DFU
+sets `ActionModes.Select` only in `DaggerfallTradeWindow`.
+
+The other half of the law is what a right click must NOT do.
+`exitButton` (`:318`), the four tab buttons (`:478-490`), the six
+action buttons (`:494-517`) and the scroller's two arrow Buttons
+(`ItemListScroller.cs:299`, `:307`) bind `OnMouseClick` alone, and
+`BaseScreenComponent.RightMouseClick` (`:927-934`) raises only
+`OnRightMouseClick` with no fallback - so in classic a right click on
+Exit, a tab or an action button does nothing at all. The port closed
+the window, switched tabs, selected modes and fired the wagon and
+drop-gold actions on it. Those three blocks are gated on `!right`
+now, and the rail arms with them (`VerticalScrollBar` overrides
+`MouseClick` only, `VerticalScrollBar.cs:142`). The drop-icon panel
+stays ungated: it is the one component in the window with all three
+handlers (`:437-439`).
+
+## AUDIT 64 F48 - THE CLASSIC INVENTORY NAMED NOTHING (2026-09-08)
+
+`DaggerfallBaseWindow.cs:50-56` builds `defaultToolTip` whenever
+`EnableToolTips` is on (it ships True), and the inventory window hands
+it to four surfaces: both `ItemListScroller`s (`:368`, `:383`, which
+pass it to every item button at `ItemListScroller.cs:340`), every
+accessory button (`:547`) and the paperdoll (`:470`). The text is the
+item's long name - `ItemListScroller.cs:462-465` for the scroller,
+with its `Books && !IsArtifact` GetBookTitle arm, and plain
+`item.LongName` for the accessory buttons (`:995`) and the doll
+(`:2191`).
+
+The port shipped that tooltip on the TRADE window and the potion
+maker at D7 and never on the screen DFU wrote it for, so the only way
+to find out what a slot held was to click it. `makeSlotToolTip` was
+already exported; the window builds one, ticks it (the hosts have
+called `w.tick?.(dt)` all along), feeds it from `hover()` and draws it
+LAST, which is `DaggerfallBaseWindow.cs:110-111`'s own order.
+
+Two details that are not the info panel's. First, the tooltip
+CLEARS: `ItemListScroller.cs:387` blanks an empty slot's text,
+`:981` blanks an empty accessory button and `:2200`/`:2204` blank the
+doll off an item layer, where the 37px info panel beside it is
+deliberately STICKY (U47, and DFU's too - it has no OnMouseLeave arm).
+Hanging the tip off the info panel's early returns would have left a
+stale name standing over dead space, so `_tipItemAt` is a resolver of
+its own, walked in DFU's component order and answering null for the
+gold button (`:515-520` gives it no ToolTip), the tabs, the action
+buttons, the arrows and the rail. Second, the text law is not uniform:
+`scrollerToolTipText` grew a `books` flag so the two lists take
+`ItemListScroller.cs:462-465` and the doll and accessory slots take
+bare `ResolveItemLongName`, which is what those two lines actually
+say. (No book is equippable, so the two agree in practice - but the
+port now says which is which.)
+
+REVIEW ROUND (2026-09-08). The DRAW was unpinned. Every one of the
+round's tooltip assertions reached the tip through `w._tip.tip.text`,
+i.e. through the ToolTip object's own state, so deleting the single
+`this._tip.draw(renderer, m, font)` line - the visible half of this
+finding, and the whole of `DaggerfallBaseWindow.cs:105-112`'s "Draw
+tooltip last" - left the entire inventory suite green: a window that
+resolves, feeds and times a tooltip nothing ever paints. `draw()` bails
+without ARENA2 art, so the order is pinned off the source the way F53's
+cell pass already is: the tooltip draw exists, it follows the
+message-box pass rather than hiding under it, and it is the LAST
+statement of `draw()`.
+
+## AUDIT 64 F49 - AN INFO CLICK ON A RECIPE NEVER LISTED ITS INGREDIENTS (2026-09-08)
+
+`ShowInfoPopup`'s chain (`DaggerfallInventoryWindow.cs:1601-1630`) is
+an if/else-if with FOUR arms, and the port had built three of them.
+The first, `if (item.IsPotionRecipe)` (`:1602-1609`), chains a second
+`DaggerfallMessageBox` whose tokens are
+`item.GetMacroDataSource().PotionRecipeIngredients(JustifyCenter)` -
+`DaggerfallUnityItemMCP.cs:245-260`, one `CreateTextToken` per
+ingredient holding `GetItemTemplate(ingredient.id)`'s name, each
+followed by a format token - marks it `ClickAnywhereToClose` and
+shows it. D7 had already given the recipe's FIRST box its two
+generated lines (`GetPotionRecipeTokens`, "Recipe for Potion of %po" /
+"Weight: %kg kilograms"), so an Info click named the potion and
+stopped, where the ingredient list is the whole point of the item.
+
+`_info` grows the arm above the enchanted `1016` push, with an early
+return, because DFU's chain is exclusive and the recipe wins over
+`legacyMagic`. It is CHAINED UNCONDITIONALLY: `PotionRecipeIngredients`
+answers an empty token array when `GetPotionRecipe(potionRecipeKey)`
+is null and `:1605-1608` adds and shows that box anyway, so an
+unresolvable key gets an empty second box rather than none. The data
+was all present - `POTION_RECIPES[].ingredients` are template indices
+in the recipe's own order, and `templateByIndex` was already imported.
+
+## AUDIT 64 F50 - THE MIDDLE BUTTON FELL THROUGH TO THE LEFT ONE (2026-09-08)
+
+DFU binds the middle mouse button on three surfaces of this window
+beyond the drop-icon panel: `localItemListScroller.OnItemMiddleClick`
+(`:379`) and the remote twin (`:394`), handled at `:2020-2023` and
+`:2075-2078` as a bare `NextVariant(item)`, and
+`paperDoll.OnMiddleMouseClick` (`:469`), handled at `:1964-1971` as
+`PaperDoll_GetItem` then `NextVariant`. That is how a garment's colour
+is cycled without entering Use mode. `NextVariant` (`:1405-1412`)
+refreshes unconditionally - the doll when the item is equipped, the
+list otherwise - so the refresh is not gated on the variant having
+moved.
+
+The port routed `middle` to the drop-icon panel and no further, so
+every other middle click ran the LEFT body: it closed the window,
+switched tabs, selected modes, equipped items and - the one a player
+would actually hit - unequipped a worn ring off the accessory strip,
+which classic cannot do at all. `BaseScreenComponent` dispatches
+middle through `MiddleMouseClick` alone (`:710-724`, `:930-937`) and
+never raises `OnMouseClick`, so a middle click on any component
+without a middle handler is inert. `_middleClick` handles the three
+surfaces and returns for everything else.
+
+The SOUND is not symmetric and the difference is load-bearing.
+`ItemButton_OnClick` (`ItemListScroller.cs:535-552`) raises the middle
+event with no `PlayOneShot`, so the lists are silent; but
+`PaperDoll_GetItem`'s first statement is
+`PlayOneShot(SoundClips.ButtonClick)` (`:1918-1925`), AHEAD of the
+`value == 0xff` bail, so a middle click anywhere on the doll clicks
+whether or not a layer is under the point.
+
+## AUDIT 64 F51 - THE 37-PIXEL PANEL SHOWED THE POPUP'S LONG WORDS (2026-09-08)
+
+`UpdateItemInfoPanel(TextFile.Token[])`
+(`DaggerfallInventoryWindow.cs:1142-1152`) is the info panel label's
+only writer, and every token bound for it goes through
+`.Replace(kgSrc, kgRep).Replace(damSrc, damRep).Replace(arSrc, arRep)`
+first - the six strings are the readonly fields at `:131-136`,
+resolved from `Internal_Strings.csv:838-843`: kilograms->kg, points of
+damage->damage, armor rating->armor. The panel is 37 pixels wide;
+`ShowInfoPopup` (`:1594-1601`) builds its own `GetItemInfo` tokens
+straight into a message box and gets no such pass, which is why the
+popup still reads "5 points of damage".
+
+The port shared one row builder between popup and panel and applied
+the pass nowhere, so the panel printed "Weight: 3 kilograms" into a
+third of the space it needs.
+
+`infoPanelShorten` in `systems/itemInfo.js` is the pass, with the six
+strings named and cited; `replaceAll` is C#'s `string.Replace`, which
+replaces every occurrence, and the `?? ''` is DFU's `text != null`
+guard at `:1148`. It is applied at the ONE point both of DFU's arms
+have produced their rows - the window wraps the whole
+`infoGold ? goldPanelRows(...) : itemInfoPanelRows(...)` ternary -
+because `UpdateItemInfoPanelGold` (`:2249-2259`) routes the gold
+tokens through the same member. It is a no-op on today's gold strings,
+which already spell "kg"; it is the structure that keeps the two arms
+from drifting. The popup door, `itemInfoRows`, is untouched.
+
+## AUDIT 64 F52 - THE INVENTORY LISTS TOOK NO WHEEL (2026-09-08)
+
+`ItemListScroller.SetupItemsList` wires
+`itemsListPanel.OnMouseScrollUp/Down` (`ItemListScroller.cs:314-316`)
+and the handlers (`:606-616`) step `itemListScrollBar.ScrollIndex` by
+one, with no sound - the `ButtonClick` belongs to the two arrow
+buttons alone (`:588-604`). Both of the inventory window's lists are
+plain `ItemListScroller`s (`:368`, `:383`), so both carry it.
+
+The port's window declared no `wheel` at all, while all four hosts
+have routed the notch to the active overlay for slices -
+`townTalk.js`, `worldModes.js`, `interior.js` and `dungeonContext.js`
+each call `overlay.wheel?.(Math.sign(e.deltaY))` - so the wheel
+reached this window and was dropped, leaving the arrows and the rail
+as the only way past item four in a bag, a loot pile or the wagon.
+
+The member is routed strictly by what the pointer is over, because
+`BaseScreenComponent.cs:725-733` dispatches per component rect and
+there is no "active list" in DFU to fall back on: a notch over the
+paperdoll, the mode buttons or the window's background scrolls
+nothing. `hover()` records the point (the hosts' `(-1,-1)`
+pointer-leave sentinel hits no rect). Two of the scroller's children
+take the wheel and one does not: the ITEMS panel, whose
+`itemListPanelRect` is `Rect(9, 0, 50, 152)` (`:24`) and therefore
+starts past the arrow column, and the `VerticalScrollBar` at
+`(1,18,6,117)` (`:277-284`), which OVERRIDES `MouseScrollUp/Down` with
+the same one-row step (`VerticalScrollBar.cs:152-162`); the two arrows
+are plain Buttons and override neither. The port's `scrollerHit`
+already draws that line - `slot` is the items panel, `thumb`/`page-up`
+/`page-down` the rail, `up`/`down` the arrows.
+
+Adjacent and NOT taken here: `ui/nativeTrade.js` has no `wheel`
+either, and `DaggerfallTradeWindow` inherits the same two scrollers
+through `SetupItemListScrollers`. That is the same missing member on
+the same C# class in a second window, and it wants its own finding.
+
+REVIEW ROUND (2026-09-08). A NOTCH IS NOT ONLY A SCROLL. The first
+pass ported the items panel's handler and stopped two lines short of
+the two more the same frame fires, so under a still cursor the list
+moved and everything that named it stayed pointing at the item that
+had scrolled away.
+
+The first is the hover. Every item button binds the SAME handler to
+its own wheel that it binds to the pointer entering it -
+`itemButtons[i].OnMouseScrollUp/Down += ItemButton_OnMouseEnter`
+(`ItemListScroller.cs:346-347`) - and the ORDER is what makes it
+work: `Panel.Update` (`Panel.cs:94-108`) runs `base.Update()`, which
+is the panel's own scroll dispatch, BEFORE it walks its children, and
+the item buttons are children of that panel (`:337`). So by the time
+the button's body runs at `:570-581` it reads `items[GetScrollIndex()
+* listWidth + Tag]` at the ALREADY-incremented index. That reaches
+`OnItemHover`, wired at `DaggerfallInventoryWindow.cs:381` and `:398`
+to `Local`/`RemoteItemListScroller_OnHover` (`:2225-2235`), both
+falling into `ItemListScroller_OnHover` (`:2237-2242`) ->
+`UpdateItemInfoPanel(item)`. The U47 panel follows the list, notch for
+notch, with no mouse movement at all. Past the end of the list the
+handler returns at `:574-575` without touching the panel, which is the
+same stickiness every other miss on this window carries.
+
+The second is the tooltip clock. `BaseScreenComponent.cs:727-736` ends
+its wheel block with `hoverTime = 0` under the comment "Not hovering
+while scrolling", and `hoverTime` is exactly what gates the tooltip
+draw at `:819`. That runs for EVERY component under the pointer on a
+notch, not only the ones that scroll, so a notch at the end of the list
+- or over the dead arrows, or over the paperdoll - silences the tip
+just as a notch that moves the list does. The text that comes back
+after the delay is the button's, which the scroll has just rewritten
+(`ItemsScrollBar_OnScroll` `:583-586` -> `UpdateItemsDisplay`'s
+`:464-466`, or `ClearItemsList`'s `:386` past the end).
+
+`_wheelRehover` is both, in DFU's order: the scroll index moves first,
+then the tip is hidden (the port's `hoverTime = 0` - `show()` alone
+keeps the clock running when the text is unchanged, which is precisely
+the stationary-cursor case) and re-fed from the point, and then the
+info panel is repointed at the item now under the cursor.
+
+## AUDIT 64 F53 - NOTHING TOLD THE LIT TORCH FROM THE UNLIT ONES (2026-09-08)
+
+`SetupItemListScrollers` hands BOTH of the inventory window's
+scrollers `BackgroundColourHandler = ItemBackgroundColourHandler`
+(`:372`, `:387`), and the handler (`:401-411`) is a three-arm else-if:
+`IsQuestItem` -> `questItemBackgroundColor`, else
+`playerEntity.LightSource == item` -> `lightSourceBackgroundColor`,
+else `IsSummoned` -> `summonedItemBackgroundColor`, else
+`Color.clear`. The three colours are `:154-156`. It is applied per
+cell at `ItemListScroller.cs:450-451` and cleared on the blank pass
+(`:389`), and `BaseScreenComponent.cs:784-787` paints it over the
+button's whole `Rectangle` - `itemButtonRects4`'s 50x38 cell - ahead
+of the background texture and ahead of the child icon panel.
+`SetMargins` (`:339`) insets the children, not the colour.
+
+The port's shared scroller drew icon and stack label and stopped, so a
+quest letter, a conjured arrow stack and the torch the player is
+actually holding all looked like ordinary loot. `itemScroller.js`
+grows `itemBackgroundColour(item, entity)` - the handler verbatim,
+including that the light-source arm is a reference IDENTITY compare -
+and `drawCellBackground`, which fills the whole cell and answers false
+for `Color.clear`. Both windows' cell loops paint it first.
+
+`ui/nativeTrade.js` takes it too, and with the ONE override the trade
+window has: `DaggerfallTradeWindow.cs:242-245` replaces the REMOTE
+scroller's handler in Repair mode with
+`RepairItemBackgroundColourHandler` (`:269-275`), which tints
+`repairItemBackgroundColor` (`:88`) on `currentCondition ==
+maxCondition` under `InstantRepairs` and on
+`RepairData.IsBeingRepaired()` otherwise. The local list is not
+overridden and keeps the inherited handler. Applying the inventory
+handler to the repair counter would have tinted by the wrong rule and
+dropped DFU's blue "done / in progress" cue.
+
+Still unported and NOT folded in here, each a separate member of the
+same initialiser and each wanting its own finding: the Buy-mode coins
+`BackgroundAnimationHandler` (`DaggerfallTradeWindow.cs:236-237`,
+handler `:277-280`); `MagicItemForegroundAnimationHander`, which is an
+INVENTORY-window member, not a trade-window one - assigned
+`DaggerfallInventoryWindow.cs:373` and `:388`, defined `:419-422`; and
+`RepairItemLabelTextHandler` (`DaggerfallTradeWindow.cs:244`, defined
+`:282-288`), the line immediately beside the `:243` this finding did
+port, which writes the "repair done / N days" misc label under the
+repair counter's blue tint.
+
+REVIEW ROUND (2026-09-08). That paragraph read `:373-375`/`:388-390`
+as a continuation of the `DaggerfallTradeWindow.cs` cite before it,
+which pointed the next lane at the racial-override and
+building-discovery block of the trade window's `Setup`. Bare
+`:`-cites only continue a file while the member really is in it, and
+`MagicItemForegroundAnimationHander` never was: `grep` finds it at
+`DaggerfallInventoryWindow.cs:373`, `:388` and `:419` and nowhere
+else. The file is spelled out now, and the third survivor of the same
+initialiser block - `RepairItemLabelTextHandler`, the line beside the
+one this finding ported - is named rather than left silent.
+
+## AUDIT 64 F54 - A TAKEN QUEST ITEM WAS BURIED AT THE BOTTOM OF THE PACK (2026-09-08)
+
+`DoTransferItem` chooses the destination position per item
+(`DaggerfallInventoryWindow.cs:1573-1579`): "Always place quest item
+pickups to front of list / Otherwise use preferred order" -
+`order = preferredOrder; if (item.IsQuestItem) order =
+AddPosition.Front; to.Transfer(item, from, order)`. `preferredOrder`
+is declared `DontCare` at `:192` and is never reassigned anywhere in
+the tree, so Front is the only position that is not an append.
+`ItemCollection.Transfer` (`:473-480`) forwards it to `AddItem`
+(`:217-252`), whose stack merge runs first and ignores the position
+and whose switch is DontCare `items.Add`, Front `items.Insert(0, ...)`,
+Back `items.Insert(Count, ...)`. Since `FilterLocalItems` and
+`FilterRemoteItems` are flat in-order walks of the collection, list
+position IS collection position, and the difference is the first
+visible row against the last.
+
+The port's `addItem` had no position parameter at all, so every
+transfer appended. It carries `ItemCollection.AddItem`'s three
+positions now (Back is the reference's default; DontCare and Back are
+the same append on an array-backed collection), and `_applyTransfer`
+passes `moved.questItem ? 'front' : 'dontCare'`. The MOVED record is
+what is tested, not the clicked one: a partial move mints a fresh item
+through `SplitStack` and `SplitStack_OnGotUserInput` (`:1546-1558`)
+hands that mint to `DoTransferItem`. The rule is not scoped to
+pickups - storing a droppable quest item into the wagon or the ground
+pile inserts at that collection's front too, and
+`DaggerfallTradeWindow`'s clicks reach the same inherited member - so
+it lives in the shared `_applyTransfer`, below the gold interception,
+which returns at `:1570` before the Front arm.
+
+The parameter had a second caller waiting. `quest/actions.js` has
+passed `front: true` from GivePc and GetItem for slices
+(`GivePc.cs:179`/`:186` and `GetItem.cs:83` are
+`AddItem(item.DaggerfallUnityItem, AddPosition.Front)`), threaded
+through `machine.js` and `questBridge.js`, and the one host that
+implements the hook dropped it on the floor. `scenes/world.js`'s
+`giveItemToPlayer` takes it now.
+`QuestResourceBehaviour.cs:421` passes no position, so
+`_transferWorldItemToPlayer` keeps AddItem's Back default.
