@@ -64,6 +64,7 @@ import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
+import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
 import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
 import { NativeTalkWindow, preloadTalkArt, talkArtLoaded, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
@@ -101,7 +102,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, questBuildingSource = null }) {   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -124,6 +125,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  each other and can only hand them over once all four exist. */
   const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
   const hud = new HudText();
+  let _notebookSink = null;   // AUDIT 63 F5: the host's PlayerNotebook.AddNote(tokens)
   let font = null, factions = null, textRsc = null, people = null;
   // RP1: which region `people` was resolved for. FACTION.TXT is parsed
   // once and kept; only the per-region LOOKUP re-runs, and only when
@@ -641,6 +643,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // so the engine's npcData still carried whatever static NPC last
     // set it: every walker answered with that NPC's social group and
     // isSpyMaster, over an answer counter that was already spent.
+    // AUDIT 63 F47: TalkManager.cs:2618-2628's racial-override door,
+    // for the ENGINELESS host too. The engine now carries it as its
+    // `suppressTalk` dep, but the pre-engine fallback below returns at
+    // the directory-less arm before openTalkWindow's gate is reached,
+    // so a transformed player in a host with no talk engine mounted
+    // still got a window. One check, ahead of both branches.
+    // AUDIT 63 F3: a MessageBox, not AddHUDText - TalkManager.cs:2626
+    // is `DaggerfallUI.MessageBox(suppressTalkMessage)`.
+    const sup0 = racialSuppressTalk(playerEntity);
+    if (sup0) { showOverlay(new ActionTextBox([sup0.text])); return; }
     const eng0 = engine();
     if (eng0?.session) {
       // T3c: the NPC keeps a stable per-person seed for the
@@ -729,7 +741,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // conversation door lands here (B7's one-opener law), so the
     // transformed refusal gates them all at once.
     const sup = racialSuppressTalk(playerEntity);
-    if (sup) { hud.add(sup.text); return; }
+    // AUDIT 63 F3: DaggerfallTalkWindow's own second door is a box too
+    // (DaggerfallTalkWindow.cs:327-333 - CloseWindow() then
+    // DaggerfallUI.MessageBox(suppressTalkMessage)), as is
+    // TalkToNpc's first (TalkManager.cs:2626). The message is a plain
+    // literal with no macro in it, so the box's ExpandMacros pass is a
+    // no-op here and the row is the string.
+    if (sup) { showOverlay(new ActionTextBox([sup.text])); return; }
     const eng = engine();
     if (talkArtLoaded() && directory.length) {
       showOverlay(new NativeTalkWindow(greeting, {
@@ -763,6 +781,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction
+        // AUDIT 63 F5: OnPop's `PlayerEntity.Notebook.AddNote(
+        // copiedEntries)` (DaggerfallTalkWindow.cs:319). townTalk holds
+        // no notebook, so the sink is the host's - set beside
+        // hudMessageSink once the quest bridge exists. A host that
+        // mounts no bridge leaves it undefined and the copy is a silent
+        // no-op, which is this port's established shape for a
+        // hook-less host.
+        copyToNotebook: (tokens) => _notebookSink?.(tokens),
       }));
       return;
     }
@@ -841,7 +867,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  to the pipeline as its `reactionTier` seam. */
   function computeTier(questionType, socialGroup) {
     return reactionTier012({
-      personality: playerEntity.stats?.personality ?? 50,
+      // AUDIT 63 F4: TalkManager.cs:665 is
+      // `player.Stats.LivePersonality / 5`, i.e.
+      // DaggerfallStats.cs:55 -> GetLiveStatValue - base PLUS every
+      // standing fortify/drain/transfer and the disease PER column.
+      // The sibling skill term two lines down is already live
+      // (TalkManager.cs:647,655 GetLiveSkillValue); this one was the
+      // last raw base read in the call.
+      personality: playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50,
       npcSeed: _talkSeed,   // F043: the door's seed - the static path has one too
       socialGroup: socialGroup ?? 0,
       // AUDIT 26 F042/F096: the reaction adds
@@ -946,7 +979,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b: the answer STRING, shared by the native talk window and the
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:453 never consumes it
     const raw = randomVariant(a.textId, '%hnt');
     // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
     // rides MacroHelper's %hnt), so the fork runs only when the record
@@ -964,7 +997,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // boot region, so a building revealed after streaming across a
       // border was filed under the region the session started in and
       // the map never showed it where the player actually was.
-      if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building);
+      if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
     }
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
     // runs the FULL MacroHelper over the answer record - %oth and %cn
@@ -1147,6 +1180,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     /** TK-i: GetRandomTokens for the rumor mill (a random variant as
      *  TOKENS - AddNonQuestRumor freezes one per add). */
     variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
+    /** AUDIT 63 F3: TextProvider.GetRSCTokens(int id)
+     *  (TextProvider.cs:167-188) - the WHOLE record, no variant draw.
+     *  DaggerfallMessageBox.SetTextTokens(int) reads this; the
+     *  `variantTokens` sibling above is GetRandomTokens and is a
+     *  different member with a different draw. */
+    recordTokens: (id) => textRsc?.tokensById(id) ?? [],
+    /** AUDIT 63 F3: DaggerfallUI.MessageBox's parchment, the port's
+     *  ActionTextBox, through this host's one overlay door - the same
+     *  swap ROAD-D D10 made for the pickpocket boxes. The three
+     *  TalkToNpc refusals (TalkManager.cs:2626/:2632/:2645) are modal
+     *  boxes in DFU, never AddHUDText. */
+    showBox: (rows) => showOverlay(new ActionTextBox(rows.length ? rows : [''])),
     /** AUDIT 24: TextProvider.GetRandomText - a flat pool of every Text
      *  token in the record, NOT a variant pick. %oth's seam. */
     randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
@@ -1158,6 +1203,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  hands the sink back down once it exists. */
     set hudMessageSink(fn) { hud.onMessage = fn; },
     get hudMessageSink() { return hud.onMessage; },
+    /** AUDIT 63 F5: PlayerEntity.Notebook.AddNote(List<Token>) for the
+     *  talk window's Copy-to-logbook button (DaggerfallTalkWindow.cs
+     *  :319). Same shape and same reason as hudMessageSink above - the
+     *  notebook belongs to the quest bridge, which is built after this
+     *  host. */
+    set notebookSink(fn) { _notebookSink = fn; },
+    get notebookSink() { return _notebookSink; },
     /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose
      *  frame is not this one. worldModes' interior arm consumes the
      *  frame and returns, so a line said inside a building was queued

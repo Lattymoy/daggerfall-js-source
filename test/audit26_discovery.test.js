@@ -80,8 +80,14 @@ test('F099: the talk bridge forwards TalkManager\'s exact arguments', () => {
   // The bridge used to DROP the name and the flag, making every
   // refusal unreachable from the quest seam.
   const w = src('scenes/world.js');
-  assert.ok(w.includes('undiscoverBuilding: (buildingKey, buildingName) =>'), 'the deps bridge takes both');
+  // AUDIT 63 F0 hoisted the closure to `undiscoverBuildingHere`,
+  // because Quest.cs:655's tombstone sweep passes the SAME triple to
+  // the SAME store and must not mint a second copy of it. Both seams
+  // take that one function.
+  assert.ok(w.includes('const undiscoverBuildingHere = (buildingKey, buildingName) =>'), 'ONE closure for both callers');
   assert.ok(w.includes('buildingKey, true, buildingName ?? null)'), 'and passes onlyIfResidence=true + the name');
+  assert.equal((w.match(/undiscoverBuilding: undiscoverBuildingHere,/g) ?? []).length, 2,
+    'the topic tree (TalkManager.cs:2958) and the quest bridge (Quest.cs:655) both take it');
 });
 
 // ── F061 / F062 ───────────────────────────────────────────────────

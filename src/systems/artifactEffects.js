@@ -38,6 +38,7 @@ import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - th
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf } from './statMods.js';
+import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
 
 /** ItemEnums.ArtifactsSubTypes (:238-262), the payload-bearing nine
  *  named; Hircine_Ring (3) has no effect class - lycanthropy reads it
@@ -145,8 +146,8 @@ const HANDLERS = new Map([
       const stats = entity?.stats;
       if (!stats) return;
       const amount = Math.trunc(liveStatOf(entity, 'personality') / 5);
-      const mods = (entity.reactionMods ??= new Array(5).fill(0));
-      for (let g = 0; g < mods.length; g++) mods[g] += amount;
+      const mods = (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0));
+      for (let g = 0; g < mods.length; g++) mods[g] += amount;   // Enum.GetValues(SocialGroups) is Commoners 0 .. SGroup10 10; None = -1 is refused by ChangeReactionMod's index >= 0 guard (PlayerEntity.cs:279)
     },
   }],
 

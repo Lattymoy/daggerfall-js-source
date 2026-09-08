@@ -95,6 +95,11 @@ export function makeInteriorPersonHost(pn, hooks = {}) {
   const live = () => hooks.built?.() === true;
   return {
     staticNpcFactionId: pn.factionID,   // DoClick's individual broadcast reads this
+    // AUDIT 63 F1: ActiveGameObjectDatabase's cache answers only
+    // `activeInHierarchy` objects (ActiveGameObjectDatabase.cs:32-46),
+    // so AddQuestor's relink walk must be able to skip a person the
+    // away arm's SetActive(false) took out.
+    isActive: () => pn.active !== false,
     setActive(active) {
       active = !!active;
       const was = !!pn.active;

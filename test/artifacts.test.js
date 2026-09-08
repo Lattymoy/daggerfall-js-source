@@ -76,7 +76,11 @@ test('V3: the Masque adds LivePersonality/5 to EVERY social group\'s reaction mo
   p.stats.personality = 63;   // trunc(63/5) = 12
   const masque = artifactItem(ARTIFACTS.MasqueOfClavicus);
   doItemEnchantmentPayloads(PAYLOAD.MagicRound, masque, { entity: p, round: 1 });
-  assert.deepEqual([...p.reactionMods], [12, 12, 12, 12, 12]);
+  // AUDIT 63 F6: ELEVEN, not five. MasqueOfClavicusEffect.cs:39-43
+  // walks Enum.GetValues(FactionFile.SocialGroups) and
+  // FactionFile.cs:552-566 runs Commoners 0 .. SGroup10 10, over an
+  // array PlayerEntity.cs:128-129 sizes at socialGroupCount = 11.
+  assert.deepEqual([...p.reactionMods], new Array(11).fill(12));
 });
 
 test('V3: Mehrunes\' Razor - a failed save adds the target\'s WHOLE health and bills the same condition', () => {

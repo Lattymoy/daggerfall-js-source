@@ -204,6 +204,7 @@ import { freeShipTravel, freeTavernRooms, avoidDeath, AVOID_DEATH_TEXT } from '.
 import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 // AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
 // common-rumor macro pass, as TalkManager.cs:1417-1419 brackets its own.
@@ -215,7 +216,8 @@ import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer,
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): the PC's clan, off the curse entry
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
-import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
+import { expandRandomTextRecord as expandTalkRecord, expandMessageBoxTokens } from '../systems/talkMacros.js';   // AUDIT 63 F3: DaggerfallMessageBox's null-mcp ExpandMacros pass
+import { TOKEN_TEXT } from '../formats/textRsc.js';   // AUDIT 63 F3: TextFile.Formatting.Text, for DaggerfallMessageBox.SetText(string)'s one-token tokenization
 import { OATH_RACE_INDEX, raceDisplayName } from '../systems/talkSession.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
@@ -1557,6 +1559,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // after all four are built (they reference each other), so townTalk
   // reads it lazily through the getter below.
   let talkEngineRef = null;
+  /** AUDIT 63 F0: PlayerGPS.UndiscoverBuilding for the CURRENT
+   *  location, the one closure DFU's quest-side callers share.
+   *  TalkManager.cs:2958 (the add-dialog scrub) and Quest.cs:655 (the
+   *  tombstone sweep) pass the identical (key, onlyIfResidence:true,
+   *  buildingName) triple, so the topic tree and the quest bridge take
+   *  the SAME function rather than each minting one.
+   *
+   *  Keying on the current location is the law, not a shortcut:
+   *  PlayerGPS.cs:987-999 resolves the dict from CurrentLocation and
+   *  returns early when none is loaded, so a quest that tombstones
+   *  while the player is elsewhere is a no-op in DFU too. */
+  const undiscoverBuildingHere = (buildingKey, buildingName) => undiscoverBuilding(
+    `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null);
+  /** AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override
+   *  pair (PlayerGPS.cs:945-959) - CurrentMapID and
+   *  TalkManager.IsBuildingQuestResource. Every DiscoverBuilding
+   *  caller in DFU takes this arm, so ONE object rides to all three
+   *  the port has (the door at worldModes' building entry, the talk
+   *  map reveal, and the quest bridge's own hook) rather than each
+   *  minting its own. Both members are deferred reads: `topicTree` and
+   *  `_questLoc` are declared further down and this object is only
+   *  ever CALLED at discovery time. scenes/exterior.js mounts no topic
+   *  tree (its own note at the stamp seam records the same stance), so
+   *  that host hands nothing and the member behaves as it always did. */
+  const questBuildingSource = {
+    currentMapID: () => _questLoc()?.mapTableData?.mapId ?? 0,
+    isBuildingQuestResource: (mapID, buildingKey) => topicTree.isBuildingQuestResource(mapID, buildingKey),
+  };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
@@ -1569,6 +1599,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // like onCrime - npcSession mounts below, and the first topics set
     // (the streaming update) runs long after boot.
     onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
+    // AUDIT 63 F49: TalkManager.cs:1290's map reveal is a plain
+    // DiscoverBuilding, which asks IsBuildingQuestResource for itself
+    // (PlayerGPS.cs:945-959) - so the seam rides to every caller, not
+    // just the door.
+    questBuildingSource,
     // AUDIT 58 (talk lane): the mode keys sit UNDER the window gate, and
     // this host's second slot is the mode machine's - a window held
     // there is invisible to townTalk's own `overlay`. `modes` is
@@ -5127,6 +5162,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     // _questRegionIndex; the write now agrees with it.
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questRegionIndex(), amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+    /** AUDIT 63 F1: ActiveGameObjectDatabase.GetActiveStaticNPCQuest
+     *  ResourceBehaviours (ActiveGameObjectDatabase.cs:307-311) - the
+     *  list AddQuestor walks to relink an individual's standing
+     *  behaviour (Quest.cs:483-496). DFU's cache spans every static
+     *  NPC in the scene, so the answer is the UNION of the modal
+     *  hosts' (interior people, interior and dungeon marker stands)
+     *  and this host's own STREET NPCs, which carry the same bootstrap
+     *  behaviour (exteriorNpcs.js's quest pass) and stand individuals
+     *  too. Inactive hosts are dropped - GetActiveComponents keeps
+     *  only activeInHierarchy objects (:32-46). */
+    staticNpcQuestBehaviours: () => {
+      const out = modes?.activeStaticNpcQuestBehaviours?.() ?? [];
+      for (const entry of built.values()) {
+        for (const pn of entry.npcs ?? []) {
+          const b = pn.questBehaviour;
+          if (!b || typeof b.host?.staticNpcFactionId !== 'number') continue;
+          if (b.host.isActive?.() === false) continue;
+          out.push(b);
+        }
+      }
+      return out;
+    },
     // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
     // has declared these since Q3-iii and no host answered - the
     // placement law sat fully ported in sceneMount.js with no caller,
@@ -5303,7 +5360,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // F099: TalkManager.cs:2958 passes onlyIfResidence=TRUE and the
     // quest Place's buildingName - the bridge used to drop both, so
     // the store's refusals were never reachable from the talk seam.
-    undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null),
+    undiscoverBuilding: undiscoverBuildingHere,
     talkPartner: () => npcSession.lastTargetStaticNPC ?? npcSession.lastTargetMobileNPC ?? null,
     onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
   });
@@ -5311,6 +5368,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the tree and the pipeline all answer for. Its questor door is what
   // finally opens a quest offer from a plain static-NPC click.
   const npcSession = new NPCSession({
+    // AUDIT 63 F47: TalkManager.cs:2620-2628 - the racial override is
+    // TalkToNpc's FIRST door ("Also doing suppression here to prevent
+    // talk window flashing open and closed in some cases", :2620-2621),
+    // BEFORE the reaction/rejection gate at :2630 and before any
+    // greeting is computed. This dep had no writer, so the port ran the
+    // whole greeting body - the mid-greeting rejection's DFRandom draw,
+    // ResetNPCKnowledge and the three tone resets - and only refused at
+    // the window door. LycanthropyEffect.cs:423-437 is the one override
+    // that answers true.
+    suppressTalk: () => racialSuppressTalk(playerEntity)?.text ?? null,
     factionData: (id) => _questStore()?.dict.get(id) ?? null,
     factionName: (id) => _questStore()?.dict.get(id)?.name ?? '',
     peopleOfCurrentRegion: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
@@ -5366,9 +5433,41 @@ export async function bootWorld(canvas, renderer, params, status) {
     resetNPCKnowledge: () => topicTree.resetNPCKnowledge(),
     resetToneSession: () => answerPipeline.resetToneSession(),
     resetQuestionSession: () => answerPipeline.startNewConversation(),
-    messageBox: (x) => townTalk.say(typeof x === 'number'
-      ? (townTalk.lines(x).map((r) => r.text ?? r).join(' ') || 'You get no response.')
-      : (Array.isArray(x) ? tokensToString(x) : String(x ?? ''))),
+    /** AUDIT 63 F3: DaggerfallUI.MessageBox, all three overloads
+     *  TalkToNpc uses (DaggerfallUI.cs:1328, :1346, :1355). Every one
+     *  builds a DaggerfallMessageBox and lands in
+     *  DaggerfallMessageBox.SetTextTokens (:432-441), whose body is
+     *  `if (expandMacros) MacroHelper.ExpandMacros(ref tokens, mcp);
+     *  label.SetText(tokens);` - so the box ALWAYS expands, and it is
+     *  a modal ClickAnywhereToClose parchment, never AddHUDText.
+     *
+     *  This seam did neither. It joined raw tokens with ' ' and handed
+     *  the result to hud.add, so the mid-greeting rejection
+     *  (TalkManager.cs:2641-2646, ~31% of first conversations with a
+     *  non-Province-parented static NPC at rep 0) printed literal
+     *  %pcf/%pcn/%cn from the 8550-8571 guild table as a HUD line -
+     *  the same table the ACCEPTED arm two rows up already expands.
+     *
+     *  Three arms, each DFU's:
+     *  - int   -> GetRSCTokens(id), the WHOLE record with no draw
+     *            (DaggerfallMessageBox.cs:443-450 / TextProvider.cs
+     *            :167-188). The old `lines(x)` was GetRandomTokens'
+     *            sibling and additionally burned a rolls() value per
+     *            refusal that DFU never spends.
+     *  - array -> the tokens as given (:1355-1362).
+     *  - string-> SetText(string) tokenizes into one Text token and
+     *            falls into the same SetTextTokens (:405-408), so the
+     *            suppressTalk message expands too.
+     *  The macro pass is NULL-mcp - see expandMessageBoxTokens. */
+    messageBox: (x) => {
+      const tokens = typeof x === 'number' ? townTalk.recordTokens(x)
+        : (Array.isArray(x) ? x : [{ formatting: TOKEN_TEXT, text: String(x ?? '') }]);
+      // tokenRows answers { text, center } records (TEXT.RSC carries
+      // its own per-row alignment); plainLines is the port's
+      // established flattening for ActionTextBox's string rows.
+      const rows = plainLines(tokenRows(expandMessageBoxTokens(tokens, talkMcp()))) ?? [];
+      townTalk.showBox(rows.length ? rows : ['You get no response.']);
+    },
     pushTalkWindow: () => {},   // TK-v opens the window
     onTargetChanged: () => {},  // TK-v repaints the portrait and name
     rolls: Math.random,
@@ -5500,7 +5599,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       .find((b) => b.buildingKey === buildingKey) ?? null,
     discoverBuilding: (buildingKey) => discoverBuilding(
       `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
-      (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey }),
+      (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey },
+      null, questBuildingSource),   // AUDIT 63 F49: the quest name-override arm (PlayerGPS.cs:945-959)
     // S44: the real member (PersistentFactionData.cs:675-689). This hook
     // answered a hardcoded `false` from the talk arc onward, so
     // answerPipeline's faction-relation gate could never fire once.
@@ -5564,6 +5664,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
     removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
+    // AUDIT 63 F0: Quest.cs:655's tombstone sweep - the SECOND of
+    // DFU's two quest-side UndiscoverBuilding callers, through the same
+    // closure the talk seam above takes.
+    undiscoverBuilding: undiscoverBuildingHere,
     forceTopicListsUpdate: () => topicTree.forceTopicListsUpdate(),
     // FE1: the HUD escorting faces - AddFace/DropFace's world half
     // (declared by the bridge since Q4, mounted now) and the
@@ -5873,6 +5977,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The notebook only exists once the bridge is built, so the sink is
   // handed down here.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
+  // AUDIT 63 F5: and the talk window's Copy-to-logbook sink, which
+  // is DaggerfallTalkWindow.OnPop's `PlayerEntity.Notebook.AddNote(
+  // copiedEntries)` (DaggerfallTalkWindow.cs:319), handed down for
+  // the same reason at the same moment.
+  townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   // V2d: THE RACIAL-QUEST SEAM. worldTick's minute walk rolls the
   // curse quests (38-day non-cure, 84-day cure) but the machine is
   // THIS host's, so racialQuests reaches it through a registered host
@@ -6055,6 +6164,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
     discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+    questBuildingSource,   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override pair (PlayerGPS.cs:945-959)
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town
@@ -6505,6 +6615,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the load gate (QuestMachine.cs:310-316 refuses to tick while
     // SaveLoadManager.LoadInProgress - no popups mid-restore).
     if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
+    // AUDIT 63 F2: the STREET StaticNPCs' QuestResourceBehaviours, the
+    // exterior half of the loop worldModes drives for interior people.
+    // Unity Updates a MonoBehaviour whatever the timeScale, so this
+    // sits OUTSIDE the pause gate above, as the modal hosts' behaviour
+    // loops do. Two clauses of QuestResourceBehaviour.Update ride on
+    // it: the back-link recouple (:132-141), which Quest.cs:522's
+    // DropQuestor test reads, and the hidden/destroyed Person arm
+    // (:143-152).
+    for (const entry of built.values()) {
+      for (const pn of entry.npcs ?? []) pn.questBehaviour?.update();
+    }
 
     // AUDIT 39 (S19 host gap): PARALYSIS, above ground. Every DFU gate
     // reads PlayerEntity.IsParalyzed with no interior/exterior test -
@@ -7174,6 +7295,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         distanceToPlayer: Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]),
         sheathed: weaponRig.playerWeapon.sheathed,
         invisible: isInvisible(playerEntity),
+        inBeastForm: !!playerEntity.isInBeastForm,   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
         enemiesNearby: () => areEnemiesNearby(enchantFoes()),
       }));
       for (const { person, out } of live) {

@@ -745,7 +745,7 @@ export function classicSaveToSnapshot(saveGames, {
     lightSourceIndex: -1,
 
     sGroupReputations,
-    reactionMods: null,
+    reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),   // AUDIT 63 F6: PlayerEntity.cs:129 - the array exists from construction and is never serialized, so an imported character lands the eleven-zero shape rather than no array at all
     crimeCommitted: saveVars.crimeCommitted,
     haveShownSurrenderDialogue: false,
     legalRep,

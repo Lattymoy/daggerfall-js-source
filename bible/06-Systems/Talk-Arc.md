@@ -1280,3 +1280,301 @@ block named after the slice, which is the mistake EF1c had to undo.
 Pins: 6 in `test/regionlive.test.js`, the sixth being CQ1b's per-slice
 second-home check, applied at the time rather than an hour later.
 Campaign: 11 mutants, 11 killed. Open flags 167 -> 166.
+
+## AUDIT 63 F3 - TALKTONPC'S REFUSALS WERE A HUD LINE WITH RAW MACROS (2026-09-08)
+
+`TalkToNpc` refuses three ways, and every one of them is a
+`DaggerfallUI.MessageBox`: the racial override (TalkManager.cs:2626),
+the reaction/rejection gate (:2632, record 7205) and **the rejection
+found mid-greeting** (:2645, `GetRandomTokens(npcGreetingRecord)`). All
+four `MessageBox` overloads (DaggerfallUI.cs:1328-1362) build a
+`DaggerfallMessageBox`, `Show()` it, and land in
+`DaggerfallMessageBox.SetTextTokens` (:432-441), whose whole body is
+
+    if (expandMacros) MacroHelper.ExpandMacros(ref tokens, mcp);
+    label.SetText(tokens);
+
+So DFU **always expands**, and it is a modal ClickAnywhereToClose
+parchment, never `AddHUDText`.
+
+The port's one `messageBox` seam did neither. It joined raw tokens with
+a space and handed the string to `hud.add`. The reachable arm is the
+mid-greeting rejection: `GetNPCGreetingRecord` sets `alreadyRejectedOnce`
+whenever `reputation < DFRandom.random_range_inclusive(0,15) - 10`, which
+at rep 0 lands in 1..5 five times in sixteen — about 31% of first
+conversations with any static NPC whose parent group faction is not a
+Province — and the record it draws is one of the 8550-8571 guild
+greetings, which this host's own comment says carry `%pcf/%pcn/%cn/%oth`
+and which the ACCEPTED arm two rows above already expands. Same table,
+one arm expanded, the other printed raw, as a HUD popup.
+
+Three corrections the verifiers made to the obvious fix, all of them
+load-bearing:
+
+1. **The mcp is NULL.** All three call sites use the mcp-less overload.
+   `MacroHelper.GetValue` (:502-527) still resolves every GLOBAL row —
+   `%pcn`, `%pcf`, `%cn`, the faction rows all ignore the provider — and
+   returns the `symbolStr + "[nullMCP]"` sentinel for a source-method
+   row, `%oth` above all (:1371-1375 returns null on a null mcp).
+   Expanding with the live talk MCP would print a real oath where DFU
+   prints `%oth[nullMCP]`: a NEW departure on the same classic path, not
+   a fix. `talkMacroHandlers` takes an mcp override now and
+   `expandMessageBoxTokens` is the null-mcp door. The HOOKS stay —
+   MarkLocationOnMap, Honorific and GreetingOrFollowUpText are
+   MacroHelper globals that read the TalkManager singleton whatever the
+   mcp.
+2. **The int arm is `GetRSCTokens`, the WHOLE record.**
+   `SetTextTokens(int id)` (DaggerfallMessageBox.cs:443-450) reads
+   `TextProvider.GetRSCTokens(id)`, whose body is `ReadTokens(buffer, 0,
+   EndOfRecord)` (TextProvider.cs:167-188) — every subrecord, and **no
+   draw**. The port's `lines(x)` was `variantLinesById`, which picks one
+   variant AND burns a `rolls()` value on every refusal that DFU never
+   spends. `textRsc.tokensById(id)` is the missing reader.
+3. **Rows, not a flattened string.** The label consumes tokens with
+   their NewLine formatting intact; `tokensToString` at its default
+   separator spends a `' '` on every formatting token. The row law
+   already had ONE home — `ui/messageBox.tokenRows`,
+   MultiFormatTextLabel.LayoutTextElements' switch — so the seam takes
+   that and `shared.plainLines`, and mounts an `ActionTextBox` through
+   `townTalk.showBox`, which is the swap ROAD-D D10 already made for the
+   pickpocket boxes.
+
+The string arm expands too: `SetText(string)` tokenizes into one Text
+token and falls into the same `SetTextTokens` (:405-408). And the same
+law reaches a second site — `townTalk`'s racial-suppress refusals, both
+of DFU's own doors (TalkManager.cs:2626 and DaggerfallTalkWindow.cs
+:327-333, which is `CloseWindow()` then `DaggerfallUI.MessageBox`) — so
+those are boxes now rather than HUD lines.
+
+## AUDIT 63 F4 - THE REACTION TIER READ THE BASE PERSONALITY (2026-09-08)
+
+`GetReactionToPlayer_0_1_2` opens with
+
+    int reaction = player.Stats.LivePersonality / 5
+       + questionTypeReactionMods[classicQuestionIndex] + toneModifier;
+
+**TalkManager.cs:665**, and `LivePersonality` is
+`DaggerfallStats.cs:55` -> `GetLiveStatValue` — base PLUS every standing
+mod. `computeTier`, the port's ONE implementation of that method and the
+pipeline's `reactionTier` seam, read the raw base map. The two sibling
+terms in the very same call are already live (`GetLiveSkillValue`,
+:647/:655), so personality was the last raw read in the expression.
+
+`liveStat` is the port's `GetLiveStatValue` and its own header already
+says "Combat and advancement read THIS, never the raw base"; it carries
+`fortifyAttribute`/`drainAttribute`/`transferAttribute` on Personality
+and the disease PER column. So in DFU a Fortify Personality potion, a
+Drain/Transfer hit or an ordinary disease moves which answer-table row an
+NPC draws, which greeting flavour the tone bands to, and whether "any
+work" answers 8075 or 8076/8077; in the port it moved none of them.
+
+One line, with the `shared.js` guard idiom kept so a stats-less caller
+keeps the 50 sentinel rather than dropping to `liveStat`'s 0-floor and
+banding every NPC to tier 0. The pre-engine fallback's `whereIsAnswer`
+call takes the same substitution for consistency, and it is recorded here
+that it changes nothing: that caller always supplies `tier`, so
+`talkTopics.js`'s `opts.tier ?? reactionTier(personality, npcSeed)` never
+consumes the argument.
+
+**Adjacent, not fixed here, and left for its own row:**
+`FormulaHelper.CalculateTradePrice` reads `LivePersonality` twice, and
+six shop/temple/spellbook callers plus the court's not-guilty plea pass
+`entity.stats?.personality ?? 50`. Same substitution, different members.
+
+## AUDIT 63 F5 - THE TALK WINDOW'S COPY-TO-LOGBOOK BUTTON (2026-09-08)
+
+`DaggerfallTalkWindow` carries a `buttonLogbook` at **(118,158) 67x18**
+over the baked TALK01I0 art (:725-737). A left click toggles the
+selected conversation row into `copyIndexes` and marks its shadow blue; a
+right click selects every row; and `OnPop` (:299-319) turns the sorted
+indexes into TextQuestion/TextAnswer tokens and files them with
+`PlayerEntity.Notebook.AddNote(copiedEntries)`.
+
+The port had no rect there, no conversation selection state, and no
+OnPop write — the baked button under the portrait was dead area, and the
+receiving law was a ported member with a single quest-action caller
+(`notebook.addNoteTokens`, commented for exactly this arc).
+
+The half worth naming is the SELECTION, because it was a constant
+restating a live member. `nativeTalk`'s draw highlighted
+`index === entries.length - 1`; DFU reads
+`listboxConversation.SelectedIndex`, which a fresh window holds at
+**-1** (see the review round below), `:1280` moves to the newest row on
+every Q/A pair, and `ListBox.MouseClick` moves on a click. That click is the PixelWise walk
+at `ListBox.cs:483-497` — `y = scrollIndex + clickY`, per-item heights
+accumulated with `+ rowSpacing`, hit inside a `rowSpacing * 0.5`
+tolerance at both edges — and NOT the topic list's fixed-row divide,
+because conversation entries are wrapped and each has its own height.
+The heights are only knowable at draw time, so the draw stashes them and
+a click before the first draw is a miss, which is `ListBox.cs:469`'s
+`listItems.Count == 0` return.
+
+The rest is verbatim: `MarkCopiedListItem` (:1580-1592) plays a
+ButtonClick of its OWN on top of the handler's, so a left click that
+marks or unmarks sounds twice in DFU and a right click sounds once per
+row; the shadow is `Color.blue` and reverts to
+`DaggerfallDefaultShadowColor`; OnPop sorts, inserts an EMPTY token
+wherever `idx - prev != 1 && prev > -1` (which `PlayerNotebook.AddNote`
+turns into a line break), and files `question`/`answer` formatting. The
+greeting is stored as a bare string and normalises to an ANSWER in the
+copy exactly as the draw normalises it, or the note would be filed under
+a formatting the journal cannot render.
+
+The seam is `townTalk.notebookSink`, beside `hudMessageSink` and for the
+same reason (the notebook belongs to the quest bridge, which is built
+after the host), set by BOTH hosts that mount the one talk-window door.
+A host with no bridge leaves it undefined and the copy is a silent no-op.
+
+### AUDIT 63 F5 - REVIEW ROUND: a fresh talk window selects NOTHING (2026-09-08)
+
+The first cut read `ListBox.cs:28`'s `int selectedIndex = 0;` as the
+value a fresh talk window holds, and pinned the greeting as its selected
+(and copyable) row. That initialiser is overwritten on every push.
+
+`SetStartConversation` (`DaggerfallTalkWindow.cs:635-652`) — run from
+`Setup` (`:616`) **and** from `OnPush` (`:266`) — opens with
+`listboxConversation.ClearItems();`, and
+
+```csharp
+public void ClearItems()          // ListBox.cs:532-537
+{
+    listItems.Clear();
+    scrollIndex = 0;
+    SelectNone();                 // ListBox.cs:773-776 -> selectedIndex = -1
+}
+```
+
+`AddItem` (`:539-577`) never assigns `selectedIndex`, and the only write
+to `listboxConversation.SelectedIndex` anywhere in
+`DaggerfallTalkWindow.cs` is `:1280`, inside
+`SetQuestionAnswerPairInConversationListbox`. So the greeting draws
+**unhighlighted**, and
+
+```csharp
+if (listboxConversation.SelectedIndex < 0)    // :1554-1555
+    return;
+```
+
+makes the logbook button a no-op until a Q/A pair or a click in the
+conversation panel creates a selection. The port copied index 0 there.
+
+`nativeTalk.js` now seeds `conversationSelected = -1` in the
+constructor. `_pushQA` keeps `this.conversation.length - 1` — that is
+`:1280` verbatim — and the panel click keeps `ListBox.MouseClick`'s
+PixelWise walk. The pin asserts -1 on a fresh window and that a left
+click on the logbook rect before any Q/A leaves `copyIndexes` empty
+while still CONSUMING the click (the handler plays its ButtonClick at
+`:1553` before the guard, then returns).
+
+## AUDIT 63 F6 - REACTIONMODS WAS MINTED FIVE LONG (2026-09-08)
+
+`PlayerEntity.cs:128-129` is `const int socialGroupCount = 11; int[]
+reactionMods = new int[socialGroupCount];`, `ChangeReactionMod` and
+`GetReactionMod` bound-check against that length, `ClearReactionMods`
+(:1567-1570) is `Array.Clear(reactionMods, 0, socialGroupCount)`, and
+`TalkManager.GetReactionToPlayer` (:558) adds
+`GetReactionMod((SocialGroups)factionData.sgroup)` for the NPC faction's
+**unclamped** sgroup — the Merchants clamp at 5 belongs to
+`SetTargetNPC` alone.
+
+`talk.js`'s `ensureReactionState` correctly minted `SOCIAL_GROUP_COUNT`
+(11), but three OTHER producers minted the same field at length 5 with
+`??=`: `applyRepMod`, `enchantmentMagicRound`'s ClearReactionMods, and
+the Masque of Clavicus payload. Whichever ran first fixed the length,
+`ensureReactionState`'s `if (!entity.reactionMods)` never replaced it,
+and `getReactionToPlayer`'s own `sgroup < reactionMods.length` bound
+silently dropped the term for sgroups 5..10 — SGroup5,
+SupernaturalBeings, **GuildMembers**, SGroup8-10.
+
+All three mint `SOCIAL_GROUP_COUNT` now. The five inside `applyRepMod`
+STAYS: `GoodRepWith.cs:80-91` and `BadRepWith.cs:84-95` name
+Commoners..Underworld explicitly and pass `ClassicParam` straight
+through otherwise, so that five is DFU's own and only the ARRAY was
+wrong. `MasqueOfClavicusEffect.cs:39-43` walks
+`Enum.GetValues(SocialGroups)` — Commoners 0 .. SGroup10 10
+(FactionFile.cs:552-566) — so its `g < mods.length` loop now covers all
+eleven, and wearing the Masque raises the player's reaction with guild
+and supernatural NPCs as DFU does. `classicSave.js` emits the eleven-zero
+array instead of `null`, because DFU's live array exists from
+construction and the envelope's `if (!snap[k]) continue` was leaving an
+imported character with no array at all.
+
+The ordinary wizard-chargen path was never the exposed one — biography
+effects call `ensureReactionState` before the world runs. The paths that
+manifested are the classic `.SAV` import, the headless `?class=N` roll
+and a BIOG-less chargen. Two existing pins restated the port instead of
+the reference (`[12,12,12,12,12]` for the Masque; five-element arrays for
+the GoodRepWith pump) and are the reference's shape now.
+
+## AUDIT 63 F7 - THE POPUP TALK BUTTON DROPPED THE QUESTOR DOOR (2026-09-08)
+
+`TalkToStaticNPC`'s FIRST act, before `currentNPCType` is even set, is
+the questor door: **TalkManager.cs:757-772** pushes the QuestOffer window
+and returns for an NPC in `npcsWithWork`, or for a castle NPC that won
+its 25% roll. Every POPUP Talk button reaches that member with the
+default `menu = true`
+(DaggerfallGuildServicePopupWindow.cs:294/:307 and the spymaster's
+:713, DaggerfallWitchesCovenPopupWindow.cs:165/:179).
+
+`openStaticNpc` handled the `questOffer` result; `popupTalkToStaticNpc`
+handled only `kind === 'talk'` and said "You get no response." only when
+the result was falsy. A truthy `questOffer` object matched neither arm,
+so the button did **nothing at all** — no offer, no conversation, no
+line. And the popup is the only door those NPCs have: for a Fighters
+Guild service NPC `openStaticNpc` returns at the `guildService` route
+before it ever calls `talkToStaticNPC`, while factions 849/850/851 are
+`sgroup: 0` = Commoners, which is exactly the pool's own
+Merchants/Commoners/Nobility filter (TalkManager.cs:2816-2822) inside a
+GuildHall, a named building.
+
+The offer body is one function now, parameterised by its MOUNT DOOR, and
+the door matters: `openStaticNpc` pushes onto a bare stack
+(PlayerActivate.cs:1552-1568) and keeps `mountSpellWindow`, which
+REFUSES an occupied slot by design in both non-dungeon modes; the popup
+call is already IN that slot, so it takes `mountServiceWindow`, the
+REPLACE-mode sibling that is DFU's own `CloseWindow();
+PushWindow(next);` for every dispatch out of the guild-service popup
+(:383-394). Nulling `interiorOverlay` would have repaired only the
+interior arm and left the outdoor guild-service and coven Talk buttons
+dead, since ROAD-F GS1 the popup ships above ground in townTalk's slot.
+
+An empty box list returns HANDLED rather than falling through to "You
+get no response.": that silence is DFU's own face —
+`DaggerfallQuestOfferWindow.Setup()` closes before `GetQuest()` and
+`GetQuest()` closes again on `IsLastNPCClickedAnActiveQuestor`
+(:45-63). The coven half of the finding is genuinely unreachable (all
+fourteen coven factions are sgroup 7 and a coven is not a castle); the
+guild-service half is ordinary play.
+
+## AUDIT 63 F47 - THE RACIAL-OVERRIDE DOOR HAD NO WRITER (2026-09-08)
+
+`TalkToNpc` opens with the racial override, and DFU says why in a
+comment: *"Also doing suppression here to prevent talk window flashing
+open and closed in some cases"* (TalkManager.cs:2620-2621). It is the
+FIRST door — before the `reactionToPlayer < -20 || alreadyRejectedOnce`
+gate at :2630, before `GetNPCQuestGreeting`, before
+`GetNPCGreetingRecord`.
+
+`npcSession.js` read `this.deps.suppressTalk?.()` in exactly the right
+place and **nothing supplied it**. Both exterior hosts even IMPORT
+`racialSuppressTalk` and never call it; the port's only live gate was at
+the window door in `townTalk.openTalkWindow`, downstream of the whole of
+`TalkToNpc`. So a transformed lycanthrope's click ran the entire greeting
+body: the mid-greeting rejection arm answered with the hostile greeting
+record's tokens on the HUD where DFU shows "You get no response.", and
+`ResetNPCKnowledge`, the three tone resets and an extra DFRandom draw off
+the shared stream all ran before the port finally refused.
+
+The dep is wired, first in the list to mirror DFU's order. The finding's
+"permanent `alreadyRejectedOnce` latch" is refuted and recorded as such:
+a mobile's npcData is a region People faction nested under a Province, so
+the whole rejection block is skipped for walkers, and both static call
+sites build a fresh wrapper object per click, so the latch is cleared
+every time. The divergence is the wrong line of text plus the state DFU
+never spends.
+
+`townTalk`'s own gate stays — it is DFU's second, independent door
+(DaggerfallTalkWindow.cs:252-260 on OnPush, refused in Update at
+:327-333) — and the mobile-click handler now checks AHEAD of both
+branches, because the pre-engine fallback returns at its directory-less
+arm before `openTalkWindow` is ever reached.

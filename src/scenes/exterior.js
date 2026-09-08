@@ -153,7 +153,7 @@ import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutoma
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
-import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
+import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // QX1/AUDIT 28 F-B2: the quest layer sees the SIZED dungeon
@@ -2574,6 +2574,11 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  mode-aware (worldModes:1258), so this is world.js:4896's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+    /** AUDIT 63 F1: the same static-NPC behaviour cache
+     *  (ActiveGameObjectDatabase.cs:307-311) AddQuestor's relink walks.
+     *  This host stands no street StaticNPCs of its own, so the modal
+     *  hosts' list is the whole of it. */
+    staticNpcQuestBehaviours: () => modes?.activeStaticNpcQuestBehaviours?.() ?? [],
     // ---- B1: THE FOE SPAWN SEAMS, in the fixed-city host too. Without
     // them `create foe` minted nothing here and no quest that kills or
     // meets a Foe could complete on this route.
@@ -2648,6 +2653,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     data: questPack,
     world: questWorld,
     playerEntity,
+    // AUDIT 63 F0: Quest.cs:649-656's tombstone sweep. This host mounts
+    // no talk half (no topic tree, no rumour mill - see the note at the
+    // nameplate stamp), so TalkManager.cs:2958's sibling caller is
+    // absent here by design; but UndiscoverBuilding is a PlayerGPS law,
+    // not a talk one, and this host carries the same module-level
+    // discovery store under the same `region:location` key its
+    // worldModes mount already writes at the door. A quest tombstoning
+    // in the fixed city must take its residences back off the map here
+    // exactly as it does in the streaming world.
+    undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(
+      `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`, buildingKey, true, buildingName ?? null),
     classicSeconds: () => playerTicker.classicMinutes * 60,
     // The notebook's three header reads (PlayerNotebook's own ctx).
     dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
@@ -2726,6 +2742,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     changeReputation: (fid, amount, propagate) => { const st = _questStore(); if (st) changeReputation(st, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
   });
+  // AUDIT 63 F5: DaggerfallTalkWindow.OnPop's notebook filing
+  // (DaggerfallTalkWindow.cs:319). townTalk holds the one talk-window
+  // door and no notebook; the bridge holds the notebook and is built
+  // here, so the sink is handed down at this moment - world.js:5975's
+  // line for this host.
+  townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
   if (_questStartPending) questInitAtGameStart();   // chargen got here first
 
@@ -3916,6 +3938,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         distanceToPlayer: Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]),
         sheathed: weaponRig.playerWeapon.sheathed,
         invisible: isInvisible(playerEntity),
+        inBeastForm: !!playerEntity.isInBeastForm,   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193), written every ConstantEffect round (LycanthropyEffect.cs:241)
         enemiesNearby: () => areEnemiesNearby(exteriorFoePool()),
       }));
       _livePersons = live.map(({ person }) => ({ person, pos: person.pos }));   // T3b: the activation ray's targets

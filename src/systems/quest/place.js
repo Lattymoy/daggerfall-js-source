@@ -293,7 +293,13 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
-      buildingKey: 0, buildingName: '', magicNumberIndex: 0,
+      // AUDIT 63 F0: SelectRemoteDungeonSite (Place.cs:921-931) never
+      // assigns siteDetails.buildingName, and SiteDetails.buildingName
+      // is a plain `string` field of a struct
+      // (DaggerfallUnityStructs.cs:424-441), so `new SiteDetails()`
+      // leaves it NULL. That null disarms UndiscoverBuilding's
+      // matchName gate (PlayerGPS.cs:1015-1016).
+      buildingKey: 0, buildingName: null, magicNumberIndex: 0,
       questSpawnMarkers, questItemMarkers,
       selectedMarker: { targetResources: null },
     };
@@ -321,7 +327,9 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
-      buildingKey: 0, buildingName: '', magicNumberIndex: 0,
+      // AUDIT 63 F0: SelectRemoteLocationExteriorSite (Place.cs:967-978)
+      // assigns no buildingName either - null, not ''.
+      buildingKey: 0, buildingName: null, magicNumberIndex: 0,
       questSpawnMarkers: null, questItemMarkers: null,
       selectedMarker: { targetResources: null },
     };
@@ -388,7 +396,12 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
-      buildingKey, buildingName: '', magicNumberIndex,
+      // AUDIT 63 F0: SetupFixedLocation (Place.cs:1088-1101) assigns a
+      // REAL buildingKey for its SiteTypes.Building arm (:1066) but
+      // never a buildingName - so the tombstone's
+      // UndiscoverBuilding(key, true, null) DOES take that residence
+      // back off the map, the matchName gate never firing.
+      buildingKey, buildingName: null, magicNumberIndex,
       questSpawnMarkers, questItemMarkers,
       selectedMarker: { targetResources: null },
     };

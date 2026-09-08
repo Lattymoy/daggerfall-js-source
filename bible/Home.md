@@ -1363,7 +1363,9 @@ enum exact), spawn probe semantics (uniform [-r,r], 11 attempts), the
 anti-skate render gate, the promote/recycle gating incl. the 180-degree
 half-plane math, MoveAnims records/flips/speeds and the 4-variant
 outfit tables, idle 5 / guard 15, the politeness gate term for term
-(inBeastForm N/A), the reaction ladder + -20 edge, activation
+(inBeastForm live in both hosts since AUDIT 63 F46; it was N/A only
+before Ledger V4 shipped the transformed host laws), the reaction
+ladder + -20 edge, activation
 distances, the pickpocket formula + outcomes (the CAUGHT path
 witnessed live this audit: crime landed on the entity), FACTION.TXT
 parse laws. Departures documented LOUD: pickpocket gold/nothing as

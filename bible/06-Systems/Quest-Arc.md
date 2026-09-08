@@ -5528,3 +5528,248 @@ the six struck sentences was true when it was written and none was
 re-read when the premise under it moved. A departure row is a claim
 about the tree, and the day a slice mounts what the row said was
 missing, the row becomes the most confident wrong sentence in the file.
+
+## AUDIT 63 F0 - THE TOMBSTONE'S QUEST-RESIDENCE UNDISCOVER SWEEP (2026-09-08)
+
+`Quest.TombstoneQuest` ends with three acts, not two. Between
+`RemoveQuestInfoTopicsForSpecificQuest` and `DropAllQuestors` sits the
+sweep at **Quest.cs:649-656** — "undiscover all quest residences used by
+this quest" — which walks `GetAllResources(typeof(Place))` and calls
+`PlayerGPS.UndiscoverBuilding(place.SiteDetails.buildingKey, true,
+place.SiteDetails.buildingName)` for every one of them.
+
+`quest.js` had both neighbours and, between them, a **Q3 FLAG** saying
+the sweep "rides Place site binding - no Places resolve to buildings
+yet". That premise had been false for a long time: `place.js` fills
+`siteDetails.buildingKey`/`buildingName` for every Building site and for
+the `configureFromPlayerLocation` "inside" path, `r.isPlace` is the
+port's `GetAllResources(typeof(Place))` predicate and two other files
+already use it that way, and `discovery.js`'s own header names *both*
+quest callers (TalkManager.cs:2958 and Quest.cs:655) as live while only
+the first had ever been wired.
+
+The sweep is now what C# has: **every Place, unfiltered.** No
+residence filter, no Building-site filter — C# sweeps town and dungeon
+Places too, with `buildingKey` 0, and lets `PlayerGPS.cs:1000-1017` make
+all three refusals (`onlyIfResidence`, the Thieves Guild / Dark
+Brotherhood hideouts, and the `matchName` vs `displayName` test).
+`discovery.js:undiscoverBuilding` already carries all three. The name a
+nameless Place passes is **`null`** — see the review round below.
+
+The wiring is one hook down the established chain — `quest.js` ->
+`machine._buildHooks` -> `questBridge` -> the host — and the two
+quest-side callers now take **one closure**. `world.js`'s
+`undiscoverBuildingHere` was already written for the talk seam
+(TalkManager.cs:2958's identical `(key, true, buildingName)` triple); it
+is hoisted to a named const and handed to both the TopicTree deps and
+the quest-bridge deps rather than minting a second copy. Keying it on
+the CURRENT location is the law, not a shortcut: `PlayerGPS.cs:987-999`
+resolves the dictionary from `CurrentLocation` and returns early when
+none is loaded, so a quest that tombstones while the player is elsewhere
+is a no-op in DFU too — which is why the pin must place the player in
+the residence's own location or it pins a no-op green.
+
+**BOTH bridge hosts carry it.** The two verifiers split here: one said
+wire `world.js` only, because `exterior.js`'s `createQuestBridge` mounts
+no talk half at all and a lone hook there would be a new asymmetry; the
+other said wire both. The second reading is the one faithful to the
+reference: `UndiscoverBuilding` is a **PlayerGPS** member, not a
+TalkManager one, and the fixed-city host writes the *same*
+module-level discovery store under the *same* `region:location` key at
+its own building door and its own lockpick record. A quest tombstoning
+in that city must take its residences off the map there as it does in the
+streaming world. The talk-side sibling (TalkManager.cs:2958) stays absent
+there, which is that host's recorded stance and unaffected.
+
+What the missing sweep actually leaked is narrower than the finding
+claimed and worth recording, because the next finder will raise it
+again: the automap's *quest-name* plate reverts on its own (it walks
+`getAllActiveQuestIds()`, which drops a tombstoned quest), so the visible
+residue is the stale discovery RECORD — the `lastLockpickAttempt`
+anti-grind row that DFU resets by dropping the record, the
+`map_revealbuildings` cheat corner, and save-state divergence. With F49
+below landing DiscoverBuilding's override arm in the same pass, it is
+also the record that would carry a stale overridden NAME.
+
+### AUDIT 63 F0 - REVIEW ROUND: the matchName gate is DISARMED, not armed (2026-09-08)
+
+The first cut of this section — and its pin, and its Testing.md row —
+asserted the inverse of `PlayerGPS.cs:1015-1016` and had to be reversed.
+
+`SiteDetails.buildingName` is a plain `string` field of a **struct**
+(`DaggerfallUnityStructs.cs:424-441`), so a `new SiteDetails()` that
+never assigns it holds **null**, not `string.Empty`. Three of C#'s five
+site builders never assign it:
+
+* `SelectRemoteDungeonSite` (`Place.cs:921-931`) — key 0,
+* `SelectRemoteLocationExteriorSite` (`Place.cs:967-978`) — key 0,
+* `SetupFixedLocation` (`Place.cs:1088-1101`) — and this one carries a
+  **REAL** `buildingKey`, minted at `:1066` by
+  `BuildingDirectory.MakeBuildingKey`, beside the null name.
+
+The other two DO assign: `SelectRemoteBuildingSite` writes a generated
+name at `:1236`, and `ConfigureFromPlayerLocation` seeds
+`string buildingName = string.Empty;` at `:314` and assigns it at `:341`
+— so *its* Town arm really does store `''`, and `place.js` keeps `''`
+there.
+
+The consequence runs the other way from what was written. The gate is
+
+```csharp
+if (matchName != null && matchName != db.displayName)
+    return;
+dl.discoveredBuildings.Remove(db.buildingKey);      // :1017
+```
+
+so a **null** name never fires it and the residence **IS** undiscovered;
+an empty string fires it against any real `displayName` and the
+residence **survives**. A fixed Building Place — real key, no name — is
+therefore exactly the case the port refused and DFU removes. The two
+key-0 shapes are inert either way, because `BuildingDirectory.cs:197-201`
+remaps a packed key of 0 to `buildingKey0`, so no stored record is
+filed under key 0 for the sweep to reach.
+
+`place.js` now writes `buildingName: null` at those three sites and
+`quest.js` falls back to `null`, which also puts the two quest-side
+seams back in agreement — `topicTree.js:432` (TalkManager.cs:2958) had
+always forwarded the raw field.
+
+Two seams downstream take the null and were checked against C# rather
+than assumed:
+
+* **The caption.** `TalkManager.cs:3146-3149` is an explicit
+  `if (place.SiteDetails.buildingName != null)` with a `locationName`
+  else-arm. With `''` the port took the buildingName branch and drew a
+  blank quest-location row; with `null` it falls back to the location
+  name, which is the whole point of that null test.
+* **The macro.** `Place.ExpandMacro` (`Place.cs:257`) and
+  `Person.ExpandMacro` (`Person.cs:315`) hand the field straight out as
+  `textOut` while returning **true**, and `QuestMacroHelper.cs:120-122` /
+  `:207-209` then run `words[w].Replace(macro.token, result)` —
+  .NET's `String.Replace` treats a null `newValue` as `String.Empty`, so
+  the token is REMOVED. `questMacros.js` had encoded C#'s boolean as
+  "returned a string", which would have left `_place_` standing in the
+  text. Both replace seams now accept a `null` result as an expansion to
+  the empty string, and only `false` still means "did not expand".
+
+`DiscoverBuilding`'s override arm needed no change: `PlayerGPS.cs:947`
+is `if (overrideName == null)` and `:961` is `if (overrideName != null)`,
+so a null `overrideBuildingName` coming back out of
+`IsBuildingQuestResource` (`:2412`) simply leaves the building's own
+display name alone — which `discovery.js`'s discoverBuilding already
+mirrors. The `string.IsNullOrEmpty` seam at `TalkManager.cs:1753` is
+likewise already `!this.currentKeySubject` in `answerPipeline.js`.
+
+## AUDIT 63 F1 - ADDQUESTOR'S INDIVIDUAL-NPC SCENE RELINK (2026-09-08)
+
+`Quest.AddQuestor` does not end at `IsQuestor = true` and the registry
+row. **Quest.cs:481-497** is a fourth act: *"Dynamically relink
+individual NPC and associated QuestResourceBehaviour (if any) in current
+scene"* — for an `IsIndividualNPC` Person, walk
+`ActiveGameObjectDatabase.GetActiveStaticNPCQuestResourceBehaviours()`,
+and wherever `person.FactionData.id == npc.Data.factionID`, run
+`AssignResource(person)` and write the back-link
+`person.QuestResourceBehaviour = questResourceBehaviour`.
+
+`quest.js` had none of it, behind another stale note ("the individual-NPC
+scene relink half rides Q3 (no scene objects)") — written before
+`resourceBehaviour.js`, `sceneMount.js` and the host mounts shipped. DFU
+names this clause as live twice more:
+`QuestResourceBehaviour.cs:246-249` ("NPC will be re-linked on next
+layout or by \"add NPC as questor\"") and `QuestMachine.cs:730-734`, of
+which the port had ported the second and not the first.
+
+Four details of the restored clause, each read off the reference:
+
+1. **AssignResource and the back-link, nothing else.** No `start()`, no
+   `cacheTarget()`. `AssignResource` stamps `questUID`/`targetSymbol`
+   alone (QuestResourceBehaviour.cs:217-224); `CacheTarget` runs only
+   from `Start` and `RestoreSaveData` (:124-129, :283). So after DFU's
+   relink the behaviour is still holding a null `targetResource` and its
+   Update arms stay dormant — calling `start()` would make the port
+   hide/destroy through a behaviour DFU leaves inert and would change
+   `DoClick`'s direct arm on top of the individual broadcast.
+2. **ACTIVE hosts only.** `ActiveGameObjectDatabase.cs:307-311` is
+   `GetActiveComponents<T>` over `GetActiveObjects`, which keeps only
+   `activeInHierarchy` objects (:32-46) — so an individual the away arm
+   deactivated (`QuestMachine.cs:1336-1340`) is not a candidate. The
+   person hosts and the marker stands answer an `isActive()` now.
+3. **Marker-stood quest Persons stay IN the list.**
+   `GameObjectHelper.AddQuestNPC` adds a `StaticNPC` component
+   (:1060-1062), so those objects register in the same cache; the port's
+   stands already carry `staticNpcFactionId`, which is the exact field
+   C# compares.
+4. **Every host that stands an individual.** `worldModes`' interior
+   people and its interior/dungeon marker stands are two of them; the
+   THIRD is the street, `exteriorNpcs.js`'s quest pass over
+   `world.js`'s pixel NPCs, which stands the same bootstrap behaviour on
+   individuals who stand outdoors. The seam is composed in `world.js`
+   as the union, surfaced through `deps.world` and
+   `machine._buildHooks`; `exterior.js` stands no street NPCs of its own
+   and answers the modal hosts' list alone.
+
+The reachable states are narrow and worth stating so the severity is not
+re-inflated: the finding's main-quest exemplar (S0000001's
+`add _lhotun_ as questor`) is a NO-OP, because the layout pass has
+already bound that behaviour to the quest's own Person. What is real is
+(a) a start-up task adding an individual questor while the player is
+standing in that individual's scene, where the standing behaviour is
+bound to the PREVIOUS quest's Person or to none, and (b) two live quests
+holding a Person of the same individual faction, where
+`activeFactionPersons[0]` is not the one that becomes questor. In those
+states `hide npc`/`restore npc` and Place's hot-remove are dead for that
+NPC until the interior is laid out again. The CLICK path was never
+affected — the individual broadcast reaches every active quest's Person
+regardless of the link, as C# does.
+
+## AUDIT 63 F2 - DROPQUESTOR NEVER DESTROYED THE BEHAVIOUR, AND NOTHING TICKED IT (2026-09-08)
+
+`Quest.DropQuestor` has a tail: **Quest.cs:519-523** destroys the
+Person's `QuestResourceBehaviour` component when the dropped Person is
+*not* an individual ("Individual NPCs have a permanent
+QuestResourceBehaviour attached as they have special usage in
+long-running quests - it must not be removed"). `quest.js` had only
+`questors.delete(...)`, behind the same stale "rides Q3" note.
+
+Three things had to move together, and the first is the one that makes
+the other two mean anything.
+
+**A. The behaviours were never TICKED.** DFU fills the questor's
+back-link in `QuestResourceBehaviour.Update`'s first clause ("Ensure
+target resource has this behaviour assigned", :132-141) — `AssignResource`
+never writes it, and `machine.js`'s note claiming "the port's
+assignResource fills that link exactly when it is empty" was a comment
+restating the port *wrongly*. The hosts drove `update()` on the interior
+and dungeon quest FLATS only; no loop ever walked the interior people's
+or the street's `questBehaviour`. So the link stayed null for the whole
+visit, `Quest.cs:522`'s `personResource.QuestResourceBehaviour != null`
+test could never be reached, and the Person arm of Update (:143-152 — a
+hidden or destroyed quest Person is `SetActive(false)`) had no caller at
+all. Both hosts drive it now, OUTSIDE the pause gate, because Unity
+Updates a MonoBehaviour whatever the timeScale — which is the rule the
+flats' own loop already states.
+
+**B. A destroyed component is INERT.** `Destroy(component)` in Unity
+stops the component forever; the port's behaviour object survives its own
+destroy event, so without an explicit state the per-frame recouple in (A)
+would immediately undo the uncouple. `resourceBehaviour.js` carries
+`isComponentDestroyed` now: `update()` and `doClick()` return at once
+when it is set, and `destroyGameObject()` sets it too (destroying the
+GameObject takes its components with it).
+
+**C. The COMPONENT, not the GameObject.** `destroyComponent()` raises
+the destroy event and drops the host's `questBehaviour` back-pointer —
+that field is this port's stand-in for C#'s
+`GetComponent<QuestResourceBehaviour>()`, which
+`PlayerActivate.cs:1523-1528` reads before routing an activation to
+talk/guild services — and it does NOT call `host.destroy()`, so the
+StaticNPC keeps standing exactly as it does in DFU.
+
+The reachable path is the TOMBSTONE, not the scripted action: all 36
+`drop _x_ as questor` corpus lines name Individuals, which C# explicitly
+skips, so the divergence rides `_dropAllQuestors()` inside `tombstone()`
+— i.e. every ordinary guild or random quest whose questor is a plain
+building NPC. With the link now filled, a handed-in questor's behaviour
+is destroyed at tombstone and stops swallowing the player's next click,
+where before it would have answered `doClick()` true — no talk window, no
+new offer, no guild service — until the player left and re-entered.

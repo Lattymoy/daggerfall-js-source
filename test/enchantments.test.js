@@ -129,12 +129,17 @@ test('E1 pump: Good/BadRepWith re-apply into the CLEARED reaction mods each roun
   const good = item(T.GoodRepWith, 5);   // All
   const w = wearer([good], { isPlayer: true });
   enchantmentMagicRound(w, 1, {});
-  assert.deepEqual(w.reactionMods, [10, 10, 10, 10, 10]);
+  // AUDIT 63 F6: the array is ELEVEN long (PlayerEntity.cs:128-129
+  // `const int socialGroupCount = 11`), and GoodRepWith's All arm
+  // (GoodRepWith.cs:80-91) writes only Commoners..Underworld - so the
+  // tail 5..10 stays zero while the head carries the mod. One
+  // assertion pins both the eleven-wide clear and the five-wide write.
+  assert.deepEqual(w.reactionMods, [10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0]);
   enchantmentMagicRound(w, 2, {});
-  assert.deepEqual(w.reactionMods, [10, 10, 10, 10, 10], 'cleared and re-applied - never stacking');
+  assert.deepEqual(w.reactionMods, [10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0], 'cleared and re-applied - never stacking');
   w.items = [];   // taken off: the next round clears and nothing re-applies
   enchantmentMagicRound(w, 3, {});
-  assert.deepEqual(w.reactionMods, [0, 0, 0, 0, 0]);
+  assert.deepEqual(w.reactionMods, new Array(11).fill(0), 'ClearReactionMods is Array.Clear over all eleven (PlayerEntity.cs:1569)');
 });
 
 test('E1 pump: VampiricEffect AtRange drains every foe inside 2.25 through the pool sinks', () => {

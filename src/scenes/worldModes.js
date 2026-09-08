@@ -333,7 +333,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, boardTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration - the modal frames' own axes
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
@@ -1188,6 +1188,8 @@ export function createWorldModes(host) {
     };
     stand.host = {
       staticNpcFactionId,   // DoClick's individual broadcast reads this
+      isActive: () => stand.active !== false && !stand.dead,   // AUDIT 63 F1: ActiveGameObjectDatabase.cs:32-46's activeInHierarchy filter
+
       setActive(active) {
         active = !!active;
         if (stand.active === active || stand.dead) return;
@@ -1314,6 +1316,32 @@ export function createWorldModes(host) {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
     for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
+    return out;
+  };
+  /** AUDIT 63 F1: ActiveGameObjectDatabase.GetActiveStaticNPCQuest
+   *  ResourceBehaviours (ActiveGameObjectDatabase.cs:307-311) for
+   *  whichever scene this host currently draws. It is a different list
+   *  from sceneBehaviours() above: that one is
+   *  FindObjectsOfTypeAll<QuestResourceBehaviour>'s
+   *  (GameObjectHelper.cs:917) answer for IsAlreadyPlaced, over
+   *  EVERY quest object; this one is the STATIC-NPC cache, so a
+   *  behaviour qualifies only when its host is a static NPC (it
+   *  carries a numeric staticNpcFactionId - the marker-stood quest
+   *  Persons count, because GameObjectHelper.AddQuestNPC attaches a
+   *  StaticNPC component too, :1060-1062) and is active in hierarchy.
+   *  The interior people and the dungeon/interior marker stands are
+   *  the two this host owns; scenes/world.js unions its street NPCs
+   *  onto the answer. */
+  const activeStaticNpcQuestBehaviours = () => {
+    const out = [];
+    const take = (b) => {
+      if (!b || typeof b.host?.staticNpcFactionId !== 'number') return;
+      if (b.host.isActive?.() === false) return;
+      out.push(b);
+    };
+    for (const pn of interiorCtx?.people ?? []) take(pn.questBehaviour);
+    for (const s of questFlats) take(s.behaviour);
+    for (const s of dungeonQuestFlats) take(s.behaviour);
     return out;
   };
   /** The building-interior mount; also the machine's hot-place callback
@@ -2205,25 +2233,7 @@ export function createWorldModes(host) {
       // DEFAULT menu=true (DaggerfallMerchantRepairPopupWindow.cs:147)
       // - forceTalk IS that button, so it carries the popup's flag.
       { menu: forceTalk, isSpyMaster: route.spymaster === true });
-    if (talk?.kind === 'questOffer' && questBridge) {
-      const step = questBridge.offerSocialQuest(talk.npc ?? npcData, talk.socialGroup, talk.menu);
-      const boxes = questBridge.offerBoxes(step, (id) => townTalk?.lines?.(id) ?? []);
-      if (boxes.length && guildServiceArtLoaded() && _shopFont) {
-        // the U24 identity guard: a window that dispatches to another
-        // must not be nulled by its OWN onClose
-        let offerWin = null;
-        offerWin = new ServiceFlowWindow(boxes, {
-          // AUDIT 26 (F019): through the pair that mounts into
-          // whichever slot the CURRENT mode draws. A street NPC's
-          // offer is opened from exterior mode, where the interior
-          // overlay slot is never drawn or ticked - the window would
-          // have been set and then never seen.
-          onClose: () => closeSpellWindow(offerWin),
-        });
-        mountSpellWindow(offerWin);
-      }
-      return;
-    }
+    if (talk?.kind === 'questOffer' && questBridge) { openQuestOfferFor(talk, npcData, mountSpellWindow); return; }
     // the three doors that close before a conversation: a racial
     // override, a reaction below -20, and a standing rejection - each
     // already said its piece through the session's messageBox seam
@@ -2362,7 +2372,13 @@ export function createWorldModes(host) {
       // record, so the name rides as an override on a synthetic one.
       discoverBuilding: (key, name) => {
         const locId = discoveryLocationId?.();
-        if (locId) discoverBuilding(locId, { buildingKey: key, buildingType: BUILDING_TYPES.House1, name });
+        // AUDIT 63 F49: DaggerfallBankManager.cs:440 passes the
+        // residence text as DiscoverBuilding's OVERRIDE argument, and
+        // PlayerGPS.cs:926-927 lets an override through the
+        // already-discovered early-out on purpose - a house the player
+        // had already entered used to keep its old plate (and, with
+        // isOverrideName down, drew none at all).
+        if (locId) discoverBuilding(locId, { buildingKey: key, buildingType: BUILDING_TYPES.House1 }, name);
       },
       addPermanentScene: (mapId, key) => addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
       addNote: (text) => questBridge?.notebook?.addNote?.(text),
@@ -2757,12 +2773,65 @@ export function createWorldModes(host) {
     });
   }
 
+  /** TalkManager.cs:757-772 - the QUESTOR DOOR, TalkToStaticNPC's
+   *  FIRST act: an NPC in npcsWithWork (or a castle NPC that won its
+   *  25% roll) pushes the QuestOffer window and RETURNS, before
+   *  currentNPCType is even set. Both arms carry `menu` through to
+   *  DaggerfallQuestOfferWindow (:760-770).
+   *
+   *  AUDIT 63 F7: this body used to live inside openStaticNpc alone,
+   *  so the POPUP Talk buttons - which reach TalkToStaticNPC with the
+   *  default menu=true (DaggerfallGuildServicePopupWindow.cs:294/:307,
+   *  DaggerfallWitchesCovenPopupWindow.cs:165/:179) - dropped the door
+   *  entirely: a truthy `questOffer` result matched neither of
+   *  popupTalkToStaticNpc's two arms and the button did nothing at
+   *  all. In a Fighters Guild hall (factions 849/850/851 are sgroup 0
+   *  = Commoners, the pool's own filter at TalkManager.cs:2816-2822)
+   *  openStaticNpc returns at the guildService route before it ever
+   *  calls talkToStaticNPC, so the popup's Talk button is the ONLY
+   *  door those NPCs have.
+   *
+   *  The mount door is the caller's, and it matters: openStaticNpc
+   *  pushes onto a bare stack (PlayerActivate.cs:1552-1568) and takes
+   *  mountSpellWindow, while the popup call is already IN the slot and
+   *  must take mountServiceWindow - DFU's own `CloseWindow();
+   *  PushWindow(next);` (DaggerfallGuildServicePopupWindow.cs:383-394).
+   *
+   *  An empty box list still returns handled, not falls through: that
+   *  is DFU's own silent face - DaggerfallQuestOfferWindow.Setup()
+   *  closes before GetQuest() and GetQuest() closes again on
+   *  IsLastNPCClickedAnActiveQuestor (:45-63). */
+  function openQuestOfferFor(offer, npcData, mount) {
+    if (!questBridge) return false;
+    const step = questBridge.offerSocialQuest(offer.npc ?? npcData, offer.socialGroup, offer.menu);
+    const boxes = questBridge.offerBoxes(step, (id) => townTalk?.lines?.(id) ?? []);
+    if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return true;
+    // the U24 identity guard: a window that dispatches to another
+    // must not be nulled by its OWN onClose
+    let offerWin = null;
+    offerWin = new ServiceFlowWindow(boxes, {
+      // AUDIT 26 (F019): through the pair that mounts into
+      // whichever slot the CURRENT mode draws. A street NPC's
+      // offer is opened from exterior mode, where the interior
+      // overlay slot is never drawn or ticked - the window would
+      // have been set and then never seen.
+      onClose: () => closeSpellWindow(offerWin),
+    });
+    mount(offerWin);
+    return true;
+  }
+
   function popupTalkToStaticNpc(npcData, { isSpyMaster = false } = {}) {
     const dict2 = townTalk?.factionDict ?? null;
     const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
     const talk2 = npcSession?.talkToStaticNPC(
       { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
       { menu: true, isSpyMaster });
+    // AUDIT 63 F7: the questor door FIRST, as TalkManager.cs:757-772
+    // runs it - through the REPLACE-mode mount, because the popup this
+    // call came out of is already in the slot mountSpellWindow refuses
+    // (worldModes.js's own note on mountServiceWindow).
+    if (talk2?.kind === 'questOffer') { openQuestOfferFor(talk2, npcData, mountServiceWindow); return; }
     if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
       // The popup yields to the conversation, as DFU's CloseWindow-
       // then-push does. Only the INTERIOR slot needs saying so: it has
@@ -3752,7 +3821,7 @@ export function createWorldModes(host) {
       // deliberately: refusing entry on missing data would strand a
       // player where DFU always has BuildingSummary.
       if (bd && bd.buildingType != null) {
-        if (locId) discoverBuilding(locId, bd);
+        if (locId) discoverBuilding(locId, bd, null, questBuildingSource);   // AUDIT 63 F49: PlayerEnterExit.cs:1032's call takes the quest name-override arm (PlayerGPS.cs:945-959)
         const minutes = Math.floor(worldMinutes());
         const dict = townTalk?.factionDict ?? null;
         const unlocked = buildingIsUnlocked(bd, {
@@ -4840,6 +4909,18 @@ export function createWorldModes(host) {
     // Time.deltaTime, which is 0 there - so the overlay gates it.
     if (mode === 'interior') for (const s of [...questFlats]) s.behaviour?.update();
     if (mode === 'dungeon') for (const s of [...dungeonQuestFlats]) s.behaviour?.update();   // B2: foe behaviours drive inside drawFoes
+    // AUDIT 63 F2: ...and the STATIC NPCs' behaviours, which no loop
+    // drove. QuestResourceBehaviour is a MonoBehaviour on the StaticNPC
+    // GameObject like any other, so Unity Updates it too - and two of
+    // its clauses are for exactly this case: the back-link recouple
+    // ("Ensure target resource has this behaviour assigned",
+    // QuestResourceBehaviour.cs:132-141), which is what makes
+    // Quest.cs:522's `personResource.QuestResourceBehaviour != null`
+    // reachable at all, and the Person arm at :143-152 that
+    // SetActive(false)s a hidden or destroyed quest Person. Without
+    // this the questor's link stayed null for the whole visit and
+    // `hide npc` never touched a standing questor.
+    if (mode === 'interior') for (const pn of interiorCtx?.people ?? []) pn.questBehaviour?.update();
     if (!overlayHeld) questBridge?.tick(dt);
     const crouchHeld = held(keys, 'Crouch');   // I2: DFU's default C (was the port's X)
     const mv = moveHeld(keys);
@@ -7111,6 +7192,9 @@ export function createWorldModes(host) {
     // hot-place callback (deps.world.mountCurrentSiteQuestResources).
     get interiorBuilding() { return interiorBuilding; },
     mountQuestResources,
+    // AUDIT 63 F1: the modal hosts' half of ActiveGameObjectDatabase's
+    // static-NPC cache, for AddQuestor's relink walk (Quest.cs:483).
+    activeStaticNpcQuestBehaviours,
     /** Q4-v: a quest parchment box lands in the interior overlay slot
      *  while a building is mounted (the host routes exterior popups to
      *  its own overlay). */

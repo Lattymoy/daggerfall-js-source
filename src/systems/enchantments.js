@@ -58,6 +58,7 @@ import { artifactHook } from './artifactEffects.js';   // V3: the nine artifact 
 // FallExe's enum and the artifact registry reads it below this module
 // in the graph; re-exported for this module's many consumers.
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
+import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -618,7 +619,11 @@ const REGISTRY = new Map([
 
 function applyRepMod(entity, param, amount) {
   if (!entity.isPlayer) return;
-  const mods = (entity.reactionMods ??= new Array(5).fill(0));
+  // AUDIT 63 F6: the ARRAY is eleven (PlayerEntity.cs:128-129); the
+  // five below is GoodRepWith.cs:80-91 / BadRepWith.cs:84-95, which
+  // name Commoners..Underworld explicitly and pass ClassicParam
+  // straight through otherwise - that five is DFU's, and stays.
+  const mods = (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0));
   if (param === 5) { for (let g = 0; g < 5; g++) mods[g] += amount; }
   else if (param >= 0 && param < 5) mods[param] += amount;
 }
@@ -786,7 +791,7 @@ export function computeEnchantmentMods(entity, ctx = null) {
  *  runMagicRoundsFor owns the call, so every host gets it. */
 export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = null } = {}) {
   ctx = mergeCtx(ctx);
-  if (entity.isPlayer) (entity.reactionMods ??= new Array(5).fill(0)).fill(0);   // ClearReactionMods (:1713)
+  if (entity.isPlayer) (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0)).fill(0);   // ClearReactionMods (PlayerEntity.cs:1567-1570 - Array.Clear over all socialGroupCount = 11 entries)
   const items = equippedEnchantedItems(entity);
   if (!items.length) { entity._enchantMods = null; return; }
   computeEnchantmentMods(entity, ctx);
