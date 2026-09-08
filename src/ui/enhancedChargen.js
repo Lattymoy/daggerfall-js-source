@@ -1373,7 +1373,7 @@ function releaseLock() {
  *
  * ChargenFlow times exactly one thing: the constellation CEL an
  * answered question lights, which locks the questions screen until
- * CEL_OnAnimEnd releases it (chargen.js:562-568, :580-588). The
+ * CEL_OnAnimEnd releases it (chargen.js:587-593, :580-588). The
  * CLASSIC screen paints that chart and its host ticks the flow every
  * frame, so the lock is the animation you are watching. This view
  * paints no chart and its overlay ticks nothing, so the same lock is

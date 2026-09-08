@@ -49,7 +49,7 @@
 // systems/court.js:209 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:251 (DeductGoldAmount, PlayerEntity.cs
-// :1324-1354), banked at systems/banking.js:463/:476, and described by
+// :1324-1354), banked at systems/banking.js:482/:495, and described by
 // the 1007 text at systems/itemInfo.js:101. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.

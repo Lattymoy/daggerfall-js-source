@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:771`, `world.js:688`), fired
+`playerTicker.advance(60)` (`exterior.js:887`, `world.js:730`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1421` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1542` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5028,7 +5028,7 @@ predicate read prettier.
 by the same sweep and each verified against the tree before deletion:
 the interior detect claim above; "there is nowhere to cash one yet" on
 the letter of credit, which B2 answered with `DepositAll_LOC`
-(`banking.js:461`, the window's own :377-389); "the BANKING arm stays
+(`banking.js:480`, the window's own :377-389); "the BANKING arm stays
 FLAGGED below", written nine lines above the live banking arm; and
 "every other arm is FLAGGED by name in
 `guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
@@ -5322,7 +5322,7 @@ blocked.
 Mac: "let's work on the horses and carts". The port has carried the CART
 as an inventory fact since the W-slice - the wagon's 750kg, the
 dungeon-exit prompt, the transfer guards - and the HORSE as an item
-nobody could sit on. `motor.js:517` passed `riding: false` into the
+nobody could sit on. `motor.js:546` passed `riding: false` into the
 climbing gate with the note "the transport arc pends", and
 `DaggerfallTransportWindow` is the last of DFU's 60 real windows the
 port does not have (UI-Arc.md's table).

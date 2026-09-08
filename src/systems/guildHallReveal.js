@@ -27,7 +27,7 @@
 //   unsigned House2 residence (PlayerActivate.cs:1280-1285, ported at
 //   buildingLocks.js), and the town map names a residence only under
 //   `!IsResidence || isOverrideName` (ExteriorAutomap.cs:672-680,
-//   ported at exteriorAutomapWindow.js:1036). A plain discovery leaves
+//   ported at exteriorAutomapWindow.js:1075). A plain discovery leaves
 //   the hall on the map with no plate at all;
 // - the name is READ, not a constant: GetGuildName -> GetAffiliation
 //   (Guild.cs:165-176) is the FACTION.TXT record's own name for the

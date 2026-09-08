@@ -447,7 +447,7 @@ export class NativeTalkWindow {
   /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
    *  its first row - index 1 when row 0 is the NavigationBack
    *  "previous" row, which this port's flattened lists never carry
-   *  (treeCategories drops them, townTalk.js:695) - and SelectIndex
+   *  (treeCategories drops them, townTalk.js:701) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
    *  label is filled before the player clicks anything.
    *
@@ -769,7 +769,7 @@ export class NativeTalkWindow {
 
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  The third slot is the host's right-button boolean
-   *  (townTalk.js:994) and is not read here; `now` is the
+   *  (townTalk.js:1000) and is not read here; `now` is the
    *  double-click clock, injectable for the pins. */
   click(vx, vy, rightButton = false, now = null) {
     const R = TALK_RECTS;
@@ -867,7 +867,7 @@ export class NativeTalkWindow {
     }
     // B5-6: the four pages are live at :313-327 - tellMeAbout, then
     // people/things/work behind the whereIs gate - with three of the
-    // hooks supplied at scenes/townTalk.js:639-641 and Work's OKAY
+    // hooks supplied at scenes/townTalk.js:645-647 and Work's OKAY
     // question shipped alongside them (_askWork :293, ButtonOkay's
     // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
     // still falls back to consuming the click when its hook is absent

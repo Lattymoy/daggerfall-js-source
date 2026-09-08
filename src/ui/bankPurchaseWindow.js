@@ -85,7 +85,7 @@ export const SCROLL_NUM = 1;
  *  9x80 and the down arrow sits at y=64 (:26-28) - NOT the item
  *  scroller's 9x152 / y=136, which is a different pair of strips.
  *  The port drew neither, so this list never told the player it
- *  scrolled: exactly the defect itemScroller.js:120-123 records
+ *  scrolled: exactly the defect itemScroller.js:121-124 records
  *  fixing for the inventory rail. */
 export const PURCHASE_ARROWS_FULL = Object.freeze({ w: 9, h: 80 });
 export const PURCHASE_UP_ARROW_RECT = Object.freeze([0, 0, 9, 16]);

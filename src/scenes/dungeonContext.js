@@ -1816,7 +1816,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:955,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:959,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -1827,7 +1827,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:473), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:497), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -2290,7 +2290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:808 against :839; worldModes.js:5495 against :5504).
+    // (dungeon.js:864 against :895; worldModes.js:5701 against :5710).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2756,8 +2756,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:7680,
-              // exterior.js:3943 and worldModes.js:5619 already ran;
+              // playerArrowHitFoe is the one copy world.js:8013,
+              // exterior.js:4143 and worldModes.js:5825 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4522,7 +4522,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:266-268 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:275-277 runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is
@@ -4744,7 +4744,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:813) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:889) and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with

@@ -305,7 +305,7 @@ export function overlayAction(e) {
   // `'-': 'minus'`, `r: 'reroll'`, `R: 'reroll'` that used to stand
   // here were unreachable and read as a promise the module could not
   // keep. A consumer that wants those keys reads 'char:-' / 'char:r' /
-  // 'char:R' beside its own action name, as ui/chargen.js:1689 already
+  // 'char:R' beside its own action name, as ui/chargen.js:1813 already
   // did and ui/charsheet.js's LevelUpScreen now does. The branches are
   // deliberately NOT reordered: putting the table first would starve
   // every text field of '-', 'r' and 'R'. '+' and '=' are outside the

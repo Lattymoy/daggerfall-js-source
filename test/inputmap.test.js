@@ -221,7 +221,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
 
 test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () => {
   // townTalk.frame ticks and DRAWS the HUD text layer as well as the
-  // overlay (townTalk.js:598, :586), and the two exterior hosts called
+  // overlay (townTalk.js:603, :586), and the two exterior hosts called
   // it in their modal branch only when a window was up. So a broken
   // weapon, a fatigue warning and a level-up inside a building all
   // spoke to devtools while the player watched a HUD with nothing on

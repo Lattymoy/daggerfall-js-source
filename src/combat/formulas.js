@@ -811,7 +811,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:315), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:328), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */

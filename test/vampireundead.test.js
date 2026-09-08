@@ -39,7 +39,7 @@ const HUMANOID_BONUS = 0x04, HUMANOID_PHOBIA = 0x40;
 
 const attacker = (flags, level = 7) => ({ level, attackModifierFlags: flags });
 /** A player target; `vampire` adds the live racialOverride entry
- *  liveVampirism looks for (vampirism.js:97-99). */
+ *  liveVampirism looks for (vampirism.js:97-111). */
 const player = (vampire = false) => ({
   isPlayer: true,
   activeEffects: vampire ? [{ kind: 'racialOverride', racial: 'vampirism', ended: false }] : [],

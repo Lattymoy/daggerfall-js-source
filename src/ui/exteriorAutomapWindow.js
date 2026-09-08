@@ -143,7 +143,7 @@ import {
   exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
 } from './automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:377-378)
+import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:402-403)
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database
@@ -527,7 +527,7 @@ export class ExteriorAutomapWindow {
   constructor(deps) {
     this.deps = deps;
     this.done = false;
-    // The raw-code seam townTalk.js:314 forks on, the same one the
+    // The raw-code seam townTalk.js:316 forks on, the same one the
     // dungeon window takes (automapWindow.js:498) - it is that fork's
     // switch, not a semantic claim about choice windows, and without it
     // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,

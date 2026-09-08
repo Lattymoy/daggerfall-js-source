@@ -118,7 +118,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:377-402 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:402-427 runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and

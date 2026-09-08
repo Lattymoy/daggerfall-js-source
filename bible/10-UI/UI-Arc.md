@@ -52,17 +52,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1735 (the factory) and :1904 (a
+                        worldModes.js:1761 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:827, world.js:1436,
-                        exterior.js:1844. It is the only window TWO
+                        dungeonContext.js:903, world.js:1557,
+                        exterior.js:1965. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1475, dungeonContext.js:3180. A seam
+    / NOTEBOOK          world.js:1596, dungeonContext.js:3302. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -6136,7 +6136,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:598, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:603, :586`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -7768,7 +7768,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2546 as a second book built by hand 342 lines below the
+worldModes.js:2573 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -7851,7 +7851,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1722 and
+questJournal.js from charSheetNav:53, world.js:1859 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -8478,7 +8478,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5101` and `dungeonContext.js:1271` answer the same
+`worldModes.js:5251` and `dungeonContext.js:1347` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -8538,12 +8538,12 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:517` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:546` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:431` routed
+The port had the DOOR and not the room. `input.js:442` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -8582,7 +8582,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:517` reads
+is trivial, `TransportManager` is not - `motor.js:546` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -9722,9 +9722,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4661`,
+the other half went stale unnoticed. (The rest cite named `world.js:4908`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4667` now.)
+deleted the second and the cite is `world.js:4914` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9767,7 +9767,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1078` and `ui/spellbookWindow.js:427` already
+- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:427` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -9810,7 +9810,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1078`, `ui/spellbookWindow.js:427`
+section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:427`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -10141,7 +10141,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:543-569`), so in the art-less greeting chain a tone
+  (`townTalk.js:548-574`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps

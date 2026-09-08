@@ -1130,7 +1130,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:369-387). FLATS.CFG is awaited because
+    // (interiorContext.js:386-404). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -2525,10 +2525,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:1964 mounts the same one, gated on
+  // and dungeonContext.js:2054 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4371
+  // that context through modes.dungeonCtx - so worldModes.js:4495
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4674,20 +4674,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:229), which until now
+     *  panel of the large HUD (ui/hudLarge.js:231), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:430) and
+     *  on. Here routeAction's arm is optional (ui/input.js:441) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:351), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:354), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
@@ -4852,7 +4852,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     keys.add(e.code);
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:156-177), and no host passed one - so
+    // held-keys Set (ui/input.js:159-180), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -5050,7 +5050,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:205, "a right-click on a window is the window's...
+  // (dungeon.js:206, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5262,7 +5262,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:6796-6808 -
+  // worldModes answers it in BOTH modes (worldModes.js:7007-7019 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6759,7 +6759,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:93, so the
+  // only reader of `load` in the whole tree is dungeon.js:94, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7037,7 +7037,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:598, :586). So every HUD line raised in a modal
+      // (townTalk.js:603, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -8128,7 +8128,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:377-402) because neither reads ARENA2 - "a player whose
+    // (hud.js:402-427) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

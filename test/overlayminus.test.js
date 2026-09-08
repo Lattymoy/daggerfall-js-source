@@ -14,7 +14,7 @@
 // - so a level-up point could be spent from the keyboard and never
 // taken back, under a screen that prints '+/- assign'. StatsRollout.cs
 // :255's down-spinner is the door that was unreachable. The 'reroll'
-// half had no workaround at all: only ui/chargenArt.js:1449's mouse
+// half had no workaround at all: only ui/chargenArt.js:1476's mouse
 // rect reached this.reroll(), while the screen drew 'R reroll'.
 //
 // The branches are NOT reordered - the table ahead of the class would
@@ -95,7 +95,7 @@ test('AUDIT 58 (f3/input): chargen’s R rerolls from the keyboard, as the scree
   f.input(overlayAction({ key: 'R' }));
   assert.equal(rolls, 2, 'shifted too');
   f.input('reroll');
-  assert.equal(rolls, 3, "the bare name stays for chargenArt.js:1449's mouse rect");
+  assert.equal(rolls, 3, "the bare name stays for chargenArt.js:1476's mouse rect");
   assert.match(src('ui/chargen.js'), /line\('\+\/- assign {3}R reroll {3}ENTER when pool 0', 10, dim\);/);
   assert.match(src('ui/chargen.js'), /else if \(action === 'reroll' \|\| action === 'char:r' \|\| action === 'char:R'\) this\.reroll\(\);/);
   assert.match(src('ui/charsheet.js'), /else if \(action === 'minus' \|\| action === 'char:-'\)/);
