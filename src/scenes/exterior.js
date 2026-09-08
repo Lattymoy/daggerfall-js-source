@@ -116,7 +116,9 @@ import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar b
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
-import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
+import { preloadMessageBoxArt, tokenRows } from '../ui/messageBox.js';   // U11; AUDIT 64 F10: MultiFormatTextLabel's row law for the holiday parchment
+import { expandMessageBoxTokens } from '../systems/talkMacros.js';   // AUDIT 64 F10: SetTextTokens' null-mcp ExpandMacros pass
+import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
@@ -129,7 +131,7 @@ import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
-  windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
@@ -3260,6 +3262,17 @@ export async function bootExterior(canvas, renderer, params, status) {
   // arming edge is here rather than on a poll. Without it a graveyard
   // opened as ?exterior was silent while the streaming host howled.
   ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+  // AUDIT 64 F10 (the same host rule, a third law on this one edge):
+  // PlayerGPS_OnEnterLocationRect's TOWN arm primes the holiday text
+  // (PlayerEnterExit.cs:1404-1409) - 2.5 s, "to give save game fade-in
+  // time to finish". This host has one location and stands in its rect
+  // for its whole life, so the entry edge is here, at load, and the
+  // cancel clause at :355-358 (the location object changed) can never
+  // fire. The type filter is DFU's own: a graveyard, a dungeon, a coven
+  // or a mooring opened as ?exterior primes nothing (:1364-1367,
+  // :1382-1383).
+  const _holidayText = new HolidayTextTimer();
+  if (holidayTextPrimesFor(_musicLocationType())) _holidayText.enterLocationRect(dfLocation);
   // AUDIT 63 F9 (the same host rule, the other law): a Thieves Guild or
   // Dark Brotherhood member's RegisterEvents (ThievesGuild.cs:197-206,
   // DarkBrotherhood.cs:206-215) subscribes StreamingWorld
@@ -3349,6 +3362,26 @@ export async function bootExterior(canvas, renderer, params, status) {
       // AssignPlaylist and overrides the environment entirely.
       arrested: Boolean(playerEntity.arrested),
     }, modes?.musicContext?.() ?? null);
+
+    // AUDIT 64 F10 - PlayerEnterExit.Update's holiday-text drain
+    // (:355-368), the other half of the prime above: count the timer
+    // down and fire once it has run out while the player is on the HUD
+    // (GameManager.IsPlayerOnHUD, :400-403 - the port's `!gamePaused()`,
+    // so a window on top DEFERS the box rather than dropping it).
+    _holidayText.update(dt, {
+      currentLocation: () => dfLocation,   // one location, so :355's cancel is inert here
+      onHUD: () => !gamePaused(),
+      gameMinutes: () => Math.floor(playerTicker.classicMinutes),   // ToClassicDaggerfallTime (:569)
+      regionIndex: () => dfLocation.regionIndex,   // PlayerGPS.CurrentRegionIndex (:570)
+      // SetTextTokens(int) with ClickAnywhereToClose (:574-575). The mcp
+      // is NULL at that call site (DaggerfallMessageBox.cs:443-450's
+      // default), so this is the null-mcp door, hooks only.
+      showRecord: (id) => {
+        const ctx = { hooks: questBridge?.machine?.macroContext?.()?.hooks ?? null };
+        const rows = plainLines(tokenRows(expandMessageBoxTokens(townTalk.recordTokens(id), ctx))) ?? [];
+        if (rows.length) townTalk.showBox(rows);
+      },
+    });
 
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
@@ -3777,9 +3810,13 @@ export async function bootExterior(canvas, renderer, params, status) {
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
     }
+    // AUDIT 64 F9 - DaggerfallLocation.cs:141-145 is the only window-style
+    // rule a town runs (its WindowTextureStyle feeds SetClimate at :218/:221)
+    // and it reads the clock alone; WeatherManager never touches a window
+    // style, so no weather term may sit between the ?window= dev override
+    // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
-      params.has('window') ? params.get('window')
-        : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
     // thunder and snow) disables the clear night sky, so the DAY sky at
     // frame 0 is drawn instead. weatherSkyOffset IS the WeatherStyle

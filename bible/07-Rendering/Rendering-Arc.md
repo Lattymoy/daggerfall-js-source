@@ -156,8 +156,10 @@ ported as its exact Hermite keys ((0,0), (0.08,0.36, slope 2.8928573),
 (0.5,0.9), (0.92,0.36, -2.8928576), (1,0)) with Unity's clamped
 Evaluate; rig intensity 0.6 and color (0.816, 0.954, 1);
 PlayerAmbientLight exterior ambient = lerp(0.25 * NightAmbientLightScale
-(settings default 1), 0.9, curve); window style Night when IsNight (the
-ChangeClimate call-site rule); DaggerfallLight flicker per light (14
+(settings default 1), 0.9, curve); window style Night when IsCityLightsOn
+(AUDIT 64 F8: the two call sites that name it, DaggerfallLocation.cs:141-145
+and DayNight.cs:90/:120, both read IsCityLightsOn - so the glass lights with
+the lanterns at 17:00 and unlights with them at 08:00); DaggerfallLight flicker per light (14
 ticks/s, target = rand(range - 1, range), step 0.4) on the approved
 umRandom substitute (Ledger A). Renderer: solid lighting parametrized
 (uAmbient + uSunColor * uSunScale * N.L; defaults reproduce the pre-R5
@@ -381,9 +383,12 @@ Overcast/Fog 0.65, Rain/Snow 0.45, Storm 0.25); IsSnowFreeClimate
 with Unity's linear (end-d)/(end-start) and exponential exp(-density*d)
 factors, camera position extracted from the view matrix each frame
 (numeric round-trip verified); the sky pass gains a fogMix (heavy fog
-swallows the sky, mix = 1 - exp(-density * 800)). EQUIVALENCES: the R2
-Fog WINDOW style is wired to WeatherType.Fog (DFU defines it, never
-wires it); outdoor fog COLOR is DaggerfallSky.SetSkyFogColor's cameraClearColor
+swallows the sky, mix = 1 - exp(-density * 800)). AUDIT 64 F9: the R2 Fog WINDOW style is
+NOT wired to WeatherType.Fog any more - DFU declares WindowStyle.Fog and
+MaterialReader.cs:927-929 spends it, but no writer in the tree ever hands
+it Fog (WeatherManager.cs names no window at all), so the port likewise
+assigns only the clock's Day/Night and keeps the fog row for the ?window=
+dev override, as it keeps Custom. EQUIVALENCES: outdoor fog COLOR is DaggerfallSky.SetSkyFogColor's cameraClearColor
 (= west element 0, the sky horizon), verbatim; shadowStrength has no
 consumer.
 Scenes: exterior + world take ?weather= and ?wseed (deterministic sky
@@ -993,3 +998,79 @@ file header's item 4 already described the port-side collision
 correctly and is unchanged. Every assertion in the seams pin (two keys,
 distinct textures, the mesh's preference for `#opaque`, the fall-back
 to the bare key) is kept as it was.
+
+### AUDIT 64 F8 (2026-09-08) - the town glass burned on the sun's flag, not the lanterns'
+
+`windowStyleForTime` (`src/world/worldClock.js`) answered
+`isNight(minuteOfDay) ? 'night' : 'day'` - DawnHour 6 / DuskHour 18.
+Both writers of a window style in Daggerfall Unity read the OTHER
+property. `DaggerfallLocation.ApplyTimeAndSpace`
+(`Internal/DaggerfallLocation.cs:141-145`) is
+`if (dfUnity.WorldTime.Now.IsCityLightsOn) WindowTextureStyle =
+WindowStyle.Night; else WindowTextureStyle = WindowStyle.Day;`, and the
+poll that re-runs it (`:120-129`) edges on `lastCityLightsFlag !=
+Now.IsCityLightsOn`; the asset-injection twin,
+`Utility/AssetInjection/Components/DayNight.cs:90` then `:120`, is
+`WindowStyle style = lightsOn ? WindowStyle.Night : WindowStyle.Day`
+over the same `IsCityLightsOn`. `Utility/DaggerfallDateTime.cs` keeps
+the two properties apart: `IsCityLightsOn` is `Hour >= LightsOnHour(17)
+|| Hour < LightsOffHour(8)` (`:155-157`), `IsNight` is `Hour <
+DawnHour(6) || Hour >= DuskHour(18)` (`:171-173`). Nothing in the tree
+selects a window style from `IsNight`.
+
+So the port lit its town windows an hour late and unlit them two hours
+early, while the city lanterns beside them - which both exterior hosts
+read correctly off `isCityLightsOn` (`world.js`, `exterior.js`) - were
+already burning. From 17:00 to 18:00 the streetlamps stood over
+day-blue glass `(89,154,178)*0.5`; from 06:00 to 08:00 the glass went
+day-blue while the lamps still burned, where DFU shows amber
+`(255,182,56)*0.8`. Three hours of every in-game day, in every town, on
+the plain classic path.
+
+The function now answers `isCityLightsOn(minuteOfDay) ? 'night' :
+'day'` - the predicate the same module already exported one screen
+above, for the lanterns. No call site changed: the two exterior hosts
+were already the only consumers. The old pin was non-discriminating
+(22:00 and 12:00 answer the same under either law); `test/clock.test.js`
+and `test/audit64_time_weather.test.js` now pin the four hours where
+the two properties disagree (17:00 and 07:59 night, 16:59 and 08:00
+day) and sweep the whole day asserting `windowStyleForTime(m) ===
+'night'` exactly when `isCityLightsOn(m)` - the two halves of one flag,
+pinned together rather than as four restated constants.
+
+### AUDIT 64 F9 (2026-09-08) - the fog window style was wired to a weather DFU never wires it to
+
+`windowStyleForWeather(weather)` returned `'fog'` for `WeatherType.Fog`
+and both exterior hosts let that answer WIN over the clock's
+(`windowStyleForWeather(weather) ?? windowStyleForTime(minute)`), so a
+foggy town painted flat grey `(117,117,117)*0.5` where DFU paints the
+day blue or the night amber. Fog is ordinary classic weather - the
+swamp rolls it a quarter of all winter days - and the call sat behind
+no `isEnhanced()` and no pref.
+
+`WindowStyle.Fog` is DECLARED (`DaggerfallUnityEnums.cs:87-94`) and
+SPENT (`MaterialReader.cs:927-929`, over `FogWindowColor` at `:113` and
+`FogWindowIntensity` at `:117`) but never ASSIGNED. The whole tree's
+writers are `DaggerfallLocation.cs:44/:143/:145` (Day default, then
+`IsCityLightsOn ? Night : Day`), `DayNight.cs:120` (the same choice),
+`DaggerfallInterior.cs:473/:517/:1270` (`Disabled`) and
+`DaggerfallBankPurchasePopUp.cs:267` (`Day`). `Game/WeatherManager.cs`
+does not contain the word "window": `SetWeather` sets fog settings, the
+sky `WeatherStyle` and the IsRaining/IsStorming/IsSnowing/IsOvercast
+flags, and stops. The departure had no Ledger A row - only a source
+comment and a line on this page - so it was a classic-path behaviour
+change asserted in prose, which is exactly what the Ledger's own header
+forbids.
+
+`windowStyleForWeather` is gone, with its imports at both hosts, and
+each host's line is now
+`setWindowEmission(windowEmissionRGB(params.has('window') ?
+params.get('window') : windowStyleForTime(minute)))` - the `?window=`
+dev override (DFU's inspector equivalent) and then the clock, with
+nothing between. The `WINDOW_STYLES.fog` ROW STAYS: it is verbatim
+`MaterialReader` data and still reachable through `?window=fog`,
+exactly the standing of the `custom` row, which DFU also assigns
+nowhere. It is the wiring that had no counterpart, not the table. The
+old pin restated the departure (`windowStyleForWeather('fog') ===
+'fog'`); the new pin is over the two hosts' call text and over
+`weather.js` exporting no window-style rule at all.

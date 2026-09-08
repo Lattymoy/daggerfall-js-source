@@ -7081,3 +7081,138 @@ standing runner tallies AND pays the default band; the moving one pays
 88), plus `test/tr1_transport.test.js`'s dungeon-host pin rewritten from
 the raw-key shape to the latched pair. Mutants: the tally gate reverted
 to `activity.running`, a dungeon host reverted to the raw key; 2 killed.
+
+## AUDIT 64 F10 - THE FESTIVAL PARCHMENT NOBODY RAISED (2026-09-08)
+
+`src/systems/holidays.js` had shipped `getHolidayId` with five readers
+- the temple's cure price, the tavern's meal, the spellbook, the trade
+half-price and the shop lock - every one of them a price or a lock
+decision. The sixth reader in Daggerfall Unity is not a price at all:
+`PlayerEnterExit.ShowHolidayText` (`Game/PlayerEnterExit.cs:565-585`)
+is a whole public member that pops a click-anywhere parchment when the
+player walks into a settlement on one of the year's 53 holidays.
+`grep -rn '8349' src/` matched only windmill vertex data; nothing in
+the port announced anything.
+
+The member is three parts, and the announcement is the smallest of
+them.
+
+**The id** (`:567-575`). `const int holidaysStartID = 8349`, then
+`GetHolidayId(WorldTime.ToClassicDaggerfallTime(),
+PlayerGPS.CurrentRegionIndex)`, and the box carries record
+`8349 + holidayId` through `SetTextTokens(int)` with
+`ClickAnywhereToClose = true` and a cleared screen dim. Ported as
+`HOLIDAYS_START_ID` and `holidayTextId(gameMinutes, regionIndex)`,
+which answers 0 for DFU's `if (holidayId != 0)` gate. The id
+arithmetic stays in `holidays.js`; the box belongs to the host, like
+the module's five other readers.
+
+**The prime** (`:1404-1409`). It is NOT fired on the frame of entry.
+`PlayerGPS_OnEnterLocationRect` (`:1357`) splits three ways under
+`if (playerGPS && !isPlayerInside)` (`:1362`): the dungeon/graveyard
+arm (`:1364-1367` - DungeonLabyrinth, DungeonKeep, DungeonRuin,
+Graveyard) prints two flavour lines and primes NOTHING; the town arm
+(`:1382-1383`, `else if (LocationType != Coven && != HomeYourShips)`)
+prints "You are entering %s", lists rented rooms, and only then does
+`if (holidayTextTimer <= 0 && !holidayTextPrimed) { holidayTextTimer =
+2.5f; holidayTextPrimed = true; }` followed by `holidayTextLocation =
+StreamingWorld.CurrentPlayerLocationObject`. The 2.5 s is DFU's own
+comment: "short delay to give save game fade-in time to finish". So a
+ruin, a coven or a mooring must announce no festival, which is what
+`holidayTextPrimesFor(locationType)` gates.
+
+**The drain** (`:355-368`), in `Update`: cancel when the remembered
+location object is no longer the current one, count the timer down, and
+fire only when it has run out AND `GameManager.IsPlayerOnHUD`
+(`GameManager.cs:400-403`) - with a window on top the box is DEFERRED,
+not dropped, since the timer stays at zero and `primed` stays true. And
+`ShowHolidayText`'s tail sets `holidayTextTimer = 10f` (`:584`)
+OUTSIDE the `if (holidayId != 0)` block, so an entry on an ordinary day
+also blocks re-evaluation for ten seconds - DFU's own comment says why:
+"so it doesn't show again and again if the player is repeatedly
+crossing the border of a city".
+
+All three live in `HolidayTextTimer` (`holidays.js`), whose three
+fields are `PlayerEnterExit`'s three (`:78-80`) and whose `location` is
+compared by IDENTITY, as DFU's `DaggerfallLocation` reference is.
+
+Both exterior hosts carry it, as the four-hosts rule requires.
+`src/scenes/world.js` primes on the rect-entry edge it already shares
+with the graveyard ambience and the guild-hall reveal, behind the type
+gate and inside the branch that only runs outdoors, remembering
+`_musicLoc` - the per-pixel `DFLocation` object that IS this host's
+`CurrentPlayerLocationObject`; it drains once per frame ABOVE the modal
+gate, because DFU's drain runs in `Update` and is not suspended by
+walking indoors, and its `IsPlayerOnHUD` is the port's `!gamePaused()`.
+`src/scenes/exterior.js` loads ONE location and stands in its rect for
+its whole life, so the entry edge there is load time - beside the same
+cemetery arming - and the cancel clause is inert; the drain runs in its
+frame loop identically. Both push the record through their own TEXT.RSC
+parchment door (`townTalk.recordTokens` -> the macro pass ->
+`tokenRows` -> `townTalk.showBox`, an `ActionTextBox`, which is the
+port's `ClickAnywhereToClose`); the mcp at DFU's call site is the
+default `null` (`DaggerfallMessageBox.cs:443-450`), so this is the
+null-mcp door.
+
+Pinned in `test/audit64_time_weather.test.js`: the id arithmetic and
+its zero, the type gate over all fifteen location types, the 2.5 s
+delay, the cancel on leaving, the deferral under an open window, the
+ten-second re-arm on a NON-holiday day, and both hosts' wiring.
+
+### AUDIT 64 F10 - REVIEW ROUND: THE HOST PINS HELD SHAPE, NOT ARGUMENT (2026-09-08)
+
+The first cut pinned the two hosts' wiring with four independent
+source fragments - `holidayTextPrimesFor(`,
+`_holidayText.enterLocationRect(`, `_holidayText.update(dt, {` and
+`showRecord: (id)`. Every one of them is a SHAPE. None of them named an
+ARGUMENT, and the two arguments are the whole feature:
+
+- **The location object.** `PlayerEnterExit.cs:1409` stores
+  `StreamingWorld.CurrentPlayerLocationObject` into
+  `holidayTextLocation`; `:355` cancels when
+  `holidayTextLocation != <that same expression>` - a C# REFERENCE
+  comparison. Hand the prime any other object and the cancel fires on
+  the very next frame (`:357-358` zero the timer and clear `primed`):
+  the parchment can never appear, in any town, on any holiday. The
+  review proved it - `enterLocationRect(_musicLoc)` ->
+  `enterLocationRect({})` left the whole suite green.
+- **The region index.** `ShowHolidayText` passes
+  `PlayerGPS.CurrentRegionIndex` (`:570`) into `GetHolidayId`, whose
+  row test is `regionIndexCelebratingHoliday[id] == 0xFF ||
+  regionIndexCelebratingHoliday[id] == regionIndex + 1`
+  (`Game/Formulas/FormulaHelper.cs:1841`). A constant there announces a
+  regional holiday in the wrong province - and `regionIndex:
+  () => _questRegionIndex()` -> `() => 0` was also green.
+
+The pins are now a WINDOW, not four fragments. Each host's
+`_holidayText.update(dt, { … });` block is read out of the source as
+text, the expression its `currentLocation` thunk returns is extracted,
+and the prime is required to pass THAT expression - so the two can
+never drift apart whatever either is renamed to. The `regionIndex`
+term is required to be the host's own `CurrentRegionIndex` idiom
+(`_questRegionIndex()` in `world.js`, `dfLocation.regionIndex` in
+`exterior.js` - the idiom every other region read in each host uses),
+the clock term to be classic minutes (`:569`), the HUD term to be the
+deferring `!gamePaused()` (`:364`), and the door to be `showRecord`.
+Beside them the region index now has a BEHAVIOURAL pin as well: Scour
+Day (row 1, region byte `0x19` = region ID 25 = region INDEX 24, day
+of year 2) fires in region 24 and is silent in every other, both
+through `holidayTextId` and through a full prime-and-drain of
+`HolidayTextTimer` - with the ten-second re-arm set either way.
+
+**And the placement, the lane's recorded departure from both
+verifiers, is pinned.** Both verifiers asked for the drain in the
+exterior host's frame loop only; it went ABOVE the modal gate instead,
+because `PlayerEnterExit.Update` (`:325`, the block at `:355-368`)
+carries no `isPlayerInside` guard and `IsPlayerOnHUD`
+(`GameManager.cs:400-402` -> `IsHUDTopWindow` `:915`) is a UI-window
+test, not a location test: a player who steps through a tavern door a
+second after crossing the city border still gets the parchment, inside.
+Nothing held that. Both hosts' `modes.frame(dt, now)` returns true in
+the interior and dungeon modes and the caller RETURNS - "the host's
+exterior path must not run" - so the verifiers' placement would stop
+the drain for exactly the case DFU keeps running. The test now compares
+the two source offsets and fails if the drain sinks below the gate, in
+either host, with that reason in the assertion message. Six mutations
+across the two hosts - wrong prime object, constant region index, drain
+moved into the exterior-only path - are dead in both.

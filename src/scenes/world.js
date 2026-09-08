@@ -210,6 +210,7 @@ import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariant
 import { revealGuildHallsOnMap } from '../systems/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { HolidayTextTimer, holidayTextPrimesFor } from '../systems/holidays.js';   // AUDIT 64 F10: PlayerEnterExit.ShowHolidayText and its prime/drain
 import { tokenRows } from '../ui/messageBox.js';   // AUDIT 63 F3: MultiFormatTextLabel.LayoutTextElements' row law, its ONE home
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 // AUDIT 39 (#109): SetFactionIdsAndRegionID's two setters bracket the
@@ -236,7 +237,7 @@ import { poisonCount } from '../systems/poisons.js';   // U41: the warning's oth
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
-  windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -1545,6 +1546,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _wasInLocationRect = false;
   const _musicLocationType = () => _musicLoc?.mapTableData?.locationType ?? 0xffff;
   const _musicLocationIndex = () => _musicLoc?.locationIndex ?? -1;
+  // AUDIT 64 F10 - PlayerEnterExit's holiday-text fields (:78-80). The
+  // location it remembers is StreamingWorld.CurrentPlayerLocationObject,
+  // which in this host IS `_musicLoc`: the per-pixel DFLocation object
+  // the rect test already reads, compared by identity as DFU's is.
+  const _holidayText = new HolidayTextTimer();
   const musicDirector = createMusicDirector();
   ensureAudio(fetchBytes);
   // C9: the exterior FP weapon (host rule - every motor host carries
@@ -6697,6 +6703,26 @@ export async function bootWorld(canvas, renderer, params, status) {
       arrested: Boolean(playerEntity.arrested),
     }, modes?.musicContext?.() ?? null);
 
+    // AUDIT 64 F10 - PlayerEnterExit.Update's holiday-text drain
+    // (:355-368): the cancel when the current location object changed
+    // (:355-359), the countdown (:362-363), and the fire once the timer
+    // has run out while the player is on the HUD (:364-368). It sits
+    // ABOVE the modal gate because DFU's runs in Update, which is not
+    // suspended by walking indoors; IsPlayerOnHUD (:400-403) is the
+    // port's `!gamePaused()` - a window on top DEFERS the box.
+    _holidayText.update(dt, {
+      currentLocation: () => _musicLoc,
+      onHUD: () => !gamePaused(),
+      gameMinutes: () => Math.floor(playerTicker.classicMinutes),   // ToClassicDaggerfallTime (:569)
+      regionIndex: () => _questRegionIndex(),   // PlayerGPS.CurrentRegionIndex (:570)
+      // SetTextTokens(int) with ClickAnywhereToClose (:574-575) - the
+      // host's own TEXT.RSC parchment door, the one the quest boxes use.
+      showRecord: (id) => {
+        const rows = plainLines(tokenRows(expandMessageBoxTokens(townTalk.recordTokens(id), talkMcp()))) ?? [];
+        if (rows.length) townTalk.showBox(rows);
+      },
+    });
+
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
@@ -7259,9 +7285,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
     }
+    // AUDIT 64 F9 - DaggerfallLocation.cs:141-145 is the only window-style
+    // rule a town runs (its WindowTextureStyle feeds SetClimate at :218/:221)
+    // and it reads the clock alone; WeatherManager never touches a window
+    // style, so no weather term may sit between the ?window= dev override
+    // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
-      params.has('window') ? params.get('window')
-        : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
     // thunder and snow) disables the clear night sky, so the DAY sky at
@@ -7458,6 +7488,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
+        // .PlayerGPS_OnEnterLocationRect primes the holiday text
+        // (:1404-1409), but only on its TOWN arm (:1382-1383), so a
+        // dungeon, a graveyard, a coven or a mooring primes nothing;
+        // the whole handler is under `!isPlayerInside` (:1362), which
+        // is this branch of the frame loop.
+        if (holidayTextPrimesFor(_musicLocationType())) _holidayText.enterLocationRect(_musicLoc);
       } else if (!_inRect) {
         ambience.setCemeteryNearby(false);
       }
