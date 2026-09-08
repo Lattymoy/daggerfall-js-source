@@ -790,3 +790,31 @@ test('SIB1: the vendor tree carries the manifest and the record, and NO raster -
   assert.match(readme, /re-shaded sprite|silhouette/i, 'the README says why the textures are not here');
   assert.ok(existsSync(join(root, 'bible/07-Rendering/Seasons-Iliac-Bay.md')), 'the bible page');
 });
+
+// ---- SIB2 (2026-09-08, Mac: "ensure the seasons mod is 1:1 and working") --
+
+test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name; the events are DFU\'s per caller; a later version says so', () => {
+  // any .dfmod that says "season" is stored under its own lowercased name; the manifest inside decides (seasonsBundle: GUID, then title)
+  assert.equal(seasonsAssetKey('Mods/4 Seasons.dfmod'), `${DFMOD_KEY_PREFIX}4 seasons.dfmod`, 'the name the mod\'s own manifest hints at');
+  assert.equal(seasonsAssetKey('Downloads/Seasons of the Iliac Bay-1377-1-1.dfmod'), `${DFMOD_KEY_PREFIX}seasons of the iliac bay-1377-1-1.dfmod`, 'a Nexus download name');
+  assert.equal(seasonsAssetKey('Mods/seasons of the iliac bay.dfmod'), `${DFMOD_KEY_PREFIX}seasons of the iliac bay.dfmod`, 'the record\'s name still');
+  assert.equal(seasonsAssetKey('Mods/Dynamic Skies.dfmod'), null, 'another mod\'s bundle is still not stored');
+  assert.equal(seasonsAssetKey('Mods/seasons.txt'), null);
+  const assets = read('src/systems/seasonsIliacBayAssets.js');
+  assert.match(assets, /const isSeasonsDfmod = \(name\) => \/\\\.dfmod\$\/i\.test\(name\) && \/season\/i\.test\(name\);/);
+  assert.match(assets, /if \(manifest\.GUID === SEASONS_MOD\.guid \|\| manifest\.ModTitle === SEASONS_MOD\.title\) \{/, 'the identity is the manifest\'s');
+  assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\) console\.warn/, 'a later build is said, not assumed');
+  assert.equal(SEASONS_MOD.version, JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json')).ModVersion, 'the port\'s script is the vendored manifest\'s version');
+  // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
+  // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)
+  const world = read('src/scenes/world.js');
+  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, modEvent = null \} = \{\}\)/);
+  assert.match(world, /if \(seasonsActive && modEvent === 'travel'\) await seasons\.onPostFastTravel\(\)/);
+  assert.match(world, /if \(seasonsActive && modEvent === 'load'\) await seasons\.onLoad\(\)/);
+  assert.match(world, /if \(seasonsActive && modEvent === 'travel'\) seasons\.onUpdateTerrainsEnd\(\);/);
+  assert.match(world, /reposition: REPOSITION\.RandomStartMarker, modEvent: 'travel' \}\);/, 'fastTravelTo: the travel');
+  assert.match(world, /await _teleportToPixel\(w\.pixel\.x, w\.pixel\.y, null, \{ modEvent: 'load' \}\);/, 'the quickload: a load');
+  assert.match(world, /await _teleportToPixel\(px\.x, px\.y, null, \{ modEvent: 'load' \}\);/, 'the classic import: a load');
+  assert.equal((world.match(/modEvent: '(travel|load)'/g) || []).length, 3, 'and no other caller names an event');
+  assert.equal((world.match(/seasons\.onLoad\(\)/g) || []).length, 2, 'boot and the teleport core - the two loads');
+});

@@ -38,12 +38,19 @@ export const LOOSE_KEY_PREFIX = 'Seasons of the Iliac Bay/';
 
 const FOLDERS = new Set(Object.values(PREFIX_FOLDER).map((f) => f.toLowerCase()));
 const isPng = (name) => /\.png$/i.test(name);
-/** The one bundle this door takes: the file Nexus ships and DFU loads.
- *  Any other `.dfmod` in the picked folder (a player's whole Mods
- *  folder runs to gigabytes) is not stored - a bundle is decompressed
- *  whole to be read, and this registry has no use for another mod's. */
+/** The bundle this door takes. SIB2 (2026-09-08, Mac: "ensure the
+ *  seasons mod is 1:1 and working"): a mod's IDENTITY is its manifest -
+ *  the GUID and the title inside the bundle, which `seasonsBundle` reads
+ *  - never its file name, which DFU does not check either and which no
+ *  record here evidences (the mod's own manifest names its manifest
+ *  "4 Seasons.dfmod.json"; Nexus renames downloads). So any `.dfmod`
+ *  whose name says "season" is stored and read; the manifest decides.
+ *  The name test stays only because a player's whole Mods folder runs
+ *  to gigabytes and a bundle is decompressed whole to be read - this
+ *  registry has no use for another mod's. `SEASONS_DFMOD` is the name
+ *  the record expects, for the docs and the tests. */
 export const SEASONS_DFMOD = 'seasons of the iliac bay.dfmod';
-const isSeasonsDfmod = (name) => name.toLowerCase() === SEASONS_DFMOD;
+const isSeasonsDfmod = (name) => /\.dfmod$/i.test(name) && /season/i.test(name);
 
 /**
  * Does a picked file belong to this mod, and under what stored key?
@@ -134,6 +141,8 @@ async function seasonsBundle() {
         const manifest = bundleManifest(bundle);
         if (!manifest) continue;
         if (manifest.GUID === SEASONS_MOD.guid || manifest.ModTitle === SEASONS_MOD.title) {
+          // SIB2: the port is 1.1's IL, method by method; a later build may wire what 1.1 leaves unreachable
+          if (manifest.ModVersion && String(manifest.ModVersion) !== SEASONS_MOD.version) console.warn(`[seasons] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${SEASONS_MOD.version}'s script - a later version may do what this one does not`);
           return { bundle, manifest, files: manifest.Files ?? [] };
         }
       }

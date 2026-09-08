@@ -25,7 +25,7 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 test('TL3: the fast-travel arrival takes DFU\'s reposition - the start marker or the edge, never the pixel\'s centre - so TL2\'s roof guard is live on it', () => {
   const w = read('src/scenes/world.js');
   const fn = w.slice(w.indexOf('async function fastTravelTo('), w.indexOf('async function fastTravelTo(') + 4000);
-  assert.match(fn, /await _teleportToPixel\(pick\.pixel\.x, pick\.pixel\.y, null,\s*\n\s*\{ arriveMinutes: worldMinutes\(\) \+ computed\.minutes, reposition: REPOSITION\.RandomStartMarker \}\);/, 'the arrival asks for the start-marker landing');
+  assert.match(fn, /await _teleportToPixel\(pick\.pixel\.x, pick\.pixel\.y, null,\s*\n\s*\{ arriveMinutes: worldMinutes\(\) \+ computed\.minutes, reposition: REPOSITION\.RandomStartMarker, modEvent: 'travel' \}\);/, 'the arrival asks for the start-marker landing');
   assert.equal(REPOSITION.RandomStartMarker, 'RandomStartMarker');
   // the teleport core: the landing is computed only for that method, the default point is the pixel's centre,
   // and the roof guard runs only with a landing - which the arrival now always has

@@ -293,7 +293,10 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // them (`lockOn.unlock()` beside `exteriorFoes.clearLive()`, since a
   // removed foe is never flagged dead) - one statement, above the last
   // needle, which is still unchanged.
-  const core = src.slice(k, k + 3200);
+  // PIN MOVED AGAIN (SIB2, 2026-09-08), 3200 -> 4000: the core's head
+  // carries the `modEvent` note (which of the Seasons mod's events a
+  // teleport IS in DFU) and the load arm beside the travel arm.
+  const core = src.slice(k, k + 4000);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }
