@@ -342,7 +342,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // straightening exists for. The reference-faithful half of the fix
   // is to pass the arrival minute rather than to move RaiseTime.
   const world = read('src/scenes/world.js');
-  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, travelStart = null \} = \{\}\)/,
+  assert.match(world, /async function _teleportToPixel\(px, py, localPos = null, \{ grounded = false, arriveMinutes = null, reposition = REPOSITION\.None, travelStart = null, modEvent = null \} = \{\}\)/,
     'the core takes the arrival clock');
   assert.match(world, /refreshSeason\(arriveMinutes \?\? worldMinutes\(\)\);/,
     'and straightens from it, falling back to the live clock for every other caller');
@@ -356,7 +356,7 @@ test('ROAD-Ar R1: fast travel hands the teleport core the minute it is about to 
   // AUDIT 64 F18 threaded DirectionFromStartMarker through this same
   // call (DaggerfallTravelPopUp.cs:334), so the literal grew - the
   // ORDER is still what this pin is about.
-  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes,\n          reposition: REPOSITION.DirectionFromStartMarker,\n          travelStart });');
+  const teleport = fn.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,\n        { arriveMinutes: worldMinutes() + computed.minutes,\n          reposition: REPOSITION.DirectionFromStartMarker,\n          travelStart, modEvent: \'travel\' });');
   const raise = fn.indexOf('playerTicker.advance(computed.minutes)');
   assert.ok(teleport > 0, 'the arrival minute rides the teleport');
   assert.ok(raise > teleport, 'and RaiseTime still comes after it (:333 then :344)');

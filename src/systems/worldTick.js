@@ -65,7 +65,7 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
 import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
-import { rollClimateWeathersForDay } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419)
+import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
@@ -553,6 +553,11 @@ export function tickPlayerMinutes({
   // drawn before the price rolls at :446, and a generator does not
   // forgive a reordered draw.
   runDayChange({ entity, lastMinutes, nowMinutes, rolls, say });
+  // CLK2: the enhanced lane's HOURLY evolution of the six zones, on the
+  // clock wherever the player is - after the day roll, since a day
+  // boundary is an hour boundary too and the day's roll comes first.
+  // Inert on the classic lane; its generator is its own.
+  evolveClimateWeathers(nowMinutes);
 
   // PlayerEntity.cs:453-477, the per-minute loop - and it runs AFTER the day
   // block because DFU's does (:441-450 then :453-477). The port had it hoisted

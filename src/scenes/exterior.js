@@ -3540,7 +3540,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:589, :586). So every HUD line raised in a modal
+      // (townTalk.js:598, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -4018,8 +4018,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
     // deck overhead is drawn with (shared.js's sky.wind()), so a storm
-    // picks the mills up on the same fourteen-second curve it picks the
-    // sky up on. A null row is "no wind is known" - the classic sky
+    // picks the mills up on the same ease curve (WEATHER_EASE_MINUTES) it
+    // picks the sky up on. A null row is "no wind is known" - the classic sky
     // eases nothing - and a mill then stands still rather than guessing.
     if (millParts && windmills.length) {
       const wind = sky.wind();

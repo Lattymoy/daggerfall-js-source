@@ -3271,7 +3271,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
   const OBSTRUCTED_ABOVE = 3;
-  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, travelStart = null } = {}) {
+  // SIB2: `modEvent` names the Seasons mod's event this teleport IS in
+  // DFU - 'travel' (DaggerfallTravelPopUp.OnPostFastTravel, the travel
+  // popup's arm alone) or 'load' (SaveLoadManager.OnLoad, a quickload
+  // and the classic import) - and null for the rest (the court release,
+  // the ship, the recall, the teleport service, a quest's respawn, the
+  // cemetery), which raise neither in DFU: their terrains'
+  // OnInstantiateTerrain is the only word the mod hears, and the
+  // per-pixel build raises that. Every teleport used to raise the
+  // travel event: a forced apply and a rebuild of the season's atlases
+  // on each, and the load's own two-step apply never on a load.
+  async function _teleportToPixel(px, py, localPos = null, { grounded = false, arriveMinutes = null, reposition = REPOSITION.None, travelStart = null, modEvent = null } = {}) {
     // CameraRecoiler's StreamingWorld_OnInitWorld (:178-183): "player
     // can be moved by one system or another with swaying active" -
     // the sway does not ride a fast travel, a teleport or a load's
@@ -3314,11 +3324,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     const first = queue.shift();
-    if (seasonsActive) await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month
+    if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
+    if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
     let dest;   // `finally`: a throwing build must not leave the poll off
     try { dest = await buildPixel(first.px, first.py); }
     finally { _seasonStraightening = false; }
-    if (seasonsActive) seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
+    if (seasonsActive && modEvent === 'travel') seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
     // TeleportToMapPixel STORES the reposition method and calls
     // InitWorld (:1076-1095); Update() applies it only once the terrain
     // update has finished (:266-295). So the RandomStartMarker arm runs
@@ -3844,6 +3855,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       // from THAT, instead of skinning the destination for the month
       // the player left and having the next frame's tickSeason tear
       // the whole just-built grid down again.
+      // TL3 (2026-09-08, Mac, the second time: "when traveling, sometimes
+      // you'll spawn inside building geometry"): THE ARRIVAL NEVER ASKED
+      // FOR THE REPOSITION. performTravel teleports with a reposition
+      // method (DaggerfallTravelPopUp.cs:333 - DirectionFromStartMarker,
+      // whose facing hint is the slice locationEntrance.js records as
+      // its own; without the hint DFU's arm is the plain random side,
+      // which is RandomStartMarker), and PositionPlayerToLocation then
+      // stands the player just outside the location's rectangle or at
+      // its nearest start marker. This call passed none, so `landing`
+      // was null and the arrival was the DEFAULT point - the pixel's
+      // centre, which for every location is the centre of the town, and
+      // for many the middle of a building. TL2's roof guard was gated
+      // on `landing` and so never ran on the one path it was written
+      // for. The same door the court release and the ship already take.
+      // AUDIT 64 F18 (integrated over TL3 the same day): TL3 took
+      // RandomStartMarker as the method; the lane read :334 as
+      // DirectionFromStartMarker with the cached departure, and that is
+      // the arm kept - TL3's landing rides with it, and SIB2's travel
+      // event too.
       // AUDIT 64 F18: performFastTravel's teleport is
       // `TeleportToCoordinates((int)endPos.X, (int)endPos.Y,
       // RepositionMethods.DirectionFromStartMarker)` (:334) and the port
@@ -3862,7 +3892,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       await _teleportToPixel(pick.pixel.x, pick.pixel.y, null,
         { arriveMinutes: worldMinutes() + computed.minutes,
           reposition: REPOSITION.DirectionFromStartMarker,
-          travelStart });
+          travelStart, modEvent: 'travel' });
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -4111,7 +4141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
-        await _teleportToPixel(w.pixel.x, w.pixel.y);
+        await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = (w.y ?? 2) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
@@ -4296,7 +4326,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // lands inside it, the quickload arm's own shape.
     if (bundle.position) {
       const px = worldCoordToMapPixel(bundle.position.worldX, bundle.position.worldZ);
-      await _teleportToPixel(px.x, px.y);
+      await _teleportToPixel(px.x, px.y, null, { modEvent: 'load' });   // SIB2: a classic import is a load (StartFromClassicSave raises OnLoad)
       const [lx, lz] = state.localFromWorld(bundle.position.worldX, bundle.position.worldZ);
       // The classic worldY does not translate (different vertical
       // frames); FixStanding's own answer - land on what is there -
@@ -4650,7 +4680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:418) and
+     *  on. Here routeAction's arm is optional (ui/input.js:430) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
@@ -7007,7 +7037,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:589, :586). So every HUD line raised in a modal
+      // (townTalk.js:598, :586). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -7692,7 +7722,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
       // overhead is drawn with - so a storm picks the mills up on the
-      // same fourteen-second curve it picks the sky up on. A null row is
+      // same ease curve (WEATHER_EASE_MINUTES) it picks the sky up on. A null row is
       // "no wind is known" (the classic sky eases nothing), and a mill
       // then stands still rather than guessing at one.
       if (millParts && windNow) {

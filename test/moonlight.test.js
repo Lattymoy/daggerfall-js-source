@@ -41,7 +41,10 @@ test('EV5: a full masser at midnight keys the night; the formula is the state\'s
 });
 
 test('EV5: by day the sun owns the sky - the term is null even with both moons full', () => {
-  for (const m of [360, 720, 1000]) {
+  // CLK3 review: the term rides the rig's daylight curve now, which is 0 at
+  // the dawn minute itself and climbs from there - so "by day" is sampled a
+  // quarter hour in (375), where the moon has faded out, not at 06:00 exactly
+  for (const m of [375, 720, 1000]) {
     const s = skyState({ minuteOfDay: m, weather: 'sunny', phases: { masser: 4, secunda: 4 } });
     assert.equal(moonlightTerm(s), null, `no moon term at minute ${m}`);
   }

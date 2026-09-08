@@ -13,7 +13,10 @@ import { appStorage } from './appStorage.js';   // the one storage seam - localS
 const STORE_KEY = 'dfjs-mod-settings';
 
 /** Every vendored mod that has switches, by vendor key. Names, defaults
- *  and descriptions are the mod's own (Basic Roads 1.3.1 modsettings). */
+ *  and descriptions are the mod's own (Basic Roads 1.3.1 modsettings).
+ *  `author` is the manifest's ModAuthor (Basic Roads: its README's),
+ *  and the Mods pane puts it IN THE TITLE (Mac, 2026-09-08: "place each
+ *  creator's name in the mod title"). */
 export const MOD_SETTINGS = Object.freeze({
   // DS1: DYNAMIC SKIES 2.3.4 (BadLuckBurt and carademono). Its own two
   // sections, names and descriptions as modsettings.json ships them
@@ -28,6 +31,7 @@ export const MOD_SETTINGS = Object.freeze({
   // and the mod is a choice in the Mods pane (Ledger row DS1).
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
+    author: 'BadLuckBurt and carademono',
     keys: Object.freeze({
       Enabled: Object.freeze({ default: false, description: 'Dynamic Skies\u2019 procedural skybox in place of the port\u2019s own dome, under the enhanced environments: its sun and scattering, textured cloud layers per weather, twinkling stars, both moons on their orbits, its fog colours and distances, its longer sunrise and sunset, and a lightning flash under thunder. Off returns the port\u2019s own procedural sky.' }),
       densitySetting: Object.freeze({ default: 1, min: 1, max: 10, description: 'Makes fog thicker' }),
@@ -40,12 +44,14 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'seasons-iliac-bay': Object.freeze({
     title: 'Seasons of the Iliac Bay',
+    author: 'RosyTheRascal',
     keys: Object.freeze({
       Enabled: Object.freeze({ default: true, description: 'RosyTheRascal\u2019s seasonal nature flats: autumn, spring and winter repaints of the woodland, hills, haunted and mountain trees, rocks and plants, drawn at the mod\u2019s 3.1x size. The textures come from your own copy of the mod (its .dfmod, or its Textures folders) through the Your own textures pick; without them the classic flats draw. Off leaves the classic flats in every season.' }),
     }),
   }),
   'roads-hazelnut': Object.freeze({
     title: 'Basic Roads',
+    author: 'Hazelnut',
     keys: Object.freeze({
       SmoothRoads: Object.freeze({ default: true, description: 'Enables light smoothing of road surfaces, disable for minor extra performance.' }),
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),

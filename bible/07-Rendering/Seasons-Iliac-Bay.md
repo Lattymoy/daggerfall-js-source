@@ -429,3 +429,53 @@ guard (mutation: rewrite the line back to `if (walkMode &&
 playerSpawned)`; 34/34 stayed green). The ROAD-Ar R0 pin now matches
 the WHOLE condition inside the `tickSeason` window it already slices,
 and that mutation kills it.
+
+## SIB2: the audit (2026-09-08, Mac: "ensure the seasons mod we have integrated is 1:1 and working correctly")
+
+An Opus explorer mapped the integration whole against the page's own
+method table (every method, every seam, every pin) and listed twenty
+things to look at. Sixteen are the record's own translations or the
+mod's own faithful oddities, already on this page (the per-pixel
+refresh, no atlas, the pick as the mod system, the far ring reached,
+the shipped record-0 files never drawn, the size asymmetry against the
+mountain snow archive 511 the mod never manages, the fixed city's two
+events). Four were gaps, fixed:
+
+1. **The bundle by its manifest, not by one guessed file name.** The
+   door stored a `.dfmod` only under the exact name `seasons of the
+   iliac bay.dfmod`, which nothing in the tree evidences - the mod's own
+   manifest names its manifest "4 Seasons.dfmod.json", and Nexus renames
+   downloads. A mod's identity is its manifest (the GUID, then the
+   title), which `seasonsBundle` already read; now any `.dfmod` whose
+   name says "season" is stored and the manifest decides (the name test
+   stays only so a whole Mods folder is not decompressed).
+2. **The load event on a load.** A quickload and a classic import go
+   through the teleport core, which raised the mod's
+   `OnPostFastTravel`; DFU raises `SaveLoadManager.OnLoad` there - the
+   forced apply now and the unforced one a frame later. The core takes
+   `modEvent: 'load'` from both.
+3. **The travel event from the travel popup alone.** Every teleport -
+   the court release, the ship, the recall, the teleport service, a
+   quest's respawn, the cemetery - raised `OnPostFastTravel`: a forced
+   apply and a rebuild of the season's atlases on each. In DFU only
+   `DaggerfallTravelPopUp` raises it; the others' terrains raise
+   `OnInstantiateTerrain`, which the per-pixel build already does. The
+   core takes `modEvent: 'travel'` from `fastTravelTo` alone.
+4. **A later version says so.** The port is 1.1's IL; the bundle's
+   `ModVersion` is compared to it and a mismatch warned, since a later
+   build may wire what 1.1 leaves unreachable (the organic jitter, the
+   per-batch remap).
+
+Recorded, not changed: a month boundary crossed indoors is heard on the
+first exterior frame (the day poll), where DFU's `OnNewMonth` fires
+indoors - interiors have no nature flats, so nothing differs on screen;
+`OnUpdateTerrainsEnd` is raised once at the teleport's tail, after the
+first destination pixel, where DFU raises it after every terrain update
+- nothing is missed, later pixels take the installed cache; the
+`?season` pin (a dev door) moves the drawn archive and not the mod's
+season, so under it the classic flats draw. Unverified in this
+container: the all-or-nothing rule against the REAL record counts of
+`TEXTURE.504`-`510` (the mod's sets reach records 31-37 per prefix; the
+counts need ARENA2, which the container lacks), and any picture at all
+- there is no probe for this mod. **Mac: the permission record in
+`vendor/seasons-iliac-bay/README.md` is still the placeholder line.**

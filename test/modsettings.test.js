@@ -171,3 +171,13 @@ function syntheticWoods(W, H) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) bytes[heightMapOffset + y * W + x] = (x + y) & 0xff;
   return bytes;
 }
+
+test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08) - the manifest\'s ModAuthor, and the README\'s where a mod ships none', () => {
+  const manifest = (f) => JSON.parse(readFileSync(f, 'utf8'));
+  assert.equal(MOD_SETTINGS['dynamic-skies'].author, manifest('vendor/dynamic-skies/dynamic-skies.dfmod.json').ModAuthor);
+  assert.equal(MOD_SETTINGS['seasons-iliac-bay'].author, manifest('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json').ModAuthor);
+  assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut');
+  assert.match(readFileSync('vendor/roads-hazelnut/README.md', 'utf8'), /by Hazelnut/);
+  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);
+  assert.match(readFileSync('src/ui/enhancedMenu.js', 'utf8'), /mc\.append\(el\('h3', null, `\$\{mod\.title\} by \$\{mod\.author\}`\)\);/, 'the title carries the name');
+});

@@ -367,8 +367,20 @@ export function routeKeyUp(e, ctx) {
  *  is dead for every DISPATCHED action while staying live for the
  *  polled ones, which read through held(). Every host that registers a
  *  keydown hands its own Set in; test/combohosts.test.js sweeps them. */
+/** CG2 (2026-09-08, Mac: "unable to type in your name"): a key typed
+ *  INTO a DOM text field is the field's. The enhanced wizard's name
+ *  boxes are real <input>s over the canvas; every host's keydown ladder
+ *  sat behind them and either preventDefault-ed the key (no character
+ *  ever inserted) or routed it as a window action. The field owns the
+ *  key: the ladder neither swallows nor routes it, and neither walks
+ *  the player on it. */
+export function isTextEntryTarget(t) {
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable === true);
+}
+
 export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   if (ctx.uiOverlayActive) {
+    if (isTextEntryTarget(e.target)) return false;   // CG2: the field's key - not routed, not swallowed (the host preventDefaults on true)
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is
     // the keyed windows' vocabulary and says nothing about F6, the

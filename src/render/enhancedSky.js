@@ -13,8 +13,10 @@
 // WHAT IS DFU'S AND WHAT IS OURS. The LAWS the sky reads are the port's
 // verbatim ones: the sun's position (worldClock.sunDirection - dawn from
 // map east, noon straight down), day and night (DawnHour 6 / DuskHour
-// 18), the two moons' phases (gameDate.lunarPhase: Masser and Secunda on
-// DFU's own 32-day ladder with its offsets), and the weather (weatherSim,
+// 18), the two moons' phases (gameDate: DFU's own 32-day ratio, Masser
+// +3 and Secunda -1 - taken since CLK3 CONTINUOUS on the clock,
+// `lunarPhaseFractionsFromMinutes`, never a ring step from the ladder
+// every SYSTEM still reads), and the weather (weatherSim,
 // WeatherManager verbatim). Everything that turns those into light is
 // ours: the palette below, the moons' PLACES in the sky, the stars, the
 // clouds.
@@ -37,7 +39,7 @@
 // a texture.
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
-import { lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
+import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -154,7 +156,20 @@ export const STAR_POLE = Object.freeze([0, 0.622244, 0.782823]);   // unit: the 
 // for line, because a drift here is a sun that dims when the sky says
 // it should not.
 const fract = (x) => x - Math.floor(x);
+/** CLK1 review: the deck's lattice has a PERIOD - every octave's
+ *  integer corner is taken modulo DECK_LATTICE, so the field repeats
+ *  every DECK_LATTICE units of each octave's own coordinate and, the
+ *  octaves doubling exactly, every DECK_LATTICE units of the base
+ *  coordinate. The drift can then be wrapped (DECK_PERIOD, a whole
+ *  number of lattice periods for BOTH decks - the far one reads 0.55 of
+ *  it) with no seam, and the hash never sees a large number: its input
+ *  is under DECK_LATTICE whatever the drift, so float32 keeps every
+ *  fraction (EE2 F1's failure, the constant field, cannot return). */
+export const DECK_LATTICE = 256;
+export const DECK_PERIOD = 5120;   // 20 lattice periods; 0.55 of it is 11 - both decks whole
+export const wrapDeck = (v) => v - Math.floor(v / DECK_PERIOD) * DECK_PERIOD;
 export function hash21(x, y) {
+  x = x - Math.floor(x / DECK_LATTICE) * DECK_LATTICE; y = y - Math.floor(y / DECK_LATTICE) * DECK_LATTICE;
   let px = fract(x * 123.34), py = fract(y * 456.21);
   const d = px * (px + 45.32) + py * (py + 45.32);
   px += d; py += d;
@@ -171,7 +186,7 @@ export function fbm(x, y) {
   let v = 0, amp = 0.5, px = x, py = y;
   for (let i = 0; i < 5; i++) {
     v += amp * vnoise(px, py);
-    const nx = px * 2.03 + 17.1, ny = py * 2.03 + 9.7;
+    const nx = px * 2.0 + 17.1, ny = py * 2.0 + 9.7;   // CLK1 review: exactly two, so every octave shares the lattice's period
     px = nx; py = ny; amp *= 0.5;
   }
   return v;
@@ -278,7 +293,7 @@ function rotX(v, a) {
  *  negative turn about Z. */
 export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
   const sun = sunSkyDirection(minuteOfDay);
-  const p = phase === LUNAR_PHASES.None ? 0 : phase;   // 0..7, New=0 ... Full=4
+  const p = phase === LUNAR_PHASES.None ? 0 : phase;   // 0..8, New=0 ... Full=4 - a ladder step or, since CLK3, the clock's own fraction
   const angle = (p / 8) * Math.PI * 2;
   return rotX(rotZ(sun, -angle), tilt);
 }
@@ -300,6 +315,7 @@ export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
 export const MOONLIGHT = Object.freeze({
   masser: 0.25,    // full-Masser key scale (night ambient is 0.25 - a full moon roughly doubles a moonlit face)
   secunda: 0.06,   // full-Secunda ambient lift
+  dayFade: 0.06,   // CLK3 review: the daylight level under which the moonlight rises to full - the rig's curve reaches 0 at 18:00, so the term ramps over the last minutes of dusk and the first of dawn instead of stepping at the hour
 });
 
 /** How much of a moon's disc is lit, 0..1: New (0) none, Full (4)
@@ -314,9 +330,13 @@ export function phaseLitFraction(phase) {
  *  contributes. `dir`/`scale`/`color` drive the second directional
  *  term (the masser); `ambient` is secunda's additive floor lift. */
 export function moonlightTerm(state) {
-  if (!state.night) return null;
-  const key = MOONLIGHT.masser * phaseLitFraction(state.masser.phase) * state.masser.vis;
-  const lift = MOONLIGHT.secunda * phaseLitFraction(state.secunda.phase) * state.secunda.vis;
+  // CLK3 review: the day's hand on the moonlight is the DAYLIGHT CURVE
+  // the rig's key rides - continuous on the clock - and not the hour's
+  // boolean (a state without the curve keeps the boolean: the tests')
+  const nightness = state.daylight == null ? (state.night ? 1 : 0) : clamp01(1 - state.daylight / MOONLIGHT.dayFade);
+  if (nightness <= 0) return null;
+  const key = MOONLIGHT.masser * phaseLitFraction(state.masser.phase) * state.masser.vis * nightness;
+  const lift = MOONLIGHT.secunda * phaseLitFraction(state.secunda.phase) * state.secunda.vis * nightness;
   if (key <= 0 && lift <= 0) return null;
   const sc = state.secunda.color;
   return {
@@ -346,12 +366,28 @@ export function withMoonAmbient(ambient, moon) {
  *  one time constant. Pure and injectable: `dt` in, the eased row out.
  *  (The same lesson as the danger meter's slew - a slow, meaningful
  *  state should arrive slowly, and nothing about a sky changes in a
- *  frame.) */
-export const WEATHER_EASE_SECONDS = 14;
+ *  frame.)
+ *
+ *  CLK1 (2026-09-08, Mac: "in sync with the world clock"): the ease
+ *  runs on GAME MINUTES, the clock the sun, the moons and the wind
+ *  model already read - not on the wall's seconds the controller used
+ *  to keep for itself. Fourteen real seconds at the default TimeScale
+ *  of 12 (worldTick.js CLASSIC_MINUTES_PER_SECOND) is 2.8 game
+ *  minutes, so the look at the default scale is the one ES1c shipped;
+ *  a rest, a travel, a jail term or a `?timescale` now move the sky
+ *  with the clock. The constant is the span in minutes; `dt` is
+ *  minutes. */
+export const WEATHER_EASE_MINUTES = 2.8;
+/** CLK1: the rows' wind vectors are dome units per REAL SECOND at the
+ *  default scale (the lab's slider, WIND1's calibration); the drift
+ *  integrates on game minutes now, and a game minute is five real
+ *  seconds there (60 / TimeScale 12). One constant, so every deck
+ *  keeps the speed it was tuned at and follows the clock. */
+export const WIND_SECONDS_PER_MINUTE = 60 / 12;
 
-export function easeWeather(from, to, dt, seconds = WEATHER_EASE_SECONDS) {
+export function easeWeather(from, to, dt, span = WEATHER_EASE_MINUTES) {
   if (!from) return { ...to };
-  const k = seconds <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / seconds);
+  const k = span <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / span);
   const n = (a, b) => a + (b - a) * k;
   const v3 = (a, b) => [n(a[0], b[0]), n(a[1], b[1]), n(a[2], b[2])];
   return {
@@ -385,7 +421,11 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
   const twilight = clamp01((elevDeg + 12) / 16);   // 0 well below the horizon, 1 by day
   const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.25 * (1 - clamp01(elevDeg / 20))), twilight);
   const shade = mix3(nightShade, cloudShadeDay, twilight);
-  const ph = phases ?? lunarPhasesFromMinutes(classicMinutes);
+  // CLK3: the phase is CONTINUOUS on the clock - a moon that used to
+  // jump 45 degrees along its arc at midnight (and the moonlight with
+  // it) now walks there through the day. A caller's own `phases` (the
+  // tests' ladder steps) still go in whole.
+  const ph = phases ?? lunarPhaseFractionsFromMinutes(classicMinutes);
   const moon = (name, phase) => {
     const m = MOONS[name];
     const dir = moonSkyDirection(minuteOfDay, phase, m.tilt);
@@ -406,8 +446,9 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
     masser: moon('masser', ph.masser), secunda: moon('secunda', ph.secunda),
     cloudCover: w.cover, cloudSoft: w.soft, cloudLit: lit, cloudShade: shade,
     wind: w.wind, seconds,
-    drift: drift ?? [w.wind[0] * seconds, w.wind[1] * seconds],   // WIND2: the integrated cloud offset; a caller without one gets the old product
+    drift: drift ? [wrapDeck(drift[0]), wrapDeck(drift[1])] : [w.wind[0] * seconds, w.wind[1] * seconds],   // WIND2: the integrated cloud offset; a caller without one gets the old product. CLK1 review: wrapped ONCE, here, where it becomes the state both the shader and the CPU twin read
     night: isNight(minuteOfDay),
+    daylight: day,   // CLK3 review: the rig's own curve, for a moonlight that rises with the dusk and not with the hour
     // What the hosts read for the distance haze and the clear (the
     // classic pass's clearColor/fillColor roles).
     clearColor: horizon, fillColor: zenith,
@@ -495,7 +536,7 @@ float bayer4(vec2 p) {
 }
 out vec4 outColor;
 
-float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float hash21(vec2 p) { p = mod(p, ${DECK_LATTICE}.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }   // CLK1 review: the lattice has a period
 float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   float a = hash21(i), b = hash21(i + vec2(1, 0)), c = hash21(i + vec2(0, 1)), d = hash21(i + vec2(1, 1));
@@ -503,7 +544,7 @@ float vnoise(vec2 p) {
 }
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
-  for (int i = 0; i < 5; i++) { v += a * vnoise(p); p = p * 2.03 + vec2(17.1, 9.7); a *= 0.5; }
+  for (int i = 0; i < 5; i++) { v += a * vnoise(p); p = p * 2.0 + vec2(17.1, 9.7); a *= 0.5; }   // CLK1 review: exactly two - every octave shares the lattice's period
   return v;
 }
 

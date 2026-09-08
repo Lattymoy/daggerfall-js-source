@@ -53,7 +53,7 @@
 // ES1c gave the enhanced sky a per-weather wind vector (dome units a
 // second) and, because nothing about a sky changes in a frame, an
 // EASED one: the controller keeps a row and walks it toward the row
-// the sim asks for over WEATHER_EASE_SECONDS. That row is the port's
+// the sim asks for over WEATHER_EASE_MINUTES (game minutes since CLK1). That row is the port's
 // only answer to "how hard is it blowing right now", so this module
 // imports WEATHER_SKY rather than restating a single number of it,
 // and takes the EASED row - the same object the shader is drawing the
@@ -61,9 +61,9 @@
 //
 // The property that buys is the one worth having: THE BLADES AND THE
 // CLOUDS ARE DRIVEN BY THE SAME WIND. A storm rolls in, the sky's
-// deck picks up over fourteen seconds, and the mill in the field
-// below picks up with it on the same curve, because it is the same
-// number. Nothing is synchronised and nothing needs to be.
+// deck picks up over WEATHER_EASE_MINUTES of game clock (fourteen real
+// seconds at the default TimeScale), and the mill in the field below
+// picks up with it on the same curve, because it is the same number. Nothing is synchronised and nothing needs to be.
 //
 // ── THIS MODULE IS PURE ──────────────────────────────────────────
 //

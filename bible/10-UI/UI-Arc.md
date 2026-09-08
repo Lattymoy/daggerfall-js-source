@@ -6136,7 +6136,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:589, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:598, :586`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8543,7 +8543,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:419` routed
+The port had the DOOR and not the room. `input.js:431` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:151`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -9722,9 +9722,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4636`,
+the other half went stale unnoticed. (The rest cite named `world.js:4661`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4642` now.)
+deleted the second and the cite is `world.js:4667` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10141,7 +10141,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:534-560`), so in the art-less greeting chain a tone
+  (`townTalk.js:543-569`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -11689,3 +11689,35 @@ implements the hook dropped it on the floor. `scenes/world.js`'s
 `giveItemToPlayer` takes it now.
 `QuestResourceBehaviour.cs:421` passes no position, so
 `_transferWorldItemToPlayer` keeps AddItem's Back default.
+
+## CG2: A DOM TEXT FIELD OWNS ITS KEY (2026-09-08)
+
+Mac: "some bugs with character creation and being unable to type in
+your name or make selections." Found, not worked around: the enhanced
+wizard's three name boxes are real `<input>`s over the canvas, and its
+capture keydown steps aside for a field so the field can take the
+character - which lets the key BUBBLE, straight into the host's ladder,
+whose first rung under any overlay (`townTalk.keydown` in the two
+exterior hosts; `routeKey` plus the dungeon host's preventDefault-on-
+true) preventDefault-ed it. No character was ever inserted, `flow.name`
+stayed empty, Continue stayed disabled - "unable to type", and, with
+the name empty, "unable to make selections" past it. The probe that
+covers the wizard drives `/chargen.html`, which has no game host and
+so no ladder, which is why it stayed green (Testing.md's probehygiene
+row had already named the swallow as the reason probes must skip the
+wizard - the hazard was recorded and the field was never exempted).
+
+ONE RULE, `ui/input.js isTextEntryTarget`: a key whose target is an
+INPUT, a TEXTAREA or a contentEditable is the field's. `townTalk.
+keydown` answers true (consumed for the ladder - typing never walks
+the player) before its preventDefault; `routeKey` answers false (not
+routed, and the dungeon host does not preventDefault on false); the
+wizard's own listener uses the same function. Beside it, THE WEDGE: an
+enhanced wrapper whose view failed to import held the overlay slot for
+ever with no-op input/click and `done` false - every key and pointer
+eaten, nothing on screen. The classic wizard is its own function now
+(`classicChargenWindow`) and the wrapper builds it on the import's
+failure, on the same flow and callbacks, every seam delegating. Pinned
+in overlayTyping.test.js. Not seen in a real browser with ARENA2; the
+classic-skin click gate (`clickNative` refusing until the art loads)
+stands as recorded.
