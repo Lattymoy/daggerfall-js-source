@@ -8,7 +8,7 @@
 // probe (tools/waterProbe.mjs).
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
-import { waterUniforms, tilemapHasWater, WATER_MASK_TABLE } from '../render/waterSurface.js';
+import { waterUniforms, buildWaterIndices, WATER_MASK_TABLE } from '../render/waterSurface.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';
@@ -85,7 +85,10 @@ for (let r = 0; r < 64; r++) {
 }
 const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
-const hasWater = tilemapHasWater(tilemapBytes);
+// WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
+const waterIndices = buildWaterIndices(tilemapBytes, 1);
+const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
+const hasWater = !!water;
 
 const t0 = performance.now();
 const TILE_MATRICES = [];
@@ -133,7 +136,7 @@ function frame() {
       rain: Number($('rain').value),
       sky: { zenith: state.zenith, horizon: state.horizon },
     });
-    for (const m of TILE_MATRICES) renderer.drawWaterSurface(terrain, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu);
+    for (const m of TILE_MATRICES) renderer.drawWaterSurface(water, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu);
   }
   for (const id of ['hour', 'wind', 'rain', 'yaw', 'pitch', 'height']) $(id + 'V').textContent = $(id).value;
   window.__waterReady = true;

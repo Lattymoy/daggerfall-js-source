@@ -17,7 +17,7 @@ import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES } f
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
-import { waterUniforms, tilemapHasWater } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground
+import { waterUniforms, tilemapRectHasWater } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
@@ -558,7 +558,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, tilemapDim);
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door; a town without a water tile never enters the pass.
-  const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off' && tilemapHasWater(tilemapBytes);
+  const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off'
+    && tilemapRectHasWater(tilemapBytes, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);   // the padding past the town is zero, and zero is water
   const groundSurface = (() => {
     const gy = GROUND_OFFSET * 0.025;
     const gw = loc.width * RMB_SIDE;
@@ -3990,7 +3991,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // before the first flat - see world.js for the order's reasons.
     if (waterOn) {
       renderer.drawWaterSurface(groundSurface, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4,
-        waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }));
+        waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }),
+        tilemapDim);   // WATER-AUDIT: the town's own tilemap side, not 128
     }
     _visBatches.length = 0;
     for (const b of billboardBatches) {

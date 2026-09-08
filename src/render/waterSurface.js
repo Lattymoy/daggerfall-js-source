@@ -117,6 +117,50 @@ export function tilemapHasWater(bytes, table = WATER_MASK_TABLE) {
   return false;
 }
 
+/** WATER-AUDIT: the same question over a sub-rectangle of a `dim`-wide
+ *  tilemap - the fixed city pads its square tilemap with zeros past the
+ *  location's real extent, and zero converts to water, so the whole map
+ *  answered yes for every non-square town. */
+export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MASK_TABLE) {
+  const w = Math.min(width, dim), h = Math.min(height, dim);
+  for (let y = 0; y < h; y++) {
+    const row = y * dim;
+    for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;
+  }
+  return false;
+}
+
+/**
+ * WATER-AUDIT (M4): THE WATER'S OWN INDEX SET. The pass drew the pixel's
+ * whole terrain grid - 32,768 triangles for one stream tile, the far
+ * ring's twin skirt included (a 40-unit vertical curtain of water at a
+ * coast, both windings, four times). The quads of buildTerrainIndices'
+ * layout whose tiles carry any water corner, and nothing else: an open
+ * sea keeps every quad, a stream pixel keeps a few hundred triangles, no
+ * pixel keeps a skirt. Null when the tilemap carries no water at all.
+ * A quad (x, z) of the stride-`stride` grid covers the stride x stride
+ * tiles at (x * stride.., z * stride..) - the grid's cell IS the tile at
+ * stride 1 (6.4 units), which is the frame the shader samples in.
+ */
+export function buildWaterIndices(bytes, stride = 1, table = WATER_MASK_TABLE, tileDim = 128) {
+  const g = tileDim / stride + 1;
+  const q = g - 1;
+  const out = [];
+  for (let z = 0; z < q; z++) {
+    for (let x = 0; x < q; x++) {
+      let wet = false;
+      for (let tz = z * stride; tz < (z + 1) * stride && !wet; tz++) {
+        const row = tz * tileDim;
+        for (let tx = x * stride; tx < (x + 1) * stride; tx++) if (table[bytes[row + tx]]) { wet = true; break; }
+      }
+      if (!wet) continue;
+      const i0 = z * g + x, i1 = i0 + 1, i2 = i0 + g, i3 = i2 + 1;
+      out.push(i0, i2, i3, i0, i3, i1);
+    }
+  }
+  return out.length ? Uint32Array.from(out) : null;
+}
+
 /** The water corners of one converted byte (the shader's own lookup, in JS). */
 export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[convertedByte & 0xff];
 
@@ -211,6 +255,7 @@ in vec2 vLocalXZ;
 uniform sampler2DArray uTileArr;
 uniform usampler2D uTilemap;
 uniform float uTileSize;
+uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform uvec4 uWaterMask[8];   // WATER1: 256 nibbles - converted tile byte -> water corners
 uniform float uTime;
 uniform vec2 uWindDir;
@@ -224,6 +269,11 @@ uniform vec3 uSunColor;
 uniform vec3 uMoonDir;
 uniform float uMoonScale;
 uniform vec3 uMoonColor;
+uniform int uPointCount;       // WATER-AUDIT: the ground's point lights and the player's indirect light, term for term
+uniform vec4 uPointLights[16];
+uniform vec3 uPointColors[16];
+uniform vec4 uIndirect;
+uniform vec3 uIndirectColor;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 uniform vec3 uTint;
@@ -269,8 +319,11 @@ float coverage(uint m, vec2 f) {
 vec2 waveGradient(vec2 p, float t, float dist) {
   float s = 0.35 + 0.65 * uWindStrength;
   vec2 d0 = uWindDir;
-  vec2 d1 = normalize(d0 + vec2(-0.6, 0.8));
-  vec2 d2 = normalize(d0 + vec2(0.7, -0.5));
+  // WATER-AUDIT (H3): the crossing trains by ROTATION of the wind, never
+  // by adding a fixed vector to it - the sum collapsed onto the wind at
+  // one heading and was the zero vector (a NaN sea) at its opposite
+  vec2 d1 = vec2(0.809 * d0.x - 0.588 * d0.y, 0.588 * d0.x + 0.809 * d0.y);   // +36 degrees
+  vec2 d2 = vec2(0.766 * d0.x + 0.643 * d0.y, -0.643 * d0.x + 0.766 * d0.y);  // -40 degrees
   vec2 g = vec2(0.0);
   g += (0.11 * s * exp(-dist * 0.0015)) * cos(dot(p, d0) * 0.55 + t * 1.3) * d0;
   g += (0.08 * s * exp(-dist * 0.006)) * cos(dot(p, d1) * 1.10 + t * 2.1) * d1;
@@ -285,7 +338,7 @@ vec2 waveGradient(vec2 p, float t, float dist) {
 }
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
-  ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
+  ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));
   uint data = texelFetch(uTilemap, cell, 0).r;
   uint corners = waterCorners(data);
   if (corners == 0u) discard;
@@ -297,7 +350,7 @@ void main() {
   vec2 g = waveGradient(vWorldPos.xz, uTime, dist);
   vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
   vec3 V = toEye / max(dist, 1e-4);
-  float NdV = max(dot(n, V), 0.0);
+  float NdV = clamp(dot(n, V), 0.0, 1.0);   // WATER-AUDIT (M1): two near-unit vectors can dot past one; pow of a negative is NaN
   // Schlick, capped: a sea is never the mirror a flat plane is - the
   // slopes the trains do not carry still scatter the grazing view - so
   // the reflection tops out short of one, and what it reflects leans a
@@ -312,6 +365,22 @@ void main() {
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
   float mdiff = max(dot(n, uMoonDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
+  // WATER-AUDIT (M2): the ground's other two terms - the sixteen point
+  // lights and the player-following indirect light - so a torch by a
+  // pond lights the water it lights the bank by, with no seam at the shore
+  vec3 pointAcc = vec3(0.0);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - vWorldPos;
+    float d = length(L);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
+  }
+  lit += tex * pointAcc;
+  vec3 iL = uIndirect.xyz - vWorldPos;
+  float iD = length(iL);
+  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
+  lit += tex * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
   vec3 col = mix(lit, skyRefl, F);
   vec3 H = normalize(uLightDir + V);
   float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;

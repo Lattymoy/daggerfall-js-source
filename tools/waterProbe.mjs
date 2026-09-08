@@ -47,8 +47,23 @@ async function shoot(label, q) {
     const mean = sum / n;
     return { mean, sd: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), blue: blue / n, max, brightFrac: bright / n, grid, sgrid, glError: gl.getError() };
   });
+  // WATER-AUDIT (M5): the SHORE - the fraction of a fixed band across the
+  // frame's middle whose pixels read as water (blue well above red), so a
+  // transposed or inverted corner table, which moves the feather off the
+  // beach line, changes the number; on and off are compared by the caller
+  stats.wet = await page.evaluate(() => {
+    const c = document.getElementById('c');
+    const gl = c.getContext('webgl2');
+    const w = c.width, h = c.height;
+    const y0 = (h * 0.30) | 0, y1 = (h * 0.62) | 0;
+    const px = new Uint8Array(w * (y1 - y0) * 4);
+    gl.readPixels(0, y0, w, y1 - y0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let wet = 0, n = 0;
+    for (let i = 0; i < px.length; i += 4) { if (px[i + 2] - px[i] > 40) wet++; n++; }
+    return wet / n;
+  });
   await page.screenshot({ path: `${shots}/water-${label}.png` });
-  console.log(`  ${shots}/water-${label}.png  mean ${stats.mean.toFixed(1)} sd ${stats.sd.toFixed(1)} blue ${stats.blue.toFixed(1)} max ${stats.max} bright ${(stats.brightFrac * 100).toFixed(2)}%`);
+  console.log(`  ${shots}/water-${label}.png  mean ${stats.mean.toFixed(1)} sd ${stats.sd.toFixed(1)} blue ${stats.blue.toFixed(1)} max ${stats.max} bright ${(stats.brightFrac * 100).toFixed(2)}% wet ${(stats.wet * 100).toFixed(1)}%`);
   return stats;
 }
 const diff = (a, b, k = 'grid') => a[k].reduce((s, v, i) => s + Math.abs(v - b[k][i]), 0) / a[k].length;
@@ -66,7 +81,8 @@ const night = await shoot('midnight', `hour=0&${VIEW}&wind=0.4`);
 const nightOff = await shoot('midnight-off', `hour=0&${VIEW}&wind=0.4&water=off`);
 const overcast = await shoot('overcast', `hour=12&${VIEW}&wind=0.6&weather=overcast`);
 const sunny = await shoot('noon', `hour=12&${VIEW}&wind=0.6`);
-await shoot('shore', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236');   // the beach up close - for the eye, not a check
+const shore = await shoot('shore', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236');   // the beach up close, and the feather's own check below
+const shoreOff = await shoot('shore-off', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236&water=off');
 await shoot('river', 'hour=14&yaw=40&pitch=-28&height=140&wind=0.3&z=-60');   // the river down the east slope and the lake - for the eye
 await shoot('rain-close', 'hour=12&yaw=0&pitch=-30&height=4&wind=0.2&rain=1&weather=rain');   // the rain's pocking up close - for the eye
 
@@ -79,6 +95,9 @@ check('rain pocks it: a rainy sea differs from the same sea dry', diff(on, rain)
 check('the sun glints toward the sun and not away from it', toward.brightFrac > away.brightFrac * 2 && toward.brightFrac > 0.001, `bright ${(toward.brightFrac * 100).toFixed(2)}% vs ${(away.brightFrac * 100).toFixed(2)}%`);
 check('at midnight the sea is dark, and still water (the pass changes it)', night.mean < on.mean * 0.5 && diff(night, nightOff) > 1, `mean ${night.mean.toFixed(0)} vs day ${on.mean.toFixed(0)}; |diff| off ${diff(night, nightOff).toFixed(1)}`);
 check('an overcast sea reflects a grey sky: less blue than a sunny one', overcast.blue < sunny.blue, `blue ${overcast.blue.toFixed(1)} vs ${sunny.blue.toFixed(1)}`);
+// WATER-AUDIT (M5): the shore band holds BOTH sand and sea, and the pass wets only the sea's side of the feather -
+// a transposed table wets the wrong half, an inverted one wets the beach; the off shot's tile art is what stands on the sand
+check('the shore: the pass wets part of the band and not all of it, and more of it than the bare tiles', shore.wet > 0.2 && shore.wet < 0.8 && shore.wet > shoreOff.wet + 0.1, `wet ${(shore.wet * 100).toFixed(1)}% vs off ${(shoreOff.wet * 100).toFixed(1)}%`);
 
 await browser.close();
 await server.close();

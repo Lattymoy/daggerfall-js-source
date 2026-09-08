@@ -945,7 +945,8 @@ export class Renderer {
       const P = this.waterSurfaceProgram, u = (n) => gl.getUniformLocation(P, n);
       this._ws = {
         proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
-        tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), mask: u('uWaterMask'),
+        tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'), mask: u('uWaterMask'),
+        pointCount: u('uPointCount'), pointLights: u('uPointLights'), pointColors: u('uPointColors'), indirect: u('uIndirect'), indirectColor: u('uIndirectColor'),
         time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'), scroll: u('uScroll'),
         lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
         moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
@@ -2531,6 +2532,35 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, buffers, indexCount: indexSet.count };
   }
 
+  /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
+   *  vertex buffers with an index set of its own (buildWaterIndices'
+   *  water quads) - the water pass draws this, not the whole grid. Dies
+   *  with the terrain it rides: destroy it before destroyMesh frees the
+   *  buffers it points at. */
+  createWaterSurface(terrain, indices) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    this._bindVao(vao);
+    const [positions, normals] = terrain.buffers;
+    gl.bindBuffer(gl.ARRAY_BUFFER, positions);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normals);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 12, 0);
+    const ebo = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    this._bindVao(null);
+    return { vao, ebo, indexCount: indices.length };
+  }
+
+  destroyWaterSurface(water) {
+    const gl = this.gl;
+    gl.deleteBuffer(water.ebo);
+    gl.deleteVertexArray(water.vao);
+  }
+
   /** Upload a 128x128 tilemap byte texture (R8UI, NEAREST). */
   uploadTilemapTexture(bytes, dim) {
     const gl = this.gl;
@@ -2667,7 +2697,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * lift is still the surface). Call after every opaque pass of the
    * pixel and before the flats. `u` is waterUniforms' object.
    */
-  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u) {
+  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
     const gl = this.gl, L = this._ws;
     this._use(this.waterSurfaceProgram);
     if (!this._waterMaskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); this._waterMaskUploaded = true; }
@@ -2676,6 +2706,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(L.model, false, modelMatrix);
     gl.uniform1f(L.lift, u.lift);
     gl.uniform1f(L.tileSize, tileSize);
+    gl.uniform1i(L.tileDim, tileDim);
     gl.uniform1f(L.time, u.time);
     gl.uniform2f(L.windDir, u.windDir[0], u.windDir[1]);
     gl.uniform1f(L.windStrength, u.windStrength);
@@ -2698,6 +2729,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(L.moonDir, this._moonDir);
     gl.uniform1f(L.moonScale, this._moonScale);
     gl.uniform3fv(L.moonColor, this._moonColor);
+    const count = this._pointLights.length / 4;
+    gl.uniform1i(L.pointCount, count);
+    if (count > 0) gl.uniform4fv(L.pointLights, this._pointLights);
+    if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count));
+    gl.uniform4fv(L.indirect, this._indirect);
+    gl.uniform3fv(L.indirectColor, this._indirectColor);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
@@ -2719,8 +2756,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // sea on a 24-bit one), LEQUAL: the surface is the ground's own
     // triangles lifted, so its depth is never farther than the ground's
     // at the same pixel, and an equal depth is the surface, not the tile.
+    // WATER-AUDIT (M3): the CONSTANT term only. A slope factor scales with
+    // the surface's own depth slope, which at a grazing view of a lake is
+    // hundreds of world units per pixel - enough to pull the water in
+    // front of a boat or a far shore standing just above it. The lift
+    // already carries the sloped case.
     gl.enable(gl.POLYGON_OFFSET_FILL);
-    gl.polygonOffset(-1, -2);
+    gl.polygonOffset(0, -2);
     gl.depthFunc(gl.LEQUAL);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);

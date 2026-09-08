@@ -9,11 +9,14 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapHasWater, waterCorners, waterCoverage,
+  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapHasWater, tilemapRectHasWater, buildWaterIndices, waterCorners, waterCoverage,
   windStrength01, waterUniforms, SHORE_FAMILIES, WATER_SURFACE_VS, waterSurfaceFs,
   WATER_LIFT, WATER_OPACITY, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
 } from '../src/render/waterSurface.js';
-import { createLookupTable } from '../src/world/terrainTiles.js';
+import { createLookupTable, assignTiles } from '../src/world/terrainTiles.js';
+import { convertTilemap, buildTerrainGrid, buildTerrainIndices } from '../src/world/terrainSurface.js';
+import { STREAM_TILES, RIVER_TILES } from '../src/world/roadPainter.js';
+import { HEIGHTMAP_DIMENSION } from '../src/world/terrainSampler.js';
 import { convertTile, WATER_TILE_INDEX } from '../src/world/terrainSurface.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../src/systems/wind.js';
 
@@ -118,6 +121,16 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /exp\(-dist \* 0\.006\)\) \* cos\(dot\(p, d1\)/);
   assert.match(fs, /exp\(-dist \* 0\.015\)\) \* cos\(dot\(p, d2\)/);
   assert.match(fs, /if \(uRain > 0\.0\) \{\s*\n\s*float near = exp\(-dist \* 0\.012\);/);
+  // WATER-AUDIT (H3): the crossing trains are ROTATIONS of the wind - a fixed vector added to a unit wind was collinear at one heading and zero (NaN) at its opposite
+  assert.match(fs, /vec2 d1 = vec2\(0\.809 \* d0\.x - 0\.588 \* d0\.y, 0\.588 \* d0\.x \+ 0\.809 \* d0\.y\);/);
+  assert.match(fs, /vec2 d2 = vec2\(0\.766 \* d0\.x \+ 0\.643 \* d0\.y, -0\.643 \* d0\.x \+ 0\.766 \* d0\.y\);/);
+  assert.doesNotMatch(fs, /normalize\(d0 \+ vec2/, 'the degenerate form is gone');
+  // WATER-AUDIT (M1): the dot of two near-unit vectors is clamped before pow
+  assert.match(fs, /float NdV = clamp\(dot\(n, V\), 0\.0, 1\.0\);/);
+  // WATER-AUDIT (M2): the ground's other two terms, TERRAIN_FS's own loop
+  assert.match(fs, /for \(int i = 0; i < 16; i\+\+\) \{\s*\n\s*if \(i >= uPointCount\) break;/);
+  assert.match(fs, /lit \+= tex \* \(iAtt \* iAtt \* max\(dot\(n, iL \/ max\(iD, 1e-4\)\), 0\.0\)\) \* uIndirectColor;/);
+  assert.match(fs, /ivec2\(uTileDim - 1\)/);
 });
 
 test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw state that blends over the ground it is lifted from', () => {
@@ -125,7 +138,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs, packWaterMask \} from '\.\/waterSurface\.js';/);
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /this\._csLoc\.water = \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\];/, 'VC4\'s recorded gap, closed');
-  const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u) {'));
+  const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
   assert.match(body, /if \(!this\._waterMaskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(\)\); this\._waterMaskUploaded = true; \}/, 'the table once');
   assert.match(body, /this\._uploadCloudShadow\('water'\);/);
@@ -134,7 +147,13 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
     assert.ok(body.includes(`this.${k}`), `the ground's ${k}`);
   }
   assert.match(body, /gl\.enable\(gl\.BLEND\);\s*\n\s*gl\.blendFunc\(gl\.SRC_ALPHA, gl\.ONE_MINUS_SRC_ALPHA\);\s*\n\s*gl\.depthMask\(false\);\s*\n\s*gl\.disable\(gl\.CULL_FACE\);/, 'drawWater\'s state');
-  assert.match(body, /gl\.enable\(gl\.POLYGON_OFFSET_FILL\);\s*\n\s*gl\.polygonOffset\(-1, -2\);\s*\n\s*gl\.depthFunc\(gl\.LEQUAL\);/, 'nudged toward the eye in window depth, and equal is the surface');
+  assert.match(body, /gl\.enable\(gl\.POLYGON_OFFSET_FILL\);\s*\n\s*gl\.polygonOffset\(0, -2\);\s*\n\s*gl\.depthFunc\(gl\.LEQUAL\);/, 'nudged toward the eye in window depth by the constant term only (WATER-AUDIT M3: a slope factor pulled the water over a far shore), and equal is the surface');
+  // WATER-AUDIT (M2): the ground's point lights and indirect light reach the water
+  assert.match(body, /gl\.uniform1i\(L\.pointCount, count\);[\s\S]*?gl\.uniform4fv\(L\.indirect, this\._indirect\);\s*\n\s*gl\.uniform3fv\(L\.indirectColor, this\._indirectColor\);/);
+  assert.match(body, /gl\.uniform1i\(L\.tileDim, tileDim\);/, 'WATER-AUDIT (L2): the tilemap\'s own side, not a hardcoded 127');
+  // WATER-AUDIT (M4): the water's own surface over the terrain's buffers
+  assert.match(r, /createWaterSurface\(terrain, indices\) \{[\s\S]*?const \[positions, normals\] = terrain\.buffers;[\s\S]*?return \{ vao, ebo, indexCount: indices\.length \};/);
+  assert.match(r, /destroyWaterSurface\(water\) \{\s*\n\s*const gl = this\.gl;\s*\n\s*gl\.deleteBuffer\(water\.ebo\);\s*\n\s*gl\.deleteVertexArray\(water\.vao\);/);
   assert.match(body, /gl\.depthFunc\(gl\.LESS\);\s*\n\s*gl\.disable\(gl\.POLYGON_OFFSET_FILL\);\s*\n\s*gl\.depthMask\(true\);\s*\n\s*gl\.disable\(gl\.BLEND\);\s*\n\s*gl\.enable\(gl\.CULL_FACE\);/, 'and every bit of it put back');
   assert.match(body, /gl\.bindTexture\(gl\.TEXTURE_2D_ARRAY, arrayTex\);[\s\S]*?gl\.activeTexture\(gl\.TEXTURE2\);\s*\n\s*gl\.bindTexture\(gl\.TEXTURE_2D, tilemapTex\);/, 'the terrain\'s two textures on the terrain\'s two units');
 });
@@ -142,8 +161,12 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
 test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot after the opaque passes and before the first flat', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off';/, 'world: enhanced skin, the switch, the kill door');
-  assert.match(w, /const hasWater = tilemapHasWater\(tilemapBytes\);/, 'decided at the build');
-  assert.match(w, /tilemapTex, tilemap, hasWater,/, 'carried on the built pixel');
+  // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
+  assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? renderer\.createWaterSurface\(terrain, waterIndices\) : null;/, 'decided at the build');
+  assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
+  const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride) {'));
+  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? renderer\.createWaterSurface\(p\.terrain, waterIndices\) : null;/);
+  assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 2, 'the restride and the eviction');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');
   const slot = w.indexOf('    if (waterOn) {\n      const wu = waterUniforms(');
   assert.ok(slot > 0, 'the pass exists');
@@ -152,15 +175,16 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(slot < w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(w, /const wu = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\);/,
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
-  assert.match(w, /if \(!p\._visible \|\| !p\.hasWater\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.terrain, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
+  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
   const e = rd('src/scenes/exterior.js');
-  assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off' && tilemapHasWater\(tilemapBytes\);/, 'exterior: the same gate, and a town without water never enters');
+  assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off'\s*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the same gate, and a town without water never enters - asked over the town\'s real extent (WATER-AUDIT L1: the padding is zero, and zero is water)');
   const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(groundSurface, identityMatrix,');
   assert.ok(eslot > 0);
   assert.ok(eslot > e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,'), 'after the ground');
   assert.ok(eslot > e.indexOf('arrows.draw(renderer, texRemap);'), 'after the arrows');
   assert.ok(eslot < e.indexOf('renderer.drawBillboards(_visBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\)/);
+  assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
   // the dungeon's own water pass is untouched
   assert.match(rd('src/scenes/dungeon.js'), /renderer\.drawWater\(/);
 });
@@ -170,12 +194,12 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   assert.match(rd('src/ui/enhancedMenu.js'), /prefRow\('enhancedWater', 'Enhanced water',/);
   const shared = rd('src/scenes/shared.js');
   assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return \{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \};/, 'the dome\'s own state');
-  assert.match(shared, /if \(dynamicSky\) return \{ zenith: dynamicSky\.fillColor \?\? dynamicSky\.clearColor, horizon: dynamic\?\.fogColor \?\? dynamicSky\.clearColor \};/, 'the mod\'s');
+  assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return \{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \};/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');
   assert.match(shared, /return null;\s*\n\s*\},\s*\n/, 'null under the classic sky');
   const lab = rd('src/tools/waterLab.js');
   assert.match(lab, /mirrorProjectionX\(perspective\(/, 'HANDEDNESS: the lab draws under the hosts\' mirrored projection (unmirrored, every ground face is culled - the lab\'s first day)');
   assert.match(lab, /assignTiles\(tileData, tilemap, true\);/, 'the shore is marched, not painted');
-  assert.match(lab, /renderer\.drawWaterSurface\(terrain, m, renderer\.tileArrays\.get\(ARCHIVE\), tilemapTex, 6\.4, wu\)/);
+  assert.match(lab, /renderer\.drawWaterSurface\(water, m, renderer\.tileArrays\.get\(ARCHIVE\), tilemapTex, 6\.4, wu\)/, 'the lab draws the water\'s own index set, as the hosts do');
   assert.match(rd('water.html'), /src="\/src\/tools\/waterLab\.js"/);
   const probe = rd('tools/waterProbe.mjs');
   for (const name of ['on and off differ over the sea', 'leaves the sky alone', 'five seconds later', 'a gale varies more than a calm', 'rainy sea', 'glints toward the sun', 'midnight', 'overcast sea']) {
@@ -189,4 +213,92 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   assert.match(arc, /fround\(27\.2 \/ 1539\) \* 1539/, 'the ocean-band defect is on the page');
   assert.match(rd('bible/Home.md'), /07-Rendering\/Water-Arc\.md/);
   assert.match(rd('bible/07-Rendering/Rendering.md'), /`waterSurface\.js`/);
+});
+
+// ── WATER-AUDIT: the table pinned THROUGH the producer, not against itself ──
+test('WATER-AUDIT (H1/H2): every shore tile the marching squares write gives back the corners that were water, in the tilemap\'s own frame', () => {
+  // The first pin re-read what buildWaterMaskTable had just written from the
+  // same lookup. This one starts from a CORNER GRID, runs the producer
+  // (assignTiles, convertTilemap) and asks the table for every cell: bit 1
+  // must be the corner at (x + 1, y), bit 2 the corner at (x, y + 1) - the
+  // frame the shader's bilinear samples in (cell = (localX, localZ) / 6.4).
+  const td = HEIGHTMAP_DIMENSION, dim = 128;
+  const tileData = new Uint8Array(td * td);
+  // a pseudo-random water/dirt corner field (only records 0 and 1: ring 0)
+  let seed = 12345;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296; };
+  for (let i = 0; i < tileData.length; i++) tileData[i] = rnd() < 0.5 ? 0 : 1;
+  const tilemap = new Uint8Array(dim * dim);
+  assignTiles(tileData, tilemap, true);
+  const bytes = convertTilemap(tilemap);
+  let shore = 0, whole = 0, dry = 0;
+  for (let y = 0; y < dim; y++) {
+    for (let x = 0; x < dim; x++) {
+      const c00 = tileData[x + y * td] === 0, c10 = tileData[(x + 1) + y * td] === 0;
+      const c01 = tileData[x + (y + 1) * td] === 0, c11 = tileData[(x + 1) + (y + 1) * td] === 0;
+      const want = (c00 ? 1 : 0) | (c10 ? 2 : 0) | (c01 ? 4 : 0) | (c11 ? 8 : 0);
+      const got = waterCorners(bytes[x + y * dim]);
+      assert.equal(got, want, `cell (${x},${y}) record ${bytes[x + y * dim] >> 2} t${bytes[x + y * dim] & 3}`);
+      if (want === 15) whole++; else if (want === 0) dry++; else shore++;
+    }
+  }
+  assert.ok(shore > 3000 && whole > 300 && dry > 300, `the field exercised every shape: ${shore} shore, ${whole} water, ${dry} dry`);
+  // the grid's frame: sample (x, z) sits at local (x * cell, ., z * cell), and
+  // the tilemap texel (x, y) is bytes[x + y * dim] - so tilemap y IS local z
+  const h = new Float32Array(td * td);
+  const grid = buildTerrainGrid(h, 1);
+  const at = (x, z) => grid.positions.subarray((z * td + x) * 3, (z * td + x) * 3 + 3);
+  const near = (a, b) => Math.abs(a - b) < 1e-3;
+  assert.ok(near(at(3, 7)[0], 3 * 6.4) && near(at(3, 7)[2], 7 * 6.4), 'x along X, the row index along Z');
+  const r = rd('src/render/renderer.js');
+  assert.match(r, /gl\.texImage2D\(gl\.TEXTURE_2D, 0, gl\.R8UI, dim, dim, 0, gl\.RED_INTEGER, gl\.UNSIGNED_BYTE, bytes\);/, 'row-major, dim wide: texel (x, y) = bytes[x + y * dim]');
+  // and the mutation the tautology let through: an inverted table fails here
+  const inverted = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) inverted[i] = WATER_MASK_TABLE[i] ? (~WATER_MASK_TABLE[i]) & 15 : 0;
+  let wrong = 0;
+  for (let i = 0; i < bytes.length; i++) if (waterCorners(bytes[i], inverted) !== waterCorners(bytes[i])) wrong++;
+  assert.ok(wrong > 3000, 'an inverted sense is caught by the field');
+});
+
+test('WATER-AUDIT (L4): every record the river painter can write for a water path is in the table\'s families', () => {
+  const written = new Set();
+  for (const rows of [STREAM_TILES, RIVER_TILES]) for (const row of rows) if (row) for (const rec of row) written.add(rec);
+  const covered = new Set([0, ...SHORE_FAMILIES.flat()]);
+  for (const rec of written) assert.ok(covered.has(rec), `record ${rec} is painted as a water path and the table does not know it`);
+  // the families' columns ARE the painter's: column k of each family is the same shape
+  for (const fam of SHORE_FAMILIES) assert.equal(fam.length, 4, 'corner, edge, three-corner, saddle');
+});
+
+test('WATER-AUDIT (M4/L5): the water\'s own index set - the wet quads of the terrain layout, no skirt, null when dry', () => {
+  const dim = 128;
+  const bytes = new Uint8Array(dim * dim).fill(4);   // dirt everywhere
+  assert.equal(buildWaterIndices(bytes, 1), null, 'no water, no surface');
+  bytes[5 + 7 * dim] = 0;                              // one water tile
+  bytes[9 + 7 * dim] = (6 << 2) | 1;                   // one shore tile
+  const one = buildWaterIndices(bytes, 1);
+  assert.equal(one.length, 12, 'two quads');
+  const g = 129;
+  assert.deepEqual([...one.slice(0, 6)], [7 * g + 5, 7 * g + 5 + g, 7 * g + 5 + g + 1, 7 * g + 5, 7 * g + 5 + g + 1, 7 * g + 6], 'buildTerrainIndices\' own six, for the tile\'s quad');
+  // the same six the full grid carries for that quad
+  const full = buildTerrainIndices(1);
+  const q = 7 * 128 + 5;
+  assert.deepEqual([...one.slice(0, 6)], [...full.slice(q * 6, q * 6 + 6)]);
+  // the far ring: a stride-4 quad covers 4x4 tiles and is kept when any is wet; no skirt indices ever
+  const lod = buildWaterIndices(bytes, 4);
+  assert.equal(lod.length, 12, 'tile x 5 is coarse quad 1, tile x 9 coarse quad 2');
+  assert.ok(Math.max(...lod) < 33 * 33, 'no skirt vertex (the skirt sits past g*g)');
+  // a whole sea keeps every quad and nothing more
+  const sea = buildWaterIndices(new Uint8Array(dim * dim), 1);
+  assert.equal(sea.length, 128 * 128 * 6);
+  assert.equal(buildWaterIndices(new Uint8Array(dim * dim), 4).length, 32 * 32 * 6);
+  // the fixed city's gate, over the real extent only
+  const town = new Uint8Array(32 * 32);   // padded square, zero = water
+  town.fill(4, 0, 32 * 32);
+  assert.equal(tilemapRectHasWater(town, 32, 16, 16), false);
+  town[3 + 2 * 32] = 0;
+  assert.equal(tilemapRectHasWater(town, 32, 16, 16), true);
+  const padded = new Uint8Array(32 * 32);   // all zero: the padding past a 16x16 town is water, the town is not
+  padded.fill(4, 0, 16); for (let y = 0; y < 16; y++) padded.fill(4, y * 32, y * 32 + 16);
+  assert.equal(tilemapHasWater(padded), true, 'the whole map says yes (the padding)');
+  assert.equal(tilemapRectHasWater(padded, 32, 16, 16), false, 'the town says no');
 });

@@ -336,7 +336,14 @@ export function createSkyController(gl, params) {
      *  sky, which draws no water surface. */
     waterSky() {
       if (enhancedSky?.state) return { zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon };
-      if (dynamicSky) return { zenith: dynamicSky.fillColor ?? dynamicSky.clearColor, horizon: dynamic?.fogColor ?? dynamicSky.clearColor };
+      if (dynamicSky) {
+        // WATER-AUDIT (L3): the mod publishes ONE colour (its fog colour is
+        // its clear colour is its fill), so a zenith is DERIVED from it -
+        // darker and bluer, the way any day sky deepens overhead - rather
+        // than a second copy of the horizon that made the reflection flat
+        const h = dynamic?.fogColor ?? dynamicSky.clearColor;
+        return { zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h };
+      }
       return null;
     },
     /** DS1: the pixel-snow replacement (InitSnow) when the mod's switch
