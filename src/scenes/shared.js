@@ -10,7 +10,7 @@ import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
-import { skyFrameForTime, isNight, setLightCurve } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve
+import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
@@ -453,7 +453,7 @@ export function createSkyController(gl, params) {
         // clears. One seam (WM2b), one vector, everything together.
         //
         // And the SKY'S OWN EASE follows the front: a mild change still
-        // crosses in the old fourteen seconds, but a violent arrival
+        // crosses in WEATHER_EASE_MINUTES, but a violent arrival
         // takes the front's lead to build, so from the ground the wind
         // gets up first and the sky darkens behind it - the storm
         // rolling in. `dt` is stretched or shrunk to make the ease's
@@ -583,6 +583,7 @@ function dynamicMoonState(dyn, minuteOfDay, cover = 0) {
   };
   return {
     night: isNight(minuteOfDay),
+    daylight: daylightScale(minuteOfDay),   // CLK3 review: the rig's curve (the mod's own while it is the sky), so the moonlight ramps here too
     masser: moon('Moon', dyn.phases?.masser?.phase ?? -1, mat._MoonColor),
     secunda: moon('Secunda', dyn.phases?.secunda?.phase ?? -1, mat._SecundaColor),
   };

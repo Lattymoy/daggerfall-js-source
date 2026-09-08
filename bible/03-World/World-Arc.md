@@ -1174,7 +1174,8 @@ than restating a number of it.
 
 The property that buys is worth stating plainly: **the blades and the
 clouds are driven by the same number.** A storm rolls in, the sky's
-deck picks up over fourteen seconds, and the mill in the field below
+deck picks up over `WEATHER_EASE_MINUTES` of game clock (fourteen real
+seconds at the default TimeScale), and the mill in the field below
 picks up on the same curve - not synchronised, the same value.
 
 And the anchor survives it, because `ROTOR_GAIN` is DERIVED rather than

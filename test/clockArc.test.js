@@ -83,6 +83,7 @@ test('CLK1: the wrap - the drift and the recenter shift are unbounded integrals;
 import {
   resetWeatherSim, setWeatherEvolution, weatherEvolutionOn, evolveClimateWeathers, rollClimateWeathersForDay, tickWeather,
   weatherForClimate, restoreWeather, weatherJumpStamp, EVOLVE_CHANCE_PER_HOUR, ZONE_CLIMATES, STALE_DRAIN_MINUTES, WEATHER_ENUM,
+  currentWeather, WEATHER_TYPES, setWeather,
 } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
@@ -149,7 +150,7 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   assert.equal(evolveClimateWeathers(day0 + hourOfChange * 60), true);
   assert.equal(tickWeather(day0 + hourOfChange * 60 + 5, CLIMATES.Woodlands), true, 'the drain applies it');
   assert.equal(weatherJumpStamp(), stamp0, 'five minutes after its hour: live, a front');
-  assert.equal(WEATHER_ENUM[Object.keys(WEATHER_ENUM).find((k) => WEATHER_ENUM[k] === weatherForClimate(CLIMATES.Woodlands))] !== WEATHER_ENUM.sunny, true);
+  assert.equal(currentWeather(), WEATHER_TYPES[weatherForClimate(CLIMATES.Woodlands)], 'the drain applied the zone the player stands in');
   // STALE: the same change found by a tick hours later (a day inside) drains as a jump
   resetWeatherSim(); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
@@ -181,9 +182,11 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   const tick = read('src/systems/worldTick.js');
   assert.match(tick, /runDayChange\(\{ entity, lastMinutes, nowMinutes, rolls, say \}\);\s*\n(\s*\/\/[^\n]*\n)*\s*evolveClimateWeathers\(nowMinutes\);/, 'after the day roll, wherever the player is');
   const sim = read('src/systems/weatherSim.js');
-  assert.match(sim, /_evolveDoor \?\?= isEnhanced\(\) && !!getPref\('enhancedEnvironments'\)\s*\n\s*&& new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('evolve'\) !== 'off';/, 'Enhanced Environments, ?evolve=off the kill switch');
+  assert.match(sim, /_evolveUrlDoor \?\?= new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('evolve'\) !== 'off';\s*\n\s*return _evolveUrlDoor && isEnhanced\(\) && !!getPref\('enhancedEnvironments'\);/, 'Enhanced Environments read LIVE (the pane flips it without a reload), ?evolve=off the kill switch read once');
   assert.match(sim, /const r = seededRng\(\(h \* 6 \+ zone\) \^ EVOLVE_SEED\);/, 'its own generator');
-  assert.match(sim, /_rolledAtMinutes = lastChanged \* 60;/, 'stale by the change\'s own hour');
+  assert.match(sim, /_zoneChangedAtMinutes\[zone\] = h \* 60;/, 'stale by the change\'s own hour, for THAT zone');
+  assert.match(sim, /const rolledAt = \(zone != null \? _zoneChangedAtMinutes\[zone\] : null\) \?\? _rolledAtMinutes;/, 'the drain reads the player\'s zone\'s stamp, else the day roll\'s');
+  assert.match(sim, /if \(!weatherEvolutionOn\(\) \|\| !_climateWeathersValid \|\| _evolveHour === null \|\| hour < _evolveHour\)/, 'VALID, not merely rolled: a loaded save\'s all-Sunny array is never evolved off');
   assert.match(sim, /for \(let h = Math\.max\(_evolveHour \+ 1, hour - 23\); h <= hour; h\+\+\) \{/);
 });
 
@@ -212,28 +215,42 @@ test('CLK3: the moon\'s phase is continuous on the clock for the dome - no 45-de
     const a = lunarPhaseFractionsFromMinutes(base + d * MINUTES_PER_DAY + 600), b = lunarPhaseFractionsFromMinutes(base + (d + 32) * MINUTES_PER_DAY + 600);
     assert.ok(Math.abs(a.masser - b.masser) < 1e-9 && Math.abs(a.secunda - b.secunda) < 1e-9);
   }
-  // never more than one ring step from DFU's own ladder, on every day of the cycle, both moons
+  // the ladder's distance (the review widened this to the whole day): at midnight never more than one ring
+  // step from DFU's own ladder, within the day at most 1.25 (the fraction walks a quarter step across a day
+  // while the ladder stands still), on every day of the cycle, both moons
+  const ring = (a, b) => Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+  let worstDay = 0;
   for (let d = 0; d < 32; d++) {
-    const cm = base + d * MINUTES_PER_DAY;
-    const steps = lunarPhasesFromMinutes(cm), frac = lunarPhaseFractionsFromMinutes(cm);
-    for (const moon of ['masser', 'secunda']) {
-      const ring = (a, b) => Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
-      assert.ok(ring(frac[moon], steps[moon]) <= 1 + 1e-9, `day ${d} ${moon}: fraction ${frac[moon].toFixed(2)} vs ladder ${steps[moon]}`);
+    for (const m of [0, 360, 720, 1080, 1439]) {
+      const cm = base + d * MINUTES_PER_DAY + m;
+      const steps = lunarPhasesFromMinutes(cm), frac = lunarPhaseFractionsFromMinutes(cm);
+      for (const moon of ['masser', 'secunda']) {
+        const dist = ring(frac[moon], steps[moon]);
+        assert.ok(dist <= (m === 0 ? 1 : 1.25) + 1e-9, `day ${d} minute ${m} ${moon}: fraction ${frac[moon].toFixed(2)} vs ladder ${steps[moon]}`);
+        worstDay = Math.max(worstDay, dist);
+      }
+      if (m === 0) {
+        // at midnight on a Full or New day the two agree exactly
+        if (steps.masser === LUNAR_PHASES.Full) assert.ok(Math.abs(frac.masser - 4) < 1e-9, 'Full is ratio 0: the fraction is 4 at midnight');
+        if (steps.masser === LUNAR_PHASES.New) assert.ok(Math.abs(frac.masser) < 1e-9, 'New is ratio 16: the fraction is 0 at midnight');
+      }
     }
-    // at midnight on a Full or New day the two agree exactly
-    if (steps.masser === LUNAR_PHASES.Full) assert.ok(Math.abs(frac.masser - 4) < 1e-9, 'Full is ratio 0: the fraction is 4 at midnight');
-    if (steps.masser === LUNAR_PHASES.New) assert.ok(Math.abs(frac.masser) < 1e-9, 'New is ratio 16: the fraction is 0 at midnight');
   }
+  assert.ok(worstDay > 1, 'and the within-day bound is the real one: the walk does exceed a step late in the widest band');
   assert.equal(lunarPhaseFraction({ year: -1 }, 0), 0, 'year < 0: None, as the ladder answers');
   assert.equal(lunarPhase(dateFromClassicMinutes(base), { masser: true }) >= 0, true, 'the ladder itself is untouched');
   // the systems keep the step: the dome alone takes the fraction, a caller's own phases go in whole
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /const ph = phases \?\? lunarPhaseFractionsFromMinutes\(classicMinutes\);/);
   assert.doesNotMatch(dome, /lunarPhasesFromMinutes/, 'the ladder is not the dome\'s to read any more');
-  for (const f of ['src/systems/worldTick.js', 'src/systems/effects.js', 'src/systems/enchantments.js']) {
+  // the systems keep the step - the readers the page names (the enchant ctx's moon arms, the lycanthrope's full
+  // moon, the Dynamic Skies mod's own), unconditionally: a file that stops reading DFU's step goes red, not quiet
+  for (const f of ['src/scenes/hostEnchant.js', 'src/systems/lycanthropy.js', 'src/systems/dynamicSkies.js']) {
     const s = read(f);
-    if (/lunarPhase/.test(s)) assert.doesNotMatch(s, /lunarPhaseFraction/, `${f}: a system reads DFU's step, never the dome's fraction`);
+    assert.match(s, /lunarPhasesFromMinutes|isFullMoonFromMinutes|lunarPhase\(/, `${f}: reads DFU's step`);
+    assert.doesNotMatch(s, /lunarPhaseFraction/, `${f}: a system reads DFU's step, never the dome's fraction`);
   }
+  assert.equal(Object.keys(import.meta).length >= 0, true);
   assert.match(read('src/tools/skyLab.js'), /const phases = lunarPhaseFractionsFromMinutes\(/, 'the lab hands the dome the same fraction');
   assert.deepEqual(skyState({ minuteOfDay: 0, classicMinutes: base, phases: { masser: LUNAR_PHASES.Full, secunda: LUNAR_PHASES.New } }).masser.phase, LUNAR_PHASES.Full, 'a caller\'s own phases go in whole');
   // THE SUN AND THE RIG ARE ONE CURVE ALREADY: the dome's sun rides worldClock's dayFraction, the rig's light the same fraction clamped
@@ -250,4 +267,96 @@ test('CLK3: the moon\'s phase is continuous on the clock for the dome - no 45-de
     lastY = y; lastScale = sc;
   }
   assert.ok(sunSkyDirection(3 * 60)[1] < 0 && dayFraction(3 * 60) < 0, 'and the dome alone knows how far under the horizon the night\'s sun is');
+});
+
+// ---- CLK4: the review's fixes ----------------------------------------
+import { moonlightTerm, MOONLIGHT, DECK_LATTICE, DECK_PERIOD, wrapDeck, fbm } from '../src/render/enhancedSky.js';
+
+test('CLK4: the review - a distant zone never moves the player\'s stale clock, a loaded save is never evolved off, the door is live, the moonlight ramps, the deck has a period, the rest is a veil', () => {
+  // (1) THE PLAYER'S ZONE'S STAMP: the day rolls at midnight while the player is inside; a DISTANT zone turns at
+  // 03:00; the player steps out at 03:10 - the drain is stale (the day roll's three hours), not live (the distant turn)
+  const day0 = 300 * MINUTES_PER_DAY;
+  resetWeatherSim(); setWeatherEvolution(true);
+  rollClimateWeathersForDay(day0 - MINUTES_PER_DAY, () => 0.0); evolveClimateWeathers(day0 - MINUTES_PER_DAY + 1);
+  tickWeather(day0 - MINUTES_PER_DAY + 1, CLIMATES.Woodlands);
+  setWeather('rain');   // the sky the player stands under
+  rollClimateWeathersForDay(day0, () => 0.0);   // midnight, inside: every zone Sunny, the woodlands' slot now differs from the rain
+  let distantTurn = null;
+  for (let h = 1; h <= 24 * 30 && distantTurn === null; h++) {
+    const before = zonesNow();
+    if (evolveClimateWeathers(day0 + h * 60)) {
+      const after = zonesNow();
+      const woodlands = ZONE_CLIMATES.indexOf(CLIMATES.Woodlands);
+      if (after[woodlands] === before[woodlands]) distantTurn = h;   // a zone that is not the player's moved
+      else { resetWeatherSim(); setWeatherEvolution(true); rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1); setWeather('rain'); }
+    }
+  }
+  assert.ok(distantTurn !== null, 'some hour turns a zone that is not the woodlands');
+  const stamp = weatherJumpStamp();
+  assert.equal(tickWeather(day0 + distantTurn * 60 + 10, CLIMATES.Woodlands), true, 'the drain applies the day roll\'s Sunny to the woodlands');
+  assert.equal(weatherJumpStamp(), stamp + 1, 'and it is a JUMP - the woodlands\' change is the day roll\'s, hours old; the distant zone\'s turn ten minutes ago is not the player\'s');
+  // (2) A LOADED SAVE: the array was never rolled (all Sunny); the evolution rolls nothing off it, the loaded sky stands
+  resetWeatherSim(); setWeatherEvolution(true);
+  restoreWeather('rain');
+  evolveClimateWeathers(day0 + 1);
+  let moved = false;
+  for (let h = 1; h <= 48; h++) moved = evolveClimateWeathers(day0 + h * 60) || moved;
+  assert.equal(moved, false, 'nothing evolves off an array a save never had');
+  assert.equal(tickWeather(day0 + 48 * 60, CLIMATES.Woodlands), false);
+  assert.equal(currentWeather(), 'rain', 'the W1 restore law holds: the loaded sky stands until a day rolls');
+  rollClimateWeathersForDay(day0 + MINUTES_PER_DAY, () => 0.0); evolveClimateWeathers(day0 + MINUTES_PER_DAY + 1);
+  moved = false;
+  for (let h = 1; h <= 24 * 20; h++) moved = evolveClimateWeathers(day0 + MINUTES_PER_DAY + h * 60) || moved;
+  assert.equal(moved, true, 'and after the day roll the evolution runs again');
+  resetWeatherSim();
+  // (3) THE DOOR IS LIVE: the source reads the skin and the pref every call, and caches only the URL
+  const sim = read('src/systems/weatherSim.js');
+  assert.doesNotMatch(sim, /_evolveDoor\b/, 'no cached lane answer');
+  assert.match(sim, /let _evolveUrlDoor = null;/);
+  // (4) THE MOONLIGHT RAMPS on the daylight curve - no step at 18:00, none at 06:00
+  const base = 405 * 360 * MINUTES_PER_DAY;
+  let nightOf = null;
+  for (let d = 0; d < 32 && nightOf === null; d++) {
+    const st = skyState({ minuteOfDay: 18 * 60 + 5, classicMinutes: base + d * MINUTES_PER_DAY + 18 * 60 + 5 });
+    if (st.masser.vis > 0.5 && phaseLitFraction(st.masser.phase) > 0.5) nightOf = d;
+  }
+  assert.ok(nightOf !== null);
+  let lastScale = 0;
+  for (let m = 17 * 60 + 30; m <= 18 * 60 + 30; m++) {
+    const st = skyState({ minuteOfDay: m, classicMinutes: base + nightOf * MINUTES_PER_DAY + m });
+    const term = moonlightTerm(st);
+    const scale = term ? term.scale : 0;
+    assert.ok(scale >= lastScale - 1e-12 && scale - lastScale < 0.04, `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}: the moonlight rises by slivers (${(scale - lastScale).toFixed(4)})`);
+    lastScale = scale;
+  }
+  assert.ok(lastScale > 0.05, 'and is up by half past six');
+  assert.equal(moonlightTerm(skyState({ minuteOfDay: 12 * 60, classicMinutes: base + nightOf * MINUTES_PER_DAY + 12 * 60 })), null, 'none at noon');
+  assert.equal(skyState({ minuteOfDay: 720, classicMinutes: base }).daylight, daylightScale(720), 'the state carries the rig\'s curve');
+  assert.match(read('src/scenes/shared.js'), /daylight: daylightScale\(minuteOfDay\),/, 'and the mod\'s moon state carries it too');
+  assert.ok(MOONLIGHT.dayFade > 0 && MOONLIGHT.dayFade < 0.2);
+  // (5) THE DECK HAS A PERIOD: both decks whole, the field the same a period away, the drift wrapped where it becomes the state
+  assert.equal(DECK_PERIOD % DECK_LATTICE, 0, 'the near deck');
+  assert.ok(Math.abs((DECK_PERIOD * 0.55) / DECK_LATTICE - Math.round((DECK_PERIOD * 0.55) / DECK_LATTICE)) < 1e-9, 'the far deck (0.55 of the drift)');
+  for (const [x, y] of [[0.3, 0.7], [12.25, -3.5], [100.1, 77.7]]) {
+    assert.ok(Math.abs(fbm(x + DECK_PERIOD, y) - fbm(x, y)) < 1e-9 && Math.abs(fbm(x, y - DECK_PERIOD) - fbm(x, y)) < 1e-9, `fbm(${x}, ${y}) repeats every DECK_PERIOD`);
+    assert.ok(Math.abs(fbm(x + DECK_LATTICE, y) - fbm(x, y)) < 1e-9, 'and every lattice period of the base octave');
+  }
+  assert.ok(wrapDeck(DECK_PERIOD * 3 + 5) - 5 < 1e-9 && wrapDeck(-1) > DECK_PERIOD - 1.001);
+  const st = skyState({ minuteOfDay: 720, classicMinutes: base, drift: [DECK_PERIOD * 7 + 1.5, -DECK_PERIOD - 2] });
+  assert.ok(Math.abs(st.drift[0] - 1.5) < 1e-9 && Math.abs(st.drift[1] - (DECK_PERIOD - 2)) < 1e-9, 'wrapped once, where the state is made');
+  const dome = read('src/render/enhancedSky.js');
+  assert.match(dome, /float hash21\(vec2 p\) \{ p = mod\(p, \$\{DECK_LATTICE\}\.0\);/, 'the shader\'s lattice, the same period');
+  assert.doesNotMatch(dome, /2\.03/, 'the octave is exactly two');
+  // (6) THE REST IS A VEIL on the enhanced skin while resting; DFU's opaque black on the classic skin and the selection page
+  const rest = read('src/ui/restWindow.js');
+  assert.match(rest, /export const REST_VEIL = Object\.freeze\(\[0, 0, 0, 0\.35\]\);/);
+  assert.match(rest, /if \(this\.state === 'resting' && isEnhanced\(\)\) drawMenuBackdrop\(renderer, canvas, REST_VEIL\);/);
+  // (7) WHAT STAYS ON THE WALL, by decision - pinned so the next audit does not "fix" it
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const s = read(h);
+    assert.match(s, /lightning\.tick\(dt\)/, `${h}: the strobe's schedule is DFU's real-second law`);
+    assert.match(s, /advanceRotor\(w\.state, dt, /, `${h}: the sails turn at their physical rate`);
+    assert.match(s, /tsec: now \/ 1000/, `${h}: the precipitation's wander is the wall's`);
+  }
+  assert.match(read('src/scenes/shared.js'), /dt: dtReal,/, 'the mod keeps Time.deltaTime');
 });

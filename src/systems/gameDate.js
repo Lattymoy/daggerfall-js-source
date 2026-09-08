@@ -179,9 +179,12 @@ export const lunarPhasesFromMinutes = (gameMinutes) => {
  *  that JUMPS 45 degrees at midnight. This is the same 32-day ratio with
  *  the minute of the day added, mapped onto the dome's 0..8 ring (New 0,
  *  Full 4 - `moonSkyDirection`'s own scale): Full at ratio 0, the wanes
- *  through the day's ratio 16 New, the waxes back to Full at 32. It
- *  never disagrees with the ladder by more than one ring step (DFU's
- *  bands are uneven: 32 days over eight steps). None (year < 0) is 0. */
+ *  through the day's ratio 16 New, the waxes back to Full at 32. At
+ *  midnight it never disagrees with the ladder by more than one ring
+ *  step, and within the day by at most 1.25 - the fraction walks a
+ *  quarter step across a day while the ladder stands still (DFU's bands
+ *  are uneven: 32 days over eight steps, and ratio 28 ends the widest).
+ *  None (year < 0) is 0. */
 export function lunarPhaseFraction(date, minuteOfDay, { masser = true } = {}) {
   if (date.year < 0) return 0;
   const offset = masser ? 3 : -1;

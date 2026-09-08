@@ -61,9 +61,9 @@
 //
 // The property that buys is the one worth having: THE BLADES AND THE
 // CLOUDS ARE DRIVEN BY THE SAME WIND. A storm rolls in, the sky's
-// deck picks up over fourteen seconds, and the mill in the field
-// below picks up with it on the same curve, because it is the same
-// number. Nothing is synchronised and nothing needs to be.
+// deck picks up over WEATHER_EASE_MINUTES of game clock (fourteen real
+// seconds at the default TimeScale), and the mill in the field below
+// picks up with it on the same curve, because it is the same number. Nothing is synchronised and nothing needs to be.
 //
 // ── THIS MODULE IS PURE ──────────────────────────────────────────
 //

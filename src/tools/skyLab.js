@@ -60,7 +60,6 @@ const t0 = performance.now();
 // drift integral on the weather row's fixed vector - the shape the
 // controller has, without a wind model. `?still` stops both.
 let labLast = t0;
-let labMinutes = 0;
 const labDrift = [0, 0];
 
 function frame() {
@@ -81,7 +80,6 @@ function frame() {
   const nowReal = performance.now();
   const dtMin = still ? 0 : Math.min(1, (nowReal - labLast) / 1000) / WIND_SECONDS_PER_MINUTE;
   labLast = nowReal;
-  labMinutes += dtMin;
   const rowWind = (WEATHER_SKY[$('weather').value] ?? WEATHER_SKY.sunny).wind;
   labDrift[0] += rowWind[0] * dtMin * WIND_SECONDS_PER_MINUTE;
   labDrift[1] += rowWind[1] * dtMin * WIND_SECONDS_PER_MINUTE;

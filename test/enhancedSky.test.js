@@ -257,7 +257,7 @@ test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, a
     last = row.cover;
   }
   const span = storm.cover - clear.cover;
-  assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `a minute in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
+  assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `an hour of clock in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
   const half = easeWeather(clear, storm, WEATHER_EASE_MINUTES);
   assert.ok(half.cover > clear.cover && half.cover < storm.cover, 'at the time constant it is part way, not there');
   assert.ok(Math.abs(half.cover - (clear.cover + (storm.cover - clear.cover) * (1 - Math.exp(-1)))) < 1e-9, 'exponential, one time constant');
@@ -357,7 +357,7 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/);
   assert.match(fs, /clamp01\(lo \+ hi \* \(1 - lo\) \* 0\.7\)/);
   // The JS noise is the GLSL noise: same magic numbers, same octaves.
-  for (const n of ['123.34', '456.21', '45.32', '2.03', '17.1', '9.7']) {
+  for (const n of ['123.34', '456.21', '45.32', '2.0', '17.1', '9.7', '256']) {   // CLK1 review: the octave is exactly two and the lattice has a period, in both texts
     assert.ok(fs.includes(n), `${n} appears in both the shader and the JS`);
   }
   assert.ok(fbm(1.5, 2.5) >= 0 && fbm(1.5, 2.5) <= 1);

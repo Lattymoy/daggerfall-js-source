@@ -3741,8 +3741,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
     // deck overhead is drawn with (shared.js's sky.wind()), so a storm
-    // picks the mills up on the same fourteen-second curve it picks the
-    // sky up on. A null row is "no wind is known" - the classic sky
+    // picks the mills up on the same ease curve (WEATHER_EASE_MINUTES) it
+    // picks the sky up on. A null row is "no wind is known" - the classic sky
     // eases nothing - and a mill then stands still rather than guessing.
     if (millParts && windmills.length) {
       const wind = sky.wind();

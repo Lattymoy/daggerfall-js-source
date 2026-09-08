@@ -144,6 +144,7 @@ export function rollWeather(climateIndex, season, rolls = Math.random) {
 let _climateWeathers = new Uint8Array(6);   // [Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands] (WeatherManager.cs:421-426)
 let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the one persisted value
 let _climateWeathersRolled = false;         // StartGameBehaviour.cs:435-436's one-shot "Randomize weathers"
+let _climateWeathersValid = false;          // CLK2 review: the six values came from a real roll or an import - a loaded save stamps ROLLED without rolling (the array is all Sunny), and the evolution must not move off that
 let _updateFromClimateArray = false;        // WeatherManager.updateWeatherFromClimateArray (:105)
 let _lastClimateBase = CLIMATE_BASE_TYPES.None;   // lastRespawnClimate (WeatherManager.cs:90)
 // WX2a (AUDIT 57): A CHANGE THE PLAYER WAS NOT PRESENT FOR IS A JUMP, NOT
@@ -156,6 +157,7 @@ let _lastClimateBase = CLIMATE_BASE_TYPES.None;   // lastRespawnClimate (Weather
 // building. The classic path, which snaps on every change, reads nothing.
 let _jumps = 0;
 let _rolledAtMinutes = null;                 // when the day's array was rolled, to tell a stale drain from a live one
+let _zoneChangedAtMinutes = new Array(6).fill(null);   // CLK2 review: per zone, when the EVOLUTION last moved that slot (null: the day roll's stamp stands) - a zone the player cannot see never moves the stale clock
 /** A drain more than this many game minutes after its roll was a day the
  *  player spent inside - the weather changed hours ago, out of sight. */
 export const STALE_DRAIN_MINUTES = 30;
@@ -180,12 +182,17 @@ export const ZONE_CLIMATES = Object.freeze([CLIMATES.Desert, CLIMATES.Mountain, 
  *  for the season, into the six classic slots. */
 export function setClimateWeathers(season, rolls = Math.random) {
   for (let zone = 0; zone < 6; zone++) _climateWeathers[zone] = rollWeather(ZONE_CLIMATES[zone], season, rolls);   // Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands - the roll order kept
+  _climateWeathersValid = true;
+  _zoneChangedAtMinutes.fill(null);   // CLK2: a fresh roll of every zone - the day's stamp is the stamp
 }
+
+/** The zone slot a climate reads (TravelTimeCalculator.climateIndices). */
+const zoneOf = (climateIndex) => CLIMATE_INDICES[climateIndex - CLIMATES.Ocean];
 
 /** SetWeatherFromWeatherClimateArray (:429-440): the player's climate
  *  picks its zone slot through TravelTimeCalculator.climateIndices. */
 export function weatherForClimate(climateIndex) {
-  const zone = CLIMATE_INDICES[climateIndex - CLIMATES.Ocean];
+  const zone = zoneOf(climateIndex);
   // A bogus climate answers the CURRENT weather unchanged - DFU's
   // :432-434 would throw IndexOutOfRange; the defensive arm is the
   // port's (tickWeather then reports no change), and it rides the
@@ -283,8 +290,11 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
   // sky - is a front. A STALE one - the roll happened while they were
   // inside, and lands on the first frame back out - is a jump: the
   // weather changed hours ago, and the sky they step out under is
-  // already the new one.
-  if (changed && _rolledAtMinutes != null && nowMinutes - _rolledAtMinutes > STALE_DRAIN_MINUTES) _jumps++;
+  // already the new one. CLK2: the stamp is the PLAYER'S ZONE's - the
+  // evolution's own hour where it moved that slot, else the day roll's.
+  const zone = zoneOf(climateIndex);
+  const rolledAt = (zone != null ? _zoneChangedAtMinutes[zone] : null) ?? _rolledAtMinutes;
+  if (changed && rolledAt != null && nowMinutes - rolledAt > STALE_DRAIN_MINUTES) _jumps++;
   return changed;
 }
 
@@ -335,6 +345,8 @@ export function importClimateWeathers(converted) {
   if (!converted || converted.length !== 6) return false;
   _climateWeathers = Uint8Array.from(converted);
   _climateWeathersRolled = true;
+  _climateWeathersValid = true;   // CLK2: an import is a real array
+  _zoneChangedAtMinutes.fill(null);
   _updateFromClimateArray = true;
   return true;
 }
@@ -357,16 +369,17 @@ export function importClimateWeathers(converted) {
 export const EVOLVE_CHANCE_PER_HOUR = 0.12;   // a zone's sky turns, on average, every eight hours or so on top of the day's roll
 const EVOLVE_SEED = 0x5EED;
 let _evolveOverride = null;   // tests: true/false; null reads the lane
-let _evolveDoor = null;       // the lane's answer, read once
+let _evolveUrlDoor = null;    // ?evolve=off - the one door that cannot change without a reload, read once (lazily: a probe installs location after import)
 let _evolveHour = null;       // the absolute game hour the evolution last ran at (null: re-anchor without rolling)
 
 /** Tests and the lab: force the evolution on or off (null: the lane decides). */
 export function setWeatherEvolution(on) { _evolveOverride = on == null ? null : !!on; }
 export function weatherEvolutionOn() {
   if (_evolveOverride !== null) return _evolveOverride;
-  _evolveDoor ??= isEnhanced() && !!getPref('enhancedEnvironments')
-    && new URLSearchParams(globalThis.location?.search ?? '').get('evolve') !== 'off';
-  return _evolveDoor;
+  // CLK2 review: the skin and EE1's switch are LIVE (the Enhanced pane
+  // flips the pref without a reload), so they are read every call
+  _evolveUrlDoor ??= new URLSearchParams(globalThis.location?.search ?? '').get('evolve') !== 'off';
+  return _evolveUrlDoor && isEnhanced() && !!getPref('enhancedEnvironments');
 }
 
 /**
@@ -378,22 +391,29 @@ export function weatherEvolutionOn() {
  */
 export function evolveClimateWeathers(nowMinutes) {
   const hour = Math.floor(nowMinutes / 60);
-  if (!weatherEvolutionOn() || !_climateWeathersRolled || _evolveHour === null || hour < _evolveHour) { _evolveHour = hour; return false; }
+  // CLK2 review: VALID, not merely rolled - a loaded save stamps the
+  // array rolled without rolling it (all Sunny), and an evolution off
+  // that would hand the drain a slot the save never had; the loaded sky
+  // stands until the next day roll, as the W1 restore law says
+  if (!weatherEvolutionOn() || !_climateWeathersValid || _evolveHour === null || hour < _evolveHour) { _evolveHour = hour; return false; }
   if (hour === _evolveHour) return false;
   const season = seasonValue(dateFromClassicMinutes(nowMinutes));
-  let lastChanged = null;
+  let changedAny = false;
   for (let h = Math.max(_evolveHour + 1, hour - 23); h <= hour; h++) {
     for (let zone = 0; zone < 6; zone++) {
       const r = seededRng((h * 6 + zone) ^ EVOLVE_SEED);
       if (r() >= EVOLVE_CHANCE_PER_HOUR) continue;
       const next = rollWeather(ZONE_CLIMATES[zone], season, r);
-      if (next !== _climateWeathers[zone]) { _climateWeathers[zone] = next; lastChanged = h; }
+      if (next !== _climateWeathers[zone]) {
+        _climateWeathers[zone] = next;
+        _zoneChangedAtMinutes[zone] = h * 60;   // WX2a: stale by the change's OWN hour, for THIS zone - a distant zone's turn never moves the player's stale clock
+        changedAny = true;
+      }
     }
   }
   _evolveHour = hour;
-  if (lastChanged === null) return false;
-  _updateFromClimateArray = true;    // WeatherManager's own flag: the next exterior frame drains it
-  _rolledAtMinutes = lastChanged * 60;   // WX2a: stale by the change's OWN hour, not the tick that found it
+  if (!changedAny) return false;
+  _updateFromClimateArray = true;    // WeatherManager's own flag: the next exterior frame drains it (a no-op where the player's slot did not move)
   return true;
 }
 
@@ -406,7 +426,9 @@ export function resetWeatherSim() {
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
   _rolledAtMinutes = null;
+  _zoneChangedAtMinutes = new Array(6).fill(null);
+  _climateWeathersValid = false;
   _evolveOverride = null;
-  _evolveDoor = null;
+  _evolveUrlDoor = null;
   _evolveHour = null;
 }

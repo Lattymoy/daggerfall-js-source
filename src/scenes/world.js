@@ -7094,7 +7094,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
       // overhead is drawn with - so a storm picks the mills up on the
-      // same fourteen-second curve it picks the sky up on. A null row is
+      // same ease curve (WEATHER_EASE_MINUTES) it picks the sky up on. A null row is
       // "no wind is known" (the classic sky eases nothing), and a mill
       // then stands still rather than guessing at one.
       if (millParts && windNow) {
