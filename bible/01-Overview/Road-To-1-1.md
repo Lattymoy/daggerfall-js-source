@@ -23,9 +23,10 @@ re-skin's ground outage, the fast-travel season ordering, the activate
 gate's overlay/clickDelay/touchSpell trio (the critical: a click on an
 open window activated the world behind it), the mastery-box ordering,
 and four test-quality repairs. Recorded stages that belong to Wave B
-(the court backdrop, ~~the combo held-order~~ **CLOSED at ROAD-G G3
-2026-09-04**, the prison accelerator)
-wait on B1's window stack.
+(~~the court backdrop~~ **CLOSED at ROAD-B B5**, ~~the combo held-order~~
+**CLOSED at ROAD-G G3 2026-09-04**, ~~the prison accelerator~~
+**CLOSED at ROAD-B B5**) ~~wait on B1's window stack~~ - B1 landed
+2026-09-01 and B5 landed on it the same day (see the B5 bullet below).
 
 - **A1 season-calendar**: texture season reads the CALENDAR
   (DaggerfallDateTime.SeasonValue), not a `?season` URL param - climate
@@ -104,7 +105,13 @@ in the wave reports.
   doors hack, IsPlayerInsideTavern/Residence flags.
 - **B5 rest-residue** (after B1): the per-frame
   GetPreventedRestMessage poll, pause/resume of a running rest,
-  UpdateNpcPresence on pop, the toggle-binding close.
+  UpdateNpcPresence on pop, the toggle-binding close - and, on the same
+  stack, the two recorded stages Wave A routed here: the courtroom
+  backdrop, ONE window on CORT01I0 with every box of the trial pushed
+  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:121`), and
+  the prison screen's held-Back accelerator, DFU's raw Escape poll
+  rather than a binding (`ui/prisonScreen.js:68`). Both pinned by
+  `test/roadb_court_backdrop.test.js` (10).
 
 ## Wave C - the two arcs - CLOSED 2026-09-02
 
@@ -132,9 +139,15 @@ rotation-sign inversion and the injected-vs-default water tint).
   interior-building arm with DFU's quirks reproduced at the site, S10
   the exterior town map as DFU's own composition with the plate
   anchor moved onto the building's Position (every plate in every
-  town moved). Residue, all at `ui/exteriorAutomapWindow.js`'s
+  town moved). ~~Residue, all at `ui/exteriorAutomapWindow.js`'s
   header: the residence-with-active-quest plate arm, the eight button
-  tooltips, the two reveal-buildings console verbs.
+  tooltips, the two reveal-buildings console verbs.~~ **CLOSED: the
+  plate arm and the tooltips at ROAD-D D5, the two console verbs at
+  ROAD-E E3** - that header narrates both closures
+  (`ui/exteriorAutomapWindow.js:79` and `:100`). CORRECTED with the
+  strike: the shipped tooltip table is TEN rects
+  (`ui/automapText.js:167`) - nine buttons and the compass PANEL - not
+  eight; the header says TEN too.
 
 The whole of Waves B5, C and D - plus the bow salvage and the incident
 record - is the parked deploy batch: gated on the branch, waiting for
@@ -206,10 +219,10 @@ with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:48`);
 E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:289`);
 E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
 narrowed while E3 closed the two console verbs
-(`ui/exteriorAutomapWindow.js:96`) by building the console host they
-were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:3223`, the two ship pixels): the owner supplied the
-(`scenes/world.js:3196`, the two ship pixels): the owner supplied the
+(`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
+measured on; the closure narrates at `:100` today) by building the
+console host they were waiting on. The SHIP LANDING then took a seventh
+(`scenes/world.js:3544`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
