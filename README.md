@@ -25,6 +25,7 @@ with `ARENA2_PATH`.
 - `npm run build` - production build
 - `npm run lint` - eslint over `src/` (no-undef, no-dupe-keys, ...)
 - `npm run check` - lint + test + build (pre-push gate)
+- `npm run cites [-- --apply]` - re-resolve line cites into files you changed (tools/citeShift.mjs)
 - `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
 - `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit

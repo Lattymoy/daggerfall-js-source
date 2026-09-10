@@ -10,6 +10,7 @@
     "test": "node --test",
     "lint": "eslint src/",
     "check": "npm run lint && npm test && npm run build",
+    "cites": "node tools/citeShift.mjs",
     "prebuild": "node scripts/buildTag.mjs",
     "shot": "node tools/screenshot.mjs",
     "firsthour": "node tools/firstHourProbe.mjs",
