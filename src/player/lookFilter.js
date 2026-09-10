@@ -32,6 +32,18 @@ export const SMOOTHING_MAX = 0.9;
 // exact divergence MW-D30 removed from the four hosts.
 export { PITCH_LIMIT };
 
+/** MAC1 (Mac, 2026-09-10): "Looking straight down and moving is
+ *  jarring. Add a stopper so the player's camera can not go down past a
+ *  certain threshold." DFU's PlayerMouseLook clamps both ways at 90
+ *  degrees (PitchMinLimit / PitchMaxLimit); the port keeps the
+ *  reference CEILING (PITCH_LIMIT above) and takes the owner's FLOOR:
+ *  75 degrees below the horizon, which keeps the ground under a walk in
+ *  view without the view turning perpendicular to the motion. Ledger A,
+ *  MAC1 - the number is Mac's to tune. Applied where the reference
+ *  clamp is applied, to the TARGET, so a pitch restored from a save
+ *  below the floor glides up to it rather than snapping. */
+export const PITCH_FLOOR = (75 * Math.PI) / 180;
+
 /** GetFrameRateScaledFractionOfProgression (:100-105), verbatim. */
 export function frameRateScaledFraction(fractionAt60FPS, dt) {
   const frames = dt * 60;
@@ -75,7 +87,7 @@ export class LookFilter {
    */
   tick(dt, cam, { smoothing = getFloat('Controls', 'MouseLookSmoothingFactor', 0, SMOOTHING_MAX) } = {}) {
     // Clamp the TARGET pitch to the range, then owe only what remains.
-    const targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));
+    const targetPitch = Math.max(-PITCH_FLOOR, Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));   // MAC1: the floor is the owner's, the ceiling the reference's
     this.residualPitch = targetPitch - cam.pitch;
     const s = frameSmoothing(smoothing, dt);
     const stepYaw = this.residualYaw * (1 - s);

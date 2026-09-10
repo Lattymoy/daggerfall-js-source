@@ -2756,7 +2756,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8128,
+              // playerArrowHitFoe is the one copy world.js:8150,
               // exterior.js:4169 and worldModes.js:5833 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP

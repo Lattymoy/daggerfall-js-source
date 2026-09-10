@@ -98,6 +98,9 @@ export const OVER_ENCUMBERED_LIMIT = 250;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
+/** MAC1: the render eye pays a grounded step out over this many seconds
+ *  (see PlayerMotor._noteVerticalStep). */
+export const STEP_SMOOTH_TAU = 0.06;
 export const SLOPE_LIMIT_DEG = 70;
 export const EYE_HEIGHT = 1.7;
 // P12 crouch (PlayerHeightChanger): controllerCrouchHeight 0.9.
@@ -332,6 +335,8 @@ export class PlayerMotor {
     // span so the eye can continue across it), read only by eyeAt.
     this._prevPos = new Float32Array(3);
     this._alpha = 1;               // _acc / FIXED_DT after the last update
+    this._eyeFeetY = null;         // MAC1: the render eye's LOW-PASSED interpolated feet height (eyeAt); null = not yet primed
+    this._eyeSmoothing = true;     // MAC1: the harness's off switch, so a bare walk can be measured beside a smoothed one
     this.velY = 0;
     this.grounded = false;
     this.groundedTime = 0;         // PlayerMotor.GroundedTime (the 0.1 s jump gate reads it)
@@ -511,12 +516,16 @@ export class PlayerMotor {
   eyeAt(alpha = this._alpha) {
     const p = this.pos, q = this._prevPos;
     const dx = p[0] - q[0], dy = p[1] - q[1], dz = p[2] - q[2];
-    if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) return this.eye;
+    if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) { this._eyeFeetY = null; return this.eye; }   // MAC1: a placement primes the eye filter afresh
     const a = Math.max(0, Math.min(1, alpha));
     const b = this.bobOffset;
+    // MAC1: the height is the low-passed interpolated feet (`_smoothEyeFeet`)
+    // when the frame's update has primed it; a read before any update,
+    // or with an explicit alpha, is the plain interpolation.
+    const feetY = (this._eyeFeetY != null && alpha === this._alpha) ? this._eyeFeetY : q[1] + dy * a;
     return [
       q[0] + dx * a + b[0],
-      q[1] + dy * a + this._eyeLevel() + b[1],
+      feetY + this._eyeLevel() + b[1],
       q[2] + dz * a + b[2],
     ];
   }
@@ -530,6 +539,7 @@ export class PlayerMotor {
       this.pos[i] += offset[i];
       this._prevPos[i] += offset[i];
     }
+    if (this._eyeFeetY != null) this._eyeFeetY += offset[1];   // MAC1: the smoothed height shifts with the world too
   }
 
   /** The presentation eye across the height actions (P18): DoCrouch
@@ -948,6 +958,32 @@ export class PlayerMotor {
       this._step(FIXED_DT, input, yaw, pitch);
     }
     this._alpha = Math.min(1, this._acc / FIXED_DT);
+    this._smoothEyeFeet(frameDt);   // MAC1: once per RENDER frame, like the bob and the look
+  }
+
+  /** MAC1 (Mac, 2026-09-10: "Fix Jittery hills and stairs"). The step
+   *  ladder (collider.js) lifts the feet a whole rung in ONE physics
+   *  step and the snap drops them a whole tread, where Unity's
+   *  controller slides the same rung across several fixed updates; the
+   *  port's camera, riding eyeAt, popped with the feet - and on a
+   *  terrain of facets every triangle edge was a small step. This
+   *  low-passes the height the RENDER eye rides - EV1's interpolated
+   *  feet, the thing eyeAt already reads - over STEP_SMOOTH_TAU, so a
+   *  rung is climbed by the eye across a few frames and the feet still
+   *  arrive in one. Never more than a rung behind (STEP_OFFSET). A jump
+   *  or a fall is not a step: while either is up the filter follows
+   *  the raw height exactly, and re-engages from it on landing with no
+   *  seam. Only eyeAt carries it - `eye`, the simulation's own eye and
+   *  every ray's, is untouched. A placement (eyeAt's snap guard) primes
+   *  the filter afresh. */
+  _smoothEyeFeet(frameDt) {
+    const raw = this._prevPos[1] + (this.pos[1] - this._prevPos[1]) * this._alpha;
+    if (!this._eyeSmoothing || this.jumping || this.falling || this._eyeFeetY == null) { this._eyeFeetY = raw; return; }
+    const k = 1 - Math.exp(-frameDt / STEP_SMOOTH_TAU);
+    let y = this._eyeFeetY + (raw - this._eyeFeetY) * k;
+    if (y - raw > STEP_OFFSET) y = raw + STEP_OFFSET;
+    else if (raw - y > STEP_OFFSET) y = raw - STEP_OFFSET;
+    this._eyeFeetY = y;
   }
 
   /** M3: the wall probe - CollisionFlags.Sides + GetClimbedWallInfo's

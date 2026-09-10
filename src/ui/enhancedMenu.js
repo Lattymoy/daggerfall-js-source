@@ -92,7 +92,7 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
+import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -1981,6 +1981,19 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
+  // enhanced settings, the Build and Switch Arms options are gone and
+  // require me to reattach the files"). The Morrowind store is COUNTED
+  // by the hosts' loadMagicRegistries (scenes/shared.js), and the boot
+  // door opens before any host boots - so on this surface
+  // morrowindDataCount() read -1's zero, the card offered Attach alone,
+  // and an attach (which counts) was the only thing that brought the
+  // two buttons back. Nothing was lost: the archives sat in IndexedDB
+  // the whole time. Count here, and repaint once the count lands - a
+  // menu torn down first repaints nothing.
+  if (morrowindDataFingerprint() == null) {
+    registerMorrowindData().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
+  }
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
   // the face itself, every section one press away. Pause used to open

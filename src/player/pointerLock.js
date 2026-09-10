@@ -91,8 +91,26 @@ export function requestLook(canvas) {
     _errBound = true;
   }
   try {
-    const p = canvas.requestPointerLock();
-    if (p && typeof p.catch === 'function') p.catch(() => {});
+    // MAC1 (Mac, 2026-09-10: "camera turning being very jumpy"). The
+    // bare request hands the look the OS pointer's ACCELERATED deltas
+    // (Windows' "enhance pointer precision", the Mac's curve), so a slow
+    // turn and a flick over the same mouse travel land different
+    // angles and a fast pass overshoots. unadjustedMovement asks for
+    // the raw device counts - what a game's look wants and what Unity's
+    // mouse axis reads. A browser or platform without it rejects with
+    // NotSupportedError, and the plain request follows on THAT
+    // rejection alone; every other refusal (focus, cooldown, pending)
+    // stays the no-op it was. Older browsers ignore the argument.
+    const p = canvas.requestPointerLock({ unadjustedMovement: true });
+    if (p && typeof p.catch === 'function') {
+      p.catch((err) => {
+        if (err?.name !== 'NotSupportedError') return;
+        try {
+          const q = canvas.requestPointerLock();
+          if (q && typeof q.catch === 'function') q.catch(() => {});
+        } catch { /* non-fatal */ }
+      });
+    }
   } catch {
     /* older browsers throw synchronously; non-fatal */
   }

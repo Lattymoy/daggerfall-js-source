@@ -32,7 +32,8 @@ import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: 
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
-import { createSeasonReskin } from '../world/seasonReskin.js';   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
+import { createSeasonReskin } from '../world/seasonReskin.js';
+import { farFlatVisible } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
@@ -4812,6 +4813,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
+        relock: () => requestLook(canvas),   // MAC1: the pointer comes back with the resume gesture (ui/pauseDoor.js)
         // SAV4: the slot window's seams - the pause SAVE/LOAD doors
         // open it with these (openClassicPauseFlow builds the doors).
         playerName: () => playerEntity.name,
@@ -5329,7 +5331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7017-7029 -
+  // worldModes answers it in BOTH modes (worldModes.js:7018-7030 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6716,6 +6718,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exterior.js builds no save doors (the probe host).
     quickSave: () => worldQuickSave(),
     quickLoad: () => worldQuickLoad(),
+    relock: () => requestLook(canvas),   // MAC1: the interior arm's pause door relocks through this host's canvas
     playerName: () => playerEntity.name,
     saveAs: (saveName) => worldQuickSave(saveName),
     loadKey: (key) => worldQuickLoad({ key }),
@@ -7849,8 +7852,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the batches are - a pixel evicted takes its clocks with it -
       // so the tick rides the same walk that collects the batches.
       p.flatAnims.tick(dt);
+      // MAC1 (Mac: "fps outside ... all the billboards in the distance
+      // ESPECIALLY ALL THE SMALL ONES not being culled out"). Every
+      // (archive, record) of every streamed pixel was a draw call
+      // however far the pixel stood - the small plants of 49 pixels
+      // most of all. The rule is world/flatDistance.js's: the two
+      // nearest rings draw everything, the far rings the trees and the
+      // flats that move, and nothing else. Facing costs nothing here (a
+      // uniform per pass), so a far flat that draws still turns.
+      const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
       for (const b of p.batches) {
         if (!pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]))) continue;   // EV3
+        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1
         b.origin = t;
         allBatches.push(b);
       }
@@ -7914,8 +7927,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       _wasInLocationRect = _inRect;
     }
-    _playerStill = _lastPlayerPos &&
-      Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
+    // MAC1 (Mac: "sprites jittery when slowing down to talk to you").
+    // MobilePersonMotor's gate reads PlayerMotor.IsStandingStill -
+    // grounded over a ZERO moveDirection (:113-125), the motor's own
+    // `standing`. This host compared the CAMERA frame to frame, and the
+    // camera carries the head bob and EV1's interpolation: for the
+    // frames after the player stops the bob is still settling, so
+    // "standing still" flickered and every walker inside idleDistance
+    // flipped move/idle/move, its frame reset to 0 on each edge (F021).
+    // The fly camera keeps the position test, having no motor to ask.
+    _playerStill = walkMode && playerSpawned ? !!player.standing : (_lastPlayerPos &&
+      Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001);
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
     const isDay = !isNight(minute);
     const livePersonBatches = [];
