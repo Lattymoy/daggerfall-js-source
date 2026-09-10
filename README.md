@@ -23,7 +23,8 @@ with `ARENA2_PATH`.
 - `npm run dev` - Vite dev server
 - `npm test` - Node test runner
 - `npm run build` - production build
-- `npm run check` - test + build (pre-push gate)
+- `npm run lint` - eslint over `src/` (no-undef, no-dupe-keys, ...)
+- `npm run check` - lint + test + build (pre-push gate)
 - `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
 - `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit

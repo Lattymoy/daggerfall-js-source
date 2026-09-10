@@ -403,14 +403,14 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   "DR1: THE TWO WINDOW SEAMS, MOUNTED"), pinned by three DR1 cases in
   `test/x11b.test.js`. This was also Ledger row `:613`'s adjudication,
   and that row is struck with it.
-- **`src/ui/enhancedMenu.js:1769`** - the rest of the keyboard; the
+- **`src/ui/enhancedMenu.js:1889`** - the rest of the keyboard; the
   wizard walks to `done` with no pointer. *The enhanced menu is the
   enhanced skin, a Ledger A departure, so no C# line is owed. The flag
   names its own blocker: focus order across a rail, a settings list and
   a help sheet. Escape already routes through the shared
-  `overlayAction` table at `:1744`, so the seam is in place whenever the
+  `overlayAction` table at `:1918`, so the seam is in place whenever the
   design is decided.*
-- **`src/ui/pauseWindow.js:58`** - `PauseOptionsDropdown`. *Its two
+- **`src/ui/pauseWindow.js:65`** - `PauseOptionsDropdown`. *Its two
   fixed rows are `ModSettingsWindowOption_OnClick`, which lists
   `ModManager.Instance.Mods`, and `GameEffectsWindowOption_OnClick`,
   which opens `GameEffectsConfigWindow`; the port has neither, and
@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- **`src/systems/inputActions.js:513`** - STILL FLAGGED: axes and
+- **`src/systems/inputActions.js:543`** - STILL FLAGGED: axes and
   joystick. *The port has no gamepad input layer, so `AxisActions` and
   `JoystickUIActions` have no source to bind and `loadKeyBinds`
   deliberately ignores those blocks in a DFU-written file; the matching
@@ -639,12 +639,12 @@ could see the others' closures until the squash, which is how "leaving
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
 regenerated onto the new sites: ~~`exterior.js:1271` -> `:1089`~~
-(**CLOSED at TP2**: the Recall interim narrowed to the one arm this
-host cannot take, `exterior.js:1605`), ~~`exterior.js:1648` ->
-`:1346`~~ (**CLOSED at QX1**: this host took the quest bridge, so the
-pause window's Quests tab has a machine to read), `world.js:3117` ->
-`:2934`, ~~`worldModes.js:1833` -> `:1687`~~ (**CLOSED at ROAD-F GS1**,
-below), `pauseWindow.js:58` -> `:61`. The
+(**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
+cannot take, `exterior.js:1605`), ~~`exterior.js:1648` -> `:1346`~~
+(**CLOSED at QX1**: this host took the quest bridge, so the pause window's
+Quests tab has a machine to read), ~~`world.js:3117` -> `:2934`~~
+(**CLOSED at the ship landing**), ~~`worldModes.js:1833` -> `:1687`~~
+(**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
 **ROAD-G G7 states that convention rather than leaving it implied:** a
@@ -652,7 +652,7 @@ measurement, which is older still; `Home.md` is the live list.
 claim about the tree at HEAD - the row is closed, so there is nothing
 live for it to name. An UNSTRUCK row is a live claim and its line is
 re-resolved, which is why the `exterior.js` row above now reads
-`:1302`. `node tools/regenOpenFlags.mjs --check` and `Home.md` are the
+`:1712`. `node tools/regenOpenFlags.mjs --check` and `Home.md` are the
 only live inventory.
 
 **ROAD-F (2026-09-03) took the last two this page still owed.**
@@ -767,20 +767,20 @@ held there by `test/citedrift.test.js` - the wave that wrote this
 section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
-Section C's table is **247 rows** between `Port-Ledger.md:487` and
-`:733` (`awk '/^\|/ && !/^\|---/'`). **226 are struck.** Of the 21 that
-are not, four are VidFile quirks filed under the wrong section
-(ported-as-is, no route), three carry a **Kept** verdict (the climate
-swap dimensions, the secondary picker's cancel path, the rep window's
-stale-bar quirk), two are **Not planned** (`TangentSolver`/lightmap UVs;
-AssetInjection's texture, model and world-data halves), three are
-declared departures (the two Morrowind judgement rows, the settings
-taxonomy), two are audit preambles, one is RESERVED by the owner
-(smaller-dungeon generation, to the enhanced lane), and two say inside
-their own text that they are closed (`RegionPowerAndConditionsUpdate`,
-vampirism/lycanthropy).
+Section C's table is **247 rows** between `Port-Ledger.md:487` and `:733`
+(`awk '/^\|/ && !/^\|---/'`). **227 are struck.** Of the 20 that are not,
+four are VidFile quirks filed under the wrong section (ported-as-is, no
+route), three carry a **Kept** verdict (the climate swap dimensions, the
+secondary picker's cancel path, the rep window's stale-bar quirk), two are
+**Not planned** (`TangentSolver`/lightmap UVs; AssetInjection's model and
+world-data halves - M-TEX took the TEXTURE half), three are declared
+departures (the two Morrowind judgement rows, the settings taxonomy), two
+are audit preambles, ~~one is RESERVED by the owner (smaller-dungeon
+generation, to the enhanced lane)~~ (**it read 226 and 21 until `:547` was
+STRUCK: SHIPPED at AUDIT 28 W4**), and two say inside their own text that
+they are closed (`RegionPowerAndConditionsUpdate`, vampirism/lycanthropy).
 
-That accounts for 17 of the 21, leaving **4 unstruck rows that carry a
+That accounts for 16 of the 20, leaving **4 unstruck rows that carry a
 route** - plus `:604`, struck at its head but carrying a live PENDING
 clause in its tail, for **six rows that still owe work: items 1-6
 below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
@@ -934,13 +934,13 @@ faithful to whatever reference it does have, and none of them is a gap.
   Daggerfall->Morrowind weapon mapping, MW-D9; the uncharged Daggerfall
   swing, MW-D12). `combat/fpArm.js` is the lane's first-person arm.
 - **Mod-injection infrastructure** - `WorldDataReplacement`,
-  `BuildingReplacement`, texture/mesh replacement, custom
+  `BuildingReplacement`, ~~texture and~~ mesh replacement, custom
   guild/item/effect registries, quest-pack discovery. The citation sweep
   reads `Utility/AssetInjection` **5/9**: the SOUND half ships behind
-  DFU's own `Settings.AssetInjection` gate
-  (`systems/musicReplacement.js`), the rest is Not planned.
-  `BookReplacement`, `TextAssetReader`, `VideoReplacement` and
-  `XMLManager` are the four uncited.
+  DFU's own `Settings.AssetInjection` gate (`systems/musicReplacement.js`)
+  and the TEXTURE half with it at M-TEX (`systems/textureReplacement.js`);
+  the rest is Not planned. `BookReplacement`, `TextAssetReader`,
+  `VideoReplacement` and `XMLManager` are the four uncited.
 - **`AdvancedClimbing` / rappel / hanging** - the corner wraps,
   `WallEject` and overhang bumps stay with their setting, on the
   `EnhancedCombatAI` doctrine. The classic climbing path shipped whole
