@@ -241,11 +241,3 @@ export function decodedTexture(archive, record, frame = 0, map = 'Albedo') {
 }
 
 export const decodedTextureCount = () => _decoded.size;
-
-/** Test seam: place an already-decoded image without touching the DOM.
- *  Takes a decoder's `{ width, height, data }` and crosses the SAME
- *  door production does, so a pin driven through it sees the bytes the
- *  GL would see. */
-export function _setDecodedForTests(archive, record, frame, map, image) {
-  _decoded.set(textureKey(archive, record, frame, map), toColor32(image));
-}

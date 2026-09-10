@@ -4495,7 +4495,7 @@ all four with a no-raw-constant assertion.
 
 **F2 - THE LAUNCHER TRAPPED EVERY TOUCH DEVICE (severe).**
 `launcherScene.js` registered only `keydown`, while every other
-pre-game screen takes `pointerdown` (menu.js:95, :143) and every
+pre-game screen takes `pointerdown` (menu.js:96, :143) and every
 playable scene calls `attachTouch`. With `ShowOptionsAtStart` shipping
 True, a phone booted straight into a screen it could not dismiss - the
 game was unreachable. PROVEN on an emulated Pixel 5 before the fix
@@ -9767,7 +9767,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:427` already
+- the arm `ui/chargen.js:1103` and `ui/spellbookWindow.js:428` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -9810,7 +9810,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:427`
+section above called `ui/chargen.js:1103`, `ui/spellbookWindow.js:428`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards

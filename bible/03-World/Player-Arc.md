@@ -1535,14 +1535,14 @@ speed` and `_trackHalfSpeed`, because DFU scales the `speed` FIELD and
 under half the walk base must read `movingLessThanHalfSpeed` true, which
 is the stealth and footstep-cadence half of the same law.
 
-RESIDUE, recorded not invented: `sunk` is `IsPlayerSwimming` everywhere
-the sink arms it, but it does not carry MeteoricDragon's tile-0 latch -
-a player who surfaces onto tile 0 off-ground (aboard a ship whose hull
-the down-ray strikes as StaticGeometry) keeps `IsPlayerSwimming` true in
-DFU for frames where `OnExteriorWater != Swimming`.
-`exteriorSurface.js`'s `exteriorSwimLatch` models exactly that and still
-has no caller; closing that frame-width divergence is a separate,
-narrower slice.
+~~RESIDUE, recorded not invented: `sunk` is `IsPlayerSwimming` everywhere
+the sink arms it, but it does not carry MeteoricDragon's tile-0 latch~~
+**WIRED (OT1, 2026-09-10).** `exteriorSurface.js`'s `exteriorSwimming`
+is the host's `IsPlayerSwimming` above ground - the sink/unsink edge
+(DoSinking/DoUnsinking write it in lockstep with controllerSink) and
+the tile-0 clearing rule (`exteriorSwimLatch`, PlayerEnterExit.cs:415-421)
+in one helper both exterior hosts call after the surface model; the
+dungeon exit's value is read before the per-frame clear and carried.
 
 Pins: 2 in `test/audit64_motor.test.js`, both computing DFU's
 `GetWalkSpeed` and `GetSwimSpeed` from the C# constants
@@ -1705,7 +1705,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:8263` already did at its
+motor's own mirror of that getter (`world.js:8270` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 

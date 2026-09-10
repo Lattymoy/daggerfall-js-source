@@ -909,15 +909,4 @@ function buildBody(s, plugs, spec) {
   return body;
 }
 
-// the Ravager gun-blade muzzles from the most recent buildBody, body-local (one entry per gun: { p, side }).
-// huskBody + the tuner world-transform these so bolts + the charge spawn exactly on the rendered muzzles.
-export function lastRavagerMuzzles() { return B.ravagerMuzzles; }
-
-// the Idol's beam emitter muzzle (lens tip) from the most recent buildBody, body-local. The tuner + game
-// world-transform it so the charged beam + muzzle burst loose exactly from the rendered lens.
-export function lastIdolMuzzle() { return B.idolMuzzle; }
-export function lastBulwarkMuzzle() { return B.rifleMuzzle; } // body-local rifle muzzle point (rifle tuner: dart launch origin)
-export function lastBulwarkAim() { return B.rifleAim; } // body-local rifle bore direction (unit)
-export function lastRig() { return B.rig; } // solved pelvis/chest frames + arm/leg joints from the last buildBody (the armor lab rides these real bones)
-
 export { buildBody, AIM_PITCH_FRAC, BULWARK_SCALE };

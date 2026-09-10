@@ -23,6 +23,7 @@ import {
   spellIconRect, targetIconRect, elementIconRect, _setSpellIconsForTests,
 } from '../src/ui/spellIcons.js';
 import { HOLIDAYS, getHolidayId } from '../src/systems/holidays.js';
+import { DOUBLE_CLICK_DELAY_MS } from '../src/ui/chargenArt.js';   // OT1: the ListBox double-click window
 import { calculateTradePrice } from '../src/systems/shopStock.js';
 import { SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME } from '../src/systems/spellMaker.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
@@ -805,16 +806,53 @@ test('U42 clicks: every button hits through the half-pixel panel offset', () => 
   assert.equal(c.w.top, 'rename');
 });
 
-test('U42 clicks: a list row selects, and the SELECTED row readies', () => {
+test('U42 clicks: a list row selects, and a second click inside the double-click window readies it', () => {
+  // OT1: the spellsListBox is a ListBox - MouseClick selects
+  // (SpellsListBox_OnSelectItem), MouseDoubleClick uses
+  // (SpellsListBox_OnUseSelectedItem). The old arm used the SELECTED
+  // row on any re-click, however late; Ledger :505 called that an
+  // approximation and this is the gesture itself.
   const { w, readied } = book(spell('A', 5), spell('B', 5), spell('C', 5));
   w._font = font();
   const [lx, ly] = SPELLBOOK_RECTS.list;
   const rowY = (i) => PY + ly + i * (6 + SPELLBOOK_LAYOUT.rowSpacing) + 1;
-  w.click(PX + lx + 4, rowY(2));
+  w.click(PX + lx + 4, rowY(2), 1000);
   assert.equal(w.selectedIndex, 2, 'the third visible row');
   assert.equal(readied.length, 0, 'a first click only selects');
-  w.click(PX + lx + 4, rowY(2));
-  assert.equal(readied[0][0].name, 'C', 'clicking the SELECTED row uses it');
+  w.click(PX + lx + 4, rowY(2), 1000 + DOUBLE_CLICK_DELAY_MS - 1);
+  assert.equal(readied[0][0].name, 'C', 'the second click inside the window uses it');
+  assert.equal(w._lastRowClick, null, 'the pair is spent - a third click opens a new one');
+});
+
+test('OT1 clicks: the gesture is TIME, not identity (BaseScreenComponent.cs:691)', () => {
+  const [lx, ly] = SPELLBOOK_RECTS.list;
+  const rowY = (i) => PY + ly + i * (6 + SPELLBOOK_LAYOUT.rowSpacing) + 1;
+  // a slow re-click of the selected row only selects - the arm this
+  // replaced used it, which no ListBox in DFU does
+  const a = book(spell('A', 5), spell('B', 5), spell('C', 5));
+  a.w._font = font();
+  a.w.click(PX + lx + 4, rowY(2), 1000);
+  a.w.click(PX + lx + 4, rowY(2), 1000 + DOUBLE_CLICK_DELAY_MS);   // the window is exclusive
+  assert.equal(a.readied.length, 0, 'outside the window a re-click is a MouseClick');
+  assert.equal(a.w.selectedIndex, 2);
+  // the second click need not land on the same row: the first has
+  // already moved the selection, so a fast pair across rows uses the
+  // row under the SECOND click - listPicker.js and nativeTalk.js's law
+  const b = book(spell('A', 5), spell('B', 5), spell('C', 5));
+  b.w._font = font();
+  b.w.click(PX + lx + 4, rowY(0), 1000);
+  b.w.click(PX + lx + 4, rowY(1), 1100);
+  assert.equal(b.w.selectedIndex, 1);
+  assert.equal(b.readied[0][0].name, 'B');
+  // in BUY mode the use is the buy (SpellsListBox_OnUseSelectedItem's
+  // buy arm): the double-click reaches buyButton, whose no-gold refusal
+  // is the observable
+  const c = shop([spell('Arc Bolt', 20)], { gold: () => 0 });
+  c.w._font = font();
+  c.w.click(PX + lx + 4, rowY(0), 1000);
+  assert.equal(c.w.top, null, 'a single click in buy mode only selects');
+  c.w.click(PX + lx + 4, rowY(0), 1050);
+  assert.equal(c.w.top, 'trade', 'the second click inside the window is the buy');
 });
 
 test('U42: the CAST binding toggles the book closed, as does Escape', () => {

@@ -991,7 +991,14 @@ const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most sce
 // well under the 4GB shapes). If the archive carries an arena2/
 // folder, only those entries ingest (the full gamefiles zip ships
 // siblings we must not swallow).
-export async function readZip(file, onProgress) {   // exported for the harness
+/** OT1: the central-directory walk with the entry NAMES KEPT - the
+ *  saves picker needs the `SAVE#/` segment the ARENA2 diet flattens
+ *  away. `pick` sees every file name in the archive and answers the
+ *  ones to inflate, so a caller's filter runs BEFORE any bytes are
+ *  decompressed, the skip-before-inflate readZip has always done.
+ *  Answers `[{ name, data }]` in archive order, `data` an ArrayBuffer;
+ *  directory entries and methods other than 0/8 are skipped. */
+export async function readZipEntries(file, { pick = (names) => names, onProgress } = {}) {
   const buf = new Uint8Array(await file.arrayBuffer());
   const dv = new DataView(buf.buffer);
   // EOCD: scan the tail for PK\x05\x06 (comment can pad up to 64KB)
@@ -1015,29 +1022,43 @@ export async function readZip(file, onProgress) {   // exported for the harness
     if (!name.endsWith('/')) dirs.push({ name, method, compSize, localOff });
     off += 46 + nameLen + extraLen + commentLen;
   }
-  const hasArena2 = dirs.some((d) => /(^|\/)arena2\//i.test(d.name));
-  const picked = hasArena2 ? dirs.filter((d) => /(^|\/)arena2\//i.test(d.name)) : dirs;
+  const wanted = new Set(pick(dirs.map((d) => d.name)));
+  const picked = dirs.filter((d) => wanted.has(d.name));
   const entries = [];
   let seen = 0;
   for (const d of picked) {
-    const key = normalizeName(d.name);
     if (onProgress && ++seen % 50 === 0) onProgress(seen, picked.length);
-    if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
-    if (!KEEP(key)) continue;   // skip BEFORE inflating - the 362MB of unread data never touches memory
     // Local header: its own name/extra lengths position the data
     const lnl = dv.getUint16(d.localOff + 26, true);
     const lel = dv.getUint16(d.localOff + 28, true);
     const data = buf.subarray(d.localOff + 30 + lnl + lel, d.localOff + 30 + lnl + lel + d.compSize);
     if (d.method === 0) {
-      entries.push([key, data.slice().buffer]);
+      entries.push({ name: d.name, data: data.slice().buffer });
     } else if (d.method === 8) {
       const ds = new DecompressionStream('deflate-raw');
       const out = await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer();
-      entries.push([key, out]);
+      entries.push({ name: d.name, data: out });
     }
     // other methods: skip (classic zips are 0/8 only)
   }
   return entries;
+}
+
+/** The ARENA2 ingest over the walk above: the arena2/ folder alone when
+ *  the archive carries one, the engine's diet (KEEP) applied to the
+ *  canonical key BEFORE inflating - the 362MB of unread data never
+ *  touches memory - and `[key, ArrayBuffer]` pairs out, the store's
+ *  own shape. */
+export async function readZip(file, onProgress) {   // exported for the harness
+  const arena2 = (n) => /(^|\/)arena2\//i.test(n);
+  const entries = await readZipEntries(file, {
+    onProgress,
+    pick: (names) => {
+      const picked = names.some(arena2) ? names.filter(arena2) : names;
+      return picked.filter((n) => { const key = normalizeName(n); return /^[A-Za-z0-9._-]+$/.test(key) && KEEP(key); });
+    },
+  });
+  return entries.map(({ name, data }) => [normalizeName(name), data]);
 }
 
 

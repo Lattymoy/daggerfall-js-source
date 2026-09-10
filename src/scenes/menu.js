@@ -29,6 +29,7 @@ import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
 import { fetchBytes } from './shared.js';
+import { readZipEntries } from './dataSource.js';   // OT1: the saves picker's phone path rides the ARENA2 door's zip walk
 import { music } from '../systems/music.js';
 import { mostRecentRestorable } from '../systems/saveSlots.js';   // SAV4: the F2 question, now over the slot store
 import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/saveGames.js';
@@ -198,15 +199,49 @@ const CLASSIC_SAVE_FILES = new Set([
   SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME,
 ]);
 
+/** A picked path's SAVE# slot and file, or null: the SaveGames walk's
+ *  own shape (a SAVE0-SAVE5 segment, then one of the seven names),
+ *  case-folded because a user's folder may not be uppercase. */
+function classicSaveSlot(path) {
+  const m = String(path).toUpperCase().match(/(?:^|\/)SAVE([0-5])\/([^/]+)$/);
+  return m && CLASSIC_SAVE_FILES.has(m[2]) ? { index: Number(m[1]), name: m[2] } : null;
+}
+
+/** The Directory.GetDirectories walk over picked file-likes (anything
+ *  with a path and an `arrayBuffer()`): `{ saveIndex: { FILENAME: file } }`
+ *  keyed by the SAVE# segment, everything else dropped. Exported for the
+ *  harness - the zip door below feeds it the same shape. */
+export function collectClassicSaveFiles(files) {
+  const saves = {};
+  for (const f of files) {
+    const slot = classicSaveSlot(f.webkitRelativePath || f.name);
+    if (!slot) continue;
+    (saves[slot.index] ??= {})[slot.name] = f;
+  }
+  return saves;
+}
+
+/** OT1: THE PHONE PATH. iOS Safari has no directory picker - the ARENA2
+ *  door's own reason for its zip input (dataSource.js) - so a zipped
+ *  Daggerfall folder, or a zipped SAVE# folder, reaches the same
+ *  collector with the archive's own paths standing in for
+ *  webkitRelativePath. Only the seven save files under a SAVE0-SAVE5
+ *  segment inflate; the rest of a zipped game folder never touches
+ *  memory. */
+export async function classicSaveFilesFromZip(file) {
+  const entries = await readZipEntries(file, { pick: (names) => names.filter((n) => classicSaveSlot(n) != null) });
+  return entries.map(({ name, data }) => ({ webkitRelativePath: name, arrayBuffer: async () => data }));
+}
+
 /**
  * The browser's stand-in for SaveGames' Directory.GetDirectories walk
  * (Ledger A, the MAIN-MENU EXIT BUTTON row, which carries this half
  * too - a browser cannot read the Daggerfall folder on its own): a
  * picker overlay takes the classic Daggerfall folder (or
- * the SAVE0-SAVE5 folders, or a drop) and returns
- * { saveIndex: { FILENAME: bytes } } keyed by the SAVE# path segment.
- * Resolves null on cancel. Nothing persists - like DFU, the "disk" is
- * re-read on every open; ours just arrives through a picker.
+ * the SAVE0-SAVE5 folders, or a drop, or - OT1 - a zip of either) and
+ * returns { saveIndex: { FILENAME: bytes } } keyed by the SAVE# path
+ * segment. Resolves null on cancel. Nothing persists - like DFU, the
+ * "disk" is re-read on every open; ours just arrives through a picker.
  */
 function pickClassicSaveFiles() {
   return new Promise((resolve) => {
@@ -219,6 +254,9 @@ function pickClassicSaveFiles() {
         SAVE0-SAVE5 beside ARENA2), or drop it here. Saves are read for
         this load only - nothing is stored.</p>
         <input type="file" id="picksaves" webkitdirectory multiple style="margin:8px">
+        <p style="margin:4px 0">on a phone: pick a <b>.zip</b> instead
+        (your Daggerfall folder, or a SAVE# folder, zipped)</p>
+        <input type="file" id="picksaveszip" accept=".zip,application/zip" style="margin:8px">
         <p><button id="cancelsaves" style="font:inherit;padding:4px 12px">Cancel</button></p>
         <p id="savemsg" style="color:#8a8"></p>
       </div>`;
@@ -226,18 +264,8 @@ function pickClassicSaveFiles() {
     const msg = ui.querySelector('#savemsg');
     const finish = (result) => { ui.remove(); resolve(result); };
 
-    const collect = (files) => {
-      const saves = {};
-      for (const f of files) {
-        const path = (f.webkitRelativePath || f.name).toUpperCase();
-        const m = path.match(/(?:^|\/)SAVE([0-5])\/([^/]+)$/);
-        if (!m || !CLASSIC_SAVE_FILES.has(m[2])) continue;
-        (saves[Number(m[1])] ??= {})[m[2]] = f;
-      }
-      return saves;
-    };
     const ingest = async (files) => {
-      const saves = collect(files);
+      const saves = collectClassicSaveFiles(files);
       const indexes = Object.keys(saves);
       if (!indexes.length) { msg.textContent = 'no SAVE0-SAVE5 folders in that selection'; return; }
       msg.textContent = `reading ${indexes.length} save slot(s)...`;
@@ -250,6 +278,13 @@ function pickClassicSaveFiles() {
     };
 
     ui.querySelector('#picksaves').addEventListener('change', (e) => ingest([...e.target.files]));
+    ui.querySelector('#picksaveszip').addEventListener('change', async (e) => {   // OT1: the phone path
+      const f = e.target.files[0];
+      if (!f) return;
+      msg.textContent = `unpacking ${f.name}...`;
+      try { await ingest(await classicSaveFilesFromZip(f)); }
+      catch (err) { msg.textContent = `zip failed: ${err.message}`; }
+    });
     ui.querySelector('#cancelsaves').addEventListener('click', () => finish(null));
     ui.addEventListener('dragover', (e) => e.preventDefault());
     ui.addEventListener('drop', async (e) => {
@@ -260,6 +295,8 @@ function pickClassicSaveFiles() {
       const walk = async (entry, prefix) => {
         if (entry.isFile) {
           const f = await new Promise((r) => entry.file(r));
+          // OT1: a dropped archive is the phone path by another gesture
+          if (/\.zip$/i.test(entry.name)) { files.push(...await classicSaveFilesFromZip(f)); return; }
           files.push({ webkitRelativePath: prefix + entry.name, arrayBuffer: () => f.arrayBuffer() });
         } else if (entry.isDirectory) {
           const reader = entry.createReader();

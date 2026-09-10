@@ -605,7 +605,7 @@ export class OverworldMapWindow {
     // BETWEEN CalculateTravelTime and CalculateTripCost exactly as DFU
     // orders them, so the Temple of Akatosh's blessing shortens the
     // fare and the days as well as the journey. The classic popup
-    // folds it at ui/travelPopUp.js:166; this is the same fold on the
+    // folds it at ui/travelPopUp.js:164; this is the same fold on the
     // same deps, and everything the card bills or commits reads the
     // blessed minutes. `_journey` stays raw - its memo is keyed on the
     // route, and the flight only wants the path.

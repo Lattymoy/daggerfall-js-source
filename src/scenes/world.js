@@ -182,7 +182,7 @@ import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, c
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
-import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
+import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
@@ -7235,7 +7235,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // stranded the player in the motor's no-gravity branch
         // forever. The EFFECT owns the flag (Levitate.cs:131/:136),
         // so it is recomputed per frame in every host; swimming is
-        // false outdoors (no blockWaterLevel - PlayerEnterExit).
+        // false outdoors (no blockWaterLevel - PlayerEnterExit) until
+        // the surface model below re-derives it (OT1).
+        const _wasSwimming = !!player.swimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
@@ -7318,6 +7320,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // "Wave B's exterior-water slice owns the model that raises
         // it"; this is that raise.
         player.onExteriorWater = _surf.water === ON_EXTERIOR_WATER.Swimming;
+        // OT1 (AUDIT 64 F0's residue): PlayerEnterExit.IsPlayerSwimming above ground - the sink/unsink
+        // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
+        // one helper. Before this the flag was the clear alone: a sea swim never suppressed the encounter
+        // roll (:488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry.
+        player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water/static-geometry arms
         // ride the surface model above).
@@ -8236,7 +8243,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:402-427) because neither reads ARENA2 - "a player whose
+    // (hud.js:401-426) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

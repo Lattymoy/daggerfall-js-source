@@ -206,7 +206,7 @@ export function jumpSpeedMultiplier(entity) {
   const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;
   if ((bits & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) {
     m += ATHLETICISM_MULTIPLIER;
-    // The same fold entityImprovedAthleticism (enchantments.js:901)
+    // The same fold entityImprovedAthleticism (enchantments.js:897)
     // answers, read in place: this leaf cannot import enchantments.js
     // without closing a cycle back through skills.js, which is why
     // the skillMods read above (:86) is spelled out the same way.

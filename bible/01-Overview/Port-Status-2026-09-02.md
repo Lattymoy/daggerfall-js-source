@@ -35,7 +35,7 @@ but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
 Wave E and the closures after it worked that list down to **seven sites
-and six rows**,
+and six rows** (five, since OT1 struck `:601`),
 which is what lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
 
@@ -297,7 +297,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | Area | then | now | what moved, and what is left |
 |---|---|---|---|
 | **formats-core** | Verbatim | **Verbatim** | 46/50 API classes cited, `API/Save` 14/14. The malformed-CIF runaway parse was in the AUDIT-44 wave. Residue: `DFValidator`, `PowerOfTwo`. |
-| **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). Ledger row `:601`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call. |
+| **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). ~~Ledger row `:601`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call.~~ **CLOSED (OT1, 2026-09-10): the saves picker took the ARENA2 door's zip arm, and the row is struck whole.** |
 | **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1531` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:137-145` the gated call, `:174` the guard). |
@@ -321,8 +321,8 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:476` runs `updateHudVitals` and `:530` `drawNearDeathFlicker`, both above the enhanced branch at `:557` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:571`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
-| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:887` over the 7-wide rail). |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:475` runs `updateHudVitals` and `:529` `drawNearDeathFlicker`, both above the enhanced branch at `:556` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:570`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:907` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/lootHover.js:64` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
@@ -768,7 +768,7 @@ section moved every one of them by inserting rows above section C, and
 a line number nobody re-resolves is a pointer at a stranger.
 
 Section C's table is **247 rows** between `Port-Ledger.md:487` and `:733`
-(`awk '/^\|/ && !/^\|---/'`). **227 are struck.** Of the 20 that are not,
+(`awk '/^\|/ && !/^\|---/'`). **228 are struck.** Of the 19 that are not,
 four are VidFile quirks filed under the wrong section (ported-as-is, no
 route), three carry a **Kept** verdict (the climate swap dimensions, the
 secondary picker's cancel path, the rep window's stale-bar quirk), two are
@@ -780,10 +780,10 @@ generation, to the enhanced lane)~~ (**it read 226 and 21 until `:547` was
 STRUCK: SHIPPED at AUDIT 28 W4**), and two say inside their own text that
 they are closed (`RegionPowerAndConditionsUpdate`, vampirism/lycanthropy).
 
-That accounts for 16 of the 20, leaving **4 unstruck rows that carry a
+That accounts for 16 of the 19, leaving **3 unstruck rows that carry a
 route** - plus `:604`, struck at its head but carrying a live PENDING
-clause in its tail, for **six rows that still owe work: items 1-6
-below** (item 7 was the seventh, and DR1 struck it). The measurement this section was first written over read 246
+clause in its tail, for **five rows that still owe work: items 1-4 and 6
+below** (item 5 was the sixth, OT1 struck it; item 7 the seventh, DR1). The measurement this section was first written over read 246
 rows, 216 struck and fourteen still owing; what closed the gap is the
 work the entries themselves argued for - the closeout tail struck the
 six STALE rows (items 9-14), E8 struck item 8, and E4 added one new
@@ -826,8 +826,8 @@ ships, which is the warning the section's own preamble opens with.
    the `QuestAudioSource` DFU's QuestMachine carries, IsPlaying reading
    the end time of the clip `playOneShot` already reported, and the
    world host's hook is PlaySound.cs:110-116 line for line.
-5. **`:601` the classic `.SAV` reader** -> the phone path: no zip arm in
-   the saves picker, a desktop-first charter call.
+5. ~~**`:601` the classic `.SAV` reader** -> the phone path: no zip arm in
+   the saves picker, a desktop-first charter call.~~ **CLOSED (OT1, 2026-09-10).**
 6. **`:604` (struck, with a live clause) the keybinding registry** ->
    the mouse/advanced and joystick sub-windows, the two of DFU's 65
    game windows the port does not cite.
@@ -890,7 +890,7 @@ ships, which is the warning the section's own preamble opens with.
 12. **`:599` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
-    `ui/spellbookWindow.js:135-137`, drawn at `:935`), the icon picker
+    `ui/spellbookWindow.js:135-137`, drawn at `:955`), the icon picker
     ships (`ui/spellIconPickerWindow.js`), and the
     inert-catalogue count is gated at 0. What survives is not residue
     ~~but a **departure with no Ledger row**: DFU's native INFO01I0 art

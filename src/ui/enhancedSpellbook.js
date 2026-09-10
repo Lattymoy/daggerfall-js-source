@@ -97,7 +97,7 @@ export function effectWords(effect) {
 }
 
 /** The two words the classic shows as TOOLTIPS on the target and
- *  element icons (spellbookWindow.js:384/388). This window draws no
+ *  element icons (spellbookWindow.js:385/388). This window draws no
  *  icons - it reads no ARENA2 - so it prints what those icons mean,
  *  which is strictly more than the classic tells you at a glance. */
 export function spellFrame(spell) {
