@@ -364,7 +364,7 @@ with nothing lost). Integration was solo. Gate at the merge: see the PR.
   it, and the flag is what the reviewer reads first.
 - **The cite mappers need a Ledger arm.** Every audit since ROAD-E has
   hand-fixed `Port-Ledger.md:N` cites at integration; this one wrote the
-  second mapper. Fold it into the first before AUDIT 65.
+  second mapper. ~~Fold it into the first before AUDIT 65.~~ **LANDED (CS1, 2026-09-10): `tools/citeShift.mjs`, one home, the Ledger arm in it.**
 - **Shape pins are not pins.** Eleven of the thirty-two review findings
   were tests that asserted text fragments a mutation could not redden.
   The lanes' own mutation tallies (17/17, 14/14) were honest about the
