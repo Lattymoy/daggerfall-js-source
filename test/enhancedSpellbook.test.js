@@ -197,7 +197,7 @@ test('PX23b: an effect carries magnitude, duration and chance - and the first dr
 });
 
 test('PX23b: the two icons the classic only shows on HOVER are printed as words', () => {
-  // spellbookWindow.js:384/388 pushes TARGET_DESCRIPTIONS and
+  // spellbookWindow.js:385/388 pushes TARGET_DESCRIPTIONS and
   // ELEMENT_DESCRIPTIONS into a tooltip. This window draws no icons -
   // it reads no ARENA2 - so it prints what they mean, which is more
   // than the classic tells you at a glance.

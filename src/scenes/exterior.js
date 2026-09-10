@@ -20,7 +20,7 @@ import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';
 import { waterUniforms, tilemapRectHasWater } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
-import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods
+import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { createWeaponRig } from '../combat/weaponRig.js';
@@ -3120,7 +3120,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *
    *  What was dead, with the ctx null: CastWhenUsed and CastWhenStrikes
    *  found no spell record and still billed 10 condition
-   *  (enchantments.js:339-347, :372-379), HealthLeech never billed the
+   *  (enchantments.js:335-343, :372-379), HealthLeech never billed the
    *  wearer and stamped its last-used minute at epoch 0
    *  (:556-577), CastWhenHeld could never take the resting degrade rate
    *  (:364), and the held/round scans - VampiricEffect AtRange,
@@ -3628,7 +3628,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       // leaving a dungeon while levitating stranded the player in the
       // motor's no-gravity branch forever. The EFFECT owns the flag
       // (Levitate.cs:131/:136); swimming is false outdoors (there is
-      // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming).
+      // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming) until
+      // the surface model below re-derives it (OT1).
+      const _wasSwimming = !!player.swimming;   // OT1: the value the frame arrived with, read BEFORE the clear
       applyMotorEffectFlags(player, playerEntity);
       const mv = moveHeld(keys);
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
@@ -3699,6 +3701,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // never sinks the capsule. A6 left this flag false pending
       // "Wave B's exterior-water slice"; this is that slice.
       player.onExteriorWater = _surf.water === ON_EXTERIOR_WATER.Swimming;
+      // OT1 (AUDIT 64 F0's residue): PlayerEnterExit.IsPlayerSwimming above ground - the sink/unsink
+      // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
+      // one helper; this host has no dungeon branch to carry a value from, so the sink edge is its
+      // whole live arm. Before this the flag was the clear alone.
+      player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
       // FS-slice: PlayerFootsteps - the exterior stride.
       {
         // PlayerFootsteps.cs:116 - "Play splash footsteps whether
@@ -4127,7 +4134,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7826-7890 is the shape.
+    // through the player for ever. world.js:7833-7897 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4335,7 +4342,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7950's order, and the order
+          // BEFORE civilians - world.js:7957's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
@@ -4373,7 +4380,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:402-427) because neither reads ARENA2 - "a player whose
+    // (hud.js:401-426) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

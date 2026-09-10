@@ -140,14 +140,6 @@ export async function loadIcon(archive, record, { scale = 2 } = {}) {
   return icons.get(`${archive}_${record}_${scale}`) ?? null;
 }
 
-/** Drop everything. Only a test or a data-source change wants this. */
-export function _resetIconsForTests() {
-  archives.clear();
-  icons.clear();
-  palettePromise = null;
-  dollCache = null;
-}
-
 // ── U59: THE PAPERDOLL, FOR A SCREEN MADE OF NODES ───────────────
 //
 // The same problem the icons had, one layer up. `ui/paperDoll.js`

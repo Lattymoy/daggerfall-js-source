@@ -283,10 +283,6 @@ export function assignHeldSpell(record, entity, item, { ctx = null, nowMinutes =
   item.timeEffectsLastRerolled = nowMinutes;
 }
 
-/** UnequipHeldItem's bundle half, exported for hosts/probes - the
- *  dispatcher's Unequipped arm runs it itself. */
-export function removeHeldSpell(entity, item) { _fx.removeItemPinnedEffects?.(entity, item); }
-
 function instantiateHeldSpell({ param, entity, item, ctx, nowMinutes }, recast) {
   const record = ctx?.spellsByIndex?.()?.get?.(param);
   if (!record) return;

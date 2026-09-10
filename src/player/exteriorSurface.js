@@ -265,3 +265,29 @@ export function exteriorSwimLatch(wasSwimming, tileIndex) {
     motorSwimming: false,
   };
 }
+
+/**
+ * OT1 (AUDIT 64 F0's residue, wired): the exterior host's
+ * PlayerEnterExit.IsPlayerSwimming for ONE frame, from the only two
+ * writers DFU has above ground.
+ *
+ *   1. PlayerHeightChanger's DoSinking / DoUnsinking write the flag in
+ *      lockstep with controllerSink - the port's `sunk`, whose
+ *      `_beginSink` note in motor.js names this write as "the host's
+ *      half of the same edge". Sunk this frame is swimming; the
+ *      unsink (the motor's 'unsink' heightAction, live across its
+ *      lerp) is not - and once false, nothing below sets it again.
+ *   2. PlayerEnterExit.Update's else arm (:415-421, `exteriorSwimLatch`
+ *      above) - a CLEAR on every tile but 0, so a value the frame
+ *      arrived with (the dungeon branch's, on the exit frame) survives
+ *      on open water alone.
+ *
+ * Nothing else above ground sets it, which is why the two exterior
+ * hosts wrote `false` every frame before this: the clear was ported
+ * and the two writes it guards were not.
+ */
+export function exteriorSwimming({ wasSwimming = false, sunk = false, unsunk = false, tileIndex = -1 } = {}) {
+  if (sunk) return true;
+  if (unsunk) return false;
+  return exteriorSwimLatch(wasSwimming, tileIndex).swimming;
+}

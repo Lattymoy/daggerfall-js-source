@@ -537,7 +537,6 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
  *  arm and every painting in the game was described by four blanks. */
 let _paintFile = null;
 export function setPaintFile(paintFile) { _paintFile = paintFile ?? null; }
-export function getPaintFile() { return _paintFile; }
 
 /** IM1: the %ba author cache, fed by the book reader when a file
  *  opens (the paint-file registration shape, for the same reason:

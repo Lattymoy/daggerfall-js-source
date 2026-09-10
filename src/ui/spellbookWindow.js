@@ -139,7 +139,7 @@ import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js'
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
-import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
+import { ALT_SHADOW_1, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed; OT1: the ListBox double-click window
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
 import {
@@ -276,6 +276,7 @@ export class SpellbookWindow {
     this._rows = [];
     this.offeredSpells = [];
     this.highlightedIndex = -1;
+    this._lastRowClick = null;   // OT1: the list's last row click, for the timed use gesture
     // SetupIcons (:436, :448, :454) points all three icon panels at
     // the shared defaultToolTip. U37 built that component; this is
     // the second window to hold one.
@@ -773,7 +774,7 @@ export class SpellbookWindow {
     else if (code === 'KeyS') { this.top = 'sort'; }                         // SpellbookSort
   }
 
-  click(vx, vy) {
+  click(vx, vy, now) {
     if (this.top === 'iconPicker') return this._iconPicker?.click(vx, vy) ?? true;   // MC1
     if (this.top === 'delete' || this.top === 'sort' || this.top === 'trade') {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
@@ -839,14 +840,33 @@ export class SpellbookWindow {
       this.scrollIndex = this.scrollBar.scrollIndex;
       return true;
     }
-    // a click in the list selects that row
+    // a click in the list selects that row; a second within the
+    // double-click window USES it.
+    //
+    // OT1: this arm used to re-click the SELECTED row - a click on
+    // the row already selected used it, however long ago it was
+    // selected - which Ledger row :505 recorded as an approximation.
+    // The spellsListBox is a ListBox: MouseClick selects
+    // (SpellsListBox_OnSelectItem) and MouseDoubleClick uses
+    // (SpellsListBox_OnUseSelectedItem - cast, or the buy in buy
+    // mode), and the double-click test is on TIME ALONE
+    // (BaseScreenComponent.cs:691), the law listPicker.js and
+    // nativeTalk.js already carry. The second click need not land on
+    // the same row: the first of the pair has already moved the
+    // selection.
     const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
     if (inRect([lx, ly, lw, lh], vx - PANEL_X, vy - PANEL_Y)) {
       const row = Math.floor((vy - PANEL_Y - ly) / this._rowHeight());
       const index = this.scrollIndex + row;
       if (index >= 0 && index < this._rows.length) {
-        if (index === this.selectedIndex) { if (!this.buyMode) this.useSelected(); else this.buyButton(); }
-        else this.selectedIndex = index;
+        const t = now ?? Date.now();
+        const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
+        this.selectedIndex = index;          // MouseClick
+        this._lastRowClick = t;
+        if (wasDouble) {                     // MouseDoubleClick
+          this._lastRowClick = null;
+          if (!this.buyMode) this.useSelected(); else this.buyButton();
+        }
       }
       return true;
     }

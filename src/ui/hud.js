@@ -253,7 +253,6 @@ let _spellTip = null;
 const spellTip = () => (_spellTip ??= new ToolTip());
 let _placedSpellIcons = [];
 export const activeSpellIconsPlaced = () => _placedSpellIcons;
-export function _resetActiveSpellHud() { _spellBlink._reset(); _spellTip?.hide(); _placedSpellIcons = []; }
 
 /**
  * The icon rows, drawn from the ONE host-agnostic call - and drawn on

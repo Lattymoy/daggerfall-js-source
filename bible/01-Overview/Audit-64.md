@@ -329,8 +329,8 @@ rewritten.
   arc page.
 - **F0's tile-0 latch** (motor): `PlayerEnterExit.cs:415-421` keeps
   IsPlayerSwimming for a player who surfaces onto tile 0 off-ground;
-  `exteriorSwimLatch` models it and still has no production caller.
-  Recorded, not invented.
+  ~~`exteriorSwimLatch` models it and still has no production caller.
+  Recorded, not invented.~~ **WIRED at OT1 (2026-09-10)** - `exteriorSwimming`.
 - **F13's standalone dungeon host** (layout): the host gets the static
   NPC data but no `person:` target on its ray - it mounts no talk seam,
   no faction dictionary, no quest bridge, so a target would eat clicks

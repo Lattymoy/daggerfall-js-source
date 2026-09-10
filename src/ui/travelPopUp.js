@@ -141,8 +141,6 @@ export async function preloadTravelPopUpArt(deps) {
   return _art;
 }
 export const travelPopUpArtLoaded = () => !!_art;
-/** Tests reach the loaded art through the same door the window does. */
-export function _setTravelPopUpArtForTests(art) { _art = art; }
 
 export class TravelPopUpWindow {
   /** endPos: the destination MAP PIXEL {x, y}. deps:
