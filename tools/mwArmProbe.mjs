@@ -526,7 +526,7 @@ ok((noBone.status.notes || []).some((n) => /no bone "Weapon Bone"/.test(n)),
 // through the REAL composite - drawThird -> drawRigSpriteBox -> the
 // mini ortho pass -> the world quad under the HOST's mirrorProjectionX
 // (dungeon.js:576's exact lens) - never deduced from one matrix alone.
-// The ground truth is the port's own motor law (motor.js:602: the
+// The ground truth is the port's own motor law (motor.js:612: the
 // player's RIGHT at yaw 0 is +X), anchored per-shot by projecting a
 // +X point through this very lens and requiring it screen-RIGHT. The
 // witness is the sword: the fixture arms are x-symmetric (ink alone is

@@ -152,6 +152,17 @@ function enhancedPauseOverlay(show, hooks) {
   // live door would put its own confirmation out of sight.
   const act = (action) => {
     close();
+    // MAC1 (Mac, 2026-09-10: "opening menu returning to game requiring
+    // player to press buttons twice"). This close runs INSIDE the Resume
+    // click or the Escape keydown - the transient activation a
+    // pointer-lock request needs - while the hosts' look gate relocked
+    // on the NEXT frame, outside any gesture, which the browser refuses
+    // (pointerLock.js's own header). So the first click after a resume
+    // went to re-grabbing the pointer, and took SetClickDelay with it
+    // (world.js's pointerdown, PlayerActivate.cs:1050-1054), and only
+    // the second reached the world. The host's relock rides THIS
+    // gesture; the exit has no world to relock into.
+    if (action !== 'exit') hooks.relock?.();
     if (action === 'save') hooks.quickSave?.();
     else if (action === 'load') hooks.quickLoad?.();
     else if (action === 'exit') hooks.exitToMenu?.();

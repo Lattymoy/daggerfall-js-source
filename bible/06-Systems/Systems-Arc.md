@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:893`, `world.js:768`), fired
+`playerTicker.advance(60)` (`exterior.js:893`, `world.js:769`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1588` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1589` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5322,7 +5322,7 @@ blocked.
 Mac: "let's work on the horses and carts". The port has carried the CART
 as an inventory fact since the W-slice - the wagon's 750kg, the
 dungeon-exit prompt, the transfer guards - and the HORSE as an item
-nobody could sit on. `motor.js:546` passed `riding: false` into the
+nobody could sit on. `motor.js:556` passed `riding: false` into the
 climbing gate with the note "the transport arc pends", and
 `DaggerfallTransportWindow` is the last of DFU's 60 real windows the
 port does not have (UI-Arc.md's table).
