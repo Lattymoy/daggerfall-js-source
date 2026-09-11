@@ -154,7 +154,6 @@ test('CD1: Ledger A row TB1 exists, in section A, and names the windows that cit
       ['src/systems/weatherSim.js']],
     [/THE CONVERSATION SAVE STORES `dictQuestInfo` AS PLAIN DATA/,
       ['src/systems/topicTree.js']],
-    [/THE COLOR PICKER'S FOUR HOST SEAMS/, ['src/ui/colorPicker.js']],
     [/ART LANDS ASYNC, AND A MISSING RECORD COSTS THE PICTURE RATHER THAN THE SESSION/,
       ['src/ui/hudEscortFaces.js', 'src/ui/nativeTalk.js']],
     [/THE TOWN MAP'S PLATE LABEL AND ROTATION ARROW ARE THE PORT'S OWN PIXELS/,

@@ -64,8 +64,8 @@
 //
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
-// settings home is the launcher menu, and the dropdown pends with the
-// settings arc.
+// settings home is the one front door (ui/enhancedMenu.js, under
+// either skin), and the dropdown pends with the settings arc.
 //
 // AN APPROVED DEPARTURE, and NOT part of the flag above: THE VERSION
 // LABEL DRAWS THE PORT'S BUILD TAG. DaggerfallPauseOptionsWindow.cs

@@ -85,7 +85,7 @@ test('MusicVolume: each player ramps its master to the setting now - the schedul
 });
 
 test('MusicVolume: every writer already goes through setValue, so the door reaches them all', () => {
-  for (const f of ['src/ui/enhancedMenu.js', 'src/ui/settingsWindow.js', 'src/ui/pauseWindow.js']) {
+  for (const f of ['src/ui/enhancedMenu.js', 'src/ui/pauseWindow.js']) {   // FD1: the SettingsWindow is gone
     assert.match(read(f), /setValue\(/, `${f} writes through setValue`);
   }
   assert.match(read('src/systems/settings.js'), /_publish\(section, key, str\);\n    return;/, 'the default-drop arm publishes too');

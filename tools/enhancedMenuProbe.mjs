@@ -140,15 +140,19 @@ async function run(label, opts) {
 await run('desktop', { viewport: { width: 1400, height: 900 } });
 await run('phone', { ...devices['Pixel 5'] });
 
-// 4. THE CLASSIC SKIN IS UNTOUCHED. ?skin=classic must go the old way
-//    round: data FIRST, so the pick is up before any menu.
+// 4. THE CLASSIC SKIN OPENS ON THE SAME DOOR (FD1, 2026-09-11): the
+//    rail collapses to Begin / Settings / Controls / Mods / About, and
+//    BEGIN gates the data - the pick is up before any classic screen.
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.px-menu button', { timeout: 20000 });
+  const st = await page.evaluate(() => JSON.parse(window.__menu()));
+  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'settings', 'controls', 'mods', 'about']), JSON.stringify(st.sections));
+  await page.locator('.px-menu .door-begin').click();
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
-  check('classic: gates the data before its menu', picked);
-  check('classic: no enhanced menu mounted', (await page.locator('#enhanced-menu').count()) === 0);
+  check('classic: Begin gates the data before its own start sequence', picked);
   await ctx.close();
 }
 
@@ -162,6 +166,9 @@ await run('phone', { ...devices['Pixel 5'] });
   await page.goto(`${BASE}/play/`, { waitUntil: 'load' });
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
   await page.locator('.skinswitch .skinopt:not(.on)').click();
+  // FD1: the classic door is this same screen with the Begin rail; the pick rises behind Begin
+  await page.waitForSelector('.px-menu .door-begin', { timeout: 20000 });
+  await page.locator('.px-menu .door-begin').click();
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('press Classic: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
   check('press Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));

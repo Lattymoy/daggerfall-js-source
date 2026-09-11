@@ -403,7 +403,9 @@ test('AUDIT 58: a file claiming a RECORDED departure has an unstruck section-A r
     const base = f.split('/').pop();
     if (!approved.includes(f) && !approved.includes(base)) unrowed.push(f);
   }
-  assert.ok(claimed.length >= 18,
+  // FD1 (2026-09-11): 18 -> 17, a deliberate edit - colorPicker.js and its
+  // keyed settings window were DELETED with the launcher, and the row is struck.
+  assert.ok(claimed.length >= 17,
     `only ${claimed.length} files match the RECORDED-departure claim - the shapes moved and this gate went quiet`);
   assert.deepEqual(unrowed, [],
     'these files say their departure is already RECORDED and no unstruck section-A row\n'

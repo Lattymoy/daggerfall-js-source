@@ -25,7 +25,6 @@ import { equipItem, isEquipped, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { sheetModel } from '../src/ui/enhancedCharSheet.js';
 import { totalGoldAmount } from '../src/systems/court.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
-import { SettingsWindow } from '../src/ui/settingsWindow.js';
 import { BankPurchaseWindow, LIST_ROWS } from '../src/ui/bankPurchaseWindow.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
 
@@ -222,27 +221,6 @@ test('F145: the travel map prices the trip AFTER the guild blessing', () => {
   // the committed trip carries the BLESSED minutes - _confirmDiseased
   // hands st.trip.minutes to the clock.
   assert.match(trip, /st\.trip = \{ \.\.\.time, minutes, \.\.\.cost, days: travelDays\(minutes\) \};/);
-});
-
-// ── F146: THE SETTINGS SCREEN KEEPS ITS THIRD HOOK ────────────────
-
-test('F146: onPickMorrowind survives the constructor and reaches both consumers', () => {
-  // launcherScene.js passes it in the same object literal as the two
-  // hooks that WERE read; the row and the KeyM arm were both wired for
-  // it, so the classic skin's only Morrowind door was dead.
-  let picked = 0;
-  const win = new SettingsWindow({ onPickMusic: () => {}, onPickMorrowind: () => { picked++; } });
-  assert.equal(typeof win.onPickMorrowind, 'function', 'the hook is stored, not dropped');
-  const d = win._detail('Enhancements/AssetInjection');
-  assert.ok(d.buttons.some((b) => b.id === 'pickMw'), 'the M - Morrowind button is offered');
-  assert.equal(typeof d.onAlt2, 'function');
-  win.dialog = win._detail('Enhancements/AssetInjection');
-  win.input('KeyM');
-  assert.equal(picked, 1, 'KeyM runs it');
-  assert.equal(win.dialog, null, 'and closes the dialog');
-  // A host that hands none still gets no button - the honest refusal.
-  const bare = new SettingsWindow({ onPickMusic: () => {} });
-  assert.equal(bare._detail('Enhancements/AssetInjection').buttons.some((b) => b.id === 'pickMw'), false);
 });
 
 // ── F147: ArrowUp CANNOT DRIVE THE HOUSE LIST TO -1 ───────────────

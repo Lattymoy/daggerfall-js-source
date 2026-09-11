@@ -23,11 +23,13 @@ const exists = (p) => { try { read(p); return true; } catch { return false; } };
 // the wrong reason. Every assertion about the enhanced door is made
 // against this slice only.
 function enhancedBranch() {
+  // FD1: one door for both skins - the branch is the block from the
+  // door's heading to the classic BEGIN arm
   const src = read('src/main.js');
-  const from = src.indexOf('if (isEnhanced()) {');
-  assert.ok(from > 0, 'main.js lost its enhanced front door');
-  const to = src.indexOf('\n  }', from);
-  assert.ok(to > from, 'the enhanced branch is unclosed');
+  const from = src.indexOf('// ── THE FRONT DOOR');
+  assert.ok(from > 0, 'main.js lost its front door');
+  const to = src.indexOf('// FD1: BEGIN', from);
+  assert.ok(to > from, 'the door has no Begin arm');
   return src.slice(from, to);
 }
 
@@ -97,8 +99,8 @@ test('the classic door still gates its data first', () => {
 test('only game actions resolve the door - never a destination', () => {
   const src = read('src/ui/enhancedMenu.js');
   const calls = [...new Set([...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]))].sort();
-  assert.deepEqual(calls, ['continue', 'exit', 'load', 'new', 'resume', 'save'],
-    'boot resolves continue/new/load; pause resolves resume/save/exit');
+  assert.deepEqual(calls, ['begin', 'continue', 'exit', 'load', 'new', 'resume', 'save'],
+    'boot resolves continue/new/load (and begin on the classic rail, FD1); pause resolves resume/save/exit');
   for (const dest of ['settings', 'mods', 'about']) {
     assert.ok(!calls.includes(dest),
       `${dest} is a destination INSIDE this screen, not an exit from it`);
@@ -134,10 +136,15 @@ test('the two rails differ only where the question does', () => {
   // affordance this project keeps finding.
   // TR3: Test Room joins the boot-only set - like Continue and New
   // Game it answers "which game", settled once one is running.
+  // SO1: ENHANCED left the rail for a category of Settings, reachable
+  // from BOTH doors through the one pane
   assert.deepEqual(boot.filter((x) => !shared.includes(x)),
-    ['Continue', 'New Game', 'Test Room', 'Enhanced']);
+    ['Continue', 'New Game', 'Test Room']);
   assert.ok(!pause.includes('Test Room'), 'the room is a front door, not a pause row');
-  assert.ok(!pause.includes('Enhanced'), 'and it must NOT reach the pause door');
+  assert.ok(!boot.includes('Enhanced') && !pause.includes('Enhanced'), 'Enhanced is a settings category, not a rail entry (SO1)');
+  // FD1: the classic rail is the shared set behind one door
+  const classic = list('SECTIONS_CLASSIC');
+  assert.deepEqual(classic, ['Begin', 'Settings', 'Controls', 'Mods', 'About']);
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left
@@ -146,96 +153,27 @@ test('the two rails differ only where the question does', () => {
     'the whole reason this door exists is that settings were reachable only at boot');
 });
 
-test('R7: the Enhanced section has a pane, and it is wired to the rail', () => {
-  // A rail entry with no pane throws on the click - the dispatch is a
-  // lookup, so a missing key is `undefined(body)`.
+test('R7/SO1: the Enhanced CATEGORY carries the port\'s own switches, every one a real pref, and the tree\'s reverted features are not among them', () => {
+  // R7's law, one level down: the Enhanced pane became a Settings
+  // category (SO1). A switch it draws must exist on the prefs shelf,
+  // and a feature that was built and REVERTED WHOLE (the generative
+  // music, the first Morrowind 3D layer) must not be drawn as one.
   const src = read('src/ui/enhancedMenu.js');
-  assert.match(src, /function paneEnhanced\(body\)/, 'the pane must exist');
-  assert.match(src, /enhanced: paneEnhanced/, 'and the boot dispatch must know it');
-  // idOf('Enhanced') is what the dispatch keys on
+  assert.doesNotMatch(src, /function paneEnhanced\(/, 'the pane is gone');
+  const from = src.indexOf('function portRowsEnhanced(');
+  const pane = src.slice(from, src.indexOf('\n}', from));
+  const prefs = read('src/systems/uiPrefs.js');
+  for (const m of pane.matchAll(/(?:prefRow|choiceRow)\('(\w+)'/g)) {
+    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`), `the category toggles '${m[1]}', which is not a uiPrefs key`);
+  }
+  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the ES1 sky must be a real switch');
+  for (const gone of ['music', 'mwfp', 'roads']) assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane), `${gone} has no engine in this tree and must not be a switch`);
+  assert.ok(!/not built/.test(pane), 'no row labels a shipped thing a hole');
+  const ui = src.slice(src.indexOf('function portRowsInterface('), src.indexOf('function portRows('));
+  assert.match(ui, /skinRow\(\)/, 'the skin switch lives under Interface');
   assert.match(src, /const idOf = \(label\) => label\.toLowerCase\(\)/);
 });
 
-test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', () => {
-  // The pane's own law, and the rail's: an enhancement that does not
-  // exist is listed with its reason rather than dropped, because a list
-  // with a hole teaches the player the hole is permanent - but it must
-  // NEVER be drawn as a control. A button that looks live and does
-  // nothing is the dead affordance AUDIT F4 found on Delete.
-  const src = read('src/ui/enhancedMenu.js');
-  const from = src.indexOf('function paneEnhanced(body)');
-  const pane = src.slice(from, src.indexOf('\n}', from));
-
-  // the live half toggles keys that actually exist in the prefs store
-  const prefs = read('src/systems/uiPrefs.js');
-  for (const m of pane.matchAll(/prefRow\('(\w+)'/g)) {
-    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`),
-      `the pane toggles '${m[1]}', which is not a uiPrefs key`);
-  }
-  // Roads was the switch this arc built, and it went with the road
-  // system (2026-08-29, Mac's call). The pane must still carry a REAL
-  // one, or the law above ("every switch is real") is vacuous on an
-  // empty list - the procedural sky is it.
-  // EE1: the sky switch became ENHANCED ENVIRONMENTS, which contains it.
-  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the pane carries no live switch at all');
-  assert.doesNotMatch(pane, /prefRow\('roads'/, 'the roads switch is back without its system');
-  assert.match(pane, /skinRow\(\)/, 'and the skin switch comes home here');
-
-  // the inert half carries a reason and NO control
-  assert.match(pane, /inertRow\(/, 'unbuilt enhancements must still be listed');
-  const inert = read('src/ui/enhancedMenu.js');
-  const iFrom = inert.indexOf('function inertRow(');
-  const inertFn = inert.slice(iFrom, inert.indexOf('\n}', iFrom));
-  assert.ok(!/onclick/.test(inertFn), 'an inert row must not be clickable');
-  assert.ok(!/el\('button'/.test(inertFn), 'nor drawn as a button');
-});
-
-test('R7: the pane does not claim a feature the tree does not have', () => {
-  // Enhanced Music and the Morrowind 3D layer were both built and
-  // REVERTED WHOLE. Listing either as a live switch would be the
-  // screen lying about the build. (The sky came OFF this list
-  // with RA1: ES1 shipped a procedural sky and the pane still said
-  // "not built" - the same lie with the sign flipped.)
-  const src = read('src/ui/enhancedMenu.js');
-  const from = src.indexOf('function paneEnhanced(body)');
-  const pane = src.slice(from, src.indexOf('\n}', from));
-  for (const gone of ['music', 'mwfp']) {
-    assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane),
-      `${gone} has no engine in this tree and must not be a switch`);
-  }
-  // RA1: the sky IS built (render/enhancedSky.js, on by default), so
-  // the pane must offer the switch and must no longer call it a hole.
-  // EE1: that switch is ENHANCED ENVIRONMENTS now, which contains the
-  // sky and everything the arc adds after it.
-  assert.match(pane, /prefRow\('enhancedEnvironments'/, 'the ES1 sky must be a real switch');
-  assert.ok(!/not built/.test(pane) || !/[Pp]rocedural sky[^]*not built/.test(pane),
-    'the pane must not still label the shipped sky "not built"');
-  assert.ok(!/Nothing procedural is built yet/.test(pane),
-    'the stale ES1 denial sentence must be gone');
-
-  // MW-D8 EXTENDS THIS PIN RATHER THAN NEGOTIATING WITH IT. The bans
-  // above are the whole of what R7 could see - a `prefRow` that exists -
-  // so a CARD that describes a feature was invisible to it in both
-  // directions: it could not stop a lying card, and it could not notice
-  // a truthful one. The Morrowind card now names the first-person arms,
-  // so the claim has to be backed by a module the game actually imports.
-  if (/first-person arm/i.test(pane)) {
-    assert.ok(exists('src/combat/fpArm.js'),
-      'the pane names the arms, so the engine must exist');
-    assert.match(read('src/combat/weaponRig.js'), /import \{ fpArm(?:, [\w$, ]+)? \} from '\.\/fpArm\.js';/,
-      'and the weapon rig must actually import it - a card is not a feature');
-    // TR2: the button rides the ONE HOME for the build opts
-    // (weaponRig.buildArmsFor) - the inline fpArm.build copy it
-    // replaces carried the `!!gender` bug that built the female
-    // skeleton for everyone.
-    assert.match(pane, /buildArmsFor\(playerEntity\)/, 'and the button must call the real build through the one home');
-  }
-  // The stale denial, retired the way RA1 retired the sky's: the card
-  // said the layer "is NOT built - it was removed", and that sentence
-  // stopped being true the moment the arm shipped.
-  assert.ok(!/first-person layer is NOT built/.test(pane),
-    'the pre-MW-D8 denial sentence must go when the arm lands, exactly as the sky\'s did');
-});
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -
 // Reset wiped every override on one press where the CLASSIC screen has
@@ -469,7 +407,7 @@ test('EE1: the migration, exercised - stale OFF comes up OFF, an explicit answer
 // ═══ EE13: a season test door - drop into a random town ═════════════
 test('EE13: the Enhanced pane offers a season/weather test that spawns in a random town, and stores nothing', () => {
   const menu = read('src/ui/enhancedMenu.js');
-  const from = menu.indexOf('function paneEnhanced(body)');
+  const from = menu.indexOf('function outdoorsTestRow(');   // SO1: the door is a row of the Enhanced category
   const pane = menu.slice(from, menu.indexOf('\n}', from));
   assert.match(pane, /el\('div', 'row-name', 'Test the outdoors'\)/, 'the row exists');
   // EE14: a season is both an archive and a day - the game has three

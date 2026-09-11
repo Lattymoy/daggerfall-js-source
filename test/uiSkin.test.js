@@ -7,7 +7,7 @@
 // typo pins die if `clean` stops filtering.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 import {
   SKINS, DEFAULT_SKIN, SKIN_NAMES, uiSkin, isEnhanced, setUiSkin,
@@ -84,14 +84,14 @@ test('a corrupt stored value falls to the default, never throws', () => {
 // the AUDIT 24 trap (a launcher a phone could reach and never
 // dismiss), and it would be worse here: enhanced is the default, so
 // the only player on the classic screen is one who asked for it.
-test('the CLASSIC settings screen carries a way back to enhanced', () => {
-  const src = readFileSync(new URL('../src/ui/settingsWindow.js', import.meta.url), 'utf8');
-  assert.match(src, /push\('btn:skin'/, 'the classic screen must expose a skin control');
-  assert.match(src, /arg === 'skin'/, 'and route a click to it');
-  assert.match(src, /_switchSkin\(\)\s*\{/, 'through one named arm');
-  // it must DROP the override on the way out, or the reload lands back
-  // on the skin the URL asked for and the press reads as ignored
-  assert.match(src, /searchParams\.delete\('skin'\)/);
+// FD1 (2026-09-11): the classic SettingsWindow and its footer are
+// DELETED; the classic skin opens on this same door with the Begin
+// rail, and the way back is the door's own switch - the pin below.
+test('FD1: the CLASSIC skin opens on the same door, whose switch is its way back', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
+  assert.match(src, /const SECTIONS_CLASSIC = \['Begin', 'Settings', 'Controls', 'Mods', 'About'\]/);
+  assert.match(src, /sections = mode === 'pause' \? SECTIONS_PAUSE : isEnhanced\(\) \? SECTIONS_BOOT : SECTIONS_CLASSIC;/);
+  assert.ok(!existsSync(new URL('../src/ui/settingsWindow.js', import.meta.url)), 'the keyed screen is gone');
 });
 
 test('the ENHANCED menu carries a way back to classic - on the door itself (U62), and in settings', () => {
@@ -120,37 +120,6 @@ test('the ENHANCED menu carries a way back to classic - on the door itself (U62)
   assert.match(css, /\.skinopt \{ min-height: 44px; padding: 8px 14px; \}/, 'a thumb\'s target on a phone');
 });
 
-// ── THE FOOTER HOLDS FOUR BUTTONS AT EVERY WIDTH ─────────────────
-// The first attempt put the control in the TITLEBAR and AUDIT 24's own
-// touch pin killed it (18px tall where a finger is 44). The footer
-// WRAPS to two rows instead of cramming four into one, and this pin
-// drives the real layout at the narrowest page the metric can produce
-// (MIN_PAGE_W 156) and at a desktop, asserting no two buttons overlap
-// and none runs off the page.
-test('the classic footer fits four buttons, wrapped or not', async () => {
-  const { SettingsWindow } = await import('../src/ui/settingsWindow.js');
-  const win = new SettingsWindow({ onLaunch: () => {} });
-  for (const canvas of [{ width: 320, height: 640 }, { width: 1400, height: 900 }, { width: 390, height: 844 }]) {
-    const L = win.layout(canvas);
-    const btns = [L.footer.help, L.footer.reset, L.footer.skin, L.footer.play];
-    for (const b of btns) {
-      assert.ok(b, 'every footer button is placed');
-      assert.ok(b[0] >= 0 && b[0] + b[2] <= L.m.pageW,
-        `${canvas.width}x${canvas.height}: a footer button runs off the ${L.m.pageW}-wide page`);
-      assert.ok(b[1] + b[3] <= L.m.pageH, 'and none runs off the bottom');
-    }
-    for (let i = 0; i < btns.length; i++) {
-      for (let j = i + 1; j < btns.length; j++) {
-        const [a, b] = [btns[i], btns[j]];
-        const apart = a[0] + a[2] <= b[0] || b[0] + b[2] <= a[0]
-          || a[1] + a[3] <= b[1] || b[1] + b[3] <= a[1];
-        assert.ok(apart, `${canvas.width}x${canvas.height}: footer buttons ${i} and ${j} overlap`);
-      }
-    }
-    // and the label names the skin you would GET, not the one you have
-    assert.equal(L.footer.skinLabel, SKIN_NAMES[otherSkin(uiSkin(''))]);
-  }
-});
 
 // ── AND IT IS NOT A DFU SETTING ──────────────────────────────────
 test('the skin stays OUT of the DFU settings store', async () => {
