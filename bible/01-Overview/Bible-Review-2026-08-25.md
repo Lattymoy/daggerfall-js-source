@@ -239,7 +239,7 @@ opposite of their own code and deserve a slice's attention:
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:446` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
-(interiorContext.js:202 → :199); `Rendering.md:37`
+(interiorContext.js:203 → :199); `Rendering.md:37`
 (CHAR_SPRITE_RT_SIZE "256" → 512).
 
 ## What checked out clean

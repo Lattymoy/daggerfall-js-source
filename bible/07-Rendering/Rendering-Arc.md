@@ -1219,3 +1219,18 @@ the mesh with the level.
 **Pinned** in `test/perf5.test.js` (2); the builder's arithmetic is
 PERF4's. Not a departure. The interior contexts (a building's rooms,
 a few dozen models) are left as they are.
+
+## PERF6 - THE ROOM AS ONE MESH: THE INTERIOR'S STATIC MODELS BATCHED (2026-09-11)
+
+PERF5's batch for the building interior. A room's placements are all
+still except the doors (`dynamicDraws`) and the mill's machinery (its
+own `rotors`); `interiorContext` remaps every model up front, before
+the list is built, so the merge's keys resolve exactly as drawMesh's
+do. Each placement goes to the builder beside its draw entry, the
+merge uploads once on the first frame that reads `staticBatch`, the
+host draws it with the identity before the per-model loop and skips
+the batched entries, the doors and the machinery draw as before, and
+`drawList` stays whole for the automap. `destroy()` frees it. A tavern
+of a hundred models is a dozen calls.
+
+**Pinned** in `test/perf6.test.js` (1). Not a departure.

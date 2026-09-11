@@ -2111,7 +2111,7 @@ registry", and the function does exactly that - but NOTHING IN `src/` CALLS
 IT. Its only importer is test/names.test.js, so no scene ever builds the
 exterior NPC registry and no exterior static NPC is a talk or activation
 target in the running game. The interior twin IS live
-(interiorContext.js:202 -> collectInteriorPeople), which is what made the
+(interiorContext.js:203 -> collectInteriorPeople), which is what made the
 gap invisible: the feature demonstrably works on one side. The corpus pin
 (76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
 a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
