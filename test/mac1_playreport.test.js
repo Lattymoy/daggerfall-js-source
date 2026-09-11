@@ -271,6 +271,7 @@ test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host
   const m2 = new PlayerMotor(new Collider(() => 0));
   m2.pos = [0, 0, 0]; m2.grounded = true;
   for (let i = 0; i < 30; i++) m2.update(1 / 60, walkInput, 0);
+  m2.bobOffset = [0.1, 0.2, -0.3];   // the bob is the HOSTS' write (world.js/exterior.js/dungeon.js) - mint one, so "without the bob" can fail
   const e2 = m2.eyeAt(), f2 = m2.feetAt();
   assert.ok(near(f2[0], e2[0] - m2.bobOffset[0]) && near(f2[2], e2[2] - m2.bobOffset[2]),
     'the render feet are the eye\'s own interpolated x/z, without the bob');

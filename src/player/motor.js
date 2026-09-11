@@ -1128,11 +1128,11 @@ export class PlayerMotor {
     // the climb call stays bare ON PURPOSE: PlayerMotor.cs:296-307
     // does NOT zero moveDirection, so DFU's getters keep reading the
     // pre-freeze vector there and a write would be the divergence.
-    // KNOWING DEPARTURE: DFU returns at :326 without updating
-    // `grounded`, so its climber reads the value latched on the
-    // approach for the whole climb; the port has just written the
-    // collider's LIVE grounded above, and answers from that - the same
-    // choice the swim branch already made.
+    // No departure here: DFU refreshes `grounded` at the top of the
+    // next FixedUpdate (PlayerMotor.cs:278) out of the collisionFlags
+    // ClimbingMotor.cs:767 writes after its own controller.Move, so the
+    // collider's LIVE grounded written above IS DFU's answer, one step
+    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1854).
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true

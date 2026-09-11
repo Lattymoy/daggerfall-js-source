@@ -269,4 +269,18 @@ test('AUDIT 65 XL-5: a climb writes IsStandingStill - the cached standing/half-s
   const motorSrc = readFileSync(new URL('../src/player/motor.js', import.meta.url), 'utf8');
   const freeze = motorSrc.slice(motorSrc.indexOf('if (this.freezeMotor > 0) {'));
   assert.ok(!/^[\s\S]{0,260}this\.standing =/.test(freeze), 'the freezeMotor block writes no standing (PlayerMotor.cs:296-307)');
+
+  // THE CENSUS (both refuters asked for it): every early return that
+  // ZEROES moveDirection writes `standing` in its own body - the
+  // cancelMovement block (:286-294), _climbStep's `return true` and the
+  // swim/levitate branch (:322-326) - so a future return landing above
+  // the walk path without the write goes red here, and the freeze
+  // return above is the one exemption. MUTANT: delete the swim
+  // branch's `this.standing = this.grounded;` - this file reddens.
+  const body = (open, span) => { const i = motorSrc.indexOf(open); assert.ok(i >= 0, `motor.js lost ${open}`); return motorSrc.slice(i, i + span); };
+  assert.match(body('if (this.cancelMovement) {', 900), /this\.standing = this\.grounded;[\s\S]*?\n      return;/, 'the cancelMovement block writes standing before its return');
+  assert.match(body('if (this.levitating || this.swimming) {', 9000), /this\.standing = this\.grounded;[\s\S]*?\n      return;/, 'the swim/levitate branch writes standing before its return');
+  const climb = motorSrc.slice(motorSrc.indexOf('  _climbStep(dt, input, yaw) {'), motorSrc.indexOf('\n  }\n', motorSrc.indexOf('  _climbStep(dt, input, yaw) {')));
+  assert.match(climb, /this\.standing = this\.grounded;[\s\S]{0,400}return true;/, '_climbStep writes standing before its `return true`');
+  assert.equal((motorSrc.match(/this\.standing = this\.grounded;/g) ?? []).length, 3, 'three writers of the cached pair, no more (a fourth zeroing return needs its own)');
 });
