@@ -41,7 +41,7 @@
 // is the disease the touch layer's `up()` guards against.
 import { bindings } from './input.js';
 import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding } from '../systems/inputActions.js';
-import { unityAxes, unityButtons, axisNumber, axisKeyDown, isAxisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, NUM_AXES } from '../systems/gamepad.js';
+import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { lookScale } from './lookSettings.js';
 import { setControllerLook } from '../player/lookFilter.js';
 
@@ -105,14 +105,18 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     unityButtons(pad, buttons);
     const b = bindings();
     const wanted = new Set(buttons);
-    // axis keys: every bound one, polled (GetAxisKey)
-    for (const dict of [b.primary, b.secondary]) {
-      for (const code of dict.keys()) if (isAxisKeyName(code) && axisKeyDown(axes, parseAxisKeyName(code))) wanted.add(code);
-    }
+    // axis keys: all thirty-two, polled (GetAxisKey) - GetAnyKeyDown
+    // walks every one of them (KeyCodeList :1573-1587), which is how
+    // the joystick window's capture sees a stick move (GP2)
+    for (let key = AXIS_KEY_BASE; key < AXIS_KEY_BASE + NUM_AXES * 2; key++) if (axisKeyDown(axes, key)) wanted.add(axisKeyName(key));
     // the movement stick (FindInputAxisActions)
     const mh = axisNumber(getAxisBinding(b, 'MovementHorizontal')), mvn = axisNumber(getAxisBinding(b, 'MovementVertical'));
     let moved = false;
-    if (mh && mvn) {
+    const overlay = !!hooks.overlayActive?.();
+    // FindInputAxisActions never runs under a pause (Update :488-500
+    // returns first): no move codes, no throw, while a window is up -
+    // and so the joystick window's capture never takes 'KeyW' for a stick
+    if (mh && mvn && !overlay) {
       const m = movementAxes(axes[mh], axes[mvn], { deadzone: s.deadzone, threshold: s.threshold, invertH: getAxisInversion(b, 'MovementHorizontal'), invertV: getAxisInversion(b, 'MovementVertical') });
       if (m) {
         for (const a of m.actions) { const c = codeOf(b, a); if (c) wanted.add(c); }
@@ -133,7 +137,6 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     mouseMoved = false;
     setControllerLook(usingController);
     // the UI buttons as the mouse's (GetMouseButton :1050-1063) and Back as Escape (:1065-1068)
-    const overlay = !!hooks.overlayActive?.();
     for (const [ui, mouse] of Object.entries(MOUSE_CODE_OF_UI)) {
       const code = getJoystickUIBinding(b, ui);
       if (code && buttons.has(code)) wanted.add(mouse);

@@ -21,8 +21,8 @@
 //   ADVANCED opens DaggerfallUnityMouseControlsWindow over this one
 //   (ROAD-G G6, ui/mouseControlsWindow.js), sharing THESE staged dicts
 //   exactly as DFU's two windows share ControlsConfigManager.Instance;
-//   JOYSTICK still answers with a note: GP1 made the pad play, and
-//   the window that binds its axes is the next slice (Ledger). DFU paints the ADVANCED tab with an
+//   JOYSTICK opens DaggerfallJoystickControlsWindow the same way (GP2,
+//   ui/joystickControlsWindow.js), on staging THIS window owns. DFU paints the ADVANCED tab with an
 //   "advanced_controls_button" texture out of its own Resources folder
 //   (:114-120); the port has no DFU asset bundle, so the tab is the
 //   bare CNFG00I0 rect - ui/travelPopUp.js's shape, recorded, and not
@@ -64,6 +64,7 @@ import {
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
 import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
+import { JoystickControlsWindow, createJoystickUnsaved, resetJoystickUnsaved, saveJoystickSettings } from './joystickControlsWindow.js';   // GP2: the JOYSTICK tab's destination
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -136,6 +137,10 @@ export class ControlsWindow {
     this.done = false;
     this.isChoiceWindow = true;
     this.unsaved = createUnsavedKeybinds(bindings());
+    // GP2: DaggerfallJoystickControlsWindow.ResetUnsavedSettings() at
+    // Setup (DaggerfallControlsWindow.cs:142) - the joystick window's
+    // staging, owned here because THIS window's OnPop saves it
+    this.unsaved.joystick = createJoystickUnsaved(bindings());
     this.buttons = gridButtons();
     this.capture = null;        // the action awaiting a key (:52 waitingForInput)
     this.top = null;            // 'dupes' | 'defaults' | 'remove' | 'note'
@@ -155,7 +160,14 @@ export class ControlsWindow {
     // and it edits THIS window's staged dicts.
     this.advanced = null;
     this.advancedOpen = false;
+    // GP2: the JOYSTICK tab's window, on the same terms (dfuiOpenJoystickControlsWindow, :279-286)
+    this.joystick = null;
+    this.joystickOpen = false;
   }
+
+  /** GP2: whichever popup is up - DaggerfallUI draws and feeds the TOP window only. */
+  get _popup() { return this.advancedOpen ? this.advanced : this.joystickOpen ? this.joystick : null; }
+  _popupDone() { if (this.advancedOpen && this.advanced.done) this._closeAdvanced(); if (this.joystickOpen && this.joystick.done) this._closeJoystick(); }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
@@ -164,6 +176,10 @@ export class ControlsWindow {
     // slot back to the pause window.
     applyUnsavedKeybinds(bindings(), this.unsaved);
     saveKeyBinds(bindings());
+    // GP2: DaggerfallJoystickControlsWindow.SaveSettings() (:170) - the
+    // joystick staging written back, its settings saved, its rebinds
+    // applied and the keybinds saved again
+    saveJoystickSettings(bindings(), this.unsaved.joystick);
     // ...and THAT is what writes the advanced window's ten settings:
     // it does all of its writing in the OnSavedKeyBinds handler
     // (DaggerfallUnityMouseControlsWindow.cs:83, :351-371), so the
@@ -176,9 +192,9 @@ export class ControlsWindow {
   _refresh() { this.dupes = checkDuplicates(this.unsaved); }
 
   input(code, e = null) {
-    if (this.advancedOpen) {
-      this.advanced.input(code, e);
-      if (this.advanced.done) this._closeAdvanced();
+    if (this._popup) {
+      this._popup.input(code, e);
+      this._popupDone();
       return;
     }
     if (this.capture) {
@@ -211,6 +227,7 @@ export class ControlsWindow {
         this._click();
         resetUnsavedToDefaults(bindings(), this.unsaved);
         saveKeyBinds(bindings());   // ConfirmDefaultsBox (:309-317)
+        resetJoystickUnsaved(bindings(), this.unsaved.joystick);   // GP2: SetDefaults (:230-238) re-reads the joystick staging off the reset store
         this._refresh();
       }
       if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') this.top = null;
@@ -239,7 +256,7 @@ export class ControlsWindow {
    *  SuppressToolTip decides (:214-216). */
   hover(vx, vy) {
     this._hover = [vx, vy];
-    if (this.advancedOpen) { this.advanced.hover(vx, vy); this.advanced.drag(vx); return; }
+    if (this._popup) { this._popup.hover(vx, vy); this._popup.drag(vx); return; }
     if (this.capture || this.top) { this.tip.hide(); return; }
     const dict = currentDict(this.unsaved);
     for (const b of this.buttons) {
@@ -262,19 +279,19 @@ export class ControlsWindow {
    *  has to pass it on (ui/itemMakerWindow.js:203's shape). The popup
    *  latches its thumb on the press and `hover` above pumps the drag
    *  from every move, so this is the only edge that ends it. */
-  release() { this.advanced?.release(); }
+  release() { this.advanced?.release(); this.joystick?.release(); }
 
   /** The wheel seam (U-scroll): the hosts deliver it as
    *  `overlay.wheel?.(dir, vx, vy)` (AUDIT 65 UI-5), and while the popup is up
    *  it is the popup's - MouseScrollUp/Down (HorizontalSlider.cs:
    *  180-190) over the slider the pointer is on. */
-  wheel(dir) { if (this.advancedOpen) this.advanced.wheel(dir); }
+  wheel(dir) { this._popup?.wheel(dir); }
 
   /** The tooltip's rest clock. `tick` is the name the hosts' overlay
    *  seam already calls (townTalk.frame, dungeonContext.tickOverlay) -
    *  ONE per-frame hook, not a second one beside it. */
   tick(dt) {
-    if (this.advancedOpen) { this.advanced.tick(dt); return; }
+    if (this._popup) { this._popup.tick(dt); return; }
     this.tip.update(dt);
   }
 
@@ -287,12 +304,20 @@ export class ControlsWindow {
     this.advanced.release();
     this._refresh();
   }
+  /** GP2: the joystick window's OnPop (:176-179) reads its controls
+   *  back into the staging; the grid's OnReturn re-checks its own. */
+  _closeJoystick() {
+    this.joystickOpen = false;
+    this.joystick.onPop();
+    this.joystick.release();
+    this._refresh();
+  }
 
   /** vx/vy native; `right` marks the remove gesture (:371). */
   click(vx, vy, right = false) {
-    if (this.advancedOpen) {
-      this.advanced.click(vx, vy, right);
-      if (this.advanced.done) this._closeAdvanced();
+    if (this._popup) {
+      this._popup.click(vx, vy, right);
+      this._popupDone();
       return true;
     }
     if (this.capture) return true;   // every tab ignores clicks mid-capture (:283 etc.)
@@ -334,8 +359,14 @@ export class ControlsWindow {
       return true;
     }
     if (inRect(TAB_RECTS.joystick, vx, vy)) {
-      this._click(); this.top = 'note';
-      this._noteRows = ['The pad plays (GP1); its window is next (Ledger).'];
+      // JoystickButton_OnMouseClick (:279-286): the click sound, then
+      // PostMessage(dfuiOpenJoystickControlsWindow) - one cached instance,
+      // pushed again (OnPush -> OnReturn re-reads the staging, :181-190)
+      this._click();
+      this.joystick ??= new JoystickControlsWindow(this.unsaved.joystick);
+      this.joystick.onPush();
+      this.joystickOpen = true;
+      this.tip.hide();
       return true;
     }
     if (inRect(TAB_RECTS.advanced, vx, vy)) {
@@ -360,7 +391,7 @@ export class ControlsWindow {
     if (!_art) { this.done = true; return; }
     // DaggerfallUI draws ONLY the top window (DaggerfallUI.cs:489-492),
     // so while the advanced popup is up the grid draws nothing at all.
-    if (this.advancedOpen) { this.advanced.draw(renderer, canvas, font); return; }
+    if (this._popup) { this._popup.draw(renderer, canvas, font); return; }
     const m = nativeMetrics(canvas);
     drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);

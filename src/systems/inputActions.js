@@ -651,11 +651,9 @@ export function endFrame(state) {
 // setters and the KeyBindData_v1 blocks), systems/gamepad.js holds
 // InputManager's stick and axis-key law, and ui/gamepadInput.js polls
 // the browser's pad into every host's held-keys Set.
+// GP2 (the same day) BUILT THE JOYSTICK CONTROLS WINDOW
+// (ui/joystickControlsWindow.js, the JOYSTICK tab's destination).
 // STILL FLAGGED:
-//  - THE JOYSTICK CONTROLS WINDOW (DaggerfallJoystickControlsWindow.cs,
-//    the JOYSTICK tab's destination: the four axis rows with their
-//    invert boxes, the four UI buttons, the sensitivity sliders) is
-//    not built; the tab answers with a note (ui/controlsWindow.js).
 //  - THE CONTROLLER CURSOR in windows (UsingController's drawn cursor
 //    and GetMouseButton at its position, InputManager.cs:556-573,
 //    :1518-1570) is not built: a window takes the mouse, the keyboard

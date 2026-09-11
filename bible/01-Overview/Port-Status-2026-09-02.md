@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- **`src/systems/inputActions.js:654`** - STILL FLAGGED, NARROWED (GP1,
+- **`src/systems/inputActions.js:656`** - STILL FLAGGED, NARROWED (GP1,
   2026-09-11): ~~axes and joystick. *The port has no gamepad input
   layer, so `AxisActions` and `JoystickUIActions` have no source to
   bind and `loadKeyBinds` deliberately ignores those blocks in a
@@ -508,9 +508,10 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   InputManager's stick, axis-key and cursor law, the three joystick
   dicts live on the bindings store with their KeyBindData_v1 blocks,
   and `ui/gamepadInput.js` polls the browser's pad into every host.
-  What the flag still names is the JOYSTICK CONTROLS WINDOW (the tab's
-  note stands) and the CONTROLLER CURSOR in windows; *the matching
-  sub-window is recorded pending at `Port-Ledger.md:609`. The flag's
+  GP2 (the same day) built the JOYSTICK CONTROLS WINDOW
+  (`ui/joystickControlsWindow.js`, off the JOYSTICK tab); what the flag
+  still names is the CONTROLLER CURSOR in windows; *the row is
+  `Port-Ledger.md:609`. The flag's
   second bullet - the port's own key departures - was retired as stale
   by I2 and the table now carries DFU's defaults.*
 

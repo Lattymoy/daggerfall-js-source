@@ -239,7 +239,7 @@ test('GP1 the hosts and the tiers: all four hosts attach the pad on the touch la
   _resetForTests();
   const cs = controllerSettings();
   assert.deepEqual(cs, { enabled: true, deadzone: 0.1, threshold: 0.9, lookSensitivity: 1, cursorSensitivity: 1 }, 'the shipped defaults');
-  assert.match(rd('src/systems/inputActions.js'), /STILL FLAGGED:\n\/\/\s+- THE JOYSTICK CONTROLS WINDOW/);
-  assert.match(rd('src/ui/controlsWindow.js'), /The pad plays \(GP1\); its window is next \(Ledger\)\./);
+  assert.match(rd('src/systems/inputActions.js'), /STILL FLAGGED:\n\/\/\s+- THE CONTROLLER CURSOR/, 'GP2 took the window off the flag');
+  assert.match(rd('src/ui/controlsWindow.js'), /this\.joystick \?\?= new JoystickControlsWindow\(this\.unsaved\.joystick\);/);
   assert.ok(JOYSTICK_UI_ACTIONS.length === 4 && AXIS_ACTIONS.length === 4);
 });

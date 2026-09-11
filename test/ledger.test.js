@@ -240,8 +240,8 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   assert.ok(cite, 'the joystick row must point at the flag that carries the owner decision');
   const ia = readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8').split('\n');
   const cited = ia.slice(Number(cite[1]) - 1, Number(cite[2])).join('\n');
-  assert.match(cited, /THE JOYSTICK CONTROLS WINDOW \(DaggerfallJoystickControlsWindow\.cs,/,
-    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it (GP1 narrowed it to the window and the cursor)`);
+  assert.match(cited, /THE CONTROLLER CURSOR in windows/,
+    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it (GP1 narrowed it to the window and the cursor, GP2 to the cursor alone)`);
   assert.match(cited, /a window takes the mouse, the keyboard\n\s*\/\/\s*and the Back button only/,
     'the cited range must hold the WHOLE flag, not its first line');
   // ROAD-G G6 (2026-09-04) BUILT the other one, so this half flipped
@@ -260,10 +260,10 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     /this\.advanced \?\?= new MouseControlsWindow\(this\.unsaved\);/,
     'the ADVANCED tab must still reach it, on the grid\'s own staged dicts');
   assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
-    /THE JOYSTICK CONTROLS WINDOW \(DaggerfallJoystickControlsWindow\.cs,/,
-    'the Ledger cites the gamepad flag at inputActions.js; GP1 narrowed it to the window and the cursor, and the flag must still be there');
+    /THE CONTROLLER CURSOR in windows/,
+    'the Ledger cites the gamepad flag at inputActions.js; GP2 narrowed it to the cursor, and the flag must still be there');
   assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
-    /The pad plays \(GP1\); its window is next \(Ledger\)\./,
+    /this\.joystick \?\?= new JoystickControlsWindow\(this\.unsaved\.joystick\);/,
     'the JOYSTICK tab note that sends the reader to this row must still be there');
 });
 

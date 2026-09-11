@@ -9185,7 +9185,7 @@ travel the consumer ignored, so the clamp was widened to DFU's instead:
 the law now holds because the port agrees with DFU end to end rather
 than because the screen agrees with a narrower port.
 
-**WHAT DID NOT SHIP, and why.** `DaggerfallJoystickControlsWindow.cs`
+**WHAT DID NOT SHIP, and why** (SHIPPED SINCE: GP2, 2026-09-11, below). `DaggerfallJoystickControlsWindow.cs`
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
@@ -12085,3 +12085,53 @@ Unity's frame, the stick, the camera, the store's round trip with an
 older file and an unknown name, the poller against a fake pad and a
 captured dispatch, the filter's floor, the four hosts and the tiers.
 Not a departure: every number is DFU's.
+
+## GP2 - THE JOYSTICK CONTROLS WINDOW (2026-09-11)
+
+The last of DFU's game windows the port did not have.
+`ui/joystickControlsWindow.js` is `DaggerfallJoystickControlsWindow.cs`
+element by element, on the mouse window's own geometry (the same
+318x170 panel at (1,15), the same 85x15 row with its 43x10 button at
+(+42, +2.5), the same 70x45 slider panel): the title at y=4; CONTINUE
+80x10 bottom-right on the dark red; ENABLE CONTROLLER at (20,20),
+whose toggle writes the setting AT ONCE (:522-526) and which Update
+re-reads from the setting every frame (:96-102); the four AXIS rows
+(Movement H. (20,40), Movement V. (20,80), Camera H. (115,40), Camera
+V. (115,80)) each with its INVERT box twenty below; the four UI rows
+in one column at x=210 (Left-Click, Middle-Click, Right-Click, Back);
+four FLOAT sliders - Look Sensitivity 0.1..4.0, UI Mouse Sensitivity
+0.1..5.0, Maximum Movement Threshold 0..1, Deadzone 0..0.9. No art:
+the panel is a colour unless a mod supplies a texture, as the mouse
+window's is.
+
+**The staging is the grid's.** DFU keeps the window's two dictionaries
+STATIC and lets the CONTROLS window drive them - ResetUnsavedSettings
+at its Setup and SetDefaults, SaveSettings at its OnPop
+(DaggerfallControlsWindow.cs:142, :170, :234) - so CONTINUE here is
+CancelWindow and nothing else. The port puts `createJoystickUnsaved`
+on the grid's `unsaved` object: the grid resets it on construction and
+on Y to the defaults prompt, and its `_close` calls
+`saveJoystickSettings` after the keybind save - the five settings and
+four inversions written, the settings saved, ONLY the changed axis and
+button bindings rebound (SaveAllKeybindValues :461-499), the keybinds
+saved again, the staging re-read. The window's OnPush reads the
+staging into its controls, its OnPop reads them back.
+
+**The capture** is WaitForKeyPress (:549-602). A UI row takes the next
+key down - a keyboard key is legal - unless it is an axis key of a
+BOUND axis (GetAnyKeyDownIgnoreAxisBinds); an axis row takes the next
+key and keeps it only if it is an axis key, binding the AXIS
+("Axis3") and reverting otherwise. The pad's keys arrive the way every
+key does: GP1's poller now edges all thirty-two axis keys, not only
+the bound ones (GetAnyKeyDown walks KeyCodeList, which holds them all),
+and it holds the movement stick's move codes and throw back while a
+window is up - FindInputAxisActions never runs under a pause - so a
+capture never takes 'KeyW' for a stick. CheckDuplicates (:419-441)
+runs GetDuplicates over the window's own eight strings, axes and keys
+in one list, reddens the clashes, and a CONTINUE or a Back with
+clashes standing shows the multipleAssignments box, click or key to
+close.
+
+**Pinned** in `test/joystickwindow.test.js`. The flag at
+`systems/inputActions.js` narrows to the controller cursor; the Ledger
+row (`:609`) says the window shipped. Not a departure.
