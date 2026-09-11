@@ -941,7 +941,10 @@ test('CD8: the ROAD-G G4 review\'s re-resolved cites name the lines they mean', 
     'the double-click cite does not start at the row guard');
   const dblSpan = lp.slice(Number(dbl[1]) - 1, Number(dbl[2])).join('\n');
   assert.match(dblSpan, /DOUBLE_CLICK_DELAY_MS/, 'the cited range holds no DOUBLE_CLICK_DELAY_MS test');
-  assert.match(dblSpan, /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/,
+  // AUDIT 65 UI-1: the stamp is no longer cleared on the double -
+  // BaseScreenComponent.cs:687-688 stores it unconditionally - so the
+  // cited range is the bare `_use()` call now.
+  assert.match(dblSpan, /if \(wasDouble\) this\._use\(\);/,
     'the cited range never reaches _use()');
 
   const sync = /with `listPicker\.js:(\d+)-(\d+)` \(`syncScrollBar`\)/.exec(row);

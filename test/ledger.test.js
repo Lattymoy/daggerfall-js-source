@@ -139,7 +139,9 @@ test('L2 ledger: a section-C "unported" claim whose facility shipped is struck, 
   // here instead of leaving the ledger boasting.
   const CLOSED = [
     { claim: /U24's list picker picks straight through/, slice: /ROAD-A7/,
-      file: 'src/ui/listPicker.js', built: /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/ },
+      // AUDIT 65 UI-1: the double no longer clears the stamp
+      // (BaseScreenComponent.cs:687-688 stores it unconditionally).
+      file: 'src/ui/listPicker.js', built: /if \(wasDouble\) this\._use\(\);/ },
     { claim: /the vertical scroll bar's THUMB DRAG is not implemented/, slice: /ROAD-A7/,
       file: 'src/ui/verticalScrollBar.js', built: /this\.draggingThumb = true;/ },
     { claim: /what wa-4 still waits on is the CROSS-HOST arm/, slice: /ROAD-B B4 \+ ROAD-A A10/,

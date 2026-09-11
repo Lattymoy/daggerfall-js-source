@@ -27,7 +27,16 @@ import { shortcutBinding } from '../src/systems/dialogShortcuts.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
 
-const dblClick = (w, x, y) => { w.click(x, y, false, 1000); return w.click(x, y, false, 1100); };
+const dblClick = (w, x, y) => {
+  // AUDIT 65 UI-1: the host's shape is `click(vx, vy, right, middle)`
+  // (townTalk.js:1123) - the clock is the window's own `_now()` seam,
+  // never a positional, so the pair is stepped on the SEAM.
+  let t = 1000;
+  w._now = () => t;
+  w.click(x, y, false, false);
+  t = 1100;
+  return w.click(x, y, false, false);
+};
 
 // ── F1: the tone handlers re-run UpdateQuestion ───────────────────────
 // MUTANT: `_setTone(t) { this.hooks.setTone(t); }` - drop the
@@ -106,9 +115,12 @@ test('AUDIT 58 talk: the asked question is the DISPLAYED question (ListboxTopic_
   const w = new NativeTalkWindow('Yes?', hooks);
   w.click(TALK_RECTS.whereIs[0] + 1, TALK_RECTS.whereIs[1] + 1);
   dblClick(w, 10, 72);                                   // descend into Taverns
-  w.click(10, 72 + 7, false, 2000);                      // SELECT The Dancing Chasm
+  let t = 2000;
+  w._now = () => t;
+  w.click(10, 72 + 7, false, false);                     // SELECT The Dancing Chasm
   const shown = w.question;
-  w.click(10, 72 + 7, false, 2050);                      // USE it
+  t = 2050;
+  w.click(10, 72 + 7, false, false);                     // USE it
   assert.equal(w.conversation.at(-2).text, shown,
     'the conversation records the sentence the player-says panel showed');
   assert.notEqual(w.question, shown, ':1333 re-rolls the label AFTER the pair');
