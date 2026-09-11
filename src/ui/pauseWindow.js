@@ -160,8 +160,13 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + panelX() && y >= ry + PAUSE
 export class PauseOptionsWindow {
   /** hooks: { quickSave(), quickLoad(), exitToMenu(), textLines(id),
    *  savingPrevented?(), relock?() } - each host hands its own. `relock`
-   *  is MAC1 J's in-gesture pointer grab, read on the two RESUME exits
-   *  only (see `keyup` and the CONTINUE rect in `click`). */
+   *  is MAC1 J's in-gesture pointer grab, read on the RESUME exits ONLY -
+   *  the ones that hand the player back the world rather than another
+   *  window: CONTINUE, the deferred Escape keyup, the two quick-verb
+   *  save/load fallbacks, and openClassicPauseFlow's `popToHUD` drain
+   *  when a pushed save or load COMPLETES. Never on the shared
+   *  `_closeWith`, which the pushed save/load doors and the controls arm
+   *  also travel. */
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
@@ -249,10 +254,12 @@ export class PauseOptionsWindow {
       this._closeWith();
       // MAC1 J, the classic twin (ui/pauseDoor.js:153-170): the close runs
       // inside this click/keyup, the activation requestPointerLock needs.
-      // RESUME only - NOT `_closeWith`, which the SAVE and LOAD arms below
-      // also call under the replace fallback, and which the CONTROLS arm
-      // bypasses outright; all three hand the player a window they need the
-      // CURSOR for, and a relock there takes it away as it opens.
+      // On the RESUME exits, never on the shared `_closeWith`: the SAVE
+      // and LOAD arms below travel it to OPEN the slot window, and the
+      // CONTROLS arm bypasses it outright - all three hand the player a
+      // window they need the CURSOR for, and a relock there takes it away
+      // as it opens. The completed save/load drains through `popToHUD`,
+      // which relocks there instead (openClassicPauseFlow's saveWindowHooks).
       this.hooks.relock?.();
       return true;
     }
@@ -277,7 +284,13 @@ export class PauseOptionsWindow {
         // and a pushed-over window has not popped.
         if (!this.hooks.saveLoadPushes) this._closeWith();
         this.hooks.openSave();
-      } else { this._closeWith(); this.hooks.quickSave?.(); }
+      } else {
+        // The quick-verb fallback is a RESUME: it hands the player no
+        // window, so it relocks inside this click like CONTINUE does.
+        this._closeWith();
+        this.hooks.relock?.();
+        this.hooks.quickSave?.();
+      }
       return true;
     }
     if (inRect(R.load, vx, vy)) {
@@ -288,7 +301,13 @@ export class PauseOptionsWindow {
       if (this.hooks.openLoad) {
         if (!this.hooks.saveLoadPushes) this._closeWith();
         this.hooks.openLoad();
-      } else { this._closeWith(); this.hooks.quickLoad?.(); }
+      } else {
+        // ...and the same for the one-press quickload (live on the
+        // exterior host, whose bag carries no loadKey seam).
+        this._closeWith();
+        this.hooks.relock?.();
+        this.hooks.quickLoad?.();
+      }
       return true;
     }
     const bx = vx - panelX(), by = vy - PAUSE_PANEL_Y;
@@ -449,7 +468,11 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // Under a real push the pop uncovers the pause window itself, so
     // `done` is the whole of CloseWindow and onBack must NOT rebuild.
     onBack: push ? null : () => openClassicPauseFlow(show, hooks),
-    popToHUD: push ? () => win?._closeWith() : null,
+    // MAC1 J: a COMPLETED save or load drains the whole stack back to
+    // the HUD, inside the slot window's own click - so this exit is a
+    // resume too, and the enhanced twin relocks on exactly it
+    // (ui/pauseDoor.js:165 fires for 'save' and 'load', not 'exit').
+    popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
     ...extra,
   });
   win = new PauseOptionsWindow({

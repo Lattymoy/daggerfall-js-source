@@ -192,15 +192,29 @@ test('SAV4: the host wiring source pins - per-character quickslots, the boot arm
   const pause = readFileSync(new URL('../src/ui/pauseWindow.js', import.meta.url), 'utf8');
   assert.match(pause, /openSave: hooks\.saveAs/);
   assert.match(pause, /openLoad: hooks\.loadKey/);
-  // PIN MOVED, ROAD-C C1. It read
-  //   `if (this.hooks.openLoad) this.hooks.openLoad(); else this.hooks.quickLoad?.();`
-  // on ONE line, which only held while the LOAD button closed the pause
-  // window unconditionally before dispatching. DFU pushes the slot
-  // window OVER the pause window (:308) and Cancel pops back onto it,
-  // so the close is now the replace-fallback's alone. The half this pin
-  // was actually guarding - a host without loadKey keeps the one-press
-  // quickload - is what stays pinned, in the new shape.
-  assert.match(pause, /if \(this\.hooks\.openLoad\) \{\n\s*if \(!this\.hooks\.saveLoadPushes\) this\._closeWith\(\);\n\s*this\.hooks\.openLoad\(\);\n\s*\} else \{ this\._closeWith\(\); this\.hooks\.quickLoad\?\.\(\); \}/);
+  // PIN MOVED TWICE, and the half it guards has never changed: a host
+  // without the loadKey seam keeps the ONE-PRESS quickload. It first
+  // read `if (this.hooks.openLoad) this.hooks.openLoad(); else
+  // this.hooks.quickLoad?.();` on one line, which held only while the
+  // LOAD button closed the pause window unconditionally before
+  // dispatching; ROAD-C C1 pushed the slot window OVER the pause window
+  // (:308) with Cancel popping back onto it, so the close became the
+  // replace-fallback's alone. AUDIT 65 UI-2 moved it again: the
+  // quick-verb fallback is a RESUME - it hands the player no window -
+  // so it relocks the pointer inside the click that closed it, which
+  // the pushed door must NOT do. Matched as three ordered fragments
+  // rather than one whitespace-exact block, so the next reformat moves
+  // this pin's LAW and not its indentation.
+  const loadArm = pause.slice(pause.indexOf('if (this.hooks.openLoad)'),
+    pause.indexOf('const bx = vx - panelX()'));
+  assert.match(loadArm, /if \(!this\.hooks\.saveLoadPushes\) this\._closeWith\(\);/,
+    'the pushed door leaves this window standing under the slot window');
+  assert.match(loadArm, /\} else \{[\s\S]*this\._closeWith\(\);[\s\S]*this\.hooks\.quickLoad\?\.\(\);/,
+    'and a host without loadKey still gets the one-press quickload, after the close');
+  assert.match(loadArm, /\} else \{[\s\S]*this\.hooks\.relock\?\.\(\);[\s\S]*this\.hooks\.quickLoad\?\.\(\);/,
+    'AUDIT 65 UI-2: that fallback is a resume, so it relocks inside the click (MAC1 J)');
+  assert.doesNotMatch(loadArm.slice(0, loadArm.indexOf('} else {')), /this\.hooks\.relock\?\.\(\)/,
+    '...and the PUSHED door does not - the slot window needs the cursor');
 
   const menu = readFileSync(new URL('../src/scenes/menu.js', import.meta.url), 'utf8');
   assert.match(menu, /export const hasSavedGame = \(\) => !!mostRecentRestorable\(\);/);
