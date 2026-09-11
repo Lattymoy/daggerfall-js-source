@@ -874,7 +874,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // `activeCount() > 0` was a different question - one unaware
         // guard alive anywhere in town killed the collapse.
         enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   // ROAD-G G2: BOTH street pools, world.js:1596's line
-        swimming: !!player.swimming, entity: playerEntity,
+        swimming: !!player.isPlayerSwimming, entity: playerEntity,   // XL-1: PlayerEntity.cs:2406/:2426 read PlayerEnterExit.IsPlayerSwimming - PlayerMotor.IsSwimming is false outdoors (:421)
         day: !isNight(minuteNow()), inside: false,
       });
       // RSC 1071/1072 pend the reader in this host; classic strings fall back.
@@ -1397,7 +1397,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // :488-491 - "Don't spawn encounters while player is swimming in
       // water or on ship (same as classic)". This host has no ship.
       const _m = _mode();
-      const hit = player.swimming ? null : intermittentEnemySpawn({
+      const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
         inLocationRect: _musicInLocationRect(),   // F061: the WIDENED TOWN RECT - this host lives inside it
         climateIndex: locClimateIndex,
@@ -1525,10 +1525,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // this host had none of it, because rest was a dungeon feature.
     // Outdoors all three inputs are live: real foes, real water, and a
     // levitating or falling player who cannot lie down.
-    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // V2b: the vampire's rest gate
+    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // V2b: the vampire's rest gate   // XL-1: the refusal's swim term below is PlayerEnterExit.IsPlayerSwimming (DaggerfallUI.cs:661), not PlayerMotor.IsSwimming
     const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
-      swimming: !!player.swimming,
+      swimming: !!player.isPlayerSwimming,   // DaggerfallUI.cs:661
       // StartRestGroundedCheck, not the raw flag: a levitating player
       // an inch off the floor reads grounded === false and DFU lets
       // them sleep anyway (PlayerMotor.cs:190-193's own comment) - and
@@ -3489,7 +3489,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
+        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101 and :215 both read playerEnterExit.IsPlayerSwimming, never the motor's flag
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
@@ -3613,7 +3613,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // so the Running skill did not advance while the run key was
         // held standing still.
         runningTally: player.isRunning && !player.riding,
-        swimming: player.swimming,
+        swimming: player.isPlayerSwimming,   // XL-1: PlayerEntity.cs:410 reads PlayerEnterExit.IsPlayerSwimming - the flag the surface model below writes
         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083
         jumped: player.jumped,
       });
@@ -3630,7 +3630,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // (Levitate.cs:131/:136); swimming is false outdoors (there is
       // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming) until
       // the surface model below re-derives it (OT1).
-      const _wasSwimming = !!player.swimming;   // OT1: the value the frame arrived with, read BEFORE the clear
+      const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame arrived with, read BEFORE the clear
       applyMotorEffectFlags(player, playerEntity);
       const mv = moveHeld(keys);
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
@@ -3705,7 +3705,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
       // one helper; this host has no dungeon branch to carry a value from, so the sink edge is its
       // whole live arm. Before this the flag was the clear alone.
-      player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
+      player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
       // FS-slice: PlayerFootsteps - the exterior stride.
       {
         // PlayerFootsteps.cs:116 - "Play splash footsteps whether

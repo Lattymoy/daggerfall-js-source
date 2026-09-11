@@ -49,11 +49,41 @@
 //
 // The lone exterior latch DFU does keep is isPlayerSwimming itself:
 // it survives above ground while the tile under the player is water
-// (the `!= 0` guard above, MeteoricDragon's note at :417). Nothing in
-// the port reads a separate isPlayerSwimming - the motor's swimming
-// flag is levitateMotor.IsSwimming, which is unconditionally cleared -
-// so exteriorSwimLatch below carries it for the hosts that want it
-// without letting it near the motor.
+// (the `!= 0` guard above, MeteoricDragon's note at :417).
+//
+// AUDIT 65 XL-1 - THE TWO MEMBERS, AND WHICH READER TAKES WHICH.
+// DFU carries isPlayerSwimming (PlayerEnterExit.cs:44, :177-178) AND
+// levitateMotor.IsSwimming, which IS PlayerMotor.IsSwimming (:149-152).
+// The dungeon arm writes BOTH off one blockWaterLevel test (:384-392);
+// the else arm above splits them, keeping the host flag on tile 0 and
+// clearing the motor's with no tile test at all. The port had ONE
+// member - `player.swimming`, whose setter raises PlayerMotor
+// .CancelMovement on every transition - and OT1 wired this helper's
+// result into it, so shared.applyMotorEffectFlags' false and the
+// host's true were two edges a frame and the frame's one fixed step
+// spent the cancel and returned (PlayerMotor.cs:286-294): MEASURED
+// over a real Collider floor at Speed 50 / Swimming 30, the exterior
+// swimmer travelled 0.0000 over 600 steps at 60 Hz, with the swim
+// speed sitting unused in `speed`. XL-1 gave the motor DFU's second
+// member - `isPlayerSwimming`, a plain field beside `sunk` that _step
+// never reads - and the hosts write THAT, leaving
+// shared.applyMotorEffectFlags (shared.js:886) to keep the motor's own
+// flag false outdoors, which is :421 itself.
+//
+// THE HOST FLAG (PlayerEnterExit.IsPlayerSwimming): the fatigue band
+// and the Swimming tally (PlayerEntity.cs:410), the encounter roll
+// (:489), the exhaustion collapse (:2406/:2426), the rest refusal
+// (DaggerfallUI.cs:661), HeadBobber's style and bounce (:101/:215),
+// and UpdateSpeed's swim speed (PlayerMotor.cs:387 - carried in the
+// port by the `sunk` proxy, AUDIT 64 F0).
+// THE MOTOR FLAG (PlayerMotor.IsSwimming): the swim/levitate zero-and-
+// return (PlayerMotor.cs:323), DecideHeightAction's forced-swim crouch
+// (PlayerHeightChanger.cs:128/:551), the footstep stride
+// (PlayerFootsteps.cs:230) and PassiveSpecialsEffect.cs:136.
+//
+// So exteriorSwimLatch below carries the latch for the hosts that want
+// it without letting it near the motor - which is what
+// `motorSwimming: false` beside it has always said.
 
 import { playerTileMapIndex, WATER_TILE_INDEX } from '../world/terrainSurface.js';
 

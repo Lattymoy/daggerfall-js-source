@@ -724,8 +724,12 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   assert.match(wm, /if \(d\.kind === 'enemies'\) setEnemyAlert\(playerEntity, true, Math\.floor\(interiorTicker\.classicMinutes\)\);/);
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
+  // AUDIT 65 XL-1: the member is PlayerEnterExit.IsPlayerSwimming
+  // (DaggerfallUI.cs:661), not PlayerMotor.IsSwimming - and the line is
+  // matched with its neighbour, because `swimming: !!player.swimming,`
+  // alone also hits the Morrowind movement bag further up each host.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /swimming: !!player\.swimming,/, f);
+    assert.match(src(f), /enemiesNearby: outdoorRestDeps\.enemiesNearby\(\),\s*\n\s*swimming: !!player\.isPlayerSwimming,/, f);
   }
   // IF: the interior's `enemiesNearby` was a literal false because the
   // host mounted no foe pool. It mounts one now, so it feeds the
@@ -746,7 +750,11 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);
     assert.match(h, /startRestGroundedCheck\(/, f);
-    const g = h.slice(h.indexOf('restDecision({'), h.indexOf('restDecision({') + 500);
+    // AUDIT 65 XL-1 widened the window from 500: `swimming` in these
+    // calls became `isPlayerSwimming` (DaggerfallUI.cs:661 reads
+    // PlayerEnterExit's member, not PlayerMotor's), and the rename's
+    // eight characters alone land `grounded:` at 501 of the old 500.
+    const g = h.slice(h.indexOf('restDecision({'), h.indexOf('restDecision({') + 600);
     assert.match(g, /grounded: (startRestGroundedCheck\(|nearFloor)/, f);
   }
 });

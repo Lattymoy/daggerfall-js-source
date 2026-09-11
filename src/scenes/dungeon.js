@@ -612,7 +612,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: ctx.uiOverlayActive, climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
+        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101/:215 read playerEnterExit.IsPlayerSwimming (this host writes both members, so the ANSWER is unchanged - the member is)
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
@@ -680,7 +680,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // (DFU's defaults, read through the I2 registry).
       const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
-      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
+      player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): BOTH swim members off the one blockWaterLevel test, as PlayerEnterExit.cs:384-392 writes them. Outdoors the two part company - :421 clears the motor's with no tile test - which is why the exterior hosts write only the host flag
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
       // S19 paralysis: FrictionMotor cancels ALL movement input (the

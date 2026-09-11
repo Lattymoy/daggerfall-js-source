@@ -146,10 +146,13 @@ test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both host
   assert.ok(fn.includes('_witnessResponse();'), 'through SpawnCityGuards(false)');
   const _sweepLatch = /let _updatedGuards = false;[^]*if \(!_updatedGuards\) \{\n\s*_updatedGuards = true;(?:\n\s*\/\/[^\n]*)*\n\s*if \(_m === 'exterior'\) cityGuards\.makeNpcGuardsIntoEnemies\(/;
   // :488-491 - no encounter roll while the player swims (DFU: or is on a ship; the port has no ship state)
-  assert.ok(fn.includes('const hit = player.swimming ? null : intermittentEnemySpawn({'), 'the fixed city skips the roll while swimming');
+  // AUDIT 65 XL-1: PlayerEntity.cs:489 reads PlayerEnterExit.IsPlayerSwimming,
+  // the HOST flag - outdoors levitateMotor.IsSwimming (`player.swimming`) is
+  // cleared every frame by :421 and this arm would never fire off it.
+  assert.ok(fn.includes('const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({'), 'the fixed city skips the roll while swimming');
   const wi = w.indexOf('function runEncounterTick');
   const wfn = w.slice(wi, w.indexOf('\n  }\n', wi));
-  assert.ok(wfn.includes('const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({'), 'the world host skips it too');
+  assert.ok(wfn.includes('const hit = (walkMode && playerSpawned && player.isPlayerSwimming) ? null : intermittentEnemySpawn({'), 'the world host skips it too');
   // the placement: DFU's own ring with the arm's band, a FLYING foe lifted 1.5
   assert.match(e, /const _standEncounterFoe = \(hit, feet\) => \{[^]*minDistance: hit\.minDistance, maxDistance: hit\.maxDistance,\n\s*lineOfSightCheck: hit\.lineOfSightCheck,/);
   // the callers: this host's exterior frame, its rest advance, and -
