@@ -92,8 +92,20 @@
 // So exteriorSwimLatch below carries the latch for the hosts that want
 // it without letting it near the motor - which is what
 // `motorSwimming: false` beside it has always said.
+//
+// MAC2 (2026-09-11) - THE PLAYER SWIMS WHERE THE SURFACE IS DRAWN
+// (Ledger A). DFU's record law above is kept whole, and ONE arm rides
+// ahead of it in exteriorWaterMethod: where the enhanced surface's own
+// corner table (world/waterCorners.js) puts water under the feet - the
+// bilinear coverage at the feet's fraction inside the tile, at or past
+// the shader's 0.5 diagonal - the player swims, water-walking excepted.
+// DFU wades a stream, a bank or a moat because their records are its
+// "shallow" set; the port draws them as water, and Mac's call is that
+// what reads as water swims. The hosts hand the fraction over beside the
+// raw byte (world.js / exterior.js playerGroundSample).
 
-import { playerTileMapIndex, WATER_TILE_INDEX } from '../world/terrainSurface.js';
+import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrainSurface.js';
+import { waterCorners, waterCoverage } from '../world/waterCorners.js';   // MAC2: the surface pass's own corner table
 
 /** PlayerMotor.OnExteriorWaterMethod (:79-87). "Defines the way
  *  player can interact with exterior water tiles. Unrelated to deep
@@ -238,11 +250,37 @@ export function onExteriorStaticGeometryMethod({ inside = false, probe = null } 
  *   off terrain, which is neither 0 nor shallow, so: None).
  * @param {boolean} p.waterWalking  PlayerEntity.IsWaterWalking.
  */
-export function exteriorWaterMethod({ onGround = false, tileIndex = -1, waterWalking = false } = {}) {
+export function exteriorWaterMethod({ onGround = false, tileIndex = -1, waterWalking = false, coverage = null } = {}) {
+  // MAC2 (2026-09-11, Ledger A: THE PLAYER SWIMS WHERE THE SURFACE IS
+  // DRAWN): DFU's answer is by RECORD - tile 0 swims, its water-majority
+  // shore records wade (OnShallowWaterTile :551-563), the rest are dry
+  // - and the port's enhanced surface draws water by CORNER, so a
+  // stream, a bank, a shore or a moat read as water and were walked
+  // across. Mac's call: where the surface puts water under the feet
+  // (the same bilinear coverage the shader fills, past its 0.5 diagonal)
+  // the player swims - unless water-walking, which DFU keeps above
+  // any water. Off the ground, or where the coverage is under the
+  // diagonal, DFU's record law answers as before.
+  if (onGround && coverage != null && coverage >= SWIM_COVERAGE) {
+    return waterWalking ? ON_EXTERIOR_WATER.WaterWalking : ON_EXTERIOR_WATER.Swimming;
+  }
   const shallow = onShallowWaterTile(tileIndex);
   if (!onGround || (tileIndex !== WATER_TILE_INDEX && !shallow)) return ON_EXTERIOR_WATER.None;
   if (waterWalking || shallow) return ON_EXTERIOR_WATER.WaterWalking;
   return ON_EXTERIOR_WATER.Swimming;
+}
+/** MAC2: the coverage at which the feet stand in water - the shader's
+ *  own shore diagonal (render/waterSurface.js: smoothstep about 0.5). */
+export const SWIM_COVERAGE = 0.5;
+/** MAC2: the surface pass's water coverage under the feet - the raw
+ *  tilemap byte's water corners (world/waterCorners.js, indexed by the
+ *  CONVERTED byte as the shader indexes it) blended at the feet's
+ *  fraction inside the tile, in the tilemap's own frame (x along the
+ *  row, y along the column - the shader's `fract(vLocalXZ / tile)`).
+ *  Null off a built pixel, or with no fraction to read. */
+export function feetWaterCoverage(rawTile, feet) {
+  if (rawTile == null || !feet) return null;
+  return waterCoverage(waterCorners(convertTile(rawTile)), feet[0], feet[1]);
 }
 
 /** PlayerMotor.GetOnExteriorPathMethod (:600-603) -
@@ -266,12 +304,12 @@ export function exteriorPathMethod({ onGround = false, tileIndex = -1 } = {}) {
  */
 export function exteriorSurfaces({
   inside = false, rawTile = null, tileIndex = null,
-  waterWalking = false, probe = null,
+  waterWalking = false, probe = null, feet = null,
 } = {}) {
   const idx = tileIndex == null ? playerTileMapIndex(rawTile) : tileIndex;
   const onGround = onExteriorGroundMethod({ inside, probe });
   return {
-    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking }),
+    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking, coverage: feetWaterCoverage(rawTile, feet) }),   // MAC2: the feet's coverage rides beside the record
     path: exteriorPathMethod({ onGround, tileIndex: idx }),
     staticGeometry: onExteriorStaticGeometryMethod({ inside, probe }),
     onGround,

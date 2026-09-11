@@ -3253,17 +3253,20 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  tilemap, and a caller must read that as "no information" rather
    *  than as any particular tile. */
   const TERRAIN_TILE_WORLD = 2 * TERRAIN_TILE_DIM;
-  const playerGroundTile = () => {
+  const playerGroundSample = () => {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     const p = worldCoordToMapPixel(wc.x, wc.z);
     const built_ = built.get(`${p.x},${p.y}`);
     if (!built_?.tilemap) return null;
     const origin = mapPixelToWorldCoords(p.x, p.y);
-    const tx = Math.floor((wc.x - origin.x) / TERRAIN_TILE_WORLD);
-    const ty = Math.floor((wc.z - origin.z) / TERRAIN_TILE_WORLD);
+    const u = (wc.x - origin.x) / TERRAIN_TILE_WORLD, v = (wc.z - origin.z) / TERRAIN_TILE_WORLD;
+    const tx = Math.floor(u);
+    const ty = Math.floor(v);
     if (tx < 0 || ty < 0 || tx >= TERRAIN_TILE_DIM || ty >= TERRAIN_TILE_DIM) return null;
-    return built_.tilemap[tx + ty * TERRAIN_TILE_DIM];
+    // MAC2: the feet's fraction inside the tile, the water pass's own frame (fract(vLocalXZ / tile))
+    return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };
   };
+  const playerGroundTile = () => playerGroundSample()?.tile ?? null;
   const footsteps = new FootstepMachine();   // FS-slice
   /** ROAD-B (b3): PlayerMotor.Update's three exterior surface reads,
    *  run together the way DFU runs them (:367-369) - one downward
@@ -3283,9 +3286,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const exteriorSurfaceNow = () => {
     const cy = player.pos[1] + player.height / 2;   // transform.position on a CharacterController
     const rayDistance = rayDistanceFor(isOnFoot(player.transportMode));
+    const _ground = playerGroundSample();
     return exteriorSurfaces({
       inside: false,
-      rawTile: playerGroundTile(),
+      rawTile: _ground?.tile ?? null,
+      feet: _ground?.feet ?? null,   // MAC2: the player swims where the surface is drawn under the feet
       waterWalking: !!player.waterWalking,   // PlayerEntity.IsWaterWalking (:590)
       probe: downProbe({
         centreY: cy,

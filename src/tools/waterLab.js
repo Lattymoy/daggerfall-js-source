@@ -8,7 +8,8 @@
 // probe (tools/waterProbe.mjs).
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
-import { waterUniforms, buildWaterIndices, WATER_MASK_TABLE } from '../render/waterSurface.js';
+import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
+import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home
 import { basinDepths, carveBasin, waterMesh } from '../render/waterBasin.js';   // WATER2
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';

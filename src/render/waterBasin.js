@@ -25,7 +25,7 @@
 // The collider never sees any of this: world.js's heightAt reads the
 // pixel's SAMPLES, and the samples are untouched. The player swims on
 // a water tile at the height DFU swims at; only the picture has a bed.
-import { WATER_MASK_TABLE } from './waterSurface.js';
+import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table's one home
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../world/terrainSampler.js';
 import { TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 
