@@ -1126,3 +1126,39 @@ what was submitted.
 **Pinned** in `test/perf2.test.js` (3): the culling executes against a
 stub GL that records the draws; the sky law and the hosts' order are
 text. Not a departure: the same fragments reach the buffer.
+
+## PERF3 - ONCE A FRAME, NOT ONCE A PIXEL; ONCE A TEXTURE, NOT ONCE A BATCH (2026-09-11)
+
+Mac: "just do your job and look for opportunities." Three more that
+change no pixel, read out of the renderer.
+
+**The terrain program re-uploaded the frame's lighting for every
+pixel.** `drawTerrain` set seventeen uniforms a draw - projection,
+view, the fog block, the key light, the ambient, the sun, the moon,
+the point lights, the indirect light, the two sampler slots - and a
+streamed frame draws it forty-odd times. The mesh program never did:
+`beginFrame` uploads its block once and the setters merely shadow
+(`uploadLighting` is the one exception, for the automap's beacons).
+The terrain block now sits behind a frame stamp that `beginFrame`,
+`restoreState` and `setLightDir` bump: the first terrain draw after
+any of them uploads, the rest skip. The model matrix and the tile
+size stay per draw; the cloud deck keeps its own stamp.
+
+**The cutout billboards bound their textures once a batch.** A batch
+is one (archive, record) on one pixel, so the same tree record across
+forty pixels bound its diffuse and emission textures forty times, and
+minted its key string forty times. The cutout pass writes depth and
+discards alpha with no blend, so its order is free: the batches are
+sorted by key and a batch whose key the batch before wore binds
+nothing. The key is cached on the batch per frame value (FA1 animates
+`b.frame`). The blended pass (the spectral and the concealed) keeps
+its back-to-front sort and only skips the repeats it happens to have.
+`stats.texBinds` now counts the binds that happen.
+
+**The counter shows the renderer's own numbers.** `stats.draws` and
+`stats.texBinds` are per frame (`beginFrame` zeroes them); the counter
+sums the sample it sees each tick and prints the per-frame mean under
+the script line - the GL call count, which is the CPU side of the
+GPU's work and the number the culls and the sort are meant to move.
+
+**Pinned** in `test/perf3.test.js` (2). Not a departure.
