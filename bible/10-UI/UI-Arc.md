@@ -11829,3 +11829,97 @@ failure, on the same flow and callbacks, every seam delegating. Pinned
 in overlayTyping.test.js. Not seen in a real browser with ARENA2; the
 classic-skin click gate (`clickNative` refusing until the art loads)
 stands as recorded.
+
+## TI2 - THE PHONE IN HAND, TUNED: THE LOOK, THE THROW, THE GYRO, THE CHROME (2026-09-11)
+
+Mac: "I want to talk about how we could enhance the mobile element of
+DFJS in terms of camera movement, character movement and a more phone
+built feel where it doesnt seem so non-native" - then "Do it" on the
+order proposed: fullscreen and the manifest and the safe area first,
+then a touch sensitivity with a height-normalised look, then the analog
+throw, then gyro aim as its own opt-in. Ledger A row TI2.
+
+**What TI1 was.** A test build that speaks the desktop input language:
+a stick that synthesizes WASD eight ways, a right half classified into
+tap / hold-then-swipe / look, five buttons, a lock dot. Every part of
+that stands. What made it feel like a website was around it: the look
+was raw pixels at a flat gain, the stick was a keyboard, the buttons
+were monospace divs at bare pixel edges under the notch, the name
+prompt was `window.prompt`, and the address bar never went away.
+
+**The look** (`ui/touchLook.js lookNormalisation`, `ui/touch.js
+route`). A drag is a fraction of the canvas height now, referenced to
+the 400 px landscape phone TI1b was tuned on - at that height the
+factor is 1 and nothing changed; a canvas twice as tall turns half as
+far per pixel, which is the same sweep of the thumb turning the same.
+On top rides `touchLookSensitivity`, the player's own, 0.25..4, over
+the mouse sensitivity the host still applies (`lookScale()`). The
+AUDIT 62 F7 pause gate is untouched: the normalised delta is dropped
+under a window exactly as the raw one was.
+
+**The throw** (`touchLook.js analogAxes`, `player/moveAxes.js`). The
+stick reports its throw past a 0.25 radial dead zone, rescaled from
+the zone's edge so the first motion is a small speed and not a jump to
+a quarter; the handle publishes it as `axes()` and each host hands it
+to MoveAxes beside the held keys (`mv.analog`; the modal frames read
+it through `host.stickAxes`). In MoveAxes it is InputManager.Update's
+joystick arm - the axis reading as the force's scale, beside :548's
+FindKeyboardActions - and it REPLACES the key impulse on its axis for
+the frame, because the layer still synthesizes the stick's keys (the
+anim and reportInput read them) and summing both would count one
+thumb twice. One departure of kind, recorded: under
+MovementAcceleration the throw is a TARGET the axis climbs to at 9.8/s
+and settles at; DFU's impulse form would walk every throw to the rail,
+and a half throw that becomes a run is not a throw. `touchAnalogStick`
+off is TI1's eight-way, verbatim. `touchStickAnchor` 'fixed' parks the
+stick bottom-left, shown at rest, its centre the origin; it answers a
+finger within 2.5 radii of the centre and nothing else on the half - a
+far-off origin would be a full throw at once.
+
+**The gyro** (`touchLook.js gyroLookDelta`, opt-in `touchGyroLook`).
+devicemotion's rotationRate, integrated over the sample's own interval
+and mapped by `screen.orientation.type` - beta the turn and gamma the
+tilt in landscape-primary, both flipped in secondary, swapped in
+portrait, alpha a roll and never a look - into the host's LOOK UNITS:
+the host's `lookScale()` is divided out so its multiply puts the
+radians back, a degree of phone a degree of camera at
+`touchGyroSensitivity` 1. It goes through `hooks.look` like a drag, so
+the LookFilter, the pitch clamp, the swing-settle rule and the pause
+gate all hold; a sample older than 100 ms (a backgrounded tab) is not
+integrated. iOS grants motion only from a user gesture: the Touch
+card's switch asks on its click, and a pref already on at boot is
+asked for on the first canvas touch.
+
+**The chrome.** `navigator.vibrate` where the platform has it, under
+`touchHaptics`: 10 ms on a button, 15 on the hold that arms a swipe,
+20 when the lock lands (once, on the dot's arrival). The first canvas
+touch asks `requestFullscreen` then `screen.orientation.lock
+('landscape')`, once, under `touchFullscreen`, every refusal swallowed;
+iOS Safari has no fullscreen for a page, so `public/manifest.webmanifest`
+(fullscreen, landscape, `start_url ./play/`, three icons drawn by
+`scripts/makeIcons.mjs` and committed) with Safari's `apple-mobile-web-
+app-*` metas makes the GAME page a home-screen app - the landing page
+links neither, by test/landing.test.js's own law that it references no
+file. Every control sits at `calc(Npx + env(safe-area-inset-side))`;
+the buttons are 48 px, the system face, frosted, and scale in on the
+press; the chargen name is an inline `<input>` that raises the phone's
+keyboard, its own keys the field's (`isTextEntryTarget`), delivered on
+Enter or the ✓ as the characters the classic window reads.
+
+**Where the knobs live.** Seven `touch*` keys on `systems/uiPrefs.js` -
+the port's own shelf, beside the HUD scale, for the same reason: DFU
+has no touch input, the settings catalog is baked from its ini and
+holds exactly 171 keys. The Enhanced pane's Touch card
+(`ui/enhancedMenu.js`) sets them and mounts only where
+`isTouchDevice()` says so - a card of finger controls on a machine
+without a finger is the dead affordance the pane refuses.
+
+**Pinned** in `test/touchinput2.test.js` (13): the three pure functions
+and the MoveAxes arm executed with their mutants named; the layer
+against AUDIT 62's stub (`axes()` under the pref, the normalised look,
+the fixed anchor's reach, the motion listener added and removed);
+text pins on the hosts, the pane, the prefs and the manifest.
+`test/audit62_touch.test.js` F7's look expectation takes the
+normalisation. **Not seen on hardware** - the same standing note as
+AUDIT 62's: the gain, the dead zone and the gyro's signs are the
+numbers a phone will correct.

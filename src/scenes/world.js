@@ -5331,7 +5331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7018-7030 -
+  // worldModes answers it in BOTH modes (worldModes.js:7019-7031 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6512,6 +6512,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // never fires on an orphan).
     lockToggle: (foe) => lockOn.toggle(foe),
     unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
+    stickAxes: () => touch?.axes() ?? null,   // TI2: the modal frames' MoveAxes read the same stick
     // AUDIT 62 F16/F28: the MODAL frame's matrices, handed back. Both
     // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
     // unprojects through them at the top of the frame, and the lock dot
@@ -7243,6 +7244,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _wasSwimming = !!player.swimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
+        mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)

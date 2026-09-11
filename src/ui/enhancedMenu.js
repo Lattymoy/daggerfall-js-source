@@ -102,6 +102,7 @@ import {
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';   // R7: the Enhanced pane's own switches
+import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
 import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
 // PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
 // law - every host already reads this same module), so no host seam
@@ -975,6 +976,83 @@ function paneEnhanced(body) {
   sizing.append(el('p', 'note', 'The compass, the bars and the effect chips together. '
     + 'Takes effect at once; half size still reads and double fills a phone.'));
   body.append(sizing);
+
+  // TI2 (Mac, 2026-09-11: "enhance the mobile element... camera
+  // movement, character movement and a more phone built feel"): THE
+  // TOUCH CARD. Every knob the touch layer reads (ui/touch.js), on the
+  // same prefs shelf as the HUD scale and for the same reason - DFU has
+  // no touch input, so none of these is a setting of its. Mounted only
+  // where the device reports touch: a card of controls for a finger the
+  // machine does not have would be the dead affordance this pane
+  // refuses (inertRow's law).
+  if (isTouchDevice()) {
+    const touch = el('div', 'card');
+    touch.append(el('h3', null, 'Touch'));
+    const stepRow = (key, name, note, { min, max, step: inc, fmt }) => {
+      const row = el('div', 'row');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', name));
+      if (note) main.append(el('div', 'row-note', note));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      const cur = () => Number(getPref(key)) || 1;
+      const val = el('span', 'val', fmt(cur()));
+      const step = (delta, label) => {
+        const b = el('button', 'step', label);
+        b.onclick = () => {
+          const next = Math.round(Math.max(min, Math.min(max, cur() + delta)) * 100) / 100;
+          setPref(key, next);
+          val.textContent = fmt(next);
+        };
+        return b;
+      };
+      ctl.append(step(-inc, '\u2039'), val, step(inc, '\u203a'));
+      row.append(ctl);
+      return row;
+    };
+    const times = (v) => `${v.toFixed(2)}\u00d7`;
+    touch.append(stepRow('touchLookSensitivity', 'Look sensitivity',
+      'How far a thumb\u2019s drag turns the camera, on top of the mouse sensitivity in Controls. '
+      + 'A drag is measured against the screen\u2019s height, so the same sweep turns the same on any phone.',
+      { min: 0.25, max: 4, step: 0.25, fmt: times }));
+    touch.append(prefRow('touchAnalogStick', 'Analog stick',
+      'The stick\u2019s throw is your speed: a little is a walk, most of the way is a run. '
+      + 'Off is the eight-way stick - any push is a full step.'));
+    // the anchor is a two-way choice, not a switch: a row whose button names the OTHER option
+    {
+      const fixed = getPref('touchStickAnchor') === 'fixed';
+      const row = el('div', 'row');
+      const main = el('button', 'row-main');
+      main.append(el('div', 'row-name', 'Stick position'));
+      main.append(el('div', 'row-note', fixed
+        ? 'Fixed: the stick sits bottom-left and waits for your thumb.'
+        : 'Floating: the stick appears wherever your thumb lands on the left half.'));
+      const flip = () => { setPref('touchStickAnchor', fixed ? 'float' : 'fixed'); render(); };
+      main.onclick = flip;
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      const b = el('button', 'act rowact', fixed ? 'Fixed' : 'Floating');
+      b.onclick = flip;
+      ctl.append(b, el('span', 'tier live'));
+      row.append(ctl);
+      touch.append(row);
+    }
+    touch.append(prefRow('touchGyroLook', 'Gyro aim',
+      'Turn the phone to turn the camera, a degree for a degree, on top of the drag - fine aim without lifting a thumb. '
+      + 'iPhones ask permission for motion the first time.', {
+      // iOS grants motion only from a user gesture - this click is one.
+      onChange: (on) => { if (on) { try { globalThis.DeviceMotionEvent?.requestPermission?.()?.catch?.(() => {}); } catch { /* not iOS */ } } },
+    }));
+    touch.append(stepRow('touchGyroSensitivity', 'Gyro sensitivity',
+      'Degrees of camera per degree of phone.',
+      { min: 0.25, max: 4, step: 0.25, fmt: times }));
+    touch.append(prefRow('touchHaptics', 'Haptics',
+      'A short pulse on a button, when a held finger arms a swing, and when a lock lands. Phones that can.'));
+    touch.append(prefRow('touchFullscreen', 'Fullscreen on touch',
+      'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
+      + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
+    body.append(touch);
+  }
 
   // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
   // every extra page at the SITE ROOT (vite.config's rollup inputs) but
