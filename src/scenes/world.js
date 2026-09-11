@@ -560,6 +560,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off';
+  const waterMaskDebug = new URLSearchParams(globalThis.location?.search ?? '').get('water') === 'mask';   // WATER5: the art's mask painted over the ground, for the eye
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
@@ -7994,7 +7995,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cloud deck and the mills take; null = calm), the front's rain, and
     // the dome's own two colours to reflect.
     if (waterOn) {
-      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
+      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky(), debug: waterMaskDebug });
       for (const p of built.values()) {
         if (!p._visible || !p.water) continue;
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu, TERRAIN_TILE_DIM, renderer.waterArts.get(p.groundArchive));   // WATER4: the archive's art rides

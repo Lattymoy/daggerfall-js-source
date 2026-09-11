@@ -104,16 +104,17 @@
 // what reads as water swims. The hosts hand the fraction over beside the
 // raw byte (world.js / exterior.js playerGroundSample).
 //
-// WATER4 (2026-09-11): the surface is the ART'S now (world/waterArt.js
-// - the record's own texels, the shore its outline), so the feet read
-// the same art through the shader's own shore ramp: artShore crosses
-// 0.5 exactly where the eye sees the water begin. The hosts hand the
-// archive's art over with the fraction; without it (no archive read)
-// the corner table answers as MAC2 left it.
+// WATER4/5 (2026-09-11): the surface is the ART'S now (world/waterArt.js
+// - the record's own texels, the shore its outline, per texel), so the
+// feet read the same art: artCoverage folds the record's distance
+// field about 0.5 and crosses it exactly where the eye sees the water
+// begin - the texel under the feet, as the ground draws it. The hosts
+// hand the archive's art over with the fraction; without it (no
+// archive read) the corner table answers as MAC2 left it.
 
 import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrainSurface.js';
 import { waterCorners, waterCoverage } from '../world/waterCorners.js';   // MAC2: the surface pass's own corner table
-import { artCoverage, artShore } from '../world/waterArt.js';   // WATER4: the surface pass's own art, where the archive's is read
+import { artCoverage } from '../world/waterArt.js';   // WATER4/5: the surface pass's own art, where the archive's is read - texel-exact
 
 /** PlayerMotor.OnExteriorWaterMethod (:79-87). "Defines the way
  *  player can interact with exterior water tiles. Unrelated to deep
@@ -285,13 +286,13 @@ export const SWIM_COVERAGE = 0.5;
  *  CONVERTED byte as the shader indexes it) blended at the feet's
  *  fraction inside the tile, in the tilemap's own frame (x along the
  *  row, y along the column - the shader's `fract(vLocalXZ / tile)`).
- *  WATER4: with the archive's art, the art's own coverage there through
- *  the shader's shore ramp (its 0.5 is the ramp's midpoint, ART_WET).
+ *  WATER4/5: with the archive's art, the art's own distance field under
+ *  the feet folded about 0.5 - at or past it the TEXEL is water.
  *  Null off a built pixel, or with no fraction to read. */
 export function feetWaterCoverage(rawTile, feet, art = null) {
   if (rawTile == null || !feet) return null;
   const byte = convertTile(rawTile);
-  if (art) return artShore(artCoverage(art, byte, feet[0], feet[1]));
+  if (art) return artCoverage(art, byte, feet[0], feet[1]);
   return waterCoverage(waterCorners(byte), feet[0], feet[1]);
 }
 

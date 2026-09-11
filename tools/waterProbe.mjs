@@ -32,11 +32,12 @@ async function shoot(label, q) {
     gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
     // the LOWER third of the frame (readPixels is bottom-up: rows 0..h/3),
     // which is the sea in front of the camera in every shot here
-    let sum = 0, sum2 = 0, blue = 0, max = 0, n = 0, bright = 0;
+    let sum = 0, sum2 = 0, blue = 0, max = 0, n = 0, bright = 0, magenta = 0;
     const grid = [];
     for (let y = 0; y < (h / 3) | 0; y++) for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4; const r = px[i], g = px[i + 1], b = px[i + 2], l = (r + g + b) / 3;
       sum += l; sum2 += l * l; blue += b - r; if (l > max) max = l; if (l >= 200) bright++; n++;
+      if (r > 170 && b > 140 && g < 100) magenta++;   // WATER5: the mask view's paint (magenta at 0.65 over the ground)
       if ((x & 7) === 0 && (y & 7) === 0) grid.push(l);
     }
     // and the UPPER third - the sky, which the pass must not touch
@@ -45,7 +46,7 @@ async function shoot(label, q) {
       if ((x & 7) === 0 && (y & 7) === 0) { const i = (y * w + x) * 4; sgrid.push((px[i] + px[i + 1] + px[i + 2]) / 3); }
     }
     const mean = sum / n;
-    return { mean, sd: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), blue: blue / n, max, brightFrac: bright / n, grid, sgrid, glError: gl.getError() };
+    return { mean, sd: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), blue: blue / n, max, brightFrac: bright / n, magenta: magenta / n, grid, sgrid, glError: gl.getError() };
   });
   // WATER-AUDIT (M5): the SHORE - the fraction of a fixed band across the
   // frame's middle whose pixels read as water (blue well above red), so a
@@ -83,6 +84,8 @@ const overcast = await shoot('overcast', `hour=12&${VIEW}&wind=0.6&weather=overc
 const sunny = await shoot('noon', `hour=12&${VIEW}&wind=0.6`);
 const shore = await shoot('shore', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236');   // the beach up close, and the feather's own check below
 const shoreOff = await shoot('shore-off', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236&water=off');
+const shoreMask = await shoot('shore-mask', 'hour=14&yaw=20&pitch=-22&height=6&wind=0.5&z=-236&water=mask');   // WATER5: the mask view - the art's own water, painted
+const seaMask = await shoot('sea-mask', `hour=10&${VIEW}&wind=0.4&water=mask`);
 await shoot('river', 'hour=14&yaw=40&pitch=-28&height=140&wind=0.3&z=-60');   // the river down the east slope and the lake - for the eye
 await shoot('rain-close', 'hour=12&yaw=0&pitch=-30&height=4&wind=0.2&rain=1&weather=rain');   // the rain's pocking up close - for the eye
 
@@ -98,6 +101,9 @@ check('an overcast sea reflects a grey sky: less blue than a sunny one', overcas
 // WATER-AUDIT (M5): the shore band holds BOTH sand and sea, and the pass wets only the sea's side of the feather -
 // a transposed table wets the wrong half, an inverted one wets the beach; the off shot's tile art is what stands on the sand
 check('the shore: the pass wets part of the band and not all of it, and more of it than the bare tiles', shore.wet > 0.2 && shore.wet < 0.8 && shore.wet > shoreOff.wet + 0.1, `wet ${(shore.wet * 100).toFixed(1)}% vs off ${(shoreOff.wet * 100).toFixed(1)}%`);
+// WATER5: the mask view paints exactly the art's water - all of the open sea, part of the shore band, and nothing of the sky
+check('the mask view: the whole sea, part of the shore, none of the sky', seaMask.magenta > 0.9 && shoreMask.magenta > 0.05 && shoreMask.magenta < 0.95 && diff(on, seaMask, 'sgrid') < 1,
+  `sea ${(seaMask.magenta * 100).toFixed(1)}% shore ${(shoreMask.magenta * 100).toFixed(1)}% sky |diff| ${diff(on, seaMask, 'sgrid').toFixed(2)}`);
 
 await browser.close();
 await server.close();

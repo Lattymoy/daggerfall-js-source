@@ -63,8 +63,10 @@ const grid = buildTerrainGrid(heightmap, 1);
 // WATER4: the lab's ART - the archive's bitmaps are not here, so each
 // record is painted at texel resolution from the corner table's own
 // shape (index 200 water, 1 dry; record 0 all water), and the art path
-// draws what the corner path drew - `?noart` keeps the corner table
+// draws what the corner path drew - `?noart` keeps the corner table;
+// WATER5: `?water=mask` paints the mask over the ground
 const artOn = !params.has('noart');
+const maskView = params.get('water') === 'mask';
 const artBitmaps = [];
 for (let r = 0; r < 64; r++) {
   const m = WATER_MASK_TABLE[r << 2];
@@ -156,6 +158,7 @@ function frame() {
       wind: [s * 0.8, s * 0.6],
       rain: Number($('rain').value),
       sky: { zenith: state.zenith, horizon: state.horizon },
+      debug: maskView,
     });
     for (const m of TILE_MATRICES) renderer.drawWaterSurface(water, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu, TERRAIN_TILE_DIM, artEntry);   // WATER4: the lab's art rides
   }
