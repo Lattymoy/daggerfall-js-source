@@ -66,6 +66,20 @@ export const PREF_DEFAULTS = Object.freeze({
   // default like the other enhanced visuals; off (or the classic skin)
   // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
   enhancedWater: true,
+  // TI2: THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
+  // element... camera movement, character movement and a more phone
+  // built feel"). The touch layer's own knobs - DFU has no touch input
+  // (Ledger A, TI1) so none of these is a DFU setting and none may go
+  // in the baked catalog. Read at the point of use by ui/touch.js; set
+  // from the Enhanced pane's Touch card, which mounts only where the
+  // device reports touch.
+  touchLookSensitivity: 1,   // a multiplier on the mouse sensitivity the drag already rides (0.25..4)
+  touchAnalogStick: true,    // the stick's throw is the speed (InputManager's joystick arm) - off is TI1's 8-way digital
+  touchStickAnchor: 'float', // 'float': the stick is born under the finger; 'fixed': it lives bottom-left and the finger's offset is the throw
+  touchGyroLook: false,      // fine aim from the phone's rotation, on top of the drag - opt-in (iOS asks permission)
+  touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
+  touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
+  touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',

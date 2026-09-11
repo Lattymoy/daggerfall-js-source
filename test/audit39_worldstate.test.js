@@ -395,7 +395,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
 
 test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell like its other three doors', () => {
   // WeaponManager.cs:244-263 hands the click to the ready spell before
-  // it handles any attack; touch.js:129 already promises the tap casts.
+  // it handles any attack; touch.js:221 already promises the tap casts.
   // TI1 (2026-09-05): the tap-to-attack button is gone - the touch
   // SWIPE is the attack now, and it carries the same gate in front of
   // the drag seam, held-edge only (a release must reach the rig).

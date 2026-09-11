@@ -5377,6 +5377,7 @@ export function createWorldModes(host) {
     if (!overlayHeld) questBridge?.tick(dt);
     const crouchHeld = held(keys, 'Crouch');   // I2: DFU's default C (was the port's X)
     const mv = moveHeld(keys);
+    mv.analog = host.stickAxes?.() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
     // AUDIT 28 W8: the axes advance only on frames the motor runs (a
     // held overlay is DFU's timeScale 0 - no climb, no friction).
     // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)

@@ -2934,6 +2934,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // never fires on an orphan).
     lockToggle: (foe) => lockOn.toggle(foe),
     unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
+    stickAxes: () => touch?.axes() ?? null,   // TI2: the modal frames' MoveAxes read the same stick
     // AUDIT 62 F16/F28: the MODAL frame's matrices, handed back. Both
     // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
     // unprojects through them at the top of the frame, and the lock dot
@@ -3074,7 +3075,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // search; an empty list means an owned house never resolves even
       // in its OWN town, so this host sold every deed for nothing
       // before F26's guard and would refuse every sale after it. Same
-      // two inputs the world host uses (world.js:6535).
+      // two inputs the world host uses (world.js:6536).
       buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
@@ -3633,6 +3634,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const _wasSwimming = !!player.swimming;   // OT1: the value the frame arrived with, read BEFORE the clear
       applyMotorEffectFlags(player, playerEntity);
       const mv = moveHeld(keys);
+      mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
       // held overlay is DFU's timeScale 0 - no climb, no friction).
       // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
@@ -4134,7 +4136,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7836-7910 is the shape.
+    // through the player for ever. world.js:7838-7912 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4345,7 +4347,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7979's order, and the order
+          // BEFORE civilians - world.js:7981's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
