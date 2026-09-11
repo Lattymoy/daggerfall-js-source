@@ -105,7 +105,8 @@ test('AUDIT 28 W7: all four hosts route all three look sites (mouse, touch, keyb
     assert.equal((s.match(/cam\.yaw \+= [^\n]*lookScale\(\)/g) || []).length, 0, `${host}: no raw delta reaches the camera`);
     // F-C1 moved the tick behind the paused gate; it still rides the
     // frame's dt, immediately after it.
-    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n(\s*\/\/[^\n]*\n)*\s*if \(![^\n]*\) \{\s*\n\s*if \([^\n]*\) lookFilter\.settle\(\);\s*\n\s*else lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
+    // GP1: the pad's own tick may stand between them - it takes the same dt and must run under a pause
+    assert.match(s, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);\n(\s*\/\/[^\n]*\n)*(\s*gamepad\?\.tick\(dt\);[^\n]*\n)?(\s*\/\/[^\n]*\n)*\s*if \(![^\n]*\) \{\s*\n\s*if \([^\n]*\) lookFilter\.settle\(\);\s*\n\s*else lookFilter\.tick\(dt, cam\);/, `${host}: the tick rides the frame's dt`);
     assert.match(s, /const lookFilter = new LookFilter\(\);/, `${host}: one filter per camera`);
   }
 });

@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1771 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:916, world.js:1638,
-                        exterior.js:1983. It is the only window TWO
+                        dungeonContext.js:916, world.js:1639,
+                        exterior.js:1984. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1677, dungeonContext.js:3341. A seam
+    / NOTEBOOK          world.js:1678, dungeonContext.js:3341. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7854,7 +7854,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1940 and
+questJournal.js from charSheetNav:53, world.js:1941 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9189,7 +9189,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:513`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:619`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -9725,9 +9725,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:5029`,
+the other half went stale unnoticed. (The rest cite named `world.js:5030`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:5035` now.)
+deleted the second and the cite is `world.js:5036` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -9901,7 +9901,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:268-269`. Either order collapses the
+port carries it at `inputActions.js:329-330`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -9912,7 +9912,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:385-395`, whose own comment already said
+- ported at `inputActions.js:468-478`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -11999,3 +11999,89 @@ law, the dial is the escape for a machine that cannot hold it.
 **Pinned** in `test/perf1.test.js` (3). Not a Ledger row: no game law
 moves; the field and the march are the port's own and were already
 recorded.
+
+## GP1 - THE GAMEPAD LAYER (2026-09-11)
+
+**Mac: "Lets tackle the buildable now."** The one input surface the
+port lacked. `InputManager.cs` reads a controller through Unity's
+sixteen named joystick axes and twenty joystick buttons: four AXIS
+ACTIONS bound to axis names (the left stick to movement, the right to
+the camera, :306-312, :1034-1037), four JOYSTICK UI ACTIONS bound to
+buttons (A left-click, Y right-click, X middle-click, B back, :314-320,
+:1039-1042), and any ordinary Action bindable to a button or to an
+AXIS KEY - a synthetic KeyCode from 5000 up, two per axis, the
+positive half "JoystickAxisNButton0" and the negative "...Button1"
+(:33, :1743-1766, polled at :1655-1664).
+
+**The law** is `systems/gamepad.js`, pure. `unityAxes` and
+`unityButtons` lay the browser's standard-mapping pad out as Unity on
+Windows does (sticks on Axis1/2 and 4/5 with the asset's `invert: 1`
+on the Y axes so up is positive, the triggers on Axis3 combined and
+9/10 apart, the d-pad on 6/7; face, bumpers, back/start and stick
+clicks as JoystickButton0-9), with `InputManager.asset`'s `dead: 0.19`
+applied as the clip it is. `movementAxes` is FindInputAxisActions
+(:1872-1928): nothing inside the radial JoystickDeadzone, else each
+axis ±dist where dist is the throw over JoystickMovementThreshold
+capped at 1 - the diagonal FULL on both, not a unit vector - with the
+four move actions raised and MoveBackwards clearing autorun.
+`cameraAxes` is Update :525-540; `controllerLookDegrees` is
+PlayerMouseLook.ApplyLook :114-122 - axis × the serialized
+sensitivity of 2 × JoystickLookSensitivity × 60 × dt, in degrees, so a
+full stick at 1.0 turns 120° a second at any frame rate and the mouse
+setting plays no part; `controllerSmoothing` is ApplySmoothing's floor
+of 0.5 (:159-160); `uiScrollMovement` and `cursorStep` carry
+GetUIScrollMovement and UpdateControllerCursorPosition for the cursor
+slice to come.
+
+**The store.** The bindings store grew DFU's three joystick dicts
+(axis name → action, action → inverted, button code → UI action) with
+their setters on DFU's single-bind law (SetAxisBinding :763-776 clears
+the action's old axis then takes the axis from whoever held it),
+ResetDefaults' tail (:1034-1047, the autofill filling only a MISSING
+action - and through the same steal, so a moved stick loses its axis
+to a missing default: DFU's own quirk, pinned as such) and the three
+KeyBindData_v1 blocks (:876-922 out, :1995-2035 in, an unknown name
+dropped where Enum.Parse would throw). `isUsedInAxisBinding` is
+:941-950.
+
+**The poller** is `ui/gamepadInput.js`, on the same hooks object the
+touch layer takes - one per host, `inputHooks`. Every frame, before
+the paused gate so a window still sees Back and a lifted thumb still
+releases: a button's edge is a synthetic KeyboardEvent whose code is
+the Unity name, so the hosts' held-keys Sets fill and `held(keys,
+action)` resolves through the registry with no host change - rebind
+Jump to JoystickButton0 in the grid and it jumps; every bound axis key
+is polled by GetAxisKey's law and edged the same way; the movement
+stick presses the codes its four actions are bound to (as the touch
+stick does) and hands its ±dist throw to MoveAxes through the seam
+TI2 opened (`mv.analog`, the finger's stick first); the camera stick
+pays its degrees into the host's look hook in the hook's own units,
+so the LookFilter, the pitch clamp, the invert and the pause gate are
+the mouse's; the three click actions are Mouse0/Mouse1/Mouse2 in the
+held set (GetMouseButton's OR, :1050-1063 - activate, swing, autorun
+by default), a held swing riding the camera stick through the attack
+hook as the swipe does on a phone; Back is the Escape action's code
+while a window is up (GetBackButtonDown :1065-1068) and nothing in the
+world. `UsingController` (:1536-1546): a stick past the dead zone
+makes the pad the live device and a mouse move takes it back; while it
+is live the look filter's fraction never drops below 0.5. Every code
+the layer presses it releases when the pad goes, the setting turns
+off, or the layer is disposed.
+
+**The tiers.** `Controls/EnableController` and the four Joystick keys
+leave the launcher's UNAVAILABLE shelf for LIVE, read each frame by
+`controllerSettings()`; `Settings-Screen-Spec.md` follows.
+
+**What stands** is the WINDOW and the CURSOR, and the flag at
+`systems/inputActions.js` says so: `DaggerfallJoystickControlsWindow`
+(the JOYSTICK tab still answers with a note, now "The pad plays (GP1);
+its window is next") and the controller cursor in windows
+(UsingController's drawn cursor and GetMouseButton at its position,
+:556-573, :1518-1570) - a window takes the mouse, the keyboard and the
+Back button only. The Ledger row (`:609`) carries the narrowing.
+
+**Pinned** in `test/gamepad.test.js` (8): the axis keys, the pad in
+Unity's frame, the stick, the camera, the store's round trip with an
+older file and an unknown name, the poller against a fake pad and a
+captured dispatch, the filter's floor, the four hosts and the tiers.
+Not a departure: every number is DFU's.

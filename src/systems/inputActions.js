@@ -15,6 +15,8 @@ import { appStorage } from './appStorage.js';   // DA1: the storage seam
 /** InputManager.Actions (:324-384), names and ORDER verbatim.
  *  'Unknown' (:383) is the parse sentinel, not a bindable action -
  *  parseActionName answers it, the list does not carry it. */
+import { AXIS_ACTIONS, JOYSTICK_UI_ACTIONS, DEFAULT_AXIS_BINDINGS, DEFAULT_JOYSTICK_UI, axisOfKey, parseAxisKeyName } from './gamepad.js';   // GP1: the joystick dicts' vocabulary
+
 export const ACTIONS = Object.freeze([
   'Escape', 'ToggleConsole',
   'MoveForwards', 'MoveBackwards', 'TurnLeft', 'MoveLeft', 'TurnRight', 'MoveRight',
@@ -255,8 +257,67 @@ export function createBindings() {
     removedPrimary: new Set(),   // :87 - "don't autofill this default back"
     unknown: new Map(),
     secondaryUnknown: new Map(),
+    // GP1: the joystick dicts (:83-92) - axis name -> AxisAction,
+    // AxisAction -> inverted, button code -> JoystickUIAction
+    axisActions: new Map(),
+    axisInversions: new Map(),
+    joystickUI: new Map(),
   };
 }
+
+// ── GP1: the joystick dicts (InputManager.cs :677-700, :761-800, :814-870, :931-939) ──
+
+/** GetAxisBinding: the axis name bound to an AxisAction, or ''. */
+export function getAxisBinding(store, action) {
+  for (const [axis, a] of store.axisActions) if (a === action) return axis;
+  return '';
+}
+/** GetJoystickUIBinding: the button code bound to a UI action, or null (KeyCode.None). */
+export function getJoystickUIBinding(store, action) {
+  for (const [code, a] of store.joystickUI) if (a === action) return code;
+  return null;
+}
+/** ClearAxisBinding(action) (:827-832). */
+export function clearAxisBinding(store, action) {
+  touched(store);
+  for (const [axis, a] of [...store.axisActions]) if (a === action) store.axisActions.delete(axis);
+}
+/** ClearAxisBinding(code) (:816-822): by axis name. */
+export function clearAxisBindingByAxis(store, axis) { touched(store); store.axisActions.delete(axis); }
+/** ClearJoystickUIBinding(action) (:862-867). */
+export function clearJoystickUIBinding(store, action) {
+  touched(store);
+  for (const [code, a] of [...store.joystickUI]) if (a === action) store.joystickUI.delete(code);
+}
+/** ClearJoystickUIBinding(code) (:851-856). */
+export function clearJoystickUIBindingByCode(store, code) { touched(store); store.joystickUI.delete(code); }
+/** SetAxisBinding (:763-776): "Not allowing multi-bind" - the action's
+ *  old axis is cleared first, then the axis takes the action (stealing
+ *  it from whatever the axis held). */
+export function setAxisBinding(store, axis, action) {
+  clearAxisBinding(store, action);
+  store.axisActions.delete(axis);
+  store.axisActions.set(axis, action);
+}
+/** SetJoystickUIBinding (:779-792): the same shape on the button dict. */
+export function setJoystickUIBinding(store, code, action) {
+  clearJoystickUIBinding(store, action);
+  store.joystickUI.delete(code);
+  store.joystickUI.set(code, action);
+}
+/** GetAxisActionInversion (:931-934): unset is false. */
+export const getAxisInversion = (store, action) => store.axisInversions.get(action) === true;
+/** SetAxisActionInversion (:936-939). */
+export function setAxisInversion(store, action, invert) { touched(store); store.axisInversions.set(action, !!invert); }
+/** IsUsedInAxisBinding (:941-950): is this synthetic axis key's axis one
+ *  of the four bound axes - the controls grid refuses such a key. */
+export function isUsedInAxisBinding(store, code) {
+  const axis = axisOfKey(parseAxisKeyName(code) ?? -1);
+  return !!axis && [...store.axisActions.keys()].includes(axis);
+}
+// TestSetAxisBinding / TestSetJoystickUIBinding (:1427-1444): only if the action is missing
+function testSetAxisBinding(store, axis, action) { if (!getAxisBinding(store, action)) setAxisBinding(store, axis, action); }
+function testSetJoystickUIBinding(store, code, action) { if (getJoystickUIBinding(store, action) == null) setJoystickUIBinding(store, code, action); }
 
 /** SetBinding (:727-758). The order is the law: steal the code from
  *  the OTHER dict first, then clear this dict's old code for the
@@ -354,6 +415,16 @@ export function resetDefaults(store, autofill = false) {
     ? (code, action) => testSetBinding(store, code, action, true)
     : (code, action) => setBinding(store, code, action, true);
   for (const [code, action] of DEFAULT_BINDINGS) set(code, action);
+  // GP1: the joystick tail (:1034-1047). A full reset SETS the four
+  // axes and four buttons over whatever stood (SetAxisBinding clears
+  // the action's old axis, so a stick moved to Axis3 comes home); an
+  // autofill fills only a MISSING action. The inversions: false unless
+  // autofill and the file already said.
+  const setAxis = autofill ? (a, x) => testSetAxisBinding(store, a, x) : (a, x) => setAxisBinding(store, a, x);
+  const setUI = autofill ? (c, x) => testSetJoystickUIBinding(store, c, x) : (c, x) => setJoystickUIBinding(store, c, x);
+  for (const [axis, action] of DEFAULT_AXIS_BINDINGS) setAxis(axis, action);
+  for (const [code, action] of DEFAULT_JOYSTICK_UI) setUI(code, action);
+  for (const action of AXIS_ACTIONS) if (!autofill || !store.axisInversions.has(action)) setAxisInversion(store, action, false);
 }
 
 /** SaveKeyBinds' KeyBindData_v1 (:871-930), minus the axis/joystick
@@ -372,10 +443,22 @@ export function serializeKeyBinds(store) {
   for (const [code, name] of store.secondaryUnknown) {
     if (!(code in secondaryActionKeyBinds)) secondaryActionKeyBinds[code] = name;
   }
+  // GP1: the three joystick blocks (:876-879, :915-922) - the axis
+  // dict as it stands, the inversions as "True"/"False" strings, the
+  // UI buttons by their key string
+  const axisActionKeyBinds = {};
+  for (const [axis, action] of store.axisActions) axisActionKeyBinds[axis] = action;
+  const axisActionInversions = {};
+  for (const [action, inv] of store.axisInversions) axisActionInversions[action] = inv ? 'True' : 'False';
+  const joystickUIKeyBinds = {};
+  for (const [code, action] of store.joystickUI) joystickUIKeyBinds[code] = action;
   return {
     actionKeyBinds,
     secondaryActionKeyBinds,
     removedPrimaryActions: [...store.removedPrimary],
+    axisActionKeyBinds,
+    axisActionInversions,
+    joystickUIKeyBinds,
   };
 }
 
@@ -412,13 +495,36 @@ export function loadKeyBinds(store, data) {
       if (!bound) store.removedPrimary.add(action);
     }
   }
+  // GP1: the joystick blocks (:1995-2035). Each is a raw map-set that
+  // keeps the first of two bindings to one key, as the action dicts
+  // load; a block absent from an older file is simply empty (the
+  // autofill that follows every load fills it), and an unknown
+  // AxisAction or UI action name is dropped - Enum.Parse would throw
+  // there, and a thrown load is a file that never loads again.
+  if (data.axisActionKeyBinds && typeof data.axisActionKeyBinds === 'object') {
+    touched(store);
+    for (const [axis, action] of Object.entries(data.axisActionKeyBinds)) {
+      if (AXIS_ACTIONS.includes(action) && !store.axisActions.has(axis)) store.axisActions.set(axis, action);
+    }
+  }
+  if (data.joystickUIKeyBinds && typeof data.joystickUIKeyBinds === 'object') {
+    touched(store);
+    for (const [code, action] of Object.entries(data.joystickUIKeyBinds)) {
+      if (JOYSTICK_UI_ACTIONS.includes(action) && !store.joystickUI.has(code)) store.joystickUI.set(code, action);
+    }
+  }
+  if (data.axisActionInversions && typeof data.axisActionInversions === 'object') {
+    for (const [action, v] of Object.entries(data.axisActionInversions)) {
+      if (AXIS_ACTIONS.includes(action)) setAxisInversion(store, action, v === 'True');
+    }
+  }
 }
 
 // ── persistence ─────────────────────────────────────────────────────
 // DFU keeps KeyBindings.txt BESIDE settings.ini, its own file with its
 // own serializer (GetKeyBindsSavePath) - so the port keeps its own
 // localStorage key beside the settings store's, same try/catch shield
-// as systems/settings.js:150.
+// as systems/settings.js:156.
 const STORAGE_KEY = 'dagger.keybinds';
 
 // DA1: the storage seam - localStorage in a browser, the desktop
@@ -540,10 +646,20 @@ export function endFrame(state) {
 // test/a8_combos.test.js' two-modifier pair. (test/combohosts.test.js
 // is AUDIT 58's sweep of the Set ARGUMENT and carries neither claim.)
 //
+// GP1 (2026-09-11) PORTED THE AXES AND THE JOYSTICK: AxisActions and
+// JoystickUIActions live on this store (the three dicts above, their
+// setters and the KeyBindData_v1 blocks), systems/gamepad.js holds
+// InputManager's stick and axis-key law, and ui/gamepadInput.js polls
+// the browser's pad into every host's held-keys Set.
 // STILL FLAGGED:
-//  - AXES + JOYSTICK (AxisActions, JoystickUIActions): no gamepad
-//    layer in the port; the serialized blocks are simply absent here,
-//    and loadKeyBinds ignores them in a DFU-written file.
+//  - THE JOYSTICK CONTROLS WINDOW (DaggerfallJoystickControlsWindow.cs,
+//    the JOYSTICK tab's destination: the four axis rows with their
+//    invert boxes, the four UI buttons, the sensitivity sliders) is
+//    not built; the tab answers with a note (ui/controlsWindow.js).
+//  - THE CONTROLLER CURSOR in windows (UsingController's drawn cursor
+//    and GetMouseButton at its position, InputManager.cs:556-573,
+//    :1518-1570) is not built: a window takes the mouse, the keyboard
+//    and the Back button only.
 //  - The port's own standing key departures (C cast, X crouch,
 //    E activate, V view) reconcile against this table in I2, each
 //    becoming an adoption or a Ledger-A row - not here.

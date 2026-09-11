@@ -365,7 +365,7 @@ test('G6: the JOYSTICK tab still answers with its note, and the grid still owns 
   const cw = new ControlsWindow({});
   cw.click(TAB_RECTS.joystick[0] + 1, TAB_RECTS.joystick[1] + 1);
   assert.equal(cw.top, 'note');
-  assert.deepEqual(cw._noteRows, ['The port has no gamepad layer (Ledger).']);
+  assert.deepEqual(cw._noteRows, ['The pad plays (GP1); its window is next (Ledger).']);
   assert.equal(cw.advancedOpen, false);
   // ...and the grid's own close is what disposes the popup, AFTER the
   // save that pays its settings out.

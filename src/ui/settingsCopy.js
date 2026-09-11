@@ -261,11 +261,6 @@ export const READOUT = Object.freeze({
   'Video/ResolutionHeight': 'your window',
   'Video/ExclusiveFullscreen': 'browser',
   'Video/Fullscreen': 'browser',
-  'Controls/EnableController': 'no gamepad',
-  'Controls/JoystickLookSensitivity': 'no gamepad',
-  'Controls/JoystickCursorSensitivity': 'no gamepad',
-  'Controls/JoystickMovementThreshold': 'no gamepad',
-  'Controls/JoystickDeadzone': 'no gamepad',
 });
 
 /** The sentence that says what you get INSTEAD - shown in the detail
@@ -283,11 +278,6 @@ export const INSTEAD = Object.freeze({
   'Video/ResolutionHeight': 'The picture already fills the window you give it.',
   'Video/ExclusiveFullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
   'Video/Fullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
-  'Controls/EnableController': 'Keyboard, mouse and touch all work today.',
-  'Controls/JoystickLookSensitivity': 'Keyboard, mouse and touch all work today.',
-  'Controls/JoystickCursorSensitivity': 'Keyboard, mouse and touch all work today.',
-  'Controls/JoystickMovementThreshold': 'Keyboard, mouse and touch all work today.',
-  'Controls/JoystickDeadzone': 'Keyboard, mouse and touch all work today.',
 });
 
 /** The one-line status a row's tier earns, shown in the help panel. */

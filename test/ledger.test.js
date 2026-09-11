@@ -240,9 +240,9 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
   assert.ok(cite, 'the joystick row must point at the flag that carries the owner decision');
   const ia = readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8').split('\n');
   const cited = ia.slice(Number(cite[1]) - 1, Number(cite[2])).join('\n');
-  assert.match(cited, /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
-    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it`);
-  assert.match(cited, /loadKeyBinds ignores them in a DFU-written file/,
+  assert.match(cited, /THE JOYSTICK CONTROLS WINDOW \(DaggerfallJoystickControlsWindow\.cs,/,
+    `the Ledger cites the gamepad flag at inputActions.js:${cite[1]}-${cite[2]}, which is not it (GP1 narrowed it to the window and the cursor)`);
+  assert.match(cited, /a window takes the mouse, the keyboard\n\s*\/\/\s*and the Back button only/,
     'the cited range must hold the WHOLE flag, not its first line');
   // ROAD-G G6 (2026-09-04) BUILT the other one, so this half flipped
   // from "recorded against section A" to "shipped": the row must strike
@@ -260,10 +260,10 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
     /this\.advanced \?\?= new MouseControlsWindow\(this\.unsaved\);/,
     'the ADVANCED tab must still reach it, on the grid\'s own staged dicts');
   assert.match(readFileSync(join(ROOT, 'src/systems/inputActions.js'), 'utf8'),
-    /AXES \+ JOYSTICK \(AxisActions, JoystickUIActions\)/,
-    'the Ledger cites the gamepad flag at inputActions.js; the flag must still be there');
+    /THE JOYSTICK CONTROLS WINDOW \(DaggerfallJoystickControlsWindow\.cs,/,
+    'the Ledger cites the gamepad flag at inputActions.js; GP1 narrowed it to the window and the cursor, and the flag must still be there');
   assert.match(readFileSync(join(ROOT, 'src/ui/controlsWindow.js'), 'utf8'),
-    /The port has no gamepad layer \(Ledger\)\./,
+    /The pad plays \(GP1\); its window is next \(Ledger\)\./,
     'the JOYSTICK tab note that sends the reader to this row must still be there');
 });
 
@@ -328,7 +328,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
     'and world.js holds no third wire outside it');
 
   // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
-  // `world.js:380-383` - four lines of the ROADS 3/22 comment block - from
+  // `world.js:381-384` - four lines of the ROADS 3/22 comment block - from
   // the day it was written, and the pin above re-derived the no-gate fact
   // without ever reading the number, so the one pointer a reader is sent to
   // could name anything. The cite is now sliced and checked.

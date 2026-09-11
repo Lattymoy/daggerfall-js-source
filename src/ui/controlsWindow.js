@@ -21,8 +21,8 @@
 //   ADVANCED opens DaggerfallUnityMouseControlsWindow over this one
 //   (ROAD-G G6, ui/mouseControlsWindow.js), sharing THESE staged dicts
 //   exactly as DFU's two windows share ControlsConfigManager.Instance;
-//   JOYSTICK still answers with a note, because the port has no
-//   gamepad layer at all (Ledger). DFU paints the ADVANCED tab with an
+//   JOYSTICK still answers with a note: GP1 made the pad play, and
+//   the window that binds its axes is the next slice (Ledger). DFU paints the ADVANCED tab with an
 //   "advanced_controls_button" texture out of its own Resources folder
 //   (:114-120); the port has no DFU asset bundle, so the tab is the
 //   bare CNFG00I0 rect - ui/travelPopUp.js's shape, recorded, and not
@@ -335,7 +335,7 @@ export class ControlsWindow {
     }
     if (inRect(TAB_RECTS.joystick, vx, vy)) {
       this._click(); this.top = 'note';
-      this._noteRows = ['The port has no gamepad layer (Ledger).'];
+      this._noteRows = ['The pad plays (GP1); its window is next (Ledger).'];
       return true;
     }
     if (inRect(TAB_RECTS.advanced, vx, vy)) {

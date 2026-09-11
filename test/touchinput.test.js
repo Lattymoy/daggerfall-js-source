@@ -260,7 +260,7 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
 test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-cam interior wires none (mutant: any hook dropped)', () => {
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(h);
-    assert.match(s, /const touch = attachTouch\(canvas, \{/, `${h}: the layer's handle is kept for the dot`);
+    assert.match(s, /const inputHooks = \{[\s\S]*?const touch = attachTouch\(canvas, inputHooks\);/, `${h}: the layer's handle is kept for the dot (GP1: the hooks are one object the pad shares)`);
     assert.match(s, /\n\s*attack: \(dx, dy, held\) =>/, `${h}: the swipe hook`);
     assert.match(s, /\n\s*tap: \(x, y\) =>/, `${h}: the tap hook`);
     assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
