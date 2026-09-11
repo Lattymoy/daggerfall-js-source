@@ -87,7 +87,7 @@ test('pickpocket: the verbatim chance clamp and the three outcomes', () => {
   // ROAD-D D10: DFU raises a real parchment for BOTH success arms
   // (PlayerActivate.cs:1630 and :1645) and leaves only the failure on
   // the HUD (:1650 PopupMessage) - the port printed all three as HUD
-  // lines. scenes/townTalk.js:533 routes on this flag.
+  // lines. scenes/townTalk.js:535 routes on this flag.
   assert.equal(r1.modal, true, 'DaggerfallUI.MessageBox(gotGold)');
   // Success + nothing valuable: the 33 roll PASSES (.10 -> 10 < 33)
   const p2 = { level: 1, skills: 50, items: [] };

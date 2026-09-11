@@ -11,7 +11,7 @@ import { PERSON_FACE_RECORDS, PERSON_TEXTURES, NUM_PERSON_FACE_VARIANTS } from '
  *  DOUBLE_CLICK_DELAY_MS, with the clock injected. */
 const dblClick = (w, x, y) => {
   // AUDIT 65 UI-1: the host's shape is `click(vx, vy, right, middle)`
-  // (townTalk.js:1123) - the clock is the window's own `_now()` seam,
+  // (townTalk.js:1132) - the clock is the window's own `_now()` seam,
   // never a positional, so the pair is stepped on the SEAM.
   let t = 1000;
   w._now = () => t;
@@ -143,7 +143,7 @@ test('D10: UpdateQuestion runs on SELECTION - group rows clear the label, item r
 test('AUDIT 65 UI-1: the talk window takes the HOST\'s four-argument click - the 4th slot is `middle`, not a clock', () => {
   // townTalk.js:777 mounts NativeTalkWindow into the same overlay slot
   // every other window uses, and every slot dispatches
-  // `click(vx, vy, right, middle)` - townTalk.js:1123,
+  // `click(vx, vy, right, middle)` - townTalk.js:1132,
   // worldModes.js:7151, dungeonContext.js:4924. The double-click clock
   // used to occupy that fourth positional, so `e.button === 1` arrived
   // as `now`, `false ?? Date.now()` kept the `false`, and

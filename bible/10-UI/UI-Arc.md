@@ -6139,7 +6139,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:603, :586`), and both exterior hosts called it
+  overlay (`townTalk.js:605, :586`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -10144,7 +10144,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:548-574`), so in the art-less greeting chain a tone
+  (`townTalk.js:550-576`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -12249,3 +12249,77 @@ Enhanced category's rows). Records: `Settings-Screen-Spec.md` is
 marked superseded; the launcher's Ledger row and the colour picker's
 say DELETED; `tools/enhancedMenuProbe.mjs` checks the classic rail and
 Begin's data gate.
+
+## ET1 - THE ENHANCED TALK PANEL (2026-09-11)
+
+**Mac: "Let's now work on the rest of the unbuilt enhanced UI starting
+with the talk menu. My goal is to transform it into a rectangular
+panel akin to Fallout/Skyrim instead of a full screen menu."**
+
+**The panel.** Under the enhanced skin a conversation is a framed
+rectangle along the bottom of the view with the world - and the
+person - still standing behind it: no scrim, no 320x200 page. The
+frame is the pause window's (`.px-win`, PX3), so it reads as the same
+family. The head carries the NPC's portrait (the same TFAC00I0 /
+FACES.CIF record SetNPCPortrait chose, painted as pixels into a
+`<canvas>` from the buffer the classic face's texture was decoded
+from - one decode, two faces) and name, the three tones as a
+segmented control, and Goodbye. The main body is the conversation on
+the left - answers in bone, the player's questions on the right in
+DFU's question blue, the selected entry ruled in brass, a copied one
+marked "noted" - and the topics on the right: the two modes, the four
+categories (greyed under Tell me about as TALK02I0 greys them), and
+the list, with a way back to the category list on a category page
+(DFU's own NavigationBack row, which the port's flattened tree
+drops). The foot is the player-says line - the pending question at
+the current tone - with ASK and the logbook's Note button (right-click
+copies the whole conversation, the classic's right arm). On a phone
+the columns stack and the panel takes the width.
+
+**One model, two faces.** `ui/talkDoor.js` is the seventh door of the
+shape the pause, the pack, the sheet, the spellbook, the chronicle and
+the travel map wear, with one difference: it builds the CLASSIC
+window on both skins. `NativeTalkWindow` is where DFU's conversation
+law lives - the pages, the selection model, the toneLastUsed guard,
+the Q/A pair, the logbook's copy set and the OnPop note - and the
+panel (`ui/enhancedTalk.js`) is a second FACE over that same object.
+To make that honest the classic window's `click()` was split: the
+rect hit-test walks `BUTTON_ORDER` and lands on `press(name)`, the
+one handler per button (its sound, its greyed-category gate, its
+arm), and three index arms (`selectTopic`, `useTopic`,
+`selectConversation`) are the listboxes' own MouseClick /
+MouseDoubleClick laws. The panel presses names and draws the model's
+state; its `draw()` is never called. `test/enhancedTalk.test.js`
+drives one window by rect and another by name through a 23-step
+script over the whole surface and holds them equal after every step,
+down to the note filed on close.
+
+**Keys.** The host routes raw codes to the door (a ChoiceWindow) and
+the door maps them. The classic accelerators stand - Escape and E
+goodbye, W where-is, T cycles tone, digits use a row. TWO ARE OURS:
+Enter ASKS the selected topic and the arrows move the selection (left
+and right step the tone); Enter closing a dialogue panel is the one
+thing a Skyrim player never expects, and the classic's Enter-closes
+was the interim ChoiceWindow's key kept alive. A press on a topic row
+SELECTS it and a press on the lit row USES it - the classic's
+double-click clock read off the selection, because a double tap on a
+phone is a zoom.
+
+**The gesture.** The panel's Goodbye is a DOM click, not a press on
+the canvas, so the host's pointerdown never relocks after it (MAC1's
+lesson); townTalk hands the door a `relock` that requests the lock
+inside the closing gesture, gated on nothing standing under the
+conversation - the guild popup's TALK pushes, and its popup wants the
+cursor back. A press on the world beside the panel is consumed, never
+a pointer grab. Tab (PX28) says goodbye THROUGH the model, so the note
+is filed and the session's onClose fires; a replaced window (the
+host's dispose) only clears the DOM, as the classic fires nothing on
+replacement.
+
+**What it reads.** The style sheet and the portrait pixels. No
+TALK01I0, no strips: the door's readiness under the enhanced skin is
+unconditional, so a conversation opens before the classic art lands.
+The topic list's PixelWise scroll and horizontal pan (AUDIT 58) are the
+classic face's answers to a 94-pixel box; a DOM list scrolls itself
+and a long topic wraps, so the model's scroll fields go unread by the
+panel and the digit accelerators count from the top of the list.

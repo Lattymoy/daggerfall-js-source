@@ -815,7 +815,7 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   //
   // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
   // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
-  // - townTalk.js:1123, worldModes.js:7151, dungeonContext.js:4924 -
+  // - townTalk.js:1132, worldModes.js:7151, dungeonContext.js:4924 -
   // so the clock is stubbed on the window's OWN `_now()` seam, not
   // handed to a positional the hosts already fill with a button.
   // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`

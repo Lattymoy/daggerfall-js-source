@@ -9,9 +9,9 @@
 // (258,18/28/38), the selection a flat toggleColor fill (:63-65,
 // :545-547) - so there IS no text row to find and the probe failed on
 // a window that was working. The DRIVE is unchanged, because the keys
-// are: KeyT is the tone cycle (nativeTalk.js:460), KeyW opens the
+// are: KeyT is the tone cycle (nativeTalk.js:484), KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
-// What moved is what is READ: `native` (townTalk.js:1313, true only
+// What moved is what is READ: `native` (townTalk.js:1322, true only
 // when the art window is up), `tone`, and the ABSENCE of
 // `overlayOptions` - which is the positive statement that the window
 // under the keys is the native one and not the keyed fallback.

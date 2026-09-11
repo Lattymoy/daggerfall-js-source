@@ -527,7 +527,7 @@ export class ExteriorAutomapWindow {
   constructor(deps) {
     this.deps = deps;
     this.done = false;
-    // The raw-code seam townTalk.js:316 forks on, the same one the
+    // The raw-code seam townTalk.js:318 forks on, the same one the
     // dungeon window takes (automapWindow.js:498) - it is that fork's
     // switch, not a semantic claim about choice windows, and without it
     // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,

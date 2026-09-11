@@ -68,7 +68,9 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
 import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
-import { NativeTalkWindow, preloadTalkArt, talkArtLoaded, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
+import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
+import { createTalkWindow, talkDoorReady } from '../ui/talkDoor.js';   // ET1: the ONE door - the classic window or the enhanced panel over it
+import { requestLook } from '../player/pointerLock.js';   // ET1: the panel's Goodbye relocks inside its own gesture (MAC1)
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
 import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
 
@@ -773,8 +775,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // no-op here and the row is the string.
     if (sup) { showOverlay(new ActionTextBox([sup.text])); return; }
     const eng = engine();
-    if (talkArtLoaded() && directory.length) {
-      mount(new NativeTalkWindow(greeting, {
+    // ET1: the door's readiness is the skin's - the panel needs no art.
+    if (talkDoorReady() && directory.length) {
+      mount(createTalkWindow(greeting, {
         categories: () => treeCategories() ?? localCategories(),
         // B5-6: the OTHER pages, off the engine's own lists - the
         // whole reason they were blockers is that the tree computed
@@ -813,6 +816,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // no-op, which is this port's established shape for a
         // hook-less host.
         copyToNotebook: (tokens) => _notebookSink?.(tokens),
+        // ET1: the enhanced panel's Goodbye is a DOM click, not a press
+        // on the canvas, so the host's pointerdown never relocks after
+        // it; the panel asks here, inside its gesture (MAC1), and only
+        // when nothing is left standing under the conversation - the
+        // popup's TALK (push) returns to a popup that wants the cursor.
+        relock: () => { let under = 0; windows.eachCoveredWindow(() => { under++; }); if (!under) requestLook(canvas); },
       }), onClosed);   // AUDIT 63 F44: the popup's TALK leaves its window standing under the conversation
       return;
     }
