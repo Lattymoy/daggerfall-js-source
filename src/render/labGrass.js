@@ -249,6 +249,32 @@ export function grassCellSeed(cx, cz, seed = LAB_GRASS.seed) {
   return (h || 1) >>> 0;
 }
 
+/** PERF8: THE PIECE UNDER A POINT, BY ARITHMETIC. The placer asks
+ *  `keep(x, z)` and `ground(x, z)` once per blade - six thousand a
+ *  cell, two cells a frame while the eye walks - and each answered by
+ *  scanning every streamed pixel for the one whose square holds the
+ *  point: fifty pixels, three hundred thousand bounds tests a cell. The
+ *  pixels are a grid: every translation is a whole number of
+ *  TERRAIN_SIZE from every other (streamingWorld.pixelTranslation adds
+ *  one shared compensation to `(px - origin) * TERRAIN_SIZE`), so the
+ *  pixel under a point is one floor away from any reference piece.
+ *  Same answer as the scan - the squares do not overlap and a point
+ *  outside every piece is null either way - at one Map read.
+ *  @param {Array<{p:{px:number,py:number}, t:number[]}>} pieces the near pixels with their translations
+ *  @param {number} size TERRAIN_SIZE
+ *  @returns {(x:number, z:number) => object|null} the piece holding (x, z), or null */
+export function pieceIndex(pieces, size) {
+  if (!pieces.length) return () => null;
+  const ref = pieces[0];
+  const byKey = new Map();
+  for (const piece of pieces) byKey.set(`${piece.p.px},${piece.p.py}`, piece);
+  return (x, z) => {
+    const px = ref.p.px + Math.floor((x - ref.t[0]) / size);
+    const py = ref.p.py - Math.floor((z - ref.t[2]) / size);   // z runs the other way: t[2] = -(py - origin) * size + c
+    return byKey.get(`${px},${py}`) ?? null;
+  };
+}
+
 /** How many blades a cell holds, from the lab's density over its span. */
 export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.span, cell = GRASS_CELL) =>
   Math.max(1, Math.round(density * (cell * cell) / ((span * 2) * (span * 2))));

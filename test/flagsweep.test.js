@@ -11,7 +11,7 @@
 // judgement call; it is DELEGATING, and the delegation is checkable:
 // the named file must carry a flag. world.js sent the reader to a
 // flag in systems/healthStatus.js that ST1 had shipped away, and
-// world.js:1699 sent them to one in dungeonContext.js that had never
+// world.js:1700 sent them to one in dungeonContext.js that had never
 // been written at all - which is the worse of the two, because the
 // work is real and the ledger could not see it.
 import { test } from 'node:test';

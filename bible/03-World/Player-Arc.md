@@ -1686,7 +1686,7 @@ at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
 `host` (`worldModes.js:356`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:5150-5151`,
+and both of whose WINDOW-level handlers (`world.js:5151-5152`,
 `exterior.js:2512-2513`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:281`), which is the shipped
