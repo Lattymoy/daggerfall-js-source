@@ -1275,3 +1275,27 @@ four thousand random points in the test. The two closures keep their
 bodies and lose their loops.
 
 **Pinned** in `test/perf8.test.js` (2). Not a departure.
+
+## PERF9 - THE PERFORMANCE PROBE (2026-09-11)
+
+PERF1 to PERF8 were read out of the frame with no GPU and no ARENA2 in
+the room: each was argued from the code and pinned against its mutant,
+none was measured. The probe closes that. `npm run perf` (with
+ARENA2_PATH set) boots the real game under Vite and Playwright on the
+?shot door with the FPS counter armed, for three scenes - Daggerfall
+city, a random road spawn, and Privateer's Hold - waits until the
+stream says the scene has settled, discards the settling second, and
+then reads the counter's OWN numbers once a second: frames a second,
+frame ms and worst, script ms and worst, draws and texture binds a
+frame. The counter exposes them at `window.__fpsStats()` whether or
+not its overlay shows; the overlay is still written only while it
+does (FPS1's law). `HEADED=1` runs on the machine's GPU, which is the
+number that matters; headless runs on SwiftShader, whose numbers are
+only relative to each other. `OUT=perf.json` appends the rows so a
+before and an after sit in one file.
+
+A scene that never reports a second, throws on the page, or shows no
+fps fails the run: a probe that prints a dash and exits 0 is the
+disease probehygiene's T3 names.
+
+**Pinned** in `test/perf9.test.js` (2). Not a departure.
