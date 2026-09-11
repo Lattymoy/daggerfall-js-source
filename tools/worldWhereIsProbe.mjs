@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
 const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
 
-// The drain. `overlay` is townTalk's live slot (townTalk.js:1311), so
+// The drain. `overlay` is townTalk's live slot (townTalk.js:1320), so
 // this asks the host what is up rather than guessing at names.
 let drained = 0;
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
@@ -67,7 +67,7 @@ console.log('greeting:', JSON.stringify(greet));
 if (!greet.overlay) { console.log('NO TALK WINDOW'); process.exit(1); }
 // E8: the assertions read the LIVE window's own state, which the
 // native talk window carries and the keyed one does not - topicMode
-// walks none -> categories -> buildings (ui/nativeTalk.js:341, :384-389).
+// walks none -> categories -> buildings (ui/nativeTalk.js:347, :384-389).
 await press('KeyW');
 const cats = await talk();
 console.log('categories:', JSON.stringify({ mode: cats.topicMode, count: cats.topicCount }));

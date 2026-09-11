@@ -2342,7 +2342,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:483) - so
+    // is above zero and "stranger" below it (townTalk.js:485) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.

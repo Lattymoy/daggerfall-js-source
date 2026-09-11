@@ -128,8 +128,10 @@ test('questflatanchor: the gate is SILENT - the click sound sits inside it', () 
   assert.equal(gates.length, 4, 'all four category buttons gate BEFORE the sound');
   // ...and Tell-me-about and Where-is themselves are never gated -
   // they are the two options, not categories.
-  assert.match(s, /inRect\(R\.tellMeAbout, vx, vy\)\) \{ audio\.playOneShot/);
-  assert.match(s, /inRect\(R\.whereIs, vx, vy\)\) \{ audio\.playOneShot/);
+  // ET1: the buttons are pressed BY NAME (press(name) is the one
+  // handler under both faces), so the two options are the case arms.
+  assert.match(s, /case 'tellMeAbout': audio\.playOneShot/);
+  assert.match(s, /case 'whereIs': audio\.playOneShot/);
 });
 
 test('questflatanchor: Where-is re-enables the categories, and restores the one last used', () => {

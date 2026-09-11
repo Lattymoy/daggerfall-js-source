@@ -1512,6 +1512,76 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; }
+/* ── ET1: THE TALK PANEL ─────────────────────────────────────────
+   Mac's reference is Fallout/Skyrim: a rectangle across the bottom of
+   the view with the world - and the person - still standing behind
+   it. No scrim. The frame is the pause window's (.px-win: 2px border,
+   corner gems, slight transparency) so the panel reads as the same
+   family; the conversation on the left, the topics on the right, the
+   player-says line and ASK along the foot. On a phone the two columns
+   stack and the panel takes the width. */
+.talk-shell { position: absolute; inset: 0; font-family: ${PIXEL_STACK}; color: #d8cfae;
+  -webkit-font-smoothing: none; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0; }
+.talk-shell .talk-panel { position: absolute; left: 50%; bottom: max(16px, 3dvh); transform: translateX(-50%);
+  width: min(1080px, 96vw); height: min(440px, 52dvh); background: rgba(10,12,17,0.84); }
+.talk-head { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 14px;
+  padding: 8px 14px; border-bottom: 2px solid rgba(125,116,96,0.55); }
+.talk-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.talk-face { width: 48px; height: 48px; image-rendering: pixelated; border: 2px solid rgba(125,116,96,0.55);
+  background: #0a0c11; flex: 0 0 auto; }
+.talk-who h2 { font: inherit; font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.talk-tone { display: flex; gap: 2px; }
+.talk-tone button, .talk-mode, .talk-cat, .talk-row, .talk-back { font: inherit; background: none; border: 0;
+  color: #d8cfae; cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.talk-tone button { font-size: 15px; letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase;
+  min-height: 40px; padding: 4px 12px; color: #7d7460; }
+.talk-tone button:hover, .talk-tone button[aria-pressed="true"] { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.talk-head .act, .talk-say .act { font: inherit; font-size: 15px; letter-spacing: 0.12em; text-indent: 0.12em;
+  text-transform: uppercase; min-height: 40px; padding: 6px 16px; }
+.talk-main { flex: 1; display: grid; grid-template-columns: 1fr minmax(240px, 34%); min-height: 0; }
+.talk-log { overflow-y: auto; padding: 12px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.talk-entry { max-width: 88%; padding: 6px 10px; font-size: 16px; line-height: 1.35; cursor: pointer;
+  border-left: 2px solid transparent; }
+.talk-entry.a { align-self: flex-start; }
+.talk-entry.q { align-self: flex-end; text-align: right; color: #b2cfff; border-left: 0; border-right: 2px solid transparent; }
+.talk-entry.on { border-color: var(--brass); background: rgba(125,116,96,0.12); }
+.talk-entry .talk-copied { color: #7aa0ff; margin-left: 8px; font-size: 13px; white-space: nowrap; }
+.talk-topics { border-left: 2px solid rgba(125,116,96,0.45); display: flex; flex-direction: column; min-height: 0; }
+.talk-modes, .talk-cats { display: flex; border-bottom: 2px solid rgba(125,116,96,0.35); }
+.talk-mode { flex: 1; font-size: 15px; letter-spacing: 0.12em; text-indent: 0.12em; text-transform: uppercase;
+  min-height: 40px; color: #7d7460; }
+.talk-mode:hover, .talk-mode.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.talk-cat { flex: 1; font-size: 13px; letter-spacing: 0.1em; text-indent: 0.1em; text-transform: uppercase;
+  min-height: 36px; color: #7d7460; }
+.talk-cat:hover, .talk-cat.on { color: #d8cfae; }
+.talk-cat[disabled] { opacity: 0.35; cursor: default; }   /* TALK02I0's greyed strip */
+.talk-cat[disabled]:hover { color: #7d7460; }
+.talk-list { flex: 1; overflow-y: auto; padding: 6px 0; min-height: 0; }
+.talk-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font-size: 16px;
+  min-height: 36px; padding: 4px 14px; }
+.talk-row .px-c { font-size: 13px; color: rgb(243,239,44); visibility: hidden; text-shadow: 2px 2px 0 rgb(93,77,12); flex: 0 0 auto; }
+.talk-row:hover, .talk-row.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.talk-row:hover .px-c, .talk-row.on .px-c { visibility: visible; }
+.talk-row.group::after { content: '\\203a'; margin-left: auto; color: #7d7460; }
+.talk-back { display: block; width: 100%; text-align: left; font-size: 13px; letter-spacing: 0.1em; text-indent: 0.1em;
+  text-transform: uppercase; color: #7d7460; padding: 6px 14px; min-height: 32px; }
+.talk-back:hover { color: #d8cfae; }
+.talk-hint { color: #7d7460; font-size: 14px; padding: 14px; margin: 0; }
+.talk-say { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+  padding: 8px 14px; border-top: 2px solid rgba(125,116,96,0.55); }
+.talk-q { color: #b2cfff; font-size: 16px; min-height: 22px; line-height: 1.3; }
+.talk-q.none { color: #7d7460; }
+@media (max-width: 720px) {
+  .talk-shell .talk-panel { width: 100vw; height: min(600px, 70dvh); bottom: 0; }
+  .talk-head { grid-template-columns: 1fr auto; padding: 6px 10px; }
+  .talk-head .door-goodbye { grid-row: 1; grid-column: 2; }   /* the name and Goodbye share the first row */
+  .talk-tone { grid-row: 2; grid-column: 1 / -1; justify-content: center; }
+  .talk-main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .talk-topics { border-left: 0; border-top: 2px solid rgba(125,116,96,0.45); }
+  .talk-say { grid-template-columns: auto 1fr; }
+  .talk-say .talk-q { grid-column: 1 / -1; }
+}
 /* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
    Mac's reference is ESO's Clean UI - a compass across the top, the
    target named beneath it, three vitals along the bottom and the
