@@ -97,6 +97,7 @@ import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
@@ -875,6 +876,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MaterialReader.ChangeClimate semantics).
     const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    // PERF4: the pixel's static models, merged as they arrive (the
+    // transform rides the build's own awaits) into one mesh per pixel,
+    // one draw call per texture. The gates (whose mesh swaps) and the
+    // mills (whose rotor turns) stay individual draws.
+    const staticBuilder = new StaticBatchBuilder();
+    const resolveTexKey = keyResolver(texRemap);
     const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
     // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
     // pixel-local like its doors, boards and street NPCs.
@@ -946,6 +953,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           unionBox(box);
           const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
           models.push(entry);
+          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, resolveTexKey); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above)
           // AUDIT 64 F14: a city gate takes a collider bucket of its own
           // (the pixel's shared bucket has no per-mesh removal), keyed
           // off the pixel key so destroyPixel drops it with the pixel.
@@ -1203,8 +1211,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV6: the pixel's models sort by MESH at build - one archetype's
     // placements draw back to back and the VAO shadow skips the rebind.
     models.sort((a, b) => a._order - b._order);
+    const staticMerged = staticBuilder.finish();   // PERF4
+    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
 
     built.set(key, {
+      staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
@@ -1376,6 +1387,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!p) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }   // WATER-AUDIT: before the buffers it rides go
     renderer.destroyMesh(p.terrain);
+    if (p.staticBatch) { renderer.destroyMesh(p.staticBatch); p.staticBatch = null; }   // PERF4
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
@@ -7794,7 +7806,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         renderer.setCloudShadow(sky?.cloudShadow ?? null);
         renderer.drawTerrain(p.terrain, pixelMatrix,
           renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);   // PERF4: every static model of the pixel, one call per texture (the keys are resolved in the merge)
         for (const m of p.models) {
+          if (m._batched) continue;   // PERF4: drawn above
           if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
           if (m._worldGen !== p._worldGen || !m._world) {
             m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));

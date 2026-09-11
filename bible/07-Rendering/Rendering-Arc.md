@@ -1162,3 +1162,37 @@ the script line - the GL call count, which is the CPU side of the
 GPU's work and the number the culls and the sort are meant to move.
 
 **Pinned** in `test/perf3.test.js` (2). Not a departure.
+
+## PERF4 - ONE MESH PER PIXEL: THE STATIC MODELS BATCHED (2026-09-11)
+
+The city frame's cost is its draw calls. A streamed pixel drew every
+RMB model with its own `drawMesh` - one call per sub-mesh, a block's
+fifty to a hundred models each in three to six pieces, a city pixel
+of up to sixty-four blocks - and a WebGL draw call is tens of
+microseconds of validation whatever it draws; two thousand of them
+is the frame. EV6 had already sorted the models by id so the VAO
+cache hit; the calls remained.
+
+The models never move. A block's 3D objects are placed once, so
+`render/staticBatch.js` merges them ONCE at build time: each model's
+vertices transformed by its pixel-local matrix as it arrives (the
+transform rides the build's own awaits, so a city pixel costs no
+single hitch), normals rotated by the matrix's orthonormal upper
+3x3, and at the end the index ranges regrouped by RESOLVED texture -
+`keyResolver(texRemap)` is drawMesh's own resolution, so a climate-
+swapped texture groups under the swapped archive and drawMesh, handed
+the merge with no remap, finds the `#opaque` upload the remap made.
+`renderer.createMesh` uploads the merge; the pixel draws it with the
+pixel matrix as the model matrix, one call per texture, and the
+per-model loop skips what the merge holds. Same triangles, same
+textures; the fragment shader lights by world position and normal,
+both of which the merge carries. Out of the batch: the city gates
+(their entry's mesh swaps open/closed) and the mills (their rotor
+turns), drawn as before. Per-model frustum culling is traded for the
+pixel's: a visible pixel submits all its static vertices, which the
+GPU clips for far less than the calls cost. `destroyPixel` frees the
+mesh with the pixel; a season re-skin rebuilds it.
+
+**Pinned** in `test/perf4.test.js` (3). Not a departure. Not measured
+here (no data, no GPU): the counter's draws line in a city is the
+number to read, before and after.
