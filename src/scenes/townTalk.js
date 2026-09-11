@@ -592,10 +592,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return getInteractionMode();
   }
 
-  /** The activation ray (the host's E/use edge). persons =
-   *  [{ person, pos }] world feet of LIVE townsfolk. Returns true if
-   *  a person consumed the activation. */
-  function tryActivate(camPos, fwd, persons) {
+  /** The activation ray (the host's E/use edge). persons = [{ person, pos }] world feet of LIVE townsfolk. Returns true
+   *  if a person consumed the activation. AUDIT 65 MC-2: `nearerThan` is the REST of the ladder's winning distance and
+   *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
+  function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
     if (overlay) return true;
     let best = null, bestDist = Infinity;
     for (const p of persons) {
@@ -607,7 +607,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal
     // 3.2 alone). The old 6.4 pre-gate answered a person down a long
     // street with SILENCE and let E fall through to a door behind them.
-    if (!best || bestDist > RAY_DISTANCE) return false;
+    if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;   // MC-2: :412 is reached for the ray's OWN hit
     // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
     if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
@@ -1178,10 +1178,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   /** The wheel seam (U-scroll): an open window owns the wheel; the
-   *  ones with overflow implement wheel(dir). */
+   *  ones with overflow implement wheel(dir).
+   *
+   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, exactly as it rides the
+   *  hover above. BaseScreenComponent.Update's scroll block (:725-736)
+   *  is guarded by `mouseOverComponent`, which :577-594 recomputes from
+   *  the live mouse each frame, so a window may not route the wheel by
+   *  the last point hover() happened to hand it - a pack opened with
+   *  the Inventory key has had no mousemove at all. */
   function wheel(e) {
     if (!overlay) return false;
-    overlay.wheel?.(Math.sign(e.deltaY));
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
     return true;
   }
 

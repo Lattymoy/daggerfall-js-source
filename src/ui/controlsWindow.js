@@ -32,16 +32,16 @@
 //   shown dict carries an internal clash (:337-343).
 //
 // THE FLOW, law for law:
-// - a LEFT CLICK on a key button enters capture: the next keydown
-//   binds (WaitForKeyPress :383-427). ReservedKeys is EMPTY in DFU
-//   (:73), so every key binds - Escape included. A8 retired half of
-//   the combo flag that stood here: a captured key pressed under
-//   Ctrl/Shift/Alt now binds a COMBO, and the grid draws it through
-//   GetButtonText's combo arm ("LSHIFT + T", elongated past ten
-//   characters with the full string on the tooltip). Still not here:
-//   DFU also captures MOUSE BUTTONS in this window, and its two-key
-//   gesture accepts ANY key as the modifier where this one reads the
-//   event's three virtual flags.
+// - a LEFT CLICK on a key button enters capture: the next keydown binds
+//   (WaitForKeyPress :383-427). ReservedKeys is empty in DFU
+//   (InputManager.cs:73 `new KeyCode[] { }`, exposed :174-177), so the
+//   capture gate that consults it (DaggerfallControlsWindow.cs:410) never
+//   refuses a key - Escape included. A8 retired half of the combo flag
+//   here: a captured key pressed under Ctrl/Shift/Alt now binds a COMBO,
+//   drawn through GetButtonText's combo arm ("LSHIFT + T", elongated past
+//   ten characters, the full string on the tooltip). Still not here: DFU
+//   also captures MOUSE BUTTONS, and its two-key gesture accepts ANY key
+//   as the modifier where this one reads the event's three virtual flags.
 // - a RIGHT CLICK prompts to remove the binding (:371-381,
 //   PromptRemoveKeybindMessage :290-320), Yes staging null.
 // - DUPLICATES colour the labels - red inside the shown dict, blue
@@ -265,7 +265,7 @@ export class ControlsWindow {
   release() { this.advanced?.release(); }
 
   /** The wheel seam (U-scroll): the hosts deliver it as
-   *  `overlay.wheel?.(Math.sign(deltaY))`, and while the popup is up
+   *  `overlay.wheel?.(dir, vx, vy)` (AUDIT 65 UI-5), and while the popup is up
    *  it is the popup's - MouseScrollUp/Down (HorizontalSlider.cs:
    *  180-190) over the slider the pointer is on. */
   wheel(dir) { if (this.advancedOpen) this.advanced.wheel(dir); }

@@ -123,7 +123,7 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   assert.ok(call > 0, 'interiorContext runs it per person');
   // PlayerEnterExit.cs:800 reaches AddQuestResourceObjects only AFTER
   // DoLayout returns, so the bootstrap behaviours exist before the
-  // marker walk asks IsAlreadyPlaced.
+  // marker walk asks IsAlreadyInjected.
   assert.ok(call < ic.indexOf('for (const flat of interior.flats)'),
     'and does it during layout, before the flats batch');
   // PIN MOVED (ROAD review-p): the bare `setActive(active) { pn.active
@@ -151,7 +151,7 @@ test('audit24 wave20: findBehaviours sees the static-NPC behaviours too', () => 
   // GameObjectHelper.cs:917 opens with
   // Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>(), which is
   // every behaviour alive in the scene - the bootstrap ones on static
-  // NPCs included. IsAlreadyPlaced reads that list, so a Person the
+  // NPCs included. IsAlreadyInjected reads that list, so a Person the
   // bootstrap behaviour already holds would otherwise be stood a
   // second time by the marker walk.
   const s = rd('src/scenes/worldModes.js');

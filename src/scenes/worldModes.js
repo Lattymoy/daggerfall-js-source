@@ -26,7 +26,7 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
+import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText, DOOR_ACTIVATION_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
 // living-enemy arm of the activation ladder, in the two hosts this
 // file owns as well as the three outside it.
@@ -1200,10 +1200,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1493 states), so the same visual
+   *  the C11 law dungeonContext.js:1505 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1398, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1410, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1411,10 +1411,10 @@ export function createWorldModes(host) {
     questBridge?.machine.setupIndividualStaticNPC(host, pn.factionID) ?? true;
   /** Every QuestResourceBehaviour standing in this scene:
    *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
-   *  (GameObjectHelper.cs:917) sees the ones on static NPCs too, and
-   *  IsAlreadyPlaced reads exactly this list - miss them and a Person
-   *  the bootstrap behaviour already holds gets stood a SECOND time by
-   *  the marker walk. */
+   *  (GameObjectHelper.cs:926) sees the ones on static NPCs too, and
+   *  IsAlreadyInjected (GameObjectHelper.cs:978, called :950) reads
+   *  exactly this list - miss them and a Person the bootstrap behaviour
+   *  already holds gets stood a SECOND time by the marker walk. */
   const sceneBehaviours = () => {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
@@ -1422,7 +1422,7 @@ export function createWorldModes(host) {
     // same bootstrap behaviour - RDBLayout.cs:1228-1237 adds StaticNPC
     // and then runs SetupIndividualStaticNPC on that GameObject, so its
     // QuestResourceBehaviour is in FindObjectsOfTypeAll's answer exactly
-    // like an interior one. Miss it and IsAlreadyPlaced stands the
+    // like an interior one. Miss it and IsAlreadyInjected stands the
     // Person a SECOND time on the marker walk.
     for (const pn of dungeonCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
     for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
@@ -1433,7 +1433,7 @@ export function createWorldModes(host) {
    *  whichever scene this host currently draws. It is a different list
    *  from sceneBehaviours() above: that one is
    *  FindObjectsOfTypeAll<QuestResourceBehaviour>'s
-   *  (GameObjectHelper.cs:917) answer for IsAlreadyPlaced, over
+   *  (GameObjectHelper.cs:926) answer for IsAlreadyInjected, over
    *  EVERY quest object; this one is the STATIC-NPC cache, so a
    *  behaviour qualifies only when its host is a static NPC (it
    *  carries a numeric staticNpcFactionId - the marker-stood quest
@@ -3955,9 +3955,8 @@ export function createWorldModes(host) {
    *  distance this set resolves to. */
   function exteriorActivationTargets() {
     const entries = doorTargets();
-    const targets = entries.map((entry, i) => ({
-      key: i, aabb: doorWorldAabb(entry.door),
-    }));
+    // AUDIT 65 MC-2: the DOOR reaches for the RAY, as the boards below do - ActivateStaticDoor's own `hit.distance > DoorActivationDistance` refusal (:501-504) can only speak if the pick hands the door over.
+    const targets = entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));
     // AUDIT 26 (F019/F190): THE STREET'S STATIC NPCs, in the SAME ray
     // as the doors. DFU has one activation raycast above ground and
     // routes by what it hit (PlayerActivate.cs:1229 reads the
@@ -3992,7 +3991,7 @@ export function createWorldModes(host) {
   /** The distance the exterior ray's nearest activatable sits at, or
    *  Infinity - the rival the living-foe arm must beat (AUDIT 63 F33).
    *  The host passes ITS ray (the tap's, or the crosshair's) so the two
-   *  picks are measured along one line, as DFU's one raycast is. */
+   *  picks are measured along one line, as DFU's one raycast is. AUDIT 65 MC-2: it answers for a door the player cannot REACH as well as one they can, because DFU's single ray HIT that door - the foe behind it was never the enemy check's subject, and tryEnter refuses out loud. It used to answer Infinity there and the foe ate the click. */
   function exteriorActivationDistance(eye = player.eye, dir = eyeDir()) {
     if (mode !== 'exterior') return Infinity;
     return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider())?.distance ?? Infinity;
@@ -4097,7 +4096,7 @@ export function createWorldModes(host) {
       if (bd && bd.buildingType != null) activateBuilding(bd, resolveBuildingUnlocked(bd));
     }
     const { entries, npcs, boards, targets } = exteriorActivationTargets();
-    const key = pickActivatable(eye, dir, targets, baseCollider());
+    const { key, distance: _hitDist, reach: _hitReach } = pickActivatableHit(eye, dir, targets, baseCollider()) ?? { key: null };
     if (key === null) return false;
     // ...and the NPC arm ENDS the activation, exactly as the interior
     // ray's does: an NPC under the ray is not a door.
@@ -4109,6 +4108,7 @@ export function createWorldModes(host) {
       activateBulletinBoard(boards[Number(key.split(':')[1])], eye, dir);
       return true;
     }
+    if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false);
   }
 
@@ -4349,9 +4349,9 @@ export function createWorldModes(host) {
    *  `weapon.Reach` (:1064), which is why the reach here is
    *  WEAPON_REACH and not DEFAULT_ACTIVATION_DISTANCE. That also makes
    *  ActivateStaticDoor's `hit.distance > DoorActivationDistance`
-   *  refusal (:500-504) unreachable on this path - the weapon cannot
-   *  reach 3.2 units - so it is not re-tested here; the click's own
-   *  caller still enforces it through pickActivatable.
+   *  refusal (:500-504) unreachable on this path - the weapon cannot reach 3.2 units - so it is not
+   *  re-tested here; the click's own caller SPEAKS it (tryEnter, AUDIT 65 MC-2) and the swing keeps
+   *  a NARROW pick (`distance: WEAPON_REACH`, no `reach`), because a swing at nothing is no refusal.
    *
    *  Only DOORS are targets: the street's NPCs and bulletin boards are
    *  in the activation ray, not the weapon's. The return is DFU's -
@@ -4593,7 +4593,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:145), so the
+    // any foe without a questBehaviour (activate.js:160), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -4622,9 +4622,11 @@ export function createWorldModes(host) {
     // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
     // enemy check (:419) only for the one thing its single ray hit
     // (:314), so a nearer door, chest, shelf, lever or static NPC
-    // takes the click and the foe behind it does not. The FAR call
-    // sits at the bottom of the ladder for the Info line and the
-    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    // takes the click and the foe behind it does not. AUDIT 65 MC-2
+    // made that ONE call at RayDistance - the Info line (:806-826, no
+    // distance gate) and the pickpocket's too-far refusal (:832-836)
+    // are the same call, not a second pass at the bottom of the
+    // ladder, and a bottom pass could not see `nearerThan` at all.
     const _enemyArm = (reach, nearerThan = Infinity) => (interiorCtx ? tryMobileEnemyActivate(eye, dir, interiorFoePool(), interiorCtx.collider,
       reach, getInteractionMode(), playerEntity, {
         nearerThan,
@@ -4636,12 +4638,20 @@ export function createWorldModes(host) {
       }) : false);
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
-    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));   // AUDIT 65 MC-2 (review): the exit is ActivateStaticDoor too (:364-369, gated :501-504)
+    // AUDIT 65 MC-2: containers, shelves and ladders reach for the ray
+    // (PlayerActivate.cs:76/:314) and carry their handler's own reach
+    // beside it, because that is where DFU speaks the refusal -
+    // ActivateLootContainer's `hit.distance > TreasureActivationDistance`
+    // (:868-873) and ActivateLaddersAndShelves' `hit.distance >
+    // DefaultActivationDistance` (:850-853), both
+    // SetMidScreenText(youAreTooFarAway) and return. The port's pick
+    // simply dropped them and said nothing.
     interiorCtx.containers.forEach((c, i) => {
-      targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix) });   // S2b
+      targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });   // S2b
     });
     interiorCtx.shelves.forEach((s, i) => {
-      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix) });   // E2
+      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // E2; :850-853 for the Library/Guild/Temple bookshelf, :868-873 for a shop's ShopShelves - both 128 units
     });
     // AUDIT 63 F43 (review round): the dungeon arm's ONE helper
     // (activationTargets, below at the dungeon ray) - this loop was a
@@ -4656,7 +4666,7 @@ export function createWorldModes(host) {
     // (F37) comes with it, and the reach is the same constant.
     targets.push(...activationTargets(interiorCtx.actions.objects));
     interiorCtx.ladders.forEach((l, i) => {
-      targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
+      targets.push({ key: `ladder:${i}`, aabb: objAabb(l), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // :850-853
     });
     targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
@@ -4681,14 +4691,34 @@ export function createWorldModes(host) {
     // falls through to whatever is behind it and says nothing.
     targets.push(...questFlatTargets(questFlats));
     const _pick = pickActivatableHit(eye, dir, targets, interiorCtx.collider);
-    // AUDIT 63 F33 (review round): the NEAR half, now that the ladder
-    // has produced its candidate - the foe consumes only below it.
-    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, decided against
+    // the ladder's own winner - which is the whole of AUDIT 63 F33's
+    // near/far pair in a single call. DFU casts ONE ray to RayDistance
+    // (PlayerActivate.cs:76/:314) and reaches MobileEnemyCheck (:419)
+    // only for the thing that ray hit, so the foe consumes exactly when
+    // it is nearer than everything else on the line. The split pair
+    // could not say that: the NEAR half asked 3.2 and the FAR half ran
+    // with `nearerThan` Infinity, so a foe 20 units off ate a click DFU
+    // gives a door at 5 - a mis-order that only got louder once the
+    // families below started reaching for the ray themselves.
+    if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;
     const key = _pick?.key ?? null;
-    // nothing else took the click: the FAR half of the enemy arm
-    // (PlayerActivate.cs:806-826 has no distance gate at all, and
-    // :832-836 is the pickpocket's own refusal).
-    if (key === null) return _enemyArm(RAY_DISTANCE);
+    if (key === null) return false;
+    // AUDIT 65 MC-2: THE REFUSAL, where DFU keeps it - inside the
+    // handler the one ray dispatched into. `midScreenText.js`'s header
+    // named eleven `youAreTooFarAway` sites and the port could reach
+    // five of them, because the pick DROPPED an out-of-reach target
+    // instead of handing it over: a shelf, ladder, chest, pile or
+    // corpse at 5 units answered with silence and let the click fall
+    // through to whatever stood behind it. The families above now
+    // compete at the ray's reach and carry their own (:850-853
+    // ladders and shelves, :868-873 the loot container, :936-941 the
+    // corpse), so the winner can be out of reach - and when it is, the
+    // ladder speaks and consumes, as every one of those handlers does.
+    // A family that was never widened has `reach === distance` and can
+    // never take this arm. The quest resource is deliberately NOT one
+    // of them - see the recorded delta above.
+    if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     if (key.startsWith('ladder:')) {
       // Verbatim ClimbLadder: closest markers, below-top -> top,
       // above-bottom -> bottom.
@@ -4937,6 +4967,14 @@ export function createWorldModes(host) {
           enchantCtx: false,
           // wave 22: PopupText.AddText files into the notebook ring
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
+          // MAC1 J: and the relock the dungeon's pause door needs, on
+          // the same threading - the context owns no canvas of its own
+          // (dungeonContext.js:4723), so the OUTER host's one rides in.
+          // This is the most-played pause door of the six: world.js
+          // gates its own Escape ladder on exterior mode, so underground
+          // the key falls to routeKey -> ui/input.js:524 -> the
+          // context's togglePause (ui/pauseDoor.js:153-170).
+          relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
           // saves quest + conversation wherever the player stands
           // (SaveLoadManager.cs:1113-1121), and until this the F9
@@ -5092,7 +5130,7 @@ export function createWorldModes(host) {
     // AUDIT 62 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
     // the ladder the classic start into Privateer's Hold runs through,
     // so it is the one the feature was most missing from; the arm is
-    // scenes/dungeon.js:222's, line for line, over this context's pool.
+    // scenes/dungeon.js:227's, line for line, over this context's pool.
     if (host.activateDir?.() && dungeonCtx) {
       const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
@@ -5103,19 +5141,31 @@ export function createWorldModes(host) {
     // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
     // enemy check (:419) only for the one thing its single ray hit
     // (:314), so a nearer exit door, lever, chest or lootable corpse
-    // takes the click and the foe behind it does not. The FAR call
-    // sits at the bottom of the ladder for the Info line and the
-    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    // takes the click and the foe behind it does not. AUDIT 65 MC-2
+    // made that ONE call at RayDistance - the Info line (:806-826, no
+    // distance gate) and the pickpocket's too-far refusal (:832-836)
+    // ride it, not a second pass at the bottom of the ladder.
     const _enemyArm = (reach, nearerThan = Infinity) => (dungeonCtx ? tryMobileEnemyActivate(eye, dir, dungeonCtx.foes, dungeonCtx.collider,
       reach, getInteractionMode(), playerEntity, {
         nearerThan,
-        hud: (t) => say(t),
-        modal: (t) => mountInterior(new ActionTextBox(String(t).split('\n'))),
+        // AUDIT 65 HP-2/HP-3: the sinks are the DUNGEON'S, not the
+        // building's. DaggerfallUI.MessageBox builds on uiManager's
+        // TopWindow (PlayerActivate.cs:1640/:1646 -> DaggerfallUI.cs:1328-1330)
+        // and PopupMessage is the HUD's ONE PopupText (:1652 ->
+        // DaggerfallUI.cs:820-822 `dfHUD.PopupText.AddText`) - both of
+        // which underground are dungeonContext's, the stack and queue
+        // this host's dungeon frame actually draws. The interior slot is
+        // never drawn, ticked, keyed or clicked in dungeon mode, so a
+        // box mounted there orphaned until the next building entry and
+        // a line said there opened a second popup column over the
+        // dungeon's own. scenes/dungeon.js:240-241 is the same pair.
+        hud: (t) => dungeonCtx.hudSay(t),
+        modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
         playerFeet: player.pos,
         nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
       }) : false);
-    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));   // AUDIT 65 MC-2 (review): the dungeon exit is ActivateStaticDoor too (:364-369, gated :501-504)
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     // DQ1: the quest stands. B2 mounted them underground and the ray
@@ -5141,12 +5191,18 @@ export function createWorldModes(host) {
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
     const _pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
-    // AUDIT 63 F33 (review round): the NEAR half, decided against the
-    // ladder's candidate - the foe consumes only when strictly nearer.
-    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    // AUDIT 65 MC-2: ONE enemy arm at the RAY's reach, decided against
+    // the ladder's winner - the interior ray's reasoning, underground.
+    if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;
     const key = _pick?.key ?? null;
-    // the FAR half of the enemy arm, once nothing else has taken it
-    if (key === null) return _enemyArm(RAY_DISTANCE);
+    if (key === null) return false;
+    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -
+    // the action door (:686-689), the loot container (:868-873) and
+    // the corpse (:936-941). Their targets reach for the ray now and
+    // carry their own reach, so the winner can be out of reach; an
+    // un-widened family answers `reach === distance` and never gets
+    // here. The quest resource stays the recorded delta it is.
+    if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
     if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
@@ -5332,7 +5388,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:274's `held` already implements.
+    // which is what dungeon.js:279's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -5403,7 +5459,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:444 is this same gate
+    // the crouch edge still toggled. dungeon.js:457 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -5493,7 +5549,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:328 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:333 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -5606,7 +5662,7 @@ export function createWorldModes(host) {
     const _act = activateFrame((latch.activate ??= createActivateGate()), {
       down: held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
       hasReadySpell: (mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) ?? false,
-      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
+      touchSpell: ((mode === 'dungeon' ? dungeonCtx?.readiedSpell?.() : magic?.readied()) ?? null)?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:198)
       hudBlocked: activeMouseOverLargeHUD(),
       paused: overlayHeld,
     });
@@ -5652,7 +5708,7 @@ export function createWorldModes(host) {
     // MW-D25: the modal hosts ride the same Morrowind camera machine as
     // the walk hosts - one eye law, this context's own collider.
     const mwv = mwViewFrame({
-      fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
@@ -5661,7 +5717,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:275's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:280's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -5707,7 +5763,7 @@ export function createWorldModes(host) {
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
-      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
+      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
       if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture
       for (const d of dungeonCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
@@ -5773,7 +5829,7 @@ export function createWorldModes(host) {
     renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
     if (interiorCtx.staticBatch) renderer.drawMesh(interiorCtx.staticBatch, BATCH_IDENTITY, null);   // PERF6: the room's static models, one call per texture
     for (const d of interiorCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     // WM4b: the mill's machinery turns at Kamer's rate, in here too.
@@ -5813,7 +5869,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6229's own wave-46 note); the interior
+          // a blow (world.js:6250's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6398,7 +6454,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:345-371 carries, so a probe could take the
+    // scenes/dungeon.js:350-384 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -6593,7 +6649,7 @@ export function createWorldModes(host) {
   });
   addEventListener('mousedown', (e) => {
     // I4: a right-click on a window is the WINDOW's (the remove
-    // gesture), never a swing - dungeon.js:220 and both exterior slots
+    // gesture), never a swing - dungeon.js:225 and both exterior slots
     // have always said so, and this host's modal arm had no gate at
     // all. DFU pauses the game under any PauseWhileOpen window
     // (UserInterfaceManager.cs:179-185), so the click never reaches
@@ -7167,14 +7223,29 @@ export function createWorldModes(host) {
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open
-   *  mode-owned window owns the wheel. */
+   *  mode-owned window owns the wheel.
+   *
+   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, in BOTH arms and by the
+   *  hover seam's own arithmetic below. BaseScreenComponent.Update's
+   *  scroll block (:725-736) is guarded by `mouseOverComponent`, which
+   *  :577-594 recomputes from the live mouse, so the window must
+   *  not be left routing by the last point hover() gave it - opening
+   *  the pack with the Inventory key fires no mousemove at all. */
   function wheel(e) {
+    const at = () => {
+      const r = canvas.getBoundingClientRect();
+      return pointToNative(nativeMetrics(canvas),
+        (e.clientX - r.left) * (canvas.width / r.width),
+        (e.clientY - r.top) * (canvas.height / r.height));
+    };
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
-      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY));
+      const v = at();
+      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
       return true;
     }
     if (mode !== 'interior' || !interiorOverlay) return false;
-    interiorOverlay.wheel?.(Math.sign(e.deltaY));
+    const v = at();
+    interiorOverlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
     return true;
   }
 
@@ -7863,6 +7934,47 @@ export function createWorldModes(host) {
     },
     interiorPoolSnapshot,
     restoreInteriorPools,
+    /** SL-2 (AUDIT 65): THE FOURTH RIG'S POSE. DFU has ONE
+     *  WeaponManager for every WorldContext, and SerializablePlayer
+     *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
+     *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
+     *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2577-2599), and IS1 routed the inside-a-building save to
+     *  the WORLD host's composer - which reads its own exterior rig
+     *  unconditionally (world.js:4148). So an F9 pressed in a shop
+     *  recorded the street's sheath and hand, and the load wrote them
+     *  back into the street's rig; the rig actually in the player's
+     *  hands was in no envelope at all.
+     *
+     *  Interior mode ONLY. Exterior mode is the world host's own rig
+     *  (it composes that itself), and DUNGEON mode is dungeonContext's
+     *  - that host owns the whole pair already (:4690 save, :4766/:4772
+     *  restore) - so answering non-null there would shadow a correct
+     *  composer with this file's idle interim rig. */
+    weaponPose() {
+      return mode === 'interior'
+        ? { weaponDrawn: !interiorWeapon.playerWeapon.sheathed, usingRightHand: interiorWeapon.playerWeapon.usingRightHand }
+        : null;
+    },
+    /** The restore half - and NOT gated on the mode, deliberately.
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4208)
+     *  and only re-enters the building at :4217, so the mode at apply
+     *  time is whatever the LOAD landed in, not whatever the SAVE was
+     *  taken in: an outdoor save loaded while the player was indoors
+     *  must still land its bit in the interior rig, or the next
+     *  building entry meets the outgoing session's drawn weapon. DFU
+     *  has one manager, so the same bit belongs in every rig.
+     *
+     *  FLAG ONLY, presence-gated, exactly as world.js:4293/:4306 and
+     *  dungeonContext.js:4788/:4794 are: the C# restore sets the
+     *  property and calls no ApplyWeapon, because UpdateHands ends in
+     *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
+     *  port's twin is the rig's per-frame syncWorn. */
+    applyWeaponPose(pose) {
+      if (!pose) return;
+      if (pose.weaponDrawn != null) interiorWeapon.playerWeapon.sheathed = !pose.weaponDrawn;
+      if (pose.usingRightHand != null) interiorWeapon.playerWeapon.usingRightHand = !!pose.usingRightHand;
+    },
     /** A10: the SAME two fields, with NO scene write. SetAnchor
      *  (Teleport.cs:107-112) reads ExteriorDoors and
      *  BuildingDiscoveryData and nothing else - it is not a save, it

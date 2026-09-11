@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:711)". Section A carried no widget row at all -
+//     (Port-Ledger.md:713)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -588,7 +588,11 @@ const SOURCE_CITES = [
   // numbers this round's one-line insert into worldModes moved.
   ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
-  ['src/systems/chargenSession.js', /dungeon\.js:436 and worldModes\.js:(\d+) both feed/,
+  // AUDIT 65 UI-5: the dungeon.js half is read by CONTENT here (CD8
+  // below resolves that number itself) - the literal 433 was a second
+  // copy of a line number and went stale the moment the wheel seam
+  // three lines above it grew its point.
+  ['src/systems/chargenSession.js', /dungeon\.js:\d+ and worldModes\.js:(\d+) both feed/,
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1517/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:923\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
@@ -622,20 +626,20 @@ const SOURCE_CITES = [
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:2209/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2272/,
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-2273/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-1151 and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2365/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:2366/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:2357\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:2358\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:776`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2272\)/,
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2273\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:815`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:828`/, EX, /^ {6}fieldOfView\(\),$/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
@@ -669,9 +673,9 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3574` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3594` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3549-(\d+)` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3569-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
@@ -856,7 +860,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:744-694`, `world.js:5488-5462`,
+// multi-number citation: `cityGuards.js:744-694`, `world.js:5509-5483`,
 // `worldModes.js:1095 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
@@ -1015,6 +1019,109 @@ test('CD8b: the C# members ROAD-G G4 names EXIST, and at the lines it cites', ()
   // ScrollIndex copy, :249 is the call the sentence's argument rests
   // on. The line is RESOLVED below wherever a checkout exists.
   assert.equal(icon[1], '249', 'the UpdateSelectedIcon cite moved off the call it names');
+
+  // AUDIT 65 (RC-1/RC-2/RC-3) widened this pin to the rest of the port's
+  // C# addresses, in the same two parts. RC-2 is the UNKNOWN-MEMBER arm
+  // at full size: `IsAlreadyPlaced` is not DFU's name for anything - the
+  // double-injection guard is `IsAlreadyInjected` (GameObjectHelper.cs:978,
+  // called :950) over the list at :926 - and no rename of the port's own
+  // JS can make the invented one resolve, so the walk below is the half
+  // that holds without a checkout. RC-1 is one wrong FILE copied to four
+  // sites: the ReservedKeys law is InputManager.cs:73's empty array,
+  // exposed :174-177 and consulted by DaggerfallControlsWindow.cs:410,
+  // whose own :73 is a brace - both files carry something at :73, which
+  // is how the slip survived. RC-3's five are single-line cites that
+  // QUOTE the line they name, so the quote and the number must agree.
+  // MUTANT: any name or number below back to the one it replaced.
+  // The walk spans the port, its tests and the bible; the records that
+  // QUOTE the retired name (this pin, Testing.md's row, the audit
+  // records) are the only files allowed to carry it.
+  const quotes = (f) => f === 'test/citedrift.test.js' || f === 'bible/09-Testing/Testing.md' || /^bible\/01-Overview\/Audit-\d+\.md$/.test(f);
+  for (const f of [...tracked('src'), ...tracked('test'), ...tracked('bible')].filter((f) => /\.(js|mjs|md)$/.test(f) && !quotes(f))) {
+    assert.equal(/IsAlreadyPlaced/.test(read(f)), false,
+      `${f} names IsAlreadyPlaced; DFU's guard is IsAlreadyInjected (GameObjectHelper.cs:978)`);
+  }
+  for (const f of ['src/ui/enhancedControls.js', 'src/ui/enhancedMenu.js',
+    'src/ui/controlsWindow.js', 'test/enhancedControls.test.js']) {
+    const prose = read(f).replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    assert.match(prose, /ReservedKeys is empty in DFU \(InputManager\.cs:73 `new KeyCode\[\] \{ \}`, exposed :174-177\), so the (capture )?gate that consults it \(DaggerfallControlsWindow\.cs:410\)/,
+      `${f} does not cite ReservedKeys to its declaration AND the gate that reads it`);
+    assert.equal(/ReservedKeys is (empty|EMPTY) in (DFU \(:73\)|DaggerfallControlsWindow)/.test(prose), false,
+      `${f} still puts ReservedKeys in DaggerfallControlsWindow, whose :73 is a brace`);
+  }
+
+  // The LINE halves of all three, resolved wherever a checkout exists -
+  // PY1's rule again, and a separate gate from the G4 files below so one
+  // missing .cs cannot silently skip the other slice's pin.
+  const DFU_INPUT = 'Assets/Scripts/Game/InputManager.cs';
+  const DFU_CONTROLS = 'Assets/Scripts/Game/UserInterfaceWindows/DaggerfallControlsWindow.cs';
+  const DFU_GOH = 'Assets/Scripts/Utility/GameObjectHelper.cs';
+  const DFU_NPC = 'Assets/Scripts/Game/StaticNPC.cs';
+  const DFU_WIZ = 'Assets/Scripts/Game/UserInterfaceWindows/DaggerfallStartNewGameWizard.cs';
+  const DFU_FOE = 'Assets/Scripts/Game/Serialization/SerializableEnemy.cs';
+  if (!missingDfu(DFU_INPUT, DFU_CONTROLS, DFU_GOH, DFU_NPC, DFU_WIZ, DFU_FOE)) {
+    const input = dfuLines(DFU_INPUT);
+    assert.match(input[72] ?? '', /KeyCode\[\] reservedKeys = new KeyCode\[\] \{ \};/,
+      'InputManager.cs:73 is no longer the empty reservedKeys array the four sites quote');
+    assert.match(input.slice(173, 177).join('\n'), /public KeyCode\[\] ReservedKeys[\s\S]*reservedKeys\.Clone\(\)/,
+      'InputManager.cs:174-177 no longer exposes ReservedKeys');
+    assert.match(dfuLines(DFU_CONTROLS)[409] ?? '', /InputManager\.Instance\.ReservedKeys\.FirstOrDefault/,
+      'DaggerfallControlsWindow.cs:410 is no longer the capture gate that consults ReservedKeys');
+
+    // RC-2: both hosts' cites read out of their own comments, so a flip
+    // back to :917 (a blank line) reddens here and not at a reader.
+    const goh = dfuLines(DFU_GOH);
+    const wm = read('src/scenes/worldModes.js').replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    const dc = read('src/scenes/dungeonContext.js').replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    const listCites = [
+      [/Resources\.FindObjectsOfTypeAll<QuestResourceBehaviour>\(\) \(GameObjectHelper\.cs:(\d+)\) sees the ones on static NPCs/.exec(wm), 'worldModes sceneBehaviours'],
+      [/FindObjectsOfTypeAll<QuestResourceBehaviour>'s \(GameObjectHelper\.cs:(\d+)\) answer for IsAlreadyInjected/.exec(wm), 'worldModes G1 contrast'],
+      [/\(GameObjectHelper\.cs:(\d+) - the list IsAlreadyInjected reads/.exec(dc), 'dungeonContext raw list'],
+    ];
+    for (const [m, what] of listCites) {
+      assert.ok(m, `${what} no longer cites the whole-scene behaviour list`);
+      assert.match(goh[Number(m[1]) - 1] ?? '', /Resources\.FindObjectsOfTypeAll<QuestResourceBehaviour>\(\)/,
+        `${what} cites GameObjectHelper.cs:${m[1]}, which is not the FindObjectsOfTypeAll call`);
+    }
+    const guard = /IsAlreadyInjected \(GameObjectHelper\.cs:(\d+), called :(\d+)\)/.exec(wm);
+    assert.ok(guard, 'worldModes no longer says where IsAlreadyInjected lives');
+    assert.match(goh[Number(guard[1]) - 1] ?? '', /static bool IsAlreadyInjected\(/,
+      `GameObjectHelper.cs:${guard[1]} is not IsAlreadyInjected's declaration`);
+    assert.match(goh[Number(guard[2]) - 1] ?? '', /if \(IsAlreadyInjected\(resourceBehaviours, resource\)\)/,
+      `GameObjectHelper.cs:${guard[2]} is not the call to it`);
+
+    // RC-3: a single-line cite that carries a quoted C# fragment or a
+    // member name must land on the line that holds it - all five were a
+    // counting slip onto the argument or field next door.
+    const npc = dfuLines(DFU_NPC);
+    const seed = /StaticNPC\.cs:(\d+) seeds the name off the FLAT RESOURCE's stream position/.exec(dc);
+    assert.ok(seed, 'dungeonContext no longer cites the nameSeed\'s own argument');
+    assert.match(npc[Number(seed[1]) - 1] ?? '', /obj\.Resources\.FlatResource\.Position/,
+      `StaticNPC.cs:${seed[1]} is not the FlatResource.Position argument (:154 is TextureRecord)`);
+    const bkey = /buildingKey stays 0 \(:(\d+)\)/.exec(dc);
+    assert.ok(bkey, 'dungeonContext no longer cites the buildingKey argument');
+    assert.match(npc[Number(bkey[1]) - 1] ?? '', /^\s*0\);$/,
+      `StaticNPC.cs:${bkey[1]} is not the zero buildingKey argument (:157 is LocationIndex)`);
+
+    const wiz = dfuLines(DFU_WIZ);
+    const cg = read('src/ui/chargen.js').replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    const stats = /the cancel arm does copy the stat VALUES back \(DaggerfallStartNewGameWizard\.cs:(\d+)-(\d+)\)/.exec(cg);
+    assert.ok(stats, 'chargen no longer cites the cancel arm\'s stat copies');
+    assert.match(wiz[Number(stats[1]) - 1] ?? '', /characterDocument\.startingStats\.Copy/,
+      `DaggerfallStartNewGameWizard.cs:${stats[1]} is not the startingStats copy (:570 is workingSkills)`);
+    assert.match(wiz[Number(stats[2]) - 1] ?? '', /characterDocument\.workingStats\.Copy/,
+      `DaggerfallStartNewGameWizard.cs:${stats[2]} is not the workingStats copy`);
+    const bonus = /through SetBonusSkillPoints, :(\d+)\)/.exec(cg);
+    assert.ok(bonus, 'chargen no longer cites SetBonusSkillPoints');
+    assert.match(wiz[Number(bonus[1]) - 1] ?? '', /createCharAddBonusSkillsWindow\.SetBonusSkillPoints\(/,
+      `DaggerfallStartNewGameWizard.cs:${bonus[1]} is not SetBonusSkillPoints (:575 is faceIndex)`);
+
+    const ef = read('src/scenes/exteriorFoes.js').replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
+    const spawn = /SerializableEnemy\.cs:(\d+) `data\.questSpawn = enemy\.QuestSpawn;`/.exec(ef);
+    assert.ok(spawn, 'exteriorFoes no longer quotes the questSpawn save beside its line');
+    assert.match(dfuLines(DFU_FOE)[Number(spawn[1]) - 1] ?? '', /data\.questSpawn = enemy\.QuestSpawn;/,
+      `SerializableEnemy.cs:${spawn[1]} does not hold the line the comment quotes (:117 is mobileGender)`);
+  }
 
   // ...and the numbers themselves, whenever the reference tree is
   // there. PY1's rule: DFU is an external reference, so this half

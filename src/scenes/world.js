@@ -122,8 +122,8 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
-// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
-import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
@@ -2595,7 +2595,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2067 mounts the same one, gated on
+  // and dungeonContext.js:2079 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4505
@@ -4103,6 +4103,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       interior.foes = shed(interiorPools.foes);
       interior.guards = shed(interiorPools.guards);
     }
+    // SL-2 (AUDIT 65): THE RIG IN THE PLAYER'S HANDS. DFU has ONE
+    // WeaponManager for every WorldContext and SerializablePlayer
+    // .cs:175-176 reads it wherever the save is taken; this host has
+    // four rigs and was reading its own EXTERIOR one unconditionally,
+    // so an F9 pressed inside a shop recorded the street's sheath and
+    // hand. The mode host answers for the rig that is actually drawn
+    // and null outside interior mode (the dungeon owns its own
+    // composer, dungeonContext.js:4712), so exterior mode and a
+    // pre-seam mode host compose exactly as before, per field.
+    const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
       interior,
       classicMinutes: Math.floor(playerTicker.classicMinutes),
@@ -4135,7 +4145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // loaded back on the right hand's item (or bare fists). The
       // port stores the POSITIVE sense because PlayerWeapon holds
       // `usingRightHand`; it is the same bit.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed, usingRightHand: weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: wp?.weaponDrawn ?? !weaponRig.playerWeapon.sheathed, usingRightHand: wp?.usingRightHand ?? weaponRig.playerWeapon.usingRightHand, camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -4294,6 +4304,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // scripted weapon. Presence-gated: a pre-field envelope (and the
     // classic import before its own arm below) leaves the live hand.
     if (pose.usingRightHand != null) weaponRig.playerWeapon.usingRightHand = !!pose.usingRightHand;
+    // SL-2 (AUDIT 65): ...and the SAME pair into the interior rig, the
+    // one the player's hands actually hold inside a building. DFU has
+    // ONE WeaponManager for every WorldContext (SerializablePlayer
+    // .cs:420-421 sets it once, whatever the context), so this is the
+    // one bit landing in every rig rather than a second restore. NOT
+    // mode-gated on purpose: worldQuickLoad runs forceExitToExterior
+    // FIRST (:4184) and re-enters the building after (:4217), so an
+    // OUTDOOR save loaded while the player was standing indoors would
+    // otherwise leave the interior rig holding the outgoing session's
+    // drawn weapon for the next door. Flag-only, like the two above.
+    modes?.applyWeaponPose?.(pose);
     // AUDIT 39 (SerializablePlayer.cs:423): the mount comes back
     // through the ONE builder, so the riding sprite, the hoof loop,
     // the ride bob and the no-climbing-from-a-saddle rule re-arm with
@@ -5137,7 +5158,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:209, "a right-click on a window is the window's...
+  // (dungeon.js:214, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5356,7 +5377,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7023-7035 -
+  // worldModes answers it in BOTH modes (worldModes.js:7079-7091 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7431,7 +7452,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _act = activateFrame((latch.activate ??= createActivateGate()), {
           down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
           hasReadySpell: magic.spellArmed(),
-          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:197)
+          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:198)
           hudBlocked: activeMouseOverLargeHUD(),
           paused: _overlayHeld,
         });
@@ -7465,9 +7486,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // a townsperson, a corpse, a dropped pile, a street NPC, a
           // bulletin board or a door standing nearer than the foe takes
           // the click - `_rivalDist` below is those picks' own winning
-          // distance. The FAR call at the bottom carries the un-gated
-          // Info line (:806-826) and the pickpocket's too-far refusal
-          // (:832-836), which DFU takes out to RayDistance.
+          // distance. AUDIT 65 MC-2 made it ONE call at RayDistance:
+          // the un-gated Info line (:806-826) and the pickpocket's
+          // too-far refusal (:832-836) ride the same comparison, and a
+          // second call at the bottom of the ladder could not see
+          // `_rivalDist` at all.
           const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
             [...exteriorFoes.foes, ...cityGuards.guards], collider, reach,
             getInteractionMode(), playerEntity, {
@@ -7485,24 +7508,41 @@ export async function bootWorld(canvas, renderer, params, status) {
           // until this wave the host never asked the encounter pool
           // at all, so its corpses could not be opened by anyone.
           const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-          const _lootPick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider);
-          const _dropPick = _lootPick ? null : pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+          const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
+          const _pileNearer = !!_pilePick && !(_corpsePick && _corpsePick.distance <= _pilePick.distance), _lootPick = _pileNearer ? null : _corpsePick, _dropPick = _pileNearer ? _pilePick : null;   // AUDIT 65 MC-2: ...so the body and the pile are decided by DISTANCE. The old `_lootPick ? null : pick(piles)` precedence was inert while each pick dropped its own out-of-reach target; now that both reach for the ray so their handlers can speak (:868-873 the container, :936-941 the corpse), a body across the room would have suppressed the pile pick outright and refused a pile at arm's length.
           // Every OTHER thing this ray can strike, at its own distance:
           // the street's townsfolk (townTalk's own cylinder pick), the
           // corpse and pile picks above, and the door/NPC/board set the
           // interior transition picks from.
-          const _rivalDist = Math.min(
+          // AUDIT 65 MC-2: split in two, because the PERSON arm needs a
+          // rival that does not include the persons themselves - see
+          // townTalk.tryActivate. The foe arm still measures against
+          // everything, the townsfolk included.
+          const _nonPersonRival = Math.min(
             _lootPick?.distance ?? Infinity,
             _dropPick?.distance ?? Infinity,
-            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
             modes.exteriorActivationDistance(cam.pos, useFwd),
           );
+          const _rivalDist = Math.min(_nonPersonRival,
+            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
           if (_lockFoe) lockOn.toggle(_lockFoe);
-          else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
-          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+          // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, still
+          // decided against every rival above - DFU's one raycast
+          // (:314) reaches MobileEnemyCheck (:419) only for the thing
+          // it hit, and that is the whole of the arm. F33's second,
+          // bottom-of-the-ladder call ran with `nearerThan` Infinity,
+          // so a foe 20 units off ate a click DFU gives a door at 5.
+          else if (_enemyArm(RAY_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
+          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
             const lootKey = _lootPick?.key ?? null;
             const dropKey = _dropPick?.key ?? null;
-            if (lootKey) {
+            // AUDIT 65 MC-2: the corpse's own refusal
+            // (PlayerActivate.cs:936-941) - the body reaches for the
+            // ray now (scenes/corpseMarker.js) so the handler can
+            // speak, where the old pick dropped it in silence and let
+            // the click fall through to the door behind it.
+            if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
+            else if (lootKey) {
               const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
               surfacePlayer();
@@ -7513,6 +7553,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           // the pile itself now, so the gate is the skin question every
           // other pack arm asks - and on the classic skin it still comes
           // down to the same art.
+          // AUDIT 65 MC-2: ActivateLootContainer's own refusal (:868-873)
+          else if (dropKey && _dropPick.distance > _dropPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
           else if (dropKey && inventoryDoorReady()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
@@ -7526,9 +7568,6 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
-            // AUDIT 63 F33: nothing else took the click, so the FAR
-            // half of the enemy arm runs before the door transition.
-            else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
             else modes.tryEnter().catch((e) => console.error(e));
           }
         }
@@ -7622,7 +7661,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // third it is the reference's focal-and-pull-back with this host's
     // collider standing in for the sphere cast.
     const mwv = mwViewFrame({
-      fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
@@ -7776,7 +7815,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.beginFrame(proj, view, sunDirection(minute));
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();

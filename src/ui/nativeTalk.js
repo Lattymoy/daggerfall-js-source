@@ -421,7 +421,7 @@ export class NativeTalkWindow {
     // width in glyphs is not knowable without the font.
     this.topicHScroll = 0;
     this._topicWidthContent = 0;
-    this._mouse = [0, 0];            // for the wheel's per-panel routing
+    this._mouse = [0, 0];            // for the wheel's per-panel routing - AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
     this._category = null;
     // MERGE (the S-A lane's shape): selectedTalkCategory persists -
     // SetTalkModeWhereIs re-runs SetTalkCategory(selectedTalkCategory)
@@ -776,7 +776,7 @@ export class NativeTalkWindow {
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
    *  `click(vx, vy, right, middle)` - townTalk.js:1123,
-   *  worldModes.js:7095, dungeonContext.js:4884 - so the clock that
+   *  worldModes.js:7151, dungeonContext.js:4924 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

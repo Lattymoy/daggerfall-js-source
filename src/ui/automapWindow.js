@@ -1088,9 +1088,12 @@ export class AutomapWindow {
     this._panelMouse = [px, py];
   }
 
-  /** The wheel (:1855-1866 and GridButton_OnMouseScroll*). The overlay
-   *  wheel seam carries no position, so the LAST pointer position is
-   *  the target - which is where the wheel actually is. */
+  /** The wheel (:1855-1866 and GridButton_OnMouseScroll*). The LAST
+   *  pointer position is the target - which is where the wheel
+   *  actually is. AUDIT 65 UI-5 put the live point on the overlay
+   *  wheel seam (the hosts pass it after the dir), but this window
+   *  does not read it yet and so still carries UI-5's shape: a notch
+   *  before the first mousemove routes by the seeded point. */
   wheel(dir) {
     if (this._jump || this._noteBox) return;   // c2/S8: the two lockouts
     const [nx, ny] = this._mouse;

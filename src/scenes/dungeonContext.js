@@ -106,7 +106,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin, PLAYER_BODY_RADIUS,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -161,7 +161,7 @@ import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySou
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
-import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
+import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -556,10 +556,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         factionID: f.factionID, flags: f.flags,
         // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED record ints.
         rawX: f.rawX, rawY: f.rawY, rawZ: f.rawZ,
-        // StaticNPC.cs:154 seeds the name off the FLAT RESOURCE's
+        // StaticNPC.cs:155 seeds the name off the FLAT RESOURCE's
         // stream position, not the object offset the actions key on.
         position: f.flatPosition,
-        // StaticNPC.cs:159. buildingKey stays 0 (:157) - the struct
+        // StaticNPC.cs:159. buildingKey stays 0 (:158) - the struct
         // default, and a dungeon has no building.
         context: NPC_CONTEXT.Dungeon,
         // PlayerActivate.cs:745-751 keeps its own copy of the flat's
@@ -1364,6 +1364,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // `Notebook.AddMessage(message)` PopupText.AddText carries
   // (DaggerfallHUD.cs:371 / PopupText.cs:123), so the label files into
   // the journal's Messages page through the same host sink.
+  //
+  // EVERY ALLOCATION HAS AN OWNER: `hudText` is this context's own, but
+  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:152) -
+  // the one label the outer host shares - so the seam is BORROWED, not
+  // owned, and destroy() hands it back (the _prevPassiveHost idiom this
+  // file already uses for its other process-global seams). A bare null
+  // would not do: on ?world and ?exterior the previous holder is the
+  // host's own townTalk sink (world.js:6484 / exterior.js:2910), set
+  // once at boot and never again, so nulling on the way out of the
+  // first dungeon would silently un-file every mid-screen label above
+  // ground for the rest of the session - MC-1's own bug, re-opened.
+  const _prevMidScreenSink = midScreenText.onMessage;
   midScreenText.onMessage = (t) => opts.hudMessageSink?.(t);
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
@@ -2303,7 +2315,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:879 against :904; worldModes.js:5713 against :5718).
+    // (dungeon.js:892 against :917; worldModes.js:5769 against :5774).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2769,8 +2781,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8191,
-              // exterior.js:4168 and worldModes.js:5838 already ran;
+              // playerArrowHitFoe is the one copy world.js:8230,
+              // exterior.js:4188 and worldModes.js:5894 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2828,7 +2840,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // does (combat/arrowFlight.js's player test precedes its foe
           // sweep); the shooter cannot feather itself on the release
           // frame.
-          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets - at the player's OWN radius (AUDIT 65 CV-2)
           let struckFoe = null;
           if (!struckPlayer) {
             for (const f of foes) {
@@ -2917,7 +2929,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
         continue;
       }
-      if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {   // the player's capsule, DaggerfallMissile.cs:339
+      if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {   // the player's capsule at the player's own radius, DaggerfallMissile.cs:339 (AUDIT 65 CV-2)
         // S16: enemy missiles carry their caster (level + the
         // transfer heal-back pair); trap casts stay casterless (DFU
         // action casters are null) on the S4b player-level shape.
@@ -3011,6 +3023,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     };
   }
   function applyWorld(w) {
+    // SL-3 (AUDIT 65): THE PICKPOCKET LATCH DIES WITH THE POOL - which
+    // in this host means it has to be lowered by hand. DFU's load
+    // REBUILDS the enemy set: SerializableStateManager.cs:404-425
+    // InstantiatePrefab's a fresh GameObject per saved record, so
+    // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
+    // truth for every enemy. The re-minting pools match that by
+    // construction (exteriorFoes.js:1025's restoreWorld goes through
+    // spawnFoe), but this host patches the LIVE foes in place, so a
+    // same-dungeon reload kept a raised latch and a failed pickpocket
+    // could never be retried - falsifying the law
+    // player/mobileEnemyActivate.js:44-47 states in its own header.
+    // A PRE-PASS over the WHOLE live pool, not a line in the loop
+    // below: that loop visits only the indices the record carries.
+    for (const f of foes) if (f?.entity) f.entity.pickpocketAttempted = false;
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f) return;
@@ -3603,7 +3629,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       let key = null;
       if (isEnhanced() && eye) {
         const dir = [-view[2], -view[6], -view[10]];
-        const k = pickActivatable(eye, dir, api.lootTargets(), collider);
+        // AUDIT 65 MC-2: the pick now reaches as far as the RAY does,
+        // so the plaque must apply the handler's own reach itself -
+        // the player can SEE a pile across the room and cannot open
+        // it, and DFU's HUD says nothing about one until you activate.
+        const hit = pickActivatableHit(eye, dir, api.lootTargets(), collider);
+        const k = hit && hit.distance <= hit.reach ? hit.key : null;
         if (k && (k.startsWith('loot:') || k.startsWith('corpse:') || k.startsWith('droppedLoot:'))) key = k;
       }
       showLootHover(key, key ? api.lootContents(key) : null,
@@ -4392,6 +4423,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
         },
         quickSave: () => ctx.quickSave?.(),
+        // MAC1 J: the pointer comes back INSIDE the resume gesture
+        // (ui/pauseDoor.js:153-170). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // OWN (:4701), so the relock arrives from whichever dungeon host
+        // mounted it - the way hudMessageSink is threaded (:1349) - and
+        // both of them hand it in: dungeon.js's opts bag and
+        // worldModes' (the world-hosted crawl, which is where the
+        // classic start into Privateer's Hold lives, and which is the
+        // pause door ui/input.js:524 reaches underground).
+        relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
         quickLoad: () => ctx.quickLoad?.(setPlayerPos),
@@ -4896,8 +4936,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return true;
     },
     /** The wheel seam (U-scroll): scroll never closes a window, so no
-     *  done check. */
-    overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
+     *  done check.
+     *  AUDIT 65 UI-5: the NATIVE POINT rides the notch, the way it
+     *  rides overlayHover below - BaseScreenComponent.Update's scroll
+     *  block (:725-736) is guarded by `mouseOverComponent`, which :577-594
+     *  recomputes from the live mouse, so a window may not route by the
+     *  last hover it was given. The (-1,-1) default is the hosts' own
+     *  pointer-leave sentinel: a caller with no point routes nothing. */
+    overlayWheel(dir, vx = -1, vy = -1) { activeOverlay?.wheel?.(dir, vx, vy); },
     /**
      * ROAD-C c2/S4: THE POINTER SEAM, beside the click/hover/wheel
      * triple rather than folded into them. DFU's automap windows are
@@ -5155,9 +5201,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  static NPC's bootstrap QuestResourceBehaviour is a component in
      *  the scene like any other: it is in
      *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
-     *  (GameObjectHelper.cs:926 - the list IsAlreadyPlaced reads) and,
-     *  because StaticNPC.cs:127 registers the object with
-     *  ActiveGameObjectDatabase, in
+     *  (GameObjectHelper.cs:926 - the list IsAlreadyInjected reads; the
+     *  guard is :978, called :950) and, because StaticNPC.cs:127
+     *  registers the object with ActiveGameObjectDatabase, in
      *  GetActiveStaticNPCQuestResourceBehaviours too
      *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
      *  RAY's filtered view and cannot serve either. */
@@ -5173,10 +5219,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // takeLoot vacuumed everything in one keypress.
     lootTargets() {
       const targets = [];
+      // AUDIT 65 MC-2: every kind here competes for the ray at the
+      // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
+      // handler constant beside it, because the refusal is spoken
+      // INSIDE the handler - ActivateLootContainer's
+      // `hit.distance > TreasureActivationDistance` (:868-873) and the
+      // corpse arm's `hit.distance > CorpseActivationDistance`
+      // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
+      // the target at the pick, as the port did, answers with silence
+      // and lets the click fall through to whatever stood behind it.
       lootPiles.forEach((p, i) => {
         if (!p.batch) return;
         const [hx, hy] = p.half;
-        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] } });
+        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
       });
       foes.forEach((f, i) => {
         if (!f.dead || !f.entity?.items?.length) return;
@@ -5184,7 +5239,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
         // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
         // 128-unit default the loot piles use.
-        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
+        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
       });
       targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
       return targets;
@@ -5337,6 +5392,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       setDeathPresenter(_prevDeathPresenter);
       setAvoidDeathHook(_prevAvoidDeath);
       setInfectionHost(_prevInfectionHost);
+      // ...and the one HUD label this context borrowed off the module
+      // singleton (:1366). A dungeon left behind must not keep a dead
+      // context's opts closure installed on it.
+      midScreenText.onMessage = _prevMidScreenSink;
     },
   };
   api.enhancedNav = enhancedNav;   // ENHANCED AI 3b: the bake for the motor (4); null chf until it lands

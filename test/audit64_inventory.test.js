@@ -426,8 +426,14 @@ test('AUDIT 64 F52: the wheel scrolls the list under the cursor, one row a notch
 test('AUDIT 64 F52: off both scrollers nothing scrolls - there is no fallback list', () => {
   const bag = Array.from({ length: 9 }, () => dagger());
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity: hero(bag) });
+  // AUDIT 65 UI-5: the notch carries its own point now, so "before the
+  // pointer has ever moved" is no longer the inert case - the inert
+  // case is a notch with NO point, which falls back to the hosts'
+  // (-1,-1) pointer-leave sentinel and hits no rect.
+  w.wheel(1, -1, -1);
+  assert.equal(w.scroll, 0, 'the pointer-leave sentinel carries no scroll');
   w.wheel(1);
-  assert.equal(w.scroll, 0, 'a notch before the pointer has ever moved is inert');
+  assert.equal(w.scroll, 0, 'and so does a caller with no point at all');
   w.hover(INV_RECTS.paperDoll[0] + 5, INV_RECTS.paperDoll[1] + 5);
   w.wheel(1);
   assert.equal(w.scroll, 0, 'the paperdoll carries no scroll handler');

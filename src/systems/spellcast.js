@@ -17,6 +17,7 @@ import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE wi
 import { magicResist } from '../combat/formulas.js';   // U10
 import { raceById, raceByKey } from './races.js';   // AUDIT 18: the racial saving-throw block
 import { getInt } from './settings.js';   // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
+import { CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 65 CV-2: the PLAYER's own CharacterController radius, imported rather than restated
 
 // ---- DaggerfallMissile constants, verbatim ----
 export const MISSILE_SPEED = 25.0;
@@ -254,12 +255,31 @@ export function sweepFoes(pos, radius, foes) {
 // resolveSpellVsTarget moved to systems/effects.applySpell (S7) -
 // one door for instant AND continuous families.
 
-/** The CharacterController every DFU body wears: the enemy prefab's
- *  is m_Height 1.8, m_Radius 0.4, m_SkinWidth 0.05, m_Center {0,0,0}
- *  (DaggerfallEnemy [Game Serializable].prefab:442-448), and the
- *  player's is the same radius under PlayerHeightChanger's live
- *  height. 0.4 + 0.05 is the surface a cast meets. */
+/** The CharacterController a DFU FOE wears: the enemy prefab's is
+ *  m_Height 1.8, m_Radius 0.4, m_SkinWidth 0.05, m_Center {0,0,0}
+ *  (DaggerfallEnemy [Game Serializable].prefab:442-448), and 0.4 +
+ *  0.05 is the surface AUDIT 62 recorded a cast meeting.
+ *
+ *  AUDIT 65 CV-2: it is the FOE's, and the foe's only. The sentence
+ *  that stood here - "the player's is the same radius" - is false at
+ *  the prefab: PlayerAdvanced.prefab:81-85 is m_Height 1.8, m_Radius
+ *  0.35, m_SkinWidth 0.06, and nothing writes a radius at runtime
+ *  (PlayerHeightChanger and SetupDemoEnemy both move HEIGHT alone).
+ *  DFU never measures two bodies with one number: DaggerfallMissile
+ *  .cs:339's SphereCast and :481's OverlapSphereNonAlloc meet
+ *  whatever collider each entity actually wears. Measuring the
+ *  player at 0.45 gave it a body 0.10 wider than DFU's on every
+ *  missile, arrow and blast - a 0.90 missile contact where DFU's is
+ *  0.80, a 4.45 blast rim where DFU's is 4.35. */
 export const BODY_CAPSULE_RADIUS = 0.45;
+/** The PLAYER's, from player/motor.js's one declaration of its
+ *  controller (ONE DFU MEMBER, ONE EXPORT). SKIN WIDTH IS NOT PART OF
+ *  IT: m_SkinWidth is PhysX's penetration allowance for the
+ *  controller's own Move, and DFU casts at the raw controller.radius
+ *  everywhere it reads one (PlayerHeightChanger.cs:530,
+ *  EnemyMotor.cs:679/:1144) - which is the convention player/collider
+ *  .js already sweeps the player by. */
+export const PLAYER_BODY_RADIUS = CAPSULE_RADIUS;
 
 /** AUDIT 62 F21: a missile's contact test, against the target's
  *  CAPSULE rather than one point on it.
@@ -284,8 +304,8 @@ export const BODY_CAPSULE_RADIUS = 0.45;
  *  diameter: under 2r the two centres coincide and it is a sphere,
  *  which is what min(r, h/2) gives.
  */
-export function missileHitsCapsule(pos, feet, height) {
-  return sphereOverlapsCapsule(pos, MISSILE_COLLIDER_RADIUS, feet, height);
+export function missileHitsCapsule(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS) {
+  return sphereOverlapsCapsule(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius);
 }
 
 /**
@@ -293,20 +313,23 @@ export function missileHitsCapsule(pos, feet, height) {
  * RADIUS the caller measures with. A Unity sphere (a SphereCast's tip
  * at ColliderRadius, an OverlapSphere at ExplosionRadius) meets a
  * CharacterController capsule when its centre is within
- * `radius + BODY_CAPSULE_RADIUS` of the capsule's INNER AXIS SEGMENT -
- * feet + r up to feet + height - r, the two hemisphere centres, which
- * collapse to one point (a sphere) under height < 2r exactly as Unity
- * collapses a capsule shorter than its own diameter. Both laws
- * DaggerfallMissile carries are this function: the contact test at
+ * `radius + bodyRadius` of the capsule's INNER AXIS SEGMENT - feet + r
+ * up to feet + height - r, the two hemisphere centres, which collapse
+ * to one point (a sphere) under height < 2r exactly as Unity collapses
+ * a capsule shorter than its own diameter. AUDIT 65 CV-2: `bodyRadius`
+ * is the MEASURED body's own controller radius and it defaults to the
+ * foe's, so a player-side caller passes PLAYER_BODY_RADIUS - DFU's
+ * query meets each entity's collider, never one shared number. Both
+ * laws DaggerfallMissile carries are this function: the contact test at
  * :339 (MISSILE_COLLIDER_RADIUS, above) and the area sweep at :481
  * (ExplosionRadius, sweepFoes).
  */
-export function sphereOverlapsCapsule(pos, radius, feet, height) {
+export function sphereOverlapsCapsule(pos, radius, feet, height, bodyRadius = BODY_CAPSULE_RADIUS) {
   if (!feet) return false;
   const h = height ?? 1.8;
-  const half = Math.min(BODY_CAPSULE_RADIUS, h / 2);
+  const half = Math.min(bodyRadius, h / 2);   // AUDIT 65 CV-2: the axis inset is the MEASURED body's own radius
   const y = Math.min(Math.max(pos[1], feet[1] + half), feet[1] + h - half);   // the clamped point on the capsule AXIS
-  return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= radius + BODY_CAPSULE_RADIUS;
+  return Math.hypot(feet[0] - pos[0], y - pos[1], feet[2] - pos[2]) <= radius + bodyRadius;
 }
 
 /**

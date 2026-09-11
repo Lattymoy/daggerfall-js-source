@@ -12,6 +12,7 @@
 // imports it from. This file declared a second 0.025 - agreeing, as
 // duplicates do until they do not.
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
 
 export { GLOBAL_SCALE };
 
@@ -127,6 +128,19 @@ export function objectAabb(o) {
  * inline with worldAabb(o.cpu.positions, o.matrix) and CRASHED on
  * effect objects, which carry a precomputed aabb and no cpu/matrix;
  * relay objects carry neither and are chain-only, never targets).
+ * AUDIT 65 MC-2: the two kinds this one pool holds are NOT gated
+ * alike in DFU. An ACTION DOOR is dispatched off the ray's hit
+ * (ActionDoorCheck, :374 -> ActivateActionDoor) and refuses out loud
+ * inside the handler - `hit.distance > DoorActivationDistance` ->
+ * SetMidScreenText(youAreTooFarAway), :686-689 - so it must reach the
+ * handler to speak, which means competing for the pick at the RAY's
+ * own reach and carrying its real one. An action RECORD is gated in
+ * the Update ladder itself and is SILENT - `if (ActionCheck(hit, out
+ * action) && hit.distance <= DefaultActivationDistance)` (:380-383),
+ * no else, no line - so it keeps the narrow pre-gate exactly as it is.
+ * isActionDoorObject (world/actionSystem.js:106) is the port's spelling
+ * of that GetComponent<DaggerfallActionDoor> everywhere else.
+ *
  * @param {Map<string, object>} objects - ActionSystem.objects
  * @param {number} distance - activation reach for every target.
  */
@@ -135,7 +149,8 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
   for (const o of objects.values()) {
     const aabb = objectAabb(o);
     if (!aabb) continue;
-    targets.push({ key: o.key, aabb, distance });
+    if (isActionDoorObject(o)) targets.push({ key: o.key, aabb, distance: RAY_DISTANCE, reach: distance });   // :686-689 speaks
+    else targets.push({ key: o.key, aabb, distance });   // :380-383 is silent
   }
   return targets;
 }
@@ -210,7 +225,7 @@ function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
 
 /**
  * Pick the nearest activatable the eye ray hits within reach and sight.
- * @param {Array<{key:string, aabb:{min,max}, distance?:number}>} targets
+ * @param {Array<{key:string, aabb:{min,max}, distance?:number, reach?:number}>} targets
  * @returns {string|null} target key
  */
 export function pickActivatable(eye, dir, targets, collider) {
@@ -234,12 +249,28 @@ export function pickActivatable(eye, dir, targets, collider) {
  * its own pool - so a host that wants DFU's answer has to compare the
  * two picks by DISTANCE, which means this one has to return it.
  *
- * @returns {{key:string, distance:number}|null}
+ * AUDIT 65 MC-2: and its REACH with it. DFU's ray is cast once at
+ * RayDistance (:76) and every handler it dispatches into gates the
+ * distance ITSELF, out loud - the static door (:501-504), the action
+ * door (:686-689), the bulletin board (:709-712), ladders and shelves
+ * (:850-853), the loot container (:868-873) and the corpse (:936-941)
+ * each answer `hit.distance > <its own constant>` with
+ * SetMidScreenText(youAreTooFarAway) and return. A target whose
+ * `distance` is widened to RAY_DISTANCE so it can WIN the pick
+ * therefore carries its real `reach` beside it, and the ladder speaks
+ * the refusal when the winner came back out of reach. This is the
+ * bulletin board's idiom (scenes/worldModes.js:3978-3988) given a
+ * field, not a second pick: one ray, one winner, the gate downstream.
+ * Targets that were never widened answer `reach === distance`, which
+ * the pre-gate has already enforced, so they can never refuse.
+ *
+ * @returns {{key:string, distance:number, reach:number}|null}
  */
 export function pickActivatableHit(eye, dir, targets, collider) {
   let bestKey = null;
   let bestDist = Infinity;
   let bestAabb = null;
+  let bestReach = DEFAULT_ACTIVATION_DISTANCE;
   for (const target of targets) {
     const d = rayAabb(eye, dir, target.aabb);
     if (d === null || d >= bestDist) continue;
@@ -247,6 +278,9 @@ export function pickActivatableHit(eye, dir, targets, collider) {
     bestKey = target.key;
     bestDist = d;
     bestAabb = target.aabb;
+    // MC-2: a family that was not widened has no `reach` of its own, and
+    // its pick reach IS its handler's constant.
+    bestReach = target.reach ?? target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
   }
   if (bestKey === null) return null;
   // Occlusion: solid world strictly in front of the target blocks it -
@@ -265,5 +299,5 @@ export function pickActivatableHit(eye, dir, targets, collider) {
       && hz >= b.min[2] - skin && hz <= b.max[2] + skin;
     if (!inside) return null;
   }
-  return { key: bestKey, distance: bestDist };
+  return { key: bestKey, distance: bestDist, reach: bestReach };
 }

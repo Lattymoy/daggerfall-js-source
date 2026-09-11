@@ -41,7 +41,7 @@ const NO_SPELLBOOK_TEXT = 'You have no spellbook!';   // TextManager noSpellbook
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach, missileHitsFoe,   // ROAD-H tail: the reach along the normalised direction; the foe's CAPSULE at contact
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
-  missileHitsCapsule,   // AUDIT 62 F21 (review): the SphereCast contact test
+  missileHitsCapsule, PLAYER_BODY_RADIUS,   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
@@ -293,8 +293,8 @@ export function createPlayerMagic({
       if (excludeFoe && t === excludeFoe) continue;
       applySpellToFoe(spell, casterLevel, t, caster);
     }
-    // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by the whole 0.45 body radius in every stance.
-    if (playerFeet && sphereOverlapsCapsule(pos, EXPLOSION_RADIUS, playerFeet, playerHeight)) {
+    // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by a whole body radius in every stance. AUDIT 65 CV-2: and that body is the PLAYER's 0.35 (PlayerAdvanced.prefab:82), not the foe's 0.45 - the rim is 4.35.
+    if (playerFeet && sphereOverlapsCapsule(pos, EXPLOSION_RADIUS, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
       applySpellToPlayer(spell, casterLevel, caster);
     }
   }
@@ -590,7 +590,7 @@ export function createPlayerMagic({
           // AUDIT 62 F21 (review): the player's CAPSULE, DaggerfallMissile
           // .cs:339's SphereCast into its CharacterController, at the LIVE
           // height - the shared engine's copy of the dungeon's arm.
-          if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {
+          if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
             const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
             if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster, { playerHeight });   // ROAD-H H2
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);

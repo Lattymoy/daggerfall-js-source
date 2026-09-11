@@ -2535,7 +2535,7 @@ collectors could see it:
 
 - `sceneBehaviours()` is the port's
   `Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()`
-  (`GameObjectHelper.cs:926`), the list `IsAlreadyPlaced` reads; and
+  (`GameObjectHelper.cs:926`), the list `IsAlreadyInjected` reads; and
 - `activeStaticNpcQuestBehaviours()` is
   `ActiveGameObjectDatabase.GetActiveStaticNPCQuestResourceBehaviours`
   (`ActiveGameObjectDatabase.cs:308-311`), the static-NPC cache.
@@ -2547,7 +2547,7 @@ bootstrap `QuestResourceBehaviour` is an ordinary scene component that
 `FindObjectsOfTypeAll` sees; and `StaticNPC.cs:127` registers EVERY
 `StaticNPC` with `ActiveGameObjectDatabase`, `Context.Dungeon` ones
 included, so the narrower cache holds it too. A quest Person bootstrapped
-onto a palace static NPC was therefore invisible to `IsAlreadyPlaced` and
+onto a palace static NPC was therefore invisible to `IsAlreadyInjected` and
 could be stood a SECOND time by the marker walk. The host record the fix
 already built (`{ staticNpcFactionId, isActive, setActive, destroy }`) was
 shaped precisely for the collector that never read it.

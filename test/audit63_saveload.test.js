@@ -176,9 +176,66 @@ test('AUDIT 63 F25: the hand round-trips through the envelope (mutant: drop it f
 });
 
 test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-runs ApplyWeapon', () => {
-  assert.match(WORLD, /usingRightHand: weaponRig\.playerWeapon\.usingRightHand,/, 'the world host writes it');
+  // AUDIT 65 SL-2 rewrote this line to the new law. DFU has ONE
+  // WeaponManager for every WorldContext; the port has FOUR rigs, and
+  // IS1 routes the inside-a-building save to the WORLD host's composer
+  // - which read its own EXTERIOR rig unconditionally, so an F9 pressed
+  // in a shop recorded the street's sheath and hand and the load wrote
+  // them back into the street's rig. The composer asks the mode host
+  // for the rig that is actually in the player's hands, per field, and
+  // falls back to its own when there is none.
+  assert.match(WORLD, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'the world host asks the mode seam for the live rig');
+  assert.match(WORLD, /weaponDrawn: wp\?\.weaponDrawn \?\? !weaponRig\.playerWeapon\.sheathed, usingRightHand: wp\?\.usingRightHand \?\? weaponRig\.playerWeapon\.usingRightHand,/,
+    'per field: the mode seam, else this host\'s own rig');
   assert.match(WORLD, /if \(pose\.usingRightHand != null\) weaponRig\.playerWeapon\.usingRightHand = !!pose\.usingRightHand;/,
     ':421 sets the property, presence-gated');
+  assert.match(WORLD, /modes\?\.applyWeaponPose\?\.\(pose\);/, 'and the pair lands in the interior rig too - DFU sets ONE manager');
+
+  // ...and the fourth host's two seams, MOUNTED, not matched: the
+  // expressions that run below are the ones in src/scenes/worldModes.js.
+  const lift = (text, sig) => {
+    const i = text.indexOf(sig);
+    assert.ok(i >= 0, `${sig} was found`);
+    let d = 0;
+    for (let k = text.indexOf('{', i + sig.length - 1); k < text.length; k++) {
+      const c = text[k];
+      if (c === '/' && text[k + 1] === '/') { k = text.indexOf('\n', k); continue; }
+      if (c === '\'' || c === '"' || c === '`') { const q = c; for (k++; k < text.length; k++) { if (text[k] === '\\') k++; else if (text[k] === q) break; } continue; }
+      if (c === '{') d++;
+      else if (c === '}' && --d === 0) return text.slice(i, k + 1);
+    }
+    assert.fail(`unbalanced ${sig}`);
+    return '';
+  };
+  // eslint-disable-next-line no-new-func
+  const seam = (mode, interiorWeapon) => new Function('mode', 'interiorWeapon',
+    `return ({ ${lift(WM, '    weaponPose() {')}, ${lift(WM, '    applyWeaponPose(pose) {')} });`)(mode, interiorWeapon);
+  const rig = (sheathed, usingRightHand) => ({ playerWeapon: { sheathed, usingRightHand } });
+
+  const drawnLeft = rig(false, false);
+  assert.deepEqual(seam('interior', drawnLeft).weaponPose(), { weaponDrawn: true, usingRightHand: false },
+    'inside a building the pair comes off the INTERIOR rig');
+  // null in exterior AND dungeon mode: the world host composes its own
+  // rig outdoors, and dungeonContext owns the whole pair underground
+  // (:4690 save, :4766/:4772 restore) - answering here would shadow a
+  // correct composer with this file's idle interim rig.
+  assert.equal(seam('exterior', drawnLeft).weaponPose(), null);
+  assert.equal(seam('dungeon', drawnLeft).weaponPose(), null);
+
+  // THE RESTORE IS UNGATED BY MODE, deliberately: worldQuickLoad runs
+  // forceExitToExterior FIRST and re-enters the building after, so an
+  // OUTDOOR save loaded while the player stood indoors must still land
+  // its bit in the rig they will meet at the next door.
+  const sheathedRight = rig(true, true);
+  seam('exterior', sheathedRight).applyWeaponPose({ weaponDrawn: true, usingRightHand: false });
+  assert.deepEqual(sheathedRight.playerWeapon, { sheathed: false, usingRightHand: false },
+    'an outdoor-mode apply still reaches the interior rig');
+  const untouched = rig(true, true);
+  seam('interior', untouched).applyWeaponPose({ yaw: 1 });
+  assert.deepEqual(untouched.playerWeapon, { sheathed: true, usingRightHand: true }, 'presence-gated, like every additive pose member');
+  seam('interior', untouched).applyWeaponPose(null);
+  assert.deepEqual(untouched.playerWeapon, { sheathed: true, usingRightHand: true }, 'and a poseless envelope leaves the live rig');
+  assert.ok(!/applyWeapon\(/.test(lift(WM, '    applyWeaponPose(pose) {')), 'flag only - the rig re-derives the screen weapon per frame');
   assert.match(DC, /usingRightHand: playerWeapon\.usingRightHand \}/, 'the dungeon/interior host writes it');
   assert.match(DC, /if \(extras\.pose\.usingRightHand != null\) playerWeapon\.usingRightHand = !!extras\.pose\.usingRightHand;/);
   // THE RESTORE SETS THE FLAG AND NOTHING ELSE. SerializablePlayer's

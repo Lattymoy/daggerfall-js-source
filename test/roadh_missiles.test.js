@@ -20,7 +20,7 @@ import {
 } from '../src/characters/enemyTargets.js';
 import {
   playerArrowOrigin, PLAYER_ARROW_DOWN, PLAYER_ARROW_SIDE,
-  sphereOverlapsCapsule, sweepFoes, missileHitsCapsule,
+  sphereOverlapsCapsule, sweepFoes, missileHitsCapsule, PLAYER_BODY_RADIUS,
   EXPLOSION_RADIUS, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS,
 } from '../src/systems/spellcast.js';
 import { sensesContext } from '../src/scenes/shared.js';
@@ -313,7 +313,7 @@ test('ROAD-H H1c: BOTH arrow spawn seams apply it, so every host inherits the bo
 
 test('ROAD-H H2: DoAreaOfEffect is an OverlapSphere against CAPSULES - the rim is radius + the body', () => {
   assert.equal(EXPLOSION_RADIUS, 4.0);          // DaggerfallMissile.cs:38
-  assert.equal(BODY_CAPSULE_RADIUS, 0.45);      // the prefab's 0.4 + 0.05 skin
+  assert.equal(BODY_CAPSULE_RADIUS, 0.45);      // the ENEMY prefab's 0.4 + 0.05 skin (AUDIT 65 CV-2: the player's is PLAYER_BODY_RADIUS)
 
   // THE PIN THE BRIEF ASKS FOR: a foe whose capsule EDGE is inside the
   // blast while its CENTRE is outside. DFU's OverlapSphere hits it;
@@ -353,8 +353,8 @@ test('ROAD-H H2: DoAreaOfEffect is an OverlapSphere against CAPSULES - the rim i
       `missileHitsCapsule is sphereOverlapsCapsule at the missile radius (y=${y})`);
   }
   assert.match(src('systems/spellcast.js'),
-    /export function missileHitsCapsule\(pos, feet, height\) \{\n\s*return sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height\);\n\}/,
-    'and it is a call, not a second copy');
+    /export function missileHitsCapsule\(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS\) \{\n\s*return sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\);\n\}/,
+    'and it is a call, not a second copy - carrying the measured body through (AUDIT 65 CV-2)');
 });
 
 test('ROAD-H H2: explodeAt measures the PLAYER as a capsule at its LIVE height, not a point at feet + 0.9', () => {
@@ -389,13 +389,14 @@ test('ROAD-H H2: explodeAt measures the PLAYER as a capsule at its LIVE height, 
   };
 
   // A CROUCHED player 4.2 out, blast at its own mid-capsule height: the
-  // sphere overlaps the 0.9 capsule (4.2 <= 4.0 + 0.45), where the old
-  // point at feet + 0.9 sat 4.224 from the blast and was missed.
+  // sphere overlaps the 0.9 capsule (4.2 <= 4.0 + 0.35, the PLAYER's own
+  // body - AUDIT 65 CV-2), where the old point at feet + 0.9 sat 4.224
+  // from the blast and was missed.
   magic.explodeAt([0, 0.45, 0], spell, 1, [4.2, 0, 0], null, { playerHeight: 0.9 });
   assert.ok(world.hurt > 0, 'the crouched player is caught');
   assert.ok(world.foeHurt > 0, 'and so is the foe whose capsule edge is inside the radius');
 
-  // ...and the rim still ends: 4.46 out is past 4.0 + 0.45.
+  // ...and the rim still ends: 4.46 out is past 4.0 + 0.35.
   const before = world.hurt;
   magic.explodeAt([0, 0.45, 0], spell, 1, [4.46, 0, 0], null, { playerHeight: 0.9 });
   assert.equal(world.hurt, before, 'past the rim nothing lands on the player');
@@ -407,9 +408,9 @@ test('ROAD-H H2: explodeAt measures the PLAYER as a capsule at its LIVE height, 
   assert.ok(world.hurt > tallBefore, 'the mounted player is struck at 2.0');
   const crouchBefore = world.hurt;
   magic.explodeAt([0, 5.0, 0], spell, 1, [0, 0, 0], null, { playerHeight: 0.9 });
-  assert.equal(world.hurt, crouchBefore, 'a burst 5.0 overhead clears a CROUCHED capsule, whose crown is 0.45');
+  assert.equal(world.hurt, crouchBefore, 'a burst 5.0 overhead clears a CROUCHED capsule, whose crown is 0.55');
   magic.explodeAt([0, 5.0, 0], spell, 1, [0, 0, 0], null, { playerHeight: 1.8 });
-  assert.ok(world.hurt > crouchBefore, '...and the same burst catches a STANDING one, whose crown is 1.35');
+  assert.ok(world.hurt > crouchBefore, '...and the same burst catches a STANDING one, whose crown is 1.45');
 });
 
 test('ROAD-H H2: the sweep and the player arm are wired through the one helper, and every explodeAt caller carries the height', () => {
@@ -419,7 +420,7 @@ test('ROAD-H H2: the sweep and the player arm are wired through the one helper, 
   assert.ok(!/f\.ai\.feet\[1\] \+ \(f\.ai\.height \?\? 1\.8\) \/ 2, f\.ai\.feet\[2\]\];\n\s*if \(Math\.hypot/.test(sc),
     'and no longer a point at the capsule centre within the bare radius');
   const hm = src('scenes/hostMagic.js');
-  assert.match(hm, /if \(playerFeet && sphereOverlapsCapsule\(pos, EXPLOSION_RADIUS, playerFeet, playerHeight\)\)/);
+  assert.match(hm, /if \(playerFeet && sphereOverlapsCapsule\(pos, EXPLOSION_RADIUS, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)\)/);   // AUDIT 65 CV-2
   assert.ok(!/playerFeet\[1\] \+ 0\.9 - pos\[1\]/.test(hm), 'the feet + 0.9 point is gone');
   // Every caller of explodeAt hands it the live capsule.
   for (const m of hm.matchAll(/\bexplodeAt\((?!pos, spell)[^\n]*/g)) {

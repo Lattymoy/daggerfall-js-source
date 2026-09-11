@@ -15,6 +15,23 @@
 // lifetime (PopupText.popDelay 1.0 s instead of 1.5 s) and the wrong
 // semantics (a stack that scrolls instead of a line that replaces).
 //
+// AUDIT 65 MC-2 - HOW MANY OF THOSE ELEVEN THE PORT CAN SPEAK. The
+// list above is DFU's, not a claim about this tree, and for a long
+// while the port reached five of the refusals (the board :711, the
+// static/mobile NPC :763/:780/:790 and the pickpocket :834) because
+// player/activate.js PRE-GATED THE PICK: a target beyond its own reach
+// was dropped before any host saw it, so a door, action door, shelf,
+// ladder, chest, pile or body at five units answered with SILENCE and
+// let the click fall through to whatever stood behind it. DFU rays
+// once to RayDistance (PlayerActivate.cs:76/:314) and gates inside
+// each handler. The families now compete for that one ray and carry
+// their handler's own reach beside it, so :503, :688, :852, :872 and
+// :940 are spoken too. Two stay silent on purpose: :330, the quest
+// resource, is a RECORDED delta (scenes/worldModes.js's own note and
+// bible/06-Systems/Quest-Arc.md), and an action RECORD is not a
+// refusal at all in C# either (:380-383 gates in the Update ladder
+// with no else and no line).
+//
 // The reference itself proves the two are deliberately distinct in one
 // file: PlayerActivate.cs:527-529 speaks `PopupMessage(lockedExterior
 // Door)` and then `LookAtInteriorLock(...)` - one line per surface.
