@@ -56,7 +56,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:903, world.js:1604,
-                        exterior.js:1971. It is the only window TWO
+                        exterior.js:1972. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
@@ -9722,9 +9722,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4970`,
+the other half went stale unnoticed. (The rest cite named `world.js:4974`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4976` now.)
+deleted the second and the cite is `world.js:4980` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -11923,3 +11923,39 @@ text pins on the hosts, the pane, the prefs and the manifest.
 normalisation. **Not seen on hardware** - the same standing note as
 AUDIT 62's: the gain, the dead zone and the gyro's signs are the
 numbers a phone will correct.
+
+## MWA1 + FPS1 - THE ARMS AT BOOT, AND A NUMBER OVER THE GAME (2026-09-11)
+
+RookieG's report, relayed by Mac: "morrowind arms did not work on
+first launch" and "we need an ingame fps counter" (the same message
+said the outside still has optimization issues - the counter is the
+first thing that work needs). Two of the five items; the reflexes
+Continue and the Privateer's Hold save wait on a repro.
+
+**MWA1 - the arms at boot.** Only the test room ever built the arms
+at boot (`world.js`'s `?test` branch). A normal game had them only
+after the Enhanced pane's "Build first-person arms", and `fpArm` is a
+module singleton that dies with the tab, so every launch began bare -
+not a first-launch bug, an every-launch one. The pane's Build now
+sets `mwArms` on the prefs shelf (only when the build stood) and
+Unload clears it; `combat/weaponRig.js autoBuildArms` is the one
+home, four gates (a made character, the switch, the archives
+attached, the arm not already built), and each host that owns a rig
+calls it at every door a made character arrives through: the rig's
+creation for a continuing session, after the wizard for a new one,
+after the restore for a load and a classic load. A refusal is logged;
+the classic sprite stands in, as it always did.
+
+**FPS1 - the counter.** `ui/fpsCounter.js`, mounted from `main.js`
+over every host and skin on its own requestAnimationFrame, so it
+measures the browser's cadence and not one host's loop. Once a
+second: the frames the second held, the mean frame in ms, and the
+WORST frame of that second - a steady 60 with a 90 ms worst is the
+stutter a mean hides. Its switch is `showFps` on the prefs shelf
+(the Enhanced pane's new Diagnostics card), read on every tick so
+the row takes effect at once; `?fps` forces it on for a probe. Off,
+the element is hidden and the loop only counts.
+
+**Pinned** in `test/mwarms_fps.test.js` (4). Not a Ledger row: the
+counter is a diagnostic overlay with no game law in it, and the arms
+are the MW arc's already-recorded departure with a boot door added.

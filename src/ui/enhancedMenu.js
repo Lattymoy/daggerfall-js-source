@@ -32,7 +32,7 @@
 // ── WHAT IT REPLACES ─────────────────────────────────────────────
 //
 // The port's front door is currently FOUR screens in a row, and the
-// player meets all four before touching the game (main.js:29-120):
+// player meets all four before touching the game (main.js:31-123):
 //
 //     ui/titleScreen.js      the logo, dismissed by any key
 //     scenes/launcherScene.js + ui/settingsWindow.js   settings, 584 lines
@@ -977,6 +977,16 @@ function paneEnhanced(body) {
     + 'Takes effect at once; half size still reads and double fills a phone.'));
   body.append(sizing);
 
+  // FPS1 (RookieG via Mac, 2026-09-11: "we need an ingame fps counter").
+  // A diagnostic, so its own card: the overlay ui/fpsCounter.js mounts
+  // from main.js and reads this switch every second - no reload.
+  const diag = el('div', 'card');
+  diag.append(el('h3', null, 'Diagnostics'));
+  diag.append(prefRow('showFps', 'FPS counter',
+    'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
+    + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
+  body.append(diag);
+
   // TI2 (Mac, 2026-09-11: "enhance the mobile element... camera
   // movement, character movement and a more phone built feel"): THE
   // TOUCH CARD. Every knob the touch layer reads (ui/touch.js), on the
@@ -1124,7 +1134,7 @@ function paneEnhanced(body) {
   ];
   if (count) {
     armActions.push(armState.active
-      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); render(); } }
+      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); setPref('mwArms', false); render(); } }   // MWA1: and stay unloaded across launches
       : { label: 'Build first-person arms', primary: true, onClick: async () => {
         // Seconds long and synchronous - the BSA index, the whole ESM
         // walk and every mesh parse, on the main thread. It happens with
@@ -1140,7 +1150,8 @@ function paneEnhanced(body) {
         // which is TRUE for the string 'male' - every build asked for
         // the female skeleton; the one home tests the string.
         const { buildArmsFor } = await import('../combat/weaponRig.js');
-        await buildArmsFor(playerEntity);
+        const res = await buildArmsFor(playerEntity);
+        if (res?.ok) setPref('mwArms', true);   // MWA1: the arms come back on the next launch by themselves
         render();
       } });
   }

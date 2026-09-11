@@ -1,0 +1,70 @@
+// FPS1 - THE FPS COUNTER (2026-09-11, RookieG via Mac: "we need an
+// ingame fps counter"; the same report said "the outside still has
+// optimization issues", and a number is the first thing that work
+// needs). A DOM overlay over the canvas, driven by its own
+// requestAnimationFrame so it measures the browser's frame cadence and
+// not any one host's loop - every host, every skin, the menu too.
+//
+// What it shows, once a second: the frames the last second held, the
+// mean frame in milliseconds, and the WORST frame of that second - a
+// steady 60 with a 90 ms worst is the stutter a mean hides. Reads its
+// switch (ui prefs `showFps`, or ?fps) on every tick, so the Enhanced
+// pane's row takes effect at once and costs nothing while off: the
+// element is hidden and the loop only counts.
+//
+// The pure half (`fpsStats`) is executed by test/mwarms_fps.test.js;
+// the DOM half runs against the same stub document AUDIT 62 built.
+
+const PERIOD_MS = 1000;
+
+/**
+ * The second's numbers from its frame stamps.
+ * @param {number[]} stamps frame times in ms, ascending, the second's own
+ * @returns {{fps:number, meanMs:number, worstMs:number}}
+ */
+export function fpsStats(stamps) {
+  const n = stamps.length;
+  if (n < 2) return { fps: n, meanMs: 0, worstMs: 0 };
+  let worst = 0;
+  for (let i = 1; i < n; i++) worst = Math.max(worst, stamps[i] - stamps[i - 1]);
+  const span = stamps[n - 1] - stamps[0];
+  return { fps: Math.round(((n - 1) * 1000) / span), meanMs: span / (n - 1), worstMs: worst };
+}
+
+/**
+ * Mount the overlay. Returns { el, tick(now), dispose() }; the tick is
+ * public so a test can drive it without a frame loop.
+ * @param {{enabled: () => boolean, raf?: (fn) => number}} opts
+ */
+export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null) } = {}) {
+  const el = document.createElement('div');
+  el.id = 'fps-counter';
+  el.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:9;padding:4px 8px;border-radius:8px;'
+    + 'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;'
+    + '-webkit-user-select:none;user-select:none;white-space:pre;text-align:right;display:none';
+  el.style.display = 'none';   // set on the property too: the cssText above is a string to a stub document
+  document.body.appendChild(el);
+  let stamps = [];
+  let shown = false;
+  let handle = 0;
+  let live = true;
+  function tick(now) {
+    stamps.push(now);
+    const on = !!enabled();
+    if (on !== shown) { shown = on; el.style.display = on ? 'block' : 'none'; }
+    if (now - stamps[0] >= PERIOD_MS) {
+      if (on) {
+        const { fps, meanMs, worstMs } = fpsStats(stamps);
+        el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`;
+      }
+      stamps = [now];
+    }
+    if (live && raf) handle = raf(tick);
+  }
+  if (raf) handle = raf(tick);
+  return {
+    el,
+    tick,
+    dispose() { live = false; if (handle && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(handle); el.remove(); },
+  };
+}
