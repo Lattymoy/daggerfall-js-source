@@ -7459,8 +7459,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           // until this wave the host never asked the encounter pool
           // at all, so its corpses could not be opened by anyone.
           const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-          const _lootPick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider);
-          const _dropPick = _lootPick ? null : pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
+          const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
+          const _pileNearer = !!_pilePick && !(_corpsePick && _corpsePick.distance <= _pilePick.distance), _lootPick = _pileNearer ? null : _corpsePick, _dropPick = _pileNearer ? _pilePick : null;   // AUDIT 65 MC-2: ...so the body and the pile are decided by DISTANCE. The old `_lootPick ? null : pick(piles)` precedence was inert while each pick dropped its own out-of-reach target; now that both reach for the ray so their handlers can speak (:868-873 the container, :936-941 the corpse), a body across the room would have suppressed the pile pick outright and refused a pile at arm's length.
           // Every OTHER thing this ray can strike, at its own distance:
           // the street's townsfolk (townTalk's own cylinder pick), the
           // corpse and pile picks above, and the door/NPC/board set the
