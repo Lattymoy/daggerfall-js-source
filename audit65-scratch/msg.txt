@@ -1,0 +1,74 @@
+AUDIT 65 lane ui-windows: UI-1 the double-click clock is the window's own, not a positional the hosts fill with a button
+
+Every host that owns an overlay slot dispatches ONE shape -
+`click(vx, vy, right, middle)`, where the third is `e.button === 2` and
+the fourth `e.button === 1`: scenes/townTalk.js:1123 (the exterior and
+world arms), scenes/worldModes.js:7090 (the interior slot) and
+scenes/dungeonContext.js:4867 (both dungeon hosts). scenes/exterior.js
+and scenes/interior.js own no click dispatch of their own, and
+ui/charsheet.js:420 forwards two arguments, which is why the spellbook
+opened from the character sheet timed correctly and the same window
+opened from CastSpell, the dial or the pause rail did not.
+
+Three windows put a CLOCK in a slot the hosts already fill:
+
+  src/ui/spellbookWindow.js:777 `click(vx, vy, now)` - so `now` was the
+  right-button boolean, `false ?? Date.now()` kept the `false`,
+  `false != null` held and `false - false === 0 < 300`. Every second
+  click in the spell list cast (or bought), on any row, at any distance
+  in time - the gesture the arm was written to remove.
+
+  src/ui/listPicker.js:311 `click(vx, vy, font = null, now = null)` -
+  the same bite one slot over. Its header already defended the THIRD
+  slot by content after ROAD-U/AUDIT 58; the fourth took `middle` from
+  the BARE mounts - useMagicItemWindow through scenes/world.js:4776,
+  scenes/dungeonContext.js:5123 and scenes/worldModes.js:6912, and the
+  bookshelf picker at scenes/worldModes.js:1588-1598.
+
+  src/ui/nativeTalk.js:774 `click(vx, vy, rightButton = false, now = null)`
+  - the topic list, mounted at scenes/townTalk.js:777.
+
+DFU's law is BaseScreenComponent.cs:681-692: MouseClick, then
+`lastLeftClickTime = leftClickTime; leftClickTime =
+Time.realtimeSinceStartup;` and `if (leftClickTime - lastLeftClickTime <
+doubleClickDelay) MouseDoubleClick(...)`. A real clock and nothing else.
+
+So the clock stops being threaded positionally. All three windows read
+`this._now()` - the seam ui/listPicker.js already declared, verbatim -
+and the pins override the CLOCK instead of occupying an argument the
+hosts own. spellbookWindow and nativeTalk take the hosts' own
+`(vx, vy, right, middle)`; listPicker drops to THREE slots and KEEPS its
+`font?.fnt` content test, because five nested callers still pass a real
+font third (ui/guildServiceWindows.js:158, ui/itemMakerWindow.js:431,
+ui/potionMakerWindow.js:342, ui/travelMapWindow.js:1201,
+ui/spellMakerWindow.js:845). ui/charsheet.js is untouched.
+
+Second law in the same three files: BaseScreenComponent.cs:687-688
+stores the stamp UNCONDITIONALLY, so DFU answers three fast clicks with
+click/double/DOUBLE. The port cleared `_lastRowClick` on the double and
+made the third a plain MouseClick; the clear is gone from all three.
+
+Pins now drive the HOST shape. test/spellbookwindow.test.js's two OT1
+tests stub `_now` and click `(x, y, false, false)`: a first click only
+selects and stamps a NUMBER, a pair inside DOUBLE_CLICK_DELAY_MS
+readies, a 600 ms pair across rows readies nothing (the regression
+itself), a fast pair across rows uses the row under the second click,
+and three fast clicks ready twice. Mirror pins added for a BARE
+listPicker through the four-argument dispatch
+(test/guildserviceflows.test.js) and for the talk window
+(test/nativetalk.test.js), each also pinning the unspent stamp. The
+suites that handed a number to a positional the producer fills with a
+boolean are rewritten onto the seam: test/guildserviceflows.test.js,
+test/nativetalk.test.js, test/audit58_talk.test.js,
+test/talkpages.test.js. test/citedrift.test.js CD8 and
+test/ledger.test.js L2, which pinned the cleared stamp as the Ledger
+row's shipped facility, are moved to the new law; listPicker's line
+numbers are unchanged so Port-Ledger's `:359-364`, `:309` and `:173-183`
+cites still resolve.
+
+bible/09-Testing/Testing.md: guildserviceflows 20 -> 21, nativetalk
+8 -> 9, both Covers cells say what the new pins hold. The `Suite:` line
+is left for the integrator (+2).
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01C7SvRjrnsDoSwxQSGzfpoR

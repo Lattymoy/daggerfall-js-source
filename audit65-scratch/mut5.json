@@ -1,0 +1,42 @@
+[
+ {
+  "name": "PN-1 wiring: tint no longer forwarded",
+  "path": "src/render/waterSurface.js",
+  "old": "    tint: WATER_TINT,",
+  "new": "    tint: [0, 0, 0],",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 wiring: lift no longer forwarded",
+  "path": "src/render/waterSurface.js",
+  "old": "    lift: WATER_LIFT,",
+  "new": "    lift: 0,",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 scan blind spot: a 2nd literal in src/render/",
+  "path": "src/render/underwaterFog.js",
+  "old": "export ",
+  "new": "const WATER_SCROLL_TILES_PER_SEC_2 = 0.05;\nexport ",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 scan blind spot: a 2nd literal in src/tools/",
+  "path": "src/tools/waterLab.js",
+  "old": "import ",
+  "new": "const WATER_SCROLL_RATE = 0.05;\nimport ",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ }
+]

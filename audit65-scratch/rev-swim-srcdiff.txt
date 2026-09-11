@@ -1,0 +1,277 @@
+diff --git a/bible/09-Testing/Testing.md b/bible/09-Testing/Testing.md
+index 2dd79d41..ec666732 100644
+--- a/bible/09-Testing/Testing.md
++++ b/bible/09-Testing/Testing.md
+@@ -793,6 +793,7 @@ commit as any test change.
+ | ot1_swim_latch.test.js | 3 | OT1 (2026-09-10) - AUDIT 64 F0'S RESIDUE, WIRED: IsPlayerSwimming ABOVE GROUND. `exteriorSwimLatch` had modelled PlayerEnterExit.Update's else arm (:415-421) and had no caller, because a CLEARING rule guarding nothing is a no-op: both exterior hosts wrote `player.swimming = false` every frame and nothing above ground wrote true, so a sea swim never suppressed the encounter roll (StreamingWorld :488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry. `exteriorSwimming` is DFU's two exterior writers in one helper - the sink/unsink edge (DoSinking/DoUnsinking write the flag in lockstep with controllerSink, the port's `sunk`; the unsink is the motor's own 'unsink' heightAction) and MeteoricDragon's tile-0 latch - and both hosts call it after the surface model with the value read BEFORE the per-frame clear. The truth table, the ordering in both hosts (read before the clear, write after the surface model and the motor), and the clear itself left untouched. |
+ | ot1_saveszip.test.js | 5 | OT1 (2026-09-10) - THE SAVES PICKER'S PHONE PATH, Ledger :601's last residue. iOS Safari has no directory picker - the ARENA2 door's own reason for its zip input - and the saves door never took one. `readZipEntries` is the central-directory walk with the entry NAMES KEPT and a `pick` over them that runs BEFORE any inflate (pinned by planting bytes that cannot inflate behind an unpicked name - a green run IS the proof), `readZip` is rebuilt on it with its diet intact, and `collectClassicSaveFiles` / `classicSaveFilesFromZip` are the SaveGames walk as one collector both gestures feed - the SAVE0-SAVE5 segment and the seven names, case-folded, the rest of a zipped game folder never touching memory. Plus the picker's shape: the accept-gated `#picksaveszip` under the phone line, feeding the SAME ingest, and a dropped `.zip` expanding in the directory walk. |
+ | mac1_playreport.test.js | 8 | MAC1 (2026-09-10) - MAC'S PLAY REPORT, the seven with a mechanism, each pinned on the seam that was wrong. A: the boot menu's Morrowind card read a store no host had counted yet (the count runs in the hosts' loadMagicRegistries; the boot door opens first), so Build and Switch Arms hid until a re-attach counted it - mount counts and repaints. B: requestLook asks for unadjustedMovement (the OS's accelerated deltas were the "very jumpy" turn) and retries bare on NotSupportedError alone. C: PITCH_FLOOR, 75 degrees down, on the look filter's TARGET - the owner's stopper, the reference's ceiling kept (Ledger A, MAC1). D: world/flatDistance.js - rings 0-1 draw every flat, the far rings the trees (2.5+) and the flats that move; wired after EV3's frustum test in the streaming host's flat walk. H: the walkers' politeness gate reads PlayerMotor.IsStandingStill (the motor's standing) instead of the bobbing camera's frame-to-frame position, which flickered a stopped walker move/idle/move. I: the render eye low-passes EV1's interpolated feet height over STEP_SMOOTH_TAU (0.06 s), never more than a rung behind, raw through a jump or a fall, the simulation eye untouched - MEASURED on the staircase harness at 60 and 144 Hz, worst single-frame eye pop 0.153 -> 0.051 and 0.064 -> 0.021 with the snap's drops gone; and the hills measured clean in the motor (10/20/30-degree ramps, no backstep, no airborne frame), so their jitter was the facets, which the same filter pays out. J: the pause door relocks the pointer INSIDE the resume gesture (the hosts' look gate relocked a frame later, outside any activation, which the browser refused - so the first click after a resume re-grabbed the pointer and the second reached the world). |
++| audit65_swim.test.js | 5 | AUDIT 65 XL-1 (2026-09-11) - DFU HAS TWO SWIM MEMBERS AND THE PORT HAD ONE. PlayerEnterExit.isPlayerSwimming (:44/:177-178) and levitateMotor.IsSwimming (== PlayerMotor.IsSwimming, PlayerMotor.cs:149-152) are written together only inside a dungeon (PlayerEnterExit.cs:384-392); the outdoor arm (:415-421) keeps isPlayerSwimming on tile 0 and clears the motor's flag with NO tile test. OT1 had wired the exterior latch into `player.swimming`, whose setter raises PlayerMotor.CancelMovement on every transition, so applyMotorEffectFlags' false and the host's true were two edges a frame and the frame's one fixed step spent the cancel (:286-294) and returned: MEASURED over a real Collider floor at Speed 50 / Swimming 30, the exterior swimmer travelled 0.0000 over 600 steps at 60 Hz. The motor now carries DFU's second member as a plain FIELD beside `sunk` - no setter, never read by _step - and the swimmer travels GetSwimSpeed again: 60 steps = 1.7721519 == GetSwimSpeed(GetWalkSpeed(50), 30) computed from the C# constants (dfWalkBase 150, classicToUnitySpeedUnitRatio 39.5), with no CancelMovement pending, against the pre-XL-1 target's measured 0 in the same harness. Beside the travel pin: the field is a data property and never arms the cancel while `swimming` still does on both edges; neither exterior host assigns exteriorSwimming's result to `player.swimming` and both read `_wasSwimming` from the host flag before applyMotorEffectFlags' clear; the five repointed readers (fatigue/Swimming tally PlayerEntity.cs:410, encounter roll :489, exhaustion collapse :2406/:2426, rest refusal DaggerfallUI.cs:661, HeadBobber :101/:215) and the four that stayed on PlayerMotor.IsSwimming (PlayerFootsteps.cs:230, PassiveSpecialsEffect.cs:136, PlayerMotor.cs:323, the forced-swim crouch); and THE FOUR HOSTS - both dungeon arms write BOTH members off the one block-water test, the interior arm clears both, and neither exterior host writes the motor's flag at all. |
+ | citeshift.test.js | 5 | CS1 (2026-09-10) - THE CITE SHIFT, `tools/citeShift.mjs`: AUDIT 64's last lesson ("the cite mappers need a Ledger arm ... fold it into the first before AUDIT 65") landed as one tool, after three slices in one day re-derived it in scratch (34, 111 and 32 cites). A line cite is a claim (citedrift's law), and this is the mechanical half of keeping it true: the unified diff's hunks map a base's line numbers to the tree's; every cite into a changed file - the path or basename form, a range, the tests' own `world\.js:N` spelling, and the Ledger arm's four spellings (`Port-Ledger.md:N`, `Port-Ledger row :N`, `Ledger row \`:N\``, `Ledger rows \`:N\``) - is moved only when the base's line and the tree's mapped line carry the SAME text, held as INSIDE when the line was rewritten, MISMATCH when the text differs or the line does not exist, and STRUCK (kept, Port-Status's own convention) unless `--struck`. Bare continuations (`world.js:1862`, `:1667`) are reported with their mapped value and never applied, because the C# `:524-525` on the same line looks identical. Pinned on synthetic files and hand-written hunks: the hunk parse and the map (a pure insertion moves only the lines below it, a rewritten line has no answer), every spelling (and the two that must NOT match - a longer basename, a bare `row \`:N\``), the plan's five verdicts and the apply's punctuation, and the continuation report. The CLI is the same functions over git. RUN ONCE PER BASE: a pure shift makes "base N == tree N+1" true whether the cite still says N or was already moved, so a second --apply against the same base moves everything again - apply, commit, and the next base is the new HEAD; the MAC1 integration paid for that lesson. |
+ 
+ ## PY1 - THE PARITY PINS WERE BLIND (2026-08-28)
+diff --git a/src/player/exteriorSurface.js b/src/player/exteriorSurface.js
+index 2e0077d9..d270870a 100644
+--- a/src/player/exteriorSurface.js
++++ b/src/player/exteriorSurface.js
+@@ -49,11 +49,41 @@
+ //
+ // The lone exterior latch DFU does keep is isPlayerSwimming itself:
+ // it survives above ground while the tile under the player is water
+-// (the `!= 0` guard above, MeteoricDragon's note at :417). Nothing in
+-// the port reads a separate isPlayerSwimming - the motor's swimming
+-// flag is levitateMotor.IsSwimming, which is unconditionally cleared -
+-// so exteriorSwimLatch below carries it for the hosts that want it
+-// without letting it near the motor.
++// (the `!= 0` guard above, MeteoricDragon's note at :417).
++//
++// AUDIT 65 XL-1 - THE TWO MEMBERS, AND WHICH READER TAKES WHICH.
++// DFU carries isPlayerSwimming (PlayerEnterExit.cs:44, :177-178) AND
++// levitateMotor.IsSwimming, which IS PlayerMotor.IsSwimming (:149-152).
++// The dungeon arm writes BOTH off one blockWaterLevel test (:384-392);
++// the else arm above splits them, keeping the host flag on tile 0 and
++// clearing the motor's with no tile test at all. The port had ONE
++// member - `player.swimming`, whose setter raises PlayerMotor
++// .CancelMovement on every transition - and OT1 wired this helper's
++// result into it, so shared.applyMotorEffectFlags' false and the
++// host's true were two edges a frame and the frame's one fixed step
++// spent the cancel and returned (PlayerMotor.cs:286-294): MEASURED
++// over a real Collider floor at Speed 50 / Swimming 30, the exterior
++// swimmer travelled 0.0000 over 600 steps at 60 Hz, with the swim
++// speed sitting unused in `speed`. XL-1 gave the motor DFU's second
++// member - `isPlayerSwimming`, a plain field beside `sunk` that _step
++// never reads - and the hosts write THAT, leaving
++// shared.applyMotorEffectFlags (shared.js:886) to keep the motor's own
++// flag false outdoors, which is :421 itself.
++//
++// THE HOST FLAG (PlayerEnterExit.IsPlayerSwimming): the fatigue band
++// and the Swimming tally (PlayerEntity.cs:410), the encounter roll
++// (:489), the exhaustion collapse (:2406/:2426), the rest refusal
++// (DaggerfallUI.cs:661), HeadBobber's style and bounce (:101/:215),
++// and UpdateSpeed's swim speed (PlayerMotor.cs:387 - carried in the
++// port by the `sunk` proxy, AUDIT 64 F0).
++// THE MOTOR FLAG (PlayerMotor.IsSwimming): the swim/levitate zero-and-
++// return (PlayerMotor.cs:323), DecideHeightAction's forced-swim crouch
++// (PlayerHeightChanger.cs:128/:551), the footstep stride
++// (PlayerFootsteps.cs:230) and PassiveSpecialsEffect.cs:136.
++//
++// So exteriorSwimLatch below carries the latch for the hosts that want
++// it without letting it near the motor - which is what
++// `motorSwimming: false` beside it has always said.
+ 
+ import { playerTileMapIndex, WATER_TILE_INDEX } from '../world/terrainSurface.js';
+ 
+diff --git a/src/player/motor.js b/src/player/motor.js
+index ff171785..aee2062d 100644
+--- a/src/player/motor.js
++++ b/src/player/motor.js
+@@ -389,7 +389,7 @@ export class PlayerMotor {
+     // the sink's ONE trigger (:127). Wave B's exterior-water slice
+     // owns the model that raises it; until then it stays false and no
+     // host sinks, which is the port's behaviour before this line.
+-    this.onExteriorWater = false;
++    this.onExteriorWater = false;   this.isPlayerSwimming = false;   // XL-1: PlayerEnterExit.isPlayerSwimming (:44, :177-178) beside it - DFU's OTHER swim member, the HOST's. A plain FIELD: no setter, never read by _step, and it must never arm cancelMovement the way `swimming` (levitateMotor.IsSwimming, PlayerMotor.cs:149-152) does. The split, and which reader takes which member, is exteriorSurface.js's header.
+     this._camFrom = EYE_HEIGHT;   // PlayerHeightChanger.prevCamLevel / targetCamLevel
+     this._camTo = EYE_HEIGHT;
+     // PlayerEntity.IsParalyzed, as FrictionMotor.GroundedMovement
+@@ -1369,6 +1369,14 @@ export class PlayerMotor {
+     // GetBaseSpeed()/2 against that already-swim-scaled field, so a
+     // swimmer under half the walk base reads movingLessThanHalfSpeed
+     // true for the stealth and footstep-cadence consumers.
++    //
++    // XL-1 NOTE: `isPlayerSwimming` is on this motor now, so re-pointing
++    // this gate at it makes UpdateSpeed verbatim and closes the <=1-frame
++    // gap where a dungeon exit onto open water carries the latch before
++    // DoSinking has armed the sink. Left on `sunk` here because that is
++    // the proxy AUDIT 64 F0 measured and pinned (PlayerHeightChanger.cs
++    // :419-423/:374-377 write the two in lockstep); the swap is a slice
++    // of its own, with its own pins.
+     if (this.sunk && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);
+     this.speed = speed;   // UpdateSpeed writes the field the getter reads
+     this._trackHalfSpeed(input, speed);
+diff --git a/src/scenes/dungeon.js b/src/scenes/dungeon.js
+index bbeb1df4..291e7abc 100644
+--- a/src/scenes/dungeon.js
++++ b/src/scenes/dungeon.js
+@@ -612,7 +612,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
+     {
+       const bob = headBobber.update(dt, cam, {
+         health: playerEntity.health, paused: ctx.uiOverlayActive, climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
++        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101/:215 read playerEnterExit.IsPlayerSwimming (this host writes both members, so the ANSWER is unchanged - the member is)
+         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+       });
+       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+@@ -680,7 +680,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
+       // (DFU's defaults, read through the I2 registry).
+       const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
+       player.waterSurfaceY = surf;
+-      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
++      player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): BOTH swim members off the one blockWaterLevel test, as PlayerEnterExit.cs:384-392 writes them. Outdoors the two part company - :421 clears the motor's with no tile test - which is why the exterior hosts write only the host flag
+       player.levitating = ctx.playerLevitating();
+       player.waterWalking = ctx.playerWaterWalking();
+       // S19 paralysis: FrictionMotor cancels ALL movement input (the
+diff --git a/src/scenes/exterior.js b/src/scenes/exterior.js
+index 38a82399..68a0b357 100644
+--- a/src/scenes/exterior.js
++++ b/src/scenes/exterior.js
+@@ -874,7 +874,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+         // `activeCount() > 0` was a different question - one unaware
+         // guard alive anywhere in town killed the collapse.
+         enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   // ROAD-G G2: BOTH street pools, world.js:1596's line
+-        swimming: !!player.swimming, entity: playerEntity,
++        swimming: !!player.isPlayerSwimming, entity: playerEntity,   // XL-1: PlayerEntity.cs:2406/:2426 read PlayerEnterExit.IsPlayerSwimming - PlayerMotor.IsSwimming is false outdoors (:421)
+         day: !isNight(minuteNow()), inside: false,
+       });
+       // RSC 1071/1072 pend the reader in this host; classic strings fall back.
+@@ -1397,7 +1397,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+       // :488-491 - "Don't spawn encounters while player is swimming in
+       // water or on ship (same as classic)". This host has no ship.
+       const _m = _mode();
+-      const hit = player.swimming ? null : intermittentEnemySpawn({
++      const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
+         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
+         inLocationRect: _musicInLocationRect(),   // F061: the WIDENED TOWN RECT - this host lives inside it
+         climateIndex: locClimateIndex,
+@@ -1525,10 +1525,10 @@ export async function bootExterior(canvas, renderer, params, status) {
+     // this host had none of it, because rest was a dungeon feature.
+     // Outdoors all three inputs are live: real foes, real water, and a
+     // levitating or falling player who cannot lie down.
+-    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // V2b: the vampire's rest gate
++    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // V2b: the vampire's rest gate   // XL-1: the refusal's swim term below is PlayerEnterExit.IsPlayerSwimming (DaggerfallUI.cs:661), not PlayerMotor.IsSwimming
+     const d = restDecision({
+       enemiesNearby: outdoorRestDeps.enemiesNearby(),
+-      swimming: !!player.swimming,
++      swimming: !!player.isPlayerSwimming,   // DaggerfallUI.cs:661
+       // StartRestGroundedCheck, not the raw flag: a levitating player
+       // an inch off the floor reads grounded === false and DFU lets
+       // them sleep anyway (PlayerMotor.cs:190-193's own comment) - and
+@@ -3489,7 +3489,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+     {
+       const bob = headBobber.update(dt, cam, {
+         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
++        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101 and :215 both read playerEnterExit.IsPlayerSwimming, never the motor's flag
+         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+       });
+       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+@@ -3613,7 +3613,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+         // so the Running skill did not advance while the run key was
+         // held standing still.
+         runningTally: player.isRunning && !player.riding,
+-        swimming: player.swimming,
++        swimming: player.isPlayerSwimming,   // XL-1: PlayerEntity.cs:410 reads PlayerEnterExit.IsPlayerSwimming - the flag the surface model below writes
+         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083
+         jumped: player.jumped,
+       });
+@@ -3630,7 +3630,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+       // (Levitate.cs:131/:136); swimming is false outdoors (there is
+       // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming) until
+       // the surface model below re-derives it (OT1).
+-      const _wasSwimming = !!player.swimming;   // OT1: the value the frame arrived with, read BEFORE the clear
++      const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame arrived with, read BEFORE the clear
+       applyMotorEffectFlags(player, playerEntity);
+       const mv = moveHeld(keys);
+       // AUDIT 28 W8: the axes advance only on frames the motor runs (a
+@@ -3705,7 +3705,7 @@ export async function bootExterior(canvas, renderer, params, status) {
+       // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
+       // one helper; this host has no dungeon branch to carry a value from, so the sink edge is its
+       // whole live arm. Before this the flag was the clear alone.
+-      player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
++      player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
+       // FS-slice: PlayerFootsteps - the exterior stride.
+       {
+         // PlayerFootsteps.cs:116 - "Play splash footsteps whether
+diff --git a/src/scenes/world.js b/src/scenes/world.js
+index 188f2f6e..6e700ec6 100644
+--- a/src/scenes/world.js
++++ b/src/scenes/world.js
+@@ -1606,7 +1606,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+         // Both of this host's pools answer it, the watch and the
+         // encounter foes, exactly as the rest deps ask them.
+         enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),
+-        swimming: !!player.swimming, entity: playerEntity,
++        swimming: !!player.isPlayerSwimming, entity: playerEntity,   // XL-1: PlayerEntity.cs:2406/:2426 read PlayerEnterExit.IsPlayerSwimming - PlayerMotor.IsSwimming is false outdoors (:421)
+         day: !isNight(minuteNow()), inside: false,
+       });
+       const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
+@@ -2253,7 +2253,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+       // it once per modal frame (host.encounterTick) and from its
+       // interior rest; the host's own call below is the exterior arm.
+       const _m = modes?.mode ?? 'exterior';
+-      const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({
++      const hit = (walkMode && playerSpawned && player.isPlayerSwimming) ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
+         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
+         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
+         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
+@@ -3094,10 +3094,10 @@ export async function bootWorld(canvas, renderer, params, status) {
+     // levitating or falling player who cannot lie down.
+     // V2b: the vampire's own rest gate - CheckStartRest is LAST in
+     // DFU's ladder and the override speaks for itself (TEXT.RSC 36)
+-    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));
++    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // XL-1: the refusal's swim term below is PlayerEnterExit.IsPlayerSwimming (DaggerfallUI.cs:661), not PlayerMotor.IsSwimming
+     const d = restDecision({
+       enemiesNearby: outdoorRestDeps.enemiesNearby(),
+-      swimming: !!player.swimming,
++      swimming: !!player.isPlayerSwimming,   // DaggerfallUI.cs:661
+       // StartRestGroundedCheck, not the raw flag: a levitating player
+       // an inch off the floor reads grounded === false and DFU lets
+       // them sleep anyway (PlayerMotor.cs:190-193's own comment) - and
+@@ -7051,7 +7051,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+     {
+       const bob = headBobber.update(dt, cam, {
+         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
+-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
++        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101 and :215 both read playerEnterExit.IsPlayerSwimming, never the motor's flag
+         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
+       });
+       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
+@@ -7228,7 +7228,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+         // so the Running skill did not advance while the run key was
+         // held standing still.
+         runningTally: player.isRunning && !player.riding,
+-        swimming: player.swimming,
++        swimming: player.isPlayerSwimming,   // XL-1: PlayerEntity.cs:410 reads PlayerEnterExit.IsPlayerSwimming - the flag the surface model below writes
+         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
+         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
+       });
+@@ -7240,7 +7240,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+         // so it is recomputed per frame in every host; swimming is
+         // false outdoors (no blockWaterLevel - PlayerEnterExit) until
+         // the surface model below re-derives it (OT1).
+-        const _wasSwimming = !!player.swimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
++        const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
+         applyMotorEffectFlags(player, playerEntity);
+         const mv = moveHeld(keys);
+         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
+@@ -7327,7 +7327,7 @@ export async function bootWorld(canvas, renderer, params, status) {
+         // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
+         // one helper. Before this the flag was the clear alone: a sea swim never suppressed the encounter
+         // roll (:488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry.
+-        player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
++        player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
+         // FS-slice: PlayerFootsteps - the exterior stride (snow by
+         // season + CLIMATE.PAK; the path/water/static-geometry arms
+         // ride the surface model above).
+diff --git a/src/scenes/worldModes.js b/src/scenes/worldModes.js
+index 5823391b..c19dd3c6 100644
+--- a/src/scenes/worldModes.js
++++ b/src/scenes/worldModes.js
+@@ -5292,7 +5292,7 @@ export function createWorldModes(host) {
+       // Levitate/waterWalking consumers.
+       const surf = dungeonCtx.waterSurfaceYAt(player.pos[0], player.pos[2]);
+       player.waterSurfaceY = surf;
+-      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
++      player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): PlayerEnterExit.cs:384-392's dungeon arm writes BOTH members off the one blockWaterLevel test - isPlayerSwimming AND levitateMotor.IsSwimming - and only the else arm (:415-421) splits them. The outer host's host-flag readers run ABOVE this modal frame and so read it in a dungeon too: the encounter roll (world.js's runEncounterTick, PlayerEntity.cs:489), CollapseFromExhaustion (:2406/:2426), the rest refusal (DaggerfallUI.cs:661) and HeadBobber (:101/:215). Without the host flag here all four go dead underground. (This host's own fatigue tally rides reportActivity's `player.swimming` below, which this same line writes.)
+       player.levitating = dungeonCtx.playerLevitating();
+       player.waterWalking = dungeonCtx.playerWaterWalking();
+     } else {
+@@ -5303,7 +5303,7 @@ export function createWorldModes(host) {
+       // The EFFECT owns levitate/waterWalking/slowFall (Levitate.cs
+       // :131/:136 sets IsLevitating on Start AND End), so they are
+       // recomputed; swimming is false with no blockWaterLevel.
+-      applyMotorEffectFlags(player, playerEntity);
++      applyMotorEffectFlags(player, playerEntity);   player.isPlayerSwimming = false;   // XL-1: an interior shell has no blockWaterLevel and no water tile, so the HOST flag clears beside the motor's (PlayerEnterExit.cs:419-421). The two exterior hosts re-derive theirs from the tile model instead of clearing it here.
+     }
+     // S19 paralysis host parity (the standing host rule): movement
+     // input zeroed, jump cancelled - the player still falls; look

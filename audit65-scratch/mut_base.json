@@ -1,0 +1,52 @@
+[
+ {
+  "name": "BASE rect: only record 0 counts",
+  "path": "src/render/waterSurface.js",
+  "old": "    for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;",
+  "new": "    for (let x = 0; x < w; x++) if (bytes[row + x] === 0) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "BASE rect: w clamps to 15",
+  "path": "src/render/waterSurface.js",
+  "old": "const w = Math.min(width, dim), h = Math.min(height, dim);",
+  "new": "const w = Math.min(width, dim) - 1, h = Math.min(height, dim);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "BASE hasWater: only record 0 counts",
+  "path": "src/render/waterSurface.js",
+  "old": "  for (let i = 0; i < bytes.length; i++) if (table[bytes[i]]) return true;",
+  "new": "  for (let i = 0; i < bytes.length; i++) if (bytes[i] === 0) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "BASE hasWater: every byte counts",
+  "path": "src/render/waterSurface.js",
+  "old": "  for (let i = 0; i < bytes.length; i++) if (table[bytes[i]]) return true;",
+  "new": "  for (let i = 0; i < bytes.length; i++) if (table[bytes[i]] !== undefined) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "BASE hasWater: never says water",
+  "path": "src/render/waterSurface.js",
+  "old": "  for (let i = 0; i < bytes.length; i++) if (table[bytes[i]]) return true;",
+  "new": "  for (let i = 0; i < bytes.length; i++) if (false && table[bytes[i]]) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ }
+]

@@ -1,0 +1,182 @@
+[
+ {
+  "name": "PN-1 WATER_LIFT 0.08->0.09",
+  "path": "src/render/waterSurface.js",
+  "old": "export const WATER_LIFT = 0.08;",
+  "new": "export const WATER_LIFT = 0.09;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 WATER_OPACITY 0.82->0.83",
+  "path": "src/render/waterSurface.js",
+  "old": "export const WATER_OPACITY = 0.82;",
+  "new": "export const WATER_OPACITY = 0.83;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 WATER_F0 0.02->0.03",
+  "path": "src/render/waterSurface.js",
+  "old": "export const WATER_F0 = 0.02;",
+  "new": "export const WATER_F0 = 0.03;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 SHORE_SOFTNESS 0.16->0.17",
+  "path": "src/render/waterSurface.js",
+  "old": "export const SHORE_SOFTNESS = 0.16;",
+  "new": "export const SHORE_SOFTNESS = 0.17;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 WATER_TINT 0.62->0.63",
+  "path": "src/render/waterSurface.js",
+  "old": "WATER_TINT = Object.freeze([0.62, 0.78, 0.86]);",
+  "new": "WATER_TINT = Object.freeze([0.63, 0.78, 0.86]);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 SKY_ZENITH 0.35->0.36",
+  "path": "src/render/waterSurface.js",
+  "old": "DEFAULT_SKY_ZENITH = Object.freeze([0.17, 0.35, 0.72]);",
+  "new": "DEFAULT_SKY_ZENITH = Object.freeze([0.17, 0.36, 0.72]);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-1 SKY_HORIZON 0.78->0.79",
+  "path": "src/render/waterSurface.js",
+  "old": "DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.78, 0.92]);",
+  "new": "DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.79, 0.92]);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 SCROLL 0.05->0.06",
+  "path": "src/render/waterSurface.js",
+  "old": "export const WATER_SCROLL_TILES_PER_SEC = 0.05;",
+  "new": "export const WATER_SCROLL_TILES_PER_SEC = 0.06;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 dungeon.js drops the import",
+  "path": "src/scenes/dungeon.js",
+  "old": "import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';",
+  "new": "const WATER_SCROLL_TILES_PER_SEC = 0.05;   //",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 worldModes.js drops the import",
+  "path": "src/scenes/worldModes.js",
+  "old": "import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';",
+  "new": "const WATER_SCROLL_TILES_PER_SEC = 0.05;   //",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 a 2nd scroll literal reappears in worldModes",
+  "path": "src/scenes/worldModes.js",
+  "old": "const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];",
+  "new": "const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];\nconst DUNGEON_WATER_SCROLL = 0.05;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 a 2nd scroll literal reappears in exterior.js",
+  "path": "src/scenes/exterior.js",
+  "old": "import { fieldOfView }",
+  "new": "const WATER_SCROLL = 0.05;\nimport { fieldOfView }",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 shader coverage f.x/f.y swapped",
+  "path": "src/render/waterSurface.js",
+  "old": "return mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);",
+  "new": "return mix(mix(c00, c10, f.y), mix(c01, c11, f.y), f.x);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 shader corner bit c10 1u->2u",
+  "path": "src/render/waterSurface.js",
+  "old": "float c00 = float(m & 1u), c10 = float((m >> 1u) & 1u);",
+  "new": "float c00 = float(m & 1u), c10 = float((m >> 2u) & 1u);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 shader mix order c10<->c01",
+  "path": "src/render/waterSurface.js",
+  "old": "return mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);",
+  "new": "return mix(mix(c00, c01, f.x), mix(c10, c11, f.x), f.y);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 JS waterCoverage fx/fy swapped",
+  "path": "src/render/waterSurface.js",
+  "old": "  const top = c00 + (c10 - c00) * fx;\n  const bottom = c01 + (c11 - c01) * fx;\n  return top + (bottom - top) * fy;",
+  "new": "  const top = c00 + (c10 - c00) * fy;\n  const bottom = c01 + (c11 - c01) * fy;\n  return top + (bottom - top) * fx;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 JS corner bit c10 >>1 -> >>2",
+  "path": "src/render/waterSurface.js",
+  "old": "const c00 = mask & 1, c10 = (mask >> 1) & 1, c01 = (mask >> 2) & 1, c11 = (mask >> 3) & 1;",
+  "new": "const c00 = mask & 1, c10 = (mask >> 2) & 1, c01 = (mask >> 1) & 1, c11 = (mask >> 3) & 1;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 rect h clamps to width only",
+  "path": "src/render/waterSurface.js",
+  "old": "const w = Math.min(width, dim), h = Math.min(height, dim);",
+  "new": "const w = Math.min(width, dim), h = Math.min(height, dim) - 1;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ }
+]

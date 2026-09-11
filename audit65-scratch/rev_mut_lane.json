@@ -1,0 +1,133 @@
+[
+ {
+  "id": "M1 world.js write back onto player.swimming",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/world.js",
+    "player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });",
+    "player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });"
+   ]
+  ]
+ },
+ {
+  "id": "M2 motor field -> accessor over _swimming",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/player/motor.js",
+    "this.onExteriorWater = false;   this.isPlayerSwimming = false;",
+    "this.onExteriorWater = false;"
+   ],
+   [
+    "src/player/motor.js",
+    "  get swimming() { return this._swimming; }",
+    "  get isPlayerSwimming() { return this._swimming; }\n  set isPlayerSwimming(v) { this.swimming = v; }\n  get swimming() { return this._swimming; }"
+   ]
+  ]
+ },
+ {
+  "id": "M3 worldModes dungeon arm drops the host flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/worldModes.js",
+    "player.isPlayerSwimming = player.swimming = surf != null",
+    "player.swimming = surf != null"
+   ]
+  ]
+ },
+ {
+  "id": "M4 world.js HeadBobber back on the motor flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/world.js",
+    "swimming: !!player.isPlayerSwimming, running: !!player.isRunning",
+    "swimming: !!player.swimming, running: !!player.isRunning"
+   ]
+  ]
+ },
+ {
+  "id": "M5 world.js rest term back on the motor flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/world.js",
+    "      swimming: !!player.isPlayerSwimming,   // DaggerfallUI.cs:661",
+    "      swimming: !!player.swimming,   // DaggerfallUI.cs:661"
+   ]
+  ]
+ },
+ {
+  "id": "M6 exterior.js encounter term back on the motor flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/exterior.js",
+    "const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({",
+    "const hit = player.swimming ? null : intermittentEnemySpawn({"
+   ]
+  ]
+ },
+ {
+  "id": "M7 the sunk swim-speed gate disabled",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js"
+  ],
+  "edits": [
+   [
+    "src/player/motor.js",
+    "if (this.sunk && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);",
+    "if (false && this.sunk && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);"
+   ]
+  ]
+ }
+]

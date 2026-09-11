@@ -1,0 +1,461 @@
+diff --git a/bible/01-Overview/Port-Ledger.md b/bible/01-Overview/Port-Ledger.md
+index ecb2ff39..1e924e84 100644
+--- a/bible/01-Overview/Port-Ledger.md
++++ b/bible/01-Overview/Port-Ledger.md
+@@ -612,7 +612,7 @@ restate them independently.
+ | ~~THE DAY-CHANGE BLOCK (`PlayerEntity.Update:441-450`) - `daysPast > 0` and its four members~~ SHIPPED (S41 2026-08-25: `worldTick.js`'s `runDayChange`, called from `tickPlayerMinutes`, so all four hosts get it with no host code. THREE of the four members were already ported as correct, tested laws with NO CALLER on a day boundary - `LoanChecker.CheckOverdueLoans` had no caller anywhere in `src/` at all, so every line of B1's loan law was unreachable and a character could borrow the maximum in all 62 regions and never owe a thing; `RemoveExpiredRentedRooms` ran only on a tavern window opening and a rest ending on an already-expired room, so a rental slept through in a dungeon was never collected and held its interior as a permanent scene for the session (the finding the three-lane rest merge deferred); `SetClimateWeathers` was fused behind weatherSim's own second day marker, corrected in the W1 row above. The FOURTH, `FormulaHelper.UpdateRegionalPrices` (:2053-2089), was not ported at all, so every shop price in the world was frozen at its boot 750..1250 roll for the life of the character and the merchants' faction power had no consumer - the mean-reverting walk ships with both C# integer divisions proven against `Math.floor` at the exact roll that separates them. RESIDUE: that member's PricesHigh/PricesLow condition-flag writes are FLAGGED to the region-conditions row below, which has no store to write to) | PlayerEntity.cs, FormulaHelper.cs, LoanChecker.cs, WeatherManager.cs | Audit-25 S-J |
+ | WorldDataReplacement / BuildingReplacement mod hooks. **NARROWED at M-EXT (2026-08-25): the SOUND half of asset injection ships.** `Utility/AssetInjection/SoundReplacement.cs`'s song path is ported - `systems/musicReplacement.js` answers DFU's TryImportSong shape (name in, bytes or nothing out) behind DFU's own `Settings.AssetInjection` gate, and `MusicService.playSong` asks it before it reaches MIDI.BSA, falling back to the built-in song on a miss, a load failure or a decode failure exactly as TryImportSong answering false does. So `Enhancements/AssetInjection` is no longer 'no mod system (Not planned)' - it has a consumer, the UNAVAILABLE entry is struck and the settings screen no longer says 'Nothing to add yet'. TWO DEPARTURES: DFU seeks `.ogg` alone, a Unity WWW-loader constraint rather than a law about the format, so the port takes a SET with a fixed preference order; and there is no StreamingAssets in a browser, so the folder is a pick stored in IndexedDB beside the ARENA2 ingest - its OWN store, because KEEP (the download diet) rejects every audio extension by design. NOTHING SHIPS: the repo carries no audio and the deploy serves none; the player points at their own files. ~~STILL OUT: the texture, model and world-data halves of AssetInjection, and the mod system proper~~ **RE-NARROWED 2026-09-09, stale twice over.** The TEXTURE half SHIPPED at M-TEX (2026-08-25 - the same asset-injection arc as the sound half above, so this clause was false the day it was written; the swap's colour order was fixed later, at ROAD-H H4, b30cca6): `systems/textureReplacement.js` is TextureReplacement.cs's verbatim `{archive:000}_{record}-{frame}[_{dye}][_{map}].png` naming behind the same `Settings.AssetInjection` gate the sound half checks, and the swap is taken at the upload door - `scenes/dataPipeline.js:60` preloads an archive, `:93` swaps a whole RECORD and `:143` a FRAME - with the ingest at `scenes/dataSource.js:803`, the folder pick and registration at `:926` and the count on the settings screen at `ui/settingsWindow.js:411`; its non-Albedo maps (Normal, Emission and the rest) are named and decoded but no caller asks for one yet. And "the mod system proper" is really no GENERAL mod loader: a specific mod's bundle and its switches DO load (`formats/unityBundle.js` reads UnityFS `.dfmod`, `systems/modSettings.js` holds that mod's own settings). STILL OUT: the MODEL half - `scenes/dataPipeline.js:171`'s WM4b arm is one vendored mesh in MeshReplacement.TryImportGameObject's shape, not a user-asset importer - and the WORLD-DATA half, which is in `src/` only as documented drops (`formats/mapsFile.js:21`, `:61`, `:540-541`, `formats/blocksFile.js:13`, the dropped arm pinned by `test/road_maps_record.test.js:103`) | AssetInjection | Not planned (mod system) except the SOUND half (M-EXT) and the TEXTURE half (M-TEX) |
+ | ~~THE STANDALONE DUNGEON HOST HAS NO TRADE WINDOW~~ **SHIPPED (DR1 2026-09-03)** (X11c 2026-08-25). ~~`scenes/dungeonContext.js` builds its own cast engine and routes `onCreateItem` and `onDispel`, but not `onIdentify` - it imports no `NativeTradeWindow` and warms no trade art, so the one window Identify needs has nowhere to mount there.~~ It imports one now and warms `INVE00I0`/`SHOP00I0`/`FONT0004` at BOOT beside `PICK00I0` - X11c's own lesson, since the Identify window is a SPELL's and a caster who has never been indoors still owns the spell. The row's instructions are what shipped, line for line: the host got the trade art warm and the same `mountSpellWindow`-shaped door `worldModes.js` grew at X11b (here it resolves to this file's `pushDungeonWindow`, which IS `UserInterfaceManager.PushWindow`, so a spell window raised over an open automap or rest window lands on top and uncovers it on close), and Dispel Magic's picker came in the same pass - `dispellableBundles(liveBundles(...))` into a `ListPickerWindow`, `dispelBundle` on the pick with DFU's one asymmetry (the player's OWN casts always come off; only something cast AT them rolls). `openIdentifySpellWindow` is `Identify.cs:71-76` over this host's bindings - `UsingIdentifySpell` set, `IdentifySpellCost = cost.spellPointCost` (the number the effect just refunded, which is what makes the round trip free) - and its commit is `DoModeAction`'s spell arm whole (`:954-995`): the magicka refusal answers FALSE so the lot stays staged (F144), `identifySpellPass` rolls per item, the points are spent ONCE for the list, the "N of M identified" tally is spoken, and there is no Mercantile tally because the spell never reaches `ConfirmTrade`. What the mount does NOT carry is DFU's own mode gating, not port residue: `shelfItems`/`otherItems`/`repairItems`/`nowMinutes`/`allowMagicRepairs` are Buy and Repair only, `accepts`/`enchanted` are `localListAccepts`' Sell and SellMagic arms, `weight` is `sellProceeds` on the Sell confirm, and `priceCtx` is read only by the PAID identify service - which `usingIdentifySpell` short-circuits at `:479-481` and `:458`, and which has no merchant underground to sell it in DFU either. Pinned in `x11b.test.js` per arm (DR1 x3), each red when its mount is reverted to the PR1 refusal. | DaggerfallTradeWindow; Identify.cs:74 | SHIPPED DR1 2026-09-03 |
+-| ~~THREE PROBES THE T2 SWEEP FOUND STALE IN THEIR OWN RIGHT~~ **PORT-OR-RETIRED, ALL THREE (E-group, 2026-09-02).** (1) `tools/shopProbe.mjs` is RETIRED - deleted. It drove the keyed browse window U8c/U40 replaced with the native trade screen, and its subject (buy and sell at a shop shelf, through a real door) is covered twice over by `tools/tradeModeProbe.mjs` and `tools/nativeTradeProbe.mjs`, which drive the window that exists; a third copy is duplication, not coverage. Its two historical measurements in Systems-Arc.md keep their numbers and now say RETIRED on the line. (2) `tools/toneProbe.mjs` is PORTED. B5-6's native talk window draws the tone as ART - three 6x6 radios at (258, 18/28/38) with a flat toggleColor fill (`ui/nativeTalk.js:63-65`, `:545-547`) - so the `tone: Normal` TEXT row it hunted does not exist and its absence was being read as a broken game. The DRIVE was already right (KeyT is the tone cycle at `:431`, KeyW opens where-is at `:430`, a digit uses a visible row at `:435`); what moved is what it READS - `native` and `tone` off `townTalk._debug()` (`scenes/townTalk.js:1300-1303`), the walk asserted through `topicMode` none -> categories -> buildings, and the ABSENCE of `overlayOptions` as the positive statement that the art window is the one under the keys. (3) `tools/worldWhereIsProbe.mjs` is PORTED. Its "NO LIVE WALKER" was never about walkers: a modal holds the motor, every host returns at its overlay gate before the frame body, and while the quest arc's boot boxes are up the town does not tick AT ALL - so the 60x5s poll ran out against a frozen world. It drains them first now, the way `tools/firstHourProbe.mjs:245-256` and `:427-432` do, and JUDGES the drain rather than hoping. `test/probehygiene.test.js` gates all three (the retired name stays absent, the tone probe may not hunt a text row, and the drain must sit BEFORE the walker poll). NOT RUN HERE, and this is the honest half: no ARENA2 and no browser in the E-group container, so the two ported probes are verified against the SEAMS they read - each named with its live line - and not against a running game. | DaggerfallTradeWindow; DaggerfallTalkWindow; DaggerfallGuildServicePopupWindow | a probe-hygiene lane |
++| ~~THREE PROBES THE T2 SWEEP FOUND STALE IN THEIR OWN RIGHT~~ **PORT-OR-RETIRED, ALL THREE (E-group, 2026-09-02).** (1) `tools/shopProbe.mjs` is RETIRED - deleted. It drove the keyed browse window U8c/U40 replaced with the native trade screen, and its subject (buy and sell at a shop shelf, through a real door) is covered twice over by `tools/tradeModeProbe.mjs` and `tools/nativeTradeProbe.mjs`, which drive the window that exists; a third copy is duplication, not coverage. Its two historical measurements in Systems-Arc.md keep their numbers and now say RETIRED on the line. (2) `tools/toneProbe.mjs` is PORTED. B5-6's native talk window draws the tone as ART - three 6x6 radios at (258, 18/28/38) with a flat toggleColor fill (`ui/nativeTalk.js:63-65`, `:545-547`) - so the `tone: Normal` TEXT row it hunted does not exist and its absence was being read as a broken game. The DRIVE was already right (KeyT is the tone cycle at `:431`, KeyW opens where-is at `:430`, a digit uses a visible row at `:435`); what moved is what it READS - `native` and `tone` off `townTalk._debug()` (`scenes/townTalk.js:1311-1314`), the walk asserted through `topicMode` none -> categories -> buildings, and the ABSENCE of `overlayOptions` as the positive statement that the art window is the one under the keys. (3) `tools/worldWhereIsProbe.mjs` is PORTED. Its "NO LIVE WALKER" was never about walkers: a modal holds the motor, every host returns at its overlay gate before the frame body, and while the quest arc's boot boxes are up the town does not tick AT ALL - so the 60x5s poll ran out against a frozen world. It drains them first now, the way `tools/firstHourProbe.mjs:245-256` and `:427-432` do, and JUDGES the drain rather than hoping. `test/probehygiene.test.js` gates all three (the retired name stays absent, the tone probe may not hunt a text row, and the drain must sit BEFORE the walker poll). NOT RUN HERE, and this is the honest half: no ARENA2 and no browser in the E-group container, so the two ported probes are verified against the SEAMS they read - each named with its live line - and not against a running game. | DaggerfallTradeWindow; DaggerfallTalkWindow; DaggerfallGuildServicePopupWindow | a probe-hygiene lane |
+ | TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |
+ | **AUDIT 26 (2026-08-26) ADDED THE ROWS BELOW.** The full-codebase parity/bug audit read `src/` against DFU at commit 81e89e9 and confirmed 218 findings under adversarial verification. The 67 bug-severity ones are FIXED and pinned (`git log`: "AUDIT 26 fixes wave 1/2/3", closed green 2026-08-26); the 151 that remain are the rows below - 89 PARITY, where the port and DFU differ somewhere a player can reach, and 62 marked **NIT**, which are technically divergent with negligible impact and are NOT a work queue: a NIT row exists so nobody re-finds it and so a slice touching that seam knows the exact shape of the difference. Every row carries its finding ids so the register can be cross-referenced, and the per-finding evidence - both sides, with the C# and the port site read line by line - lives in `.audit26/remainder.json`. Findings are GROUPED where they are one law seen from two sides; the ids in a row's tag are that row's whole membership. THE LINE NUMBERS ARE THE AUDIT'S OWN READ and the tree has moved under some of them already - the exterior static-NPC slice (commit 0fc1d9e) shifted `worldModes.js`, `world.js` and `exterior.js` the same afternoon - so the MEMBER named in each row is the durable half of the citation and the line is the pointer that found it. Five ids are not rows below because the claim already had a home on this page: F088 struck the rain-loop row above, F108 is the Ledger A biography row, F114 narrowed the Ledger A knightly-promotion row, F187 confirms the residue on the save-load-11 row, F221 confirms the interior clause on the MULTI-SLOT SAVE row | see `.audit26/remainder.json` | routed below |
+ | ~~**INTERIOR WINDOWS KEEP THE EXTERIOR GLOW** (F001, F002)~~ FIXED (AUDIT 26 render batch 2026-08-27: WINDOW_STYLES gains the `disabled` entry - Color.black OUTRIGHT (MaterialReader.cs:933-935), not a colour times an intensity - and EVERY non-exterior host now writes its own style, which is what the tint being one renderer global demands. All three interior mesh paths are laid out Disabled in DFU (DaggerfallInterior.cs :473 individual models, :517 the combined batch, :1270 action doors) and nothing re-lights them mid-visit, since PlayerEnterExit.cs:713 creates the interior as a ROOT GameObject that DaggerfallLocation's Day/Night re-apply never reaches. The missing entry was worse than absent: `windowEmissionRGB('disabled')` fell through the `|| WINDOW_STYLES.day` guard and answered DAY. WIDER THAN THE ROW, and deliberately: DUNGEONS had the same defect and fixing only interiors would have REGRESSED them, since a dungeon inherited whatever the last host wrote and would have started inheriting `disabled`. SetDungeonTextures (DaggerfallMesh.cs :153-169) calls GetMaterial with no window style, and a window material is BORN DayWindowColor * DayWindowIntensity (MaterialReader.cs:456-461), so both dungeon hosts write `day` explicitly - which also fixes a dungeon entered at night having glowed amber. 7-mutation checked). Original finding:  DaggerfallInterior lays out every interior model with `SetClimate(..., WindowStyle.Disabled)` (:473, :517, :1270), and Disabled means EmissionColor BLACK (MaterialReader.cs:934-936). The port's window emission is a single renderer global (`renderer.js:1172-1173`, bound at :1578) that is only ever day/night/fog: `main.js:67` boots it to `day` before routing, only exterior frames write it (`world.js:3736`, `exterior.js:3984`), the interior block at `worldModes.js:3118-3135` never touches it, and `WINDOW_STYLES` (`windowEmission.js:8-13`) has no disabled entry to write. So inside every shop, tavern and house the glass glows pale blue by day and amber at night where DFU and classic show unlit panes - and the port contradicts its own bible (the Rendering-Arc R2 note) and its own comment one import away (`interior.js:29-31`, the `?interior` dev scene - the NIT half, F002, since only the dev route draws it) | DaggerfallInterior.SetClimate + MaterialReader.SetWindowStyle | Rendering arc |
+diff --git a/bible/09-Testing/Testing.md b/bible/09-Testing/Testing.md
+index 2dd79d41..b885d200 100644
+--- a/bible/09-Testing/Testing.md
++++ b/bible/09-Testing/Testing.md
+@@ -793,6 +793,7 @@ commit as any test change.
+ | ot1_swim_latch.test.js | 3 | OT1 (2026-09-10) - AUDIT 64 F0'S RESIDUE, WIRED: IsPlayerSwimming ABOVE GROUND. `exteriorSwimLatch` had modelled PlayerEnterExit.Update's else arm (:415-421) and had no caller, because a CLEARING rule guarding nothing is a no-op: both exterior hosts wrote `player.swimming = false` every frame and nothing above ground wrote true, so a sea swim never suppressed the encounter roll (StreamingWorld :488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry. `exteriorSwimming` is DFU's two exterior writers in one helper - the sink/unsink edge (DoSinking/DoUnsinking write the flag in lockstep with controllerSink, the port's `sunk`; the unsink is the motor's own 'unsink' heightAction) and MeteoricDragon's tile-0 latch - and both hosts call it after the surface model with the value read BEFORE the per-frame clear. The truth table, the ordering in both hosts (read before the clear, write after the surface model and the motor), and the clear itself left untouched. |
+ | ot1_saveszip.test.js | 5 | OT1 (2026-09-10) - THE SAVES PICKER'S PHONE PATH, Ledger :601's last residue. iOS Safari has no directory picker - the ARENA2 door's own reason for its zip input - and the saves door never took one. `readZipEntries` is the central-directory walk with the entry NAMES KEPT and a `pick` over them that runs BEFORE any inflate (pinned by planting bytes that cannot inflate behind an unpicked name - a green run IS the proof), `readZip` is rebuilt on it with its diet intact, and `collectClassicSaveFiles` / `classicSaveFilesFromZip` are the SaveGames walk as one collector both gestures feed - the SAVE0-SAVE5 segment and the seven names, case-folded, the rest of a zipped game folder never touching memory. Plus the picker's shape: the accept-gated `#picksaveszip` under the phone line, feeding the SAME ingest, and a dropped `.zip` expanding in the directory walk. |
+ | mac1_playreport.test.js | 8 | MAC1 (2026-09-10) - MAC'S PLAY REPORT, the seven with a mechanism, each pinned on the seam that was wrong. A: the boot menu's Morrowind card read a store no host had counted yet (the count runs in the hosts' loadMagicRegistries; the boot door opens first), so Build and Switch Arms hid until a re-attach counted it - mount counts and repaints. B: requestLook asks for unadjustedMovement (the OS's accelerated deltas were the "very jumpy" turn) and retries bare on NotSupportedError alone. C: PITCH_FLOOR, 75 degrees down, on the look filter's TARGET - the owner's stopper, the reference's ceiling kept (Ledger A, MAC1). D: world/flatDistance.js - rings 0-1 draw every flat, the far rings the trees (2.5+) and the flats that move; wired after EV3's frustum test in the streaming host's flat walk. H: the walkers' politeness gate reads PlayerMotor.IsStandingStill (the motor's standing) instead of the bobbing camera's frame-to-frame position, which flickered a stopped walker move/idle/move. I: the render eye low-passes EV1's interpolated feet height over STEP_SMOOTH_TAU (0.06 s), never more than a rung behind, raw through a jump or a fall, the simulation eye untouched - MEASURED on the staircase harness at 60 and 144 Hz, worst single-frame eye pop 0.153 -> 0.051 and 0.064 -> 0.021 with the snap's drops gone; and the hills measured clean in the motor (10/20/30-degree ramps, no backstep, no airborne frame), so their jitter was the facets, which the same filter pays out. J: the pause door relocks the pointer INSIDE the resume gesture (the hosts' look gate relocked a frame later, outside any activation, which the browser refused - so the first click after a resume re-grabbed the pointer and the second reached the world). |
++| audit65_wheel.test.js | 3 | AUDIT 65 UI-5 (2026-09-11) - THE WHEEL CARRIES THE POINTER. AUDIT 64 F52 routed the classic pack's wheel by what the pointer is OVER, which is right (BaseScreenComponent.cs:725-733 dispatches per component rect), but by a REMEMBERED point: nativeInventory's `_mouse`, seeded `[-1,-1]` (:358) and written by `hover()` alone (:1059), while every host wheel seam handed the window a bare `wheel(dir)`. Opening the pack with the Inventory key releases the pointer lock without moving the cursor, so the browser fires no mousemove and the first notch hit no rect - the same notch after a one-pixel nudge worked. DFU keeps no such state: BaseScreenComponent.Update (:724-736) recomputes `mouseOverComponent` from the LIVE scaled mouse position every frame, immediately before the scroll block reads it. The pin builds the pack through its real producer (ui/inventoryDoor.js:58, U53's one seam) and, with NO hover anywhere, scrolls the local list and then the remote one from the notch's own point, holds that ItemListScroller.cs:346-347's repoint follows the carried point too (the info panel names the item that scrolled under it), holds that the point still ROUTES (the paperdoll carries no scroll handler) and that the remembered point is only the fallback for a caller with none. THE FOUR HOSTS RULE is pinned off the source: scenes/world.js and scenes/exterior.js own no wheel arithmetic and pass the raw event on, so the seams are scenes/townTalk.js (for both of them), scenes/worldModes.js in BOTH arms (the interior slot and `dungeonCtx.overlayWheel`), scenes/dungeonContext.js's `overlayWheel(dir, vx = -1, vy = -1)` and the two standalone hosts scenes/dungeon.js and scenes/interior.js - each asserted to pass `v ? v[0] : -1, v ? v[1] : -1`, and none allowed back to a bare `wheel?.(Math.sign(e.deltaY))`. Third pin: ONE WHEEL SHAPE in src/ui - the seams now pass three arguments to whatever window is up, which is safe only while every other window declares one parameter, so the only multi-parameter `wheel` declarations in the directory are nativeInventory's and automapChrome's nested `wheel(nx, ny, dir)` (fed by automapWindow:1097, not by a host). Campaign: 7 mutants, 7 killed. |
+ | citeshift.test.js | 5 | CS1 (2026-09-10) - THE CITE SHIFT, `tools/citeShift.mjs`: AUDIT 64's last lesson ("the cite mappers need a Ledger arm ... fold it into the first before AUDIT 65") landed as one tool, after three slices in one day re-derived it in scratch (34, 111 and 32 cites). A line cite is a claim (citedrift's law), and this is the mechanical half of keeping it true: the unified diff's hunks map a base's line numbers to the tree's; every cite into a changed file - the path or basename form, a range, the tests' own `world\.js:N` spelling, and the Ledger arm's four spellings (`Port-Ledger.md:N`, `Port-Ledger row :N`, `Ledger row \`:N\``, `Ledger rows \`:N\``) - is moved only when the base's line and the tree's mapped line carry the SAME text, held as INSIDE when the line was rewritten, MISMATCH when the text differs or the line does not exist, and STRUCK (kept, Port-Status's own convention) unless `--struck`. Bare continuations (`world.js:1862`, `:1667`) are reported with their mapped value and never applied, because the C# `:524-525` on the same line looks identical. Pinned on synthetic files and hand-written hunks: the hunk parse and the map (a pure insertion moves only the lines below it, a rewritten line has no answer), every spelling (and the two that must NOT match - a longer basename, a bare `row \`:N\``), the plan's five verdicts and the apply's punctuation, and the continuation report. The CLI is the same functions over git. RUN ONCE PER BASE: a pure shift makes "base N == tree N+1" true whether the cite still says N or was already moved, so a second --apply against the same base moves everything again - apply, commit, and the next base is the new HEAD; the MAC1 integration paid for that lesson. |
+ 
+ ## PY1 - THE PARITY PINS WERE BLIND (2026-08-28)
+diff --git a/src/scenes/dungeon.js b/src/scenes/dungeon.js
+index bbeb1df4..cebfe62d 100644
+--- a/src/scenes/dungeon.js
++++ b/src/scenes/dungeon.js
+@@ -359,7 +359,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
+       return;
+     }
+     e.preventDefault();
+-    ctx.overlayWheel?.(Math.sign(e.deltaY));
++    // AUDIT 65 UI-5: the point rides the notch, by the mousemove arm's
++    // own arithmetic - DFU reads the mouse position afresh each Update
++    // (BaseScreenComponent.cs:724-736), so the window must not be left
++    // routing the wheel by the last hover it happened to get.
++    const r = canvas.getBoundingClientRect();
++    const v = pointToNative(nativeMetrics(canvas),
++      (e.clientX - r.left) * (canvas.width / r.width),
++      (e.clientY - r.top) * (canvas.height / r.height));
++    ctx.overlayWheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+   }, { passive: false });
+   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
+   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
+diff --git a/src/scenes/dungeonContext.js b/src/scenes/dungeonContext.js
+index 3f5bbe2b..76c7b7d9 100644
+--- a/src/scenes/dungeonContext.js
++++ b/src/scenes/dungeonContext.js
+@@ -4879,8 +4879,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
+       return true;
+     },
+     /** The wheel seam (U-scroll): scroll never closes a window, so no
+-     *  done check. */
+-    overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
++     *  done check.
++     *  AUDIT 65 UI-5: the NATIVE POINT rides the notch, the way it
++     *  rides overlayHover below - BaseScreenComponent.Update
++     *  (:724-736) recomputes `mouseOverComponent` from the live mouse
++     *  position each frame, so a window may not route the wheel by the
++     *  last hover it was given. The (-1,-1) default is the hosts' own
++     *  pointer-leave sentinel: a caller with no point routes nothing. */
++    overlayWheel(dir, vx = -1, vy = -1) { activeOverlay?.wheel?.(dir, vx, vy); },
+     /**
+      * ROAD-C c2/S4: THE POINTER SEAM, beside the click/hover/wheel
+      * triple rather than folded into them. DFU's automap windows are
+diff --git a/src/scenes/interior.js b/src/scenes/interior.js
+index cb7be50a..b26d6b80 100644
+--- a/src/scenes/interior.js
++++ b/src/scenes/interior.js
+@@ -246,7 +246,16 @@ export async function bootInterior(canvas, renderer, params, status) {
+     overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
+     drainOverlay();
+   });
+-  addEventListener('wheel', (e) => { if (overlay) overlay.wheel?.(Math.sign(e.deltaY)); });
++  // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
++  // rule, one seam over from F48's miss above) - BaseScreenComponent
++  // .cs:724-736 recomputes `mouseOverComponent` from the live mouse
++  // position each Update, so no window routes the wheel by a remembered
++  // hover; `nativeAt` is the hover arm's own arithmetic.
++  addEventListener('wheel', (e) => {
++    if (!overlay) return;
++    const v = nativeAt(e);
++    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
++  });
+   addEventListener('mousemove', (e) => {
+     if (document.pointerLockElement !== canvas) return;
+     // AUDIT 28 W7: the delta goes to the look filter's target, not the
+diff --git a/src/scenes/townTalk.js b/src/scenes/townTalk.js
+index e5d6d121..f2fa167f 100644
+--- a/src/scenes/townTalk.js
++++ b/src/scenes/townTalk.js
+@@ -1178,10 +1178,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
+   }
+ 
+   /** The wheel seam (U-scroll): an open window owns the wheel; the
+-   *  ones with overflow implement wheel(dir). */
++   *  ones with overflow implement wheel(dir).
++   *
++   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, exactly as it rides the
++   *  hover above. BaseScreenComponent.Update (:724-736) recomputes
++   *  `mouseOverComponent` from the live mouse position every frame
++   *  before the scroll block, so a window may not route the wheel by
++   *  the last point hover() happened to hand it - a pack opened with
++   *  the Inventory key has had no mousemove at all. */
+   function wheel(e) {
+     if (!overlay) return false;
+-    overlay.wheel?.(Math.sign(e.deltaY));
++    const r = canvas.getBoundingClientRect();
++    const px = (e.clientX - r.left) * (canvas.width / r.width);
++    const py = (e.clientY - r.top) * (canvas.height / r.height);
++    const v = pointToNative(nativeMetrics(canvas), px, py);
++    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+     return true;
+   }
+ 
+diff --git a/src/scenes/worldModes.js b/src/scenes/worldModes.js
+index 5823391b..73d5d287 100644
+--- a/src/scenes/worldModes.js
++++ b/src/scenes/worldModes.js
+@@ -7162,14 +7162,29 @@ export function createWorldModes(host) {
+   }
+ 
+   /** The wheel seam (U-scroll), the pointerdown shape: an open
+-   *  mode-owned window owns the wheel. */
++   *  mode-owned window owns the wheel.
++   *
++   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, in BOTH arms and by the
++   *  hover seam's own arithmetic below. BaseScreenComponent.Update
++   *  (:724-736) recomputes `mouseOverComponent` from the live mouse
++   *  position every frame before the scroll block, so the window must
++   *  not be left routing by the last point hover() gave it - opening
++   *  the pack with the Inventory key fires no mousemove at all. */
+   function wheel(e) {
++    const at = () => {
++      const r = canvas.getBoundingClientRect();
++      return pointToNative(nativeMetrics(canvas),
++        (e.clientX - r.left) * (canvas.width / r.width),
++        (e.clientY - r.top) * (canvas.height / r.height));
++    };
+     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
+-      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY));
++      const v = at();
++      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+       return true;
+     }
+     if (mode !== 'interior' || !interiorOverlay) return false;
+-    interiorOverlay.wheel?.(Math.sign(e.deltaY));
++    const v = at();
++    interiorOverlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+     return true;
+   }
+ 
+diff --git a/src/systems/chargenSession.js b/src/systems/chargenSession.js
+index b9bf85eb..d6f26407 100644
+--- a/src/systems/chargenSession.js
++++ b/src/systems/chargenSession.js
+@@ -402,7 +402,7 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
+     // the wizard already routes a mousemove here: world.js and
+     // exterior.js through `townTalk.hover` (townTalk.js:1167-1178,
+     // the route itself :1176), dungeonContext.js through `overlayHover`
+-    // (:4956), which dungeon.js:433 and worldModes.js:7189 both feed.
++    // (:4962), which dungeon.js:441 and worldModes.js:7204 both feed.
+     // (ROAD-G G4 review: all four were stale - re-resolved by content,
+     // against the same six routes G4-11 sweeps.) Hovering never
+     // advances the flow, so no done check.
+diff --git a/src/ui/automapWindow.js b/src/ui/automapWindow.js
+index 4f23f338..b367ae24 100644
+--- a/src/ui/automapWindow.js
++++ b/src/ui/automapWindow.js
+@@ -1088,9 +1088,12 @@ export class AutomapWindow {
+     this._panelMouse = [px, py];
+   }
+ 
+-  /** The wheel (:1855-1866 and GridButton_OnMouseScroll*). The overlay
+-   *  wheel seam carries no position, so the LAST pointer position is
+-   *  the target - which is where the wheel actually is. */
++  /** The wheel (:1855-1866 and GridButton_OnMouseScroll*). The LAST
++   *  pointer position is the target - which is where the wheel
++   *  actually is. AUDIT 65 UI-5 put the live point on the overlay
++   *  wheel seam (the hosts pass it after the dir), but this window
++   *  does not read it yet and so still carries UI-5's shape: a notch
++   *  before the first mousemove routes by the seeded point. */
+   wheel(dir) {
+     if (this._jump || this._noteBox) return;   // c2/S8: the two lockouts
+     const [nx, ny] = this._mouse;
+diff --git a/src/ui/mouseControlsWindow.js b/src/ui/mouseControlsWindow.js
+index 770d2e7a..32505704 100644
+--- a/src/ui/mouseControlsWindow.js
++++ b/src/ui/mouseControlsWindow.js
+@@ -258,8 +258,9 @@ export class MouseControlsWindow {
+     this.dupes = checkDuplicates(this.unsaved);
+     this.tip = new ToolTip();
+     this._drag = null;
+-    // The overlay wheel seam carries no position (ui/automapWindow.js's
+-    // shape), so the LAST hovered point is what the wheel acts on.
++    // The LAST hovered point is what the wheel acts on
++    // (ui/automapWindow.js's shape). AUDIT 65 UI-5 put the live point
++    // on the overlay wheel seam; this window does not read it yet.
+     this._mouse = [0, 0];
+     // Checkbox.cs:103-105 needs the label's measured width, which only
+     // draw() has a font for; the first draw fills this in.
+@@ -444,8 +445,9 @@ export class MouseControlsWindow {
+   /** MouseScrollUp/Down (HorizontalSlider.cs:180-190): one unit a
+    *  notch, and only on the slider the pointer is over - DFU routes a
+    *  scroll to `mouseOverComponent` alone (BaseScreenComponent.cs:
+-   *  578-579). The overlay wheel seam carries no position, so the last
+-   *  hovered point stands in for it. */
++   *  578-579). The last hovered point stands in for the notch's own -
++   *  AUDIT 65 UI-5 put the live point on the overlay wheel seam, but
++   *  this window does not read it yet. */
+   wheel(dir) {
+     if (this.capture || this.top) return;
+     const [vx, vy] = this._mouse;
+diff --git a/src/ui/nativeInventory.js b/src/ui/nativeInventory.js
+index c3f8d00e..81e74517 100644
+--- a/src/ui/nativeInventory.js
++++ b/src/ui/nativeInventory.js
+@@ -348,9 +348,9 @@ export class NativeInventoryWindow {
+     // -1 when nothing has been picked.
+     this.dropIcon = openDropIcon(hooks, this.chooseOne);
+     // AUDIT 64 F52: the wheel is routed by what the pointer is OVER
+-    // (BaseScreenComponent.cs:725-733 dispatches by the component's own
+-    // rect), so the window remembers the last point hover() was given.
+-    // The hosts' (-1,-1) pointer-leave sentinel must hit no rect.
++    // (BaseScreenComponent.cs:725-733 dispatches per component rect).
++    // AUDIT 65 UI-5: this is only the FALLBACK - the notch carries the
++    // live point - and the (-1,-1) leave sentinel must hit no rect.
+     this._mouse = [-1, -1];
+     // AUDIT 64 F48: the window's shared ToolTip. DaggerfallBaseWindow
+     // .cs:50-56 builds `defaultToolTip` and DaggerfallInventoryWindow
+@@ -950,10 +950,20 @@ export class NativeInventoryWindow {
+    *  "active list" in DFU to fall back on.
+    *
+    *  A NOTCH IS NOT ONLY A SCROLL - see _wheelRehover below, which is
+-   *  the other half of the same frame. */
+-  wheel(dir) {
++   *  the other half of the same frame.
++   *
++   *  AUDIT 65 UI-5: THE NOTCH CARRIES ITS OWN POINT. DFU never
++   *  remembers where the cursor was - BaseScreenComponent.Update
++   *  (:724-736) recomputes `mouseOverComponent` from the LIVE scaled
++   *  mouse position every frame, before the scroll block reads it. The
++   *  port's `_mouse` is written by hover() alone, and opening the pack
++   *  with the Inventory key releases the lock without moving the
++   *  cursor, so no mousemove fires and the seeded point routes nothing:
++   *  the wheel was dead until the player nudged the mouse. The hosts
++   *  hand the live point in (they already compute it for hover); the
++   *  remembered one is only the fallback for a caller that has none. */
++  wheel(dir, vx = this._mouse[0], vy = this._mouse[1]) {
+     if (!dir || this.topBox) return;
+-    const [vx, vy] = this._mouse;
+     const R = INV_RECTS;
+     const kind = dir > 0 ? 'down' : 'up';
+     const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
+diff --git a/test/audit64_inventory.test.js b/test/audit64_inventory.test.js
+index 683cbfd8..8beae716 100644
+--- a/test/audit64_inventory.test.js
++++ b/test/audit64_inventory.test.js
+@@ -426,8 +426,14 @@ test('AUDIT 64 F52: the wheel scrolls the list under the cursor, one row a notch
+ test('AUDIT 64 F52: off both scrollers nothing scrolls - there is no fallback list', () => {
+   const bag = Array.from({ length: 9 }, () => dagger());
+   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity: hero(bag) });
++  // AUDIT 65 UI-5: the notch carries its own point now, so "before the
++  // pointer has ever moved" is no longer the inert case - the inert
++  // case is a notch with NO point, which falls back to the hosts'
++  // (-1,-1) pointer-leave sentinel and hits no rect.
++  w.wheel(1, -1, -1);
++  assert.equal(w.scroll, 0, 'the pointer-leave sentinel carries no scroll');
+   w.wheel(1);
+-  assert.equal(w.scroll, 0, 'a notch before the pointer has ever moved is inert');
++  assert.equal(w.scroll, 0, 'and so does a caller with no point at all');
+   w.hover(INV_RECTS.paperDoll[0] + 5, INV_RECTS.paperDoll[1] + 5);
+   w.wheel(1);
+   assert.equal(w.scroll, 0, 'the paperdoll carries no scroll handler');
+diff --git a/test/audit65_wheel.test.js b/test/audit65_wheel.test.js
+new file mode 100644
+index 00000000..6325cfc6
+--- /dev/null
++++ b/test/audit65_wheel.test.js
+@@ -0,0 +1,136 @@
++// AUDIT 65 UI-5 - THE WHEEL CARRIES THE POINTER.
++//
++// AUDIT 64 F52 gave the classic pack the wheel and routed it, rightly,
++// by what the pointer is OVER (BaseScreenComponent.cs:725-733
++// dispatches per component rect). But it routed it by a REMEMBERED
++// point: nativeInventory's `_mouse`, seeded `[-1, -1]` and written by
++// `hover()` alone, while every host wheel seam handed the window a
++// bare `wheel(dir)`. Opening the pack with the Inventory key releases
++// the pointer lock without moving the cursor, so the browser fires no
++// mousemove at all - and the first notch found the seed, hit no rect
++// and did nothing. The same notch after a one-pixel nudge worked.
++//
++// DFU has no such state. BaseScreenComponent.Update (:724-736)
++// recomputes `mouseOverComponent` from the LIVE scaled mouse position
++// every frame, immediately before the scroll block reads it, so the
++// wheel is routed by where the cursor IS and never by whether it has
++// moved since the window opened.
++//
++// The fix is the shape that matches: the point rides the notch.
++// `wheel(dir, vx = this._mouse[0], vy = this._mouse[1])` prefers the
++// live point, the remembered one is only the fallback for a caller
++// that has none, and each host seam computes the native point exactly
++// as its own `hover` already does and passes it.
++//
++// THE FOUR HOSTS RULE: scenes/world.js and scenes/exterior.js own no
++// wheel arithmetic - they hand the raw event to townTalk's seam and to
++// worldModes' - so the seams are townTalk.js (for both of them),
++// worldModes.js (BOTH arms: the interior slot and dungeonCtx), and
++// dungeonContext.js's `overlayWheel`, plus the two standalone hosts
++// scenes/dungeon.js and scenes/interior.js.
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFileSync, readdirSync } from 'node:fs';
++import { join, dirname } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++import { createInventoryWindow } from '../src/ui/inventoryDoor.js';
++import { INV_RECTS } from '../src/ui/nativeInventory.js';
++import { CELL_X, SLOT_H } from '../src/ui/itemScroller.js';
++import { equipOf } from '../src/systems/equip.js';
++
++const root = join(dirname(fileURLToPath(import.meta.url)), '..');
++const read = (p) => readFileSync(join(root, p), 'utf8');
++
++const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
++const dagger = (name) => ({ group: 'Weapons', templateIndex: 113, name, material: 9 });
++const hero = (items) => { const e = { stats: { strength: 80 }, items }; equipOf(e); return e; };
++const LOCAL_SLOT = (s = 0) => [INV_RECTS.localList[0] + CELL_X + 5, INV_RECTS.localList[1] + s * SLOT_H + 5];
++const REMOTE_SLOT = (s = 0) => [INV_RECTS.remoteList[0] + CELL_X + 5, INV_RECTS.remoteList[1] + s * SLOT_H + 5];
++
++/** The producer, not a literal: ui/inventoryDoor.js:58 is the ONE seam
++ *  every host opens the pack through (U53), and headless it mints the
++ *  classic window. */
++const pack = (bag, pile) => {
++  const w = createInventoryWindow({
++    items: () => bag, icons: ICONS, entity: hero(bag), loot: { items: () => pile },
++  });
++  assert.equal(w?.constructor?.name, 'NativeInventoryWindow', 'the door minted the classic pack');
++  return w;
++};
++
++test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before the mouse has ever moved', () => {
++  const letters = 'abcdefghi';
++  const bag = [...letters].map((n) => dagger(n));
++  const pile = [...letters].map((n) => dagger(n.toUpperCase()));
++  const w = pack(bag, pile);
++  // NO hover() anywhere below: this is the Inventory-key open, whose
++  // lock release moves no cursor and fires no mousemove.
++  w.wheel(1, ...LOCAL_SLOT(0));
++  assert.equal(w.scroll, 1, 'the first notch scrolled the list the cursor is over');
++  assert.equal(w.remoteScroll, 0, 'and only that list');
++  // ItemListScroller.cs:346-347's other handler rides the carried
++  // point too - the info panel names the item that scrolled under it.
++  assert.equal(w.infoItem, bag[1], 'the repoint read the notch\'s own point');
++  w.wheel(1, ...REMOTE_SLOT(0));
++  assert.equal(w.remoteScroll, 1, 'the remote scroller likewise, still with no hover');
++  assert.equal(w.scroll, 1, 'and the local one held its place');
++  // The point still ROUTES: off both scrollers there is no fallback
++  // list, exactly as F52 holds.
++  w.wheel(1, INV_RECTS.paperDoll[0] + 5, INV_RECTS.paperDoll[1] + 5);
++  assert.deepEqual([w.scroll, w.remoteScroll], [1, 1], 'the paperdoll carries no scroll handler');
++  // ...and the remembered point is only the fallback for a caller with
++  // none, which is still the seeded pointer-leave sentinel here.
++  w.wheel(1);
++  assert.deepEqual([w.scroll, w.remoteScroll], [1, 1], 'a notch with no point routes nothing');
++});
++
++test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
++  const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
++  // townTalk.js is the seam for BOTH outdoor hosts (world.js:5071 and
++  // exterior.js:2451 hand it the raw event).
++  assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
++  // worldModes.js: BOTH arms - the interior slot and the mounted
++  // dungeon context's.
++  const wm = read('src/scenes/worldModes.js');
++  assert.match(wm, /dungeonCtx\.overlayWheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'worldModes dungeon arm');
++  assert.match(wm, /interiorOverlay\.wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'worldModes interior arm');
++  // dungeonContext.js forwards it, defaulting to the hosts' own
++  // pointer-leave sentinel for a caller that has no point.
++  assert.match(read('src/scenes/dungeonContext.js'),
++    /overlayWheel\(dir, vx = -1, vy = -1\) \{ activeOverlay\?\.wheel\?\.\(dir, vx, vy\); \},/, 'dungeonContext.js');
++  // the two standalone hosts
++  assert.match(read('src/scenes/dungeon.js'),
++    /ctx\.overlayWheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'dungeon.js');
++  assert.match(read('src/scenes/interior.js'), POINT, 'interior.js');
++  // world.js and exterior.js own no arithmetic of their own: the whole
++  // point of naming them is that the event is what they pass on.
++  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
++    assert.match(read(h), /townTalk\.wheel\(e\) \|\| modes\?\.wheel\?\.\(e\)/, h);
++  }
++  // ...and no seam may go back to a bare notch.
++  for (const h of ['src/scenes/townTalk.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js',
++    'src/scenes/interior.js', 'src/scenes/dungeonContext.js']) {
++    assert.equal(/wheel\?\.\(Math\.sign\(e\.deltaY\)\)/.test(read(h)), false, `${h} drops the point again`);
++  }
++});
++
++test('AUDIT 65 UI-5: one wheel shape in src/ui - every other window ignores the extra args', () => {
++  // The seams now pass three arguments to whatever window is up. That
++  // is safe only while every other `wheel` declares one parameter and
++  // lets the rest fall on the floor; a window that grows a second
++  // positional would read a coordinate as its own. The ONE exception
++  // is automapChrome's NESTED seam, which is fed by automapWindow
++  // (:1097) rather than by a host and keeps its own argument order.
++  const dir = join(root, 'src/ui');
++  const multi = [];
++  for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
++    for (const m of readFileSync(join(dir, f), 'utf8').matchAll(/^\s*wheel\(([^)]*)\)/gm)) {
++      if (m[1].split(',').filter((a) => a.trim()).length > 1) multi.push(`${f}: wheel(${m[1]})`);
++    }
++  }
++  assert.deepEqual(multi.sort(), [
++    'automapChrome.js: wheel(nx, ny, dir)',
++    'nativeInventory.js: wheel(dir, vx = this._mouse[0], vy = this._mouse[1])',
++  ]);
++});
+diff --git a/test/citedrift.test.js b/test/citedrift.test.js
+index 65be6a6a..7bf46b9e 100644
+--- a/test/citedrift.test.js
++++ b/test/citedrift.test.js
+@@ -588,7 +588,11 @@ const SOURCE_CITES = [
+   // numbers this round's one-line insert into worldModes moved.
+   ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
+     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
+-  ['src/systems/chargenSession.js', /dungeon\.js:433 and worldModes\.js:(\d+) both feed/,
++  // AUDIT 65 UI-5: the dungeon.js half is read by CONTENT here (CD8
++  // below resolves that number itself) - the literal 433 was a second
++  // copy of a line number and went stale the moment the wheel seam
++  // three lines above it grew its point.
++  ['src/systems/chargenSession.js', /dungeon\.js:\d+ and worldModes\.js:(\d+) both feed/,
+     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
+   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1516/, EX, /^ {4}onLevelUp: \(\) => \{$/],
+   ['src/systems/advancement.js', /exterior\.js:922\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
+diff --git a/tools/toneProbe.mjs b/tools/toneProbe.mjs
+index bcdd2f4e..d09d4e3d 100644
+--- a/tools/toneProbe.mjs
++++ b/tools/toneProbe.mjs
+@@ -11,7 +11,7 @@
+ // a window that was working. The DRIVE is unchanged, because the keys
+ // are: KeyT is the tone cycle (nativeTalk.js:460), KeyW opens the
+ // where-is categories (:430) and a digit uses a visible row (:435).
+-// What moved is what is READ: `native` (townTalk.js:1302, true only
++// What moved is what is READ: `native` (townTalk.js:1313, true only
+ // when the art window is up), `tone`, and the ABSENCE of
+ // `overlayOptions` - which is the positive statement that the window
+ // under the keys is the native one and not the keyed fallback.
+diff --git a/tools/worldWhereIsProbe.mjs b/tools/worldWhereIsProbe.mjs
+index 5a18d01b..9094b6c6 100644
+--- a/tools/worldWhereIsProbe.mjs
++++ b/tools/worldWhereIsProbe.mjs
+@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
+ const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
+ const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
+ 
+-// The drain. `overlay` is townTalk's live slot (townTalk.js:1300), so
++// The drain. `overlay` is townTalk's live slot (townTalk.js:1311), so
+ // this asks the host what is up rather than guessing at names.
+ let drained = 0;
+ for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {

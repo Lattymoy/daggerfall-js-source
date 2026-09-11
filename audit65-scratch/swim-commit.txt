@@ -1,0 +1,100 @@
+AUDIT 65 lane swim: XL-1 isPlayerSwimming is the host's flag, swimming stays the motor's - the exterior swimmer moves again
+
+DFU carries TWO swim members. PlayerEnterExit.isPlayerSwimming
+(PlayerEnterExit.cs:44, :177-178) is the HOST's; levitateMotor
+.IsSwimming IS PlayerMotor.IsSwimming (PlayerMotor.cs:149-152). The
+dungeon arm writes BOTH off one blockWaterLevel test (:384-392); the
+else arm splits them (:415-421) - "don't clear swimming if we're
+outside on a water tile" keeps isPlayerSwimming on tile 0 while
+levitateMotor.IsSwimming is cleared with NO tile test at all.
+
+The port had one member. OT1 wired exteriorSwimming's result into
+`player.swimming`, whose setter raises PlayerMotor.CancelMovement on
+every transition (SetSwimming :174/:182), so shared.applyMotorEffect
+Flags' false and the host's true were two edges a frame and the
+frame's one fixed step spent the cancel and returned (:286-294).
+MEASURED over a real Collider floor at Speed 50 / Swimming 30: the
+exterior swimmer travelled 0.0000 over 600 steps at 60 Hz, with
+GetSwimSpeed sitting unused in `speed`. Both refuters reproduced it.
+
+src/player/motor.js            `this.isPlayerSwimming = false` beside
+                               `sunk`/`onExteriorWater` - a plain FIELD,
+                               no setter, never read by _step. The
+                               UpdateSpeed note records that re-pointing
+                               the `sunk` gate (PlayerMotor.cs:387) at it
+                               makes UpdateSpeed verbatim; left on `sunk`
+                               here, which is AUDIT 64 F0's pinned proxy.
+src/player/exteriorSurface.js  the header's retired sentence ("Nothing in
+                               the port reads a separate isPlayerSwimming")
+                               replaced by the two-member law and the
+                               reader-by-reader split.
+src/scenes/world.js            the write and the `_wasSwimming` carry move
+src/scenes/exterior.js         to player.isPlayerSwimming, and with them
+                               the five IsPlayerSwimming readers: the
+                               fatigue band + Swimming tally
+                               (PlayerEntity.cs:410), the encounter roll
+                               (:489), CollapseFromExhaustion (:2406/
+                               :2426), the rest refusal (DaggerfallUI.cs
+                               :661) and HeadBobber's style and bounce
+                               (:101/:215). Neither host writes
+                               player.swimming at all now.
+src/scenes/worldModes.js       THE FOUR HOSTS: the dungeon arm writes
+src/scenes/dungeon.js          `player.isPlayerSwimming = player.swimming
+                               = <block-water test>` (PlayerEnterExit.cs
+                               :384-392); worldModes' interior arm clears
+                               both beside applyMotorEffectFlags (:419-
+                               421). dungeon.js's HeadBobber moves to the
+                               host member with the other two hosts'.
+src/scenes/shared.js           UNCHANGED - `player.swimming = false` is
+                               :421 verbatim and stays the exterior clear.
+
+LEFT on PlayerMotor.IsSwimming: the swim/levitate zero-and-return
+(PlayerMotor.cs:323), DecideHeightAction's forced-swim crouch, the
+footstep stride (PlayerFootsteps.cs:230 -> systems/footsteps.js:121),
+passiveSpecials (PassiveSpecialsEffect.cs:136) and the Morrowind
+movement bags.
+
+test/audit65_swim.test.js      new, 5 tests. Behavioural: the real
+                               PlayerMotor over a real Collider floor in
+                               the hosts' own order (capture ->
+                               applyMotorEffectFlags -> player.update(1/60)
+                               -> onExteriorWater -> the exteriorSwimming
+                               write) travels GetSwimSpeed(GetWalkSpeed(50),
+                               30) = 1.7721519 per second computed from
+                               PlayerSpeedChanger's C# constants, over 60
+                               and 600 steps, with no CancelMovement
+                               pending - against the pre-XL-1 target's
+                               measured 0 in the same harness. Plus the
+                               plain-field pin, the absence pin on both
+                               exterior hosts, the reader census both ways,
+                               and the four-hosts pin.
+test/ot1_swim_latch.test.js    its host greps re-pointed at the new
+                               target; the header records what XL-1
+                               corrected.
+test/exteriorfoes.test.js      the encounter-roll source greps follow the
+test/restlodging.test.js       member; S40's restDecision window widened
+                               500 -> 600 (the rename is eight characters
+                               and pushed `grounded:` past the old slice).
+bible/09-Testing/Testing.md    the audit65_swim row. The Suite line is
+                               left for integration to settle (+5 tests,
+                               +1 file: 7043 across 670) - it is the one
+                               line behind BOTH standing failures,
+                               manifest and landing's U60c strip.
+
+Every edit inside a line-cited file is line-count neutral, so
+`node tools/citeShift.mjs` reports zero cites to move.
+
+Mutations (each applied, seen red, restored, seen green):
+  world.js back to `player.swimming = exteriorSwimming(...)` -> the
+    absence pin, the four-hosts pin and OT1's host-order pin all red
+  motor.js `isPlayerSwimming` re-made an accessor over `_swimming` ->
+    the travel pin red (dz 1.7722 -> 0) and the plain-field pin red
+  worldModes' dungeon arm drops the host flag -> four-hosts pin red
+  world.js HeadBobber back on the motor flag -> reader census red
+  world.js rest term back on the motor flag -> census + restlodging red
+  exterior.js encounter term back on the motor flag -> census +
+    exteriorfoes red
+  the `sunk` swim-speed gate disabled -> the travel pin red
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01C7SvRjrnsDoSwxQSGzfpoR

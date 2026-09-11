@@ -1,0 +1,52 @@
+[
+ {
+  "name": "MC-6 rect: only record 0 counts (shore ignored)",
+  "path": "src/render/waterSurface.js",
+  "old": "    for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;",
+  "new": "    for (let x = 0; x < w; x++) if (bytes[row + x] === 0) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 rect: every byte counts (dirt says water)",
+  "path": "src/render/waterSurface.js",
+  "old": "    for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;",
+  "new": "    for (let x = 0; x < w; x++) if (table[bytes[row + x]] !== undefined) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 rect: never says water",
+  "path": "src/render/waterSurface.js",
+  "old": "    for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;",
+  "new": "    for (let x = 0; x < w; x++) if (false && table[bytes[row + x]]) return true;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 rect: w clamps to 15",
+  "path": "src/render/waterSurface.js",
+  "old": "const w = Math.min(width, dim), h = Math.min(height, dim);",
+  "new": "const w = Math.min(width, dim) - 1, h = Math.min(height, dim);",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "MC-6 rect: stride uses width not dim",
+  "path": "src/render/waterSurface.js",
+  "old": "    const row = y * dim;",
+  "new": "    const row = y * w;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ }
+]

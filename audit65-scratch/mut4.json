@@ -1,0 +1,192 @@
+[
+ {
+  "name": "PN-2 VC_PROFILE.sunny.shear 0.35->0.36",
+  "path": "src/render/volumetricClouds.js",
+  "old": "sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35 }),",
+  "new": "sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.36 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.cloudy.shear 0.40->0.41",
+  "path": "src/render/volumetricClouds.js",
+  "old": "cloudy:   Object.freeze({ base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 }),",
+  "new": "cloudy:   Object.freeze({ base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.41 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.overcast.shear 0.20->0.21",
+  "path": "src/render/volumetricClouds.js",
+  "old": "overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20 }),",
+  "new": "overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.21 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.fog.shear 0.05->0.06",
+  "path": "src/render/volumetricClouds.js",
+  "old": "fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05 }),",
+  "new": "fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.06 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.rain.shear 0.30->0.31",
+  "path": "src/render/volumetricClouds.js",
+  "old": "rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 }),",
+  "new": "rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.31 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.snow.shear 0.20->0.21",
+  "path": "src/render/volumetricClouds.js",
+  "old": "snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 }),",
+  "new": "snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.21 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 VC_PROFILE.thunder.shear 0.50->0.51",
+  "path": "src/render/volumetricClouds.js",
+  "old": "thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 }),",
+  "new": "thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.51 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 sunny.density 0.60->0.61",
+  "path": "src/render/volumetricClouds.js",
+  "old": "sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35 }),",
+  "new": "sunny:    Object.freeze({ base: 1400, top: 3200, density: 0.61, dark: 0.00, flat: 0.10, shear: 0.35 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 cloudy.base 1200->1201",
+  "path": "src/render/volumetricClouds.js",
+  "old": "cloudy:   Object.freeze({ base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 }),",
+  "new": "cloudy:   Object.freeze({ base: 1201, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 overcast.dark 0.30->0.31",
+  "path": "src/render/volumetricClouds.js",
+  "old": "overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20 }),",
+  "new": "overcast: Object.freeze({ base: 800,  top: 1600, density: 0.80, dark: 0.31, flat: 0.90, shear: 0.20 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 fog.flat 1.00->0.99",
+  "path": "src/render/volumetricClouds.js",
+  "old": "fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05 }),",
+  "new": "fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 0.99, shear: 0.05 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 rain.top 2600->2601",
+  "path": "src/render/volumetricClouds.js",
+  "old": "rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 }),",
+  "new": "rain:     Object.freeze({ base: 600,  top: 2601, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 snow.dark 0.30->0.31",
+  "path": "src/render/volumetricClouds.js",
+  "old": "snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 }),",
+  "new": "snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.31, flat: 0.85, shear: 0.20 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 thunder.top 4200->4201",
+  "path": "src/render/volumetricClouds.js",
+  "old": "thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 }),",
+  "new": "thunder:  Object.freeze({ base: 500,  top: 4201, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 QUALITY.lo.light 4->3",
+  "path": "src/render/volumetricClouds.js",
+  "old": "lo: Object.freeze({ width: 512, height: 128, steps: 32, light: 4, shadow: 256, shadowSteps: 8 }),",
+  "new": "lo: Object.freeze({ width: 512, height: 128, steps: 32, light: 3, shadow: 256, shadowSteps: 8 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 QUALITY.default.light 5->6",
+  "path": "src/render/volumetricClouds.js",
+  "old": "default: Object.freeze({ width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12 }),",
+  "new": "default: Object.freeze({ width: 1024, height: 256, steps: 56, light: 6, shadow: 512, shadowSteps: 12 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 QUALITY.default.steps 56->57",
+  "path": "src/render/volumetricClouds.js",
+  "old": "steps: 56, light: 5",
+  "new": "steps: 57, light: 5",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 QUALITY.hi.shadowSteps 16->24",
+  "path": "src/render/volumetricClouds.js",
+  "old": "hi: Object.freeze({ width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16 }),",
+  "new": "hi: Object.freeze({ width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16 + 8 }),",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "PN-2 SWEEP_FRAMES 8->4",
+  "path": "src/render/volumetricClouds.js",
+  "old": "export const SWEEP_FRAMES = 8;",
+  "new": "export const SWEEP_FRAMES = 4;",
+  "tests": [
+   "test/volumetricClouds.test.js"
+  ],
+  "count": 1
+ }
+]

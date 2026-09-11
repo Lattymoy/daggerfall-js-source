@@ -1,0 +1,6 @@
+not ok 756 - audit24 wave25: the factionListener comments name PlayerActivate, and claim nothing pending
+# tests 7062
+# pass 6863
+# fail 1
+# skipped 198
+done

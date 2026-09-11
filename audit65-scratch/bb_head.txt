@@ -1,0 +1,78 @@
+const BB_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+in vec3 vBBWorld;
+uniform sampler2D uTex;
+uniform sampler2D uEmissionTex;
+uniform int uSpectral;
+uniform vec4 uConceal;  // ECV1: x mode (0 plain, 1 chameleon, 2 shade, 3 hit reveal), y opacity, z seconds, w phase
+uniform vec3 uTint; // time-of-day: ambient (+ the moon's half); VC4: the sun's half rides uBBSun so a cloud's shadow can take it
+uniform vec3 uBBSun;
+uniform int uPointCount;
+uniform vec4 uPointLights[16]; // xyz scene-space, w range
+uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
+uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
+uniform vec3 uIndirectColor;  // color x intensity x daylight scale
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+${CLOUD_SHADOW_GLSL}
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
+  return exp(-uFogDensity * d);
+}
+void main() {
+  // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
+  // the sprite, phased per foe - so it reads as blending in, not as a
+  // faded sprite.
+  vec2 uv = vUV;
+  if (uConceal.x == 1.0) {
+    uv.x += sin(vUV.y * 28.0 + uConceal.z * 7.0 + uConceal.w) * 0.008;
+    if (uv.x < 0.0 || uv.x > 1.0) discard;   // the texture wraps REPEAT: never pull the far edge onto this one
+  }
+  vec4 tex = texture(uTex, uv);
+  // Spectral flats keep their 180-alpha translucency (blended pass);
+  // opaque flats keep the classic 0.5 cutout. ECV1's concealed pass is
+  // blended too and takes the spectral threshold.
+  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5)) discard;
+  // Point lights on flats: billboards have no normal, so the term is
+  // attenuation-only (squared linear falloff) - documented equivalence
+  // to Unity's vertex-lit billboards.
+  vec3 pointAcc = vec3(0.0);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    float d = length(uPointLights[i].xyz - vBBWorld);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointAcc += att * att * uPointColors[i];
+  }
+  // spectral eyes/body glow, or an auto-emissive flat's own albedo (black
+  // tex otherwise). AUDIT 39r R17: DaggerfallBillboard.shader:56-58 lights
+  // albedo.rgb - emission and adds the emission back - "Emission cancels
+  // out other lights" - so a self-lit flat draws at exactly its albedo in
+  // any light. Adding it on top of the exterior tint (~1.31 at noon) put
+  // every missile, impact flash and fire daedra at ~2.3x albedo, clipped
+  // to white. The clamp is ours; a negative albedo has no meaning here.
+  vec3 emission = texture(uEmissionTex, uv).rgb;
+  vec3 albedo = max(tex.rgb - emission, vec3(0.0));
+  // R12: the indirect term, attenuation-only like the lantern term
+  // (billboards have no normal).
+  float iD = length(uIndirect.xyz - vBBWorld);
+  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
+  vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) + pointAcc + iAtt * iAtt * uIndirectColor) + emission;   // VC4
+  // ECV1: a shade is its silhouette - the lit colour pulled to black;
+  // every concealed draw takes the visual's opacity over the texel's.
+  // AUDIT 65 PN-3: SHADE_DARK itself (keep it a decimal - GLSL will not
+  // multiply a vec3 by an int literal).
+  if (uConceal.x == 2.0) lit *= 0.12;
+  float alpha = uSpectral == 1 ? tex.a : 1.0;
+  if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);
+}

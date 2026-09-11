@@ -1,0 +1,15 @@
+DYNAMICIMPORTSfromreachedset:
+src/formats/baseImageFile.js
+src/formats/dfPalette.js
+src/formats/textureFile.js
+src/formats/textureFile.js=>src/formats/dfPalette.js
+src/formats/umRandom.js
+src/render/renderer.js
+src/render/underwaterFog.js
+src/render/waterSurface.js
+src/systems/wind.js
+src/world/meshReader.js
+src/world/perlin.js
+src/world/terrainSampler.js
+src/world/terrainSurface.js
+src/world/terrainTiles.js

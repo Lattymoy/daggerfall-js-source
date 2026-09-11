@@ -1,0 +1,171 @@
+  MOVE    bible/01-Overview/Audit-54.md:31  renderer.js:461-529 -> 465-533
+  MOVE    bible/01-Overview/Bible-Review-2026-08-25.md:240  renderer.js:442 -> 446
+  STRUCK   bible/01-Overview/Port-Ledger.md:618  renderer.js:1172-1173 -> 1176-1177
+  STRUCK   bible/01-Overview/Port-Ledger.md:640  renderer.js:774 -> 778
+  MOVE    bible/01-Overview/Port-Status-2026-09-02.md:590  render/renderer.js:1247 -> 1251
+  MOVE    bible/02-Formats/Morrowind-Rules.md:919  render/renderer.js:787 -> 791
+  MOVE    bible/02-Formats/Morrowind-Rules.md:3563  renderer.js:927-932 -> 931-936
+  MOVE    bible/02-Formats/Morrowind-Rules.md:3563  renderer.js:1006 -> 1010
+  MOVE    bible/06-Systems/Systems-Arc.md:3357  renderer.js:1803 -> 1807
+  MOVE    bible/06-Systems/Systems-Arc.md:3368  renderer.js:1793 -> 1797
+  MOVE    bible/07-Rendering/Enhanced-Visuals-Arc.md:55  renderer.js:1878 -> 1882
+  MOVE    bible/07-Rendering/Enhanced-Visuals-Arc.md:77  renderer.js:590 -> 594
+  MOVE    bible/07-Rendering/Seasons-Iliac-Bay.md:214  renderer.js:1793 -> 1797
+  MOVE    bible/09-Testing/Testing.md:243  renderer.js:1803 -> 1807
+  MOVE    bible/10-UI/Settings-Screen-Spec.md:34  src/render/renderer.js:1118 -> 1122
+  MOVE    src/combat/fpArm.js:20  render/renderer.js:787 -> 791
+  MOVE    src/combat/fpArm.js:416  renderer.js:738 -> 742
+  MOVE    src/combat/fpArm.js:430  renderer.js:736 -> 740
+  MOVE    src/formats/color32Order.js:8  renderer.js:1793 -> 1797
+  MOVE    src/formats/color32Order.js:48  renderer.js:1803 -> 1807
+  MOVE    src/systems/seasonsIliacBayAssets.js:160  renderer.js:1793 -> 1797
+  MOVE    src/systems/textureReplacement.js:171  renderer.js:1803 -> 1807
+  MOVE    src/systems/textureReplacement.js:175  renderer.js:1793 -> 1797
+  MOVE    src/ui/settingsMetrics.js:7  renderer.js:1118-1122 -> 1122-1126
+  MOVE    test/roadc_panelframe.test.js:209  renderer.js:550 -> 554
+  MOVE    test/roadh_seasons_tex.test.js:21  renderer.js:1803 -> 1807
+  MOVE    tools/mwArmProbe.mjs:214  renderer.js:800 -> 804
+  MOVE    tools/mwArmProbe.mjs:230  renderer.js:795 -> 799
+  MOVE    bible/01-Overview/Audit-24.md:563  dungeon.js:240 -> 241
+  STRUCK   bible/01-Overview/Port-Ledger.md:548  scenes/dungeon.js:98 -> 99
+  STRUCK   bible/01-Overview/Port-Ledger.md:637  dungeon.js:483 -> 484
+  STRUCK   bible/01-Overview/Port-Ledger.md:641  dungeon.js:296 -> 297
+  STRUCK   bible/01-Overview/Port-Ledger.md:645  dungeon.js:500 -> 501
+  STRUCK   bible/01-Overview/Port-Ledger.md:706  dungeon.js:496 -> 497
+  CONTIN.  bible/01-Overview/Port-Ledger.md:548  `:4707-4715` -> 4708 (a bare continuation - read the line)
+  MOVE    bible/06-Systems/Quest-Arc.md:4860  dungeon.js:240 -> 241
+  STRUCK   bible/10-UI/Settings-Screen-Spec.md:925  dungeon.js:810 -> 811
+  MOVE    src/combat/fpArm.js:3331  dungeon.js:576 -> 577
+  MOVE    src/scenes/dungeonContext.js:2293  dungeon.js:873 -> 874
+  MOVE    src/scenes/exterior.js:2499  dungeon.js:206 -> 207
+  MOVE    src/scenes/interior.js:335  dungeon.js:622 -> 623
+  MOVE    src/scenes/shared.js:1791  dungeon.js:240 -> 241
+  MOVE    src/scenes/world.js:5115  dungeon.js:206 -> 207
+  MOVE    src/scenes/world.js:6832  dungeon.js:94 -> 95
+  MOVE    src/scenes/worldModes.js:5094  scenes/dungeon.js:219 -> 220
+  MOVE    src/scenes/worldModes.js:5334  dungeon.js:271 -> 272
+  MOVE    src/scenes/worldModes.js:5404  dungeon.js:441 -> 442
+  MOVE    src/scenes/worldModes.js:5494  dungeon.js:325 -> 326
+  MOVE    src/scenes/worldModes.js:5662  dungeon.js:272 -> 273
+  MOVE    src/scenes/worldModes.js:6397  scenes/dungeon.js:342-368 -> 343-369
+  MOVE    src/scenes/worldModes.js:6592  dungeon.js:217 -> 218
+  MOVE    src/systems/chargenSession.js:405  dungeon.js:433 -> 434
+  MOVE    test/audit18_hosts_outer.test.js:173  dungeon.js:272 -> 273
+  MOVE    test/audit24_wave45.test.js:21  dungeon.js:240 -> 241
+  MOVE    test/audit24_wave45.test.js:121  dungeon.js:238-246 -> 239-247
+  MOVE    test/citedrift.test.js:638  dungeon\.js:810 -> 811
+  MOVE    test/crashreport.test.js:201  dungeon.js:447 -> 448
+  MOVE    test/travelmapwindow.test.js:929  dungeon.js:206 -> 207
+  MOVE    tools/mwArmProbe.mjs:528  dungeon.js:576 -> 577
+  MOVE    tools/mwArmProbe.mjs:550  dungeon.js:576 -> 577
+  MOVE    tools/x11Probe.mjs:340  dungeon.js:437 -> 438
+  MOVE    bible/01-Overview/Audit-24.md:563  worldModes.js:1724 -> 1725
+  MOVE    bible/01-Overview/Audit-25.md:151  worldModes.js:244 -> 245
+  MOVE    bible/01-Overview/Audit-25.md:160  worldModes.js:298-310 -> 299-311
+  MOVE    bible/01-Overview/Audit-25.md:194  worldModes.js:647 -> 648
+  MOVE    bible/01-Overview/Audit-58.md:171  src/scenes/worldModes.js:830-898 -> 831-899
+  MOVE    bible/01-Overview/Audit-59.md:26  worldModes.js:4914 -> 4915
+  CONTIN.  bible/01-Overview/Audit-59.md:26  `:6829` -> 6830 (a bare continuation - read the line)
+  MOVE    bible/01-Overview/Bible-Review-2026-08-25.md:109  worldModes.js:1158-1169 -> 1159-1170
+  MOVE    bible/01-Overview/Bible-Review-2026-08-25.md:166  worldModes.js:4170-4171 -> 4171-4172
+  MOVE    bible/01-Overview/Bible-Review-2026-08-25.md:238  worldModes.js:473 -> 474
+  MOVE    bible/01-Overview/Bible-Review-2026-08-25.md:238  worldModes.js:618 -> 619
+  MOVE    bible/01-Overview/Port-Ledger.md:121  worldModes.js:1913 -> 1914
+  STRUCK   bible/01-Overview/Port-Ledger.md:497  scenes/worldModes.js:986-996 -> 987-997
+  STRUCK   bible/01-Overview/Port-Ledger.md:498  worldModes.js:2369 -> 2370
+  STRUCK   bible/01-Overview/Port-Ledger.md:498  worldModes.js:1519-1535 -> 1520-1536
+  STRUCK   bible/01-Overview/Port-Ledger.md:551  scenes/worldModes.js:2428 -> 2429
+  STRUCK   bible/01-Overview/Port-Ledger.md:594  worldModes.js:244 -> 245
+  STRUCK   bible/01-Overview/Port-Ledger.md:595  worldModes.js:298-310 -> 299-311
+  STRUCK   bible/01-Overview/Port-Ledger.md:598  worldModes.js:4503 -> 4504
+  STRUCK   bible/01-Overview/Port-Ledger.md:607  scenes/worldModes.js:1035 -> 1036
+  STRUCK   bible/01-Overview/Port-Ledger.md:607  worldModes.js:1039 -> 1040
+  STRUCK   bible/01-Overview/Port-Ledger.md:618  worldModes.js:3118-3135 -> 3119-3136
+  STRUCK   bible/01-Overview/Port-Ledger.md:621  worldModes.js:1204 -> 1205
+  STRUCK   bible/01-Overview/Port-Ledger.md:622  worldModes.js:1121 -> 1122
+  STRUCK   bible/01-Overview/Port-Ledger.md:637  worldModes.js:2911 -> 2912
+  STRUCK   bible/01-Overview/Port-Ledger.md:640  worldModes.js:1617 -> 1618
+  STRUCK   bible/01-Overview/Port-Ledger.md:641  worldModes.js:3010 -> 3011
+  STRUCK   bible/01-Overview/Port-Ledger.md:645  worldModes.js:2890 -> 2891
+  STRUCK   bible/01-Overview/Port-Ledger.md:647  worldModes.js:2572-2580 -> 2573-2581
+  STRUCK   bible/01-Overview/Port-Ledger.md:649  worldModes.js:2426 -> 2427
+  STRUCK   bible/01-Overview/Port-Ledger.md:657  worldModes.js:1163 -> 1164
+  STRUCK   bible/01-Overview/Port-Ledger.md:665  worldModes.js:900 -> 901
+  STRUCK   bible/01-Overview/Port-Ledger.md:666  worldModes.js:486-488 -> 487-489
+  STRUCK   bible/01-Overview/Port-Ledger.md:667  worldModes.js:873-883 -> 874-884
+  STRUCK   bible/01-Overview/Port-Ledger.md:667  worldModes.js:2198-2207 -> 2199-2208
+  STRUCK   bible/01-Overview/Port-Ledger.md:686  worldModes.js:1850 -> 1851
+  STRUCK   bible/01-Overview/Port-Ledger.md:688  worldModes.js:1913 -> 1914
+  STRUCK   bible/01-Overview/Port-Ledger.md:689  worldModes.js:1630 -> 1631
+  STRUCK   bible/01-Overview/Port-Ledger.md:690  worldModes.js:1922-1924 -> 1923-1925
+  STRUCK   bible/01-Overview/Port-Ledger.md:697  worldModes.js:655 -> 656
+  STRUCK   bible/01-Overview/Port-Ledger.md:699  worldModes.js:660 -> 661
+  STRUCK   bible/01-Overview/Port-Ledger.md:700  worldModes.js:1958-1980 -> 1959-1981
+  STRUCK   bible/01-Overview/Port-Ledger.md:706  worldModes.js:2929 -> 2930
+  CONTIN.  bible/01-Overview/Port-Ledger.md:497  `:1092-1098` -> 1093 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:498  `:2251` -> 2252 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:498  `:261` -> 262 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:548  `:4707-4715` -> 4708 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:551  `:1667` -> 1668 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:551  `:3037` -> 3038 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:551  `:853-859` -> 854 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:621  `:1461` -> 1462 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:622  `:1366` -> 1367 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:622  `:653` -> 654 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:657  `:1370` -> 1371 (a bare continuation - read the line)
+  CONTIN.  bible/01-Overview/Port-Ledger.md:686  `:1650` -> 1651 (a bare continuation - read the line)
+  MOVE    bible/01-Overview/Port-Status-2026-09-02.md:313  worldModes.js:4171 -> 4172
+  MOVE    bible/01-Overview/Port-Status-2026-09-02.md:459  src/scenes/worldModes.js:1836 -> 1837
+  STRUCK   bible/01-Overview/Port-Status-2026-09-02.md:529  src/scenes/worldModes.js:1836 -> 1837
+  STRUCK   bible/01-Overview/Port-Status-2026-09-02.md:646  worldModes.js:1833 -> 1834
+  STRUCK   bible/01-Overview/Port-Status-2026-09-02.md:659  src/scenes/worldModes.js:1906 -> 1907
+  MOVE    bible/01-Overview/Port-Status-2026-09-02.md:921  worldModes.js:4171 -> 4172
+  CONTIN.  bible/01-Overview/Port-Status-2026-09-02.md:646  `:1687` -> 1688 (a bare continuation - read the line)
+  MOVE    bible/01-Overview/Road-To-1-1.md:229  scenes/worldModes.js:1906 -> 1907
+  MOVE    bible/03-World/Player-Arc.md:960  worldModes.js:618 -> 619
+  MOVE    bible/03-World/Player-Arc.md:1687  worldModes.js:354 -> 355
+  MOVE    bible/05-Combat/Combat.md:1371  worldModes.js:7090 -> 7091
+  MOVE    bible/05-Combat/Combat.md:1374  worldModes.js:5832 -> 5833
+  MOVE    bible/05-Combat/Combat.md:1375  worldModes.js:7188 -> 7189
+  MOVE    bible/06-Systems/Quest-Arc.md:719  src/scenes/worldModes.js:473 -> 474
+  MOVE    bible/06-Systems/Quest-Arc.md:1455  worldModes.js:990 -> 991
+  MOVE    bible/06-Systems/Quest-Arc.md:2904  worldModes.js:473 -> 474
+  MOVE    bible/09-Testing/Testing.md:560  worldModes.js:473 -> 474
+  MOVE    bible/10-UI/Settings-Screen-Spec.md:924  worldModes.js:1281 -> 1282
+  STRUCK   bible/10-UI/Settings-Screen-Spec.md:925  worldModes.js:5540 -> 5541
+  MOVE    bible/10-UI/UI-Arc.md:55  worldModes.js:1769 -> 1770
+  MOVE    bible/10-UI/UI-Arc.md:7771  worldModes.js:2581 -> 2582
+  MOVE    bible/10-UI/UI-Arc.md:8481  worldModes.js:5259 -> 5260
+  MOVE    src/combat/weaponRig.js:95  worldModes.js:366 -> 367
+  MOVE    src/scenes/dungeonContext.js:1819  worldModes.js:967 -> 968
+  MOVE    src/scenes/dungeonContext.js:2293  worldModes.js:5709 -> 5710
+  MOVE    src/scenes/dungeonContext.js:2760  worldModes.js:5833 -> 5834
+  MOVE    src/scenes/interior.js:179  worldModes.js:6818 -> 6819
+  MOVE    src/scenes/interior.js:335  worldModes.js:4998 -> 4999
+  MOVE    src/scenes/world.js:2578  worldModes.js:4503 -> 4504
+  MOVE    src/scenes/world.js:5334  worldModes.js:7018-7030 -> 7019-7031
+  MOVE    src/systems/advancement.js:97  worldModes.js:385 -> 386
+  MOVE    src/systems/banking.js:742  scenes/worldModes.js:2355 -> 2356
+  MOVE    src/systems/buildingLocks.js:50  scenes/worldModes.js:3605 -> 3606
+  MOVE    src/systems/chargenSession.js:405  worldModes.js:7189 -> 7190
+  MOVE    src/systems/knightlyGifts.js:8  worldModes.js:2850 -> 2851
+  MOVE    src/systems/knightlyGifts.js:149  worldModes.js:3072-3076 -> 3073-3077
+  MOVE    src/systems/passiveSpecials.js:10  worldModes.js:884 -> 885
+  MOVE    src/systems/quest/machine.js:1093  src/scenes/worldModes.js:473 -> 474
+  MOVE    src/systems/sceneCache.js:192  worldModes.js:2192 -> 2193
+  MOVE    src/systems/tavern.js:197  worldModes.js:2495 -> 2496
+  MOVE    src/systems/tavern.js:199  worldModes.js:2014 -> 2015
+  MOVE    src/systems/tavern.js:201  worldModes.js:2508-2525 -> 2509-2526
+  MOVE    src/systems/tradeModes.js:129  worldModes.js:1661-1693 -> 1662-1694
+  MOVE    src/systems/tradeModes.js:406  worldModes.js:1666-1684 -> 1667-1685
+  MOVE    src/systems/tradeModes.js:409  worldModes.js:6648 -> 6649
+  MOVE    src/ui/listPicker.js:332  worldModes.js:7090 -> 7091
+  MOVE    src/ui/saveWindow.js:395  worldModes.js:6404 -> 6405
+  MOVE    src/ui/spellbookDoor.js:18  worldModes.js:2581 -> 2582
+  MOVE    src/ui/tavernWindow.js:42  worldModes.js:2500 -> 2501
+  MOVE    test/audit24_wave25.test.js:140  worldModes.js:473 -> 474
+  MOVE    test/audit39_itemstrade.test.js:24  scenes/worldModes.js:1356 -> 1357
+  MOVE    test/bulletinboard.test.js:230  worldModes.js:1868 -> 1869
+  MOVE    test/citedrift.test.js:860  worldModes.js:1093 -> 1094
+  MOVE    test/crashreport.test.js:201  worldModes.js:1096 -> 1097
+7 target(s) against 583346e3: 112 cite(s) to move, 58 for a person

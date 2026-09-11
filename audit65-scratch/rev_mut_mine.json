@@ -1,0 +1,122 @@
+[
+ {
+  "id": "M8 (MINE, dungeon arm) dungeon.js:615 HeadBobber reverted to the motor flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js",
+   "test/audit18_hosts_outer.test.js",
+   "test/audit26_uicore.test.js",
+   "test/fparm.test.js",
+   "test/enterexit.test.js",
+   "test/roadb_exterior_water.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/dungeon.js",
+    "swimming: !!player.isPlayerSwimming, running: !!player.isRunning",
+    "swimming: !!player.swimming, running: !!player.isRunning"
+   ]
+  ]
+ },
+ {
+  "id": "M9 (MINE, dungeon arm) worldModes dungeon arm keeps the HOST flag but drops the MOTOR flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js",
+   "test/audit18_hosts_outer.test.js",
+   "test/audit26_uicore.test.js",
+   "test/fparm.test.js",
+   "test/enterexit.test.js",
+   "test/roadb_exterior_water.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/worldModes.js",
+    "player.isPlayerSwimming = player.swimming = surf != null",
+    "player.isPlayerSwimming = surf != null"
+   ]
+  ]
+ },
+ {
+  "id": "M10 (MINE, dungeon arm) standalone dungeon.js arm drops the host flag",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js",
+   "test/audit18_hosts_outer.test.js",
+   "test/audit26_uicore.test.js",
+   "test/fparm.test.js",
+   "test/enterexit.test.js",
+   "test/roadb_exterior_water.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/dungeon.js",
+    "player.isPlayerSwimming = player.swimming = surf != null",
+    "player.swimming = surf != null"
+   ]
+  ]
+ },
+ {
+  "id": "M11 (MINE) worldModes interior arm's host-flag clear removed",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js",
+   "test/audit18_hosts_outer.test.js",
+   "test/audit26_uicore.test.js",
+   "test/fparm.test.js",
+   "test/enterexit.test.js",
+   "test/roadb_exterior_water.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/worldModes.js",
+    "applyMotorEffectFlags(player, playerEntity);   player.isPlayerSwimming = false;",
+    "applyMotorEffectFlags(player, playerEntity);"
+   ]
+  ]
+ },
+ {
+  "id": "M12 (MINE, dungeon arm) the block-water comparison inverted in BOTH dungeon arms",
+  "tests": [
+   "test/audit65_swim.test.js",
+   "test/ot1_swim_latch.test.js",
+   "test/exteriorfoes.test.js",
+   "test/restlodging.test.js",
+   "test/audit64_motor.test.js",
+   "test/audit28_headbob.test.js",
+   "test/audit18_hosts_outer.test.js",
+   "test/audit26_uicore.test.js",
+   "test/fparm.test.js",
+   "test/enterexit.test.js",
+   "test/roadb_exterior_water.test.js"
+  ],
+  "edits": [
+   [
+    "src/scenes/worldModes.js",
+    "player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;",
+    "player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 > surf;"
+   ],
+   [
+    "src/scenes/dungeon.js",
+    "player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;",
+    "player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 > surf;"
+   ]
+  ]
+ }
+]

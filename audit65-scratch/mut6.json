@@ -1,0 +1,22 @@
+[
+ {
+  "name": "CV-3 scan blind spot: a 2nd literal in src/render/waterSurface neighbour",
+  "path": "src/render/waterSurface.js",
+  "old": "export const WATER_SCROLL_TILES_PER_SEC = 0.05;",
+  "new": "export const WATER_SCROLL_TILES_PER_SEC = 0.05;\nconst WATER_SCROLL_TILES_PER_SEC_ALT = 0.05;",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ },
+ {
+  "name": "CV-3 scan blind spot: a 2nd literal in src/render/underwaterFog.js",
+  "path": "src/render/underwaterFog.js",
+  "old": "export const WATER_MAP_COLOR",
+  "new": "const WATER_SCROLL_RATE = 0.05;\nexport const WATER_MAP_COLOR",
+  "tests": [
+   "test/water.test.js"
+  ],
+  "count": 1
+ }
+]

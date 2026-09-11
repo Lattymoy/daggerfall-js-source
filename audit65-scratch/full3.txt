@@ -1,0 +1,2 @@
+not ok 3885 - U60: the build stamp fills every stamp on the page, links the commit, and stays empty unstamped
+not ok 3980 - manifest: Testing.md pins the real suite
