@@ -707,21 +707,20 @@ export const morrowindDataFingerprint = () => _mwFingerprint;
  * MW-LOAD is an ArrayBuffer and costs one materialising read until
  * something opens it - which is why only the host bootstrap asks for
  * sizes, and the boot menu counts names); a file of the same name and
- * size is taken to be
- * the same file (a same-size edit is the one case this leaves to the
- * derived set's own sample stamp).
+ * size is taken to be the same file (a same-size edit is the one case
+ * this leaves to the derived set's own sample stamp).
  */
-let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
+let _mwFingerprint = null;   // null = THE SET HAS NOT BEEN MEASURED (since AUDIT 65 XL-6 a names-only count can have landed with this still null - `_mwCount`'s -1 is a different question)
 const mwFingerprint = (names, sizes = []) => [...names].sort().map((n, i) => `${n}\t${sizes[i] ?? ''}`).join('\n');
 /** The stored sizes, in the SORTED order mwFingerprint walks.
  *
  *  AUDIT 65 XL-6: A PLAIN GET, NEVER assetBlob. Measuring a set is not
  *  using it, and assetBlob MIGRATES what it reads - it structured-clones
- *  a pre-MW-LOAD ArrayBuffer record whole and PUTS the Blob back (:371).
- *  Routed through it, a fingerprint over N legacy files was N value
- *  reads AND N readwrite puts - 181 MB out of the store and back on a
- *  six-file set - and MAC1's boot door moved that onto the title
- *  screen. Both shapes answer the size for free: a Blob has `.size`, an
+ *  a pre-MW-LOAD ArrayBuffer record whole and PUTS the Blob back
+ *  (:375-381). Routed through it, a fingerprint over N legacy files was
+ *  N value reads AND N readwrite puts (every attached archive out of
+ *  the store and back) - and MAC1's boot door moved that onto the
+ *  title screen. Both shapes answer the size for free: a Blob has `.size`, an
  *  ArrayBuffer `.byteLength`. The legacy-to-Blob migration stays where
  *  the file is USED (assetBlob's callers - loadMorrowindArchives and the
  *  record door), which is where MW-LOAD's range reads need it. */
@@ -752,8 +751,11 @@ const archiveCount = (names) => names.filter((n) => /\.bsa$/i.test(n)).length;
  * Counting is not fingerprinting; the fingerprint stays null until the
  * full pass has actually measured the set.
  */
+let _mwCountedNames = null;   // the names the cheap door counted, sorted - so a later attach still reads as a CHANGE while the print is null
 export async function countMorrowindArchives() {
-  _mwCount = archiveCount(await storedMorrowindNames());
+  const names = await storedMorrowindNames();
+  _mwCountedNames = [...names].sort().join('\n');
+  _mwCount = archiveCount(names);
   return _mwCount;
 }
 
@@ -779,8 +781,16 @@ export async function registerMorrowindData() {
   // "unloaded" on the first frame after boot.
   //
   // The generation means THE STORED SET CHANGED. It cannot mean that
-  // until there is a previous set to compare against.
-  if (_mwFingerprint !== null && print !== _mwFingerprint) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches; MW-LOAD: and the record memo
+  // until there is a previous set to compare against - and since AUDIT
+  // 65 XL-6 the boot door's names-only count IS a previous set: a print
+  // still null after a count means the set was counted, not measured,
+  // so an attach that lands between the count and this pass compares
+  // against the counted NAMES (or the fpArm swap caches would keep
+  // answering for the set the count saw - MWFIX's bug by a new road).
+  const changed = _mwFingerprint !== null
+    ? print !== _mwFingerprint
+    : (_mwCountedNames !== null && [...names].sort().join('\n') !== _mwCountedNames);
+  if (changed) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches; MW-LOAD: and the record memo
   _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;

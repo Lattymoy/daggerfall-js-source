@@ -1061,6 +1061,13 @@ function paneEnhanced(body) {
         // copy this replaces carried `female: !!playerEntity.gender`,
         // which is TRUE for the string 'male' - every build asked for
         // the female skeleton; the one home tests the string.
+        // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
+        // is still null here - and fpArm keys its kept face verdict on
+        // that print. The surface about to spend seconds measures the
+        // set first (the sizes pass, off plain gets), which is what
+        // makes the verdict a lookup instead of a dozen mesh parses.
+        const ds = await import('../scenes/dataSource.js');
+        await ds.registerMorrowindData();
         const { buildArmsFor } = await import('../combat/weaponRig.js');
         await buildArmsFor(playerEntity);
         render();

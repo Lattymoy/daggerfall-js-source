@@ -61,7 +61,9 @@ function fakeIndexedDb(initial = {}) {
 test('MAC1 A: the boot door counts the Morrowind store itself and repaints when the count lands', async () => {
   const menu = src('src/ui/enhancedMenu.js');
   assert.match(menu, /import \{[^}]*\bcountMorrowindArchives\b[^}]*\} from '\.\.\/scenes\/dataSource\.js'/, 'the menu imports the NAMES-ONLY count');
-  assert.doesNotMatch(menu, /registerMorrowindData\(\)/, 'AUDIT 65 XL-6: and never CALLS the fingerprinting pass');
+  const mountBlock = menu.slice(menu.indexOf('hooks = h ?? {};'), menu.indexOf('sections = mode ==='));
+  assert.doesNotMatch(mountBlock, /registerMorrowindData\(\)/, 'AUDIT 65 XL-6: the MOUNT never calls the fingerprinting pass (the Build button does, before it spends seconds)');
+  assert.match(menu, /await ds\.registerMorrowindData\(\);\s*\n\s*const \{ buildArmsFor \} = await import/, 'the Build-arms button measures the set first, so fpArm\'s kept face verdict is a lookup');
   // Inside mount, after the hooks land and before any pane renders: the
   // count is kicked when nothing has counted (`_mwCount`'s -1) and the
   // SAME host repaints.
@@ -110,6 +112,20 @@ test('MAC1 A: the boot door counts the Morrowind store itself and repaints when 
   assert.equal(ds.morrowindDataGeneration(), gen, 'learning the set is still not a change (MW-D9g)');
   assert.match(ds.morrowindDataFingerprint(), /Morrowind\.bsa\t2048/, 'the sizes are byte-exact off the ArrayBuffer');
   for (const v of legacy.values()) assert.ok(v instanceof ArrayBuffer, 'the store still holds what it held');
+
+  // THE COUNTED-THEN-ATTACHED SET (the review's block): a fresh module
+  // whose boot door has COUNTED but never measured, then an attach
+  // lands, then the host bootstrap runs. The print is still null, and
+  // MW-D9g's "learning a set is not a change" must not swallow it -
+  // the count saw different NAMES, and the swap caches must drop.
+  // MUTANT: drop the `_mwCountedNames` arm of `changed` - gen stays 0.
+  const ds2 = await import('../src/scenes/dataSource.js?xl6-counted');
+  assert.equal(await ds2.countMorrowindArchives(), 2);
+  legacy.set('Bloodmoon.bsa', new ArrayBuffer(256));
+  const gen2 = ds2.morrowindDataGeneration();
+  await ds2.registerMorrowindData();
+  assert.equal(ds2.morrowindDataGeneration(), gen2 + 1, 'an attach between the count and the measure IS a change');
+  legacy.delete('Bloodmoon.bsa');
 
   // AND THE MIGRATION SURVIVES where the file is actually USED.
   const warn = console.warn; console.warn = () => {};

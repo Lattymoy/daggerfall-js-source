@@ -217,9 +217,9 @@ test('MW-D9g: LEARNING the archive count is not a data change - the boot must no
   // AUDIT 39 moved this pin off `_mwCount`: the guard is the same law
   // (an unknown previous set is not a change) over the whole stored
   // set instead of the archive count - see the MW-D40 test below.
-  assert.match(src, /if \(_mwFingerprint !== null && print !== _mwFingerprint\) \{ _mwGeneration\+\+;/,
-    'a KNOWN set that differs still bumps; an unknown one never does');
-  assert.match(src, /let _mwFingerprint = null;/, 'null is "not counted yet", and it must stay distinguishable from an empty set');
+  assert.match(src, /const changed = _mwFingerprint !== null\s*\n\s*\? print !== _mwFingerprint\s*\n\s*: \(_mwCountedNames !== null && \[\.\.\.names\]\.sort\(\)\.join\('\\n'\) !== _mwCountedNames\);\s*\n\s*if \(changed\) \{ _mwGeneration\+\+;/,
+    'a KNOWN set that differs still bumps; an unknown one never does - and a COUNTED one compares its names (AUDIT 65 XL-6)');
+  assert.match(src, /let _mwFingerprint = null;/, 'null is "not measured", and it must stay distinguishable from an empty set');
   assert.match(src, /let _mwCount = -1;/, '-1 is "not counted yet", and it must stay distinguishable from 0');
 });
 

@@ -95,7 +95,7 @@ test('AUDIT 28 W7: the setting is the default source (0..0.9, ships 0.5), LIVE, 
   assert.equal(NUMBER_LAW['Controls/MouseLookSmoothingFactor'].max, 0.9, 'range-equals-clamp: SmoothingMax');
 });
 
-test('AUDIT 28 W7: all four hosts route both look sites (mouse, touch) through the filter and tick it on the frame\'s dt before the camera is read', () => {
+test('AUDIT 28 W7: all four hosts route all three look sites (mouse, touch, keyboard) through the filter and tick it on the frame\'s dt before the camera is read', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
     const s = read(host);
     // FIX-F: the keyboard look is the THIRD site, beside the mouse and
