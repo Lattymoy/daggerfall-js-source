@@ -3867,7 +3867,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the screenshot scout and the horse keep their own framing (the
     // ride-view predates the machine and is its own recorded law).
     const mwv = (!shotMode || walkMode) && !riding
-      ? mwViewFrame({ fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           raycast: (o, d, m) => collider.raycast(o, d, m) })
       : { eye: cam.pos, thirdPerson: false };
     const target = shotMode && !walkMode
@@ -4025,7 +4025,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
-    mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
+    mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;

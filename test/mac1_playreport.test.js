@@ -218,6 +218,85 @@ test('MAC1 I: the render eye pays a grounded step out over STEP_SMOOTH_TAU; the 
   assert.ok(near(shifted._eyeFeetY, before + 10));
 });
 
+// ── I x MW-D25 (AUDIT 65 XL-4) ───────────────────────────────────
+test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host hands mwView player.pos', () => {
+  // MAC1 I low-passed the render EYE and EV1 interpolated it, but the
+  // Morrowind camera builds its third-person focal out of `feet`
+  // alone (mwCamera.js:198-233) and every host handed it the raw
+  // stepped `player.pos` - so BOTH fixes were bypassed the moment the
+  // player scrolled out of his own head, in all four hosts. feetAt is
+  // eyeAt's positional half; the hosts pass that instead.
+  //
+  // 1. THE NUMBERS, on this file's own staircase (riser 0.3, run 0.6).
+  const worst = (dt, read) => {
+    const { col, topZ } = stairs();
+    const m = new PlayerMotor(col);
+    m.pos = [0, 0, 0]; m.grounded = true;
+    let rise = 0, lag = 0, prev = read(m)[1], f = 0;
+    while (m.pos[2] < topZ + 3 && f < 2000) {
+      m.update(dt, walkInput, 0);
+      const v = read(m)[1];
+      rise = Math.max(rise, v - prev);
+      lag = Math.max(lag, Math.abs(m.feetAt()[1] - m.pos[1]));
+      prev = v; f++;
+    }
+    return { rise, lag };
+  };
+  const eye = worst(1 / 60, (m) => m.eyeAt());
+  const feet = worst(1 / 60, (m) => m.feetAt());
+  const raw = worst(1 / 60, (m) => m.pos);
+  assert.ok(raw.rise > 0.15, `the raw feet still pop a whole rung (${raw.rise.toFixed(4)})`);
+  assert.ok(feet.rise <= eye.rise + 1e-9,
+    `the focal's feet are no jumpier than the first-person eye (${feet.rise.toFixed(4)} vs ${eye.rise.toFixed(4)})`);
+  assert.ok(feet.rise < 0.06, `and under MAC1's own 60 Hz figure (${feet.rise.toFixed(4)})`);
+  // EV1's half too: at a high-refresh rate the render feet interpolate
+  // where the raw feet stay quantised in 60 Hz steps.
+  const stepZ = (dt, read) => {
+    const { col, topZ } = stairs();
+    const m = new PlayerMotor(col);
+    m.pos = [0, 0, 0]; m.grounded = true;
+    let mx = 0, prev = read(m)[2], f = 0;
+    while (m.pos[2] < topZ + 3 && f < 2000) { m.update(dt, walkInput, 0); const z = read(m)[2]; mx = Math.max(mx, z - prev); prev = z; f++; }
+    return mx;
+  };
+  assert.ok(stepZ(1 / 144, (m) => m.feetAt()) < stepZ(1 / 144, (m) => m.pos) * 0.6,
+    'at 144 Hz the render feet translate smoothly where the stepped feet quantise');
+  // The focal's own ceiling probe (mwCamera.js:207-217) casts from
+  // this height, so the filter may never run away from the capsule
+  // the collider actually keeps under the ceiling: it is clamped to
+  // STEP_OFFSET and in practice stays well inside it.
+  assert.ok(feet.lag <= STEP_OFFSET, `the render feet never leave the capsule's own step (${feet.lag.toFixed(4)})`);
+
+  // 2. THE ACCESSOR: eyeAt's positional half - no eye level, no bob.
+  const m2 = new PlayerMotor(new Collider(() => 0));
+  m2.pos = [0, 0, 0]; m2.grounded = true;
+  for (let i = 0; i < 30; i++) m2.update(1 / 60, walkInput, 0);
+  const e2 = m2.eyeAt(), f2 = m2.feetAt();
+  assert.ok(near(f2[0], e2[0] - m2.bobOffset[0]) && near(f2[2], e2[2] - m2.bobOffset[2]),
+    'the render feet are the eye\'s own interpolated x/z, without the bob');
+  assert.ok(near(f2[1], e2[1] - m2._eyeLevel() - m2.bobOffset[1]),
+    'and its height, without _eyeLevel and without the bob - the focal supplies FOCAL_HEIGHT itself');
+  // the snap guard is shared: a placement is not lerped through
+  m2.pos[2] += 50;
+  assert.deepEqual(m2.feetAt(), [m2.pos[0], m2.pos[1], m2.pos[2]], 'a placement answers the raw feet');
+  assert.equal(m2._eyeFeetY, null, 'and primes the filter afresh, exactly as eyeAt does');
+
+  // 3. THE HOSTS (the four-hosts rule): every mwView call site takes
+  //    the render feet, and `player.pos` reaches neither.
+  for (const [host, sites] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 3],
+    ['src/scenes/exterior.js', 2], ['src/scenes/dungeon.js', 2]]) {
+    const s = src(host);
+    let n = 0;
+    for (const hit of s.matchAll(/mwView(?:Frame|DrawBody)\(/g)) {
+      const call = s.slice(hit.index, hit.index + 320);
+      assert.match(call, /feet: player\.feetAt\(\)/, `${host}: a mwView call takes the render feet`);
+      assert.ok(!/feet: player\.pos/.test(call), `${host}: the raw stepped feet must not reach the camera`);
+      n++;
+    }
+    assert.equal(n, sites, `${host}: every mwView call site is pinned (found ${n})`);
+  }
+});
+
 test('MAC1 I: a hill is walked with no backstep and no airborne frame - the hills\' jitter is presentation, not the motor', () => {
   // The measurement that decided the fix's shape: on a mesh ramp with a
   // matching heightAt the feet climb monotonically at 10, 20 and 30
