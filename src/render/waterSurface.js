@@ -38,10 +38,17 @@
 // the same bits, and the water-grass (20-22, 49) and water-stone
 // (30-32, 50) twins of the water-dirt shapes by the same columns, so
 // they take the same corners. A shore record the painters never write
-// (8, 9, 23, 33-36: town docks and moats) has no known shape and takes
-// no water here: the classic tile stands. The coverage inside a tile is
-// the bilinear blend of its corners - the diagonal the shore tile's own
-// art follows - feathered by SHORE_SOFTNESS.
+// as a SHAPE (8, 23, 33-36: town docks, moats and puddles) is one of
+// DFU's own shallow-water tiles - PlayerMotor.OnShallowWaterTile
+// (:551-563), "determined by if the water design takes up the majority
+// of the texture" - so the player wades it already, and the surface
+// covers it WHOLE (MAC2, 2026-09-11: "some puddle areas don't register
+// as water"); its corner geometry is unknown here, and a majority-water
+// tile drawn full is the nearer reading of its art than a bare classic
+// tile. Record 9 is not in DFU's list and keeps the classic tile. The
+// coverage inside a tile is the bilinear blend of its corners - the
+// diagonal the shore tile's own art follows - feathered by
+// SHORE_SOFTNESS.
 import { createLookupTable } from '../world/terrainTiles.js';
 import { convertTile, WATER_TILE_INDEX } from '../world/terrainSurface.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
@@ -50,12 +57,16 @@ import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
  *  tile is 6.4). Enough to clear the depth test on a slope, too little
  *  to read as a step at the shore. */
 export const WATER_LIFT = 0.08;
-/** The surface's base opacity; Fresnel raises it toward grazing. */
-export const WATER_OPACITY = 0.82;
+/** The surface's base opacity; Fresnel raises it toward grazing. MAC2
+ *  (2026-09-11, Mac: "I wish the water was darker and not as see
+ *  through"): 0.82 -> 0.94, so the terrain pass's flat tile beneath
+ *  barely shows. */
+export const WATER_OPACITY = 0.94;
 /** The classic water texel's tint under the surface - a deep blue-green
  *  multiplier, so the tile's own palette colour reads as the body of the
- *  water and not as a floor seen through it. */
-export const WATER_TINT = Object.freeze([0.62, 0.78, 0.86]);
+ *  water and not as a floor seen through it. MAC2: darkened from
+ *  0.62/0.78/0.86 - the body is the water's depth now, not its floor. */
+export const WATER_TINT = Object.freeze([0.36, 0.50, 0.60]);
 /** Schlick's F0 for water (n = 1.33). */
 export const WATER_F0 = 0.02;
 /** Half-width of the shore feather, in coverage (0.5 is the diagonal). */
@@ -77,6 +88,11 @@ export const SHORE_FAMILIES = Object.freeze([
   Object.freeze([20, 21, 22, 49]),
   Object.freeze([30, 31, 32, 50]),
 ]);
+/** DFU's shallow-water records the painters never write as a shape -
+ *  PlayerMotor.OnShallowWaterTile's list (:551-563) minus the shore
+ *  families above (5, 6, 20, 21, 30, 31, 49, whose corners the table
+ *  knows). Drawn whole (see the header). */
+export const SHALLOW_WHOLE = Object.freeze([8, 23, 33, 34, 35, 36]);
 
 /**
  * The 256-entry water-corner table, indexed by the CONVERTED tile byte
@@ -97,6 +113,7 @@ export function buildWaterMaskTable() {
     const water = (~shape) & 0xF;             // the shape's bits are the DIRT corners
     for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
   }
+  for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // MAC2: the docks, moats and puddles, whole
   return table;
 }
 

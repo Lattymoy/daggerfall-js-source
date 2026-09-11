@@ -62,9 +62,13 @@ is the frame the bilinear coverage samples in. The river painter writes
 the same records with the same bits, and its water-grass (20-22, 49)
 and water-stone (30-32, 50) columns are the water-dirt shapes' twins, so
 they take the same corners. A record the producers never write as a
-shape (8, 9, 23, 33-36: town docks and moats) has no known geometry
-and takes no water: the classic tile stands there, said so in the
-module. The coverage inside a tile is the bilinear blend of its four
+shape (8, 23, 33-36: town docks, moats and puddles) has no known
+geometry, and is one of DFU's own shallow-water tiles
+(`PlayerMotor.OnShallowWaterTile`, :551-563: "the water design takes
+up the majority of the texture"), so the surface covers it whole (MAC2,
+2026-09-11 - before that the classic tile stood there and a town
+puddle did not read as water); record 9 is not in DFU's list and keeps
+the classic tile. The coverage inside a tile is the bilinear blend of its four
 corners - the diagonal the shore tile's own art follows - feathered by
 `SHORE_SOFTNESS` and discarded past the feather.
 
@@ -98,7 +102,9 @@ corners - the diagonal the shore tile's own art follows - feathered by
   toward the zenith the way a rough sea integrates.
 - The sun's and the moon's Blinn-Phong glints, the sun's under the
   cloud shadow.
-- The alpha is the opacity (0.82) raised toward grazing by the same
+- The alpha is the opacity (0.94; 0.82 until MAC2 asked for darker,
+  less see-through water, when the tint went from 0.62/0.78/0.86 to
+  0.36/0.50/0.60 with it) raised toward grazing by the same
   Fresnel, times the shore feather. The fog every world pass takes.
 
 **The draw state.** `drawWater`'s (blend, no depth write, no cull)
