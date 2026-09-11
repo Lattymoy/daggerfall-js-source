@@ -1368,7 +1368,7 @@ export class Renderer {
     // by the constructor and every borrower) instead of a synchronous
     // gl.getParameter round-trip per sprite frame; and the clear is
     // SCISSORED to the sprite's own pw x ph corner instead of wiping
-    // the full 512x512 target - the quad only ever samples that
+    // the full 1024x1024 target - the quad only ever samples that
     // corner.
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.SCISSOR_TEST);
@@ -1407,7 +1407,7 @@ export class Renderer {
     // carries on over it: the 1024x1024 sprite FBO stays bound for the
     // rest of the frame, the world rect stays at the sprite's corner,
     // and the clear colour stays transparent black FOREVER, because
-    // setClearColor (:1941) is idempotent against the `_clearColor`
+    // setClearColor (:1942) is idempotent against the `_clearColor`
     // shadow this path no longer matches - AUDIT 26 F034's bug back,
     // permanently, off one caught exception.
     try { this.drawCharacter(mesh, modelMatrix); }
@@ -1955,9 +1955,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // never inherits the last exterior frame's map onto its walls.
     if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }
     // EV6: the shadows reset with the counters - whatever ran between
-    // frames (UI passes, another context's work) is not trusted.
+    // frames (UI passes, another context's work) is not trusted. The
+    // cloud-shadow upload stamps are the same kind of claim (RS-3) and
+    // reset here too, not only behind the conditional deck bump above.
     this._lastProgram = null;
     this._lastVao = null;
+    this._csUploaded = {};
     const gl = this.gl;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;

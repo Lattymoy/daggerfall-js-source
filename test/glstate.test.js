@@ -173,7 +173,7 @@ test('AUDIT 65 RS-2: the sprite pass hands back the FBO, the world rect AND the 
   r.drawCharacter = () => { atThrow = log.length; throw new Error('mesh.vao of undefined'); };
 
   const at = log.length;
-  assert.throws(() => r.renderCharacterSprite({ vao: {}, subMeshes: [] }, I, I, I, 200, 300),
+  assert.throws(() => r.renderCharacterSprite({ vao: {}, count: 3 }, I, I, I, 200, 300),
     /mesh\.vao/, 'the throw still propagates - the finally restores, it does not swallow');
   // the draw really ran against the borrowed target and the borrowed
   // corner, so what follows is a RESTORE and not a coincidence
