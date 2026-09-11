@@ -247,7 +247,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const key = _pick?.key ?? null;
     // AUDIT 65 MC-2: THE REFUSAL, where DFU keeps it - inside the handler its one ray dispatched into: the action door
     // (:686-689), the loot container (:868-873), the corpse (:936-941). activate.js's pickActivatableHit holds the law.
-    if (_pick && _pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return key; }
+    if (_pick && _pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // consumed, and no key: nothing was activated (the probe seam __activate reads this)
     // U26: the player's OWN dropped piles are loot targets too, and
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did

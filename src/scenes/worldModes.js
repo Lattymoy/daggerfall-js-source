@@ -4591,7 +4591,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:160), so the
+    // any foe without a questBehaviour (activate.js:145), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -4636,7 +4636,7 @@ export function createWorldModes(host) {
       }) : false);
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
-    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));   // AUDIT 65 MC-2 (review): the exit is ActivateStaticDoor too (:364-369, gated :501-504)
     // AUDIT 65 MC-2: containers, shelves and ladders reach for the ray
     // (PlayerActivate.cs:76/:314) and carry their handler's own reach
     // beside it, because that is where DFU speaks the refusal -
@@ -4649,7 +4649,7 @@ export function createWorldModes(host) {
       targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });   // S2b
     });
     interiorCtx.shelves.forEach((s, i) => {
-      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // E2; :850-853 is the shelf's own gate
+      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // E2; :850-853 for the Library/Guild/Temple bookshelf, :868-873 for a shop's ShopShelves - both 128 units
     });
     // AUDIT 63 F43 (review round): the dungeon arm's ONE helper
     // (activationTargets, below at the dungeon ray) - this loop was a
@@ -5163,7 +5163,7 @@ export function createWorldModes(host) {
         playerFeet: player.pos,
         nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
       }) : false);
-    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));   // AUDIT 65 MC-2 (review): the dungeon exit is ActivateStaticDoor too (:364-369, gated :501-504)
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     // DQ1: the quest stands. B2 mounted them underground and the ray

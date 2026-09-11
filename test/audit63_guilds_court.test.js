@@ -351,6 +351,19 @@ test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts a
       `${file}: ONE call per ladder, decided against the ladder's own winner`);
     assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, /g) ?? []).length, n,
       `${file}: every call must be at the RAY's reach AND take a rival distance`);
+    // (review) ...and the rival is THE LADDER'S OWN WINNER, by its full
+    // text: the interior/dungeon ladders' pick, the outdoor hosts'
+    // nearest non-person rival AND the townsfolk. MUTANT: any rival ->
+    // Infinity, or `_rivalDist` -> `_nonPersonRival` (the foe stops
+    // measuring against the townsfolk).
+    if (/worldModes|dungeon\.js/.test(file)) {
+      assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, _pick\?\.distance \?\? Infinity\)/g) ?? []).length, n,
+        `${file}: the rival is the ladder's pick, Infinity only when the ladder picked nothing`);
+    } else {
+      assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, _rivalDist\)/g) ?? []).length, n, `${file}: the rival is _rivalDist`);
+      assert.match(src, /const _rivalDist = Math\.min\(_nonPersonRival,\s*\n?\s*\.\.\._livePersons\.map\(/,
+        `${file}: _rivalDist is the nearest non-person rival AND the townsfolk`);
+    }
     assert.doesNotMatch(src, /_enemyArm\(RAY_DISTANCE\)/,
       `${file}: an un-gated far call dispatches the foe over a nearer door`);
     assert.doesNotMatch(src, /_enemyArm\(DEFAULT_ACTIVATION_DISTANCE/,
@@ -635,6 +648,10 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
       { lootKey: 'foeCorpse:1', dropKey: null }, `${file}: and the nearer body beats the pile`);
     assert.deepEqual(decide(null, { key: 'droppedLoot:2', distance: 8 }),
       { lootKey: null, dropKey: 'droppedLoot:2' }, `${file}: with no body, the pile is the hit`);
+    // (review) the TIE goes to the body - the pre-MC-2 precedence, which
+    // DFU cannot contradict (one ray, one hit). MUTANT: `<=` -> `<`.
+    assert.deepEqual(decide({ key: 'foeCorpse:1', distance: 4 }, { key: 'droppedLoot:2', distance: 4 }),
+      { lootKey: 'foeCorpse:1', dropKey: null }, `${file}: an equal pair goes to the body`);
     // the pile rung sits above the pack door the same way
     assert.ok(src.indexOf('else if (dropKey && _dropPick.distance > _dropPick.reach)') > 0
       && src.indexOf('else if (dropKey && _dropPick.distance > _dropPick.reach)')
@@ -651,6 +668,11 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
     ['the container (:868-873)', /key: `container:\$\{i\}`.*distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/],
     ['the shelf (:850-853)', /key: `shelf:\$\{i\}`.*distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE/],
     ['the ladder (:850-853)', /key: `ladder:\$\{i\}`.*distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE/],
+    // (review) the interior's and the dungeon's EXIT doors are the same
+    // ActivateStaticDoor (:364-369) as tryEnter's, gated :501-504 -
+    // both reach for the ray, so a too-far click on the way out speaks
+    ['the interior exit door (:501-504)', /interiorCtx\.doors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)/],
+    ['the dungeon exit door (:501-504)', /dungeonCtx\.exitDoors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)/],
   ]) assert.match(wm, re, `${what} does not reach for the ray`);
   // ...and the static door's rung sits where ActivateStaticDoor's own
   // first statement does: BELOW the NPC and board arms, which carry
