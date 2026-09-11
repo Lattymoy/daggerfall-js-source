@@ -9,6 +9,7 @@ import {
   LARGE_HUD_W, LARGE_HUD_H, COMPASS_FRAME_COUNT, LARGE_HUD_RECTS, MODE_SUBRECT,
   HUD_MODE_CYCLE, hudLargeNextMode, hudLargePrevMode, LARGE_HUD_PANELS,
   largeHudRect, compassFrameIndex, largeHudPoint, largeHudPanelAt, largeHudClick,
+  routeLargeHudClick,   // AUDIT 65 UI-4
   headArchiveFor, horseOffsetHeight, weaponOffsetHeight,
   dockedLargeHudHeight, largeHudViewportRect, largeHudWorldAspect, STANDARD_VIEWPORT_RECT,   // ROAD-E E5
 } from '../src/ui/hudLarge.js';
@@ -18,9 +19,29 @@ import { setValue, resetToDefaults } from '../src/systems/settings.js';
 import { ridingRect } from '../src/systems/riding.js';
 import { MODES, nextInteractionMode } from '../src/player/interactionMode.js';
 import { routeAction } from '../src/ui/input.js';
+import { drawHud } from '../src/ui/hud.js';                  // AUDIT 65 UI-4: largeHudBar() is the LAST DRAWN bar
+import { audio } from '../src/systems/audio.js';             // AUDIT 65 UI-4
+import { SOUND } from '../src/systems/soundClips.js';        // AUDIT 65 UI-4
+import { setCursorActive } from '../src/player/pointerLock.js';   // AUDIT 65 UI-4: IsLargeHUDInteractable's own half
 
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 const canvas = (w, h) => ({ width: w, height: h });
+// AUDIT 65 UI-4: the minimum drawHud needs to leave a bar behind.
+const recorder = () => ({ uploadTexture: () => 'tex', drawScreenQuad() {} });
+const hudFont = () => ({ fnt: { fixedHeight: 9, fixedWidth: 4, glyphWidth: () => 4 } });
+const hudArt = () => ({
+  health: { tex: 'tex:MAIN03I0', w: 4, h: 32 },
+  fatigue: { tex: 'tex:MAIN04I0', w: 4, h: 32 },
+  magicka: { tex: 'tex:MAIN05I0', w: 4, h: 32 },
+  compass: { tex: 'tex:COMPASS', w: 258 + 64, h: 17 },
+  compassBox: { tex: 'tex:COMPBOX', w: 69, h: 17 },
+  breathNormal: { tex: 'tex:breath-normal', w: 1, h: 1 },
+  breathShort: { tex: 'tex:breath-short', w: 1, h: 1 },
+});
+const hudVitals = () => ({
+  health: 50, maxHealth: 50, magicka: 20, maxMagicka: 20, fatigue: 6400,
+  stats: { strength: 50, endurance: 50 },
+});
 
 // ---------------------------------------------------------------
 // 1. THE RECTS
@@ -191,7 +212,7 @@ test('hudLarge: a click maps through the bar rect to the panel under it', () => 
   assert.equal(largeHudPanelAt(7 + 33, 8), null, 'and the far edge is not');
 });
 
-test('hudLarge: only the MAP panel differs on the right button', () => {
+test('hudLarge: the MAP and INTERACTION-MODE panels differ on the right button', () => {
   const bar = largeHudRect(canvas(320, 200), { docked: true });
   const at = (key, b) => {
     const [x, y, w, h] = LARGE_HUD_RECTS[key];
@@ -209,8 +230,88 @@ test('hudLarge: only the MAP panel differs on the right button', () => {
     assert.equal(p.right, undefined, `${p.key} binds one handler to both buttons`);
     assert.equal(at(p.key, 2).action, at(p.key, 0).action);
   }
-  // a middle click takes the left handler - DFU binds only the two
-  assert.equal(at('map', 1).action, 'AutoMap');
+});
+
+test('hudLarge: the bar answers the TWO buttons HUDLarge binds, and CONSUMES the rest', () => {
+  // AUDIT 65 UI-4. This test used to end on
+  // `assert.equal(at('map', 1).action, 'AutoMap')` under the comment
+  // "a middle click takes the left handler - DFU binds only the two":
+  // a pin on the DIVERGENCE, which would have blocked its own fix
+  // (Home.md, A PIN MUST FAIL). HUDLarge.cs:170-232 registers
+  // OnMouseClick and OnRightMouseClick on all eleven panels and no
+  // OnMiddleMouseClick anywhere, and BaseScreenComponent.cs:710-724
+  // dispatches the middle button to MiddleMouseClick alone - a third
+  // block with no fallback to MouseClick - so a middle or aux click
+  // reaches no handler at all.
+  //
+  // It is still a HIT: the bar consumes it and answers true, because
+  // routeLargeHudClick reports whether the BAR took the click and not
+  // whether anything behind it did (hudLarge.js's own law). So the
+  // gate belongs where the action is RUN, which is why largeHudClick
+  // stays a pure hit test and this drives the real door.
+  resetToDefaults();
+  setValue('GUI', 'LargeHUD', true);
+  setValue('GUI', 'LargeHUDDocked', true);
+  const played = [];
+  const realPlay = audio.playOneShot;
+  audio.playOneShot = (i, v) => { played.push([i, v]); return 0.1; };
+  try {
+    // largeHudBar() is the last DRAWN bar, so draw one frame of it
+    const c = canvas(1280, 800);
+    drawHud(recorder(), c, hudArt(), hudVitals(), 0, 0, {
+      font: hudFont(),
+      largeHud: { art: { main: { tex: 'tex:MAIN00I0' } }, docked: true, undockedScale: 1, alignment: 0, mode: 'info' },
+    });
+    setCursorActive(true);   // IsLargeHUDInteractable (HUDLarge.cs:388-391)
+    const s = 4;   // largeHudRect docked: canvas.width / LARGE_HUD_W, x=0 full width, bottom-anchored
+    const [mx, my, mw, mh] = LARGE_HUD_RECTS.map;
+    const px = (mx + mw / 2) * s;
+    const py = (c.height - LARGE_HUD_H * s) + (my + mh / 2) * s;
+    const run = (button) => {
+      played.length = 0;
+      const seen = [];
+      const took = routeLargeHudClick(px, py, button, {
+        toggleAutomap: () => seen.push('AutoMap'),
+        openTravelMap: () => seen.push('TravelMap'),
+      });
+      return { took, seen, played: played.slice() };
+    };
+    // The two binds answer, and the sound is the handler's FIRST
+    // statement either side (MapPanel_OnMouseClick :504-508 and
+    // MapPanel_OnRightMouseClick :513-517).
+    assert.deepEqual(run(0), { took: true, seen: ['AutoMap'], played: [[SOUND.ButtonClick, 1]] });
+    assert.deepEqual(run(2), { took: true, seen: ['TravelMap'], played: [[SOUND.ButtonClick, 1]] });
+    // ...and the three DFU never bound are swallowed in full silence:
+    // no action, no click, and still true so the host withholds its
+    // world fall-through.
+    for (const b of [1, 3, 4]) {
+      assert.deepEqual(run(b), { took: true, seen: [], played: [] },
+        `button ${b} reaches no handler in HUDLarge`);
+    }
+    // WHERE the gate sits is half the law, and both halves are
+    // placement: it is UNDER the hit test, so an aux click that is on
+    // no panel is not the bar's to swallow, and UNDER
+    // IsLargeHUDInteractable, so one that arrives with the bar off, a
+    // window up or the cursor captured is a swing and not a button
+    // press. Hoisted over either guard the eleven-panel answers above
+    // are unchanged, which is exactly why they need their own lines.
+    assert.equal(routeLargeHudClick(px, py - LARGE_HUD_H * s - 1, 1, {}), false,
+      'an aux click OFF the bar is not the bar\'s - the gate sits under the hit test, not over it');
+    setCursorActive(false);
+    assert.equal(routeLargeHudClick(px, py, 1, {}), false,
+      'and under IsLargeHUDInteractable (HUDLarge.cs:388-391)');
+    setCursorActive(true);
+  } finally {
+    audio.playOneShot = realPlay;
+    setCursorActive(false);
+    resetToDefaults();
+  }
+  // MUTATIONS, all five killed: `button !== 0 && button !== 2` -> `||`
+  // (consumes EVERY button, so 0 and 2 stop routing and stop
+  // sounding); deleting the gate line (the pre-fix shape, where 1/3/4
+  // run the left action); dropping the playOneShot; and the two
+  // PLACEMENT mutants - hoisting the gate above `if (!hit)` and
+  // hoisting it above the largeHudEnabled/windowUp/cursorActive line.
 });
 
 test('hudLarge: every panel posts an action ui/input.js can route', () => {

@@ -214,9 +214,9 @@ export const hudLargePrevMode = (mode) => {
  * door rather than two.
  *
  * `right` is only set where DFU's OnRightMouseClick differs from its
- * OnMouseClick - the MAP panel alone, which opens the AUTOMAP on the
- * left and the TRAVEL MAP on the right (:504-520). Every other panel
- * binds the same handler to both buttons, deliberately.
+ * OnMouseClick - the MAP and INTERACTION-MODE panels: the automap left
+ * and the travel map right (:504-520), and the mode cycle forward and
+ * back (:393-438). The other nine bind one handler to both, deliberately.
  *
  * The spellbook posts dfuiOpenSpellBookWindow, which has no
  * InputManager action in DFU at all; the port's door for that window
@@ -301,11 +301,16 @@ export const largeHudPanelAt = (vx, vy) =>
   LARGE_HUD_PANELS.find((p) => inRect(p.rect, vx, vy)) ?? null;
 
 /**
- * One click on the bar. `button` is 0 for left and 2 for right, the
- * DOM's numbering; anything else takes the left handler, because DFU
- * binds only those two and a middle click reaches no panel at all.
+ * One click on the bar - a pure HIT TEST, and the only place the
+ * BUTTON changes the answer is the right one: the interaction-mode
+ * and map panels bind a DISTINCT OnRightMouseClick (HUDLarge.cs:192
+ * and :227) where the other nine hand the same handler to both.
+ * WHICH buttons the bar answers at all is not decided here - HUDLarge
+ * binds two of the three and routeLargeHudClick owns that gate
+ * (AUDIT 65 UI-4) - so an unbound button still gets the panel under
+ * the point, which is what a hit test is for.
  *
- * IsLargeHUDInteractable (:392-395) is `cursorActive && !paused`, and
+ * IsLargeHUDInteractable (:388-391) is `cursorActive && !paused`, and
  * the caller owns both - a click that arrives while the cursor is
  * captured is a swing, not a button press.
  *
@@ -656,7 +661,7 @@ export function largeHudOptions(deps, entity) {
  * ONE DOOR for a click on the bar, called from every host's pointer
  * path. Returns true when the bar took the click.
  *
- * IsLargeHUDInteractable (:392-395) is `cursorActive && !paused`, and
+ * IsLargeHUDInteractable (:388-391) is `cursorActive && !paused`, and
  * both halves matter here. The cursor half is what U45 had to build -
  * see player/pointerLock.js - because with the pointer locked there
  * is no cursor to click a panel with. The paused half is the caller's
@@ -667,12 +672,23 @@ export function largeHudOptions(deps, entity) {
  * in a host with no rest door would fall through to the world and
  * swing the player's sword at the floor. `routeAction` reports
  * whether a door answered; this reports whether the BAR did, and they
- * are different questions.
+ * are different questions. AUDIT 65 UI-4: the same holds for a button
+ * DFU never bound - a middle or aux click on a panel is CONSUMED and
+ * answered by NOTHING, no action and no sound. It is the bar's hit
+ * that swallows the click, not the handler behind it.
  */
 export function routeLargeHudClick(px, py, button, ctx, { windowUp = false } = {}) {
   if (!largeHudEnabled() || windowUp || !cursorActive()) return false;
   const hit = largeHudClick(largeHudBar(), px, py, button);
   if (!hit) return false;
+  // AUDIT 65 UI-4 - THE BAR BINDS TWO BUTTONS. HUDLarge registers
+  // OnMouseClick and OnRightMouseClick on all eleven panels
+  // (HUDLarge.cs:170-232) and no OnMiddleMouseClick anywhere, and
+  // BaseScreenComponent.cs:710-724 sends the middle button to
+  // MiddleMouseClick alone - a third block with no fallback to
+  // MouseClick. So a middle or aux click reaches no handler: the bar
+  // consumes it (the law above) and runs nothing.
+  if (button !== 0 && button !== 2) return true;
   // AUDIT 64 F42 - EVERY PANEL CLICKS. `DaggerfallUI.Instance
   // .PlayOneShot(SoundClips.ButtonClick)` is the FIRST statement of
   // all thirteen HUDLarge handlers, inside the IsLargeHUDInteractable
@@ -682,14 +698,10 @@ export function routeLargeHudClick(px, py, button, ctx, { windowUp = false } = {
   // :517, :526, :535 (head, options, spellbook, inventory, sheath,
   // use-magic-item, transport, map left, map right, rest, compass).
   // It fires on the HIT, whether or not a host has wired the action,
-  // because DFU plays it before the message that may be refused.
-  //
-  // Only the two DFU binds - OnMouseClick and OnRightMouseClick
-  // (HUDLarge.cs's panel registration) - make a sound; a middle click
-  // reaches no handler at all, and this port's largeHudClick sends
-  // every non-right button to the LEFT action, so the sound is asked
-  // of the two buttons DFU actually binds.
-  if (button === 0 || button === 2) audio.playOneShot(SOUND.ButtonClick, 1);
+  // because DFU plays it before the message that may be refused. The
+  // button gate above is what keeps it to the two DFU binds, so this
+  // is unconditional here exactly as it is there.
+  audio.playOneShot(SOUND.ButtonClick, 1);
   routeAction(hit.action, ctx);
   return true;
 }

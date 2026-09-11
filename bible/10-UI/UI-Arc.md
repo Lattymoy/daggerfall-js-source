@@ -11213,9 +11213,10 @@ carried the same clip.
 before `routeAction` - the reference's own order, and it matters:
 DFU plays the click before a message that may be refused, so a panel
 whose door a host has not wired still sounds. Only the two buttons DFU
-binds are asked for it (`OnMouseClick` and `OnRightMouseClick`); a
-middle click reaches no handler in the reference and makes no sound
-here.
+binds are asked for it (`OnMouseClick` and `OnRightMouseClick`).
+AUDIT 65 UI-4 moved that test ABOVE the sound, where it gates the
+ACTION too: F42 had gated the CLIP alone, so a middle click still ran
+the left panel's handler, silently.
 
 ## AUDIT 64 F34 - REVIEW ROUND: THE LIVE SCREEN READ WAS UNPINNED (2026-09-08)
 
