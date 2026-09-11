@@ -109,7 +109,7 @@ test('WATER2: the shader reads the bed - the surface fades to nothing as the bed
   assert.match(WATER_SURFACE_VS, /layout\(location=1\) in float aDepth;[\s\S]*?out float vDepth;[\s\S]*?vDepth = aDepth;/);
   const fs = waterSurfaceFs('float cloudShadowAt(vec3 wp) { return 1.0; }');
   assert.match(fs, /in float vDepth;/);
-  assert.match(fs, /edge \*= smoothstep\(0\.0, uShoreDepth, depth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the shoreline is the bed\'s rise (WATER4: `depth`, the bed or a puddle\'s floor)');
+  assert.match(fs, /edge \*= smoothstep\(0\.0, uShoreDepth, vDepth\);\s*\n\s*if \(edge <= 0\.002\) discard;\s*\n\s*depth = vDepth;/, 'the shoreline is the bed\'s rise (the corner arm; WATER5: the art arm\'s shoreline is the art\'s)');
   assert.match(fs, /float deep = 1\.0 - exp\(-max\(depth, 0\.0\) \* uAbsorb\);/, 'Beer-Lambert');
   const mixAt = fs.indexOf('tex = mix(tex, uDeep, deep);'), litAt = fs.indexOf('vec3 lit = tex * (uAmbient');
   assert.ok(mixAt > 0 && mixAt < litAt, 'the deep colour goes in BEFORE the light, so a deep pool at midnight is dark');

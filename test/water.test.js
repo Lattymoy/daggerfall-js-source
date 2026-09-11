@@ -148,7 +148,7 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /uniform uvec4 uWaterMask\[8\];/);
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
-  assert.match(fs, /edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n\s*depth = vDepth;\s*\n\s*\}\s*\n(\s*\/\/[^\n]*\n)*\s*edge \*= smoothstep\(0\.0, uShoreDepth, depth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, the bed\'s rise (WATER2), then nothing past it');
+  assert.match(fs, /edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(\s*\/\/[^\n]*\n)*\s*edge \*= smoothstep\(0\.0, uShoreDepth, vDepth\);\s*\n\s*if \(edge <= 0\.002\) discard;\s*\n\s*depth = vDepth;/, 'the feather, the bed\'s rise (WATER2), then nothing past it');
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   assert.match(fs, /vec3 lit = tex \* \(uAmbient \+ uSunColor \* \(uSunScale \* diff\) \+ uMoonColor \* \(uMoonScale \* mdiff\)\);/, 'TERRAIN_FS\'s light law');
   assert.match(fs, /float F = uF0 \+ \(0\.72 - uF0\) \* pow\(1\.0 - NdV, 5\.0\);/, 'Schlick, capped');
@@ -213,7 +213,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(slot > w.indexOf('renderer.drawTerrain(p.terrain, pixelMatrix,'), 'after the ground');
   assert.ok(slot > w.lastIndexOf('renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local)'), 'after the last opaque model of the pixel loop');
   assert.ok(slot < w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'), 'before the first flat');
-  assert.match(w, /const wu = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\);/,
+  assert.match(w, /const wu = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\), debug: waterMaskDebug \}\);/,
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
   assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu, TERRAIN_TILE_DIM, renderer\.waterArts\.get\(p\.groundArchive\)\);/);
   const e = rd('src/scenes/exterior.js');
@@ -223,8 +223,8 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(eslot > e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,'), 'after the ground');
   assert.ok(eslot > e.indexOf('arrows.draw(renderer, texRemap);'), 'after the arrows');
   assert.ok(eslot < e.indexOf('renderer.drawBillboards(_visBatches, camRight, UP_Y);'), 'before the first flat');
-  assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\)/);
-  assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim, renderer\.waterArts\.get\(groundArchive\)\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
+  assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\), debug: waterMaskDebug \}\)/);
+  assert.match(e, /sky: sky\.waterSky\(\), debug: waterMaskDebug \}\),\s*\n\s*tilemapDim, renderer\.waterArts\.get\(groundArchive\)\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
   // the dungeon's own water pass is untouched
   assert.match(rd('src/scenes/dungeon.js'), /renderer\.drawWater\(/);
 });

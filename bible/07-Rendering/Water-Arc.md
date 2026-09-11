@@ -414,3 +414,61 @@ hosts and the lab are text-pinned. The lab paints its own art off the
 corner table (the archive's bitmaps are not in it), so the probe's ten
 checks run through the art path: 10/10 on this change. Not seen on a
 real GPU with a real archive - Mac's eye is the gate.
+
+## WATER5 - PER TEXEL, AND THE DISTANCE TO THE SHORE (2026-09-11)
+
+**Mac, of WATER4's trace: "It's still not a perfect trace. What can we
+do to make sure this is perfect."** WATER4 could not be perfect by
+construction: it averaged the art into 4x4-texel cells and blended
+between them, so anything finer than 0.4 units smeared, corners
+rounded, and the shore landed where 40% of a cell was water rather
+than on the art's edge. Two other shorelines still competed with the
+art: WATER2's depth ramp faded the water near dry vertices, and
+WATER3's foam followed the basin's corner geometry. The classic art is
+pixels; a perfect trace is per pixel.
+
+**Per texel.** `world/waterArt.js` now mints a 64x64 mask per record
+- a texel is water or it is not - and from it a SIGNED DISTANCE FIELD:
+every texel's Euclidean distance to the shore in texels (Felzenszwalb's
+transform, exact), positive in the water, negative on the dry, ±0.5 on
+the two texels either side of the shore so the field crosses zero ON
+the texel boundary, clamped at `SDF_RANGE` (8 texels), ±8 throughout
+for a record with no shore. Encoded to a byte about 128. The renderer
+uploads it as a `TEXTURE_2D_ARRAY` of the tile array's own shape (64 x
+64 x records, R8, LINEAR, CLAMP), and the shader reads it at the very
+uv TERRAIN_FS draws the record's texel by - the same `ROT`/`TRANS`, the
+same clamp the tiles have - so the water's decision and the ground's
+texel come from one address. The edge is the field's zero crossing,
+feathered over one screen pixel of the field (`fwidth`): on the art's
+outline at any distance, no shimmer, and a diagonal of pixel stairs
+reads as one smooth line. No ramp of its own and no bed ramp in the
+art arm: the art is the shoreline's one authority. The foam band is
+`FOAM_TEXELS` (6, widened on a wind) of the same distance, so the surf
+sits on the outline; the corner arm keeps WATER2's ramp and WATER3's
+band, untouched. A puddle's bed is the shoreline's depth as before.
+
+**The palette, widened by colour.** A texel is water if its index is
+one of record 0's, or - with the palette to read - if its colour sits
+within `WATER_COLOUR_TOLERANCE` (24, Euclidean RGB) of one of record
+0's colours, so a shore record's lighter or darker blue counts and a
+brown does not. Not seen on a real archive from here, so:
+
+**The mask view.** `?water=mask` in either host and in the lab paints
+the mask magenta over the ground - the water exactly where the art is
+read as water, nothing else. That is the gate for "perfect": the eye
+on the overlay, texel by texel; `WATER_COLOUR_TOLERANCE` is the dial if
+a blue is missed or a brown caught.
+
+**The feet** read the same field, texel-exact (NEAREST, as the ground
+samples its own texel): at or past the shore the texel is water and the
+player swims - a puddle, a one-texel stream.
+
+**Pinned** in `test/water4.test.js` (4, rewritten for the per-texel
+leaf: a one-texel stream survives whole, the reads step from texel to
+texel with no blend, the tables, the feet) and `test/water5.test.js`
+(5: the field's numbers with mutants - the sign flipped, the byte's
+centre moved - the palette widening, the shader arm with no ramp of
+its own, the renderer's array upload and its unit-3 fallback, the
+hosts' and the lab's mask view, the probe's check). The probe gains a
+shot in the mask view: the whole sea magenta, part of the shore band,
+none of the sky.

@@ -34,7 +34,8 @@ test('WATER3: the vertex rides the INTEGRAL of the fragment\'s wave field - thre
 });
 
 test('WATER3: the foam - the shore band by the bed\'s rise, wider on a wind; the crests by the field\'s slope, only on a wind; the lace drawn along the wind; lit white by the ground\'s light; not glass (mutant: crest foam on a calm, or foam under the alpha)', () => {
-  assert.match(FS, /float shoreFoam = \(1\.0 - smoothstep\(0\.0, uFoamDepth \* \(0\.6 \+ 0\.8 \* uWindStrength\), vDepth\)\) \* smoothstep\(0\.35, 0\.75, lace/);
+  assert.match(FS, /shore = smoothstep\(0\.0, uFoamDepth \* \(0\.6 \+ 0\.8 \* uWindStrength\), vDepth\);/, 'the band by the bed\'s rise where the corner table draws (WATER5: `shore`, the one band both arms fill)');
+  assert.match(FS, /float shoreFoam = \(1\.0 - shore\) \* smoothstep\(0\.35, 0\.75, lace/);
   assert.match(FS, /float crestFoam = smoothstep\(0\.16, 0\.30, length\(g\)\) \* uWindStrength \* smoothstep\(0\.45, 0\.8, lace\);/);
   assert.match(FS, /float lace = vnoise\(vWorldPos\.xz \* 0\.9 \+ uWindDir \* \(uTime \* 0\.6\)\) \* 0\.6 \+ vnoise\(vWorldPos\.xz \* 3\.1 - uWindDir \* \(uTime \* 1\.1\)\) \* 0\.4;/);
   assert.match(FS, /float foam = clamp\(shoreFoam \+ crestFoam, 0\.0, 1\.0\) \* exp\(-dist \* 0\.004\);/, 'fades before it aliases');
