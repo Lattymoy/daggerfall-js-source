@@ -5293,7 +5293,7 @@ export function createWorldModes(host) {
       // Levitate/waterWalking consumers.
       const surf = dungeonCtx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
-      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
+      player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): PlayerEnterExit.cs:384-392's dungeon arm writes BOTH members off the one blockWaterLevel test - isPlayerSwimming AND levitateMotor.IsSwimming - and only the else arm (:415-421) splits them. The outer host's host-flag readers run ABOVE this modal frame and so read it in a dungeon too: the encounter roll (world.js's runEncounterTick, PlayerEntity.cs:489), CollapseFromExhaustion (:2406/:2426), the rest refusal (DaggerfallUI.cs:661) and HeadBobber (:101/:215). Without the host flag here all four go dead underground. (This host's own fatigue tally rides reportActivity's `player.swimming` below, which this same line writes.)
       player.levitating = dungeonCtx.playerLevitating();
       player.waterWalking = dungeonCtx.playerWaterWalking();
     } else {
@@ -5304,7 +5304,7 @@ export function createWorldModes(host) {
       // The EFFECT owns levitate/waterWalking/slowFall (Levitate.cs
       // :131/:136 sets IsLevitating on Start AND End), so they are
       // recomputed; swimming is false with no blockWaterLevel.
-      applyMotorEffectFlags(player, playerEntity);
+      applyMotorEffectFlags(player, playerEntity);   player.isPlayerSwimming = false;   // XL-1: an interior shell has no blockWaterLevel and no water tile, so the HOST flag clears beside the motor's (PlayerEnterExit.cs:419-421). The two exterior hosts re-derive theirs from the tile model instead of clearing it here.
     }
     // S19 paralysis host parity (the standing host rule): movement
     // input zeroed, jump cancelled - the player still falls; look

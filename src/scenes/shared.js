@@ -877,8 +877,12 @@ export function wireDoorSpells(actions, entity, say) {
  *  sets LevitateMotor.IsLevitating on the effect's Start AND End, so
  *  the EFFECT owns the flag - it survives every transition and clears
  *  when the spell expires, indoors or out). Swimming is the exception:
- *  PlayerEnterExit.IsPlayerSwimming is recomputed from the block water
- *  level, and an exterior/interior shell has none, so it is false.
+ *  `player.swimming` is levitateMotor.IsSwimming, which the outdoor arm
+ *  clears with no tile test (PlayerEnterExit.cs:421) - the HOST's flag,
+ *  `player.isPlayerSwimming`, is not touched here (AUDIT 65 XL-1): the
+ *  exterior hosts re-derive it unconditionally every frame, and that
+ *  re-derive is its fail-safe - there is no per-frame clear, so a host
+ *  that forgets the write keeps the last value.
  *
  *  Before this, all four flags were written only inside the dungeon
  *  branch and never cleared: leaving a dungeon while levitating left
