@@ -99,6 +99,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
 import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
+import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
@@ -8094,33 +8095,32 @@ export async function bootWorld(canvas, renderer, params, status) {
       const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
       const near = [...built.values()].filter((p) => p._stride === 1 && p.tilemapBytes && p.season !== SEASON.Winter);
       const pieces = near.map((p) => ({ p, t: state.pixelTranslation(p.px, p.py, [0, 0, 0]), grass: grassRecords.get(p.groundArchive) }));
+      const pieceAt = pieceIndex(pieces, TERRAIN_SIZE);   // PERF8: one Map read per blade instead of a scan of every near pixel
       const keep = (x, z) => {
-        for (const { p, t, grass } of pieces) {
-          const lx = x - t[0]; const lz = z - t[2];
-          if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
-          const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-          const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
-          if (rec === 0 || !grass || !grass.has(rec)) return null;
-          const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
-          const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
-          const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
-          if (h <= sea) return null;
-          return h + t[1];
-        }
-        return null;
+        const hit = pieceAt(x, z);
+        if (!hit) return null;
+        const { p, t, grass } = hit;
+        const lx = x - t[0]; const lz = z - t[2];
+        const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+        const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+        if (rec === 0 || !grass || !grass.has(rec)) return null;
+        const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;
+        const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;
+        const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;
+        if (h <= sea) return null;
+        return h + t[1];
       };
       // GR4: the SAME lookup keep makes, answering with the tile's mean
       // colour instead of its height - so the root under a blade takes
       // the colour of the very tile keep let it stand on.
       const ground = (x, z) => {
-        for (const { p, t } of pieces) {
-          const lx = x - t[0]; const lz = z - t[2];
-          if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
-          const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
-          const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
-          return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
-        }
-        return null;
+        const hit = pieceAt(x, z);   // PERF8
+        if (!hit) return null;
+        const { p, t } = hit;
+        const lx = x - t[0]; const lz = z - t[2];
+        const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
+        const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
+        return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);

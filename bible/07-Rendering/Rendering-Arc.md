@@ -1258,3 +1258,20 @@ did. The dungeon and interior builds run behind a mode change and are
 left as they are.
 
 **Pinned** in `test/perf7.test.js` (2). Not a departure.
+
+## PERF8 - THE PIECE UNDER A BLADE, BY ARITHMETIC (2026-09-11)
+
+The grass placer asks `keep(x, z)` and `ground(x, z)` once per blade -
+six thousand a cell, two cells a frame while the eye walks - and each
+found the streamed pixel under the point by scanning every near pixel
+for the square that holds it: fifty pixels, three hundred thousand
+bounds tests a cell, every frame the field was filling. The pixels are
+a grid: `pixelTranslation` is `(px - origin) * TERRAIN_SIZE` plus one
+compensation shared by every pixel, so the pixel under a point is one
+floor from any reference piece, and `labGrass.pieceIndex` answers it
+at one Map read. Same answer as the scan - the squares do not overlap
+and a point outside every piece is null either way - proven against
+four thousand random points in the test. The two closures keep their
+bodies and lose their loops.
+
+**Pinned** in `test/perf8.test.js` (2). Not a departure.
