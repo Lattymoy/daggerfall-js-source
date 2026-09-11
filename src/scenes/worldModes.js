@@ -7162,14 +7162,29 @@ export function createWorldModes(host) {
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open
-   *  mode-owned window owns the wheel. */
+   *  mode-owned window owns the wheel.
+   *
+   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, in BOTH arms and by the
+   *  hover seam's own arithmetic below. BaseScreenComponent.Update
+   *  (:724-736) recomputes `mouseOverComponent` from the live mouse
+   *  position every frame before the scroll block, so the window must
+   *  not be left routing by the last point hover() gave it - opening
+   *  the pack with the Inventory key fires no mousemove at all. */
   function wheel(e) {
+    const at = () => {
+      const r = canvas.getBoundingClientRect();
+      return pointToNative(nativeMetrics(canvas),
+        (e.clientX - r.left) * (canvas.width / r.width),
+        (e.clientY - r.top) * (canvas.height / r.height));
+    };
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
-      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY));
+      const v = at();
+      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
       return true;
     }
     if (mode !== 'interior' || !interiorOverlay) return false;
-    interiorOverlay.wheel?.(Math.sign(e.deltaY));
+    const v = at();
+    interiorOverlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
     return true;
   }
 

@@ -246,7 +246,16 @@ export async function bootInterior(canvas, renderer, params, status) {
     overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
     drainOverlay();
   });
-  addEventListener('wheel', (e) => { if (overlay) overlay.wheel?.(Math.sign(e.deltaY)); });
+  // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
+  // rule, one seam over from F48's miss above) - BaseScreenComponent
+  // .cs:724-736 recomputes `mouseOverComponent` from the live mouse
+  // position each Update, so no window routes the wheel by a remembered
+  // hover; `nativeAt` is the hover arm's own arithmetic.
+  addEventListener('wheel', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+  });
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the

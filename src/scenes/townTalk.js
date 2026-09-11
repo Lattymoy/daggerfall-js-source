@@ -1178,10 +1178,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   /** The wheel seam (U-scroll): an open window owns the wheel; the
-   *  ones with overflow implement wheel(dir). */
+   *  ones with overflow implement wheel(dir).
+   *
+   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, exactly as it rides the
+   *  hover above. BaseScreenComponent.Update (:724-736) recomputes
+   *  `mouseOverComponent` from the live mouse position every frame
+   *  before the scroll block, so a window may not route the wheel by
+   *  the last point hover() happened to hand it - a pack opened with
+   *  the Inventory key has had no mousemove at all. */
   function wheel(e) {
     if (!overlay) return false;
-    overlay.wheel?.(Math.sign(e.deltaY));
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
     return true;
   }
 

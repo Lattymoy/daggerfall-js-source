@@ -4879,8 +4879,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return true;
     },
     /** The wheel seam (U-scroll): scroll never closes a window, so no
-     *  done check. */
-    overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
+     *  done check.
+     *  AUDIT 65 UI-5: the NATIVE POINT rides the notch, the way it
+     *  rides overlayHover below - BaseScreenComponent.Update
+     *  (:724-736) recomputes `mouseOverComponent` from the live mouse
+     *  position each frame, so a window may not route the wheel by the
+     *  last hover it was given. The (-1,-1) default is the hosts' own
+     *  pointer-leave sentinel: a caller with no point routes nothing. */
+    overlayWheel(dir, vx = -1, vy = -1) { activeOverlay?.wheel?.(dir, vx, vy); },
     /**
      * ROAD-C c2/S4: THE POINTER SEAM, beside the click/hover/wheel
      * triple rather than folded into them. DFU's automap windows are

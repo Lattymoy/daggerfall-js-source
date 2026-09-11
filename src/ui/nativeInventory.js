@@ -348,9 +348,9 @@ export class NativeInventoryWindow {
     // -1 when nothing has been picked.
     this.dropIcon = openDropIcon(hooks, this.chooseOne);
     // AUDIT 64 F52: the wheel is routed by what the pointer is OVER
-    // (BaseScreenComponent.cs:725-733 dispatches by the component's own
-    // rect), so the window remembers the last point hover() was given.
-    // The hosts' (-1,-1) pointer-leave sentinel must hit no rect.
+    // (BaseScreenComponent.cs:725-733 dispatches per component rect).
+    // AUDIT 65 UI-5: this is only the FALLBACK - the notch carries the
+    // live point - and the (-1,-1) leave sentinel must hit no rect.
     this._mouse = [-1, -1];
     // AUDIT 64 F48: the window's shared ToolTip. DaggerfallBaseWindow
     // .cs:50-56 builds `defaultToolTip` and DaggerfallInventoryWindow
@@ -950,10 +950,20 @@ export class NativeInventoryWindow {
    *  "active list" in DFU to fall back on.
    *
    *  A NOTCH IS NOT ONLY A SCROLL - see _wheelRehover below, which is
-   *  the other half of the same frame. */
-  wheel(dir) {
+   *  the other half of the same frame.
+   *
+   *  AUDIT 65 UI-5: THE NOTCH CARRIES ITS OWN POINT. DFU never
+   *  remembers where the cursor was - BaseScreenComponent.Update
+   *  (:724-736) recomputes `mouseOverComponent` from the LIVE scaled
+   *  mouse position every frame, before the scroll block reads it. The
+   *  port's `_mouse` is written by hover() alone, and opening the pack
+   *  with the Inventory key releases the lock without moving the
+   *  cursor, so no mousemove fires and the seeded point routes nothing:
+   *  the wheel was dead until the player nudged the mouse. The hosts
+   *  hand the live point in (they already compute it for hover); the
+   *  remembered one is only the fallback for a caller that has none. */
+  wheel(dir, vx = this._mouse[0], vy = this._mouse[1]) {
     if (!dir || this.topBox) return;
-    const [vx, vy] = this._mouse;
     const R = INV_RECTS;
     const kind = dir > 0 ? 'down' : 'up';
     const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';

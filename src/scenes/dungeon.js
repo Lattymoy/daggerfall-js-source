@@ -359,7 +359,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
       return;
     }
     e.preventDefault();
-    ctx.overlayWheel?.(Math.sign(e.deltaY));
+    // AUDIT 65 UI-5: the point rides the notch, by the mousemove arm's
+    // own arithmetic - DFU reads the mouse position afresh each Update
+    // (BaseScreenComponent.cs:724-736), so the window must not be left
+    // routing the wheel by the last hover it happened to get.
+    const r = canvas.getBoundingClientRect();
+    const v = pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+    ctx.overlayWheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
   }, { passive: false });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
