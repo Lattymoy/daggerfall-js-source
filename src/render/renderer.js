@@ -2941,7 +2941,18 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // FA1: an animated flat's frames are uploaded under `record#frame`
       // (the key uploadRecordFrame already mints for enemy sprites);
       // a still flat is `record` alone, as before.
-      if (b._bbKey == null || b._bbKeyFrame !== b.frame) { b._bbKeyFrame = b.frame; b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`; }
+      // MAC4 (2026-09-11, Mac: "enemy animations are completely broken"):
+      // the cache re-minted on a FRAME change only, and the mobiles -
+      // every foe, guard and townsperson (exteriorFoes, dungeonContext,
+      // cityGuards, the two hosts' people) - animate by writing the
+      // RECORD (`record#frame`, orientation and frame folded into one)
+      // and never touch `frame`: their key was minted once and they
+      // stood on their first texture for the rest of the session. The
+      // key follows every field it is made of.
+      if (b._bbKey == null || b._bbKeyRecord !== b.record || b._bbKeyFrame !== b.frame || b._bbKeyArchive !== b.archive) {
+        b._bbKeyRecord = b.record; b._bbKeyFrame = b.frame; b._bbKeyArchive = b.archive;
+        b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
+      }
       return b._bbKey;
     };
     const drawOne = (b) => {
