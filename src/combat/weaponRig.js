@@ -39,6 +39,8 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
 import { fpArm, hasDaggerfallArrows } from './fpArm.js';
+import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
+import { morrowindDataCount } from '../scenes/dataSource.js';   // MWA1: are the archives attached
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
@@ -80,6 +82,24 @@ export function buildArmsFor(entity) {
   return fpArm.build(armBuildOptsOf(entity));
 }
 
+/** MWA1: THE ARMS AT BOOT. RookieG (2026-09-11): "morrowind arms did
+ *  not work on first launch" - only the test room built them at boot;
+ *  a normal game had the arms only after the Enhanced pane's Build
+ *  button, and the module singleton dies with the tab, so every launch
+ *  began bare. The pane's Build now sets the `mwArms` pref and Unload
+ *  clears it, and each host that owns a rig calls this once the entity
+ *  is a made character - at its rig's creation for a continuing
+ *  session, after the wizard for a new one, after a restore for a
+ *  load. A refusal is logged, never thrown: the arms are a departure
+ *  the classic sprite stands in for. Returns the build's result, or
+ *  null when nothing was asked for. */
+export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount } = {}) {
+  if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || fpArm.ready()) return null;
+  const res = await buildArmsFor(entity);
+  if (!res?.ok) console.warn(`[arms] boot build refused - ${res?.stage}: ${res?.error}`);
+  return res;
+}
+
 /**
  * @param deps {
  *   renderer, canvas, fetchBytes, palette, audio,
@@ -91,7 +111,7 @@ export function buildArmsFor(entity) {
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2094), townTalk.say
- *                     (exterior.js:1299, world.js:2409) and
+ *                     (exterior.js:1299, world.js:2410) and
  *                     worldModes' own interior sink (worldModes.js:366,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below

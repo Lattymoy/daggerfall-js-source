@@ -31,6 +31,15 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
+  // TI2 (2026-09-11): THE HOME-SCREEN APP. The manifest is text; the
+  // three icons are drawn by scripts/makeIcons.mjs from the enhanced
+  // skin's own colour tokens (a block-letter D over a seeded star
+  // field) - no ARENA2 pixel, no screenshot, nothing derived. Re-run
+  // the script and the same bytes come out.
+  ['public/manifest.webmanifest', 'TI2: the web app manifest - text, the port\'s own'],
+  ['public/icons/icon-192.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
+  ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
+  ['public/icons/icon-512-maskable.png', 'TI2: home-screen icon (maskable), drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   // THE INTRO'S FOUR ASSETS (U65) WENT WITH THE INTRO at 1c62e11
   // (U65f): two marks, a title card and the one recorded piece of
   // music this port ever shipped. The rows went with the files; this

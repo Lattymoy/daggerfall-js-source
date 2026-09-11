@@ -19,6 +19,16 @@ picker persisted in IndexedDB). What lives here is artwork that is
 *ours*, which is a different thing entirely and does ship with the
 build.
 
+## manifest.webmanifest and icons/ — the home-screen app (TI2)
+
+`play/index.html` links the manifest, so a phone can add the game to
+its home screen and open it fullscreen in landscape - the only
+fullscreen iOS gives a web page. The three icons under `icons/` are
+DRAWN, by `scripts/makeIcons.mjs`: the enhanced skin's ink, brass and
+bone, a block-letter D over a seeded star field. No ARENA2 pixel is
+in them; re-run the script and the same bytes come out. All four are
+on the allow-list in `test/doctrine.test.js` with that reason.
+
 ## logo.png — the title screen (U21c)
 
 `src/ui/titleScreen.js` draws this ahead of the main menu. It is the

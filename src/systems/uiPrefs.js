@@ -80,6 +80,20 @@ export const PREF_DEFAULTS = Object.freeze({
   touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
   touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
   touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
+  // MWA1 (2026-09-11, RookieG via Mac: "morrowind arms did not work on
+  // first launch"). Only the test room ever built the arms at boot; a
+  // normal game had them only after the Enhanced pane's Build button,
+  // and the rig is a module singleton that dies with the tab. This is
+  // the switch that button flips: Build sets it, Unload clears it, and
+  // every host that owns a weapon rig builds at boot while it is on and
+  // the archives are attached (combat/weaponRig.js autoBuildArms).
+  mwArms: false,
+  // FPS1 (2026-09-11, RookieG via Mac: "we need an ingame fps counter").
+  // The overlay in ui/fpsCounter.js: frames a second and the frame's
+  // milliseconds, worst frame of the second beside it. ?fps forces it
+  // on for a probe; this is the player's own switch on the Enhanced
+  // pane. Off by default - a number over the game is a diagnostic.
+  showFps: false,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
