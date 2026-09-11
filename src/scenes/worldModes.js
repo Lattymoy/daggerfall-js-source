@@ -239,6 +239,7 @@ import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js'; 
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -247,8 +248,8 @@ let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off 
 // here" - hoisted, not minted per frame (the EV2 law).
 const NO_INDIRECT_POS = [0, 0, 0];
 const NO_INDIRECT_COLOR = new Float32Array(3);
+// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate that WAS beside it is one law and now has one home.
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
-const DUNGEON_WATER_SCROLL = 0.05;
 
 // AUDIT 26 F079: CreateItem.lastSelectedIndex is ONE static shared by
 // every cast in a run (CreateItem.cs:29, :75, :121). This host kept
@@ -5719,7 +5720,7 @@ export function createWorldModes(host) {
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
-          (now / 1000) * DUNGEON_WATER_SCROLL);
+          (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
       }
       return true;
     }

@@ -5,13 +5,13 @@
 // and the record to its two pages.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapHasWater, tilemapRectHasWater, buildWaterIndices, waterCorners, waterCoverage,
+  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapRectHasWater, buildWaterIndices, waterCorners, waterCoverage,
   windStrength01, waterUniforms, SHORE_FAMILIES, WATER_SURFACE_VS, waterSurfaceFs,
-  WATER_LIFT, WATER_OPACITY, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
+  WATER_LIFT, WATER_OPACITY, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
 } from '../src/render/waterSurface.js';
 import { createLookupTable, assignTiles } from '../src/world/terrainTiles.js';
 import { convertTilemap, buildTerrainGrid, buildTerrainIndices } from '../src/world/terrainSurface.js';
@@ -58,7 +58,7 @@ test('WATER1: the water-corner table inverts the marching squares - a shape\'s w
   assert.deepEqual([...buildWaterMaskTable()], [...WATER_MASK_TABLE], 'built once, deterministic');
 });
 
-test('WATER1: the pack, the coverage and the has-water gate', () => {
+test('WATER1: the pack, and the coverage - the JS twin held against the shader\'s own coverage()', () => {
   const words = packWaterMask();
   assert.equal(words.length, 32, 'eight uvec4s');
   for (let i = 0; i < 256; i++) {
@@ -70,10 +70,14 @@ test('WATER1: the pack, the coverage and the has-water gate', () => {
   assert.equal(waterCoverage(0b0110, 0.5, 0.5), 0.5, 'a saddle is half at the centre');
   assert.equal(waterCoverage(0b0001, 0, 0), 1);
   assert.equal(waterCoverage(0b0001, 1, 1), 0);
-  assert.equal(tilemapHasWater(new Uint8Array([4, 8, 12, 40])), false, 'dirt, grass, stone, a dirt-grass edge');
-  assert.equal(tilemapHasWater(new Uint8Array([4, 8, 0])), true, 'one water tile');
-  assert.equal(tilemapHasWater(new Uint8Array([4, (6 << 2) | 3])), true, 'one shore tile');
-  assert.equal(tilemapHasWater(new Uint8Array(0)), false);
+  // AUDIT 65 MC-6: THE ORACLE. waterCoverage has no production caller - it
+  // is the JS twin of this module's own GLSL coverage(), so the six values
+  // above certify nothing unless the two bodies are held against each
+  // other. A swapped corner bit or a swapped f.x/f.y in EITHER half reddens
+  // one of these two lines.
+  const cfs = waterSurfaceFs('');
+  assert.match(cfs, /float coverage\(uint m, vec2 f\) \{[\s\S]*?return mix\(mix\(c00, c10, f\.x\), mix\(c01, c11, f\.x\), f\.y\);/, 'the shader blends the corners in the same order the JS twin does');
+  assert.match(cfs, /float c00 = float\(m & 1u\), c10 = float\(\(m >> 1u\) & 1u\);\s*\n\s*float c01 = float\(\(m >> 2u\) & 1u\), c11 = float\(\(m >> 3u\) & 1u\);/, 'the corner-bit order: bit0 (0,0), bit1 (1,0), bit2 (0,1), bit3 (1,1)');
 });
 
 test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, the sky\'s two colours, the classic scroll', () => {
@@ -91,14 +95,36 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   assert.deepEqual(u.horizon, [0.4, 0.5, 0.6]);
   assert.ok(Math.abs(u.scroll - (7 * WATER_SCROLL_TILES_PER_SEC) % 1) < 1e-12, 'the dungeon water\'s rate');
   assert.equal(u.lift, WATER_LIFT); assert.equal(u.opacity, WATER_OPACITY); assert.equal(u.f0, WATER_F0); assert.equal(u.shoreSoft, SHORE_SOFTNESS);
+  assert.deepEqual(u.tint, WATER_TINT, 'forwarded too - the only uniform nothing asked about');
+  // AUDIT 65 PN-1: the lines above are WIRING pins (lift: WATER_LIFT -> lift: 0 reddens them); these hold the NUMBERS, which nothing in the tree held.
+  assert.equal(WATER_LIFT, 0.08, 'the z-fight lift above the ground the water is built from');
+  assert.ok(WATER_LIFT > 0 && WATER_LIFT < 0.2, 'above the ground but below a step');
+  assert.equal(WATER_OPACITY, 0.82, 'the surface\'s base opacity, before Fresnel raises it toward grazing');
+  assert.equal(WATER_F0, 0.02, 'Schlick\'s F0 for water (n = 1.33)');
+  assert.equal(SHORE_SOFTNESS, 0.16, 'half-width of the shore feather, in coverage');
   const calm = waterUniforms({ seconds: 3, still: true });
   assert.equal(calm.time, 0, 'still stops the clock');
   assert.equal(calm.windStrength, 0);
   assert.ok(Math.abs(Math.hypot(calm.windDir[0], calm.windDir[1]) - 1) < 1e-6, 'a unit direction even with no wind');
   assert.equal(calm.zenith, DEFAULT_SKY_ZENITH); assert.equal(calm.horizon, DEFAULT_SKY_HORIZON);
+  assert.deepEqual([...DEFAULT_SKY_ZENITH], [0.17, 0.35, 0.72], 'the plain day the surface reflects when no sky says otherwise');
+  assert.deepEqual([...DEFAULT_SKY_HORIZON], [0.66, 0.78, 0.92]);
+  assert.deepEqual([...WATER_TINT], [0.62, 0.78, 0.86]);
   assert.equal(waterUniforms({ rain: 4 }).rain, 1, 'rain clamps');
   assert.equal(waterUniforms({ rain: -1 }).rain, 0);
-  assert.equal(WATER_SCROLL_TILES_PER_SEC, 0.05, 'scenes/dungeon.js WATER_SCROLL_TILES_PER_SEC');
+  assert.equal(WATER_SCROLL_TILES_PER_SEC, 0.05, 'render/waterSurface.js is the one home for the classic texel\'s flow');
+  // AUDIT 65 CV-3: the rate was spelled three times - here, scenes/dungeon.js
+  // and scenes/worldModes.js (as DUNGEON_WATER_SCROLL) - and this line's own
+  // message named scenes/dungeon.js while reading only this module, so retuning
+  // either host could never redden it. Both hosts import the name now, and no
+  // scene may declare a second one.
+  for (const h of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
+    assert.match(rd(h), /^import \{ WATER_SCROLL_TILES_PER_SEC \} from '\.\.\/render\/waterSurface\.js';/m, `${h} imports the rate`);
+  }
+  for (const f of readdirSync(join(ROOT, 'src/scenes')).filter((n) => n.endsWith('.js'))) {
+    const decls = (rd(`src/scenes/${f}`).match(/^\s*(?:export\s+)?(?:const|let|var)\s+\w*water\w*scroll\w*\s*=/gim) || []);
+    assert.deepEqual(decls, [], `src/scenes/${f} declares a second water-scroll rate`);
+  }
 });
 
 test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by compare, the discards, one light law with the ground', () => {
@@ -299,6 +325,6 @@ test('WATER-AUDIT (M4/L5): the water\'s own index set - the wet quads of the ter
   assert.equal(tilemapRectHasWater(town, 32, 16, 16), true);
   const padded = new Uint8Array(32 * 32);   // all zero: the padding past a 16x16 town is water, the town is not
   padded.fill(4, 0, 16); for (let y = 0; y < 16; y++) padded.fill(4, y * 32, y * 32 + 16);
-  assert.equal(tilemapHasWater(padded), true, 'the whole map says yes (the padding)');
+  assert.equal(tilemapRectHasWater(padded, 32, 32, 32), true, 'the whole map says yes (the padding)');
   assert.equal(tilemapRectHasWater(padded, 32, 16, 16), false, 'the town says no');
 });

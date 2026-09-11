@@ -62,14 +62,15 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host, worldModes and the surface all crawled at their own 0.05)
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
 // record 0 - the 0xFF tilemap sentinel's target, same picture classic
 // tiles across oceans), tinted only by alpha; slow diagonal scroll is
 // the classic flow, presentation-tuned.
+// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate below is the one that IS a law, and it has one home.
 const WATER_COLOR = [1, 1, 1, 0.82];
-const WATER_SCROLL_TILES_PER_SEC = 0.05;
 
 // Milestone 5 scene: a full dungeon on the block grid.
 export async function bootDungeon(canvas, renderer, params, status) {
