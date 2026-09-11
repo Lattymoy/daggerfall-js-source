@@ -812,6 +812,11 @@ ships, which is the warning the section's own preamble opens with.
    harness was NOT re-runnable as the row claimed: the float->double
    widening the measurement was taken against was never a committed
    patch. It is one now (`tools/parity/patches/FaceUVTool.cs.patch`).
+   FU1 (2026-09-11) read both sides term for term - nothing differs -
+   and found the harness's own false-arm asymmetry (the C# dump prints
+   a singular face's zeroed points, the JS dump printed nothing);
+   fixed in `tools/parity/js/faceuv.mjs`. The re-run still needs ARENA2
+   and mono.
    The 1,803 itself still needs ARENA2 plus mono to re-measure.
 2. **`:540` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
