@@ -3,6 +3,7 @@
 // quirks, and a LIVE climb up a real wall through the motor+collider.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   climbingChance, climbingSpeed, ClimbingState,
   START_CLIMB_MIN_CHANCE, CONTINUE_CLIMB_MIN_CHANCE, REGAIN_HOLD_MIN_CHANCE, GRASP_WALL_MIN_CHANCE,
@@ -190,4 +191,96 @@ test('X3 climbing LIVE: the Climbing SPELL doubles the climb SPEED, not just the
   assert.ok(spelled > plain * 1.8,
     `the spell climbs about twice as fast (plain=${plain.toFixed(2)} spelled=${spelled.toFixed(2)})`);
   assert.ok(spelled < plain * 2.2, 'about twice - not some other multiplier');
+});
+
+// AUDIT 65 XL-5 ────────────────────────────────────────────────────
+test('AUDIT 65 XL-5: a climb writes IsStandingStill - the cached standing/half-speed fields follow the climb\'s own grounded', () => {
+  // PlayerMotor.cs:322-326 zeroes moveDirection for the climb disjunct
+  // exactly as for the swim one, so :113-125's IsStandingStill
+  // collapses to `grounded` and :168-181's IsMovingLessThanHalfSpeed
+  // takes its standing-still arm. The port caches both in fields, and
+  // the climb return (the `if (this._climbStep(...)) return;` in
+  // _step) sits ABOVE both remaining writers - so before this the
+  // pre-climb `standing = false` rode the whole climb into the
+  // footstep gate, MAC1 H's townsfolk politeness gate and the stealth
+  // senses' movingLessThanHalfSpeed.
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const build = ({ ceiling = null, rolls } = {}) => {
+    const col = new Collider(() => -100);
+    col.addMesh('floor', new Float32Array([-5, 0, -5, 5, 0, -5, 5, 0, 5, -5, 0, 5]), [0, 1, 2, 0, 2, 3], I);
+    col.addMesh('wall', new Float32Array([-5, 0, 0.4, 5, 0, 0.4, 5, 6, 0.4, -5, 6, 0.4]), [0, 1, 2, 0, 2, 3], I);
+    // a crawlspace lid: the climb latches from the floor and the hug's
+    // rise is eaten by the ceiling, so the climb's OWN move keeps
+    // reporting grounded - DFU's grounded forward start, in the port
+    if (ceiling != null) col.addMesh('ceil', new Float32Array([-5, ceiling, -5, 5, ceiling, -5, 5, ceiling, 5, -5, ceiling, 5]), [0, 1, 2, 0, 2, 3], I);
+    const m = new PlayerMotor(col, { speed: 50, running: 30 }, {
+      climbing: { inputs: () => ({ climbing: 50, luck: 50 }), tally: () => {}, rolls, say: () => {} },
+    });
+    m.spawn(0, 0.02, 0);
+    return m;
+  };
+  const fwd = { forward: 1, strafe: 0, run: false, jump: false };
+  const halfLine = (m) => (m.grounded ? true : walkSpeed(m.stats.speed) / 2 >= m.speed);
+
+  // A GROUNDED forward start, under a 1.81 ceiling: every climbing
+  // step is grounded, so every one of them is "standing still".
+  {
+    const m = build({ ceiling: 1.81, rolls: () => 0 });
+    let steps = 0, grounded = 0, first = null;
+    for (let i = 0; i < 200; i++) {
+      m.update(1 / 60, fwd, 0);
+      if (!m.climb.isClimbing) continue;
+      steps++;
+      if (m.grounded) grounded++;
+      if (!first) first = { grounded: m.grounded, standing: m.standing, half: m.movingLessThanHalfSpeed };
+      assert.equal(m.standing, m.grounded, `climbing step ${i}: standing IS grounded (PlayerMotor.cs:113-125 over the zeroed moveDirection)`);
+      assert.equal(m.movingLessThanHalfSpeed, halfLine(m), `climbing step ${i}: the half-speed line mirrors the swim branch's, not a constant`);
+    }
+    assert.ok(steps > 20, `the wall was climbed for ${steps} steps`);
+    assert.equal(grounded, steps, 'the lidded climb never leaves the floor');
+    assert.deepEqual(first, { grounded: true, standing: true, half: true },
+      'the FIRST climbing step of a grounded forward start already reads standing-still');
+  }
+
+  // The open wall: the climb lifts clear at once, so `grounded` (and
+  // with it `standing`) is false for the hug - and the SLIP that
+  // reaches the floor is grounded again, which is where the stale
+  // field used to lie. The invariant holds across both.
+  {
+    let roll = 0;
+    const m = build({ rolls: () => roll });
+    let landed = 0, climbed = 0;
+    for (let i = 0; i < 400; i++) {
+      if (i === 120) roll = 0.99;   // the continue check starts failing: the climber slips
+      m.update(1 / 60, fwd, 0);
+      if (!m.climb.isClimbing) continue;
+      climbed++;
+      assert.equal(m.standing, m.grounded, `step ${i}: standing IS grounded`);
+      assert.equal(m.movingLessThanHalfSpeed, halfLine(m), `step ${i}: the half-speed line`);
+      if (m.grounded) { landed++; assert.equal(m.standing, true); assert.equal(m.movingLessThanHalfSpeed, true); }
+    }
+    assert.ok(climbed > 50 && m.pos[1] < 0.01, 'the climber rose and slipped back to the floor');
+    assert.equal(landed, 1, 'exactly one grounded climbing step - the slip touching down');
+  }
+
+  // THE FREEZE RETURN STAYS BARE: PlayerMotor.cs:296-307 does NOT zero
+  // moveDirection, so DFU's getters keep reading the pre-freeze
+  // vector there - a write on that return would be the divergence.
+  const motorSrc = readFileSync(new URL('../src/player/motor.js', import.meta.url), 'utf8');
+  const freeze = motorSrc.slice(motorSrc.indexOf('if (this.freezeMotor > 0) {'));
+  assert.ok(!/^[\s\S]{0,260}this\.standing =/.test(freeze), 'the freezeMotor block writes no standing (PlayerMotor.cs:296-307)');
+
+  // THE CENSUS (both refuters asked for it): every early return that
+  // ZEROES moveDirection writes `standing` in its own body - the
+  // cancelMovement block (:286-294), _climbStep's `return true` and the
+  // swim/levitate branch (:322-326) - so a future return landing above
+  // the walk path without the write goes red here, and the freeze
+  // return above is the one exemption. MUTANT: delete the swim
+  // branch's `this.standing = this.grounded;` - this file reddens.
+  const body = (open, span) => { const i = motorSrc.indexOf(open); assert.ok(i >= 0, `motor.js lost ${open}`); return motorSrc.slice(i, i + span); };
+  assert.match(body('if (this.cancelMovement) {', 900), /this\.standing = this\.grounded;[\s\S]*?\n      return;/, 'the cancelMovement block writes standing before its return');
+  assert.match(body('if (this.levitating || this.swimming) {', 9000), /this\.standing = this\.grounded;[\s\S]*?\n      return;/, 'the swim/levitate branch writes standing before its return');
+  const climb = motorSrc.slice(motorSrc.indexOf('  _climbStep(dt, input, yaw) {'), motorSrc.indexOf('\n  }\n', motorSrc.indexOf('  _climbStep(dt, input, yaw) {')));
+  assert.match(climb, /this\.standing = this\.grounded;[\s\S]{0,400}return true;/, '_climbStep writes standing before its `return true`');
+  assert.equal((motorSrc.match(/this\.standing = this\.grounded;/g) ?? []).length, 3, 'three writers of the cached pair, no more (a fourth zeroing return needs its own)');
 });

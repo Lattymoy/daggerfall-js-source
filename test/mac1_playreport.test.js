@@ -310,6 +310,86 @@ test('MAC1 I: the render eye pays a grounded step out over STEP_SMOOTH_TAU; the 
   assert.ok(near(shifted._eyeFeetY, before + 10));
 });
 
+// ── I x MW-D25 (AUDIT 65 XL-4) ───────────────────────────────────
+test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host hands mwView player.pos', () => {
+  // MAC1 I low-passed the render EYE and EV1 interpolated it, but the
+  // Morrowind camera builds its third-person focal out of `feet`
+  // alone (mwCamera.js:198-233) and every host handed it the raw
+  // stepped `player.pos` - so BOTH fixes were bypassed the moment the
+  // player scrolled out of his own head, in all four hosts. feetAt is
+  // eyeAt's positional half; the hosts pass that instead.
+  //
+  // 1. THE NUMBERS, on this file's own staircase (riser 0.3, run 0.6).
+  const worst = (dt, read) => {
+    const { col, topZ } = stairs();
+    const m = new PlayerMotor(col);
+    m.pos = [0, 0, 0]; m.grounded = true;
+    let rise = 0, lag = 0, prev = read(m)[1], f = 0;
+    while (m.pos[2] < topZ + 3 && f < 2000) {
+      m.update(dt, walkInput, 0);
+      const v = read(m)[1];
+      rise = Math.max(rise, v - prev);
+      lag = Math.max(lag, Math.abs(m.feetAt()[1] - m.pos[1]));
+      prev = v; f++;
+    }
+    return { rise, lag };
+  };
+  const eye = worst(1 / 60, (m) => m.eyeAt());
+  const feet = worst(1 / 60, (m) => m.feetAt());
+  const raw = worst(1 / 60, (m) => m.pos);
+  assert.ok(raw.rise > 0.15, `the raw feet still pop a whole rung (${raw.rise.toFixed(4)})`);
+  assert.ok(feet.rise <= eye.rise + 1e-9,
+    `the focal's feet are no jumpier than the first-person eye (${feet.rise.toFixed(4)} vs ${eye.rise.toFixed(4)})`);
+  assert.ok(feet.rise < 0.06, `and under MAC1's own 60 Hz figure (${feet.rise.toFixed(4)})`);
+  // EV1's half too: at a high-refresh rate the render feet interpolate
+  // where the raw feet stay quantised in 60 Hz steps.
+  const stepZ = (dt, read) => {
+    const { col, topZ } = stairs();
+    const m = new PlayerMotor(col);
+    m.pos = [0, 0, 0]; m.grounded = true;
+    let mx = 0, prev = read(m)[2], f = 0;
+    while (m.pos[2] < topZ + 3 && f < 2000) { m.update(dt, walkInput, 0); const z = read(m)[2]; mx = Math.max(mx, z - prev); prev = z; f++; }
+    return mx;
+  };
+  assert.ok(stepZ(1 / 144, (m) => m.feetAt()) < stepZ(1 / 144, (m) => m.pos) * 0.6,
+    'at 144 Hz the render feet translate smoothly where the stepped feet quantise');
+  // The focal's own ceiling probe (mwCamera.js:207-217) casts from
+  // this height, so the filter may never run away from the capsule
+  // the collider actually keeps under the ceiling: it is clamped to
+  // STEP_OFFSET and in practice stays well inside it.
+  assert.ok(feet.lag <= STEP_OFFSET, `the render feet never leave the capsule's own step (${feet.lag.toFixed(4)})`);
+
+  // 2. THE ACCESSOR: eyeAt's positional half - no eye level, no bob.
+  const m2 = new PlayerMotor(new Collider(() => 0));
+  m2.pos = [0, 0, 0]; m2.grounded = true;
+  for (let i = 0; i < 30; i++) m2.update(1 / 60, walkInput, 0);
+  m2.bobOffset = [0.1, 0.2, -0.3];   // the bob is the HOSTS' write (world.js/exterior.js/dungeon.js) - mint one, so "without the bob" can fail
+  const e2 = m2.eyeAt(), f2 = m2.feetAt();
+  assert.ok(near(f2[0], e2[0] - m2.bobOffset[0]) && near(f2[2], e2[2] - m2.bobOffset[2]),
+    'the render feet are the eye\'s own interpolated x/z, without the bob');
+  assert.ok(near(f2[1], e2[1] - m2._eyeLevel() - m2.bobOffset[1]),
+    'and its height, without _eyeLevel and without the bob - the focal supplies FOCAL_HEIGHT itself');
+  // the snap guard is shared: a placement is not lerped through
+  m2.pos[2] += 50;
+  assert.deepEqual(m2.feetAt(), [m2.pos[0], m2.pos[1], m2.pos[2]], 'a placement answers the raw feet');
+  assert.equal(m2._eyeFeetY, null, 'and primes the filter afresh, exactly as eyeAt does');
+
+  // 3. THE HOSTS (the four-hosts rule): every mwView call site takes
+  //    the render feet, and `player.pos` reaches neither.
+  for (const [host, sites] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 3],
+    ['src/scenes/exterior.js', 2], ['src/scenes/dungeon.js', 2]]) {
+    const s = src(host);
+    let n = 0;
+    for (const hit of s.matchAll(/mwView(?:Frame|DrawBody)\(/g)) {
+      const call = s.slice(hit.index, hit.index + 320);
+      assert.match(call, /feet: player\.feetAt\(\)/, `${host}: a mwView call takes the render feet`);
+      assert.ok(!/feet: player\.pos/.test(call), `${host}: the raw stepped feet must not reach the camera`);
+      n++;
+    }
+    assert.equal(n, sites, `${host}: every mwView call site is pinned (found ${n})`);
+  }
+});
+
 test('MAC1 I: a hill is walked with no backstep and no airborne frame - the hills\' jitter is presentation, not the motor', () => {
   // The measurement that decided the fix's shape: on a mesh ramp with a
   // matching heightAt the feet climb monotonically at 10, 20 and 30
@@ -336,6 +416,55 @@ test('MAC1 I: a hill is walked with no backstep and no airborne frame - the hill
 });
 
 // ── J ────────────────────────────────────────────────────────────
+/** AUDIT 65 HP-1: the brace-balanced body of the object literal that
+ *  follows `opener`, skipping strings and comments, so a `{` inside a
+ *  note or a quote cannot end the scan. */
+function literalBody(text, opener) {
+  const i = text.indexOf(opener);
+  assert.ok(i >= 0, `could not find ${opener}`);
+  const open = text.indexOf('{', i + opener.length);
+  let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    const c = text[k];
+    if (c === '/' && text[k + 1] === '/') { k = text.indexOf('\n', k); continue; }
+    if (c === '/' && text[k + 1] === '*') { k = text.indexOf('*/', k) + 1; continue; }
+    if (c === '\'' || c === '"' || c === '`') {
+      const q = c;
+      for (k++; k < text.length; k++) { if (text[k] === '\\') k++; else if (text[k] === q) break; }
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  assert.fail(`unbalanced literal after ${opener}`);
+  return '';
+}
+
+/** ...and MOUNT it. The roadb_host_pause idiom (test/roadb_host_pause
+ *  .test.js:53-66): nothing is retyped here, the object that gets built
+ *  IS the one in src/, so a deleted key is a MISSING key in these
+ *  assertions rather than a regex that quietly stops matching something
+ *  nearby. Free identifiers resolve through a `with` scope proxy to
+ *  inert stubs, except the ones handed in - which is how `host.relock`
+ *  can be asked the question that matters: does the bag the REAL host
+ *  hands over actually carry it? */
+const STUB = new Proxy(function stub() {}, {
+  get: (t, k) => (typeof k === 'symbol' ? Reflect.get(t, k) : STUB),
+  apply: () => STUB,
+});
+function mountLiteral(text, opener, env = {}) {
+  const scope = new Proxy({ ...env }, {
+    has: () => true,
+    get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : STUB)),
+  });
+  // eslint-disable-next-line no-new-func
+  return new Function('__scope', `with (__scope) { return (${literalBody(text, opener)}); }`)(scope);
+}
+
+/** A host's createWorldModes bag, built - the `host` object worldModes'
+ *  interior pause reads its doors off. */
+const hostBagOf = (text, env = {}) => mountLiteral(`x(${literalBody(text, 'var modes = createWorldModes(')})`, 'x(', env);
+
 test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and every host hands it the canvas', () => {
   const door = src('src/ui/pauseDoor.js');
   assert.match(door, /const act = \(action\) => \{\s*\n\s*close\(\);[\s\S]{0,1400}if \(action !== 'exit'\) hooks\.relock\?\.\(\);\s*\n\s*if \(action === 'save'\) hooks\.quickSave\?\.\(\);/,
@@ -344,4 +473,64 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   assert.match(w, /quickLoad: worldQuickLoad,\s*\n\s*relock: \(\) => requestLook\(canvas\),/, 'the world host\'s pause hooks relock through its canvas');
   assert.match(w, /quickLoad: \(\) => worldQuickLoad\(\),\s*\n\s*relock: \(\) => requestLook\(canvas\),/, '...and the host bag the interior arm rides');
   assert.match(src('src/scenes/worldModes.js'), /quickLoad: host\.quickLoad,\s*\n\s*relock: host\.relock,/, 'the interior arm passes the host\'s relock through');
+
+  // AUDIT 65 HP-1: ...AND THE OTHER THREE HOOK LITERALS, which this
+  // test's own title has always claimed and never read. MAC1 wired
+  // three of five and the source regexes above could not see it -
+  // worse, the worldModes regex PASSES while `host.relock` resolves to
+  // undefined, which is precisely what the ?exterior host did. So the
+  // five bags are BUILT and asked, not matched.
+  const modes = src('src/scenes/worldModes.js');
+  const ext = src('src/scenes/exterior.js');
+  const OUT = [['src/scenes/world.js', w], ['src/scenes/exterior.js', ext]];
+
+  // (1)+(2) the two OUTDOOR pause doors, each relocking its own canvas.
+  // AUDIT 65 HP-1 (review): presence is not relocking - each hook is
+  // CALLED and must reach requestLook with ITS host's canvas.
+  // MUTANT: `relock: () => {}` at any of the five sites.
+  const spy = () => { const seen = []; return { seen, requestLook: (c) => { seen.push(c); } }; };
+  for (const [file, text] of OUT) {
+    const s = spy();
+    const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:165 a relock`);
+    hooks.relock();
+    assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
+  }
+
+  // (3) the INTERIOR pause door - ONE literal fed by TWO host bags, and
+  // the bag is where MAC1's miss actually lived.
+  for (const [file, text] of OUT) {
+    const s = spy();
+    const hooks = mountLiteral(modes, 'openPauseFlow((w) => { interiorOverlay = w; }, ', { opts: {}, host: hostBagOf(text, { requestLook: s.requestLook, canvas: `CANVAS-${file}` }) });
+    assert.equal(typeof hooks.relock, 'function',
+      `${file}: worldModes' interior pause reads host.relock, so THIS host's createWorldModes bag must carry it`);
+    hooks.relock();
+    assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and the bag's relock reaches THIS host's canvas`);
+  }
+
+  // (4) the DUNGEON pause door - the most-played one of the six
+  // (world.js gates its own Escape ladder on exterior mode, so
+  // underground the key falls to routeKey -> ui/input.js's Escape case
+  // -> dungeonContext.togglePause). That context owns no canvas, so its
+  // hook is a forward and the pin follows it all the way out.
+  let reached = 0;
+  const hooks = mountLiteral(src('src/scenes/dungeonContext.js'), 'openPauseFlow((w) => { activeOverlay = w; }, ',
+    { opts: { relock: () => { reached++; } } });
+  assert.equal(typeof hooks.relock, 'function', 'dungeonContext\'s pause door hands over a relock');
+  hooks.relock();
+  assert.equal(reached, 1, '...and it is the one its HOST threaded in (this context owns no canvas of its own)');
+  for (const [file, text] of [['src/scenes/dungeon.js', src('src/scenes/dungeon.js')], ['src/scenes/worldModes.js', modes]]) {
+    let fired = 0;
+    const s = spy();
+    const opts = mountLiteral(text, 'dfLocation.climate.climateType, ', { host: { relock: () => { fired++; } }, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
+    assert.equal(typeof opts.relock, 'function', `${file}: this dungeon host hands buildDungeonContext a relock`);
+    opts.relock();
+    // the standalone host closes over its OWN canvas; the world-hosted
+    // crawl forwards the outer host's (worldModes owns no requestLook)
+    assert.equal(fired, file === 'src/scenes/worldModes.js' ? 1 : 0, `${file}: ...through this host's own look seam`);
+    assert.deepEqual(s.seen, file === 'src/scenes/dungeon.js' ? [`CANVAS-${file}`] : [], `${file}: ...and the standalone host relocks its own canvas`);
+  }
+
+  // The law the whole item rides on: NEVER on the way to the menu.
+  assert.ok(!/if \(action === 'exit'\)[^\n]*relock/.test(door), 'the exit has no world to relock into');
 });

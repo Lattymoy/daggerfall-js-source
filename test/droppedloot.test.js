@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createDroppedLoot, RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../src/scenes/droppedLoot.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';
+import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';   // AUDIT 65 MC-2: the ray's reach, and the handler's own
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
@@ -44,6 +45,13 @@ test('droppedLoot: the verbatim treasure flat + empty-pile removal', async () =>
   assert.equal(t[0].key, `droppedLoot:${pile.id}`);
   assert.deepEqual(t[0].aabb.min, [9.5, 2, 29.5]);
   assert.deepEqual(t[0].aabb.max, [10.5, 2.6, 30.5]);
+  // AUDIT 65 MC-2: a pile is a DaggerfallLoot and ActivateLootContainer
+  // refuses out loud past TreasureActivationDistance
+  // (PlayerActivate.cs:868-873), which it can only do if the ONE ray's
+  // hit (:76/:314) is allowed to BE the pile - so the target competes
+  // at the ray's reach and carries the handler's beside it.
+  assert.equal(t[0].distance, RAY_DISTANCE);
+  assert.equal(t[0].reach, TREASURE_ACTIVATION_DISTANCE);
   assert.equal(dl.batches().length, 1);
   // EMPTIED piles vanish (SerializableLootContainer's removal law)
   pile.items.length = 0;

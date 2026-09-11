@@ -2034,12 +2034,12 @@ function onKey(e) {
   // picker is exactly that, and Escape over it must close the picker,
   // not walk this screen's back stack out from under it.
   if (assetPickerOpen()) return;
-  // FIX-F: ...and so does an ARMED REBIND. This handler is on the
-  // GLOBAL in capture, so it runs before the Controls pane's own
-  // document listener and would eat the one key DFU is most careful
-  // to let through: ReservedKeys is empty in DaggerfallControlsWindow
-  // (:73), so Escape BINDS rather than backing out. Stand down while a
-  // capture is waiting; the pane stops the key itself.
+  // FIX-F: ...and so does an ARMED REBIND. This handler is on the GLOBAL
+  // in capture, so it runs before the Controls pane's own listener and
+  // would eat the one key DFU lets through: ReservedKeys is empty in DFU
+  // (InputManager.cs:73 `new KeyCode[] { }`, exposed :174-177), so the
+  // gate that consults it (DaggerfallControlsWindow.cs:410) never refuses
+  // a key - Escape included. Stand down; the pane stops the key itself.
   if (captureArmed()) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;

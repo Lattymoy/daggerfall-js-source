@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ArrowFlight } from '../src/combat/arrowFlight.js';
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS, missileReach, missileHitsCapsule } from '../src/systems/spellcast.js';
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, missileReach, missileHitsCapsule } from '../src/systems/spellcast.js';
 import { CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { createPlayerMagic } from '../src/scenes/hostMagic.js';
 
@@ -24,15 +24,17 @@ test('ROAD-H tail: an enemy shaft meets the player CAPSULE at its LIVE height - 
   // The old law tested a point at feet + 0.9 against 0.45 + 0.45: a shaft
   // flying at y = 1.6 over a CROUCHED player (0.9 controller,
   // PlayerHeightChanger.cs:54-57) was 0.7 from that point and HIT. The
-  // capsule of height 0.9 collapses to a sphere at feet + 0.45
-  // (min(r, h/2)); the shaft is 1.15 from it - a MISS in DFU.
+  // capsule of height 0.9 has its axis inset by the PLAYER's own radius
+  // (AUDIT 65 CV-2: 0.35, PlayerAdvanced.prefab:82), so it runs
+  // feet+0.35..feet+0.55 and the shaft is 1.05 above its crown against a
+  // 0.45 + 0.35 reach - a MISS in DFU.
   const crouched = open();
   const hits = [];
   crouched.fire([0, 1.6, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
   for (let i = 0; i < 4; i++) crouched.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 0.9, onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 0, 'over a crouched player the shaft sails through (the capsule is 0.9 tall)');
-  // the same shaft at a STANDING player (1.8): the axis runs 0.45..1.35,
-  // the shaft at 1.6 is 0.25 from its top - a hit
+  // the same shaft at a STANDING player (1.8): the axis runs 0.35..1.45,
+  // the shaft at 1.6 is 0.15 from its top - a hit
   const standing = open();
   standing.fire([0, 1.6, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
   for (let i = 0; i < 4; i++) standing.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: (m) => hits.push(m) });
@@ -43,12 +45,12 @@ test('ROAD-H tail: an enemy shaft meets the player CAPSULE at its LIVE height - 
   // the hit rather than pinning CAPSULE_HEIGHT's value. The default is
   // BRACKETED instead, at the exact height where a 1.8 capsule's reach
   // ends: the axis tops out at `h - r` and the contact band is
-  // `MISSILE_COLLIDER_RADIUS + BODY_CAPSULE_RADIUS`, so 1.8 reaches
+  // `MISSILE_COLLIDER_RADIUS + PLAYER_BODY_RADIUS`, so 1.8 reaches
   // 2.2500 and not a micron further. A shaft a tenth of a millimetre
   // UNDER that lands and one a tenth OVER it sails - which no other
   // default satisfies, in either direction.
   assert.equal(CAPSULE_HEIGHT, 1.8, 'the standing controller (PlayerMotor.controller.height)');
-  const rim = CAPSULE_HEIGHT - BODY_CAPSULE_RADIUS + MISSILE_COLLIDER_RADIUS + BODY_CAPSULE_RADIUS;   // 2.25
+  const rim = CAPSULE_HEIGHT - PLAYER_BODY_RADIUS + MISSILE_COLLIDER_RADIUS + PLAYER_BODY_RADIUS;   // 2.25 - AUDIT 65 CV-2: the r cancels, but it is the PLAYER's r that does
   const bare = open();
   bare.fire([0, rim - 1e-4, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
   for (let i = 0; i < 4; i++) bare.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
@@ -263,7 +265,7 @@ test('ROAD-H tail (review): an enemy shaft STOPS on the body it meets, and pays 
   // caster.GetComponent<EnemySenses>().Target` (:669) before calling
   // BowDamage - the DAMAGE gate, not the contact gate.
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /const struckPlayer = !!playerFeet && missileHitsCapsule\(m\.pos, playerFeet, playerHeight\);/,
+  assert.match(d, /const struckPlayer = !!playerFeet && missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\);/,
     'the player capsule is tested for EVERY enemy shaft, whatever it was aimed at');
   assert.match(d, /if \(!struckPlayer\) \{\n\s+for \(const f of foes\) \{\n\s+if \(f\.dead \|\| f === m\.shooterFoe\) continue;\n\s+if \(missileHitsFoe\(m\.pos, f\)\) \{ struckFoe = f; break; \}/,
     'and so is every live body but the shooter, which cannot feather itself on the release frame');

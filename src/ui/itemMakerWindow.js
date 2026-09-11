@@ -227,7 +227,7 @@ export class ItemMakerWindow {
     // F170: one ScrollIndex per EnchantmentListPicker instance.
     this.powersScroll = 0;
     this.sideEffectsScroll = 0;
-    this._mouse = [0, 0];
+    this._mouse = [0, 0];   // AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
     this.itemName = '';
     this.renaming = false;
     this.box = null;

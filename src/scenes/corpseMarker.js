@@ -38,7 +38,7 @@ import { floorLanding } from '../player/enterExit.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
 import { SOUND } from '../systems/soundClips.js';
-import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
@@ -141,10 +141,22 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
     const id = idOf ? idOf(e) : i;
     // PlayerActivate.cs:85/:938 - corpses reach 150 * GlobalScale, not
     // the 128-unit default.
+    //
+    // AUDIT 65 MC-2: and the REACH is not the RAY. DFU's one raycast
+    // runs to RayDistance (:76) and the corpse's 150 units are a
+    // SECOND test inside the handler - ActivateLootContainer exempts
+    // CorpseMarker from the treasure gate by name (:868-869) and the
+    // corpse arm answers `hit.distance > CorpseActivationDistance`
+    // with SetMidScreenText(youAreTooFarAway) (:936-941). So the body
+    // competes for the pick at the ray's reach and carries its own
+    // beside it; the ladder speaks the refusal. Pre-MC-2 the pick
+    // simply dropped a body at 5 units and the click fell through to
+    // whatever stood behind it, in silence.
     targets.push({
       key: `${keyPrefix}:${id}`,
       aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] },
-      distance: CORPSE_ACTIVATION_DISTANCE,
+      distance: RAY_DISTANCE,
+      reach: CORPSE_ACTIVATION_DISTANCE,
     });
   });
   return targets;

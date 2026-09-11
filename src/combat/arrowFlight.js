@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, missileHitsCapsule, missileReach } from '../systems/spellcast.js';
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
@@ -83,12 +83,12 @@ export class ArrowFlight {
       m.pos[2] += m.dir[2] * step;
       // X2-slice: an enemy arrow tests the player mid-capsule per
       // step - the dungeon missile's exact contact law
-      // (MISSILE_COLLIDER_RADIUS + the 0.45 body).
-      if (m.enemy && playerFeet && onPlayerHit) {
+      // (MISSILE_COLLIDER_RADIUS + the player's OWN 0.35 body = 0.80).
+      if (m.enemy && playerFeet && onPlayerHit) {   // AUDIT 65 CV-2: PlayerAdvanced.prefab:82 m_Radius 0.35, not the foe prefab's 0.45
         // ROAD-H tail: the SphereCast at :339 meets the player's
         // CharacterController CAPSULE at its LIVE height, not a point
         // 0.9 up - a crouched player (0.9) is a shorter target.
-        if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {
+        if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
           // ROAD-H tail (review): the CONTACT stops the shaft on any
           // body (DoCollision, DaggerfallMissile.cs:388-396: an arrow is
           // destroyed on whatever it meets); the DAMAGE is gated on the
@@ -149,7 +149,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2409), so the copy that survived
+ * now calls it (dungeonContext.js:2421), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into

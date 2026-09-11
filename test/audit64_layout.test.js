@@ -290,7 +290,7 @@ test('AUDIT 64 F13: a dungeon static NPC\'s bootstrap behaviour reaches BOTH beh
   // factionID)` on that SAME GameObject, so the bootstrap
   // QuestResourceBehaviour it attaches is an ordinary scene component:
   //  - GameObjectHelper.cs:926 `Resources.FindObjectsOfTypeAll
-  //    <QuestResourceBehaviour>()` - the list IsAlreadyPlaced reads, so
+  //    <QuestResourceBehaviour>()` - the list IsAlreadyInjected reads, so
   //    a Person already bootstrapped onto a palace guard is NOT stood a
   //    second time by the marker walk; and
   //  - ActiveGameObjectDatabase.cs:308-311

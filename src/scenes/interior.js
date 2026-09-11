@@ -176,7 +176,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:430-431) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:6823 sits
+    // returns before its own preventDefault - worldModes.js:6879 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -246,7 +246,16 @@ export async function bootInterior(canvas, renderer, params, status) {
     overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
     drainOverlay();
   });
-  addEventListener('wheel', (e) => { if (overlay) overlay.wheel?.(Math.sign(e.deltaY)); });
+  // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
+  // rule, one seam over from F48's miss above) - BaseScreenComponent
+  // .cs:725-736's scroll block is guarded by `mouseOverComponent`, which
+  // :577-594 recomputes each Update, so no window routes by a remembered
+  // hover; `nativeAt` is the hover arm's own arithmetic.
+  addEventListener('wheel', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+  });
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
@@ -341,7 +350,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:626 and worldModes.js:5000/:5122 gate the same
+    // driver. dungeon.js:639 and worldModes.js:5038/:5173 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

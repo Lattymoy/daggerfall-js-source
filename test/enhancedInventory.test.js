@@ -1070,11 +1070,18 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
     'the skin is asked BEFORE the node is built and the sheet injected');
   // The host runs the SAME pick the take runs, throttled, enhanced only.
   const ctx = read('src/scenes/dungeonContext.js');
-  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3000);
+  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3500);   // AUDIT 65 MC-2 widened the window: the reach gate and its note sit inside it
   assert.match(frame, /_hoverAt \+= dt;/);
   assert.match(frame, /if \(_hoverAt >= 0\.1\)/, '10Hz: a raycast over every pile is not free');
   assert.match(frame, /if \(isEnhanced\(\) && eye\)/, 'the classic HUD says nothing about a pile - Daggerfall\'s own answer');
-  assert.match(frame, /pickActivatable\(eye, dir, api\.lootTargets\(\), collider\)/, 'the take\'s own pick');
+  // AUDIT 65 MC-2: the take's pick reaches as far as DFU's ONE ray does
+  // now (RayDistance, PlayerActivate.cs:76/:314) so a too-far pile can
+  // reach the handler that REFUSES it out loud - which means the plaque
+  // has to apply the handler's own reach itself, or it would name a
+  // chest across the room that E cannot open.
+  assert.match(frame, /pickActivatableHit\(eye, dir, api\.lootTargets\(\), collider\)/, 'the take\'s own pick');
+  assert.match(frame, /const k = hit && hit\.distance <= hit\.reach \? hit\.key : null;/,
+    'the plaque names only what the handler would actually open');
   assert.match(frame, /showLootHover\(key, key \? api\.lootContents\(key\) : null,/);
   // lootContents shares takeLoot's key vocabulary rather than a second one.
   assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);

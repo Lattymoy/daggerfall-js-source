@@ -123,7 +123,7 @@ export function sheetModel(entity) {
       // open; the remainder is the disclosure.
       career: i < 3,
     })),
-    skill: (id) => e.skills?.[id] ?? 0,
+    skill: (id) => skillValue(e, id),   // AUDIT 65 CV-1: TextProvider.cs:503 - every row of GetSkillSummary is GetLiveSkillValue, so the number AND its meter move with a lycanthrope's +30
     // AUDIT 63 F34: ShowSkillsDialog's hand-to-hand damage line
     // (DaggerfallCharacterSheetWindow.cs:283-284, :309-318) - one
     // extra row under whichever GROUP holds HandToHand, formatted

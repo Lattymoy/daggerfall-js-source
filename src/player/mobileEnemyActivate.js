@@ -121,7 +121,7 @@ export function activateMobileEnemy(foe, distance, mode, player, {
 /**
  * The host-facing arm: pick, then run ActivateMobileEnemy on the hit.
  *
- * ORDERING, and why each host calls this TWICE.
+ * ORDERING, and why each host calls this ONCE.
  *
  * DFU fires ONE ray (PlayerActivate.cs:314) and every check in the Hit
  * Checks region reads `hit.transform` off that single RaycastHit - the
@@ -143,14 +143,21 @@ export function activateMobileEnemy(foe, distance, mode, player, {
  * inside 3.2 units eat the click on a closer door, lever, chest,
  * corpse or static NPC - the exact failure DFU's one raycast forbids.
  *
- * Each host therefore calls this twice: the NEAR call, gated on
- * `nearerThan` against the ladder's own winner, and the FAR call once
- * the ladder has found nothing at all, which is where DFU's un-gated
+ * AUDIT 65 MC-2: each host therefore calls this ONCE, at the RAY's
+ * reach and gated on `nearerThan`. The AUDIT 63 pass called it twice -
+ * a NEAR call at DefaultActivationDistance gated on the ladder's
+ * winner, then a FAR call at the foot of the ladder for DFU's un-gated
  * Info line (:806-826) and the pickpocket's `youAreTooFarAway`
- * (:832-836) live - both of which DFU takes out to RayDistance.
+ * (:832-836), which DFU takes out to RayDistance. That second call ran
+ * with `nearerThan` Infinity, so past 3.2 the comparison the paragraph
+ * above states simply stopped applying and a foe twenty units off ate
+ * the click DFU gives a door at five. One call at RayDistance is both
+ * halves: the Info line and the refusal reach as far as the ray does,
+ * and the distance comparison never lapses.
  *
  * @param deps.nearerThan  the ladder's winning hit distance; the foe
- *   is dispatched only below it. Omitted/Infinity on the FAR call.
+ *   is dispatched only below it. Infinity when the ladder picked
+ *   nothing at all.
  */
 export function tryMobileEnemyActivate(eye, dir, foes, collider, reach, mode, player, deps = {}) {
   const hit = pickFoeHit(eye, dir, foes, collider, reach);

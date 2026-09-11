@@ -994,7 +994,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // tables back, infighting suppression lost and the one-shot
         // clip able to play a second time.
         specialTransformationCompleted: !!f.mobile?.specialTransformationCompleted,
-        // AUDIT 63 F24: the QUEST LINK. SerializableEnemy.cs:117
+        // AUDIT 63 F24: the QUEST LINK. SerializableEnemy.cs:116
         // `data.questSpawn = enemy.QuestSpawn;` and :129-133
         // `data.questResource = questResourceBehaviour.GetSaveData();`,
         // restored at :205-218 (re-add the behaviour, RestoreSaveData,

@@ -1322,7 +1322,7 @@ export class ChargenFlow {
     // whichever window owns them. One function over two backing
     // fields is that shape; `stats`/`rolledStats` stay SHARED because
     // the cancel arm does copy the stat VALUES back
-    // (DaggerfallStartNewGameWizard.cs:570-571).
+    // (DaggerfallStartNewGameWizard.cs:571-572).
     const key = STAT_KEYS_ORDER[this._statCursor()];
     const pool = this._statPool();
     const r = delta > 0
@@ -1404,7 +1404,7 @@ export class ChargenFlow {
     // load-bearing on the way BACK: SummaryWindow_OnClose's cancel arm
     // (DaggerfallStartNewGameWizard.cs:566-577) copies six things -
     // startingSkills, workingSkills, startingStats, workingStats, the
-    // three SKILL bonus counters (through SetBonusSkillPoints, :575)
+    // three SKILL bonus counters (through SetBonusSkillPoints, :574)
     // and faceIndex - and the stat bonus pool is absent from that
     // list, while the only other write into the stats window's
     // rollout, AddBonusSkillsWindow_OnClose's cancel arm (:534-536),
