@@ -21,7 +21,7 @@
 // Run it on the merged, conflict-free working tree BEFORE the merge
 // commit, once; like citeShift, the sides are spent after --apply.
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { hunksFromDiff, lineMap, citeSpellings } from './citeShift.mjs';
@@ -98,6 +98,7 @@ function main(argv) {
     for (const t of git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter((f) => /\.(js|mjs|md)$/.test(f))) {
       const hunks = hunksFromDiff(git('diff', '-U0', base, '--', t)); if (!hunks.length) continue;
       let oldLines; try { oldLines = git('show', `${base}:${t}`).split('\n'); } catch { continue; }   // new on the other side: nothing cites it at this side's numbers
+      if (!existsSync(join(ROOT, t))) continue;   // deleted by the other side (WATER4's merge of #96): no lines to land on, and its cites are the deleter's to strike
       targetsOf[k].set(t, { map: lineMap(hunks), oldLines, newLines: readFileSync(join(ROOT, t), 'utf8').split('\n'), res: citeSpellings(t) });
       const b = basename(t); (byBase[k].get(b) ?? byBase[k].set(b, []).get(b)).push(t);
     }

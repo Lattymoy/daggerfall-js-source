@@ -35,7 +35,7 @@ briefly shared a name.
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
 `F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:135`,
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
-`src/world/roadsCache.js:17`, `src/scenes/world.js:93`,
+`src/world/roadsCache.js:17`, `src/scenes/world.js:94`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
 `test/audit58_terrainhelper.test.js`, `test/ledger.test.js:244`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
@@ -172,7 +172,7 @@ three (`src/scenes/worldModes.js:832-900`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:45` now, and the pool it answers with is the
+`src/scenes/exterior.js:46` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
 and destroyed the session - against `src/ui/input.js:421-443`'s own law,

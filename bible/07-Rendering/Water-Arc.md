@@ -347,3 +347,70 @@ the alpha rises to it. No texture and no table - the lace is a hash.
 
 **Pinned** in `test/water3.test.js` (4). Not seen on a GPU; the lab
 carries it.
+
+## WATER4 - THE ART'S OWN WATER (2026-09-11)
+
+**Mac: "I noticed with the water, its still not taking into account
+all the water textures that are on land, and its not traced well, just
+square. Water is also still way too see through."** Three faults, one
+cause. WATER1 decided what is water by CORNER: a 256-entry table
+(`world/waterCorners.js`) names which corners of a record stand in
+water and the shader blends the four. So every shore was a straight
+diagonal or a straight edge (the square tracing), and a record whose
+water reaches no corner - the puddle in the middle of a dirt tile, the
+pond's inner bank the painters never write as a shape - drew no water
+at all (the water textures on land). The glass was a number: WATER2
+set the shallows at 0.30.
+
+**The art decides.** `world/waterArt.js`. Every terrain record is a
+64x64 indexed bitmap, and record 0 - the water tile - is painted in
+nothing but water, so its palette indices ARE the archive's water.
+`buildWaterArt` reads the archive's bitmaps once (both hosts do it
+beside the tile array, and the renderer keeps it there:
+`uploadWaterArt`, `waterArtOf`) and mints, per record, a 16x16 grid of
+box-averaged "is water" (`ART_GRID`: four texels a cell, so a dithered
+shore is a fraction and not a checker), uploaded as one R8 texture 16
+wide and 16 x records tall, LINEAR. The shader (`uWaterArt`,
+`uWaterArtOn`) reads the tile byte for the record and its turn exactly
+as TERRAIN_FS does - the same `ROT`/`TRANS`, character for character,
+gated in `test/water4.test.js` - and samples the record's cells
+bilinearly, a half-cell in from its edges so no neighbour record
+bleeds, then feathers the shore on `ART_SHORE` (0.2 to 0.6: low, so
+half-water reads as water and not as lace). The shore is the record's
+own outline now, traced between cells at 0.4 units. Without an
+archive's art (the tests, `?noart` in the lab) the corner table draws
+as before: the fallback arm, not a retirement.
+
+**Two more tables off the same art**, by converted byte: `any` (does
+the record draw water at all - a quad enters the pass on it, a town
+enters the pass on it: `buildWaterIndices`, `tilemapRectHasWater`) and
+`corners` (WATER1's four bits read off the art through the turn, wet
+at `ART_WET`, the ramp's midpoint - the basin carves by them,
+`basinDepths`, exactly as it carved by the hand-made table). A puddle
+no corner reaches has a quad and no basin: its sheet lies flat on the
+ground (`flatDepths`, where WATER2 answered null and drew nothing),
+and the shader gives it a bed of its own - `depth = max(vDepth,
+SHORE_DEPTH * edge)` - so the shoreline ramp keeps it, the
+Beer-Lambert loss reads it, and the foam, which still reads the carved
+bed, breaks no surf on it.
+
+**The feet.** MAC2's law stands - the player swims where the surface
+is drawn - and the surface is the art's, so `feetWaterCoverage` takes
+the archive's art from the hosts' ground sample and answers the art's
+coverage under the feet THROUGH the shader's own ramp (`artShore`): it
+crosses 0.5 where the eye sees the water begin. The player swims in
+the puddle the art paints; on its dirt DFU's record law answers as
+before.
+
+**The glass.** `SHALLOW_OPACITY` 0.30 to 0.80. The bed shows through
+the shallows; it does not show them up.
+
+**Pinned** in `test/water4.test.js` (6): the leaf executes on
+synthetic bitmaps (the palette off record 0, the grid, the four turns
+as GLSL's column-major mat2 applies them, the bilinear, the clamp, the
+tables, the ramp, the feet through `exteriorSurfaces`), with mutants
+(the turns swapped, the set inverted); the shader, the renderer, both
+hosts and the lab are text-pinned. The lab paints its own art off the
+corner table (the archive's bitmaps are not in it), so the probe's ten
+checks run through the art path: 10/10 on this change. Not seen on a
+real GPU with a real archive - Mac's eye is the gate.
