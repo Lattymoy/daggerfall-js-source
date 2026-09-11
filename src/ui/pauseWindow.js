@@ -159,7 +159,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + panelX() && y >= ry + PAUSE
 
 export class PauseOptionsWindow {
   /** hooks: { quickSave(), quickLoad(), exitToMenu(), textLines(id),
-   *  savingPrevented?() } - each host hands its own. */
+   *  savingPrevented?(), relock?() } - each host hands its own. `relock`
+   *  is MAC1 J's in-gesture pointer grab, read on the two RESUME exits
+   *  only (see `keyup` and the CONTINUE rect in `click`). */
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
@@ -228,6 +230,9 @@ export class PauseOptionsWindow {
     this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
+    // MAC1 J, the classic twin (ui/pauseDoor.js:153-170): the close runs
+    // inside this click/keyup, the activation requestPointerLock needs.
+    this.hooks.relock?.();
   }
 
   click(vx, vy) {
@@ -239,7 +244,18 @@ export class PauseOptionsWindow {
     }
     if (this.top) { this.top = null; return true; }
     const R = PAUSE_RECTS;
-    if (inRect(R.continue, vx, vy)) { this._click(); this._closeWith(); return true; }
+    if (inRect(R.continue, vx, vy)) {
+      this._click();
+      this._closeWith();
+      // MAC1 J, the classic twin (ui/pauseDoor.js:153-170): the close runs
+      // inside this click/keyup, the activation requestPointerLock needs.
+      // RESUME only - NOT `_closeWith`, which the SAVE and LOAD arms below
+      // also call under the replace fallback, and which the CONTROLS arm
+      // bypasses outright; all three hand the player a window they need the
+      // CURSOR for, and a relock there takes it away as it opens.
+      this.hooks.relock?.();
+      return true;
+    }
     if (inRect(R.exit, vx, vy)) {
       this._click();
       this.top = 'exit';

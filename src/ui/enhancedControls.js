@@ -180,6 +180,19 @@ function arm(action) {
   repaint();
 }
 
+/** WHILE A CAPTURE IS ARMED THE PANE IS INERT.
+ *  DaggerfallControlsWindow heads EVERY button handler with
+ *  `if (waitingForInput) return;` — Joystick (:281), Mouse (:290),
+ *  Defaults (:299), Continue (:321), CurrentBindings (:338), the
+ *  keybind button itself (:361) and the right-click remove (:372,
+ *  where it is ANDed with the unbound-slot refusal). The pending
+ *  capture is the only live gesture on the screen. The classic grid
+ *  carries the law in one line (ui/controlsWindow.js:298); this face
+ *  carries it as ONE predicate wrapped round every click surface, so
+ *  a control cannot be added without it. arm()'s own leading disarm()
+ *  is then unreachable-by-click — which is DFU's shape, not a loss. */
+const act = (fn) => (...a) => { if (armed) return undefined; return fn(...a); };
+
 /**
  * LEAVING THE PANE. Drops the staged copy, so nothing that was not
  * pushed through CONTINUE reaches the registry, and takes the capture
@@ -267,14 +280,21 @@ function keyRow(action, label) {
     armedHere ? 'PRESS A KEY' : buttonText(code, true));
   key.setAttribute('type', 'button');
   key.dataset.action = action;   // the probe's handle, and the test's
-  key.onclick = () => arm(action);
-  key.oncontextmenu = (e) => { e?.preventDefault?.(); promptRemove(action); return false; };
+  key.onclick = act(() => arm(action));
+  key.oncontextmenu = (e) => {
+    // The preventDefault stays OUTSIDE the guard: DFU's bare `return`
+    // (:372) costs nothing, but a refused right-click here would pop
+    // the browser's own context menu over an armed pane.
+    e?.preventDefault?.();
+    act(() => promptRemove(action))();
+    return false;
+  };
   ctl.append(key);
 
   const clear = el('button', 'act ctl-clear', '✕');
   clear.setAttribute('type', 'button');
   clear.title = 'Remove this binding';
-  clear.onclick = () => promptRemove(action);
+  clear.onclick = act(() => promptRemove(action));
   ctl.append(clear);
 
   row.append(ctl);
@@ -329,11 +349,11 @@ export function paneControls(body, { render = () => {} } = {}) {
   const acts = el('div', 'acts');
   const which = el('button', 'act ctl-which', unsaved.usingPrimary ? 'Primary' : 'Secondary');
   which.title = 'Which of the two binding sets this page edits';
-  which.onclick = switchDict;
+  which.onclick = act(switchDict);
   const defaults = el('button', 'act ctl-defaults', 'Defaults');
-  defaults.onclick = () => { prompt = { kind: 'defaults' }; repaint(); };
+  defaults.onclick = act(() => { prompt = { kind: 'defaults' }; repaint(); });
   const cont = el('button', 'act primary ctl-continue', 'Continue');
-  cont.onclick = applyAndSave;
+  cont.onclick = act(applyAndSave);
   acts.append(which, defaults, cont);
   head.append(acts);
 
