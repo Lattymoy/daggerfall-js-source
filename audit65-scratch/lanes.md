@@ -27,3 +27,7 @@ OPUS LIMIT: hit 2026-09-11 ~09:30 UTC, resets 2026-09-12 01:50 UTC; send_later t
 
 ROUND 1 INTEGRATED (2026-09-11 ~11:00 UTC): merges of saveload-core, hudlarge, ui-pause-controls, water-pins, renderer, swim, ui-windows, small-seams -> 647ba7c3 (mapper --base 583346e3 applied: 198 moved, 19 by hand) + dc6341cf (docs). Full suite 7062 run / 0 fail / 198 skipped; Suite: 7053 tests across 670 files. Pushed to origin/claude/epic-carson-xyywwe. NOT merged to main.
 ROUND 2 (after Opus reset): reviews for constants (53d797ea), cites (08781189), wheel (7bcbaf76 - revert its four hand-shifted cites to base before merging), motor-view (0ca27f2d), host-seams (35717eeb); resume activation (dirty worktree); fixups; merge onto dc6341cf; RS-10 (exterior.js body after the sky) by hand after motor-view; mapper --base dc6341cf ONCE; Suite restamp; Home.md row OPEN->CLOSED; Audit-65.md record from record-draft.md; gates + full suite; PR to main; ask Mac to merge.
+
+BACKUPS (2026-09-11 12:30 UTC, after a container restart that lost nothing): every a65/* lane branch pushed to origin (13 lanes + a65/activation WIP 3094607a + a65/scratch = this directory's md/json/mjs/txt). Delete the a65/* remote branches after the audit PR merges.
+
+COST TALLY SO FAR (from the agent notifications; subagent tokens): finders 8 reported ~2.46M (+ saveload finder, pre-compaction); refuters 14 ~2.53M; lanes 13 first passes ~2.72M; reviewers 8 ~1.53M; fixups 3 ~0.53M. ~9.8M tokens over 46 reported agents before round two; the activation lane, five reviews and their fixups still to come.

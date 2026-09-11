@@ -1,0 +1,175 @@
+  moved   bible/01-Overview/Audit-24.md:563  | 45 | Reported from play: "whenever attempting to attack, it swings your entire screen." RMB is a W
+        -> | 45 | Reported from play: "whenever attempting to attack, it swings your entire screen." RMB is a W
+  moved   bible/01-Overview/Audit-24.md:563  | 45 | Reported from play: "whenever attempting to attack, it swings your entire screen." RMB is a W
+        -> | 45 | Reported from play: "whenever attempting to attack, it swings your entire screen." RMB is a W
+  moved   bible/01-Overview/Audit-65.md:375  spell), and two escaped-regex cites in tests (`dungeon\.js:433`,
+        -> spell), and two escaped-regex cites in tests (`dungeon\.js:434`,
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  `Port-Ledger.md:467` (save.js:28/:445/:454 → :28/:471/:501), `:451`
+        -> `Port-Ledger.md:467` (save.js:28/:465/:474 → :28/:491/:521), `:471`
+  INSIDE   bible/01-Overview/Bible-Review-2026-08-25.md:237  Quest-Arc.md:719  [bible/06-Systems/Quest-Arc.md]
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:238  (worldModes.js:473 → :903); `Player-Arc.md:947` (worldModes.js:618 →
+        -> (worldModes.js:474 → :903); `Player-Arc.md:947` (worldModes.js:619 →
+  moved   bible/01-Overview/Port-Ledger.md:549  | ~~Smaller-dungeons generation~~ **SHIPPED (AUDIT 28 W4, 2026-08-30/31, with self-audit 2's F-B1/F-
+        -> | ~~Smaller-dungeons generation~~ **SHIPPED (AUDIT 28 W4, 2026-08-30/31, with self-audit 2's F-B1/F-
+  moved   bible/01-Overview/Port-Ledger.md:552  | ~~FAST TRAVEL residue~~ **CLOSED (TC1 2026-09-02).** The RE-SWEPT below took teleport, GotoPlace (
+        -> | ~~FAST TRAVEL residue~~ **CLOSED (TC1 2026-09-02).** The RE-SWEPT below took teleport, GotoPlace (
+  moved   bible/01-Overview/Port-Ledger.md:599  | ~~ENCHANTING, WHOLE~~ THE RUNTIME SHIPPED (E1 2026-08-23: systems/enchantments.js - the 24-type re
+        -> | ~~ENCHANTING, WHOLE~~ THE RUNTIME SHIPPED (E1 2026-08-23: systems/enchantments.js - the 24-type re
+  moved   bible/01-Overview/Port-Ledger.md:619  | ~~**INTERIOR WINDOWS KEEP THE EXTERIOR GLOW** (F001, F002)~~ FIXED (AUDIT 26 render batch 2026-08-
+        -> | ~~**INTERIOR WINDOWS KEEP THE EXTERIOR GLOW** (F001, F002)~~ FIXED (AUDIT 26 render batch 2026-08-
+  moved   bible/01-Overview/Port-Ledger.md:619  | ~~**INTERIOR WINDOWS KEEP THE EXTERIOR GLOW** (F001, F002)~~ FIXED (AUDIT 26 render batch 2026-08-
+        -> | ~~**INTERIOR WINDOWS KEEP THE EXTERIOR GLOW** (F001, F002)~~ FIXED (AUDIT 26 render batch 2026-08-
+  moved   bible/01-Overview/Port-Ledger.md:622  | ~~**STATIC NPCs ARE NAMED FROM THE RACE BANK, DFU ALWAYS USES THE REGION'S** (F016)~~ FIXED (AUDIT
+        -> | ~~**STATIC NPCs ARE NAMED FROM THE RACE BANK, DFU ALWAYS USES THE REGION'S** (F016)~~ FIXED (AUDIT
+  moved   bible/01-Overview/Port-Ledger.md:623  | ~~**IsChildNPCData IS UNPORTED, SO THE CHILD FLAG IS CONSTANT FALSE** (F020)~~ FIXED (AUDIT 26 tal
+        -> | ~~**IsChildNPCData IS UNPORTED, SO THE CHILD FLAG IS CONSTANT FALSE** (F020)~~ FIXED (AUDIT 26 tal
+  moved   bible/01-Overview/Port-Ledger.md:638  | ~~**NO HOST MAPS THE CROUCH KEY TO FLOAT-DOWN** (F031)~~ FIXED (AUDIT 26 movement batch 2026-08-27
+        -> | ~~**NO HOST MAPS THE CROUCH KEY TO FLOAT-DOWN** (F031)~~ FIXED (AUDIT 26 movement batch 2026-08-27
+  moved   bible/01-Overview/Port-Ledger.md:638  | ~~**NO HOST MAPS THE CROUCH KEY TO FLOAT-DOWN** (F031)~~ FIXED (AUDIT 26 movement batch 2026-08-27
+        -> | ~~**NO HOST MAPS THE CROUCH KEY TO FLOAT-DOWN** (F031)~~ FIXED (AUDIT 26 movement batch 2026-08-27
+  moved   bible/01-Overview/Port-Ledger.md:641  | ~~NIT (F034). `renderCharacterSprite` LEAKS ITS CLEAR COLOUR INTO EVERY LATER FRAME~~ FIXED (AUDIT
+        -> | ~~NIT (F034). `renderCharacterSprite` LEAKS ITS CLEAR COLOUR INTO EVERY LATER FRAME~~ FIXED (AUDIT
+  moved   bible/01-Overview/Port-Ledger.md:641  | ~~NIT (F034). `renderCharacterSprite` LEAKS ITS CLEAR COLOUR INTO EVERY LATER FRAME~~ FIXED (AUDIT
+        -> | ~~NIT (F034). `renderCharacterSprite` LEAKS ITS CLEAR COLOUR INTO EVERY LATER FRAME~~ FIXED (AUDIT
+  moved   bible/01-Overview/Port-Ledger.md:642  | ~~**CASTLE AND SPECIAL-AREA DUNGEON AMBIENT (0.58) IS UNPORTED** (F183)~~ FIXED (AUDIT 26 render b
+        -> | ~~**CASTLE AND SPECIAL-AREA DUNGEON AMBIENT (0.58) IS UNPORTED** (F183)~~ FIXED (AUDIT 26 render b
+  moved   bible/01-Overview/Port-Ledger.md:642  | ~~**CASTLE AND SPECIAL-AREA DUNGEON AMBIENT (0.58) IS UNPORTED** (F183)~~ FIXED (AUDIT 26 render b
+        -> | ~~**CASTLE AND SPECIAL-AREA DUNGEON AMBIENT (0.58) IS UNPORTED** (F183)~~ FIXED (AUDIT 26 render b
+  moved   bible/01-Overview/Port-Ledger.md:646  | ~~**A DAMAGING FALL IN A DUNGEON DOES NOT FLASH THE SCREEN** (F206)~~ FIXED (AUDIT 26 combat batch
+        -> | ~~**A DAMAGING FALL IN A DUNGEON DOES NOT FLASH THE SCREEN** (F206)~~ FIXED (AUDIT 26 combat batch
+  moved   bible/01-Overview/Port-Ledger.md:646  | ~~**A DAMAGING FALL IN A DUNGEON DOES NOT FLASH THE SCREEN** (F206)~~ FIXED (AUDIT 26 combat batch
+        -> | ~~**A DAMAGING FALL IN A DUNGEON DOES NOT FLASH THE SCREEN** (F206)~~ FIXED (AUDIT 26 combat batch
+  moved   bible/01-Overview/Port-Ledger.md:648  | ~~**StockHouseContainer IS UNPORTED: PRIVATE HOUSE CONTAINERS ARE PERMANENTLY EMPTY** (F209)~~ FIX
+        -> | ~~**StockHouseContainer IS UNPORTED: PRIVATE HOUSE CONTAINERS ARE PERMANENTLY EMPTY** (F209)~~ FIX
+  moved   bible/01-Overview/Port-Ledger.md:658  | ~~**STATIC-NPC CONVERSATIONS ROLL THEIR REACTION WITH THE LAST TOWNSPERSON'S SEED** (F043)~~ FIXED
+        -> | ~~**STATIC-NPC CONVERSATIONS ROLL THEIR REACTION WITH THE LAST TOWNSPERSON'S SEED** (F043)~~ FIXED
+  moved   bible/01-Overview/Port-Ledger.md:662  | ~~**THE ImprovedAthleticism FATIGUE ARM IS MISSING INSIDE THE REGION THE PORT CITES** (F044)~~ FIX
+        -> | ~~**THE ImprovedAthleticism FATIGUE ARM IS MISSING INSIDE THE REGION THE PORT CITES** (F044)~~ FIX
+  moved   bible/01-Overview/Port-Ledger.md:707  | ~~NIT (F090). THE DUNGEON WATER FOOTSTEP HYSTERESIS IS COLLAPSED TO ONE THRESHOLD~~ FIXED (AUDIT 2
+        -> | ~~NIT (F090). THE DUNGEON WATER FOOTSTEP HYSTERESIS IS COLLAPSED TO ONE THRESHOLD~~ FIXED (AUDIT 2
+  moved   bible/01-Overview/Port-Ledger.md:707  | ~~NIT (F090). THE DUNGEON WATER FOOTSTEP HYSTERESIS IS COLLAPSED TO ONE THRESHOLD~~ FIXED (AUDIT 2
+        -> | ~~NIT (F090). THE DUNGEON WATER FOOTSTEP HYSTERESIS IS COLLAPSED TO ONE THRESHOLD~~ FIXED (AUDIT 2
+  MISMATCH bible/01-Overview/Port-Ledger.md:726  , :1270 (continuation) -> 1281  [src/ui/nativeTalk.js]
+  moved   bible/01-Overview/Port-Status-2026-09-02.md:406  - **`src/ui/enhancedMenu.js:2010`** - the rest of the keyboard; the
+        -> - **`src/ui/enhancedMenu.js:2017`** - the rest of the keyboard; the
+  moved   bible/01-Overview/Port-Status-2026-09-02.md:590  (`render/renderer.js:1249, :1219, :1701, :1876`) and the 2D passes
+        -> (`render/renderer.js:1274, :1244, :1740, :1915`) and the 2D passes
+  moved   bible/01-Overview/Port-Status-2026-09-02.md:646  (**CLOSED at the ship landing**), ~~`worldModes.js:1833` -> `:1687`~~
+        -> (**CLOSED at the ship landing**), ~~`worldModes.js:1834` -> `:1688`~~
+  moved   bible/02-Formats/Morrowind-Rules.md:3563  > The rule cannot hold here because its entire subject is absent from this codebase, and the code th
+        -> > The rule cannot hold here because its entire subject is absent from this codebase, and the code th
+  moved   bible/06-Systems/Quest-Arc.md:4860  `dungeon.js:241`, the standalone host, has always had the right shape:
+        -> `dungeon.js:242`, the standalone host, has always had the right shape:
+  moved   bible/06-Systems/Systems-Arc.md:3357  it (`renderer.js:1805`). `colors` was `undefined`, `asBytes` reads
+        -> it (`renderer.js:1844`). `colors` was `undefined`, `asBytes` reads
+  moved   bible/06-Systems/Systems-Arc.md:3368  leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1795`), and `BB_VS`
+        -> leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1834`), and `BB_VS`
+  moved   bible/07-Rendering/Enhanced-Visuals-Arc.md:55  per frame (renderer.js:1880 - thousands of strings/frame, the single
+        -> per frame (renderer.js:1919 - thousands of strings/frame, the single
+  moved   bible/07-Rendering/Seasons-Iliac-Bay.md:214  uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1795`), and
+        -> uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:1834`), and
+  moved   bible/09-Testing/Testing.md:248  | roadh_seasons_tex.test.js | 5 | ROAD-H (2026-09-07) - the two items AUDIT 62 left over. **H3 THE P
+        -> | roadh_seasons_tex.test.js | 5 | ROAD-H (2026-09-07) - the two items AUDIT 62 left over. **H3 THE P
+  moved   bible/09-Testing/Testing.md:803  | citeshift.test.js | 5 | CS1 (2026-09-10) - THE CITE SHIFT, `tools/citeShift.mjs`: AUDIT 64's last 
+        -> | citeshift.test.js | 5 | CS1 (2026-09-10) - THE CITE SHIFT, `tools/citeShift.mjs`: AUDIT 64's last 
+  moved   bible/10-UI/Settings-Screen-Spec.md:34  | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1120‑1064` |
+        -> | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1137‑1064` |
+  moved   bible/10-UI/Settings-Screen-Spec.md:924  * **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` +
+        -> * **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` +
+  moved   bible/10-UI/Settings-Screen-Spec.md:925  * ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is 
+        -> * ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is 
+  moved   bible/10-UI/Settings-Screen-Spec.md:925  * ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is 
+        -> * ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is 
+  moved   bible/Home.md:318  - `src/ui/enhancedMenu.js:2010` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+        -> - `src/ui/enhancedMenu.js:2017` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+  moved   src/combat/fpArm.js:3331  * WORLD's lens, which is mirrorProjectionX (dungeon.js:578 et al.),
+        -> * WORLD's lens, which is mirrorProjectionX (dungeon.js:579 et al.),
+  moved   src/combat/weaponRig.js:121  *                     worldModes' own interior sink (worldModes.js:366,
+        -> *                     worldModes' own interior sink (worldModes.js:367,
+  moved   src/formats/color32Order.js:8  // (renderer.js:1795), and BB_VS samples the quad's TOP at v=1, i.e. the
+        -> // (renderer.js:1834), and BB_VS samples the quad's TOP at v=1, i.e. the
+  moved   src/formats/color32Order.js:48  * (renderer.js:1805, :2329). A decoded PNG's `{ width, height, data }`
+        -> * (renderer.js:1844, :2371). A decoded PNG's `{ width, height, data }`
+  moved   src/scenes/dataSource.js:909  *  CAPTURE and stops it (enhancedMenu.js:1703), which is right for a
+        -> *  CAPTURE and stops it (enhancedMenu.js:1710), which is right for a
+  moved   src/scenes/dungeonContext.js:2293  // (dungeon.js:876 against :904; worldModes.js:5710 against :5718).
+        -> // (dungeon.js:877 against :904; worldModes.js:5710 against :5718).
+  moved   src/scenes/dungeonContext.js:2293  // (dungeon.js:877 against :904; worldModes.js:5710 against :5718).
+        -> // (dungeon.js:877 against :904; worldModes.js:5711 against :5718).
+  moved   src/scenes/dungeonContext.js:2760  // exterior.js:4168 and worldModes.js:5834 already ran;
+        -> // exterior.js:4168 and worldModes.js:5835 already ran;
+  moved   src/scenes/exterior.js:877  enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   /
+        -> enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),   /
+  moved   src/scenes/exterior.js:2501  // (dungeon.js:207, "a right-click on a window is the window's...
+        -> // (dungeon.js:208, "a right-click on a window is the window's...
+  moved   src/scenes/interior.js:344  // driver. dungeon.js:624 and worldModes.js:4998/:5121 gate the same
+        -> // driver. dungeon.js:625 and worldModes.js:4998/:5121 gate the same
+  moved   src/scenes/interior.js:344  // driver. dungeon.js:625 and worldModes.js:4998/:5121 gate the same
+        -> // driver. dungeon.js:625 and worldModes.js:4999/:5122 gate the same
+  moved   src/scenes/shared.js:1795  *  `dungeon.js:241`, the standalone host, has always had the right
+        -> *  `dungeon.js:242`, the standalone host, has always had the right
+  moved   src/scenes/world.js:5123  // (dungeon.js:207, "a right-click on a window is the window's...
+        -> // (dungeon.js:208, "a right-click on a window is the window's...
+  moved   src/scenes/world.js:6841  // only reader of `load` in the whole tree is dungeon.js:95, so the
+        -> // only reader of `load` in the whole tree is dungeon.js:96, so the
+  moved   src/scenes/worldModes.js:5094  // scenes/dungeon.js:220's, line for line, over this context's pool.
+        -> // scenes/dungeon.js:221's, line for line, over this context's pool.
+  moved   src/scenes/worldModes.js:5334  // which is what dungeon.js:272's `held` already implements.
+        -> // which is what dungeon.js:273's `held` already implements.
+  moved   src/scenes/worldModes.js:5405  // the crouch edge still toggled. dungeon.js:442 is this same gate
+        -> // the crouch edge still toggled. dungeon.js:443 is this same gate
+  moved   src/scenes/worldModes.js:5495  // only dungeon.js:326 fed it, so in a world-hosted dungeon the
+        -> // only dungeon.js:327 fed it, so in a world-hosted dungeon the
+  moved   src/scenes/worldModes.js:5663  if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:273's `if (!held)` - a paused game 
+        -> if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:274's `if (!held)` - a paused game 
+  moved   src/scenes/worldModes.js:6398  // scenes/dungeon.js:343-369 carries, so a probe could take the
+        -> // scenes/dungeon.js:344-370 carries, so a probe could take the
+  moved   src/scenes/worldModes.js:6593  // gesture), never a swing - dungeon.js:218 and both exterior slots
+        -> // gesture), never a swing - dungeon.js:219 and both exterior slots
+  moved   src/systems/advancement.js:97  * :3132, exterior.js:923/:1517, worldModes.js:385/:6152,
+        -> * :3132, exterior.js:923/:1517, worldModes.js:386/:6153,
+  moved   src/systems/chargenSession.js:405  // (:4956), which dungeon.js:434 and worldModes.js:7190 both feed.
+        -> // (:4956), which dungeon.js:435 and worldModes.js:7190 both feed.
+  moved   src/systems/chargenSession.js:405  // (:4956), which dungeon.js:435 and worldModes.js:7190 both feed.
+        -> // (:4956), which dungeon.js:435 and worldModes.js:7191 both feed.
+  moved   src/systems/passiveSpecials.js:10  // off the host seam that worldModes.js:884 and dungeonContext.js:2242
+        -> // off the host seam that worldModes.js:885 and dungeonContext.js:2242
+  moved   src/systems/seasonsIliacBayAssets.js:160  // as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1795).
+        -> // as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1834).
+  moved   src/systems/textureReplacement.js:171  // which reads `color32.colors` and `asBytes` of it (renderer.js:1805),
+        -> // which reads `color32.colors` and `asBytes` of it (renderer.js:1844),
+  moved   src/systems/textureReplacement.js:175  // UNPACK_FLIP_Y_WEBGL off (renderer.js:1795). A browser decode hands
+        -> // UNPACK_FLIP_Y_WEBGL off (renderer.js:1834). A browser decode hands
+  moved   src/ui/settingsMetrics.js:7  // and 360x640. Since renderer.js:1120-1124 sets canvas.width from
+        -> // and 360x640. Since renderer.js:1137-1141 sets canvas.width from
+  moved   test/audit18_hosts_outer.test.js:173  // DFU PauseGame(true) stops the movers too (dungeon.js:273 does).
+        -> // DFU PauseGame(true) stops the movers too (dungeon.js:274 does).
+  moved   test/audit24_wave45.test.js:21  // dungeon.js:241 - the standalone host - has always had the right
+        -> // dungeon.js:242 - the standalone host - has always had the right
+  moved   test/audit24_wave45.test.js:121  // dungeon.js:239-247 - attack, then return, with no mode in the test
+        -> // dungeon.js:240-248 - attack, then return, with no mode in the test
+  moved   test/citedrift.test.js:638  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:813`/, EX, /^ {6}fieldOf
+        -> ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:814`/, EX, /^ {6}fieldOf
+  moved   test/citedrift.test.js:860  // `worldModes.js:1093 against :1056`. Forty of them came out as ranges
+        -> // `worldModes.js:1094 against :1056`. Forty of them came out as ranges
+  moved   test/crashreport.test.js:201  // (dungeon.js:448 against :473; worldModes.js:1096 against :1104), so
+        -> // (dungeon.js:449 against :473; worldModes.js:1096 against :1104), so
+  moved   test/crashreport.test.js:201  // (dungeon.js:449 against :473; worldModes.js:1096 against :1104), so
+        -> // (dungeon.js:449 against :473; worldModes.js:1097 against :1104), so
+  moved   test/guildserviceflows.test.js:142  // - the U key's useMagicItemWindow (world.js:4780,
+        -> // - the U key's useMagicItemWindow (world.js:4784,
+  moved   test/pausewindow.test.js:249  // (world.js:4823-4830, worldModes.js:6827-6833,
+        -> // (world.js:4827-4834, worldModes.js:6827-6833,
+  moved   test/pausewindow.test.js:309  // resume: a host with no saveAs/loadKey seam (exterior.js:2169's bag
+        -> // resume: a host with no saveAs/loadKey seam (exterior.js:2170's bag
+  moved   test/roadh_seasons_tex.test.js:21  // upload path reads `color32.colors` (renderer.js:1805) and every
+        -> // upload path reads `color32.colors` (renderer.js:1844) and every
+  moved   test/travelmapwindow.test.js:929  // exterior hosts need the dungeon host's gate (dungeon.js:207)
+        -> // exterior hosts need the dungeon host's gate (dungeon.js:208)
+  moved   tools/mwArmProbe.mjs:528  // (dungeon.js:578's exact lens) - never deduced from one matrix alone.
+        -> // (dungeon.js:579's exact lens) - never deduced from one matrix alone.
+  moved   tools/mwArmProbe.mjs:550  // a standard perspective (dungeon.js:578) - only near/far/distance
+        -> // a standard perspective (dungeon.js:579) - only near/far/distance
+  moved   tools/x11Probe.mjs:340  // The host clamps its frame delta at 0.1s (dungeon.js:438), and
+        -> // The host clamps its frame delta at 0.1s (dungeon.js:439), and
+107 cite(s) moved, 2 for a person, 0 line(s) from neither side

@@ -1,0 +1,85 @@
+fatal: path 'src/systems/concealDraw.js' exists on disk, but not in 'origin/main'
+fatal: path 'test/audit65_swim.test.js' exists on disk, but not in 'origin/main'
+fatal: path 'src/ui/fpsCounter.js' exists on disk, but not in '6ef9797d'
+fatal: path 'src/ui/touchLook.js' exists on disk, but not in '6ef9797d'
+fatal: path 'test/mwarms_fps.test.js' exists on disk, but not in '6ef9797d'
+fatal: path 'test/touchinput2.test.js' exists on disk, but not in '6ef9797d'
+  moved   bible/01-Overview/Audit-59.md:26  worldModes.js:4914 -> worldModes.js:4915
+  moved   bible/01-Overview/Audit-59.md:26  `:6830 -> `:6831 (continuation)
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  /:445 -> /:465 (continuation)
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  /:454 -> /:474 (continuation)
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  /:471 -> /:491 (continuation)
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  /:501 -> /:521 (continuation)
+  moved   bible/01-Overview/Bible-Review-2026-08-25.md:236  `:451 -> `:471 (continuation)
+  INSIDE   bible/01-Overview/Bible-Review-2026-08-25.md:237  Quest-Arc.md:719  [bible/06-Systems/Quest-Arc.md]
+  moved   bible/01-Overview/Port-Ledger.md:552  world.js:2567 -> world.js:2569
+  moved   bible/01-Overview/Port-Ledger.md:552  world.js:3808-3823 -> world.js:3810-3825
+  moved   bible/01-Overview/Port-Ledger.md:552  `:3037 -> `:3039 (continuation)
+  moved   bible/01-Overview/Port-Ledger.md:552  main.js:216 -> main.js:219
+  moved   bible/01-Overview/Port-Ledger.md:599  world.js:2393 -> world.js:2394
+  moved   bible/01-Overview/Port-Ledger.md:619  renderer.js:1172-1173 -> renderer.js:1197-1198
+  moved   bible/01-Overview/Port-Ledger.md:619  worldModes.js:3118-3135 -> worldModes.js:3119-3136
+  moved   bible/01-Overview/Port-Ledger.md:622  worldModes.js:1204 -> worldModes.js:1205
+  moved   bible/01-Overview/Port-Ledger.md:622  `:1461 -> `:1462 (continuation)
+  moved   bible/01-Overview/Port-Ledger.md:623  worldModes.js:1121 -> worldModes.js:1122
+  moved   bible/01-Overview/Port-Ledger.md:623  `:1366 -> `:1367 (continuation)
+  moved   bible/01-Overview/Port-Ledger.md:631  weaponRig.js:105 -> weaponRig.js:111
+  moved   bible/01-Overview/Port-Ledger.md:632  `:100 -> `:106 (continuation)
+  moved   bible/01-Overview/Port-Ledger.md:634  weaponRig.js:160-163 -> weaponRig.js:166-169
+  moved   bible/01-Overview/Port-Ledger.md:641  worldModes.js:1617 -> worldModes.js:1618
+  moved   bible/01-Overview/Port-Ledger.md:641  /:1630 -> /:1631 (continuation)
+  moved   bible/01-Overview/Port-Ledger.md:641  renderer.js:774 -> renderer.js:791
+  moved   bible/01-Overview/Port-Ledger.md:642  worldModes.js:3010 -> worldModes.js:3011
+  moved   bible/01-Overview/Port-Ledger.md:642  dungeon.js:296 -> dungeon.js:297
+  moved   bible/01-Overview/Port-Ledger.md:646  dungeon.js:500 -> dungeon.js:501
+  moved   bible/01-Overview/Port-Ledger.md:646  worldModes.js:2890 -> worldModes.js:2891
+  moved   bible/01-Overview/Port-Ledger.md:648  worldModes.js:2572-2580 -> worldModes.js:2573-2581
+  MISMATCH bible/01-Overview/Port-Ledger.md:726  , :1270 (continuation) -> 1281  [src/ui/nativeTalk.js]
+  INSIDE   bible/01-Overview/Port-Status-2026-09-02.md:320  Ledger row `:552`  [bible/01-Overview/Port-Ledger.md]
+  moved   bible/01-Overview/Port-Status-2026-09-02.md:406  src/ui/enhancedMenu.js:1978 -> src/ui/enhancedMenu.js:1985
+  moved   bible/01-Overview/Port-Status-2026-09-02.md:893  `:955 -> `:977 (continuation)
+  moved   bible/05-Combat/Combat.md:1371  worldModes.js:7091 -> worldModes.js:7092
+  moved   bible/05-Combat/Combat.md:1374  worldModes.js:5833 -> worldModes.js:5834
+  moved   bible/05-Combat/Combat.md:1375  worldModes.js:7189 -> worldModes.js:7190
+  moved   bible/09-Testing/Testing.md:140  worldModes.js:7091 -> worldModes.js:7092
+  moved   bible/10-UI/Settings-Screen-Spec.md:924  worldModes.js:1281 -> worldModes.js:1282
+  moved   bible/10-UI/Settings-Screen-Spec.md:925  worldModes.js:5541 -> worldModes.js:5542
+  moved   bible/10-UI/Settings-Screen-Spec.md:925  dungeon.js:811 -> dungeon.js:812
+  moved   bible/Home.md:318  src/ui/enhancedMenu.js:1978 -> src/ui/enhancedMenu.js:1985
+  moved   src/combat/weaponRig.js:121  worldModes.js:366 -> worldModes.js:367
+  moved   src/scenes/dataSource.js:909  enhancedMenu.js:1671 -> enhancedMenu.js:1678
+  moved   src/scenes/dungeonContext.js:2293  dungeon.js:874 -> dungeon.js:875
+  moved   src/scenes/dungeonContext.js:2293  worldModes.js:5710 -> worldModes.js:5711
+  moved   src/scenes/dungeonContext.js:2760  worldModes.js:5834 -> worldModes.js:5835
+  moved   src/scenes/interior.js:179  worldModes.js:6819 -> worldModes.js:6820
+  moved   src/scenes/world.js:5338  worldModes.js:7019-7031 -> worldModes.js:7020-7032
+  moved   src/systems/advancement.js:97  /:6152 -> /:6153 (continuation)
+  moved   src/systems/chargen.js:11  /:27 -> /:28 (continuation)
+  moved   src/systems/chargen.js:11  /:29 -> /:30 (continuation)
+  moved   src/systems/chargenSession.js:405  dungeon.js:433 -> dungeon.js:434
+  moved   src/systems/chargenSession.js:405  worldModes.js:7190 -> worldModes.js:7191
+fatal: path 'src/systems/concealDraw.js' exists on disk, but not in 'origin/main'
+  moved   src/systems/factionRep.js:244  /:27 -> /:28 (continuation)
+  moved   src/systems/passiveSpecials.js:10  worldModes.js:884 -> worldModes.js:885
+  INSIDE   src/systems/passiveSpecials.js:11  bible/01-Overview/Port-Ledger.md:599  [bible/01-Overview/Port-Ledger.md]
+  moved   src/systems/tradeModes.js:409  worldModes.js:6649 -> worldModes.js:6650
+fatal: path 'src/ui/fpsCounter.js' exists on disk, but not in '6ef9797d'
+  moved   src/ui/listPicker.js:332  worldModes.js:7091 -> worldModes.js:7092
+  moved   src/ui/nativeTalk.js:779  worldModes.js:7091 -> worldModes.js:7092
+  moved   src/ui/saveWindow.js:395  worldModes.js:6405 -> worldModes.js:6406
+  moved   src/ui/spellbookWindow.js:786  scenes/worldModes.js:7091 -> scenes/worldModes.js:7092
+fatal: path 'src/ui/touchLook.js' exists on disk, but not in '6ef9797d'
+fatal: path 'test/audit65_swim.test.js' exists on disk, but not in 'origin/main'
+  moved   test/citedrift.test.js:638  dungeon\.js:811 -> dungeon\.js:812
+  moved   test/citedrift.test.js:860  worldModes.js:1093 -> worldModes.js:1094
+  moved   test/guildserviceflows.test.js:142  world.js:4776 -> world.js:4780
+  moved   test/guildserviceflows.test.js:143  worldModes.js:6913 -> worldModes.js:6914
+  moved   test/guildserviceflows.test.js:146  worldModes.js:7091 -> worldModes.js:7092
+fatal: path 'test/mwarms_fps.test.js' exists on disk, but not in '6ef9797d'
+  moved   test/nativetalk.test.js:147  worldModes.js:7091 -> worldModes.js:7092
+  moved   test/pausewindow.test.js:249  world.js:4819-4826 -> world.js:4823-4830
+  moved   test/pausewindow.test.js:249  worldModes.js:6826-6832 -> worldModes.js:6827-6833
+  moved   test/pausewindow.test.js:309  exterior.js:2168 -> exterior.js:2169
+  moved   test/spellbookwindow.test.js:818  worldModes.js:7091 -> worldModes.js:7092
+fatal: path 'test/touchinput2.test.js' exists on disk, but not in '6ef9797d'
+68 cite(s) moved, 4 for a person, 0 line(s) from neither side

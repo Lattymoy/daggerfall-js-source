@@ -23,3 +23,8 @@ Claude-Session: https://claude.ai/code/session_01C7SvRjrnsDoSwxQSGzfpoR
 RETURN: commit hash, diff stat, per-pin mutation results, test delta (files + counts), lint/full-suite result, and the record text per finding. Leave the worktree in place.
 
 WORKTREE ENVIRONMENT: a fresh worktree has no node_modules and no DFU clone. Before running anything: `ln -s /home/user/daggerfall-js-source/node_modules node_modules` and run tests with `DFU_PATH=/home/user/daggerfall-js-source/tools/parity/dfu` in the environment so citedrift's DFU-backed pins run. test/tdz.test.js and test/verifydeploy.test.js fail in a worktree without the symlink - that is the environment, not your change.
+
+## Merging main under an open audit (added at the round-one integration)
+- Do NOT normalise-then-map with citeShift: two mapped sides are two bases in one tree.
+- Merge with --no-commit, resolve conflicts, then ONCE: `node tools/citeMerge.mjs origin/main <our-head> --apply` (report first without --apply). Read the held list by content.
+- Then: hand cites the mappers cannot see, regenOpenFlags, Suite restamp, lint, doc gates, full suite, commit.
