@@ -250,8 +250,8 @@ test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .b
   assert.match(src, /const archiveCount = \(names\) => names\.filter\(\(n\) => \/\\\.bsa\$\/i\.test\(n\)\)\.length;/,
     'and ARCHIVES is what that one home counts');
   const cheap = src.slice(src.indexOf('export async function countMorrowindArchives()'));
-  assert.match(cheap.slice(0, cheap.indexOf('\n}\n')), /_mwCount = archiveCount\(await storedMorrowindNames\(\)\);/,
-    'the boot door’s count is names and nothing else');
+  assert.match(cheap.slice(0, cheap.indexOf('\n}\n')), /const names = await storedMorrowindNames\(\);\s*\n\s*_mwCountedNames = \[\.\.\.names\]\.sort\(\)\.join\('\\n'\);\s*\n\s*_mwCount = archiveCount\(names\);/,
+    'the boot door’s count is names and nothing else - and it remembers the names it counted, so a later attach reads as a change (AUDIT 65 XL-6 fixup)');
   assert.doesNotMatch(cheap.slice(0, cheap.indexOf('\n}\n')), /_mwFingerprint|storedMorrowindSizes/,
     'and it NEVER writes the fingerprint - a names-only print would read as a changed set and bump the generation');
   // the fingerprint moves on ANY change to the set, including a
