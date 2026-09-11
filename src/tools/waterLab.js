@@ -9,6 +9,7 @@
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
 import { waterUniforms, buildWaterIndices, WATER_MASK_TABLE } from '../render/waterSurface.js';
+import { basinDepths, carveBasin, waterMesh } from '../render/waterBasin.js';   // WATER2
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';
@@ -57,6 +58,10 @@ assignTiles(tileData, tilemap, true);
 const tilemapBytes = convertTilemap(tilemap);
 const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 const grid = buildTerrainGrid(heightmap, 1);
+// WATER2: the water's mesh off the grid as it stands, then the basin carved under it
+const basin = basinDepths(tilemapBytes, 1);
+const waterVerts = basin ? waterMesh(grid.positions, basin, 1) : null;
+if (basin) carveBasin(grid, basin, 1);
 const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, buildTerrainIndices(1));
 // sixty-four flat tiles: water, dirt, grass, stone, and every shore
 // record a mix of the two it joins, so a shape reads even without the art
@@ -87,7 +92,7 @@ const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
 // WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
 const waterIndices = buildWaterIndices(tilemapBytes, 1);
-const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
+const water = waterIndices && waterVerts ? renderer.createWaterSurface(waterVerts.positions, waterVerts.depths, waterIndices) : null;
 const hasWater = !!water;
 
 const t0 = performance.now();
