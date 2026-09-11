@@ -109,8 +109,8 @@ test('WATER2: the shader reads the bed - the surface fades to nothing as the bed
   assert.match(WATER_SURFACE_VS, /layout\(location=1\) in float aDepth;[\s\S]*?out float vDepth;[\s\S]*?vDepth = aDepth;/);
   const fs = waterSurfaceFs('float cloudShadowAt(vec3 wp) { return 1.0; }');
   assert.match(fs, /in float vDepth;/);
-  assert.match(fs, /edge \*= smoothstep\(0\.0, uShoreDepth, vDepth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the shoreline is the bed\'s rise');
-  assert.match(fs, /float deep = 1\.0 - exp\(-max\(vDepth, 0\.0\) \* uAbsorb\);/, 'Beer-Lambert');
+  assert.match(fs, /edge \*= smoothstep\(0\.0, uShoreDepth, depth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the shoreline is the bed\'s rise (WATER4: `depth`, the bed or a puddle\'s floor)');
+  assert.match(fs, /float deep = 1\.0 - exp\(-max\(depth, 0\.0\) \* uAbsorb\);/, 'Beer-Lambert');
   const mixAt = fs.indexOf('tex = mix(tex, uDeep, deep);'), litAt = fs.indexOf('vec3 lit = tex * (uAmbient');
   assert.ok(mixAt > 0 && mixAt < litAt, 'the deep colour goes in BEFORE the light, so a deep pool at midnight is dark');
   assert.match(fs, /float body = mix\(uShallowOpacity, uOpacity, deep\);/);
@@ -128,13 +128,13 @@ test('WATER2: the shader reads the bed - the surface fades to nothing as the bed
 
 test('WATER2: the hosts - the world takes the water\'s mesh BEFORE it carves and uploads the ground (the build and the restride), the town\'s flat sheet sits at one depth, the lab does the same, and the collider reads the samples the carve never touches (mutant: the carve before the mesh, or the town drawn off the ground quad)', () => {
   const w = rd('src/scenes/world.js');
-  const bw = w.slice(w.indexOf('  function buildWater(positions, normals, tilemapBytes, stride, waterIndices) {'));
-  assert.match(bw.slice(0, bw.indexOf('\n  }\n')), /const depths = basinDepths\(tilemapBytes, stride\);\s*\n\s*if \(!depths\) return null;\s*\n\s*const mesh = waterMesh\(positions, depths, stride\);\s*\n\s*carveBasin\(\{ positions, normals \}, depths, stride\);\s*\n\s*return renderer\.createWaterSurface\(mesh\.positions, mesh\.depths, waterIndices\);/);
-  const build = w.indexOf('const water = waterIndices ? buildWater(positions, normals, tilemapBytes, stride, waterIndices) : null;');
+  const bw = w.slice(w.indexOf('  function buildWater(positions, normals, tilemapBytes, stride, waterIndices, art = null) {'));   // WATER4: the art carves
+  assert.match(bw.slice(0, bw.indexOf('\n  }\n')), /const depths = basinDepths\(tilemapBytes, stride, TERRAIN_TILE_DIM, art\?\.corners\) \?\? flatDepths\(stride, TERRAIN_TILE_DIM\);\s*\n\s*const mesh = waterMesh\(positions, depths, stride\);\s*\n\s*carveBasin\(\{ positions, normals \}, depths, stride\);\s*\n\s*return renderer\.createWaterSurface\(mesh\.positions, mesh\.depths, waterIndices\);/);
+  const build = w.indexOf('const water = waterIndices ? buildWater(positions, normals, tilemapBytes, stride, waterIndices, waterArt) : null;');
   assert.ok(build > 0 && build < w.indexOf('const terrain = renderer.createTerrainSurface(positions, normals,'), 'the build: the water first, then the carved ground uploaded');
   const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride) {'));
   const rb = restride.slice(0, restride.indexOf('\n  }\n'));
-  assert.ok(rb.indexOf('p.water = waterIndices ? buildWater(grid.positions, grid.normals, p.tilemapBytes, stride, waterIndices) : null;') < rb.indexOf('p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,'), 'the restride: the same order');
+  assert.ok(rb.indexOf('p.water = waterIndices ? buildWater(grid.positions, grid.normals, p.tilemapBytes, stride, waterIndices, art) : null;') < rb.indexOf('p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,'), 'the restride: the same order');
   // the collider: heightAt reads the pixel's samples, which no carve touches
   const ha = w.slice(w.indexOf('  const heightAt = (x, z) => {'));
   assert.match(ha.slice(0, ha.indexOf('\n  };\n')), /p\.samples\[a \* HEIGHTMAP_DIMENSION \+ b\] \* worldHeight/, 'the samples, not the positions');

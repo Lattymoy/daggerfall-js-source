@@ -32,6 +32,7 @@
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
 import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share
+import { ART_GRID, ART_SHORE } from '../world/waterArt.js';   // WATER4: the art's own water - the shore is the record's outline
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 
 /** How far above the ground the surface is drawn, in world units (a
@@ -57,8 +58,10 @@ export const SHORE_SOFTNESS = 0.16;
  *  water, and the last hand's breadth is clear. World units. */
 export const SHORE_DEPTH = 0.35;
 /** WATER2: the surface's opacity over a bed just under it; the body
- *  climbs from here to WATER_OPACITY as the bed falls away. */
-export const SHALLOW_OPACITY = 0.30;
+ *  climbs from here to WATER_OPACITY as the bed falls away. WATER4:
+ *  0.30 read as glass (Mac: "still way too see through") - the bed
+ *  shows through the shallows now, it does not show them up. */
+export const SHALLOW_OPACITY = 0.80;
 /** WATER2: the colour of deep water - what the body tends to as the
  *  bed is lost, lit by the same ambient and sun as the texel. */
 export const DEEP_COLOR = Object.freeze([0.05, 0.17, 0.22]);
@@ -256,6 +259,9 @@ uniform usampler2D uTilemap;
 uniform float uTileSize;
 uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform uvec4 uWaterMask[8];   // WATER1: 256 nibbles - converted tile byte -> water corners
+uniform sampler2D uWaterArt;   // WATER4: the archive's water art - ART_GRID x (ART_GRID * records) coverage cells, LINEAR
+uniform int uWaterArtOn;       // WATER4: 1 with the archive's art bound; 0 draws by the corner table
+uniform float uWaterArtRows;   // WATER4: the art texture's height in texels (ART_GRID * records)
 uniform float uTime;
 uniform vec2 uWindDir;
 uniform float uWindStrength;   // 0..1 on the sky's row scale
@@ -323,6 +329,27 @@ float coverage(uint m, vec2 f) {
   float c01 = float((m >> 2u) & 1u), c11 = float((m >> 3u) & 1u);
   return mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
 }
+// WATER4: the art's own coverage under a texel - the record and the
+// turn out of the tile byte, the fraction turned as TERRAIN_FS turns
+// it (the same ROT/TRANS, renderer.js), then the record's cell grid
+// read bilinearly, a half-cell in from its edges so no neighbour
+// record bleeds in (world/waterArt.js is this sample on the CPU)
+const float ART_GRID = ${ART_GRID.toFixed(1)};
+const vec2 ART_SHORE = vec2(${ART_SHORE[0].toFixed(2)}, ${ART_SHORE[1].toFixed(2)});
+const mat2 ROT[4] = mat2[4](
+  mat2(1.0, 0.0, 0.0, 1.0),
+  mat2(0.0, -1.0, 1.0, 0.0),
+  mat2(-1.0, 0.0, 0.0, -1.0),
+  mat2(0.0, 1.0, -1.0, 0.0));
+const vec2 TRANS[4] = vec2[4](
+  vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+float artCoverage(uint data, vec2 f) {
+  int layer = int(data >> 2u);
+  int t = int(data & 3u);
+  vec2 tuv = clamp(ROT[t] * f + TRANS[t], 0.0, 1.0) * ART_GRID;
+  tuv = clamp(tuv, vec2(0.5), vec2(ART_GRID - 0.5));
+  return texture(uWaterArt, vec2(tuv.x / ART_GRID, (float(layer) * ART_GRID + tuv.y) / uWaterArtRows)).r;
+}
 // the gradient of the wave field at p: three trains on the wind, two
 // fine rain trains; returns d(height)/d(xz). Each train fades with the
 // distance from the eye on its own wavelength's scale, so a train a few
@@ -352,17 +379,29 @@ void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));
   uint data = texelFetch(uTilemap, cell, 0).r;
-  uint corners = waterCorners(data);
-  if (corners == 0u) discard;
   vec2 f = fract(unwrapped);
-  float edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
+  float edge, depth;
+  if (uWaterArtOn == 1) {
+    // WATER4: the art's own water - the shore is the record's outline,
+    // feathered between its cells (world/waterArt.js). A puddle the
+    // basin never carved (no corner of its tile is water) still has
+    // a bed: the shoreline's own depth, so the ramp below keeps it.
+    edge = smoothstep(ART_SHORE.x, ART_SHORE.y, artCoverage(data, f));
+    if (edge <= 0.002) discard;
+    depth = max(vDepth, uShoreDepth * edge);
+  } else {
+    uint corners = waterCorners(data);
+    if (corners == 0u) discard;
+    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
+    depth = vDepth;
+  }
   // WATER2: the SHORELINE is where the bed rises to meet the surface -
   // the last hand's breadth of depth is clear water over ground, and
-  // the art's diagonal (edge) only bounds it
-  edge *= smoothstep(0.0, uShoreDepth, vDepth);
+  // the art's outline (edge) only bounds it
+  edge *= smoothstep(0.0, uShoreDepth, depth);
   if (edge <= 0.002) discard;
   // WATER2: how much of the bed is lost to the water above it
-  float deep = 1.0 - exp(-max(vDepth, 0.0) * uAbsorb);
+  float deep = 1.0 - exp(-max(depth, 0.0) * uAbsorb);
   vec3 toEye = uCamPos - vWorldPos;
   float dist = length(toEye);
   vec2 g = waveGradient(vWorldPos.xz, uTime, dist);
@@ -418,6 +457,7 @@ void main() {
   // the alpha rises with it.
   float lace = vnoise(vWorldPos.xz * 0.9 + uWindDir * (uTime * 0.6)) * 0.6 + vnoise(vWorldPos.xz * 3.1 - uWindDir * (uTime * 1.1)) * 0.4;
   float shoreFoam = (1.0 - smoothstep(0.0, uFoamDepth * (0.6 + 0.8 * uWindStrength), vDepth)) * smoothstep(0.35, 0.75, lace + 0.15 * sin(uTime * 1.7 + vWorldPos.x * 0.3));
+  shoreFoam *= smoothstep(0.0, 0.05, vDepth);   // WATER4: a bed the basin never carved (a puddle) breaks no surf
   float crestFoam = smoothstep(0.16, 0.30, length(g)) * uWindStrength * smoothstep(0.45, 0.8, lace);
   float foam = clamp(shoreFoam + crestFoam, 0.0, 1.0) * exp(-dist * 0.004);
   vec3 foamLit = vec3(0.92) * (uAmbient + uSunColor * (uSunScale * shadow) + uMoonColor * uMoonScale);
