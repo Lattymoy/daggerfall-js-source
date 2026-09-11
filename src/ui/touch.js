@@ -52,16 +52,57 @@
 //     and takes the finger directly.
 //
 // Activates only when the device reports touch; desktop is untouched.
+//
+// TI2 - THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
+// element... camera movement, character movement and a more phone
+// built feel where it doesnt seem so non-native"). The same layer, the
+// same seams, six things done the way a phone game does them - every
+// knob on the port's own prefs shelf (systems/uiPrefs.js, the touch*
+// keys; the Enhanced pane's Touch card sets them):
+//   - the LOOK is measured in fractions of the canvas height, not raw
+//     pixels (ui/touchLook.js lookNormalisation), times the player's
+//     own touch sensitivity on top of the mouse setting the host applies;
+//   - the STICK is ANALOG: its throw is the speed (touchLook.js
+//     analogAxes -> the host's MoveAxes joystick arm). The keys are
+//     still synthesized - the anim and reportInput read them - and the
+//     host takes the analog reading over the key impulse when it has
+//     one (`axes()` on the handle). Off, the stick is TI1's 8-way;
+//   - the stick can be FIXED bottom-left instead of born under the
+//     finger, the finger's offset from its centre being the throw;
+//   - GYRO fine aim, opt-in: the phone's rotation rate becomes look
+//     units through the host's own lookScale, so it rides the same
+//     LookFilter, pitch clamp and pause gate as the drag;
+//   - HAPTICS: a short pulse on a button, on the hold that arms a
+//     swipe, and on a lock;
+//   - the FIRST TOUCH asks for fullscreen and a landscape lock where
+//     the browser allows it (iOS takes it from the manifest instead -
+//     public/manifest.webmanifest, apple-mobile-web-app-capable);
+//   and the chrome is a phone's: safe-area insets on every edge, a
+//   press that scales, the system face, and the name prompt an inline
+//   field that raises the keyboard instead of window.prompt.
 
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
 import { overlayOpen } from './enhancedOverlays.js';
 import { bindings } from './input.js';                       // AUDIT 62 F8: the live registry
 import { getBinding, getCombo } from '../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
+import { getPref } from '../systems/uiPrefs.js';             // TI2: the touch* knobs
+import { lookNormalisation, analogAxes, gyroLookDelta } from './touchLook.js';   // TI2: the pure halves
+import { lookScale } from './lookSettings.js';               // TI2: the gyro speaks the host's look units
 
 const TOUCH_LOOK_GAIN = 2.0;
 const STICK_RADIUS = 56;        // px, visual + clamp
 const RUN_THROW = 0.8;          // stick throw fraction -> ShiftLeft
 const NAV_POLL_MS = 150;        // the classic-overlay nav row's watch
+const FIXED_STICK_REACH = 2.5;  // TI2: a fixed stick answers a finger within this many radii of its centre
+const FIXED_STICK_INSET = 36;   // TI2: the fixed stick's edge distance from the canvas's bottom-left, px, before the safe area
+const GYRO_MAX_DT = 0.1;        // TI2: a motion sample older than this (a backgrounded tab) is not integrated
+
+// TI2: the safe area. A phone's notch, rounded corners and home bar
+// sit INSIDE the viewport (play/index.html asks for viewport-fit=cover
+// so the canvas runs under them); every control is inset by the
+// browser's own reading of the edge it sits on, exactly as the
+// enhanced skin's sheets already are (enhancedStyle.js).
+const edge = (side, px) => `${side}:calc(${px}px + env(safe-area-inset-${side}, 0px))`;
 
 export function isTouchDevice() {
   return typeof window !== 'undefined' &&
@@ -100,27 +141,78 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
  * Attach the touch layer.
  * @param canvas the game canvas (drag surface)
  * @param hooks { look(dx,dy), attack?(dx,dy,held), tap?(x,y), locked?(), dial?, cycleMode?(), overlayActive?(), paused?() }
+ *   TI2 adds nothing to the hooks: the analog stick is read FROM the
+ *   handle (`axes()`), the gyro goes through `look`.
  *   - attack/tap/dial omitted on scenes without them (the fly-cam
  *     interior): a drag then only looks, a tap does nothing, and no
  *     dial button is drawn - a drawn door that opens nothing is the
  *     lie this repo names.
- * @returns { el, setLockDot(x,y)|setLockDot(null), dispose() } or null off touch
+ * @returns { el, setLockDot(x,y)|setLockDot(null), axes(), dispose() } or null off touch
+ *   axes(): TI2 - the analog stick's reading {x, y} (x strafe right +,
+ *   y forward +, -1..1) while the stick is engaged AND the analog pref
+ *   is on; null otherwise, so the host's MoveAxes takes the key path.
  */
 export function attachTouch(canvas, hooks = {}) {
   if (!isTouchDevice()) return null;
 
   const ui = document.createElement('div');
   ui.id = 'touch-ui';
-  ui.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;font:16px monospace;-webkit-user-select:none;user-select:none';
+  ui.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:5;font:600 15px system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none';
   document.body.appendChild(ui);
+
+  // TI2: the haptic pulse - navigator.vibrate where the platform has it
+  // (Android; iOS Safari has none and the call is simply absent), and
+  // only while the pref says so.
+  const buzz = (ms) => {
+    if (!getPref('touchHaptics')) return;
+    try { navigator.vibrate?.(ms); } catch { /* a platform without it */ }
+  };
+
+  // TI2: FULLSCREEN AND LANDSCAPE, asked ONCE from the first touch (a
+  // user gesture, which both APIs require). requestFullscreen is
+  // absent on iOS Safari for anything but a video - there the manifest
+  // does the job - and the orientation lock is refused outside
+  // fullscreen on most browsers, hence the order. Every refusal is
+  // swallowed: a browser that will not is not an error.
+  let fsAsked = false;
+  function askFullscreen() {
+    if (fsAsked || !getPref('touchFullscreen')) return;
+    fsAsked = true;
+    try {
+      const de = document.documentElement;
+      if (!de?.requestFullscreen || document.fullscreenElement) return;
+      const lock = () => { try { globalThis.screen?.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch { /* unsupported */ } };
+      de.requestFullscreen({ navigationUI: 'hide' })?.then?.(lock, () => {});
+    } catch { /* unsupported */ }
+  }
 
   // ---- virtual stick (visual) ----
   const stick = document.createElement('div');
-  stick.style.cssText = `position:absolute;width:${STICK_RADIUS * 2}px;height:${STICK_RADIUS * 2}px;border:2px solid rgba(255,255,255,.35);border-radius:50%;display:none`;
+  stick.style.cssText = `position:absolute;width:${STICK_RADIUS * 2}px;height:${STICK_RADIUS * 2}px;box-sizing:border-box;border:2px solid rgba(255,255,255,.28);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,0) 70%);display:none`;
   const nub = document.createElement('div');
-  nub.style.cssText = 'position:absolute;width:40px;height:40px;margin:-20px;left:50%;top:50%;background:rgba(255,255,255,.35);border-radius:50%';
+  nub.style.cssText = 'position:absolute;width:44px;height:44px;margin:-22px;left:50%;top:50%;background:rgba(255,255,255,.42);border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.45)';
   stick.appendChild(nub);
   ui.appendChild(stick);
+  // TI2: the FIXED anchor - the stick lives bottom-left and shows
+  // itself at rest. Its centre in CANVAS px (the space the touches are
+  // read in) and its placement in the overlay's.
+  const fixedStick = () => getPref('touchStickAnchor') === 'fixed';
+  const fixedCentre = () => {
+    const r = canvas.getBoundingClientRect();
+    return [FIXED_STICK_INSET + STICK_RADIUS, r.height - FIXED_STICK_INSET - STICK_RADIUS];
+  };
+  function placeStick(cx, cy) {   // canvas px -> the fixed overlay's viewport px
+    const r = canvas.getBoundingClientRect();
+    stick.style.left = `${cx + r.left - STICK_RADIUS}px`;
+    stick.style.top = `${cy + r.top - STICK_RADIUS}px`;
+    stick.style.display = 'block';
+    nub.style.transform = 'translate(0,0)';
+  }
+  function restStick() {
+    if (fixedStick()) { const [cx, cy] = fixedCentre(); placeStick(cx, cy); }
+    else stick.style.display = 'none';
+  }
+  restStick();
 
   // ---- the lock-on dot (TI1) ----
   const dot = document.createElement('div');
@@ -128,6 +220,7 @@ export function attachTouch(canvas, hooks = {}) {
   ui.appendChild(dot);
   function setLockDot(x, y) {
     if (x == null) { dot.style.display = 'none'; return; }
+    if (dot.style.display !== 'block') buzz(20);   // TI2: the lock lands - once, on its arrival
     const r = canvas.getBoundingClientRect();   // canvas px -> the fixed overlay's viewport px
     dot.style.left = `${x + r.left}px`;
     dot.style.top = `${y + r.top}px`;
@@ -174,13 +267,18 @@ export function attachTouch(canvas, hooks = {}) {
   const upCode = (code, keep = null) => { for (const k of codesOf(code).reverse()) if (!keep?.has(k)) up(k); };
   const tapAction = (action) => tapCodes(codesOf(codeFor(action)));
 
+  // TI2: a phone's button - 48 px tall (the platforms' minimum target),
+  // the system face, a frosted ground, a press that scales in and
+  // pulses. The label and the two edges are the caller's.
+  const BTN_REST = 'rgba(14,16,19,.55)', BTN_DOWN = 'rgba(120,120,120,.6)';
   function button(label, x, y, w, onDown, onUp) {
     const b = document.createElement('div');
     b.textContent = label;
-    b.style.cssText = `position:absolute;${x};${y};width:${w}px;height:44px;line-height:44px;text-align:center;color:#ddd;background:rgba(20,20,20,.55);border:1px solid rgba(255,255,255,.25);border-radius:8px;pointer-events:auto`;
-    b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); b.style.background = 'rgba(90,90,90,.7)'; onDown(); }, { passive: false });
-    b.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); b.style.background = 'rgba(20,20,20,.55)'; onUp && onUp(); }, { passive: false });
-    b.addEventListener('touchcancel', () => { b.style.background = 'rgba(20,20,20,.55)'; onUp && onUp(); });
+    b.style.cssText = `position:absolute;${x};${y};width:${w}px;height:48px;line-height:48px;text-align:center;color:#eee;background:${BTN_REST};border:1px solid rgba(255,255,255,.22);border-radius:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:auto;touch-action:none;transition:transform .08s,background .08s`;
+    const rest = () => { b.style.background = BTN_REST; b.style.transform = 'scale(1)'; };
+    b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); askFullscreen(); b.style.background = BTN_DOWN; b.style.transform = 'scale(.94)'; buzz(10); onDown(); }, { passive: false });
+    b.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); rest(); onUp && onUp(); }, { passive: false });
+    b.addEventListener('touchcancel', () => { rest(); onUp && onUp(); });
     ui.appendChild(b);
     return b;
   }
@@ -189,8 +287,8 @@ export function attachTouch(canvas, hooks = {}) {
   // Tab to the rose - the same gate-by-hook rule the sword button had.
   // Tab alone stays a literal: it is not an InputManager action
   // (inputActions.js ACTIONS) and the hosts match `e.code === 'Tab'`.
-  if (hooks.dial) button('◆', 'left:16px', 'top:16px', 48, () => tap('Tab'));
-  button('≡', hooks.dial ? 'left:72px' : 'left:16px', 'top:16px', 48, () => tapAction('Escape'));   // the menu: the pause window, save and load inside it
+  if (hooks.dial) button('◆', edge('left', 16), edge('top', 16), 48, () => tap('Tab'));
+  button('≡', edge('left', hooks.dial ? 72 : 16), edge('top', 16), 48, () => tapAction('Escape'));   // the menu: the pause window, save and load inside it
   // AUDIT 62 F8: each held button captures the code it resolved at the
   // press and lifts THAT one, so a rebind mid-hold cannot strand a key.
   let jumpCode = null, sheatheCode = null;
@@ -209,47 +307,102 @@ export function attachTouch(canvas, hooks = {}) {
   // what the live controls want, and a release subtracts only its own.
   // The code is cleared BEFORE the lift so `liveNeeds()` does not count
   // the control that is letting go.
-  button('↑↑', 'right:16px', 'bottom:16px', 64, () => { jumpCode = downAction('Jump'); }, () => { const c = jumpCode; jumpCode = null; upCode(c, liveNeeds()); });   // jump
-  button('Z', 'right:96px', 'bottom:16px', 52, () => { sheatheCode = downAction('ReadyWeapon'); }, () => { const c = sheatheCode; sheatheCode = null; upCode(c, liveNeeds()); });   // ReadyWeapon: sheathe toggle (held-style so the per-frame edge reads it)
+  button('↑↑', edge('right', 16), edge('bottom', 16), 64, () => { jumpCode = downAction('Jump'); }, () => { const c = jumpCode; jumpCode = null; upCode(c, liveNeeds()); });   // jump
+  button('Z', edge('right', 96), edge('bottom', 16), 52, () => { sheatheCode = downAction('ReadyWeapon'); }, () => { const c = sheatheCode; sheatheCode = null; upCode(c, liveNeeds()); });   // ReadyWeapon: sheathe toggle (held-style so the per-frame edge reads it)
   if (hooks.cycleMode) {
     // T3-touch: NextInteractionMode (Steal > Grab > Info > Talk wrap,
     // verbatim order) - the phone's path to the F1-F4 modes. The
     // label shows the LIVE mode (grab is the boot default).
-    const modeBtn = button('grab', 'right:160px', 'bottom:16px', 64,
+    const modeBtn = button('grab', edge('right', 160), edge('bottom', 16), 64,
       () => { modeBtn.textContent = hooks.cycleMode(); });
   }
 
   // Overlay-nav row (classic windows navigate on arrows/Enter/Esc) -
   // shown by itself while a classic overlay holds the game.
   const nav = document.createElement('div');
-  nav.style.cssText = 'position:absolute;right:16px;top:16px;display:none;pointer-events:none';
+  nav.style.cssText = 'position:absolute;inset:0;display:none;pointer-events:none';
   ui.appendChild(nav);
   const navBtn = (label, code, dx) => {
-    const b = button(label, `right:${dx}px`, 'top:16px', 44, () => tap(code));
+    const b = button(label, edge('right', dx), edge('top', 16), 44, () => tap(code));
     nav.appendChild(b);
-    b.style.right = `${dx}px`;
   };
   navBtn('↑', 'ArrowUp', 262); navBtn('↓', 'ArrowDown', 212);
   navBtn('+', 'Equal', 162); navBtn('−', 'Minus', 112);
   navBtn('⏎', 'Enter', 62); navBtn('✕', 'Escape', 12);
-  // Text entry (chargen name): prompt() -> per-char synthetic
-  // keydowns through overlayAction's 'char:' route.
-  {
-    const b = button('abc', 'right:312px', 'top:16px', 44, () => {
-      const text = window.prompt('name');
-      if (!text) return;
-      for (const ch of text) window.dispatchEvent(new KeyboardEvent('keydown', { key: ch, code: '', bubbles: true }));
+  // Text entry (chargen name): per-char synthetic keydowns through
+  // overlayAction's 'char:' route. TI2: the field is an INLINE input
+  // that raises the phone's own keyboard, not window.prompt - the
+  // native dialog was the most foreign thing on the screen. The
+  // field's own keys are the field's (ui/input.js isTextEntryTarget:
+  // the hosts route none of them); the text is delivered on Enter or
+  // the ✓, as the characters the classic window reads.
+  let entry = null;
+  const sendText = (text) => { for (const ch of text) window.dispatchEvent(new KeyboardEvent('keydown', { key: ch, code: '', bubbles: true })); };
+  function closeEntry() { if (entry) { entry.remove(); entry = null; } }
+  function openEntry() {
+    if (entry) return;
+    entry = document.createElement('input');
+    entry.type = 'text';
+    entry.autocapitalize = 'words';
+    entry.autocomplete = 'off';
+    entry.placeholder = 'name';
+    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;font:600 18px system-ui,-apple-system,sans-serif;color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
+    entry.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { const t = entry.value; closeEntry(); if (t) sendText(t); }
+      else if (e.key === 'Escape') closeEntry();
     });
+    ui.appendChild(entry);
+    entry.focus?.();
+  }
+  {
+    const b = button('abc', edge('right', 312), edge('top', 16), 44, () => openEntry());
     nav.appendChild(b);
+    const ok = button('✓', edge('right', 362), edge('top', 16), 44, () => { if (!entry) return; const t = entry.value; closeEntry(); if (t) sendText(t); });
+    nav.appendChild(ok);
   }
   const navTimer = setInterval(() => {
     const classicUp = !!hooks.overlayActive?.() && !overlayOpen();
     nav.style.display = classicUp ? 'block' : 'none';
+    if (!classicUp) closeEntry();
     if (hooks.overlayActive?.()) dot.style.display = 'none';
+    setGyro(!!getPref('touchGyroLook'));   // TI2: the pref can flip while the layer is up (the Touch card)
+    if (stickId === null && fixedStick() !== (stick.style.display === 'block')) restStick();   // ...and so can the anchor
   }, NAV_POLL_MS);
+
+  // TI2: THE GYRO. devicemotion's rotationRate, integrated over the
+  // sample's own interval and mapped by the screen orientation
+  // (ui/touchLook.js gyroLookDelta) into look units - the host's
+  // lookScale() is divided out here so its multiply puts it back, and
+  // the delta rides hooks.look like a drag: same LookFilter, same pitch
+  // clamp, same pause gate (dropped under a window, never banked).
+  let gyroOn = false, gyroT = 0;
+  const onMotion = (e) => {
+    const now = e.timeStamp ?? performance.now();
+    const dt = gyroT ? (now - gyroT) / 1000 : 0;
+    gyroT = now;
+    if (!(dt > 0) || dt > GYRO_MAX_DT || hooks.paused?.()) return;
+    const d = gyroLookDelta(e.rotationRate, globalThis.screen?.orientation?.type ?? 'landscape-primary', dt, lookScale(), getPref('touchGyroSensitivity'));
+    if (d.dx || d.dy) hooks.look?.(d.dx, d.dy);
+  };
+  function setGyro(on) {
+    if (on === gyroOn) return;
+    gyroOn = on; gyroT = 0;
+    try { window[on ? 'addEventListener' : 'removeEventListener']?.('devicemotion', onMotion); } catch { /* no motion events here */ }
+  }
+  // iOS asks permission for motion, and only from a user gesture: the
+  // Touch card asks when the switch is turned on; a pref already on at
+  // boot is asked for on the first touch instead (askMotion below).
+  let motionAsked = false;
+  function askMotion() {
+    if (motionAsked || !getPref('touchGyroLook')) return;
+    motionAsked = true;
+    try { globalThis.DeviceMotionEvent?.requestPermission?.()?.catch?.(() => {}); } catch { /* not iOS */ }
+  }
+  setGyro(!!getPref('touchGyroLook'));
 
   // ---- canvas touch: stick (left half) + the classified right half ----
   let stickId = null, stickOrigin = null, stickStart = 0, stickTravel = 0;
+  let stickX = 0, stickY = 0;   // TI2: the analog reading while engaged (x right +, y forward +)
   let lookId = null;
   const gesture = createGestureRecognizer({ locked: () => !!hooks.locked?.() });
   const local = (tch) => { const r = canvas.getBoundingClientRect(); return [tch.clientX - r.left, tch.clientY - r.top, r.width]; };
@@ -309,14 +462,19 @@ export function attachTouch(canvas, hooks = {}) {
   // held:false only on the finger's lift, the gate synthesizes that
   // release itself the moment it bites.
   let swiping = false;   // a held=true swipe was actually delivered
+  // TI2: one CSS pixel of finger is worth TOUCH_REF_HEIGHT/height of
+  // TI1b's, times the player's touch sensitivity - the drag is a
+  // fraction of the screen, not a count of whatever pixels it has.
+  const lookNorm = () => lookNormalisation(canvas.getBoundingClientRect().height, getPref('touchLookSensitivity'));
   function route(events) {
     const paused = !!hooks.paused?.();
     for (const ev of events) {
       if (ev.type === 'look') {
-        if (!paused) hooks.look?.(ev.dx * TOUCH_LOOK_GAIN, ev.dy * TOUCH_LOOK_GAIN);   // dropped, never accumulated
+        if (!paused) hooks.look?.(ev.dx * TOUCH_LOOK_GAIN * lookNorm(), ev.dy * TOUCH_LOOK_GAIN * lookNorm());   // dropped, never accumulated
       } else if (ev.type === 'swipe') {
         if (ev.held) {
           if (paused) { if (swiping) { swiping = false; hooks.attack?.(0, 0, false); } continue; }
+          if (!swiping) buzz(15);   // TI2: the hold armed - the finger is told
           swiping = true;
         } else swiping = false;
         hooks.attack?.(ev.dx, ev.dy, ev.held);
@@ -330,15 +488,23 @@ export function attachTouch(canvas, hooks = {}) {
 
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
+    askFullscreen(); askMotion();   // TI2: the first touch is the user gesture both need
     for (const t of e.changedTouches) {
       const [x, y, w] = local(t);
-      if (x < w / 2 && stickId === null) {
+      // TI2: a FIXED stick's origin is its own centre, and it answers
+      // only a finger that landed near it (the stick never moves, so
+      // the finger's offset from a far-off origin would be a full throw
+      // at once); a touch elsewhere on the half falls through to the
+      // classifier below - the tap it was, or a look, as on the right.
+      // A floating stick is born under the finger, as TI1's was.
+      const fixed = fixedStick();
+      const fc = fixed ? fixedCentre() : null;
+      const onStick = !fixed || Math.hypot(x - fc[0], y - fc[1]) <= STICK_RADIUS * FIXED_STICK_REACH;
+      if (x < w / 2 && stickId === null && onStick) {
         stickId = t.identifier;
-        stickOrigin = [x, y]; stickStart = e.timeStamp; stickTravel = 0;
-        stick.style.left = `${t.clientX - STICK_RADIUS}px`;
-        stick.style.top = `${t.clientY - STICK_RADIUS}px`;
-        stick.style.display = 'block';
-        nub.style.transform = 'translate(0,0)';
+        stickStart = e.timeStamp; stickTravel = 0; stickX = stickY = 0;
+        stickOrigin = fixed ? fc : [x, y];
+        placeStick(stickOrigin[0], stickOrigin[1]);
       } else if (lookId === null) {
         lookId = t.identifier;
         route(gesture.begin(x, y, e.timeStamp));
@@ -358,6 +524,7 @@ export function attachTouch(canvas, hooks = {}) {
         if (len > STICK_RADIUS) { dx *= STICK_RADIUS / len; dy *= STICK_RADIUS / len; }
         nub.style.transform = `translate(${dx}px,${dy}px)`;
         setStickKeys(dx / STICK_RADIUS, dy / STICK_RADIUS, mag);
+        ({ x: stickX, y: stickY } = analogAxes(dx, dy, STICK_RADIUS));   // TI2: the throw, past the dead zone
       } else if (t.identifier === lookId) {
         const [x, y] = local(t);
         route(gesture.move(x, y, e.timeStamp));
@@ -370,7 +537,8 @@ export function attachTouch(canvas, hooks = {}) {
     for (const t of e.changedTouches) {
       if (t.identifier === stickId) {
         stickId = null;
-        stick.style.display = 'none';
+        stickX = stickY = 0;
+        restStick();   // TI2: a fixed stick stays, at rest; a floating one goes
         releaseStick();   // AUDIT 62 F8: the codes it actually holds, not a frozen literal list
         // TI1b: a still, short touch on this half is a TAP - it moved no
         // key (the stick's dead zone) and it is how a foe left of centre
@@ -390,6 +558,7 @@ export function attachTouch(canvas, hooks = {}) {
   return {
     el: ui,
     setLockDot,
-    dispose() { clearInterval(navTimer); ui.remove(); },
+    axes: () => (stickId !== null && getPref('touchAnalogStick') ? { x: stickX, y: stickY } : null),   // TI2
+    dispose() { clearInterval(navTimer); setGyro(false); ui.remove(); },
   };
 }

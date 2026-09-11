@@ -697,6 +697,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
+      mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
       // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
       // ApplyVerticalForce(1);` runs in Update ahead of
       // FindKeyboardActions, so the latch drives the vertical axis

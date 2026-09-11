@@ -189,7 +189,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig } from '../combat/weaponRig.js';
+import { createWeaponRig, autoBuildArms } from '../combat/weaponRig.js';   // MWA1: the arms at boot
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendArrow, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -2023,6 +2023,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
           questInitAtGameStart();   // Q4-v: OnStartGame for the new character
+          autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -2427,6 +2428,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         grounded: player.grounded !== false, jumping: !!player.jumping, swimming: !!player.swimming, levitating: !!player.levitating } }),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs (grounded/jumping/swimming/levitating)
     spellArmed: () => magic.spellArmed(),   // M2
   });
+  autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
    *  them, and so does the broker fan-out below - one set of doors per
@@ -4160,6 +4162,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!snap) { townTalk.say('No saved game.'); return; }
     const extras = restorePlayer(playerEntity, snap, spellsByIndex);
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
+    autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
     _loading = true;
     // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
     // incoming character does not inherit the old one's reel.
@@ -4331,6 +4334,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
     if (!extras) return false;
+    autoBuildArms(playerEntity);   // MWA1: the classic save's character too
     // AUDIT 58: StartFromClassicSave.cs:616 -
     // `Banking.DaggerfallBankManager.AssignShipToPlayer(saveVars
     // .PlayerOwnedShip)`, and AssignShipToPlayer is TWO statements
@@ -5331,7 +5335,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7019-7031 -
+  // worldModes answers it in BOTH modes (worldModes.js:7020-7032 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6512,6 +6516,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // never fires on an orphan).
     lockToggle: (foe) => lockOn.toggle(foe),
     unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
+    stickAxes: () => touch?.axes() ?? null,   // TI2: the modal frames' MoveAxes read the same stick
     // AUDIT 62 F16/F28: the MODAL frame's matrices, handed back. Both
     // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
     // unprojects through them at the top of the frame, and the lock dot
@@ -7243,6 +7248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
+        mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)

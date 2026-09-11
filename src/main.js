@@ -21,6 +21,8 @@ import { bootWorld } from './scenes/world.js';
 
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
+import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
+import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
 import { getBool } from './systems/settings.js';   // SETT: the launcher gate
 import { isEnhanced } from './systems/uiSkin.js';   // THE SKIN: which front door
 // The deployed site is redeployed several times a day and every deploy
@@ -32,6 +34,7 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
+  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps') });   // FPS1: over every host, on the pref or the probe door
   const status = (msg) => {
     document.title = `Daggerfall JavaScript - ${msg}`;
   };

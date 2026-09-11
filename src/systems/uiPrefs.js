@@ -66,6 +66,34 @@ export const PREF_DEFAULTS = Object.freeze({
   // default like the other enhanced visuals; off (or the classic skin)
   // draws the tile as DFU does. Kill door `?water=off` (render/waterSurface.js).
   enhancedWater: true,
+  // TI2: THE PHONE IN HAND, TUNED (2026-09-11, Mac: "enhance the mobile
+  // element... camera movement, character movement and a more phone
+  // built feel"). The touch layer's own knobs - DFU has no touch input
+  // (Ledger A, TI1) so none of these is a DFU setting and none may go
+  // in the baked catalog. Read at the point of use by ui/touch.js; set
+  // from the Enhanced pane's Touch card, which mounts only where the
+  // device reports touch.
+  touchLookSensitivity: 1,   // a multiplier on the mouse sensitivity the drag already rides (0.25..4)
+  touchAnalogStick: true,    // the stick's throw is the speed (InputManager's joystick arm) - off is TI1's 8-way digital
+  touchStickAnchor: 'float', // 'float': the stick is born under the finger; 'fixed': it lives bottom-left and the finger's offset is the throw
+  touchGyroLook: false,      // fine aim from the phone's rotation, on top of the drag - opt-in (iOS asks permission)
+  touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
+  touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
+  touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
+  // MWA1 (2026-09-11, RookieG via Mac: "morrowind arms did not work on
+  // first launch"). Only the test room ever built the arms at boot; a
+  // normal game had them only after the Enhanced pane's Build button,
+  // and the rig is a module singleton that dies with the tab. This is
+  // the switch that button flips: Build sets it, Unload clears it, and
+  // every host that owns a weapon rig builds at boot while it is on and
+  // the archives are attached (combat/weaponRig.js autoBuildArms).
+  mwArms: false,
+  // FPS1 (2026-09-11, RookieG via Mac: "we need an ingame fps counter").
+  // The overlay in ui/fpsCounter.js: frames a second and the frame's
+  // milliseconds, worst frame of the second beside it. ?fps forces it
+  // on for a probe; this is the player's own switch on the Enhanced
+  // pane. Off by default - a number over the game is a diagnostic.
+  showFps: false,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',

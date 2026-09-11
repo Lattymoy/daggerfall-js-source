@@ -4,6 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>Daggerfall JavaScript</title>
+  <!-- TI2 (2026-09-11): the phone's install surface. The manifest makes
+       the game a home-screen app (fullscreen, landscape, no address bar -
+       the only fullscreen iOS offers a web page); the apple metas are
+       Safari's older spelling of the same. -->
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0c11" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Daggerfall" />
+  <link rel="apple-touch-icon" href="../icons/icon-192.png" />
   <style>
     html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; overscroll-behavior: none; }
     #c { display: block; width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }

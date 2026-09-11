@@ -27,6 +27,7 @@ import { createLockOn, LOCK_BREAK_DISTANCE } from '../src/player/lockOn.js';
 import { LookFilter } from '../src/player/lookFilter.js';
 import { HOLD_MS } from '../src/ui/touchGestures.js';
 import { attachTouch } from '../src/ui/touch.js';
+import { TOUCH_REF_HEIGHT } from '../src/ui/touchLook.js';   // TI2
 import { setBindings, held } from '../src/ui/input.js';
 import { createBindings, setBinding, clearBinding } from '../src/systems/inputActions.js';
 
@@ -171,7 +172,11 @@ test('AUDIT 62 F7: under a window the finger\'s look is DROPPED and its held swi
     canvas.fire('touchstart', tev('touchstart', [[3, 700, 300]], 2000));
     canvas.fire('touchmove', tev('touchmove', [[3, 780, 320]], 2010));
     assert.equal(looks.length, 1, 'and the very next unpaused drag is NOT paid the banked residual - only its own delta');
-    assert.deepEqual(looks[0], [80 * 2.0, 20 * 2.0], 'TOUCH_LOOK_GAIN on this drag alone');
+    // TI2: the drag is a fraction of the canvas height now (ui/touchLook.js
+    // lookNormalisation) - the stub canvas is 600 tall against the
+    // 400 reference, so the gain rides 2/3 of TI1b's.
+    const norm = TOUCH_REF_HEIGHT / 600;
+    assert.ok(Math.abs(looks[0][0] - 80 * 2.0 * norm) < 1e-9 && Math.abs(looks[0][1] - 20 * 2.0 * norm) < 1e-9, `TOUCH_LOOK_GAIN, height-normalised, on this drag alone: ${looks[0]}`);
     canvas.fire('touchend', tev('touchend', [[3, 780, 320]], 2020));
 
     // the TAP stays ungated on purpose: the hosts' activateGate already

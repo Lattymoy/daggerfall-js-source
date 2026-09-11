@@ -380,6 +380,30 @@ five remaining reviews and the activation lane, merged onto round one's
 commit as the mapper's next base, and put RS-10's reorder in by hand
 once the motor-view lane's edit to the same call had landed.
 
+Main moved under the audit while round one was in review: TI2 (the
+touch layer), MWA1+FPS1 (the Morrowind arms at boot, the FPS counter)
+and main's own cite commit landed as PR #80 and #81. Merging them into
+round one's commit met the mapper's one-base rule from the other side:
+the merged tree carried lines at main's numbers and lines at ours in
+the same files, and no `--base` fits both. Normalising both sides back
+to the stub and mapping once was tried twice and double-shifted what
+the pair tables could not see (the `/:N` and `` `:N` `` continuations,
+the hand-resolved cites, the `autoBuildArms` import once); the third
+pass mapped each line from the side it came from - `tools/citeMerge.mjs`
+(CS2, pinned in `citemerge.test.js`), which reads a line's provenance
+(verbatim in main's file, else in ours), maps it with citeShift's own
+hunks, spellings and content check, and moves the bare continuations
+citeShift only reports, up to the next cite of any file. 68 cites
+moved; four held, all four right where they stood (a row whose own
+cites had moved, a C# `:1270` after a port cite). Thirteen conflict
+hunks, all in bible rows, took main's block. One code reconciliation:
+MWA1's `autoBuildArms` runs at every door a made character arrives
+through, and XL-6 had taken the sizes out of the boot count that gated
+it - so the rig measures the store first (`registerMorrowindData`) when
+no fingerprint is down, as the pane's Build button does, and MWA1's pin
+follows the new signature. Full suite green over the merged tree (7079
+run, 0 failed); that commit is round two's base.
+
 Three fixups were done by hand between the rounds, from the reviewers'
 exact findings, because the lanes that owned them had died at the
 limit: the ui-pause-controls fixup that was half on disk, the
@@ -434,6 +458,12 @@ paused. Integration solo. The full figure closes with round two.
   one checkout at once and each saw the other's mutants as a red HEAD.
   One of them moved to a worktree on its own; the rule is written down
   now.
+- **Two mapped sides need a provenance map, not a common base.** The
+  mapper's "run once per base" rule has a mirror: a merge of two
+  branches that each ran it is two bases in one tree, and the only
+  question that resolves a line is which side wrote it. Three passes
+  and one tool (`citeMerge.mjs`) to learn that; the next merge under an
+  open audit runs the tool once.
 - **A split verdict is a refutation, and the surviving half still has a
   home.** Eight findings split; each is recorded above with the half
   that stood, so the next slice through that file takes it without a

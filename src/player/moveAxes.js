@@ -41,13 +41,24 @@ export class MoveAxes {
   /**
    * One Update: flags cleared, forces for the held actions, friction.
    * @param {number} dt - Time.deltaTime
-   * @param {{forwards?:boolean, backwards?:boolean, left?:boolean, right?:boolean, autorun?:boolean}} held
+   * @param {{forwards?:boolean, backwards?:boolean, left?:boolean, right?:boolean, autorun?:boolean, analog?:{x:number,y:number}|null}} held
+   *   `analog` is TI2's stick reading (ui/touchLook.js analogAxes): x
+   *   strafe right +, y forward +, each -1..1. InputManager.Update's
+   *   JOYSTICK arm, beside :548's FindKeyboardActions: the force's
+   *   scale is the axis's own reading rather than the keyboard's +/-1,
+   *   so under acceleration the axis climbs toward the throw and
+   *   without it the axis IS the throw. A non-zero analog component
+   *   REPLACES that axis's key forces for the frame - the touch layer
+   *   synthesizes the stick's keys too (for the anim and reportInput),
+   *   and summing both would count one thumb twice.
    * @returns {{forward:number, strafe:number}} the motor's axes
    */
   update(dt, held, { acceleration = getBool('Controls', 'MovementAcceleration') } = {}) {
+    const ax = held.analog ? clamp(Number(held.analog.x) || 0, -1, 1) : 0;
+    const ay = held.analog ? clamp(Number(held.analog.y) || 0, -1, 1) : 0;
     if (!acceleration) {
       // "just go" / "just stop": the axis is the held difference.
-      this.horizontal = (held.right ? 1 : 0) - (held.left ? 1 : 0);
+      this.horizontal = ax !== 0 ? ax : (held.right ? 1 : 0) - (held.left ? 1 : 0);
       // AUDIT 64 F3 - InputManager.cs:542-545, `if (ToggleAutorun)
       // ApplyVerticalForce(1);`, the half of autorun that MOVES the
       // player: the latch drives the vertical axis forward with no key
@@ -59,7 +70,7 @@ export class MoveAxes {
       // pass that zeroes ToggleAutorun at :1851 still applies its -1
       // this frame), autorun + MoveForwards is +1. Two opposing keys
       // keep the file's recorded neutral-difference answer above.
-      this.vertical = (held.forwards || held.backwards)
+      this.vertical = ay !== 0 ? ay : (held.forwards || held.backwards)
         ? ((held.forwards ? 1 : 0) - (held.backwards ? 1 : 0))
         : (held.autorun ? 1 : 0);
       return { forward: this.vertical, strafe: this.horizontal };
@@ -75,10 +86,25 @@ export class MoveAxes {
     // the net stays 0.
     if (held.autorun) { this.vertical = force(this.vertical, 1); posV = true; }
     // FindKeyboardActions (:1840-1852): right, left, forwards, backwards.
-    if (held.right) { this.horizontal = force(this.horizontal, 1); posH = true; }
-    if (held.left) { this.horizontal = force(this.horizontal, -1); negH = true; }
-    if (held.forwards) { this.vertical = force(this.vertical, 1); posV = true; }
-    if (held.backwards) { this.vertical = force(this.vertical, -1); negV = true; }
+    // TI2: the joystick arm. A key is an IMPULSE toward +/-1; a throw
+    // is a TARGET, so the axis climbs toward the throw at the same
+    // 9.8/s and settles THERE, not at the rail (a half throw is half
+    // speed, held). The impulse flag of its sign is raised so friction
+    // leaves the settled axis alone. Departure of kind, recorded in
+    // Ledger A under TI2: DFU's joystick reading reaches
+    // ApplyHorizontalForce as the scale of the same impulse, which with
+    // acceleration on would walk every throw to full speed.
+    const toward = (axis, target) => axis + clamp(target - axis, -MOVE_ACCELERATION_CONST * dt, MOVE_ACCELERATION_CONST * dt);
+    if (ax !== 0) { this.horizontal = toward(this.horizontal, ax); if (ax > 0) posH = true; else negH = true; }
+    else {
+      if (held.right) { this.horizontal = force(this.horizontal, 1); posH = true; }
+      if (held.left) { this.horizontal = force(this.horizontal, -1); negH = true; }
+    }
+    if (ay !== 0) { this.vertical = toward(this.vertical, ay); if (ay > 0) posV = true; else negV = true; }
+    else {
+      if (held.forwards) { this.vertical = force(this.vertical, 1); posV = true; }
+      if (held.backwards) { this.vertical = force(this.vertical, -1); negV = true; }
+    }
     // ApplyFriction (:1477-1491): decay an axis whose impulse was not raised.
     const step = MOVE_ACCELERATION_CONST * dt;
     if (!posV && this.vertical > 0) this.vertical = clamp(this.vertical - step, 0, this.vertical);

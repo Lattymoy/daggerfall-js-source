@@ -5378,6 +5378,7 @@ export function createWorldModes(host) {
     if (!overlayHeld) questBridge?.tick(dt);
     const crouchHeld = held(keys, 'Crouch');   // I2: DFU's default C (was the port's X)
     const mv = moveHeld(keys);
+    mv.analog = host.stickAxes?.() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
     // AUDIT 28 W8: the axes advance only on frames the motor runs (a
     // held overlay is DFU's timeScale 0 - no climb, no friction).
     // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
@@ -5809,7 +5810,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6204's own wave-46 note); the interior
+          // a blow (world.js:6208's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();

@@ -17,7 +17,7 @@ Translation rule: read the DFU C# source, translate logic verbatim into JS, keep
 1. Renderer: hand-rolled WebGL2 replaces Unity rendering. No engine, no framework.
 2. Characters: our voxel system replaces billboard NPCs/enemies and the flat 2D paperdoll. Paperdoll equipment maps onto the outfit-piece workflow proven in project-final (piece-by-piece design -> solo-tune -> lock). This is a design win, not a compromise - it upgrades the weakest original layer.
    **SUPERSEDED BY MAC, 2026-08-30**: the goal is now a comprehensive MORROWIND 3D replacement - paperdoll, items, weapons, and in time NPCs and enemies - with the player's first- and third-person aspect first. The staged rebuild and its rules live in `02-Formats/Morrowind-Rules.md`. The voxel system remains shipped where it stands until each piece's 3D replacement lands.
-3. Runtime: browser, Vite, Node ESM. Desktop-first; a mobile touch layer (virtual stick + look/attack drag + button row speaking the desktop input language) ships for on-device testing - approved by Mac, 2026-08-13.
+3. Runtime: browser, Vite, Node ESM. Desktop-first; a mobile touch layer (virtual stick + look/attack drag + button row speaking the desktop input language) ships for on-device testing - approved by Mac, 2026-08-13. TI2 (Mac, 2026-09-11) tuned it toward a phone game: a height-normalised look, an analog stick, gyro aim, haptics, fullscreen and a home-screen manifest - every knob on the port's own prefs shelf, none in DFU's settings.
 
 ## Non-negotiables
 
