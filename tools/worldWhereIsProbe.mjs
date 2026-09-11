@@ -67,7 +67,7 @@ console.log('greeting:', JSON.stringify(greet));
 if (!greet.overlay) { console.log('NO TALK WINDOW'); process.exit(1); }
 // E8: the assertions read the LIVE window's own state, which the
 // native talk window carries and the keyed one does not - topicMode
-// walks none -> categories -> buildings (ui/nativeTalk.js:341, :384-389).
+// walks none -> categories -> buildings (ui/nativeTalk.js:347, :384-389).
 await press('KeyW');
 const cats = await talk();
 console.log('categories:', JSON.stringify({ mode: cats.topicMode, count: cats.topicCount }));

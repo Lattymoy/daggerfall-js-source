@@ -4,7 +4,7 @@
 // The engine under the window has been ~95% ported since TK-v - the
 // tree assembles listTopicTellMeAbout / Person / Thing, the pipeline
 // answers every QuestionType - and the window mounted ONE of its five
-// pages (Where-is > Location) while nativeTalk.js:206 pended the rest
+// pages (Where-is > Location) while nativeTalk.js:212 pended the rest
 // as INTERIM no-ops. "Any news?", "Where am I?", quest topics and
 // work were computed and thrown away; every non-service static NPC
 // answered "You get no response." over a fully-computed greeting.

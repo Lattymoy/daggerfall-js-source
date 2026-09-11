@@ -88,8 +88,9 @@ test('AUDIT 58 talk: a tone change RE-DRAWS the question (ButtonTone*_OnClickHan
   state.tone = 1;
   w3.click(TALK_RECTS.toneNormal[0] + 1, TALK_RECTS.toneNormal[1] + 1);
   assert.equal(sets, 0, 'TalkToneToIndex(selectedTalkTone) == toneLastUsed returns');
-  // ...and the KeyT accelerator is the same door, not a bare hook call.
-  w3.input('KeyT');
+  // ...and the tone hotkey is the same door, not a bare hook call
+  // (ET1-AUDIT F1: DFU's F3 = TalkToneBlunt; T is TalkCategoryThings).
+  w3.input('F3');
   assert.equal(sets, 1);
 });
 

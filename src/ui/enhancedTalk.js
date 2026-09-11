@@ -42,12 +42,14 @@
 // ── THE KEYS ─────────────────────────────────────────────────────
 //
 // The host routes raw codes to the door (isChoiceWindow), and the
-// door maps them here. The classic accelerators stand (Escape and E
-// goodbye, W where-is, T cycles tone, digits use a row); TWO ARE
-// OURS: Enter ASKS the selected topic and the arrows move the
-// selection - Enter closing a dialogue panel would be the one thing a
-// Skyrim player never expects, and the classic's Enter-closes was
-// only ever the interim ChoiceWindow's key kept alive.
+// door maps them here. DFU's own DialogShortcuts row comes first,
+// through the model's input() (ET1-AUDIT F1: A/W/L/P/T/J/O/G/C and
+// F1-F3 - the same presses a click makes), then the classic's Esc/E
+// goodbye, digits and N. TWO ARE OURS: Enter ASKS the selected topic
+// and the arrows move the selection (sideways steps the tone) - Enter
+// closing a dialogue panel would be the one thing a Skyrim player
+// never expects, and the classic's Enter-closes was only ever the
+// interim ChoiceWindow's key kept alive.
 //
 // ── WHAT IT DOES NOT DO ──────────────────────────────────────────
 //
@@ -265,7 +267,7 @@ function render() {
 /** The door's key map, over the host's routed code. Returns true when
  *  the key was taken. Enter and the arrows are this panel's own (see
  *  the header); everything else is the classic window's input(). */
-export function talkKey(code, m) {
+export function talkKey(code, m, e = null) {
   if (code === 'Enter') { m.press('okay'); return true; }
   if (code === 'ArrowDown' || code === 'ArrowUp') {
     if (!m.topics.length) return true;
@@ -276,11 +278,11 @@ export function talkKey(code, m) {
   }
   if (code === 'ArrowLeft' || code === 'ArrowRight') {
     // the arrows sideways step the tone, the way T cycles it
-    const t = m.hooks.tone();
+    const t = m.hooks.tone?.() ?? 1;
     m.press(['tonePolite', 'toneNormal', 'toneBlunt'][(t + (code === 'ArrowRight' ? 1 : 2)) % 3]);
     return true;
   }
-  m.input(code);
+  m.input(code, e);
   return true;
 }
 
@@ -305,7 +307,7 @@ export function mountEnhancedTalk(hostEl, d = {}) {
     /** Per frame from the door's draw(): the portrait lands async. */
     frame() { paintFace(); },
     /** A routed key, through the map, then a fresh picture. */
-    key(code) { act(() => talkKey(code, model)); },
+    key(code, e = null) { act(() => talkKey(code, model, e)); },
     destroy() {
       host = null; model = null; onExit = () => {}; relock = () => {};
       faceKey = null; faceCanvas = null; logEl = null; listEl = null;

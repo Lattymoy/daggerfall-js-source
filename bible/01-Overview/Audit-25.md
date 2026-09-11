@@ -181,7 +181,7 @@ composer both hosts call - two call sites of one envelope is exactly
 how the halves drifted.)
 
 **5-6. The talk window mounts one of its five pages.**
-`nativeTalk.js:206` is explicit: "Tell me about / People / Things /
+`nativeTalk.js:212` is explicit: "Tell me about / People / Things /
 Work: INTERIM no-ops (pend)". Only Where-is/Location works. The
 ENGINE underneath is ~95% ported across five modules and 3,000 JS
 lines with mutation campaigns - so "Any news?", "Where am I?", quest

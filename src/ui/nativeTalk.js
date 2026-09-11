@@ -38,12 +38,17 @@
 // :549-550/:1381-1387), a DOUBLE click uses it (MouseDoubleClick ->
 // OnUseSelectedItem -> SelectTopicFromTopicList), OKAY asks whatever
 // is selected (ButtonOkay_OnMouseClick :1534-1548), and the selected
-// row draws in ListBox's selectedTextColor with no shadow. The
-// session's keyboard accelerators are preserved - W opens
-// Where-is > Location, T cycles tone, digits USE a visible row
-// (OURS: DFU has no keyboard here, so one press does both halves),
-// N/P page (OURS: DFU has no keyboard scroll here, so they step a
-// full listbox height), Esc/E goodbye. B5-6: Tell me about, People,
+// row draws in ListBox's selectedTextColor with no shadow.
+// ET1-AUDIT F1: THE KEYBOARD IS DFU'S. This header used to say "DFU
+// has no keyboard here", and it does: DialogShortcuts.txt binds all
+// twelve of this window's buttons (systems/dialogShortcuts.js:331-336
+// - A Tell me about, W Where is, L/P/T/J the four categories, O ask,
+// G goodbye, C copy, F1/F2/F3 the tones), and input() walks them
+// FIRST through firstHotkey, landing on press(name) like a click. The
+// port's own keys stand only where DFU binds nothing: Esc/E/Enter
+// goodbye, digits USE a visible row (one press does both halves), N
+// pages the list. T-cycles-tone and P-pages are GONE - DFU's T is
+// Things and P is People. B5-6: Tell me about, People,
 // Things and Work are LIVE pages over the engine's own lists
 // (listTopicTellMeAbout / Person / Thing and the Work question);
 // each stays a consumed no-op on a host with no engine mounted.
@@ -61,6 +66,7 @@ import { SOUND } from '../systems/soundClips.js';
 // AUDIT 58 (seams): the resolvingError literal SetListboxTopics repairs
 // an empty caption with (Internal_Strings.csv:582, '...never mind...').
 import { RESOLVING_ERROR } from '../systems/rumorMill.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // ET1-AUDIT F1: DaggerfallShortcut's talk row
 
 export const TALK_RECTS = Object.freeze({
   tellMeAbout: [4, 4, 107, 10],
@@ -390,6 +396,19 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *  arrows, and the four category buttons last. The three PANELS
  *  (topicList, conversation, topicSlider) are hit by coordinate, not
  *  by name, and are not here. */
+/** ET1-AUDIT F1: DaggerfallShortcut.Buttons for this window
+ *  (dialogShortcuts.js BUTTONS' "Talk screen" row), each to the button
+ *  name it presses. The order is the row's own - firstHotkey returns
+ *  the first hit, as Panel.ProcessHotkeySequences does. */
+export const TALK_HOTKEYS = Object.freeze({
+  TalkTellMeAbout: 'tellMeAbout', TalkWhereIs: 'whereIs',
+  TalkCategoryLocation: 'categoryLocation', TalkCategoryPeople: 'categoryPeople',
+  TalkCategoryThings: 'categoryThings', TalkCategoryWork: 'categoryWork',
+  TalkAsk: 'okay', TalkExit: 'goodbye', TalkCopy: 'logbook',
+  TalkTonePolite: 'tonePolite', TalkToneNormal: 'toneNormal', TalkToneBlunt: 'toneBlunt',
+});
+const TALK_HOTKEY_BUTTONS = Object.freeze(Object.keys(TALK_HOTKEYS));
+
 export const BUTTON_ORDER = Object.freeze([
   'logbook', 'goodbye', 'okay', 'whereIs', 'categoryLocation',
   'tonePolite', 'toneNormal', 'toneBlunt',
@@ -780,13 +799,16 @@ export class NativeTalkWindow {
    *  right click sounds once per row it marks. */
   _markCopied() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
-  /** Keyboard accelerators (the session's established keys). */
-  input(code) {
+  /** The keyboard. ET1-AUDIT F1: DFU's DialogShortcuts row FIRST -
+   *  every talk button has a hotkey there and each is the same press
+   *  a click is - then the port's own keys where DFU binds nothing.
+   *  `e` is the host's event (U20a: it rides with the code), for the
+   *  modifier halves a bare code cannot carry. */
+  input(code, e = null) {
+    const hit = firstHotkey(TALK_HOTKEY_BUTTONS, code, e);
+    if (hit) { this.press(TALK_HOTKEYS[hit]); return; }
     if (code === 'Escape' || code === 'KeyE' || code === 'Enter') { this._close(); return; }
-    if (code === 'KeyW') { this._openCategories(); return; }
-    if (code === 'KeyT') { this._setTone((this.hooks.tone() + 1) % 3); return; }
     if (code === 'KeyN') { this._scrollBy(TALK_RECTS.topicList[3]); return; }   // ours: a full page
-    if (code === 'KeyP') { this._scrollBy(-TALK_RECTS.topicList[3]); return; }
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(Number(d[1]) - 1);
   }

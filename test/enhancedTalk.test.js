@@ -180,13 +180,37 @@ test('ET1 keys: Enter asks and the arrows move (ours); the classic accelerators 
   assert.equal(w.hooks.tone(), 2, 'sideways steps the tone');
   talkKey('ArrowLeft', w); talkKey('ArrowLeft', w);
   assert.equal(w.hooks.tone(), 0);
+  // ET1-AUDIT F1: DFU's DialogShortcuts row, through the model - T is
+  // Things (an empty page), F2 is TalkToneNormal, C copies, A/L are
+  // the pages, G says goodbye; the classic's T-cycles-tone is gone
+  talkKey('F2', w);
+  assert.equal(w.hooks.tone(), 1, 'F2 is TalkToneNormal');
   talkKey('KeyT', w);
-  assert.equal(w.hooks.tone(), 1, 'T cycles it, as the classic does');
+  assert.equal(w.topicMode, 'topics');
+  assert.deepEqual(w.topics, [], 'T is TalkCategoryThings - the empty page, verbatim');
+  talkKey('KeyL', w);
+  assert.equal(w.topicMode, 'categories');
+  talkKey('KeyA', w);
+  assert.equal(w.topics[0].label, 'Any news?', 'A is TalkTellMeAbout');
+  talkKey('KeyC', w);
+  assert.equal(w.copyIndexes.size, 1, 'C is TalkCopy');
+  talkKey('KeyW', w); talkKey('Enter', w);
+  assert.equal(w.topicMode, 'buildings');
   talkKey('Digit2', w);
   assert.equal(w.conversation.length, 5, 'a digit uses a row');
   talkKey('Escape', w);
   assert.equal(w.done, true, 'Escape is goodbye');
   assert.equal(w.hooks.state.closed, 1);
+  const g = new NativeTalkWindow('Hello.', mkHooks());
+  talkKey('KeyG', g);
+  assert.equal(g.done, true, 'and so is DFU\'s G, TalkExit');
+  // the classic face reads the same row: the map is the window's own
+  const talk = read('src/ui/nativeTalk.js');
+  assert.match(talk, /const hit = firstHotkey\(TALK_HOTKEY_BUTTONS, code, e\);\s*\n\s*if \(hit\) \{ this\.press\(TALK_HOTKEYS\[hit\]\); return; \}/, 'DFU\'s row first, as a press');
+  assert.doesNotMatch(talk, /code === 'KeyT'|code === 'KeyP'/, 'the port\'s T and P are gone - DFU binds both');
+  const door = read('src/ui/talkDoor.js');
+  assert.match(door, /hooks\.relock\?\.\(\);\s*\n\s*teardown\(\);/, 'ET1-AUDIT F3: Tab\'s goodbye relocks in its gesture');
+  assert.match(door, /else if \(code !== 'Enter'\) \{ model\.input\(code, e\);/, 'ET1-AUDIT F4: a pre-mount Enter is held, not a goodbye');
 });
 
 test('ET1 panel: a bottom rectangle over the world, the pixel frame, no art, and the phone stacks it', () => {

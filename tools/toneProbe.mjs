@@ -9,7 +9,8 @@
 // (258,18/28/38), the selection a flat toggleColor fill (:63-65,
 // :545-547) - so there IS no text row to find and the probe failed on
 // a window that was working. The DRIVE is unchanged, because the keys
-// are: KeyT is the tone cycle (nativeTalk.js:484), KeyW opens the
+// are: F3 is TalkToneBlunt - ET1-AUDIT F1: DFU's own DialogShortcuts
+// row, which the window walks first (nativeTalk.js input) - KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
 // What moved is what is READ: `native` (townTalk.js:1322, true only
 // when the art window is up), `tone`, and the ABSENCE of
@@ -51,9 +52,9 @@ console.log('greeting:', JSON.stringify({ text: greet.overlayText, native: greet
 if (!greet.native) { console.log('NOT THE NATIVE TALK WINDOW'); process.exit(1); }
 if (greet.overlayOptions) { console.log('KEYED OPTION ROWS ARE UP - the art window did not mount'); process.exit(1); }
 if (greet.tone !== 'Normal') { console.log(`TONE DOES NOT START NORMAL: ${greet.tone}`); process.exit(1); }
-await press('KeyT');   // Normal -> Blunt
+await press('F3');   // Normal -> Blunt: TalkToneBlunt (ET1-AUDIT F1; the port's T-cycles-tone is gone, T is Things)
 const blunt = await talk();
-console.log('after T:', JSON.stringify({ native: blunt.native, tone: blunt.tone }));
+console.log('after F3:', JSON.stringify({ native: blunt.native, tone: blunt.tone }));
 if (blunt.tone !== 'Blunt') { console.log('TONE DID NOT CYCLE'); process.exit(1); }
 await press('KeyW');
 const cats = await talk();

@@ -449,7 +449,7 @@ footer        [0, H-FOOT_H, P, FOOT_H]
 * Row heights are variable: `rowH = ROW_BASE + (labelLines-1) * LINE_H`, `labelLines = wrapText(font.fnt, label, labelW).length` capped at 3.
 * Scroll is by **item index** (`scrollIndex`). Items are laid out from `list.y`; an item is emitted only if it fits **wholly** (`y + h <= list.y + list.h`) — the renderer has no scissor (`grep scissor src/render/renderer.js` → nothing), so a partially visible row is never drawn and never hit‑tested.
 * On focus move, clamp `scrollIndex` so the focused item is wholly visible (ListBox's `ClampSelectionToVisibleRange`, `listPicker.js:102‑103`).
-* Scrollbar thumb: `h = max(6, round(trackH * visibleCount / totalCount))`, `y = track.y + round(trackH * scrollIndex / totalCount)` — the `TotalUnits/DisplayUnits` proportion of `VerticalScrollBar.cs:187‑198` (precedent `nativeTalk.js:88‑83`). Draggable; a tap above/below the thumb pages.
+* Scrollbar thumb: `h = max(6, round(trackH * visibleCount / totalCount))`, `y = track.y + round(trackH * scrollIndex / totalCount)` — the `TotalUnits/DisplayUnits` proportion of `VerticalScrollBar.cs:187‑198` (precedent `nativeTalk.js:94‑83`). Draggable; a tap above/below the thumb pages.
 
 ### 2.6 Row internals (all rows are two‑line)
 
@@ -904,7 +904,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | `ButtonClick` on every button press | `DaggerfallMessageBox.ButtonClickHandler:487`, precedent `messageBox.js:248-257` |
 | Wheel = one row per notch | `ListBox`, precedent `listPicker.js:111-115` |
 | Clamp selection to the visible range | `ListBox`, precedent `listPicker.js:102-103` |
-| Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:88-89` |
+| Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:94-95` |
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
 | Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:175-177` |
 | `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:26` |

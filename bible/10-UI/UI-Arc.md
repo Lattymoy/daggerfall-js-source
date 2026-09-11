@@ -12323,3 +12323,84 @@ The topic list's PixelWise scroll and horizontal pan (AUDIT 58) are the
 classic face's answers to a 94-pixel box; a DOM list scrolls itself
 and a long topic wraps, so the model's scroll fields go unread by the
 panel and the digit accelerators count from the top of the list.
+
+## ET1-AUDIT - THE TALK PANEL, AUDITED (2026-09-11)
+
+**Mac: "Do an audit on this."** The panel read against the classic
+window it fronts, DFU's own talk window, and the seams it stands on
+(the hosts' key ladders, the pad, the touch layer, the DOM HUD, the
+pushed popup). Nine findings; four fixed, five recorded.
+
+**F1 - FIXED: the keyboard was not DFU's, on EITHER face.** The
+classic window's header said "DFU has no keyboard here" and rolled
+its own keys - T cycled the tone, N/P paged, W where-is, digits. DFU
+HAS a keyboard here: DialogShortcuts.txt binds all twelve of the
+window's buttons (`systems/dialogShortcuts.js:331-336` - A Tell me
+about, W Where is, L/P/T/J the four categories, O ask, G goodbye, C
+copy, F1/F2/F3 the tones), and the port's own T and P collided with
+two of them (T is Things, P is People). `NativeTalkWindow.input(code,
+e)` now walks DFU's row FIRST through `firstHotkey` - the A8 table the
+inventory, the guild and coven windows and the travel popup already
+read - and lands on `press(name)`, the same arm a click takes; the
+port's keys stand only where DFU binds nothing (Esc/E/Enter goodbye,
+digits, N). T-cycles-tone and P-page are gone. The panel's key map
+runs the same row through the model, so a keyboard player reaches
+every page and tone by DFU's letters, and the two pins that pressed T
+for the tone now press F3. `tools/toneProbe.mjs` presses F3.
+
+**F2 - FIXED: the event did not ride.** The host routes `input(code,
+e)` (U20a) and the door dropped `e`, so a modifier could never reach
+the hotkey match. It rides now, door to panel to model.
+
+**F3 - FIXED: Tab's goodbye did not relock.** PX28's Tab took the
+door's `goodbye` arm, which said goodbye through the model and tore
+the DOM down but never asked for the pointer back; the panel's own
+Goodbye and the routed Escape did. Tab is a keydown - a gesture - so
+the relock rides it too (MAC1).
+
+**F4 - FIXED: a pre-mount Enter said goodbye.** The panel is one
+dynamic import away, and until it lands the door drove the model
+with the classic accelerators - whose Enter is goodbye, where the
+panel's Enter is ASK. An Enter in that frame closed the conversation
+before it appeared. It is held.
+
+**F5 - RECORDED: the pad cannot press the panel.** GP1's poller
+synthesises pointer events on the CANVAS, so no DOM overlay takes a
+controller-cursor click - this panel, the pause window, the pack, the
+book alike. The pad's UI bindings that reach the panel are the ones
+that become keys (the arrows, Enter, Escape), which move, ask and
+leave; the pages and tones are letters a pad has none of. The fix is
+GP-lane, not ET1: a cursor that dispatches to
+`document.elementFromPoint` reaches every enhanced window at once.
+
+**F6 - RECORDED: Modern Talk Layout is the classic face's.**
+`GUI/EnableModernConversationStyleInTalkWindow` stays LIVE - the
+classic window reads it - and the panel ignores it: the panel IS the
+modern layout (questions right, answers left, blocks). The row's DFU
+help text describes the classic window, which is what it switches.
+
+**F7 - RECORDED: a pushed popup shows under the panel.** The guild
+service popup's TALK pushes the conversation over its popup (AUDIT 63
+F44), and the host paints covered windows before the top (ROAD
+close-P). The classic talk art covered it; the panel does not, and
+the popup's canvas rows stand in the world behind the panel - inert,
+since the door consumes every press. DFU's own window is opaque. Left
+as the reference's own shape (Skyrim shows the world), noted here so
+nobody reads it as a leak.
+
+**F8 - RECORDED: the digits count from the top.** The classic's digit
+accelerators address the VISIBLE rows (its PixelWise scroll); the
+panel's list scrolls in the DOM, unread by the model, so digit N is
+row N of the page. On a page longer than nine rows the mouse and the
+arrows reach the rest.
+
+**F9 - CHECKED, CLEAN.** The interior host hands its keyboard to the
+outer slot (worldModes.js: "the outer slot owns the keyboard"), so
+keys reach the panel inside a building as outside; the touch layer's
+overlay-nav row hides while a PX28 overlay is registered, so no
+arrow buttons pile on the panel; the DOM HUD stands at z-index 4
+under the panel's 11 and `hudCovered` hides the canvas HUD as it does
+under every window; `windows.eachCoveredWindow` counts the pushed
+popup, so the relock gate holds; a click beside the panel lands on
+the door's shell, never the canvas, so the world's pointerdown cannot
+relock mid-conversation.

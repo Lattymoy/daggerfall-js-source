@@ -78,6 +78,9 @@ function enhancedTalkOverlay(model, hooks) {
   // take this arm, never a bare teardown.
   const goodbye = () => {
     if (!model.done) model.press('goodbye');
+    // ET1-AUDIT F3: Tab (PX28) is a keydown - a gesture - so the relock
+    // rides it as it rides the panel's own Goodbye (MAC1).
+    hooks.relock?.();
     teardown();
   };
   host = document.createElement('div');
@@ -103,10 +106,15 @@ function enhancedTalkOverlay(model, hooks) {
     get done() { return torn; },
     /** The host's routed code. Before the panel has mounted (one
      *  import away) the classic accelerators still work on the model. */
-    input(code) {
+    input(code, e = null) {
       if (torn) return;
-      if (view) view.key(code);
-      else { model.input(code); if (model.done) teardown(); }
+      if (view) view.key(code, e);
+      // ET1-AUDIT F4: before the panel mounts (one import away) the
+      // classic accelerators drive the model, EXCEPT Enter - the
+      // classic's Enter is goodbye and the panel's is ASK, and a key
+      // that closes the conversation the frame before it appears is
+      // neither; it is held.
+      else if (code !== 'Enter') { model.input(code, e); if (model.done) teardown(); }
     },
     /** Consumed: a press that reaches the canvas beside the panel is
      *  a press on the conversation, and must not grab the pointer. */

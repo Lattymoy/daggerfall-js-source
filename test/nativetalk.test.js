@@ -105,8 +105,10 @@ test('nativeTalk: the keyboard accelerators mirror the session keys', () => {
   assert.equal(w.topics[0].label, 'The Bank of Daggerfall');
   w.input('Digit1');
   assert.equal(w.conversation.at(-1).text, 'The Bank of Daggerfall is east of here');
-  w.input('KeyT');             // tone cycles 1 -> 2
+  w.input('F3');               // ET1-AUDIT F1: DFU's TalkToneBlunt (DialogShortcuts.txt); T is TalkCategoryThings now
   assert.equal(h.state.tone, 2);
+  w.input('F1');
+  assert.equal(h.state.tone, 0);
   w.input('Escape');
   assert.ok(w.done && h.state.closed === 1);
 });
