@@ -70,7 +70,14 @@ up the majority of the texture"), so the surface covers it whole (MAC2,
 puddle did not read as water); record 9 is not in DFU's list and keeps
 the classic tile. The coverage inside a tile is the bilinear blend of its four
 corners - the diagonal the shore tile's own art follows - feathered by
-`SHORE_SOFTNESS` and discarded past the feather.
+`SHORE_SOFTNESS` and discarded past the feather. MAC2 (2026-09-11)
+lifted the table into `world/waterCorners.js`, a leaf the render pass
+and the player's feet share: the exterior surface model reads the same
+corners at the feet's fraction, and where the coverage is at or past
+the shader's 0.5 diagonal the player SWIMS - Mac's departure over
+DFU's record law, in which a stream, a bank, a shore or a moat is waded
+(Ledger A: THE PLAYER SWIMS WHERE THE SURFACE IS DRAWN). The picture and
+the physics come from one table now, so they cannot disagree.
 
 **The shading**, in the engine's own palette space (no sRGB anywhere):
 

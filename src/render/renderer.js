@@ -678,7 +678,8 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // c2/S6: the automap's water tint is UnderwaterFog's, not the shader's -
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
-import { WATER_SURFACE_VS, waterSurfaceFs, packWaterMask } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
+import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
+import { packWaterMask } from '../world/waterCorners.js';   // MAC2: the corner table's one home
 
 /** The automap render panel, DFU's own rect on the 320x200 native
  *  screen (DaggerfallAutomapWindow's dummyPanelRenderAutomap /

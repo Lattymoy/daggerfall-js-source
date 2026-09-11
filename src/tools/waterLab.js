@@ -8,7 +8,8 @@
 // probe (tools/waterProbe.mjs).
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
-import { waterUniforms, buildWaterIndices, WATER_MASK_TABLE } from '../render/waterSurface.js';
+import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
+import { WATER_MASK_TABLE } from '../world/waterCorners.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';

@@ -40,7 +40,9 @@ import {
   onShallowWaterTile, onPathTile, downProbe,
   onExteriorGroundMethod, onExteriorStaticGeometryMethod,
   exteriorWaterMethod, exteriorPathMethod, exteriorSurfaces, exteriorSwimLatch,
+  SWIM_COVERAGE, feetWaterCoverage,   // MAC2
 } from '../src/player/exteriorSurface.js';
+import { createLookupTable } from '../src/world/terrainTiles.js';   // MAC2: a shore byte the producer mints
 import {
   UnderwaterFog, fogT, WATER_FOG_COLOR, WATER_MAP_COLOR,
   FOG_DENSITY_MIN, FOG_DENSITY_MAX, DUNGEON_FOG, applyFog,
@@ -490,5 +492,51 @@ test('ROAD-B b3: both dungeon hosts run UpdateFog per frame; no exterior host do
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
     assert.equal(callers.has(host), false,
       `${host} must not tint the screen underwater - DFU has no exterior UpdateFog call`);
+  }
+});
+
+test('MAC2: the player swims where the surface is drawn under the feet - the departure over DFU\'s record law (Ledger A)', () => {
+  // DFU answers by RECORD (tile 0 swims, the water-majority shore records
+  // wade, the rest are dry); the enhanced surface draws water by CORNER,
+  // so a stream, a bank, a shore or a moat read as water and were walked
+  // across. Mac's call (2026-09-11): where the surface puts water under
+  // the feet the player swims. MUTANTS: the coverage gate deleted (every
+  // shore case below wades or dries as DFU has it); `>=` -> `>` (the
+  // diagonal case); either host's `feet:` line dropped (the source pins).
+  const { Swimming, WaterWalking, None } = ON_EXTERIOR_WATER;
+  const G = { onGround: true };
+  // DFU's law stands where there is no coverage to read
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 0 }), Swimming);
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 5 }), WaterWalking);
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 7 }), None);
+  // the departure: feet in a shore tile's water swim...
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 5, coverage: 0.7 }), Swimming, 'a shore tile, the feet in its water');
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 5, coverage: SWIM_COVERAGE }), Swimming, 'on the shader\'s own diagonal');
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 5, coverage: 0.3 }), WaterWalking, '...and on its dirt DFU\'s wade stands');
+  // ...even on a record DFU calls dry (7: one water corner)
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 7, coverage: 0.6 }), Swimming);
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 7, coverage: 0.2 }), None);
+  // water walking stays above any water (:590-591), and the ground gate holds
+  assert.equal(exteriorWaterMethod({ ...G, tileIndex: 5, coverage: 0.9, waterWalking: true }), WaterWalking);
+  assert.equal(exteriorWaterMethod({ onGround: false, tileIndex: 0, coverage: 1 }), None);
+  assert.equal(SWIM_COVERAGE, 0.5, 'the shader\'s shore diagonal (render/waterSurface.js smoothstep about 0.5)');
+  // the shape the producer mints: a raw shore byte from the marching
+  // squares (corners (0,0),(1,0) dirt - water along y = 1), and the
+  // feet's fraction in the tilemap's own frame
+  const raw = createLookupTable()[0b0011];
+  assert.ok(Math.abs(feetWaterCoverage(raw, [0.5, 0.9]) - 0.9) < 1e-9, 'coverage is the bilinear blend of the byte\'s water corners');
+  assert.ok(Math.abs(feetWaterCoverage(raw, [0.5, 0.1]) - 0.1) < 1e-9);
+  assert.equal(feetWaterCoverage(null, [0.5, 0.5]), null, 'off a built pixel');
+  assert.equal(feetWaterCoverage(raw, null), null, 'no fraction to read');
+  const probe = { hit: true, terrain: true, staticGeometry: false, dist: 0.9 };
+  assert.equal(exteriorSurfaces({ inside: false, rawTile: raw, feet: [0.5, 0.9], probe }).water, Swimming, 'the model, off the raw byte and the feet');
+  assert.equal(exteriorSurfaces({ inside: false, rawTile: raw, feet: [0.5, 0.1], probe }).water, WaterWalking, 'the same byte, the feet on its dirt: DFU\'s wade');
+  assert.equal(exteriorSurfaces({ inside: false, rawTile: raw, probe }).water, WaterWalking, 'and with no feet at all, DFU\'s record law alone');
+  // both exterior hosts hand the feet over, from the tile arithmetic the
+  // water pass shares (fract(vLocalXZ / tile))
+  for (const [file, sample] of [['../src/scenes/world.js', 'playerGroundSample'], ['../src/scenes/exterior.js', 'playerGroundSampleRaw']]) {
+    const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.match(src, new RegExp(`const ${sample} = \\(\\) => \\{[\\s\\S]{0,900}feet: \\[u - tx, v - ty\\]`), `${file}: the sample carries the feet's fraction`);
+    assert.match(src, /rawTile: _ground\?\.tile \?\? null,\s*\n\s*feet: _ground\?\.feet \?\? null,/, `${file}: the surface read hands the feet to the model`);
   }
 });

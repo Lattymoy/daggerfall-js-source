@@ -9,10 +9,9 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapRectHasWater, buildWaterIndices, waterCorners, waterCoverage, SHALLOW_WHOLE,
-  windStrength01, waterUniforms, SHORE_FAMILIES, WATER_SURFACE_VS, waterSurfaceFs,
-  WATER_LIFT, WATER_OPACITY, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
+  tilemapRectHasWater, buildWaterIndices, windStrength01, waterUniforms, WATER_SURFACE_VS, waterSurfaceFs, WATER_LIFT, WATER_OPACITY, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
 } from '../src/render/waterSurface.js';
+import { WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, waterCorners, waterCoverage, SHALLOW_WHOLE, SHORE_FAMILIES } from '../src/world/waterCorners.js';
 import { onShallowWaterTile } from '../src/player/exteriorSurface.js';
 import { createLookupTable, assignTiles } from '../src/world/terrainTiles.js';
 import { convertTilemap, buildTerrainGrid, buildTerrainIndices } from '../src/world/terrainSurface.js';
@@ -175,7 +174,8 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
 
 test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw state that blends over the ground it is lifted from', () => {
   const r = rd('src/render/renderer.js');
-  assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs, packWaterMask \} from '\.\/waterSurface\.js';/);
+  assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs \} from '\.\/waterSurface\.js';/);
+  assert.match(r, /import \{ packWaterMask \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /this\._csLoc\.water = \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\];/, 'VC4\'s recorded gap, closed');
   const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
