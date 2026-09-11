@@ -543,10 +543,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         factionID: f.factionID, flags: f.flags,
         // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED record ints.
         rawX: f.rawX, rawY: f.rawY, rawZ: f.rawZ,
-        // StaticNPC.cs:154 seeds the name off the FLAT RESOURCE's
+        // StaticNPC.cs:155 seeds the name off the FLAT RESOURCE's
         // stream position, not the object offset the actions key on.
         position: f.flatPosition,
-        // StaticNPC.cs:159. buildingKey stays 0 (:157) - the struct
+        // StaticNPC.cs:159. buildingKey stays 0 (:158) - the struct
         // default, and a dungeon has no building.
         context: NPC_CONTEXT.Dungeon,
         // PlayerActivate.cs:745-751 keeps its own copy of the flat's
@@ -5138,9 +5138,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  static NPC's bootstrap QuestResourceBehaviour is a component in
      *  the scene like any other: it is in
      *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
-     *  (GameObjectHelper.cs:926 - the list IsAlreadyPlaced reads) and,
-     *  because StaticNPC.cs:127 registers the object with
-     *  ActiveGameObjectDatabase, in
+     *  (GameObjectHelper.cs:926 - the list IsAlreadyInjected reads; the
+     *  guard is :978, called :950) and, because StaticNPC.cs:127
+     *  registers the object with ActiveGameObjectDatabase, in
      *  GetActiveStaticNPCQuestResourceBehaviours too
      *  (ActiveGameObjectDatabase.cs:308-311). npcTargets() below is the
      *  RAY's filtered view and cannot serve either. */

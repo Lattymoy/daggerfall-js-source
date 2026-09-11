@@ -26,10 +26,11 @@
 //
 // THE GESTURES, mirrored from ui/controlsWindow.js:
 //  - LEFT CLICK a binding arms capture; the NEXT keydown binds.
-//    ReservedKeys is empty in DFU (DaggerfallControlsWindow.cs:73), so
-//    EVERY key binds — Escape included, which is why the shell's own
-//    Escape handler stands down while a capture is armed (see
-//    captureArmed() and ui/enhancedMenu.js's onKey).
+//    ReservedKeys is empty in DFU (InputManager.cs:73
+//    `new KeyCode[] { }`, exposed :174-177), so the capture gate that
+//    consults it (DaggerfallControlsWindow.cs:410) never refuses a key —
+//    Escape included, which is why the shell's own Escape handler stands
+//    down while armed (captureArmed(), ui/enhancedMenu.js's onKey).
 //  - a key pressed under Ctrl/Shift/Alt binds the COMBO, through the
 //    grid's own comboFromEvent — the port's narrowing of DFU's
 //    two-key gesture onto the event's three virtual flags.
@@ -47,13 +48,12 @@
 //
 // THE CAPTURE LISTENER IS THE PART A BROWSER GETS WRONG. It is a
 // `keydown` on the DOCUMENT with `{ capture: true }`, and it
-// preventDefault()s and stopPropagation()s what it takes, so the
-// hosts' own keydown ladders (scenes/world.js, exterior.js,
-// worldModes.js — all bubble-phase listeners on the global) never see
-// the key being bound. It is removed the instant the key lands, and
-// again if the pane is left while still armed: a window-level listener
-// that outlives its screen is the bug ui/enhancedMenu.js's own unmount
-// note is about.
+// preventDefault()s and stopPropagation()s what it takes, so the hosts'
+// own keydown ladders (scenes/world.js, exterior.js, worldModes.js —
+// all bubble-phase listeners on the global) never see the key being
+// bound. It is removed the instant the key lands, and again if the pane
+// is left while still armed: a window-level listener that outlives its
+// screen is the bug ui/enhancedMenu.js's own unmount note is about.
 //
 // AND THE CAPTURE TARGET IS A <button>, NEVER AN <input>. ui/input.js
 // isTextEntryTarget answers on INPUT/TEXTAREA/contentEditable (CG2);
