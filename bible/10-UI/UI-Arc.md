@@ -12135,3 +12135,47 @@ close.
 **Pinned** in `test/joystickwindow.test.js`. The flag at
 `systems/inputActions.js` narrows to the controller cursor; the Ledger
 row (`:609`) says the window shipped. Not a departure.
+
+## GP3 - THE CONTROLLER CURSOR (2026-09-11)
+
+The last of InputManager's joystick law. `UpdateControllerCursorPosition`
+(:1518-1570) and `OnGUI` (:556-573): while the cursor is visible - a
+window up - and the pad is the live device (`UsingController`, :252-255:
+a stick past the dead zone made it so, a mouse move unmakes it), a
+32x32 cursor stands where `Input.mousePosition` was when the pad took
+over, the MOVEMENT stick's raw axes move it at JoystickCursorSensitivity
+× 900 px a second (the inversions applied, up is up, clamped to the
+screen), `MousePosition` (:265-272) answers the cursor's point to every
+window, and `GetMouseButtonDown` (:1050-1063) ORs the joystick click
+actions - which is how BaseScreenComponent (:573, :626-628) sees a click
+where the cursor is. The OS cursor hides meanwhile (:563).
+
+The port keeps all of it in `ui/gamepadInput.js`. The cursor is a DOM
+element over the canvas (the touch layer's own idiom), born at the last
+real mouse point (the canvas centre when none was seen), moved on the
+poller's frame by `cursorStep`, and its clicks are SYNTHETIC
+PointerEvents on the canvas at its point - pointermove on each step,
+pointerdown and pointerup on each click action's edges, with
+`pointerType: 'mouse'` and the DOM button the action is (left 0,
+middle 1, right 2) - so every host's overlay seam (`pointerdown` on the
+canvas, `pointermove`/`pointerup` on the window, `pointerNative` /
+`nativeAt`) takes them exactly as it takes a mouse, and no window
+learns a second input. The poller's own synthetic moves are not a hand
+on the mouse (`isTrusted === false` is skipped), the movement stick
+counts toward UsingController under a window even though its move arm
+does not run there (:1531, :1540), a click still held when the window
+closes or the mouse takes over is released, and the OS cursor comes
+back with it.
+
+Not carried: `GetUIScrollMovement` (:1249-1280) - the camera stick as a
+list scroll - has no consumer in the four DFU files read for this
+slice (ListBox, BaseScreenComponent, UserInterfaceManager,
+DaggerfallUI); the law is in `systems/gamepad.js` for the window that
+turns out to call it.
+
+**The flag is retired.** `systems/inputActions.js` carries a note where
+"AXES + JOYSTICK: no gamepad layer in the port" stood since I2; the
+open-flag list is six; the Ledger row (`:609`) says so.
+
+**Pinned** in `test/gamepad.test.js` (the GP3 test, against a fake
+canvas and an event factory). Not a departure.

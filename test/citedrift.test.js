@@ -352,7 +352,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   // seven. Prose is a count like any other, so the PROSE is pinned:
   // every figure below is read out of the page and compared with the
   // list Home.md actually holds.
-  const WORDS = { seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+  const WORDS = { six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
     thirteen: 13, fourteen: 14, seventeen: 17, nineteen: 19 };
   const statusText = read(STATUS);
   const prose = [

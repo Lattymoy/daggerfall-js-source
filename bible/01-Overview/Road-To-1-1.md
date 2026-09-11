@@ -245,7 +245,7 @@ residence plates all read the machine instead of saying they cannot -
 and TP2 NARROWED the flag beside it, that host's Recall, to the one
 cross-LOCATION jump a route with no streamer cannot make (set-anchor,
 the same-interior move and the whole cross-context arm INSIDE the
-loaded pixel all ship). That leaves **7** open flags as
+loaded pixel all ship). That leaves **6** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

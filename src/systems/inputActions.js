@@ -653,11 +653,12 @@ export function endFrame(state) {
 // the browser's pad into every host's held-keys Set.
 // GP2 (the same day) BUILT THE JOYSTICK CONTROLS WINDOW
 // (ui/joystickControlsWindow.js, the JOYSTICK tab's destination).
-// STILL FLAGGED:
-//  - THE CONTROLLER CURSOR in windows (UsingController's drawn cursor
-//    and GetMouseButton at its position, InputManager.cs:556-573,
-//    :1518-1570) is not built: a window takes the mouse, the keyboard
-//    and the Back button only.
-//  - The port's own standing key departures (C cast, X crouch,
-//    E activate, V view) reconcile against this table in I2, each
-//    becoming an adoption or a Ledger-A row - not here.
+// GP3 (the same day) BUILT THE CONTROLLER CURSOR (ui/gamepadInput.js):
+// UsingController's cursor over a window, born where the mouse last
+// was, moved by the movement stick at JoystickCursorSensitivity, the
+// three click actions landing as pointer events at its point
+// (InputManager.cs:556-573, :1518-1570). Nothing of InputManager's
+// joystick law is flagged here any longer.
+// NOT A FLAG: the port's own standing key departures (C cast, X crouch,
+// E activate, V view) reconcile against this table in I2, each
+// becoming an adoption or a Ledger-A row - not here.

@@ -33,7 +33,19 @@
 //   - USING CONTROLLER (:1536-1546): a stick past the dead zone makes
 //     the pad the live device, a mouse move takes it back; while it is
 //     live the look filter never smooths below 0.5 (ApplySmoothing
-//     :159-160). The cursor it draws in windows is GP3's.
+//     :159-160).
+//   - THE CONTROLLER CURSOR (GP3): UpdateControllerCursorPosition
+//     (:1518-1570) and OnGUI (:556-573). While a window is up
+//     (CursorVisible) and the pad is the live device, a 32x32 cursor
+//     stands where the mouse last was, the MOVEMENT stick moves it at
+//     JoystickCursorSensitivity * 900 px a second (raw axes, the
+//     inversions applied, clamped to the screen), and the three click
+//     actions land as pointer events AT ITS POINT - the way
+//     BaseScreenComponent reads InputManager.MousePosition (:573) and
+//     GetMouseButtonDown (:626-628). The events are synthetic
+//     PointerEvents on the canvas, so every host's overlay seam takes
+//     them as it takes a mouse; the OS cursor hides meanwhile
+//     (Cursor.visible = false, :563).
 //
 // The pad is the FIRST connected one with the standard mapping. Every
 // code this layer presses it releases when the pad goes, the setting
@@ -41,7 +53,7 @@
 // is the disease the touch layer's `up()` guards against.
 import { bindings } from './input.js';
 import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding } from '../systems/inputActions.js';
-import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
+import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, movementAxes, cameraAxes, controllerLookDegrees, cursorStep, controllerSettings, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { lookScale } from './lookSettings.js';
 import { setControllerLook } from '../player/lookFilter.js';
 
@@ -49,6 +61,16 @@ import { setControllerLook } from '../player/lookFilter.js';
 export const SWING_PX_PER_SEC = 800;
 
 const MOUSE_CODE_OF_UI = Object.freeze({ LeftClick: 'Mouse0', RightClick: 'Mouse1', MiddleClick: 'Mouse2' });
+/** The DOM button each UI click action is (MouseEvent.button: left 0, middle 1, right 2). */
+const DOM_BUTTON_OF_UI = Object.freeze({ LeftClick: 0, MiddleClick: 1, RightClick: 2 });
+/** controllerCursorWidth / Height (:138-139). */
+export const CURSOR_SIZE = 32;
+const CURSOR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M4 2 L4 26 L10 20 L15 30 L19 28 L14 18 L22 18 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>');
+
+function defaultMakeEvent(type, init) {
+  const Ctor = type.startsWith('pointer') && typeof globalThis.PointerEvent === 'function' ? globalThis.PointerEvent : globalThis.MouseEvent;
+  return new Ctor(type, init);
+}
 
 function synth(type, code) {
   window.dispatchEvent(new KeyboardEvent(type, { code, key: code, bubbles: true }));
@@ -71,7 +93,7 @@ export function pickPad(list) {
  *   - the same object the host hands attachTouch
  * @returns { tick(dt), axes(), usingController(), dispose() } or null without the API
  */
-export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = synth } = {}) {
+export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = synth, makeEvent = defaultMakeEvent } = {}) {
   if (!getPads && !hasGamepadApi()) return null;
   getPads ??= () => navigator.getGamepads();
   const axes = new Float32Array(NUM_AXES + 1);
@@ -81,8 +103,35 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   let usingController = false;
   let mouseMoved = false;
   let swinging = false;
-  const onMouseMove = (e) => { if (e.movementX || e.movementY) mouseMoved = true; };
+  let lastMouse = null;          // Input.mousePosition, the port's last real mouse point (client px)
+  let cursor = null;             // controllerCursorPosition, client px
+  const cursorHeld = {};         // the UI click actions down at the cursor
+  let cursorEl = null;
+  const onMouseMove = (e) => {
+    if (e.isTrusted === false) return;   // the cursor's own synthetic moves are not a hand on the mouse
+    if (e.movementX || e.movementY) mouseMoved = true;
+    if (Number.isFinite(e.clientX) && Number.isFinite(e.clientY)) lastMouse = [e.clientX, e.clientY];
+  };
   window.addEventListener('mousemove', onMouseMove);
+  const cursorShow = (on) => {
+    if (canvas?.style) canvas.style.cursor = on ? 'none' : '';   // Cursor.visible = false (:563)
+    if (typeof document === 'undefined' || !document.body) return;
+    if (on && !cursorEl) {
+      cursorEl = document.createElement('div');
+      cursorEl.style.cssText = `position:fixed;left:0;top:0;width:${CURSOR_SIZE}px;height:${CURSOR_SIZE}px;pointer-events:none;z-index:6;background:url("${CURSOR_SVG}") no-repeat;display:none`;
+      document.body.appendChild(cursorEl);
+    }
+    if (!cursorEl) return;
+    cursorEl.style.display = on ? 'block' : 'none';
+    if (on && cursor) { cursorEl.style.left = `${cursor[0]}px`; cursorEl.style.top = `${cursor[1]}px`; }
+  };
+  const pointerAt = (type, button) => {
+    if (!cursor) return;
+    canvas.dispatchEvent(makeEvent(type, { clientX: cursor[0], clientY: cursor[1], button, buttons: type === 'pointerup' ? 0 : (button === 0 ? 1 : button === 2 ? 2 : 4), pointerType: 'mouse', pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }));
+  };
+  const cursorRelease = () => {
+    for (const ui of Object.keys(cursorHeld)) if (cursorHeld[ui]) { cursorHeld[ui] = false; pointerAt('pointerup', DOM_BUTTON_OF_UI[ui]); }
+  };
 
   const press = (code) => { if (!held.has(code)) { held.add(code); dispatch('keydown', code); } };
   const releaseAll = (keep = null) => {
@@ -97,6 +146,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       analog = null;
       if (swinging) { swinging = false; hooks.attack?.(0, 0, false); }
       if (usingController) { usingController = false; setControllerLook(false); }
+      cursorRelease(); cursorShow(false);
       releaseAll();
       mouseMoved = false;
       return;
@@ -131,9 +181,18 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       look = cameraAxes(axes[ch], axes[cv], { deadzone: s.deadzone, invertH: getAxisInversion(b, 'CameraHorizontal'), invertV: getAxisInversion(b, 'CameraVertical') });
       if (look.x || look.y) moved = true;
     }
-    // UsingController (:1536-1546): a stick makes the pad live, the mouse takes it back
+    // UsingController (:1536-1546): a stick makes the pad live, the mouse
+    // takes it back - the movement stick counts here even under a window
+    // (distMovement > JoystickDeadzone, :1531, :1540), where the move arm
+    // above did not run; and the cursor is born where the mouse last was
+    if (mh && mvn && Math.hypot(axes[mh], axes[mvn]) > s.deadzone) moved = true;
+    const wasUsing = usingController;
     if (mouseMoved) usingController = false;
     else if (moved) usingController = true;
+    if (usingController && !wasUsing) {
+      const r = canvas?.getBoundingClientRect?.();
+      cursor = lastMouse ? [lastMouse[0], lastMouse[1]] : r ? [r.left + r.width / 2, r.top + r.height / 2] : [0, 0];
+    }
     mouseMoved = false;
     setControllerLook(usingController);
     // the UI buttons as the mouse's (GetMouseButton :1050-1063) and Back as Escape (:1065-1068)
@@ -146,6 +205,26 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // edges: presses first, then the releases of what is no longer wanted
     for (const code of wanted) press(code);
     releaseAll(wanted);
+    // THE CONTROLLER CURSOR (GP3): CursorVisible is a window up
+    if (overlay && usingController && cursor) {
+      let h = mh ? axes[mh] : 0, v = mvn ? axes[mvn] : 0;   // GetAxisRaw (:1526-1527)
+      if (getAxisInversion(b, 'MovementHorizontal')) h = -h;
+      if (getAxisInversion(b, 'MovementVertical')) v = -v;
+      if (Math.hypot(h, v) > s.deadzone) {
+        const st = cursorStep(h, v, dt, s.cursorSensitivity);
+        const r = canvas?.getBoundingClientRect?.() ?? { left: 0, top: 0, width: Infinity, height: Infinity };
+        cursor[0] = Math.min(r.left + r.width, Math.max(r.left, cursor[0] + st.dx));
+        cursor[1] = Math.min(r.top + r.height, Math.max(r.top, cursor[1] - st.dy));   // Unity's y is up (:1568)
+        pointerAt('pointermove', 0);
+      }
+      for (const [ui, button] of Object.entries(DOM_BUTTON_OF_UI)) {
+        const code = getJoystickUIBinding(b, ui);
+        const down = !!code && buttons.has(code);
+        if (down && !cursorHeld[ui]) { cursorHeld[ui] = true; pointerAt('pointerdown', button); }
+        else if (!down && cursorHeld[ui]) { cursorHeld[ui] = false; pointerAt('pointerup', button); }
+      }
+      cursorShow(true);
+    } else { cursorRelease(); cursorShow(false); }
     // the swing: RightClick's button held is the drag's button held -
     // its edges first, so the frame the button lifts is a look again
     const swingBtn = getJoystickUIBinding(b, 'RightClick');
@@ -167,7 +246,8 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     tick,
     axes: () => analog,
     usingController: () => usingController,
+    cursor: () => (cursor ? [cursor[0], cursor[1]] : null),
     held: () => new Set(held),
-    dispose() { releaseAll(); setControllerLook(false); window.removeEventListener('mousemove', onMouseMove); },
+    dispose() { cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); window.removeEventListener('mousemove', onMouseMove); },
   };
 }

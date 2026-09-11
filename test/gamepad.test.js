@@ -211,6 +211,61 @@ test('GP1 the poller: buttons and bound axis keys become synthetic keys by Unity
   } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
 });
 
+test('GP3 the controller cursor: born where the mouse last was when the pad becomes the live device, moved by the movement stick at JoystickCursorSensitivity * 900 px/s (raw axes, up is up, clamped to the canvas) with a pointermove at each step, the three click actions as pointerdown/up at its point, all of it only under a window, a real mouse move ending it with any held click released (mutant: y unflipped, or the clamp dropped, or a click left held)', () => {
+  const prev = { w: globalThis.window };
+  const listeners = {};
+  globalThis.window = { addEventListener: (t, f) => { (listeners[t] ??= []).push(f); }, removeEventListener: () => {}, dispatchEvent: () => {} };
+  const store = createBindings(); resetDefaults(store); setBindings(store);
+  const evs = [];
+  const canvas = { getBoundingClientRect: () => ({ left: 10, top: 20, width: 640, height: 400 }), dispatchEvent: (ev) => evs.push(ev), style: {} };
+  let overlay = true;
+  let pads = [];
+  try {
+    _resetForTests();
+    const gp = attachGamepad(canvas, { overlayActive: () => overlay }, { getPads: () => pads, dispatch: () => {}, makeEvent: (type, init) => ({ type, ...init }) });
+    const pad = { connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+    pads = [pad];
+    gp.tick(1 / 60);
+    assert.equal(gp.cursor(), null, 'no stick yet: no cursor');
+    // the stick right and up: the pad is live, the cursor is born at the canvas centre (no mouse seen) and steps
+    pad.axes[0] = 1; pad.axes[1] = -1; gp.tick(1 / 60);
+    assert.equal(gp.usingController(), true);
+    let c = gp.cursor();
+    assert.ok(near(c[0], 330 + 15) && near(c[1], 220 - 15), `centre (330,220) plus 900/60 right and UP: ${c}`);
+    assert.equal(evs.at(-1).type, 'pointermove'); assert.ok(near(evs.at(-1).clientX, 345) && near(evs.at(-1).clientY, 205) && evs.at(-1).bubbles === true);
+    // clamped at the canvas edge
+    for (let i = 0; i < 100; i++) gp.tick(1 / 60);
+    c = gp.cursor(); assert.ok(near(c[0], 650) && near(c[1], 20), `clamped to the rect: ${c}`);
+    // A at the cursor: pointerdown button 0, then up; Y is button 2
+    pad.axes[0] = 0; pad.axes[1] = 0; evs.length = 0;
+    pad.buttons[0].pressed = true; gp.tick(1 / 60);
+    assert.deepEqual(evs.map((e) => [e.type, e.button]), [['pointerdown', 0]]);
+    assert.ok(near(evs[0].clientX, 650) && evs[0].pointerType === 'mouse');
+    pad.buttons[0].pressed = false; pad.buttons[3].pressed = true; gp.tick(1 / 60);
+    assert.deepEqual(evs.slice(1).map((e) => [e.type, e.button]), [['pointerup', 0], ['pointerdown', 2]]);
+    assert.equal(canvas.style.cursor, 'none', 'the OS cursor hides (Cursor.visible = false)');
+    // no window: no cursor events, and the held click is released
+    overlay = false; evs.length = 0; gp.tick(1 / 60);
+    assert.deepEqual(evs.map((e) => [e.type, e.button]), [['pointerup', 2]]);
+    assert.equal(canvas.style.cursor, '');
+    overlay = true; pad.buttons[3].pressed = false; gp.tick(1 / 60); evs.length = 0;
+    // the real mouse takes over: the cursor goes, and the next stick birth is at the mouse's last point
+    for (const f of listeners.mousemove) f({ movementX: 2, movementY: 0, clientX: 100, clientY: 200 });
+    gp.tick(1 / 60);
+    assert.equal(gp.usingController(), false);
+    pad.axes[0] = 1; gp.tick(1 / 60);
+    c = gp.cursor(); assert.ok(near(c[0], 115) && near(c[1], 200), `born at the mouse's point plus one step: ${c}`);
+    // the cursor's own synthetic move is not a hand on the mouse
+    for (const f of listeners.mousemove) f({ isTrusted: false, movementX: 5, movementY: 5, clientX: 1, clientY: 1 });
+    gp.tick(1 / 60); assert.equal(gp.usingController(), true);
+    // sensitivity scales the step; an inverted movement axis moves the cursor the other way
+    setValue('Controls', 'JoystickCursorSensitivity', 2); const before = gp.cursor()[0]; gp.tick(1 / 60);
+    assert.ok(near(gp.cursor()[0] - before, 30), '2 * 900 / 60');
+    gp.dispose();
+    assert.equal(canvas.style.cursor, '');
+  } finally { globalThis.window = prev.w; setBindings(null); setControllerLook(false); _resetForTests(); }
+});
+
 test('GP1 the look filter\'s controller floor: while the pad is live the fraction never drops below 0.5 (mutant: the floor dropped)', () => {
   const f = new LookFilter(); const cam = { yaw: 0, pitch: 0 };
   f.add(1, 0); f.tick(1 / 60, cam, { smoothing: 0 });
@@ -239,7 +294,8 @@ test('GP1 the hosts and the tiers: all four hosts attach the pad on the touch la
   _resetForTests();
   const cs = controllerSettings();
   assert.deepEqual(cs, { enabled: true, deadzone: 0.1, threshold: 0.9, lookSensitivity: 1, cursorSensitivity: 1 }, 'the shipped defaults');
-  assert.match(rd('src/systems/inputActions.js'), /STILL FLAGGED:\n\/\/\s+- THE CONTROLLER CURSOR/, 'GP2 took the window off the flag');
+  assert.match(rd('src/systems/inputActions.js'), /GP3 \(the same day\) BUILT THE CONTROLLER CURSOR/, 'GP3 retired the flag');
+  assert.doesNotMatch(rd('src/systems/inputActions.js'), /STILL FLAGGED/, 'nothing of the joystick law is flagged');
   assert.match(rd('src/ui/controlsWindow.js'), /this\.joystick \?\?= new JoystickControlsWindow\(this\.unsaved\.joystick\);/);
   assert.ok(JOYSTICK_UI_ACTIONS.length === 4 && AXIS_ACTIONS.length === 4);
 });
