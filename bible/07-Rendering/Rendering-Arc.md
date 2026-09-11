@@ -1234,3 +1234,27 @@ the batched entries, the doors and the machinery draw as before, and
 of a hundred models is a dozen calls.
 
 **Pinned** in `test/perf6.test.js` (1). Not a departure.
+
+## PERF7 - THE STREAM BUILD BREATHES (2026-09-11)
+
+The hitch on the road into a town. A streamed pixel is built by an
+async function that awaits per model, and an await on a promise that
+is already settled continues as a microtask - it never gives the frame
+back. On a cold load the fetches are real and the build spreads
+itself; on a warm one (every model cached, which is every pixel after
+the first few) a city pixel's whole loop - three thousand models, each
+a collider insert of hundreds of triangles - ran in one task, and the
+frame loop waited hundreds of milliseconds for it.
+
+`systems/buildBreather.js` is a cooperative yield: `buildPixelNow`
+resets its slice and awaits `breathe()` after every placed model; while
+the slice has budget (`BUILD_SLICE_MS`, 6 ms) the breath resolves at
+once, and when it is spent the build awaits the next animation frame -
+the frame loop runs and draws, the build resumes after. The pixel
+arrives a few frames later than it would have and every frame between
+is drawn. Nothing about the pixel changes: a partially built pixel is
+not in `built` and draws nothing, exactly as a cold-load pixel never
+did. The dungeon and interior builds run behind a mode change and are
+left as they are.
+
+**Pinned** in `test/perf7.test.js` (2). Not a departure.

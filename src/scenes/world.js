@@ -98,6 +98,7 @@ import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROA
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
+import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
 import { LabGrassRenderer, createGrassField, grassRecordsOf, labWindSlider, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
@@ -777,7 +778,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     return flying;
   }
 
+  const breather = createBreather();   // PERF7: one slice clock for the stream; each build resets it
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
+    breather.reset();   // PERF7
     const key = `${px},${py}`;
     const dfLocation = locationIndex.get(key) || null;
     // EV7: the LOCATION half stays here - setLocationTiles reads
@@ -954,6 +957,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const entry = { gpu, local, _box: box, _order: placed.modelIdNum };   // EV6: sort key
           models.push(entry);
           if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, resolveTexKey); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above)
+          await breather.breathe();   // PERF7: a warm build gives the frame back every few milliseconds
           // AUDIT 64 F14: a city gate takes a collider bucket of its own
           // (the pixel's shared bucket has no per-mesh removal), keyed
           // off the pixel key so destroyPixel drops it with the pixel.
