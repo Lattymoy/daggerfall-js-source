@@ -28,7 +28,8 @@ import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, perspective, mirrorProjectionX, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
 import { PlayerMotor, TELEPORT_FREEZE_S } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
@@ -873,7 +874,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
-    for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
+    if (ctx.staticBatch) renderer.drawMesh(ctx.staticBatch, BATCH_IDENTITY, null);   // PERF5: the level's static models, one call per texture (keys resolved in the merge)
+    for (const d of ctx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock

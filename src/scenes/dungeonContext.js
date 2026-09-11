@@ -151,6 +151,7 @@ import {
 } from '../systems/loot.js';
 import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
 import { trs, multiply, identity, UP_Y } from '../world/mat4.js';
+import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF5: the level's static models as one mesh
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
@@ -200,6 +201,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   const drawList = [];
   const dynamicDraws = [];
+  // PERF5: THE LEVEL'S STATIC MODELS AS ONE MESH. drawList draws every
+  // placed model with its own call (the automap still walks it, one
+  // entry per revealed model); the main view draws the merge instead -
+  // one call per resolved texture for the whole level - and skips the
+  // entries it holds. Action objects (dynamicDraws) move and stay out.
+  // Built lazily on the first read, after every block has been placed;
+  // freed by destroy().
+  let staticBatch = null, staticBuilt = false;
+  const staticBuilder = new StaticBatchBuilder();
   const automapEntries = [];   // A1: { key, aabb } per draw entry - the reveal index's rows
   const collider = new Collider(() => -Infinity);
   // Effect actions (Hurt traps) damage the shared player entity;
@@ -274,6 +284,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);
   };
   const texRemap = new Map();
+  const resolveTexKey = keyResolver(texRemap);   // PERF5: drawMesh's own remap resolution
   const flatGroups = new Map();
   /** AUDIT 64 F13: THE DUNGEON'S STATIC NPCs. RDBLayout.AddFlat
    *  (RDBLayout.cs:1204-1247) does two things to a flat that the port
@@ -476,6 +487,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // can filter the LIVE list by the revealed set - no duplicate
       // geometry (Automap.cs duplicates the whole level instead).
       drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });
+      // PERF5: the remap for this model is in the map (ensureRemap above); the entry stays in drawList for the automap
+      if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
       automapEntries.push(amapRow(`${bi}:${p.position}`, aabb, !!p.action, cpu, matrix));
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
@@ -1816,7 +1829,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:968,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:969,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2290,7 +2303,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:877 against :904; worldModes.js:5711 against :5718).
+    // (dungeon.js:879 against :904; worldModes.js:5713 against :5718).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2757,7 +2770,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:8187,
-              // exterior.js:4168 and worldModes.js:5835 already ran;
+              // exterior.js:4168 and worldModes.js:5837 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4268,6 +4281,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),
     drawList,
+    get staticBatch() {   // PERF5: merged and uploaded once, on the first frame that asks
+      if (!staticBuilt) { staticBuilt = true; const m = staticBuilder.finish(); staticBatch = m ? renderer.createMesh(m) : null; }
+      return staticBatch;
+    },
     dynamicDraws,
     actions,
     hudSay: (t) => hudText.add(t),   // R1: the host's one-line channel (the F1-F4 mode line)
@@ -5283,6 +5300,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       enhancedNav.client?.dispose();
       enhancedNav.client = null;
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF5
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
       // corpses each own a live billboard batch that is NOT in
       // billboardBatches (that list is the static layout art), so
