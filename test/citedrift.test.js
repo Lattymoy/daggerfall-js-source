@@ -595,7 +595,7 @@ const SOURCE_CITES = [
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1546/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:952\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
-  ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:1151-1153/,
+  ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:1152-1154/,
     EX, /from '\.\.\/systems\/chargenSession\.js'/],
   ['src/systems/equip.js', /world\.js:1587, exterior\.js:(\d+)\)/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],

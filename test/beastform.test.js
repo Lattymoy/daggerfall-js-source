@@ -130,6 +130,6 @@ test('V4: the inventory and talk doors refuse the beast - every opener, one gate
   assert.ok(dc.includes('racialSuppressInventory(playerEntity)'), 'the dungeon gates INSIDE openInventory - loot included');
   const tt = read('src/scenes/townTalk.js');
   assert.ok(tt.includes('racialSuppressTalk(playerEntity)'), 'townTalk gates at B7\'s ONE window-opener');
-  assert.ok(tt.indexOf('racialSuppressTalk(playerEntity)') < tt.indexOf('new NativeTalkWindow('),
+  assert.ok(tt.indexOf('racialSuppressTalk(playerEntity)') < tt.indexOf('mount(createTalkWindow('),   // ET1: the door builds the window
     'the refusal comes before any window mounts');
 });

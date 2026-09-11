@@ -1367,7 +1367,7 @@ review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
-wrong. All three are resolved by content (`townTalk.js:1123`,
+wrong. All three are resolved by content (`townTalk.js:1132`,
 `worldModes.js:7151`, `dungeonContext.js:4924`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past

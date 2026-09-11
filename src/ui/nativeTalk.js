@@ -38,12 +38,17 @@
 // :549-550/:1381-1387), a DOUBLE click uses it (MouseDoubleClick ->
 // OnUseSelectedItem -> SelectTopicFromTopicList), OKAY asks whatever
 // is selected (ButtonOkay_OnMouseClick :1534-1548), and the selected
-// row draws in ListBox's selectedTextColor with no shadow. The
-// session's keyboard accelerators are preserved - W opens
-// Where-is > Location, T cycles tone, digits USE a visible row
-// (OURS: DFU has no keyboard here, so one press does both halves),
-// N/P page (OURS: DFU has no keyboard scroll here, so they step a
-// full listbox height), Esc/E goodbye. B5-6: Tell me about, People,
+// row draws in ListBox's selectedTextColor with no shadow.
+// ET1-AUDIT F1: THE KEYBOARD IS DFU'S. This header used to say "DFU
+// has no keyboard here", and it does: DialogShortcuts.txt binds all
+// twelve of this window's buttons (systems/dialogShortcuts.js:331-336
+// - A Tell me about, W Where is, L/P/T/J the four categories, O ask,
+// G goodbye, C copy, F1/F2/F3 the tones), and input() walks them
+// FIRST through firstHotkey, landing on press(name) like a click. The
+// port's own keys stand only where DFU binds nothing: Esc/E/Enter
+// goodbye, digits USE a visible row (one press does both halves), N
+// pages the list. T-cycles-tone and P-pages are GONE - DFU's T is
+// Things and P is People. B5-6: Tell me about, People,
 // Things and Work are LIVE pages over the engine's own lists
 // (listTopicTellMeAbout / Person / Thing and the Work question);
 // each stays a consumed no-op on a host with no engine mounted.
@@ -61,6 +66,7 @@ import { SOUND } from '../systems/soundClips.js';
 // AUDIT 58 (seams): the resolvingError literal SetListboxTopics repairs
 // an empty caption with (Internal_Strings.csv:582, '...never mind...').
 import { RESOLVING_ERROR } from '../systems/rumorMill.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // ET1-AUDIT F1: DaggerfallShortcut's talk row
 
 export const TALK_RECTS = Object.freeze({
   tellMeAbout: [4, 4, 107, 10],
@@ -356,9 +362,14 @@ export function setNpcPortrait(archive, recordId) {
   _loadPortraitFile(file).then((cif) => {
     if (!_portraitTex.has(key)) {
       const bmp = cif.getDFBitmap(recordId, 0);
+      // ET1: the same Color32 buffer feeds the GL texture (the classic
+      // face) and is KEPT as pixels for the enhanced panel's <canvas>
+      // face - one decode, two faces.
+      const c32 = bitmapToColor32(bmp, _portraitDeps.palette);
       _portraitTex.set(key, {
-        tex: _portraitDeps.renderer.uploadTexture('cif', key, bitmapToColor32(bmp, _portraitDeps.palette)),
+        tex: _portraitDeps.renderer.uploadTexture('cif', key, c32),
         w: bmp.width, h: bmp.height,
+        rgba: new Uint8ClampedArray(c32.colors.buffer),   // RGBA in memory order - what ImageData takes
       });
     }
     if (_portraitKey === key) _portrait = _portraitTex.get(key);
@@ -371,8 +382,40 @@ export function setNpcPortrait(archive, recordId) {
  *  must not inherit the last NPC's face. */
 export function clearNpcPortrait() { _portrait = null; _portraitKey = null; }
 export const npcPortraitKey = () => _portraitKey;
+/** ET1: the landed portrait as pixels - { rgba, w, h } - or null while
+ *  it loads or when none is set. The enhanced panel paints it into a
+ *  <canvas>; it reads the same cache the classic face's texture came
+ *  from, so both faces show the one record SetNPCPortrait chose. */
+export const npcPortraitPixels = () => (_portrait?.rgba ? { rgba: _portrait.rgba, w: _portrait.w, h: _portrait.h } : null);
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+/** ET1: the named buttons of TALK_RECTS, in the order click() always
+ *  tested them - the logbook first (AUDIT 63 F5: before every broad
+ *  panel rect), then the two big buttons, the modes, the tones and the
+ *  arrows, and the four category buttons last. The three PANELS
+ *  (topicList, conversation, topicSlider) are hit by coordinate, not
+ *  by name, and are not here. */
+/** ET1-AUDIT F1: DaggerfallShortcut.Buttons for this window
+ *  (dialogShortcuts.js BUTTONS' "Talk screen" row), each to the button
+ *  name it presses. The order is the row's own - firstHotkey returns
+ *  the first hit, as Panel.ProcessHotkeySequences does. */
+export const TALK_HOTKEYS = Object.freeze({
+  TalkTellMeAbout: 'tellMeAbout', TalkWhereIs: 'whereIs',
+  TalkCategoryLocation: 'categoryLocation', TalkCategoryPeople: 'categoryPeople',
+  TalkCategoryThings: 'categoryThings', TalkCategoryWork: 'categoryWork',
+  TalkAsk: 'okay', TalkExit: 'goodbye', TalkCopy: 'logbook',
+  TalkTonePolite: 'tonePolite', TalkToneNormal: 'toneNormal', TalkToneBlunt: 'toneBlunt',
+});
+const TALK_HOTKEY_BUTTONS = Object.freeze(Object.keys(TALK_HOTKEYS));
+
+export const BUTTON_ORDER = Object.freeze([
+  'logbook', 'goodbye', 'okay', 'whereIs', 'categoryLocation',
+  'tonePolite', 'toneNormal', 'toneBlunt',
+  'topicUp', 'topicDown', 'topicLeft', 'topicRight',
+  'conversationUp', 'conversationDown',
+  'tellMeAbout', 'categoryPeople', 'categoryThings', 'categoryWork',
+]);
 
 /** The session seam: hooks = { categories() -> [{label, buildings}],
  *  answer(building) -> string, tone() -> 0|1|2, setTone(t),
@@ -447,7 +490,7 @@ export class NativeTalkWindow {
   /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
    *  its first row - index 1 when row 0 is the NavigationBack
    *  "previous" row, which this port's flattened lists never carry
-   *  (treeCategories drops them, townTalk.js:701) - and SelectIndex
+   *  (treeCategories drops them, townTalk.js:703) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
    *  label is filled before the player clicks anything.
    *
@@ -756,13 +799,16 @@ export class NativeTalkWindow {
    *  right click sounds once per row it marks. */
   _markCopied() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
-  /** Keyboard accelerators (the session's established keys). */
-  input(code) {
+  /** The keyboard. ET1-AUDIT F1: DFU's DialogShortcuts row FIRST -
+   *  every talk button has a hotkey there and each is the same press
+   *  a click is - then the port's own keys where DFU binds nothing.
+   *  `e` is the host's event (U20a: it rides with the code), for the
+   *  modifier halves a bare code cannot carry. */
+  input(code, e = null) {
+    const hit = firstHotkey(TALK_HOTKEY_BUTTONS, code, e);
+    if (hit) { this.press(TALK_HOTKEYS[hit]); return; }
     if (code === 'Escape' || code === 'KeyE' || code === 'Enter') { this._close(); return; }
-    if (code === 'KeyW') { this._openCategories(); return; }
-    if (code === 'KeyT') { this._setTone((this.hooks.tone() + 1) % 3); return; }
     if (code === 'KeyN') { this._scrollBy(TALK_RECTS.topicList[3]); return; }   // ours: a full page
-    if (code === 'KeyP') { this._scrollBy(-TALK_RECTS.topicList[3]); return; }
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(Number(d[1]) - 1);
   }
@@ -772,10 +818,108 @@ export class NativeTalkWindow {
    *  declares: the pins override the CLOCK, not an argument slot. */
   _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
 
+  /** ET1: THE BUTTONS, BY NAME. The classic face hit-tests TALK_RECTS
+   *  and the enhanced panel (ui/enhancedTalk.js) has a DOM button per
+   *  name; both arrive HERE, so DFU's handler for each button - its
+   *  sound, its gate, its arm - lives once. The three PANELS (the topic
+   *  list, the conversation, the topic slider) are not buttons: their
+   *  hit needs a coordinate, and they stay in click() below.
+   *
+   *  `right` is the logbook's right-click arm (:1569-1578) and nothing
+   *  else reads it. Returns true: every named button consumes the
+   *  press, even the ones the mode has greyed out. */
+  press(name, right = false) {
+    switch (name) {
+      // AUDIT 63 F5: THE LOGBOOK BUTTON. Left click
+      // (ButtonLogbook_OnMouseClick, :1551-1567): ButtonClick, then
+      // return with nothing done when SelectedIndex < 0 (:1554-1555),
+      // else toggle that index in copyIndexes and mark it (which plays a
+      // SECOND ButtonClick). Right click (:1569-1578): clear the set and
+      // mark EVERY row.
+      case 'logbook': {
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        if (right) {
+          this.copyIndexes.clear();
+          for (let i = 0; i < this.conversation.length; i++) { this.copyIndexes.add(i); this._markCopied(); }
+          return true;
+        }
+        if (this.conversationSelected < 0) return true;
+        if (this.copyIndexes.has(this.conversationSelected)) this.copyIndexes.delete(this.conversationSelected);
+        else this.copyIndexes.add(this.conversationSelected);
+        this._markCopied();
+        return true;
+      }
+      // AUDIT 17e F12: GOODBYE closes. OKAY is DFU's "ask the selected
+      // topic" button (DaggerfallTalkWindow) - it never closed the
+      // window.
+      // Every talk-window button assigns ButtonClick (DaggerfallTalkWindow
+      // :1315-1605); the topic ask itself clicks at the Q&A pair (:1253).
+      case 'goodbye': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true;
+      // ROAD-D D10: OKAY, whole. ButtonOkay_OnMouseClick (:1534-1548)
+      // has TWO arms and the port only ever had one: the Work page asks
+      // its fake ListItem, and EVERY other page asks
+      // SelectTopicFromTopicList(listboxTopic.SelectedIndex) - the
+      // selected topic, which is what makes OKAY the button its art
+      // says it is. It plays no sound of its own (the pair does).
+      case 'okay':
+        if (this.topicMode === 'work') this._askWork();
+        else this._pickIndex(this.selected);
+        return true;
+      case 'whereIs': audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true;
+      // B5-6: the four pages are live at :313-327 - tellMeAbout, then
+      // people/things/work behind the whereIs gate - with three of the
+      // hooks supplied at scenes/townTalk.js:647-649 and Work's OKAY
+      // question shipped alongside them (_askWork :293, ButtonOkay's
+      // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
+      // still falls back to consuming the press when its hook is absent
+      // (the pre-engine host), so an art-only session never half-opens
+      // a page.
+      case 'tellMeAbout': audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'tellMeAbout'; this._openFlat(this.hooks.tellMeAboutTopics?.()); return true;
+      // The four CATEGORY buttons open with `if (selectedTalkOption ==
+      // TalkOption.WhereIs)` and play the click sound INSIDE that gate
+      // (:1465-1498): greyed out, they are silent and do nothing.
+      case 'categoryLocation':
+        if (this._talkOption !== 'whereIs') return true;
+        audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true;
+      case 'categoryPeople':
+        if (this._talkOption !== 'whereIs') return true;
+        audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.peopleTopics?.())) this._lastCategory = 'people'; return true;
+      case 'categoryThings':
+        if (this._talkOption !== 'whereIs') return true;
+        audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.thingsTopics?.())) this._lastCategory = 'things'; return true;
+      case 'categoryWork':
+        if (this._talkOption !== 'whereIs') return true;
+        audio.playOneShot(SOUND.ButtonClick, 1); if (this._openWork()) this._lastCategory = 'work'; return true;
+      // The ButtonClick is played BEFORE the toneLastUsed guard (:1503),
+      // so a re-click of the standing tone still sounds and changes nothing.
+      case 'tonePolite': audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(0); return true;
+      case 'toneNormal': audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(1); return true;
+      case 'toneBlunt': audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(2); return true;
+      case 'topicUp': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true;
+      case 'topicDown': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true;
+      // AUDIT 58: the horizontal pair, one slider unit a click (:1433, :1439).
+      case 'topicLeft': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(-1); return true;
+      case 'topicRight': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(1); return true;
+      // F159: the conversation arrows (:1442-1452) - 5 pixels a click.
+      case 'conversationUp': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(-CONVERSATION_ARROW_SCROLL); return true;
+      case 'conversationDown': audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true;
+      default: return false;
+    }
+  }
+
+  /** ET1: the three list arms the enhanced panel reaches by INDEX,
+   *  each the one DFU handler the classic face's click() also takes.
+   *  selectTopic is ListBox.MouseClick's select-only arm (ROAD-D D10);
+   *  useTopic is MouseDoubleClick's OnUseSelectedItem; selectConversation
+   *  is the conversation ListBox's own MouseClick (AUDIT 63 F5). */
+  selectTopic(idx) { this._selectIndex(idx); }
+  useTopic(idx) { this._pickIndex(idx); }
+  selectConversation(idx) { if (idx >= 0 && idx < this.conversation.length) this.conversationSelected = idx; }
+
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - townTalk.js:1123,
+   *  `click(vx, vy, right, middle)` - townTalk.js:1132,
    *  worldModes.js:7151, dungeonContext.js:4924 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
@@ -784,57 +928,12 @@ export class NativeTalkWindow {
    *  the host's `middle`, which this window has no handler for. */
   click(vx, vy, rightButton = false, middle = false) {
     const R = TALK_RECTS;
-    // AUDIT 63 F5: THE LOGBOOK BUTTON, before every broad panel rect so
-    // it is not swallowed. Left click (ButtonLogbook_OnMouseClick,
-    // :1551-1567): ButtonClick, then return with nothing done when
-    // SelectedIndex < 0 (:1554-1555), else toggle that index in
-    // copyIndexes and mark it (which plays a SECOND ButtonClick).
-    // Right click (:1569-1578): clear the set and mark EVERY row.
-    if (inRect(R.logbook, vx, vy)) {
-      audio.playOneShot(SOUND.ButtonClick, 1);
-      if (rightButton) {
-        this.copyIndexes.clear();
-        for (let i = 0; i < this.conversation.length; i++) { this.copyIndexes.add(i); this._markCopied(); }
-        return true;
-      }
-      if (this.conversationSelected < 0) return true;
-      if (this.copyIndexes.has(this.conversationSelected)) this.copyIndexes.delete(this.conversationSelected);
-      else this.copyIndexes.add(this.conversationSelected);
-      this._markCopied();
-      return true;
+    // ET1: the named buttons, in the order the rects were always
+    // tested - the logbook BEFORE every broad panel rect so it is not
+    // swallowed (AUDIT 63 F5), goodbye and okay next, and so on.
+    for (const name of BUTTON_ORDER) {
+      if (inRect(R[name], vx, vy)) return this.press(name, rightButton);
     }
-    // AUDIT 17e F12: GOODBYE closes. OKAY is DFU's "ask the selected
-    // topic" button (DaggerfallTalkWindow) - it never closed the
-    // window.
-    // Every talk-window button assigns ButtonClick (DaggerfallTalkWindow
-    // :1315-1605); the topic ask itself clicks at the Q&A pair (:1253).
-    if (inRect(R.goodbye, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
-    // ROAD-D D10: OKAY, whole. ButtonOkay_OnMouseClick (:1534-1548)
-    // has TWO arms and the port only ever had one: the Work page asks
-    // its fake ListItem, and EVERY other page asks
-    // SelectTopicFromTopicList(listboxTopic.SelectedIndex) - the
-    // selected topic, which is what makes OKAY the button its art
-    // says it is. It plays no sound of its own (the pair does).
-    if (inRect(R.okay, vx, vy)) {
-      if (this.topicMode === 'work') this._askWork();
-      else this._pickIndex(this.selected);
-      return true;
-    }
-    if (inRect(R.whereIs, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true; }
-    if (inRect(R.categoryLocation, vx, vy)) {
-      if (this._talkOption !== 'whereIs') return true;   // greyed out: silent, per the gate above
-      audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true;
-    }
-    // The ButtonClick is played BEFORE the toneLastUsed guard (:1503),
-    // so a re-click of the standing tone still sounds and changes nothing.
-    if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(0); return true; }
-    if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(1); return true; }
-    if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._setTone(2); return true; }
-    if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
-    if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
-    // AUDIT 58: the horizontal pair, one slider unit a click (:1433, :1439).
-    if (inRect(R.topicLeft, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(-1); return true; }
-    if (inRect(R.topicRight, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollTopicH(1); return true; }
     // ...and the trough, which pages by DisplayUnits on whichever side
     // of the thumb was hit (HorizontalSlider.MouseClick :170-178). The
     // slider plays no ButtonClick of its own - it is a slider, not a
@@ -847,9 +946,6 @@ export class NativeTalkWindow {
       }
       return true;
     }
-    // F159: the conversation arrows (:1442-1452) - 5 pixels a click.
-    if (inRect(R.conversationUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(-CONVERSATION_ARROW_SCROLL); return true; }
-    if (inRect(R.conversationDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true; }
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
     // ROAD-D D10: and it only SELECTS (ListBox.cs:465-505). Reaching
@@ -875,29 +971,6 @@ export class NativeTalkWindow {
       const i = this._conversationIndexAt(vy);
       if (i >= 0) this.conversationSelected = i;
       return true;
-    }
-    // B5-6: the four pages are live at :313-327 - tellMeAbout, then
-    // people/things/work behind the whereIs gate - with three of the
-    // hooks supplied at scenes/townTalk.js:645-647 and Work's OKAY
-    // question shipped alongside them (_askWork :293, ButtonOkay's
-    // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
-    // still falls back to consuming the click when its hook is absent
-    // (the pre-engine host), so an art-only session never half-opens
-    // a page.
-    if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'tellMeAbout'; this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
-    // The three remaining CATEGORY buttons, behind the same gate as
-    // Location above - the sound sits inside it, as C# has it.
-    if (inRect(R.categoryPeople, vx, vy)) {
-      if (this._talkOption !== 'whereIs') return true;
-      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.peopleTopics?.())) this._lastCategory = 'people'; return true;
-    }
-    if (inRect(R.categoryThings, vx, vy)) {
-      if (this._talkOption !== 'whereIs') return true;
-      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.thingsTopics?.())) this._lastCategory = 'things'; return true;
-    }
-    if (inRect(R.categoryWork, vx, vy)) {
-      if (this._talkOption !== 'whereIs') return true;
-      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openWork()) this._lastCategory = 'work'; return true;
     }
     return false;
   }

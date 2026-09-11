@@ -142,7 +142,7 @@ test('AUDIT 65 UI-1: a BARE picker takes the HOST\'s four-argument click, and th
   // - the U key's useMagicItemWindow (world.js:4856,
   // dungeonContext.js:5186, worldModes.js:6973) and the bookshelf
   // picker (worldModes.js:1590-1600) - are dispatched by the hosts'
-  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1123,
+  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1132,
   // worldModes.js:7151, dungeonContext.js:4924). The window's header
   // already defended the THIRD slot by content; the fourth was left
   // open, so `middle` arrived as `now`, `false ?? this._now()` kept the
