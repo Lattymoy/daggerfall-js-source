@@ -148,7 +148,7 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /uniform uvec4 uWaterMask\[8\];/);
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
-  assert.match(fs, /float edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(\s*\/\/[^\n]*\n)*\s*edge \*= smoothstep\(0\.0, uShoreDepth, vDepth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, the bed\'s rise (WATER2), then nothing past it');
+  assert.match(fs, /edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n\s*depth = vDepth;\s*\n\s*\}\s*\n(\s*\/\/[^\n]*\n)*\s*edge \*= smoothstep\(0\.0, uShoreDepth, depth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, the bed\'s rise (WATER2), then nothing past it');
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   assert.match(fs, /vec3 lit = tex \* \(uAmbient \+ uSunColor \* \(uSunScale \* diff\) \+ uMoonColor \* \(uMoonScale \* mdiff\)\);/, 'TERRAIN_FS\'s light law');
   assert.match(fs, /float F = uF0 \+ \(0\.72 - uF0\) \* pow\(1\.0 - NdV, 5\.0\);/, 'Schlick, capped');
@@ -178,7 +178,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   assert.match(r, /import \{ packWaterMask \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /this\._csLoc\.water = \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\];/, 'VC4\'s recorded gap, closed');
-  const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
+  const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128, art = null) {'));   // WATER4: the art rides eighth
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
   assert.match(body, /if \(!this\._waterMaskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(\)\); this\._waterMaskUploaded = true; \}/, 'the table once');
   assert.match(body, /this\._uploadCloudShadow\('water'\);/);
@@ -202,10 +202,10 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   const w = rd('src/scenes/world.js');
   assert.match(w, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off';/, 'world: enhanced skin, the switch, the kill door');
   // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
-  assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? buildWater\(positions, normals, tilemapBytes, stride, waterIndices\) : null;/, 'decided at the build');
+  assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride, waterArt\?\.any\) : null;\s*\n\s*const water = waterIndices \? buildWater\(positions, normals, tilemapBytes, stride, waterIndices, waterArt\) : null;/, 'decided at the build (WATER4: by the art\'s tables)');
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
   const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride) {'));
-  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? buildWater\(grid\.positions, grid\.normals, p\.tilemapBytes, stride, waterIndices\) : null;/);
+  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? buildWater\(grid\.positions, grid\.normals, p\.tilemapBytes, stride, waterIndices, art\) : null;/);
   assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 2, 'the restride and the eviction');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');
   const slot = w.indexOf('    if (waterOn) {\n      const wu = waterUniforms(');
@@ -215,16 +215,16 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(slot < w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(w, /const wu = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\);/,
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
-  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
+  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu, TERRAIN_TILE_DIM, renderer\.waterArts\.get\(p\.groundArchive\)\);/);
   const e = rd('src/scenes/exterior.js');
-  assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off'\s*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the same gate, and a town without water never enters - asked over the town\'s real extent (WATER-AUDIT L1: the padding is zero, and zero is water)');
+  assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off'\s*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM, waterArt\?\.any\);/, 'exterior: the same gate, and a town without water never enters - asked over the town\'s real extent (WATER-AUDIT L1: the padding is zero, and zero is water)');
   const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(townWater, identityMatrix,');
   assert.ok(eslot > 0);
   assert.ok(eslot > e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,'), 'after the ground');
   assert.ok(eslot > e.indexOf('arrows.draw(renderer, texRemap);'), 'after the arrows');
   assert.ok(eslot < e.indexOf('renderer.drawBillboards(_visBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\)/);
-  assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
+  assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim, renderer\.waterArts\.get\(groundArchive\)\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
   // the dungeon's own water pass is untouched
   assert.match(rd('src/scenes/dungeon.js'), /renderer\.drawWater\(/);
 });
@@ -239,7 +239,7 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   const lab = rd('src/tools/waterLab.js');
   assert.match(lab, /mirrorProjectionX\(perspective\(/, 'HANDEDNESS: the lab draws under the hosts\' mirrored projection (unmirrored, every ground face is culled - the lab\'s first day)');
   assert.match(lab, /assignTiles\(tileData, tilemap, true\);/, 'the shore is marched, not painted');
-  assert.match(lab, /renderer\.drawWaterSurface\(water, m, renderer\.tileArrays\.get\(ARCHIVE\), tilemapTex, 6\.4, wu\)/, 'the lab draws the water\'s own index set, as the hosts do');
+  assert.match(lab, /renderer\.drawWaterSurface\(water, m, renderer\.tileArrays\.get\(ARCHIVE\), tilemapTex, 6\.4, wu, TERRAIN_TILE_DIM, artEntry\)/, 'the lab draws the water\'s own index set, as the hosts do (WATER4: with its art)');
   assert.match(rd('water.html'), /src="\/src\/tools\/waterLab\.js"/);
   const probe = rd('tools/waterProbe.mjs');
   for (const name of ['on and off differ over the sea', 'leaves the sky alone', 'five seconds later', 'a gale varies more than a calm', 'rainy sea', 'glints toward the sun', 'midnight', 'overcast sea']) {

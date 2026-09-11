@@ -97,6 +97,12 @@ export function basinDepths(bytes, stride = 1, tileDim = 128, table = WATER_MASK
   return out;
 }
 
+/** WATER4: a sheet the basin does not carve - every vertex at depth 0,
+ *  in buildTerrainGrid's order - for a tilemap whose water reaches no
+ *  vertex (a shore tile's lone corner, a puddle in the art): the water
+ *  lies on the ground and the shader gives it its own bed. */
+export const flatDepths = (stride = 1, tileDim = 128) => new Float32Array((tileDim / stride + 1) ** 2);
+
 /**
  * Lower the ground under the water, in place: the grid's positions and
  * normals as buildTerrainGrid laid them (g * g vertices, then the far
