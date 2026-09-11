@@ -30,6 +30,15 @@ const DUNGEON_CTX = src('src/scenes/dungeonContext.js');
 const DUNGEON = src('src/scenes/dungeon.js');
 const WORLD = src('src/scenes/world.js');
 const SHARED = src('src/scenes/shared.js');
+const XF = src('src/scenes/exteriorFoes.js');   // AUDIT 65 SL-3: the re-minting pool, the law this host has to match by hand
+
+/** AUDIT 65 SL-3: an inert stand-in for every free identifier a lifted
+ *  statement block reaches for - callable, and its properties are more
+ *  of itself, so a host expression runs without its host. */
+const STUB = new Proxy(function stub() {}, {
+  get: (t, k) => (typeof k === 'symbol' ? Reflect.get(t, k) : STUB),
+  apply: () => STUB,
+});
 
 const sinks = () => ({
   hurt() {}, heal() {}, drainMagicka() {}, restoreMagicka() {},
@@ -196,6 +205,32 @@ test('F218: applyWorld destroys the live foes past the snapshot (SerializableSta
     'spliced from BOTH owner lists, as the rewind arm above does');
   assert.ok(tail.includes('f.questBehaviour?.notifyDestroyed();'), 'Destroy(gameObject): the quest resource uncouples');
   assert.ok(tail.includes('foes.splice(i, 1);'), 'and the record leaves the pool, so the counter rewind cannot double it');
+
+  // AUDIT 65 SL-3, the same reference line from the other side: a
+  // rebuilt enemy is a FRESH entity, so `PickpocketByPlayerAttempted`
+  // is false for every enemy after a load. The re-minting pools match
+  // that by construction (exteriorFoes.restoreWorld goes through
+  // spawnFoe); this host patches in place, so it has to lower the latch
+  // by hand - or a failed pickpocket in a dungeon could never be
+  // retried, falsifying the law mobileEnemyActivate.js:44-47 states in
+  // its own header. A PRE-PASS over the whole live pool, because the
+  // per-record loop only ever visits the indices the record carries.
+  assert.match(XF, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\]/, 'the exterior pool RE-MINTS on restore, so its latch dies with the pool');
+  // Mounted, not matched: the statements below are the ones in src/.
+  const run = (foes, w) => {
+    const scope = new Proxy({ foes, w }, {
+      has: () => true,
+      get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : STUB)),
+    });
+    // eslint-disable-next-line no-new-func
+    new Function('__scope', `with (__scope) { ${fn.slice(fn.indexOf('{') + 1)} }`)(scope);
+  };
+  const foe = () => ({ entity: { pickpocketAttempted: true, items: [] }, ai: { feet: [0, 0, 0] } });
+  const recorded = foe();
+  const unrecorded = foe();
+  run([recorded, unrecorded], { foes: [{ health: 1, items: [], feet: [0, 0, 0], yaw: 0 }] });
+  assert.equal(recorded.entity.pickpocketAttempted, false, 'a foe the record covers loads back pickpocketable');
+  assert.equal(unrecorded.entity.pickpocketAttempted, false, '...and so does one the record does not reach');
 });
 
 // =====================================================================

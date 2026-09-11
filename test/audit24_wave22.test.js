@@ -39,14 +39,37 @@ test('audit24 wave22: every HUD popup files into the notebook message ring', () 
 test('audit24 wave22: the two hosts hand their HudText the notebook sink', () => {
   assert.match(rd('src/ui/hudText.js'), /this\.lines\.push\(\{ text \}\);\s*\n\s*this\.onMessage\?\.\(text\);/,
     'AddText files AFTER it queues, as C# does');
-  assert.match(rd('src/scenes/world.js'),
-    /townTalk\.hudMessageSink = \(t\) => questBridge\?\.notebook\?\.addMessage\(t\);/);
+  // AUDIT 65 MC-1: BOTH walkable outdoor hosts, which is what this
+  // test's title has always said. exterior.js handed down `notebookSink`
+  // in the same post-questBridge block and never this one, so on
+  // ?exterior every PopupText line the street and its shops spoke was
+  // dropped from the Messages page - a page that host wires up (:1094)
+  // and can open. DFU reads the Notebook off the
+  // GameManager.Instance.PlayerEntity GLOBAL in both tails, so no host
+  // there can fail to file.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(rd(host),
+      /townTalk\.hudMessageSink = \(t\) => questBridge\?\.notebook\?\.addMessage\(t\);/, host);
+  }
   // AUDIT 64 F34: SetMidScreenText ends with the SAME
   // Notebook.AddMessage tail (DaggerfallHUD.cs:371), so the one host
   // sink now feeds both of DaggerfallHUD's text surfaces.
   assert.match(rd('src/scenes/townTalk.js'), /set hudMessageSink\(fn\) \{ hud\.onMessage = fn; midScreenText\.onMessage = fn; \}/);
   assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);
-  assert.match(rd('src/scenes/dungeonContext.js'), /midScreenText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);
+  // EVERY ALLOCATION HAS AN OWNER (AUDIT 65 MC-1): `hudText` is the
+  // context's own, but `midScreenText` is a MODULE SINGLETON
+  // (ui/midScreenText.js:135) - the one label the outer host shares -
+  // so this seam is BORROWED and has to be handed back, or a torn-down
+  // dungeon's opts closure stays installed on the live game's label.
+  // Handed BACK, not nulled: the previous holder is the outer host's
+  // own townTalk sink, set once at boot, so a null would un-file every
+  // mid-screen label above ground from the first dungeon exit onward.
+  const dctx = rd('src/scenes/dungeonContext.js');
+  assert.match(dctx, /const _prevMidScreenSink = midScreenText\.onMessage;\s*\n\s*midScreenText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/,
+    'the singleton\'s holder is read BEFORE the borrow, never after it');
+  const destroy = dctx.slice(dctx.indexOf('    destroy() {'));
+  assert.ok(destroy.includes('midScreenText.onMessage = _prevMidScreenSink;'),
+    'and the context hands it back on the way out');
   assert.match(rd('src/scenes/worldModes.js'),
     /hudMessageSink: \(t\) => questBridge\?\.notebook\?\.addMessage\(t\),/);
 });

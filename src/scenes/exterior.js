@@ -1838,7 +1838,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
     // two engine-owning hosts wire the identical pair (world.js:2386-2387,
-    // dungeonContext.js:1925-1926); `questBridge` is assigned below this
+    // dungeonContext.js:1937-1938); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
     onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
@@ -2177,6 +2177,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
+        relock: () => requestLook(canvas),   // MAC1 J: the pointer comes back with the resume gesture (ui/pauseDoor.js:153-170)
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
         // PX3 SHIPPED (QX1): the Quests tab reads THIS host's own quest
@@ -2649,7 +2650,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:5484-5497. */
+     *  %rn/%rt's producer - world.js:5505-5518. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -2686,7 +2687,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
-    // QG1: CastSpellDo's two world reads, world.js:5400-5403's pair.
+    // QG1: CastSpellDo's two world reads, world.js:5421-5424's pair.
     // Without them the action self-completes at parse (actions.js:2742/:2749)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
@@ -2888,6 +2889,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     changeReputation: (fid, amount, propagate) => { const st = _questStore(); if (st) changeReputation(st, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
   });
+  // AUDIT 24 (wave 22) / AUDIT 64 F34: PopupText.AddText's last line
+  // files the popup in the notebook ring (PopupText.cs:123) and
+  // SetMidScreenText carries the SAME Notebook.AddMessage tail
+  // (DaggerfallHUD.cs:371) - DFU reads the notebook off the
+  // GameManager.Instance.PlayerEntity GLOBAL, so no host there can
+  // fail to file. This one did: the sink was handed down by world.js
+  // (:6459) alone, so on ?exterior every HUD line this host and its
+  // interior arm spoke was dropped from the journal's Messages page -
+  // a page exterior.js:1094 wires up and can reach. Same moment and
+  // same order as world.js:6459/:6464, for the same reason: the
+  // notebook only exists once the bridge above is built.
+  townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   // AUDIT 63 F5: DaggerfallTalkWindow.OnPop's notebook filing
   // (DaggerfallTalkWindow.cs:319). townTalk holds the one talk-window
   // door and no notebook; the bridge holds the notebook and is built
@@ -3016,6 +3029,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // pause does (worldModes hands these two to its openPauseFlow), so
     // a pause in a tavern is not a different journal.
     pauseQuestMessages, pauseQuestLog,
+    // MAC1 J / THE FOUR HOSTS RULE: ...and the relock that rides the
+    // resume gesture with them. worldModes' interior pause reads
+    // `host.relock` (:6832) and nothing else, so without this key the
+    // pause taken inside a shop entered from THIS host resolved
+    // undefined and fell back to the frame-late look gate - the exact
+    // double-click MAC1 J closed for ?world (ui/pauseDoor.js:153-170).
+    relock: () => requestLook(canvas),
     // TP2: a Recall cast inside a shop or the crawl raises THIS host's
     // 4000 box, exactly as world.js hands its own prompt down. Without
     // it the mounted dungeon context kept its standalone refusal and a
@@ -4134,7 +4154,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7836-7910 is the shape.
+    // through the player for ever. world.js:7857-7931 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit

@@ -61,7 +61,13 @@ test('audit26 F222: both hosts write the pose and land it on load', () => {
   // camera is no longer the last field.
   // AUDIT 63 F25 widened it once more: the HAND rides beside the
   // sheath, which is how SerializablePlayer.cs:175-176 writes the pair.
-  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed, usingRightHand: weaponRig\.playerWeapon\.usingRightHand, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
+  // AUDIT 65 SL-2 moved the SOURCE of that pair, not the bag: DFU has
+  // ONE WeaponManager for every WorldContext, and this host has four
+  // rigs - so the pair is composed from the mode host's LIVE rig when
+  // there is one (inside a building it is `interiorWeapon`, a rig this
+  // envelope never carried) and from this host's own when there is not.
+  assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: wp\?\.weaponDrawn \?\? !weaponRig\.playerWeapon\.sheathed, usingRightHand: wp\?\.usingRightHand \?\? weaponRig\.playerWeapon\.usingRightHand, camera: mwCamera\.state\(\), transport: player\.transportMode \}/);
+  assert.match(w, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'and `wp` is the mode host\'s answer, null outside interior mode');
   // SAV3 moved the landing into the ONE pose-apply (quickload + the
   // classic import share it) - the inversion law lives there now.
   assert.match(w, /if \(pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !pose\.weaponDrawn;/,

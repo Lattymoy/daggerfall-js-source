@@ -4935,6 +4935,14 @@ export function createWorldModes(host) {
           enchantCtx: false,
           // wave 22: PopupText.AddText files into the notebook ring
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
+          // MAC1 J: and the relock the dungeon's pause door needs, on
+          // the same threading - the context owns no canvas of its own
+          // (dungeonContext.js:4701), so the OUTER host's one rides in.
+          // This is the most-played pause door of the six: world.js
+          // gates its own Escape ladder on exterior mode, so underground
+          // the key falls to routeKey -> ui/input.js:524 -> the
+          // context's togglePause (ui/pauseDoor.js:153-170).
+          relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
           // saves quest + conversation wherever the player stands
           // (SaveLoadManager.cs:1113-1121), and until this the F9
@@ -6393,7 +6401,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:342-368 carries, so a probe could take the
+    // scenes/dungeon.js:347-373 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -7873,6 +7881,47 @@ export function createWorldModes(host) {
     },
     interiorPoolSnapshot,
     restoreInteriorPools,
+    /** SL-2 (AUDIT 65): THE FOURTH RIG'S POSE. DFU has ONE
+     *  WeaponManager for every WorldContext, and SerializablePlayer
+     *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
+     *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
+     *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
+     *  and exterior.js's), and IS1 routed the inside-a-building save to
+     *  the WORLD host's composer - which reads its own exterior rig
+     *  unconditionally (world.js:4125). So an F9 pressed in a shop
+     *  recorded the street's sheath and hand, and the load wrote them
+     *  back into the street's rig; the rig actually in the player's
+     *  hands was in no envelope at all.
+     *
+     *  Interior mode ONLY. Exterior mode is the world host's own rig
+     *  (it composes that itself), and DUNGEON mode is dungeonContext's
+     *  - that host owns the whole pair already (:4690 save, :4766/:4772
+     *  restore) - so answering non-null there would shadow a correct
+     *  composer with this file's idle interim rig. */
+    weaponPose() {
+      return mode === 'interior'
+        ? { weaponDrawn: !interiorWeapon.playerWeapon.sheathed, usingRightHand: interiorWeapon.playerWeapon.usingRightHand }
+        : null;
+    },
+    /** The restore half - and NOT gated on the mode, deliberately.
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4184)
+     *  and only re-enters the building at :4217, so the mode at apply
+     *  time is whatever the LOAD landed in, not whatever the SAVE was
+     *  taken in: an outdoor save loaded while the player was indoors
+     *  must still land its bit in the interior rig, or the next
+     *  building entry meets the outgoing session's drawn weapon. DFU
+     *  has one manager, so the same bit belongs in every rig.
+     *
+     *  FLAG ONLY, presence-gated, exactly as world.js:4269/:4282 and
+     *  dungeonContext.js:4766/:4772 are: the C# restore sets the
+     *  property and calls no ApplyWeapon, because UpdateHands ends in
+     *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
+     *  port's twin is the rig's per-frame syncWorn. */
+    applyWeaponPose(pose) {
+      if (!pose) return;
+      if (pose.weaponDrawn != null) interiorWeapon.playerWeapon.sheathed = !pose.weaponDrawn;
+      if (pose.usingRightHand != null) interiorWeapon.playerWeapon.usingRightHand = !!pose.usingRightHand;
+    },
     /** A10: the SAME two fields, with NO scene write. SetAnchor
      *  (Teleport.cs:107-112) reads ExteriorDoors and
      *  BuildingDiscoveryData and nothing else - it is not a save, it
