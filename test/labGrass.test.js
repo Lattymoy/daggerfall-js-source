@@ -220,7 +220,7 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
 
 test('GR5: the host runs the field, not the walk', () => {
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground \}\);/);
+  assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground, density: grassDensity \}\);/);   // PERF1: at the pane's fraction of the lab's field
   assert.match(world, /labGrassField\.update\(ex, ez, keep, ground\);/, 'this frame\'s keep/ground, since the near pieces move with the eye');
   assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');
   assert.match(world, /labGrassField = null;   \/\/ AUDIT 49 F2 \/ GR5/, 'a new world starts empty');

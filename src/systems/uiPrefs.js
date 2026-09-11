@@ -94,6 +94,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // on for a probe; this is the player's own switch on the Enhanced
   // pane. Off by default - a number over the game is a diagnostic.
   showFps: false,
+  // PERF1 (2026-09-11, RookieG via Mac: "its like 45fps on the outside").
+  // The two dials on the enhanced outdoors' heaviest layers, so a
+  // player whose machine cannot hold the full field can keep the lane.
+  // Both take effect when the world next loads (the grass field is
+  // baked per world, the cloud march built at boot).
+  grassDensity: 1,           // a fraction of the lab's 1.2 million blades over the 420 m window: 1, 0.5, 0.25, or 0 for none
+  cloudQuality: 'default',   // volumetricClouds.js QUALITY: 'lo' | 'default' | 'hi'
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
