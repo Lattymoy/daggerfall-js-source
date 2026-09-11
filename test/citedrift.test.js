@@ -673,7 +673,7 @@ const SOURCE_CITES = [
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
   ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3570` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-3590` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:3565-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
