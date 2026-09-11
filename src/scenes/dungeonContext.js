@@ -1351,6 +1351,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // `Notebook.AddMessage(message)` PopupText.AddText carries
   // (DaggerfallHUD.cs:371 / PopupText.cs:123), so the label files into
   // the journal's Messages page through the same host sink.
+  //
+  // EVERY ALLOCATION HAS AN OWNER: `hudText` is this context's own, but
+  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:135) -
+  // the one label the outer host shares - so the seam is BORROWED, not
+  // owned, and destroy() hands it back (the _prevPassiveHost idiom this
+  // file already uses for its other process-global seams). A bare null
+  // would not do: on ?world and ?exterior the previous holder is the
+  // host's own townTalk sink (world.js:6459 / exterior.js:2908), set
+  // once at boot and never again, so nulling on the way out of the
+  // first dungeon would silently un-file every mid-screen label above
+  // ground for the rest of the session - MC-1's own bug, re-opened.
+  const _prevMidScreenSink = midScreenText.onMessage;
   midScreenText.onMessage = (t) => opts.hudMessageSink?.(t);
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
@@ -2290,7 +2302,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:873 against :904; worldModes.js:5709 against :5718).
+    // (dungeon.js:878 against :904; worldModes.js:5717 against :5718).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2756,8 +2768,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8150,
-              // exterior.js:4169 and worldModes.js:5833 already ran;
+              // playerArrowHitFoe is the one copy world.js:8171,
+              // exterior.js:4189 and worldModes.js:5841 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -2998,6 +3010,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     };
   }
   function applyWorld(w) {
+    // SL-3 (AUDIT 65): THE PICKPOCKET LATCH DIES WITH THE POOL - which
+    // in this host means it has to be lowered by hand. DFU's load
+    // REBUILDS the enemy set: SerializableStateManager.cs:404-425
+    // InstantiatePrefab's a fresh GameObject per saved record, so
+    // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
+    // truth for every enemy. The re-minting pools match that by
+    // construction (exteriorFoes.js:1025's restoreWorld goes through
+    // spawnFoe), but this host patches the LIVE foes in place, so a
+    // same-dungeon reload kept a raised latch and a failed pickpocket
+    // could never be retried - falsifying the law
+    // player/mobileEnemyActivate.js:44-47 states in its own header.
+    // A PRE-PASS over the WHOLE live pool, not a line in the loop
+    // below: that loop visits only the indices the record carries.
+    for (const f of foes) if (f?.entity) f.entity.pickpocketAttempted = false;
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f) return;
@@ -4375,6 +4401,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
         },
         quickSave: () => ctx.quickSave?.(),
+        // MAC1 J: the pointer comes back INSIDE the resume gesture
+        // (ui/pauseDoor.js:153-170). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // OWN (:4701), so the relock arrives from whichever dungeon host
+        // mounted it - the way hudMessageSink is threaded (:1349) - and
+        // both of them hand it in: dungeon.js's opts bag and
+        // worldModes' (the world-hosted crawl, which is where the
+        // classic start into Privateer's Hold lives, and which is the
+        // pause door ui/input.js:524 reaches underground).
+        relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
         quickLoad: () => ctx.quickLoad?.(setPlayerPos),
@@ -5319,6 +5354,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       setDeathPresenter(_prevDeathPresenter);
       setAvoidDeathHook(_prevAvoidDeath);
       setInfectionHost(_prevInfectionHost);
+      // ...and the one HUD label this context borrowed off the module
+      // singleton (:1366). A dungeon left behind must not keep a dead
+      // context's opts closure installed on it.
+      midScreenText.onMessage = _prevMidScreenSink;
     },
   };
   api.enhancedNav = enhancedNav;   // ENHANCED AI 3b: the bake for the motor (4); null chf until it lands

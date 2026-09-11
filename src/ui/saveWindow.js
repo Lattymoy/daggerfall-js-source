@@ -392,7 +392,7 @@ export class SaveWindow {
    *
    *  RECORDED (structural): DFU routes the wheel to the component under
    *  the pointer; the port's host channel delivers a bare sign
-   *  (townTalk.js:968, worldModes.js:6404, dungeonContext's
+   *  (townTalk.js:968, worldModes.js:6412, dungeonContext's
    *  overlayWheel), so the window forwards it to its one scrolling
    *  list. There is nothing else on this window a wheel could mean. */
   wheel(dir) {

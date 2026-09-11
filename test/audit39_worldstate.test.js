@@ -235,7 +235,7 @@ test('AUDIT 39 #158: the city watch sweeps on the same law', async () => {
 // coordinates. The pools now carry an epoch the sweep bumps.
 // ---------------------------------------------------------------------
 
-// the parked-fetchBytes harness of audit26_dungeonfoes.test.js:336 -
+// the parked-fetchBytes harness of audit26_dungeonfoes.test.js:371 -
 // one 74-byte CLASS*.CFG record, held until the pin lets it land
 const parkedCareer = () => {
   let land;

@@ -244,6 +244,55 @@ test('MAC1 I: a hill is walked with no backstep and no airborne frame - the hill
 });
 
 // ── J ────────────────────────────────────────────────────────────
+/** AUDIT 65 HP-1: the brace-balanced body of the object literal that
+ *  follows `opener`, skipping strings and comments, so a `{` inside a
+ *  note or a quote cannot end the scan. */
+function literalBody(text, opener) {
+  const i = text.indexOf(opener);
+  assert.ok(i >= 0, `could not find ${opener}`);
+  const open = text.indexOf('{', i + opener.length);
+  let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    const c = text[k];
+    if (c === '/' && text[k + 1] === '/') { k = text.indexOf('\n', k); continue; }
+    if (c === '/' && text[k + 1] === '*') { k = text.indexOf('*/', k) + 1; continue; }
+    if (c === '\'' || c === '"' || c === '`') {
+      const q = c;
+      for (k++; k < text.length; k++) { if (text[k] === '\\') k++; else if (text[k] === q) break; }
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  assert.fail(`unbalanced literal after ${opener}`);
+  return '';
+}
+
+/** ...and MOUNT it. The roadb_host_pause idiom (test/roadb_host_pause
+ *  .test.js:53-66): nothing is retyped here, the object that gets built
+ *  IS the one in src/, so a deleted key is a MISSING key in these
+ *  assertions rather than a regex that quietly stops matching something
+ *  nearby. Free identifiers resolve through a `with` scope proxy to
+ *  inert stubs, except the ones handed in - which is how `host.relock`
+ *  can be asked the question that matters: does the bag the REAL host
+ *  hands over actually carry it? */
+const STUB = new Proxy(function stub() {}, {
+  get: (t, k) => (typeof k === 'symbol' ? Reflect.get(t, k) : STUB),
+  apply: () => STUB,
+});
+function mountLiteral(text, opener, env = {}) {
+  const scope = new Proxy({ ...env }, {
+    has: () => true,
+    get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : STUB)),
+  });
+  // eslint-disable-next-line no-new-func
+  return new Function('__scope', `with (__scope) { return (${literalBody(text, opener)}); }`)(scope);
+}
+
+/** A host's createWorldModes bag, built - the `host` object worldModes'
+ *  interior pause reads its doors off. */
+const hostBagOf = (text) => mountLiteral(`x(${literalBody(text, 'var modes = createWorldModes(')})`, 'x(');
+
 test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and every host hands it the canvas', () => {
   const door = src('src/ui/pauseDoor.js');
   assert.match(door, /const act = \(action\) => \{\s*\n\s*close\(\);[\s\S]{0,1400}if \(action !== 'exit'\) hooks\.relock\?\.\(\);\s*\n\s*if \(action === 'save'\) hooks\.quickSave\?\.\(\);/,
@@ -252,4 +301,52 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   assert.match(w, /quickLoad: worldQuickLoad,\s*\n\s*relock: \(\) => requestLook\(canvas\),/, 'the world host\'s pause hooks relock through its canvas');
   assert.match(w, /quickLoad: \(\) => worldQuickLoad\(\),\s*\n\s*relock: \(\) => requestLook\(canvas\),/, '...and the host bag the interior arm rides');
   assert.match(src('src/scenes/worldModes.js'), /quickLoad: host\.quickLoad,\s*\n\s*relock: host\.relock,/, 'the interior arm passes the host\'s relock through');
+
+  // AUDIT 65 HP-1: ...AND THE OTHER THREE HOOK LITERALS, which this
+  // test's own title has always claimed and never read. MAC1 wired
+  // three of five and the source regexes above could not see it -
+  // worse, the worldModes regex PASSES while `host.relock` resolves to
+  // undefined, which is precisely what the ?exterior host did. So the
+  // five bags are BUILT and asked, not matched.
+  const modes = src('src/scenes/worldModes.js');
+  const ext = src('src/scenes/exterior.js');
+  const OUT = [['src/scenes/world.js', w], ['src/scenes/exterior.js', ext]];
+
+  // (1)+(2) the two OUTDOOR pause doors, each relocking its own canvas.
+  for (const [file, text] of OUT) {
+    const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {} });
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:165 a relock`);
+  }
+
+  // (3) the INTERIOR pause door - ONE literal fed by TWO host bags, and
+  // the bag is where MAC1's miss actually lived.
+  for (const [file, text] of OUT) {
+    const hooks = mountLiteral(modes, 'openPauseFlow((w) => { interiorOverlay = w; }, ', { opts: {}, host: hostBagOf(text) });
+    assert.equal(typeof hooks.relock, 'function',
+      `${file}: worldModes' interior pause reads host.relock, so THIS host's createWorldModes bag must carry it`);
+  }
+
+  // (4) the DUNGEON pause door - the most-played one of the six
+  // (world.js gates its own Escape ladder on exterior mode, so
+  // underground the key falls to routeKey -> ui/input.js's Escape case
+  // -> dungeonContext.togglePause). That context owns no canvas, so its
+  // hook is a forward and the pin follows it all the way out.
+  let reached = 0;
+  const hooks = mountLiteral(src('src/scenes/dungeonContext.js'), 'openPauseFlow((w) => { activeOverlay = w; }, ',
+    { opts: { relock: () => { reached++; } } });
+  assert.equal(typeof hooks.relock, 'function', 'dungeonContext\'s pause door hands over a relock');
+  hooks.relock();
+  assert.equal(reached, 1, '...and it is the one its HOST threaded in (this context owns no canvas of its own)');
+  for (const [file, text] of [['src/scenes/dungeon.js', src('src/scenes/dungeon.js')], ['src/scenes/worldModes.js', modes]]) {
+    let fired = 0;
+    const opts = mountLiteral(text, 'dfLocation.climate.climateType, ', { host: { relock: () => { fired++; } } });
+    assert.equal(typeof opts.relock, 'function', `${file}: this dungeon host hands buildDungeonContext a relock`);
+    opts.relock();
+    // the standalone host closes over its OWN canvas; the world-hosted
+    // crawl forwards the outer host's (worldModes owns no requestLook)
+    assert.equal(fired, file === 'src/scenes/worldModes.js' ? 1 : 0, `${file}: ...through this host's own look seam`);
+  }
+
+  // The law the whole item rides on: NEVER on the way to the menu.
+  assert.ok(!/if \(action === 'exit'\)[^\n]*relock/.test(door), 'the exit has no world to relock into');
 });

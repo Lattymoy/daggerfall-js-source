@@ -95,7 +95,7 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
  * live host supplies that message as the hook - world.js:1382/:2767/
  * :3132, exterior.js:922/:1516, worldModes.js:385/:6152,
- * dungeonContext.js:1549. The immediate arm below is taken only when
+ * dungeonContext.js:1561. The immediate arm below is taken only when
  * onLevelUp is null: a headless/test path (and the ?class= skip) that
  * DFU has no counterpart for, so there is nothing to diverge from.
  *
