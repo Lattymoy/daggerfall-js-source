@@ -371,7 +371,7 @@ function mountLiteral(text, opener, env = {}) {
 
 /** A host's createWorldModes bag, built - the `host` object worldModes'
  *  interior pause reads its doors off. */
-const hostBagOf = (text) => mountLiteral(`x(${literalBody(text, 'var modes = createWorldModes(')})`, 'x(');
+const hostBagOf = (text, env = {}) => mountLiteral(`x(${literalBody(text, 'var modes = createWorldModes(')})`, 'x(', env);
 
 test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and every host hands it the canvas', () => {
   const door = src('src/ui/pauseDoor.js');
@@ -393,17 +393,27 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   const OUT = [['src/scenes/world.js', w], ['src/scenes/exterior.js', ext]];
 
   // (1)+(2) the two OUTDOOR pause doors, each relocking its own canvas.
+  // AUDIT 65 HP-1 (review): presence is not relocking - each hook is
+  // CALLED and must reach requestLook with ITS host's canvas.
+  // MUTANT: `relock: () => {}` at any of the five sites.
+  const spy = () => { const seen = []; return { seen, requestLook: (c) => { seen.push(c); } }; };
   for (const [file, text] of OUT) {
-    const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {} });
+    const s = spy();
+    const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
     assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:165 a relock`);
+    hooks.relock();
+    assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }
 
   // (3) the INTERIOR pause door - ONE literal fed by TWO host bags, and
   // the bag is where MAC1's miss actually lived.
   for (const [file, text] of OUT) {
-    const hooks = mountLiteral(modes, 'openPauseFlow((w) => { interiorOverlay = w; }, ', { opts: {}, host: hostBagOf(text) });
+    const s = spy();
+    const hooks = mountLiteral(modes, 'openPauseFlow((w) => { interiorOverlay = w; }, ', { opts: {}, host: hostBagOf(text, { requestLook: s.requestLook, canvas: `CANVAS-${file}` }) });
     assert.equal(typeof hooks.relock, 'function',
       `${file}: worldModes' interior pause reads host.relock, so THIS host's createWorldModes bag must carry it`);
+    hooks.relock();
+    assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and the bag's relock reaches THIS host's canvas`);
   }
 
   // (4) the DUNGEON pause door - the most-played one of the six
@@ -419,12 +429,14 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   assert.equal(reached, 1, '...and it is the one its HOST threaded in (this context owns no canvas of its own)');
   for (const [file, text] of [['src/scenes/dungeon.js', src('src/scenes/dungeon.js')], ['src/scenes/worldModes.js', modes]]) {
     let fired = 0;
-    const opts = mountLiteral(text, 'dfLocation.climate.climateType, ', { host: { relock: () => { fired++; } } });
+    const s = spy();
+    const opts = mountLiteral(text, 'dfLocation.climate.climateType, ', { host: { relock: () => { fired++; } }, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
     assert.equal(typeof opts.relock, 'function', `${file}: this dungeon host hands buildDungeonContext a relock`);
     opts.relock();
     // the standalone host closes over its OWN canvas; the world-hosted
     // crawl forwards the outer host's (worldModes owns no requestLook)
     assert.equal(fired, file === 'src/scenes/worldModes.js' ? 1 : 0, `${file}: ...through this host's own look seam`);
+    assert.deepEqual(s.seen, file === 'src/scenes/dungeon.js' ? [`CANVAS-${file}`] : [], `${file}: ...and the standalone host relocks its own canvas`);
   }
 
   // The law the whole item rides on: NEVER on the way to the menu.
