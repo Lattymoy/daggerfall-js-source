@@ -1409,10 +1409,10 @@ export function createWorldModes(host) {
     questBridge?.machine.setupIndividualStaticNPC(host, pn.factionID) ?? true;
   /** Every QuestResourceBehaviour standing in this scene:
    *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
-   *  (GameObjectHelper.cs:917) sees the ones on static NPCs too, and
-   *  IsAlreadyPlaced reads exactly this list - miss them and a Person
-   *  the bootstrap behaviour already holds gets stood a SECOND time by
-   *  the marker walk. */
+   *  (GameObjectHelper.cs:926) sees the ones on static NPCs too, and
+   *  IsAlreadyInjected (GameObjectHelper.cs:978, called :950) reads
+   *  exactly this list - miss them and a Person the bootstrap behaviour
+   *  already holds gets stood a SECOND time by the marker walk. */
   const sceneBehaviours = () => {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
@@ -1420,7 +1420,7 @@ export function createWorldModes(host) {
     // same bootstrap behaviour - RDBLayout.cs:1228-1237 adds StaticNPC
     // and then runs SetupIndividualStaticNPC on that GameObject, so its
     // QuestResourceBehaviour is in FindObjectsOfTypeAll's answer exactly
-    // like an interior one. Miss it and IsAlreadyPlaced stands the
+    // like an interior one. Miss it and IsAlreadyInjected stands the
     // Person a SECOND time on the marker walk.
     for (const pn of dungeonCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
     for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
@@ -1431,7 +1431,7 @@ export function createWorldModes(host) {
    *  whichever scene this host currently draws. It is a different list
    *  from sceneBehaviours() above: that one is
    *  FindObjectsOfTypeAll<QuestResourceBehaviour>'s
-   *  (GameObjectHelper.cs:917) answer for IsAlreadyPlaced, over
+   *  (GameObjectHelper.cs:926) answer for IsAlreadyInjected, over
    *  EVERY quest object; this one is the STATIC-NPC cache, so a
    *  behaviour qualifies only when its host is a static NPC (it
    *  carries a numeric staticNpcFactionId - the marker-stood quest

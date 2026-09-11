@@ -204,10 +204,10 @@ test('FIX-F: arming then a keydown binds through the STAGED dict, and the listen
 });
 
 test('FIX-F: Escape binds like any other key, and the shell stands down for it', () => {
-  // ReservedKeys is EMPTY in DaggerfallControlsWindow (:73): Escape
-  // BINDS rather than cancelling. The shell's own Escape handler is a
-  // CAPTURE listener on the global, so it runs BEFORE this pane's
-  // document listener and would eat the key; it has to stand down.
+  // ReservedKeys is empty in DFU (InputManager.cs:73 `new KeyCode[] { }`,
+  // exposed :174-177), so the capture gate that consults it
+  // (DaggerfallControlsWindow.cs:410) never refuses a key - Escape
+  // included. The shell's own Escape handler stands down for it.
   assert.match(read('src/ui/enhancedMenu.js'), /if \(captureArmed\(\)\) return;/,
     'ui/enhancedMenu.js’s onKey must stand down while a rebind is armed');
   withPane(({ doc, view }) => {
