@@ -1,27 +1,440 @@
 # AUDIT 65 - THE DELTA SINCE AUDIT 62, BY FAULT SHAPE (the shape turn), 2026-09-10
 
-**STUB - the number is claimed; the record lands with the fleet's
-close.** AUDIT 62's lesson: "A number is not free until the record is
-merged. Two audits took 61 on one day, on two branches. Claim the number
-by publishing the record's stub on main first, or expect to renumber."
-This is that stub.
+**ROUND ONE LANDED (2026-09-11); ROUND TWO FOLLOWS.** The finder and
+refuter phases are complete and every verdict is final. Of the fourteen
+fix lanes, eight are reviewed, fixed up and merged here; the other six
+(constants, cites, wheel, motor-view, host-seams, activation) are built
+on their branches and wait on their reviews, which the Opus session
+limit interrupted - they land as round two on this record, with RS-10's
+reorder, the Home.md row's CLOSE, and the cost. Sections marked "(round
+two)" below are owed.
 
 The question: AUDIT 63 read ten classic systems whole and AUDIT 64 the
 other ten, and 63's own lesson said alternate - shape, then depth, then
-shape. The shape turn is owed, over a delta the fault-shape lenses have
+shape. The shape turn was owed, over a delta the fault-shape lenses had
 never read: since AUDIT 62 closed (2026-09-07) main took 83 commits and
 199 `src/` files (+13,159 / -1,833) - AUDIT 63's seven lanes and AUDIT
 64's nine, WATER1 and its audit, the Clock arc, TL3 + CG2, SIB2, the
 MODS AUDIT with FIX-C/D/E/F and DS2, MW-LOAD, and the 2026-09-10 slices
 (OT1, MAC1, CS1). Each piece was reviewed on its own branch against its
-own reference; nobody has asked what the pieces do to each other, or
+own reference; nobody had asked what the pieces do to each other, or
 swept them for the shapes this port keeps producing: the missing
 caller, the four-hosts miss, the constant where DFU reads a value, the
 pin that restates the port, the seam one lane built and another lane's
 fix bypassed.
 
-Planned shape: finder lenses over the delta with the DFU reference on
-disk (`tools/parity/dfu`, PY1's own slot), two Opus refuters per
-finding, fix lanes grouped by FILE in isolated worktrees with a reviewer
-and a fixup round each, integration through `tools/citeShift.mjs` (CS1 -
-the cite mapper AUDIT 64 asked for, landed first).
+**Nine fault-shape lenses over the delta with the DFU reference on disk,
+50 findings judged by two Opus refuters each, 33 confirmed (two
+duplicates folded) and 15 refuted. Fourteen fix lanes in isolated
+worktrees - grouped by the FILES they touch - each followed by its own
+adversarial reviewer and a fixup round; integration through
+`tools/citeShift.mjs`.**
+
+## Why the audit took this shape
+
+A depth audit reads one system against one C# file and finds the
+members nobody ported. A shape audit reads ACROSS the slices for the
+faults that live between them - and the delta since AUDIT 62 was
+eighty-three commits from seventeen lanes and a dozen solo slices, each
+correct on its own branch. The lenses were the port's own recurring
+fault shapes, the ones AUDIT 62 and 64 named in their lessons:
+
+| # | Lens | What it read | Judged | Confirmed |
+|---|---|---|---|---|
+| 1 | missing-caller | every export, hook, option and field the delta added, grepped for a feeder and a reader; the four-hosts sweep over the delta's per-frame laws | 6 | 5 |
+| 2 | hosts-parity | the delta's host wiring across `world.js`, `exterior.js`, `worldModes.js`, `dungeonContext.js` and the standalone scenes | 3 | 3 |
+| 3 | constants-vs-reads | every numeric literal the delta added against the C# member that owns it - live vs permanent, restated vs imported | 4 | 3 |
+| 4 | pins | 57 mutants run against the delta's own tests: which pins cannot redden | 8 | 3 |
+| 5 | cross-lane | pairs of slices that touch one seam (OT1 x AUDIT 64 F0, MAC1 x SIB, MAC1 x MW-D25, MAC1 A x MW-LOAD...) | 6 | 4 |
+| 6 | reference-cites | 312 `File.cs:N` cites on the delta's added lines resolved line by line against DFU master 81e89e9 | 3 | 3 |
+| 7 | saveload-delta | every member the delta added to or read from the save envelope, the classic import and the four hosts' restore paths | 4 | 4 |
+| 8 | ui-input | the delta's windows and the hosts' click, key, wheel and pointer-lock seams against `BaseScreenComponent.cs` and the window classes | 5 | 5 |
+| 9 | render-state | the delta's GL passes: state brackets, texture units, framebuffer restores, allocations, pass order | 11 | 3 |
+
+Two findings were the same defect seen from three lenses (MAC1 J's
+relock hook missing from the dungeon and fixed-city hosts: `ui-input`,
+`cross-lane`, `hosts-parity`) and two lenses filed the water scroll
+literal (`constants-vs-reads`, `missing-caller`); both fold to one row.
+Every finding went to two adversarial refuters prompted to REFUTE it
+with the reference open; a finding survived only if both upheld it, and
+each refuter's corrections travelled into the lane brief verbatim. Where
+the two disagreed on a fix's SHAPE, the shape that kept the tree's own
+recorded law won (the large HUD consumes an unbound button rather than
+falling through, per `hudLarge.js`'s own header; the classic pause
+window relocks on its two resume exits and not in the shared close the
+save arm also takes).
+
+## What was refuted, and why
+
+Refuted by both:
+
+- **Seasons of the Iliac Bay's 3.1x flats defeat MAC1's far-flat rule
+  for three seasons of four** (cross-lane) - one refuter upheld it and
+  the other did not, and the second was right on the law: the rule is
+  a WORLD-UNIT size test ('a tree, at or above 2.5 units'), and under
+  the mod those plants really are five to eight units tall and subtend
+  the pixels a tree does. The rule answers its own criterion; what
+  changed is the world. The mod is opt-in and the cost is the mod's.
+  Recorded as a sentence in `Seasons-Iliac-Bay.md`, not a fix; if Mac
+  reports fps with SIB installed, the lever is a screen-size criterion
+  applied uniformly, not a season-conditional height.
+- **The closed-building line is an invented sentence** (constants) -
+  `Internal_Strings.csv:36-37` (read from the reference's object store)
+  are `Store is closed. Open from %d1:00 to %d2:00.` and `Guild is
+  closed. ...`, differing only in the first word; the port's one
+  template with the noun swapped produces both byte for byte, and the
+  docblock four lines above already cites the two csv lines.
+- **`farFlatVisible`'s options object per batch per frame** (render) -
+  measured at 0.2 ns per call over five million calls; V8 scalar-
+  replaces a destructured literal that never escapes. EV2's law is
+  about `Float32Array`s that escape into a model's matrix.
+- **`drawWaterSurface` re-uploads pass constants per pixel** (render) -
+  the counts are real (34 uniform calls a surface) but the host comment
+  the finding read as a law ('one uniform set a frame') describes the
+  `waterUniforms()` object built once outside the loop, which is what
+  the code does; `drawTerrain` has the same shape and always has.
+- **Per-frame scratch objects in the deck chain** (render) - eight
+  small objects a frame, and the proposed `gen` counter would have
+  replaced the identity stamp `setCloudShadow` depends on with a second
+  source of truth in the seam RS-3 shows is already fragile.
+- **The cloud passes leave `blendFuncSeparate` standing** (render) -
+  every `enable(BLEND)` in `src/` sets its own func within two lines,
+  and leaving BLEND off on exit IS the renderer's baseline, not a
+  missing restore.
+- **`_shiftShadowMap` uploads in-frame and clobbers the active unit**
+  (render) - 16 KB once per 819.2 m at the default tier; the active
+  unit is TEXTURE0 on every path into it and the next pass rebinds.
+
+Refuted by one (a split is a refutation; the surviving half is recorded
+here so the next slice through the file can take it):
+
+- **`withTarget` restores nothing on a throw** (render) - true, and
+  latent: every closure handed to it is two GL calls, and GL does not
+  throw. The `try/finally` is a one-line hardening for whoever next
+  opens `renderTarget.js`.
+- **`VolumetricClouds` has no `dispose`** (render) - true, and there is
+  no path that ends its life short of the page: `exitToTitleMenu` is a
+  navigation, and a host boots once per page. AUDIT 17e's law is about
+  teardown reachable from the path that ends the object; here none
+  exists.
+- **The march loop ceilings 96 and 8 are unpinned** (render) - true and
+  zero-consequence at HEAD; a two-line interpolation and a pin for
+  whoever next opens the file.
+- **Four AUDIT 63/64 pins compute their expected value from the module
+  under test** (pins: `EXTRA_DISTANCE`, the shoplifting chance, the
+  too-far call count, `rebuildRoadless`'s callers) - all four mutants
+  are killed by an older file in the full suite (`prisonrelease`,
+  `theft`, `audit23_ui`, `roads`), so the number cannot ship wrong.
+  Duplicate coverage is a locality note, not a hole. The second refuter
+  wrote and verified a literal form for each; they sit in the audit's
+  verdict files.
+- **The death-video watchdog is held by a 15-60 s band** (pins) - the
+  test never promised the number; both halves of its claim (the hold,
+  the release) are pinned behaviourally with an injected value.
+
+## What was broken
+
+Thirty-three confirmed findings landed in fourteen lanes, grouped by the
+files they touch. Each lane ran in its own worktree from the stub, was
+read by its own adversarial reviewer, and took a fixup round; the review
+findings are recorded under each lane, because the reviewers found the
+half the lanes' own mutation tallies could not see.
+
+### The save envelope and the weather (saveload-core: SL-1, SL-4)
+
+- **SL-1** `restoreWeather` lowered `_evolveHour` but not
+  `_climateWeathersValid`, so an IN-SESSION load (F12, the pause
+  window's Load) left the outgoing session's boot-roll flag standing
+  over the outgoing session's six zones; CLK2's hourly evolution turned
+  a zone, raised DFU's own drain flag, and `tickWeather` applied the
+  player's slot from a stale array - the restored sky was gone by hour
+  five. `WeatherManager.cs:538-542`'s else arm is not "at boot", it is
+  "in case of loaded savegame", every time. One line at
+  `weatherSim.js:334`; no envelope change. The CLK4 pin stayed green
+  under this bug for a whole audit because it opens with
+  `resetWeatherSim()` - a restore pin that starts from a fresh module
+  tests the boot load only, and the boot load was never the broken
+  case.
+- **SL-4** The envelope carried `reactionMods` under a comment citing
+  `SerializablePlayer.cs:152-162`, a range that writes the eleven
+  `sGroupReputations` and nothing else; `PlayerEntity.cs:128-129` says
+  of `reactionMods` "do not serialize, set by live effects". A pre-F6
+  five-wide snapshot restored five-wide and `ClearReactionMods`'
+  `fill(0)` kept the length forever, so the Masque of Clavicus buffed
+  five social groups instead of eleven for the life of that character.
+  DROPPED, not padded: `REP_ARRAYS = ['sGroupReputations']`, and the
+  entity is now BUILT with the eleven zeros DFU's field initializer
+  gives (`playerEntity.js`, the third field of the U24/A4 kind). This
+  reverses AUDIT 63 F6's `classicSave.js` half; its Talk-Arc sentence
+  is struck, and the UI-Arc and Home.md paragraphs that named
+  `reactionMods` as persisted are narrowed to the reputations. No
+  Ledger A row - the departure is retired, not recorded.
+- *Review round:* the Talk-Arc sentence describing the deleted line was
+  the block; the constructor line and the producer-minted pin were the
+  shoulds. Four mutants, four red.
+
+### The large HUD (hudlarge: UI-4)
+
+- `HUDLarge` binds `OnMouseClick` and `OnRightMouseClick` on all eleven
+  panels and no `OnMiddleMouseClick`; `BaseScreenComponent.cs:679-724`
+  dispatches the three buttons in independent blocks with no fallback.
+  The port sent every non-right button to the LEFT action, so a middle
+  or aux click on the bar opened the pack, the spellbook, the sheath or
+  the pause door, silently, in all four hosts. The fall-through line is
+  AUDIT 54's; AUDIT 64 F42 recorded the two-button law and applied it
+  to the CLIP alone. The gate now sits in `routeLargeHudClick` and
+  answers TRUE (the bar consumes an unbound button and runs nothing -
+  the module's own consumption law), not null. A pin certified the bug
+  (`at('map', 1).action === 'AutoMap'`, "a middle click takes the left
+  handler") and would have blocked its own fix.
+- *Review round:* the gate's PLACEMENT was unpinned - hoisting it above
+  the hit test or above `IsLargeHUDInteractable` survived the whole
+  suite; two lines hold it now. Five mutants, five red. Three stale
+  `IsLargeHUDInteractable (:392-395)` cites corrected to `:388-391`.
+
+### The rebinding pane and the classic pause window (ui-pause-controls: UI-3, UI-2)
+
+- **UI-3** FIX-F's enhanced rebinding pane had no `waitingForInput`
+  guard - `DaggerfallControlsWindow` heads all seven handlers with one
+  (:281 :290 :299 :321 :338 :361 :371-372), and the port's classic grid
+  carries it in one line. CONTINUE under an armed capture saved and
+  re-staged, leaving the capture live for the next keystroke anywhere;
+  the Primary/Secondary toggle flipped the dict a pending capture
+  writes to. One `act` wrapper over the six click surfaces; the
+  right-click keeps `preventDefault` outside the guard. Six mutants,
+  six red.
+- **UI-2, the classic half** MAC1 J's `hooks.relock` was read only by
+  the enhanced pause door; the classic window relocked on nothing. It
+  now relocks on every RESUME exit - CONTINUE, the deferred Escape
+  keyup, the two quick-verb save/load fallbacks (live on `exterior.js`'s
+  LOAD arm today) and `popToHUD`'s drain of a COMPLETED pushed save or
+  load - and on no exit that hands over a window.
+- *Review round:* the first cut's save/load pin drove a `{ quickSave(){}
+  }` bag no host mints (every pause host passes saveAs + loadKey +
+  pushWindow, so the door PUSHES and `_closeWith` is never reached), and
+  two resume exits were still cold. The pin now drives the producer's
+  bag and the replace fallback - the one `_closeWith` caller that is not
+  a resume, and the only arm that tells the two candidate fixes apart.
+  Six mutants, six red. The four hosts: `world.js` wired on both arms;
+  `worldModes.js`'s `relock: host.relock` was undefined on the ?exterior
+  route; `exterior.js` and `dungeonContext.js` unwired - the host-seams
+  lane's.
+
+### The water constants, the dead exports and three pin files (water-pins: CV-3, MC-6, PN-1, PN-2, PN-3)
+
+- **CV-3** The classic water scroll rate was spelled three times in two
+  names across three modules; `render/waterSurface.js` is the one home
+  and both dungeon hosts import it. The two `[1, 1, 1, 0.82]` quad
+  alphas are NOT merged with `WATER_OPACITY` - a flat alpha for
+  `drawWater`, not the surface's Fresnel floor.
+- **MC-6** `tilemapHasWater` had no caller (superseded by
+  `tilemapRectHasWater` and `buildWaterIndices`) and is deleted;
+  `waterCoverage` also had none but is the only executable statement of
+  the corner-bit order, so it stays and its test is now an oracle
+  against the module's own GLSL `coverage()`.
+- **PN-1, PN-2, PN-3** Seven WATER constants (one, `WATER_TINT`, held
+  nowhere at all), the three cloud tiers with all seven `VC_PROFILE`
+  rows, and all seven ECV1 concealment constants were pinned only
+  against themselves or by inequalities - the whole 7047-test suite
+  stayed green with the water lifted ten times and a chameleon drawn
+  solid. Literals beside reasons now, with the identity lines kept as
+  wiring pins. `SHADE_DARK` only reddened because the billboard shader
+  restated 0.12 as a second GLSL literal; the FS interpolates the
+  export now, from `systems/concealDraw.js` - a LEAF, because importing
+  it from `combatVisuals.js` took the renderer's static closure from 13
+  modules to 69.
+- *Review round:* four table-behaviour assertions were dropped with the
+  retired export instead of moved to the surviving gate (a shore-only
+  town would have lost its water pass with CI green); the FS pin read
+  the string after its own substitution, so a bare `0.12` slipped back
+  in silently; the import edge. 55 mutants run by the reviewer, 49 red,
+  the six survivors all closed.
+
+### The renderer (renderer: RS-2, RS-3)
+
+- **RS-2** `renderCharacterSprite`'s VC5 try/finally guarded the JS
+  caches and left the three GL restores - the sprite FBO's unbind,
+  `_restoreWorldViewport()`, the clear colour - below it. The throw path
+  is reachable (`drawCharacter` dereferences the mesh) and SWALLOWED
+  (`fpArm.js`'s `catch { img = null; }`), and because `setClearColor` is
+  idempotent against the `_clearColor` shadow, GL stayed at transparent
+  black for the rest of the session while the shadow read sky blue -
+  AUDIT 26 F034's bug back, permanently, off one caught exception. All
+  three restores are inside the finally now, GL-first.
+- **RS-3** The cloud-shadow map lived on texture unit 7, the unit the
+  Dynamic Skies pass writes `_MoonTex` into, and `markForeignPass()`
+  reset the program and VAO shadows but not the upload stamps - a key
+  uploaded before the sky kept a stamp claiming unit 7 held the shadow
+  map while it held the moon. Live in `exterior.js` (which draws the
+  body before the sky), latent in `world.js`. `markForeignPass()` and
+  `beginFrame()` empty the stamps; the unit is `CLOUD_SHADOW_UNIT = 15`,
+  above the mod's nine under WebGL2's sixteen-unit guarantee.
+- *Review round:* clean; nits applied.
+
+### The exterior swimmer (swim: XL-1, the critical one)
+
+- DFU has TWO swim members - `PlayerEnterExit.isPlayerSwimming` (the
+  host flag; kept on tile 0 outdoors, `:415-421`) and
+  `levitateMotor.IsSwimming` == `PlayerMotor.IsSwimming` (cleared
+  outdoors with no tile test). The port had one, `player.swimming`,
+  whose setter arms `CancelMovement`. OT1 wired `exteriorSwimming()`'s
+  result into it AFTER `applyMotorEffectFlags` wrote false, so every
+  frame was two edges and the fixed step spent the cancel and returned:
+  MEASURED on the real motor over a real Collider floor, the exterior
+  swimmer travelled nothing at every ordinary frame rate (0.10 units in
+  the two frames before the latch closed, then zero for six hundred
+  steps), with the swim speed sitting unused in `speed`. The finder
+  measured it, both refuters re-measured it, and the lane's pin
+  measures it from the C# constants: 1.772 units a second again.
+- The motor carries both members now: `isPlayerSwimming` is a plain
+  field the hosts write; ten `IsPlayerSwimming` readers moved to it
+  (the fatigue band, the encounter roll, the exhaustion collapse, the
+  rest refusal, HeadBobber's style and bounce - which the finder had
+  backwards); the `IsSwimming` readers (the zero-and-return, the
+  forced-swim crouch, the footstep stride, PassiveSpecials) stayed. Both
+  dungeon arms write both from one block-water test. `UpdateSpeed`'s
+  gate stays on `sunk`, AUDIT 64 F0's pinned proxy - re-pointing it is
+  a slice of its own.
+- *Review round:* the standalone dungeon's HeadBobber repoint was
+  unpinned (reverting it survived the suite); the seam's docstring named
+  the wrong member; the motor pin forbade the READ DFU's own UpdateSpeed
+  has. Twelve mutants, eleven red before the fixup, twelve after.
+
+### The double-click clock (ui-windows: UI-1)
+
+- Every overlay slot dispatches `click(vx, vy, right, middle)`; OT1 gave
+  the spellbook `click(vx, vy, now)`, so `now` was `e.button === 2`,
+  `false ?? Date.now()` kept the boolean, and every second click in the
+  spell list cast or bought - any row, any distance in time. The nested
+  path proved it: `charsheet.js` forwards two arguments, so the
+  spellbook opened from the sheet timed correctly while the same window
+  from the dial did not. `listPicker.js`'s fourth slot and
+  `nativeTalk.js`'s carried the same shape from AUDIT 54 (the bare
+  mounts: useMagicItem through three hosts, the bookshelf picker). Each
+  window times on its OWN `_now()` seam now; and `BaseScreenComponent.cs
+  :687-688` stores the stamp UNCONDITIONALLY, so the clear on a double
+  is gone from all three - click/double/DOUBLE, as DFU.
+- *Review round:* the new spellbook seam itself was unpinned (deleting
+  `_now()` left 255 tests green and would throw on the first click in
+  the game), and a fifth suite still minted the old shape. Flagged, not
+  fixed: `chargen.js:987` and `:1927` still spend the stamp.
+
+### Three small seams (small-seams: MC-3, MC-4, XL-6)
+
+- **MC-3** `dynamicMoonlight` had no caller; `shared.js` carried its
+  body inline. Wired, not deleted.
+- **MC-4** FIX-F's keyboard-look arm was absent from the fourth
+  `LookFilter` owner, the standalone `?interior` fly-cam. Not one of THE
+  FOUR HOSTS - the set this seam owes is every filter owner - and the
+  audit28 pin had been given an "interior has 2 sites" exception by
+  FIX-F itself to keep its own miss green.
+- **XL-6** MAC1 A's boot-menu `registerMorrowindData()` ran MW-LOAD's
+  size fingerprint, whose sizes went through `assetBlob` - which
+  structured-clones a pre-MW-LOAD ArrayBuffer whole and PUTS it back.
+  Measured with a counting IndexedDB: N value gets AND N readwrite puts
+  over the stored set, on the title screen. The sizes read through a
+  plain get now; the boot door counts names (one `getAllKeys`); the
+  fingerprint stays on the host bootstrap.
+- *Review round, the block:* a names-only count left the print null, so
+  the MW-D9g guard read the NEXT `registerMorrowindData` - the attach -
+  as "learning a set" and never dropped the swap caches: MWFIX's bug by
+  a new road, with no pin to see it. The count remembers the names it
+  saw; the guard compares them while the print is null. And the Build
+  first-person arms button now measures the set before it spends
+  seconds, so fpArm's kept face verdict is a lookup. Thirteen mutants,
+  thirteen red; the block's own fourteenth red.
+
+### (round two) Constants, cites, the wheel, the motor view, the host seams, the activation ladders
+
+Built and pinned on their branches (`a65/constants` 53d797ea: CV-1
+the skills page reads the live value, CV-2 the player's body is the
+player's radius; `a65/cites` 08781189: RC-1..3, comment-only, every
+cited file at its exact line count; `a65/wheel` 7bcbaf76: UI-5 the
+wheel carries the pointer; `a65/motor-view` 0ca27f2d: XL-4 the
+third-person focal rides the smoothed feet, XL-5 a climb writes
+standing-still; `a65/host-seams` 43c1acf8: HP-1 relock in every pause
+door, MC-1 exterior.js files HUD lines, SL-2 the interior rig's pose is
+saved, SL-3 a dungeon load forgets the pickpocket latch; `a65/activation`:
+HP-2/HP-3 the dungeon arm's F33 sinks and MC-2's too-far refusals, in
+progress). Each takes its adversarial reviewer and fixup before it
+merges; RS-10 (the fixed-city host draws the body before an opaque sky
+pass) lands with motor-view, whose edit touches the same call.
+
+## Integration
+
+Two rounds, because the Opus session limit fell in the middle of the
+review round and reset sixteen hours later. Round one (2026-09-11) merged
+the eight lanes whose reviews and fixups were complete - saveload-core,
+hudlarge, ui-pause-controls, water-pins, renderer, swim, ui-windows,
+small-seams - onto the stub; `tools/citeShift.mjs --base 583346e3
+--apply --struck` moved 198 cites over 58 targets in one run, and the 19
+it left for a person were resolved by content: four `pauseWindow.js`
+cites that were already wrong at the base (the mapper renumbers a wrong
+number onto a differently wrong line), the renderer's `setClearColor`
+self-cite (a bare `:N` inside its own file, which the mapper does not
+spell), and two escaped-regex cites in tests (`dungeon\.js:433`,
+`worldModes\.js:473`), which the mapper cannot see - the CS1 edge AUDIT
+64's integration hit first. The Suite line restamped once; the full
+suite green over the merged tree. Round two (after the reset) took the
+five remaining reviews and the activation lane, merged onto round one's
+commit as the mapper's next base, and put RS-10's reorder in by hand
+once the motor-view lane's edit to the same call had landed.
+
+Three fixups were done by hand between the rounds, from the reviewers'
+exact findings, because the lanes that owned them had died at the
+limit: the ui-pause-controls fixup that was half on disk, the
+small-seams block (the counted-then-attached set), and the ui-windows
+seam pin. Each was mutation-checked the way the lane would have been.
+
+## What was left, and by whose decision
+
+- **The four weapon rigs never share state at a transition** (saveload,
+  found beside SL-2): drawing a weapon outside and walking into a shop
+  finds the interior rig sheathed and right-handed with no save
+  involved. SL-2 narrows the SAVE half; the transition half is a
+  Ledger A row for the next slice through `worldModes.js`.
+- **The skills dialog draws two tokens where DFU draws three**
+  (constants, found beside CV-1): `TextProvider.cs:505-508` adds the
+  primary stat's abbreviation at +112. A follow-up, not this audit's.
+- **The foe capsule's 0.45 is skin-inflated** (constants, found beside
+  CV-2): the enemy prefab's query radius is 0.40; the recorded 0.45
+  adds `m_SkinWidth`, which Unity does not. Left standing because AUDIT
+  62's record pins it; a separate finding against that record.
+- **`biography.js:200/:264` cite `BiogFile.cs` one line early** (cites)
+  - consistent drift, and the sentence between them says 'one line
+  after' where the gap is three; a decision for the biography slice.
+- **`townTalk.js`'s person arm consumes at the ray's reach with no
+  collider** (activation, found beside MC-2) - a townsperson on the ray
+  line beyond a wall swallows a click on a door at arm's length.
+
+## The cost (round one)
+
+The audit fleet: nine finders and fourteen refuters, about five million
+tokens of reading. The fix fleet so far: thirteen lane passes, eight
+reviews and three fixups on Opus, about 4.8 million tokens, plus three
+fixups done by hand from the reviewers' findings while the fleet was
+paused. Integration solo. The full figure closes with round two.
+
+## Lessons
+
+- **The refuter pair is the brief.** Fourteen refuter reports rewrote
+  the fix for eleven of the thirty-three confirmed findings: the
+  spellbook clock as a seam, not a reordered signature (five nested
+  callers pass a font in that slot); the relock hook threaded through
+  `dungeonContext`'s deps because that context owns no canvas; the
+  too-far refusal as the bulletin board's one-pick idiom, not a second
+  pick that would have let a far door pre-empt a near foe; `hudSay`
+  unconditional, because `?? say(t)` would have fired both queues.
+- **A finder measures; a refuter re-measures.** The critical finding
+  (the frozen exterior swimmer) was measured by the finder at dz 0.000
+  and by both refuters at 0.103 and 0.000 - the same defect, three
+  harnesses, and the first two frames explain the difference. The
+  number in the record is the refuters'.
+- **Give each refuter its own worktree.** Two pins refuters mutated the
+  one checkout at once and each saw the other's mutants as a red HEAD.
+  One of them moved to a worktree on its own; the rule is written down
+  now.
+- **A split verdict is a refutation, and the surviving half still has a
+  home.** Eight findings split; each is recorded above with the half
+  that stood, so the next slice through that file takes it without a
+  new audit.
