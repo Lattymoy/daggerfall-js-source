@@ -372,8 +372,8 @@ it left for a person were resolved by content: four `pauseWindow.js`
 cites that were already wrong at the base (the mapper renumbers a wrong
 number onto a differently wrong line), the renderer's `setClearColor`
 self-cite (a bare `:N` inside its own file, which the mapper does not
-spell), and two escaped-regex cites in tests (`dungeon\.js:434`,
-`worldModes\.js:473`), which the mapper cannot see - the CS1 edge AUDIT
+spell), and two escaped-regex cites in tests (`dungeon\.js:435`,
+`worldModes\.js:474`), which the mapper cannot see - the CS1 edge AUDIT
 64's integration hit first. The Suite line restamped once; the full
 suite green over the merged tree. Round two (after the reset) took the
 five remaining reviews and the activation lane, merged onto round one's

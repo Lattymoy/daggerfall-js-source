@@ -1196,3 +1196,26 @@ mesh with the pixel; a season re-skin rebuilds it.
 **Pinned** in `test/perf4.test.js` (3). Not a departure. Not measured
 here (no data, no GPU): the counter's draws line in a city is the
 number to read, before and after.
+
+## PERF5 - THE LEVEL AS ONE MESH: THE DUNGEON'S STATIC MODELS BATCHED (2026-09-11)
+
+PERF4's batch, for the dungeon. A level drew its `drawList` - every
+placed block model, three hundred to eight hundred of them, each in
+three to five sub-meshes - one call apiece, and no frustum test in
+front of any of them, so a dungeon frame was a thousand to three
+thousand draw calls whatever the eye saw. The block models never
+move; the ones that do (the platforms, the special doors - `move` and
+`specialDoor` placements) are `dynamicDraws` and `continue` past the
+list. `dungeonContext` adds each static placement to a
+`StaticBatchBuilder` beside its draw entry, after `ensureRemap` has
+put the model's swaps in the level's map, and `staticBatch` merges
+and uploads once on the first frame that reads it. Both hosts draw
+the merge with the identity (the placement matrices are world space
+already) before the per-model loop, which skips the batched entries;
+the dynamic objects follow as before. `drawList` stays whole: the
+automap reveals per model and walks it as it did. `destroy()` frees
+the mesh with the level.
+
+**Pinned** in `test/perf5.test.js` (2); the builder's arithmetic is
+PERF4's. Not a departure. The interior contexts (a building's rooms,
+a few dozen models) are left as they are.
