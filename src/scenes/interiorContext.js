@@ -19,6 +19,7 @@
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/interiorLayout.js';
 import { multiply, transformPoint, identity } from '../world/mat4.js';
+import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF6: the room's static models as one mesh
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
@@ -227,6 +228,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Climate swap table over the interior's submeshes, pruned like the
   // standalone scene when the swapped archive lacks the record.
   const texRemap = new Map();
+  const resolveTexKey = keyResolver(texRemap);   // PERF6: drawMesh's own remap resolution (every model is remapped above, before the list is built)
   const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
   for (const id of pending.keys()) {
     // The undefined submesh list is the seam's to survive, not this
@@ -238,6 +240,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   }
 
   const drawList = [];
+  // PERF6: THE ROOM'S STATIC MODELS AS ONE MESH - PERF5's batch for the
+  // interior. Doors are dynamicDraws and the mill's machinery its own
+  // rotors; every other placement stands still. Built lazily on the
+  // first read, freed by destroy(); drawList stays whole for the automap.
+  let staticBatch = null, staticBuilt = false;
+  const staticBuilder = new StaticBatchBuilder();
   // ROAD-C c2/S9: THE INTERIOR AUTOMAP'S ROWS, minted at the ONE push
   // site every building entry runs through.
   //
@@ -321,6 +329,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const aabb = worldAabb(cpu.positions, matrix);
     const key = `int:${pi}`;
     drawList.push({ mesh: gpu, matrix, key, aabb });
+    // PERF6: the entry stays in drawList for the automap; the main view draws the merge
+    if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
     automapEntries.push({
       key,
       aabb,
@@ -712,6 +722,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
 
   return {
     drawList,
+    get staticBatch() {   // PERF6: merged and uploaded once, on the first frame that asks
+      if (!staticBuilt) { staticBuilt = true; const m = staticBuilder.finish(); staticBatch = m ? renderer.createMesh(m) : null; }
+      return staticBatch;
+    },
     actions,
     // ROAD-C c2/S9: the window's model + the live record.
     automapModel,
@@ -776,6 +790,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       exitInteriorAutomap();
       for (const r of rotors) { r.hum?.stop(); r.hum = null; }   // WM4c: the gear's hum ends with the room
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF6
       // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
       // meshes per context - every interior exit leaked them.
       for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);
