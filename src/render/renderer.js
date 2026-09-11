@@ -802,6 +802,8 @@ export class Renderer {
     // terrain culling it exists to measure. texBinds counts the binds a
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0 };
+    this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
+    this._tFrameStamp = -1;
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._flashLight = null;   // DS1: the storm's flash, composed in by setFlashLight
@@ -1953,6 +1955,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
     this._lightDir = lightDir;
+    this._frameStamp++;   // PERF3
     gl.uniform3fv(this.uAmbient, this._ambient);
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
@@ -2118,6 +2121,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
     this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
     this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
+    this._frameStamp++;   // PERF3: a restored state is a new frame to the terrain block
     this._camPos[0] = s.camPos[0]; this._camPos[1] = s.camPos[1]; this._camPos[2] = s.camPos[2];
     this._clearColor[0] = s.clearColor[0]; this._clearColor[1] = s.clearColor[1];
     this._clearColor[2] = s.clearColor[2]; this._clearColor[3] = s.clearColor[3];
@@ -2182,6 +2186,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  change it BETWEEN draws - see uploadLighting. */
   setLightDir(dir) {
     this._lightDir = dir;
+    this._frameStamp++;   // PERF3: a pass that moves the light between draws re-uploads the terrain block too
   }
 
   /**
@@ -2622,32 +2627,42 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
     const gl = this.gl;
     this._use(this.terrainProgram);
-    gl.uniformMatrix4fv(this.tUProj, false, this._proj);
-    gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
     // EE5 / VC4: the deck's shadow map, or nothing at all
     this._uploadCloudShadow('terrain');
-    this._uploadFog(this._terrainFog);
-    gl.uniform3fv(this.tULightDir, this._lightDir);
-    gl.uniform3fv(this.tUAmbient, this._ambient);
-    gl.uniform1f(this.tUSunScale, this._sunScale);
-    gl.uniform3fv(this.tUSunColor, this._sunColor);
-    gl.uniform3fv(this.tUMoonDir, this._moonDir);
-    gl.uniform1f(this.tUMoonScale, this._moonScale);
-    gl.uniform3fv(this.tUMoonColor, this._moonColor);
-    const count = this._pointLights.length / 4;
-    gl.uniform1i(this.tUPointCount, count);
-    if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
-    if (count > 0) gl.uniform3fv(this.tUPointColors, this._pointColorData(count));
-    gl.uniform4fv(this.tUIndirect, this._indirect);
-    gl.uniform3fv(this.tUIndirectColor, this._indirectColor);
+    // PERF3: THE FRAME-CONSTANT BLOCK, ONCE A FRAME. The mesh program has
+    // always taken its lights from beginFrame alone (the setters merely
+    // shadow - see uploadLighting); the terrain program re-uploaded the
+    // same seventeen uniforms for every streamed pixel, forty-odd draws
+    // a frame on an open road. They go up on the first terrain draw after
+    // beginFrame (or a state restore, or a moved light) and are skipped
+    // for the rest: the same values, the same picture.
+    if (this._tFrameStamp !== this._frameStamp) {
+      this._tFrameStamp = this._frameStamp;
+      gl.uniformMatrix4fv(this.tUProj, false, this._proj);
+      gl.uniformMatrix4fv(this.tUView, false, this._view);
+      this._uploadFog(this._terrainFog);
+      gl.uniform3fv(this.tULightDir, this._lightDir);
+      gl.uniform3fv(this.tUAmbient, this._ambient);
+      gl.uniform1f(this.tUSunScale, this._sunScale);
+      gl.uniform3fv(this.tUSunColor, this._sunColor);
+      gl.uniform3fv(this.tUMoonDir, this._moonDir);
+      gl.uniform1f(this.tUMoonScale, this._moonScale);
+      gl.uniform3fv(this.tUMoonColor, this._moonColor);
+      const count = this._pointLights.length / 4;
+      gl.uniform1i(this.tUPointCount, count);
+      if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
+      if (count > 0) gl.uniform3fv(this.tUPointColors, this._pointColorData(count));
+      gl.uniform4fv(this.tUIndirect, this._indirect);
+      gl.uniform3fv(this.tUIndirectColor, this._indirectColor);
+      gl.uniform1i(this.tUTileArr, 0);
+      gl.uniform1i(this.tUTilemap, 2);
+    }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
-    gl.uniform1i(this.tUTileArr, 0);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
-    gl.uniform1i(this.tUTilemap, 2);
     gl.activeTexture(gl.TEXTURE0);
     this._bindVao(surface.vao);
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
@@ -2816,27 +2831,48 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // alpha (~70% visible) and their emission map (red eyes + the
     // V^1.9 body glow). Rendering's last queue row, classic-visuals
     // direction (Mac).
-    const drawOne = (b) => {
+    // PERF3: A BATCH'S TEXTURE KEY IS MINTED ONCE PER FRAME IT CHANGES,
+    // and the two texture binds are skipped when the batch before wore
+    // the same key. The cutout pass is order-free (depth written, alpha
+    // discarded, no blend), so it is SORTED by key first: the same tree
+    // record across forty pixels used to bind its textures forty times
+    // and now binds them once. The blended pass keeps its back-to-front
+    // order and only skips the repeats it happens to have.
+    let lastKey = null;
+    const keyOf = (b) => {
       // FA1: an animated flat's frames are uploaded under `record#frame`
       // (the key uploadRecordFrame already mints for enemy sprites);
       // a still flat is `record` alone, as before.
-      const key = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
+      if (b._bbKey == null || b._bbKeyFrame !== b.frame) { b._bbKeyFrame = b.frame; b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`; }
+      return b._bbKey;
+    };
+    const drawOne = (b) => {
+      const key = keyOf(b);
       const tex = this.textures.get(key);
       if (!tex) return;
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
+      if (key !== lastKey) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
+        this.stats.texBinds += 2;
+        lastKey = key;
+      }
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
       const o = b.origin || ZERO_ORIGIN;
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
       this._bindVao(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
-      this.stats.texBinds += 2; this.stats.draws++;
+      this.stats.draws++;
     };
     gl.uniform1i(this.bbUSpectral, 0);
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
-    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) drawOne(b);
+    const opaque = this._bbOpaque ??= [];
+    opaque.length = 0;
+    for (const b of batches) if (!isSpectralArchive(b.archive) && !b.conceal) { keyOf(b); opaque.push(b); }
+    opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));
+    for (const b of opaque) drawOne(b);
+    opaque.length = 0;
     // The BLENDED phase: the spectral batches and (ECV1) the concealed
     // ones together, depth-writes off, drawn BACK TO FRONT by their
     // origin's distance from the camera so a translucent foe behind
