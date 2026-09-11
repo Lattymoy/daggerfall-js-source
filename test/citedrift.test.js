@@ -588,7 +588,11 @@ const SOURCE_CITES = [
   // numbers this round's one-line insert into worldModes moved.
   ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
-  ['src/systems/chargenSession.js', /dungeon\.js:433 and worldModes\.js:(\d+) both feed/,
+  // AUDIT 65 UI-5: the dungeon.js half is read by CONTENT here (CD8
+  // below resolves that number itself) - the literal 433 was a second
+  // copy of a line number and went stale the moment the wheel seam
+  // three lines above it grew its point.
+  ['src/systems/chargenSession.js', /dungeon\.js:\d+ and worldModes\.js:(\d+) both feed/,
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1516/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:922\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],

@@ -258,8 +258,9 @@ export class MouseControlsWindow {
     this.dupes = checkDuplicates(this.unsaved);
     this.tip = new ToolTip();
     this._drag = null;
-    // The overlay wheel seam carries no position (ui/automapWindow.js's
-    // shape), so the LAST hovered point is what the wheel acts on.
+    // The LAST hovered point is what the wheel acts on
+    // (ui/automapWindow.js's shape). AUDIT 65 UI-5 put the live point
+    // on the overlay wheel seam; this window does not read it yet.
     this._mouse = [0, 0];
     // Checkbox.cs:103-105 needs the label's measured width, which only
     // draw() has a font for; the first draw fills this in.
@@ -444,8 +445,9 @@ export class MouseControlsWindow {
   /** MouseScrollUp/Down (HorizontalSlider.cs:180-190): one unit a
    *  notch, and only on the slider the pointer is over - DFU routes a
    *  scroll to `mouseOverComponent` alone (BaseScreenComponent.cs:
-   *  578-579). The overlay wheel seam carries no position, so the last
-   *  hovered point stands in for it. */
+   *  578-579). The last hovered point stands in for the notch's own -
+   *  AUDIT 65 UI-5 put the live point on the overlay wheel seam, but
+   *  this window does not read it yet. */
   wheel(dir) {
     if (this.capture || this.top) return;
     const [vx, vy] = this._mouse;
