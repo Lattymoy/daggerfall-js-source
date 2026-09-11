@@ -794,7 +794,13 @@ export function classicSaveToSnapshot(saveGames, {
     lightSourceIndex: -1,
 
     sGroupReputations,
-    reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),   // AUDIT 63 F6: PlayerEntity.cs:129 - the array exists from construction and is never serialized, so an imported character lands the eleven-zero shape rather than no array at all
+    // AUDIT 65 SL-4: no reactionMods. The envelope stopped carrying the
+    // member (save.js REP_ARRAYS) because PlayerEntity.cs:128-129 says
+    // "do not serialize, set by live effects"; an imported character
+    // lands with no array and the first magic round mints the eleven,
+    // which is DFU's own fresh-PlayerEntity shape. (AUDIT 63 F6's line
+    // here minted the eleven-zero shape into the snapshot - a width
+    // nothing reads now.)
     crimeCommitted: saveVars.crimeCommitted,
     haveShownSurrenderDialogue: false,
     legalRep,

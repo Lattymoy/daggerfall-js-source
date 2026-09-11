@@ -109,14 +109,34 @@ const ENTITY_FIELDS = [
 export const newSkillsRecentlyRaised = () => [0, 0];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
- *  field by field (SerializablePlayer.cs:152-162) and the matching
- *  reaction modifiers. Nothing persisted these, so a quicksave/load
- *  reset the player's standing with every social group to zero -
- *  which getReactionToPlayer reads on EVERY greeting, and which the
- *  biography, the T3f tone tallies and the G2 court sentences all
- *  write to. The port has never carried them; the biography made the
- *  gap load-bearing from the first minute of a new character. */
-const REP_ARRAYS = ['sGroupReputations', 'reactionMods'];
+ *  field by field (SerializablePlayer.cs:152-162). Nothing persisted
+ *  them, so a quicksave/load reset the player's standing with every
+ *  social group to zero - which getReactionToPlayer reads on EVERY
+ *  greeting, and which the biography, the T3f tone tallies and the G2
+ *  court sentences all write to. The port had never carried them; the
+ *  biography made the gap load-bearing from the first minute of a new
+ *  character.
+ *
+ *  AUDIT 65 SL-4: reactionMods used to ride this array too, under that
+ *  same cite - and SerializablePlayer.cs:152-162 writes the eleven
+ *  reputations ALONE. DFU is explicit the other way for the mods:
+ *  PlayerEntity.cs:128-129 declares `int[] reactionMods = new
+ *  int[socialGroupCount]` with "do not serialize, set by live
+ *  effects", and no SerializablePlayer field answers it. Carrying it
+ *  cost a real defect: a snapshot minted before AUDIT 63 F6 holds a
+ *  FIVE-wide array, the restore below wrote that width back verbatim,
+ *  and ClearReactionMods' fill(0) preserves a length forever - so the
+ *  Masque of Clavicus buffed five social groups instead of eleven for
+ *  the life of that character. Dropping the member costs nothing:
+ *  enchantmentMagicRound clears the player's array at the head of
+ *  every magic round (enchantments.js:825, DFU's ClearReactionMods at
+ *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
+ *  pass, off worldTick.js:213 - so a load lands DFU's own shape, the
+ *  live mods left standing until the next DoMagicRound re-derives
+ *  them eleven wide. An older snapshot's key is simply ignored (the
+ *  restore loop skips what REP_ARRAYS does not name), so the envelope
+ *  stays back-compatible and SAVE_VERSION does not move. */
+const REP_ARRAYS = ['sGroupReputations'];
 
 /** Deep-copy one activeEffects entry: permanent drain entries carry
  *  no effect record (S15); disease entries carry the accumulating
