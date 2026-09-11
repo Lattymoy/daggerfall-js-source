@@ -2341,7 +2341,7 @@ The hook now runs where C# runs it: inside `buildInteriorContext`,
 per person, during layout. `PlayerEnterExit` does not reach
 `AddQuestResourceObjects` until `DoLayout` has returned (:800), so
 the bootstrap behaviours exist before the marker walk asks
-`IsAlreadyPlaced` - which was the other half of the repair.
+`IsAlreadyInjected` - which was the other half of the repair.
 `findBehaviours` fed that check `questFlats.map(s => s.behaviour)`,
 the quest stands only, where C# opens with
 `Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()`

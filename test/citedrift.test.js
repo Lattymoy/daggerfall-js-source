@@ -1026,7 +1026,11 @@ test('CD8b: the C# members ROAD-G G4 names EXIST, and at the lines it cites', ()
   // is how the slip survived. RC-3's five are single-line cites that
   // QUOTE the line they name, so the quote and the number must agree.
   // MUTANT: any name or number below back to the one it replaced.
-  for (const f of tracked('src')) {
+  // The walk spans the port, its tests and the bible; the records that
+  // QUOTE the retired name (this pin, Testing.md's row, the audit
+  // records) are the only files allowed to carry it.
+  const quotes = (f) => f === 'test/citedrift.test.js' || f === 'bible/09-Testing/Testing.md' || /^bible\/01-Overview\/Audit-\d+\.md$/.test(f);
+  for (const f of [...tracked('src'), ...tracked('test'), ...tracked('bible')].filter((f) => /\.(js|mjs|md)$/.test(f) && !quotes(f))) {
     assert.equal(/IsAlreadyPlaced/.test(read(f)), false,
       `${f} names IsAlreadyPlaced; DFU's guard is IsAlreadyInjected (GameObjectHelper.cs:978)`);
   }
