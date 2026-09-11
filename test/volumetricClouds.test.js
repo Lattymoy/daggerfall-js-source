@@ -162,7 +162,12 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   // VC5 review: the FP arm is lens-local geometry at the origin - the deck is borrowed off for it, and only for it
   assert.match(rr, /renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
   assert.match(rr, /const sd = lensLocal \? this\._cloudShadow : null;\s*\n\s*if \(sd\) \{ this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'borrowed off');
-  assert.match(rr, /finally \{\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}/, 'and returned with the stamp bumped, whatever the draw did');
+  // AUDIT 65 RS-2: the deck's return is still here and still
+  // unconditional - but it is now the TAIL of one finally that returns
+  // the GL state first (the sprite FBO, the world rect, the clear
+  // colour), which used to sit below the block and never ran on a
+  // throw. The behavioural half is test/glstate.test.js's RS-2 pin.
+  assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');
   assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');

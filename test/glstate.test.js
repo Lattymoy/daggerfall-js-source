@@ -12,7 +12,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { identity } from '../src/world/mat4.js';
-import { Renderer } from '../src/render/renderer.js';
+import { Renderer, CLOUD_SHADOW_UNIT, SKY_CLEAR } from '../src/render/renderer.js';
+import { TEXTURE_SLOTS } from '../src/systems/dynamicSkies.js';   // AUDIT 65 RS-3: the nine slots the reserved unit has to clear
 
 function countingRenderer(counts) {
   const stub = new Proxy({}, {
@@ -121,6 +122,143 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
 test('EV6: both exterior hosts sort their draw lists by mesh at build', () => {
   assert.ok(readFileSync('src/scenes/exterior.js', 'utf8').includes('drawList.sort((a, b) => a.order - b.order)'));
   assert.ok(readFileSync('src/scenes/world.js', 'utf8').includes('models.sort((a, b) => a._order - b._order)'));
+});
+
+// ═══ AUDIT 65: the same stub, grown a LOG and REAL enum NUMBERS ═════
+// `gl.TEXTURE0 + CLOUD_SHADOW_UNIT` is arithmetic, so the counting
+// stub's `return 1` (and hudlarge's string enums) cannot say WHICH
+// unit a call touched. Every other enum gets a stable unique number so
+// the bit-ORed clear masks still behave like numbers.
+const GL_ENUMS = { TEXTURE0: 0x84C0, FRAMEBUFFER: 0x8D40, TEXTURE_2D: 0x0DE1 };
+const enumIds = new Map();
+function glEnum(k) {
+  if (GL_ENUMS[k] !== undefined) return GL_ENUMS[k];
+  if (!enumIds.has(k)) enumIds.set(k, 0x9000 + enumIds.size);
+  return enumIds.get(k);
+}
+function loggingRenderer(log, size = { w: 640, h: 400 }) {
+  const stub = new Proxy({}, {
+    get: (o, k) => {
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
+      if (k === 'createTexture' || k === 'createBuffer' || k === 'createVertexArray'
+        || k === 'createProgram' || k === 'createShader' || k === 'createFramebuffer') return () => ({});
+      if (k === 'getParameter') return () => new Float32Array([0, 0, 0, 0]);
+      if (k === 'drawingBufferWidth') return size.w;
+      if (k === 'drawingBufferHeight') return size.h;
+      if (typeof k === 'string' && k.toUpperCase() === k) return glEnum(k);
+      return (...args) => { log.push([k, ...args]); };
+    },
+  });
+  const canvas = { getContext: () => stub, clientWidth: size.w, clientHeight: size.h, width: size.w, height: size.h };
+  const r = new Renderer(canvas);
+  log.length = 0;
+  return r;
+}
+const LIGHT = () => new Float32Array([0, 1, 0]);
+
+test('AUDIT 65 RS-2: the sprite pass hands back the FBO, the world rect AND the clear colour on a THROW', () => {
+  // drawCharacter dereferences the mesh, so it CAN throw, and the icon
+  // path swallows it (fpArm.js's `catch { img = null; }`) - so the
+  // restores have to be in the finally or the session runs on over a
+  // bound offscreen target, a viewport stuck at the sprite's corner,
+  // and a clear colour of transparent black.
+  const log = [];
+  const r = loggingRenderer(log);
+  const I = identity();
+  r.setWorldViewport({ x: 0, y: 92 / 400, w: 1, h: 1 - 92 / 400 });   // the docked large HUD
+  r.beginFrame(I, I, LIGHT());
+  assert.deepEqual(r.worldViewportPx, [0, 92, 640, 308]);
+  let atThrow = -1;
+  r.drawCharacter = () => { atThrow = log.length; throw new Error('mesh.vao of undefined'); };
+
+  const at = log.length;
+  assert.throws(() => r.renderCharacterSprite({ vao: {}, count: 3 }, I, I, I, 200, 300),
+    /mesh\.vao/, 'the throw still propagates - the finally restores, it does not swallow');
+  // the draw really ran against the borrowed target and the borrowed
+  // corner, so what follows is a RESTORE and not a coincidence
+  assert.notEqual(log.slice(0, atThrow).filter((e) => e[0] === 'bindFramebuffer').at(-1)[2], null,
+    'the sprite FBO was bound when drawCharacter threw');
+  assert.deepEqual(log.slice(0, atThrow).filter((e) => e[0] === 'viewport').at(-1), ['viewport', 0, 0, 200, 300],
+    'and the viewport was the sprite\'s own corner');
+  assert.deepEqual(log.slice(at).slice(-3), [
+    ['bindFramebuffer', GL_ENUMS.FRAMEBUFFER, null],
+    ['viewport', 0, 92, 640, 308],
+    ['clearColor', ...r._clearColor],
+  ], 'the pass ends GL-first: the sprite FBO unbound, the world rect back, the clear colour back');
+
+  // AND THE SHADOW IS STILL TRUE, which is the half that makes this
+  // permanent rather than one frame: setClearColor is idempotent
+  // against `_clearColor`, so had the finally not re-issued the
+  // colour, a host asking for the sky again would issue NOTHING and GL
+  // would hold transparent black for the rest of the session (AUDIT 26
+  // F034's shipped bug, restored).
+  r.setClearColor(SKY_CLEAR);
+  const held = log.filter((e) => e[0] === 'clearColor').at(-1).slice(1);
+  assert.deepEqual(held, [...r._clearColor], 'GL holds what the _clearColor shadow claims it holds');
+  assert.deepEqual(held.map(Math.fround), SKY_CLEAR.map(Math.fround), 'and that is the sky, not the sprite pass\'s transparent black');
+
+  // the read-back path's own bind is in a finally for the same reason;
+  // there is no seam to make the stub's readPixels throw, so this half
+  // is pinned on the source (the funnel-law idiom above).
+  assert.match(readFileSync('src/render/renderer.js', 'utf8'),
+    /try \{ gl\.readPixels\(0, 0, pw, ph, gl\.RGBA, gl\.UNSIGNED_BYTE, raw\); \}\s*\n\s*finally \{ gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\); \}/,
+    'renderCharacterSpriteImage returns the read-back bind too');
+});
+
+test('AUDIT 65 RS-3: a foreign pass forgets the cloud-shadow uploads, and the next draw rebinds the reserved unit', () => {
+  const log = [];
+  const r = loggingRenderer(log);
+  const I = identity();
+  const unit = GL_ENUMS.TEXTURE0 + CLOUD_SHADOW_UNIT;
+  const mesh = { vao: {}, count: 3 };
+  r.beginFrame(I, I, LIGHT());
+  r.setCloudShadow({ map: {}, rect: [0, 0, 1024, 0.5] });
+
+  log.length = 0;
+  r.drawCharacter(mesh, I);
+  assert.ok(log.some((e) => e[0] === 'activeTexture' && e[1] === unit),
+    'the first draw of this key uploads the map on the reserved unit');
+
+  // the stamp is what makes the second draw free - that much is EV6's
+  // own economy and must survive the fix.
+  log.length = 0;
+  r.drawCharacter(mesh, I);
+  assert.equal(log.filter((e) => e[0] === 'activeTexture' && e[1] === unit).length, 0,
+    'and holds while nothing foreign runs');
+
+  // now the seam: a foreign pass (the Dynamic Skies sheet walks nine
+  // units as TEXTURE0 + i) writes a unit behind the renderer's back,
+  // and the host marks it. The stamp is a claim about a binding this
+  // renderer can no longer account for.
+  r.gl.activeTexture(unit);
+  r.gl.bindTexture(r.gl.TEXTURE_2D, { foreign: true });
+  r.markForeignPass();
+
+  log.length = 0;
+  r.drawCharacter(mesh, I);
+  const i = log.findIndex((e) => e[0] === 'activeTexture' && e[1] === unit);
+  assert.ok(i >= 0, 'the mark dropped the stamp: the reserved unit is re-issued');
+  assert.equal(log[i + 1][0], 'bindTexture', 'and the shadow map is bound back onto it');
+  assert.ok(log.some((e) => e[0] === 'uniform1i' && e[1] === r._csLoc.char[0] && e[2] === CLOUD_SHADOW_UNIT),
+    'with the sampler pointed at the same unit');
+});
+
+test('AUDIT 65 RS-3: the reserved cloud-shadow unit stands clear of every slot a foreign pass binds', () => {
+  // THE fix's pin: at unit 7 this read 9 <= 7 and failed. The mod
+  // bases its sheet at unit 0, so its top unit is TEXTURE_SLOTS.length
+  // - 1 and the reservation has to sit above it.
+  assert.match(readFileSync('src/render/dynamicSkiesRenderer.js', 'utf8'), /gl\.activeTexture\(gl\.TEXTURE0 \+ i\);/,
+    'the Dynamic Skies sheet is based at unit 0');
+  assert.ok(TEXTURE_SLOTS.length <= CLOUD_SHADOW_UNIT,
+    `the mod's ${TEXTURE_SLOTS.length} slots run 0..${TEXTURE_SLOTS.length - 1}, below the reserved ${CLOUD_SHADOW_UNIT}`);
+  assert.ok(CLOUD_SHADOW_UNIT <= 15, 'and WebGL2 only guarantees MAX_TEXTURE_IMAGE_UNITS >= 16');
+  const rr = readFileSync('src/render/renderer.js', 'utf8');
+  assert.doesNotMatch(rr, /gl\.TEXTURE7\b/, 'the literal is gone from both sites');
+  assert.match(rr, /gl\.activeTexture\(gl\.TEXTURE0 \+ CLOUD_SHADOW_UNIT\);/);
+  assert.match(rr, /gl\.uniform1i\(mapLoc, CLOUD_SHADOW_UNIT\);/);
+  assert.match(rr, /markForeignPass\(\) \{\s*\n\s*this\.gl\.bindVertexArray\(null\);\s*\n\s*this\._lastProgram = null;\s*\n\s*this\._lastVao = null;\s*\n\s*this\._csUploaded = \{\};\s*\n\s*\}/,
+    'and the mark forgets the upload stamps with the program and the VAO');
 });
 
 // ═══ AUDIT 47: every shader declares what it uses, statically ═══════
