@@ -25,37 +25,29 @@
 // ground. Nothing here asserts a water surface height to the game
 // (player/exteriorSurface.js: DFU has none outdoors) - it is a draw.
 //
-// WHICH TEXEL IS WATER. The tile byte says (the same byte the terrain
-// pass decodes: record = data >> 2, transform = data & 3), through a
-// 256-entry table of WATER CORNERS: which of the tile's four corners,
-// in the TILEMAP'S OWN FRAME, stand in water. Record 0 is all four.
-// The shore records are the marching-squares transitions
-// (world/terrainTiles.js createLookupTable, DFU's AssignTilesJob): a
-// shape's bits name the corners that are dirt, and the table maps that
-// shape to a record plus its rotate/flip bits - so the table inverts
-// exactly: the byte a shape wrote gets the shape's water corners back.
-// The river painter (world/roadPainter.js) writes the same records with
-// the same bits, and the water-grass (20-22, 49) and water-stone
-// (30-32, 50) twins of the water-dirt shapes by the same columns, so
-// they take the same corners. A shore record the painters never write
-// (8, 9, 23, 33-36: town docks and moats) has no known shape and takes
-// no water here: the classic tile stands. The coverage inside a tile is
+// WHICH TEXEL IS WATER. The tile byte says, through the 256-entry
+// table of WATER CORNERS in world/waterCorners.js (MAC2 lifted it out of
+// this file: the player's feet read the same table now, so where this
+// pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { createLookupTable } from '../world/terrainTiles.js';
-import { convertTile, WATER_TILE_INDEX } from '../world/terrainSurface.js';
+import { WATER_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 
 /** How far above the ground the surface is drawn, in world units (a
  *  tile is 6.4). Enough to clear the depth test on a slope, too little
  *  to read as a step at the shore. */
 export const WATER_LIFT = 0.08;
-/** The surface's base opacity; Fresnel raises it toward grazing. */
-export const WATER_OPACITY = 0.82;
+/** The surface's base opacity; Fresnel raises it toward grazing. MAC2
+ *  (2026-09-11, Mac: "I wish the water was darker and not as see
+ *  through"): 0.82 -> 0.94, so the terrain pass's flat tile beneath
+ *  barely shows. */
+export const WATER_OPACITY = 0.94;
 /** The classic water texel's tint under the surface - a deep blue-green
  *  multiplier, so the tile's own palette colour reads as the body of the
- *  water and not as a floor seen through it. */
-export const WATER_TINT = Object.freeze([0.62, 0.78, 0.86]);
+ *  water and not as a floor seen through it. MAC2: darkened from
+ *  0.62/0.78/0.86 - the body is the water's depth now, not its floor. */
+export const WATER_TINT = Object.freeze([0.36, 0.50, 0.60]);
 /** Schlick's F0 for water (n = 1.33). */
 export const WATER_F0 = 0.02;
 /** Half-width of the shore feather, in coverage (0.5 is the diagonal). */
@@ -89,47 +81,6 @@ export const WATER_SCROLL_TILES_PER_SEC = 0.05;
  *  lab without a dome): a plain day. */
 export const DEFAULT_SKY_ZENITH = Object.freeze([0.17, 0.35, 0.72]);
 export const DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.78, 0.92]);
-
-/** The water-dirt shore family and its water-grass / water-stone twins,
- *  by column: corner, edge, three-corner, saddle - the painter's own
- *  columns (roadPainter.js STREAM_TILES / RIVER_TILES). */
-export const SHORE_FAMILIES = Object.freeze([
-  Object.freeze([5, 6, 7, 48]),
-  Object.freeze([20, 21, 22, 49]),
-  Object.freeze([30, 31, 32, 50]),
-]);
-
-/**
- * The 256-entry water-corner table, indexed by the CONVERTED tile byte
- * (record << 2 | transform). Bits: 1 = corner (0,0), 2 = (1,0),
- * 4 = (0,1), 8 = (1,1), in the tilemap's frame (x along the tile row,
- * y along the column - AssignTilesJob's b0..b3).
- */
-export function buildWaterMaskTable() {
-  const table = new Uint8Array(256);
-  for (let t = 0; t < 4; t++) table[(WATER_TILE_INDEX << 2) | t] = 0xF;
-  const lookup = createLookupTable();
-  for (let shape = 0; shape < 16; shape++) {
-    const raw = lookup[shape];               // ring 0: water below, dirt above
-    const record = raw & 0x3f;
-    const k = SHORE_FAMILIES[0].indexOf(record);
-    if (k < 0) continue;                      // shape 0 is bare water (record 0, above), 15 bare dirt
-    const t = convertTile(raw) & 3;
-    const water = (~shape) & 0xF;             // the shape's bits are the DIRT corners
-    for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
-  }
-  return table;
-}
-
-export const WATER_MASK_TABLE = buildWaterMaskTable();
-
-/** The table packed eight nibbles to a uint, as the shader's
- *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
-export function packWaterMask(table = WATER_MASK_TABLE) {
-  const words = new Uint32Array(32);
-  for (let i = 0; i < 256; i++) words[i >> 3] |= (table[i] & 0xF) << ((i & 7) * 4);
-  return words;
-}
 
 /** WATER-AUDIT: does a sub-rectangle of a `dim`-wide tilemap carry any
  *  water? The fixed city pads its square tilemap with zeros past the
@@ -176,19 +127,6 @@ export function buildWaterIndices(bytes, stride = 1, table = WATER_MASK_TABLE, t
   return out.length ? Uint32Array.from(out) : null;
 }
 
-/** The water corners of one converted byte (the shader's own lookup, in JS). */
-export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[convertedByte & 0xff];
-
-/** The bilinear coverage the shader computes at (fx, fy) inside a tile -
- *  the JS twin of this file's own GLSL `coverage()` (the corner-bit
- *  order bit0=(0,0), bit1=(1,0), bit2=(0,1), bit3=(1,1)). No production
- *  caller: test/water.test.js holds the two bodies against each other. */
-export function waterCoverage(mask, fx, fy) {
-  const c00 = mask & 1, c10 = (mask >> 1) & 1, c01 = (mask >> 2) & 1, c11 = (mask >> 3) & 1;
-  const top = c00 + (c10 - c00) * fx;
-  const bottom = c01 + (c11 - c01) * fx;
-  return top + (bottom - top) * fy;
-}
 
 /** 0..1: the eased wind row's strength on the sky's own scale
  *  (systems/wind.js: a row's vector runs WIND_ROW_CALM to

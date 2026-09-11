@@ -9,10 +9,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, tilemapRectHasWater, buildWaterIndices, waterCorners, waterCoverage,
-  windStrength01, waterUniforms, SHORE_FAMILIES, WATER_SURFACE_VS, waterSurfaceFs,
-  WATER_LIFT, WATER_OPACITY, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
+  tilemapRectHasWater, buildWaterIndices, windStrength01, waterUniforms, WATER_SURFACE_VS, waterSurfaceFs, WATER_LIFT, WATER_OPACITY, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_SCROLL_TILES_PER_SEC, DEFAULT_SKY_ZENITH, DEFAULT_SKY_HORIZON,
 } from '../src/render/waterSurface.js';
+import { WATER_MASK_TABLE, buildWaterMaskTable, packWaterMask, waterCorners, waterCoverage, SHALLOW_WHOLE, SHORE_FAMILIES } from '../src/world/waterCorners.js';
+import { onShallowWaterTile } from '../src/player/exteriorSurface.js';
 import { createLookupTable, assignTiles } from '../src/world/terrainTiles.js';
 import { convertTilemap, buildTerrainGrid, buildTerrainIndices } from '../src/world/terrainSurface.js';
 import { STREAM_TILES, RIVER_TILES } from '../src/world/roadPainter.js';
@@ -51,8 +51,19 @@ test('WATER1: the water-corner table inverts the marching squares - a shape\'s w
   }
   assert.equal(waterCorners(48 << 2), 0b1001, 'the saddle, unrotated: (0,0) and (1,1)');
   assert.equal(waterCorners((48 << 2) | 1), 0b0110, 'and rotated: the other diagonal');
-  // every other record carries no water here: the ring-1 and ring-2 transitions, the bases, the docks and moats
-  for (const r of [1, 2, 3, 8, 9, 10, 11, 12, 15, 16, 17, 23, 33, 34, 35, 36, 46, 51, 53]) {
+  // MAC2: DFU's shallow-water records the painters never write as a shape -
+  // the town docks, moats and puddles - take the surface WHOLE, under every
+  // transform; they are exactly PlayerMotor.OnShallowWaterTile's list
+  // (:551-563) minus the shore families whose corners the table knows.
+  // MUTANT: drop any record from SHALLOW_WHOLE, or give it a partial mask.
+  assert.deepEqual([...SHALLOW_WHOLE], [8, 23, 33, 34, 35, 36]);
+  for (const r of SHALLOW_WHOLE) {
+    assert.ok(onShallowWaterTile(r), `record ${r} is one of DFU's shallow-water tiles`);
+    for (let t = 0; t < 4; t++) assert.equal(waterCorners((r << 2) | t), 0xF, `record ${r} t${t}: whole`);
+  }
+  assert.ok(!onShallowWaterTile(9), 'record 9 is not in DFU\'s list...');
+  // every other record carries no water here: the ring-1 and ring-2 transitions, the bases, and record 9
+  for (const r of [1, 2, 3, 9, 10, 11, 12, 15, 16, 17, 46, 51, 53]) {
     for (let t = 0; t < 4; t++) assert.equal(waterCorners((r << 2) | t), 0, `record ${r} t${t}`);
   }
   assert.deepEqual([...buildWaterMaskTable()], [...WATER_MASK_TABLE], 'built once, deterministic');
@@ -100,7 +111,7 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   // AUDIT 65 PN-1: the lines above are WIRING pins (lift: WATER_LIFT -> lift: 0 reddens them); these hold the NUMBERS, which nothing in the tree held.
   assert.equal(WATER_LIFT, 0.08, 'the z-fight lift above the ground the water is built from');
   assert.ok(WATER_LIFT > 0 && WATER_LIFT < 0.2, 'above the ground but below a step');
-  assert.equal(WATER_OPACITY, 0.82, 'the surface\'s base opacity, before Fresnel raises it toward grazing');
+  assert.equal(WATER_OPACITY, 0.94, 'the surface\'s base opacity, before Fresnel raises it toward grazing (MAC2: darker, less see-through)');
   assert.equal(WATER_F0, 0.02, 'Schlick\'s F0 for water (n = 1.33)');
   assert.equal(SHORE_SOFTNESS, 0.16, 'half-width of the shore feather, in coverage');
   const calm = waterUniforms({ seconds: 3, still: true });
@@ -110,7 +121,7 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   assert.equal(calm.zenith, DEFAULT_SKY_ZENITH); assert.equal(calm.horizon, DEFAULT_SKY_HORIZON);
   assert.deepEqual([...DEFAULT_SKY_ZENITH], [0.17, 0.35, 0.72], 'the plain day the surface reflects when no sky says otherwise');
   assert.deepEqual([...DEFAULT_SKY_HORIZON], [0.66, 0.78, 0.92]);
-  assert.deepEqual([...WATER_TINT], [0.62, 0.78, 0.86]);
+  assert.deepEqual([...WATER_TINT], [0.36, 0.50, 0.60], 'MAC2: the body is the water\'s depth, not its floor');
   assert.equal(waterUniforms({ rain: 4 }).rain, 1, 'rain clamps');
   assert.equal(waterUniforms({ rain: -1 }).rain, 0);
   assert.equal(WATER_SCROLL_TILES_PER_SEC, 0.05, 'render/waterSurface.js is the one home for the classic texel\'s flow');
@@ -163,7 +174,8 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
 
 test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw state that blends over the ground it is lifted from', () => {
   const r = rd('src/render/renderer.js');
-  assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs, packWaterMask \} from '\.\/waterSurface\.js';/);
+  assert.match(r, /import \{ WATER_SURFACE_VS, waterSurfaceFs \} from '\.\/waterSurface\.js';/);
+  assert.match(r, /import \{ packWaterMask \} from '\.\.\/world\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /this\._csLoc\.water = \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\];/, 'VC4\'s recorded gap, closed');
   const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
