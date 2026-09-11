@@ -404,7 +404,7 @@ function paneLoad(body) {
     c.append(acts([
       // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
       // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:198) and
+      // own pause window loads on one press (pauseWindow.js:307-309) and
       // so does F11, and inventing a prompt on exactly one of the
       // port's three load doors is a divergence, not a safety net.
       { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
@@ -426,7 +426,7 @@ function paneLoad(body) {
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
 // U51. Classic's SAVE button closes the window and then writes
-// (pauseWindow.js:195, `this._closeWith(); this.hooks.quickSave?.()`),
+// (pauseWindow.js:290-292, `this._closeWith(); ... this.hooks.quickSave?.()`),
 // and this does the same for a reason that is not only parity: the
 // port answers a write with a HUD LINE, and this screen is a fixed
 // opaque div over the whole canvas, so a save that left the door open
@@ -466,7 +466,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:161); in a browser Application.Quit means nothing,
+// (pauseWindow.js:198-201); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //

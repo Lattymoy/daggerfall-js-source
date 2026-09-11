@@ -619,7 +619,7 @@ export function createSkyController(gl, params) {
  *
  *  RECORDED, not a gap: the pre-chargen guard is load-bearing, and
  *  what it guards is a state DFU never has. The pre-chargen literal
- *  (characters/playerEntity.js:28) is `stats: { strength: 50,
+ *  (characters/playerEntity.js:29) is `stats: { strength: 50,
  *  agility: 50, luck: 50 }` with no `speed` key, so an unguarded
  *  liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5 instead
  *  of the documented SPD-50 stand-in. DFU builds its stats from the
@@ -1792,7 +1792,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:240`, the standalone host, has always had the right
+ *  `dungeon.js:241`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

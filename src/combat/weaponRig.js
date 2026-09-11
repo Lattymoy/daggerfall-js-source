@@ -92,7 +92,7 @@ export function buildArmsFor(entity) {
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2094), townTalk.say
  *                     (exterior.js:1299, world.js:2409) and
- *                     worldModes' own interior sink (worldModes.js:366,
+ *                     worldModes' own interior sink (worldModes.js:367,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,

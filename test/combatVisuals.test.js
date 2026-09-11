@@ -171,7 +171,7 @@ test('ECV1: the renderer\'s blended phase - spectral and concealed together, bac
 test('ECV1: the billboard shader declares uConceal and draws each mode - the ripple, the dark shade, the opacity', () => {
   const r = read('src/render/renderer.js');
   // AUDIT 65 PN-3: the template's own interpolation, resolved the way
-  // test/glstate.test.js:161 resolves ${CLOUD_SHADOW_GLSL} - so the regex
+  // test/glstate.test.js:299 resolves ${CLOUD_SHADOW_GLSL} - so the regex
   // below can spell the NUMBER the shader compiles with.
   const fs = r.slice(r.indexOf('const BB_FS = `'), r.indexOf('`;', r.indexOf('const BB_FS = `')))
     .replace(/\$\{SHADE_DARK\}/g, String(SHADE_DARK));

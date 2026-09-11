@@ -588,7 +588,7 @@ const SOURCE_CITES = [
   // numbers this round's one-line insert into worldModes moved.
   ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
-  ['src/systems/chargenSession.js', /dungeon\.js:433 and worldModes\.js:(\d+) both feed/,
+  ['src/systems/chargenSession.js', /dungeon\.js:434 and worldModes\.js:(\d+) both feed/,
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1516/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:922\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
@@ -635,7 +635,7 @@ const SOURCE_CITES = [
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2270\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:810`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:811`/, EX, /^ {6}fieldOfView\(\),$/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
@@ -857,7 +857,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
 // multi-number citation: `cityGuards.js:744-694`, `world.js:5463-5437`,
-// `worldModes.js:1093 against :1056`. Forty of them came out as ranges
+// `worldModes.js:1094 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

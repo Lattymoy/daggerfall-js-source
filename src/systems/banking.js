@@ -739,14 +739,14 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2355
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2356
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
 //    3D model panel, and ui/bankWindow.js:243-251 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to
 //    DFU's own missing-directory answer, :433-434).
 //  - ReadNativeBankData (:584-614) IS PORTED, verbatim quirks and all:
 //    systems/classicSave.js:255 classicBankAccounts, fed the SaveTree
-//    BankAccount record at classicSave.js:804 and mounted by SAV3
+//    BankAccount record at classicSave.js:811 and mounted by SAV3
 //    (ui/loadClassicWindow.js -> scenes/menu.js -> world.js's
 //    classicLoadBoot).
 //  - D6 CLOSED THE SHIP HALF, and it needed no new scenes seam: the

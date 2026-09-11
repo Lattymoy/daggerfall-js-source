@@ -200,7 +200,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
-  // (the stand-in entity's flat skills, characters/playerEntity.js:27)
+  // (the stand-in entity's flat skills, characters/playerEntity.js:28)
   // - spreading it threw. RECORDED, and no divergence from
   // SerializablePlayer: the line below is the working guard, it
   // round-trips BOTH shapes, and restore reads back whichever it

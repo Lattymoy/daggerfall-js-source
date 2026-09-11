@@ -43,7 +43,7 @@
 // .IsSwimming (:149-152) - is always false, and the only exterior
 // water state in the game is the OnExteriorWaterMethod below. The
 // port's hosts already leave player.swimming false outdoors
-// (shared.applyMotorEffectFlags, shared.js:886), which is that law, and the
+// (shared.applyMotorEffectFlags, shared.js:890), which is that law, and the
 // motor's `onExteriorWater` flag - declared by A6 with "Wave B's
 // exterior-water slice owns the model that raises it" - is this one.
 //
@@ -68,7 +68,7 @@
 // nothing), with the swim speed sitting unused in `speed`. XL-1 gave the motor DFU's second
 // member - `isPlayerSwimming`, a plain field beside `sunk` that _step
 // never reads - and the hosts write THAT, leaving
-// shared.applyMotorEffectFlags (shared.js:886) to keep the motor's own
+// shared.applyMotorEffectFlags (shared.js:890) to keep the motor's own
 // flag false outdoors, which is :421 itself.
 //
 // THE HOST FLAG (PlayerEnterExit.IsPlayerSwimming): the fatigue band

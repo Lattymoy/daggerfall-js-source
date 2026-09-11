@@ -145,8 +145,8 @@ function enhancedPauseOverlay(show, hooks) {
   };
 
   // THE FOUR EXITS. Every one of them takes the screen down FIRST and
-  // then acts, which is classic's own order (pauseWindow.js:195, :198,
-  // :161 - `_closeWith()` then the hook) and matters more here: the
+  // then acts, which is classic's own order (pauseWindow.js:254, :290,
+  // :198 - `_closeWith()` then the hook) and matters more here: the
   // port answers a save or a load with a HUD line, and this screen is
   // an opaque div over the entire canvas, so a hook fired underneath a
   // live door would put its own confirmation out of sight.

@@ -22,7 +22,7 @@ campaign. Nobody's save changes shape because they played with a friend.
 Each player's quest state, dialogue state, travel map and history are
 their own. You walk together; the story you are in is yours.
 
-Why: the save envelope (`systems/save.js:603`) already splits the world
+Why: the save envelope (`systems/save.js:623`) already splits the world
 from the player - `position, pose, classicMinutes, world, locationKey`
 on one side; `quest, talk, travelMap, escortingFaces, interior` on the
 other. That line IS the replication boundary. A shared campaign would

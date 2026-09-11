@@ -226,7 +226,7 @@ console host they were waiting on. The SHIP LANDING then took a seventh
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:1906`) with the
+guild-service popup above ground (`scenes/worldModes.js:1907`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:164` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.

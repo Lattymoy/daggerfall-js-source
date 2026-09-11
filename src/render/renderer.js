@@ -1411,7 +1411,7 @@ export class Renderer {
     // carries on over it: the 1024x1024 sprite FBO stays bound for the
     // rest of the frame, the world rect stays at the sprite's corner,
     // and the clear colour stays transparent black FOREVER, because
-    // setClearColor (:1942) is idempotent against the `_clearColor`
+    // setClearColor (:1946) is idempotent against the `_clearColor`
     // shadow this path no longer matches - AUDIT 26 F034's bug back,
     // permanently, off one caught exception.
     try { this.drawCharacter(mesh, modelMatrix); }
