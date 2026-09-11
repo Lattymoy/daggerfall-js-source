@@ -24,6 +24,12 @@ import { revealGuildHallsOnMap } from '../src/systems/guildHallReveal.js';
 import { hasSpellbook, SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
 import { activateMobileEnemy, tryMobileEnemyActivate, youSeeEnemyText } from '../src/player/mobileEnemyActivate.js';
 import { PICKPOCKET_DISTANCE, TOO_FAR_AWAY_TEXT, DEFAULT_ACTIVATION_DISTANCE, pickActivatableHit } from '../src/player/activate.js';
+// AUDIT 65 MC-2: the ray's own reach, and the reaches the handlers gate on
+import {
+  RAY_DISTANCE, DOOR_ACTIVATION_DISTANCE, TREASURE_ACTIVATION_DISTANCE,
+  CORPSE_ACTIVATION_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE,
+} from '../src/player/activate.js';
+import { corpseLootTargets } from '../src/scenes/corpseMarker.js';   // AUDIT 65 MC-2: the body's own producer
 import { pickpocket } from '../src/systems/talk.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -327,16 +333,28 @@ test('AUDIT 63 F33: Info/Grab/Talk pop the youSeeA / youSeeAn line with no dista
 });
 
 test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts and the standalone dungeon', () => {
-  for (const [file, n] of [['../src/scenes/world.js', 2], ['../src/scenes/exterior.js', 2],
-    ['../src/scenes/worldModes.js', 4], ['../src/scenes/dungeon.js', 2]]) {
+  // AUDIT 65 MC-2 COLLAPSED THE PAIR. F33 shipped TWO calls per ladder -
+  // a NEAR one at DefaultActivationDistance gated on the ladder's winner
+  // and a FAR one at the ladder's foot with no gate at all - and the FAR
+  // one is exactly the mis-order the NEAR one was written to stop: with
+  // `nearerThan` Infinity, a foe 20 units off ate a click DFU gives a
+  // door at 5. DFU has ONE ray (PlayerActivate.cs:314) and reaches
+  // MobileEnemyCheck (:419) for its own hit alone, so there is ONE call
+  // per ladder, at the RAY's reach, decided by distance - which carries
+  // the un-gated Info line (:806-826) and the pickpocket's too-far
+  // refusal (:832-836) with it, since both run out to RayDistance.
+  for (const [file, n] of [['../src/scenes/world.js', 1], ['../src/scenes/exterior.js', 1],
+    ['../src/scenes/worldModes.js', 2], ['../src/scenes/dungeon.js', 1]]) {
     const src = read(file);
     assert.ok(/tryMobileEnemyActivate/.test(src), `${file} has no ActivateMobileEnemy arm`);
     assert.equal((src.match(/_enemyArm\(/g) ?? []).length, n,
-      `${file}: the NEAR call decided against the ladder, and the FAR call after it`);
-    // review round: the NEAR call must be handed a rival distance -
-    // DFU's one raycast (:314) reaches :419 only for its own hit
-    assert.ok(/_enemyArm\(DEFAULT_ACTIVATION_DISTANCE, /.test(src),
-      `${file}: the NEAR call takes no rival distance, so it dispatches foe-first`);
+      `${file}: ONE call per ladder, decided against the ladder's own winner`);
+    assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, /g) ?? []).length, n,
+      `${file}: every call must be at the RAY's reach AND take a rival distance`);
+    assert.doesNotMatch(src, /_enemyArm\(RAY_DISTANCE\)/,
+      `${file}: an un-gated far call dispatches the foe over a nearer door`);
+    assert.doesNotMatch(src, /_enemyArm\(DEFAULT_ACTIVATION_DISTANCE/,
+      `${file}: the 3.2 pre-gate cannot reach the Info line or the pickpocket refusal`);
   }
   // and the pickpocket law is ONE law with an optional target, as
   // DFU's Pickpocket(target = null) is
@@ -388,4 +406,278 @@ test('AUDIT 63 F33 (review): the enemy arm loses to a NEARER activatable - DFU d
   assert.equal(tryMobileEnemyActivate(eye, dir, [foe4], collider, DEFAULT_ACTIVATION_DISTANCE,
     'grab', thief(), { hud: (t) => heard.push(t), nearerThan: 3.0 }), true);
   assert.deepEqual(heard, ['You see a Knight.']);
+});
+
+// ── AUDIT 65 HP-2/HP-3: the dungeon arm's two host-supplied sinks ──
+//
+// F33 wired this arm into all five ladders and four of them handed it a
+// door their own frame owns. The world-hosted DUNGEON handed the modal
+// to `mountInterior` - the INTERIOR window slot - and the HUD line to
+// `say`, townTalk's outdoor PopupText queue. Underground the first is a
+// slot no frame draws, ticks, keys or clicks, and the second is a
+// SECOND popup column over the dungeon's own. DFU has neither:
+// DaggerfallUI.MessageBox builds on uiManager.TopWindow (the current
+// scene's stack) and PopupMessage is the HUD's one PopupText.
+
+/** worldModes' DUNGEON `_enemyArm`, lifted from the shipped source and
+ *  RUN against a stub dungeonCtx. The declaration is one arrow over
+ *  host names, so the pin can hand it spies for all four candidate
+ *  sinks - the dungeon's two and the building's two - and see which
+ *  fire. A regex cannot: what HP-2/HP-3 name is a wiring fault, and
+ *  the wiring is the thing this runs. */
+const dungeonEnemyArm = (mode, rolls = null) => {
+  const wm = read('../src/scenes/worldModes.js');
+  const at = wm.indexOf('const _enemyArm = (reach, nearerThan = Infinity) => (dungeonCtx ?');
+  assert.ok(at > 0, 'the dungeon arm is not where the pin can lift it');
+  const end = wm.indexOf('}) : false);', at);
+  assert.ok(end > at, 'the arm no longer closes as one expression');
+  const decl = wm.slice(at, end + '}) : false);'.length);
+  const seen = { hudSay: [], hudBox: [], say: [], mounted: [], hostile: 0 };
+  const foe = classFoe();
+  foe.ai.feet = [0, 0, 2];
+  foe.ai.height = 1.8;
+  const dungeonCtx = {
+    foes: [foe],
+    collider: { raycast: () => Infinity },
+    // both stubs answer what the real sinks answer, and hudSay's VOID
+    // return is load-bearing: `hudText.add` returns undefined, which is
+    // why `dungeonCtx?.hudSay?.(t) ?? say(t)` would fall through and
+    // fire townTalk's queue as well on every line.
+    hudSay: (t) => { seen.hudSay.push(t); },        // dungeonContext.js: hudText.add
+    hudBox: (rows) => { seen.hudBox.push(rows); return true; },   // dungeonContext.js: pushDungeonWindow(new ActionTextBox(rows))
+  };
+  const build = new Function('dungeonCtx', 'tryMobileEnemyActivate', 'eye', 'dir',
+    'getInteractionMode', 'playerEntity', 'makeEnemiesHostile', 'player', 'townTalk',
+    'FOUND_NOTHING_VALUABLE_TEXT_ID', 'say', 'mountInterior', 'ActionTextBox',
+    `${decl}\n    return _enemyArm;`);
+  const arm = build(dungeonCtx,
+    // the REAL member, with only the dice fixed - the sinks under test
+    // are the ones the arm's own hooks bag names, and it names them
+    (...args) => { if (rolls) args[7].rolls = rolls; return tryMobileEnemyActivate(...args); },
+    [0, 1, 0], [0, 0, 1], () => mode, thief(), () => { seen.hostile++; },
+    { pos: [0, 0, 0] }, { randomText: () => null, say: (t) => seen.say.push(t) }, 8999,
+    (t) => seen.say.push(t), (w) => seen.mounted.push(w),
+    class { constructor(rows) { this.rows = rows; } });
+  return { arm, seen, foe };
+};
+
+test('AUDIT 65 HP-2: the world-hosted dungeon\'s pickpocket box goes to the DUNGEON\'s window stack', () => {
+  // PlayerActivate.cs:1640/:1646 - the MessageBox inside Pickpocket()
+  // builds on DaggerfallUI's uiManager.TopWindow, which underground is
+  // the dungeon's stack, never a building's. The shipped sink was
+  // `mountInterior`, and an ActionTextBox has no timer (only input() /
+  // click() clear it), so the box orphaned in a slot the dungeon frame
+  // never feeds and surfaced on the next building entry.
+  const { arm, seen } = dungeonEnemyArm('steal', seq(0.74, 0.5, 0.5));   // SuccessRoll(75) passes at 74
+  assert.equal(arm(RAY_DISTANCE, Infinity), true, 'the foe was the ray\'s own hit');
+  assert.equal(seen.hudBox.length, 1, 'the dungeon context\'s hudBox took the MessageBox');
+  assert.match(seen.hudBox[0].join(' '), /pinched/, `${seen.hudBox[0]}`);
+  assert.deepEqual(seen.mounted, [], 'and NOTHING was mounted into the interior slot');
+  assert.deepEqual(seen.say, [], 'and nothing reached townTalk');
+});
+
+test('AUDIT 65 HP-3: the same arm\'s HUD line goes to the dungeon\'s ONE PopupText, not a second column', () => {
+  // PlayerActivate.cs:814-826 (the Info line) and :1651
+  // (PopupMessage -> dfHUD.PopupText.AddText). Both queues paint on a
+  // world-hosted dungeon frame - dungeonContext's inside drawFoes, and
+  // townTalk's from the outer host after modes.frame returns - so the
+  // shipped `say(t)` stacked a second seven-row column over the
+  // dungeon's own. The townTalk spy recording ZERO is the half that
+  // catches the `?? say(t)` fix, which fires BOTH sinks because hudSay
+  // is a void sink.
+  const { arm, seen } = dungeonEnemyArm('info');
+  assert.equal(arm(RAY_DISTANCE, Infinity), true);
+  assert.deepEqual(seen.hudSay, ['You see a Knight.']);
+  assert.deepEqual(seen.say, [], 'the outdoor queue is a SECOND column underground');
+  assert.deepEqual(seen.hudBox, []);
+});
+
+test('AUDIT 65 HP-2/HP-3: each ladder\'s enemy sinks are its OWN host\'s - the four hosts and the standalone dungeon', () => {
+  const wm = read('../src/scenes/worldModes.js');
+  const ladder = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow()'));
+  assert.ok(ladder.length > 1000, 'the dungeon ladder moved');
+  // the standing structural rule this file's own header argues for
+  // (worldModes.js: "a slot the frame never draws and the keydown arm
+  // never feeds. The orphan then sat there until the player walked
+  // through a door."): the interior slot is not reachable from the
+  // dungeon ladder at all.
+  assert.doesNotMatch(ladder, /mountInterior\(/, 'the dungeon ladder cannot reach the interior slot');
+  // ...and BOTH halves of the arm name a dungeonCtx sink, so the family
+  // cannot split again.
+  assert.match(ladder, /hud: \(t\) => dungeonCtx\.hudSay\(t\),/);
+  assert.match(ladder, /modal: \(t\) => dungeonCtx\.hudBox\(String\(t\)\.split\('\\n'\)\),/);
+  // no optional chain and no ?? fallback: hudSay is a VOID sink, so
+  // `dungeonCtx?.hudSay?.(t) ?? say(t)` would fire both queues on every
+  // line - the finding's own symptom made unconditional. The arm is
+  // already `(dungeonCtx ? ... : false)`.
+  assert.doesNotMatch(ladder, /dungeonCtx\?\.hud/);
+  assert.doesNotMatch(ladder, /\?\? say\(t\)/);
+  // THE FOUR HOSTS RULE over the sink family: each pair is the pair
+  // that host's own frame draws.
+  for (const [file, hud, modal] of [
+    ['../src/scenes/world.js', 'hud: (t) => townTalk.say(t),', 'modal: (t) => townTalk.showOverlay(new ActionTextBox(String(t).split(\'\\n\'))),'],
+    ['../src/scenes/exterior.js', 'hud: (t) => townTalk.say(t),', 'modal: (t) => townTalk.showOverlay(new ActionTextBox(String(t).split(\'\\n\'))),'],
+    ['../src/scenes/dungeon.js', 'hud: (t) => ctx.hudSay?.(t),', 'modal: (t) => ctx.hudBox?.(String(t).split(\'\\n\')),'],
+  ]) {
+    const src = read(file);
+    assert.ok(src.includes(hud), `${file}: the HUD sink is not its own host's`);
+    assert.ok(src.includes(modal), `${file}: the modal sink is not its own host's`);
+  }
+  // worldModes' INTERIOR arm is correct as it stands and must not be
+  // dragged along: in interior mode townTalk's queue IS the host's
+  // queue (ticked and drawn on that frame) and the interior slot IS the
+  // drawn slot.
+  assert.ok(wm.includes('hud: (t) => say(t),'), 'the interior arm keeps townTalk\'s queue');
+  assert.equal((wm.match(/modal: \(t\) => mountInterior\(new ActionTextBox\(String\(t\)\.split\('\\n'\)\)\),/g) ?? []).length, 1,
+    'exactly one arm mounts into the interior slot, and it is the interior one');
+  // interior.js, named: the standalone interior host runs no activation
+  // ray at all, so it has no enemy arm and no sink to point.
+  const interior = read('../src/scenes/interior.js');
+  assert.doesNotMatch(interior, /tryMobileEnemyActivate|pickActivatableHit/,
+    'interior.js has no activation ladder - it is flagged here, not wired');
+});
+
+// ── AUDIT 65 MC-2: the refusal DFU speaks inside each handler ──────
+
+test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refused out loud, not dropped', () => {
+  // midScreenText.js's header names eleven youAreTooFarAway sites and
+  // the port could reach five, because activate.js pre-gated the PICK:
+  // `if (d > (target.distance ?? DEFAULT)) continue` dropped the target
+  // before any caller saw it, so a body, pile, chest, shelf or ladder
+  // at 8 units answered with silence and let the click fall through to
+  // whatever stood behind it. DFU rays to RayDistance once (:76/:314)
+  // and gates INSIDE each handler: the static door (:501-504), the
+  // action door (:686-689), ladders and shelves (:850-853), the loot
+  // container (:868-873) and the corpse (:936-941).
+  const eye = [0, 1, 0];
+  const dir = [0, 0, 1];
+  const collider = { raycast: () => Infinity };
+  // the PRODUCER's own shape, not a hand-written target
+  const body = corpseLootTargets([{ corpse: true }], 'corpse',
+    { isCorpse: () => true, feetOf: () => [0, 0.6, 8] });
+  const pick = pickActivatableHit(eye, dir, body, collider);
+  assert.ok(pick, 'a body at 8 units reaches the ladder now - the pick used to drop it');
+  assert.equal(pick.reach, CORPSE_ACTIVATION_DISTANCE);
+  assert.ok(pick.distance > pick.reach, `${pick.distance} vs ${pick.reach}`);
+  // and the shipped refusal, RUN: every ladder that owns one speaks
+  // once and CONSUMES, exactly as each C# handler returns.
+  const said = [];
+  const runRung = (stmt, _pick) => new Function('_pick', 'key', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT',
+    `${stmt}\n  return false;`)(_pick, 'loot:0', (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+  const far = { key: 'loot:0', distance: 8, reach: TREASURE_ACTIVATION_DISTANCE };
+  const near = { key: 'loot:0', distance: 1, reach: TREASURE_ACTIVATION_DISTANCE };
+  for (const [file, n] of [['../src/scenes/worldModes.js', 2], ['../src/scenes/dungeon.js', 1]]) {
+    const rungs = read(file).split('\n').map((l) => l.trim())
+      .filter((l) => /^if \(.*_pick\.distance > _pick\.reach\)/.test(l));
+    assert.equal(rungs.length, n, `${file}: one refusal per ladder`);
+    for (const rung of rungs) {
+      said.length = 0;
+      assert.ok(runRung(rung, far), `${file}: the refusal CONSUMES the click`);
+      assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: ...and speaks it once`);
+      said.length = 0;
+      assert.equal(runRung(rung, near), false, `${file}: a target in reach falls through to its own arm`);
+      assert.deepEqual(said, [], `${file}: ...silently`);
+    }
+  }
+  // the exterior STATIC DOOR (:501-504) speaks its own in tryEnter, off
+  // the destructured pick, so its rung is run on its own names.
+  const doorRung = read('../src/scenes/worldModes.js').split('\n').map((l) => l.trim())
+    .find((l) => l.startsWith('if (_hitDist > _hitReach)'));
+  assert.ok(doorRung, 'tryEnter speaks ActivateStaticDoor\'s own refusal');
+  const runDoor = (d) => new Function('_hitDist', '_hitReach', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT',
+    `${doorRung}\n  return false;`)(d, DOOR_ACTIVATION_DISTANCE, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+  said.length = 0;
+  assert.ok(runDoor(8), 'a door the player can see but not reach CONSUMES the click');
+  assert.deepEqual(said, [TOO_FAR_AWAY_TEXT]);
+  said.length = 0;
+  assert.equal(runDoor(1), false, 'and a door in reach opens instead');
+  assert.deepEqual(said, []);
+  // the two outdoor hosts keep theirs in an if/else chain, so the RUN
+  // is of the corpse rung together with the opener it must precede.
+  for (const file of ['../src/scenes/world.js', '../src/scenes/exterior.js']) {
+    const src = read(file);
+    const lines = src.split('\n');
+    const at = lines.findIndex((l) => l.includes('if (lootKey && _lootPick.distance > _lootPick.reach)'));
+    assert.ok(at > 0, `${file}: the corpse refusal (:936-941)`);
+    // the rung plus the opener it guards, however many lines that
+    // opener spans in this host (the streaming host's is a block).
+    let end = at + 1;
+    let depth = 0;
+    do {
+      for (const ch of lines[end]) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+      end++;
+    } while (depth > 0 && end < at + 12);
+    const took = [];
+    said.length = 0;
+    const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
+      'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', lines.slice(at, end).join('\n'));
+    const run = (pick) => arm('foeCorpse:1', pick,
+      { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
+      { say: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+    run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
+    assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
+    assert.deepEqual(took, [], `${file}: ...and not opened`);
+    run({ distance: 1, reach: CORPSE_ACTIVATION_DISTANCE });
+    assert.deepEqual(took, ['foeCorpse:1'], `${file}: a body in reach still opens`);
+    assert.equal(said.length, 1, `${file}: ...saying nothing more`);
+    // ...and the body and the pile are ONE ray's, so the NEARER wins.
+    // The precedence (`_lootPick ? null : pick(piles)`) was inert while
+    // each pick dropped its own out-of-reach target; once both reach for
+    // the ray, a body across the room suppressed the pile pick outright
+    // and refused a pile at arm's length.
+    const oAt = lines.findIndex((l) => l.trim().startsWith('const _pileNearer ='));
+    assert.ok(oAt > 0, `${file}: the body and the pile are not decided by distance`);
+    const decide = new Function('_corpsePick', '_pilePick',
+      `${lines[oAt].trim()}\nreturn { lootKey: _lootPick?.key ?? null, dropKey: _dropPick?.key ?? null };`);
+    assert.deepEqual(decide({ key: 'foeCorpse:1', distance: 8 }, { key: 'droppedLoot:2', distance: 1 }),
+      { lootKey: null, dropKey: 'droppedLoot:2' }, `${file}: a pile at arm's length beats a body across the room`);
+    assert.deepEqual(decide({ key: 'foeCorpse:1', distance: 1 }, { key: 'droppedLoot:2', distance: 8 }),
+      { lootKey: 'foeCorpse:1', dropKey: null }, `${file}: and the nearer body beats the pile`);
+    assert.deepEqual(decide(null, { key: 'droppedLoot:2', distance: 8 }),
+      { lootKey: null, dropKey: 'droppedLoot:2' }, `${file}: with no body, the pile is the hit`);
+    // the pile rung sits above the pack door the same way
+    assert.ok(src.indexOf('else if (dropKey && _dropPick.distance > _dropPick.reach)') > 0
+      && src.indexOf('else if (dropKey && _dropPick.distance > _dropPick.reach)')
+        < src.indexOf('else if (dropKey && inventoryDoorReady())'),
+    `${file}: ActivateLootContainer's refusal (:868-873) sits above the pack door`);
+  }
+});
+
+test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow pre-gate', () => {
+  // Verbatim per-family, because the families are NOT alike in C#.
+  const wm = read('../src/scenes/worldModes.js');
+  for (const [what, re] of [
+    ['the static door (:501-504)', /doorWorldAabb\(entry\.door\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE/],
+    ['the container (:868-873)', /key: `container:\$\{i\}`.*distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/],
+    ['the shelf (:850-853)', /key: `shelf:\$\{i\}`.*distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE/],
+    ['the ladder (:850-853)', /key: `ladder:\$\{i\}`.*distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE/],
+  ]) assert.match(wm, re, `${what} does not reach for the ray`);
+  // ...and the static door's rung sits where ActivateStaticDoor's own
+  // first statement does: BELOW the NPC and board arms, which carry
+  // their own gates (:741-767, :709-712), and ABOVE the door itself.
+  const tAt = wm.indexOf('if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }');
+  assert.ok(tAt > 0, 'tryEnter carries the refusal');
+  assert.ok(tAt > wm.indexOf("if (typeof key === 'string' && key.startsWith('board:')) {"));
+  assert.ok(tAt < wm.indexOf('return activateStaticDoor(entries[key], entries, false);'));
+  const dc = read('../src/scenes/dungeonContext.js');
+  assert.match(dc, /key: `loot:\$\{i\}`.*distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/, 'the dungeon pile');
+  assert.match(dc, /key: `corpse:\$\{i\}`.*distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/, 'the dungeon body');
+  assert.match(read('../src/scenes/droppedLoot.js'), /distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE/, 'the player\'s own pile');
+  assert.match(read('../src/scenes/corpseMarker.js'), /distance: RAY_DISTANCE,\n\s+reach: CORPSE_ACTIVATION_DISTANCE,/, 'the shared body producer');
+  // THE RECORDED DELTA IS NOT ONE OF THEM. PlayerActivate.cs:330 prints
+  // the line and aborts the whole activation; the port's picker does
+  // not select the resource and the click falls through in silence -
+  // recorded in worldModes.js's own note and in Quest-Arc.md, and a
+  // lane must not port it under cover of this one.
+  const qAt = wm.indexOf('key: `questflat:${i}`');
+  assert.ok(qAt > 0);
+  assert.doesNotMatch(wm.slice(qAt, qAt + 400), /reach:/, 'the quest resource keeps its recorded silence');
+  assert.match(wm, /distance: isPerson \? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,/);
+  // ...nor is a PERSON: ActivateStaticNPC's 256 units are the gate the
+  // port already speaks through townTalk/activateStaticNpc.
+  assert.ok(STATIC_NPC_ACTIVATION_DISTANCE > DEFAULT_ACTIVATION_DISTANCE);
+  assert.match(wm, /key: `person:\$\{i\}`, aabb: personAabb\(pn\), distance: STATIC_NPC_ACTIVATION_DISTANCE \}\);/);
+  // ...nor the WEAPON's door pick: AttemptExteriorDoorBash reaches
+  // weapon.Reach (:1064), and a swing at nothing is no refusal.
+  assert.match(wm, /aabb: doorWorldAabb\(entry\.door\), distance: WEAPON_REACH \}\)\),/);
 });

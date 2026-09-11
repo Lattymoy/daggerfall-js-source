@@ -27,6 +27,7 @@ import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../src/combat/formulas.
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { corpseLootTargets } from '../src/scenes/corpseMarker.js';   // AUDIT 24 wave 38: the shared corpse seam
+import { RAY_DISTANCE } from '../src/player/activate.js';   // AUDIT 65 MC-2: the reach the ONE ray casts at
 import { makeEnemyEntity, loadMonsterCareer } from '../src/characters/enemyEntity.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
 import { readSpellsStd } from '../src/formats/spellsStd.js';
@@ -294,13 +295,22 @@ test('audit18: corpses reach 150 * GlobalScale, not the 128-unit default', () =>
   // moved the two exterior pools onto the shared builder, so the reach
   // is asserted where each one now writes it - and for the shared one,
   // by CALLING it rather than grepping for the constant's name.
-  assert.ok(/distance: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')), 'dungeonContext.js corpse targets carry the reach');
+  // AUDIT 65 MC-2 MOVED THE FIELD, not the law: 150 units is the reach
+  // the HANDLER gates on (PlayerActivate.cs:936-941, which answers past
+  // it with SetMidScreenText(youAreTooFarAway) rather than silence), so
+  // the body now competes for the ONE ray at the ray's own reach (:76,
+  // :314) and carries its 150 as `reach`. A pick that drops the body
+  // can never reach the handler that speaks.
+  assert.ok(/reach: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')), 'dungeonContext.js corpse targets carry the reach');
+  assert.ok(/distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')),
+    'dungeonContext.js corpse targets compete for the RAY');
   const built = corpseLootTargets(
     [{ corpse: true, entity: { items: [] } }],
     'x', { isCorpse: (e) => !!e.corpse, feetOf: () => [1, 2, 3] },
   );
   assert.equal(built.length, 1);
-  assert.equal(built[0].distance, CORPSE_ACTIVATION_DISTANCE, 'the shared builder carries it too');
+  assert.equal(built[0].reach, CORPSE_ACTIVATION_DISTANCE, 'the shared builder carries the handler\'s reach');
+  assert.equal(built[0].distance, RAY_DISTANCE, 'and competes for the pick at the ray\'s');
   assert.equal(built[0].key, 'x:0');
 });
 

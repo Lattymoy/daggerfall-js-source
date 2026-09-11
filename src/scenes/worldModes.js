@@ -26,7 +26,7 @@ import { startRestGroundedCheck, TELEPORT_FREEZE_S } from '../player/motor.js'; 
 import { AutomapWindow, preloadAutomapArt, signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
+import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText, DOOR_ACTIVATION_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
 // living-enemy arm of the activation ladder, in the two hosts this
 // file owns as well as the three outside it.
@@ -3953,9 +3953,8 @@ export function createWorldModes(host) {
    *  distance this set resolves to. */
   function exteriorActivationTargets() {
     const entries = doorTargets();
-    const targets = entries.map((entry, i) => ({
-      key: i, aabb: doorWorldAabb(entry.door),
-    }));
+    // AUDIT 65 MC-2: the DOOR reaches for the RAY, as the boards below do - ActivateStaticDoor's own `hit.distance > DoorActivationDistance` refusal (:501-504) can only speak if the pick hands the door over.
+    const targets = entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));
     // AUDIT 26 (F019/F190): THE STREET'S STATIC NPCs, in the SAME ray
     // as the doors. DFU has one activation raycast above ground and
     // routes by what it hit (PlayerActivate.cs:1229 reads the
@@ -3990,7 +3989,7 @@ export function createWorldModes(host) {
   /** The distance the exterior ray's nearest activatable sits at, or
    *  Infinity - the rival the living-foe arm must beat (AUDIT 63 F33).
    *  The host passes ITS ray (the tap's, or the crosshair's) so the two
-   *  picks are measured along one line, as DFU's one raycast is. */
+   *  picks are measured along one line, as DFU's one raycast is. AUDIT 65 MC-2: it answers for a door the player cannot REACH as well as one they can, because DFU's single ray HIT that door - the foe behind it was never the enemy check's subject, and tryEnter refuses out loud. It used to answer Infinity there and the foe ate the click. */
   function exteriorActivationDistance(eye = player.eye, dir = eyeDir()) {
     if (mode !== 'exterior') return Infinity;
     return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider())?.distance ?? Infinity;
@@ -4095,7 +4094,7 @@ export function createWorldModes(host) {
       if (bd && bd.buildingType != null) activateBuilding(bd, resolveBuildingUnlocked(bd));
     }
     const { entries, npcs, boards, targets } = exteriorActivationTargets();
-    const key = pickActivatable(eye, dir, targets, baseCollider());
+    const { key, distance: _hitDist, reach: _hitReach } = pickActivatableHit(eye, dir, targets, baseCollider()) ?? { key: null };
     if (key === null) return false;
     // ...and the NPC arm ENDS the activation, exactly as the interior
     // ray's does: an NPC under the ray is not a door.
@@ -4107,6 +4106,7 @@ export function createWorldModes(host) {
       activateBulletinBoard(boards[Number(key.split(':')[1])], eye, dir);
       return true;
     }
+    if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false);
   }
 
@@ -4347,9 +4347,9 @@ export function createWorldModes(host) {
    *  `weapon.Reach` (:1064), which is why the reach here is
    *  WEAPON_REACH and not DEFAULT_ACTIVATION_DISTANCE. That also makes
    *  ActivateStaticDoor's `hit.distance > DoorActivationDistance`
-   *  refusal (:500-504) unreachable on this path - the weapon cannot
-   *  reach 3.2 units - so it is not re-tested here; the click's own
-   *  caller still enforces it through pickActivatable.
+   *  refusal (:500-504) unreachable on this path - the weapon cannot reach 3.2 units - so it is not
+   *  re-tested here; the click's own caller SPEAKS it (tryEnter, AUDIT 65 MC-2) and the swing keeps
+   *  a NARROW pick (`distance: WEAPON_REACH`, no `reach`), because a swing at nothing is no refusal.
    *
    *  Only DOORS are targets: the street's NPCs and bulletin boards are
    *  in the activation ray, not the weapon's. The return is DFU's -
@@ -4591,7 +4591,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:145), so the
+    // any foe without a questBehaviour (activate.js:160), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx) {
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -4620,9 +4620,11 @@ export function createWorldModes(host) {
     // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
     // enemy check (:419) only for the one thing its single ray hit
     // (:314), so a nearer door, chest, shelf, lever or static NPC
-    // takes the click and the foe behind it does not. The FAR call
-    // sits at the bottom of the ladder for the Info line and the
-    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    // takes the click and the foe behind it does not. AUDIT 65 MC-2
+    // made that ONE call at RayDistance - the Info line (:806-826, no
+    // distance gate) and the pickpocket's too-far refusal (:832-836)
+    // are the same call, not a second pass at the bottom of the
+    // ladder, and a bottom pass could not see `nearerThan` at all.
     const _enemyArm = (reach, nearerThan = Infinity) => (interiorCtx ? tryMobileEnemyActivate(eye, dir, interiorFoePool(), interiorCtx.collider,
       reach, getInteractionMode(), playerEntity, {
         nearerThan,
@@ -4635,11 +4637,19 @@ export function createWorldModes(host) {
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
     const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    // AUDIT 65 MC-2: containers, shelves and ladders reach for the ray
+    // (PlayerActivate.cs:76/:314) and carry their handler's own reach
+    // beside it, because that is where DFU speaks the refusal -
+    // ActivateLootContainer's `hit.distance > TreasureActivationDistance`
+    // (:868-873) and ActivateLaddersAndShelves' `hit.distance >
+    // DefaultActivationDistance` (:850-853), both
+    // SetMidScreenText(youAreTooFarAway) and return. The port's pick
+    // simply dropped them and said nothing.
     interiorCtx.containers.forEach((c, i) => {
-      targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix) });   // S2b
+      targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });   // S2b
     });
     interiorCtx.shelves.forEach((s, i) => {
-      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix) });   // E2
+      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // E2; :850-853 is the shelf's own gate
     });
     // AUDIT 63 F43 (review round): the dungeon arm's ONE helper
     // (activationTargets, below at the dungeon ray) - this loop was a
@@ -4654,7 +4664,7 @@ export function createWorldModes(host) {
     // (F37) comes with it, and the reach is the same constant.
     targets.push(...activationTargets(interiorCtx.actions.objects));
     interiorCtx.ladders.forEach((l, i) => {
-      targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
+      targets.push({ key: `ladder:${i}`, aabb: objAabb(l), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // :850-853
     });
     targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
@@ -4679,14 +4689,34 @@ export function createWorldModes(host) {
     // falls through to whatever is behind it and says nothing.
     targets.push(...questFlatTargets(questFlats));
     const _pick = pickActivatableHit(eye, dir, targets, interiorCtx.collider);
-    // AUDIT 63 F33 (review round): the NEAR half, now that the ladder
-    // has produced its candidate - the foe consumes only below it.
-    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, decided against
+    // the ladder's own winner - which is the whole of AUDIT 63 F33's
+    // near/far pair in a single call. DFU casts ONE ray to RayDistance
+    // (PlayerActivate.cs:76/:314) and reaches MobileEnemyCheck (:419)
+    // only for the thing that ray hit, so the foe consumes exactly when
+    // it is nearer than everything else on the line. The split pair
+    // could not say that: the NEAR half asked 3.2 and the FAR half ran
+    // with `nearerThan` Infinity, so a foe 20 units off ate a click DFU
+    // gives a door at 5 - a mis-order that only got louder once the
+    // families below started reaching for the ray themselves.
+    if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;
     const key = _pick?.key ?? null;
-    // nothing else took the click: the FAR half of the enemy arm
-    // (PlayerActivate.cs:806-826 has no distance gate at all, and
-    // :832-836 is the pickpocket's own refusal).
-    if (key === null) return _enemyArm(RAY_DISTANCE);
+    if (key === null) return false;
+    // AUDIT 65 MC-2: THE REFUSAL, where DFU keeps it - inside the
+    // handler the one ray dispatched into. `midScreenText.js`'s header
+    // named eleven `youAreTooFarAway` sites and the port could reach
+    // five of them, because the pick DROPPED an out-of-reach target
+    // instead of handing it over: a shelf, ladder, chest, pile or
+    // corpse at 5 units answered with silence and let the click fall
+    // through to whatever stood behind it. The families above now
+    // compete at the ray's reach and carry their own (:850-853
+    // ladders and shelves, :868-873 the loot container, :936-941 the
+    // corpse), so the winner can be out of reach - and when it is, the
+    // ladder speaks and consumes, as every one of those handlers does.
+    // A family that was never widened has `reach === distance` and can
+    // never take this arm. The quest resource is deliberately NOT one
+    // of them - see the recorded delta above.
+    if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     if (key.startsWith('ladder:')) {
       // Verbatim ClimbLadder: closest markers, below-top -> top,
       // above-bottom -> bottom.
@@ -5109,14 +5139,26 @@ export function createWorldModes(host) {
     // against the LADDER'S OWN WINNER (`nearerThan`): DFU reaches the
     // enemy check (:419) only for the one thing its single ray hit
     // (:314), so a nearer exit door, lever, chest or lootable corpse
-    // takes the click and the foe behind it does not. The FAR call
-    // sits at the bottom of the ladder for the Info line and the
-    // pickpocket's too-far refusal, which DFU takes at RayDistance.
+    // takes the click and the foe behind it does not. AUDIT 65 MC-2
+    // made that ONE call at RayDistance - the Info line (:806-826, no
+    // distance gate) and the pickpocket's too-far refusal (:832-836)
+    // ride it, not a second pass at the bottom of the ladder.
     const _enemyArm = (reach, nearerThan = Infinity) => (dungeonCtx ? tryMobileEnemyActivate(eye, dir, dungeonCtx.foes, dungeonCtx.collider,
       reach, getInteractionMode(), playerEntity, {
         nearerThan,
-        hud: (t) => say(t),
-        modal: (t) => mountInterior(new ActionTextBox(String(t).split('\n'))),
+        // AUDIT 65 HP-2/HP-3: the sinks are the DUNGEON'S, not the
+        // building's. DaggerfallUI.MessageBox builds on uiManager's
+        // TopWindow (PlayerActivate.cs:1640/:1646 -> DaggerfallUI.cs:1328-1330)
+        // and PopupMessage is the HUD's ONE PopupText (:1652 ->
+        // DaggerfallUI.cs:820-822 `dfHUD.PopupText.AddText`) - both of
+        // which underground are dungeonContext's, the stack and queue
+        // this host's dungeon frame actually draws. The interior slot is
+        // never drawn, ticked, keyed or clicked in dungeon mode, so a
+        // box mounted there orphaned until the next building entry and
+        // a line said there opened a second popup column over the
+        // dungeon's own. scenes/dungeon.js:232-233 is the same pair.
+        hud: (t) => dungeonCtx.hudSay(t),
+        modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
         playerFeet: player.pos,
         nothingText: () => townTalk?.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',
@@ -5147,12 +5189,18 @@ export function createWorldModes(host) {
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
     const _pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
-    // AUDIT 63 F33 (review round): the NEAR half, decided against the
-    // ladder's candidate - the foe consumes only when strictly nearer.
-    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return true;
+    // AUDIT 65 MC-2: ONE enemy arm at the RAY's reach, decided against
+    // the ladder's winner - the interior ray's reasoning, underground.
+    if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;
     const key = _pick?.key ?? null;
-    // the FAR half of the enemy arm, once nothing else has taken it
-    if (key === null) return _enemyArm(RAY_DISTANCE);
+    if (key === null) return false;
+    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -
+    // the action door (:686-689), the loot container (:868-873) and
+    // the corpse (:936-941). Their targets reach for the ray now and
+    // carry their own reach, so the winner can be out of reach; an
+    // un-widened family answers `reach === distance` and never gets
+    // here. The quest resource stays the recorded delta it is.
+    if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
     if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {

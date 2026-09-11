@@ -34,7 +34,7 @@ import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
   pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
-  DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE,   // AUDIT 63 F33: the enemy arm's two reaches
+  RAY_DISTANCE, TOO_FAR_AWAY_TEXT,   // AUDIT 65 MC-2: the ONE reach the foe arm competes at (DFU's one ray), and the refusal each handler speaks for itself
 } from '../player/activate.js';
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
 // standalone dungeon's copy of the living-foe arm.
@@ -227,10 +227,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (_lockFoe) { lockOn.toggle(_lockFoe); return null; }
     }
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841).
-    // The NEAR call runs against the LADDER'S OWN WINNER and takes the
-    // click only when the foe is strictly nearer, because DFU reaches
-    // :419 only for the one thing its single ray hit (:314); the FAR
-    // call runs once nothing else has taken it at all.
+    // AUDIT 65 MC-2 collapsed F33's near/far pair into ONE call at the
+    // RAY's reach, decided against the LADDER'S OWN WINNER: DFU reaches
+    // :419 only for the one thing its single ray hit (:314), the Info
+    // line (:806-826) and the pickpocket's refusal (:832-836) with it.
     const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(eye, dir, ctx.foes, ctx.collider,
       reach, getInteractionMode(), playerEntity, {
         nearerThan,
@@ -243,8 +243,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const _pick = pickActivatableHit(eye, dir, targets, ctx.collider);
-    if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _pick?.distance ?? Infinity)) return null;
+    if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return null;   // MC-2: the split pair's FAR half ran with `nearerThan` Infinity, so a foe 20 off ate a click DFU gives a chest at 5
     const key = _pick?.key ?? null;
+    // AUDIT 65 MC-2: THE REFUSAL, where DFU keeps it - inside the handler its one ray dispatched into: the action door
+    // (:686-689), the loot container (:868-873), the corpse (:936-941). activate.js's pickActivatableHit holds the law.
+    if (_pick && _pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return key; }
     // U26: the player's OWN dropped piles are loot targets too, and
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did
@@ -254,9 +257,6 @@ export async function bootDungeon(canvas, renderer, params, status) {
       return key;
     }
     if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // R1: Steal mode picks a locked door; X1: an armed Open/Lock fires here
-    // AUDIT 63 F33: the FAR half - the Info line (:806-826, no distance
-    // gate) and the pickpocket's too-far refusal (:832-836).
-    else _enemyArm(RAY_DISTANCE);
     return key;
   };
   const keys = new Set();

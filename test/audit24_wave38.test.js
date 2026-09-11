@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import {
   mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied, ARROW_TEMPLATE_INDEX,
 } from '../src/scenes/corpseMarker.js';
-import { CORPSE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
+import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../src/player/activate.js';
 import { goldStack } from '../src/systems/inventory.js';
 import { goldAmount } from '../src/systems/court.js';
 import { SOUND } from '../src/systems/soundClips.js';
@@ -313,27 +313,45 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
   // miss: cityGuards.js:1035-1037 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:158-181)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:170-181)
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
-  const armSrc = rd('src/scenes/exterior.js').split('\n')
-    .find((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
-  assert.ok(armSrc, 'the fixed-city host no longer carries the corpse-key router');
+  // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for
+  // the ray at RayDistance and carries its own 150 units, so the rung
+  // ABOVE the router is ActivateLootContainer/the corpse arm's own
+  // `hit.distance > CorpseActivationDistance` ->
+  // SetMidScreenText(youAreTooFarAway) (PlayerActivate.cs:936-941).
+  // Both rungs are run here, because the ladder runs both.
+  const exLines = rd('src/scenes/exterior.js').split('\n');
+  const armAt = exLines.findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
+  assert.ok(armAt > 0, 'the fixed-city host no longer carries the corpse-key router');
+  const armSrc = exLines.slice(armAt - 1, armAt + 1).join('\n');
+  assert.match(armSrc, /setMidScreenText\(TOO_FAR_AWAY_TEXT\)/, 'the too-far refusal sits above the router');
   const took = [];
-  const arm = new Function('lootKey', 'exteriorFoes', 'cityGuards', 'townTalk', 'surfacePlayer', armSrc);
-  const run = (k) => arm(k,
+  const said = [];
+  const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
+    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', armSrc);
+  const run = (k, pick) => arm(k, pick,
     { takeLoot: (key) => took.push(['encounter', key]) },
     { takeLoot: (key) => took.push(['watch', key]) },
-    { say: () => {} }, () => {});
-  run('foeCorpse:3');
-  run('guardCorpse:3');
-  run(null);
+    { say: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT);
+  const near = { distance: 1, reach: CORPSE_ACTIVATION_DISTANCE };
+  run('foeCorpse:3', near);
+  run('guardCorpse:3', near);
+  run(null, null);
   assert.deepEqual(took, [['encounter', 'foeCorpse:3'], ['watch', 'guardCorpse:3']],
     'the KEY picks the pool - an encounter corpse never reaches a live watchman');
+  assert.deepEqual(said, [], 'a body in reach is opened, not refused');
+  run('foeCorpse:9', { distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
+  assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], 'a body past 150 units is refused OUT LOUD (:936-941)');
+  assert.equal(took.length, 2, 'and is not opened');
 
-  // the target reach is the corpse one, everywhere it is built
+  // the target reach is the corpse one, everywhere it is built - and
+  // MC-2 put it in `reach`, the handler's gate, while `distance` is the
+  // RAY's so the pick can hand the body to that handler at all.
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [2, 3, 4] });
-  assert.equal(t[0].distance, CORPSE_ACTIVATION_DISTANCE);
+  assert.equal(t[0].reach, CORPSE_ACTIVATION_DISTANCE);
+  assert.equal(t[0].distance, RAY_DISTANCE);
   assert.deepEqual(t[0].aabb.min, [1.5, 3, 3.5]);
   assert.deepEqual(t[0].aabb.max, [2.5, 3.6, 4.5]);
 });

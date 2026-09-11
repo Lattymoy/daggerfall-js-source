@@ -37,7 +37,18 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   assert.equal(MOBILE_NPC_ACTIVATION_DISTANCE, 6.4);
   assert.equal(PICKPOCKET_DISTANCE, 3.2);
   const tt = src('src/scenes/townTalk.js');
-  assert.ok(tt.includes('if (!best || bestDist > RAY_DISTANCE) return false;'), 'the ray reach is the only silent bound');
+  // AUDIT 65 MC-2 ADDED THE SECOND SILENT BOUND: DFU reaches
+  // MobileNPCCheck (:412) for the ONE thing its one ray hit (:314), so
+  // a person BEHIND the ladder's own winner is not the hit and says
+  // nothing - the same `nearerThan` comparison F33 gave the foe arm.
+  assert.ok(tt.includes('if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;'),
+    'the ray reach and the ladder\'s own winner are the two silent bounds');
+  assert.ok(/function tryActivate\(camPos, fwd, persons, nearerThan = Infinity\)/.test(tt),
+    'tryActivate takes the rival distance');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.ok(src(f).includes('townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)'),
+      `${f} hands the person arm a rival with the persons left OUT of it`);
+  }
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's
   // currentMode is global) - the gates read it live, same law
   // AUDIT 58 (talk lane) MOVED THIS PIN: the refusal is the localized
