@@ -305,6 +305,8 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
+
 const BB_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
@@ -376,7 +378,9 @@ void main() {
   vec3 lit = albedo * (uTint + uBBSun * cloudShadowAt(vBBWorld) + pointAcc + iAtt * iAtt * uIndirectColor) + emission;   // VC4
   // ECV1: a shade is its silhouette - the lit colour pulled to black;
   // every concealed draw takes the visual's opacity over the texel's.
-  if (uConceal.x == 2.0) lit *= 0.12;
+  // AUDIT 65 PN-3: SHADE_DARK itself (keep it a decimal - GLSL will not
+  // multiply a vec3 by an int literal).
+  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);

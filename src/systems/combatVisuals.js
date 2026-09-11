@@ -48,18 +48,18 @@
 import { isEnhanced } from './uiSkin.js';
 import { getPref } from './uiPrefs.js';
 import { concealmentFlags, isMagicallyConcealed } from './effects.js';
+import {
+  BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA,
+} from './concealDraw.js';   // ECV1: the numbers, in a leaf the renderer can reach
 
-/** Chameleon: the base opacity, and the shimmer's swing and rate. */
-export const BLEND_ALPHA = 0.22;
-export const BLEND_SHIMMER = 0.08;
-export const BLEND_HZ = 1.3;
-/** Shadow: a dark silhouette - the opacity and how far the lit colour
- *  is pulled toward black (the shader's multiplier). */
-export const SHADE_ALPHA = 0.55;
-export const SHADE_DARK = 0.12;
-/** The hit reveal: how long the flash lasts and how bright it starts. */
-export const REVEAL_SECONDS = 0.35;
-export const REVEAL_ALPHA = 0.8;
+/** The seven draw constants. AUDIT 65 PN-3: they are STORED in the leaf
+ *  systems/concealDraw.js, because render/renderer.js interpolates
+ *  SHADE_DARK into its billboard shader and must not drag this module's
+ *  effects/inventory/paperdoll graph in behind it. This module is still
+ *  their one public home - every reader imports them from here. */
+export {
+  BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA,
+};
 /** The billboard shader's mode codes (uConceal.x). */
 export const CONCEAL_MODE = Object.freeze({ blend: 1, shade: 2, reveal: 3 });
 

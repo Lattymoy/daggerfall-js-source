@@ -60,9 +60,9 @@ export const WATER_TINT = Object.freeze([0.62, 0.78, 0.86]);
 export const WATER_F0 = 0.02;
 /** Half-width of the shore feather, in coverage (0.5 is the diagonal). */
 export const SHORE_SOFTNESS = 0.16;
-/** The classic texel's slow flow, in tiles per second - the dungeon
- *  water's own rate (scenes/dungeon.js), so a river and a dungeon pool
- *  crawl alike. */
+/** The classic texel's slow flow, in tiles per second. AUDIT 65 CV-3:
+ *  the ONE home for the rate - scenes/dungeon.js and scenes/worldModes.js
+ *  import it, so a river and a dungeon pool crawl alike. */
 export const WATER_SCROLL_TILES_PER_SEC = 0.05;
 /** The sky the surface reflects when no sky says otherwise (a test, a
  *  lab without a dome): a plain day. */
@@ -110,17 +110,11 @@ export function packWaterMask(table = WATER_MASK_TABLE) {
   return words;
 }
 
-/** Does this tilemap (converted bytes) carry any water at all? A pixel
- *  without water never enters the pass. */
-export function tilemapHasWater(bytes, table = WATER_MASK_TABLE) {
-  for (let i = 0; i < bytes.length; i++) if (table[bytes[i]]) return true;
-  return false;
-}
-
-/** WATER-AUDIT: the same question over a sub-rectangle of a `dim`-wide
- *  tilemap - the fixed city pads its square tilemap with zeros past the
+/** WATER-AUDIT: does a sub-rectangle of a `dim`-wide tilemap carry any
+ *  water? The fixed city pads its square tilemap with zeros past the
  *  location's real extent, and zero converts to water, so the whole map
- *  answered yes for every non-square town. */
+ *  answered yes for every non-square town (AUDIT 65 MC-6: the one gate -
+ *  the whole-map twin it replaced had no caller left and is retired). */
 export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_MASK_TABLE) {
   const w = Math.min(width, dim), h = Math.min(height, dim);
   for (let y = 0; y < h; y++) {
@@ -164,7 +158,10 @@ export function buildWaterIndices(bytes, stride = 1, table = WATER_MASK_TABLE, t
 /** The water corners of one converted byte (the shader's own lookup, in JS). */
 export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[convertedByte & 0xff];
 
-/** The bilinear coverage the shader computes at (fx, fy) inside a tile. */
+/** The bilinear coverage the shader computes at (fx, fy) inside a tile -
+ *  the JS twin of this file's own GLSL `coverage()` (the corner-bit
+ *  order bit0=(0,0), bit1=(1,0), bit2=(0,1), bit3=(1,1)). No production
+ *  caller: test/water.test.js holds the two bodies against each other. */
 export function waterCoverage(mask, fx, fy) {
   const c00 = mask & 1, c10 = (mask >> 1) & 1, c01 = (mask >> 2) & 1, c11 = (mask >> 3) & 1;
   const top = c00 + (c10 - c00) * fx;
