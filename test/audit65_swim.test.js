@@ -172,11 +172,13 @@ test('AUDIT 65 XL-1: isPlayerSwimming is a plain FIELD - no setter, no cancelMov
   m.swimming = false;
   assert.equal(m.cancelMovement, true, 'and on the way out (:182)');
 
-  // The motor's CODE mentions the host flag exactly once: the
-  // declaration. Every other mention is prose.
+  // The motor's CODE WRITES the host flag exactly once: the declaration.
+  // The hosts own every other write. (A READ inside _step is DFU's own
+  // shape - UpdateSpeed reads playerEnterExit.IsPlayerSwimming at
+  // PlayerMotor.cs:387 - so reads are not counted here.)
   const code = src('src/player/motor.js').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
-  const hits = code.match(/isPlayerSwimming/g) ?? [];
-  assert.equal(hits.length, 1, `motor code names isPlayerSwimming ${hits.length} times - it must only declare it`);
+  const writes = code.match(/this\.isPlayerSwimming\s*=[^=]/g) ?? [];
+  assert.equal(writes.length, 1, `motor code writes isPlayerSwimming ${writes.length} times - only the declaration may`);
   assert.match(code, /this\.isPlayerSwimming = false;/, 'the declaration is the one');
 });
 
@@ -220,6 +222,10 @@ test('AUDIT 65 XL-1: every IsPlayerSwimming reader moved to the host flag, and e
     const s = src(host);
     for (const [re, what] of MOVED) assert.match(s, re, `${host}: ${what} must read PlayerEnterExit.IsPlayerSwimming`);
   }
+  // ...and the standalone dungeon's HeadBobber reads the same C# member
+  // (HeadBobber.cs:101/:215); that host writes both, so the answer is
+  // unchanged and the MEMBER is what this pins.
+  assert.match(src('src/scenes/dungeon.js'), MOVED[3][0], 'dungeon.js: the head bob reads PlayerEnterExit.IsPlayerSwimming');
   // PlayerMotor.IsSwimming - these stay, and they are the reason the
   // member had to split rather than be renamed.
   // PlayerFootsteps.cs:230 `if (!playerMotor.IsSwimming)`

@@ -43,7 +43,7 @@
 // .IsSwimming (:149-152) - is always false, and the only exterior
 // water state in the game is the OnExteriorWaterMethod below. The
 // port's hosts already leave player.swimming false outdoors
-// (shared.applyMotorEffectFlags:576), which is that law, and the
+// (shared.applyMotorEffectFlags, shared.js:886), which is that law, and the
 // motor's `onExteriorWater` flag - declared by A6 with "Wave B's
 // exterior-water slice owns the model that raises it" - is this one.
 //
@@ -63,8 +63,9 @@
 // host's true were two edges a frame and the frame's one fixed step
 // spent the cancel and returned (PlayerMotor.cs:286-294): MEASURED
 // over a real Collider floor at Speed 50 / Swimming 30, the exterior
-// swimmer travelled 0.0000 over 600 steps at 60 Hz, with the swim
-// speed sitting unused in `speed`. XL-1 gave the motor DFU's second
+// swimmer travelled 0.0000 over 600 steps at 60 Hz from a settled
+// water frame (0.1034 in the two frames before the latch closes, then
+// nothing), with the swim speed sitting unused in `speed`. XL-1 gave the motor DFU's second
 // member - `isPlayerSwimming`, a plain field beside `sunk` that _step
 // never reads - and the hosts write THAT, leaving
 // shared.applyMotorEffectFlags (shared.js:886) to keep the motor's own
@@ -79,7 +80,14 @@
 // THE MOTOR FLAG (PlayerMotor.IsSwimming): the swim/levitate zero-and-
 // return (PlayerMotor.cs:323), DecideHeightAction's forced-swim crouch
 // (PlayerHeightChanger.cs:128/:551), the footstep stride
-// (PlayerFootsteps.cs:230) and PassiveSpecialsEffect.cs:136.
+// (PlayerFootsteps.cs:230) and PassiveSpecialsEffect.cs:136 (whose
+// second disjunct, OnExteriorWater == Swimming, no exterior host wires).
+// ONE ANSWER IN A DUNGEON: the dungeon arms write both members from one
+// block-water test, so the readers served off the dungeon activity bag
+// - the exhaustion collapse, the rest refusal, the splash edge
+// (PlayerEnterExit.cs:389), the submerged/shallow footstep selection
+// (PlayerFootsteps.cs:181/:189) - read IsPlayerSwimming through the
+// motor flag and answer the same (scenes/dungeonContext.js).
 //
 // So exteriorSwimLatch below carries the latch for the hosts that want
 // it without letting it near the motor - which is what
