@@ -18,7 +18,7 @@
 //
 // H4 THE TEXTURE-REPLACEMENT SWAP. A user texture pack's PNG decodes
 // through the DOM to `{ width, height, data }`, TOP row first; the
-// upload path reads `color32.colors` (renderer.js:1842) and every
+// upload path reads `color32.colors` (renderer.js:1844) and every
 // texture it uploads is BOTTOM-up (getColor32, baseImageFile.js:123 /
 // BaseImageFile.cs:250, with UNPACK_FLIP_Y_WEBGL off). So the first
 // swapped record a pack covered threw on `undefined.buffer`, and would

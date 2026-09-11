@@ -207,7 +207,7 @@ export function createSkyController(gl, params) {
   // the same map. `?clouds=off` gives the mod its own sheets back.
   const cloudsDoor = params.get('clouds');
   const clouds = enhancedLane && cloudsDoor !== 'off'
-    ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : 'default', [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
+    ? new VolumetricClouds(gl, Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default'), [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) : null;
   if (clouds && enhancedSky) enhancedSky.cloudsExternal = true;
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
@@ -1792,7 +1792,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:241`, the standalone host, has always had the right
+ *  `dungeon.js:242`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

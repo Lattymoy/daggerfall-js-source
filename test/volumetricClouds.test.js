@@ -110,7 +110,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
 
 test('VC3: the seam - the clouds ride the dome only, behind the one switch, on the same row, dt and drift; the hosts hand the viewport and the flash', () => {
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /const clouds = enhancedLane && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : 'default', \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the enhanced LANE - the dome or the mod (DS2), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
+  assert.match(shared, /const clouds = enhancedLane && cloudsDoor !== 'off'\s*\n\s*\? new VolumetricClouds\(gl, Object\.hasOwn\(CLOUD_QUALITY, cloudsDoor\) \? cloudsDoor : \(Object\.hasOwn\(CLOUD_QUALITY, getPref\('cloudQuality'\)\) \? getPref\('cloudQuality'\) : 'default'\), \[0, 0, gl\.drawingBufferWidth, gl\.drawingBufferHeight\]\) : null;/, 'the enhanced LANE - the dome or the mod (DS2), ?clouds=off the kill switch, ?clouds=lo|hi the tiers');
   assert.match(shared, /if \(clouds && enhancedSky\) enhancedSky\.cloudsExternal = true;/, 'the dome\'s own decks stand down');
   assert.match(shared, /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/, 'and the mod\'s own sheets (DS2)');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');

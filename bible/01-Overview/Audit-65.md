@@ -372,7 +372,7 @@ it left for a person were resolved by content: four `pauseWindow.js`
 cites that were already wrong at the base (the mapper renumbers a wrong
 number onto a differently wrong line), the renderer's `setClearColor`
 self-cite (a bare `:N` inside its own file, which the mapper does not
-spell), and two escaped-regex cites in tests (`dungeon\.js:433`,
+spell), and two escaped-regex cites in tests (`dungeon\.js:434`,
 `worldModes\.js:473`), which the mapper cannot see - the CS1 edge AUDIT
 64's integration hit first. The Suite line restamped once; the full
 suite green over the merged tree. Round two (after the reset) took the
@@ -401,8 +401,10 @@ MWA1's `autoBuildArms` runs at every door a made character arrives
 through, and XL-6 had taken the sizes out of the boot count that gated
 it - so the rig measures the store first (`registerMorrowindData`) when
 no fingerprint is down, as the pane's Build button does, and MWA1's pin
-follows the new signature. Full suite green over the merged tree (7079
-run, 0 failed); that commit is round two's base.
+follows the new signature. PERF1-3 (#82, #83) landed on main an hour
+later and merged the same way, one run: 107 cites moved, the same two
+held. Full suite green over the merged tree; that commit is round two's
+base.
 
 Three fixups were done by hand between the rounds, from the reviewers'
 exact findings, because the lanes that owned them had died at the

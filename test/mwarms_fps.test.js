@@ -87,5 +87,5 @@ test('MWA1 pins: the switch on the prefs shelf, flipped by Build and Unload; the
   assert.match(menu, /fpArm\.unload\(\); setPref\('mwArms', false\);/, 'Unload clears it');
   assert.match(menu, /const res = await buildArmsFor\(playerEntity\);\n\s+if \(res\?\.ok\) setPref\('mwArms', true\);/, 'Build sets it only when the build stood');
   assert.match(menu, /prefRow\('showFps', 'FPS counter',/, 'the counter has its row');
-  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\) \}\);/, 'the counter mounts over every host, on the pref or ?fps');
+  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3)');
 });

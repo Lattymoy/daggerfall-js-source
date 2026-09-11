@@ -34,7 +34,7 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
-  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps') });   // FPS1: over every host, on the pref or the probe door
+  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
   const status = (msg) => {
     document.title = `Daggerfall JavaScript - ${msg}`;
   };

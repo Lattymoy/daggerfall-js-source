@@ -1078,3 +1078,87 @@ nowhere. It is the wiring that had no counterpart, not the table. The
 old pin restated the departure (`windowStyleForWeather('fog') ===
 'fog'`); the new pin is over the two hosts' call text and over
 `weather.js` exporting no window-style rule at all.
+
+## PERF2 - THE SKY AFTER THE GROUND, THE GRASS BY THE CELL (2026-09-11)
+
+Mac: "I really just want you to find ways we can improve performance
+without downgrading across the board." Two changes that draw the same
+picture for fewer cycles, both read out of the frame rather than
+measured - there is no GPU and no ARENA2 in the session - so the
+counter's numbers on a real machine are what confirm them.
+
+**The sky was the frame's first draw, and most of it was painted over.**
+`beginFrame` cleared, the dome's full-screen triangle shaded every
+pixel (stars, two moons, the decks, the retro step) and the clouds'
+composite shaded every pixel again, and then the terrain, the models
+and the far ring covered the lower half or more of them. Now the three
+sky passes (`enhancedSky.js`, `skyRenderer.js`, `dynamicSkiesRenderer.js`)
+and the clouds' composite (`volumetricClouds.js draw`) put their quad AT
+the far plane - `gl_Position.z = w`, depth exactly 1.0 - and draw with
+the depth test on, LEQUAL, mask off: a fragment lands only where the
+buffer still holds the cleared 1.0, which is exactly where nothing
+nearer drew. The hosts draw the block after the terrain, the models
+and the body, before the water, so every blended pass after it (the
+water, the flats, the rain, the grass) composes over the sky as it
+did. `0.9999` would not have done: at near 0.2 and far 6000 that depth
+is 1,500 m out, and the streamed terrain runs past it. The far ring
+kept its law - "the streamed world repaints everything nearer" - by
+DEPTH instead of by ORDER: `gl_FragDepth = 1.0` under the same test,
+so it loses to any streamed pixel and paints over the sky. The three
+`markForeignPass` seams moved with the block; glstate's count holds.
+
+**The grass field went to the GPU whole, every frame.** One instanced
+draw of every slot - the 420 m window's ~180 cells, the cells behind
+the eye, and the window's corners, which at 1.4 x `uRange` the vertex
+shader fades to nothing and then blends as nothing. `LabGrassRenderer`
+now records each slot's box when a cell is written (x/z off the roots,
+y from the lowest root to the tallest tip) and `draw` walks the slots:
+a cell whose nearest point is past the range, or whose box is outside
+the frustum (`render/frustum.js`, the EV3 helpers), is not submitted;
+the rest are drawn one instanced call each with the four instance
+pointers moved to the slot's byte run - WebGL2 has no base instance,
+so the pointers are the offset; four calls, no upload. Facing forward
+on an open meadow that is roughly a third of the blades the frame used
+to carry; the culled ones drew no surviving fragment. The lab's whole
+scatter (`set`) still draws whole. `window.__grassStats().drawn` says
+what was submitted.
+
+**Pinned** in `test/perf2.test.js` (3): the culling executes against a
+stub GL that records the draws; the sky law and the hosts' order are
+text. Not a departure: the same fragments reach the buffer.
+
+## PERF3 - ONCE A FRAME, NOT ONCE A PIXEL; ONCE A TEXTURE, NOT ONCE A BATCH (2026-09-11)
+
+Mac: "just do your job and look for opportunities." Three more that
+change no pixel, read out of the renderer.
+
+**The terrain program re-uploaded the frame's lighting for every
+pixel.** `drawTerrain` set seventeen uniforms a draw - projection,
+view, the fog block, the key light, the ambient, the sun, the moon,
+the point lights, the indirect light, the two sampler slots - and a
+streamed frame draws it forty-odd times. The mesh program never did:
+`beginFrame` uploads its block once and the setters merely shadow
+(`uploadLighting` is the one exception, for the automap's beacons).
+The terrain block now sits behind a frame stamp that `beginFrame`,
+`restoreState` and `setLightDir` bump: the first terrain draw after
+any of them uploads, the rest skip. The model matrix and the tile
+size stay per draw; the cloud deck keeps its own stamp.
+
+**The cutout billboards bound their textures once a batch.** A batch
+is one (archive, record) on one pixel, so the same tree record across
+forty pixels bound its diffuse and emission textures forty times, and
+minted its key string forty times. The cutout pass writes depth and
+discards alpha with no blend, so its order is free: the batches are
+sorted by key and a batch whose key the batch before wore binds
+nothing. The key is cached on the batch per frame value (FA1 animates
+`b.frame`). The blended pass (the spectral and the concealed) keeps
+its back-to-front sort and only skips the repeats it happens to have.
+`stats.texBinds` now counts the binds that happen.
+
+**The counter shows the renderer's own numbers.** `stats.draws` and
+`stats.texBinds` are per frame (`beginFrame` zeroes them); the counter
+sums the sample it sees each tick and prints the per-frame mean under
+the script line - the GL call count, which is the CPU side of the
+GPU's work and the number the culls and the sort are meant to move.
+
+**Pinned** in `test/perf3.test.js` (2). Not a departure.

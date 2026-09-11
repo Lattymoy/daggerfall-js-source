@@ -461,7 +461,7 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
-void main() { vNdc = aPos; gl_Position = vec4(aPos, 0.9999, 1.0); }`;
+void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;   // PERF2: AT the far plane, so LEQUAL passes only the cleared depth
 
 const FS = `#version 300 es
 precision highp float;
@@ -826,7 +826,7 @@ export class EnhancedSkyRenderer {
     // the R9 law, as the classic pass; the hosts mark the seam.
     gl.useProgram(this.program);
     gl.depthMask(false);
-    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform3fv(u.uZenith, s.zenith); gl.uniform3fv(u.uHorizon, s.horizon);
@@ -855,7 +855,7 @@ export class EnhancedSkyRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);   // PERF2: the renderer's own compare back
     gl.depthMask(true);
   }
 }

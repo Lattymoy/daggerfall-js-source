@@ -55,14 +55,14 @@ does the pack's USE arm.
                         worldModes.js:1770 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:903, world.js:1604,
-                        exterior.js:1972. It is the only window TWO
+                        dungeonContext.js:903, world.js:1608,
+                        exterior.js:1973. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:1643, dungeonContext.js:3302. A seam
+    / NOTEBOOK          world.js:1647, dungeonContext.js:3302. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -7854,7 +7854,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:1906 and
+questJournal.js from charSheetNav:53, world.js:1910 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9725,9 +9725,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:4974`,
+the other half went stale unnoticed. (The rest cite named `world.js:4978`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:4980` now.)
+deleted the second and the cite is `world.js:4984` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -11963,3 +11963,38 @@ the element is hidden and the loop only counts.
 **Pinned** in `test/mwarms_fps.test.js` (4). Not a Ledger row: the
 counter is a diagnostic overlay with no game law in it, and the arms
 are the MW arc's already-recorded departure with a boot door added.
+
+## PERF1 - THE FRAME'S TWO NUMBERS, AND TWO DIALS (2026-09-11)
+
+RookieG, with the FPS counter in hand: "its like 45fps on the
+outside". What the outdoors costs, read from the tree: the canvas is
+sized in CSS pixels (renderer.js's resize takes clientWidth, no
+devicePixelRatio), so the fragment load is not a HiDPI one; the two
+heaviest enhanced layers are the GRASS - `LAB_GRASS.density` 1,200,000
+instanced blades over a 420 m window, ~6,100 a 30 m cell, roughly a
+million in the air on an open meadow, one draw - and the VOLUMETRIC
+CLOUDS, a 56-step march per texel of a 1024x256 sky map with a
+512-texel shadow map beside it (`QUALITY.default`). The water is a
+second pass over the water tiles; the sky one full-screen pass. On
+the script side the flats walk (MAC1 culled the far rings), the
+pixel stream and the grass field's cell fill are the per-frame work.
+
+**Which side.** `systems/frameClock.js`: each host stamps `frameBegin`
+after its held gate and `frameEnd` before it re-arms, and the FPS
+counter prints a SCRIPT line under the cadence - the main thread's
+mean and worst frame over the last second. A 22 ms frame with 6 ms of
+script is the GPU's; with 20 ms it is ours. That is the number the
+next step needs from RookieG's machine.
+
+**Two dials**, on the Enhanced pane under the environments switch,
+both on the prefs shelf and both taking effect when the world next
+loads: `grassDensity` (Full, Half, Quarter, Off - a fraction of the
+lab's field handed to `createGrassField`; 0 builds no renderer, as
+`?grass=off` does) and `cloudQuality` (Default, Low, High - the
+`QUALITY` tier `VolumetricClouds` is built at, behind the `?clouds`
+door, which still wins). Defaults unchanged: the enhanced look is the
+law, the dial is the escape for a machine that cannot hold it.
+
+**Pinned** in `test/perf1.test.js` (3). Not a Ledger row: no game law
+moves; the field and the march are the port's own and were already
+recorded.

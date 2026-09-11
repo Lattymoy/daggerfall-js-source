@@ -897,6 +897,38 @@ function paneEnhanced(body) {
     + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
     + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
     + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
+  // PERF1 (RookieG via Mac, 2026-09-11: "its like 45fps on the outside"):
+  // THE TWO HEAVIEST LAYERS GET A DIAL. The grass is 1.2 million
+  // instanced blades over a 420 m window and the clouds a per-texel
+  // march; a machine that cannot hold the full field keeps the lane at
+  // a fraction rather than switching the whole outdoors off. A choice
+  // row, not a switch: the button names the CURRENT tier and a click
+  // steps to the next, wrapping.
+  const choiceRow = (key, name, note, tiers) => {
+    const cur = String(getPref(key));
+    const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', name));
+    main.append(el('div', 'row-note', note));
+    const step = () => { setPref(key, tiers[(at + 1) % tiers.length][0]); render(); };
+    main.onclick = step;
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    const b = el('button', 'act rowact', tiers[at][1]);
+    b.onclick = step;
+    ctl.append(b, el('span', 'tier live'));
+    row.append(ctl);
+    return row;
+  };
+  live.append(choiceRow('grassDensity', 'Grass density',
+    'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
+    + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
+    [[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]));
+  live.append(choiceRow('cloudQuality', 'Cloud quality',
+    'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
+    + 'Takes effect when the world next loads.',
+    [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
   // WATER1: the water's own switch, beside the environments it stands in.
   live.append(prefRow('enhancedWater', 'Enhanced water',
     'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '

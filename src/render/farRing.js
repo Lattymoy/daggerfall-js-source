@@ -191,6 +191,7 @@ uniform float uRimEnd;   // the mesh rim - fully sky by here
 uniform float uHazeHold;
 out vec4 outColor;
 void main() {
+  gl_FragDepth = 1.0;   // PERF2: at the far plane - under LEQUAL it draws only where the streamed world did not, and over the sky
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
@@ -341,7 +342,7 @@ export class FarRingRenderer {
     // depth off whole: like the sky it extends, and the streamed world
     // repaints everything nearer; culling off under the mirrored
     // projection (the handedness law every fullscreen pass learned).
-    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: tested, not ordered - see gl_FragDepth in the FS
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
@@ -349,7 +350,7 @@ export class FarRingRenderer {
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
-    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
     // no program save/restore: this pass draws inside the host's
     // sky-to-markForeignPass span, where the renderer's EV6 shadows
     // are already due their reset (the R9 law).

@@ -9,6 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
@@ -569,6 +570,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
@@ -915,6 +917,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // draw (preserveDrawingBuffer false - the buffer is only this
     // task's to read).
     capturePendingScreenshot(canvas);
+    frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
