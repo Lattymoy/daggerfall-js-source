@@ -50,7 +50,7 @@ test('PERF3 pins: the terrain block goes up once per frame stamp; the cutout bil
   assert.match(r, /gl\.uniformMatrix4fv\(this\.tUModel, false, modelMatrix\);\n\s+gl\.uniform1f\(this\.tUTileSize, tileSize\);\n\s+\/\/ EE5/, 'the per-pixel two stay outside it');
   assert.match(r, /this\._uploadCloudShadow\('terrain'\);\n\s+\/\/ PERF3/, 'the deck keeps its own stamp, outside the block');
   // the billboards
-  assert.match(r, /const keyOf = \(b\) => \{[\s\S]{0,400}b\._bbKeyFrame !== b\.frame/, 'the key is cached per frame value (FA1 animates b.frame)');
+  assert.match(r, /const keyOf = \(b\) => \{[\s\S]{0,1200}b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive/, 'the key is cached per record, frame and archive (FA1 animates b.frame; the mobiles animate b.record - MAC4)');
   assert.match(r, /if \(key !== lastKey\) \{\n\s+gl\.activeTexture\(gl\.TEXTURE0\);\n\s+gl\.bindTexture\(gl\.TEXTURE_2D, tex\);/, 'a repeated key binds nothing');
   assert.match(r, /opaque\.sort\(\(a, b\) => \(a\._bbKey < b\._bbKey \? -1 : a\._bbKey > b\._bbKey \? 1 : 0\)\);\n\s+for \(const b of opaque\) drawOne\(b\);/, 'the cutout pass is sorted by key');
   assert.match(r, /blended\.sort\(\(a, b\) => d2\(b\) - d2\(a\)\);/, 'the blended pass keeps its back-to-front order');
