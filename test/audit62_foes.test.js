@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { EnemyAI, wouldBeSpawnedInClassic, CLASSIC_SPAWN_Y_UPPER, CLASSIC_SPAWN_XZ } from '../src/characters/enemyMotor.js';
 import { enemyControllerHeight } from '../src/characters/enemyAnchor.js';
 import { getTargets, runTargetMachine, targetAimPoint, isPlayerTarget } from '../src/characters/enemyTargets.js';
-import { missileHitsFoe, missileHitsCapsule, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS } from '../src/systems/spellcast.js';
+import { missileHitsFoe, missileHitsCapsule, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS } from '../src/systems/spellcast.js';
 import { sensesContext } from '../src/scenes/shared.js';
 import { Collider } from '../src/player/collider.js';
 import { CAPSULE_HEIGHT, CROUCH_HEIGHT } from '../src/player/motor.js';
@@ -181,8 +181,8 @@ test('AUDIT 62 F21: an enemy missile aims at the TARGET transform, and the conta
   assert.equal([...d.matchAll(/if \(missileHitsFoe\(m\.pos, af\)\) \{/g)].length, 1, 'the foe-vs-foe SPELL arm reads the capsule');
   assert.match(d, /if \(missileHitsFoe\(m\.pos, f\)\) \{ struckFoe = f; break; \}/,
     '...and the foe-vs-foe ARROW arm sweeps every live body with the same test');
-  assert.equal([...d.matchAll(/missileHitsCapsule\(m\.pos, playerFeet, playerHeight\)/g)].length, 2,
-    "and both PLAYER arms sweep the player's own live capsule");
+  assert.equal([...d.matchAll(/missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)/g)].length, 2,
+    "and both PLAYER arms sweep the player's own live capsule, at the player's OWN radius (AUDIT 65 CV-2)");
   assert.doesNotMatch(d, /const ay = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'the single-point arrow test is gone');
   assert.doesNotMatch(d, /const sy = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'and the single-point spell test');
   // a 4.0m flyer: capsule halved to 2.0, transform 2.0 up. The flight
@@ -198,12 +198,14 @@ test('AUDIT 62 F21: an enemy missile aims at the TARGET transform, and the conta
 });
 
 test('AUDIT 62 F21 (review): the swept capsule is the INNER segment, feet+r .. feet+h-r', () => {
-  // The prefab's CharacterController is m_Height 1.8, m_Radius 0.4,
-  // m_SkinWidth 0.05, m_Center {0,0,0} (DaggerfallEnemy [Game
+  // The ENEMY prefab's CharacterController is m_Height 1.8, m_Radius
+  // 0.4, m_SkinWidth 0.05, m_Center {0,0,0} (DaggerfallEnemy [Game
   // Serializable].prefab:442-448) - so 0.45 is the surface a cast
-  // meets, and DaggerfallMissile.cs:339's SphereCast(ColliderRadius)
-  // reaches it at 0.45 + 0.45.
-  assert.equal(BODY_CAPSULE_RADIUS, 0.45, "m_Radius 0.4 + m_SkinWidth 0.05");
+  // meets on a FOE (AUDIT 65 CV-2: the player's is its own 0.35, and
+  // this constant is no longer applied to it), and
+  // DaggerfallMissile.cs:339's SphereCast(ColliderRadius) reaches it
+  // at 0.45 + 0.45.
+  assert.equal(BODY_CAPSULE_RADIUS, 0.45, "the FOE's m_Radius 0.4 + m_SkinWidth 0.05");
   // A Unity capsule's SURFACE spans feet..feet+h; its two hemisphere
   // CENTRES are inset by r. So for a 1.6 rat DFU's swept volume runs
   // feet-0.45 .. feet+2.05 - NOT feet-0.9 .. feet+2.5, which is what
@@ -264,8 +266,8 @@ test('AUDIT 62 F21 (review): ONE aim-point law, and the player arm of it is the 
     assert.match(src(f), /player\.pos\[1\] \+ player\.height \/ 2 - from\[1\]/, `${f}: the fireMissile hook too`);
     assert.doesNotMatch(src(f), /player\.pos\[1\] \+ 0\.9 - from\[1\]/, `${f}: and not the standing constant`);
   }
-  assert.match(src('src/scenes/hostMagic.js'), /if \(missileHitsCapsule\(m\.pos, playerFeet, playerHeight\)\) \{/,
-    "the shared engine sweeps the player's live capsule");
+  assert.match(src('src/scenes/hostMagic.js'), /if \(missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)\) \{/,
+    "the shared engine sweeps the player's live capsule, at the player's own radius (AUDIT 65 CV-2)");
 });
 
 test('AUDIT 62 F21: a foe casts from - and blows an AreaAroundCaster at - its own TRANSFORM', () => {

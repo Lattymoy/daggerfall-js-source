@@ -106,7 +106,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach,   // ROAD-H tail: the reach along the normalised direction
   MISSILE_LIFESPAN_S,
-  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes, missileHitsFoe, missileHitsCapsule, playerArrowOrigin, PLAYER_BODY_RADIUS,   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -2815,7 +2815,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // does (combat/arrowFlight.js's player test precedes its foe
           // sweep); the shooter cannot feather itself on the release
           // frame.
-          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets
+          const struckPlayer = !!playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS);   // the player's CAPSULE, the same SphereCast (DaggerfallMissile.cs:339) the foe arm gets - at the player's OWN radius (AUDIT 65 CV-2)
           let struckFoe = null;
           if (!struckPlayer) {
             for (const f of foes) {
@@ -2904,7 +2904,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
         continue;
       }
-      if (missileHitsCapsule(m.pos, playerFeet, playerHeight)) {   // the player's capsule, DaggerfallMissile.cs:339
+      if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {   // the player's capsule at the player's own radius, DaggerfallMissile.cs:339 (AUDIT 65 CV-2)
         // S16: enemy missiles carry their caster (level + the
         // transfer heal-back pair); trap casts stay casterless (DFU
         // action casters are null) on the S4b player-level shape.

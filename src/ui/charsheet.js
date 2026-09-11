@@ -656,7 +656,7 @@ export class CharSheet {
     // recently-raised row is pale BLUE here rather than the orange
     // DaggerfallHighlightTextColor (:54) this used to draw.
     ids.forEach((id, i) =>
-      shadowText(renderer, font, `${SKILL_NAMES[id]} ${e.skills?.[id] ?? 0}%`,
+      shadowText(renderer, font, `${SKILL_NAMES[id]} ${skillValue(e, id)}%`,   // AUDIT 65 CV-1: GetSkillSummary's value token is GetLiveSkillValue (TextProvider.cs:503), not the permanent array
         m, x + 4 + (twoColumn && i % 2 ? 136 : 0), y + 13 + (twoColumn ? Math.floor(i / 2) : i) * 9,
         { color: getSkillRecentlyIncreased(e, id) ? SKILL_DIALOG_HIGHLIGHT_COLOR : [0.9, 0.9, 0.85, 1] }));
     if (showHth) {
