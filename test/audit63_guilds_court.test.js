@@ -327,16 +327,28 @@ test('AUDIT 63 F33: Info/Grab/Talk pop the youSeeA / youSeeAn line with no dista
 });
 
 test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts and the standalone dungeon', () => {
-  for (const [file, n] of [['../src/scenes/world.js', 2], ['../src/scenes/exterior.js', 2],
-    ['../src/scenes/worldModes.js', 4], ['../src/scenes/dungeon.js', 2]]) {
+  // AUDIT 65 MC-2 COLLAPSED THE PAIR. F33 shipped TWO calls per ladder -
+  // a NEAR one at DefaultActivationDistance gated on the ladder's winner
+  // and a FAR one at the ladder's foot with no gate at all - and the FAR
+  // one is exactly the mis-order the NEAR one was written to stop: with
+  // `nearerThan` Infinity, a foe 20 units off ate a click DFU gives a
+  // door at 5. DFU has ONE ray (PlayerActivate.cs:314) and reaches
+  // MobileEnemyCheck (:419) for its own hit alone, so there is ONE call
+  // per ladder, at the RAY's reach, decided by distance - which carries
+  // the un-gated Info line (:806-826) and the pickpocket's too-far
+  // refusal (:832-836) with it, since both run out to RayDistance.
+  for (const [file, n] of [['../src/scenes/world.js', 1], ['../src/scenes/exterior.js', 1],
+    ['../src/scenes/worldModes.js', 2], ['../src/scenes/dungeon.js', 1]]) {
     const src = read(file);
     assert.ok(/tryMobileEnemyActivate/.test(src), `${file} has no ActivateMobileEnemy arm`);
     assert.equal((src.match(/_enemyArm\(/g) ?? []).length, n,
-      `${file}: the NEAR call decided against the ladder, and the FAR call after it`);
-    // review round: the NEAR call must be handed a rival distance -
-    // DFU's one raycast (:314) reaches :419 only for its own hit
-    assert.ok(/_enemyArm\(DEFAULT_ACTIVATION_DISTANCE, /.test(src),
-      `${file}: the NEAR call takes no rival distance, so it dispatches foe-first`);
+      `${file}: ONE call per ladder, decided against the ladder's own winner`);
+    assert.equal((src.match(/_enemyArm\(RAY_DISTANCE, /g) ?? []).length, n,
+      `${file}: every call must be at the RAY's reach AND take a rival distance`);
+    assert.doesNotMatch(src, /_enemyArm\(RAY_DISTANCE\)/,
+      `${file}: an un-gated far call dispatches the foe over a nearer door`);
+    assert.doesNotMatch(src, /_enemyArm\(DEFAULT_ACTIVATION_DISTANCE/,
+      `${file}: the 3.2 pre-gate cannot reach the Info line or the pickpocket refusal`);
   }
   // and the pickpocket law is ONE law with an optional target, as
   // DFU's Pickpocket(target = null) is

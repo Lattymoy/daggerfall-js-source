@@ -160,7 +160,7 @@ import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySou
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
-import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
+import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // PX21c: the hover runs the take's own pick; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -2290,7 +2290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:873 against :904; worldModes.js:5709 against :5718).
+    // (dungeon.js:873 against :904; worldModes.js:5757 against :5766).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2756,8 +2756,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8150,
-              // exterior.js:4169 and worldModes.js:5833 already ran;
+              // playerArrowHitFoe is the one copy world.js:8168,
+              // exterior.js:4169 and worldModes.js:5881 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3590,7 +3590,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       let key = null;
       if (isEnhanced() && eye) {
         const dir = [-view[2], -view[6], -view[10]];
-        const k = pickActivatable(eye, dir, api.lootTargets(), collider);
+        // AUDIT 65 MC-2: the pick now reaches as far as the RAY does,
+        // so the plaque must apply the handler's own reach itself -
+        // the player can SEE a pile across the room and cannot open
+        // it, and DFU's HUD says nothing about one until you activate.
+        const hit = pickActivatableHit(eye, dir, api.lootTargets(), collider);
+        const k = hit && hit.distance <= hit.reach ? hit.key : null;
         if (k && (k.startsWith('loot:') || k.startsWith('corpse:') || k.startsWith('droppedLoot:'))) key = k;
       }
       showLootHover(key, key ? api.lootContents(key) : null,
@@ -5156,10 +5161,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // takeLoot vacuumed everything in one keypress.
     lootTargets() {
       const targets = [];
+      // AUDIT 65 MC-2: every kind here competes for the ray at the
+      // RAY's reach (PlayerActivate.cs:76/:314) and carries its own
+      // handler constant beside it, because the refusal is spoken
+      // INSIDE the handler - ActivateLootContainer's
+      // `hit.distance > TreasureActivationDistance` (:868-873) and the
+      // corpse arm's `hit.distance > CorpseActivationDistance`
+      // (:936-941), each SetMidScreenText(youAreTooFarAway). Dropping
+      // the target at the pick, as the port did, answers with silence
+      // and lets the click fall through to whatever stood behind it.
       lootPiles.forEach((p, i) => {
         if (!p.batch) return;
         const [hx, hy] = p.half;
-        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] } });
+        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
       });
       foes.forEach((f, i) => {
         if (!f.dead || !f.entity?.items?.length) return;
@@ -5167,7 +5181,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
         // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
         // 128-unit default the loot piles use.
-        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
+        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
       });
       targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
       return targets;

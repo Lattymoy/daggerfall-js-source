@@ -93,8 +93,8 @@ import { createExteriorFoes } from './exteriorFoes.js';
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
-// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
-import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // AUDIT 44 (a11): a level-up opens the SHEET (dfuiOpenCharacterSheetWindow), through this host's makeCharSheetWindow
@@ -3791,8 +3791,9 @@ export async function bootExterior(canvas, renderer, params, status) {
         // it - DFU casts ONE ray (:314) and reaches the enemy check
         // (:419) only for the thing that ray hit, so a townsperson, a
         // corpse, a pile, a street NPC, a board or a door standing
-        // nearer than the foe takes the click. FAR after the ladder has
-        // found nothing at all.
+        // nearer than the foe takes the click. AUDIT 65 MC-2 made it ONE
+        // call at RayDistance (activate.js's own note): a second call at
+        // the ladder's foot could not see `_rivalDist` at all.
         const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
           exteriorFoePool(), collider, reach, getInteractionMode(), playerEntity, {
             nearerThan,
@@ -3812,24 +3813,25 @@ export async function bootExterior(canvas, renderer, params, status) {
         // The rival the foe must beat: the corpse and pile picks above,
         // the street's townsfolk (townTalk's own cylinder pick) and the
         // door/NPC/board set the interior transition picks from.
-        const _rivalDist = Math.min(
-          _lootPick?.distance ?? Infinity,
-          _dropPick?.distance ?? Infinity,
-          ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
-          modes.exteriorActivationDistance(cam.pos, useFwd),
-        );
+        // AUDIT 65 MC-2 split it: townTalk.tryActivate needs a rival with the persons left OUT of it.
+        const _nonPersonRival = Math.min(_lootPick?.distance ?? Infinity,
+          _dropPick?.distance ?? Infinity, modes.exteriorActivationDistance(cam.pos, useFwd));
+        const _rivalDist = Math.min(_nonPersonRival,
+          ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
         if (_lockFoe) lockOn.toggle(_lockFoe);
-        else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
-        else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+        else if (_enemyArm(RAY_DISTANCE, _rivalDist)) { /* MC-2: the enemy was the ray's OWN hit */ }
+        else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
           const lootKey = _lootPick?.key ?? null;
           const dropKey = _dropPick?.key ?? null;
-          if (lootKey) { (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
+          if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);   // MC-2: the corpse's own refusal (:936-941)
+          else if (lootKey) { (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
           // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
           // because the door handed every LOOT call the classic window,
           // which cannot draw without INVE00I0. The enhanced pane runs
           // the pile itself now, so the gate is the skin question every
           // other pack arm asks - and on the classic skin it still comes
           // down to the same art.
+          else if (dropKey && _dropPick.distance > _dropPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);   // MC-2: ActivateLootContainer's (:868-873)
           else if (dropKey && inventoryDoorReady()) {
             // U8e: a pile under the ray opens the inventory WITH the
             // pile as the remote target (Remove defaults - the OnPush law)
@@ -3843,8 +3845,6 @@ export async function bootExterior(canvas, renderer, params, status) {
               loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
             }));
           }
-          // AUDIT 63 F33: the FAR half - nothing else took the click.
-          else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
           else modes.tryEnter().catch((e) => console.error(e));
         }
       }
@@ -4134,7 +4134,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7836-7910 is the shape.
+    // through the player for ever. world.js:7854-7910 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4345,7 +4345,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7979's order, and the order
+          // BEFORE civilians - world.js:7997's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

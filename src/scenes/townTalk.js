@@ -592,10 +592,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return getInteractionMode();
   }
 
-  /** The activation ray (the host's E/use edge). persons =
-   *  [{ person, pos }] world feet of LIVE townsfolk. Returns true if
-   *  a person consumed the activation. */
-  function tryActivate(camPos, fwd, persons) {
+  /** The activation ray (the host's E/use edge). persons = [{ person, pos }] world feet of LIVE townsfolk. Returns true
+   *  if a person consumed the activation. AUDIT 65 MC-2: `nearerThan` is the REST of the ladder's winning distance and
+   *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
+  function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
     if (overlay) return true;
     let best = null, bestDist = Infinity;
     for (const p of persons) {
@@ -607,7 +607,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal
     // 3.2 alone). The old 6.4 pre-gate answered a person down a long
     // street with SILENCE and let E fall through to a door behind them.
-    if (!best || bestDist > RAY_DISTANCE) return false;
+    if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;   // MC-2: :412 is reached for the ray's OWN hit
     // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
     if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test

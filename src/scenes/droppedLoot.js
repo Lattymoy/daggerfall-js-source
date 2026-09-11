@@ -19,11 +19,11 @@
 // (collectPixel = the reference's mid-session collection sweep).
 // The dungeon host rides piles through collectWorld/applyWorld
 // via restorePiles below (AUDIT 23).
-
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1 slice 3
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
 import { CONTAINER_IMAGES } from '../ui/targetIconPanel.js';   // AUDIT 63 F22: InventoryContainerImages, the picture both makers hand CreateLootContainer
+import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT 65 MC-2: the ray's reach, the handler's own
 
 // AUDIT 17e F34 / ONE DFU MEMBER, ONE EXPORT: this file re-declared
 // randomTreasureArchive and randomTreasureIconIndices, regressing the
@@ -281,11 +281,17 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   // from the items it holds.
   const alive = (p) => !p.inactive && (p.items.length > 0 || p.container === true);
   const batches = () => piles.filter((p) => alive(p) && p.batch).map((p) => p.batch);
+  // AUDIT 65 MC-2: a pile is a DaggerfallLoot and ActivateLootContainer
+  // refuses out loud - `hit.distance > TreasureActivationDistance` ->
+  // SetMidScreenText(youAreTooFarAway), PlayerActivate.cs:868-873 -
+  // which it can only do if the ray's ONE hit (:314, RayDistance) is
+  // allowed to BE the pile. So the target competes at the ray's reach
+  // and carries the treasure reach beside it for the ladder to speak.
   function lootTargets() {
     const out = [];
     piles.forEach((p) => {
       if (!alive(p)) return;
-      out.push({ key: `droppedLoot:${p.id}`, aabb: { min: [p.pos[0] - 0.5, p.pos[1], p.pos[2] - 0.5], max: [p.pos[0] + 0.5, p.pos[1] + 0.6, p.pos[2] + 0.5] } });
+      out.push({ key: `droppedLoot:${p.id}`, aabb: { min: [p.pos[0] - 0.5, p.pos[1], p.pos[2] - 0.5], max: [p.pos[0] + 0.5, p.pos[1] + 0.6, p.pos[2] + 0.5] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });
     });
     return out;
   }

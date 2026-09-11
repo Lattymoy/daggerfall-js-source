@@ -118,8 +118,8 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { mwViewFrame, mwViewWheel, mwViewDrawBody } from '../player/mwView.js';   // MW-D25: the Morrowind camera
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
-// AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841)
-import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
+import { RAY_DISTANCE, TOO_FAR_AWAY_TEXT } from '../player/activate.js';   // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841); AUDIT 65 MC-2: the loot handlers' refusal
+import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
@@ -5331,7 +5331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7018-7030 -
+  // worldModes answers it in BOTH modes (worldModes.js:7066-7078 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7437,9 +7437,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // a townsperson, a corpse, a dropped pile, a street NPC, a
           // bulletin board or a door standing nearer than the foe takes
           // the click - `_rivalDist` below is those picks' own winning
-          // distance. The FAR call at the bottom carries the un-gated
-          // Info line (:806-826) and the pickpocket's too-far refusal
-          // (:832-836), which DFU takes out to RayDistance.
+          // distance. AUDIT 65 MC-2 made it ONE call at RayDistance:
+          // the un-gated Info line (:806-826) and the pickpocket's
+          // too-far refusal (:832-836) ride the same comparison, and a
+          // second call at the bottom of the ladder could not see
+          // `_rivalDist` at all.
           const _enemyArm = (reach, nearerThan = Infinity) => tryMobileEnemyActivate(cam.pos, useFwd,
             [...exteriorFoes.foes, ...cityGuards.guards], collider, reach,
             getInteractionMode(), playerEntity, {
@@ -7463,18 +7465,35 @@ export async function bootWorld(canvas, renderer, params, status) {
           // the street's townsfolk (townTalk's own cylinder pick), the
           // corpse and pile picks above, and the door/NPC/board set the
           // interior transition picks from.
-          const _rivalDist = Math.min(
+          // AUDIT 65 MC-2: split in two, because the PERSON arm needs a
+          // rival that does not include the persons themselves - see
+          // townTalk.tryActivate. The foe arm still measures against
+          // everything, the townsfolk included.
+          const _nonPersonRival = Math.min(
             _lootPick?.distance ?? Infinity,
             _dropPick?.distance ?? Infinity,
-            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
             modes.exteriorActivationDistance(cam.pos, useFwd),
           );
+          const _rivalDist = Math.min(_nonPersonRival,
+            ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
           if (_lockFoe) lockOn.toggle(_lockFoe);
-          else if (_enemyArm(DEFAULT_ACTIVATION_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
-          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+          // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, still
+          // decided against every rival above - DFU's one raycast
+          // (:314) reaches MobileEnemyCheck (:419) only for the thing
+          // it hit, and that is the whole of the arm. F33's second,
+          // bottom-of-the-ladder call ran with `nearerThan` Infinity,
+          // so a foe 20 units off ate a click DFU gives a door at 5.
+          else if (_enemyArm(RAY_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }
+          else if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons, _nonPersonRival)) {
             const lootKey = _lootPick?.key ?? null;
             const dropKey = _dropPick?.key ?? null;
-            if (lootKey) {
+            // AUDIT 65 MC-2: the corpse's own refusal
+            // (PlayerActivate.cs:936-941) - the body reaches for the
+            // ray now (scenes/corpseMarker.js) so the handler can
+            // speak, where the old pick dropped it in silence and let
+            // the click fall through to the door behind it.
+            if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
+            else if (lootKey) {
               const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
               surfacePlayer();
@@ -7485,6 +7504,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           // the pile itself now, so the gate is the skin question every
           // other pack arm asks - and on the classic skin it still comes
           // down to the same art.
+          // AUDIT 65 MC-2: ActivateLootContainer's own refusal (:868-873)
+          else if (dropKey && _dropPick.distance > _dropPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
           else if (dropKey && inventoryDoorReady()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
@@ -7498,9 +7519,6 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
               }));
             }
-            // AUDIT 63 F33: nothing else took the click, so the FAR
-            // half of the enemy arm runs before the door transition.
-            else if (_enemyArm(RAY_DISTANCE)) { /* the enemy was the hit */ }
             else modes.tryEnter().catch((e) => console.error(e));
           }
         }
