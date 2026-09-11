@@ -421,7 +421,7 @@ export class NativeTalkWindow {
     // width in glyphs is not knowable without the font.
     this.topicHScroll = 0;
     this._topicWidthContent = 0;
-    this._mouse = [0, 0];            // for the wheel's per-panel routing
+    this._mouse = [0, 0];            // for the wheel's per-panel routing - AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
     this._category = null;
     // MERGE (the S-A lane's shape): selectedTalkCategory persists -
     // SetTalkModeWhereIs re-runs SetTalkCategory(selectedTalkCategory)

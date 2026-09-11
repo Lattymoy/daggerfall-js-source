@@ -10,9 +10,9 @@
 // mousemove at all - and the first notch found the seed, hit no rect
 // and did nothing. The same notch after a one-pixel nudge worked.
 //
-// DFU has no such state. BaseScreenComponent.Update (:724-736)
-// recomputes `mouseOverComponent` from the LIVE scaled mouse position
-// every frame, immediately before the scroll block reads it, so the
+// DFU has no such state. BaseScreenComponent.Update's scroll block
+// (:725-736) is guarded by `mouseOverComponent`, recomputed from the LIVE
+// scaled mouse position at :577-594 every frame, just before, so the
 // wheel is routed by where the cursor IS and never by whether it has
 // moved since the window opened.
 //
@@ -72,6 +72,12 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
   // ItemListScroller.cs:346-347's other handler rides the carried
   // point too - the info panel names the item that scrolled under it.
   assert.equal(w.infoItem, bag[1], 'the repoint read the notch\'s own point');
+  // ...and the tooltip half of that repoint rides the same point: the
+  // tip re-shows for the item under the notch, at the slot's own place.
+  // MUTANT: `_wheelRehover(this._mouse[0], this._mouse[1], ...)` - the
+  // remembered point again - leaves infoItem right and the tip null.
+  assert.equal(w._tip.tip._pending, 'Daedric b', 'the tooltip re-showed for the item now under the notch');
+  assert.deepEqual([w._tip.tip.x, w._tip.tip.y], LOCAL_SLOT(0), 'at the notch\'s own point');
   w.wheel(1, ...REMOTE_SLOT(0));
   assert.equal(w.remoteScroll, 1, 'the remote scroller likewise, still with no hover');
   assert.equal(w.scroll, 1, 'and the local one held its place');
@@ -121,7 +127,7 @@ test('AUDIT 65 UI-5: one wheel shape in src/ui - every other window ignores the 
   // lets the rest fall on the floor; a window that grows a second
   // positional would read a coordinate as its own. The ONE exception
   // is automapChrome's NESTED seam, which is fed by automapWindow
-  // (:1097) rather than by a host and keeps its own argument order.
+  // (:1100) rather than by a host and keeps its own argument order.
   const dir = join(root, 'src/ui');
   const multi = [];
   for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {

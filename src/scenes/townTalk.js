@@ -1181,9 +1181,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  ones with overflow implement wheel(dir).
    *
    *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, exactly as it rides the
-   *  hover above. BaseScreenComponent.Update (:724-736) recomputes
-   *  `mouseOverComponent` from the live mouse position every frame
-   *  before the scroll block, so a window may not route the wheel by
+   *  hover above. BaseScreenComponent.Update's scroll block (:725-736)
+   *  is guarded by `mouseOverComponent`, which :577-594 recomputes from
+   *  the live mouse each frame, so a window may not route the wheel by
    *  the last point hover() happened to hand it - a pack opened with
    *  the Inventory key has had no mousemove at all. */
   function wheel(e) {

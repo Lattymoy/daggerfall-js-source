@@ -361,7 +361,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     e.preventDefault();
     // AUDIT 65 UI-5: the point rides the notch, by the mousemove arm's
     // own arithmetic - DFU reads the mouse position afresh each Update
-    // (BaseScreenComponent.cs:724-736), so the window must not be left
+    // (BaseScreenComponent.cs:577-594 guards the scroll block :725-736), so the window must not be left
     // routing the wheel by the last hover it happened to get.
     const r = canvas.getBoundingClientRect();
     const v = pointToNative(nativeMetrics(canvas),

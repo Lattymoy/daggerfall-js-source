@@ -265,7 +265,7 @@ export class ControlsWindow {
   release() { this.advanced?.release(); }
 
   /** The wheel seam (U-scroll): the hosts deliver it as
-   *  `overlay.wheel?.(Math.sign(deltaY))`, and while the popup is up
+   *  `overlay.wheel?.(dir, vx, vy)` (AUDIT 65 UI-5), and while the popup is up
    *  it is the popup's - MouseScrollUp/Down (HorizontalSlider.cs:
    *  180-190) over the slider the pointer is on. */
   wheel(dir) { if (this.advancedOpen) this.advanced.wheel(dir); }

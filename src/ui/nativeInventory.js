@@ -953,9 +953,9 @@ export class NativeInventoryWindow {
    *  the other half of the same frame.
    *
    *  AUDIT 65 UI-5: THE NOTCH CARRIES ITS OWN POINT. DFU never
-   *  remembers where the cursor was - BaseScreenComponent.Update
-   *  (:724-736) recomputes `mouseOverComponent` from the LIVE scaled
-   *  mouse position every frame, before the scroll block reads it. The
+   *  remembers where the cursor was - BaseScreenComponent.Update's
+   *  scroll block (:725-736) is guarded by `mouseOverComponent`, which
+   *  :577-594 recomputes from the LIVE scaled mouse each frame. The
    *  port's `_mouse` is written by hover() alone, and opening the pack
    *  with the Inventory key releases the lock without moving the
    *  cursor, so no mousemove fires and the seeded point routes nothing:

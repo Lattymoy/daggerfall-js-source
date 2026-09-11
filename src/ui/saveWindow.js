@@ -391,10 +391,10 @@ export class SaveWindow {
    *  same index rather than a second field.
    *
    *  RECORDED (structural): DFU routes the wheel to the component under
-   *  the pointer; the port's host channel delivers a bare sign
-   *  (townTalk.js:968, worldModes.js:6404, dungeonContext's
-   *  overlayWheel), so the window forwards it to its one scrolling
-   *  list. There is nothing else on this window a wheel could mean. */
+   *  the pointer; the hosts carry the point on the overlay wheel seam
+   *  now (AUDIT 65 UI-5: townTalk.js:1189-1196, worldModes.js:7173-7189,
+   *  dungeonContext's overlayWheel), and this window has one scrolling
+   *  list, so it still ignores the point and forwards the sign to it. */
   wheel(dir) {
     if (this.top) return true;          // a stacked box is the top window, not this one
     const maxScroll = Math.max(0, this.rows.length - SW_LIST_ROWS);

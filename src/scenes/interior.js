@@ -248,8 +248,8 @@ export async function bootInterior(canvas, renderer, params, status) {
   });
   // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
   // rule, one seam over from F48's miss above) - BaseScreenComponent
-  // .cs:724-736 recomputes `mouseOverComponent` from the live mouse
-  // position each Update, so no window routes the wheel by a remembered
+  // .cs:725-736's scroll block is guarded by `mouseOverComponent`, which
+  // :577-594 recomputes each Update, so no window routes by a remembered
   // hover; `nativeAt` is the hover arm's own arithmetic.
   addEventListener('wheel', (e) => {
     if (!overlay) return;

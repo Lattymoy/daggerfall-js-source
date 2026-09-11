@@ -11529,7 +11529,8 @@ plain `ItemListScroller`s (`:368`, `:383`), so both carry it.
 The port's window declared no `wheel` at all, while all four hosts
 have routed the notch to the active overlay for slices -
 `townTalk.js`, `worldModes.js`, `interior.js` and `dungeonContext.js`
-each call `overlay.wheel?.(Math.sign(e.deltaY))` - so the wheel
+each called `overlay.wheel?.(Math.sign(e.deltaY))` (a bare sign then;
+AUDIT 65 UI-5 put the notch's own point beside it) - so the wheel
 reached this window and was dropped, leaving the arrows and the rail
 as the only way past item four in a bag, a loot pile or the wagon.
 

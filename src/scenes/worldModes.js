@@ -7165,9 +7165,9 @@ export function createWorldModes(host) {
    *  mode-owned window owns the wheel.
    *
    *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, in BOTH arms and by the
-   *  hover seam's own arithmetic below. BaseScreenComponent.Update
-   *  (:724-736) recomputes `mouseOverComponent` from the live mouse
-   *  position every frame before the scroll block, so the window must
+   *  hover seam's own arithmetic below. BaseScreenComponent.Update's
+   *  scroll block (:725-736) is guarded by `mouseOverComponent`, which
+   *  :577-594 recomputes from the live mouse, so the window must
    *  not be left routing by the last point hover() gave it - opening
    *  the pack with the Inventory key fires no mousemove at all. */
   function wheel(e) {
