@@ -1,12 +1,19 @@
 # SPEC — `SETTINGS`: the port's settings screen
 
+> **SUPERSEDED (FD1 + SO1, 2026-09-11).** The keyed native screen this
+> spec designed (`ui/settingsWindow.js`, its metric, its colour picker,
+> its launcher host and its probe) is DELETED. The enhanced menu's
+> Settings pane is the one settings screen under BOTH skins; it kept
+> this spec's category map, copy and law modules, and SO1 built the
+> tier-is-a-group fold this spec specified. See `10-UI/UI-Arc.md` FD1/SO1.
+
 > **AS BUILT (2026-08-21).** This document is the DESIGN, kept as the
 > record of how the screen was decided. Two deviations were made while
 > implementing it, both deliberate:
 >
 > - `src/ui/settingsWidgets.js` - DELETED from the plan, never built.
 > - `src/ui/settingsDialog.js` - DELETED from the plan, never built. Their
->   contents live in `src/ui/settingsWindow.js`, because the spec's own
+>   contents live in `src/ui/settingsWindow.js`, because the spec's own *(DELETED at FD1, 2026-09-11)*
 >   first law is that draw and hit-test read ONE layout, and splitting
 >   the drawing across three files is how a second copy of a
 >   coordinate gets born. The widget drawing and the dialog are each
@@ -33,7 +40,7 @@
 | Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
 | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1139‑1064` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
-| Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` |
+| Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
 | `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:80‑86` |
 | `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:60‑67` |
@@ -301,7 +308,7 @@ Daggerfall/MyDaggerfallUnityScreenshotsPath (NA) Screenshot Folder
 
 ## 2. Screen model, metric, and every coordinate
 
-### 2.1 The metric — `src/ui/settingsMetrics.js` (OURS)
+### 2.1 The metric — `src/ui/settingsMetrics.js` (OURS) *(DELETED at FD1, 2026-09-11)*
 
 This screen does **not** use `nativeMetrics`. That function floors to `s=1` on every phone (verified: 390×844 → 1; 844×390 → 1), which would give 7 CSS‑px text — **half** what today's hardcoded `s=2` launcher shows. The settings screen is a scrolling list, not a 320×200 IMG, so it may have an elastic page. Every other window in the port keeps `nativeMetrics`.
 
@@ -737,13 +744,13 @@ No zebra striping (a 1.1:1 band does nothing but add a second ground to test aga
 
 | file | exports |
 |---|---|
-| `src/ui/settingsMetrics.js` | `PAGE_W`, `MIN_PAGE_W`, `MIN_PAGE_H`, `settingsMetrics(canvas, opts)`, `pointToPage(m, px, py)`, `tapMin(m)` |
+| `src/ui/settingsMetrics.js` | `PAGE_W`, `MIN_PAGE_W`, `MIN_PAGE_H`, `settingsMetrics(canvas, opts)`, `pointToPage(m, px, py)`, `tapMin(m)` | *(DELETED at FD1, 2026-09-11)*
 | `src/ui/settingsMap.js` | `CATEGORY_IDS` (ordered 7), `KEY_CATEGORY` (171 entries), `KEY_ORDER`, `categoryOf(key)`, `keysOf(catId)` |
 | `src/ui/settingsCopy.js` | `CATEGORIES` (`{id,title,blurb}`×7), `LABELS`, `HELP`, `READOUT`, `INSTEAD`, `DFU_TEXT_KEY`, `TIER_TEXT`, `DIALOG_TEXT`, `labelOf(key)`, `helpOf(key)` |
 | `src/ui/settingsLaw.js` | `ENUM_LAW`, `NUMBER_LAW`, `TEXT_LAW`, `COLOUR_KEYS`, `BLOCKED_REASON`, `widgetFor(key)`, `formatValue(key, raw)`, `parseColour(hex)`, `stepValue(key, raw, dir, coarse)` |
 | `src/ui/settingsWidgets.js` | `drawSwitch/drawEnum/drawNumber/drawColour/drawText/drawReadout/drawGroup/drawInfo/drawButton`, `drawTriangle(renderer,m,rect,dir,color)`, `drawPadlock(...)` — each takes `(renderer, m, font, item, state)` and draws **only** inside the rects `layout()` produced |  <!-- DELETED from the plan: folded into settingsWindow.js -->
 | `src/ui/settingsDialog.js` | `layoutDialog(font, m, {title, body, buttons, list})`, `drawDialog(renderer, m, font, d)`, `dialogHit(d, vx, vy)` (returns a button id or `'outside'`) |  <!-- DELETED from the plan: folded into settingsWindow.js -->
-| `src/ui/settingsWindow.js` | `class SettingsWindow` — see 7.3 |
+| `src/ui/settingsWindow.js` | `class SettingsWindow` — see 7.3 | *(DELETED at FD1, 2026-09-11)*
 | `src/systems/uiPrefs.js` | `PREF_DEFAULTS`, `getPref(k)`, `setPref(k,v)`, `allPrefs()`, `resetPrefs()`. Storage key **`dagger.ui.v1`**, separate from `dagger.settings.v1`. Keys: `textScale` (0\|1), `category` (id), `open` (`{"video:stored":true,…}`), `seenLegend` (bool). Never touches the 171 — `test/settings.test.js:35` pins `ALL_KEYS.length === 171` and a 172nd key would break parity. |
 | `src/ui/fullscreen.js` | `fullscreenSupported()`, `applyFullscreen(canvas)`, `isFullscreen()` — the consumer that makes `Video/Fullscreen` live (§9) |  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 
@@ -807,14 +814,14 @@ No type‑to‑jump (it collided with `R`/`Q`/`E` in the reviewed designs). Ever
 6. **Long press (450 ms)** on any item opens its detail dialog — the touch equivalent of `F1`, with `[ Reset ]` inside it. It is a convenience only: **no gesture is load‑bearing.** The tap/long‑press boundary is exactly 400/450 ms with no dead zone in between (a 420 ms press resolves as a long press).
 7. **The exit is always on screen and always fat**: PLAY is `78 × FOOT_H-2` in the bottom‑right, drawn in every mode, and a dialog is dismissed by tapping outside it. Pinned (T8c, T9).
 
-### 7.4 `src/scenes/launcherScene.js` — rewritten
+### 7.4 `src/scenes/launcherScene.js` — rewritten *(DELETED at FD1, 2026-09-11)*
 
 ```js
 export async function runLauncher(canvas, renderer, status) {
   let font;
   try { font = makeFont(renderer, new FntFile().load(await getBytes('FONT0003.FNT')), 'FONT0003'); }
   catch (e) { console.warn('[settings] FONT0003.FNT unavailable; skipping the settings screen', e); return; }
-  // AUDIT: boot audio HERE. main.js:68 runs this scene before the splash's
+  // AUDIT: boot audio HERE. main.js:64 runs this scene before the splash's
   // ensureAudio, so audio.enabled was false and every playOneShot in the old
   // launcher was silently a no-op. Un-awaited: audio.ensure creates the
   // context in its synchronous prefix and attaches its own gesture resume
@@ -876,7 +883,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 
 **T15 — ASCII sweep.** Every string reachable by `drawText` from `settingsCopy.js` + `settingsLaw.js` + the window's own literals is ASCII 32..126.
 
-**T16 — the probe taps what a finger taps.** `tools/settingsProbe.mjs` (Playwright, in the shape of the launcher probe it replaces) at 1280×800 **and** with `page.setViewportSize({width:390,height:844})` + touch emulation: assert the screen is up; assert every category is reachable; `page.tap()` the reported screen rect of a `WORKS NOW` row, then of its control, and assert the value changed and persisted through a reload; `page.tap()` the reported PLAY rect and assert the launcher closes. No coordinate is ever guessed.
+**T16 — the probe taps what a finger taps.** `tools/settingsProbe.mjs` (Playwright, in the shape of the launcher probe it replaces) at 1280×800 **and** with `page.setViewportSize({width:390,height:844})` + touch emulation: assert the screen is up; assert every category is reachable; `page.tap()` the reported screen rect of a `WORKS NOW` row, then of its control, and assert the value changed and persisted through a reload; `page.tap()` the reported PLAY rect and assert the launcher closes. No coordinate is ever guessed. *(DELETED at FD1, 2026-09-11)*
 
 ---
 
@@ -901,7 +908,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
 | Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:175-177` |
 | `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:26` |
-| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:68` |
+| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:64` |
 
 ### 9.2 OURS — the presentation split (Ledger A), flagged in each file's header
 
@@ -914,7 +921,7 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 1. **`src/systems/settings.js:238-241`** — `resetToDefaults()` must `return saveSettings();`. Today it discards the boolean, so a reset that failed to persist reports success.
 2. **`src/systems/settings.js:64-107`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 3. **`src/scenes/dataSource.js`** — add `export function dataSourceLabel()` returning one of the three short strings of §5, set at each `ensureArena2` branch.
-4. **`src/scenes/launcherScene.js`** — rewritten per §7.4.
+4. **`src/scenes/launcherScene.js`** — rewritten per §7.4. *(DELETED at FD1, 2026-09-11)*
 5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/settings.test.js:165-202` and `:215-232` rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
 
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)

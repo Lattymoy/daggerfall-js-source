@@ -9,7 +9,6 @@ import assert from 'node:assert/strict';
 import {
   drawHud, hudScale, BREATH_BAR_WIDTH, BREATH_BAR_LEFT, BREATH_BAR_BOTTOM,
 } from '../src/ui/hud.js';
-import { SettingsWindow } from '../src/ui/settingsWindow.js';
 import { NativeInventoryWindow, questTransferRefused, SMALL_CART_TEMPLATE } from '../src/ui/nativeInventory.js';
 import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
 import { localClickDecision } from '../src/systems/tradeModes.js';
@@ -90,55 +89,6 @@ const clickBtn = (win, i) => {
   const [x, y] = btnRect(win, i);
   return win.click(x + 1, y + 1, CANVAS);
 };
-
-test('audit26 F152: a drawn dialog button is a real button - Cancel and Keep It DECLINE', () => {
-  _resetForTests();
-  // Reset Everything: the affirmative is button 0, the refusal is the
-  // drawn Cancel. Clicking Cancel used to run onYes and wipe every
-  // override, because click() hit-tested nothing at all.
-  let reset = 0;
-  const win = new SettingsWindow({});
-  const resetDialog = () => ({
-    title: 'Reset Everything', key: null, lines: ['x'],
-    buttons: [{ id: 'yes', label: 'Reset' }, { id: 'no', label: 'Cancel' }],
-    onYes: () => { reset++; },
-  });
-
-  win.dialog = resetDialog();
-  assert.deepEqual(win.layout(CANVAS).dialog.buttons.map((b) => b.label), ['Reset', 'Cancel']);
-  assert.ok(clickBtn(win, 1), 'the click is consumed');
-  assert.equal(reset, 0, 'Cancel declines');
-  assert.equal(win.dialog, null, 'and the dialog closes');
-
-  win.dialog = resetDialog();
-  clickBtn(win, 0);
-  assert.equal(reset, 1, 'Reset confirms');
-
-  // ...and a click that lands on no button declines too, the way
-  // Escape does on the keyboard path.
-  win.dialog = resetDialog();
-  win.click(0, 0, CANVAS);
-  assert.equal(reset, 1, 'a click outside the buttons declines');
-  assert.equal(win.dialog, null);
-  _resetForTests();
-});
-
-test('audit26 F152: "Keep It" on the ShowOptionsAtStart lock-out keeps it', () => {
-  _resetForTests();
-  const lockOut = () => ({
-    title: 'Show Options At Start', key: 'GUI/ShowOptionsAtStart', lines: ['x'],
-    buttons: [{ id: 'yes', label: 'Turn Off' }, { id: 'no', label: 'Keep It' }],
-  });
-  const win = new SettingsWindow({});
-  win.dialog = lockOut();
-  clickBtn(win, 1);
-  assert.equal(effectiveSettings().GUI.ShowOptionsAtStart, 'True', 'Keep It kept it');
-  // the affirmative still commits DFU's "False"
-  win.dialog = lockOut();
-  clickBtn(win, 0);
-  assert.equal(effectiveSettings().GUI.ShowOptionsAtStart, 'False');
-  _resetForTests();
-});
 
 // ---------------------------------------------------------------
 // F153  TransferItem's quest arm (DaggerfallInventoryWindow.cs:1480-

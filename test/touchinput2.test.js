@@ -302,7 +302,9 @@ test('TI2 pins: the prefs shelf carries the touch knobs with their shipped answe
   assert.equal(PREF_DEFAULTS.touchFullscreen, true);
   const menu = read('src/ui/enhancedMenu.js');
   assert.match(menu, /import \{ isTouchDevice \} from '\.\/touch\.js';/);
-  assert.match(menu, /if \(isTouchDevice\(\)\) \{\s*\n\s*const touch = el\('div', 'card'\);\s*\n\s*touch\.append\(el\('h3', null, 'Touch'\)\);/, 'the card is gated');
+  // SO1: the touch knobs are rows under CONTROLS (beside the mouse and
+  // the pad), and the whole set is gated on the device the same way.
+  assert.match(menu, /function portRowsControls\(\) \{\s*\n\s*const out = \[\];\s*\n\s*if \(!isTouchDevice\(\)\) return out;/, 'the rows are gated');
   for (const key of ['touchLookSensitivity', 'touchAnalogStick', 'touchStickAnchor', 'touchGyroLook', 'touchGyroSensitivity', 'touchHaptics', 'touchFullscreen']) {
     assert.ok(menu.includes(`'${key}'`), `${key} has a control`);
   }

@@ -204,14 +204,13 @@ test('texture: BOTH packs have a URL door, and one trip can set up both', () => 
 test('texture: registration rides the ONE bootstrap, and the row reports it', () => {
   assert.match(src('scenes/shared.js'), /setTextureReplacements\(names, loadTextureFile\)/);
   assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures, morrowind\]\)/);
-  // the settings row offers BOTH picks, and the alternate carries its
-  // own KEY because the dialog has no button hit-testing to choose
-  // with - a button that looked clickable and did nothing would be the
-  // dead affordance this project keeps finding
-  const w = src('ui/settingsWindow.js');
-  assert.match(w, /if \(code === 'KeyT' && this\.dialog\.onAlt\)/);
-  assert.match(w, /label: 'T - Textures'/, 'and the button says which key');
-  assert.match(w, /textureReplacementCount\(\)/);
+  // FD1: the SettingsWindow and its keyed dialog are gone; the Mods
+  // page's packs card offers BOTH picks as buttons and reports what
+  // each pick covers, as the window's row did (M-EXT/M-TEX).
+  const w = src('ui/enhancedMenu.js');
+  assert.match(w, /label: 'Attach music pack'[\s\S]{0,200}pickMusicFolder\(\)/);
+  assert.match(w, /label: 'Attach texture pack'[\s\S]{0,200}pickTextureFolder\(\)/);
+  assert.match(w, /Texture files supplied: \$\{textureReplacementCount\(\)\}/);
   // both stores exist and the upgrade creates what is MISSING
   const d = src('scenes/dataSource.js');
   // R6 RE-AIMED THIS, as M-TEX re-aimed it before: a fourth domain

@@ -4613,7 +4613,7 @@ gives scale 1 - seven-pixel text - on every phone the design workflow
 measured. It keeps the classic 320-wide page wherever it fits at scale
 2+, and falls back to an elastic COMFORT page (a real phone lands at
 196x363, scale 2, 14px text) rather than shrinking the type. Then
-`tools/settingsProbe.mjs` drives the real screen in a real browser at
+`tools/settingsProbe.mjs` drives the real screen in a real browser at *(DELETED at FD1 with the screen it probed)*
 1280x800 **and** at phone size with touch emulation, tapping only the
 rects the screen itself reports through `window.__settings` - the same
 `layout()` that `draw()` and `click()` read. It found a defect on its
@@ -12179,3 +12179,73 @@ open-flag list is six; the Ledger row (`:609`) says so.
 
 **Pinned** in `test/gamepad.test.js` (the GP3 test, against a fake
 canvas and an event factory). Not a departure.
+
+## FD1 + SO1 - ONE FRONT DOOR, AND THE SETTINGS ORGANISED (2026-09-11)
+
+**Mac: "Remove the classic Manager screen and instead use the enhanced
+menu for both enhanced and classic. If classic is toggled, New
+Game/Load Game should be condensed to simply Begin which leads into
+the classic start sequence."** And: **"A comprehensive organization of
+all the settings options, and settings audit ensuring proper
+organization and bloat reduction."**
+
+**FD1, the door.** `src/main.js` opens on the enhanced menu under BOTH
+skins. The DFU setup wizard the port had shipped as its own keyed
+native screen - `scenes/launcherScene.js` over `ui/settingsWindow.js`
+(854 lines), its `settingsMetrics.js`, its `colorPicker.js`, and
+`tools/settingsProbe.mjs` - is DELETED: its one job was reaching the
+settings before the game, and Settings is one press away on the door
+now. `GUI/ShowOptionsAtStart` is tiered STORED: written back as DFU
+would, read by nothing. Under the CLASSIC skin the rail is `Begin /
+Settings / Controls / Mods / About` (`SECTIONS_CLASSIC`); BEGIN
+resolves `'begin'` and main.js runs the classic start sequence behind
+it exactly as before - the data gate, the ANIM0001 splash, the title,
+Daggerfall's own start window with Load Game / Start New Game / Exit -
+so the classic player loses no screen Daggerfall had and gains the one
+it never did. `?begin` skips the door into that sequence for the
+probes that pin classic geometry from the title. The music and
+texture pack picks, which only the launcher's row reached, are a card
+on the Mods page now.
+
+**SO1, the organisation.** One settings screen, the enhanced menu's
+Settings pane, reflowed by CSS into the pause window as PX9 built it.
+The ENHANCED rail entry is gone: its rows are a category of Settings,
+first in the sub-rail, carrying no store key (the map stays total over
+DFU's 171). The port's own rows live where a player looks for them:
+the departures from Daggerfall (AI, environments, grass, clouds,
+water, combat visuals, the outdoors test door) under ENHANCED; the
+touch knobs under CONTROLS beside the mouse and the pad; the interface
+style, the HUD size and the FPS counter under INTERFACE; the Morrowind
+assets and the replacement packs on the MODS page. The mods category
+is DATA & MODS, which is what its seven keys are. Every row is the row
+it was (prefRow, choiceRow, stepRow over the uiPrefs shelf) so every
+law those rows carried stands; the "Not switchable here" card about a
+removed feature went with the pane.
+
+**TIER IS A GROUP**, as the Settings-Screen-Spec specified and the
+enhanced pane never built: in every category the port's rows and the
+LIVE store keys lie flat, and the two other tiers fold under a heading
+that carries the count - SAVED FOR LATER (stored, unread: 145 keys
+across the store) and NOT AVAILABLE HERE (fixed by the browser or a
+port choice) - closed by default, remembered per category on the
+prefs shelf's `open` map (`isOpen`/`setOpen`, the map's original job).
+Nothing is hidden: a folded heading still says how many. The sub-rail
+counts the rows that DO something, not the file's row count (Video
+says 5, not 66); the dot legend that explained the flat list is gone.
+At pause the condensed pane keeps its live store keys and adds the
+port rows that take effect without a reload.
+
+**What was NOT done, deliberately.** The 171 DFU keys keep their
+categories and their order; a stored key is not removed from the
+screen, because a setting the player cannot find out about was the
+U30 rule this screen was built on - it is folded, counted and one
+press away. The classic in-game pause (ui/pauseWindow.js, DFU's own)
+is untouched; its FLAGGED note now names this door as the settings
+home.
+
+**Pinned** in `test/settingsUI.test.js` (the FD1 and SO1 pins) and
+`test/enhancedMenu.test.js` (the rails, the action contract, the
+Enhanced category's rows). Records: `Settings-Screen-Spec.md` is
+marked superseded; the launcher's Ledger row and the colour picker's
+say DELETED; `tools/enhancedMenuProbe.mjs` checks the classic rail and
+Begin's data gate.
