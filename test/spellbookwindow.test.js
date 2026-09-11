@@ -843,6 +843,17 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   w.click(PX + lx + 4, rowY(2), false, false);
   assert.equal(readied.length, 2, 'the third fast click is a second MouseDoubleClick');
   assert.equal(readied[1][0].name, 'C');
+  assert.equal(w._lastRowClick, t, 'and the stamp is the third click, unspent - the producible half of the same law');
+
+  // AND THE SEAM ITSELF, UNSTUBBED: every pin above overrides `_now`, so
+  // deleting the method would leave them all green and throw on the
+  // first spell-list click in the game. MUTANT: delete `_now()`.
+  const fresh = book(spell('A', 5), spell('B', 5));
+  fresh.w._font = font();
+  fresh.w.click(PX + lx + 4, rowY(1), false, false);
+  assert.equal(typeof fresh.w._lastRowClick, 'number', 'the production clock stamps a number');
+  fresh.w.click(PX + lx + 4, rowY(1), false, false);
+  assert.equal(fresh.readied.length, 1, 'two synchronous clicks are microseconds apart - a double on the real clock');
 });
 
 test('OT1 clicks: the gesture is TIME, not identity (BaseScreenComponent.cs:691)', () => {
