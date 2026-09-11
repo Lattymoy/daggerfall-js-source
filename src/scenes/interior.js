@@ -24,7 +24,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { audio } from '../systems/audio.js';   // WM4c
 import { buildInteriorContext } from './interiorContext.js';
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
-import { lookScale, lookInvert } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed
+import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed; AUDIT 65 MC-4: and the FOURTH LookFilter owner FIX-F missed
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
@@ -34,7 +34,7 @@ import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/ho
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { swallowBrowserKey, actionOf } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry
+import { swallowBrowserKey, actionOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -288,6 +288,15 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (!gamePaused()) {
       if (false) lookFilter.settle();
       else lookFilter.tick(dt, cam);
+      // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
+      // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
+      // here per second at the live sensitivity (ui/lookSettings.js),
+      // into the same filter the mouse feeds, owed to the NEXT tick as
+      // a mouse delta is. Additive with the mouse rather than DFU's
+      // override-for-the-frame (:1510-1511): a held turn key beside a
+      // moving mouse is not a case a player reaches on purpose.
+      const kb = keyboardLook(keys);
+      if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
     }
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

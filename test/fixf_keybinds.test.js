@@ -34,7 +34,12 @@ test('FIX-F: the keyboard look reads the four turn/look actions off the registry
   // the rate: one look unit a frame at 60 fps, a unit a degree per sensitivity point
   assert.equal(KEYBOARD_LOOK_UNITS_PER_SECOND, 60);
   assert.ok(keyboardLookRate() > 0);
-  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
+  // AUDIT 65 MC-4: EVERY LookFilter OWNER, which is four files - the
+  // three player hosts and ?interior's fly-cam (`new LookFilter()` at
+  // world.js, exterior.js, dungeon.js, interior.js). Not THE FOUR HOSTS
+  // (worldModes.js and dungeonContext.js own no filter); this is the
+  // seam's own set, and DFU has ONE InputManager for all of them.
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
     assert.match(read(h), /else lookFilter\.tick\(dt, cam\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*const kb = keyboardLook\(keys\);\s*\n\s*if \(kb\.x \|\| kb\.y\) lookFilter\.add\(kb\.x \* keyboardLookRate\(\) \* dt, kb\.y \* keyboardLookRate\(\) \* dt \* lookInvert\(\)\);/, `${h}: the keyboard look feeds the same filter the mouse does, every frame, owed to the next tick`);
   }
 });

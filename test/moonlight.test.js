@@ -13,6 +13,8 @@ import { readFileSync } from 'node:fs';
 import {
   skyState, moonlightTerm, withMoonAmbient, phaseLitFraction, MOONLIGHT,
 } from '../src/render/enhancedSky.js';
+import { dynamicMoonState, dynamicMoonlight } from '../src/render/dynamicSkiesBridge.js';   // AUDIT 65 MC-3: the mod's arm of moonlight(), and the state its own producer mints
+import { MATERIAL_DEFAULTS } from '../src/systems/dynamicSkies.js';
 import { LUNAR_PHASES } from '../src/systems/gameDate.js';
 
 const midnight = (phases, weather = 'sunny') =>
@@ -98,8 +100,23 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   const shared = readFileSync('src/scenes/shared.js', 'utf8');
   // DS1: the mod's moons feed the same term (dynamicMoons); the dome's
   // arm and the classic null are as they were.
-  assert.match(shared, /moonlight\(\)\s*\{\s*if \(enhancedSky\?\.state\) return moonlightTerm\(enhancedSky\.state\);[\s\S]*?return dynamicMoons \? moonlightTerm\(dynamicMoons\) : null;/,
+  // AUDIT 65 MC-3: the mod's arm is the BRIDGE's own export now, not a
+  // second copy of its body - dynamicMoonlight carries the null guard,
+  // so the arm a future host forgets lives in one place.
+  assert.match(shared, /moonlight\(\)\s*\{\s*if \(enhancedSky\?\.state\) return moonlightTerm\(enhancedSky\.state\);[\s\S]*?return dynamicMoonlight\(dynamicMoons\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
+  // and the export itself answers, rather than merely being named: the
+  // null arm, and byte-for-byte moonlightTerm for a state the mod's own
+  // producer mints (dynamicMoonState, the shape shared.js hands it).
+  assert.equal(dynamicMoonlight(null), null, 'no mod moons, no term - the classic night');
+  const dyn = {
+    mat: { ...MATERIAL_DEFAULTS }, _sunDir: [0, -0.5, 0],
+    phases: { masser: { phase: LUNAR_PHASES.Full }, secunda: { phase: LUNAR_PHASES.Full } },
+    moonDirection: (w) => (w === 'Moon' ? [0, 0.7, 0.7] : [0, 0.5, 0.5]),
+  };
+  const modMoons = dynamicMoonState(dyn, 23 * 60, 0);
+  assert.ok(moonlightTerm(modMoons), 'the fixture is a LIT mod night - a null-vs-null identity would pin nothing');
+  assert.deepEqual(dynamicMoonlight(modMoons), moonlightTerm(modMoons), 'the bridge hands the world the dome\'s own term');
   // both exterior hosts drive it; no interior host ever does
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = readFileSync(host, 'utf8');

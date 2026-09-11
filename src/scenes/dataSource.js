@@ -662,6 +662,13 @@ export async function loadMorrowindArchives() {
 /** Sync-readable state for the settings row; -1 until registered. */
 let _mwCount = -1;
 export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/** AUDIT 65 XL-6: HAS THE STORE BEEN COUNTED THIS PAGE LOAD? The boot
+ *  door's gate used to be `morrowindDataFingerprint() == null`, which
+ *  was the same question only because the one counter also fingerprinted.
+ *  countMorrowindArchives deliberately leaves the fingerprint null, so
+ *  the gate asks the count's own sentinel instead - -1 is "not counted
+ *  yet", and it stays distinguishable from an empty store's 0. */
+export const morrowindDataCounted = () => _mwCount >= 0;
 /**
  * MWFIX: the ATTACH GENERATION. The 3D first-person view is built once,
  * at weapon-rig construction, off a `hasStoredMorrowind()` read - so
@@ -696,27 +703,65 @@ export const morrowindDataFingerprint = () => _mwFingerprint;
  * cache (the mapped archives, the file bytes, and now the record sets
  * kept in the derived store) kept answering for the file that was
  * gone. A stored Morrowind file is a Blob handle since MW-LOAD, so its
- * size is free to ask; a file of the same name and size is taken to be
+ * size is free to ask (AUDIT 65 XL-6: a record from an attach BEFORE
+ * MW-LOAD is an ArrayBuffer and costs one materialising read until
+ * something opens it - which is why only the host bootstrap asks for
+ * sizes, and the boot menu counts names); a file of the same name and
+ * size is taken to be
  * the same file (a same-size edit is the one case this leaves to the
  * derived set's own sample stamp).
  */
 let _mwFingerprint = null;   // null = NOT COUNTED YET (`_mwCount`'s -1, in the set's own terms)
 const mwFingerprint = (names, sizes = []) => [...names].sort().map((n, i) => `${n}\t${sizes[i] ?? ''}`).join('\n');
-/** The stored sizes, in the SORTED order mwFingerprint walks. */
+/** The stored sizes, in the SORTED order mwFingerprint walks.
+ *
+ *  AUDIT 65 XL-6: A PLAIN GET, NEVER assetBlob. Measuring a set is not
+ *  using it, and assetBlob MIGRATES what it reads - it structured-clones
+ *  a pre-MW-LOAD ArrayBuffer record whole and PUTS the Blob back (:371).
+ *  Routed through it, a fingerprint over N legacy files was N value
+ *  reads AND N readwrite puts - 181 MB out of the store and back on a
+ *  six-file set - and MAC1's boot door moved that onto the title
+ *  screen. Both shapes answer the size for free: a Blob has `.size`, an
+ *  ArrayBuffer `.byteLength`. The legacy-to-Blob migration stays where
+ *  the file is USED (assetBlob's callers - loadMorrowindArchives and the
+ *  record door), which is where MW-LOAD's range reads need it. */
 async function storedMorrowindSizes(names) {
   const out = [];
   for (const n of [...names].sort()) {
-    const v = await assetBlob(MW_STORE, n);
-    out.push(v ? v.size : -1);
+    const v = await assetValue(MW_STORE, n);
+    out.push(v == null ? -1 : (v.size ?? v.byteLength ?? -1));
   }
   return out;
+}
+
+/** The settings row's count is ARCHIVES ("Morrowind archives attached:
+ *  N"), which a loose .dds or a .esm must not inflate - one home, so the
+ *  cheap door below and the full pass cannot drift apart. */
+const archiveCount = (names) => names.filter((n) => /\.bsa$/i.test(n)).length;
+
+/**
+ * AUDIT 65 XL-6: THE BOOT DOOR'S HALF - the archive count off the stored
+ * NAMES alone. One getAllKeys, no value read, no write: a surface that
+ * only needs to know whether anything is attached must not pay the
+ * fingerprint's per-file walk (MAC1 put that walk on the title screen).
+ *
+ * IT MUST NOT WRITE `_mwFingerprint`. A names-only print stored here
+ * would read as a CHANGED SET against the host bootstrap's names+sizes
+ * print and bump `_mwGeneration` - which is exactly the fpArm.unload()
+ * regression the MW-D9g comment below records, arriving by a new road.
+ * Counting is not fingerprinting; the fingerprint stays null until the
+ * full pass has actually measured the set.
+ */
+export async function countMorrowindArchives() {
+  _mwCount = archiveCount(await storedMorrowindNames());
+  return _mwCount;
 }
 
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
   const names = await storedMorrowindNames();
-  const next = names.filter((n) => /\.bsa$/i.test(n)).length;   // the settings row's count stays ARCHIVES
+  const next = archiveCount(names);
   const sizes = await storedMorrowindSizes(names);
   const print = mwFingerprint(names, sizes);
   // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",

@@ -98,8 +98,10 @@ test('AUDIT 28 W7: the setting is the default source (0..0.9, ships 0.5), LIVE, 
 test('AUDIT 28 W7: all four hosts route both look sites (mouse, touch) through the filter and tick it on the frame\'s dt before the camera is read', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
     const s = read(host);
-    const sites = host === 'src/scenes/interior.js' ? 2 : 3;   // FIX-F: the keyboard look is a third site in the three hosts that own a filter
-    assert.equal((s.match(/lookFilter\.add\(/g) || []).length, sites, `${host}: ${sites} look sites through the filter`);
+    // FIX-F: the keyboard look is the THIRD site, beside the mouse and
+    // the touch swipe. AUDIT 65 MC-4 gave it to the fourth filter owner
+    // (?interior's fly-cam), so the number is the same in all four now.
+    assert.equal((s.match(/lookFilter\.add\(/g) || []).length, 3, `${host}: three look sites through the filter`);
     assert.equal((s.match(/cam\.yaw \+= [^\n]*lookScale\(\)/g) || []).length, 0, `${host}: no raw delta reaches the camera`);
     // F-C1 moved the tick behind the paused gate; it still rides the
     // frame's dt, immediately after it.
