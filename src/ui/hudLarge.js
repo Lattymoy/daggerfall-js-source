@@ -214,9 +214,9 @@ export const hudLargePrevMode = (mode) => {
  * door rather than two.
  *
  * `right` is only set where DFU's OnRightMouseClick differs from its
- * OnMouseClick - the MAP panel alone, which opens the AUTOMAP on the
- * left and the TRAVEL MAP on the right (:504-520). Every other panel
- * binds the same handler to both buttons, deliberately.
+ * OnMouseClick - the MAP and INTERACTION-MODE panels: the automap left
+ * and the travel map right (:504-520), and the mode cycle forward and
+ * back (:393-438). The other nine bind one handler to both, deliberately.
  *
  * The spellbook posts dfuiOpenSpellBookWindow, which has no
  * InputManager action in DFU at all; the port's door for that window
@@ -310,7 +310,7 @@ export const largeHudPanelAt = (vx, vy) =>
  * (AUDIT 65 UI-4) - so an unbound button still gets the panel under
  * the point, which is what a hit test is for.
  *
- * IsLargeHUDInteractable (:392-395) is `cursorActive && !paused`, and
+ * IsLargeHUDInteractable (:388-391) is `cursorActive && !paused`, and
  * the caller owns both - a click that arrives while the cursor is
  * captured is a swing, not a button press.
  *
@@ -661,7 +661,7 @@ export function largeHudOptions(deps, entity) {
  * ONE DOOR for a click on the bar, called from every host's pointer
  * path. Returns true when the bar took the click.
  *
- * IsLargeHUDInteractable (:392-395) is `cursorActive && !paused`, and
+ * IsLargeHUDInteractable (:388-391) is `cursorActive && !paused`, and
  * both halves matter here. The cursor half is what U45 had to build -
  * see player/pointerLock.js - because with the pointer locked there
  * is no cursor to click a panel with. The paused half is the caller's

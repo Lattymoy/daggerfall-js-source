@@ -212,7 +212,7 @@ test('hudLarge: a click maps through the bar rect to the panel under it', () => 
   assert.equal(largeHudPanelAt(7 + 33, 8), null, 'and the far edge is not');
 });
 
-test('hudLarge: only the MAP panel differs on the right button', () => {
+test('hudLarge: the MAP and INTERACTION-MODE panels differ on the right button', () => {
   const bar = largeHudRect(canvas(320, 200), { docked: true });
   const at = (key, b) => {
     const [x, y, w, h] = LARGE_HUD_RECTS[key];
@@ -262,8 +262,8 @@ test('hudLarge: the bar answers the TWO buttons HUDLarge binds, and CONSUMES the
       font: hudFont(),
       largeHud: { art: { main: { tex: 'tex:MAIN00I0' } }, docked: true, undockedScale: 1, alignment: 0, mode: 'info' },
     });
-    setCursorActive(true);   // IsLargeHUDInteractable (:392-395)
-    const s = 4;             // hudScale(1280, 800); the docked bar is centred and bottom-anchored
+    setCursorActive(true);   // IsLargeHUDInteractable (HUDLarge.cs:388-391)
+    const s = 4;   // largeHudRect docked: canvas.width / LARGE_HUD_W, x=0 full width, bottom-anchored
     const [mx, my, mw, mh] = LARGE_HUD_RECTS.map;
     const px = (mx + mw / 2) * s;
     const py = (c.height - LARGE_HUD_H * s) + (my + mh / 2) * s;
@@ -288,13 +288,30 @@ test('hudLarge: the bar answers the TWO buttons HUDLarge binds, and CONSUMES the
       assert.deepEqual(run(b), { took: true, seen: [], played: [] },
         `button ${b} reaches no handler in HUDLarge`);
     }
+    // WHERE the gate sits is half the law, and both halves are
+    // placement: it is UNDER the hit test, so an aux click that is on
+    // no panel is not the bar's to swallow, and UNDER
+    // IsLargeHUDInteractable, so one that arrives with the bar off, a
+    // window up or the cursor captured is a swing and not a button
+    // press. Hoisted over either guard the eleven-panel answers above
+    // are unchanged, which is exactly why they need their own lines.
+    assert.equal(routeLargeHudClick(px, py - LARGE_HUD_H * s - 1, 1, {}), false,
+      'an aux click OFF the bar is not the bar\'s - the gate sits under the hit test, not over it');
+    setCursorActive(false);
+    assert.equal(routeLargeHudClick(px, py, 1, {}), false,
+      'and under IsLargeHUDInteractable (HUDLarge.cs:388-391)');
+    setCursorActive(true);
   } finally {
     audio.playOneShot = realPlay;
     setCursorActive(false);
     resetToDefaults();
   }
-  // MUTATION: `button !== 0 && button !== 2` -> `||` consumes EVERY
-  // button, so 0 and 2 stop routing and stop sounding.
+  // MUTATIONS, all five killed: `button !== 0 && button !== 2` -> `||`
+  // (consumes EVERY button, so 0 and 2 stop routing and stop
+  // sounding); deleting the gate line (the pre-fix shape, where 1/3/4
+  // run the left action); dropping the playOneShot; and the two
+  // PLACEMENT mutants - hoisting the gate above `if (!hit)` and
+  // hoisting it above the largeHudEnabled/windowUp/cursorActive line.
 });
 
 test('hudLarge: every panel posts an action ui/input.js can route', () => {
