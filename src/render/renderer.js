@@ -626,6 +626,19 @@ export function asBytes(view) {
 export const SKY_CLEAR = Object.freeze([0.53, 0.7, 0.92, 1.0]);
 export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 
+/** AUDIT 65 RS-3: the texture unit the cloud-shadow map is RESERVED on
+ *  (_uploadCloudShadow). It used to be 7, which is also where the
+ *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
+ *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:822-829,
+ *  over systems/dynamicSkies.js:432-435's nine names),
+ *  so unit 7 was written by a foreign pass while the renderer's
+ *  per-program stamp still said the shadow map was there. 15 sits
+ *  above the mod's nine and above every other pass in the tree (none
+ *  goes past unit 3), and WebGL2 guarantees
+ *  MAX_TEXTURE_IMAGE_UNITS >= 16, so 15 always exists. The shaders
+ *  bind it by uniform name, so the number lives only here. */
+export const CLOUD_SHADOW_UNIT = 15;
+
 export function textureParams(gl, opts = {}) {
   return opts.smooth
     ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
@@ -1121,11 +1134,19 @@ export class Renderer {
 
   /** EV6: a pass outside this renderer (the skies, precipitation) has
    *  changed program/VAO state behind the shadows' back - forget them
-   *  and unbind the VAO for real, so the next entry point rebinds. */
+   *  and unbind the VAO for real, so the next entry point rebinds.
+   *  AUDIT 65 RS-3: the cloud-shadow upload stamps go with them. A
+   *  foreign pass may have moved any TEXTURE UNIT - the Dynamic Skies
+   *  pass binds nine of them - and `_csUploaded` is the same kind of
+   *  claim as `_lastProgram`: a binding this renderer can account for.
+   *  Across this seam it cannot, so it forgets and re-uploads. The
+   *  cost is one upload per program key per seam; no draw, program or
+   *  VAO count moves. */
   markForeignPass() {
     this.gl.bindVertexArray(null);
     this._lastProgram = null;
     this._lastVao = null;
+    this._csUploaded = {};
   }
 
   _buildProgram(vsSrc, fsSrc) {
@@ -1378,22 +1399,33 @@ export class Renderer {
     const sd = lensLocal ? this._cloudShadow : null;
     if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0;
+    // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
+    // GL state first and the JS caches after. drawCharacter dereferences
+    // the mesh (`mesh.vao`, `mesh.ranges`), so it can throw, and the
+    // icon path SWALLOWS the throw (fpArm.js's `catch { img = null; }`)
+    // - so a restore left below this block never runs and the session
+    // carries on over it: the 1024x1024 sprite FBO stays bound for the
+    // rest of the frame, the world rect stays at the sprite's corner,
+    // and the clear colour stays transparent black FOREVER, because
+    // setClearColor (:1941) is idempotent against the `_clearColor`
+    // shadow this path no longer matches - AUDIT 26 F034's bug back,
+    // permanently, off one caught exception.
     try { this.drawCharacter(mesh, modelMatrix); }
     finally {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
+      // the middle of the world pass (every voxel character composites
+      // through it), so returning a hardcoded full canvas would undo a
+      // docked large HUD's reduced rect for every draw after the first
+      // character - the same borrow-and-return the clear colour above
+      // has had since AUDIT 26 F034. With no world rect live it is the
+      // full drawing buffer, exactly as before.
+      this._restoreWorldViewport();
+      const cc = this._clearColor;
+      gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
       this._proj = sp; this._view = sv; this._fogMode = sf;
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    // ROAD-E E5: the viewport is BORROWED here too. This pass runs in
-    // the middle of the world pass (every voxel character composites
-    // through it), so returning a hardcoded full canvas would undo a
-    // docked large HUD's reduced rect for every draw after the first
-    // character - the same borrow-and-return the clear colour above
-    // has had since AUDIT 26 F034. With no world rect live it is the
-    // full drawing buffer, exactly as before.
-    this._restoreWorldViewport();
-    const cc = this._clearColor;
-    gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
     return cs.tex;
   }
 
@@ -1439,8 +1471,11 @@ export class Renderer {
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     const raw = new Uint8Array(pw * ph * 4);
-    gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, raw);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // AUDIT 65 RS-2: the read-back's own bind is returned in a finally
+    // for the same reason the sprite pass's is - this one runs under
+    // itemIcon's catch too.
+    try { gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, raw); }
+    finally { gl.bindFramebuffer(gl.FRAMEBUFFER, null); }
     const out = new Uint8ClampedArray(pw * ph * 4);
     for (let y = 0; y < ph; y++) out.set(raw.subarray(y * pw * 4, (y + 1) * pw * 4), (ph - 1 - y) * pw * 4);
     return { width: pw, height: ph, data: out };
@@ -2602,16 +2637,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  amount} - or null. Numbers only; it binds nothing. */
   setCloudShadow(d) { d = d ?? null; if (d !== this._cloudShadow) { this._cloudShadow = d; this._csStamp++; } }   // VC4: the stamp moves only when the deck does (the hosts hand the same object per pixel)
 
-  /** VC4: bind the deck's shadow map (or nothing) on unit 7 for one
-   *  program, once per setCloudShadow - a draw-path step. */
+  /** VC4: bind the deck's shadow map (or nothing) on the reserved unit
+   *  for one program, once per setCloudShadow - a draw-path step. */
   _uploadCloudShadow(key) {
     const loc = this._csLoc?.[key];   // a bare prototype (the crash-report tests) has no programs
     if (!loc || this._csUploaded[key] === this._csStamp) return;
     this._csUploaded[key] = this._csStamp;
     const gl = this.gl, cs = this._cloudShadow, [mapLoc, rectLoc] = loc;
-    gl.activeTexture(gl.TEXTURE7);
+    gl.activeTexture(gl.TEXTURE0 + CLOUD_SHADOW_UNIT);   // AUDIT 65 RS-3: reserved, above every foreign pass's slots
     gl.bindTexture(gl.TEXTURE_2D, cs?.map ?? this._blackTex);
-    gl.uniform1i(mapLoc, 7);
+    gl.uniform1i(mapLoc, CLOUD_SHADOW_UNIT);
     const r = cs?.map ? cs.rect : null;
     this._csRect[0] = r ? r[0] : 0; this._csRect[1] = r ? r[1] : 0; this._csRect[2] = r ? r[2] : 0; this._csRect[3] = r ? r[3] : 0;
     gl.uniform4fv(rectLoc, this._csRect);
