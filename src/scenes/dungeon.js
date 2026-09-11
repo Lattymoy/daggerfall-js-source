@@ -117,7 +117,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:4701), so each
+      // context owns none of its own (dungeonContext.js:4706), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:153-170).
       relock: () => requestLook(canvas) });
@@ -656,7 +656,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       hasReadySpell: ctx.spellArmed?.() ?? false,
       // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
       // spell leaves doors reachable. rangeType 1 is ByTouch
-      // (spellcast.js:197 ClassicTargetIndexToTargetType).
+      // (spellcast.js:198 ClassicTargetIndexToTargetType).
       touchSpell: (ctx.readiedSpell?.() ?? null)?.rangeType === 1,
       hudBlocked: activeMouseOverLargeHUD(),   // PlayerActivate.cs:230-236 - the bar's own click is not the world's
       paused: overlayHeld,                     // InputManager.cs:486-503 - a window holds the action itself

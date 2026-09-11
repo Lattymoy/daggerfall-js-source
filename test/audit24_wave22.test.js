@@ -58,7 +58,7 @@ test('audit24 wave22: the two hosts hand their HudText the notebook sink', () =>
   assert.match(rd('src/scenes/dungeonContext.js'), /hudText\.onMessage = \(t\) => opts\.hudMessageSink\?\.\(t\);/);
   // EVERY ALLOCATION HAS AN OWNER (AUDIT 65 MC-1): `hudText` is the
   // context's own, but `midScreenText` is a MODULE SINGLETON
-  // (ui/midScreenText.js:135) - the one label the outer host shares -
+  // (ui/midScreenText.js:152) - the one label the outer host shares -
   // so this seam is BORROWED and has to be handed back, or a torn-down
   // dungeon's opts closure stays installed on the live game's label.
   // Handed BACK, not nulled: the previous holder is the outer host's
