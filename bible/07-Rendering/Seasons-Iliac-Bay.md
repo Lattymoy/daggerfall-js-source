@@ -47,7 +47,7 @@ record 1's texture (the layout never places record 0, a block might);
 one missing record leaves the WHOLE archive vanilla for that season,
 with the mod's own warning; a failed build is retried on the next
 install and only a successful one is cached; mountains in snow (511)
-and the unwooded sets (500-503) never change; the size is 3.1x the
+and the unwooded sets (500-503) never change (AUDIT 65 XL-2, refuted as a defect and recorded here: MAC1's far-flat rule is a WORLD-UNIT size test, so a seasonal atlas - whose plants really are 3.1x taller - admits most of archives 504-510 at every ring in Fall, Spring and Winter; that is the mod's cost, not a hole in the rule, and the lever if it ever matters is a screen-size criterion applied uniformly, never a season-conditional height); the size is 3.1x the
 texture's pixels through the same `GetScaledBillboardSize` every
 classic flat takes, with `3.1f` rounded as a float32.
 

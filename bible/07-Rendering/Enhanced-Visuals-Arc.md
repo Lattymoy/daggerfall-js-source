@@ -349,7 +349,7 @@ already bound; drawMesh no longer unbinds its VAO, and both exterior
 hosts SORT their draw lists by mesh at build (exterior's drawList by
 modelIdNum, the streamed pixels' models likewise), so one archetype's
 placements draw back to back and the shadow makes the repeats free.
-The shadows reset at beginFrame and at markForeignPass - the R9 law's
+The shadows (and, since AUDIT 65 RS-3, the cloud-shadow upload stamps) reset at beginFrame and at markForeignPass - the R9 law's
 other half: an entry point may only trust a binding it can account
 for, and five passes change programs behind the renderer's back (GR1: the lab's grass is the fifth).
 Those four (both skies, precipitation, and - since F55 - the OVERWORLD

@@ -958,15 +958,15 @@ biography and reflex slices (PRs #61, #62), read against DFU source.
 Three confirmed, all shipped here - and the first is older and larger
 than the slices that exposed it.
 (F1) THE PORT HAS NEVER SAVED PLAYER REPUTATION. `sGroupReputations`
-and `reactionMods` are read by `getReactionToPlayer` on EVERY greeting
-and written by the T3f tone tallies, the G2 court sentences and now
-the biography - and NOTHING persisted them. A quicksave/load reset the
-player's standing with every social group to zero. The six
-`biography*Mod` fields went with them, and DFU writes all of it out
-field by field (SerializablePlayer.cs:136-141, :152-162, :305-310).
-This predates the biography by several slices; S3e made it
-load-bearing from the first minute of a new character, which is how it
-surfaced. Persisted now, with the queued faction deltas and the
+is read by `getReactionToPlayer` on EVERY greeting and written by the
+biography (the G2 court writes `legalRep` beside it) - and NOTHING
+persisted it. A quicksave/load reset the player's standing with every
+social group to zero. The six `biography*Mod` fields went with it, and
+DFU writes all of that out field by field (SerializablePlayer.cs:136-141,
+:152-162, :305-310). (`reactionMods` rode this fix too until AUDIT 65
+SL-4 struck it: PlayerEntity.cs:128-129 is "do not serialize, set by
+live effects", and :152-162 answers the reputations alone.) S3e made it
+load-bearing from the first minute; the reputations are persisted now, with the queued faction deltas and the
 composed backstory, and with the snapshot DETACHING from the live
 entity - the quicksave write happens after snapshotPlayer returns,
 the same law save.js already stated for the nested effect entries. A
