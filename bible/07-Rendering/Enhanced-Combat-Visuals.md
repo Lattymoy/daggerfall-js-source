@@ -58,6 +58,15 @@ person and neither does the port.
 
 ## Where it lives
 
+- **`systems/concealDraw.js`** - a LEAF holding the seven draw
+  constants (the chameleon's alpha, shimmer and rate; the shade's
+  alpha and its pull toward black; the reveal's seconds and alpha).
+  It imports nothing: `render/renderer.js` interpolates SHADE_DARK
+  into the billboard shader rather than restating 0.12, and reaching
+  it through `combatVisuals.js` would have taken the renderer's
+  static closure from 13 modules to 69 (AUDIT 65 PN-3).
+  `systems/combatVisuals.js` re-exports all seven and stays their one
+  public home - every other reader imports them from there.
 - **`systems/combatVisuals.js`** - pure. `concealVisual(flags, clock)`
   is the law above; `foeDraw(entity, on, clock)` is the host's one
   question per foe per frame (`plain`, `hidden`, or `conceal` with the

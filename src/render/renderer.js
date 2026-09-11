@@ -305,7 +305,7 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
-import { SHADE_DARK } from '../systems/combatVisuals.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal
+import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
 precision highp float;

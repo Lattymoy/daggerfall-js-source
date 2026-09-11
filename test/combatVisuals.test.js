@@ -58,6 +58,7 @@ test('ECV1: the law - plain, hidden, and the three concealed draws with invisibl
   assert.deepEqual(s, { mode: CONCEAL_MODE.shade, alpha: SHADE_ALPHA, t: 2, phase: 0.3 });
   assert.equal(SHADE_ALPHA, 0.55, 'a shade is a silhouette: half again as solid as the chameleon, and pulled to black');
   assert.equal(SHADE_DARK, 0.12);
+  assert.ok(String(SHADE_DARK).includes('.'), 'GLSL will not multiply a vec3 by an int literal');
   assert.equal(concealVisual({ invisible: true, blending: true, shade: true }, { t: 1 }), null, 'invisible wins');
   assert.equal(concealVisual({ blending: true, shade: true }, { t: 1 }).mode, CONCEAL_MODE.blend, 'blending beats shade');
 });
@@ -179,6 +180,7 @@ test('ECV1: the billboard shader declares uConceal and draws each mode - the rip
   assert.match(fs, /vec4 tex = texture\(uTex, uv\);/, 'the rippled UV is what samples');
   assert.match(fs, /texture\(uEmissionTex, uv\)/, 'the emission map too');
   assert.match(fs, /if \(tex\.a < \(\(uSpectral == 1 \|\| uConceal\.x > 0\.0\) \? 0\.1 : 0\.5\)\) discard;/, 'the concealed pass takes the blended threshold');
+  assert.match(r, /if \(uConceal\.x == 2\.0\) lit \*= \$\{SHADE_DARK\};/, 'the FS takes the export, not a restated literal');
   assert.match(fs, /if \(uConceal\.x == 2\.0\) lit \*= 0\.12;/, 'a shade is pulled to black by SHADE_DARK - the one number, not two that agree');
   assert.match(fs, /if \(uConceal\.x > 0\.0\) alpha = tex\.a \* uConceal\.y;/, 'the visual\'s opacity');
   assert.match(r, /this\.bbUConceal = gl\.getUniformLocation\(this\.bbProgram, 'uConceal'\);/);

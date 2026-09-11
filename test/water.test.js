@@ -74,7 +74,8 @@ test('WATER1: the pack, and the coverage - the JS twin held against the shader\'
   // is the JS twin of this module's own GLSL coverage(), so the six values
   // above certify nothing unless the two bodies are held against each
   // other. A swapped corner bit or a swapped f.x/f.y in EITHER half reddens
-  // one of these two lines.
+  // this block - the shader's through the two regexes, the JS twin's through
+  // the six values above.
   const cfs = waterSurfaceFs('');
   assert.match(cfs, /float coverage\(uint m, vec2 f\) \{[\s\S]*?return mix\(mix\(c00, c10, f\.x\), mix\(c01, c11, f\.x\), f\.y\);/, 'the shader blends the corners in the same order the JS twin does');
   assert.match(cfs, /float c00 = float\(m & 1u\), c10 = float\(\(m >> 1u\) & 1u\);\s*\n\s*float c01 = float\(\(m >> 2u\) & 1u\), c11 = float\(\(m >> 3u\) & 1u\);/, 'the corner-bit order: bit0 (0,0), bit1 (1,0), bit2 (0,1), bit3 (1,1)');
@@ -121,10 +122,11 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   for (const h of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     assert.match(rd(h), /^import \{ WATER_SCROLL_TILES_PER_SEC \} from '\.\.\/render\/waterSurface\.js';/m, `${h} imports the rate`);
   }
-  for (const f of readdirSync(join(ROOT, 'src/scenes')).filter((n) => n.endsWith('.js'))) {
-    const decls = (rd(`src/scenes/${f}`).match(/^\s*(?:export\s+)?(?:const|let|var)\s+\w*water\w*scroll\w*\s*=/gim) || []);
-    assert.deepEqual(decls, [], `src/scenes/${f} declares a second water-scroll rate`);
-  }
+  const jsUnder = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? jsUnder(`${dir}/${e.name}`) : (e.name.endsWith('.js') ? [`${dir}/${e.name}`] : [])));
+  const RATE_DECL = /^\s*(?:export\s+)?(?:const|let|var)\s+(\w*(?:water\w*scroll|scroll\w*tiles_per_sec)\w*)\s*=/im;
+  const homes = jsUnder('src').filter((f) => RATE_DECL.test(rd(f)));
+  assert.deepEqual(homes, ['src/render/waterSurface.js'], 'exactly one module in src/ declares the water scroll rate');
 });
 
 test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by compare, the discards, one light law with the ground', () => {
@@ -327,4 +329,9 @@ test('WATER-AUDIT (M4/L5): the water\'s own index set - the wet quads of the ter
   padded.fill(4, 0, 16); for (let y = 0; y < 16; y++) padded.fill(4, y * 32, y * 32 + 16);
   assert.equal(tilemapRectHasWater(padded, 32, 32, 32), true, 'the whole map says yes (the padding)');
   assert.equal(tilemapRectHasWater(padded, 32, 16, 16), false, 'the town says no');
+  // AUDIT 65 MC-6 fixup: the TABLE laws the retired whole-map twin used to
+  // carry (its :73-76). Without them the gate can stop reading the table and
+  // answer "zero is water" instead, and every shore tile stops counting.
+  assert.equal(tilemapRectHasWater(new Uint8Array([4, (6 << 2) | 3]), 2, 2, 1), true, 'one shore tile');
+  assert.equal(tilemapRectHasWater(new Uint8Array([4, 8, 12, 40]), 4, 4, 1), false, 'dirt, grass, stone, a dirt-grass edge');
 });
