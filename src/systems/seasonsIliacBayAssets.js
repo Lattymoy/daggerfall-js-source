@@ -157,7 +157,7 @@ async function seasonsBundle() {
 // COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
 // `BaseImageFile.getColor32` produces (baseImageFile.js:123,
 // BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
-// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1835).
+// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1837).
 // In DFU the mod's asset is a Unity Texture2D, whose pixels are
 // bottom-up like every Texture2D the classic reader builds, so its
 // flats and the classic ones agree; here the seasonal record entered

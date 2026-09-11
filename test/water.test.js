@@ -141,18 +141,18 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
 });
 
 test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by compare, the discards, one light law with the ground', () => {
-  assert.match(WATER_SURFACE_VS, /layout\(location=0\) in vec3 aPos;\s*\n\s*layout\(location=1\) in vec3 aNormal;/, 'TERRAIN_VS\'s attributes');
+  assert.match(WATER_SURFACE_VS, /layout\(location=0\) in vec3 aPos;\s*\n\s*layout\(location=1\) in float aDepth;/, 'the position and, WATER2, the bed\'s depth');
   assert.match(WATER_SURFACE_VS, /vec4 world = uModel \* vec4\(aPos\.x, aPos\.y \+ uLift, aPos\.z, 1\.0\);/, 'lifted in the model\'s frame');
   const fs = waterSurfaceFs('/*CS*/ float cloudShadowAt(vec3 wp) { return 1.0; }');
   assert.match(fs, /\/\*CS\*\//, 'the renderer\'s cloud-shadow block is interpolated');
   assert.match(fs, /uniform uvec4 uWaterMask\[8\];/);
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
-  assert.match(fs, /float edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, then nothing past it');
+  assert.match(fs, /float edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(\s*\/\/[^\n]*\n)*\s*edge \*= smoothstep\(0\.0, uShoreDepth, vDepth\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, the bed\'s rise (WATER2), then nothing past it');
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   assert.match(fs, /vec3 lit = tex \* \(uAmbient \+ uSunColor \* \(uSunScale \* diff\) \+ uMoonColor \* \(uMoonScale \* mdiff\)\);/, 'TERRAIN_FS\'s light law');
   assert.match(fs, /float F = uF0 \+ \(0\.72 - uF0\) \* pow\(1\.0 - NdV, 5\.0\);/, 'Schlick, capped');
-  assert.match(fs, /float alpha = \(uOpacity \+ \(1\.0 - uOpacity\) \* F\) \* edge;/);
+  assert.match(fs, /float body = mix\(uShallowOpacity, uOpacity, deep\);\s*\n\s*float alpha = \(max\(body, foam\) \+ \(1\.0 - max\(body, foam\)\) \* F\) \* edge;/, 'WATER2: the body\'s opacity by depth, Fresnel over it; WATER3: foam is not glass');
   assert.match(fs, /outColor = vec4\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), alpha\);/, 'the fog every world pass takes');
   assert.match(fs, /vec2 uv = fract\(f \+ vec2\(uScroll\)\);\s*\n\s*vec3 tex = texture\(uTileArr, vec3\(uv, 0\.0\)\)\.rgb \* uTint;/, 'the classic water texel, layer 0, scrolled');
   // the trains fade with distance on their own scale - the far sea keeps the swell
@@ -191,9 +191,9 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   // WATER-AUDIT (M2): the ground's point lights and indirect light reach the water
   assert.match(body, /gl\.uniform1i\(L\.pointCount, count\);[\s\S]*?gl\.uniform4fv\(L\.indirect, this\._indirect\);\s*\n\s*gl\.uniform3fv\(L\.indirectColor, this\._indirectColor\);/);
   assert.match(body, /gl\.uniform1i\(L\.tileDim, tileDim\);/, 'WATER-AUDIT (L2): the tilemap\'s own side, not a hardcoded 127');
-  // WATER-AUDIT (M4): the water's own surface over the terrain's buffers
-  assert.match(r, /createWaterSurface\(terrain, indices\) \{[\s\S]*?const \[positions, normals\] = terrain\.buffers;[\s\S]*?return \{ vao, ebo, indexCount: indices\.length \};/);
-  assert.match(r, /destroyWaterSurface\(water\) \{\s*\n\s*const gl = this\.gl;\s*\n\s*gl\.deleteBuffer\(water\.ebo\);\s*\n\s*gl\.deleteVertexArray\(water\.vao\);/);
+  // WATER-AUDIT (M4): the water's own surface; WATER2: on its own buffers
+  assert.match(r, /createWaterSurface\(positions, depths, indices\) \{[\s\S]*?return \{ vao, ebo, buffers: \[pos, dep\], indexCount: indices\.length \};/);
+  assert.match(r, /destroyWaterSurface\(water\) \{\s*\n\s*const gl = this\.gl;\s*\n\s*for \(const b of water\.buffers\) gl\.deleteBuffer\(b\);\s*\n\s*gl\.deleteBuffer\(water\.ebo\);\s*\n\s*gl\.deleteVertexArray\(water\.vao\);/);
   assert.match(body, /gl\.depthFunc\(gl\.LESS\);\s*\n\s*gl\.disable\(gl\.POLYGON_OFFSET_FILL\);\s*\n\s*gl\.depthMask\(true\);\s*\n\s*gl\.disable\(gl\.BLEND\);\s*\n\s*gl\.enable\(gl\.CULL_FACE\);/, 'and every bit of it put back');
   assert.match(body, /gl\.bindTexture\(gl\.TEXTURE_2D_ARRAY, arrayTex\);[\s\S]*?gl\.activeTexture\(gl\.TEXTURE2\);\s*\n\s*gl\.bindTexture\(gl\.TEXTURE_2D, tilemapTex\);/, 'the terrain\'s two textures on the terrain\'s two units');
 });
@@ -202,10 +202,10 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   const w = rd('src/scenes/world.js');
   assert.match(w, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off';/, 'world: enhanced skin, the switch, the kill door');
   // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
-  assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? renderer\.createWaterSurface\(terrain, waterIndices\) : null;/, 'decided at the build');
+  assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? buildWater\(positions, normals, tilemapBytes, stride, waterIndices\) : null;/, 'decided at the build');
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
   const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride) {'));
-  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? renderer\.createWaterSurface\(p\.terrain, waterIndices\) : null;/);
+  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? buildWater\(grid\.positions, grid\.normals, p\.tilemapBytes, stride, waterIndices\) : null;/);
   assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 2, 'the restride and the eviction');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');
   const slot = w.indexOf('    if (waterOn) {\n      const wu = waterUniforms(');
@@ -218,7 +218,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /const waterOn = isEnhanced\(\) && getPref\('enhancedWater'\) && new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('water'\) !== 'off'\s*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the same gate, and a town without water never enters - asked over the town\'s real extent (WATER-AUDIT L1: the padding is zero, and zero is water)');
-  const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(groundSurface, identityMatrix,');
+  const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(townWater, identityMatrix,');
   assert.ok(eslot > 0);
   assert.ok(eslot > e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,'), 'after the ground');
   assert.ok(eslot > e.indexOf('arrows.draw(renderer, texRemap);'), 'after the arrows');
