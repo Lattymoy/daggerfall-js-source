@@ -162,38 +162,6 @@ test('settings AUDIT: the tier map agrees BOTH ways - no unlisted consumer', () 
     `settings READ in src/ but not tiered live: ${mistiered.join(', ')}`);
 });
 
-test('settings AUDIT: the screen takes POINTER input and its controls are on-canvas', async () => {
-  // The audit's severe finding, carried onto the MENU rewrite: the
-  // first launcher shipped keyboard-only while ShowOptionsAtStart
-  // ships True, so a touch device booted into a screen it could never
-  // dismiss (proven on a Pixel 5). Its first fix then put PLAY at a
-  // fixed offset that fell off a narrow canvas. Both laws survive the
-  // rewrite and are pinned against the new window's ONE layout.
-  const { SettingsWindow } = await import('../src/ui/settingsWindow.js');
-  const scene = readFileSync(join(root, 'src/scenes/launcherScene.js'), 'utf8');
-  for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'wheel']) {
-    assert.ok(scene.includes(`addEventListener('${ev}'`), `the host must route ${ev} - keyboard-only TRAPS a phone`);
-    assert.ok(scene.includes(`removeEventListener('${ev}'`), `and release ${ev} on exit`);
-  }
-  const phone = { width: 390, height: 844 };
-  const w = new SettingsWindow({});
-  const L = w.layout(phone);
-  for (const h of L.hit) {
-    assert.ok(h.rect[0] >= 0 && h.rect[0] + h.rect[2] <= L.page[2],
-      `${h.id} must be reachable on a ${L.page[2]}-unit page (x ${h.rect[0]}..${h.rect[0] + h.rect[2]})`);
-    assert.ok(h.rect[1] >= 0 && h.rect[1] + h.rect[3] <= L.page[3], `${h.id} runs off the page vertically`);
-  }
-  assert.ok(L.hit.some((h) => h.id === 'btn:play'), 'PLAY exists on a phone page');
-  // a tap on PLAY launches, exactly once
-  let launched = 0;
-  const w2 = new SettingsWindow({ onLaunch: () => launched++ });
-  const L2 = w2.layout(phone);
-  const play = L2.hit.find((h) => h.id === 'btn:play').rect;
-  w2.click(play[0] + 2, play[1] + 2, phone);
-  assert.equal(w2.done, true, 'tapping PLAY launches');
-  assert.equal(launched, 1, 'and fires onLaunch exactly once');
-});
-
 test('settings AUDIT: the mouse-look settings reach ALL FOUR hosts', () => {
   // The FOUR HOSTS rule. The SETT slice wired world/exterior/dungeon
   // and missed scenes/interior.js, so sensitivity and invert were live
@@ -203,39 +171,6 @@ test('settings AUDIT: the mouse-look settings reach ALL FOUR hosts', () => {
     assert.ok(t.includes('lookScale()'), `${host} must read the shared look settings`);
     assert.ok(!/\* 0\.0025/.test(t), `${host} still carries a raw look constant`);
   }
-});
-
-test('settings AUDIT: turning ShowOptionsAtStart off asks first', async () => {
-  // The port has no in-game route to settings (a routed Ledger row),
-  // so switching this off hides the screen for good. The MENU rewrite
-  // promotes the old passive notice into a DECISION: a confirm that
-  // names the way back. Found unpinned by an earlier mutation run.
-  const { SettingsWindow } = await import('../src/ui/settingsWindow.js');
-  _resetForTests();
-  const canvas = { width: 1280, height: 800 };
-  const w = new SettingsWindow({});
-  w.category = 'interface';
-  const L = w.layout(canvas);
-  const idx = L.list.items.findIndex((i) => i.kind === 'row' && i.key === 'GUI/ShowOptionsAtStart');
-  assert.ok(idx >= 0, 'the setting is on the Interface page');
-  w.focus = idx;
-  w.input('ArrowLeft', {}, canvas);
-  assert.ok(w.dialog, 'a confirm opens rather than the value silently flipping');
-  assert.match(w.dialog.lines.join(' '), /\?launcher/, 'and it names the way back');
-  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true, 'nothing changed yet');
-  // AUDIT 26 F152: the confirm is resolved by CLICKING ITS BUTTON.
-  // This used to click (0,0) and pass, because any click ran the
-  // affirmative - which is what made the drawn "Keep It" turn the
-  // screen off anyway.
-  const keepIt = w.layout(canvas).dialog.buttons[1].rect;
-  w.click(keepIt[0] + 1, keepIt[1] + 1, canvas);
-  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true, 'Keep It declines');
-  w.focus = idx;
-  w.input('ArrowLeft', {}, canvas);
-  const turnOff = w.layout(canvas).dialog.buttons[0].rect;
-  w.click(turnOff[0] + 1, turnOff[1] + 1, canvas);
-  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), false, 'confirming turns it off');
-  _resetForTests();
 });
 
 test('settings MENU: Video/FieldOfView is DFU law, and reaches ALL FIVE projection hosts', async () => {

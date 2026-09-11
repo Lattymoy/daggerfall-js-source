@@ -242,7 +242,7 @@ GENERIC CAPABILITY
 9. Delivery - two new IndexedDB stores (models, worldData) on
    `src/scenes/dataSource.js`, one picker, registered in
    `src/scenes/shared.js`, a button on the AssetInjection row in
-   `src/ui/settingsWindow.js`. The model store must key on RELATIVE
+   `src/ui/settingsWindow.js`. The model store must key on RELATIVE *(DELETED at FD1: the packs attach from the Mods page of the enhanced menu now)*
    PATH, not basename. SMALL.
 
 WINDMILL-SPECIFIC GLUE

@@ -23,8 +23,6 @@ import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
-import { getBool } from './systems/settings.js';   // SETT: the launcher gate
-import { isEnhanced } from './systems/uiSkin.js';   // THE SKIN: which front door
 // The deployed site is redeployed several times a day and every deploy
 // renames chunks, so a page held open across one is holding a map of a
 // build that is gone. Recoverable, and the law of that is its own file.
@@ -87,31 +85,38 @@ async function boot() {
   if (params.has('shot') || params.has('nomenu')) { await ensureData(); return bootDungeon(canvas, renderer, params, status); }
 
   // ── THE FRONT DOOR ─────────────────────────────────────────────
-  // ENHANCED IS THE DEFAULT (systems/uiSkin.js; ?skin=classic or the
-  // toggle in either screen chooses otherwise). One screen carrying
-  // continue, new game, load, settings, mods and about - which is the
-  // classic path's title, launcher, splash and start window collapsed
-  // into a single place with a way back to it from inside the game.
+  // FD1 (2026-09-11, Mac: "Remove the classic Manager screen and instead
+  // use the enhanced menu for both enhanced and classic"): ONE door for
+  // BOTH skins. The enhanced screen carries continue, new game, load,
+  // settings, controls, mods and about, and it needs no game data, so
+  // a player who opens the page to change a setting is never asked for
+  // a folder. Under the CLASSIC skin the rail collapses its three game
+  // doors into BEGIN, which leads into the classic start sequence as
+  // Daggerfall has it - the title, the opening film, and its own start
+  // window (Load Game / Start New Game / Exit) - with the data gated in
+  // front of it as always.
   //
-  // The three the enhanced door deliberately does NOT run, each
-  // because the enhanced screen already answers what it was for:
-  //   - the LAUNCHER (ShowOptionsAtStart). DFU shows its wizard every
-  //     launch because settings are otherwise unreachable; here they
-  //     are one press away, so a screen in front of the menu would be
-  //     a screen in front of the menu.
-  //   - the TITLE and the SPLASH. Both read ARENA2, and the whole
-  //     point of this door is that it opens before the folder pick.
-  //     Recorded as a real loss rather than dropped quietly: ?skin=
-  //     classic still plays both, and giving the enhanced door its own
-  //     title moment is its own slice.
-  if (isEnhanced()) {
+  // The DFU setup wizard (the "launcher" that ShowOptionsAtStart used
+  // to raise, `scenes/launcherScene.js` + `ui/settingsWindow.js`) is
+  // GONE: its one job was reaching the settings before the game, and
+  // Settings is now one press away on this door under either skin.
+  // GUI/ShowOptionsAtStart is stored and written back, read by nothing.
+  //
+  // The TITLE and the SPLASH still do not run before this door: both
+  // read ARENA2, and the door's whole point is that it opens before the
+  // folder pick. Classic's Begin plays both.
+  //
+  // ?begin skips the door straight into the classic sequence - the
+  // old bare-URL behaviour under ?skin=classic, kept for the probes
+  // that pin classic geometry from the title on.
+  let choice;
+  if (params.has('begin')) choice = 'begin';
+  else {
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    // The enhanced door opens ON the menu. An intro cinematic lived
-    // here (U65-U65e) and was RIPPED OUT at Mac's direction on
-    // 2026-08-30 after five versions failed his eye; the history
-    // carries all of it if it is ever wanted back.
     status('main menu');
-    const choice = await runEnhancedMenu();
+    choice = await runEnhancedMenu();
+  }
+  if (choice !== 'begin') {
     await ensureData();
     // AUDIT 19 F12's law, and it matters more here: SET on load,
     // DELETE on anything else. A URL that already carries ?load would
@@ -139,25 +144,8 @@ async function boot() {
     else params.set('classic', '1');
     return bootWorld(canvas, renderer, params, status);
   }
+  // FD1: BEGIN - the classic start sequence, data first.
   await ensureData();
-  // SETT: THE LAUNCHER, before everything - DFU's setup wizard is the
-  // first screen of a DFU session, and its gate is verbatim here:
-  // SceneControl.cs:46 shows the wizard when the path is unvalidated
-  // OR ShowOptionsAtStart is set OR any key is held, and the wizard
-  // itself (:154) skips straight to the OPTIONS stage when the path is
-  // already good. Our GameFolder stage is the ARENA2 pick, which has
-  // already run by now (getBytes above), so a launch that gets here
-  // has a validated path - which leaves ShowOptionsAtStart (DFU ships
-  // it TRUE, which is why you see the wizard every launch until you
-  // turn it off) and ?launcher as the held-key analogue.
-  //
-  // ?shot/?nomenu return above, so no probe in tools/ reaches this.
-  if (params.has('launcher') || getBool('GUI', 'ShowOptionsAtStart')) {
-    const { runLauncher } = await import('./scenes/launcherScene.js');
-    status('settings');
-    await runLauncher(canvas, renderer, status);
-  }
-
   // U22: THE SPLASH. DaggerfallUI.InitGame pushes the Start window and
   // THEN pushes the VidPlayer on top of it, so ANIM0001.VID (splashVideo,
   // DaggerfallUI.cs:49) plays first and reveals the menu when it ends -

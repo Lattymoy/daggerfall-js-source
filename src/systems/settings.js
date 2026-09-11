@@ -178,7 +178,6 @@ export const LIVE = Object.freeze({
   // the launcher gate - the launcher misreported the single
   // setting that controls the launcher. The reverse-direction
   // pin below now makes that shape a test failure.
-  'GUI/ShowOptionsAtStart': 'src/main.js',
   // U31: THE START CELL. These three were `stored` while the classic
   // start ignored them entirely and booted a fixed dev scene, which is
   // why Privateer's Hold had no way out. The world host now reads all

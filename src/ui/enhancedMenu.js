@@ -31,22 +31,25 @@
 //
 // ── WHAT IT REPLACES ─────────────────────────────────────────────
 //
-// The port's front door is currently FOUR screens in a row, and the
-// player meets all four before touching the game (main.js:31-123):
+// The port's front door WAS four screens in a row, and the player met
+// all four before touching the game:
 //
 //     ui/titleScreen.js      the logo, dismissed by any key
 //     scenes/launcherScene.js + ui/settingsWindow.js   settings, 584 lines
 //     ANIM0001.VID           the splash
 //     ui/startWindow.js      PICK03I0 - Load / New Game / Exit
 //
-// Three of those are separate hosts with their own event wiring, and
-// the settings screen is only reachable at boot: once the game is
-// running there is no door back to it that does not go through a
+// Three of those were separate hosts with their own event wiring, and
+// the settings screen was only reachable at boot: once the game was
+// running there was no door back to it that did not go through a
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen. Every destination is a press away from every
-// other, settings included, mods included.
+// This is ONE screen, under BOTH skins (main.js:87-146, FD1: the
+// launcher and its settings window are deleted; the classic rail is
+// Begin, which leads into the splash and PICK03I0 exactly as before).
+// Every destination is a press away from every other, settings
+// included, mods included.
 //
 // ── WHY THE LABELS ARE TYPE ──────────────────────────────────────
 //
@@ -100,8 +103,10 @@ import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
-import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
-import { getPref, setPref } from '../systems/uiPrefs.js';   // R7: the Enhanced pane's own switches
+import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
+import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';   // R7: the port's own switches; SO1: the folded tiers' memory
+import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
+import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
 import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
 // PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
@@ -137,8 +142,8 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 // the thing behind them is not built, so a section that has no engine
 // yet still has a home and says what it is waiting on. A rail with a
 // hole in it teaches the player the hole is permanent.
-// R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
-// only. The port's own switches were scattered - the skin under the
+// R7 (Mac): ENHANCED was a section of its own on the BOOT rail; SO1
+// (2026-09-11) made it a category of Settings - same rows, one screen. The port's own switches were scattered - the skin under the
 // brand, and the port's own additions in no interface at all - and a
 // switch a player cannot find is not shipped. It is absent from SECTIONS_PAUSE deliberately: these
 // answer "what kind of game am I about to play", which is settled by
@@ -148,7 +153,14 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 // packed armory, for trying gear on the rigs without playing there.
 // Boot-only for the same reason Continue and New Game are: it answers
 // "which game", which is settled once one is running.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Enhanced', 'Settings', 'Controls', 'Mods', 'About'];
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'];
+// FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
+// three game doors collapse into BEGIN, which leads into the classic
+// start sequence - the title, the film, Daggerfall's own start window -
+// so the classic player keeps every screen Daggerfall had and gains
+// the one it never did: settings before the game, without a wizard.
+// SO1: ENHANCED left the rail for a category of Settings (settingsMap).
+const SECTIONS_CLASSIC = ['Begin', 'Settings', 'Controls', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -357,6 +369,20 @@ function paneNew(body) {
   body.append(opts);
 }
 
+// ── BEGIN (classic skin) ─────────────────────────────────────────
+// FD1: the one game door the classic rail has. It resolves 'begin' and
+// main.js runs the classic start sequence behind it - the data gate,
+// the splash, the title, Daggerfall's start window with its own Load
+// Game / Start New Game / Exit - so nothing classic is lost and no
+// enhanced screen stands between the player and it.
+function paneBegin(body) {
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Daggerfall'));
+  c.append(el('p', 'meta', 'The classic start, as it always was: the title, the opening, and the menu Daggerfall shipped with \u2013 Load Game, Start New Game, Exit.'));
+  c.append(acts([{ label: 'Begin', primary: true, onClick: () => onAction('begin') }]));
+  body.append(c);
+}
+
 // ── TEST ROOM ────────────────────────────────────────────────────
 // TR3: pick a prebuilt character, walk into the ordinary world with
 // the whole armory in your pack. The presets live in systems/
@@ -514,7 +540,7 @@ function paneSettings(pane) {
   for (const cat of CATEGORIES) {
     const on = cat.id === category;
     const b = el('button', `subbtn${on ? ' on' : ''}`, cat.title);
-    b.append(el('span', 'count', String(keysOf(cat.id).length)));
+    b.append(el('span', 'count', String(liveCount(cat.id))));   // SO1: what works here, not the file's row count
     // AUDIT F8, found by the live check rather than by reading: on a
     // PHONE the detail pane is a sheet that only rises when a ROW is
     // tapped, so the category card - and the Reset button living in it
@@ -540,22 +566,12 @@ function paneSettings(pane) {
   }
 
   const list = el('div', 'list');
-  const keys = keysOf(category);
-  // The dot legend, once at the top, instead of a word on every row.
-  const legend = el('div', 'legend');
-  for (const [cls, word] of [['live', 'works now'], ['stored', 'saved, unread'], ['unavailable', 'fixed here']]) {
-    const s2 = el('span');
-    s2.append(el('i', cls), document.createTextNode(word));
-    legend.append(s2);
-  }
-  list.append(legend);
-  // THE SKIN LIVES UNDER INTERFACE, which is what it is: a choice
-  // about what the game's screens look like. It is not a DFU key and
-  // never will be (DFU has no enhanced screens), so it is drawn as a
-  // row rather than fetched from keysOf - see systems/uiSkin.js.
-  if (category === 'interface') list.append(skinRow());
-  if (!keys.length) list.append(empty('Nothing here yet', 'This category has no keys.'));
-  for (const key of keys) list.append(settingRow(key));
+  // SO1: the port's own rows first (the skin under INTERFACE, which is
+  // what it is - see systems/uiSkin.js), the live store keys flat, and
+  // the two folded tiers with their counts (categoryRows).
+  const rows = categoryRows(category);
+  if (!rows.length) list.append(empty('Nothing here yet', 'This category has no keys.'));
+  for (const r of rows) list.append(r);
 
   const detail = el('div', 'detail');
   const close = el('button', 'sheet-close', 'Close');
@@ -590,6 +606,15 @@ function paneQuickSettings(pane) {
     any = true;
     list.append(pxDivider(cat.title));
     for (const key of liveKeys) list.append(settingRow(key));
+  }
+  // SO1: and the port's own rows that take effect without a reload,
+  // under the categories they live in on the main menu
+  for (const cat of CATEGORIES) {
+    const port = portRows(cat.id, { pause: true });
+    if (!port.length) continue;
+    any = true;
+    list.append(pxDivider(cat.title));
+    for (const r of port) list.append(r);
   }
   if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
   list.append(el('p', 'px-note', 'Every setting lives on the main menu\u2019s Settings.'));
@@ -837,122 +862,97 @@ function prefRow(key, name, note, { onChange = null } = {}) {
   return row;
 }
 
-/** An enhancement that is not switchable HERE, and why. Never a
- *  control that looks live and does nothing - the dead affordance this
- *  project keeps finding. */
-function inertRow(name, note, state) {
+
+// ── SO1: THE PORT'S OWN ROWS, IN THE CATEGORIES A PLAYER LOOKS IN ──
+// (2026-09-11, Mac: "a comprehensive organization of all the settings
+// options, and settings audit ensuring proper organization and bloat
+// reduction"). The Enhanced PANE - a rail entry of its own holding
+// every switch the port invented, in five cards - is gone. Its rows
+// live where a player would look for them: the port's departures from
+// Daggerfall (the AI, the outdoors, the water, the combat draw) under
+// the ENHANCED category of Settings; the touch knobs under CONTROLS
+// beside the mouse and the pad; the interface style, the HUD size and
+// the FPS counter under INTERFACE; the Morrowind assets and the
+// replacement packs on the MODS page, which is what they are. Every
+// row is the same row it was (prefRow, choiceRow, stepRow over the
+// uiPrefs shelf), so every law those rows carried is untouched. The
+// "Not switchable here" card - a row about a feature that was REMOVED -
+// went with the pane: a list of things that do not exist is bloat, not
+// honesty, once the thing has a record elsewhere (About, the Ledger).
+
+/** A choice row: the button names the CURRENT tier and a click steps
+ *  to the next, wrapping (PERF1). */
+function choiceRow(key, name, note, tiers) {
+  const cur = String(getPref(key));
+  const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
   const row = el('div', 'row');
-  const main = el('div', 'row-main');
+  const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
   main.append(el('div', 'row-note', note));
+  const step = () => { setPref(key, tiers[(at + 1) % tiers.length][0]); render(); };
+  main.onclick = step;
   row.append(main);
   const ctl = el('div', 'ctl');
-  const tag = el('span', 'tier', state);
-  // The column is narrow and .tier wraps: the first render broke
-  // "opt-in" across the hyphen and "not built" across the space.
-  tag.style.whiteSpace = 'nowrap';
-  ctl.append(tag);
+  const b = el('button', 'act rowact', tiers[at][1]);
+  b.onclick = step;
+  ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
   return row;
 }
 
-function paneEnhanced(body) {
-  const live = el('div', 'card');
-  live.append(el('h3', null, 'Switches'));
-  live.append(skinRow());
-  // R3W/R4W (Mac, 2026-08-28): this row promised THREE things and
-  // shipped one - the map layer and the travel slice were both written
-  // and never called. R3W wired the map and the claim came OUT rather
-  // than being left standing as the sky row's was; R4W wired travel
-  // and it goes back in. Every clause here is now reachable.
-  // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
-  // been the enhanced skin's default sky for a day - a shipped
-  // enhancement wearing a hole's label. It is a SWITCH now, over the
-  // same uiPrefs shelf as roads.
-  // EE1: the sky row becomes ENHANCED ENVIRONMENTS, which contains it.
-  // The prose names what the switch covers TODAY and grows as slices
-  // land - a row that claims more than the tree has is the fault RA1
-  // fixed here in the other direction.
-  // ENHANCED AI 1: the switch is here from the first slice so the arc's
-  // door exists; the motor only reads it once the bake is proven on a
-  // real dungeon (ENHANCED AI 3). Until then it says so.
-  // AUDIT 59 F3: the row said "not yet driving the motor" two slices
-  // after ENHANCED AI 4 made it drive, and promised towns and
-  // interiors the arc has not reached. It says what ships: dungeons,
-  // the motor live, and that a foe keeps the motor it was born with.
-  live.append(prefRow('enhancedAI', 'Enhanced AI',
-    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
-    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
-    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
-    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
-    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
-  live.append(prefRow('enhancedEnvironments', 'Enhanced environments',
-    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
-    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
-    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
-    + 'driven by the wind, rather than across the screen, arriving and clearing with the front - and the sky '
-    + 'turns through the day rather than only at midnight, a clear morning clouding over by noon and raining by dusk - '
-    + 'instead of switching on and off; and the prototype\u2019s grass, a million '
-    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
-    + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
-    + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
-    + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
-  // PERF1 (RookieG via Mac, 2026-09-11: "its like 45fps on the outside"):
-  // THE TWO HEAVIEST LAYERS GET A DIAL. The grass is 1.2 million
-  // instanced blades over a 420 m window and the clouds a per-texel
-  // march; a machine that cannot hold the full field keeps the lane at
-  // a fraction rather than switching the whole outdoors off. A choice
-  // row, not a switch: the button names the CURRENT tier and a click
-  // steps to the next, wrapping.
-  const choiceRow = (key, name, note, tiers) => {
-    const cur = String(getPref(key));
-    const at = Math.max(0, tiers.findIndex(([v]) => String(v) === cur));
-    const row = el('div', 'row');
-    const main = el('button', 'row-main');
-    main.append(el('div', 'row-name', name));
-    main.append(el('div', 'row-note', note));
-    const step = () => { setPref(key, tiers[(at + 1) % tiers.length][0]); render(); };
-    main.onclick = step;
-    row.append(main);
-    const ctl = el('div', 'ctl');
-    const b = el('button', 'act rowact', tiers[at][1]);
-    b.onclick = step;
-    ctl.append(b, el('span', 'tier live'));
-    row.append(ctl);
-    return row;
+/** A stepped number row over a uiPrefs key (TI2's shape). */
+function stepRow(key, name, note, { min, max, step: inc, fmt }) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', name));
+  if (note) main.append(el('div', 'row-note', note));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const cur = () => Number(getPref(key)) || 1;
+  const val = el('span', 'val', fmt(cur()));
+  const step = (delta, label) => {
+    const b = el('button', 'step', label);
+    b.onclick = () => {
+      const next = Math.round(Math.max(min, Math.min(max, cur() + delta)) * 100) / 100;
+      setPref(key, next);
+      val.textContent = fmt(next);
+    };
+    return b;
   };
-  live.append(choiceRow('grassDensity', 'Grass density',
-    'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
-    + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
-    [[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]));
-  live.append(choiceRow('cloudQuality', 'Cloud quality',
-    'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
-    + 'Takes effect when the world next loads.',
-    [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
-  // WATER1: the water's own switch, beside the environments it stands in.
-  live.append(prefRow('enhancedWater', 'Enhanced water',
-    'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
-    + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
-    + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
-    + 'flat water tile. Takes effect when the world next loads.'));
+  ctl.append(step(-inc, '\u2039'), val, step(inc, '\u203a'));
+  row.append(ctl);
+  return row;
+}
 
-  // EE13 (Mac: a season test option that spawns you somewhere random, so
-  // the outdoors can be checked without a walk to a season). A season, a
-  // weather, and a town chosen at random by the world's ?spawn=random
-  // door. This is a TEST door, not a setting: it navigates, it stores
-  // nothing, and it names the town in the console so a good one can be
-  // found again.
+/** PX30c: the enhanced HUD's scale, on the prefs shelf (see the note
+ *  at uiPrefs.hudScale). Takes effect at once. */
+function hudScaleRow() {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', 'Gameplay HUD scale'), el('div', 'row-note', 'The compass, the bars and the effect chips together. Takes effect at once; half size still reads and double fills a phone.'));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const val = el('span', 'val', `${hudScaleNow().toFixed(2)}\u00d7`);
+  const step = (delta, label) => {
+    const b = el('button', 'step', label);
+    b.onclick = () => {
+      const next = Math.round(Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, hudScaleNow() + delta)) * 20) / 20;
+      setPref('hudScale', next);
+      val.textContent = `${next.toFixed(2)}\u00d7`;
+    };
+    return b;
+  };
+  ctl.append(step(-0.05, '\u2039'), val, step(0.05, '\u203a'));
+  row.append(ctl);
+  return row;
+}
+
+/** EE13: the outdoors test door - a season, a weather, a random town.
+ *  A TEST door, not a setting: it navigates and stores nothing. */
+function outdoorsTestRow() {
   const test = el('div', 'row');
   const testMain = el('div', 'row-main');
   testMain.append(el('div', 'row-name', 'Test the outdoors'));
-  // ECV1: what the enhanced skin DRAWS for a concealed enemy. The rules
-  // (the cast, the senses, the hits) are classic either way.
-  live.append(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
-    'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
-    + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
-    + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
-    + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. Otherwise invisibility still hides it. Nothing about '
-    + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
   testMain.append(el('div', 'row-note', 'Pick a season and a weather, and drop into a random town. A test door: it stores nothing, and it names the town in the console.'));
   const testCtl = el('div', 'ctl');
   const seasonSel = el('select', 'act');
@@ -976,132 +976,172 @@ function paneEnhanced(body) {
   });
   testCtl.append(seasonSel, weatherSel, go);
   test.append(testMain, testCtl);
-  live.append(test);
-  body.append(live);
+  return test;
+}
 
-  // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
-  // SCALE LIVES HERE, not in the settings catalog. `EnhancedHUDScale`
-  // is OURS - DFU has no HUD of this shape to scale - and the catalog
-  // is generated from DFU's own vendored ini by scripts/bakeSettings,
-  // which nothing hand-edits (AUDIT 17e F9's lesson, and the bake pin
-  // caught me adding it there on the first full run). The Enhanced
-  // pane is where this port's own switches already live, and the value
-  // itself is in uiPrefs rather than DFU's settings (see enhancedHud).
-  const sizing = el('div', 'card');
-  sizing.append(el('h3', null, 'HUD size'));
-  const row = el('div', 'row');
-  row.append(el('span', 'row-name', 'Gameplay HUD scale'));
-  const ctl = el('div', 'ctl');
-  const val = el('span', 'val', `${hudScaleNow().toFixed(2)}\u00d7`);
-  const step = (delta, label) => {
-    const b = el('button', 'step', label);
-    b.onclick = () => {
-      const next = Math.round(Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, hudScaleNow() + delta)) * 20) / 20;
-      setPref('hudScale', next);
-      val.textContent = `${next.toFixed(2)}\u00d7`;
-    };
-    return b;
-  };
-  ctl.append(step(-0.05, '\u2039'), val, step(0.05, '\u203a'));
-  row.append(ctl);
-  sizing.append(row);
-  sizing.append(el('p', 'note', 'The compass, the bars and the effect chips together. '
-    + 'Takes effect at once; half size still reads and double fills a phone.'));
-  body.append(sizing);
+/** The ENHANCED category: the port's departures from Daggerfall, each
+ *  with a classic side. `pause` keeps only the rows that take effect
+ *  without a reload. */
+function portRowsEnhanced({ pause = false } = {}) {
+  const out = [];
+  if (!pause) {
+  out.push(prefRow('enhancedAI', 'Enhanced AI',
+    'Enemies find their way: a navmesh baked from each dungeon, so they path around pillars and down '
+    + 'corridors instead of walking into walls the way classic Daggerfall\'s do. Senses, decisions and '
+    + 'attacks stay classic; only the way an enemy moves changes. Dungeons for now - towns, interiors and '
+    + 'doors are still to come, and enemies bunch up until the crowd slice lands. Takes effect on the '
+    + 'next dungeon you enter. Off keeps the 1:1 classic motor.'));
+  out.push(prefRow('enhancedEnvironments', 'Enhanced environments',
+    'The enhanced outdoors: a procedural sky with the sun, both moons on their real phases, a star '
+    + 'field, a finely stepped sunrise and sunset, volumetric clouds that build with the weather and drift on the wind, '
+    + 'cast their shadows on the land; and rain and snow that fall through the world around you, '
+    + 'driven by the wind, rather than across the screen, arriving and clearing with the front - and the sky '
+    + 'turns through the day rather than only at midnight, a clear morning clouding over by noon and raining by dusk - '
+    + 'instead of switching on and off; and the prototype\u2019s grass, a million '
+    + 'blades in the meadows, bending in the same wind. Off returns Daggerfall\u2019s SKY*.DAT '
+    + 'panorama and its own weather. Takes effect when the world next loads. The sky is the port\u2019s own dome; '
+    + 'Dynamic Skies\u2019 skybox (BadLuckBurt and carademono, carried with permission - see the Mods pane and About) '
+    + 'replaces it while its own switch there is on.'));   // DS1; VC1: the dome is the default
+  out.push(choiceRow('grassDensity', 'Grass density',
+    'How much of the meadow grows: the full field, half, a quarter, or none. The single heaviest thing outdoors - '
+    + 'try half first if the FPS counter says the frame is the GPU\u2019s. Takes effect when the world next loads.',
+    [[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]));
+  out.push(choiceRow('cloudQuality', 'Cloud quality',
+    'How finely the volumetric clouds are marched. Low is a coarser sky map with fewer steps; High is for a machine with room to spare. '
+    + 'Takes effect when the world next loads.',
+    [['default', 'Default'], ['lo', 'Low'], ['hi', 'High']]));
+  out.push(prefRow('enhancedWater', 'Enhanced water',
+    'The oceans, rivers and ponds drawn as water: waves that rise with the wind, the sky and the '
+    + 'sun reflected off the surface, the moon\u2019s glint at night, rain pocking it, the clouds\u2019 '
+    + 'shadows crossing it, and the shore feathered along its own edge. Off returns Daggerfall\u2019s '
+    + 'flat water tile. Takes effect when the world next loads.'));
+  }
+  out.push(prefRow('enhancedCombatVisuals', 'Enhanced combat visuals',
+    'How a magically concealed enemy is drawn. Classic Daggerfall and Daggerfall Unity hide it '
+    + 'completely - an imp that casts Chameleon on itself vanishes, and still takes your hits. On, a '
+    + 'chameleoned enemy shimmers at low opacity, a shadow-spell enemy is a dark silhouette, and a hit '
+    + 'on an unseen enemy flashes it for a moment - an invisible one included, the one thing this shows that the classic draw never does. Otherwise invisibility still hides it. Nothing about '
+    + 'the rules changes: what the enemy can do, and what can hit it, are classic. Off keeps the 1:1 draw.'));
+  if (!pause) out.push(outdoorsTestRow());
+  return out;
+}
 
-  // FPS1 (RookieG via Mac, 2026-09-11: "we need an ingame fps counter").
-  // A diagnostic, so its own card: the overlay ui/fpsCounter.js mounts
-  // from main.js and reads this switch every second - no reload.
-  const diag = el('div', 'card');
-  diag.append(el('h3', null, 'Diagnostics'));
-  diag.append(prefRow('showFps', 'FPS counter',
+/** The CONTROLS category's port rows: the touch layer's knobs, only
+ *  where the device reports touch (TI2). */
+function portRowsControls() {
+  const out = [];
+  if (!isTouchDevice()) return out;
+  const times = (v) => `${v.toFixed(2)}\u00d7`;
+  out.push(stepRow('touchLookSensitivity', 'Look sensitivity',
+    'How far a thumb\u2019s drag turns the camera, on top of the mouse sensitivity in Controls. '
+    + 'A drag is measured against the screen\u2019s height, so the same sweep turns the same on any phone.',
+    { min: 0.25, max: 4, step: 0.25, fmt: times }));
+  out.push(prefRow('touchAnalogStick', 'Analog stick',
+    'The stick\u2019s throw is your speed: a little is a walk, most of the way is a run. '
+    + 'Off is the eight-way stick - any push is a full step.'));
+  // the anchor is a two-way choice, not a switch: a row whose button names the OTHER option
+  {
+    const fixed = getPref('touchStickAnchor') === 'fixed';
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', 'Stick position'));
+    main.append(el('div', 'row-note', fixed
+      ? 'Fixed: the stick sits bottom-left and waits for your thumb.'
+      : 'Floating: the stick appears wherever your thumb lands on the left half.'));
+    const flip = () => { setPref('touchStickAnchor', fixed ? 'float' : 'fixed'); render(); };
+    main.onclick = flip;
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    const b = el('button', 'act rowact', fixed ? 'Fixed' : 'Floating');
+    b.onclick = flip;
+    ctl.append(b, el('span', 'tier live'));
+    row.append(ctl);
+    out.push(row);
+  }
+  out.push(prefRow('touchGyroLook', 'Gyro aim',
+    'Turn the phone to turn the camera, a degree for a degree, on top of the drag - fine aim without lifting a thumb. '
+    + 'iPhones ask permission for motion the first time.', {
+    // iOS grants motion only from a user gesture - this click is one.
+    onChange: (on) => { if (on) { try { globalThis.DeviceMotionEvent?.requestPermission?.()?.catch?.(() => {}); } catch { /* not iOS */ } } },
+  }));
+  out.push(stepRow('touchGyroSensitivity', 'Gyro sensitivity',
+    'Degrees of camera per degree of phone.',
+    { min: 0.25, max: 4, step: 0.25, fmt: times }));
+  out.push(prefRow('touchHaptics', 'Haptics',
+    'A short pulse on a button, when a held finger arms a swing, and when a lock lands. Phones that can.'));
+  out.push(prefRow('touchFullscreen', 'Fullscreen on touch',
+    'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
+    + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
+  return out;
+}
+
+/** The INTERFACE category's port rows: the interface style, the HUD's
+ *  size, the FPS counter. */
+function portRowsInterface({ pause = false } = {}) {
+  const out = [];
+  if (!pause) out.push(skinRow());
+  out.push(hudScaleRow());
+  out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
-  body.append(diag);
+  return out;
+}
 
-  // TI2 (Mac, 2026-09-11: "enhance the mobile element... camera
-  // movement, character movement and a more phone built feel"): THE
-  // TOUCH CARD. Every knob the touch layer reads (ui/touch.js), on the
-  // same prefs shelf as the HUD scale and for the same reason - DFU has
-  // no touch input, so none of these is a setting of its. Mounted only
-  // where the device reports touch: a card of controls for a finger the
-  // machine does not have would be the dead affordance this pane
-  // refuses (inertRow's law).
-  if (isTouchDevice()) {
-    const touch = el('div', 'card');
-    touch.append(el('h3', null, 'Touch'));
-    const stepRow = (key, name, note, { min, max, step: inc, fmt }) => {
-      const row = el('div', 'row');
-      const main = el('div', 'row-main');
-      main.append(el('div', 'row-name', name));
-      if (note) main.append(el('div', 'row-note', note));
-      row.append(main);
-      const ctl = el('div', 'ctl');
-      const cur = () => Number(getPref(key)) || 1;
-      const val = el('span', 'val', fmt(cur()));
-      const step = (delta, label) => {
-        const b = el('button', 'step', label);
-        b.onclick = () => {
-          const next = Math.round(Math.max(min, Math.min(max, cur() + delta)) * 100) / 100;
-          setPref(key, next);
-          val.textContent = fmt(next);
-        };
-        return b;
-      };
-      ctl.append(step(-inc, '\u2039'), val, step(inc, '\u203a'));
-      row.append(ctl);
-      return row;
-    };
-    const times = (v) => `${v.toFixed(2)}\u00d7`;
-    touch.append(stepRow('touchLookSensitivity', 'Look sensitivity',
-      'How far a thumb\u2019s drag turns the camera, on top of the mouse sensitivity in Controls. '
-      + 'A drag is measured against the screen\u2019s height, so the same sweep turns the same on any phone.',
-      { min: 0.25, max: 4, step: 0.25, fmt: times }));
-    touch.append(prefRow('touchAnalogStick', 'Analog stick',
-      'The stick\u2019s throw is your speed: a little is a walk, most of the way is a run. '
-      + 'Off is the eight-way stick - any push is a full step.'));
-    // the anchor is a two-way choice, not a switch: a row whose button names the OTHER option
-    {
-      const fixed = getPref('touchStickAnchor') === 'fixed';
-      const row = el('div', 'row');
-      const main = el('button', 'row-main');
-      main.append(el('div', 'row-name', 'Stick position'));
-      main.append(el('div', 'row-note', fixed
-        ? 'Fixed: the stick sits bottom-left and waits for your thumb.'
-        : 'Floating: the stick appears wherever your thumb lands on the left half.'));
-      const flip = () => { setPref('touchStickAnchor', fixed ? 'float' : 'fixed'); render(); };
-      main.onclick = flip;
-      row.append(main);
-      const ctl = el('div', 'ctl');
-      const b = el('button', 'act rowact', fixed ? 'Fixed' : 'Floating');
-      b.onclick = flip;
-      ctl.append(b, el('span', 'tier live'));
-      row.append(ctl);
-      touch.append(row);
-    }
-    touch.append(prefRow('touchGyroLook', 'Gyro aim',
-      'Turn the phone to turn the camera, a degree for a degree, on top of the drag - fine aim without lifting a thumb. '
-      + 'iPhones ask permission for motion the first time.', {
-      // iOS grants motion only from a user gesture - this click is one.
-      onChange: (on) => { if (on) { try { globalThis.DeviceMotionEvent?.requestPermission?.()?.catch?.(() => {}); } catch { /* not iOS */ } } },
-    }));
-    touch.append(stepRow('touchGyroSensitivity', 'Gyro sensitivity',
-      'Degrees of camera per degree of phone.',
-      { min: 0.25, max: 4, step: 0.25, fmt: times }));
-    touch.append(prefRow('touchHaptics', 'Haptics',
-      'A short pulse on a button, when a held finger arms a swing, and when a lock lands. Phones that can.'));
-    touch.append(prefRow('touchFullscreen', 'Fullscreen on touch',
-      'The first touch asks the browser for fullscreen and a landscape lock. Where the browser will not '
-      + '(Safari on iPhone), add the game to the home screen instead - it opens fullscreen from there.'));
-    body.append(touch);
+/** Every port-own row of a category, or none. */
+function portRows(catId, opts = {}) {
+  if (catId === 'enhanced') return portRowsEnhanced(opts);
+  if (catId === 'controls') return portRowsControls(opts);
+  if (catId === 'interface') return portRowsInterface(opts);
+  return [];
+}
+
+/** The tiers a category folds: SAVED FOR LATER (stored, unread) and
+ *  NOT AVAILABLE HERE (fixed by the browser or a port choice). Each is
+ *  a collapsible group with a live count in its heading - nothing is
+ *  ever hidden, the beginner sees a short list, the veteran opens the
+ *  rest with one press. The fold is remembered per category on the
+ *  prefs shelf (uiPrefs isOpen/setOpen), which is what the shelf's
+ *  `open` map was made for. */
+const TIER_GROUPS = Object.freeze([
+  ['stored', 'Saved for later', 'Kept in the file and written back exactly as DFU would; nothing in this build reads it yet.'],
+  ['unavailable', 'Not available here', 'Fixed by the browser or by a choice the port made. Each row says what you get instead.'],
+]);
+
+function tierGroup(catId, tier, title, blurb, keys) {
+  const open = isOpen(catId, tier);
+  const g = el('section', `group${open ? ' open' : ''}`);
+  const headBtn = el('button', 'group-head');
+  headBtn.setAttribute('aria-expanded', String(open));
+  headBtn.append(el('span', 'group-title', title), el('span', 'count', String(keys.length)), el('span', 'group-chev', open ? '\u2212' : '+'));
+  headBtn.onclick = () => { setOpen(catId, tier, !open); render(); };
+  g.append(headBtn);
+  if (open) {
+    const body = el('div', 'group-body');
+    body.append(el('p', 'note', blurb));
+    for (const key of keys) body.append(settingRow(key));
+    g.append(body);
   }
+  return g;
+}
 
-  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
-  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
-  // the game itself one directory down at /play/, so a bare relative
-  // 'mw-viewer.html' resolves against the running document: from
-  // menu.html at the root it works, and from the game it asks for
-  // /play/mw-viewer.html and 404s.
+/** A category's rows, in order: the port's own, the live store keys
+ *  flat, then the two folded tiers. */
+function categoryRows(catId) {
+  const keys = keysOf(catId);
+  const out = [...portRows(catId)];
+  for (const key of keys) if (tierOf(key) === 'live') out.push(settingRow(key));
+  for (const [tier, title, blurb] of TIER_GROUPS) {
+    const ks = keys.filter((k) => tierOf(k) === tier);
+    if (ks.length) out.push(tierGroup(catId, tier, title, blurb, ks));
+  }
+  return out;
+}
+
+/** What the sub-rail counts: the rows that DO something here. */
+const liveCount = (catId) => portRows(catId).length + keysOf(catId).filter((k) => tierOf(k) === 'live').length;
+
+/** The Morrowind assets card, on the Mods page (MW-IMPORT, MW-D8, MWA1). */
+function morrowindCard() {
   const sitePage = (page) => {
     const dir = new URL('.', location.href);
     const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
@@ -1245,15 +1285,21 @@ function paneEnhanced(body) {
       + `${e.firstPerson} of them first-person. Looked for race "${e.raceWanted}": `
       + (e.raceIsThere ? 'present in your data.' : `NOT among the races your files carry (${e.racesFound.join(', ') || 'none'}).`)));
   }
-  body.append(mw);
+  return mw;
+}
 
-  const waiting = el('div', 'card');
-  waiting.append(el('h3', null, 'Not switchable here'));
-  waiting.append(inertRow('Enhanced music',
-    'A generative score was built and removed at your direction. The game plays MIDI.BSA, and your own '
-    + 'replacement tracks if you attach them in Settings.',
-    'removed'));
-  body.append(waiting);
+/** M-EXT: the replacement packs - music and textures - attach here.
+ *  The launcher's row was the only door; FD1 removed the launcher. */
+function packsCard() {
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Replacement packs'));
+  c.append(el('p', 'meta', 'Your own music (a folder of tracks named as DFU\u2019s replacement music expects) and texture packs, stored in this browser like ARENA2. Nothing uploads.'));
+  c.append(el('p', 'meta', `Music files supplied: ${replacementCount()} \u00b7 Texture files supplied: ${textureReplacementCount()}`));   // the row reports what the pick covers
+  c.append(acts([
+    { label: 'Attach music pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); await ds.pickMusicFolder(); render(); } },
+    { label: 'Attach texture pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); await ds.pickTextureFolder(); render(); } },
+  ]));
+  return c;
 }
 
 function paneMods(body) {
@@ -1294,6 +1340,8 @@ function paneMods(body) {
     mc.append(el('p', 'meta', 'Takes effect when the world next loads.'));
     body.append(mc);
   }
+  body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
+  body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
   const c = el('div', 'card');
   c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
@@ -1996,7 +2044,7 @@ function renderInto() {
         continue: paneContinue, new: paneNew, load: paneLoad,
         test: paneTest,
         save: paneSave, exit: paneExit,
-        mods: paneMods, about: paneAbout, enhanced: paneEnhanced,
+        mods: paneMods, about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
         controls: paneControlsPane,
       })[section](body);
     }
@@ -2131,7 +2179,7 @@ export function mountEnhancedMenu(host, {
   if (!morrowindDataCounted()) {
     countMorrowindArchives().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
   }
-  sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
+  sections = mode === 'pause' ? SECTIONS_PAUSE : isEnhanced() ? SECTIONS_BOOT : SECTIONS_CLASSIC;   // FD1: one door, two rails
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
   // the face itself, every section one press away. Pause used to open
   // straight on SAVE GAME (U51's law: what Escape was pressed for);

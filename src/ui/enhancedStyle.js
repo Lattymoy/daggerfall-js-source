@@ -337,15 +337,19 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .tier.live { background: var(--verdigris); }
 .tier.unavailable { background: var(--blood); }
-.legend {
-  display: flex; gap: 16px; padding: 12px 18px; color: #5f5b53;
-  font-size: 11px; letter-spacing: 0.08em; border-bottom: 1px solid #20262e;
-  position: sticky; top: 0; background: var(--slate); z-index: 2;
+/* SO1: TIER IS A GROUP. The live rows sit flat; the stored and the
+   unavailable fold under a heading that carries their count, so the
+   list a beginner sees is short and nothing is ever hidden. */
+.group { border-top: 1px solid #20262e; margin-top: 6px; }
+.group-head {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 18px;
+  background: none; border: 0; color: #8c8578; font: inherit; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; text-align: left;
 }
-.legend span { display: flex; align-items: center; gap: 7px; }
-.legend i { width: 6px; height: 6px; border-radius: 50%; background: #2f3742; }
-.legend i.live { background: var(--verdigris); }
-.legend i.unavailable { background: var(--blood); }
+.group-head:hover { color: var(--bone); }
+.group-head .count { color: #5f5b53; font-variant-numeric: tabular-nums; }
+.group-head .group-chev { margin-left: auto; color: var(--brass); font-size: 16px; line-height: 1; }
+.group.open .group-head { color: var(--bone); }
 
 .dcard { padding: 24px 20px 32px; }
 .dcard h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 10px; }
