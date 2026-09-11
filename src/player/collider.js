@@ -619,8 +619,31 @@ export class Collider {
       }
     }
 
-    // Terrain/ground floor beneath everything.
+    // MAC3 (2026-09-11, Mac: "when moving down hills, the camera
+    // hitches badly"): the snap above probes MESHES, and the terrain
+    // floor beneath everything was only a floor - a capsule walking
+    // down a heightmap slope left it on every step the slope fell
+    // faster than a fresh fall, fell for a dozen, landed hard and left
+    // again (measured: 20 degrees, 540 of 600 steps airborne, 59
+    // landings in ten seconds). DFU glues the controller to a slope
+    // with AcrobatMotor's anti-bump (:191-197, ground within 1.10
+    // below the centre); this collider's answer to that spike is its
+    // own snap (player/motor.js A6), so the floor takes the same
+    // STEP_OFFSET reach, under the same jump gate.
     const floor = this.heightAt(feet[0], feet[2]);
+    if (snap && dy <= 0 && !out.grounded && feet[1] > floor && feet[1] - floor <= STEP_OFFSET) {
+      // ...but never against the step-up LADDER above: a capsule lifted
+      // in front of a riser is off the floor on purpose, and the floor
+      // takes it only where the mesh leaves the capsule alone there.
+      const probe = [feet[0], floor, feet[2]];
+      const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
+      this._resolveCapsule(probe, probeOut, height);
+      if (!probeOut.hitCeiling && Math.abs(probe[0] - feet[0]) < 1e-6 && Math.abs(probe[2] - feet[2]) < 1e-6 && Math.abs(probe[1] - floor) < 1e-6) {
+        feet[1] = floor;
+        out.grounded = true;
+      }
+    }
+    // Terrain/ground floor beneath everything.
     if (feet[1] < floor + SKIN) {
       if (dy <= 0) out.grounded = true;
       feet[1] = floor;
