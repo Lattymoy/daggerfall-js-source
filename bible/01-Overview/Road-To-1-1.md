@@ -222,7 +222,7 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:3586`, the two ship pixels): the owner supplied the
+(`scenes/world.js:3587`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
@@ -245,7 +245,7 @@ residence plates all read the machine instead of saying they cannot -
 and TP2 NARROWED the flag beside it, that host's Recall, to the one
 cross-LOCATION jump a route with no streamer cannot make (set-anchor,
 the same-interior move and the whole cross-context arm INSIDE the
-loaded pixel all ship). That leaves **7** open flags as
+loaded pixel all ship). That leaves **6** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

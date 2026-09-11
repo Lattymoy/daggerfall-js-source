@@ -19,6 +19,7 @@ import { audio } from '../systems/audio.js';   // FS-slice: the stride plays fla
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
+import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 62 F10: the dial button's own skin gate
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -404,7 +405,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
   });
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
-  const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
+  const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
@@ -434,7 +435,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // AUDIT 62 F7: the finger's pause gate - this host's own mouse
     // predicate (mousedown :`!ctx.uiOverlayActive`, mousemove's return).
     paused: () => !!ctx.uiOverlayActive,
-  });
+  };
+  const touch = attachTouch(canvas, inputHooks);
+  const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     // U37: a window frees the mouse, so an open overlay gets the HOVER
@@ -596,6 +599,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
+    gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!(ctx.uiOverlayActive)) {
       if ((rightHeld || swipeHeld) && walkMode && !ctx.weaponIsBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
@@ -713,7 +717,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.paralyzed = paralyzed;
       const crouchHeld = held(keys, 'Crouch');
       const mv = moveHeld(keys);
-      mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
+      mv.analog = touch?.axes() ?? gamepad?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse; GP1: the pad's stick when no finger
       // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
       // ApplyVerticalForce(1);` runs in Update ahead of
       // FindKeyboardActions, so the latch drives the vertical axis

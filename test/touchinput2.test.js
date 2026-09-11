@@ -281,10 +281,10 @@ test('TI2 pins: the layer\'s chrome - safe-area edges, the inline name field, no
 
 test('TI2 pins: the hosts hand the throw to MoveAxes beside the held keys, the modal frames through the host seam (mutant: a host dropped)', () => {
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
-    assert.match(read(h), /const mv = moveHeld\(keys\);\s*\n\s*mv\.analog = touch\?\.axes\(\) \?\? null;/, `${h}: the reading rides the same bag`);
+    assert.match(read(h), /const mv = moveHeld\(keys\);\s*\n\s*mv\.analog = touch\?\.axes\(\) \?\? gamepad\?\.axes\(\) \?\? null;/, `${h}: the reading rides the same bag (GP1: the pad's stick behind the finger's)`);
   }
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(h), /stickAxes: \(\) => touch\?\.axes\(\) \?\? null,/, `${h}: the modal frames' seam`);
+    assert.match(read(h), /stickAxes: \(\) => touch\?\.axes\(\) \?\? gamepad\?\.axes\(\) \?\? null,/, `${h}: the modal frames' seam`);
   }
   assert.match(read('src/scenes/worldModes.js'), /const mv = moveHeld\(keys\);\s*\n\s*mv\.analog = host\.stickAxes\?\.\(\) \?\? null;/, 'worldModes reads it through the host');
   const ax = read('src/player/moveAxes.js');

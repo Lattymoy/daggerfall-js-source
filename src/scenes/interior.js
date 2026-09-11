@@ -10,6 +10,7 @@ import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
+import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
@@ -264,11 +265,13 @@ export async function bootInterior(canvas, renderer, params, status) {
     // turns toward +x = screen-right; the pitch clamp is the filter's.
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
-  attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
+  const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
-  });
+  };
+  const touch = attachTouch(canvas, inputHooks);
+  const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
 
   const shotMode = params.has('shot');
   // E3: the console's door. This host mounts no window that registers a
@@ -294,6 +297,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
+    gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!gamePaused()) {
       if (false) lookFilter.settle();
       else lookFilter.tick(dt, cam);
@@ -350,7 +354,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:639 and worldModes.js:5038/:5173 gate the same
+    // driver. dungeon.js:643 and worldModes.js:5038/:5173 gate the same
     // way; this is that gate for this host.
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {

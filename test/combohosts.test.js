@@ -31,7 +31,7 @@ const body = (f) => readFileSync(join(SCENES, f), 'utf8');
 
 function store() {
   const b = createBindings(); resetDefaults(b);
-  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:204 stages
+  setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);   // what controlsWindow.js:220 stages
   setBindings(b);
   return b;
 }

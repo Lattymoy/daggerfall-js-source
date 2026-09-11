@@ -58,6 +58,14 @@ export function frameSmoothing(smoothing, dt) {
   return 1 - frameRateScaledFraction(1 - s, dt);
 }
 
+// GP1: ApplySmoothing :159-160 - "Enforce some minimum smoothing for
+// controllers": while the pad is the live device (InputManager
+// .UsingController) the fraction never drops below 0.5. One latch for
+// every filter, set by ui/gamepadInput.js each frame.
+let _controllerLook = false;
+export function setControllerLook(on) { _controllerLook = !!on; }
+export const controllerLook = () => _controllerLook;
+
 export class LookFilter {
   constructor() {
     this.residualYaw = 0;
@@ -89,7 +97,7 @@ export class LookFilter {
     // Clamp the TARGET pitch to the range, then owe only what remains.
     const targetPitch = Math.max(-PITCH_FLOOR, Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));   // MAC1: the floor is the owner's, the ceiling the reference's
     this.residualPitch = targetPitch - cam.pitch;
-    const s = frameSmoothing(smoothing, dt);
+    const s = frameSmoothing(_controllerLook && smoothing < 0.5 ? 0.5 : smoothing, dt);   // GP1: the controller's floor
     const stepYaw = this.residualYaw * (1 - s);
     const stepPitch = this.residualPitch * (1 - s);
     cam.yaw += stepYaw;

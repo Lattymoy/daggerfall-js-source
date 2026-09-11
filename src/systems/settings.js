@@ -65,6 +65,12 @@ export const ALL_KEYS = Object.freeze(
 /** live: a consumer exists and flipping the value changes play. Each
  *  entry names the consumer so settings.test.js can check it. */
 export const LIVE = Object.freeze({
+  // GP1: the five controller keys, read by the pad's law each frame
+  'Controls/EnableController': 'src/systems/gamepad.js',
+  'Controls/JoystickLookSensitivity': 'src/systems/gamepad.js',
+  'Controls/JoystickCursorSensitivity': 'src/systems/gamepad.js',
+  'Controls/JoystickMovementThreshold': 'src/systems/gamepad.js',
+  'Controls/JoystickDeadzone': 'src/systems/gamepad.js',
   'Enhancements/CombatVoices': 'src/combat/combatVoices.js',
   // MT-i: EnemyInfighting. OFF sends GetTargets down its else-arm
   // (:801-803), where a non-PlayerAlly foe skips every enemy
@@ -288,11 +294,6 @@ export const UNAVAILABLE = Object.freeze({
   'Video/ResolutionHeight': 'the browser sizes its own canvas',
   'Video/Fullscreen': 'the browser owns fullscreen',
   'Video/ExclusiveFullscreen': 'the browser owns fullscreen',
-  'Controls/EnableController': 'no gamepad support yet',
-  'Controls/JoystickLookSensitivity': 'no gamepad support yet',
-  'Controls/JoystickCursorSensitivity': 'no gamepad support yet',
-  'Controls/JoystickMovementThreshold': 'no gamepad support yet',
-  'Controls/JoystickDeadzone': 'no gamepad support yet',
 });
 /** The tier of one "Section/Key". Everything not named above is
  *  STORED - it round-trips but nothing reads it yet. */
