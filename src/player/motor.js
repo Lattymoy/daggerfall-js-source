@@ -1132,7 +1132,7 @@ export class PlayerMotor {
     // next FixedUpdate (PlayerMotor.cs:278) out of the collisionFlags
     // ClimbingMotor.cs:767 writes after its own controller.Move, so the
     // collider's LIVE grounded written above IS DFU's answer, one step
-    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1854).
+    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1862).
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true
@@ -1581,7 +1581,9 @@ export class PlayerMotor {
     // the renderer - see this file's header) already answers that with
     // its own two mechanisms: the ground snap, which pulls a
     // descending capsule onto steps and slopes over the same
-    // stepOffset reach and is withheld only mid-jump, and the step-up
+    // stepOffset reach and is withheld only mid-jump (MAC3: onto the
+    // terrain FLOOR too - the mesh-only snap left a hillside walk
+    // hopping and landing every dozen steps), and the step-up
     // LADDER, which is a multi-FRAME ratchet - it raises the capsule
     // in front of a riser and, in its own words, "the raised height is
     // kept this frame and the snap below settles it onto the tread as

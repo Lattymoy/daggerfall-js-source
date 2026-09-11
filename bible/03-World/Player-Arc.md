@@ -780,7 +780,15 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   live - swimming never grounds - so wading OUT can bill the whole
   drop; nothing in DFU clears it); anti-bump gravity
   (PlayerMoveScanner StepHitDistance) is engine-side N/A - our
-  ground snap owns descent adhesion.
+  ground snap owns descent adhesion. MAC3 (2026-09-11, "when moving
+  down hills, the camera hitches badly"): that snap probed MESHES
+  only, and the terrain floor was a floor and nothing more - a walk
+  down a 20-degree heightmap slope was 540 of 600 steps airborne with
+  59 landings in ten seconds, each a hard stop of the camera. The floor
+  takes the snap's STEP_OFFSET reach now, under the same jump gate and
+  only where the capsule sits clear of the mesh at the floor, so the
+  step-up ladder's lift in front of a riser survives
+  (`test/mac3_downhill.test.js`).
 
 test/motorStairs.test.js restores the reverted 7-pin harness and
 grows it to 9 (crouch/boost/air-freeze + fall/slowfall traces).
