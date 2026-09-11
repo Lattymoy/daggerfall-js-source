@@ -154,7 +154,7 @@ export function shadowOrigin(camX, camZ, extent = SHADOW_EXTENT, pixel = PIXEL_M
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
-void main() { vNdc = aPos; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;   // PERF2: at the far plane for the composite's depth test; the marches test nothing
 
 /** THE FIELD: the density at a world point, and everything both
  *  marches share. Declared with its own uniforms and interpolated into
@@ -563,7 +563,7 @@ export class VolumetricClouds {
     if (this.sweeps === 0) return;
     const gl = this.gl, u = this.cu;
     gl.useProgram(this.compositeProgram);
-    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(false); gl.disable(gl.CULL_FACE);   // PERF2: only the sky's own pixels
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.ONE, gl.SRC_ALPHA, gl.ZERO, gl.ONE);   // sky * T + cloud; the buffer's alpha untouched (ONE, SRC_ALPHA on both would leave it 2T)
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.map.tex); gl.uniform1i(u.uMap, 0);
@@ -575,7 +575,7 @@ export class VolumetricClouds {
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.disable(gl.BLEND);
-    gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+    gl.depthFunc(gl.LESS); gl.depthMask(true); gl.enable(gl.CULL_FACE);   // PERF2
   }
 
   /** DRAW PATH, the lab's: the shadow map as a picture over the frame. */

@@ -4031,12 +4031,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.beginFrame(proj, view, sunDirection(minute));
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.pos, yaw: cam.yaw });   // MW-D24
-    {
-      const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
-      const horiz = Math.hypot(dx, dz) || 1e-6;
-      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
-      renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
-    }
     // EE5: the ground shadows under the SKY'S OWN deck - one field for the
     // cloud and for the shadow it casts. Null when there is no enhanced
     // sky, which is the classic skin and every interior.
@@ -4139,7 +4133,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:7847-7921 is the shape.
+    // through the player for ever. world.js:7814-7933 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -4199,6 +4193,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     flatAnims.tick(dt);   // FA1: the town's fires and braziers
     // EV3: per-batch skip off the build-time boxes; the clocks above
     // ticked already, so an off-screen fire keeps its frame.
+    // PERF2: the sky after the ground, at the far plane - see world.js for the law.
+    {
+      const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
+      const horiz = Math.hypot(dx, dz) || 1e-6;
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
+      renderer.markForeignPass();   // EV6: the sky changed programs behind the shadows' back
+    }
     // WATER1: THE WATER, after the ground, the models and the arrows and
     // before the first flat - see world.js for the order's reasons.
     if (waterOn) {
@@ -4350,7 +4351,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:7990's order, and the order
+          // BEFORE civilians - world.js:8002's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

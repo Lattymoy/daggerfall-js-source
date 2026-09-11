@@ -24,6 +24,8 @@
 // zero texture here: the shader's snow and wet terms are then exactly
 // zero, and the text stays the lab's.
 
+import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
+
 export const LAB_GRASS_HEAD = `#version 300 es
 precision highp float;
 `;
@@ -452,6 +454,9 @@ export class LabGrassRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.count = 0;
     this._vp = new Float32Array(16);
+    this._planes = new Float32Array(24);   // PERF2
+    this.slotBox = null;                    // PERF2: per slot, the cell's world box, or null while empty
+    this.drawn = { slots: 0, blades: 0 };   // PERF2: what the last draw actually submitted
   }
 
   /** GR5: size the buffers for `slots` cells of `perCell` blades each,
@@ -466,11 +471,23 @@ export class LabGrassRenderer {
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this.count = slots * perCell;
+    this.slotBox = new Array(slots).fill(null);   // PERF2
   }
 
   /** GR5: one cell into its slot - one bufferSubData per buffer, no repack. */
   writeSlot(slot, placed) {
     const gl = this.gl; const p = this.perCell;
+    // PERF2: the cell's box, from the blades themselves - x/z off the
+    // roots, y from the lowest root to the tallest tip (a leaning blade
+    // reaches no higher than its height, so height is the bound).
+    let x0 = Infinity, z0 = Infinity, y0 = Infinity, x1 = -Infinity, z1 = -Infinity, y1 = -Infinity;
+    const n = Math.min(placed.count ?? p, p);
+    for (let i = 0; i < n; i++) {
+      const x = placed.inst[i * 4], z = placed.inst[i * 4 + 1], h = placed.inst[i * 4 + 2], y = placed.rootY[i];
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
+      if (y < y0) y0 = y; if (y + h > y1) y1 = y + h;
+    }
+    if (this.slotBox) this.slotBox[slot] = n > 0 ? [x0, y0, z0, x1, y1, z1] : null;
     for (const [i, data, stride] of [[0, placed.inst, 4], [1, placed.inst2, 4], [2, placed.rootY, 1], [3, placed.ground, 3]]) {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
       gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * stride * 4, data);
@@ -481,6 +498,7 @@ export class LabGrassRenderer {
   /** GR5: a cell leaves - its heights go to zero, and h=0 draws nothing. */
   clearSlot(slot) {
     const gl = this.gl; const p = this.perCell;
+    if (this.slotBox) this.slotBox[slot] = null;   // PERF2
     if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Float32Array(p * 4);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 4 * 4, this._zeros);
@@ -496,6 +514,7 @@ export class LabGrassRenderer {
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this.count = placed.count;
+    this.slotBox = null;   // PERF2: a scatter is one run, drawn whole
   }
 
   /** the lab's draw. `light` = {sunDir, amb, sunCol, dim}; `wind` = {dir, speed, windV}. */
@@ -533,10 +552,47 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uSunCol, light.sunCol);
     gl.uniform1f(u.uDim, light.dim);
     gl.bindVertexArray(this.vao);
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count);
+    if (this.slotBox) this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
+    else { this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, this.count); this.drawn.slots = 1; this.drawn.blades = this.count; }   // the lab's one scatter
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     if (culled) gl.enable(gl.CULL_FACE);
+  }
+
+  /** PERF2: point the four instance attributes at one slot's run. WebGL2
+   *  has no base instance, so a slot is drawn by moving the pointers -
+   *  four calls, no upload. */
+  _point(slot) {
+    const gl = this.gl; const p = this.perCell ?? 0;
+    for (const [i, loc, size] of [[0, 1, 4], [1, 2, 4], [2, 3, 1], [3, 4, 3]]) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, slot * p * size * 4);
+    }
+  }
+
+  /** PERF2: THE FIELD DRAWS ONLY WHAT CAN BE SEEN. Before this every
+   *  slot went to the GPU every frame - the whole 420 m window, the
+   *  cells behind the eye and the corners past uRange that the shader
+   *  faded to nothing (vFade is 0 beyond uRange, and the window's
+   *  corners are 1.4 x uRange out). A cell is skipped when its box is
+   *  outside the frustum, or when its nearest point is past the range.
+   *  Same picture: a skipped cell drew no fragment that survived. */
+  _drawVisibleSlots(vp, eye, range) {
+    const gl = this.gl; const p = this.perCell;
+    const planes = frustumPlanes(vp, this._planes);
+    let slots = 0;
+    for (let slot = 0; slot < this.slotBox.length; slot++) {
+      const box = this.slotBox[slot];
+      if (!box) continue;
+      const dx = Math.max(box[0] - eye[0], 0, eye[0] - box[3]);
+      const dz = Math.max(box[2] - eye[2], 0, eye[2] - box[5]);
+      if (dx * dx + dz * dz > range * range) continue;   // wholly past the fade
+      if (aabbOutside(planes, box)) continue;
+      this._point(slot);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, this.verts, p);
+      slots++;
+    }
+    this.drawn.slots = slots; this.drawn.blades = slots * p;
   }
 
   destroy() {
