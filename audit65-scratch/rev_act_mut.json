@@ -1,0 +1,116 @@
+[
+ {
+  "name": "R1 worldModes: BOTH ladders drop the rival distance (nearerThan -> Infinity)",
+  "path": "src/scenes/worldModes.js",
+  "old": "if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return true;",
+  "new": "if (_enemyArm(RAY_DISTANCE, Infinity)) return true;",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ],
+  "count": 2
+ },
+ {
+  "name": "R2 world.js: the foe arm stops measuring against the townsfolk",
+  "path": "src/scenes/world.js",
+  "old": "else if (_enemyArm(RAY_DISTANCE, _rivalDist)) { /* the enemy was the nearest hit */ }",
+  "new": "else if (_enemyArm(RAY_DISTANCE, _nonPersonRival)) { /* the enemy was the nearest hit */ }",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ]
+ },
+ {
+  "name": "R3 dungeon.js: the standalone ladder drops the rival distance",
+  "path": "src/scenes/dungeon.js",
+  "old": "if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return null;",
+  "new": "if (_enemyArm(RAY_DISTANCE, Infinity)) return null;",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ]
+ },
+ {
+  "name": "R4 world.js: the body/pile tie flips to the pile",
+  "path": "src/scenes/world.js",
+  "old": "!(_corpsePick && _corpsePick.distance <= _pilePick.distance)",
+  "new": "!(_corpsePick && _corpsePick.distance < _pilePick.distance)",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ]
+ },
+ {
+  "name": "R5 activate.js: the pick loses the `distance` fallback for reach",
+  "path": "src/player/activate.js",
+  "old": "bestReach = target.reach ?? target.distance ?? DEFAULT_ACTIVATION_DISTANCE;",
+  "new": "bestReach = target.reach ?? DEFAULT_ACTIVATION_DISTANCE;",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ]
+ },
+ {
+  "name": "R6 worldModes: the refusal speaks but does NOT consume",
+  "path": "src/scenes/worldModes.js",
+  "old": "if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }",
+  "new": "if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return false; }",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ],
+  "count": 2
+ },
+ {
+  "name": "R7 worldModes: the interior EXIT door reaches for the ray too (does any pin object?)",
+  "path": "src/scenes/worldModes.js",
+  "old": "const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));",
+  "new": "const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));",
+  "files": [
+   "test/activate.test.js",
+   "test/audit18_hosts_dungeon.test.js",
+   "test/audit23_ui.test.js",
+   "test/audit24_wave38.test.js",
+   "test/audit63_guilds_court.test.js",
+   "test/droppedloot.test.js",
+   "test/enhancedInventory.test.js",
+   "test/hudlarge.test.js"
+  ]
+ }
+]

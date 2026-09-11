@@ -1,0 +1,7 @@
+[
+ {"name":"M21 D10: useFwd stops being built above the ladder (world host)",
+  "path":"src/scenes/world.js",
+  "old":"          const useFwd = _tapDir ?? [Math.sin(cam.yaw) * Math.cos(cam.pitch)",
+  "new":"          const useFwd = _tapDir ?? [Math.sin(cam.yaw + 0) * Math.cos(cam.pitch)",
+  "files":["test/hudlarge.test.js"]}
+]

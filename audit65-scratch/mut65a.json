@@ -1,0 +1,17 @@
+[
+ {"name":"M1 HP-2: the dungeon modal back to mountInterior",
+  "path":"src/scenes/worldModes.js",
+  "old":"        modal: (t) => dungeonCtx.hudBox(String(t).split('\\n')),",
+  "new":"        modal: (t) => mountInterior(new ActionTextBox(String(t).split('\\n'))),",
+  "files":["test/audit63_guilds_court.test.js"]},
+ {"name":"M2 HP-3: the dungeon hud back to townTalk's say",
+  "path":"src/scenes/worldModes.js",
+  "old":"        hud: (t) => dungeonCtx.hudSay(t),",
+  "new":"        hud: (t) => say(t),",
+  "files":["test/audit63_guilds_court.test.js"]},
+ {"name":"M3 HP-3: the ?? double-fire the refuter caught",
+  "path":"src/scenes/worldModes.js",
+  "old":"        hud: (t) => dungeonCtx.hudSay(t),",
+  "new":"        hud: (t) => dungeonCtx?.hudSay?.(t) ?? say(t),",
+  "files":["test/audit63_guilds_court.test.js"]}
+]
