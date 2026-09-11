@@ -195,11 +195,12 @@ the eye: the shore up close, the river and the lake, the rain up close.
 
 No point-light GLINTS on the water (a dock's lantern lights the surface
 as it lights the bank, and is not mirrored in it), no
-refraction or depth-tinted shallows (no depth texture), no foam, no
-underwater view (DFU has no exterior submersion), no wake. The dungeon
-keeps its own plane. Not seen on a real GPU or with ARENA2 - Mac's eye
-is the next gate; the amplitudes, the tint and the cap are the lab's
-sliders' to tune.
+refraction, no foam, no underwater view (DFU has no exterior
+submersion), no wake. (Depth-tinted shallows: WATER2 below, off the
+bed's own depth rather than a depth texture.) The dungeon keeps its
+own plane. Not seen on a real GPU or with ARENA2 - Mac's eye is the
+next gate; the amplitudes, the tint and the cap are the lab's sliders'
+to tune.
 
 ## The audit (WATER-AUDIT, 2026-09-08)
 
@@ -241,3 +242,95 @@ three ways), rivers and the map's byte rule at the boundary, the far
 ring's tiles (the stride never reaches the tile job), and the second
 half of the terrain pin (a guard against an over-broad fix, not a
 mutation killer - said so now).
+
+## WATER2 - THE BASIN (2026-09-11)
+
+**Mac: "Ponds, rivers, oceans, and any source of water should receive
+actually detailed water details like waves, shorelines, ponds not
+sitting like a texture and having depth in the ground (same for
+rivers)."** WATER1 drew the water as the ground's own triangles lifted
+a hand's breadth: a pond was a film on a field, a river a blue road,
+the shore the tile art's diagonal. Water lies IN the ground.
+
+**The bed.** `render/waterBasin.js`. A grid vertex is in water when
+every tile that meets its corner says that corner is water (WATER1's
+corner table; a corner one tile calls dirt is the shore). A
+breadth-first walk from every dry vertex gives each wet one its ring
+distance to the bank, capped at `BASIN_RAMP` (4 vertices, 25.6 units),
+and `basinProfile` eases it into a bowl - a quarter circle, steep off
+the bank and flat in the middle - times `BASIN_DEPTH` (5 units, a
+tile being 6.4). A one-tile stream is a trough 1.9 deep at its banks,
+a lake a bowl, the sea a beach that falls away over four vertices.
+`carveBasin` lowers the ground pass's vertices by that depth in place,
+recomputes the normals of every vertex the carve reaches with
+`buildTerrainGrid`'s own kernel (the bank is lit as the slope it now
+is), and re-hangs the far ring's skirt from the carved edge. The
+random-field round trip in `test/water2.test.js` proves the wet set
+IS the corner field, every vertex.
+
+**The surface** is no longer the ground's triangles: `waterMesh` takes
+the grid's positions AS THEY STOOD before the carve, so the surface
+stays where the ground was, and under each vertex the bed's depth in
+units, which is attribute 1 of a water surface that now owns its
+buffers (`createWaterSurface(positions, depths, indices)`). The hosts
+build the water first and upload the carved ground after - the build
+and the restride in world.js, the lab - and the town's flat sheet sits
+at `TOWN_WATER_DEPTH` (2.5: a moat or a dock has no grid to carve).
+
+**The shoreline is where the bed rises to meet the surface.** The
+fragment reads the interpolated depth - exact, because the carve is
+linear over the same triangle - and fades the surface to nothing over
+the last `SHORE_DEPTH` (0.35) of it; the art's diagonal only bounds
+it. The body tends to `DEEP_COLOR` by Beer-Lambert in the depth
+(`WATER_ABSORB` 0.45: nine tenths lost at full depth), mixed in BEFORE
+the light so a deep pool at midnight is black and not blue, and its
+opacity climbs from `SHALLOW_OPACITY` (0.30, the bed's texel seen
+through a clear film) to `WATER_OPACITY` where it is deep. The lift,
+the polygon offset and LEQUAL stay for the hand's breadth where the
+bed comes up to the surface.
+
+**What the game never sees.** world.js's `heightAt` reads the pixel's
+SAMPLES, and the carve touches only the uploaded positions: the player
+swims on a water tile at the height DFU swims at, foes and flats stand
+where they stood. The one thing that can look wrong is a nature flat
+DFU places on a shore tile's dirt half at a vertex the carve reached
+(a tree a few hand's breadths above a bank) - left for the eye.
+A pixel seam under water can show a bed step of up to half the depth
+where the nearest bank is across the seam, under at least one ring of
+water; the surface above hides most of it.
+
+**Pinned** in `test/water2.test.js` (5); WATER1's pins in
+`test/water.test.js` moved to the basin's shapes. Not seen on a GPU
+or with ARENA2 - the lab (`water.html`) carves the same basin, and
+`npm run perf` measures what it costs (nothing per frame: the walk and
+the carve are at the build).
+
+## WATER3 - THE SWELL AND THE FOAM (2026-09-11)
+
+**Mac: "waves, shorelines".** WATER1's waves were a normal map: the
+gradient of three trains, lit as slopes on a flat sheet. The sheet
+moves now. The vertex shader rides `swellHeight`, which is the
+INTEGRAL of the fragment's `waveGradient` train for train - a gradient
+term `A cos(k x + w t)` is a height `A / k sin(k x + w t)`, the same
+crossing rotations, the same distance fade on the same scale - so the
+surface the eye sees heave and the slopes it is lit by are one field
+(`test/water3.test.js` reads both shaders and holds the six numbers of
+each train equal). The rain's fine trains are not ridden: pocks are a
+texture on the water, not a sea. Over a bed shallower than
+`SWELL_DEPTH` (1 unit) the ride scales down to nothing, so the sheet
+never lifts off the shoreline WATER2 fades it at. On the long train at
+a gale the swell is 0.2 units; at a calm 0.07.
+
+**The foam** has two sources and one lace. The SHORE: where the bed
+rises through the last `FOAM_DEPTH` (1.2, widened to twice that on a
+gale) of water the surface breaks on it - a band along every bank that
+breathes with a slow sine and is cut by a value noise drawn along the
+wind, so it moves as the water does. The CRESTS: where the field's
+slope is steep enough to break (the gradient's length past 0.16),
+which only a strong wind reaches, gated by the wind's strength so a
+calm pond has none. Foam is lit white by the ground's own ambient,
+sun and moon, fades with distance before it aliases, and is not glass:
+the alpha rises to it. No texture and no table - the lace is a hash.
+
+**Pinned** in `test/water3.test.js` (4). Not seen on a GPU; the lab
+carries it.

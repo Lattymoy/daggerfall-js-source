@@ -970,6 +970,8 @@ export class Renderer {
         lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
         moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
         zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
+        shoreDepth: u('uShoreDepth'), shallowOpacity: u('uShallowOpacity'), deep: u('uDeep'), absorb: u('uAbsorb'),   // WATER2: the bed
+        swellDepth: u('uSwellDepth'), foamDepth: u('uFoamDepth'),   // WATER3: the swell and the foam
       };
       this._waterSurfaceFog = { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') };
       this._waterMaskUploaded = false;
@@ -2579,31 +2581,36 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, buffers, indexCount: indexSet.count };
   }
 
-  /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
-   *  vertex buffers with an index set of its own (buildWaterIndices'
-   *  water quads) - the water pass draws this, not the whole grid. Dies
-   *  with the terrain it rides: destroy it before destroyMesh frees the
-   *  buffers it points at. */
-  createWaterSurface(terrain, indices) {
+  /** WATER-AUDIT (M4): the water's own index set (buildWaterIndices'
+   *  water quads) - the water pass draws this, not the whole grid.
+   *  WATER2: and its own VERTICES - the ground's heights before the
+   *  basin was carved under them (render/waterBasin.js waterMesh), with
+   *  the bed's depth under each as attribute 1. It no longer rides the
+   *  terrain's buffers, so it dies on its own. */
+  createWaterSurface(positions, depths, indices) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
-    const [positions, normals] = terrain.buffers;
-    gl.bindBuffer(gl.ARRAY_BUFFER, positions);
+    const pos = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pos);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normals);
+    const dep = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, dep);
+    gl.bufferData(gl.ARRAY_BUFFER, depths, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 12, 0);
+    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 4, 0);
     const ebo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     this._bindVao(null);
-    return { vao, ebo, indexCount: indices.length };
+    return { vao, ebo, buffers: [pos, dep], indexCount: indices.length };
   }
 
   destroyWaterSurface(water) {
     const gl = this.gl;
+    for (const b of water.buffers) gl.deleteBuffer(b);
     gl.deleteBuffer(water.ebo);
     gl.deleteVertexArray(water.vao);
   }
@@ -2775,6 +2782,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(L.opacity, u.opacity);
     gl.uniform1f(L.f0, u.f0);
     gl.uniform1f(L.shoreSoft, u.shoreSoft);
+    gl.uniform1f(L.shoreDepth, u.shoreDepth);   // WATER2
+    gl.uniform1f(L.shallowOpacity, u.shallowOpacity);
+    gl.uniform3fv(L.deep, u.deep);
+    gl.uniform1f(L.absorb, u.absorb);
+    gl.uniform1f(L.swellDepth, u.swellDepth); gl.uniform1f(L.foamDepth, u.foamDepth);   // WATER3
     // the ground's own light, term for term, so the surface sits in the
     // frame the land beside it is lit in
     this._uploadCloudShadow('water');
