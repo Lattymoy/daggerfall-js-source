@@ -267,7 +267,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:298 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:323 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.

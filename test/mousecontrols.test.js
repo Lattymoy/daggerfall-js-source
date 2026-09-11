@@ -358,15 +358,14 @@ test('G6: the ADVANCED tab opens it over the grid, on the SAME staged dicts', ()
   cw.advanced.dispose();
 });
 
-test('G6: the JOYSTICK tab still answers with its note, and the grid still owns the wiring', () => {
-  // The joystick window stays unbuilt by owner decision (Ledger); the
-  // note that sends the reader there must not have been collected by
-  // this slice along with the advanced one.
+test('G6: the JOYSTICK tab opens the joystick window (GP2) on the grid\'s own staging, and the grid still owns the wiring', () => {
   const cw = new ControlsWindow({});
   cw.click(TAB_RECTS.joystick[0] + 1, TAB_RECTS.joystick[1] + 1);
-  assert.equal(cw.top, 'note');
-  assert.deepEqual(cw._noteRows, ['The port has no gamepad layer (Ledger).']);
+  assert.equal(cw.joystickOpen, true);
+  assert.equal(cw.joystick.unsaved, cw.unsaved.joystick, 'the popup edits the staging the grid saves');
   assert.equal(cw.advancedOpen, false);
+  cw.input('Escape');
+  assert.equal(cw.joystickOpen, false, 'CancelWindow hands the frame back');
   // ...and the grid's own close is what disposes the popup, AFTER the
   // save that pays its settings out.
   const src = code('ui/controlsWindow.js');
@@ -374,8 +373,8 @@ test('G6: the JOYSTICK tab still answers with its note, and the grid still owns 
     'dispose must come after the save, or the last raise is lost');
   // ...and DaggerfallUI draws ONLY the top window (DaggerfallUI.cs:489-492),
   // so while the popup is up the grid hands the frame over whole.
-  assert.match(src, /if \(this\.advancedOpen\) \{ this\.advanced\.draw\(renderer, canvas, font\); return; \}/,
-    'the popup must be what draws while it is open');
+  assert.match(src, /if \(this\._popup\) \{ this\._popup\.draw\(renderer, canvas, font\); return; \}/,
+    'the popup must be what draws while it is open (GP2: whichever of the two is up)');
 });
 
 test('G6: the checkboxes, the field focus and the capture take pointer input', () => {

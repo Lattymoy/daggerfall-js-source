@@ -312,7 +312,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // code out of the OTHER dict FIRST - `var alt = primary ?
   // secondaryActionKeyDict : actionKeyDict; if (alt.ContainsKey(code))
   // alt.Remove(code);` (InputManager.cs:730-734), ported at
-  // inputActions.js:268-269 - so EITHER order collapses it.
+  // inputActions.js:329-330 - so EITHER order collapses it.
   const collapse = defaultStore();
   setBinding(collapse, 'ShiftLeft', 'Jump', false);
   assert.equal(collapse.primary.get('ShiftLeft'), undefined,
@@ -328,7 +328,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // map-set with only a SAME-dict check: `if (!dict.ContainsKey(key)
   // && actionVal != Actions.Unknown) dict.Add(key, actionVal);`
   // (LoadActionKeybinds, InputManager.cs:1950-1969; loadActionKeybinds,
-  // inputActions.js:385-395, whose own comment says "Raw map-set, NOT
+  // inputActions.js:468-478, whose own comment says "Raw map-set, NOT
   // setBinding"). A hand-edited KeyBindings.txt that puts Jump on the
   // run key as a SECONDARY - with the primary Space spent on something
   // else - loads exactly as written, and SURVIVES the startup autofill

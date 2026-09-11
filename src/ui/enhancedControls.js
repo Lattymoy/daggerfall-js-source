@@ -187,7 +187,7 @@ function arm(action) {
  *  keybind button itself (:361) and the right-click remove (:372,
  *  where it is ANDed with the unbound-slot refusal). The pending
  *  capture is the only live gesture on the screen. The classic grid
- *  carries the law in one line (ui/controlsWindow.js:298); this face
+ *  carries the law in one line (ui/controlsWindow.js:323); this face
  *  carries it as ONE predicate wrapped round every click surface, so
  *  a control cannot be added without it. arm()'s own leading disarm()
  *  is then unreachable-by-click — which is DFU's shape, not a loss. */

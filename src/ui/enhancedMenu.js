@@ -341,7 +341,7 @@ function paneContinue(body) {
 // settings, because they are questions about the game you are about to
 // start and nowhere else. StartInDungeon in particular is the answer
 // to "do I begin in Privateer's Hold" - a new-game question wearing a
-// settings key's clothes (systems/settings.js:83-88).
+// settings key's clothes (systems/settings.js:89-94).
 function paneNew(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'A new character'));
@@ -800,7 +800,7 @@ function write(key, next) {
 }
 
 // ── MODS ─────────────────────────────────────────────────────────
-// There is NO mod system (Ledger C, Not planned - and settings.js:159
+// There is NO mod system (Ledger C, Not planned - and settings.js:165
 // blocks four keys on exactly that ground). The section still exists,
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.

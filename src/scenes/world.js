@@ -11,6 +11,7 @@ import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } fro
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
+import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -5171,7 +5172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:214, "a right-click on a window is the window's...
+  // (dungeon.js:215, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5184,7 +5185,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Unity/DOM middle-button crossover; the RELEASE is unconditional.
   addEventListener('mousedown', (e) => { if (isSwingButton(e.button)) rightHeld = true; const mc = mouseCode(e.button); if (mc) keys.add(mc); if (isSwingButton(e.button) && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2; FIX-F: the swing's button is the registry's (Mouse1 -> SwingWeapon by default)
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) keys.delete(mc); if (isSwingButton(e.button) && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
-  const touch = attachTouch(canvas, {   // mobile: stick synthesizes WASD; the right half is classified (TI1)
+  const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
     look: (dx, dy) => {
       lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
     },
@@ -5223,7 +5224,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // mouse arms carry (the mousemove look needs the pointer lock a
     // window frees, the RMB swing tests `!townTalk.overlayActive`).
     paused: () => gamePaused(),
-  });
+  };
+  const touch = attachTouch(canvas, inputHooks);
+  const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
 
   const initialCount = queue.length + 1;
   console.log(`world: streaming from ${startPixel.x},${startPixel.y}, ${initialCount} initial pixels, ` +
@@ -6571,7 +6574,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // never fires on an orphan).
     lockToggle: (foe) => lockOn.toggle(foe),
     unlockOn: () => { lockOn.unlock(); touch?.setLockDot(null); },
-    stickAxes: () => touch?.axes() ?? null,   // TI2: the modal frames' MoveAxes read the same stick
+    stickAxes: () => touch?.axes() ?? gamepad?.axes() ?? null,   // TI2: the modal frames' MoveAxes read the same stick; GP1: or the pad's
     // AUDIT 62 F16/F28: the MODAL frame's matrices, handed back. Both
     // TI1 seams read `_lastProj`/`_lastView` - the finger's ray
     // unprojects through them at the top of the frame, and the lock dot
@@ -6889,7 +6892,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:97, so the
+  // only reader of `load` in the whole tree is dungeon.js:98, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7079,6 +7082,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
     // ApplySmoothing pays it out at the setting's fraction. Before the
     // camera is read.
+    gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!gamePaused()) {
       if ((rightHeld || swipeHeld) && walkMode && modeNow() === 'exterior' && !weaponRig.playerWeapon.machine?.isBow) lookFilter.settle();
       else lookFilter.tick(dt, cam);
@@ -7304,7 +7308,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
-        mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
+        mv.analog = touch?.axes() ?? gamepad?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse; GP1: the pad's stick when no finger
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
         // held overlay is DFU's timeScale 0 - no climb, no friction).
         // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
