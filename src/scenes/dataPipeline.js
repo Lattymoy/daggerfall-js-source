@@ -191,7 +191,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1
     const gpu = renderer.createMesh(model);
-    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
+    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors, normals: model.normals, uvs: model.uvs });   // PERF4: the static batch merges the whole vertex
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }

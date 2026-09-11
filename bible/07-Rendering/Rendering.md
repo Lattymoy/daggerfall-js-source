@@ -235,6 +235,10 @@ directory by `test/audit18_bible_docs.test.js`:
   world.js (pixel/model/batch grains) and exterior.js (per-drawList-row,
   per-batch); `?cull=off` is the escape hatch. Simulation never gates -
   see `07-Rendering/Enhanced-Visuals-Arc.md`.
+- `staticBatch.js` - PERF4 STATIC BATCHES PER PIXEL: a streamed pixel's static RMB
+  models merged once at build time into one mesh grouped by resolved texture, one
+  draw call per texture instead of one per sub-mesh per model; the gates and the
+  mills stay individual draws (test/perf4.test.js).
 - `renderTarget.js` - VC2 THE RENDER TARGET: a 2D colour target and a 3D
   volume, creation under the upload law (it sizes, parameterises and binds
   no framebuffer), the framebuffer work on named DRAW paths that leave the
