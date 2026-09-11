@@ -49,11 +49,17 @@ test('B5: Tell me about opens the flat engine list and a pick asks through the s
   assert.equal(w.topics.length, 2);
   // ROAD-D D10: one click SELECTS row 0 and fills the player-says
   // label; the pair needs the double click (or OKAY).
+  // AUDIT 65 UI-1: the hosts dispatch `click(vx, vy, right, middle)`,
+  // so the clock is stepped on the window's own `_now()` seam.
+  let t = 1000;
+  w._now = () => t;
   w.click(...at(TALK_RECTS.topicList));   // row 0: Any news?
   assert.equal(w.conversation.length, 1, 'one click asks nothing');
   assert.equal(w.question, 'About Any news?...');
-  w.click(...at(TALK_RECTS.topicList), false, 1000);
-  w.click(...at(TALK_RECTS.topicList), false, 1100);
+  t = 2000;
+  w.click(...at(TALK_RECTS.topicList), false, false);
+  t = 2100;
+  w.click(...at(TALK_RECTS.topicList), false, false);
   assert.equal(w.conversation.length, 3);   // greeting + question + answer
   assert.equal(w.conversation[1].kind, 'question');
   assert.equal(w.conversation[2].text, 'Any news?: an answer');

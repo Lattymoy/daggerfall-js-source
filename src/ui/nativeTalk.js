@@ -767,11 +767,22 @@ export class NativeTalkWindow {
     if (d) this._pick(Number(d[1]) - 1);
   }
 
+  /** BaseScreenComponent's own clock (:688's
+   *  `Time.realtimeSinceStartup`), in the seam `ui/listPicker.js`
+   *  declares: the pins override the CLOCK, not an argument slot. */
+  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
+
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
-   *  The third slot is the host's right-button boolean
-   *  (townTalk.js:1000) and is not read here; `now` is the
-   *  double-click clock, injectable for the pins. */
-  click(vx, vy, rightButton = false, now = null) {
+   *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
+   *  this window's. Every overlay slot dispatches
+   *  `click(vx, vy, right, middle)` - townTalk.js:1123,
+   *  worldModes.js:7090, dungeonContext.js:4867 - so the clock that
+   *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
+   *  and `false ?? Date.now()` kept the `false`: every second click in
+   *  the topic list picked. The THIRD slot is really read - it is the
+   *  logbook button's right-click arm (:1569-1578) - and the fourth is
+   *  the host's `middle`, which this window has no handler for. */
+  click(vx, vy, rightButton = false, middle = false) {
     const R = TALK_RECTS;
     // AUDIT 63 F5: THE LOGBOOK BUTTON, before every broad panel rect so
     // it is not swallowed. Left click (ButtonLogbook_OnMouseClick,
@@ -848,11 +859,11 @@ export class NativeTalkWindow {
     // moved the selection under the second press. The listbox itself
     // plays no ButtonClick - the navigation arms and the Q/A pair do.
     if (inRect(R.topicList, vx, vy)) {
-      const t = now ?? Date.now();
+      const t = this._now();   // BaseScreenComponent.cs:688
       const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
       this._selectIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H));
       this._lastRowClick = t;
-      if (wasDouble) { this._lastRowClick = null; this._pickIndex(this.selected); }
+      if (wasDouble) this._pickIndex(this.selected);   // :687-688 stamps unconditionally - the stamp is never cleared
       return true;
     }
     // AUDIT 63 F5: a plain click in the CONVERSATION panel moves
