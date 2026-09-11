@@ -505,7 +505,9 @@ export class PlayerMotor {
    *  fixed-step pins (audit18_player, motorStairs, enemymotor) green.
    *
    *  Rays, activation, audio and every gameplay reader stay on `eye`:
-   *  the simulation's own truth. Only cameras read eyeAt.
+   *  the simulation's own truth. Only cameras read eyeAt - and
+   *  feetAt below, its positional half, for the one camera that
+   *  builds its own height off the feet instead (AUDIT 65 XL-4).
    *
    *  THE SNAP GUARD: a span longer than SNAP_SPAN means the position
    *  was PLACED, not stepped - a load, a door, a start marker (the
@@ -528,6 +530,39 @@ export class PlayerMotor {
       feetY + this._eyeLevel() + b[1],
       q[2] + dz * a + b[2],
     ];
+  }
+
+  /** AUDIT 65 XL-4: the RENDER FEET - eyeAt's positional half, for a
+   *  camera that builds its own height from the feet rather than
+   *  reading the eye. The Morrowind third-person camera
+   *  (mwCamera.eye, :198-233) takes `feet` and raises FOCAL_HEIGHT off
+   *  it; the hosts handed it `player.pos` - the raw, 60 Hz-quantised
+   *  stepped feet - while handing first person the smoothed `eyeAt`,
+   *  so EV1's interpolation and MAC1's step low-pass were both
+   *  bypassed the moment the player scrolled into third person (worst
+   *  single-frame rise on the MAC1 staircase: 0.153 raw against
+   *  eyeAt's 0.051 at 60 Hz).
+   *
+   *  The same span lerp, the same SNAP_SPAN guard and the same
+   *  `_eyeFeetY` substitution as eyeAt - and deliberately NEITHER
+   *  `_eyeLevel()` NOR `bobOffset`: the focal supplies its own height
+   *  (FOCAL_HEIGHT, off the SCALED body) and the head bob is a
+   *  first-person term, which a camera orbiting the body must not
+   *  inherit.
+   *
+   *  `pos` stays the simulation truth everywhere else - the collider,
+   *  the rays, activation - exactly as `eye` stays it for first
+   *  person. The focal's ceiling probe (mwCamera.js:207-217) rides
+   *  this too and still clears: the filter is never more than
+   *  STEP_OFFSET off the raw height and only ever trails heights the
+   *  capsule itself just occupied. */
+  feetAt(alpha = this._alpha) {
+    const p = this.pos, q = this._prevPos;
+    const dx = p[0] - q[0], dy = p[1] - q[1], dz = p[2] - q[2];
+    if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) { this._eyeFeetY = null; return [p[0], p[1], p[2]]; }   // MAC1: a placement primes the eye filter afresh
+    const a = Math.max(0, Math.min(1, alpha));
+    const feetY = (this._eyeFeetY != null && alpha === this._alpha) ? this._eyeFeetY : q[1] + dy * a;
+    return [q[0] + dx * a, feetY, q[2] + dz * a];
   }
 
   /** EV1: a floating-origin shift moves BOTH ends of the
@@ -1080,6 +1115,28 @@ export class PlayerMotor {
       this.grounded = r.grounded;
       if (r.grounded) this.velY = 0;
     }
+    // AUDIT 65 XL-5: the two cached fields the swim/levitate branch
+    // writes for the SAME reason - the climb is the other disjunct of
+    // the very statement that zeroes moveDirection (:322-326), and
+    // `this.standing` / `movingLessThanHalfSpeed` are a port-side
+    // cache of what DFU answers live. Without them a grounded forward
+    // climb start carried the pre-climb `standing = false` into the
+    // footstep gate, the townsfolk politeness gate and the stealth
+    // senses, because _step's climb return sits above BOTH remaining
+    // writers (the cancelMovement block and the swim/levitate branch).
+    // The freezeMotor return that sits between the cancel block and
+    // the climb call stays bare ON PURPOSE: PlayerMotor.cs:296-307
+    // does NOT zero moveDirection, so DFU's getters keep reading the
+    // pre-freeze vector there and a write would be the divergence.
+    // KNOWING DEPARTURE: DFU returns at :326 without updating
+    // `grounded`, so its climber reads the value latched on the
+    // approach for the whole climb; the port has just written the
+    // collider's LIVE grounded above, and answers from that - the same
+    // choice the swim branch already made.
+    this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
+    this.movingLessThanHalfSpeed = this.grounded
+      ? true
+      : walkSpeed(this.stats.speed) / 2 >= this.speed;   // :168-181 over the STALE UpdateSpeed field, the same quirk the hug rides
     return true;
   }
 
@@ -1264,8 +1321,10 @@ export class PlayerMotor {
       // ...and IsStandingStill itself, off the same reasoning: with
       // moveDirection zeroed at :322-326, :113-125 collapses to
       // `grounded`. The footstep hosts read this term (PlayerFootsteps
-      // .cs:264-265), and the walk path's _trackHalfSpeed - the only
-      // other writer - is below this return.
+      // .cs:264-265), and the walk path's _trackHalfSpeed is below
+      // this return. (AUDIT 65 XL-5: _climbStep writes the same pair
+      // for the same reason - the climb is the other disjunct of
+      // :322-326 - so this is no longer the only mirror.)
       this.standing = this.grounded;
       // AUDIT 64 F6 - LevitateMotor.cs:67-69, "Cancel levitate movement
       // if player is paralyzed": the return sits ABOVE the input read

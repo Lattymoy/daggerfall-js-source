@@ -7594,7 +7594,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // third it is the reference's focal-and-pull-back with this host's
     // collider standing in for the sphere cast.
     const mwv = mwViewFrame({
-      fpEye: cam.pos, feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
+      fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
       raycast: (o, d, m) => collider.raycast(o, d, m),
     });
     const view = lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]);
@@ -7781,7 +7781,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
 
     // WM2b: read the eased wind ONCE a frame, not once a mill.
     const windNow = sky.wind();
