@@ -52,6 +52,8 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
   let stamps = [];
   let shown = false;
   let sumDraws = 0, sumBinds = 0, samples = 0;   // PERF3: the renderer's per-frame counts (beginFrame zeroes them), summed over the second
+  let last = null;   // PERF9: the last second's numbers, for the probe
+  if (typeof globalThis.window !== 'undefined' && globalThis.window) globalThis.window.__fpsStats = () => last;
   let handle = 0;
   let live = true;
   function tick(now) {
@@ -61,15 +63,18 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
     const on = !!enabled();
     if (on !== shown) { shown = on; el.style.display = on ? 'block' : 'none'; }
     if (now - stamps[0] >= PERIOD_MS) {
-      if (on) {
+      {   // PERF9: computed every second whether or not the overlay shows; written only while it does
         const { fps, meanMs, worstMs } = fpsStats(stamps);
         const cpu = frameCpu();   // PERF1: null until a host has stamped a frame (the menu has none)
         // PERF3: the renderer's draws and texture binds, averaged per frame
         // over the second - the GL call count is the CPU side of the GPU's
         // work, and the number the culls and the sort are meant to move.
         const gpu = samples ? `\ndraws ${Math.round(sumDraws / samples)}  binds ${Math.round(sumBinds / samples)}` : '';
-        el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
+        if (on) el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
           + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '') + gpu;
+        // PERF9: the same numbers for a probe (tools/perfProbe.mjs) - the
+        // last second's, as an object, whether or not the overlay shows.
+        last = { fps, meanMs, worstMs, scriptMs: cpu?.meanMs ?? null, scriptWorstMs: cpu?.worstMs ?? null, draws: samples ? sumDraws / samples : null, binds: samples ? sumBinds / samples : null };
       }
       stamps = [now];
       sumDraws = 0; sumBinds = 0; samples = 0;   // PERF3
