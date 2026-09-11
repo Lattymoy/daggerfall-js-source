@@ -797,10 +797,11 @@ export function classicSaveToSnapshot(saveGames, {
     // AUDIT 65 SL-4: no reactionMods. The envelope stopped carrying the
     // member (save.js REP_ARRAYS) because PlayerEntity.cs:128-129 says
     // "do not serialize, set by live effects"; an imported character
-    // lands with no array and the first magic round mints the eleven,
-    // which is DFU's own fresh-PlayerEntity shape. (AUDIT 63 F6's line
-    // here minted the eleven-zero shape into the snapshot - a width
-    // nothing reads now.)
+    // lands with no key and the entity carries the eleven zeros DFU's
+    // constructor gives (playerEntity.js), which the first magic round
+    // clears and re-derives - DFU's own fresh-PlayerEntity shape.
+    // (AUDIT 63 F6's line here minted the eleven-zero shape into the
+    // SNAPSHOT; the constructor holds that guarantee now.)
     crimeCommitted: saveVars.crimeCommitted,
     haveShownSurrenderDialogue: false,
     legalRep,

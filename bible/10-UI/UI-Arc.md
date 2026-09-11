@@ -3148,23 +3148,26 @@ face. Chargen is otherwise complete.
 Three findings. The arc-local two, and one that turned out to be
 several slices older than the work that exposed it.
 
-**The port had never saved player reputation.** `sGroupReputations`
-and `reactionMods` are read by `getReactionToPlayer` on EVERY greeting
-and written by the T3f tone tallies, the G2 court sentences and now
-the biography - and the quicksave carried neither, nor any of the six
-`biography*Mod` fields. DFU writes all of it out field by field
+**The port had never saved player reputation.** `sGroupReputations` is
+read by `getReactionToPlayer` on EVERY greeting and written by the
+biography (the G2 court writes `legalRep` beside it) - and the
+quicksave carried none of it, nor any of the six `biography*Mod`
+fields. DFU writes all of that out field by field
 (SerializablePlayer.cs:136-141, :152-162, :305-310). A load reset the
-player's standing with every social group to zero.
+player's standing with every social group to zero. (`reactionMods`
+rode this fix too until AUDIT 65 SL-4 struck it: PlayerEntity.cs:128-129
+is "do not serialize, set by live effects" and :152-162 answers the
+reputations alone.)
 
 This gap predates the biography. What S3e changed is that reputation
 now matters from the FIRST MINUTE of a new character rather than
 accumulating quietly over a session, which is what made a load-wipe
-visible enough to find. Persisted now, along with the queued faction
-deltas and the composed backstory - and the SNAPSHOT detaches from the
-live entity, because the quicksave write happens after
-`snapshotPlayer` returns, the same law save.js already stated for its
-nested effect entries. A pre-17h save leaves the entity's own state
-alone rather than nulling it.
+visible enough to find. The reputations are persisted now, along with
+the queued faction deltas and the composed backstory - and the
+SNAPSHOT detaches from the live entity, because the quicksave write
+happens after `snapshotPlayer` returns, the same law save.js already
+stated for its nested effect entries. A pre-17h save leaves the
+entity's own state alone rather than nulling it.
 
 **The dungeon host skipped the biography.** It builds its own
 `ChargenFlow` and never received the question sets, so a character

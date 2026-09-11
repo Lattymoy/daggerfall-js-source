@@ -10,6 +10,7 @@ import { applyBiographyEffects } from '../src/systems/biography.js';
 import { getReactionToPlayer } from '../src/systems/talk.js';
 import { enchantmentMagicRound } from '../src/systems/enchantments.js';
 import { SOCIAL_GROUP_COUNT } from '../src/formats/factionFile.js';
+import { playerEntity } from '../src/characters/playerEntity.js';
 import { SKILL_COUNT } from '../src/systems/skills.js';
 
 const read = (f) => readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', f), 'utf8');
@@ -23,18 +24,20 @@ test('17h F1: a save carries the social-group REPUTATIONS', () => {
   // getReactionToPlayer reads them on every greeting.
   const e = player();
   applyBiographyEffects(e, ['r0 -5', 'r2 +5', 'r3 +5']);
-  e.reactionMods[1] = 7;   // the T3f tone tally writes here
+  e.reactionMods[1] = 7;   // a live-effect mod (applyRepMod / the Masque) - not persisted, AUDIT 65 SL-4
   assert.deepEqual(e.sGroupReputations.slice(0, 4), [-5, 0, 5, 5]);
 
   const loaded = {};
-  const extras = restorePlayer(loaded, snapshotPlayer(e));
+  const snap = snapshotPlayer(e);
+  const extras = restorePlayer(loaded, snap);
   assert.ok(extras, 'the snapshot restores');
   assert.deepEqual(loaded.sGroupReputations, e.sGroupReputations);
   // AUDIT 65 SL-4: and NOT the reaction mods. PlayerEntity.cs:128-129
   // declares them "do not serialize, set by live effects" and
   // SerializablePlayer.cs:152-162 answers only the eleven reputations,
-  // so the envelope holds no key and the restore lands no array.
-  assert.equal('reactionMods' in snapshotPlayer(e), false, 'the envelope does not carry the mods');
+  // so the envelope holds no key and the restore lands no array - the
+  // live 7 above is a live-effect mod and stays on the live entity.
+  assert.equal('reactionMods' in snap, false, 'the envelope does not carry the mods');
   assert.equal(loaded.reactionMods, undefined, 'and the restore never writes them onto the entity');
 
   // and the consumer sees the same greeting after a round trip
@@ -106,10 +109,13 @@ test('65 SL-4: reactionMods leaves the envelope - a five-wide legacy key never r
   // mods.length) buffed five groups forever after.
   const legacy = { ...snapshotPlayer(player()), reactionMods: [0, 0, 0, 0, 0] };
 
-  // (1) the live array is left alone - the width never lands
+  // (1) the live array is left alone - the width never lands. The
+  // eleven comes from the REAL producer, not a hand-built literal:
+  // ClearReactionMods at the head of every magic round.
   const live = player();
   live.isPlayer = true;
-  live.reactionMods = new Array(SOCIAL_GROUP_COUNT).fill(0);
+  enchantmentMagicRound(live, 1);
+  assert.equal(live.reactionMods.length, SOCIAL_GROUP_COUNT, 'the producer mints DFU\'s width');
   live.reactionMods[7] = 3;
   restorePlayer(live, legacy);
   assert.equal(live.reactionMods.length, SOCIAL_GROUP_COUNT, 'the five-wide envelope value never reaches the live array');
@@ -125,7 +131,13 @@ test('65 SL-4: reactionMods leaves the envelope - a five-wide legacy key never r
   enchantmentMagicRound(fresh, 1);
   assert.deepEqual([...fresh.reactionMods], new Array(SOCIAL_GROUP_COUNT).fill(0), 'the next magic round mints DFU\'s eleven');
 
-  // (3) the source: REP_ARRAYS names the reputations ALONE
+  // (3) and with the member out of the envelope, the ABSENT state is
+  // reachable after a boot load, so the eleven-wide guarantee comes
+  // from the constructor the way DFU's field initializer does
+  // (PlayerEntity.cs:128-129; Reset() at :794-819 does not clear it).
+  assert.equal(playerEntity.reactionMods.length, SOCIAL_GROUP_COUNT, 'the shared entity is BUILT with the eleven');
+
+  // (4) the source: REP_ARRAYS names the reputations ALONE
   assert.match(read('src/systems/save.js'), /^const REP_ARRAYS = \['sGroupReputations'\];$/m,
     'SerializablePlayer.cs:152-162 is the reputations\' cite and nothing else\'s');
   assert.doesNotMatch(read('src/systems/classicSave.js'), /^\s*reactionMods:/m,
