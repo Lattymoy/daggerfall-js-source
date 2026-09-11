@@ -92,7 +92,7 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
+import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -1061,6 +1061,13 @@ function paneEnhanced(body) {
         // copy this replaces carried `female: !!playerEntity.gender`,
         // which is TRUE for the string 'male' - every build asked for
         // the female skeleton; the one home tests the string.
+        // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
+        // is still null here - and fpArm keys its kept face verdict on
+        // that print. The surface about to spend seconds measures the
+        // set first (the sizes pass, off plain gets), which is what
+        // makes the verdict a lookup instead of a dozen mesh parses.
+        const ds = await import('../scenes/dataSource.js');
+        await ds.registerMorrowindData();
         const { buildArmsFor } = await import('../combat/weaponRig.js');
         await buildArmsFor(playerEntity);
         render();
@@ -1991,8 +1998,17 @@ export function mountEnhancedMenu(host, {
   // two buttons back. Nothing was lost: the archives sat in IndexedDB
   // the whole time. Count here, and repaint once the count lands - a
   // menu torn down first repaints nothing.
-  if (morrowindDataFingerprint() == null) {
-    registerMorrowindData().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
+  //
+  // AUDIT 65 XL-6: and it counts by NAME. registerMorrowindData also
+  // fingerprints the set, which walks every stored file's SIZE - and
+  // before this audit that walk went through assetBlob, so the title
+  // screen read and rewrote every legacy record a player had attached.
+  // This surface needs one number, so it asks for one number
+  // (countMorrowindArchives: one getAllKeys, no value read, no write).
+  // The sizes and the fingerprint stay on the host bootstrap
+  // (scenes/shared.js), which is the reader that needs them.
+  if (!morrowindDataCounted()) {
+    countMorrowindArchives().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
   }
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -

@@ -15,7 +15,7 @@ import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
-import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds
+import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
@@ -438,7 +438,7 @@ export function createSkyController(gl, params) {
       // DS1: the same term from the mod's own moons - where its orbit
       // puts them, lit by DFU's phase - so the world's night agrees
       // with the sky it stands under
-      return dynamicMoons ? moonlightTerm(dynamicMoons) : null;
+      return dynamicMoonlight(dynamicMoons);
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather

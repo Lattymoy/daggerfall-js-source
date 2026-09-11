@@ -29,18 +29,110 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (rel) => readFileSync(join(root, rel), 'utf8');
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
+/** AUDIT 65 XL-6: the smallest IndexedDB that dataSource.js can talk to,
+ *  counting what it is asked to do. `gets`/`puts` are VALUE operations -
+ *  the expensive ones: a get materialises a record, a put rewrites it.
+ *  `keyLists` is getAllKeys, which touches no value at all. */
+function fakeIndexedDb(initial = {}) {
+  const stores = new Map(Object.entries(initial).map(([k, v]) => [k, v instanceof Map ? v : new Map(Object.entries(v))]));
+  const counts = { gets: 0, puts: 0, keyLists: 0 };
+  const later = (fn) => queueMicrotask(fn);
+  const db = {
+    objectStoreNames: { contains: () => true },
+    createObjectStore: () => {},
+    transaction(name) {
+      if (!stores.has(name)) stores.set(name, new Map());
+      const map = stores.get(name);
+      const tx = {
+        objectStore: () => ({
+          getAllKeys() { counts.keyLists++; const r = {}; later(() => { r.result = [...map.keys()]; r.onsuccess?.(); }); return r; },
+          get(k) { counts.gets++; const r = {}; later(() => { r.result = map.get(k); r.onsuccess?.(); }); return r; },
+          put(v, k) { counts.puts++; map.set(k, v); later(() => tx.oncomplete?.()); },
+          clear() { map.clear(); later(() => tx.oncomplete?.()); },
+        }),
+      };
+      return tx;
+    },
+  };
+  return { idb: { open: () => { const r = {}; later(() => { r.result = db; r.onsuccess?.(); }); return r; } }, counts, stores };
+}
+
 // ── A ────────────────────────────────────────────────────────────
-test('MAC1 A: the boot door counts the Morrowind store itself and repaints when the count lands', () => {
+test('MAC1 A: the boot door counts the Morrowind store itself and repaints when the count lands', async () => {
   const menu = src('src/ui/enhancedMenu.js');
-  assert.match(menu, /import \{[^}]*\bregisterMorrowindData\b[^}]*\} from '\.\.\/scenes\/dataSource\.js'/, 'the menu imports the register');
+  assert.match(menu, /import \{[^}]*\bcountMorrowindArchives\b[^}]*\} from '\.\.\/scenes\/dataSource\.js'/, 'the menu imports the NAMES-ONLY count');
+  const mountBlock = menu.slice(menu.indexOf('hooks = h ?? {};'), menu.indexOf('sections = mode ==='));
+  assert.doesNotMatch(mountBlock, /registerMorrowindData\(\)/, 'AUDIT 65 XL-6: the MOUNT never calls the fingerprinting pass (the Build button does, before it spends seconds)');
+  assert.match(menu, /await ds\.registerMorrowindData\(\);\s*\n\s*const \{ buildArmsFor \} = await import/, 'the Build-arms button measures the set first, so fpArm\'s kept face verdict is a lookup');
   // Inside mount, after the hooks land and before any pane renders: the
-  // count is kicked when nothing has counted (the fingerprint is null
-  // until registerMorrowindData has run) and the SAME host repaints.
-  assert.match(menu, /hooks = h \?\? \{\};[\s\S]{0,1200}if \(morrowindDataFingerprint\(\) == null\) \{\s*registerMorrowindData\(\)\.then\(\(\) => \{ if \(app === host && host\.isConnected\) render\(\); \}\)\.catch\(\(\) => \{\}\);/,
+  // count is kicked when nothing has counted (`_mwCount`'s -1) and the
+  // SAME host repaints.
+  assert.match(menu, /hooks = h \?\? \{\};[\s\S]{0,1800}if \(!morrowindDataCounted\(\)\) \{\s*countMorrowindArchives\(\)\.then\(\(\) => \{ if \(app === host && host\.isConnected\) render\(\); \}\)\.catch\(\(\) => \{\}\);/,
     'mount counts an uncounted store and repaints the mounted host, never a torn-down one');
   // The hosts still count on boot (scenes/shared.js) - this is a second
-  // caller, not a move.
+  // caller, not a move - and the FULL pass, sizes and fingerprint, is
+  // still theirs: the boot menu gave up the fingerprint, not the host.
   assert.match(src('src/scenes/shared.js'), /const morrowind = registerMorrowindData\(\)\.catch\(\(\) => 0\);/);
+
+  // AUDIT 65 XL-6: MEASURED, not read off the source. A fake IndexedDB
+  // that counts value get()s and put()s, over a store holding LEGACY
+  // records (pre-MW-LOAD attaches are ArrayBuffers, not Blobs).
+  //
+  // THE DEFECT: the boot door ran the size fingerprint, whose sizes came
+  // through assetBlob - which materialises a legacy record whole and
+  // PUTS it back as a Blob. So opening the enhanced settings on the
+  // title screen read and rewrote every attached Morrowind file (a
+  // six-file set is 181 MB out of the store and back), serially, on the
+  // surface most likely to be a phone. The count now asks for names;
+  // the sizes now ask for values without rewriting them; and the
+  // migration stays where the file is USED.
+  const legacy = new Map([
+    ['Morrowind.bsa', new ArrayBuffer(2048)],
+    ['Tribunal.bsa', new ArrayBuffer(1024)],
+    ['Morrowind.esm', new ArrayBuffer(512)],
+  ]);
+  const io = fakeIndexedDb({ morrowind: legacy });
+  globalThis.indexedDB = io.idb;
+  const ds = await import('../src/scenes/dataSource.js');
+
+  // THE BOOT DOOR: names only.
+  assert.equal(await ds.countMorrowindArchives(), 2, 'two .bsa - the .esm is not an archive');
+  assert.deepEqual({ gets: io.counts.gets, puts: io.counts.puts }, { gets: 0, puts: 0 },
+    'the boot door reads no stored VALUE and writes nothing at all');
+  assert.equal(io.counts.keyLists, 1, 'one getAllKeys is the whole cost');
+  assert.equal(ds.morrowindDataFingerprint(), null,
+    'and it leaves the fingerprint NULL - a names-only print would read as a changed set at the host and bump the generation (MW-D9g)');
+  assert.equal(ds.morrowindDataCounted(), true, 'but the count HAS landed, so the door does not re-ask');
+
+  // THE HOST BOOTSTRAP: the sizes, off plain gets, with nothing written.
+  const gen = ds.morrowindDataGeneration();
+  await ds.registerMorrowindData();
+  assert.equal(io.counts.gets, legacy.size, 'one value get per stored name');
+  assert.equal(io.counts.puts, 0, 'and NOT ONE legacy record is rewritten to measure it');
+  assert.equal(ds.morrowindDataGeneration(), gen, 'learning the set is still not a change (MW-D9g)');
+  assert.match(ds.morrowindDataFingerprint(), /Morrowind\.bsa\t2048/, 'the sizes are byte-exact off the ArrayBuffer');
+  for (const v of legacy.values()) assert.ok(v instanceof ArrayBuffer, 'the store still holds what it held');
+
+  // THE COUNTED-THEN-ATTACHED SET (the review's block): a fresh module
+  // whose boot door has COUNTED but never measured, then an attach
+  // lands, then the host bootstrap runs. The print is still null, and
+  // MW-D9g's "learning a set is not a change" must not swallow it -
+  // the count saw different NAMES, and the swap caches must drop.
+  // MUTANT: drop the `_mwCountedNames` arm of `changed` - gen stays 0.
+  const ds2 = await import('../src/scenes/dataSource.js?xl6-counted');
+  assert.equal(await ds2.countMorrowindArchives(), 2);
+  legacy.set('Bloodmoon.bsa', new ArrayBuffer(256));
+  const gen2 = ds2.morrowindDataGeneration();
+  await ds2.registerMorrowindData();
+  assert.equal(ds2.morrowindDataGeneration(), gen2 + 1, 'an attach between the count and the measure IS a change');
+  legacy.delete('Bloodmoon.bsa');
+
+  // AND THE MIGRATION SURVIVES where the file is actually USED.
+  const warn = console.warn; console.warn = () => {};
+  try { await ds.loadMorrowindArchives(); } finally { console.warn = warn; }
+  assert.equal(io.counts.puts, 2, 'loadMorrowindArchives still rewrites each legacy ARCHIVE as a Blob');
+  assert.ok(legacy.get('Morrowind.bsa') instanceof Blob && legacy.get('Tribunal.bsa') instanceof Blob, 'by range next boot');
+  assert.ok(legacy.get('Morrowind.esm') instanceof ArrayBuffer, 'a file nobody opened is left alone');
 });
 
 // ── B ────────────────────────────────────────────────────────────

@@ -217,9 +217,9 @@ test('MW-D9g: LEARNING the archive count is not a data change - the boot must no
   // AUDIT 39 moved this pin off `_mwCount`: the guard is the same law
   // (an unknown previous set is not a change) over the whole stored
   // set instead of the archive count - see the MW-D40 test below.
-  assert.match(src, /if \(_mwFingerprint !== null && print !== _mwFingerprint\) \{ _mwGeneration\+\+;/,
-    'a KNOWN set that differs still bumps; an unknown one never does');
-  assert.match(src, /let _mwFingerprint = null;/, 'null is "not counted yet", and it must stay distinguishable from an empty set');
+  assert.match(src, /const changed = _mwFingerprint !== null\s*\n\s*\? print !== _mwFingerprint\s*\n\s*: \(_mwCountedNames !== null && \[\.\.\.names\]\.sort\(\)\.join\('\\n'\) !== _mwCountedNames\);\s*\n\s*if \(changed\) \{ _mwGeneration\+\+;/,
+    'a KNOWN set that differs still bumps; an unknown one never does - and a COUNTED one compares its names (AUDIT 65 XL-6)');
+  assert.match(src, /let _mwFingerprint = null;/, 'null is "not measured", and it must stay distinguishable from an empty set');
   assert.match(src, /let _mwCount = -1;/, '-1 is "not counted yet", and it must stay distinguishable from 0');
 });
 
@@ -243,9 +243,17 @@ test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .b
   assert.doesNotMatch(fn.slice(0, fn.indexOf('_mwCount = next;')),
     /_mwGeneration\+\+[\s\S]*?next !== _mwCount/, 'the bump never rides the archive count again');
   // the count the settings row prints is still ARCHIVES ("Morrowind
-  // archives attached: N"), which a loose .dds must not inflate
-  assert.match(fn, /const next = names\.filter\(\(n\) => \/\\\.bsa\$\/i\.test\(n\)\)\.length;/,
-    'the reported count stays the archive count');
+  // archives attached: N"), which a loose .dds must not inflate.
+  // AUDIT 65 XL-6 moved that filter to ONE home, `archiveCount`, so the
+  // boot door's names-only count and this full pass cannot drift apart.
+  assert.match(fn, /const next = archiveCount\(names\);/, 'the reported count stays the archive count');
+  assert.match(src, /const archiveCount = \(names\) => names\.filter\(\(n\) => \/\\\.bsa\$\/i\.test\(n\)\)\.length;/,
+    'and ARCHIVES is what that one home counts');
+  const cheap = src.slice(src.indexOf('export async function countMorrowindArchives()'));
+  assert.match(cheap.slice(0, cheap.indexOf('\n}\n')), /const names = await storedMorrowindNames\(\);\s*\n\s*_mwCountedNames = \[\.\.\.names\]\.sort\(\)\.join\('\\n'\);\s*\n\s*_mwCount = archiveCount\(names\);/,
+    'the boot door’s count is names and nothing else - and it remembers the names it counted, so a later attach reads as a change (AUDIT 65 XL-6 fixup)');
+  assert.doesNotMatch(cheap.slice(0, cheap.indexOf('\n}\n')), /_mwFingerprint|storedMorrowindSizes/,
+    'and it NEVER writes the fingerprint - a names-only print would read as a changed set and bump the generation');
   // the fingerprint moves on ANY change to the set, including a
   // same-size re-attach that swaps one file for another
   const print = (names) => [...names].sort().join('\n');
