@@ -150,7 +150,7 @@ layout(location=0) in vec2 aPos;
 out vec2 vNdc;
 void main() {
   vNdc = aPos;
-  gl_Position = vec4(aPos, 0.9999, 1.0);
+  gl_Position = vec4(aPos, 1.0, 1.0);   // PERF2: AT the far plane, so LEQUAL passes only the cleared depth
 }`;
 
 const SKY_FS = `#version 300 es
@@ -268,7 +268,7 @@ export class SkyRenderer {
     // renderer's state shadows rebind after it.
     gl.useProgram(this.program);
     gl.depthMask(false);
-    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(this.uSky, 0);
@@ -289,7 +289,7 @@ export class SkyRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);   // PERF2: the renderer's own compare back
     gl.depthMask(true);
     gl.activeTexture(gl.TEXTURE0);
   }

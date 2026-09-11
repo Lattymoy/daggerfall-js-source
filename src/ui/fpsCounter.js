@@ -7,13 +7,18 @@
 //
 // What it shows, once a second: the frames the last second held, the
 // mean frame in milliseconds, and the WORST frame of that second - a
-// steady 60 with a 90 ms worst is the stutter a mean hides. Reads its
+// steady 60 with a 90 ms worst is the stutter a mean hides. PERF1 adds
+// the SCRIPT line under it (systems/frameClock.js, stamped by the
+// hosts): the main thread's share of the frame, so a slow frame can be
+// read as the GPU's or ours.
 // switch (ui prefs `showFps`, or ?fps) on every tick, so the Enhanced
 // pane's row takes effect at once and costs nothing while off: the
 // element is hidden and the loop only counts.
 //
 // The pure half (`fpsStats`) is executed by test/mwarms_fps.test.js;
 // the DOM half runs against the same stub document AUDIT 62 built.
+
+import { frameCpu } from '../systems/frameClock.js';   // PERF1: the hosts' script time
 
 const PERIOD_MS = 1000;
 
@@ -55,7 +60,9 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
     if (now - stamps[0] >= PERIOD_MS) {
       if (on) {
         const { fps, meanMs, worstMs } = fpsStats(stamps);
-        el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`;
+        const cpu = frameCpu();   // PERF1: null until a host has stamped a frame (the menu has none)
+        el.textContent = `${fps} fps\n${meanMs.toFixed(1)} ms  worst ${worstMs.toFixed(0)}`
+          + (cpu ? `\nscript ${cpu.meanMs.toFixed(1)} ms  worst ${cpu.worstMs.toFixed(0)}` : '');
       }
       stamps = [now];
     }

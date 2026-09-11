@@ -9,9 +9,9 @@
 // 32 cites). This is the one home.
 //
 // WHAT A CITE IS HERE. A line number is a claim like any other
-// (test/citedrift.test.js's law): `src/scenes/world.js:1234`, the
-// basename form `world.js:1234`, a range `:1234-1240`, the tests' own
-// regex spelling `world\.js:1234`, and - THE LEDGER ARM - the four
+// (test/citedrift.test.js's law): `src/scenes/world.js:1238`, the
+// basename form `world.js:1238`, a range `:1234-1240`, the tests' own
+// regex spelling `world\.js:1238`, and - THE LEDGER ARM - the four
 // spellings a Port-Ledger row is cited by: `Port-Ledger.md:N`,
 // `Port-Ledger row :N` (tools/parity), `Ledger row \`:N\`` and
 // `Ledger rows \`:N\``. A cite is INTO a target file; a doc is any
@@ -30,7 +30,7 @@
 // (citedrift CD4/CD5) sometimes need.
 //
 // WHAT IT CANNOT DO, said plainly:
-//   - BARE CONTINUATIONS. "`world.js:1862`, `:1667`" - the second number
+//   - BARE CONTINUATIONS. "`world.js:1866`, `:1667`" - the second number
 //     is a cite too, but so is the C# `:524-525` on the next line. They
 //     are REPORTED with their mapped value and never applied; a person
 //     reads the line.

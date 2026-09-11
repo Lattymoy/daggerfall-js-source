@@ -104,6 +104,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: Finaliz
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
+import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -544,7 +545,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the eye leaves the window's middle. Enhanced skin and switch only.
   const grassRecords = new Map();   // archive -> Set of grass records
   const groundMeanColour = new Map();   // GR4: archive -> [record] -> mean rgb 0..1
-  const labGrass = isEnhanced() && getPref('enhancedEnvironments') && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
+  // PERF1: the density pref is a fraction of the lab's field; 0 is the
+  // same as ?grass=off - no renderer, no field, nothing drawn.
+  const grassDensity = Math.max(0, Math.min(1, Number(getPref('grassDensity')) || 0)) * LAB_GRASS.density;
+  const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
@@ -5116,7 +5120,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:206, "a right-click on a window is the window's...
+  // (dungeon.js:207, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -6834,7 +6838,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:94, so the
+  // only reader of `load` in the whole tree is dungeon.js:95, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7012,6 +7016,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
     if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
@@ -7752,39 +7757,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
-    // EV8: the far province ring - the horizon's actual mountains,
-    // drawn while the depth buffer is still the sky's (the streamed
-    // world repaints everything nearer). Skipped when exp fog owns
-    // the air (rain, snow, heavy fog); its light state is the frame's
-    // own, already installed by setLighting/beginFrame above. It
-    // shares the EV6 seam mark below - one foreign span, two passes.
-    if (farRing && fogNow.mode === 'linear') {
-      if (farRing.needsRebuild(state.current.x, state.current.y)) {
-        farRing.build({
-          heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
-          climateAt: (x, y) => maps.getClimateIndex(x, y),
-          baseX: state.current.x, baseY: state.current.y,
-        }, state.current.x, state.current.y, state.terrainDistance);
-      } else {
-        farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);
-      }
-      farRing.draw(view, {
-        origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
-        lightDir: renderer._lightDir, ambient: renderer._ambient,
-        sunScale: renderer._sunScale * sky.farSunFactor(), sunColor: renderer._sunColor,   // VC4: the ring stands outside the shadow map - a cover-derived dim
-        // AUDIT EV F-R4: the same moon the streamed terrain takes -
-        // without it a full-Masser night stepped in brightness at the
-        // exact boundary the hole machinery works to hide
-        moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end,
-        // E5: the ring draws INTO the world pass's rect, so it takes
-        // that pass's aspect - a horizon built on the full-canvas ratio
-        // would step against the terrain in front of it under a docked bar.
-        fovY: fieldOfView(), aspect: worldAspect,
-      });
-    }
-    renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.pos, yaw: cam.yaw });
@@ -7876,6 +7848,51 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
+    // PERF2 (2026-09-11, RookieG via Mac: "its like 45fps on the outside"):
+    // THE SKY IS DRAWN AFTER THE GROUND. It used to open the frame -
+    // every pixel shaded by the dome's stars, moons, decks and the
+    // clouds' composite, then most of them painted over by the terrain.
+    // The three sky passes and the ring now sit AT the far plane and
+    // depth-test LEQUAL with the mask off: they shade only the pixels
+    // nothing nearer has claimed, and write no depth, so everything
+    // blended after them (the water, the flats, the rain, the grass)
+    // composes exactly as it did. The ring keeps its "the streamed
+    // world repaints everything nearer" law by gl_FragDepth = 1.0
+    // instead of by order. Same picture, a third to a half fewer sky
+    // fragments on an open road.
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);   // VC3: the clouds' map restores this rect
+    // EV8: the far province ring - the horizon's actual mountains,
+    // drawn while the depth buffer is still the sky's (the streamed
+    // world repaints everything nearer). Skipped when exp fog owns
+    // the air (rain, snow, heavy fog); its light state is the frame's
+    // own, already installed by setLighting/beginFrame above. It
+    // shares the EV6 seam mark below - one foreign span, two passes.
+    if (farRing && fogNow.mode === 'linear') {
+      if (farRing.needsRebuild(state.current.x, state.current.y)) {
+        farRing.build({
+          heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
+          climateAt: (x, y) => maps.getClimateIndex(x, y),
+          baseX: state.current.x, baseY: state.current.y,
+        }, state.current.x, state.current.y, state.terrainDistance);
+      } else {
+        farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);
+      }
+      farRing.draw(view, {
+        origin: state.pixelTranslation(farRing.baseX, farRing.baseY, _ringOrigin),
+        lightDir: renderer._lightDir, ambient: renderer._ambient,
+        sunScale: renderer._sunScale * sky.farSunFactor(), sunColor: renderer._sunColor,   // VC4: the ring stands outside the shadow map - a cover-derived dim
+        // AUDIT EV F-R4: the same moon the streamed terrain takes -
+        // without it a full-Masser night stepped in brightness at the
+        // exact boundary the hole machinery works to hide
+        moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
+        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end,
+        // E5: the ring draws INTO the world pass's rect, so it takes
+        // that pass's aspect - a horizon built on the full-canvas ratio
+        // would step against the terrain in front of it under a docked bar.
+        fovY: fieldOfView(), aspect: worldAspect,
+      });
+    }
+    renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // WATER1: THE WATER, after every pixel's opaque ground and models and
     // before the first flat - so the surface blends over the land it lies
     // on and every sprite, missile, drop and the arms draw over it. One
@@ -8087,9 +8104,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         return null;
       };
-      if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground });
+      if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground);
-      window.__grassStats = () => ({ blades: labGrass.count, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, nearPixels: near.length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0 });
       const w = sky?.cloudShadow?.wind ?? [0, 0];
       const mag = Math.hypot(w[0], w[1]); const dir = mag > 1e-6 ? [w[0] / mag, w[1] / mag] : [1, 0];
       const slider = labWindSlider(w);   // GR2: the sky's row on the lab's slider - a sunny day is the lab's 70
@@ -8350,6 +8367,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         window.__shotReady = true;
       }
     }
+    frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

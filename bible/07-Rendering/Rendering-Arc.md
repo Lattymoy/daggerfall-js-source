@@ -1078,3 +1078,51 @@ nowhere. It is the wiring that had no counterpart, not the table. The
 old pin restated the departure (`windowStyleForWeather('fog') ===
 'fog'`); the new pin is over the two hosts' call text and over
 `weather.js` exporting no window-style rule at all.
+
+## PERF2 - THE SKY AFTER THE GROUND, THE GRASS BY THE CELL (2026-09-11)
+
+Mac: "I really just want you to find ways we can improve performance
+without downgrading across the board." Two changes that draw the same
+picture for fewer cycles, both read out of the frame rather than
+measured - there is no GPU and no ARENA2 in the session - so the
+counter's numbers on a real machine are what confirm them.
+
+**The sky was the frame's first draw, and most of it was painted over.**
+`beginFrame` cleared, the dome's full-screen triangle shaded every
+pixel (stars, two moons, the decks, the retro step) and the clouds'
+composite shaded every pixel again, and then the terrain, the models
+and the far ring covered the lower half or more of them. Now the three
+sky passes (`enhancedSky.js`, `skyRenderer.js`, `dynamicSkiesRenderer.js`)
+and the clouds' composite (`volumetricClouds.js draw`) put their quad AT
+the far plane - `gl_Position.z = w`, depth exactly 1.0 - and draw with
+the depth test on, LEQUAL, mask off: a fragment lands only where the
+buffer still holds the cleared 1.0, which is exactly where nothing
+nearer drew. The hosts draw the block after the terrain, the models
+and the body, before the water, so every blended pass after it (the
+water, the flats, the rain, the grass) composes over the sky as it
+did. `0.9999` would not have done: at near 0.2 and far 6000 that depth
+is 1,500 m out, and the streamed terrain runs past it. The far ring
+kept its law - "the streamed world repaints everything nearer" - by
+DEPTH instead of by ORDER: `gl_FragDepth = 1.0` under the same test,
+so it loses to any streamed pixel and paints over the sky. The three
+`markForeignPass` seams moved with the block; glstate's count holds.
+
+**The grass field went to the GPU whole, every frame.** One instanced
+draw of every slot - the 420 m window's ~180 cells, the cells behind
+the eye, and the window's corners, which at 1.4 x `uRange` the vertex
+shader fades to nothing and then blends as nothing. `LabGrassRenderer`
+now records each slot's box when a cell is written (x/z off the roots,
+y from the lowest root to the tallest tip) and `draw` walks the slots:
+a cell whose nearest point is past the range, or whose box is outside
+the frustum (`render/frustum.js`, the EV3 helpers), is not submitted;
+the rest are drawn one instanced call each with the four instance
+pointers moved to the slot's byte run - WebGL2 has no base instance,
+so the pointers are the offset; four calls, no upload. Facing forward
+on an open meadow that is roughly a third of the blades the frame used
+to carry; the culled ones drew no surviving fragment. The lab's whole
+scatter (`set`) still draws whole. `window.__grassStats().drawn` says
+what was submitted.
+
+**Pinned** in `test/perf2.test.js` (3): the culling executes against a
+stub GL that records the draws; the sky law and the hosts' order are
+text. Not a departure: the same fragments reach the buffer.
