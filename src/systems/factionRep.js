@@ -241,7 +241,7 @@ export function attachFactionRep(entity, factionDict) {
  *  without FACTION.TXT - a caller with no dictionary gets null and must
  *  say so rather than pretend the reputation is zero. The stand-in
  *  entity's own stand-in columns are flagged where they live, at
- *  characters/playerEntity.js:5/:20/:27, and are that file's to retire. */
+ *  characters/playerEntity.js:5/:20/:28, and are that file's to retire. */
 export function ensureFactionRep(entity, factionDict) {
   if (!entity) return null;
   return entity.factionRep ?? attachFactionRep(entity, factionDict);

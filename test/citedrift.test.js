@@ -588,7 +588,7 @@ const SOURCE_CITES = [
   // numbers this round's one-line insert into worldModes moved.
   ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
-  ['src/systems/chargenSession.js', /dungeon\.js:434 and worldModes\.js:(\d+) both feed/,
+  ['src/systems/chargenSession.js', /dungeon\.js:435 and worldModes\.js:(\d+) both feed/,
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
   ['src/systems/advancement.js', /exterior\.js:(\d+)\/:1517/, EX, /^ {4}onLevelUp: \(\) => \{$/],
   ['src/systems/advancement.js', /exterior\.js:923\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
@@ -635,7 +635,7 @@ const SOURCE_CITES = [
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-2272\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:813`/, EX, /^ {6}fieldOfView\(\),$/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:814`/, EX, /^ {6}fieldOfView\(\),$/],
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
@@ -857,7 +857,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
 // multi-number citation: `cityGuards.js:744-694`, `world.js:5483-5457`,
-// `worldModes.js:1093 against :1056`. Forty of them came out as ranges
+// `worldModes.js:1094 against :1056`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //
@@ -941,7 +941,10 @@ test('CD8: the ROAD-G G4 review\'s re-resolved cites name the lines they mean', 
     'the double-click cite does not start at the row guard');
   const dblSpan = lp.slice(Number(dbl[1]) - 1, Number(dbl[2])).join('\n');
   assert.match(dblSpan, /DOUBLE_CLICK_DELAY_MS/, 'the cited range holds no DOUBLE_CLICK_DELAY_MS test');
-  assert.match(dblSpan, /if \(wasDouble\) \{ this\._lastRowClick = null; this\._use\(\); \}/,
+  // AUDIT 65 UI-1: the stamp is no longer cleared on the double -
+  // BaseScreenComponent.cs:687-688 stores it unconditionally - so the
+  // cited range is the bare `_use()` call now.
+  assert.match(dblSpan, /if \(wasDouble\) this\._use\(\);/,
     'the cited range never reaches _use()');
 
   const sync = /with `listPicker\.js:(\d+)-(\d+)` \(`syncScrollBar`\)/.exec(row);

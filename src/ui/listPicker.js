@@ -308,7 +308,7 @@ export class ListPickerWindow {
    *  picker forwards it the way it already forwards `hover`. */
   release() { this.scrollBar.draggingThumb = false; }
 
-  click(vx, vy, font = null, now = null) {
+  click(vx, vy, font = null) {   // AUDIT 65 UI-1: THREE slots - the 4th took the bare mounts' `middle` as its clock
     if (inRect(PICKER_RECTS.previous, vx, vy)) { this._select(-1); return true; }
     if (inRect(PICKER_RECTS.next, vx, vy)) { this._select(1); return true; }
     // ROAD-A7: the bar. A press inside thumbRect latches the DRAG
@@ -329,7 +329,7 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:1123, worldModes.js:7091, dungeonContext.js:4867 - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
+      // (townTalk.js:1123, worldModes.js:7092, dungeonContext.js:4867 - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you
@@ -344,24 +344,24 @@ export class ListPickerWindow {
       if (row >= 0 && row < this.rowsDisplayed) {
         const index = this.scrollIndex + row;
         // ROAD-A7: DFU's real law at last. ListBox.MouseClick
-        // (:465-505) only SELECTS - it sets selectedIndex and raises
-        // OnSelectItem; it takes MouseDoubleClick (:507-512) to reach
-        // UseSelectedItem, and through it OnItemPicked. The port used
-        // to pick straight through on one click, which meant no list
-        // in the game could be browsed and the DFU behaviour every
-        // other list window in this port already carries (the class
-        // picker, the save window) stopped at this one door.
+        // (:465-505) only SELECTS - selectedIndex, then OnSelectItem;
+        // it takes MouseDoubleClick (:507-512) to reach UseSelectedItem
+        // and through it OnItemPicked. The port used to pick straight
+        // through on one click, so no list in the game could be browsed
+        // and the DFU behaviour every other list window here carries
+        // (the class picker, the save window) stopped at this one door.
         //
         // The double-click test is on TIME ALONE
         // (BaseScreenComponent.cs:691, the chargen precedent): the
         // second click need not land on the same row, because
-        // MouseClick has already moved the selection to it.
+        // MouseClick has already moved the selection to it. AUDIT 65
+        // UI-1: that clock is the window's OWN, never a positional.
         if (index >= 0 && index < this.items.length) {
-          const t = now ?? this._now();
+          const t = this._now();   // BaseScreenComponent.cs:688
           const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
           this.selectedIndex = index;          // MouseClick
           this._lastRowClick = t;
-          if (wasDouble) { this._lastRowClick = null; this._use(); }   // MouseDoubleClick
+          if (wasDouble) this._use();   // MouseDoubleClick; :687-688 stamps unconditionally, so nothing is cleared
         }
       }
       return true;

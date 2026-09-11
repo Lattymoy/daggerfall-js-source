@@ -63,14 +63,15 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host, worldModes and the surface all crawled at their own 0.05)
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
 // record 0 - the 0xFF tilemap sentinel's target, same picture classic
 // tiles across oceans), tinted only by alpha; slow diagonal scroll is
 // the classic flow, presentation-tuned.
+// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate below is the one that IS a law, and it has one home.
 const WATER_COLOR = [1, 1, 1, 0.82];
-const WATER_SCROLL_TILES_PER_SEC = 0.05;
 
 // Milestone 5 scene: a full dungeon on the block grid.
 export async function bootDungeon(canvas, renderer, params, status) {
@@ -614,7 +615,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: ctx.uiOverlayActive, climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
+        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101/:215 read playerEnterExit.IsPlayerSwimming (this host writes both members, so the ANSWER is unchanged - the member is)
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
@@ -682,7 +683,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // (DFU's defaults, read through the I2 registry).
       const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
-      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
+      player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): BOTH swim members off the one blockWaterLevel test, as PlayerEnterExit.cs:384-392 writes them. Outdoors the two part company - :421 clears the motor's with no tile test - which is why the exterior hosts write only the host flag
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
       // S19 paralysis: FrictionMotor cancels ALL movement input (the

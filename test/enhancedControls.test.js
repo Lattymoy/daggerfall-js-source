@@ -261,6 +261,68 @@ test('FIX-F: arming from a click cannot itself be the bound key', () => {
   });
 });
 
+test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)', () => {
+  // DaggerfallControlsWindow heads all seven handlers with
+  // `if (waitingForInput) return;` — Joystick (:281), Mouse (:290),
+  // Defaults (:299), Continue (:321), CurrentBindings (:338), the
+  // keybind button (:361) and the right-click remove (:372, ANDed
+  // with the unbound refusal). The classic grid carries it in one
+  // line (ui/controlsWindow.js:298 `if (this.capture) return true;`);
+  // this face carries it as the `act` wrapper. Without it CONTINUE
+  // saves and re-stages under a LIVE capture, and the Primary toggle
+  // flips the dict the pending keystroke is about to be written into.
+  withPane(({ doc, view, store }) => {
+    let saved = 0;
+    const off = onSavedKeyBinds(() => { saved++; });
+    try {
+      keyBtn(view, 'MoveForwards').onclick();
+      assert.equal(captureArmed(), 'MoveForwards');
+      assert.equal(controlsStaging().usingPrimary, true);
+      const armedListener = doc.listeners[0];
+      const still = (what) => {
+        assert.equal(captureArmed(), 'MoveForwards', `${what} must not touch the capture`);
+        assert.equal(controlsStaging().usingPrimary, true, `${what} must not flip the dict`);
+        assert.equal(saved, 0, `${what} must not reach saveKeyBinds`);
+        assert.equal(doc.listeners.length, 1, `${what} must leave the one capture standing`);
+        assert.equal(doc.listeners[0], armedListener, `${what} must not re-arm`);
+        assert.equal(one(view.body, 'ctl-prompt'), undefined, `${what} must open no prompt`);
+      };
+
+      one(view.body, 'ctl-continue').onclick();     // :321
+      still('CONTINUE');
+      assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW',
+        'and nothing was applied to the live registry either');
+
+      one(view.body, 'ctl-which').onclick();        // :338
+      still('the Primary/Secondary toggle');
+
+      one(view.body, 'ctl-defaults').onclick();     // :299
+      still('DEFAULTS');
+
+      keyBtn(view, 'Jump').onclick();               // :361 - a second row
+      still('a second row’s binding');
+
+      clearBtn(view, 'Jump').onclick();             // :372 - its ✕
+      still('a second row’s ✕');
+
+      // The right-click half keeps DFU's refusal AND the browser's
+      // menu suppressed: the preventDefault sits outside the guard.
+      const e = { prevented: false, preventDefault() { e.prevented = true; } };
+      assert.equal(keyBtn(view, 'Jump').oncontextmenu(e), false);
+      assert.equal(e.prevented, true,
+        'a refused right-click must still swallow the browser menu');
+      still('a second row’s right-click');
+
+      // ...and the capture the player actually armed is still the one
+      // live gesture on the screen, landing where they aimed it.
+      armedListener.fn(keyEvent('KeyG'));
+      assert.equal(captureArmed(), null);
+      assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
+      assert.equal(controlsStaging().usingPrimary, true);
+    } finally { off(); }
+  });
+});
+
 // ── DUPLICATES, DEFAULTS, REMOVE ─────────────────────────────────
 
 test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window’s words', () => {

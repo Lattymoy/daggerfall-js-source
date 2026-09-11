@@ -75,7 +75,8 @@ test('MWA1 pins: the switch on the prefs shelf, flipped by Build and Unload; the
   assert.equal(PREF_DEFAULTS.mwArms, false, 'off until the player builds once');
   assert.equal(PREF_DEFAULTS.showFps, false, 'a diagnostic is off by default');
   const rig = read('src/combat/weaponRig.js');
-  assert.match(rig, /export async function autoBuildArms\(entity, \{ wanted = \(\) => getPref\('mwArms'\), dataCount = morrowindDataCount \} = \{\}\)/);
+  assert.match(rig, /export async function autoBuildArms\(entity, \{ wanted = \(\) => getPref\('mwArms'\), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint \} = \{\}\)/);
+  assert.match(rig, /if \(measured\(\) == null\) await measure\(\)\.catch\(\(\) => 0\);\n\s+const res = await buildArmsFor\(entity\);/, 'AUDIT 65 XL-6: the store is measured before the face verdict, not parsed a dozen times');
   assert.match(rig, /if \(!entity\?\.chargenDone \|\| !wanted\(\) \|\| !\(dataCount\(\) > 0\) \|\| fpArm\.ready\(\)\) return null;/, 'the four gates, the last so a second door does not rebuild a built arm');
   const w = read('src/scenes/world.js');
   assert.equal((w.match(/autoBuildArms\(playerEntity\);/g) ?? []).length, 4, 'world: the rig, the wizard, the load, the classic load');

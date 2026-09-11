@@ -10,6 +10,9 @@ import {
   PauseOptionsWindow,
 } from '../src/ui/pauseWindow.js';
 import { setValue, getFloat, _resetForTests } from '../src/systems/settings.js';
+import { openPauseFlow } from '../src/ui/pauseDoor.js';
+import { isEnhanced } from '../src/systems/uiSkin.js';
+import { _resetForTests as _resetUiPrefs } from '../src/systems/uiPrefs.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -175,5 +178,159 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // the symbol; this pins the CALL in the exit hook of each host)
   for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
     assert.match(code(rel), /exitToMenu: exitToTitleMenu/, `${rel} exits through the shared door`);
+  }
+});
+
+
+// ── MAC1 J ON THE CLASSIC SKIN ───────────────────────────────────
+
+test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on resume', () => {
+  // MAC1 J's mechanism is the enhanced door's (ui/pauseDoor.js:153-170):
+  // the close runs INSIDE the Resume click or the Escape keyup - the
+  // transient activation requestPointerLock needs - while the hosts'
+  // look gate relocks on the NEXT frame, outside any gesture, which the
+  // browser refuses. The fix was wired as `hooks.relock` and read only
+  // by `enhancedPauseOverlay`, so a player on the CLASSIC skin got none
+  // of it and spent the first click after every resume re-grabbing the
+  // pointer (and took PlayerActivate.cs:1050-1054's SetClickDelay with
+  // it). This face now reads the same hook on every RESUME exit: the
+  // CONTINUE rect, the deferred Escape keyup, the two quick-verb
+  // save/load fallbacks, and the PopToHUD drain of a COMPLETED pushed
+  // save or load - and on none of the exits that hand over a window.
+  //
+  // The skin AND a document are both set: headless, the door's second
+  // clause takes the classic branch whatever the skin says, and a pin
+  // that only set the skin would pass for the wrong reason (the M4
+  // shape test/enhancedPause.test.js names).
+  _resetForTests();
+  _resetUiPrefs();
+  globalThis.location = { search: '?skin=classic' };
+  globalThis.document = { createElement: () => ({ style: {}, remove() {} }), body: { append() {} } };
+  try {
+    assert.equal(isEnhanced(), false, 'this pin is about the classic skin');
+    const px = 85, py = PAUSE_PANEL_Y;
+    let relocked = 0;
+    const open = (extra = {}) => {
+      let shown = null;
+      const w = openPauseFlow((win) => { shown = win; }, { relock: () => relocked++, ...extra });
+      assert.equal(w?.constructor?.name, 'PauseOptionsWindow', 'the classic skin gets the canvas window');
+      assert.equal(shown, w);
+      return w;
+    };
+
+    // RESUME, door one: the CONTINUE rect.
+    const cont = open();
+    cont.click(px + 76 + 1, py + 60 + 1);
+    assert.equal(cont.done, true, 'CONTINUE closes');
+    assert.equal(relocked, 1, 'and relocks inside the click that closed it');
+
+    // RESUME, door two: the deferred Escape RELEASE (ROAD-E E1).
+    relocked = 0;
+    const esc = open();
+    esc.keyup('Escape');
+    assert.equal(relocked, 0, 'a release with nothing armed closes nothing, so it relocks nothing');
+    esc.input('Escape');
+    esc.keyup('Escape');
+    assert.equal(esc.done, true);
+    assert.equal(relocked, 1, 'the close on the keyup relocks inside that keyup');
+
+    // NOT the exit. There is no world to relock into - pauseDoor.js:165's
+    // own `action !== 'exit'`.
+    relocked = 0;
+    const exit = open({ exitToMenu() {}, textLines: () => ['Are you sure?'] });
+    exit.click(px + 101 + 1, py + 4 + 1);
+    exit.input('KeyY');
+    assert.equal(exit.done, true, 'Yes takes the door');
+    assert.equal(relocked, 0, 'the exit leaves the pointer where the title menu can use it');
+
+    // NOT the save or load DOORS - and driven through the bag the
+    // PRODUCER mints, which is the whole point of this arm. All three
+    // shipping pause hosts hand over saveAs + loadKey + pushWindow
+    // (world.js:4839-4846, worldModes.js:6827-6833,
+    // dungeonContext.js:4382-4388), so `saveLoadPushes` is true and the
+    // door PUSHES the slot window: the pause window rides UNDER it,
+    // `done` stays false and `_closeWith` is never reached at all. A
+    // relock here would take away the cursor the slot window is for.
+    // (A bag of `{ quickSave(){} }` alone is a shape no host mints, and
+    // under it this arm would certify a law the game never runs.)
+    relocked = 0;
+    const pushed = [];
+    const hostBag = {
+      playerName: () => 'Alaric',
+      saveAs: () => true,
+      loadKey: () => {},
+      pushWindow: (w) => pushed.push(w),
+    };
+    const save = open(hostBag);
+    save.click(px + 4 + 1, py + 4 + 1);
+    assert.equal(pushed.length, 1, 'the SAVE door PUSHES the slot window (ROAD-C C1)');
+    assert.equal(save.done, false, 'the pause window rides under it - _closeWith never ran');
+    assert.equal(relocked, 0, 'and nothing grabs the cursor that window is for');
+    const load = open(hostBag);
+    load.click(px + 52 + 1, py + 4 + 1);
+    assert.equal(pushed.length, 2, 'the LOAD door pushes too');
+    assert.equal(load.done, false);
+    assert.equal(relocked, 0, 'nor on the load door');
+
+    // ...but the DRAIN when one COMPLETES is a resume. PopToHUD
+    // (DaggerfallUI.cs:829-836) empties the whole stack back to the
+    // world inside the slot window's own click, and the enhanced twin
+    // relocks on exactly it - pauseDoor.js:165 fires for 'save' and
+    // 'load', not only for 'resume'. saveWindow.js:343 and :349 are the
+    // two callers of this hook.
+    assert.equal(typeof pushed[1].hooks.popToHUD, 'function',
+      'a pushed slot window carries the drain');
+    pushed[1].hooks.popToHUD();
+    assert.equal(load.done, true, 'the drain closes the pause window under it');
+    assert.equal(relocked, 1, 'and relocks inside the click that completed the load');
+
+    // AND THE REPLACE FALLBACK, which is the arm that tells the two
+    // candidate fixes apart. `openClassicPauseFlow` mints
+    // `saveLoadPushes: !!push` and its own header documents the
+    // push-less branch as supported (test/roadc_savewindow.test.js:669
+    // drives it); there the SAVE door really does travel `_closeWith`
+    // and STILL must not relock, because it is opening the slot window
+    // in this window's place. No shipping host mints this bag today -
+    // it is the seam's branch, not a host's - and it is the only
+    // `_closeWith` caller that is not a resume, so a fix hung on
+    // `_closeWith` instead of on the resume exits dies exactly here.
+    relocked = 0;
+    const replaceBag = { playerName: () => 'Alaric', saveAs: () => true, loadKey: () => {} };
+    const repSave = open(replaceBag);
+    repSave.click(px + 4 + 1, py + 4 + 1);
+    assert.equal(repSave.done, true, 'the replace door closes this window up front');
+    assert.equal(relocked, 0, 'and hands the cursor to the slot window it just opened');
+    const repLoad = open(replaceBag);
+    repLoad.click(px + 52 + 1, py + 4 + 1);
+    assert.equal(repLoad.done, true);
+    assert.equal(relocked, 0, 'the same on the load side');
+
+    // THE QUICK-VERB FALLBACK is the other save/load shape, and it IS a
+    // resume: a host with no saveAs/loadKey seam (exterior.js:2170's bag
+    // carries neither, so its LOAD rect runs this today) closes straight
+    // back to the world and opens no window at all.
+    relocked = 0;
+    const quickSave = open({ quickSave() {} });
+    quickSave.click(px + 4 + 1, py + 4 + 1);
+    assert.equal(quickSave.done, true, 'the one-press quicksave closes the window');
+    assert.equal(relocked, 1, 'and hands the pointer back inside that click');
+    const quickLoad = open({ quickLoad() {} });
+    quickLoad.click(px + 52 + 1, py + 4 + 1);
+    assert.equal(quickLoad.done, true);
+    assert.equal(relocked, 2, 'the one-press quickload too');
+
+    // NOT controls. That arm bypasses `_closeWith` outright and opens
+    // the rebinding grid, which needs the cursor most of all. Built by
+    // hand because the classic grid's own art is not loaded headless,
+    // so the flow would hand this window a null openControls.
+    relocked = 0;
+    const ctl = new PauseOptionsWindow({ relock: () => relocked++, openControls() {} });
+    ctl.click(px + 5 + 1, py + 60 + 1);
+    assert.equal(ctl.done, true, 'the controls arm closes this window and opens the grid');
+    assert.equal(relocked, 0, 'with the cursor intact');
+  } finally {
+    delete globalThis.document;
+    delete globalThis.location;
+    _resetUiPrefs();
   }
 });

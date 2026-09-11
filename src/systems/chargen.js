@@ -8,7 +8,7 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 // FormulaHelper.cs (MIT, Daggerfall Workshop). This slice replaces
 // the pre-chargen placeholder player (maxHealth 50, flat skills 30,
 // stats 50s) with the real rolled entity - that placeholder carries
-// its own notes at characters/playerEntity.js:5/:20/:27/:29, and
+// its own notes at characters/playerEntity.js:5/:20/:28/:30, and
 // systems/chargenSession.js is the path that supersedes it (:239
 // finishChargen -> applyCharacter). Nothing pends HERE.
 //

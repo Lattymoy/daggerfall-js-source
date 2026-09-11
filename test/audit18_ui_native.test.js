@@ -266,8 +266,11 @@ test('audit18 ui-native F7b: the topic hit test reads scrollIndex + clickY', () 
   w.click(10, 15);
   w.scroll = 21;                          // three rows off the top
   // ROAD-D D10: two presses, because MouseDoubleClick is what descends
-  w.click(10, 71, false, 1000);           // the very top of the list band
-  w.click(10, 71, false, 1100);
+  let t = 1000;                           // AUDIT 65 UI-1: the clock is the window's own seam, the 4th slot is the hosts' `middle`
+  w._now = () => t;
+  w.click(10, 71, false, false);          // the very top of the list band
+  t = 1100;
+  w.click(10, 71, false, false);
   assert.equal(w.topicMode, 'buildings');
   assert.equal(w.topics[0].label, 'b3', 'ListBox.MouseClick: floor((21 + 0) / 7) = 3');
 });

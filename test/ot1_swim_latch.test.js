@@ -20,6 +20,17 @@
 // clears it off tile 0. `exteriorSwimming` is both, and the two exterior
 // hosts call it after the surface model, feeding the value the frame
 // arrived with (read BEFORE the per-frame clear) and the sink edge.
+//
+// AUDIT 65 XL-1 CORRECTED THE TARGET. OT1 wrote the result into
+// `player.swimming`, which is levitateMotor.IsSwimming - the member
+// PlayerEnterExit.cs:421 clears outdoors with NO tile test - and whose
+// setter arms PlayerMotor.CancelMovement on every transition. Two edges
+// a frame, one fixed step, and the exterior swimmer travelled 0 over 600
+// steps at 60 Hz. The member the readers want is the OTHER one, and the
+// motor now carries it: `player.isPlayerSwimming`, a plain field. The
+// host-order greps below follow it; the behaviour is pinned in
+// test/audit65_swim.test.js, which drives a real motor over a real
+// Collider floor because nothing here can see a motor at all.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -61,14 +72,14 @@ test('OT1: both exterior hosts feed the helper the pre-clear value and the sink 
     // The carried value is read BEFORE applyMotorEffectFlags clears it
     // - after, and the dungeon exit's value is gone before the latch
     // can see it.
-    const read = s.indexOf('const _wasSwimming = !!player.swimming;');
+    const read = s.indexOf('const _wasSwimming = !!player.isPlayerSwimming;');   // XL-1: the HOST flag (PlayerEnterExit.isPlayerSwimming)
     const clear = s.indexOf('applyMotorEffectFlags(player, playerEntity);');
     assert.ok(read > 0 && clear > 0 && read < clear, `${host}: _wasSwimming must be read before the per-frame clear`);
     // The write sits after the surface model (it needs the tile under
     // the player) and after the motor ran (it needs this frame's sunk).
     const surf = s.indexOf('const _surf = exteriorSurfaceNow();');
-    const write = s.indexOf("player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });");
-    assert.ok(surf > 0 && write > surf, `${host}: player.swimming is derived from the surface model's tile`);
+    const write = s.indexOf("player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });");
+    assert.ok(surf > 0 && write > surf, `${host}: player.isPlayerSwimming is derived from the surface model's tile`);
     assert.ok(write > clear, `${host}: the write follows the clear it re-derives`);
     // DoUnsinking's write is the motor's own 'unsink' height action -
     // `_beginUnsink` sets it and the lerp's end resets it - so the host
@@ -79,10 +90,11 @@ test('OT1: both exterior hosts feed the helper the pre-clear value and the sink 
 });
 
 test('OT1: the per-frame clear is untouched - the EFFECT still owns levitate/waterWalking/slowFall', () => {
-  // The clear stays exactly as AUDIT 18 pinned it (audit18_hosts_outer):
-  // the helper re-derives swimming AFTER it rather than reaching into
-  // shared.js, so a host that forgets the helper is back to the old
-  // false, never to a leak.
+  // The clear stays exactly as AUDIT 18 pinned it (audit18_hosts_outer),
+  // and XL-1 is why it must: `player.swimming` IS levitateMotor
+  // .IsSwimming and :421 clears it outdoors with no tile test, so the
+  // helper's result goes to the OTHER member and this line keeps the
+  // motor's own flag down every exterior frame.
   const shared = src('src/scenes/shared.js');
   assert.match(shared, /player\.swimming = false;/, 'applyMotorEffectFlags still clears swimming');
 });

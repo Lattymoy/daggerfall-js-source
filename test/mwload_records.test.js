@@ -166,8 +166,13 @@ test('MW-LOAD: the attach fingerprint carries the stored SIZES, so a same-name r
   assert.match(src, /const mwFingerprint = \(names, sizes = \[\]\) => \[\.\.\.names\]\.sort\(\)\.map\(\(n, i\) => `\$\{n\}\\t\$\{sizes\[i\] \?\? ''\}`\)\.join\('\\n'\);/,
     'name and size per row, in sorted order');
   const sizes = src.slice(src.indexOf('async function storedMorrowindSizes(names)'));
-  assert.match(sizes.slice(0, sizes.indexOf('\n}\n')), /for \(const n of \[\.\.\.names\]\.sort\(\)\) \{\s*\n\s*const v = await assetBlob\(MW_STORE, n\);/,
-    'the sizes walk the same sorted order off Blob handles - no bytes read');
+  // AUDIT 65 XL-6: off a PLAIN GET, not assetBlob. Both stored shapes
+  // answer their own size (a Blob's `.size`, a legacy ArrayBuffer's
+  // `.byteLength`); assetBlob would MIGRATE every legacy record - a
+  // structured clone and a readwrite put per file - just to measure it.
+  assert.match(sizes.slice(0, sizes.indexOf('\n}\n')), /for \(const n of \[\.\.\.names\]\.sort\(\)\) \{\s*\n\s*const v = await assetValue\(MW_STORE, n\);\s*\n\s*out\.push\(v == null \? -1 : \(v\.size \?\? v\.byteLength \?\? -1\)\);/,
+    'the sizes walk the same sorted order off a plain get - no bytes read, and nothing written');
+  assert.doesNotMatch(sizes.slice(0, sizes.indexOf('\n}\n')), /assetBlob/, 'measuring a set never migrates it');
   const reg = src.slice(src.indexOf('export async function registerMorrowindData()'));
   assert.match(reg, /const sizes = await storedMorrowindSizes\(names\);\s*\n\s*const print = mwFingerprint\(names, sizes\);/);
 });

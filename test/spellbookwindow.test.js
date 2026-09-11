@@ -364,7 +364,7 @@ test('U42 sort: alphabetical, then point cost only if the alpha pass changed not
 });
 
 test('U42: every mutation lands on the player\'s OWN array - the save envelope sees it', () => {
-  // PlayerEntity.GetSpells() is the book itself and save.js:143 maps
+  // PlayerEntity.GetSpells() is the book itself and save.js:163 maps
   // that array in order. This pin fails if the window ever copies.
   const { entity, w } = book(spell('B', 5, { index: 7 }), spell('A', 5, { index: 9 }));
   const arr = entity.spells;
@@ -385,7 +385,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   // RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
   // is a struct, so GetSpell/SetSpell is a copy-then-write; the
   // port's records are shared objects, so the copy is explicit. The
-  // `custom` flag is what save.js:143 reads to store the whole
+  // `custom` flag is what save.js:163 reads to store the whole
   // record instead of a bare SPELLS.STD index.
   const shared = spell('Fireball', 20, { index: 12 });
   const { entity, w } = book(shared);
@@ -402,7 +402,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
 });
 
 test('U42 rename: the renamed COPY survives the save envelope', () => {
-  // The `custom` flag is not decoration - save.js:143 stores the whole
+  // The `custom` flag is not decoration - save.js:163 stores the whole
   // record for a custom spell and a bare SPELLS.STD index for every
   // other, so without it a reload would hand back the ORIGINAL name.
   // This drives the real envelope rather than asserting the flag.
@@ -812,16 +812,48 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   // (SpellsListBox_OnUseSelectedItem). The old arm used the SELECTED
   // row on any re-click, however late; Ledger :505 called that an
   // approximation and this is the gesture itself.
+  //
+  // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
+  // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
+  // - townTalk.js:1123, worldModes.js:7092, dungeonContext.js:4867 -
+  // so the clock is stubbed on the window's OWN `_now()` seam, not
+  // handed to a positional the hosts already fill with a button.
+  // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`
+  // back - `false ?? Date.now()` keeps the boolean and every second
+  // click is a double.
   const { w, readied } = book(spell('A', 5), spell('B', 5), spell('C', 5));
   w._font = font();
+  let t = 1000;
+  w._now = () => t;
   const [lx, ly] = SPELLBOOK_RECTS.list;
   const rowY = (i) => PY + ly + i * (6 + SPELLBOOK_LAYOUT.rowSpacing) + 1;
-  w.click(PX + lx + 4, rowY(2), 1000);
+  w.click(PX + lx + 4, rowY(2), false, false);
   assert.equal(w.selectedIndex, 2, 'the third visible row');
   assert.equal(readied.length, 0, 'a first click only selects');
-  w.click(PX + lx + 4, rowY(2), 1000 + DOUBLE_CLICK_DELAY_MS - 1);
+  assert.equal(w._lastRowClick, 1000, 'the stamp is the CLOCK, not the button the hosts put in that slot');
+  t = 1000 + DOUBLE_CLICK_DELAY_MS - 1;
+  w.click(PX + lx + 4, rowY(2), false, false);
   assert.equal(readied[0][0].name, 'C', 'the second click inside the window uses it');
-  assert.equal(w._lastRowClick, null, 'the pair is spent - a third click opens a new one');
+  // ...and the pair is NOT spent. BaseScreenComponent.cs:687-688 stores
+  // `lastLeftClickTime = leftClickTime` UNCONDITIONALLY - DFU never
+  // clears the stamp on a double - so three fast clicks are
+  // click/double/DOUBLE, not click/double/click.
+  // MUTANT: put `this._lastRowClick = null;` back on the double.
+  t += 1;
+  w.click(PX + lx + 4, rowY(2), false, false);
+  assert.equal(readied.length, 2, 'the third fast click is a second MouseDoubleClick');
+  assert.equal(readied[1][0].name, 'C');
+  assert.equal(w._lastRowClick, t, 'and the stamp is the third click, unspent - the producible half of the same law');
+
+  // AND THE SEAM ITSELF, UNSTUBBED: every pin above overrides `_now`, so
+  // deleting the method would leave them all green and throw on the
+  // first spell-list click in the game. MUTANT: delete `_now()`.
+  const fresh = book(spell('A', 5), spell('B', 5));
+  fresh.w._font = font();
+  fresh.w.click(PX + lx + 4, rowY(1), false, false);
+  assert.equal(typeof fresh.w._lastRowClick, 'number', 'the production clock stamps a number');
+  fresh.w.click(PX + lx + 4, rowY(1), false, false);
+  assert.equal(fresh.readied.length, 1, 'two synchronous clicks are microseconds apart - a double on the real clock');
 });
 
 test('OT1 clicks: the gesture is TIME, not identity (BaseScreenComponent.cs:691)', () => {
@@ -831,17 +863,38 @@ test('OT1 clicks: the gesture is TIME, not identity (BaseScreenComponent.cs:691)
   // replaced used it, which no ListBox in DFU does
   const a = book(spell('A', 5), spell('B', 5), spell('C', 5));
   a.w._font = font();
-  a.w.click(PX + lx + 4, rowY(2), 1000);
-  a.w.click(PX + lx + 4, rowY(2), 1000 + DOUBLE_CLICK_DELAY_MS);   // the window is exclusive
+  let ta = 1000;
+  a.w._now = () => ta;
+  a.w.click(PX + lx + 4, rowY(2), false, false);
+  ta = 1000 + DOUBLE_CLICK_DELAY_MS;   // the window is exclusive
+  a.w.click(PX + lx + 4, rowY(2), false, false);
   assert.equal(a.readied.length, 0, 'outside the window a re-click is a MouseClick');
   assert.equal(a.w.selectedIndex, 2);
+  // AUDIT 65 UI-1, THE REGRESSION ITSELF: two clicks 600 ms apart on
+  // DIFFERENT rows, through the host's four-argument dispatch, ready
+  // NOTHING. When the clock sat in the third positional the hosts fill
+  // with `e.button === 2`, `t` was `false` on both, `false != null` held
+  // and `false - false === 0 < 300` - so this pair CAST, at any
+  // distance in time and on any row.
+  const d = book(spell('A', 5), spell('B', 5), spell('C', 5));
+  d.w._font = font();
+  let td = 1000;
+  d.w._now = () => td;
+  d.w.click(PX + lx + 4, rowY(0), false, false);
+  td = 1600;
+  d.w.click(PX + lx + 4, rowY(2), false, false);
+  assert.equal(d.readied.length, 0, 'a slow pair across rows is two MouseClicks');
+  assert.equal(d.w.selectedIndex, 2, 'each of them still SELECTS');
   // the second click need not land on the same row: the first has
   // already moved the selection, so a fast pair across rows uses the
   // row under the SECOND click - listPicker.js and nativeTalk.js's law
   const b = book(spell('A', 5), spell('B', 5), spell('C', 5));
   b.w._font = font();
-  b.w.click(PX + lx + 4, rowY(0), 1000);
-  b.w.click(PX + lx + 4, rowY(1), 1100);
+  let tb = 1000;
+  b.w._now = () => tb;
+  b.w.click(PX + lx + 4, rowY(0), false, false);
+  tb = 1100;
+  b.w.click(PX + lx + 4, rowY(1), false, false);
   assert.equal(b.w.selectedIndex, 1);
   assert.equal(b.readied[0][0].name, 'B');
   // in BUY mode the use is the buy (SpellsListBox_OnUseSelectedItem's
@@ -849,9 +902,12 @@ test('OT1 clicks: the gesture is TIME, not identity (BaseScreenComponent.cs:691)
   // is the observable
   const c = shop([spell('Arc Bolt', 20)], { gold: () => 0 });
   c.w._font = font();
-  c.w.click(PX + lx + 4, rowY(0), 1000);
+  let tc = 1000;
+  c.w._now = () => tc;
+  c.w.click(PX + lx + 4, rowY(0), false, false);
   assert.equal(c.w.top, null, 'a single click in buy mode only selects');
-  c.w.click(PX + lx + 4, rowY(0), 1050);
+  tc = 1050;
+  c.w.click(PX + lx + 4, rowY(0), false, false);
   assert.equal(c.w.top, 'trade', 'the second click inside the window is the buy');
 });
 

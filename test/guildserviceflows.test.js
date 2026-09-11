@@ -117,17 +117,58 @@ test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE clic
   // row 2 of the visible page, at (glyphHeight + rowSpacing) each
   const rh = 6 + ROW_SPACING;
   const at = [PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + 2 * rh + 1];
-  w.click(at[0], at[1], font, 1000);
+  // AUDIT 65 UI-1: the clock is the window's OWN seam now, never a
+  // fourth positional - the bare mounts fill that slot with `middle`.
+  // The THIRD slot stays the font the five nested callers really pass.
+  let t = 1000;
+  w._now = () => t;
+  w.click(at[0], at[1], font);
   assert.deepEqual(picked, [], 'one click picks nothing');
   assert.equal(w.selectedIndex, 11, 'it moved the SELECTION to the scrolled row');
   assert.equal(w.done, false, 'and the window is still up');
   // a second click far outside doubleClickDelay is another single click
-  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 1);
+  t = 1000 + DOUBLE_CLICK_DELAY_MS + 1;
+  w.click(at[0], at[1], font);
   assert.deepEqual(picked, []);
   // ...and one inside it is the double click, which uses the row
-  w.click(at[0], at[1], font, 1000 + DOUBLE_CLICK_DELAY_MS + 2);
+  t = 1000 + DOUBLE_CLICK_DELAY_MS + 2;
+  w.click(at[0], at[1], font);
   assert.deepEqual(picked, [[11, 'item11']]);
   assert.equal(w.done, true);
+});
+
+test('AUDIT 65 UI-1: a BARE picker takes the HOST\'s four-argument click, and the 4th slot is not its clock', () => {
+  // The mounts that hand a ListPickerWindow straight to an overlay slot
+  // - the U key's useMagicItemWindow (world.js:4796,
+  // dungeonContext.js:5123, worldModes.js:6914) and the bookshelf
+  // picker (worldModes.js:1589-1599) - are dispatched by the hosts'
+  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1123,
+  // worldModes.js:7092, dungeonContext.js:4867). The window's header
+  // already defended the THIRD slot by content; the fourth was left
+  // open, so `middle` arrived as `now`, `false ?? this._now()` kept the
+  // `false`, and `false - false === 0 < 300` made every second click a
+  // MouseDoubleClick - at any distance in time, on any row.
+  // MUTANT: restore `click(vx, vy, font = null, now = null)` with
+  // `const t = now ?? this._now()`.
+  const picked = [];
+  const w = new ListPickerWindow({ items: ['a', 'b', 'c'], onPick: (i, l) => picked.push([i, l]) });
+  let t = 1000;
+  w._now = () => t;
+  const rh = 6 + ROW_SPACING;   // no font seeded: rowHeight's own default
+  const at = (row) => [PICKER_X + PICKER_RECTS.list[0] + 1, PICKER_Y + PICKER_RECTS.list[1] + row * rh + 1];
+  w.click(...at(0), false, false);
+  assert.equal(w.selectedIndex, 0, 'the first click SELECTS');
+  t = 1600;                     // 600 ms, twice the doubleClickDelay
+  w.click(...at(2), false, false);
+  assert.deepEqual(picked, [], 'a slow pair across rows is two MouseClicks');
+  assert.equal(w.done, false, 'and the picker is still up');
+  t = 1600 + DOUBLE_CLICK_DELAY_MS - 1;
+  w.click(...at(2), false, false);
+  assert.deepEqual(picked, [[2, 'c']], 'inside the window it is the MouseDoubleClick');
+  // BaseScreenComponent.cs:687-688 stores the stamp UNCONDITIONALLY -
+  // DFU never clears it on a double.
+  // MUTANT: put `this._lastRowClick = null;` back on the double.
+  assert.equal(w._lastRowClick, t, 'the double does not spend the stamp');
 });
 
 test('U24 (ROAD-A7): Return is UseSelectedItem, the same door', () => {
@@ -169,9 +210,10 @@ test('U24 (ROAD-U): hover, draw and the hit-test share ONE row height - a router
     const vy = PICKER_Y + PICKER_RECTS.list[1] + row * rh + 1;
     w.hover(vx, vy);
     assert.equal(w.highlightedIndex, row, `hover resolves drawn row ${row}`);
-    // the third argument is the routers' boolean, and the fourth keeps
-    // every click a SINGLE click
-    w.click(vx, vy, false, 1000 + row * (DOUBLE_CLICK_DELAY_MS + 10));
+    // the third argument is the routers' boolean, and the window's own
+    // clock is stepped past doubleClickDelay so every click is SINGLE
+    w._now = () => 1000 + row * (DOUBLE_CLICK_DELAY_MS + 10);
+    w.click(vx, vy, false, false);
     assert.equal(w.selectedIndex, w.highlightedIndex, `row ${row}: you select the row you highlight`);
   }
   assert.equal(w.selectedIndex, ROWS_DISPLAYED - 1, 'the LAST visible row is reachable at all');

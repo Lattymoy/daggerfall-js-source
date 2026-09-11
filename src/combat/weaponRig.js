@@ -40,7 +40,7 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // state in which both reach the screen, and none in which neither does.
 import { fpArm, hasDaggerfallArrows } from './fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
-import { morrowindDataCount } from '../scenes/dataSource.js';   // MWA1: are the archives attached
+import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
 import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
@@ -93,8 +93,14 @@ export function buildArmsFor(entity) {
  *  load. A refusal is logged, never thrown: the arms are a departure
  *  the classic sprite stands in for. Returns the build's result, or
  *  null when nothing was asked for. */
-export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount } = {}) {
+export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint } = {}) {
   if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || fpArm.ready()) return null;
+  // AUDIT 65 XL-6: the boot menu only COUNTS the store now (names, no
+  // sizes), so this can run before the host bootstrap's fingerprint
+  // lands - and fpArm keys its kept face verdict on that print. Measure
+  // first, as the pane's Build button does, so the verdict is a lookup
+  // and not a dozen mesh parses on every launch.
+  if (measured() == null) await measure().catch(() => 0);
   const res = await buildArmsFor(entity);
   if (!res?.ok) console.warn(`[arms] boot build refused - ${res?.stage}: ${res?.error}`);
   return res;
@@ -112,7 +118,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2094), townTalk.say
  *                     (exterior.js:1300, world.js:2426) and
- *                     worldModes' own interior sink (worldModes.js:366,
+ *                     worldModes' own interior sink (worldModes.js:367,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,

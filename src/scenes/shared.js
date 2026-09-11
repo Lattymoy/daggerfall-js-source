@@ -15,7 +15,7 @@ import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world
 import { createWindModel, FRONT_LEAD_MIN } from '../systems/wind.js';   // WIND1
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, retroFor, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
-import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds
+import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
@@ -438,7 +438,7 @@ export function createSkyController(gl, params) {
       // DS1: the same term from the mod's own moons - where its orbit
       // puts them, lit by DFU's phase - so the world's night agrees
       // with the sky it stands under
-      return dynamicMoons ? moonlightTerm(dynamicMoons) : null;
+      return dynamicMoonlight(dynamicMoons);
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
@@ -619,7 +619,7 @@ export function createSkyController(gl, params) {
  *
  *  RECORDED, not a gap: the pre-chargen guard is load-bearing, and
  *  what it guards is a state DFU never has. The pre-chargen literal
- *  (characters/playerEntity.js:28) is `stats: { strength: 50,
+ *  (characters/playerEntity.js:29) is `stats: { strength: 50,
  *  agility: 50, luck: 50 }` with no `speed` key, so an unguarded
  *  liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5 instead
  *  of the documented SPD-50 stand-in. DFU builds its stats from the
@@ -877,8 +877,12 @@ export function wireDoorSpells(actions, entity, say) {
  *  sets LevitateMotor.IsLevitating on the effect's Start AND End, so
  *  the EFFECT owns the flag - it survives every transition and clears
  *  when the spell expires, indoors or out). Swimming is the exception:
- *  PlayerEnterExit.IsPlayerSwimming is recomputed from the block water
- *  level, and an exterior/interior shell has none, so it is false.
+ *  `player.swimming` is levitateMotor.IsSwimming, which the outdoor arm
+ *  clears with no tile test (PlayerEnterExit.cs:421) - the HOST's flag,
+ *  `player.isPlayerSwimming`, is not touched here (AUDIT 65 XL-1): the
+ *  exterior hosts re-derive it unconditionally every frame, and that
+ *  re-derive is its fail-safe - there is no per-frame clear, so a host
+ *  that forgets the write keeps the last value.
  *
  *  Before this, all four flags were written only inside the dungeon
  *  branch and never cleared: leaving a dungeon while levitating left
@@ -1788,7 +1792,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:241`, the standalone host, has always had the right
+ *  `dungeon.js:242`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

@@ -360,3 +360,44 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   }
   assert.match(read('src/scenes/shared.js'), /dt: dtReal,/, 'the mod keeps Time.deltaTime');
 });
+
+// ---- AUDIT 65 SL-1 -----------------------------------------------------
+// The CLK4 arm above pins the BOOT load: a fresh process, resetWeatherSim()
+// first, so `_climateWeathersValid` was never raised and the evolution has
+// nothing to roll off. The IN-SESSION load - F12, or the pause window's Load -
+// runs in a process that HAS rolled, and restoreWeather stamped the array
+// ROLLED without lowering VALID, so CLK2's hourly evolution kept walking the
+// OUTGOING session's six zones and DFU's own drain wore the loaded sky off
+// within hours. WeatherManager.cs:538-542's else arm is not "at boot" - it is
+// "in case of loaded savegame", every time.
+test('CLK2 / AUDIT 65 SL-1: an IN-SESSION load lowers the evolution guard - the loaded sky survives a day of hourly evolution in a session that had already rolled', () => {
+  const day0 = 300 * MINUTES_PER_DAY;
+  resetWeatherSim(); setWeatherEvolution(true);
+  // the OUTGOING session's boot roll: a real, valid six-zone array (all Sunny)
+  tickWeather(day0 - 200, CLIMATES.Woodlands, () => 0.0);
+  assert.equal(currentWeather(), 'sunny', 'the outgoing session stands under its own rolled sky');
+  // ...and then the player loads, in this same process
+  restoreWeather('rain');
+  const stamp = weatherJumpStamp();
+  for (let h = 1; h <= 24; h++) {
+    evolveClimateWeathers(day0 + h * 60);
+    tickWeather(day0 + h * 60, CLIMATES.Woodlands);
+    assert.equal(currentWeather(), 'rain', `hour ${h}: the loaded sky still stands`);
+  }
+  assert.equal(weatherJumpStamp(), stamp, 'and nothing landed as a jump either - the array never moved');
+  // the next DAY ROLL re-validates, and the evolution runs again
+  rollClimateWeathersForDay(day0 + MINUTES_PER_DAY, () => 0.0); evolveClimateWeathers(day0 + MINUTES_PER_DAY + 1);
+  let moved = false;
+  for (let h = 1; h <= 24 * 20; h++) moved = evolveClimateWeathers(day0 + MINUTES_PER_DAY + h * 60) || moved;
+  assert.equal(moved, true, 'the guard is dormant, not dead');
+  resetWeatherSim();
+  // THE CLASSIC IMPORT'S ORDER: restorePlayer reaches restoreWeather (save.js),
+  // which now lowers the flag; importClimateWeathers raises it again for the
+  // imported array - so the import must run AFTER the restore or the imported
+  // zones would sit inert for a whole game day.
+  const host = read('src/scenes/world.js');
+  const restoreAt = host.indexOf('restorePlayer(playerEntity, bundle.snap');
+  const importAt = host.indexOf('importClimateWeathers(bundle.climateWeathers)');
+  assert.ok(restoreAt > 0 && importAt > 0, 'the classic-import arm is where the pin says');
+  assert.ok(importAt > restoreAt, 'SAV3: importClimateWeathers runs after restorePlayer');
+});

@@ -52,7 +52,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1769 (the factory) and :1904 (a
+                        worldModes.js:1770 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:903, world.js:1620,
@@ -3148,23 +3148,26 @@ face. Chargen is otherwise complete.
 Three findings. The arc-local two, and one that turned out to be
 several slices older than the work that exposed it.
 
-**The port had never saved player reputation.** `sGroupReputations`
-and `reactionMods` are read by `getReactionToPlayer` on EVERY greeting
-and written by the T3f tone tallies, the G2 court sentences and now
-the biography - and the quicksave carried neither, nor any of the six
-`biography*Mod` fields. DFU writes all of it out field by field
+**The port had never saved player reputation.** `sGroupReputations` is
+read by `getReactionToPlayer` on EVERY greeting and written by the
+biography (the G2 court writes `legalRep` beside it) - and the
+quicksave carried none of it, nor any of the six `biography*Mod`
+fields. DFU writes all of that out field by field
 (SerializablePlayer.cs:136-141, :152-162, :305-310). A load reset the
-player's standing with every social group to zero.
+player's standing with every social group to zero. (`reactionMods`
+rode this fix too until AUDIT 65 SL-4 struck it: PlayerEntity.cs:128-129
+is "do not serialize, set by live effects" and :152-162 answers the
+reputations alone.)
 
 This gap predates the biography. What S3e changed is that reputation
 now matters from the FIRST MINUTE of a new character rather than
 accumulating quietly over a session, which is what made a load-wipe
-visible enough to find. Persisted now, along with the queued faction
-deltas and the composed backstory - and the SNAPSHOT detaches from the
-live entity, because the quicksave write happens after
-`snapshotPlayer` returns, the same law save.js already stated for its
-nested effect entries. A pre-17h save leaves the entity's own state
-alone rather than nulling it.
+visible enough to find. The reputations are persisted now, along with
+the queued faction deltas and the composed backstory - and the
+SNAPSHOT detaches from the live entity, because the quicksave write
+happens after `snapshotPlayer` returns, the same law save.js already
+stated for its nested effect entries. A pre-17h save leaves the
+entity's own state alone rather than nulling it.
 
 **The dungeon host skipped the biography.** It builds its own
 `ChargenFlow` and never received the question sets, so a character
@@ -7768,7 +7771,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2581 as a second book built by hand 342 lines below the
+worldModes.js:2582 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8478,7 +8481,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5259` and `dungeonContext.js:1347` answer the same
+`worldModes.js:5260` and `dungeonContext.js:1347` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -11210,9 +11213,10 @@ carried the same clip.
 before `routeAction` - the reference's own order, and it matters:
 DFU plays the click before a message that may be refused, so a panel
 whose door a host has not wired still sounds. Only the two buttons DFU
-binds are asked for it (`OnMouseClick` and `OnRightMouseClick`); a
-middle click reaches no handler in the reference and makes no sound
-here.
+binds are asked for it (`OnMouseClick` and `OnRightMouseClick`).
+AUDIT 65 UI-4 moved that test ABOVE the sound, where it gates the
+ACTION too: F42 had gated the CLIP alone, so a middle click still ran
+the left panel's handler, silently.
 
 ## AUDIT 64 F34 - REVIEW ROUND: THE LIVE SCREEN READ WAS UNPINNED (2026-09-08)
 

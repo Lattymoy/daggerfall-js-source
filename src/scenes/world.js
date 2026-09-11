@@ -1622,7 +1622,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // Both of this host's pools answer it, the watch and the
         // encounter foes, exactly as the rest deps ask them.
         enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),
-        swimming: !!player.swimming, entity: playerEntity,
+        swimming: !!player.isPlayerSwimming, entity: playerEntity,   // XL-1: PlayerEntity.cs:2406/:2426 read PlayerEnterExit.IsPlayerSwimming - PlayerMotor.IsSwimming is false outdoors (:421)
         day: !isNight(minuteNow()), inside: false,
       });
       const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
@@ -2270,7 +2270,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // it once per modal frame (host.encounterTick) and from its
       // interior rest; the host's own call below is the exterior arm.
       const _m = modes?.mode ?? 'exterior';
-      const hit = (walkMode && playerSpawned && player.swimming) ? null : intermittentEnemySpawn({
+      const hit = (walkMode && playerSpawned && player.isPlayerSwimming) ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
@@ -2593,7 +2593,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2054 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4503
+  // that context through modes.dungeonCtx - so worldModes.js:4504
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -3112,10 +3112,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // levitating or falling player who cannot lie down.
     // V2b: the vampire's own rest gate - CheckStartRest is LAST in
     // DFU's ladder and the override speaks for itself (TEXT.RSC 36)
-    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));
+    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // XL-1: the refusal's swim term below is PlayerEnterExit.IsPlayerSwimming (DaggerfallUI.cs:661), not PlayerMotor.IsSwimming
     const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
-      swimming: !!player.swimming,
+      swimming: !!player.isPlayerSwimming,   // DaggerfallUI.cs:661
       // StartRestGroundedCheck, not the raw flag: a levitating player
       // an inch off the floor reads grounded === false and DFU lets
       // them sleep anyway (PlayerMotor.cs:190-193's own comment) - and
@@ -5132,7 +5132,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:207, "a right-click on a window is the window's...
+  // (dungeon.js:208, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -5351,7 +5351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7019-7031 -
+  // worldModes answers it in BOTH modes (worldModes.js:7020-7032 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6850,7 +6850,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:95, so the
+  // only reader of `load` in the whole tree is dungeon.js:96, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -7073,7 +7073,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
-        swimming: !!player.swimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style
+        swimming: !!player.isPlayerSwimming, running: !!player.isRunning, crouching: !!player.crouching, riding: !!player.riding, levitating: !!player.levitating,   // TR1: the Horse bob style   // XL-1: HeadBobber.cs:101 and :215 both read playerEnterExit.IsPlayerSwimming, never the motor's flag
         velocity: player.moveSpeed || 0, moving: !!(player.moveForward || player.moveStrafe),
       });
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
@@ -7250,7 +7250,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // so the Running skill did not advance while the run key was
         // held standing still.
         runningTally: player.isRunning && !player.riding,
-        swimming: player.swimming,
+        swimming: player.isPlayerSwimming,   // XL-1: PlayerEntity.cs:410 reads PlayerEnterExit.IsPlayerSwimming - the flag the surface model below writes
         climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
       });
@@ -7262,7 +7262,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // so it is recomputed per frame in every host; swimming is
         // false outdoors (no blockWaterLevel - PlayerEnterExit) until
         // the surface model below re-derives it (OT1).
-        const _wasSwimming = !!player.swimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
+        const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
         applyMotorEffectFlags(player, playerEntity);
         const mv = moveHeld(keys);
         mv.analog = touch?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
@@ -7350,7 +7350,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
         // one helper. Before this the flag was the clear alone: a sea swim never suppressed the encounter
         // roll (:488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry.
-        player.swimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
+        player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water/static-geometry arms
         // ride the surface model above).

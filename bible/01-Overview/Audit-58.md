@@ -37,7 +37,7 @@ briefly shared a name.
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
 `src/world/roadsCache.js:17`, `src/scenes/world.js:91`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
-`test/audit58_terrainhelper.test.js`, `test/ledger.test.js:242`,
+`test/audit58_terrainhelper.test.js`, `test/ledger.test.js:244`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
 there is no F1 or F2 anywhere. That is the collision fossilised: the
 first lane minted its numbers as a CONTINUATION of main's Audit-54.md
@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:830-898`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:831-899`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -224,7 +224,7 @@ mitigates in `DaggerfallEntity.DecreaseHealth`
 (`Assets/Scripts/Game/Entities/DaggerfallEntity.cs:312-328`), the base
 class every entity passes through, with DFU's own comment "from all
 sources"; the port consumed the pool only in `hurtPlayer`
-(`src/characters/playerEntity.js:150`) and the three foe doors subtracted
+(`src/characters/playerEntity.js:164`) and the three foe doors subtracted
 raw, so a Shield cast on a foe absorbed nothing. Beside it: `CastReadySpell`
 had grown a magicka-sufficiency refusal DFU does not have and re-priced
 the spell at click time, the six concealment effects lost DFU's

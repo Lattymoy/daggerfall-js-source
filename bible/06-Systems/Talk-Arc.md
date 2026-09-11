@@ -1494,10 +1494,13 @@ wrong. `MasqueOfClavicusEffect.cs:39-43` walks
 `Enum.GetValues(SocialGroups)` — Commoners 0 .. SGroup10 10
 (FactionFile.cs:552-566) — so its `g < mods.length` loop now covers all
 eleven, and wearing the Masque raises the player's reaction with guild
-and supernatural NPCs as DFU does. `classicSave.js` emits the eleven-zero
-array instead of `null`, because DFU's live array exists from
-construction and the envelope's `if (!snap[k]) continue` was leaving an
-imported character with no array at all.
+and supernatural NPCs as DFU does. `classicSave.js` used to emit the
+eleven-zero array instead of `null`, because DFU's live array exists
+from construction and the envelope's `if (!snap[k]) continue` left an
+imported character with no array at all - AUDIT 65 SL-4 retired both
+halves: `reactionMods` left the envelope (PlayerEntity.cs:128-129 is
+"do not serialize, set by live effects"), so the import mints no key
+and the entity carries the eleven from construction.
 
 The ordinary wizard-chargen path was never the exposed one — biography
 effects call `ensureReactionState` before the world runs. The paths that

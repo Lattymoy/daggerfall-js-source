@@ -331,6 +331,7 @@ export function restoreWeather(weather) {
   _updateFromClimateArray = false;
   _jumps++;   // WX2a: a load lands the player under the saved sky, whole
   _evolveHour = null;   // CLK2: the evolution re-anchors on the loaded clock, rolling nothing
+  _climateWeathersValid = false;   // CLK2 (AUDIT 65 SL-1): a loaded save's array is not THIS session's - an in-session load leaves the outgoing session's roll standing, and the evolution stays dormant until the next day roll re-rolls it
 }
 
 /** SAV3: the classic-save import's weather arm. StartFromClassicSave

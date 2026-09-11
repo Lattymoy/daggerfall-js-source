@@ -203,7 +203,7 @@ test('G6: the flags ride the save, and a pre-G6 membership restores as unclaimed
 // =====================================================================
 // D9: KnightlyOrder.RestoreGuildData's armour-bit migration
 // (KnightlyOrder.cs:283-295), run on every load through save.js's
-// restoreMembershipBook (save.js:47) from restorePlayer (save.js:571).
+// restoreMembershipBook (save.js:47) from restorePlayer (save.js:591).
 // =====================================================================
 test('D9: RestoreGuildData back-fills the armour bit for every rank BELOW the current one', () => {
   // the gate is `(flags & 4092) == 0` (:288) - NO new-style bit set
@@ -257,7 +257,7 @@ test('D9: the back-fill runs at the LOAD door, so a demotion cannot re-open a cl
   assert.equal(receiveArmorDecision({ ...row, rank: 2 }, { rolls: () => 0.5 }).textId, NO_ARMOR_TEXT_ID);
   assert.equal(receiveArmorDecision(row, { rolls: () => 0.5 }).kind, 'offer');
 
-  // save.js:571-572 restores through TWO arms - the V2e store shape
+  // save.js:591-592 restores through TWO arms - the V2e store shape
   // takes the same door on BOTH books
   const store = roundTrip({
     mortal: { [KNIGHTS]: { guild: 'KnightlyOrder', rank: 2, flags: 0 } },

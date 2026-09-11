@@ -22,8 +22,18 @@ test('VC3: the profile - one row per weather, eased on the weather ease\'s own e
   assert.deepEqual(Object.keys(VC_PROFILE).sort(), [...WEATHER_TYPES].sort(), 'a profile for every weather the sim can produce, and no more');
   for (const [name, p] of Object.entries(VC_PROFILE)) {
     assert.ok(p.base > 0 && p.top > p.base, `${name}: a slab with a base below its top`);
-    for (const k of ['density', 'dark', 'flat']) assert.ok(p[k] >= 0 && p[k] <= 1, `${name}.${k} is 0..1`);
+    for (const k of ['density', 'dark', 'flat', 'shear']) assert.ok(p[k] >= 0 && p[k] <= 1, `${name}.${k} is 0..1`);   // AUDIT 65 PN-2: shear was the one field no assertion touched
   }
+  // AUDIT 65 PN-2: the table itself. The inequalities below say WHY each
+  // row is what it is and stay; these say WHAT it is - nothing else in the
+  // tree held a single one of these numbers (src/render/volumetricClouds.js).
+  assert.deepEqual(VC_PROFILE.sunny,    { base: 1400, top: 3200, density: 0.60, dark: 0.00, flat: 0.10, shear: 0.35 });
+  assert.deepEqual(VC_PROFILE.cloudy,   { base: 1200, top: 3000, density: 0.70, dark: 0.10, flat: 0.35, shear: 0.40 });
+  assert.deepEqual(VC_PROFILE.overcast, { base: 800,  top: 1600, density: 0.80, dark: 0.30, flat: 0.90, shear: 0.20 });
+  assert.deepEqual(VC_PROFILE.fog,      { base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05 });
+  assert.deepEqual(VC_PROFILE.rain,     { base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30 });
+  assert.deepEqual(VC_PROFILE.snow,     { base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20 });
+  assert.deepEqual(VC_PROFILE.thunder,  { base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50 });
   assert.ok(VC_PROFILE.overcast.flat > VC_PROFILE.sunny.flat && VC_PROFILE.thunder.dark > VC_PROFILE.overcast.dark, 'a lid is flat, a storm dark');
   assert.ok(VC_PROFILE.thunder.top > VC_PROFILE.sunny.top && VC_PROFILE.fog.top < 1000, 'the storm towers, the fog lies low');
   // the SAME clock as the row: after dt, the profile has crossed exactly the fraction the row has
@@ -57,6 +67,12 @@ test('VC3: the light - the sun while it is up, else the brighter visible moon, d
 });
 
 test('VC3: the map, the sweep, the drift - the numbers the rest of the outdoors already keeps', () => {
+  // AUDIT 65 PN-2: the tiers by their literals. The inequalities below survived
+  // halving every field of QUALITY.default at once; these do not.
+  assert.deepEqual(QUALITY.lo, { width: 512, height: 128, steps: 32, light: 4, shadow: 256, shadowSteps: 8 });
+  assert.deepEqual(QUALITY.default, { width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12 });
+  assert.deepEqual(QUALITY.hi, { width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16 });
+  assert.equal(SWEEP_FRAMES, 8, 'a full re-march every eight frames');
   assert.ok(QUALITY.lo.width < QUALITY.default.width && QUALITY.default.width < QUALITY.hi.width, 'three tiers, rising');
   assert.ok(QUALITY.lo.steps < QUALITY.default.steps && QUALITY.default.steps < QUALITY.hi.steps);
   for (const q of Object.values(QUALITY)) assert.ok(q.height % SWEEP_FRAMES === 0, 'a sweep divides the map evenly');
@@ -146,7 +162,12 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   // VC5 review: the FP arm is lens-local geometry at the origin - the deck is borrowed off for it, and only for it
   assert.match(rr, /renderCharacterSprite\(mesh, modelMatrix, proj, view, pw, ph, \{ lensLocal = false \} = \{\}\)/);
   assert.match(rr, /const sd = lensLocal \? this\._cloudShadow : null;\s*\n\s*if \(sd\) \{ this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'borrowed off');
-  assert.match(rr, /finally \{\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}/, 'and returned with the stamp bumped, whatever the draw did');
+  // AUDIT 65 RS-2: the deck's return is still here and still
+  // unconditional - but it is now the TAIL of one finally that returns
+  // the GL state first (the sprite FBO, the world rect, the clear
+  // colour), which used to sit below the block and never ran on a
+  // throw. The behavioural half is test/glstate.test.js's RS-2 pin.
+  assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, null\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');
   assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
   assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position');

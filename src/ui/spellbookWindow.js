@@ -74,7 +74,7 @@
 // and SetSpell writes it back into the player's slot - the shared
 // SPELLS.STD record is untouched. The port's records are objects
 // shared by every caster, so confirmRename copies explicitly and
-// marks the copy `custom`, which is exactly the flag save.js:143
+// marks the copy `custom`, which is exactly the flag save.js:163
 // already reads to store a whole record instead of a bare index.
 // U4's "rename needs per-entity copies + name persistence first" is
 // answered: it has both.
@@ -637,7 +637,7 @@ export class SpellbookWindow {
    *  copy, and SetSpell writes it into the player's slot - the shared
    *  SPELLS.STD record is never touched. The port's records are
    *  objects shared by every caster, so the copy has to be explicit,
-   *  and it is marked `custom` so save.js:143 stores the whole record
+   *  and it is marked `custom` so save.js:163 stores the whole record
    *  instead of the bare index it would otherwise write (which would
    *  reload the ORIGINAL name). That retires the U4 ledger's rename
    *  row: renaming is real and it persists. */
@@ -774,7 +774,25 @@ export class SpellbookWindow {
     else if (code === 'KeyS') { this.top = 'sort'; }                         // SpellbookSort
   }
 
-  click(vx, vy, now) {
+  /** BaseScreenComponent's own clock, never a positional: the
+   *  `Time.realtimeSinceStartup` of :688, in the seam `ui/listPicker.js`
+   *  already declares, so a pin overrides the CLOCK rather than
+   *  occupying an argument slot the hosts own. */
+  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
+
+  /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
+   *  host that holds an overlay slot dispatches
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1123`,
+   *  `scenes/worldModes.js:7092`, `scenes/dungeonContext.js:4867` - so
+   *  a clock threaded positionally here arrived as `e.button === 2`, a
+   *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
+   *  is true and `false - false === 0 < 300`, which made EVERY second
+   *  click in the list a double-click - any row, any distance in time -
+   *  the exact gesture OT1 was written to remove. Neither button is
+   *  read here; the clock is `_now()`. (`ui/charsheet.js`'s nested
+   *  forward passes two arguments and was never bitten, which is why
+   *  the book worked from the character sheet and nowhere else.) */
+  click(vx, vy, right = false, middle = false) {
     if (this.top === 'iconPicker') return this._iconPicker?.click(vx, vy) ?? true;   // MC1
     if (this.top === 'delete' || this.top === 'sort' || this.top === 'trade') {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
@@ -859,12 +877,16 @@ export class SpellbookWindow {
       const row = Math.floor((vy - PANEL_Y - ly) / this._rowHeight());
       const index = this.scrollIndex + row;
       if (index >= 0 && index < this._rows.length) {
-        const t = now ?? Date.now();
+        const t = this._now();   // BaseScreenComponent.cs:688 - leftClickTime = Time.realtimeSinceStartup
         const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
         this.selectedIndex = index;          // MouseClick
         this._lastRowClick = t;
+        // AUDIT 65 UI-1: the stamp is NOT cleared on a double.
+        // BaseScreenComponent.cs:687-688 stores `lastLeftClickTime =
+        // leftClickTime` UNCONDITIONALLY, so three fast clicks in DFU
+        // are click/double/DOUBLE; clearing made the third a plain
+        // MouseClick and lost the second use.
         if (wasDouble) {                     // MouseDoubleClick
-          this._lastRowClick = null;
           if (!this.buyMode) this.useSelected(); else this.buyButton();
         }
       }

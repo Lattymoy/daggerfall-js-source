@@ -44,7 +44,9 @@ test('DS2: the seam - built on the lane, the mod’s sheets stand down, the clou
   assert.match(shared, /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/);
   assert.match(shared, /clouds\.setState\(cloudsStateUnderMod\(st, dynamicMoons, \{ minuteOfDay, weather: weatherName, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: weatherRowNow \}\),\s*\n\s*weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null\);/, 'the same row, dt, drift, flash and position the dome path hands them');
   assert.match(shared, /if \(clouds\.shadow\) Object\.assign\(dynamicDeck, clouds\.shadow\);/, 'the ground takes the shadow map under the mod');
-  assert.match(shared, /import \{ cloudsStateUnderMod, dynamicMoonState \} from '\.\.\/render\/dynamicSkiesBridge\.js';/);
+  // AUDIT 65 MC-3: and the THIRD export with them - the mod's moon term
+  // is the bridge's, not a second copy of its body in the controller.
+  assert.match(shared, /import \{ cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight \} from '\.\.\/render\/dynamicSkiesBridge\.js';/);
   assert.doesNotMatch(shared, /^function dynamicMoonState/m, 'the moon state moved to the bridge, with the clouds’ state');
   const r = read('src/render/dynamicSkiesRenderer.js');
   assert.match(r, /this\.cloudsExternal = false;/);

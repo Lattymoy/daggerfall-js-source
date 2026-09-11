@@ -41,6 +41,13 @@ test('ECV1: the law - plain, hidden, and the three concealed draws with invisibl
   const b = concealVisual({ blending: true }, { t: 0, phase: 0 });
   assert.equal(b.mode, CONCEAL_MODE.blend);
   assert.equal(b.alpha, BLEND_ALPHA, 'the shimmer starts at its base at t=0, phase 0');
+  // AUDIT 65 PN-3: every assertion about visibility in this file reads the
+  // constant back from the module, so all six free ECV1 numbers survived
+  // being mutated together against the whole suite. These hold the numbers.
+  assert.equal(BLEND_ALPHA, 0.22, 'a chameleon shimmers at a fifth opacity');
+  assert.equal(BLEND_SHIMMER, 0.08);
+  assert.equal(BLEND_HZ, 1.3);
+  assert.ok(BLEND_ALPHA + BLEND_SHIMMER < 0.5, 'a concealed foe is never more than half visible');
   const q = concealVisual({ blending: true }, { t: 1 / (4 * BLEND_HZ), phase: 0 });
   assert.ok(Math.abs(q.alpha - (BLEND_ALPHA + BLEND_SHIMMER)) < 1e-9, 'a quarter period on, the shimmer peaks');
   for (let t = 0; t < 3; t += 0.05) {
@@ -49,6 +56,9 @@ test('ECV1: the law - plain, hidden, and the three concealed draws with invisibl
   }
   const s = concealVisual({ shade: true }, { t: 2, phase: 0.3 });
   assert.deepEqual(s, { mode: CONCEAL_MODE.shade, alpha: SHADE_ALPHA, t: 2, phase: 0.3 });
+  assert.equal(SHADE_ALPHA, 0.55, 'a shade is a silhouette: half again as solid as the chameleon, and pulled to black');
+  assert.equal(SHADE_DARK, 0.12);
+  assert.ok(String(SHADE_DARK).includes('.'), 'GLSL will not multiply a vec3 by an int literal');
   assert.equal(concealVisual({ invisible: true, blending: true, shade: true }, { t: 1 }), null, 'invisible wins');
   assert.equal(concealVisual({ blending: true, shade: true }, { t: 1 }).mode, CONCEAL_MODE.blend, 'blending beats shade');
 });
@@ -57,6 +67,9 @@ test('ECV1: the hit reveal - a landed blow flashes any concealed foe, invisibili
   const at = concealVisual({ invisible: true }, { t: 10, hitAt: 10 });
   assert.equal(at.mode, CONCEAL_MODE.reveal);
   assert.equal(at.alpha, REVEAL_ALPHA, 'brightest at the hit');
+  assert.equal(REVEAL_ALPHA, 0.8);
+  assert.equal(REVEAL_SECONDS, 0.35, 'a third of a second, not a tell that outlives the swing');
+  assert.ok(REVEAL_SECONDS < 1, 'the flash is shorter than a swing');
   const half = concealVisual({ blending: true }, { t: 10 + REVEAL_SECONDS / 2, hitAt: 10 });
   assert.equal(half.mode, CONCEAL_MODE.reveal, 'the reveal overrides the shimmer while it runs');
   assert.ok(Math.abs(half.alpha - REVEAL_ALPHA / 2) < 1e-9, 'halfway, half as bright');
@@ -157,13 +170,18 @@ test('ECV1: the renderer\'s blended phase - spectral and concealed together, bac
 
 test('ECV1: the billboard shader declares uConceal and draws each mode - the ripple, the dark shade, the opacity', () => {
   const r = read('src/render/renderer.js');
-  const fs = r.slice(r.indexOf('const BB_FS = `'), r.indexOf('`;', r.indexOf('const BB_FS = `')));
+  // AUDIT 65 PN-3: the template's own interpolation, resolved the way
+  // test/glstate.test.js:299 resolves ${CLOUD_SHADOW_GLSL} - so the regex
+  // below can spell the NUMBER the shader compiles with.
+  const fs = r.slice(r.indexOf('const BB_FS = `'), r.indexOf('`;', r.indexOf('const BB_FS = `')))
+    .replace(/\$\{SHADE_DARK\}/g, String(SHADE_DARK));
   assert.match(fs, /uniform vec4 uConceal;/);
   assert.match(fs, /if \(uConceal\.x == 1\.0\) \{\s*\n\s*uv\.x \+= sin\(vUV\.y \* 28\.0 \+ uConceal\.z \* 7\.0 \+ uConceal\.w\) \* 0\.008;\s*\n\s*if \(uv\.x < 0\.0 \|\| uv\.x > 1\.0\) discard;/, 'chameleon ripples, and never samples past the sprite\'s edge into the REPEAT wrap');
   assert.match(fs, /vec4 tex = texture\(uTex, uv\);/, 'the rippled UV is what samples');
   assert.match(fs, /texture\(uEmissionTex, uv\)/, 'the emission map too');
   assert.match(fs, /if \(tex\.a < \(\(uSpectral == 1 \|\| uConceal\.x > 0\.0\) \? 0\.1 : 0\.5\)\) discard;/, 'the concealed pass takes the blended threshold');
-  assert.match(fs, new RegExp(`if \\(uConceal\\.x == 2\\.0\\) lit \\*= ${String(SHADE_DARK).replace('.', '\\.')};`), 'a shade is pulled to black by SHADE_DARK');
+  assert.match(r, /if \(uConceal\.x == 2\.0\) lit \*= \$\{SHADE_DARK\};/, 'the FS takes the export, not a restated literal');
+  assert.match(fs, /if \(uConceal\.x == 2\.0\) lit \*= 0\.12;/, 'a shade is pulled to black by SHADE_DARK - the one number, not two that agree');
   assert.match(fs, /if \(uConceal\.x > 0\.0\) alpha = tex\.a \* uConceal\.y;/, 'the visual\'s opacity');
   assert.match(r, /this\.bbUConceal = gl\.getUniformLocation\(this\.bbProgram, 'uConceal'\);/);
   assert.match(r, /gl\.uniform4f\(this\.bbUConceal, c \? c\.mode : 0, c \? c\.alpha : 0, c \? c\.t : 0, c \? c\.phase : 0\);/);

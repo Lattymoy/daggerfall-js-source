@@ -21,7 +21,11 @@
 // TALL_FLAT_HEIGHT in world units (a walker is 1.8) - or if it MOVES
 // (an animated flat: a fire, a torch, and any smoke a village puts up),
 // which is what marks a settlement from the road. Everything small and
-// still is skipped before it costs a draw call.
+// still is skipped before it costs a draw call. It is a WORLD-UNIT test
+// on purpose: under Seasons of the Iliac Bay the managed archives draw
+// 3.1x taller, so most of their plants pass this rule three seasons of
+// four - they really are that big on screen. That is the mod's cost
+// (AUDIT 65 XL-2, judged and left); do not season-condition the height.
 //
 // THE ROTATION. The owner's permission not to turn the far ones is
 // noted and not needed: a billboard's facing is one uniform per pass in

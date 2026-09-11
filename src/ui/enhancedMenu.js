@@ -92,7 +92,7 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
+import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen } from '../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -405,7 +405,7 @@ function paneLoad(body) {
     c.append(acts([
       // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
       // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:198) and
+      // own pause window loads on one press (pauseWindow.js:307-309) and
       // so does F11, and inventing a prompt on exactly one of the
       // port's three load doors is a divergence, not a safety net.
       { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
@@ -427,7 +427,7 @@ function paneLoad(body) {
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
 // U51. Classic's SAVE button closes the window and then writes
-// (pauseWindow.js:195, `this._closeWith(); this.hooks.quickSave?.()`),
+// (pauseWindow.js:290-292, `this._closeWith(); ... this.hooks.quickSave?.()`),
 // and this does the same for a reason that is not only parity: the
 // port answers a write with a HUD LINE, and this screen is a fixed
 // opaque div over the whole canvas, so a save that left the door open
@@ -467,7 +467,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:161); in a browser Application.Quit means nothing,
+// (pauseWindow.js:198-201); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //
@@ -1181,6 +1181,13 @@ function paneEnhanced(body) {
         // copy this replaces carried `female: !!playerEntity.gender`,
         // which is TRUE for the string 'male' - every build asked for
         // the female skeleton; the one home tests the string.
+        // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
+        // is still null here - and fpArm keys its kept face verdict on
+        // that print. The surface about to spend seconds measures the
+        // set first (the sizes pass, off plain gets), which is what
+        // makes the verdict a lookup instead of a dozen mesh parses.
+        const ds = await import('../scenes/dataSource.js');
+        await ds.registerMorrowindData();
         const { buildArmsFor } = await import('../combat/weaponRig.js');
         const res = await buildArmsFor(playerEntity);
         if (res?.ok) setPref('mwArms', true);   // MWA1: the arms come back on the next launch by themselves
@@ -2112,8 +2119,17 @@ export function mountEnhancedMenu(host, {
   // two buttons back. Nothing was lost: the archives sat in IndexedDB
   // the whole time. Count here, and repaint once the count lands - a
   // menu torn down first repaints nothing.
-  if (morrowindDataFingerprint() == null) {
-    registerMorrowindData().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
+  //
+  // AUDIT 65 XL-6: and it counts by NAME. registerMorrowindData also
+  // fingerprints the set, which walks every stored file's SIZE - and
+  // before this audit that walk went through assetBlob, so the title
+  // screen read and rewrote every legacy record a player had attached.
+  // This surface needs one number, so it asks for one number
+  // (countMorrowindArchives: one getAllKeys, no value read, no write).
+  // The sizes and the fingerprint stay on the host bootstrap
+  // (scenes/shared.js), which is the reader that needs them.
+  if (!morrowindDataCounted()) {
+    countMorrowindArchives().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
   }
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -

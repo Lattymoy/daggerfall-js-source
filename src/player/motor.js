@@ -389,7 +389,7 @@ export class PlayerMotor {
     // the sink's ONE trigger (:127). Wave B's exterior-water slice
     // owns the model that raises it; until then it stays false and no
     // host sinks, which is the port's behaviour before this line.
-    this.onExteriorWater = false;
+    this.onExteriorWater = false;   this.isPlayerSwimming = false;   // XL-1: PlayerEnterExit.isPlayerSwimming (:44, :177-178) beside it - DFU's OTHER swim member, the HOST's. A plain FIELD: no setter, written by the hosts alone (UpdateSpeed's swim gate below is the one _step read DFU has, PlayerMotor.cs:387 - still on `sunk`), and it must never arm cancelMovement the way `swimming` (levitateMotor.IsSwimming, PlayerMotor.cs:149-152) does. The split, and which reader takes which member, is exteriorSurface.js's header.
     this._camFrom = EYE_HEIGHT;   // PlayerHeightChanger.prevCamLevel / targetCamLevel
     this._camTo = EYE_HEIGHT;
     // PlayerEntity.IsParalyzed, as FrictionMotor.GroundedMovement
@@ -1369,6 +1369,14 @@ export class PlayerMotor {
     // GetBaseSpeed()/2 against that already-swim-scaled field, so a
     // swimmer under half the walk base reads movingLessThanHalfSpeed
     // true for the stealth and footstep-cadence consumers.
+    //
+    // XL-1 NOTE: `isPlayerSwimming` is on this motor now, so re-pointing
+    // this gate at it makes UpdateSpeed verbatim and closes the <=1-frame
+    // gap where a dungeon exit onto open water carries the latch before
+    // DoSinking has armed the sink. Left on `sunk` here because that is
+    // the proxy AUDIT 64 F0 measured and pinned (PlayerHeightChanger.cs
+    // :419-423/:374-377 write the two in lockstep); the swap is a slice
+    // of its own, with its own pins.
     if (this.sunk && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);

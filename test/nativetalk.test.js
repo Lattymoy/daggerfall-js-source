@@ -9,7 +9,16 @@ import { PERSON_FACE_RECORDS, PERSON_TEXTURES, NUM_PERSON_FACE_VARIANTS } from '
 /** ROAD-D D10: MouseClick selects, MouseDoubleClick uses - so the
  *  pins that mean "use this row" press twice inside
  *  DOUBLE_CLICK_DELAY_MS, with the clock injected. */
-const dblClick = (w, x, y) => { w.click(x, y, false, 1000); return w.click(x, y, false, 1100); };
+const dblClick = (w, x, y) => {
+  // AUDIT 65 UI-1: the host's shape is `click(vx, vy, right, middle)`
+  // (townTalk.js:1123) - the clock is the window's own `_now()` seam,
+  // never a positional, so the pair is stepped on the SEAM.
+  let t = 1000;
+  w._now = () => t;
+  w.click(x, y, false, false);
+  t = 1100;
+  return w.click(x, y, false, false);
+};
 
 const hooks = () => {
   const state = { tone: 1, closed: 0 };
@@ -120,12 +129,44 @@ test('D10: UpdateQuestion runs on SELECTION - group rows clear the label, item r
   assert.equal(w.selected, 0);
   // ...and a category row is an ItemGroup, so currentQuestion is ""
   assert.equal(w.question, '');
-  assert.ok(w.click(10, 72, false, 1000));             // select Taverns
-  assert.ok(w.click(10, 72, false, 1100));             // use it
+  let t = 1000;
+  w._now = () => t;
+  assert.ok(w.click(10, 72, false, false));            // select Taverns
+  t = 1100;
+  assert.ok(w.click(10, 72, false, false));            // use it
   assert.equal(w.topicMode, 'buildings');
   assert.equal(w.selected, 0, 'the child list selects its own row 0');
   assert.equal(w.question, 'Where is The Howling Wolf?', 'the label is filled before any ask');
   assert.equal(w.conversation.length, 1, 'descending into a group asks nothing');
+});
+
+test('AUDIT 65 UI-1: the talk window takes the HOST\'s four-argument click - the 4th slot is `middle`, not a clock', () => {
+  // townTalk.js:777 mounts NativeTalkWindow into the same overlay slot
+  // every other window uses, and every slot dispatches
+  // `click(vx, vy, right, middle)` - townTalk.js:1123,
+  // worldModes.js:7092, dungeonContext.js:4867. The double-click clock
+  // used to occupy that fourth positional, so `e.button === 1` arrived
+  // as `now`, `false ?? Date.now()` kept the `false`, and
+  // `false - false === 0 < 300` made EVERY second click in the topic
+  // list a MouseDoubleClick - any row, any distance in time.
+  // MUTANT: restore `click(vx, vy, rightButton = false, now = null)`
+  // with `const t = now ?? Date.now()`.
+  const w = new NativeTalkWindow('Yes?', hooks());
+  let t = 1000;
+  w._now = () => t;
+  w.click(10, 15);                                  // Where is -> the category list
+  assert.equal(w.topicMode, 'categories');
+  w.click(10, 72, false, false);                    // MouseClick: select Taverns
+  t = 1600;                                         // 600 ms, twice the delay
+  w.click(10, 72 + TOPIC_ROW_H, false, false);      // ...and a DIFFERENT row
+  assert.equal(w.topicMode, 'categories', 'a slow pair across rows never descends');
+  t = 1700;
+  w.click(10, 72 + TOPIC_ROW_H, false, false);
+  assert.equal(w.topicMode, 'buildings', 'inside the window it is the MouseDoubleClick');
+  // BaseScreenComponent.cs:687-688 stores `lastLeftClickTime =
+  // leftClickTime` UNCONDITIONALLY - DFU never clears the stamp.
+  // MUTANT: put `this._lastRowClick = null;` back on the double.
+  assert.equal(w._lastRowClick, t, 'the double does not spend the stamp');
 });
 
 test('D10: OKAY asks the selected topic (ButtonOkay :1547 -> SelectTopicFromTopicList)', () => {
