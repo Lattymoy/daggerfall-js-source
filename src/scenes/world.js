@@ -135,7 +135,7 @@ import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the 
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
-import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
+import { loadHud, drawHud, hudScale } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw; ONLINE1: the names' scale
 import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from '../ui/hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
@@ -204,6 +204,9 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the session
+import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
+import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
@@ -5385,7 +5388,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7079-7091 -
+  // worldModes answers it in BOTH modes (worldModes.js:7081-7093 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6534,12 +6537,85 @@ export async function bootWorld(canvas, renderer, params, status) {
   // classic minute every other dated law in this host reads.
   setCrimeGuildClock(() => Math.floor(playerTicker.classicMinutes));
   if (_questStartPending) questInitAtGameStart();
+  // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer"): THE
+  // OTHERS. `?online` (the front door's Online button, main.js) joins the
+  // relay with this player's look and pose and draws the peers of the
+  // room the player stands in - the world by cell, a dungeon or an
+  // interior by map id (net/online.js roomKeyFor). Nothing else is
+  // shared: every player runs their own world from their own save.
+  // This host alone: the fixed city (exterior.js) is a dev route the
+  // front door never boots, and its interior frame and town room
+  // disagreed with this one's (AUDIT ONLINE D6/D8).
+  const onlineOn = params.has('online');
+  let online = null, remotePlayers = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let onlineToScene = (p) => [p.x, p.y, p.z];
+  const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
+  const onlineStart = () => {
+    online = new OnlineSession({
+      url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
+      name: params.get('name') || getPref('onlineName') || playerEntity.name || 'Traveller',
+      look: composeLook(playerEntity),
+    });
+    remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
+    globalThis.addEventListener?.('pagehide', () => online?.leave());   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence
+  };
+  const onlineFrame = (now) => {
+    // AUDIT ONLINE D12: the dead broadcast nothing and see no one
+    if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); return; }
+    const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
+    const overworld = mode === 'exterior';
+    const wc = state.worldCoords(player.pos);
+    let key;
+    if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: worldCoordToMapPixel(wc.x, wc.z) });
+    else {
+      const ident = modes?.roomIdentity?.();
+      const loc = _questLoc();   // the location under the player: an interior's room is named by it
+      key = roomKeyFor({
+        host: 'world', mode,
+        mapId: ident?.kind === 'dungeon' ? (ident.mapId ?? null) : (loc?.mapTableData?.mapId ?? null),
+        regionIndex: ident?.kind === 'dungeon' ? ident.regionIndex : (loc?.regionIndex ?? -1),
+        locationName: ident?.kind === 'dungeon' ? ident.name : (loc?.name ?? ''),
+        buildingKey: ident?.buildingKey ?? 0,
+      });
+    }
+    // the pose: MapsFile's frame in the overworld (the floating origin's
+    // inverse); a modal mode's own scene - the interior rides the
+    // exterior's frame (P8), so its height sheds the origin's vertical
+    // shift too (AUDIT ONLINE D7), the dungeon's frame is its own
+    const shedY = overworld || mode === 'interior';
+    const pose = overworld
+      ? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }
+      : { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 };
+    onlineToScene = overworld
+      ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
+      : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
+    const moved = _onlineLast ? (player.pos[0] - _onlineLast[0]) ** 2 + (player.pos[2] - _onlineLast[2]) ** 2 > 1e-6 : false;
+    _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
+    if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
+    if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
+    else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) online.join(key, pose); }
+    else online.sendPose({ ...pose, mv: moved ? 1 : 0 });
+    online.tick();
+    remotePlayers.sync(online.drawable(), onlineToScene);
+  };
+  const drawPeerNames = (proj, view, eye) => {
+    if (!remotePlayers) return;
+    if (townTalk.hudCovered || (modes?.hudCovered ?? false)) return;   // a window over the HUD covers the names too
+    const scale = hudScale(canvas.width, canvas.height);
+    // the docked HUD's viewport rect (E5), so the name lands over the head the world pass drew (AUDIT ONLINE C6/D3)
+    remotePlayers.drawNames(renderer, townTalk.font, proj, view, canvas.width, canvas.height, eye, scale, onlineToScene, largeHudViewportRect(canvas.clientHeight));
+    const line = online?.statusLine();   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent
+    if (line && townTalk.font) drawText(renderer, townTalk.font, line, Math.round(8 * scale), Math.round(8 * scale), scale, [1, 0.85, 0.6, 1]);
+  };
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // ONLINE1: the peers in a modal mode - their billboards on the mode's own pass, their names after its HUD
+    extraBillboards: () => remotePlayers?.batches() ?? [],
+    drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
@@ -7115,6 +7191,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
     last = now;
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
@@ -7624,6 +7701,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // stillness gate's last-position (one false "moving" frame).
       footsteps.rebase();
       if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
+      // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
+      if (remotePlayers) for (const b of remotePlayers.batches()) { b.origin[0] += r.offset[0]; b.origin[1] += r.offset[1]; b.origin[2] += r.offset[2]; }
+      if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
@@ -7830,6 +7910,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const windNow = sky.wind();
     if (cullOn) frustumPlanes(multiply(proj, view, _pv), _planes);   // EV3
     const allBatches = [];
+    if (remotePlayers) for (const b of remotePlayers.batches()) allBatches.push(b);   // ONLINE1: the others, at their feet
     for (const p of built.values()) {
       // EV2: the pixel's frame matrix caches on the built entry and
       // refreshes only when its translation actually changes (a
@@ -8400,6 +8481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           renderer.drawScreenQuad(ridingArt.frames[r.frame], rect);
         }
       }
+      drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: gamePaused(),

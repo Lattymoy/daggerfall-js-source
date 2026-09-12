@@ -191,14 +191,14 @@ test('F141: BlitBody gates BOTH welds on ChildGuard/PlayerNudity', () => {
   // them is drawn either way. The port had only the two slot tests, so
   // a player who turned the shipped toggle on saw no change.
   const s = src('ui/paperDoll.js');
-  const body = s.slice(s.indexOf('blit(out, _art.nude);'), s.indexOf('racialOverrideHeadArt(entity)'));
+  const body = s.slice(s.indexOf('blit(out, art.nude, art.palette);'), s.indexOf('racialOverrideHeadArt(entity)'));
   assert.match(body, /if \(!getBool\('ChildGuard', 'PlayerNudity'\)\) \{/, 'the outer gate');
   const gate = body.indexOf("getBool('ChildGuard', 'PlayerNudity')");
   for (const weld of ['EQUIP_SLOTS.ChestClothes', 'EQUIP_SLOTS.LegsClothes']) {
     assert.ok(body.indexOf(weld) > gate, `${weld}'s weld sits INSIDE the gate`);
   }
   // the nude body is NOT gated - only the welds are
-  assert.ok(body.indexOf('blit(out, _art.nude);') < gate);
+  assert.ok(body.indexOf('blit(out, art.nude, art.palette);') < gate);
 });
 
 // ── F145: THE ENHANCED MAP FOLDS GuildManager.FastTravel ──────────

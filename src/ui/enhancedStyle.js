@@ -691,6 +691,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+/* ONLINE1: the Online card's two fields */
+.card label.field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.card label.field .fieldlabel { font-size: 13px; color: var(--ash); letter-spacing: 0.02em; }
+.card label.field input {
+  min-height: 44px; padding: 0 12px;
+  background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
+  font: inherit; font-size: 15px;
+}
+.card label.field input:focus-visible { outline: none; border-color: var(--brass); }
 .goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
 
 /* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two

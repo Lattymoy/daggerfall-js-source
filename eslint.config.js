@@ -3,6 +3,15 @@
 // headless tests - no-undef catches the whole class.
 export default [
   {
+    // ONLINE1 / AUDIT ONLINE A13: the relay's Worker is linted with the tree - its globals are the runtime's
+    files: ['server/src/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest', sourceType: 'module',
+      globals: { console: 'readonly', Response: 'readonly', Request: 'readonly', URL: 'readonly', WebSocketPair: 'readonly', WebSocketRequestResponsePair: 'readonly', crypto: 'readonly', TextEncoder: 'readonly' },
+    },
+    rules: { 'no-undef': 'error', 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }], 'no-dupe-keys': 'error', 'no-dupe-class-members': 'error' },
+  },
+  {
     files: ['src/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',

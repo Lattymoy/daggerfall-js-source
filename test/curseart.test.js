@@ -95,9 +95,9 @@ test('V5: the three consumers order the override FIRST, as DFU does', () => {
   assert.ok(hl.includes('const headKeyFor = (entity)') && hl.includes('${ov ? `${ov.file}#${ov.record}` : \'\'}'),
     'the head KEY carries the override - a morph swaps the face the next frame, DFU\'s null-and-re-read');
   const pd = read('src/ui/paperDoll.js');
-  assert.ok(pd.includes('const bg = (bgOverride ?? _art.bg).bmp;'), 'the compose fills from the override background');
+  assert.ok(pd.includes('const bg = (bgOverride ?? art.bg).bmp;'), 'the compose fills from the override background');
   assert.ok(pd.includes('for (const slot of suppress ? [] : [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1])'), 'suppression skips the cloaks');
-  assert.ok(pd.includes('if (!suppress) {\n      blit(out, _art.nude);'), 'and the body');
+  assert.ok(pd.includes('if (!suppress) {\n    blit(out, art.nude, art.palette);'), 'and the body');
   assert.ok(pd.includes('const ordered = suppress ? [] : paperdollOrder('), 'and the items - the click mask empties with them');
-  assert.ok(pd.includes('blit(out, headArt ?? _art.head);'), 'the vampire head replaces the racial blit');
+  assert.ok(pd.includes('blit(out, headArt ?? art.head, art.palette);'), 'the vampire head replaces the racial blit');
 });

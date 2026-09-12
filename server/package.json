@@ -1,0 +1,12 @@
+{
+  "name": "daggerfall-online-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.131.1"
+  }
+}

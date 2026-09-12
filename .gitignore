@@ -57,3 +57,6 @@ firsthour-shots/
 __pycache__/
 *.pyc
 prototype/
+
+# ONLINE1: wrangler's local state beside the relay
+server/.wrangler/
