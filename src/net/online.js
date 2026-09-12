@@ -40,7 +40,7 @@
 // collide or a '-1.x' fallback that pooled the unknown).
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
-import { appStorage } from '../systems/appStorage.js';   // the one storage question - the seam, never the browser's own (a PIN)
+import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, worldRoom, inRange, relayUrl } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
@@ -124,12 +124,14 @@ function keptToken(storage, key, re, mint) {
   return v;
 }
 
-/** The player's id across sessions: minted once, kept in storage. */
-export const peerId = (storage = appStorage()) => keptToken(storage, 'dagger.online.id', /^[A-Za-z0-9_-]{4,40}$/,
+/** The player's id: minted once per TAB and kept for its life (TABS1: two
+ *  tabs of one browser are two players, whatever each loaded; a reload of
+ *  the tab keeps the id, so a reconnect replaces its own old socket). */
+export const peerId = (storage = tabStorage()) => keptToken(storage, 'dagger.online.id', /^[A-Za-z0-9_-]{4,40}$/,
   () => 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4));
 
 /** The id's secret (AUDIT ONLINE A3): minted beside it, kept beside it, sent only in the hello. */
-export const peerSecret = (storage = appStorage()) => keptToken(storage, 'dagger.online.secret', /^[A-Za-z0-9_-]{8,64}$/,
+export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger.online.secret', /^[A-Za-z0-9_-]{8,64}$/,
   () => Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 10)).join(''));
 
 /**

@@ -95,6 +95,11 @@ test('ONLINE1: the pose - changed past a hair, eased between two with the yaw by
   const id = peerId(storage); assert.match(id, /^[A-Za-z0-9_-]{4,40}$/); assert.equal(peerId(storage), id, 'the same id next time');
   assert.match(peerId({ getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } }), /^p/, 'a storage that throws: a fresh id, never a crash');
   const sec = peerSecret(storage); assert.match(sec, /^[A-Za-z0-9_-]{8,64}$/); assert.equal(peerSecret(storage), sec, 'the secret kept beside the id'); assert.notEqual(sec, id);
+  // TABS1: the id's home is the TAB's storage, so two tabs of one browser are two players
+  const src = rd('src/net/online.js');
+  assert.match(src, /import \{ tabStorage \} from '\.\.\/systems\/appStorage\.js'/); assert.match(src, /export const peerId = \(storage = tabStorage\(\)\)/); assert.match(src, /export const peerSecret = \(storage = tabStorage\(\)\)/);
+  assert.doesNotMatch(src, /appStorage\(\)/, 'never the browser-wide one');
+  assert.match(rd('src/systems/appStorage.js'), /export function tabStorage\(\) \{\s*\n\s*try \{ return globalThis\.sessionStorage \?\? null; \} catch \{ return null; \}/);
   assert.equal(relayUrl('wss://daggerfall-online.example.workers.dev/'), 'wss://daggerfall-online.example.workers.dev'); assert.equal(relayUrl('ws://localhost:8787'), 'ws://localhost:8787');
   for (const bad of ['http://relay.test', 'ws://relay.test', 'wss://relay.test/x?y=1', 'javascript:alert(1)', '']) assert.equal(relayUrl(bad), null, `${bad || 'empty'} is no relay`);
   assert.match(DEFAULT_SERVER, /^wss:\/\/daggerfall-online\./, 'the relay this port hosts');

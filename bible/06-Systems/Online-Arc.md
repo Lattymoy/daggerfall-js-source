@@ -93,7 +93,11 @@ reconnects with a backoff that doubles; the relay's own closes - a
 frame refused (1008), replaced by another window (4000) - are terminal,
 and `statusLine()` says which. The welcome merges into the peers
 known. Every frame the relay sends is checked by the wire's law. The
-player's id is minted once and kept through the storage seam. The
+player's id and its secret are minted once per TAB and kept in the
+tab's own storage (`tabStorage`, the seam's; TABS1 - Mac: "even though
+I load in with a different save, it always says the character is open
+in another window": the id lived in the browser's storage, so two tabs
+of one browser were one player). The
 WebSocket class and the clock are handed in, so `test/online.test.js`
 drives it over a fake socket.
 
@@ -307,7 +311,7 @@ so a peer's body wears what it logged in with.
   past a handful of players; interest management filters what is sent,
   not what is iterated.
 - No identity beyond the display name: the id is a random token kept
-  in the browser.
+  in the tab.
 
 ## Pinned
 
