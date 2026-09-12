@@ -917,6 +917,109 @@ memory on re-entry - persistence, but it will read as "F12 does nothing
 to the dungeon"; publishes and applies happen under an open window or
 a pause, which slice 3 gates explicitly.
 
+## WORLD2 (2026-09-12): one simulation per room
+
+**Mac: "Lets continue on with the next phase. We can merge in bulk
+once completed."** Slice 2 of the persistent shared world: THE HOST'S
+FOES ARE EVERYONE'S. Until now every player in a dungeon room ran their
+own copy of its foes and the memory reconciled them fifteen seconds at
+a time; now the room's host runs the layout's foes and streams them,
+and everyone else's are puppets.
+
+- **The wire** (`src/net/wire.js`, `server/src/index.js`):
+  `{t:'foes', data}` - the host's changed foes, the other frame
+  admitted past `MAX_FRAME_BYTES` by its prefix (`frameCap`) up to
+  `FOES_FRAME_MAX` (64 KiB), `FOES_HZ_MAX` (12) a second on the
+  stream's own bucket (`_meterFoes`, so the poses' stands), fanned to
+  everyone hello'd but the host as `{t:'foes', id, data}`; a non-host's
+  is ignored unparsed at the door. `{t:'hit', data}` - a blow on the
+  host's foe, under the small cap, from anyone but the host, forwarded
+  to the host's socket alone as `{t:'hit', id, data}`. A world room
+  alone; the relay reads neither.
+- **The session** (`src/net/online.js`): `sendFoes` (the host's alone,
+  in a world room, the stream's gate kept at home, never past the cap),
+  `sendHit` (anyone else's), `onFoes` (the room's host's frames alone -
+  a stale host's are not the world), `onHit` (while hosting);
+  `FOES_MS` (200) and `FOES_FULL_MS` (2000), the cadence.
+- **The world host** (`src/scenes/world.js`): `foesStream` every
+  `FOES_MS` while hosting a world room - the changed foes, every foe
+  `FOES_FULL_MS` apart so a dropped delta heals; the seat decides who
+  steps the layout's foes (`dungeonAuthority`: mine unless a world
+  room's open socket says another; `setDungeonAuthority` on every host
+  change; a new host streams every foe at once); `onFoes` and `onHit`
+  routed into the dungeon; `onFoeHit` in the host bag for a puppet's
+  blow.
+- **The dungeon host** (`src/scenes/dungeonContext.js`): `_authority`.
+  In the foe loop a PUPPET (`!_authority` and an index under
+  `_layoutFoes`) steps by `puppetStep` - the feet eased toward the
+  streamed feet over the stream's interval (`PUPPET_EASE_S`), a jump
+  past `PUPPET_SNAP` snapped, the yaw set, the walk while the streamed
+  feet move, the hurt one-shot after a health drop, the attack edge
+  once per streamed count with its ranged bit, the mobile's damage
+  latches cleared unconsumed - and skips everything the authority
+  decides (senses, pursuit, the swing, the cast, the fall, the door,
+  the pacification); the mobile arm draws both, and a puppet's barks
+  and its swing's sound are its own. `foesFrame(full)` - every layout
+  foe whose record `{i, f, y, h, d, a, m}` changed (feet to the
+  centimetre, yaw to the milliradian; `a` the attack count minted at
+  the strike edge, the ranged bit low; `m` moving). `applyFoes` - each
+  record onto its puppet, a drop the hurt, death and un-death through
+  `setFoeDead` (the ONE kill door - the save's restore takes it too),
+  the attack once per count and never the count a joiner arrived with,
+  a frame older than the last stale. `damageFoe`'s first line - on a
+  puppet a player's blow goes out as `{i, dmg, kind}` (the number
+  computed before the door by the striker's own weapon, arrow or
+  spell; the sounds and the HUD already played) and a fall's or a foe's
+  is dropped. `applyHit` - the host's own door with the peer's number
+  and kind (aggro, the shield pool, death and its corpse).
+  `setAuthority` - off, puppets from the next frame; on, THE HANDOVER:
+  the puppet's pose stands, the motor resumes live
+  (`EnemyAI.resumeLive`, `EnhancedEnemyAI` dropping its path: the
+  grounding, the target and its senses, the path and the clocks, the
+  accumulator forgotten; `isHostile` and `hasEncounteredPlayer` kept),
+  the attack machine and the mobile's latches cleared so no phantom
+  edge or blow fires, the stream from every foe.
+- **The mode machine** (`src/scenes/worldModes.js`): the four
+  forwards; a dungeon built while another hosts starts under the seat
+  as it stands; the hit routed into the build.
+
+What it does not do: the host's foes TARGET THE HOST ALONE - a layout
+foe does not see a non-host, so a non-host beside the host is not
+attacked and one alone with a foe strikes it unopposed (the host's
+senses see peers in slice 3); a blow carries no direction (a peer's
+blow never shoves) and no position (the aggro turns toward the host);
+the arrow's shaft lands in the host's copy of the foe's items; soul
+trap and Azura's Star on a peer's kill read the host's inventory; a
+spell's other effects (a paralysis, a drain) still land on the puppet
+locally, and the stream overwrites what it carries; doors, levers and
+platforms are still each client's own (slice 3); two players' random
+flats differ by level, so a puppet mirrors a species that may not be
+its own until the layout is seeded (slice 3); the foes past the
+layout's run - an encounter's, a summon's, a quest's - are still each
+player's own.
+
+Pinned in `test/world2.test.js` (4): the wire's two frames at both
+ends (the foes frame past the small cap by its prefix alone, never
+past its own whatever prefix it wore; the hit under the small cap; the
+stream's gate); the Room over the one fake (the stream fanned to
+everyone but the host, a non-host's ignored unparsed, the stream's own
+bucket leaving the poses' untouched, a hit to the host alone and never
+the host's own, a town relaying neither, the seat's move re-routing
+both); the session (sendFoes the host's alone under its gate and cap
+with t first, sendHit anyone else's, onFoes from the host alone, onHit
+while hosting); the hosts by source (the hit door first in damageFoe,
+the kinds, the puppet branch, the count, puppetStep, the frame out and
+in, the hit in, the handover, the one kill door, the API, the mode
+machine's forwards and the seat, the world host's stream and routes)
+and the motor's resume executed on both motors. Relay redeployed
+(06b8eddf); live, in a map-id room: the stream to the joiner and not
+back, a large prefixed frame through, a non-host's ignored with the
+socket kept, a hit to the host alone and never the host's own, the
+seat's move re-routing both. Not seen with two real players from here
+- Mac's two browsers are the gate: two in one dungeon, the host's foes
+walking and dying on the other screen, a blow from the joiner landing
+through the host, the host leaving and the joiner's foes coming alive.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -926,18 +1029,19 @@ a pause, which slice 3 gates explicitly.
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
 - **The live chat** ships (CHAT1, above): one World tab.
-- **The room's memory** (WORLD1, above) is a dungeon's alone and a
-  snapshot: the live simulation is still each player's own - two
-  players in one dungeon each fight their own copy of a foe until the
-  blows travel as events (slice 3), and a foe killed between two
-  publishes by a host that vanished comes back. Towns, cells and
-  buildings keep nothing yet; no shared clock or weather (slice 5);
-  the quest clocks still run online; no player-versus-player. A
-  memory is forgotten `WORLD_TTL_MS` (thirty days) after its room
-  last emptied (AUDIT WORLD A3 - a bound on parked storage, Mac's
-  to change), and two players' random flats differ by level, so a
-  record patches only its own species at an index until the layout
-  is seeded (AUDIT WORLD B4, slice 3).
+- **The room's memory** (WORLD1, above) is a dungeon's alone, and
+  since WORLD2 the layout's foes are ONE simulation per room - the
+  host's, streamed; a foe killed between two publishes by a host that
+  vanished still comes back for the next visitor. The host's foes
+  target the host alone until slice 3; doors, levers and platforms
+  are still each client's own. Towns, cells and buildings keep
+  nothing yet; no shared clock or weather (slice 5); the quest clocks
+  still run online; no player-versus-player. A memory is forgotten
+  `WORLD_TTL_MS` (thirty days) after its room last emptied (AUDIT
+  WORLD A3 - a bound on parked storage, Mac's to change), and two
+  players' random flats differ by level, so a record patches - and a
+  puppet mirrors - only its own index's species until the layout is
+  seeded (AUDIT WORLD B4, slice 3).
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -1010,6 +1114,11 @@ reconnect's seat and the room's floor, the farewell; the session's
 farewell; the body's doors in order, the pending strike, the loose
 law, the arrow's wait and commit, the re-latch; the hosts and the
 record by source.
+`test/world2.test.js` (4): the wire's foes frame and hit at both ends,
+the Room's stream and hit routing over the one fake, the session's
+sendFoes/sendHit/onFoes/onHit, the hosts by source (the puppet branch,
+the frame out and in, the hit door, the handover) and the motor's
+resume executed.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

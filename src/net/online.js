@@ -4,9 +4,10 @@
 // see and traverse with other players"): THE SESSION.
 //
 // THE SHAPE. Every player runs their own world from their own save;
-// presence is shared (ONLINE1), words (CHAT1), and - WORLD1 - a world
-// room's memory: the host's snapshot of the place, handed to whoever
-// comes next. This module holds one WebSocket to
+// presence is shared (ONLINE1), words (CHAT1), a world room's memory
+// (WORLD1 - the host's snapshot of the place, handed to whoever comes
+// next) and its live foes (WORLD2 - the host's, streamed to the rest;
+// a blow on them goes to the host). This module holds one WebSocket to
 // the relay (server/src/index.js on Cloudflare), in one ROOM at a time,
 // says hello once with the player's look, sends the player's pose at
 // POSE_HZ when it changes (and a heartbeat pose every HEARTBEAT_MS

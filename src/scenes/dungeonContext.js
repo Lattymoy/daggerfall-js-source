@@ -182,6 +182,15 @@ import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanc
 // lives with the law in systems/createItem.js - this host and the
 // world host each kept a copy, so the picker opened on the other's row.
 
+/** WORLD2: a puppet's feet ease toward the streamed feet over the stream's interval (FOES_MS, net/online.js). */
+const PUPPET_EASE_S = 0.2;
+/** WORLD2: a streamed jump past this (scene units) is a teleport: snapped, not walked. */
+const PUPPET_SNAP = 3;
+/** WORLD2: a streamed move under this per frame is standing still (the walk cycle stops). */
+const PUPPET_STILL = 0.02;
+const q2 = (v) => Math.round(v * 100) / 100;
+const q3 = (v) => Math.round(v * 1000) / 1000;
+
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
 
@@ -1809,7 +1818,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka, say: (l) => hudText.add(l) };   // S21: concealment start messages
   const foeSinks = (f) => ({
-    hurt: (n) => damageFoe(f, n),
+    hurt: (n) => damageFoe(f, n, null, null, { kind: 'spell' }),   // WORLD2: the kind rides the hit
     heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
     drainMagicka: foeDrainMagicka(f.entity),
     restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
@@ -2805,7 +2814,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // body now, verbatim.
               playerArrowHitFoe(m, f, {
                 playerEntity, playerWeapon, playerFeet,
-                dealDamage: (t, d) => damageFoe(t, d, lastPlayerFeet, m.dir),   // C15: arrows knock along their flight; MT-iv: the player arm keys on the feet, so an arrow kill reverts a struck ally too
+                dealDamage: (t, d) => damageFoe(t, d, lastPlayerFeet, m.dir, { kind: 'arrow' }),   // WORLD2: the kind rides the hit; C15: arrows knock along their flight; MT-iv: the player arm keys on the feet, so an arrow kill reverts a struck ally too
                 audio,
                 hitEffects,
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
@@ -2954,6 +2963,125 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (let i = missiles.length - 1; i >= 0; i--) if (missiles[i].dead) missiles.splice(i, 1);
   }
 
+  /** WORLD2: a foe's death and un-death - ONE door for the save's restore and the host's stream: dead spawns the
+   *  corpse (the record's own items are the corpse's), un-dead frees the corpse flat by its foe. */
+  function setFoeDead(f, dead) {
+    if (dead) { if (!f.dead) { f.dead = true; spawnCorpse(f); } return; }
+    if (!f.dead) return;
+    f.dead = false;
+    if (f.corpseBatch) {
+      const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
+      const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
+      renderer.destroyBillboardBatch(f.corpseBatch);
+      f.corpseBatch = null;
+    }
+  }
+
+  /** WORLD2: one PUPPET frame - the pose from the stream (the feet eased toward the streamed feet over the stream's
+   *  interval, a far jump snapped; the yaw set), the walk while the streamed feet move, the hurt one-shot after a
+   *  health drop, the attack edge once per streamed count with its ranged bit; the mobile's damage latches cleared
+   *  unconsumed (a puppet lands no blow of its own). Returns the strike edge for the mobile arm. */
+  function puppetStep(f, dt) {
+    const p = f._pup;
+    let edge = false;
+    if (p) {
+      const feet = f.ai.feet, t = p.feet;
+      const dx = t[0] - feet[0], dy = t[1] - feet[1], dz = t[2] - feet[2];
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 > PUPPET_SNAP * PUPPET_SNAP) { feet[0] = t[0]; feet[1] = t[1]; feet[2] = t[2]; }
+      else { const k = Math.min(1, dt / PUPPET_EASE_S); feet[0] += dx * k; feet[1] += dy * k; feet[2] += dz * k; }
+      f.ai.yaw = p.yaw;
+      f.ai.moving = p.moving || d2 > PUPPET_STILL * PUPPET_STILL;
+      f.ai.hurtKnock = p.hurt; p.hurt = false;
+      if (p.strike != null) { edge = true; if (f.attack) f.attack.firedRanged = p.strike === 'ranged'; p.strike = null; }
+    } else { f.ai.moving = false; f.ai.hurtKnock = false; }
+    if (f.mobile) { f.mobile.doMeleeDamage = false; f.mobile.shootArrow = false; }   // WORLD2 dropped unconsumed: a puppet lands no blow of its own
+    f._castPending = false;
+    return edge;
+  }
+
+  /** WORLD2: the host's foes frame out - every layout foe whose streamed state changed since its last frame (every
+   *  one when full, so a dropped frame heals), or null when none did. Feet to the centimetre, yaw to the milliradian,
+   *  so a foe standing still streams nothing. The record: i the index, f the feet, y the yaw, h the health, d dead,
+   *  a the attack count with the ranged bit low, m moving. */
+  function foesFrame(full = false) {
+    if (!_authority) return null;
+    const out = [];
+    for (let i = 0; i < _layoutFoes; i++) {
+      const f = foes[i];
+      if (!f) continue;
+      const r = { i, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: f.entity.health, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0 };
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m}`;
+      if (!full && f._sentKey === key) continue;
+      f._sentKey = key;
+      out.push(r);
+    }
+    if (!out.length) return null;
+    return { n: ++_foesSeq, f: out };
+  }
+
+  /** WORLD2: the host's foes frame in, each record onto its puppet - the target pose for the eased step, the health
+   *  (a drop is the hurt one-shot), death and un-death through the one kill door, the attack once per count (a joiner
+   *  latches the count it arrives with and replays nothing). A frame older than the last is stale. False while I am
+   *  the authority. */
+  function applyFoes(data) {
+    if (_authority || !data || !Array.isArray(data.f)) return false;
+    if (Number.isFinite(data.n)) { if (data.n <= _foesSeqIn) return false; _foesSeqIn = data.n; }
+    for (const r of data.f) {
+      if (!r || typeof r !== 'object') continue;
+      const i = r.i | 0;
+      const f = foes[i];
+      if (!f || i >= _layoutFoes) continue;
+      const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null });
+      if (Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite)) { p.feet[0] = r.f[0]; p.feet[1] = r.f[1]; p.feet[2] = r.f[2]; }
+      if (Number.isFinite(r.y)) p.yaw = r.y;
+      p.moving = !!r.m;
+      if (Number.isFinite(r.h)) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
+      if (r.a != null) { const a = r.a | 0; if (p.a != null && a !== p.a) p.strike = (a & 1) ? 'ranged' : 'melee'; p.a = a; }
+      if (r.d === 1) setFoeDead(f, true); else if (r.d === 0) setFoeDead(f, false);
+    }
+    return true;
+  }
+
+  /** WORLD2: a peer's blow on my foe, while I host - through the one damage door with the peer's number and kind
+   *  (the player arm: aggro, the shield pool, death and its corpse), the striker's feet unknown to it (the aggro turns
+   *  toward me - a known drift until the pose rides the hit). */
+  function applyHit(id, data) {
+    if (!_authority || !data || typeof data !== 'object') return false;
+    const i = data.i | 0, dmg = Number(data.dmg);
+    const f = foes[i];
+    if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg <= 0) return false;
+    damageFoe(f, dmg, null, null, { fromPlayer: true, kind: data.kind === 'arrow' || data.kind === 'spell' ? data.kind : 'melee' });
+    return true;
+  }
+
+  /** WORLD2: who steps the layout's foes. Off: they are puppets from the next frame (posed by the stream when it
+   *  comes; still until then). On - the HANDOVER: each puppet's pose stands and the motor resumes live from it
+   *  (resumeLive - the target, the path, the grounding and the clocks forgotten), the attack machine and the mobile's
+   *  latches cleared so no phantom edge or blow fires on the first live frame, and the stream starts from every foe. */
+  function setAuthority(on) {
+    on = !!on;
+    if (on === _authority) return;
+    _authority = on;
+    _foesSeqIn = -1;
+    for (let i = 0; i < _layoutFoes; i++) {
+      const f = foes[i];
+      if (!f) continue;
+      if (on) {
+        const p = f._pup;
+        if (p) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; f.ai.yaw = p.yaw; }
+        f.ai.resumeLive?.();
+        if (f.attack?.machine) { f.attack.machine.state = 'Idle'; if ('acc' in f.attack.machine) f.attack.machine.acc = 0; }
+        if (f.attack) f.attack.firedRanged = false;
+        f._prevMState = 'Idle';
+        if (f.mobile) { f.mobile.doMeleeDamage = false; f.mobile.shootArrow = false; }   // WORLD2 dropped unconsumed: no blow from a puppet's last frame on the first live one
+        f._castPending = false;
+      }
+      f._pup = null;
+      f._sentKey = null;
+    }
+  }
+
   // S12: the dungeon world snapshot. Foes persist by SPAWN ORDER
   // (marker order is deterministic per location rebuild); piles by
   // index; action objects by their stable keys. The action-object
@@ -2963,6 +3091,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
   const _sharedStamp = Math.random().toString(36).slice(2);   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back
   let _sharedApplied = false;   // AUDIT WORLD B7: the room's memory lands on a freshly built pool ONCE; a second apply onto a live fight is slice 3's events
+  // WORLD2 (Mac: "Lets continue on with the next phase"): ONE SIMULATION PER ROOM. While another hosts the room I am
+  // not the authority: my layout foes (the first _layoutFoes of the pool) are PUPPETS that follow the host's stream
+  // and decide nothing, and my blows on them go out as hits for the host's own damage door. The seat's handover
+  // turns _authority on and the puppets live, from the pose the stream left them in.
+  let _authority = true;
+  let _foesSeq = 0;        // the host's frame counter out
+  let _foesSeqIn = -1;     // the last frame counter in (an older frame is stale, not the world)
   /** MAC6 #1: where this dungeon stands - its map pixel and map id, for the save (null for a location with no map row: the probe). */
   const dungeonHome = () => {
     const mt = dfLocation?.mapTableData;
@@ -3097,23 +3232,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.mobile.clearSpecialTransformationCompleted();
         if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
       }
-      if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
+      if (sf.dead && !f.dead) setFoeDead(f, true);
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved
       // truth per LoadID (SerializableEnemy.cs:176 SetHealth; only
       // data.isDead disables, :200-203) - a foe killed AFTER the
       // save stands alive again and its corpse container, absent
       // from the save, leaves with the rebuild. The port patches in
-      // place: un-kill and free the corpse flat by its foe.
-      else if (!sf.dead && f.dead) {
-        f.dead = false;
-        if (f.corpseBatch) {
-          const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
-          const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
-          renderer.destroyBillboardBatch(f.corpseBatch);
-          f.corpseBatch = null;
-        }
-      }
+      // place: un-kill and free the corpse flat by its foe (setFoeDead,
+      // WORLD2's one door for the save and the stream).
+      else if (!sf.dead && f.dead) setFoeDead(f, false);
     });
     // SL2 / SerializableStateManager.RestoreEnemyData (:404-425): a
     // DFU load REBUILDS the scene and then instantiates exactly the
@@ -3222,7 +3350,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
   let _ecvT = 0;   // ECV1: the foe pass's clock (seconds), for the shimmer and the hit reveal - declared above its first reader
-  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false } = {}) {
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee' } = {}) {
+    // WORLD2: a PUPPET's blow is the host's to apply - the number is this client's (computed before this door, the
+    // sounds and the HUD already played) and goes out as a hit; the next stream frame carries the health. A blow from
+    // anything but the player (a fall, a foe) is the host's simulation, not this client's: dropped.
+    if (!_authority) {
+      const pi = foes.indexOf(foe);
+      if (pi >= 0 && pi < _layoutFoes) { if (fromPlayer && damage > 0) opts.onFoeHit?.({ i: pi, dmg: damage, kind }); return; }
+    }
     markFoeStruck(foe, { fromPlayer });   // PX30: the enhanced HUD's target frame
     if (damage > 0) markConcealedHit(foe, _ecvT);   // ECV1: a hit on an unseen foe flashes it
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
@@ -3845,13 +3980,33 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // over frames instead of spiking one. Created lazily: the world
     // object outlives the bake and every foe reads the same one.
     if (enhancedNav.world) enhancedNav.world.pathBudget = enhancedNav.world.budgetPerFrame;
+    let _fi = -1;
     for (const f of foes) {
+      _fi++;
       if (f.dead) continue;
       // S19: a paralyzed foe freezes - EnemyMotor (CanAct = false,
       // FreezeAnims) stops senses/pursuit and EnemyAttack returns
       // (no decisions, no damage frame). EnemySounds is NOT gated
       // in DFU, so the bark pass below still runs.
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
+      const _pf = playerFeet || eye;
+      // ROAD-U: MobileUnit.OneShotPauseActionsWhilePlaying, read where
+      // DFU's components read it - the transforming Seducer takes no
+      // action at all (EnemyMotor.cs:464-466 + :267-269,
+      // EnemyAttack.cs:59-61), not merely no anim intent.
+      const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
+      // WORLD2: a PUPPET - another hosts the room and this layout foe follows its stream (puppetStep): nothing below
+      // decides for it (no senses, no pursuit, no swing, no cast, no fall, no door, no bark of its own choosing);
+      // the mobile arm past this block still draws it - the walk, the attack clip, the hurt one-shot
+      const _puppet = !_authority && _fi < _layoutFoes;
+      let _tgt = null, _strikeEdge = false;
+      if (_puppet) {
+        _strikeEdge = puppetStep(f, dt);
+        f.sounds ??= new EnemySoundSource(f.mobileType);
+        tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });   // the barks are the foe's, not the frame's
+        if (_strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // the streamed swing's own sound
+      }
+      else {
       // MT-iv: the armed context and the target's feet - exteriorFoes'
       // pair, one spelling. Unarmed (no candidates, or the foe
       // subsystem never loaded) both fall through to the legacy
@@ -3862,7 +4017,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           playerEntity: sn.playerEntity ?? playerEntity, playerHeight: sn.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
         }),
       } : sn);
-      const _pf = playerFeet || eye;
       const _targetFeet = (rec) => {
         const t = rec.ai.target;
         if (t == null) return rec.ai._armedTargeting ? null : _pf;
@@ -3872,13 +4026,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       applyEnemyMotorEffectFlags(f.ai, f.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
-      // ROAD-U: MobileUnit.OneShotPauseActionsWhilePlaying, read where
-      // DFU's components read it - the transforming Seducer takes no
-      // action at all (EnemyMotor.cs:464-466 + :267-269,
-      // EnemyAttack.cs:59-61), not merely no anim intent.
-      const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
       f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed, _fPaused);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
-      const _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
+      _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
       // player's fall formula - trunc(5 x (drop - 5)) - through the
       // pool's damage door (no knockback), ringing FallDamage at the
@@ -3977,8 +4126,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // gated on the hit later connecting. A LEVEL signal replayed the
       // sprite sequence inside one swing (the machine outlasts it).
       const _mstate = f.attack.machine.state;
-      const _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
+      _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = _mstate;
+      if (_strikeEdge) f._atkA = (((f._atkA | 0) >> 1) + 1) * 2 + (f.attack.firedRanged ? 1 : 0);   // WORLD2: the attack count out, the ranged bit in its low bit
       // PlayAttackSound (:100-113) - half the time, humans silent
       // except the watch, at whatever volumeScale the last attract
       // sound left behind. Through the one home (AUDIT 24 wave 41):
@@ -4039,6 +4189,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // sequence strikes TWICE per swing).
         if (!f.mobile) resolveFoeMelee(f, _pf);
       }
+      }   // WORLD2: the end of the authority's own step - a puppet skipped it
       if (f.mobile) {
         // C11: the sprite mobile. Paralysis freezes the anim clock
         // (FreezeAnims - the cached output redraws); otherwise the
@@ -4878,6 +5029,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return true;
     },
     locationKey: () => _locationKey,
+    // WORLD2: one simulation per room - the stream out and in, the hit in, the seat
+    foesFrame,
+    applyFoes,
+    applyHit,
+    setAuthority,
+    isAuthority: () => _authority,
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     // ROAD-B B1 asked the DEPTH here, for the same reason worldModes'

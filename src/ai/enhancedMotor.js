@@ -267,4 +267,10 @@ export class EnhancedEnemyAI extends EnemyAI {
     const k = reach / d;
     this.destination = [this.feet[0] + dx * k, y, this.feet[2] + dz * k];
   }
+
+  /** WORLD2: the base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */
+  resumeLive() {
+    super.resumeLive();
+    this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;
+  }
 }

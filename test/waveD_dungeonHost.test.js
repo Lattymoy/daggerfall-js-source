@@ -54,7 +54,7 @@ test('wave D: the player-arrow law has FOUR CALLERS and one body', () => {
   assert.equal(/calculateAttackDamage/.test(arm), false, 'and its damage door with it');
   // the four options the shared law cannot work without
   assert.match(arm, /playerEntity, playerWeapon, playerFeet,/);
-  assert.match(arm, /dealDamage: \(t, d\) => damageFoe\(t, d, lastPlayerFeet, m\.dir\),/,
+  assert.match(arm, /dealDamage: \(t, d\) => damageFoe\(t, d, lastPlayerFeet, m\.dir, \{ kind: 'arrow' \}\),/,
     'the pool\'s own damage door, carrying the knockback origin and the flight direction');
 });
 

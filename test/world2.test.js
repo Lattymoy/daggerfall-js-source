@@ -21,7 +21,12 @@ import assert from 'node:assert/strict';
 import { parseClient, frameCap, foesGate, FOES_FRAME_MAX, FOES_HZ_MAX, FOES_PREFIX, WORLD_PREFIX, WORLD_FRAME_MAX, MAX_FRAME_BYTES, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { fakeRoom } from './fakeRoom.mjs';
-import { OnlineSession } from '../src/net/online.js';
+import { OnlineSession, FOES_MS, FOES_FULL_MS } from '../src/net/online.js';
+import { readFileSync } from 'node:fs';
+import { EnemyAI } from '../src/characters/enemyMotor.js';
+import { EnhancedEnemyAI } from '../src/ai/enhancedMotor.js';
+
+const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
 const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
@@ -145,4 +150,54 @@ test('WORLD2: the session - sendFoes is the host\'s alone, in a world room, unde
   s.join('town:m9', { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 });
   const ws2 = sockets[1]; ws2.open(); ws2.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: 'mac-0001', world: null });
   assert.equal(s.sendFoes(foes), false, 'a town streams no foes'); assert.equal(s.sendHit(hit), false);
+});
+
+test('WORLD2: the hosts by source - the dungeon host\'s hit door first in damageFoe (a puppet\'s blow goes out with its kind, a fall\'s or a foe\'s dropped), the kind riding the spell and arrow doors; the puppet branch in the foe loop with the attack count and its ranged bit; puppetStep (eased or snapped, the hurt once, the latches cleared); the frame out (the changed alone unless full), the frame in (never the authority\'s, never stale, the attack once per count and never the count it arrived with, death through the one kill door), the hit in (the host\'s door, the layout\'s foes alone), the handover (the motor resumed, the machines idle, the stream from every foe); the mode machine and the world host; the motor resumes live from a puppet\'s pose, executed', () => {
+  const d = rd('src/scenes/dungeonContext.js');
+  assert.match(d, /let _authority = true;\s*let _foesSeq = 0;[^\n]*\n\s*let _foesSeqIn = -1;/, 'the state');
+  assert.match(d, /function damageFoe\(foe, damage, playerFeet = null, knockDir = null, \{ fromPlayer = true, bypassShield = false, kind = 'melee' \} = \{\}\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(!_authority\) \{\s*const pi = foes\.indexOf\(foe\);\s*if \(pi >= 0 && pi < _layoutFoes\) \{ if \(fromPlayer && damage > 0\) opts\.onFoeHit\?\.\(\{ i: pi, dmg: damage, kind \}\); return; \}\s*\}\s*markFoeStruck\(foe/, 'the hit door: first - before the HUD, the aggro, the shield, the health');
+  assert.match(d, /hurt: \(n\) => damageFoe\(f, n, null, null, \{ kind: 'spell' \}\)/, 'a spell\'s kind'); assert.match(d, /damageFoe\(t, d, lastPlayerFeet, m\.dir, \{ kind: 'arrow' \}\)/, 'an arrow\'s kind');
+  assert.match(d, /let _fi = -1;\s*for \(const f of foes\) \{\s*_fi\+\+;\s*if \(f\.dead\) continue;/, 'the loop counts');
+  assert.match(d, /const _puppet = !_authority && _fi < _layoutFoes;\s*let _tgt = null, _strikeEdge = false;\s*if \(_puppet\) \{\s*_strikeEdge = puppetStep\(f, dt\);\s*f\.sounds \?\?= new EnemySoundSource\(f\.mobileType\);\s*tickEnemySound\([^\n]*\n\s*if \(_strikeEdge\) playEnemyClip\(audio, f\.sounds\.attack\(\), f\.ai\.feet, acuteHearingMultiplier\(playerEntity\)\);[^\n]*\n\s*\}\s*else \{/, 'the branch: a puppet steps by the stream - its barks and its swing\'s sound its own - the authority by itself');
+  assert.match(d, /\}   \/\/ WORLD2: the end of the authority's own step - a puppet skipped it\s*if \(f\.mobile\) \{/, 'and the mobile arm draws both');
+  assert.match(d, /if \(_strikeEdge\) f\._atkA = \(\(\(f\._atkA \| 0\) >> 1\) \+ 1\) \* 2 \+ \(f\.attack\.firedRanged \? 1 : 0\);/, 'the attack count, the ranged bit low');
+  assert.match(d, /function puppetStep\(f, dt\) \{[\s\S]*?if \(d2 > PUPPET_SNAP \* PUPPET_SNAP\) \{ feet\[0\] = t\[0\]; feet\[1\] = t\[1\]; feet\[2\] = t\[2\]; \}\s*else \{ const k = Math\.min\(1, dt \/ PUPPET_EASE_S\); feet\[0\] \+= dx \* k;[\s\S]*?f\.ai\.hurtKnock = p\.hurt; p\.hurt = false;\s*if \(p\.strike != null\) \{ edge = true; if \(f\.attack\) f\.attack\.firedRanged = p\.strike === 'ranged'; p\.strike = null; \}[\s\S]*?if \(f\.mobile\) \{ f\.mobile\.doMeleeDamage = false; f\.mobile\.shootArrow = false; \}[^\n]*\n\s*f\._castPending = false;\s*return edge;/, 'the puppet: eased or snapped in place (the batch aliases the feet), the hurt once, the edge once, the latches cleared');
+  assert.match(d, /const PUPPET_EASE_S = 0\.2;/, 'the stream\'s interval'); assert.equal(FOES_MS, 200, 'and it is FOES_MS'); assert.ok(FOES_FULL_MS > FOES_MS);
+  assert.match(d, /function foesFrame\(full = false\) \{\s*if \(!_authority\) return null;[\s\S]*?const r = \{ i, f: \[q2\(f\.ai\.feet\[0\]\), q2\(f\.ai\.feet\[1\]\), q2\(f\.ai\.feet\[2\]\)\], y: q3\(f\.ai\.yaw\), h: f\.entity\.health, d: f\.dead \? 1 : 0, a: f\._atkA \| 0, m: f\.ai\.moving \? 1 : 0 \};[\s\S]*?if \(!full && f\._sentKey === key\) continue;[\s\S]*?if \(!out\.length\) return null;\s*return \{ n: \+\+_foesSeq, f: out \};/, 'the frame out: the changed alone unless full, nothing when nothing');
+  assert.match(d, /function applyFoes\(data\) \{\s*if \(_authority \|\| !data \|\| !Array\.isArray\(data\.f\)\) return false;\s*if \(Number\.isFinite\(data\.n\)\) \{ if \(data\.n <= _foesSeqIn\) return false; _foesSeqIn = data\.n; \}/, 'the frame in: never the authority\'s, never stale');
+  assert.match(d, /if \(Number\.isFinite\(r\.h\)\) \{ if \(r\.h < f\.entity\.health\) p\.hurt = true; f\.entity\.health = r\.h; \}/, 'a drop is the hurt');
+  assert.match(d, /if \(r\.a != null\) \{ const a = r\.a \| 0; if \(p\.a != null && a !== p\.a\) p\.strike = \(a & 1\) \? 'ranged' : 'melee'; p\.a = a; \}/, 'the attack once per count, never the count it arrived with');
+  assert.match(d, /if \(r\.d === 1\) setFoeDead\(f, true\); else if \(r\.d === 0\) setFoeDead\(f, false\);/, 'death through the one kill door');
+  assert.match(d, /function applyHit\(id, data\) \{\s*if \(!_authority \|\| !data \|\| typeof data !== 'object'\) return false;[\s\S]*?if \(!f \|\| i >= _layoutFoes \|\| f\.dead \|\| !Number\.isFinite\(dmg\) \|\| dmg <= 0\) return false;\s*damageFoe\(f, dmg, null, null, \{ fromPlayer: true, kind: data\.kind === 'arrow' \|\| data\.kind === 'spell' \? data\.kind : 'melee' \}\);/, 'the hit in: the host\'s door, the layout\'s foes alone, a finite blow');
+  assert.match(d, /function setAuthority\(on\) \{\s*on = !!on;\s*if \(on === _authority\) return;\s*_authority = on;\s*_foesSeqIn = -1;[\s\S]*?if \(p\) \{ f\.ai\.feet\[0\] = p\.feet\[0\];[\s\S]*?f\.ai\.resumeLive\?\.\(\);[\s\S]*?f\._prevMState = 'Idle';[\s\S]*?f\._pup = null;\s*f\._sentKey = null;/, 'the handover: the puppet\'s pose stands, the motor resumes, no phantom edge, the stream from every foe');
+  assert.match(d, /function setFoeDead\(f, dead\) \{\s*if \(dead\) \{ if \(!f\.dead\) \{ f\.dead = true; spawnCorpse\(f\); \} return; \}\s*if \(!f\.dead\) return;\s*f\.dead = false;\s*if \(f\.corpseBatch\) \{/, 'one kill door for the save and the stream');
+  assert.match(d, /if \(sf\.dead && !f\.dead\) setFoeDead\(f, true\);/); assert.match(d, /else if \(!sf\.dead && f\.dead\) setFoeDead\(f, false\);/);
+  assert.match(d, /    foesFrame,\s*applyFoes,\s*applyHit,\s*setAuthority,\s*isAuthority: \(\) => _authority,/, 'the API');
+  const m = rd('src/scenes/worldModes.js');
+  assert.match(m, /onFoeHit: \(hit\) => host\.onFoeHit\?\.\(hit\),/, 'the hit routed into the build');
+  assert.match(m, /dungeonCtx = ctx;\s*_dungeonAuthority = host\.dungeonAuthority\?\.\(\) \?\? true; ctx\.setAuthority\?\.\(_dungeonAuthority\);/, 'a dungeon built under the seat as it stands');
+  assert.match(m, /setDungeonAuthority\(on\) \{ _dungeonAuthority = !!on; dungeonCtx\?\.setAuthority\?\.\(_dungeonAuthority\); \},/, 'the seat kept for the next dungeon');
+  assert.match(m, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*_foesSentAt = now;\s*if \(!online\.sendFoes\(frame\)\) return false;\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart, every foe FOES_FULL_MS apart');
+  assert.match(w, /const dungeonAuthority = \(\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && !online\.isHost\(\)\);/, 'the seat: mine unless a world room\'s open socket says another');
+  assert.match(w, /online\.onFoes = \(id, data\) => \{ modes\?\.applyDungeonFoes\?\.\(data\); \};\s*online\.onHit = \(id, data\) => \{ modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the stream and the hits routed');
+  assert.match(w, /worldPublish\(now\);[^\n]*\n\s*foesStream\(now\);/, 'every frame asks'); assert.match(w, /onFoeHit: \(hit\) => online\?\.sendHit\(hit\) \?\? false,/, 'a puppet\'s blow out');
+  // the motor's resume, executed: a puppet's pose stands, everything decided is forgotten
+  for (const AI of [EnemyAI, EnhancedEnemyAI]) {
+    const ai = new AI({ raycast: () => null, groundAt: () => 0 }, [1, 2, 3], 0.5, {});
+    ai.feet[0] = 10; ai.feet[1] = 4; ai.feet[2] = 20; ai.yaw = 1.25;
+    Object.assign(ai, { lastGroundedY: 30, _airborne: true, velY: -9, landedFall: 2, target: { x: 1 }, secondaryTarget: { x: 2 }, targetSenses: {}, lastKnownTargetPos: [0, 0, 0], oldLastKnownTargetPos: [0, 0, 0], predictedTargetPos: [0, 0, 0], _predictedTargetPosWithoutLead: [0, 0, 0], lastHadLOSTimer: 5, giveUpTimer: 5, classicTargetUpdateTimer: 5, destination: [0, 0, 0], detourDestination: [0, 0, 0], obstacleDetected: true, fallDetected: true, foundUpwardSlope: true, foundDoor: true, avoidObstaclesTimer: 5, checkingClockwiseTimer: 5, didClockwiseCheck: true, lastTimeWasStuck: 5, _acc: 0.5, knockbackSpeed: 3, hurtKnock: true, moving: true, isHostile: true, hasEncounteredPlayer: true });
+    if (AI === EnhancedEnemyAI) Object.assign(ai, { path: [[0, 0, 0]], pathI: 3, repathT: 2, pathEpoch: 7 });
+    ai.resumeLive();
+    assert.deepEqual([ai.feet, ai.yaw], [[10, 4, 20], 1.25], `${AI.name}: the puppet's pose stands`);
+    assert.deepEqual([ai.lastGroundedY, ai._airborne, ai.velY, ai.landedFall], [4, false, 0, 0], 'grounded where it stands: no phantom fall');
+    assert.deepEqual([ai.target, ai.secondaryTarget, ai.targetSenses, ai.lastKnownTargetPos, ai.oldLastKnownTargetPos, ai.predictedTargetPos, ai._predictedTargetPosWithoutLead], [null, null, null, null, null, null, null], 'the target forgotten');
+    assert.deepEqual([ai.lastHadLOSTimer, ai.giveUpTimer, ai.classicTargetUpdateTimer], [0, 0, 0]);
+    assert.deepEqual([ai.destination, ai.detourDestination], [[10, 4, 20], [10, 4, 20]], 'the path from here');
+    assert.deepEqual([ai.obstacleDetected, ai.fallDetected, ai.foundUpwardSlope, ai.foundDoor, ai.didClockwiseCheck], [false, false, false, false, false]);
+    assert.deepEqual([ai.avoidObstaclesTimer, ai.checkingClockwiseTimer, ai.lastTimeWasStuck, ai._acc, ai.knockbackSpeed, ai.hurtKnock, ai.moving], [0, 0, -Infinity, 0, 0, false, false]);
+    assert.deepEqual([ai.isHostile, ai.hasEncounteredPlayer], [true, true], 'the foe\'s own stand');
+    if (AI === EnhancedEnemyAI) assert.deepEqual([ai.path, ai.pathI, ai.repathT, ai.pathEpoch], [null, 1, 0, undefined], 'and the cached path with it');
+  }
 });

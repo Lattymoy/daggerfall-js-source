@@ -6,8 +6,10 @@
 > own save) whole; the second stands in a new shape - the relay names a
 > HOST per room (the player in it longest) and keeps the host's snapshot
 > of a dungeon's world for whoever comes next, while the world still
-> runs in the host's browser; shared time and weather are the arc's
-> next slices. This page is the co-op design the arc grows into; where
+> runs in the host's browser - and WORLD2 (2026-09-12) made that
+> literal for a dungeon's foes: one simulation per room, the host's,
+> streamed to the rest, whose foes are puppets. Shared time and
+> weather are the arc's next slices. This page is the co-op design the arc grows into; where
 > the two disagree, the arc is what runs.
 
 Co-op for the Daggerfall JavaScript port. Locked with Mac on 2026-09-01
