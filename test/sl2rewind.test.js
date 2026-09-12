@@ -61,7 +61,7 @@ test('SL2 save-load-2: the pile flat FOLLOWS the restored items, both directions
 });
 
 test('SL2 save-load-2: spawnCorpse keys its batch to the foe and aborts on a mid-warm resurrect', () => {
-  const i = dc.indexOf('async function spawnCorpse(f)');
+  const i = dc.indexOf('async function spawnCorpseNow(f)');   // AUDIT WORLD2 B14: spawnCorpse is the one-mint-in-flight guard around this body
   const fn = dc.slice(i, dc.indexOf('\n  }\n', i));
   // the race: getTexture awaits; a backward load can resurrect the
   // foe before the batch mints - a corpse must never stand for a live foe

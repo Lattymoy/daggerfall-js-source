@@ -4993,7 +4993,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4903), so the OUTER host's one rides in.
+          // (dungeonContext.js:4938), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -7495,7 +7495,7 @@ export function createWorldModes(host) {
     /** WORLD2: the host's foes frame out (every changed layout foe, or every one when full), or null outside a dungeon. */
     dungeonFoesFrame(full = false) { return mode === 'dungeon' && dungeonCtx ? (dungeonCtx.foesFrame?.(full) ?? null) : null; },
     /** WORLD2: the host's foes frame in - the puppets follow it; false outside a dungeon. */
-    applyDungeonFoes(data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyFoes?.(data) : false; },
+    applyDungeonFoes(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyFoes?.(data, id) : false; },   // AUDIT WORLD2 A1: the streaming host's id rides in - a new host's counter starts over
     /** WORLD2: a peer's blow on my foe, applied through the dungeon's own damage door while I host. */
     applyDungeonHit(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyHit?.(id, data) : false; },
     /** WORLD2: who runs the layout's foes - me (the AI steps) or the room's host (my layout foes are puppets). Kept
@@ -8039,7 +8039,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4338/:4338 and
-     *  dungeonContext.js:4979/:4983 are: the C# restore sets the
+     *  dungeonContext.js:5014/:5018 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

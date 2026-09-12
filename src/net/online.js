@@ -67,7 +67,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -89,6 +89,9 @@ export const WORLD_PUBLISH_MS = 15000;
 export const FOES_MS = 200;
 /** WORLD2: how often the stream carries EVERY layout foe, not the changed alone - a dropped delta heals within it. */
 export const FOES_FULL_MS = 2000;
+/** AUDIT WORLD2 C5: a seat heard from no more recently than this (its stream, or its word in the welcome) is not a
+ *  live seat - the joiner steps its own foes rather than stand among frozen ones. */
+export const FOES_STALE_MS = 3 * FOES_FULL_MS;
 /** A pose farther than this from the drawn one is a teleport: the peer snaps rather than sweeps (world frame / scene frame). */
 export const SNAP_WORLD_UNITS = PIXEL_UNITS / 8;
 export const SNAP_SCENE_UNITS = 30;
@@ -187,6 +190,7 @@ export class OnlineSession {
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this._fbucket = null;         // WORLD2: the foes stream's own gate, the relay's law kept at home
+    this._hbucket = null;         // AUDIT WORLD2 A6: the hits' own gate at home (HIT_HZ_MAX), so a blow never starves the poses at the relay
     this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
     this.onHost = null;           // (id, mine) => void: the host changed
     this.onWorld = null;          // (world) => void: the welcome carried the room's memory
@@ -232,8 +236,8 @@ export class OnlineSession {
     this._retryAt = null;
     this.room = null;
     this.peers.clear();
-    this.host = null;
     this.status = 'closed';
+    this._setHost(null);   // AUDIT WORLD2 C2: through the one door, so the world host hears the seat go with the room
   }
 
   /** Am I the room's host (WORLD1)? False until the welcome says so. */
@@ -267,10 +271,12 @@ export class OnlineSession {
   sendHit(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     if (this.isHost() || !this.host || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
+    if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
     if (s.length > MAX_FRAME_BYTES) return false;
     try { this._ws.send(s); } catch { return false; }
-    this.stats.sent++; this.stats.hits++;
+    this._hbucket = gate.bucket; this.stats.sent++; this.stats.hits++;
     return true;
   }
 
@@ -299,6 +305,7 @@ export class OnlineSession {
     ws.onclose = (ev) => {
       if (this._ws !== ws) return;
       this._ws = null;
+      this._setHost(null);   // AUDIT WORLD2 A2/C2: a dead socket holds no seat - the host is unknown until the next welcome, and the world host hears it (onHost)
       const code = ev?.code ?? 1005;
       if (code === CLOSE_REPLACED) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = 'this character is online in another window'; return; }
       if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; return; }

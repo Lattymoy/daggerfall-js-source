@@ -64,7 +64,7 @@ test('AUDIT 58: every combat-voice play site spends the lift it was handed', () 
   // takes the voice object and plays only `.clip` is the defect.
   const SITES = [
     ['src/scenes/hostCombat.js', 1],      // the ONE player seam, nine callers behind it
-    ['src/scenes/dungeonContext.js', 3],
+    ['src/scenes/dungeonContext.js', 4],   // AUDIT WORLD2 B8: applyHit plays a peer's blow's pain on the host - the fourth site
     ['src/scenes/exteriorFoes.js', 4],
     ['src/scenes/cityGuards.js', 4],
     ['src/combat/arrowFlight.js', 1],
@@ -76,7 +76,7 @@ test('AUDIT 58: every combat-voice play site spends the lift it was handed', () 
     assert.equal(lifts.length, n, `${f}: ${lifts.length} voice sites carry the lift, expected ${n}`);
     total += lifts.length;
   }
-  assert.equal(total, 13, 'all thirteen');
+  assert.equal(total, 14, 'all fourteen');
   // ...and the vampire override arm keeps its hard 0, which is DFU's:
   // PlayAttackVoice lifts only in the `customSound == None` arm
   // (FPSWeapon.cs:313-320); :323 is a bare PlayOneShot at the source's

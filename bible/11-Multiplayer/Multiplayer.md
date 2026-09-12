@@ -71,8 +71,9 @@ be a second copy of the game in a Worker.
 
 The cost as designed: when the host leaves, the session ends. WORLD1
 (2026-09-12) shipped the relay's own answer to the seat - it passes to
-the player in the room longest, said in a host frame - and slice 2 of
-the arc hands the live simulation over with it.
+the player in the room longest, said in a host frame - and WORLD2
+(2026-09-12) handed the live simulation of a dungeon's foes over with
+it: the puppets go live from the pose the stream left them in.
 
 ### 3. WebSocket through a Cloudflare Durable Object
 
@@ -205,7 +206,7 @@ convenience.
 
 ## Open questions, deliberately open
 
-- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); the live simulation, slice 2 of the arc.
+- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); the rest of the room, slice 3.
 - Splitting the party across interiors. Later.
 - Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.

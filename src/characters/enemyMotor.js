@@ -1826,5 +1826,6 @@ export class EnemyAI {
     this.obstacleDetected = false; this.fallDetected = false; this.foundUpwardSlope = false; this.foundDoor = false;
     this.avoidObstaclesTimer = 0; this.checkingClockwiseTimer = 0; this.didClockwiseCheck = false; this.lastTimeWasStuck = -Infinity;
     this._acc = 0; this.knockbackSpeed = 0; this.hurtKnock = false; this.moving = false;
+    this._restGrounded = false;   // AUDIT WORLD2 B12: a foe that takes the seat standing still re-grounds on its first step, not its first move
   }
 }
