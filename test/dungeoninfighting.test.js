@@ -153,7 +153,7 @@ test("P0b (Mac 2026-08-28): the dungeon's CAST arm guards on the SELECTED target
   // the exterior host both guarded on _tgt all along; this pin closes
   // the one arm that did not, in the shape audit24_wave32 already
   // pins for the exterior.
-  assert.match(DG, /const _tgt = _targetFeet\(f\);/, 'the selected-target feet exist');
+  assert.match(DG, /let _tgt = null, _strikeEdge = false;[\s\S]*?_tgt = _targetFeet\(f\);/, 'the selected-target feet exist (declared before WORLD2\'s puppet branch, selected in the authority\'s own step)');
   assert.match(DG, /return rec\.ai\._armedTargeting \? null : _pf;/,
     'armed-with-no-target really answers null - the state the guard is for');
   assert.ok(DG.includes('if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {'),

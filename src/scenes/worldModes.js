@@ -1200,10 +1200,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1506 states), so the same visual
+   *  the C11 law dungeonContext.js:1516 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1411, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1421, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -3938,6 +3938,7 @@ export function createWorldModes(host) {
   }
   let exitReturn = null;
   let dungeonCtx = null;
+  let _dungeonAuthority = true;   // WORLD2: who steps the layout's foes - me, unless a world room's host is another (the seat as last told)
   let dungeonLoc = null;    // B2: the mounted dungeon's dfLocation (playerInside's dungeon arm)
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
@@ -4927,7 +4928,7 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(), useMagicItem: (item) => host.useMagicItem?.(item),
+        dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(), useMagicItem: (item) => host.useMagicItem?.(item), onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
           // A10: the Recall prompt (Teleport.cs:81-98). The outer host
           // owns it - the plan's arms are its pixel teleport, its mode
           // teardown and its dungeon mount - so a cast underground in
@@ -4975,7 +4976,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4738), so the OUTER host's one rides in.
+          // (dungeonContext.js:4901), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -5009,6 +5010,7 @@ export function createWorldModes(host) {
           },
         });
       dungeonCtx = ctx;
+      _dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);   // WORLD2: a dungeon built while another hosts starts as puppets
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
       // no-opped): Teleport actions move the modal player.
@@ -5267,6 +5269,7 @@ export function createWorldModes(host) {
   function exitDungeonNow() {
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
+    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands
     teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown
     dungeonCtx.destroy();
     dungeonCtx = null;
@@ -5879,7 +5882,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6287's own wave-46 note); the interior
+          // a blow (world.js:6289's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -7469,6 +7472,19 @@ export function createWorldModes(host) {
      *  applier the key route hands the context (routeKey's, above),
      *  and no second session restore (the host did that before it
      *  teleported). False when no dungeon stands. */
+    /** WORLD1: the standing dungeon's shared world for the room's memory, or null outside one. */
+    dungeonSharedWorld() { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.sharedWorld() : null; },
+    /** WORLD2: the host's foes frame out (every changed layout foe, or every one when full), or null outside a dungeon. */
+    dungeonFoesFrame(full = false) { return mode === 'dungeon' && dungeonCtx ? (dungeonCtx.foesFrame?.(full) ?? null) : null; },
+    /** WORLD2: the host's foes frame in - the puppets follow it; false outside a dungeon. */
+    applyDungeonFoes(data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyFoes?.(data) : false; },
+    /** WORLD2: a peer's blow on my foe, applied through the dungeon's own damage door while I host. */
+    applyDungeonHit(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyHit?.(id, data) : false; },
+    /** WORLD2: who runs the layout's foes - me (the AI steps) or the room's host (my layout foes are puppets). Kept
+     *  here so a dungeon built later starts under the seat as it stands. */
+    setDungeonAuthority(on) { _dungeonAuthority = !!on; dungeonCtx?.setAuthority?.(_dungeonAuthority); },
+    /** WORLD1: the room's memory over the standing dungeon; false outside one or for another dungeon's. */
+    restoreDungeonSharedWorld(shared) { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.restoreSharedWorld(shared) : false; },
     restoreDungeonSave(extras) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;
       dungeonCtx.restoreSaved(extras, (p) => player.spawn(p[0], p[1], p[2]), { session: false });
@@ -7762,6 +7778,7 @@ export function createWorldModes(host) {
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
       }
       if (dungeonCtx) {
+        host.onDungeonLeave?.();   // WORLD1: a load or a teleport out is a leave too
         teardownDungeonQuestFlats();
         dungeonCtx.overlayWindow?.()?.dispose?.();   // the same OnPop, for the dungeon context's own slot
         dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null;
@@ -7966,7 +7983,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2586-2608), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:4161). So an F9 pressed in a shop
+     *  unconditionally (world.js:4163). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -7981,8 +7998,20 @@ export function createWorldModes(host) {
         ? { weaponDrawn: !interiorWeapon.playerWeapon.sheathed, usingRightHand: interiorWeapon.playerWeapon.usingRightHand }
         : null;
     },
+    /** AUDIT WORLD C1: the rig the player's hands are in NOW - the mode's, not world.js's own, which is never
+     *  stepped indoors or underground (interiorWeapon in a building, the dungeon context's in a dungeon; each
+     *  keeps its own swing and cast counters) - and the spell stance the same way, for the pose's arm. Null in
+     *  the exterior, where world.js's own rig is the one drawn. */
+    liveArm() {
+      const rig = mode === 'interior' ? interiorWeapon : mode === 'dungeon' ? (dungeonCtx?.weaponRig?.() ?? null) : null;
+      if (!rig) return null;
+      return { rig, armed: !!(mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) };
+    },
+    /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
+     *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
+    deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4221)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4223)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -7990,8 +8019,8 @@ export function createWorldModes(host) {
      *  building entry meets the outgoing session's drawn weapon. DFU
      *  has one manager, so the same bit belongs in every rig.
      *
-     *  FLAG ONLY, presence-gated, exactly as world.js:4327/:4327 and
-     *  dungeonContext.js:4814/:4820 are: the C# restore sets the
+     *  FLAG ONLY, presence-gated, exactly as world.js:4329/:4329 and
+     *  dungeonContext.js:4977/:4983 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

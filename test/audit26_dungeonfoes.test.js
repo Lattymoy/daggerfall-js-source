@@ -189,14 +189,14 @@ test('F051: the ?dungeon fly-cam is gated on the OVERLAY, not on the imported in
 // =====================================================================
 
 test('F218: applyWorld destroys the live foes past the snapshot (SerializableStateManager.cs:404-425)', () => {
-  const i = DUNGEON_CTX.indexOf('function applyWorld(w)');
+  const i = DUNGEON_CTX.indexOf('function applyWorld(w, { truncate = true } = {})');
   const fn = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('w.piles?.forEach', i));
   assert.ok(i > 0 && fn.length > 200, 'applyWorld\'s foe half was found');
   // DFU's load rebuilds the scene and instantiates one object per saved
   // record, so a foe born AFTER the save is gone. The port patches in
   // place by index and every late spawn appends, so the tail past the
   // snapshot IS the post-save population.
-  assert.ok(fn.includes('for (let i = foes.length - 1; i >= (w.foes?.length ?? 0); i--) {'),
+  assert.ok(fn.includes('for (let i = foes.length - 1; truncate && i >= (w.foes?.length ?? 0); i--) {'),
     'the live tail past the snapshot is walked backward for the splice');
   const tail = fn.slice(fn.indexOf('for (let i = foes.length - 1;'));
   assert.ok(tail.includes('renderer.destroyBillboardBatch(f.batch)'), 'the live batch is freed');
@@ -223,7 +223,7 @@ test('F218: applyWorld destroys the live foes past the snapshot (SerializableSta
       get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : STUB)),
     });
     // eslint-disable-next-line no-new-func
-    new Function('__scope', `with (__scope) { ${fn.slice(fn.indexOf('{') + 1)} }`)(scope);
+    new Function('__scope', `with (__scope) { ${fn.slice(fn.indexOf(') {') + 3)} }`)(scope);
   };
   const foe = () => ({ entity: { pickpocketAttempted: true, items: [] }, ai: { feet: [0, 0, 0] } });
   const recorded = foe();

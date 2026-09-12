@@ -2938,7 +2938,7 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // ROAD-E6 moved the moment: the door is CastReadySpell's PlayOneShot
   // (:430-435), it takes the release handler the engine parks its
   // resolution on, and it ANSWERS - false when PlayOneShot refused.
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s+fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
     'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');

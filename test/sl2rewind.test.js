@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
 const applyWorldSrc = () => {
-  const i = dc.indexOf('function applyWorld(w)');
+  const i = dc.indexOf('function applyWorld(w, { truncate = true } = {})');
   assert.ok(i > 0, 'applyWorld exists');
   // ...to the end of the function; the action-object half moved to
   // ActionSystem.restoreSaveData (save-load-11), so anchor on the
@@ -26,9 +26,11 @@ const applyWorldSrc = () => {
 test('SL2 save-load-2: a foe killed after the save RESURRECTS on a backward load, corpse freed', () => {
   const fn = applyWorldSrc();
   // the kill arm stands...
-  assert.ok(fn.includes('if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }'), 'the forward kill arm');
+  assert.ok(fn.includes('if (sf.dead && !f.dead) setFoeDead(f, true);'), 'the forward kill arm');
+  assert.match(dc, /function setFoeDead\(f, dead\) \{\s*if \(dead\) \{ if \(!f\.dead\) \{ f\.dead = true; spawnCorpse\(f\); \} return; \}/, 'through the one kill door (WORLD2): dead, and the corpse spawned');
   // ...and the rewind arm reverses it: alive-in-save + dead-live -> un-kill
-  const arm = fn.slice(fn.indexOf('else if (!sf.dead && f.dead)'));
+  assert.ok(fn.includes('else if (!sf.dead && f.dead) setFoeDead(f, false);'), 'the backward resurrect arm, through the one kill door (WORLD2)');
+  const arm = dc.slice(dc.indexOf('function setFoeDead(f, dead) {'), dc.indexOf('\n  }\n', dc.indexOf('function setFoeDead(f, dead) {')));
   assert.ok(arm.length > 20, 'the backward resurrect arm exists');
   assert.ok(arm.includes('f.dead = false;'), 'the foe stands back up (SetHealth restores; only data.isDead disables)');
   // the corpse flat leaves with the rewind - freed from BOTH owner

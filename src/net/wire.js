@@ -11,16 +11,30 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}]}
+//                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
+//                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
+//                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
+//                    {t:'host', id}                     the room's host changed (WORLD1)
+//                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
+//                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
 //                    {t:'error', m}                     then the socket closes
-// A pose is {x, y, z, yaw, pitch, mv} in the room's frame - a world
-// cell's in MapsFile world units (the streaming world's map-pixel
-// origin, PIXEL_UNITS a pixel), every other room's in the scene's own -
-// mv 1 when walking, 2 when running (the sender's own isRunning - AUDIT
-// MWBODY B3: a speed guess sat under every walk). A look is the paperdoll's recipe: race, gender,
+// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
+// a world cell's in MapsFile world units (the streaming world's
+// map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
+// scene's own - mv 1 when walking, 2 when running (the sender's own
+// isRunning - AUDIT MWBODY B3: a speed guess sat under every walk); wd 1
+// while the sender's weapon is drawn, 2 while a bow is held at full
+// draw (MAC7 #2); an the sender's swing count (a peer plays a swing
+// when it changes) and as the swing's WeaponStates index
+// (POSE_STRIKES) - MAC7 #1: a peer's body stood with its weapon
+// sheathed and never swung, since nothing of either travelled; am 1
+// while the sender has arrows (the look carries no inventory), sr 1
+// while a spell is readied, cn the sender's cast count and cr the
+// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2. A look is the paperdoll's recipe: race, gender,
 // face, and the equipped items projected onto the six fields the doll
 // art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
 // by construction and never a stranger's junk rebroadcast).
@@ -57,6 +71,20 @@
 // the only word of it. A chat line in a PLACE room reaches whoever a
 // pose would, and the sender besides, so a local tab can ride the
 // presence socket when it comes.
+//
+// THE ROOM'S MEMORY (WORLD1, 2026-09-12, Mac: "The world is the server
+// and every player should inhabit that world while also being able to
+// continue their progress ... True persistence"). A WORLD ROOM - a
+// dungeon, today - keeps a snapshot of its world in the object's own
+// storage: the foes the layout placed and how they stand, the piles,
+// the dropped loot, the actions and the door locks. The room's HOST
+// publishes it (the hello'd socket that has been in the room longest;
+// the relay says who in the welcome and in a host frame when it
+// changes) and a joiner is handed it in the welcome, so a dungeon one
+// player cleared is cleared for the next, and stays so through an empty
+// room. The relay reads none of it: a world frame is an object of
+// bounded size from the host, stored as it came, served as it came.
+// A frame from anyone else is ignored, not refused - a handover races.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -82,6 +110,10 @@ export const LOOK_ITEM_FIELDS = Object.freeze(['templateIndex', 'group', 'materi
 export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Armor', 'Weapons', 'Jewellery']);
 /** A display name's bounds. */
 export const NAME_MAX = 24;
+/** A swing's kind on the wire: DFU's WeaponStates order (combat/fpsWeapon.js STATE_INDEX), the pose's `as` an index into it (MAC7 #1). */
+export const POSE_STRIKES = Object.freeze(['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLeft', 'StrikeRight', 'StrikeDownRight', 'StrikeUp']);
+/** A cast's range on the wire: DFU's TargetTypes order (systems/spellcast.js TARGET_TYPES), the pose's `cr` an index into it (MAC7 #2). */
+export const POSE_CAST_RANGES = 5;
 /** World units per map pixel in the frame the streaming world's poses
  *  travel in: MapsFile's (world/streamingWorld.js NATIVE_PIXEL). */
 export const PIXEL_UNITS = 32768;
@@ -109,6 +141,25 @@ export const CHAT_HELLO_HZ_MAX = 50;
 export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
 export const CHAT_WORLD_ROOM = 'chat:world';
+/** The largest world frame the room stores (UTF-16 units) - WORLD1; anything else keeps MAX_FRAME_BYTES. */
+export const WORLD_FRAME_MAX = 512 * 1024;
+/** The least time between two of one host's world frames, ms; a sooner one is dropped. */
+export const WORLD_MIN_MS = 5000;
+/** The room's storage chunk for a world (a Durable Object value is capped at 128 KiB). */
+export const WORLD_CHUNK = 96 * 1024;
+/** How a world frame begins on the wire - the one frame admitted past MAX_FRAME_BYTES, told before any parse. */
+export const WORLD_PREFIX = '{"t":"world"';
+/** A world room's memory is forgotten this long after the room last drained, unless someone came back (AUDIT WORLD A3). */
+export const WORLD_TTL_MS = 30 * 24 * 3600 * 1000;
+/** WORLD2: the largest foes frame (UTF-16 units) - the host's live foes, a delta a few times a second. */
+export const FOES_FRAME_MAX = 64 * 1024;
+/** WORLD2: foes frames a second at most, on their own bucket (a stream beside the poses, never starving them). */
+export const FOES_HZ_MAX = 12;
+/** How a foes frame begins on the wire - the other frame admitted past MAX_FRAME_BYTES, told before any parse. */
+export const FOES_PREFIX = '{"t":"foes"';
+/** The cap a frame's PREFIX earns before any parse (WORLD1/WORLD2): a world frame WORLD_FRAME_MAX, a foes frame
+ *  FOES_FRAME_MAX, anything else MAX_FRAME_BYTES; the type keeps the cap after the parse (AUDIT WORLD A2). */
+export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : MAX_FRAME_BYTES; }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
@@ -156,13 +207,26 @@ export function sanitizeChat(text) {
 /** Is this key a channel's: one of CHAT_ROOMS - no poses relayed, no roster, every line to everyone. */
 export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 
+/** Does this room keep a world (WORLD1): a dungeon's, today - the one place whose world is one self-contained
+ *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. The key is a MAP ID's
+ *  (roomKeyFor's `dungeon:m<mapId>`), not a prefix (AUDIT WORLD A3): a client can name any room, and a world room
+ *  is a Durable Object that keeps up to WORLD_FRAME_MAX for WORLD_TTL_MS - the Bay's dungeons are a bounded set,
+ *  eighty free characters are not. */
+const WORLD_ROOM = /^dungeon:m\d{1,8}$/;
+export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
+
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
-  return { x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0 };
+  // MAC7: the arm's seven, clamped - a pose from before them reads sheathed, unswung, unarrowed and uncast
+  return {
+    x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
+    wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
+    am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
+  };
 }
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */
@@ -222,14 +286,31 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
-  if (text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  // WORLD1/WORLD2: the frames past MAX_FRAME_BYTES are the world frame and the foes frame, told by their prefix
+  // before any parse (the client mints them with t first) and capped by it; everything else keeps the small cap,
+  // refused unparsed
+  if (text.length > frameCap(text)) return { error: 'frame too large' };
   let m;
   try { m = JSON.parse(text); } catch { return { error: 'not JSON' }; }
   if (!m || typeof m !== 'object') return { error: 'not an object' };
+  // AUDIT WORLD A2: the prefix admitted the size, the TYPE keeps the cap - JSON's last duplicate key wins, so a frame
+  // that began {"t":"world" and ended "t":"pose" parsed as a 512 KiB pose under the pose gate
+  if (m.t !== 'world' && m.t !== 'foes' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  if (m.t === 'foes' && text.length > FOES_FRAME_MAX) return { error: 'frame too large' };
+  if (m.t === 'world') {   // the room's memory, an object from a hello'd socket; final marks the socket's one farewell (B5)
+    if (!hasHello) return { error: 'world before hello' };
+    if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
+    return { t: 'world', data: m.data, final: m.final === true };
+  }
+  if (m.t === 'foes' || m.t === 'hit') {   // WORLD2: the host's live foes out, a blow on them in - objects from a hello'd socket, read by no relay
+    if (!hasHello) return { error: `${m.t} before hello` };
+    if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: `bad ${m.t}` };
+    return { t: m.t, data: m.data };
+  }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
     if (hasHello) return { error: 'hello twice' };
@@ -267,6 +348,8 @@ export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
 
 /** The pose rate gate: POSE_HZ_MAX a second. */
 export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX);
+/** The foes rate gate: FOES_HZ_MAX a second (WORLD2), the stream's own bucket. */
+export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX);
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 

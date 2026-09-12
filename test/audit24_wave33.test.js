@@ -91,7 +91,11 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
   for (const [name, src] of [['dungeonContext.js', d], ['exteriorFoes.js', xf], ['cityGuards.js', cg]]) {
     const reads = (src.match(/\.(doMeleeDamage|shootArrow)\b(?! = false)/g) ?? []).length;
     const clears = (src.match(/\.(doMeleeDamage|shootArrow) = false/g) ?? []).length;
-    assert.equal(reads, clears, `${name}: every latch read has a clear`);
+    // WORLD2: a PUPPET drops both latches unconsumed (a puppet lands no blow of its own; the first live frame after a
+    // handover fires none from its last puppet frame) - two marked lines, two latches each, in the dungeon alone
+    const drops = (src.match(/^[^\n]*= false;[^\n]*WORLD2 dropped unconsumed[^\n]*$/gm) ?? []).reduce((n, line) => n + (line.match(/= false/g) ?? []).length, 0);
+    assert.equal(drops, name === 'dungeonContext.js' ? 4 : 0, `${name}: the puppet's drops, marked, and nowhere else`);
+    assert.equal(reads, clears - drops, `${name}: every latch read has a clear`);
   }
 
   // the old per-frame names are gone from src/ entirely
