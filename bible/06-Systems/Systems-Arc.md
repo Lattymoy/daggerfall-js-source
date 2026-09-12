@@ -4655,7 +4655,7 @@ affinity scans saw an empty room. Nothing threw and nothing was
 logged - the enchantment simply had no effect where the fighting is.
 
 And it really was the only ctx in play: **no host passes an
-`enchantCtx` at the strike site** (`formulas.js:465` defaults it
+`enchantCtx` at the strike site** (`formulas.js:481` defaults it
 `null`), so `mergeCtx` folds this one mount under every dispatch, in
 every mode. FS1 had just found the other half of the same hole - the
 standalone `?dungeon` host mounts no ctx at all - and that half is

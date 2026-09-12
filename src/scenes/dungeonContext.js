@@ -2976,7 +2976,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // startingHealth (entity.MaxHealth, :109), currentFatigue
         // (:111) and the instanced effect bundles (:120, restored
         // :222). Without maxHealth a rebuild-then-restore load
-        // re-rolled it (enemyEntity.js:80) and restored health could
+        // re-rolled it (enemyEntity.js:85) and restored health could
         // sit above the new max; without activeEffects a paralyzed
         // boss woke and a burning foe stopped burning on load.
         maxHealth: f.entity.maxHealth,

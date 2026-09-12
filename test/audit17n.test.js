@@ -25,7 +25,7 @@ const career = () => buildCustomCareer({ name: 'X', hp: 8, skills: Array(12).fil
 test('17n F1: an attacker carrying only a CAREER still gets its enemy-type modifier', () => {
   // DFU reads attacker.Career.<group>AttackModifier for every attacker
   // (FormulaHelper.cs:993-1030). The port flattened the byte onto the
-  // entity and only the FOE builder set it (enemyEntity.js:105), so a
+  // entity and only the FOE builder set it (enemyEntity.js:110), so a
   // player - who carries `career` and no flat field - scored 0 on every
   // swing. The target half was wired correctly all along.
   const c = career();

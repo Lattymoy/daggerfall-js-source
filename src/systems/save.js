@@ -131,7 +131,7 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  enchantmentMagicRound clears the player's array at the head of
  *  every magic round (enchantments.js:825, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:213 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:217 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope

@@ -182,8 +182,8 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
-  // (arrowFlight.js:219-225), and `onAttackFromPlayer`, which it calls
-  // unconditionally at :228 because that is where WeaponManager.cs:630
+  // (arrowFlight.js:220-226), and `onAttackFromPlayer`, which it calls
+  // unconditionally at :229 because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own
   // `handleAttackFromPlayer` had already falsified. DFU makes no such
@@ -200,7 +200,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   const w = watchman({ hostile: false, team: 'PlayerAlly' });
   // FormulaHelper.cs:576-583: a weapon material the target refuses
   // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
-  // (formulas.js:523-531).
+  // (formulas.js:554-562).
   w.entity.minMetalToHit = 1;
   g.guards.push(w);
   const hits = [];

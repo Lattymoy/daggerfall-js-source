@@ -3949,7 +3949,7 @@ showed up as an obvious bug.
 
 DFU reads `attacker.Career.<group>AttackModifier` for every attacker
 (FormulaHelper.cs:993-1030). The port flattened that byte onto the
-entity, and only the FOE builder ever set it (enemyEntity.js:105). A
+entity, and only the FOE builder ever set it (enemyEntity.js:110). A
 player carries `career` and no flat field, so
 `bonusOrPenaltyByEnemyType`'s null guard returned 0 on every swing.
 That alone would have been enough.

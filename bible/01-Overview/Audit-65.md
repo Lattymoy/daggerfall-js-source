@@ -493,7 +493,7 @@ half the lanes' own mutation tallies could not see.
   purpose and is asserted bare: `PlayerMotor.cs:296-306` does not zero
   `moveDirection`, so a write there would be the divergence. The
   finding's headline fatigue-band consequence was FALSE and is not
-  repeated - `worldTick.js:493-494` is climb-first, matching
+  repeated - `worldTick.js:497-498` is climb-first, matching
   `PlayerEntity.cs:406-408`.
 - *Review round:* fixup. The "without the bob" half of the `feetAt`
   pin was vacuous - the fixture minted no bob, so both bob mutants
