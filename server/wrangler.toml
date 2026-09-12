@@ -1,7 +1,9 @@
 # ONLINE1 (2026-09-12): THE RELAY. A Cloudflare Worker whose one Durable
 # Object class, Room, holds the WebSockets of every player in one room
-# and fans each pose out to the peers in range. It stores nothing past
-# the connection: the save stays on the player's machine.
+# and fans each pose out to the peers in range. It stored nothing past
+# the connection until WORLD1 (2026-09-12): a world room keeps its
+# host's snapshot of the place in the object's storage; the save stays
+# on the player's machine.
 #   npx wrangler deploy          (CLOUDFLARE_API_TOKEN in the environment)
 name = "daggerfall-online"
 main = "src/index.js"

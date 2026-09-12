@@ -67,8 +67,10 @@ world and the rest trust it. The host is the cheapest authority because
 the code is already here; a Durable Object running the simulation would
 be a second copy of the game in a Worker.
 
-The cost: when the host leaves, the session ends. Host migration is a
-later slice, not a v1 requirement.
+The cost as designed: when the host leaves, the session ends. WORLD1
+(2026-09-12) shipped the relay's own answer to the seat - it passes to
+the player in the room longest, said in a host frame - and slice 2 of
+the arc hands the live simulation over with it.
 
 ### 3. WebSocket through a Cloudflare Durable Object
 
@@ -100,9 +102,10 @@ the smallest server that exists.
 The DO knows who is in the room and who is host. It forwards every
 message from the host to all clients, and every message from a client
 to the host (and, for transforms, to the other clients too - the host
-does not need to re-emit what it merely renders). It holds no game
-state beyond the roster, so a DO restart loses nothing the host does
-not resend.
+does not need to re-emit what it merely renders). It held no game
+state beyond the roster until WORLD1: a world room keeps the host's
+snapshot of the place in the object's durable storage, so a restart or
+an empty room loses nothing.
 
 ### Authority
 
@@ -177,9 +180,11 @@ a scene the host is not running), and it is not what basics means.
 
 ### What is deliberately not persisted
 
-Nothing multiplayer goes in a save. Sessions are ephemeral; the only
-thing worth remembering locally is the last room code, and even that is
-a convenience.
+Nothing multiplayer goes in a save. A session is ephemeral; the place
+is not - since WORLD1 a world room's memory lives in the relay, for
+`WORLD_TTL_MS` past its last visitor (AUDIT WORLD A3). The only thing
+worth remembering locally is the last room code, and even that is a
+convenience.
 
 ## Constraints the codebase imposes
 
@@ -198,7 +203,7 @@ a convenience.
 
 ## Open questions, deliberately open
 
-- Host migration (a client becomes host when the host drops). Later.
+- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); the live simulation, slice 2 of the arc.
 - Splitting the party across interiors. Later.
 - Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.

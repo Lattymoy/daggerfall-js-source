@@ -1200,10 +1200,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1506 states), so the same visual
+   *  the C11 law dungeonContext.js:1507 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1411, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1412, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4975,7 +4975,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4740), so the OUTER host's one rides in.
+          // (dungeonContext.js:4750), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -7987,6 +7987,18 @@ export function createWorldModes(host) {
         ? { weaponDrawn: !interiorWeapon.playerWeapon.sheathed, usingRightHand: interiorWeapon.playerWeapon.usingRightHand }
         : null;
     },
+    /** AUDIT WORLD C1: the rig the player's hands are in NOW - the mode's, not world.js's own, which is never
+     *  stepped indoors or underground (interiorWeapon in a building, the dungeon context's in a dungeon; each
+     *  keeps its own swing and cast counters) - and the spell stance the same way, for the pose's arm. Null in
+     *  the exterior, where world.js's own rig is the one drawn. */
+    liveArm() {
+      const rig = mode === 'interior' ? interiorWeapon : mode === 'dungeon' ? (dungeonCtx?.weaponRig?.() ?? null) : null;
+      if (!rig) return null;
+      return { rig, armed: !!(mode === 'dungeon' ? dungeonCtx?.spellArmed?.() : magic?.spellArmed()) };
+    },
+    /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
+     *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
+    deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
      *  worldQuickLoad calls forceExitToExterior FIRST (world.js:4223)
      *  and only re-enters the building at :4217, so the mode at apply
@@ -7997,7 +8009,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4329/:4329 and
-     *  dungeonContext.js:4816/:4822 are: the C# restore sets the
+     *  dungeonContext.js:4826/:4832 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

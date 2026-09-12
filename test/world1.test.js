@@ -30,7 +30,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseClient, isWorldRoom, isChatRoom, WORLD_FRAME_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_PREFIX, MAX_FRAME_BYTES, PIXEL_UNITS } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import { Room } from '../server/src/index.js';
+import { fakeRoom } from './fakeRoom.mjs';
 import { OnlineSession, WORLD_PUBLISH_MS } from '../src/net/online.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -44,7 +44,9 @@ test('WORLD1: the wire - the world frame is the one frame past MAX_FRAME_BYTES (
   assert.equal(isWorldRoom('dungeon:m187'), true); assert.equal(isWorldRoom('town:m9'), false); assert.equal(isWorldRoom('world:1,2'), false); assert.equal(isWorldRoom('interior:m9.4'), false);
   assert.equal(isWorldRoom('chat:world'), false); assert.equal(isChatRoom('dungeon:m187'), false); assert.equal(isWorldRoom(null), false);
   const world = { locationKey: 'dungeon:1234', world: { foes: [{ health: 3, dead: false }], piles: [], actions: {} } };
-  assert.deepEqual(parseClient(JSON.stringify({ t: 'world', data: world }), { hasHello: true }), { t: 'world', data: world });
+  assert.deepEqual(parseClient(JSON.stringify({ t: 'world', data: world }), { hasHello: true }), { t: 'world', data: world, final: false });
+  assert.deepEqual(parseClient(JSON.stringify({ t: 'world', data: world, final: true }), { hasHello: true }), { t: 'world', data: world, final: true }, 'the farewell\'s mark (AUDIT WORLD B5)');
+  assert.equal(parseClient(JSON.stringify({ t: 'world', data: world, final: 1 }), { hasHello: true }).final, false, 'true alone');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'world', data: world })), { error: 'world before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'world' }), { hasHello: true }), { error: 'bad world' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'world', data: 'x' }), { hasHello: true }), { error: 'bad world' });
@@ -58,36 +60,6 @@ test('WORLD1: the wire - the world frame is the one frame past MAX_FRAME_BYTES (
   assert.deepEqual(parseClient(JSON.stringify({ t: 'pose', p: { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, pad: 'x'.repeat(MAX_FRAME_BYTES) } }), { hasHello: true }), { error: 'frame too large' });
 });
 
-/** The relay test's fake Room, with the runtime's list() and the batched put(). */
-function fakeRoom(key) {
-  const sockets = [];
-  const store = new Map();
-  const state = {
-    getWebSockets: () => sockets.slice(),
-    acceptWebSocket: (ws) => sockets.push(ws),
-    storage: {
-      async get(k) { return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, store.get(x)])) : store.get(k); },
-      async put(k, v) { if (k && typeof k === 'object') { for (const [kk, vv] of Object.entries(k)) store.set(kk, vv); } else store.set(k, v); },
-      async delete(k) { for (const x of Array.isArray(k) ? k : [k]) store.delete(x); },
-      async deleteAll() { store.clear(); },
-      async list({ prefix = '' } = {}) { return new Map([...store].filter(([k]) => k.startsWith(prefix))); },
-    },
-  };
-  let room = new Room(state);
-  const wake = () => { room = new Room(state); };   // what a hibernation wakes into: the attachments re-read
-  const connect = () => {
-    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, bucket: null, drops: 0 },
-      send(s) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(s)); }, close(code, reason) { this.closed = { code, reason }; },
-      serializeAttachment(a) { if (JSON.stringify(a).length > 16384) throw new Error('attachment too large'); this.att = JSON.parse(JSON.stringify(a)); }, deserializeAttachment() { return this.att; } };
-    state.acceptWebSocket(ws);
-    return ws;
-  };
-  const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
-  const hello = (ws, id, pose = null) => room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose }));
-  const world = (ws, data) => room.webSocketMessage(ws, JSON.stringify({ t: 'world', data }));
-  const drop = (ws) => { sockets.splice(sockets.indexOf(ws), 1); return room.webSocketClose(ws, 1005, ''); };
-  return { state, store, sockets, connect, hello, world, drop, wake };
-}
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
 const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
 const welcomeOf = (ws) => ofType(ws, 'welcome')[0];
@@ -112,25 +84,38 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   const meta = r.store.get('world:meta');
   assert.equal(meta.chunks, 2); assert.equal(meta.size, raw.length); assert.equal(meta.by, 'aaaa-0001'); assert.equal(typeof meta.at, 'number');
   assert.equal(r.store.get('world:0') + r.store.get('world:1'), raw, 'stored as it came, in WORLD_CHUNK pieces');
-  assert.equal(a.att.worldAt, meta.at);
+  assert.equal(a.att.worldAt, undefined, 'the floor\'s stamp is the room\'s, in storage - not the socket\'s, which a reconnect reset (AUDIT WORLD A5)');
   const small = { locationKey: 'dungeon:1234', world: { foes: [], piles: [], droppedLoot: [], actions: {} } };
   await r.world(a, small);
   assert.equal(r.store.get('world:meta').chunks, 2, 'a second frame within WORLD_MIN_MS is dropped');
-  a.att.worldAt -= WORLD_MIN_MS + 1; r.wake();   // the clock moves on (the stamp rides the attachment: it survives a wake)
+  r.store.get('world:meta').at -= WORLD_MIN_MS - 100;   // most of the floor gone
+  await r.world(a, small);
+  assert.equal(r.store.get('world:meta').chunks, 2, 'still inside WORLD_MIN_MS: dropped - the floor is the constant, not less (AUDIT WORLD D9)');
+  r.store.get('world:meta').at -= 101; r.wake();   // the clock moves past it (the stamp is the room's: it survives a wake)
   await r.world(a, small);
   assert.equal(r.store.get('world:meta').chunks, 1, 'the smaller world took'); assert.equal(r.store.has('world:1'), false, 'and left no stale tail');
   assert.equal(r.store.get('world:0'), JSON.stringify(small));
-  a.att.worldAt -= WORLD_MIN_MS + 1; r.wake();
+  r.store.get('world:meta').at -= WORLD_MIN_MS + 1;
   await r.world(a, world);
   // served raw in the next welcome
   await r.hello(c, 'cccc-0003', at(1, 1));
   assert.deepEqual(welcomeOf(c).world, world, 'the joiner is handed the room\'s memory as the host sent it');
   assert.equal(welcomeOf(c).host, 'aaaa-0001'); assert.equal(ofType(a, 'host').length + ofType(b, 'host').length, 0, 'a hello into a led room (across a wake) says no host frame');
   assert.deepEqual(welcomeOf(c).peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002'], 'and the roster still');
+  // AUDIT WORLD D4: the joiner that LEADS (a stamp before everyone's - the same-millisecond tie the smaller id wins)
+  // is said to the rest and not to itself, and its leave hands the seat back
+  { const tie = r.connect(); a.att.since += 10; b.att.since += 10; c.att.since += 10; r.wake();
+    await r.hello(tie, '0000-tie0', at(1, 1));
+    assert.equal(welcomeOf(tie).host, '0000-tie0', 'the joiner leads');
+    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: '0000-tie0' }, 'said to the rest');
+    assert.equal(ofType(tie, 'host').length, 0, 'not to itself: its welcome said it');
+    await r.drop(tie);
+    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: 'aaaa-0001' }, 'the seat handed back'); }
   // the host leaves: the next-longest, said to everyone
   await r.drop(a);
-  assert.deepEqual(ofType(b, 'host'), [{ t: 'host', id: 'bbbb-0002' }], 'b has been here longest now');
-  assert.deepEqual(ofType(c, 'host'), [{ t: 'host', id: 'bbbb-0002' }]);
+  assert.deepEqual(ofType(b, 'host').at(-1), { t: 'host', id: 'bbbb-0002' }, 'b has been here longest now');
+  assert.deepEqual(ofType(c, 'host').at(-1), { t: 'host', id: 'bbbb-0002' });
+  r.store.get('world:meta').at -= WORLD_MIN_MS + 1;   // the floor is the room's: the new host waits it out like anyone
   await r.world(b, small);
   assert.equal(r.store.get('world:meta').by, 'bbbb-0002', 'the new host publishes');
   // the drain: looks, secrets and the bucket go; the world stays
@@ -200,18 +185,19 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /function applyWorld\(w, \{ truncate = true \} = \{\}\) \{/);
   assert.match(d, /for \(let i = foes\.length - 1; truncate && i >= \(w\.foes\?\.length \?\? 0\); i--\) \{/, 'the cut is the save\'s alone');
-  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*const n = foes\.findIndex\(\(f\) => f\.isQuestFoe\);\s*if \(n >= 0\) w\.foes = w\.foes\.slice\(0, n\);\s*delete w\.teleportedIntoDungeon;\s*return \{ locationKey: _locationKey, world: w \};\s*\},/, 'the layout\'s foes alone, nothing of the player\'s own, keyed');
-  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*applyWorld\(shared\.world, \{ truncate: false \}\);\s*return true;\s*\},/, 'another dungeon\'s memory refused; the quest foes left standing');
-  assert.match(d, /isQuestFoe: \{ get: \(\) => !!rec\.questBehaviour, enumerable: false \}/, 'the mark the slice reads');
+  assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1)');
+  assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*_sharedApplied = true;\s*applyWorld\(\{ \.\.\.shared\.world, foes: Array\.isArray\(shared\.world\.foes\) \? shared\.world\.foes\.slice\(0, _layoutFoes\) : \[\] \}, \{ truncate: false \}\);\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing');
+  assert.match(d, /for \(const e of enemies\) await buildFoeAt\(e\);\s*const _layoutFoes = foes\.length;/, 'the run measured right after the markers\' build');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
   assert.match(m, /restoreDungeonSharedWorld\(shared\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.restoreSharedWorld\(shared\) : false; \},/);
-  assert.match(m, /function exitDungeonNow\(\) \{[\s\S]*?host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);/, 'the exit: the hook while the dungeon still stands');
+  const ex = m.slice(m.indexOf('function exitDungeonNow() {'), m.indexOf('function exitDungeonNow() {') + 600);
+  assert.match(ex, /host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);[^\n]*\n\s*dungeonCtx\.destroy\(\);/, 'the exit: the hook while the dungeon still stands - before the flats and the destroy, inside THIS function (AUDIT WORLD D1: a lazy regex ran on to the other teardown)');
   assert.match(m, /if \(dungeonCtx\) \{\s*host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);\s*dungeonCtx\.overlayWindow/, 'a load or a teleport out: the same hook');
   assert.equal((m.match(/host\.onDungeonLeave\?\.\(\)/g) ?? []).length, 2, 'the two teardowns, no third');
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS \} from '\.\.\/net\/online\.js';/);
-  assert.match(w, /const worldPublish = \(now, force = false\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open'\) return false;\s*if \(!force && now - _worldPublishedAt < WORLD_PUBLISH_MS\) return false;\s*const shared = modes\?\.dungeonSharedWorld\?\.\(\);\s*if \(!shared \|\| !online\.sendWorld\(shared\)\) return false;\s*_worldPublishedAt = now;\s*return true;\s*\};/, 'the host\'s alone, on the publish clock unless forced');
+  assert.match(w, /const worldPublish = \(now, force = false\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(!force && now - _worldPublishedAt < WORLD_PUBLISH_MS\) return false;\s*const shared = modes\?\.dungeonSharedWorld\?\.\(\);\s*if \(!shared\) return false;\s*_worldPublishedAt = now;\s*const ok = online\.sendWorld\(shared, \{ final: force \}\);\s*if \(!ok\) console\.warn\([^\n]*\);\s*return ok;\s*\};/, 'the host\'s alone, into a world room alone (AUDIT WORLD B8), on the publish clock unless forced - and forced is the farewell (B5); a refusal said once, never retried at frame rate (B9)');
   assert.match(w, /online\.onWorld = \(shared\) => \{ if \(modes\?\.restoreDungeonSharedWorld\?\.\(shared\)\)/, 'the welcome\'s memory lands on the standing dungeon');
   assert.match(w, /online\.onHost = \(id, mine\) => \{ if \(mine\) _worldPublishedAt = -Infinity; \};/, 'a new host publishes at once');
   assert.match(w, /online\.tick\(\);\s*worldPublish\(now\);/, 'every frame asks');
@@ -219,7 +205,7 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\);/, 'the page\'s hide too');
   assert.match(w, /onDungeonLeave: \(\) => worldPublish\(performance\.now\(\), true\),/, 'and the dungeon\'s exit, through the mode machine\'s hook');
   const online = rd('src/net/online.js');
-  assert.match(online, /if \(!this\.isHost\(\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;\s*const s = JSON\.stringify\(\{ t: 'world', data \}\);\s*if \(s\.length > WORLD_FRAME_MAX\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal');
+  assert.match(online, /if \(!this\.isHost\(\) \|\| !this\._ws \|\| this\.status !== 'open'\) return false;\s*const s = JSON\.stringify\(final \? \{ t: 'world', data, final: true \} : \{ t: 'world', data \}\);[^\n]*\n\s*if \(s\.length > WORLD_FRAME_MAX\) return false;/, 'the cap kept at the client: the relay\'s refusal is terminal; t first, the prefix the relay reads');
   const room = rd('server/src/index.js');
   assert.doesNotMatch(room, /storage\.deleteAll\(\)/, 'no sweep forgets the world');
   assert.match(room, /for \(const prefix of \['look:', 'secret:'\]\) \{ const m = await this\.state\.storage\.list\(\{ prefix \}\);/, 'the sweep by prefix');

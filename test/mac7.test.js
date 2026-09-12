@@ -160,7 +160,7 @@ test('MAC7 #2: the bow\'s hold - a swing that arrives with wd 2 is the draw, hel
   pb.sync([p], toScene, 0.016, near); pb.sync([p], toScene, 0.016, near);
   assert.equal(r.releases, rel, 'held: no release while the sender holds');
   p.shown = shown(3, { wd: 1, an: 3, as: 1, cn: 3, cr: 2 }); pb.sync([p], toScene, 0.016, near);
-  assert.deepEqual(r.attacks, ['StrikeUp+hold', 'StrikeDown'], 'the shot: StrikeDown (the rig\'s own attack refuses it mid-wind-up and release fires the loosed draw)');
+  assert.deepEqual(r.attacks, ['StrikeUp+hold'], 'the shot is the LOOSE: release plays it and no strike is queued for the count (AUDIT WORLD C3/C4: a queued StrikeDown shot again once the arm came back)');
   assert.equal(r.releases, rel + 1, 'and release runs again');
   p.shown = shown(3, { wd: 2, an: 4, as: 6, cn: 3, cr: 2 }); pb.sync([p], toScene, 0.016, near);
   p.shown = shown(3, { wd: 1, an: 4, as: 6, cn: 3, cr: 2 }); pb.sync([p], toScene, 0.016, near);
@@ -184,23 +184,23 @@ test('MAC7 #2: the bow\'s hold - a swing that arrives with wd 2 is the draw, hel
 
 test('MAC7: the hosts by source - weaponRig counts every strike it starts before the Morrowind arm\'s gate and every cast at castSpellAnim, and exposes both; world.js reads the sheath, the bow\'s hold off the machine, the swing, the arrow, the spell stance and the cast into every pose it sends; peerBodies drives the rig\'s doors inside the update guard and withholds release while the sender holds', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[^\n]*\*\/)?\s*const cast = \{ n: 0, rangeType: 2 \};\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
+  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[\s\S]*?\*\/)?\s*const cast = \{ n: 0, rangeType: 2 \};\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
   assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\s*cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s*fpArm\.castSpell\(rangeType\);/, 'the cast counted at the one door both lanes come through');
   assert.match(rig, /\n    swing,   \/\/ MAC7 #1/); assert.match(rig, /\n    cast,    \/\/ MAC7 #2/);
   assert.equal((rig.match(/fpAttack\(strike\)/g) ?? []).length, 3, 'the one counter sits under both strike doors (the click and the gesture)');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ POSE_STRIKES \} from '\.\.\/net\/wire\.js';/);
+  assert.match(w, /import \{ POSE_STRIKES, isWorldRoom \} from '\.\.\/net\/wire\.js';/);
   assert.match(w, /import \{ hasDaggerfallArrows \} from '\.\.\/combat\/fpArm\.js';/, 'the arrow read weaponRig\'s own per-frame read takes');
-  assert.match(w, /const wm = weaponRig\.playerWeapon\.machine;\s*const arm = \{\s*mv,\s*wd: weaponRig\.playerWeapon\.sheathed \? 0 : \(wm\?\.isBow && wm\.state === 'StrikeUp' \? 2 : 1\),\s*an: weaponRig\.swing\.n, as: Math\.max\(0, POSE_STRIKES\.indexOf\(weaponRig\.swing\.strike\)\),\s*am: hasDaggerfallArrows\(playerEntity\.items\) \? 1 : 0, sr: magic\.spellArmed\(\) \? 1 : 0,\s*cn: weaponRig\.cast\.n, cr: weaponRig\.cast\.rangeType \| 0,\s*\};/, 'the arm\'s seven off the rig, the entity and the magic seam');
+  assert.match(w, /const live = modes\?\.liveArm\?\.\(\) \?\? null;\s*const rig = live\?\.rig \?\? weaponRig;\s*const wm = rig\.playerWeapon\.machine;\s*const arm = \{\s*mv,\s*wd: rig\.playerWeapon\.sheathed \? 0 : \(wm\?\.isBow && wm\.state === 'StrikeUp' \? 2 : 1\),\s*an: rig\.swing\.n, as: Math\.max\(0, POSE_STRIKES\.indexOf\(rig\.swing\.strike\)\),\s*am: hasDaggerfallArrows\(playerEntity\.items\) \? 1 : 0, sr: \(live \? live\.armed : magic\.spellArmed\(\)\) \? 1 : 0,\s*cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0,\s*\};/, 'the arm\'s seven off the MODE\'s rig (AUDIT WORLD C1: world.js\'s own is never stepped indoors or underground), the entity and the mode\'s spell seam');
   assert.equal((w.match(/\{ \.\.\.pose, \.\.\.arm \}/g) ?? []).length, 2, 'into the hello and every pose');
   assert.doesNotMatch(w, /\{ \.\.\.pose, mv \}/);
   const pb = rd('src/net/peerBodies.js');
   assert.match(pb, /try \{\s*this\._arm\(b, peer\.shown\);\s*b\.rig\.update\(dt\);\s*\} catch \(e\) \{ this\._fail\(b, `update threw: \$\{e\?\.message \?\? e\}`\); \}/, 'the arm inside the update guard (AUDIT MWBODY A1)');
   assert.match(pb, /b\.rig\.setSheathed\?\.\(!drawn\);/);
-  assert.match(pb, /if \(b\.weapon && b\.ammo !== am\) \{ b\.ammo = am; b\.rig\.setWeapon\?\.\(b\.weapon, \{ hasAmmo: !!am \}\); \}/, 'the arrow through setWeapon, once per change');
+  assert.match(pb, /if \(b\.weapon && b\.ammo !== am && \(b\.rig\.upperBodyReady\?\.\(\) \?\? true\) && b\.rig\.setWeapon\?\.\(b\.weapon, \{ hasAmmo: !!am \}\) !== false\) b\.ammo = am;/, 'the arrow through setWeapon, once per change - when the arm is quiet and only as the rig took it (AUDIT WORLD C5/C6)');
   assert.match(pb, /b\.rig\.readySpell\?\.\(!!shown\.sr\);/);
-  assert.match(pb, /if \(an !== b\.swing\) \{ b\.swing = an; if \(drawn\) b\.rig\.attack\?\.\(POSE_STRIKES\[shown\.as \| 0\] \?\? 'StrikeDown', \{ hold: shown\.wd === 2 \}\); \}/);
+  assert.match(pb, /if \(an !== b\.swing\) \{\s*b\.swing = an;\s*if \(b\.held\) \{[\s\S]*?\} else \{[\s\S]*?b\.pending = drawn \? \{ strike: POSE_STRIKES\[shown\.as \| 0\] \?\? 'StrikeDown', hold: shown\.wd === 2, left: PENDING_FRAMES \} : null;\s*\}\s*\}\s*if \(b\.pending && b\.pending\.left-- > 0\) \{\s*if \(b\.rig\.attack\?\.\(b\.pending\.strike, \{ hold: b\.pending\.hold \}\)\) \{ b\.held = b\.pending\.hold; b\.pending = null; \}\s*\} else b\.pending = null;/);
   assert.match(pb, /if \(cn !== b\.cast\) \{ b\.cast = cn; b\.rig\.castSpell\?\.\(shown\.cr \| 0\); \}/);
-  assert.match(pb, /if \(shown\.wd !== 2\) b\.rig\.release\?\.\(\);/, 'release withheld while the sender holds - weaponRig\'s own StrikeUp gate');
+  assert.match(pb, /if \(shown\.wd !== 2\) \{ b\.rig\.release\?\.\(\); b\.held = false; \}/, 'release withheld while the sender holds - weaponRig\'s own StrikeUp gate - and the hold forgotten with it (AUDIT WORLD C4)');
   assert.match(pb, /const opts = this\._buildOpts\(look\); b\.weapon = opts\.weapon \?\? null; res = await b\.rig\.build\(opts\);/, 'the body keeps its weapon for the arrow door');
 });

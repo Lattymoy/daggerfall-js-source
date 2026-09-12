@@ -4,7 +4,9 @@
 // see and traverse with other players"): THE SESSION.
 //
 // THE SHAPE. Every player runs their own world from their own save;
-// nothing is shared but presence. This module holds one WebSocket to
+// presence is shared (ONLINE1), words (CHAT1), and - WORLD1 - a world
+// room's memory: the host's snapshot of the place, handed to whoever
+// comes next. This module holds one WebSocket to
 // the relay (server/src/index.js on Cloudflare), in one ROOM at a time,
 // says hello once with the player's look, sends the player's pose at
 // POSE_HZ when it changes (and a heartbeat pose every HEARTBEAT_MS
@@ -198,7 +200,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0, worlds: 0 };
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. */
@@ -231,12 +233,12 @@ export class OnlineSession {
 
   /** The room's memory out (WORLD1): the host's alone - the relay ignores anyone else's - and never a frame past
    *  WORLD_FRAME_MAX, which the relay would refuse with a terminal close. False when nothing went. */
-  sendWorld(data) {
+  sendWorld(data, { final = false } = {}) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     if (!this.isHost() || !this._ws || this.status !== 'open') return false;
-    const s = JSON.stringify({ t: 'world', data });
+    const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
     if (s.length > WORLD_FRAME_MAX) return false;
-    try { this._ws.send(s); this.stats.sent++; this.stats.worlds = (this.stats.worlds ?? 0) + 1; return true; } catch { return false; }
+    try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
   }
 
   _setHost(id) {

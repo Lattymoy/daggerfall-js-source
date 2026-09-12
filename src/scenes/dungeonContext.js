@@ -1016,6 +1016,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
   for (const e of enemies) await buildFoeAt(e);
+  const _layoutFoes = foes.length;   // AUDIT WORLD B2: the layout's run - every foe past it (an encounter's, a summon's, a quest's) is this player's own
 
   /** B1: one QUEST foe through the SAME build chain as the load loop
    *  and the rest-encounter spawner, at the placement point CreateFoe's
@@ -2782,7 +2783,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8428,
+              // playerArrowHitFoe is the one copy world.js:8437,
               // exterior.js:4200 and worldModes.js:5905 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -2960,6 +2961,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // restoreSaveData) - a mover's pose IS its {state, t}, and a door
   // carries a second pair for the record's Move tween.
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
+  const _sharedStamp = Math.random().toString(36).slice(2);   // AUDIT WORLD B1: this context's mark on the memory it publishes - a reconnect's welcome never hands it back
+  let _sharedApplied = false;   // AUDIT WORLD B7: the room's memory lands on a freshly built pool ONCE; a second apply onto a live fight is slice 3's events
   /** MAC6 #1: where this dungeon stands - its map pixel and map id, for the save (null for a location with no map row: the probe). */
   const dungeonHome = () => {
     const mt = dfLocation?.mapTableData;
@@ -2987,6 +2990,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // re-rolled it (enemyEntity.js:85) and restored health could
         // sit above the new max; without activeEffects a paralyzed
         // boss woke and a burning foe stopped burning on load.
+        // AUDIT WORLD B4: the species. Two players' random flats differ by level (dungeonEnemies.js bands the pick
+        // on playerLevel), so a record that reaches another client patches only its own kind at that index.
+        mobileType: f.mobileType,
         maxHealth: f.entity.maxHealth,
         fatigue: f.entity.fatigue ?? 0,
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
@@ -3048,6 +3054,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f) return;
+      if (sf.mobileType != null && sf.mobileType !== f.mobileType) return;   // AUDIT WORLD B4: another species at this index (a save from before the field patches blind)
       f.entity.health = sf.health;
       f.entity.items = sf.items.map((it) => ({ ...it }));
       // REVIEW 2026-09-05: a save written before the enemyAnchor law holds
@@ -3158,7 +3165,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         billboardBatches.push(p.batch);
       }
     });
-    droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
+    // AUDIT WORLD B3: the save's alone - the room's memory carries no drops (a drop is the dropper's own), and a
+    // clearing restore would delete this player's floor stash and mint the host's under their feet
+    if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
     // (an open door no longer restores solid-and-closed, and a door
@@ -4509,6 +4518,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     spellArmed: () => magic.spellArmed(),   // A8: PlayerEffectManager.HasReadySpell, for the host's activate gate
+    weaponRig: () => weaponRig,   // AUDIT WORLD C1: the rig the player's hands are in underground, for the pose's arm
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
     toggleSheath: weaponRig.toggleSheath,
     switchHand: weaponRig.switchHand,   // a12: SwitchHand (H) - the same one door as the sheathe toggle
@@ -4758,7 +4768,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  leaves the quest and conversation machines alone: that host
      *  restored them before it teleported, and a second restore would
      *  mount the quest resources twice. */
-    restoreSaved(extras, setPlayerPos, { session = true } = {}) {
+    restoreSaved(extras, setPlayerPos, { session = true, announce = session } = {}) {
       // AUDIT-39r: CleanupUntrackedObjects' MISSILE half. Its trigger
       // is SaveLoadManager_OnStartLoad - a LOAD, in every host - and
       // DFU reaches a dungeon's flights the other way round: the load
@@ -4842,24 +4852,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // host releases it, since the host is what tore the overlay down.
       if (activeOverlay === chargenWindow) stopConstellationAnim();
       if (activeOverlay instanceof DeathScreen || activeOverlay === chargenWindow) activeOverlay = null;
-      hudText.add('Game loaded.');
+      if (announce) hudText.add('Game loaded.');   // AUDIT WORLD B10: the boot's arm (session false) says it once, from world.js
     },
-    /** WORLD1 (Mac: "True persistence"): this dungeon's SHARED world for the room's memory - the layout's foes
-     *  (the leading run, before any quest foe: a quest's foes are the quest owner's alone, and the pool is
-     *  patched by index), the piles, the dropped loot and the actions; nothing of the player's own (the
-     *  teleported-in latch stays home). Keyed by this dungeon, so another dungeon's memory is refused. */
+    /** WORLD1 (Mac: "True persistence"): this dungeon's SHARED world for the room's memory - the LAYOUT's foes
+     *  alone (the run the markers placed, `_layoutFoes` long - AUDIT WORLD B2: the foes past it are this player's own,
+     *  an encounter's, a summon's or a quest's, and a quest foe whose quest ended loses its mark), the piles and
+     *  the actions; nothing of the player's own (the teleported-in latch and the dropped loot stay home - B3).
+     *  Keyed by this dungeon and stamped by this context, so another dungeon's memory - or its own, back from a
+     *  reconnect's welcome (B1) - is refused. */
     sharedWorld() {
       const w = collectWorld();
-      const n = foes.findIndex((f) => f.isQuestFoe);
-      if (n >= 0) w.foes = w.foes.slice(0, n);
+      w.foes = w.foes.slice(0, _layoutFoes);
       delete w.teleportedIntoDungeon;
-      return { locationKey: _locationKey, world: w };
+      delete w.droppedLoot;
+      return { locationKey: _locationKey, stamp: _sharedStamp, world: w };
     },
-    /** WORLD1: the room's memory applied - the layout's foes patched in place and the quest foes past them left
-     *  standing (applyWorld without its cut), the piles, the loot and the actions as the room remembers them. */
+    /** WORLD1: the room's memory applied - the layout's foes patched in place, each its own species (B4), and every
+     *  foe past the layout's run left standing (applyWorld without its cut), the piles and the actions as the room
+     *  remembers them; once per context (B7), never its own (B1). */
     restoreSharedWorld(shared) {
       if (!shared || shared.locationKey !== _locationKey || !shared.world || typeof shared.world !== 'object') return false;
-      applyWorld(shared.world, { truncate: false });
+      if (shared.stamp === _sharedStamp || _sharedApplied) return false;
+      _sharedApplied = true;
+      applyWorld({ ...shared.world, foes: Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes) : [] }, { truncate: false });
       return true;
     },
     locationKey: () => _locationKey,
@@ -4881,6 +4896,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
+    deathUp: () => activeOverlay instanceof DeathScreen,   // AUDIT WORLD B6: the death screen stands in THIS slot underground - world.js's own gate never saw it
     overlayWindow: () => activeOverlay,   // U26 probe surface
     /** U43-ii: the way IN to that slot. The context has held an
      *  overlay since U3 and exposed only a getter, so the quest

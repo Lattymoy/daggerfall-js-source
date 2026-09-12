@@ -60,13 +60,16 @@ export const JUMP_UNITS = 5;
 export const SWAP_MARGIN = 1.25;
 /** A peer's look change within this of its body's build keeps the body (a rebuild is seconds; a rejoin with new gear every second is not). */
 export const BODY_REBUILD_MS = 10000;
+/** A strike the rig refused (an equip in flight, a shot still releasing) is asked again this many frames, then dropped (AUDIT WORLD C3). */
+export const PENDING_FRAMES = 60;
 /** The drawn yaw eases toward the pose's at this rate (a second) - a turn the rig can see every frame, not one that stops between poses. */
 export const YAW_EASE = 12;
 
 /** The rig's build options from a peer's look - the same inputs
  *  weaponRig.armBuildOptsOf maps the player's entity onto. `hasAmmo`
- *  is false by the wire: the look carries the equip table alone, and
- *  arrows are inventory, so a peer's drawn bow shows no arrow. */
+ *  is false at the BUILD: the look carries the equip table alone; the
+ *  arrow arrives later off the pose's `am` bit through `_arm`'s
+ *  setWeapon (MAC7 #2). */
 export function peerBuildOpts(look) {
   const stub = peerStubEntity(look);
   return {
@@ -121,7 +124,7 @@ export class PeerBodies {
     this._createRig = createRig;
     this._buildOpts = buildOpts;
     this._now = now;
-    this._bodies = new Map();   // peer id -> { id, key, rig, state: 'building'|'ok', cam, feet, yaw, speed, goneAt, far, d2 }
+    this._bodies = new Map();   // peer id -> { id, key, rig, state: 'building'|'ok', cam, feet, yaw, speed, goneAt, far, d2, swing, cast, pending, held }
     this._failed = new Map();   // lookKey -> { until, reason }
     this._queue = Promise.resolve();
   }
@@ -154,7 +157,7 @@ export class PeerBodies {
     // the sweep first (the cap counts what stands, not what is leaving)
     for (const [id, b] of [...this._bodies]) {
       if (live.has(id)) { b.goneAt = null; continue; }
-      if (b.goneAt == null) b.goneAt = now;
+      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed
       else if (now - b.goneAt > BODY_LINGER_MS) this._release(id);
     }
     // the peers with a body: their feet, pace and camera
@@ -178,7 +181,7 @@ export class PeerBodies {
     for (const w of want) {
       if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, ammo: null, weapon: null };
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null };
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -224,7 +227,7 @@ export class PeerBodies {
         this._arm(b, peer.shown);
         b.rig.update(dt);
       } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
-    }
+    } else if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
   }
 
   /** MAC7 #1 (Mac: "no weapons"): the weapon and the swing, off the wire's own bits - the rig's weapon drawn while
@@ -238,16 +241,35 @@ export class PeerBodies {
   _arm(b, shown) {
     const drawn = !!shown.wd;
     b.rig.setSheathed?.(!drawn);
+    // AUDIT WORLD C5/C6: the arrow lands only when the arm is quiet (setWeapon clears the action in flight, so the
+    // last arrow's loose - am 1 to 0 in the same pose as the count - was cut every time) and is committed only
+    // when the rig took it (a swap refused mid-swap was never retried, and the wrong nock stood until a rebuild)
     const am = shown.am ? 1 : 0;
-    if (b.weapon && b.ammo !== am) { b.ammo = am; b.rig.setWeapon?.(b.weapon, { hasAmmo: !!am }); }
+    if (b.weapon && b.ammo !== am && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(b.weapon, { hasAmmo: !!am }) !== false) b.ammo = am;
     b.rig.readySpell?.(!!shown.sr);
     const an = shown.an | 0, cn = shown.cn | 0;
     if (b.swing == null) { b.swing = an; b.cast = cn; }
     else {
-      if (an !== b.swing) { b.swing = an; if (drawn) b.rig.attack?.(POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', { hold: shown.wd === 2 }); }
+      if (an !== b.swing) {
+        b.swing = an;
+        if (b.held) {
+          // the count after a held draw is its LOOSE: release() plays the shot - below, once wd dropped, or here
+          // when the next draw rode the same pose (C4: an +2, wd still 2) - and nothing is queued for it (a queued
+          // strike would shoot again once the arm came back)
+          if (shown.wd === 2) { b.rig.release?.(); b.held = false; b.pending = { strike: 'StrikeUp', hold: true, left: PENDING_FRAMES }; }
+          else b.pending = null;
+        } else {
+          // C3: the strike is KEPT until the rig takes it - the equip that setSheathed started this very frame
+          // refuses it, and a consumed count was a blow never played - for PENDING_FRAMES and no more
+          b.pending = drawn ? { strike: POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', hold: shown.wd === 2, left: PENDING_FRAMES } : null;
+        }
+      }
+      if (b.pending && b.pending.left-- > 0) {
+        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold })) { b.held = b.pending.hold; b.pending = null; }
+      } else b.pending = null;
       if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
     }
-    if (shown.wd !== 2) b.rig.release?.();
+    if (shown.wd !== 2) { b.rig.release?.(); b.held = false; }
   }
 
   /** A body that failed - refused, or threw - is released and its look waited out, the reason kept and said once. */

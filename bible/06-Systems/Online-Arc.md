@@ -17,11 +17,13 @@ it first" - AUDIT ONLINE, below.
 
 Daggerfall Unity has no multiplayer. This is the port's own, a Ledger A
 row, and it touches nothing DFU's laws govern: every player runs their
-own world from their own save, and the only thing shared is presence.
-`11-Multiplayer/Multiplayer.md` is the earlier co-op design (a host's
-browser as the server, its world shared); ONLINE1 keeps its first
-decision - your own character from your own save - and none of the
-sharing, and that record now says so at its head.
+own world from their own save; presence is shared (ONLINE1), words
+(CHAT1) and, since WORLD1, a world room's memory - the host's snapshot
+of the place, handed to whoever comes next. `11-Multiplayer/Multiplayer.md`
+is the earlier co-op design (a host's browser as the server, its world
+shared); ONLINE1 kept its first decision - your own character from your
+own save - and none of the sharing, WORLD1 began the second in its own
+shape, and that record says so at its head.
 
 ## The shape
 
@@ -342,9 +344,8 @@ mutation), each refuted against the code and fixed here:
   a `drawThird` that drew before a step. All killed; the fake rig is
   shaped like the instance API.
 
-Left as recorded: a peer's arrows never show (the wire carries no
-inventory - MAC7 put the weapon in its hand and the swing on the wire,
-below); strafe and backpedal play the forward walk; a body's textures are the instance's
+Left as recorded (the weapon, the swing and the arrow came with MAC7,
+below): strafe and backpedal play the forward walk; a body's textures are the instance's
 own (no sharing across peers of one look); the first-person arm is
 built and refused alongside the body it never draws.
 
@@ -755,6 +756,167 @@ the host forgotten on leave); the three hosts by source. Seen live:
 a host's publish into a `dungeon:` room and a second socket's welcome
 carrying `host` and `world` whole (122 KB, two chunks), the host handed over on a leave and the memory outliving an empty room, after the relay's redeploy (397de224).
 
+## AUDIT WORLD (2026-09-12)
+
+Mac: "Lets audit everything so far." Four opus finders over everything
+since AUDIT CHAT - MAC6, MAC7, OD1 and WORLD1: the relay and the wire;
+the client's world half; the peer's arm and the doll; the pins by
+mutation and the record by drift - each refuting its own candidates
+against the code and proving what stood with scratch tests and live
+probes of the deployed relay. Every survivor refuted again here; every
+one that stood fixed on the PR:
+
+**The relay and the wire.**
+
+- **A1 (med) the world door was unmetered.** Any hello'd socket in any
+  room could stream 512 KiB world frames at line rate: each was parsed
+  on the object before the host check dropped it - no bucket spent, no
+  strike. Now a large frame, or any frame shaped as one, is answered
+  BEFORE any parse: refused with no hello, metered on the pose bucket
+  (`_meter`, the one gate the pose arm uses too), and ignored unparsed
+  for anyone but a world room's host.
+- **A2 (med) the prefix was a cap bypass.** JSON's last duplicate key
+  wins, so `{"t":"world",…,"t":"pose"}` passed the large cap and parsed
+  as a 512 KiB pose under the pose gate. The type keeps the cap after
+  the parse.
+- **A3 (med) parked worlds.** `isWorldRoom` was a `dungeon:` prefix
+  over an eighty-character key and the sweeps never touch `world:*`,
+  so a script could leave 540 KiB in as many rooms as it cared to name,
+  for ever. The key is a map id's now (`dungeon:m<mapId>`), and a world
+  room's memory is forgotten `WORLD_TTL_MS` (thirty days) after the
+  room last drained unless someone is in when the alarm fires
+  (`alarm()`, armed on the drain). Mac's call: thirty days is a bound
+  against parked storage, not a design - DFU itself forgets a dungeon
+  on every exit.
+- **A4 (med) a reconnect lost the seat and told no one.** The
+  reconnecting host's fresh `since` handed the seat to the
+  next-longest, and neither the hello nor the replaced socket's leave
+  said so - the room's publishing stalled until an unrelated leave.
+  The reconnect keeps the first hello's stamp, so the seat stays; a
+  hello announces only when the seat actually moved.
+- **A5 (low) the floor rode the socket.** `worldAt` on the attachment
+  let a host reset `WORLD_MIN_MS` by reconnecting. The floor is the
+  room's `world:meta.at`.
+- **A6 (low) the stale tail's delete was a second write.** A crash
+  between the put and the delete orphaned chunks no sweep reclaimed.
+  Both are issued together, one coalesced write.
+
+**The client's world half.**
+
+- **B1 (high) the host's own memory came back.** A socket drop and its
+  reconnect re-hello into the same room, and the welcome handed the
+  host its own snapshot up to fifteen seconds old; `restoreSharedWorld`
+  resurrected every foe killed since, corpses deleted, loot re-minted.
+  The snapshot carries the context's stamp and the context refuses its
+  own.
+- **B2 (high) "the layout's foes" was "everything before the first
+  live quest foe".** The pool only grows; a rest interruption's rat or
+  a summon pushed before a quest foe rode the memory and landed on the
+  joiner's quest target by index, and a quest foe whose quest ended
+  lost its mark. The run is measured once after the markers' build
+  (`_layoutFoes`) and cuts the snapshot both ways.
+- **B3 (high) the snapshot carried the player's own dropped loot,**
+  and `restorePiles` on the receiving side deleted that player's floor
+  stash and minted the host's under their feet. The memory carries no
+  drops; the clearing restore is the save's alone.
+- **B4 (high) two clients' layout pools hold different species at the
+  same index** (`chooseRandomEnemyType` bands on the live player level)
+  and the record carried no type. The record carries `mobileType` and
+  patches only its own kind; a save from before the field patches as
+  before. The cure - a seeded layout - is slice 3's (below).
+- **B5 (med) one farewell in three was dropped:** the forced publish
+  on exit, death or hide fell inside the relay's five-second floor. A
+  forced publish is marked `final` and the relay admits one per socket
+  inside the floor.
+- **B6 (med) the death farewell never fired underground:** the dungeon
+  context borrows the death presenter, so `townTalk.overlay` never held
+  the screen - no publish, no leave, the corpse kept hosting. The mode
+  names its own death screen (`deathUp`).
+- **B7 (med) `applyWorld` was written for a rebuilt pool** and the
+  shared path ran it on a live one from a socket callback - a foe
+  teleported mid-swing, a corpse-loot window's array replaced under it,
+  a door re-solidified around the player. The memory lands once per
+  context, on the freshly built pool; a second apply is slice 3's
+  events.
+- **B8 (low)** the dungeon's snapshot went into the cell's room during
+  the room hold; **B9 (low)** a refused publish was silent and retried
+  at frame rate; **B10 (low)** the boot's dungeon arm said "Game
+  loaded." twice. A world room alone; a refusal said once with the
+  clock stamped; `announce` off on the boot's arm.
+
+**The peer's arm.**
+
+- **C1 (high) the arm bag read world.js's own rig,** which is never
+  stepped indoors or underground - so in a dungeon, WORLD1's whole
+  subject, every peer stood with the street's sheath flag and never
+  swung or cast. The mode machine names the live rig and the stance
+  (`liveArm`).
+- **C2 (med) a sheathed arm never cast:** the Morrowind arm's
+  `castSpell` refused the None stance, so a caster with nothing drawn
+  - a peer with wd 0, and the player's own arm alike - played nothing
+  while the spellcast group was composed for it. The cast plays from
+  None and returns there.
+- **C3 (med) a refused strike was lost:** the count advanced whether or
+  not the rig took the blow, and the equip that `setSheathed` started
+  the same frame refuses it. The strike is kept `PENDING_FRAMES` and
+  played once when it takes.
+- **C4 (med) a loose and the next draw in one pose** stranded the peer
+  at full draw. The count after a held draw is its loose: release plays
+  it, nothing is queued (a queued strike shot again once the arm came
+  back), and a redraw in the same pose follows the release.
+- **C5/C6 (med/low) the arrow's `setWeapon` cut a strike in flight**
+  (the last arrow's loose, every time) and was committed whether the
+  rig took it. It waits for a quiet arm and lands only as the rig took
+  it.
+- **C7 (low) a body that slept replayed a stale swing.** Out of range
+  or lingering, the counts follow; on waking nothing is replayed.
+
+**The pins and the record.**
+
+- **D1 (high)** the exit-hook pin's lazy regex matched the other
+  teardown; **D3 (high)** the fake rig recorded each door apart, so
+  sheath-before-strike was unpinned; **D4 (med)** the joiner-leads
+  frame was unpinned - and pinning it found the election skipping the
+  joiner; **D5 (med)** the finder's decoys sat after the match; **D9**
+  the floor's value was unpinned; **D13** a brittle comment anchor. All
+  repinned; **D10** the three fake Durable Objects are one
+  (`test/fakeRoom.mjs`, which drops a socket the object closed as the
+  runtime does).
+- **D2 (high)** the arc's and the module's opening law, `Home.md`, the
+  Ledger's row and wrangler's head still said presence alone was
+  shared; **D6 (med)** Multiplayer.md's "no game state beyond the
+  roster", "when the host leaves, the session ends", "sessions are
+  ephemeral", "host migration - later"; **D7 (med)** "a peer's arrows
+  never show"; **D8** `online.test.js` (8) is (9) since OD1; **D11**
+  the wire's pose list; **D12** `stats.worlds` minted lazily. All
+  struck or amended.
+
+Pinned in `test/auditworld.test.js` (4): the relay over the one fake
+(the door before the parse and its meter, the cap kept by type, the
+map-id key and the alarm both ways, the reconnect's seat and the room's
+floor, the farewell once and the host's alone, the coalesced write by
+source); the session's farewell; the body over an ordered fake rig (the
+doors in order, the pending strike taken once and dropped after
+`PENDING_FRAMES`, the loose law and the redraw, the arrow's wait and
+commit, the re-latch out of range and after a linger); the hosts and
+the record by source. WORLD1's own pins restamped where the law moved
+(the floor in storage, the joiner-leads frame, the exit hook sliced to
+its function, the dungeon's two doors). Relay redeployed (b57433f6);
+live, in a map-id room: a non-host's junk frame past the small cap
+ignored with the socket kept, the host's reconnect keeping its seat
+with no host frame to the peer, an ordinary publish inside the floor
+dropped and the farewell taken.
+
+For later slices, from the lenses: a SEEDED LAYOUT before slice 3 (the
+shared half of the pool must not band on the live player level - a
+fixed level or the location's seed for the random flats online, or the
+layout roster published beside the memory); loot's memory should carry
+"emptied", not contents (slice 4); a host's quickload inside a dungeon
+rewinds nothing for anyone else and is itself rewound by the room's
+memory on re-entry - persistence, but it will read as "F12 does nothing
+to the dungeon"; publishes and applies happen under an open window or
+a pause, which slice 3 gates explicitly.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -770,7 +932,12 @@ carrying `host` and `world` whole (122 KB, two chunks), the host handed over on 
   blows travel as events (slice 3), and a foe killed between two
   publishes by a host that vanished comes back. Towns, cells and
   buildings keep nothing yet; no shared clock or weather (slice 5);
-  the quest clocks still run online; no player-versus-player.
+  the quest clocks still run online; no player-versus-player. A
+  memory is forgotten `WORLD_TTL_MS` (thirty days) after its room
+  last emptied (AUDIT WORLD A3 - a bound on parked storage, Mac's
+  to change), and two players' random flats differ by level, so a
+  record patches only its own species at an index until the layout
+  is seeded (AUDIT WORLD B4, slice 3).
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -791,13 +958,13 @@ storage, the roster with looks and its cap, the range fan-out, the
 leave, the replaced socket's silent close, the secret that guards an
 id, the hello gate, the socket cap, the over-rate strikes, the failed
 send, the worker's routes).
-`test/online.test.js` (8): the one law at both ends and the world's
+`test/online.test.js` (9): the one law at both ends and the world's
 bound, the room key by map id and its nulls, the pose's change and
 easing, the id, the session on its own clock over a fake socket, the
 socket's lifecycle and the terminal closes, the look and the stub
 clamped, the others drawn through a fake renderer (the crop, the cache,
 the retry, the eviction, the name under the viewport rect), the
-compositor's door pure by source. Not seen with two real players from
+compositor's door pure by source, OD1's doll standing up bottom-up. Not seen with two real players from
 here - Mac's two browsers are the gate.
 `test/chat1.test.js` (7), re-pinned by AUDIT CHAT: the wire's chat law
 at both ends (the sanitizer's classes - every format character, the
@@ -837,6 +1004,12 @@ the world rooms, the Room's host election and memory over fake
 sockets across a wake (chunked, republished smaller, served verbatim,
 the ignored frames, the sweeps that keep it), the session's host and
 sendWorld, the three hosts by source.
+`test/auditworld.test.js` (4): AUDIT WORLD's fixes - the relay's door
+before the parse, the cap by type, the map-id key and the alarm, the
+reconnect's seat and the room's floor, the farewell; the session's
+farewell; the body's doors in order, the pending strike, the loose
+law, the arrow's wait and commit, the re-latch; the hosts and the
+record by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

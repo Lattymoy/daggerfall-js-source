@@ -37,7 +37,8 @@ import {
   sanitizeChat, isChatRoom, parseClient, chatGate,
 } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
-import worker, { Room } from '../server/src/index.js';
+import { fakeRoom } from './fakeRoom.mjs';
+import worker from '../server/src/index.js';
 import { OnlineSession, HEARTBEAT_MS, BACKOFF_MIN_MS } from '../src/net/online.js';
 import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS, tagOf } from '../src/net/chat.js';
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf } from '../src/ui/chatPanel.js';
@@ -106,34 +107,6 @@ test('CHAT1 / AUDIT CHAT: the wire - the constants once and literally, one home 
 
 // ── THE ROOM ─────────────────────────────────────────────────────────
 
-/** The relay test's fake Room: a state with sockets and storage, a socket with a bounded attachment (the runtime's 16 KiB). */
-function fakeRoom(key) {
-  const sockets = [];
-  const store = new Map();
-  const state = {
-    getWebSockets: () => sockets.slice(),
-    acceptWebSocket: (ws) => sockets.push(ws),
-    storage: {
-      async get(k) { return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, store.get(x)])) : store.get(k); },
-      async put(k, v) { if (k && typeof k === 'object') { for (const [kk, vv] of Object.entries(k)) store.set(kk, vv); } else store.set(k, v); }, async delete(k) { for (const x of Array.isArray(k) ? k : [k]) store.delete(x); }, async deleteAll() { store.clear(); }, async list({ prefix = '' } = {}) { return new Map([...store].filter(([k]) => k.startsWith(prefix))); },
-    },
-  };
-  const room = new Room(state);
-  const connect = () => {
-    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, bucket: null, drops: 0 },
-      send(s) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(s)); }, close(code, reason) { this.closed = { code, reason }; },
-      serializeAttachment(a) { if (JSON.stringify(a).length > 16384) throw new Error('attachment too large'); this.att = JSON.parse(JSON.stringify(a)); }, deserializeAttachment() { return this.att; } };
-    state.acceptWebSocket(ws);
-    return ws;
-  };
-  const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
-  const hello = (ws, id, pose = null, secret = 'secret-of-' + id) => room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id, secret, name: id, look, pose }));
-  const chat = (ws, text) => room.webSocketMessage(ws, JSON.stringify({ t: 'chat', text }));
-  const pose = (ws, p) => room.webSocketMessage(ws, JSON.stringify({ t: 'pose', p }));
-  const ping = (ws) => room.webSocketMessage(ws, '{"t":"ping","x":1}');   // not the byte-exact one the runtime answers in its sleep: this one wakes the object
-  const drop = (ws) => { sockets.splice(sockets.indexOf(ws), 1); return room.webSocketClose(ws, 1005, ''); };
-  return { room, state, store, sockets, connect, hello, chat, pose, ping, drop };
-}
 const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
 const chats = (ws) => ws.sent.filter((m) => m.t === 'chat');
 const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
@@ -647,7 +620,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /chatPanel\.render\(\{\s*hidden: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'hidden under a window');
   assert.match(w, /status: link\?\.statusLine\('chat'\) \?\? null,/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
   assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\); for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\); peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel');
   assert.doesNotMatch(w, /chatPanel\?\.destroy\(\)/, 'AUDIT CHAT B4: and keeps the panel - a page restored from the cache gets its chat back');
   // CG2 rests on the host listening in the BUBBLE phase (AUDIT CHAT D2): a capture listener beside the panel's would fill the ring
@@ -663,7 +636,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{[\s\S]*?const gate = poseGate\(a\.bucket, Date\.now\(\)\);[\s\S]*?if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated before it is declined');
+  assert.match(room, /if \(m\.t === 'pose' \|\| m\.t === 'ping'\) \{[\s\S]*?const chat = isChatRoom\(a\.key\);\s*if \(!this\._meter\(ws, a, Date\.now\(\), \{ pose: m\.t === 'pose' && !chat \? m\.p : a\.pose \}\)\) return;[^\n]*\n[^\n]*\n\s*if \(chat\) return;/, 'AUDIT CHAT A3: a channel\'s pose is gated (the one meter, AUDIT WORLD A1) before it is declined');
   assert.match(room, /if \(other === ws \|\| chat \|\| inRange\(a\.key \?\? '', a\.pose, b\.pose\)\) this\._send\(other, out\);/, 'the fan: the sender, a channel\'s everyone, a place\'s range');
   assert.match(room, /const room = tokenGate\(this\._roomChat, now, CHAT_ROOM_HZ_MAX\);/, 'the room\'s own budget (A2)');
   const dial = rd('src/ui/pixelDial.js');

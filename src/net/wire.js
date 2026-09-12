@@ -11,14 +11,14 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
-//                    {t:'world', data}                  the room's memory, from its host alone (WORLD1)
+//                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'error', m}                     then the socket closes
-// A pose is {x, y, z, yaw, pitch, mv, wd, an, as} in the room's frame -
+// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
 // scene's own - mv 1 when walking, 2 when running (the sender's own
@@ -145,6 +145,8 @@ export const WORLD_MIN_MS = 5000;
 export const WORLD_CHUNK = 96 * 1024;
 /** How a world frame begins on the wire - the one frame admitted past MAX_FRAME_BYTES, told before any parse. */
 export const WORLD_PREFIX = '{"t":"world"';
+/** A world room's memory is forgotten this long after the room last drained, unless someone came back (AUDIT WORLD A3). */
+export const WORLD_TTL_MS = 30 * 24 * 3600 * 1000;
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
@@ -193,8 +195,12 @@ export function sanitizeChat(text) {
 export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 
 /** Does this room keep a world (WORLD1): a dungeon's, today - the one place whose world is one self-contained
- *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. */
-export const isWorldRoom = (key) => String(key ?? '').startsWith('dungeon:');
+ *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. The key is a MAP ID's
+ *  (roomKeyFor's `dungeon:m<mapId>`), not a prefix (AUDIT WORLD A3): a client can name any room, and a world room
+ *  is a Durable Object that keeps up to WORLD_FRAME_MAX for WORLD_TTL_MS - the Bay's dungeons are a bounded set,
+ *  eighty free characters are not. */
+const WORLD_ROOM = /^dungeon:m\d{1,8}$/;
+export const isWorldRoom = (key) => WORLD_ROOM.test(String(key ?? ''));
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
@@ -277,10 +283,13 @@ export function parseClient(text, { hasHello = false } = {}) {
   let m;
   try { m = JSON.parse(text); } catch { return { error: 'not JSON' }; }
   if (!m || typeof m !== 'object') return { error: 'not an object' };
-  if (m.t === 'world') {   // the room's memory, an object from a hello'd socket
+  // AUDIT WORLD A2: the prefix admitted the size, the TYPE keeps the cap - JSON's last duplicate key wins, so a frame
+  // that began {"t":"world" and ended "t":"pose" parsed as a 512 KiB pose under the pose gate
+  if (m.t !== 'world' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  if (m.t === 'world') {   // the room's memory, an object from a hello'd socket; final marks the socket's one farewell (B5)
     if (!hasHello) return { error: 'world before hello' };
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
-    return { t: 'world', data: m.data };
+    return { t: 'world', data: m.data, final: m.final === true };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {

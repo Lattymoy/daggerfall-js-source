@@ -48,7 +48,7 @@ test('MAC6 #1: the envelope carries where the dungeon stands - `dungeon` {pixel,
   // the finder, for the old save: the dungeon's own record id, the host's pixel law injected
   const loc = (id, longitude, latitude, hasDungeon = true) => ({ hasDungeon, dungeon: { recordElement: { header: { locationId: id } } }, mapTableData: { longitude, latitude } });
   const toPixel = (mt) => ({ x: mt.longitude, y: mt.latitude });
-  const locations = [loc(7, 1, 2), loc(1234, 109, 158), loc(1234, 5, 6, false), { hasDungeon: true, dungeon: null, mapTableData: { longitude: 0, latitude: 0 } }];
+  const locations = [loc(7, 1, 2), loc(1234, 5, 6, false), { hasDungeon: true, dungeon: null, mapTableData: { longitude: 0, latitude: 0 } }, { ...loc(1234, 3, 4), mapTableData: null }, loc(1234, 109, 158)];   // AUDIT WORLD D5: the decoys sit BEFORE the match, so every guard is walked
   assert.deepEqual(dungeonPixelFor('dungeon:1234', locations, toPixel), { x: 109, y: 158 }, 'found by id, a location with no dungeon skipped');
   assert.equal(dungeonPixelFor('dungeon:99', locations, toPixel), null, 'no such dungeon');
   assert.equal(dungeonPixelFor('world', locations, toPixel), null, 'not a dungeon key');
@@ -67,7 +67,7 @@ test('MAC6 #1: the hosts by source - the dungeon host\'s composer names its pixe
   assert.match(d, /const dungeonHome = \(\) => \{\s*const mt = dfLocation\?\.mapTableData;\s*if \(!mt \|\| !Number\.isFinite\(mt\.longitude\) \|\| !Number\.isFinite\(mt\.latitude\)\) return null;\s*const p = longitudeLatitudeToMapPixel\(mt\.longitude, mt\.latitude\);\s*return \{ pixel: \{ x: p\.x, y: p\.y \}, mapId: mt\.mapId \?\? null \};/, 'where the dungeon stands, from its own map row');
   assert.match(d, /locationKey: _locationKey,(?:\s*\/\/[^\n]*\n)*\s*dungeon: dungeonHome\(\),/, 'the composer carries it beside the key');
   assert.match(d, /quickLoad\(setPlayerPos, key = null\) \{[\s\S]*?const extras = restorePlayer\(playerEntity, snap, spellsByIndex\);[\s\S]*?this\.restoreSaved\(extras, setPlayerPos\);\s*\},/, 'the key route\'s load is restorePlayer then the second half');
-  assert.match(d, /restoreSaved\(extras, setPlayerPos, \{ session = true \} = \{\}\) \{/, 'the second half on its own, the session restore a switch');
+  assert.match(d, /restoreSaved\(extras, setPlayerPos, \{ session = true, announce = session \} = \{\}\) \{/, 'the second half on its own, the session restore a switch');
   assert.match(d, /if \(session && restoreSessionState\(extras, \{ questBridge: opts\.questBridge, talk: opts\.talkSave, entity: playerEntity \}\)\) opts\.onQuestRestored\?\.\(\);/, 'gated: the world host restored the machines before it teleported');
   assert.match(d, /if \(extras\.position && extras\.locationKey === _locationKey && setPlayerPos\) setPlayerPos\(extras\.position\);/, 'the saved position lands through the applier - RestorePosition');
   const m = rd('src/scenes/worldModes.js');
