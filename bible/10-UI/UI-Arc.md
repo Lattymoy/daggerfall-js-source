@@ -12570,3 +12570,39 @@ the CHRONICLE, and the TALK panel says goodbye through the model so
 the note is filed. The book already closed on a tap beside it
 (EB1) and the dial on its scrim (PX15). Pinned in
 `test/outsideTap.test.js`.
+
+## PX31 - THE PACK'S PAGES (2026-09-12)
+
+**Mac: "For the enhanced inventory, I think we need more tabs/sections
+for items. Like books currently go in clothing which doesn't make
+sense. Armor and weapons should be separate. Just take some autonomy
+and properly sort out everything."**
+
+DFU's inventory has four tabs - Weapons & Armor, Magic, Clothing &
+Misc, Ingredients - and the third is a drawer: books, maps, potions,
+gems, jewellery, a horse, a torch and the shirts all land in it
+together. The classic pack keeps DFU's four (that window IS DFU's,
+and `filterByTab` is AddLocalItem's law). The enhanced pack is the
+port's own screen and gets NINE pages (`ui/packPages.js`): Weapons,
+Armor, Clothing, Magic, Potions, Ingredients, Books, Valuables, Misc.
+The Magic page is asked first, as AddLocalItem asks it - an enchanted
+sword is a magic item, not a weapon, on both skins - and the spellbook
+files there. Books and Maps are the things you read. Valuables are the
+gems, jewellery, letters of credit, paintings, deeds and artifacts:
+the one deliberate departure from DFU's own filing is the GEMS, which
+DFU counts as ingredients (they are) and a player looks for beside the
+rings (they are that too). Potions are their own page; the glass jar
+that shares their group is not. The rest - the drugs, the sacks, the
+torch and the bandage, the religious items, the soul trap and the
+recipe, the horse and the cart (which also keep their own strip,
+PX21a), the quest items - is Misc.
+
+**A partition, pinned.** Every unequipped item lands on exactly one
+page, and the nine together hold exactly what DFU's four hold: a bag
+with one of everything (every template of every group, a potion, an
+enchanted sword, the spellbook, a worn helm) lands on the nine and the
+four alike, no item lost, none doubled, the worn one on neither
+(FilterLocalItems, U53). The spine draws each page by its label with
+its count and dims an empty page in its place, so the spine never
+shuffles under the hand; the page follows what just arrived from a
+pile; on the phone dock the pages sit three by three.

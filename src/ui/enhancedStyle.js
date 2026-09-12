@@ -632,6 +632,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-bottom: 2px solid transparent; color: var(--dim); font-size: 13px;
 }
 .packtab.on { color: var(--brass); border-bottom-color: var(--brass); }
+.packtab.empty { opacity: 0.45; }   /* PX31: an empty page keeps its place, dimmed */
 .packtab .count { display: block; font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; }
 
 .itemrow {
@@ -2176,11 +2177,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 .pack-shell .packcats { background: transparent; border-right: 0;
   border-bottom: 2px solid rgba(125,116,96,0.3); overflow-x: auto; padding: 0 8px; }
-.pack-shell .packtabs { display: flex; flex-direction: row; gap: 2px; margin: 0; }
-.pack-shell .packtab { display: flex; align-items: center; gap: 10px; text-align: left;
-  min-height: 44px; padding: 8px 14px; border: 0; background: none; cursor: pointer;
-  color: #a89f88; font-family: inherit; font-size: 13px; letter-spacing: 0.16em;
-  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .packtabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 6px; margin: 0; }   /* PX31: nine pages, three by three */
+.pack-shell .packtab { display: flex; align-items: center; gap: 6px; text-align: left; min-width: 0; overflow: hidden;
+  min-height: 44px; padding: 8px 6px; border: 0; background: none; cursor: pointer;
+  color: #a89f88; font-family: inherit; font-size: 12px; letter-spacing: 0.06em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); white-space: nowrap; text-overflow: ellipsis; }
 .pack-shell .packtab .count { font-family: inherit; font-size: 11px; color: #7d7460;
   background: none; border: 0; margin-left: auto; }
 .pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none; color: #d8cfae; }
@@ -2291,10 +2292,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      WRAPPED - which cost the same 76px this grid costs and looked
      like an accident, the counts flung to the right of two ragged
      rows by their own margin-left:auto. TABS is imported from
-     nativeInventory and is DFU's four, always, so two by two is a
-     shape rather than a guess. */
+     PX31's nine pages (ui/packPages.js), always, so three by three
+     is a shape rather than a guess. */
   .pack-shell .pack-dock .packcats .packtabs { display: grid;
-    grid-template-columns: 1fr 1fr; gap: 0 8px; }
+    grid-template-columns: repeat(3, 1fr); gap: 0 8px; }
   /* THE MAP FILLS THE COLUMN IT WAS GIVEN. Stacked, the region was
      its content's height and the map was flex 0 0 auto so it would
      not steal from the list below it. Beside the list it steals
