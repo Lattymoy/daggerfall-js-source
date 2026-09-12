@@ -64,8 +64,8 @@ test('seams 1: alphaIndex -1 keeps palette index 0 opaque; 0 cuts it (MaterialRe
 
 test('seams 1: the pipeline uploads MESH materials opaque and flats as cutouts, through the one door', () => {
   const p = src('src/scenes/dataPipeline.js');
-  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out
-  assert.match(p, /const color32 = swap \?\? t\.getColor32\(bitmap, opaque \? -1 : 0\);/);
+  assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips, removeMask = false \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out
+  assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
   assert.match(p, /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/);
   // every sub-mesh upload asks for the opaque material
   const meshSites = [...p.matchAll(/uploadRecord\(sm\.textureArchive, sm\.textureRecord(, \{ opaque: true \})?\)/g)];
@@ -226,7 +226,7 @@ test('seams review 2: item icons are UI art - the icon door uploads a world arch
   assert.equal(calls(log, 'texParameteri').find((c) => c[2] === 'TEXTURE_MIN_FILTER')[3], 'NEAREST');
   assert.ok(r.textures.has('505_1#season3') && !r.textures.has('505_1#season3#ui'), 'under the plain batch key');
   for (const f of ['src/ui/nativeInventory.js', 'src/ui/itemScroller.js']) {
-    assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false \}\);/, `${f} asks for the UI variant`);
+    assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true \}\);/, `${f} asks for the UI variant (HM1: with the mask stripped)`);
     assert.match(src(f), /icons\.textures\.get\(`\$\{key\}#ui`\)/, `${f} reads it back`);
   }
   assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/, 'the door forwards it');

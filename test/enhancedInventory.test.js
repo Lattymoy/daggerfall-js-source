@@ -21,7 +21,7 @@ import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady,
 } from '../src/ui/inventoryDoor.js';
-import { TABS, filterByTab } from '../src/ui/nativeInventory.js';
+import { PACK_PAGES, filterByPage } from '../src/ui/packPages.js';   // PX31: the pack's nine pages
 import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
@@ -66,13 +66,14 @@ const model = (e) => packModel({ entity: e, items: () => e.items });
 
 // ── THE MODEL ────────────────────────────────────────────────────
 
-test('U53: the pack reads the four DFU tab pages, and nothing else', () => {
+test('U53/PX31: the pack reads the nine pages, each filterByPage\'s own answer, and nothing else', () => {
   const e = hero();
   const m = model(e);
-  assert.deepEqual(m.tabs.map((t) => t.tab), [...TABS]);
+  assert.deepEqual(m.tabs.map((t) => t.tab), PACK_PAGES.map(([id]) => id));
+  assert.deepEqual(m.tabs.map((t) => t.label), PACK_PAGES.map(([, label]) => label));
   for (const { tab, items } of m.tabs) {
-    assert.deepEqual(items, filterByTab(e.items, tab),
-      `${tab} must be filterByTab's own answer, not a second filter`);
+    assert.deepEqual(items, filterByPage(e.items, tab),
+      `${tab} must be filterByPage's own answer, not a second filter`);
   }
   assert.equal(m.count, 4);
   assert.equal(m.gold, 1287, 'PlayerEntity.GoldPieces, as every other screen reads it');
@@ -89,7 +90,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:173-174) because it is handed the list
+  // hand (enhancedInventory.js:174-175) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -1162,8 +1163,8 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   assert.match(src, /picked = null;\n  if \(packOpen\) \{/, 'the take must clear the pick before the pack-open arm');
   assert.ok(!/picked = packOpen \? taken : null;/.test(src), 'the taken item must not stay selected');
   assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
-  assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
-    'the tab-follows-the-item law is unchanged - it just belongs to the pack');
+  assert.match(src, /tab = pageOf\(taken\);/,
+    'the tab-follows-the-item law is unchanged - it just belongs to the pack (PX31: the page an item lives on)');
   // The transfer itself is untouched: this slice changes what is SHOWN.
   assert.match(src, /const taken = applyTransfer\(item, plan, from, bag, \{ entity: deps\.entity, toPlayer: true \}\);/,
     'E4: `PlayerEntity.Items == to` is the destination test DoTransferItem makes');

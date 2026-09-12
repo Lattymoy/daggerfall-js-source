@@ -36,8 +36,8 @@
 // clearing both hands, a shield bumping a held two-hander, the
 // forbidden-material and broken-item refusals, the swap delay billed
 // per transition, the armour-value table and the enchantment hooks.
-// Taking something off is `unequipSlot`. The four tab pages are
-// nativeInventory.js's own `TABS` and `filterByTab`. Weight,
+// Taking something off is `unequipSlot`. The pages are PX31's nine
+// (ui/packPages.js; the classic keeps DFU's four). Weight,
 // condition, material and damage strings are systems/itemInfo.js's,
 // every one of them cited to DFU. This module positions nodes and
 // prints rows.
@@ -56,7 +56,8 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
+import { USE_PENDING } from './nativeInventory.js';
+import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
@@ -174,7 +175,7 @@ export function packModel(deps = {}) {
   const carried = items.reduce((kg, it) => kg + itemWeight(it), 0)
     + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
   return {
-    tabs: TABS.map((tab) => ({ tab, items: filterByTab(items, tab) })),
+    tabs: PACK_PAGES.map(([tab, label]) => ({ tab, label, items: filterByPage(items, tab) })),   // PX31
     worn,
     // PlayerEntity.GoldPieces, the COUNTER - gold has not been an item
     // in the pack since E4, so there is no stack here to find.
@@ -374,7 +375,7 @@ let deps = {};
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
-let tab = TABS[0];
+let tab = PAGE_IDS[0];
 const _scrollMemo = new Map();   // PX22: scrollTop per tab across repaints
 let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
@@ -642,7 +643,7 @@ function take(item) {
     side = 'local';
     // The pack's TAB follows what just arrived, or the player takes a
     // sword on the Ingredients page and watches nothing happen.
-    tab = TABS.find((t) => filterByTab([taken], t).length) ?? tab;
+    tab = pageOf(taken);   // PX31: the page an item lives on is total
   }
   refresh();
   render();
@@ -1181,9 +1182,11 @@ function goldField() {
 function catsCol() {
   const col = el('section', 'packcol packcats');
   const tabs = el('div', 'packtabs');
-  for (const t of TABS) {
-    const b = el('button', `packtab${t === tab ? ' on' : ''}`, t[0].toUpperCase() + t.slice(1));
-    const n = model.tabs.find((x) => x.tab === t)?.items.length ?? 0;
+  // PX31: the nine pages, each with its count; an empty page stays in
+  // its place, dimmed, so the spine never shuffles under the hand.
+  for (const { tab: t, label, items: rows } of model.tabs) {
+    const n = rows.length;
+    const b = el('button', `packtab${t === tab ? ' on' : ''}${n ? '' : ' empty'}`, label);
     b.append(el('span', 'count', String(n)));
     b.onclick = () => { tab = t; picked = null; render(); };
     tabs.append(b);
@@ -1528,7 +1531,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, url: null }; if (host) render(); });
   }
   onExit = d.onExit ?? (() => {});
-  tab = TABS[0];
+  tab = PAGE_IDS[0];
   picked = null;
   // PX20b: a LOOT target opens its own frame alone; every other way in
   // (F6, the world's inventory door) opens the pack as it always did.

@@ -244,7 +244,7 @@ export function makeIconDrawer(icons, identityOf = null) {
       warm.add(key);
       icons.getTexture(img.archive).then((tex) => {
         if (img.record < tex.recordCount) {
-          icons.uploadRecord(img.archive, img.record, { mips: false });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain
+          icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           sizes.set(key, tex.getSize(img.record));
         }
       }).catch(() => {});

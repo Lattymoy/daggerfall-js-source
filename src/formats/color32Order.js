@@ -3,7 +3,7 @@
 // Every texture that reaches the GL here is in getColor32 order: row 0
 // of the buffer is the picture's BOTTOM row. `BaseImageFile.getColor32`
 // writes `dstRow = (dstHeight - 1 - border - y) * dstWidth`
-// (baseImageFile.js:123, BaseImageFile.cs:250), `renderer.uploadTexture`
+// (baseImageFile.js:143, BaseImageFile.cs:250), `renderer.uploadTexture`
 // uploads that buffer as-is with UNPACK_FLIP_Y_WEBGL off
 // (renderer.js:1831), and BB_VS samples the quad's TOP at v=1, i.e. the
 // LAST row (renderer.js:299-304). In Daggerfall Unity there is nothing
