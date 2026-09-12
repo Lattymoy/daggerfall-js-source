@@ -85,6 +85,17 @@
 // room. The relay reads none of it: a world frame is an object of
 // bounded size from the host, stored as it came, served as it came.
 // A frame from anyone else is ignored, not refused - a handover races.
+//
+// THE LIVE FOES (WORLD2, 2026-09-12). The host of a world room streams
+// its changed foes ({t:'foes', data} - the other frame admitted past
+// MAX_FRAME_BYTES, by its prefix, up to FOES_FRAME_MAX; FOES_HZ_MAX a
+// second on the stream's own bucket) and the room fans them to
+// everyone but the host, under a byte budget (FOES_ROOM_BYTES_PER_S:
+// the frame times its listeners). A blow on the host's foe from anyone
+// else ({t:'hit', data}, under the small cap, on the pose bucket) goes
+// to the host's socket alone, under the room's hit budget
+// (HIT_ROOM_HZ_MAX) and the joiner's own gate at home (HIT_HZ_MAX).
+// The relay reads neither; the client checks the sender.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -160,6 +171,21 @@ export const FOES_PREFIX = '{"t":"foes"';
 /** The cap a frame's PREFIX earns before any parse (WORLD1/WORLD2): a world frame WORLD_FRAME_MAX, a foes frame
  *  FOES_FRAME_MAX, anything else MAX_FRAME_BYTES; the type keeps the cap after the parse (AUDIT WORLD A2). */
 export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : MAX_FRAME_BYTES; }
+/** AUDIT WORLD2 A5: a room's foes fan spends this many bytes a second - the frame's size times its listeners; one host
+ *  at FOES_HZ_MAX and FOES_FRAME_MAX into SOCKETS_MAX listeners would have been 191 MiB/s out of one object. */
+export const FOES_ROOM_BYTES_PER_S = 4 * 1024 * 1024;
+/** AUDIT WORLD2 A6: the hits a room forwards onto its host's one socket a second, all joiners together. */
+export const HIT_ROOM_HZ_MAX = 60;
+/** AUDIT WORLD2 A6: a joiner's own hits a second, at home - the pose bucket's headroom over the client's POSE_HZ (10),
+ *  so a blow never starves the joiner's poses at the relay and an over-rate blow is refused to its caller. */
+export const HIT_HZ_MAX = 10;
+/** A byte budget: `rate` bytes a second, a second's worth at most; passes when the cost fits, spending it. */
+export function byteGate(bucket, nowMs, cost, rate) {
+  const b = bucket ?? { bytes: rate, at: nowMs };
+  const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));
+  if (bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
+  return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
+}
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
@@ -286,7 +312,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
@@ -350,6 +376,8 @@ export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
 export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX);
 /** The foes rate gate: FOES_HZ_MAX a second (WORLD2), the stream's own bucket. */
 export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX);
+/** The hit rate gate at home: HIT_HZ_MAX a second (AUDIT WORLD2 A6). */
+export const hitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, HIT_HZ_MAX);
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 
