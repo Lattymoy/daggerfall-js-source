@@ -122,8 +122,15 @@ async function boot() {
     // DELETE on anything else. A URL that already carries ?load would
     // otherwise make New Game restore the save - the one action whose
     // whole point is not to.
-    if (choice === 'continue' || choice === 'load') params.set('load', '1');
+    if (choice === 'continue' || choice === 'load' || choice === 'online') params.set('load', '1');   // ONLINE1: Online brings the most recent save in
     else params.delete('load');
+    // ONLINE1 (AUDIT ONLINE E1): the world host joins the relay on this
+    // flag (world.js), SET here and DELETED on every other door under
+    // F12's law - the first cut wired it into the classic start window's
+    // branch below, which never answers 'online', so PLAY ONLINE booted a
+    // new character with no relay at all.
+    if (choice === 'online') params.set('online', '1');
+    else params.delete('online');
     // TR3: the Test Room door - the pane answers 'test:<preset>' and
     // the world host seeds the character and the armory off the same
     // testRoom home the pane showed. The param family follows F12's
@@ -192,10 +199,9 @@ async function boot() {
   // ever set, never cleared, so a URL that already carried ?load made NEW
   // GAME restore the save instead - the one action whose whole point is
   // not to.
-  if (action === 'load' || action === 'online') params.set('load', '1');   // ONLINE1: Online brings the most recent save in
+  if (action === 'load') params.set('load', '1');
   else params.delete('load');
-  if (action === 'online') params.set('online', '1');   // ONLINE1: the world host joins the relay (world.js)
-  else params.delete('online');
+  params.delete('online');   // ONLINE1: the classic start window has no Online door; a stale flag does not ride in
   // SAV4: the slot the start menu's save window picked, when it
   // picked one - the boot's load arm reads it. Same SET-or-DELETE law.
   const { takePickedLoadKey } = await import('./scenes/menu.js');

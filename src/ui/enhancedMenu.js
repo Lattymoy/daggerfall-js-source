@@ -431,17 +431,18 @@ function paneOnline(body) {
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
   c.append(el('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together. Nothing else is shared yet.'));
-  const field = (label, key, placeholder) => {
+  const field = (label, key, placeholder, maxLength = 24) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
     const input = el('input');
-    input.type = 'text'; input.maxLength = 64; input.placeholder = placeholder; input.value = getPref(key) || '';
+    input.type = 'text'; input.maxLength = maxLength; input.placeholder = placeholder; input.value = getPref(key) || '';
     input.oninput = () => setPref(key, input.value.trim());
     wrap.append(input);
     return wrap;
   };
-  c.append(field('Name over your head', 'onlineName', save?.name ?? 'Your name'));
-  c.append(field('Relay', 'onlineServer', DEFAULT_SERVER));
+  c.append(field('Name over your head', 'onlineName', save?.name ?? 'Your name', 24));   // AUDIT ONLINE E14: the relay keeps 24 printable ASCII (NAME_MAX)
+  c.append(el('p', 'meta', 'Up to 24 plain letters and digits; anything else is dropped, and an empty name shows as Traveller.'));
+  c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   c.append(el('p', 'meta', save ? `Playing as ${save.name}, from your most recent save.` : 'Save a game first: Online brings a saved character in.'));
   c.append(acts([{ label: 'Play online', primary: true, disabled: !save, onClick: save ? () => onAction('online') : null }]));
   body.append(c);

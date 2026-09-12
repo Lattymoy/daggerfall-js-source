@@ -7,17 +7,17 @@
 // nothing is shared but presence. This module holds one WebSocket to
 // the relay (server/src/index.js on Cloudflare), in one ROOM at a time,
 // says hello once with the player's look, sends the player's pose at
-// POSE_HZ when it changes, and keeps the peers the room reports -
-// each with the pose it last sent and the pose it is DRAWN at, eased
-// toward the last one so a peer walks rather than teleports. The
-// hosts hand the frame's pose in and draw the peers out through
-// net/remotePlayers.js.
+// POSE_HZ when it changes (and a heartbeat pose every HEARTBEAT_MS
+// regardless), and keeps the peers the room reports - each with the
+// pose it last sent and the pose it is DRAWN at, eased toward the last
+// one so a peer walks rather than teleports. The hosts hand the frame's
+// pose in and draw the peers out through net/remotePlayers.js.
 //
-// ROOMS. The relay's own law (server/src/relay.js): the streaming
-// world sharded into WORLD_CELL-pixel cells, a town a room by
-// location, a dungeon and an interior each a room by location. The
-// key is minted here from what the host knows (roomKeyFor); when it
-// changes the socket is closed and a new one opened on the new room.
+// ROOMS. The wire's law (net/wire.js, the relay's one home): the
+// streaming world sharded into WORLD_CELL-pixel cells, a town a room by
+// location, a dungeon and an interior each a room by location. The key
+// is minted here from what the host knows (roomKeyFor); when it changes
+// the socket is closed and a new one opened on the new room.
 //
 // FRAMES. A world-cell room's pose is in MapsFile world units
 // (streamingWorld.worldCoords, NATIVE_PIXEL a map pixel), y the scene's
@@ -26,42 +26,62 @@
 // converts: the host hands the pose in its room's frame and takes the
 // peers back in it.
 //
+// AUDIT ONLINE (2026-09-12, the deep audit before the merge) rewrote the
+// clock (B1: the hosts fed the rAF clock into Date.now() stamps - every
+// peer stood frozen at its first pose, the timeout never fired and a
+// dropped socket never reconnected), the silence law (B3/B11/B14: a peer
+// standing still is not gone - only the room's leave removes a peer, a
+// silent one is HIDDEN, and a heartbeat pose keeps the socket and the
+// peers' clocks alive), the close codes (B4/B5: the relay's 1008 and
+// 4000 are terminal, not a reconnect storm), the frames the relay sends
+// (B7: checked by the same law the relay applies), the welcome (B13:
+// merged, not wiped), the teleport (B12: a jump snaps, a walk eases),
+// and the room key (B10: a location's map id, never a slug that could
+// collide or a '-1.x' fallback that pooled the unknown).
+//
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { appStorage } from '../systems/appStorage.js';   // the one storage question - the seam, never the browser's own (a PIN)
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, validPose, validLook, sanitizeName, worldRoom, inRange } from './wire.js';
 
+export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
-/** Poses a second, at most, and only when the pose moved. */
+/** Poses a second, at most, when the pose moved. */
 export const POSE_HZ = 10;
+/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. */
+export const HEARTBEAT_MS = 5000;
 /** The relay this port hosts (server/wrangler.toml). */
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
-/** A peer silent this long is dropped without waiting for the room's leave. */
+/** A peer silent this long is HIDDEN (out of range, or its socket is
+ *  gone and the leave is on its way); only the room's leave removes it. */
 export const PEER_TIMEOUT_MS = 20000;
-/** The streaming world's shard - the relay's WORLD_CELL, kept equal by test. */
-export const WORLD_CELL = 16;
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
+/** A pose farther than this from the drawn one is a teleport: the peer snaps rather than sweeps (world frame / scene frame). */
+export const SNAP_WORLD_UNITS = PIXEL_UNITS / 8;
+export const SNAP_SCENE_UNITS = 30;
 
 /** A room-key segment: what the relay's key regex admits, bounded. */
 export const slug = (s) => String(s ?? '').replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 40) || 'x';
 
-/** The streaming world's room for a map pixel (the relay's worldRoom). */
-export const worldRoom = (px, py) => `world:${Math.floor(px / WORLD_CELL)},${Math.floor(py / WORLD_CELL)}`;
-
 /**
- * The room the player is in, from what the host knows.
+ * The room the player is in, from what the host knows, or null when
+ * it does not know enough (no room: no join, rather than a pooled
+ * room of the unknown).
  * @param {object} p
  * @param {'world'|'exterior'} p.host   the streaming world or the fixed city
  * @param {'exterior'|'interior'|'dungeon'} p.mode   the mode machine's mode
- * @param {number} p.regionIndex  the location's region
- * @param {string} p.locationName the location (a town's, a dungeon's, the building's town)
+ * @param {number} [p.mapId]       the location's MapTableData.MapId - unique across the Bay, the key of choice
+ * @param {number} [p.regionIndex] the location's region, with its name, when there is no map id
+ * @param {string} [p.locationName]
  * @param {number} [p.buildingKey] the interior's building
  * @param {{x:number,y:number}} [p.mapPixel] the player's map pixel (the streaming world's overworld)
  */
-export function roomKeyFor({ host, mode, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null }) {
-  if (mode === 'dungeon') return `dungeon:${regionIndex}.${slug(locationName)}`;
-  if (mode === 'interior') return `interior:${regionIndex}.${slug(locationName)}.${buildingKey}`;
-  if (host === 'exterior') return `town:${regionIndex}.${slug(locationName)}`;
+export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null }) {
+  const loc = Number.isFinite(mapId) && mapId > 0 ? `m${mapId}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
+  if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;
+  if (mode === 'interior') return loc ? `interior:${loc}.${buildingKey}` : null;
+  if (host === 'exterior') return loc ? `town:${loc}` : null;
   if (!mapPixel) return null;
   return worldRoom(mapPixel.x, mapPixel.y);
 }
@@ -90,6 +110,9 @@ export function lerpPose(from, to, t) {
   };
 }
 
+/** The distance between two poses on the ground. */
+const groundDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+
 /** The player's id across sessions: minted once, kept in storage. */
 export function peerId(storage = appStorage()) {
   const KEY = 'dagger.online.id';
@@ -105,7 +128,9 @@ export function peerId(storage = appStorage()) {
 /**
  * One player's connection to the relay: one room at a time, the
  * peers of that room. Pure of the DOM: the WebSocket class and the
- * clock are handed in, so the tests drive it with a fake socket.
+ * clock are handed in, so the tests drive it with a fake socket. Every
+ * stamp inside is the handed-in clock's (Date.now() unless told
+ * otherwise); nothing outside passes a time in.
  */
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
@@ -117,7 +142,8 @@ export class OnlineSession {
     this._now = now;
     this.room = null;
     this.status = 'idle';      // idle | connecting | open | closed | error
-    this.error = null;
+    this.error = null;         // what went wrong, for a person
+    this.terminal = false;     // the relay closed with a reason a retry will not change (replaced, refused)
     this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt }
     this._ws = null;
     this._lastSent = null;
@@ -126,8 +152,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.onPeers = null;       // () => void, after the peer set changes
-    this.stats = { sent: 0, received: 0, reconnects: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0 };
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. */
@@ -137,17 +162,20 @@ export class OnlineSession {
     this.room = room;
     this._pose = pose ?? this._pose;
     this._closedByUs = false;
+    this.terminal = false;
+    this._backoff = BACKOFF_MIN_MS;
     this._open();
   }
 
   /** Leave the room: the socket closes, the peers go. */
   leave() {
     this._closedByUs = true;
-    if (this._ws) { try { this._ws.close(1000, 'leaving'); } catch { /* already closed */ } }
+    const ws = this._ws;
     this._ws = null;
+    if (ws) { try { ws.close(1000, 'leaving'); } catch { /* already closed */ } }
     this._retryAt = null;
     this.room = null;
-    if (this.peers.size) { this.peers.clear(); this.onPeers?.(); }
+    this.peers.clear();
     this.status = 'closed';
   }
 
@@ -160,16 +188,24 @@ export class OnlineSession {
     ws.onopen = () => {
       if (this._ws !== ws) return;
       this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
-      this._lastSent = null;
+      this._lastSent = null; this._lastSentAt = -Infinity;
       this._send({ t: 'hello', id: this.id, name: this.name, look: this.look, pose: this._pose });
     };
     ws.onmessage = (ev) => { if (this._ws === ws) this._receive(ev.data); };
-    ws.onclose = () => { if (this._ws !== ws) return; this._ws = null; this.status = 'closed'; if (!this._closedByUs) this._scheduleRetry(); };
+    ws.onclose = (ev) => {
+      if (this._ws !== ws) return;
+      this._ws = null;
+      const code = ev?.code ?? 1005;
+      if (code === CLOSE_REPLACED) { this.terminal = true; this.status = 'error'; this.error = 'this character is online in another window'; return; }
+      if (code === CLOSE_POLICY) { this.terminal = true; this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; return; }
+      this.status = 'closed';
+      if (!this._closedByUs) this._scheduleRetry();
+    };
     ws.onerror = () => { if (this._ws === ws) { this.status = 'error'; this.error = 'socket error'; } };
   }
 
   _scheduleRetry() {
-    if (this._closedByUs || !this.room) return;
+    if (this._closedByUs || this.terminal || !this.room) return;
     this._retryAt = this._now() + this._backoff;
     this._backoff = Math.min(BACKOFF_MAX_MS, this._backoff * 2);
   }
@@ -179,14 +215,14 @@ export class OnlineSession {
     try { this._ws.send(JSON.stringify(o)); this.stats.sent++; return true; } catch { return false; }
   }
 
-  /** The frame's pose: sent at POSE_HZ when it moved. */
+  /** The frame's pose: sent at POSE_HZ when it moved, and every HEARTBEAT_MS regardless. */
   sendPose(pose) {
     this._pose = pose;
     const now = this._now();
     if (now - this._lastSentAt < 1000 / POSE_HZ) return false;
-    if (!poseChanged(this._lastSent, pose)) return false;
+    if (now - this._lastSentAt < HEARTBEAT_MS && !poseChanged(this._lastSent, pose)) return false;
     if (!this._send({ t: 'pose', p: pose })) return false;
-    this._lastSent = { ...pose }; this._lastSentAt = now;
+    this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++;
     return true;
   }
 
@@ -196,48 +232,85 @@ export class OnlineSession {
     if (!m || typeof m !== 'object') return;
     this.stats.received++;
     const now = this._now();
-    let changed = false;
     if (m.t === 'welcome') {
-      this.peers.clear();
-      for (const p of m.peers ?? []) if (p?.id && p.id !== this.id) { this.peers.set(p.id, this._peer(p, now)); changed = true; }
-      if (!changed && this.peers.size === 0) changed = true;
+      // merged, not wiped: a peer already known keeps where it is drawn
+      const keep = new Set();
+      for (const p of Array.isArray(m.peers) ? m.peers : []) {
+        if (!p || typeof p.id !== 'string' || p.id === this.id) continue;
+        keep.add(p.id);
+        const have = this.peers.get(p.id);
+        if (have) this._refresh(have, p, now); else this.peers.set(p.id, this._peer(p, now));
+      }
+      for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
     } else if (m.t === 'join') {
-      if (m.id && m.id !== this.id) { this.peers.set(m.id, this._peer(m, now)); changed = true; }
+      if (typeof m.id === 'string' && m.id !== this.id) {
+        const have = this.peers.get(m.id);
+        if (have) this._refresh(have, m, now); else this.peers.set(m.id, this._peer(m, now));
+      }
     } else if (m.t === 'leave') {
-      if (this.peers.delete(m.id)) changed = true;
+      this.peers.delete(m.id);
     } else if (m.t === 'pose') {
       const p = this.peers.get(m.id);
-      if (p && m.p) { p.from = p.shown ? { ...p.shown } : p.pose; p.pose = m.p; p.at = now; p.seenAt = now; if (!p.shown) p.shown = { ...m.p }; }
+      const pose = p ? validPose(m.p) : null;
+      if (p && pose) this._arrive(p, pose, now);
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }
-    if (changed) this.onPeers?.();
   }
 
   _peer(p, now) {
-    const pose = p.pose ?? null;
-    return { id: p.id, name: p.name ?? 'Traveller', look: p.look ?? null, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    const pose = validPose(p.pose);
+    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
   }
 
-  /** Once a frame: the retry, the timeouts, the easing of every peer
-   *  toward its last pose over one send interval. */
-  tick(now = this._now()) {
-    if (this._retryAt != null && now >= this._retryAt && !this._ws && !this._closedByUs && this.room) { this._retryAt = null; this.stats.reconnects++; this._open(); }
-    let changed = false;
-    for (const [id, p] of this.peers) {
-      if (now - p.seenAt > PEER_TIMEOUT_MS) { this.peers.delete(id); changed = true; continue; }
-      if (p.pose) {
-        const t = (now - p.at) / (1000 / POSE_HZ);
-        p.shown = lerpPose(p.from ?? p.pose, p.pose, t);
-      }
+  /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
+  _refresh(p, m, now) {
+    p.name = sanitizeName(m.name); p.look = validLook(m.look);
+    const pose = validPose(m.pose);
+    if (pose) this._arrive(p, pose, now); else p.seenAt = now;
+  }
+
+  /** A pose in: eased from where the peer is drawn, or snapped there when it jumped. */
+  _arrive(p, pose, now) {
+    const snap = String(this.room ?? '').startsWith('world:') ? SNAP_WORLD_UNITS : SNAP_SCENE_UNITS;
+    const from = p.shown && groundDist(p.shown, pose) <= snap ? { ...p.shown } : { ...pose };
+    p.from = from; p.pose = pose; p.at = now; p.seenAt = now;
+    p.shown = { ...from };
+  }
+
+  /** Once a frame, on the session's own clock: the retry, the easing
+   *  of every peer toward its last pose over one send interval. */
+  tick() {
+    const now = this._now();
+    if (this._retryAt != null && now >= this._retryAt && !this._ws && !this._closedByUs && !this.terminal && this.room) { this._retryAt = null; this.stats.reconnects++; this._open(); }
+    for (const p of this.peers.values()) {
+      if (!p.pose) continue;
+      const t = (now - p.at) / (1000 / POSE_HZ);
+      p.shown = lerpPose(p.from ?? p.pose, p.pose, t);
     }
-    if (changed) this.onPeers?.();
   }
 
-  /** The peers with a pose to draw, as an array. */
+  /** Is a peer one to draw: a pose, seen within PEER_TIMEOUT_MS, and
+   *  (a world cell) within the relay's range of the player. */
+  visible(p, now = this._now()) {
+    if (!p.shown || now - p.seenAt > PEER_TIMEOUT_MS) return false;
+    return inRange(this.room, this._pose, p.shown);
+  }
+
+  /** The peers to draw, as an array. */
   drawable() {
+    const now = this._now();
     const out = [];
-    for (const p of this.peers.values()) if (p.shown) out.push(p);
+    for (const p of this.peers.values()) if (this.visible(p, now)) out.push(p);
     return out;
+  }
+
+  /** One line for a person, or null when all is well. */
+  statusLine() {
+    if (this.status === 'open') return null;
+    if (this.terminal || this.status === 'error') return `online: ${this.error ?? 'error'}`;
+    if (this.status === 'connecting') return 'online: connecting';
+    if (this._retryAt != null) return 'online: reconnecting';
+    return null;
   }
 }
