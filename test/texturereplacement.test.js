@@ -118,7 +118,7 @@ test('texture: decode-ahead fills the SYNC cache, per archive', async () => {
   assert.deepEqual({ width: got.width, height: got.height }, { width: 2, height: 2 });
   assert.ok(got.colors && got.colors.length === 16, 'a color32, not a decoded PNG');
   // ...and in getColor32's order, row 0 the picture's BOTTOM row
-  // (baseImageFile.js:123 / BaseImageFile.cs:250; TextureReader.cs:266
+  // (baseImageFile.js:143 / BaseImageFile.cs:250; TextureReader.cs:266
   // hands GetColor32 straight to SetPixels32, so DFU never converts).
   assert.deepEqual([...got.colors], [3, 3, 3, 255, 4, 4, 4, 255, 1, 1, 1, 255, 2, 2, 2, 255],
     'the door reverses the decoded rows');
@@ -172,7 +172,7 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
   assert.match(p, /const swap = decodedTexture\(archive, record, 0\);/);
   // INCIDENT 2026-09-04: the record door carries the caller's alphaIndex
   // choice - a mesh material is opaque (-1), a flat cuts index 0.
-  assert.match(p, /const color32 = swap \?\? t\.getColor32\(bitmap, opaque \? -1 : 0\);/);
+  assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
   assert.match(p, /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/);
   assert.match(p, /const swapFrame = decodedTexture\(archive, record, frame\);/);
   assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);

@@ -37,7 +37,7 @@ import { bitmapCanvas } from './bitmapCanvas.js';
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
 // other without dragging in what the other is for.
-import { texName } from '../formats/textureFile.js';
+import { texName } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: GetInventoryImage's removeMask - the helm's 0xFF halo is a cutout, not a black box
 
 export { texName };
 
@@ -116,7 +116,7 @@ export function requestIcon(archive, record, { scale = 2, onReady = null } = {})
         console.warn(`[icons] ${texName(archive)} has no record ${record}`);
         return;
       }
-      const bmp = got.file.getDFBitmap(record, 0);
+      const bmp = changeMask(got.file.getDFBitmap(record, 0));   // HM1: ItemHelper.cs GetInventoryImage -> GetItemImage(item, removeMask: true)
       const rgb = (i) => { const c = got.palette.get(i); return [c.r, c.g, c.b]; };
       const canvas = bitmapCanvas(bmp, rgb, { scale });
       if (!canvas) return;

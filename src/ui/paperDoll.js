@@ -26,7 +26,8 @@
 //   gauntlets 0/1, boots 0/1..2);
 //   weapons = the template archive; an Either-hand weapon worn
 //   RIGHT draws record + 1;
-//   masks removed (ChangeMask: index 0xFF -> transparent);
+//   masks removed (ChangeMask: index 0xFF -> transparent; on an
+//   ITEM layer the mask exposes the background - HM1);
 // - dyes (ChangeDye through the C5b tables): clothing dye on the
 //   0x60 band (item.dye; Blue = identity); weapons/armor on the
 //   0x70 band by material (GetWeapon/GetArmorDyeColor - leather and
@@ -230,7 +231,7 @@ export const paperDollArtLoaded = () => !!_art;
 /** Blit an indexed bitmap into the 110x184 RGBA composite at its
  *  baked offset minus paperDollOrigin. rows = [y0,y1) source band
  *  (the censor welds); remap = the dye. Index 0 stays transparent;
- *  0xFF is the classic mask (removed - ChangeMask). */
+ *  0xFF is the classic mask (removed - ChangeMask; HM1 below). */
 /* PX29, REVERTED (PX29b). A mask of "which pixels are the figure"
    was written here so the enhanced pack could drop DFU's panel. It
    blanked the doll ENTIRELY in play, and the reason is worth keeping:
@@ -242,7 +243,18 @@ export const paperDollArtLoaded = () => !!_art;
    whoever tries this again should build the mask locally and publish
    it beside `_pixels`, in the same statement, or not at all. */
 
-function blit(out, img, palette, { rows = null, remap = null, atOffset = null } = {}) {
+/* HM1 - THE MASK IS A HOLE TO THE BACKGROUND. DaggerfallPaperDoll.shader's
+   second pass (PaperDollRenderer.cs:274-277, every ITEM layer): "Mask
+   texture should use alpha 0 for non-masked areas and alpha 1 for
+   masked areas ... everything else is cleared to expose background".
+   The character layer is a panel OVER the SCBG background panel
+   (PaperDoll.cs RefreshBackground), so a masked pixel shows the
+   background - the hair under a helm is erased, not drawn through.
+   `under` is the background the compose started from; without it the
+   mask is skipped, which is what the body and head layers get (no
+   item, no shader). A doll composed with no background (another's,
+   ONLINE1) copies `under`'s alpha too, so its mask is a see-through. */
+function blit(out, img, palette, { rows = null, remap = null, atOffset = null, under = null } = {}) {
   const [orgX, orgY] = PAPERDOLL_ORIGIN;
   const off = atOffset ?? img.off;
   const px = off.x - orgX, py = off.y - orgY;
@@ -255,10 +267,14 @@ function blit(out, img, palette, { rows = null, remap = null, atOffset = null } 
       const dx = px + x;
       if (dx < 0 || dx >= PAPERDOLL_W) continue;
       let idx = data[y * width + x];
-      if (idx === 0 || idx === 0xff) continue;
+      if (idx === 0) continue;
+      const o = (dy * PAPERDOLL_W + dx) * 4;
+      if (idx === 0xff) {
+        if (under) { out[o] = under[o]; out[o + 1] = under[o + 1]; out[o + 2] = under[o + 2]; out[o + 3] = under[o + 3]; }
+        continue;
+      }
       if (remap) idx = remap(idx);
       const c = palette.get(idx);
-      const o = (dy * PAPERDOLL_W + dx) * 4;
       out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
     }
   }
@@ -322,6 +338,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
       out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
     }
   }
+  const under = out.slice();   // HM1: the background alone (or nothing), for the item masks
   const table = equipTableOf(entity);
   const worn = table.filter(Boolean).map((it) => ({ it, t: getTemplate(it.templateIndex) })).filter((w) => w.t);
   // cloak interiors first (BlitCloakInterior: cloak2 then cloak1,
@@ -332,7 +349,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     const t = getTemplate(it.templateIndex);
     const img = await loadRecord(t.playerTextureArchive + (raceByKey(deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord, deps.getTexture);
     if (img) {
-      blit(out, img, art.palette, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
+      blit(out, img, art.palette, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing), under });
       // AUDIT 18: BlitCloakInterior passes the cloak to DrawTexture
       // (PaperDollRenderer.cs:384-400), whose tail (:284-292) pushes
       // an ItemElement into itemLayout - so the interior IS in the
@@ -370,7 +387,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     const img = await loadRecord(res.archive, res.record, deps.getTexture);
     if (!img) continue;
     const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
-    blit(out, img, art.palette, { remap });
+    blit(out, img, art.palette, { remap, under });   // HM1: the helm's mask erases the hair
     layout.push({ slot: it.equipSlot, img });
   }
   return { out, layout };

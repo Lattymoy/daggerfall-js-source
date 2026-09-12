@@ -24,6 +24,26 @@ export const COMPRESSION_FORMATS = Object.freeze({
 });
 
 /** Empty bitmap, matching DFU's `new DFBitmap()` returned on invalid access. */
+/**
+ * HM1: ImageProcessing.ChangeMask, verbatim. Index 0xFF is Daggerfall's
+ * MASK - the halo around a helm, a cloak's hood - and ItemHelper's
+ * GetItemImage strips it (`removeMask`) for every inventory image and
+ * every paperdoll layer before the dye and the upload. Drawn as a
+ * palette colour it is a black box around the helm (ART_PAL's 255).
+ * A CLONE, never the cached record's own data.
+ * @param {{width:number,height:number,data:Uint8Array,palette?:any}} srcBitmap
+ * @param {number} [replaceWith] the index the mask becomes (0: the cutout).
+ */
+export function changeMask(srcBitmap, replaceWith = 0) {
+  if (!srcBitmap?.data) return emptyBitmap();
+  const data = new Uint8Array(srcBitmap.data.length);
+  for (let i = 0; i < data.length; i++) {
+    const index = srcBitmap.data[i];
+    data[i] = index === 0xff ? replaceWith : index;
+  }
+  return { ...srcBitmap, data };
+}
+
 export function emptyBitmap() {
   return { width: 0, height: 0, data: null, palette: null };
 }
