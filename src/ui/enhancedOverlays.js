@@ -93,3 +93,26 @@ export function closeTopOverlay() {
 
 /** For a host tearing down entirely. */
 export function clearOverlays() { stack.length = 0; unlisten(); }
+
+/**
+ * OT1 (Mac, 2026-09-12: "make it where tapping outside of any UI
+ * closes the UI"): a tap on the SHELL - the scrim around a framed
+ * window - closes the window. Wire it on the shell; `keep` is the
+ * selector of everything that counts as INSIDE (the window, the foot,
+ * a dialog standing over it), so a press on those is theirs. Only
+ * the primary button, and only a press that began on the shell
+ * itself: a drag that ends outside a list is not a tap. The close
+ * runs inside the gesture, so a host's relock rides it (MAC1).
+ */
+export function closeOnOutsideTap(shell, keep, close) {
+  if (!shell?.addEventListener) return () => {};
+  const onDown = (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const t = e.target;
+    if (t && t !== shell && typeof t.closest === 'function' && t.closest(keep)) return;
+    e.preventDefault?.();
+    close(e);
+  };
+  shell.addEventListener('pointerdown', onDown);
+  return () => shell.removeEventListener('pointerdown', onDown);
+}

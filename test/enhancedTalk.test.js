@@ -217,7 +217,7 @@ test('ET1 panel: a bottom rectangle over the world, the pixel frame, no art, and
   const src = read('src/ui/enhancedTalk.js');
   // paint and bones: the imports are the style and the portrait pixels, nothing that reads ARENA2
   const imports = [...src.matchAll(/^import .* from '([^']+)';/gm)].map((m) => m[1]).sort();
-  assert.deepEqual(imports, ['./enhancedStyle.js', './nativeTalk.js']);
+  assert.deepEqual(imports, ['./enhancedOverlays.js', './enhancedStyle.js', './nativeTalk.js'], 'the style, the portrait pixels, and OT1\'s outside-tap helper');
   assert.match(src, /import \{ npcPortraitPixels, npcPortraitKey \} from '\.\/nativeTalk\.js';/);
   assert.doesNotMatch(src, /_pickIndex|_setListboxTopics|_openFlat|_setTone|_close\(/, 'the panel presses named buttons; it reaches no private arm');
   for (const name of ['tonePolite', 'toneNormal', 'toneBlunt', 'goodbye', 'tellMeAbout', 'whereIs', 'okay', 'logbook', 'categoryLocation']) {

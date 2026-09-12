@@ -62,6 +62,7 @@
 // the top of the list.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { npcPortraitPixels, npcPortraitKey } from './nativeTalk.js';
 
 const el = (tag, cls, text) => {
@@ -251,6 +252,10 @@ function render() {
 
   shell.append(panel);
   host.append(shell);
+  // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
+  // world beside the panel is Goodbye - through the model, so the
+  // note is filed - and the relock rides the tap (act).
+  closeOnOutsideTap(shell, '.talk-panel', () => act(() => model.press('goodbye')));
   paintFace();
 
   // the conversation follows its newest line (UpdateScrollBarConversation
