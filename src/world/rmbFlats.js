@@ -35,6 +35,7 @@
 
 import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
+import { applyBillboardXml } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
 
 const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
@@ -50,6 +51,16 @@ const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
  * @param {{width:number,height:number}} scale - record scale fields.
  * @returns {{w:number,h:number}}
  */
+/** MM1: the size a billboard of `t`'s record draws at - GetScaledBillboardSize
+ *  over the record's own scale, then the xml scale a vendored mod
+ *  registered for (archive, record) (TextureReplacement.SetBillboardScale,
+ *  DaggerfallMobileUnit.cs:679 / DaggerfallBillboard.cs:258), then nothing
+ *  when none. Every mobile unit, corpse, person and flat sizes through
+ *  this one door; `scaledBillboardSize` below stays the pure law. */
+export function billboardSize(t, record) {
+  return applyBillboardXml(t?.archive, record, scaledBillboardSize(t.getSize(record), t.getScale(record)));
+}
+
 export function scaledBillboardSize(size, scale) {
   const xChange = Math.trunc(size.width * (scale.width / SCALE_DIVISOR));
   const yChange = Math.trunc(size.height * (scale.height / SCALE_DIVISOR));

@@ -1435,3 +1435,5 @@ says and DFU's stock core calls them - the port's stock core now carries
 both (identity unregistered). One mod behaviour recorded and pinned: a
 class enemy's bare fists deal 0. Pins 24. The page's AUDIT PCO1 section
 has the list.
+
+**MM1 (2026-09-12).** Meaner Monsters vendored (`04-Characters/Meaner-Monsters.md`), and Mac's rule - no compatibility switches between mods: the overhaul's `meanerMonsters` and `rolePlayRealismArchery` switches are gone; its two derived arms read the other mods' own switches (`modSettingIfDeclared`), and Ralzar's row lands before the overhaul's edit at mint, as DFU Awakes the dependency first.

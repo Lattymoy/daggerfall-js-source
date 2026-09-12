@@ -57,13 +57,25 @@ export const MOD_SETTINGS = Object.freeze({
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
     }),
   }),
+  // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
+  // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
+  // the overhaul because the overhaul names it as a dependency and so
+  // Awakes after it in DFU.
+  'meanerMonsters': Object.freeze({
+    title: 'Meaner Monsters',
+    author: 'Ralzar',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: false, description: 'Ralzar\u2019s Meaner Monsters 1.5.2, 1:1: "Buffs many monsters. Debuffs rats, bats and zombies." - twenty monsters\u2019 damage, health, level and armour rewritten, werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size. Takes effect on monsters spawned after the switch. With Physical Combat And Armor Overhaul also on, its own edit of these numbers takes over, as in Daggerfall Unity.' }),
+    }),
+  }),
   // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
   // Modules keys, names and descriptions as modsettings.json ships them
-  // (all seven on, as shipped), plus three of the port's: `Enabled`
-  // (DFU enables a mod by listing it), and the two arms DFU derives
-  // from OTHER mods being loaded - Roleplay Realism's advancedArchery
-  // switch and the presence of Meaner Monsters - which the port has no
-  // mod list to read, so they are switches here, off by default.
+  // (all seven on, as shipped), plus the port's `Enabled` (DFU enables
+  // a mod by listing it). MM1 (Mac: "there shouldn't be compatibility
+  // switches between mods"): the two arms DFU derives from OTHER mods
+  // being loaded - Roleplay Realism's advancedArchery and the presence
+  // of Meaner Monsters - are no longer switches here; combat/pcaao.js
+  // reads the other mod's own switch, as DFU asks ModManager.
   'pcaao': Object.freeze({
     title: 'Physical Combat And Armor Overhaul',
     author: 'Kirk.O',
@@ -76,8 +88,6 @@ export const MOD_SETTINGS = Object.freeze({
       criticalStrikesIncreaseDamage: Object.freeze({ default: true, description: 'Critical Strikes Increase Damage, not just hit-chance. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
       conditionBasedEffectiveness: Object.freeze({ default: true, description: 'Weapons and Armor Effectiveness is influenced by current Condition Value. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
       softMaterialRequirements: Object.freeze({ default: true, description: 'Weapon Material Requirements are relaxed, large damage penalty for being below required material. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
-      rolePlayRealismArchery: Object.freeze({ default: false, description: 'Roleplay Realism\u2019s Archery module as this mod bakes it in (in DFU it runs when Roleplay Realism is loaded with advancedArchery on): a bow\u2019s draw time bends its hit chance and its damage - a snap shot is wild and weak, a long hold tires.' }),
-      meanerMonsters: Object.freeze({ default: false, description: 'Kirk.O\u2019s edit of Ralzar\u2019s Meaner Monsters (in DFU it runs when Meaner Monsters is loaded): every vanilla monster\u2019s damage, health, level and armour changed, most of them made much more powerful. Takes effect on monsters spawned after the switch.' }),
     }),
   }),
 });
@@ -104,6 +114,13 @@ function coerce(def, v) {
   if (!isIntKey(def)) return !!v;
   const n = Math.trunc(Number(v));
   return Number.isFinite(n) ? Math.max(def.min, Math.min(def.max, n)) : def.default;
+}
+
+/** MM1: a read across mods - `ModManager.GetMod(...)` / another mod's
+ *  ModSettings - that answers undefined for a mod the port has not
+ *  vendored (DFU: the mod is not loaded) instead of throwing. */
+export function modSettingIfDeclared(vendor, key) {
+  return MOD_SETTINGS[vendor]?.keys?.[key] ? modSetting(vendor, key) : undefined;
 }
 
 export function modSetting(vendor, key) {

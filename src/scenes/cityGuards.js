@@ -80,7 +80,7 @@ import {
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
   tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
@@ -658,7 +658,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         renderer, getTexture, uploadRecordFrame, collider,
         corpseTexture: ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture,
         feet: g.ai.feet,
-        fallbackSize: scaledBillboardSize(g.tex.getSize(0), g.tex.getScale(0)),
+        fallbackSize: billboardSize(g.tex, 0),
         stillDead: () => g.dead,
       }).then((c) => {
         if (!c) return;
@@ -923,7 +923,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
-      const sz = scaledBillboardSize(g.tex.getSize(o.record), g.tex.getScale(o.record));
+      const sz = billboardSize(g.tex, o.record);
       g.batch.record = rkey;
       g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       g.batch.origin = g.ai.feet;

@@ -50,7 +50,7 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
@@ -520,7 +520,7 @@ export function createPlayerMagic({
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
     uploadRecord(archive, 0);
-    const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
+    const size = billboardSize(t, 0);
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
     // FA1 slice 2: the missile flat ANIMATES while it flies -

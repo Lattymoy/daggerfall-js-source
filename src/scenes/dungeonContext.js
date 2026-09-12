@@ -23,7 +23,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-tim
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
@@ -363,7 +363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     let aabb = null;
     const t = await getTexture(archive);
     if (t && record < t.recordCount) {
-      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const size = billboardSize(t, record);
       aabb = {
         min: [x - size.w / 2, y - size.h / 2, z - size.w / 2],
         max: [x + size.w / 2, y + size.h / 2, z + size.w / 2],
@@ -2383,7 +2383,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const t = await getTexture(archive);
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
-    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    const size = billboardSize(t, record);
     const based = centers.map(([x, y, z]) => [x, y - size.h / 2, z]);
     const batch = renderer.createBillboardBatch(archive, record, size, based);
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
@@ -2398,7 +2398,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!pn.active) continue;
     const t = await getTexture(pn.textureArchive);
     if (!t || pn.textureRecord >= t.recordCount) continue;
-    const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+    const size = billboardSize(t, pn.textureRecord);
     pn.width = size.w;
     pn.height = size.h;
     pn.y -= size.h / 2;
@@ -2414,7 +2414,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const t = await getTexture(mf.archive);
     if (!t || mf.record >= t.recordCount) continue;
     uploadRecord(mf.archive, mf.record);
-    const size = scaledBillboardSize(t.getSize(mf.record), t.getScale(mf.record));
+    const size = billboardSize(t, mf.record);
     const o = mf.o;
     const batch = renderer.createBillboardBatch(mf.archive, mf.record, size,
       [[o.origin[0], o.origin[1] - size.h / 2, o.origin[2]]]);
@@ -2442,7 +2442,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const t = await getTexture(RANDOM_TREASURE_ARCHIVE);
     if (!t || pile.record >= t.recordCount) continue;
     uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
-    const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
+    const size = billboardSize(t, pile.record);
     pile.half = [size.w / 2, size.h / 2];
     // AUDIT 64 F16: a FIXED (archive 216) pile is not grounded.
     // AssignFixedTreasure (RDBLayout.cs:417-427) passes
@@ -2542,7 +2542,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // only the context's own latch can stop the orphan mint.
     if (!f.dead || _ctxDead) return;
     uploadRecord(ct.archive, ct.record);
-    const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
+    const size = billboardSize(t, ct.record);
     // The billboard shader BOTTOM-anchors (position = base): the old
     // +h/2 was a center-anchor holdover and floated every corpse by
     // half its height (C11 audit 08-17; the static-flat path shifts
@@ -2685,7 +2685,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
     uploadRecord(archive, 0);
-    const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
+    const size = billboardSize(t, 0);
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
     // FA1 slice 2: the missile flat ANIMATES while it flies -
@@ -2984,7 +2984,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // startingHealth (entity.MaxHealth, :109), currentFatigue
         // (:111) and the instanced effect bundles (:120, restored
         // :222). Without maxHealth a rebuild-then-restore load
-        // re-rolled it (enemyEntity.js:85) and restored health could
+        // re-rolled it (enemyEntity.js:88) and restored health could
         // sit above the new max; without activeEffects a paralyzed
         // boss woke and a burning foe stopped burning on load.
         maxHealth: f.entity.maxHealth,
@@ -4116,7 +4116,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
-        const sz = scaledBillboardSize(f.mobileTex.getSize(out.record), f.mobileTex.getScale(out.record));
+        const sz = billboardSize(f.mobileTex, out.record);
         // C17: the texture-475 female casting records read too small
         // from the files - DFU post-scales 20-24 by 1.35 (OrientEnemy).
         if (f.mobileArchive === 475 && out.record >= 20 && out.record <= 24) { sz.w *= 1.35; sz.h *= 1.35; }
