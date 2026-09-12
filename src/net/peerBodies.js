@@ -44,6 +44,7 @@ import { EQUIP_SLOTS } from '../systems/equip.js';
 import { mwRaceId } from '../formats/mwNpc.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { peerStubEntity, lookKey } from './remotePlayers.js';
+import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
 export const BODIES_MAX = 8;
@@ -177,7 +178,7 @@ export class PeerBodies {
     for (const w of want) {
       if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now };
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null };
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -219,8 +220,24 @@ export class PeerBodies {
     b.cam = peerCamera({ ...peer.shown, yaw: b.yaw }, f, b.speed, b.cam);
     if (b.state === 'ok' && !b.far && dt > 0) {
       // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
-      try { b.rig.update(dt); } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
+      try {
+        this._arm(b, peer.shown);
+        b.rig.update(dt);
+      } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
     }
+  }
+
+  /** MAC7 #1 (Mac: "no weapons"): the weapon and the swing, off the wire's own bits - the rig's weapon drawn while
+   *  the sender's is (setSheathed, the player's own rig's door), a swing once per count and never the count the body
+   *  was born with (a late joiner does not replay an old blow), and release() every frame as weaponRig gives its own
+   *  rig - a wind-up that is not held lets go on the next frame. */
+  _arm(b, shown) {
+    const drawn = !!shown.wd;
+    b.rig.setSheathed?.(!drawn);
+    const an = shown.an | 0;
+    if (b.swing == null) b.swing = an;
+    else if (an !== b.swing) { b.swing = an; if (drawn) b.rig.attack?.(POSE_STRIKES[shown.as | 0] ?? 'StrikeDown'); }
+    b.rig.release?.();
   }
 
   /** A body that failed - refused, or threw - is released and its look waited out, the reason kept and said once. */

@@ -117,7 +117,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2120), townTalk.say
- *                     (exterior.js:1306, world.js:2439) and
+ *                     (exterior.js:1306, world.js:2440) and
  *                     worldModes' own interior sink (worldModes.js:368,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -283,7 +283,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    * Daggerfall swing is. It becomes live the moment the drawback path
    * does, with nothing here to change.
    */
+  /** MAC7 #1: the wire's swing - counted at every strike the machine starts, before the Morrowind arm's own gate
+   *  (a classic-skin player swings too, and the peers in Morrowind bodies must see it); the host reads it into the pose. */
+  const swing = { n: 0, strike: 'StrikeDown' };
   function fpAttack(strike) {
+    swing.n = (swing.n + 1) & 0xffff; swing.strike = strike;
     if (!fpArm.ready()) return;
     const m = playerWeapon.machine;
     // MW-D16: no `bow` flag. The arm derives "shoot" from its own
@@ -331,6 +335,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       return fpsSpellCasting.playOneShot(element, onRelease);
     },
     playerWeapon,
+    swing,   // MAC7 #1: { n, strike } - the count and the kind of the last strike started, for the wire
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
      *  the same way (WeaponManager.cs:276-278 returns before the

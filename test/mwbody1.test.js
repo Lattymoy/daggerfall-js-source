@@ -223,8 +223,8 @@ test('MWBODY1: the host - the gate is the enhanced skin (read once), the arms sw
   assert.match(w, /drawPeerBodies: \(\{ proj, view, eye \}\) => drawPeerBodies\(proj, view, eye\),/, 'the mode machine gets the hook');
   assert.match(w, /mwViewDrawBody\(canvas, \{ proj, view, eye: mwv\.eye, feet: player\.feetAt\(\), yaw: cam\.yaw \}\);\s*\n\s*drawPeerBodies\(proj, view, mwv\.eye\);/, 'after the player\'s own body, the same pass');
   assert.match(w, /onlineFrame\(now, dt\)/, 'the frame\'s dt steps the bodies');
-  assert.match(w, /const mv = moved \? \(player\.isRunning \? 2 : 1\) : 0;/, 'the run bit'); assert.match(w, /online\.sendPose\(\{ \.\.\.pose, mv \}\)/);
-  assert.match(w, /online\.look = composeLook\(playerEntity\); online\.join\(key, \{ \.\.\.pose, mv \}\);/, 'the next room\'s hello carries the gear worn now');
+  assert.match(w, /const mv = moved \? \(player\.isRunning \? 2 : 1\) : 0;/, 'the run bit'); assert.match(w, /online\.sendPose\(\{ \.\.\.pose, \.\.\.arm \}\)/);
+  assert.match(w, /online\.look = composeLook\(playerEntity\); online\.join\(key, \{ \.\.\.pose, \.\.\.arm \}\);/, 'the next room\'s hello carries the gear worn now');
   assert.match(w, /if \(peerBodies\) peerBodies\.offsetAll\(r\.offset\);/, 'the recenter shifts the bodies (D5)');
   assert.match(w, /instanceof DeathScreen\) \{ if \(online\.room\) online\.leave\(\); peerBodies\.destroy\(\); remotePlayers\.sync\(\[\], onlineToScene\); return; \}/, 'the dead stand no body and no doll');
   assert.match(w, /'pagehide', \(\) => \{ online\?\.leave\(\); for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\); peerBodies\?\.destroy\(\); remotePlayers\?\.destroy\(\); \}/, 'the page\'s hide releases the rigs (and, CHAT1, leaves every channel in the same goodbye - the panel stays for a restore, AUDIT CHAT B4)');

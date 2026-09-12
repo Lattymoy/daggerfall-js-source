@@ -341,9 +341,9 @@ mutation), each refuted against the code and fixed here:
   a `drawThird` that drew before a step. All killed; the fake rig is
   shaped like the instance API.
 
-Left as recorded: a peer's weapon stays sheathed and its arrows never
-show (the wire carries no drawn flag and no inventory); strafe and
-backpedal play the forward walk; a body's textures are the instance's
+Left as recorded: a peer's arrows never show (the wire carries no
+inventory - MAC7 put the weapon in its hand and the swing on the wire,
+below); strafe and backpedal play the forward walk; a body's textures are the instance's
 own (no sharing across peers of one look); the first-person arm is
 built and refused alongside the body it never draws.
 
@@ -594,6 +594,52 @@ Pinned in `test/mac6.test.js` (2): the envelope's field both ways and
 the finder over fake locations; the three hosts by source. Not seen
 with a real save from here - Mac's Privateer's Hold is the gate.
 
+## MAC7 (2026-09-12): the peer's weapon and swing
+
+**Mac: "Bug. 1. Morrowind doesnt show the player holding their
+weapon/attacking. It shows the full sprite and animations but no
+weapons."**
+
+The peers' bodies. MWBODY1 built every peer's rig with the weapon its
+look carries, but a rig's weapon is sheathed until someone calls
+`setSheathed(false)` and it swings only on `attack(strike)` - the two
+doors `weaponRig` opens for the player's own rig every frame - and
+nothing of either travelled: the wire's pose was position, look
+angles and a move bit, so every peer stood empty-handed and never
+swung. Now:
+
+- **the wire** (`src/net/wire.js`): a pose carries `wd` (the sender's
+  weapon drawn), `an` (the sender's swing count, 16 bits, a peer plays
+  a swing when it changes) and `as` (the swing's kind - an index into
+  POSE_STRIKES, DFU's WeaponStates order, `combat/fpsWeapon.js`'s own
+  STATE_INDEX), all clamped by `validPose` at both ends; a pose from
+  before them reads sheathed and unswung.
+- **the session** (`src/net/online.js`): a draw or a swing is a change
+  worth sending at once (`poseChanged`), and the eased pose carries the
+  three whole (`lerpPose`).
+- **the rig** (`src/combat/weaponRig.js`): `swing` {n, strike} counts
+  every strike the machine starts, BEFORE the Morrowind arm's own gate
+  - a classic-skin player swings too, and the peers in Morrowind bodies
+  must see it. The host (`src/scenes/world.js`) reads it and the
+  sheath into every pose it sends, the hello's included.
+- **the body** (`src/net/peerBodies.js`): inside the update guard
+  (AUDIT MWBODY A1), the rig's weapon is drawn while the sender's is,
+  a swing plays once per count with the wire's kind - never the count
+  the body was born with (a late joiner does not replay an old blow),
+  never while sheathed - and `release()` runs every frame as weaponRig
+  gives its own rig, so a wind-up that is not held lets go.
+
+Not done: a bow's hold (the port's own bow fires instantly, so a peer's
+does too), a spell cast, the arrow (the wire carries no inventory), and
+the doll (the paperdoll billboard has no arm to swing).
+
+Pinned in `test/mac7.test.js` (3): the wire's three at both ends and
+the session's change and easing; the body over the fake rig with the
+three doors recorded (drawn, sheathed, once per count, never on birth,
+never sheathed, the throw law); the rig and the host by source. Not
+seen with two real players from here - Mac's two browsers are the
+gate.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -659,6 +705,11 @@ with two real players from here either.
 both ways, the finder by dungeon id over fake locations (any iterable,
 the first match), the dungeon host's split load arm, the mode
 machine's forward and the boot's third arm by source.
+`test/mac7.test.js` (3): the pose's drawn flag, swing count and swing
+kind at both ends (clamped, the WeaponStates order pinned against
+fpsWeapon's index, a pose from before them sheathed and unswung), the
+session's change and easing, the body over a fake rig with the three
+doors recorded, the rig's counter and the host's pose by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 
