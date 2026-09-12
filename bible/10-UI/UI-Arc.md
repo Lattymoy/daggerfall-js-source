@@ -12501,3 +12501,16 @@ Raum's pixel size and blitted up by an integer with smoothing off
 (`BOOK.paperScale`, a marked seam in the vendored book), the type
 drawn over them full-size. The pages are cut again when the web font
 lands, since the measures change.
+
+## EB3 - BOOKS IN THE TEST PACKS (2026-09-12)
+
+**Mac: "For testing in the test character inventories. Give them
+books."** Every test-room preset's pack (`systems/testRoom.js`,
+`testGearRows`) carries four books after the armory and the clothes:
+Brief History of the Empire, Part I (a long one, for the leaves),
+Ark'ay The God, A Tale of Kieran and Legal Basics - by their ids in the
+classic mapping (`TEST_BOOKS`), minted through `createBook`, DFU's
+ItemBuilder.CreateBook, the named path a quest reward takes, so the
+item is the item a shelf would hand over and the reader - and the
+enhanced book over it - opens from the pack's USE without a shelf or a
+shop. Pinned in `test/testroom.test.js`.

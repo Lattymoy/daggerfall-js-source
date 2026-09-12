@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  TEST_PRESETS, TEST_RIDE, testPresetById, testEntryById, testGearRows, testItemOf, applyTestCharacter, seedTestMount,
+  TEST_PRESETS, TEST_RIDE, testPresetById, testEntryById, testGearRows, testItemOf, applyTestCharacter, seedTestMount, TEST_BOOKS,
 } from '../src/systems/testRoom.js';
 import { hasHorse, TRANSPORT_HORSE_TEMPLATE } from '../src/systems/inventorySession.js';
 import { positionPlayerToLocation, EXTRA_DISTANCE } from '../src/world/locationEntrance.js';
@@ -260,4 +260,22 @@ test('TSR4a: an 8x8 city fills its pixel, so its edge landing stands in the NEXT
   const villageOrigin = [Math.trunc((128 - 16) / 2) * (TERRAIN_SIZE / 128), 0, Math.trunc((128 - 16) / 2) * (TERRAIN_SIZE / 128)];
   const v = positionPlayerToLocation({ mapWidth: 1, mapHeight: 1, origin: villageOrigin, roll: () => 0 });
   assert.ok(v.pos[0] >= 0 && v.pos[0] < TERRAIN_SIZE && v.pos[2] >= 0 && v.pos[2] < TERRAIN_SIZE);
+});
+
+test('EB3: every test pack carries books - real ids of the classic mapping, minted through CreateBook, titled by the mapping', () => {
+  assert.ok(TEST_BOOKS.length >= 3, 'a shelf\'s worth');
+  for (const gender of ['male', 'female']) {
+    const rows = testGearRows(gender).filter((r) => r.kind === 'book');
+    assert.equal(rows.length, TEST_BOOKS.length, `${gender}: every book is a row`);
+    for (const r of rows) {
+      assert.equal(r.templateIndex, 277, 'the Books template');
+      assert.ok(r.label && r.label.length > 3, `${r.message}: the mapping names it`);
+      const item = testItemOf(r);
+      assert.equal(item.group, 'Books');
+      assert.equal(item.message, r.message, 'the item carries the book id the reader opens');
+      assert.equal(item.templateIndex, 277);
+      assert.ok(item.maxCondition > 0, 'minted through mintCondition, like the loot path');
+    }
+  }
+  assert.ok(TEST_BOOKS.includes(28), 'Brief History of the Empire I - a long book, for the leaves');
 });
