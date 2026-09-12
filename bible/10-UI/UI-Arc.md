@@ -12672,3 +12672,70 @@ colour, the body below, every pixel opaque. Not pinned against ARENA2
 here (no data in this sandbox); the real-record compose in
 test/equipmechanics.test.js still runs under ARENA2_PATH and does not read
 the mask ring, so it stands.
+
+## MF1 - THE FIGURE STANDS (2026-09-12)
+
+Mac: "the morrowind (paperdoll) when in the inventory is kinda glitchy.
+Like it takes time for things to equip or change stances and is just
+overall clunky."
+
+Three things under one word, read from the code (no Morrowind data in
+this sandbox, so the two fixes are argued and pinned, not filmed):
+
+**1. The pose was the ARM's.** PX32 made the portrait pose itself at
+the wheel's live playhead - `actionState || movementState || jumpState
+|| idleState`, with `poseSource`'s tracks - so it could never be a
+stale session. But the pack opens from FIRST person, and in first
+person that playhead is a first-person clip: `idleSource` is the
+`.1st.kf`, its trackMap the arm's tracks, its time the arm's time. The
+tracks land on the third-person body BY BONE NAME (MW-D14's law: a
+missing track is a bind pose), so the body stood in the camera-arm
+pose - the hands held up before a lens - shifting with the arm's idle
+loop and jumping on every rebuild. "Changes stances" is exactly that
+seen from the chair. `figure()` now asks `portraitPose(t)`: the BODY's
+own sources, `composeStanceGroup`'s ladder (asked group, short group,
+bare base) for the DRAWN stance - a paperdoll holds what it carries,
+PX26 - and `pickAnimSource` on those, posed at that clip's `startTime`.
+The standing frame Morrowind's own inventory doll holds; deterministic,
+so the panel's (build, yaw) cache is exact and two renders of one
+wardrobe are one picture. The pick is memoised per body and group; no
+reachable idle = no repose, and the figure keeps the build's own
+standing matrices. PX32's other two laws stand: the pose runs before
+the upload, in figure() itself.
+
+**2. The picture was a PNG.** `modelFigureUrl` read the GPU, PNG-ENCODED
+384px of body, and handed an `<img>` a data URL to DECODE a frame or
+two later - per fresh tenth of a radian on a drag and per settlement.
+Three of the four costs were the encoding. `modelFigureImage` keeps the
+ImageData, `modelFigure` puts it on a `<canvas>`, and `attachFigureTurn`
+records the yaw and repaints that one canvas on the next animation
+frame - one pending repaint, and a window that repainted under the
+drag hands the frame to its new canvas (`isConnected`). The classic
+doll stays the data-URL `<img>` it was: one composite per equip,
+cached by version. The CSS that sized and cursored the `img` names the
+canvas beside it.
+
+**3. "Takes time to equip" is the rebuild**, and that part is measured
+before it is touched. Every equip runs `build()` whole (D32: worn
+verdicts reshape the skin rows) - archives, esm and textures ride
+their memos, and the rest is binding, the third body, and PX27's
+every-clip reach sweep: `clipSweepTimes` samples nine poses of every
+clip in every source, and `clipUnionBounds` skins the whole arm for
+each. That rode inside the `meshes` span of MW-LOAD's stage clock,
+where "where does the time go" could not see it. It is its own span
+now - `sweep`, on the result and on the one log line - so the next
+report from the chair says which of the two it is. Not sped up here:
+the sweep is a camera law (the far plane over a swing), and a cheaper
+bound would need retail data to prove it does not clip a knuckle.
+
+**Pinned (test/modelFigure.test.js).** The figure poses through
+`portraitPose` before the upload, at the source's start, and reads no
+playhead; the helper climbs the body's sources for the drawn stance and
+memoises per body; the pack's figure block encodes nothing and sets no
+`src`, caches ImageData, keeps the quantised yaw, paints by
+`putImageData`, throttles the drag to one animation frame and stays
+display-only; the frame takes the canvas and the classic doll stays the
+fallback; the CSS names the canvas; the clock closes `meshes` before
+the sweep and `sweep` after the reaches. Re-aimed: PX32's playhead line
+(fparm), MW-D36's data-URL lines (fparm, enhancedInventory), MW-LOAD's
+five spans (mwload_fparm).

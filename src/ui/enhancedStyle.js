@@ -2400,7 +2400,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; border: 0; background: none; outline: 0;
   overflow: visible; color: rgba(125,116,96,0.6); padding: 2px 0; }
-.pack-shell .wornmap-doll.model img { cursor: ew-resize; image-rendering: auto; object-fit: contain; max-height: 100%; }
+.pack-shell .wornmap-doll.model img, .pack-shell .wornmap-doll.model canvas { cursor: ew-resize; image-rendering: auto; object-fit: contain; max-height: 100%; }   /* MF1: the model is a canvas */
 .pack-shell .wornmap-doll.noart { border: 2px solid rgba(125,116,96,0.45);
   background: rgba(0,0,0,0.35); outline: 2px solid rgba(125,116,96,0.25);
   outline-offset: 3px; overflow: hidden; }
@@ -2413,7 +2413,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    column. The sprite then fills it edge to edge with no letterbox at
    all, and it stays a perfect fit at every window size because the
    ratio is the constraint rather than a measured pixel. */
-.pack-shell .wornmap-doll img { display: block; height: 100%; width: 100%;
+.pack-shell .wornmap-doll img, .pack-shell .wornmap-doll canvas { display: block; height: 100%; width: 100%;
   object-fit: contain; image-rendering: pixelated;
   filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.55)); }
 .pack-shell .wornmap-doll.hasart { aspect-ratio: 110 / 184; height: 100%; width: auto;

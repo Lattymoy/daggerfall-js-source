@@ -2397,10 +2397,10 @@ test('MW-D36: figure() is null without a body, subscribe() fires on settlement a
 
 test('MW-D36: the pack takes the model only when it stands, and never lets the model unequip', () => {
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
-  assert.match(pack, /const figureUrl = modelFigureUrl\(\);/);
-  assert.match(pack, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/,
+  assert.match(pack, /const figure = modelFigure\(\);/);   // MF1: a canvas of the pixels, not a data URL
+  assert.match(pack, /const dollUrl = figure \? null : paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/,
     'the classic doll must remain the fallback');
-  assert.match(pack, /if \(figureUrl\) attachFigureTurn\(img\);/, 'the model must turn by drag');
+  assert.match(pack, /if \(figure\) \{[\s\S]{0,240}attachFigureTurn\(figure\);/, 'the model must turn by drag');
   // display only: the model's image gets NO click-to-unequip handler.
   const turn = pack.slice(pack.indexOf('function attachFigureTurn'), pack.indexOf('function attachFigureTurn') + 900);
   assert.ok(!/takeOff|slotAtPaperDoll|onclick/.test(turn), 'the model must not unequip on click (Mac: unequip stays with the list)');
@@ -3105,10 +3105,14 @@ test('PX32: the inventory figure poses the body before it uploads it', () => {
   const upload = fig.indexOf('uploadThirdMesh(t);');
   assert.ok(pose > 0, 'the figure poses the body it is about to draw');
   assert.ok(upload > pose, 'and poses it BEFORE the upload, or the upload carries the old matrices');
-  // The playhead is stepUpper's, not a second opinion about which clip
-  // is showing - two answers to that question is the drift this pins.
-  assert.match(fig, /actionState \|\| movementState \|\| jumpState \|\| idleState/,
-    'the portrait reads the SAME playhead the wheel does');
+  // MF1 re-aimed PX32's last line: the wheel's playhead is a FIRST-
+  // PERSON clip when the pack opens from first person, and posing the
+  // body with the arm's tracks and time is the camera-arm pose Mac
+  // called clunky. The portrait reads the BODY's own stance idle at its
+  // start (test/modelFigure.test.js pins the rest).
+  assert.ok(!/actionState \|\| movementState \|\| jumpState \|\| idleState/.test(fig),
+    'the portrait must not read the arm\'s playhead');
+  assert.match(fig, /const pose = portraitPose\(t\);/, 'the portrait reads the body\'s own stance idle');
 });
 
 // PX33: THE INCREMENTAL WEAPON SWAP MUST NOTIFY TOO (Mac: the bow

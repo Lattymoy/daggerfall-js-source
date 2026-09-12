@@ -870,7 +870,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
   // MW-D36: the model figure stands FIRST when a Morrowind body is
   // built; the compositor's doll is the fallback behind it, still at 4x.
-  assert.match(fp, /const dollUrl = figureUrl \|\| paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
+  assert.match(fp, /const dollUrl = figure \? null : paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
   assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
@@ -924,7 +924,7 @@ test('PX20a/c: the sprite is unframed, 4x, and its cell is a PERFECT FIT', () =>
   // letterbox inside whatever the grid left.
   assert.match(css, /\.pack-shell \.wornmap-doll\.hasart \{ aspect-ratio: 110 \/ 184;/);
   const src = read('src/ui/enhancedInventory.js');
-  assert.match(src, /wornmap-doll\$\{dollUrl \? ' hasart' : ' noart'\}/, 'and the class says which');
+  assert.match(src, /wornmap-doll\$\{figure \|\| dollUrl \? ' hasart' : ' noart'\}/, 'and the class says which');
   assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/, '4x: a bigger cell wants more pixels, not a scaled 3x');
   // 110x184 is the classic paperdoll's own size, not a number typed here.
   const pd = read('src/ui/paperDoll.js');
