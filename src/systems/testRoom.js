@@ -31,6 +31,8 @@ import { mintCondition, templateByIndex, itemBaseValue } from './itemTemplates.j
 import { WEAPONS_ENUM, ARMOR_ENUM, createWeapon, ARROW_TEMPLATE } from '../combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
+import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the pack, for the reader
+import { BOOK_ID_TITLES } from './booksData.js';
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
  *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
@@ -132,8 +134,18 @@ export function testGearRows(gender) {
   for (const [t, label] of clothes) {
     rows.push({ kind: 'clothing', label, templateIndex: t, group: female ? 'WomensClothing' : 'MensClothing' });
   }
+  // EB3 (Mac, 2026-09-12: "For testing in the test character
+  // inventories. Give them books."): a shelf's worth, by the classic
+  // mapping's ids, so the reader - and the enhanced book over it - can
+  // be opened from the pack without a shelf or a shop. A short one, a
+  // long one, a title page in the large face, and one with a poem.
+  for (const id of TEST_BOOKS) rows.push({ kind: 'book', label: BOOK_ID_TITLES.get(id), templateIndex: BOOK_TEMPLATE, message: id });
   return rows;
 }
+
+/** EB3: the test pack's books, by ID in the classic mapping
+ *  (booksData.js). */
+export const TEST_BOOKS = Object.freeze([28, 5, 1, 25]);   // Brief History of the Empire I; Ark'ay The God; A Tale of Kieran; Legal Basics
 
 /** A gear row to a real inventory item, through the SAME constructors
  *  the game's own loot uses - createWeapon for weapons (condition and
@@ -141,6 +153,7 @@ export function testGearRows(gender) {
  *  factories mint, condition through mintCondition. */
 export function testItemOf(row) {
   if (row.kind === 'weapon') return createWeapon(row.templateIndex, row.material);
+  if (row.kind === 'book') return createBook(row.message);   // EB3: ItemBuilder.CreateBook, the named path
   if (row.kind === 'arrows') return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: row.stackCount };
   if (row.kind === 'armor') {
     return mintCondition({

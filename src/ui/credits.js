@@ -45,6 +45,14 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['silkscreen-five']),
       link: 'https://github.com/googlefonts/silkscreen',
     }),
+    Object.freeze({
+      title: 'Project Raum',
+      author: 'Mac (Lattymoy)',
+      what: 'The book a Daggerfall book is read in under the enhanced skin (EB1): project-raum\'s physical journal - the leather cover that flips open, the two-page spreads, the leaves that turn as a cloth fold about the spine, the fore-edge stack and the slide up from below the screen - and its torn, stained paper. The words on its pages are Daggerfall\'s, in Daggerfall\'s own faces.',
+      terms: 'The author\'s own work, vendored from his repository (2026-09-12); see vendor/raum-book/README.md.',
+      vendor: Object.freeze(['raum-book']),
+      link: 'https://github.com/Lattymoy/project-raum',
+    }),
   ]),
   mods: Object.freeze([
     Object.freeze({

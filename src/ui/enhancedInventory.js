@@ -92,6 +92,7 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: Pla
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
 import { overlayAction } from './input.js';
 
@@ -1484,6 +1485,11 @@ function render() {
     if (packOpen) shell.append(win);
     if (loot) shell.append(loot);
     host.append(shell);
+    // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
+    // ground beside the pack and the loot column closes the pack - the
+    // same exit the Close button takes, so the close law (the drop, the
+    // equip cue) runs as it always does.
+    closeOnOutsideTap(shell, '.pack-win, .loot-win', () => onExit());
     const list = host.querySelector('.packlists');
     if (list && _scrollMemo.has(tab)) list.scrollTop = _scrollMemo.get(tab);
     _renderedTab = tab;

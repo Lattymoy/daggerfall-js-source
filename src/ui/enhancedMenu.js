@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:87-146, FD1: the
+// This is ONE screen, under BOTH skins (main.js:87-153, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { TEST_PRESETS, TEST_RIDE } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride
 import { mwRaceId } from '../formats/mwNpc.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
@@ -1483,6 +1484,10 @@ function renderHome() {
     const stage = el('div', 'px-stage');
     stage.append(pauseWindow());
     home.append(stage);
+    // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
+    // scrim - outside the window, the clock and the foot - resumes,
+    // the way Escape does; the front door has no scrim and no resume.
+    closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot', () => onAction('resume'));
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.

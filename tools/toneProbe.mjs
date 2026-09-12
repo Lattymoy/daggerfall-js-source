@@ -12,7 +12,7 @@
 // are: F3 is TalkToneBlunt - ET1-AUDIT F1: DFU's own DialogShortcuts
 // row, which the window walks first (nativeTalk.js input) - KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
-// What moved is what is READ: `native` (townTalk.js:1322, true only
+// What moved is what is READ: `native` (townTalk.js:1328, true only
 // when the art window is up), `tone`, and the ABSENCE of
 // `overlayOptions` - which is the positive statement that the window
 // under the keys is the native one and not the keyed fallback.
