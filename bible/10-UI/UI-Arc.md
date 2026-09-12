@@ -12404,3 +12404,68 @@ under every window; `windows.eachCoveredWindow` counts the pushed
 popup, so the relock gate holds; a click beside the panel lands on
 the door's shell, never the canvas, so the world's pointerdown cannot
 relock mid-conversation.
+
+## EB1 - THE ENHANCED BOOK: A DAGGERFALL BOOK, READ IN PROJECT RAUM'S (2026-09-12)
+
+**Mac: "For the book reader, I was wondering if we could use the
+animated book in my repo project-raum." Then: "Do it."**
+
+**The book.** Under the enhanced skin a Daggerfall book is read in
+project-raum's physical journal, vendored at `vendor/raum-book/` from
+Mac's own repository (commit 7fa7119e; the README beside it says so):
+a leather cover that flips open, two-page spreads rendered to
+offscreen canvases, leaves that turn as a CLOTH FOLD about the spine
+(the signed chain of strips, the belly lift, the rolling shade, the
+crest that catches the light), the closed pages' fore-edge stack, the
+slide up from below the screen and the cover falling shut before the
+book sinks away. Raum's torn, stained paper carries the words. The
+world stays standing behind the book - Raum's own rule ("only the
+book, not the entire screen") is the talk panel's rule. Two seams
+are marked `PORT` in the vendored files and nothing else is touched:
+`BOOK.inscribe` and `BOOK.cover` (Raum's uppercase journal hand is not
+this book's face, so every inscription the book makes - the cover's
+title and author, a page number, BLANK - goes through a seam the port
+points at its own painter) and `resizeBook` (the port sizes the leaf
+off the view's height where Raum keys off the short edge). A fix in
+either repo ports by copy.
+
+**One model, two faces.** `ui/bookDoor.js` is the eighth door: it
+builds the classic `BookReaderWindow` on both skins and only chooses
+the face over it. The hosts' openBook hook moved into the door with
+the fork, so the reader has exactly one construction site
+(`makeOpenBookHook` left `bookReader.js`; the four hosts import it
+from the door, on the same line so no cite moved). The reading law
+stays the classic's: LocalizedBook's converted rows (one row per text
+token, sticky centring and FontPrefix, the empty line's reset),
+LayoutBookLabels' wrapping labels in their own face's rows, FontPrefix's
+five FNT faces, OpenBook on open, ButtonClick on exit. The face
+(`ui/enhancedBook.js`) adds the one thing a two-page book needs that
+a scroll does not: PAGINATION - the placed labels cut into leaves BY
+ROW, a row never straddling a leaf and no leaf opening on a blank row
+(a typesetter's rule DFU's scroll never meets), pure and pinned. The
+page-turn plays per leaf turned where DFU plays it per centre page
+crossed. Raum's pages are 2D canvases and the port's text path draws
+through GL, so the FNT faces get a 2D painter: one atlas per face and
+ink, DrawText's own walk (the fold, a missing glyph as a space, the
+drawn space advancing by the glyph width alone).
+
+**The size.** The book paints at a logical resolution - an integer
+UIK device pixels per logical pixel off the view's short edge, so the
+pixel glyphs and Raum's pixel paper stay crisp. The leaf is sized off
+the view's height, capped by half the width, never a slab. A
+portrait phone gets a narrow leaf as it gets a small classic page:
+the spread is the book's shape and turning the phone is the answer.
+
+**The seams.** The inventory hands over THEN closes (this arc's own
+finding), so the reader mounts while the enhanced pack is still on
+the screen: the book's canvas sits above the pack (z-index 14 to its
+13). The canvas takes every pointer, so nothing beside the book grabs
+the lock; the exit - Escape, E, Enter, Tab (PX28), a tap beside the
+book - runs the classic's ButtonClick arm, requests the pointer lock
+on the world's canvas inside that gesture (MAC1; the door learns the
+canvas from its per-frame draw), then shuts the cover and sinks the
+book, and only the frame that sees it land drops the overlay. A tap
+on a page turns it (Raum's tap-anywhere: left back, right forward);
+a mid-flight tap snaps and chains; the arrows, N/P and the wheel
+turn too. Credited on the About screen under BUILT ON, beside the
+game, DFU and Silkscreen.

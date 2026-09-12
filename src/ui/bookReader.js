@@ -59,8 +59,7 @@ import { FntFile } from '../formats/fntFile.js';   // ROAD-D D10: FontPrefix's f
 import { wrapText } from './talkWindow.js';        // ROAD-D D10: TextLabel's word wrap, one home
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
-import { getBookFileName, loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
-import { setBookAuthor } from '../systems/itemInfo.js';   // IM1: the %ba cache
+import { loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -214,27 +213,9 @@ export function layoutBookLines(bookFile) {
   return lines;
 }
 
-/** The hosts' openBook hook (DaggerfallInventoryWindow's book arm:
- *  OpenBook then push the reader; a failed open is the "ruined book"
- *  box, which the CALLER shows via onFail - the inventory owns its
- *  boxes). showReader swaps the host's overlay to the built window. */
-export function makeOpenBookHook({ fetchBytes, showReader }) {
-  return async (item, onFail) => {
-    const name = getBookFileName(item?.message ?? -1);
-    if (!name) { onFail?.(); return; }
-    try {
-      const bookFile = new BookFile();
-      bookFile.load(await fetchBytes(name), name);
-      // IM1: the file's author line feeds the %ba cache - DFU reads it
-      // at info time (BookAuthor :162-183); the port's read is here.
-      setBookAuthor(item?.message, bookFile.author);
-      showReader(new BookReaderWindow(bookFile));
-    } catch (e) {
-      console.warn(`[book] ${name} failed to open:`, e?.message ?? e);
-      onFail?.();
-    }
-  };
-}
+// EB1: the hosts' openBook hook - makeOpenBookHook - moved to
+// ui/bookDoor.js, the ONE place that builds the reader this skin
+// wears; this file keeps the classic window and the layout law.
 
 export class BookReaderWindow {
   constructor(bookFile) {
