@@ -20,8 +20,6 @@ import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
-import { basinDepths, carveBasin, waterMesh, flatDepths } from '../render/waterBasin.js';   // WATER2: the ground carved under the water, the water on its own uncarved grid
-import { buildWaterArt } from '../world/waterArt.js';   // WATER4: the archive's own water art - the shore is the record's outline
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -560,7 +558,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = isEnhanced() && getPref('enhancedWater') && new URLSearchParams(globalThis.location?.search ?? '').get('water') !== 'off';
-  const waterMaskDebug = new URLSearchParams(globalThis.location?.search ?? '').get('water') === 'mask';   // WATER5: the art's mask painted over the ground, for the eye
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
@@ -844,22 +841,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       grassRecords.set(groundArchive, grassRecordsOf(layers));
     }
-    // WATER4: the archive's own water ART, read once off its bitmaps and
-    // kept on the renderer beside its tile array - the water's quads,
-    // the basin and the feet all take its tables, the shader its cells.
-    if (!renderer.waterArts.has(groundArchive)) {
-      const bitmaps = [];
-      for (let r = 0; r < groundTex.recordCount; r++) bitmaps.push(groundTex.getDFBitmap(r, 0));
-      renderer.uploadWaterArt(groundArchive, buildWaterArt(bitmaps));
-    }
-    const waterArt = renderer.waterArtOf(groundArchive);
-    // WATER1 / WATER-AUDIT (M4): the water's own quads - null for a
-    // pixel without water, which never enters the pass. WATER2: on the
-    // water's own vertices, taken before the ground is carved under them.
-    const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride, waterArt?.any) : null;
-    const water = waterIndices ? buildWater(positions, normals, tilemapBytes, stride, waterIndices, waterArt) : null;
     const terrain = renderer.createTerrainSurface(positions, normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    // WATER1 / WATER-AUDIT (M4): the water's own quads over the same
+    // vertices - null for a pixel without water, which never enters the pass
+    const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride) : null;
+    const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
     // EV4: dropped by the skirt depth so a future restride to the far
@@ -1384,27 +1371,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
 
-  /** WATER2: the water's mesh off the grid AS IT STANDS, then the basin
-   *  carved into the grid (in place) for the ground pass. WATER4: the
-   *  art's own corners carve it, and where the water reaches no vertex
-   *  (a shore tile's lone corner, a puddle) the sheet lies flat on the
-   *  ground and the shader gives it its bed. */
-  function buildWater(positions, normals, tilemapBytes, stride, waterIndices, art = null) {
-    const depths = basinDepths(tilemapBytes, stride, TERRAIN_TILE_DIM, art?.corners) ?? flatDepths(stride, TERRAIN_TILE_DIM);
-    const mesh = waterMesh(positions, depths, stride);
-    carveBasin({ positions, normals }, depths, stride);
-    return renderer.createWaterSurface(mesh.positions, mesh.depths, waterIndices);
-  }
-
   function restrideTerrain(p, stride) {
     const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     renderer.destroyMesh(p.terrain);
-    const art = renderer.waterArtOf(p.groundArchive);   // WATER4
-    const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride, art?.any) : null;
-    p.water = waterIndices ? buildWater(grid.positions, grid.normals, p.tilemapBytes, stride, waterIndices, art) : null;   // WATER2: before the carved grid is uploaded
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride) : null;
+    p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
     p._stride = stride;
   }
 
@@ -3276,9 +3250,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const tx = Math.floor(u);
     const ty = Math.floor(v);
     if (tx < 0 || ty < 0 || tx >= TERRAIN_TILE_DIM || ty >= TERRAIN_TILE_DIM) return null;
-    // MAC2: the feet's fraction inside the tile, the water pass's own frame (fract(vLocalXZ / tile));
-    // WATER4: and the archive's art, so the feet read the shore the eye sees
-    return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty], art: renderer.waterArtOf(built_.groundArchive) };
+    // MAC2: the feet's fraction inside the tile, the water pass's own frame (fract(vLocalXZ / tile))
+    return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };
   };
   const playerGroundTile = () => playerGroundSample()?.tile ?? null;
   const footsteps = new FootstepMachine();   // FS-slice
@@ -3305,7 +3278,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       inside: false,
       rawTile: _ground?.tile ?? null,
       feet: _ground?.feet ?? null,   // MAC2: the player swims where the surface is drawn under the feet
-      art: _ground?.art ?? null,     // WATER4: ...and the surface is the art's
       waterWalking: !!player.waterWalking,   // PlayerEntity.IsWaterWalking (:590)
       probe: downProbe({
         centreY: cy,
@@ -7995,10 +7967,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cloud deck and the mills take; null = calm), the front's rain, and
     // the dome's own two colours to reflect.
     if (waterOn) {
-      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky(), debug: waterMaskDebug });
+      const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
       for (const p of built.values()) {
         if (!p._visible || !p.water) continue;
-        renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu, TERRAIN_TILE_DIM, renderer.waterArts.get(p.groundArchive));   // WATER4: the archive's art rides
+        renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
     renderer.drawBillboards(allBatches, camRight, UP_Y);

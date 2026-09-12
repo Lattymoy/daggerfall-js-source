@@ -203,12 +203,6 @@ directory by `test/audit18_bible_docs.test.js`:
   glint and rain shader (`drawWaterSurface` in renderer.js), drawn after
   every opaque pass of a pixel and before the first flat, in both exterior
   hosts. Switch `enhancedWater`, `?water=off`. `07-Rendering/Water-Arc.md`.
-- `waterBasin.js` - WATER2 THE BASIN: the pure half of putting the water IN
-  the ground - which grid vertices stand in water (off the corner table),
-  the bowl's profile by distance to the bank, the ground carved and its
-  bank normals recomputed, the far ring's skirt re-hung, and the water's
-  own uncarved mesh with the bed's depth under each vertex. The collider's
-  samples are never touched. `07-Rendering/Water-Arc.md` WATER2.
 - `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning. TWO PROFILES,

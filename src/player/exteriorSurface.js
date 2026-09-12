@@ -103,18 +103,9 @@
 // "shallow" set; the port draws them as water, and Mac's call is that
 // what reads as water swims. The hosts hand the fraction over beside the
 // raw byte (world.js / exterior.js playerGroundSample).
-//
-// WATER4/5 (2026-09-11): the surface is the ART'S now (world/waterArt.js
-// - the record's own texels, the shore its outline, per texel), so the
-// feet read the same art: artCoverage folds the record's distance
-// field about 0.5 and crosses it exactly where the eye sees the water
-// begin - the texel under the feet, as the ground draws it. The hosts
-// hand the archive's art over with the fraction; without it (no
-// archive read) the corner table answers as MAC2 left it.
 
 import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrainSurface.js';
 import { waterCorners, waterCoverage } from '../world/waterCorners.js';   // MAC2: the surface pass's own corner table
-import { artCoverage } from '../world/waterArt.js';   // WATER4/5: the surface pass's own art, where the archive's is read - texel-exact
 
 /** PlayerMotor.OnExteriorWaterMethod (:79-87). "Defines the way
  *  player can interact with exterior water tiles. Unrelated to deep
@@ -286,14 +277,10 @@ export const SWIM_COVERAGE = 0.5;
  *  CONVERTED byte as the shader indexes it) blended at the feet's
  *  fraction inside the tile, in the tilemap's own frame (x along the
  *  row, y along the column - the shader's `fract(vLocalXZ / tile)`).
- *  WATER4/5: with the archive's art, the art's own distance field under
- *  the feet folded about 0.5 - at or past it the TEXEL is water.
  *  Null off a built pixel, or with no fraction to read. */
-export function feetWaterCoverage(rawTile, feet, art = null) {
+export function feetWaterCoverage(rawTile, feet) {
   if (rawTile == null || !feet) return null;
-  const byte = convertTile(rawTile);
-  if (art) return artCoverage(art, byte, feet[0], feet[1]);
-  return waterCoverage(waterCorners(byte), feet[0], feet[1]);
+  return waterCoverage(waterCorners(convertTile(rawTile)), feet[0], feet[1]);
 }
 
 /** PlayerMotor.GetOnExteriorPathMethod (:600-603) -
@@ -317,12 +304,12 @@ export function exteriorPathMethod({ onGround = false, tileIndex = -1 } = {}) {
  */
 export function exteriorSurfaces({
   inside = false, rawTile = null, tileIndex = null,
-  waterWalking = false, probe = null, feet = null, art = null,
+  waterWalking = false, probe = null, feet = null,
 } = {}) {
   const idx = tileIndex == null ? playerTileMapIndex(rawTile) : tileIndex;
   const onGround = onExteriorGroundMethod({ inside, probe });
   return {
-    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking, coverage: feetWaterCoverage(rawTile, feet, art) }),   // MAC2: the feet's coverage rides beside the record; WATER4: the art's
+    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking, coverage: feetWaterCoverage(rawTile, feet) }),   // MAC2: the feet's coverage rides beside the record
     path: exteriorPathMethod({ onGround, tileIndex: idx }),
     staticGeometry: onExteriorStaticGeometryMethod({ inside, probe }),
     onGround,

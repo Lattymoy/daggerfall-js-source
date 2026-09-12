@@ -26,12 +26,6 @@
 // unknown here, and a majority-water tile whole is the nearer reading
 // of its art than a bare classic tile. Record 9 is not in DFU's list
 // and takes no water.
-//
-// WATER4 (2026-09-11): this table is the FALLBACK now. Where an
-// archive's own bitmaps are read, world/waterArt.js decides the water
-// by the art - its outline, its puddles - and hands the pass, the
-// basin and the feet its own tables; this one draws only where no art
-// is loaded (the tests, the lab's `?noart`).
 import { createLookupTable } from './terrainTiles.js';
 import { convertTile, WATER_TILE_INDEX } from './terrainSurface.js';
 
