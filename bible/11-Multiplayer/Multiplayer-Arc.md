@@ -80,8 +80,9 @@ join/leave notices in the game's own text idiom. Both skins.
 
 ## MP8 - Later
 
-Host migration, split parties across interiors, chat, reconnection to a
-running session, WebRTC behind the same messages. Named so they are not
+Host migration, split parties across interiors, a party chat tab (text
+chat itself shipped - `06-Systems/Online-Arc.md` CHAT1), reconnection to
+a running session, WebRTC behind the same messages. Named so they are not
 mistaken for missing; none is basics.
 
 ## Laws that apply from MP0

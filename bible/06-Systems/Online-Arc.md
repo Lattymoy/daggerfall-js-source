@@ -358,6 +358,196 @@ retry, the gate); the doll pass's skip and the name; the host by
 source. Not seen with two real players and the data attached from
 here: Mac's two browsers are the gate.
 
+## CHAT1 (2026-09-12): the live chat
+
+**Mac: "So next for online, I want to add a new UI element. The live
+chat in enhanced format. Players will be able to type and chat live
+with other players. Currently I just want one world tab with the
+ability to add more tabs at a later time."**
+
+- **A channel is a room** (`src/net/wire.js` CHAT ROOMS): a key in
+  CHAT_ROOMS - a whitelist, the World tab's `chat:world` alone today -
+  is a channel, not a place. The Room (`server/src/index.js`) keeps the
+  secret and no look there, tells a joiner an empty roster, announces
+  no join and no leave, relays no pose (gated and counted all the
+  same), and hands every chat line to every socket that said hello -
+  the sender included, which is the receipt. A later tab is a later
+  entry in the list, and the Worker opens no object for a `chat:` key
+  outside it. In a PLACE room a chat line reaches whoever a pose
+  would, and the sender besides (the receipt is a channel's law and a
+  place's alike), so a local tab can ride the presence socket when it
+  comes. The wire: `{t:'chat', text}` in, `{t:'chat', id, name, text,
+  at}` out, `at` the relay's clock.
+- **The law**, one home at both ends: `sanitizeChat` (control
+  characters, every Unicode format character and the variation
+  selectors bar U+FE0F gone, a lone surrogate gone, a stack of
+  combining marks cut to three, whitespace one, CHAT_MAX 240 and never
+  a bound inside a surrogate pair - and idempotent, so what the client
+  sends the relay takes), the frame after hello only, `chatGate` at
+  CHAT_HZ_MAX (2 a second, the burst the same) with its own bucket and
+  strikes (CHAT_STRIKES_MAX 20, then 'too many lines' and 1008), the
+  room's own budget CHAT_ROOM_HZ_MAX (20 lines a second for everyone,
+  over which a line is dropped with no strike and no echo). A channel
+  holds CHAT_SOCKETS_MAX (2048) sockets and admits CHAT_HELLO_HZ_MAX
+  (50) hellos a second - deeper than a place's, never off. A room that
+  drains sweeps its own storage on the way out.
+- **The session** (`src/net/online.js`, `presence: false`): the hello
+  with no pose, a pose refused, a `{t:'ping'}` every HEARTBEAT_MS that
+  the runtime's auto-response answers while the object sleeps (a
+  channel of idle players wakes its object for nothing); `sendChat`
+  sanitizes and gates as the relay does and answers false for a line
+  that did not go (nothing to say, over the rate, no socket) so the
+  field keeps it; a line in reaches `onChat` as {id, name, text, at,
+  mine}; `rejoin` is the one way back after the page's goodbye and,
+  CHAT_REJOIN_MS (30 s) on, after a terminal close; `statusLine` takes
+  its label. One such session per tab, under the presence session's
+  own id, secret, name and look (the relay guards an id by its secret
+  per room, so one identity holds in every room), and none at all when
+  the relay the player named is one the law refuses.
+- **The log** (`src/net/chat.js`, pure): CHAT_TABS (the World tab
+  alone), CHAT_KEEP (200) lines a tab, unread unless the panel is open
+  ON that tab, a version the panel repaints on (never per frame), the
+  peek - the last CHAT_PEEK (5) lines younger than CHAT_FADE_MS (20 s),
+  held three quarters then faded - on the log's own clock (B1: one
+  clock, never the rAF's).
+- **The panel** (`src/ui/chatPanel.js`, the enhanced skin's DOM,
+  top-left under the touch layer's corner buttons): closed, the peek
+  over the world and "Enter to chat" (a Chat button with an unread
+  badge on a touch device); open, a tab bar (one button per row of
+  CHAT_TABS, a badge each), the tab's lines with the relay's time and
+  a tag from each sender's guarded id (two Macs read as two people),
+  the field. THE OPEN KEY IS THE CURSOR KEY: DFU's ActivateCursor
+  binding (Enter by default), resolved through the registry, since
+  opening frees the cursor - the panel is a pointer surface, so the
+  host releases the lock on open and takes it back inside the closing
+  gesture (MAC1's rule), and a rebind moves the chat key with it. The
+  key opens and puts the caret in the field; Enter in the field sends
+  on the active tab and closes; a line that did not go stays in the
+  field and the panel stays; an empty Enter and Escape close; a touch
+  Send keeps it open. ONE capture listener on the window: a key typed
+  into the field is stopped there, before the host's bubble listener,
+  so the host's ring (`keys.add`) never fills from a chat line - CG2,
+  typing 'w' walks no one - and F5 stays swallowed; an Enter that
+  commits an IME candidate is the IME's; a held Enter opens once and
+  its repeats send nothing; Tab stays in the field; the key UP is not
+  stopped, so a key held when the panel opened leaves the ring on
+  release. The key opens only when no enhanced overlay is up (the
+  compass dial is one, now), no other field owns the key, the host is
+  willing (`canOpen`: not paused, no window over the HUD) and the
+  event is the keyboard's own (`isTrusted` - the touch layer's ⏎
+  synthesizes an Enter for the windows it drives). A PRESS inside the
+  open box is stopped at the box (the host adds every window mousedown
+  to its ring and swings on the left button outdoors); a RELEASE is
+  not, so a press begun on the canvas still lets go. Lines are
+  textContent, never markup; the open list grows by the lines that
+  arrived and keeps a reader's scroll unless it sat at the bottom; the
+  root is no live region (the box is the log).
+- **The host** (`src/scenes/world.js`): `chatStart` from `onlineStart`
+  on the enhanced skin with a document and a relay the law admits;
+  `chatFrame` rejoins and ticks every channel and renders the panel -
+  hidden, and closed, under a window over the HUD, the pause, or an
+  enhanced overlay; the channel's own status line (`chat: connecting`,
+  `chat: reconnecting`, a refusal) - BEFORE the dead return, so the
+  channels keep their heartbeat and their reconnect while the death
+  screen is up (the panel itself is paused away like any HUD: the dead
+  read and say nothing until they rise). The page's hide leaves every
+  channel and keeps the panel, so a page restored from the cache gets
+  its chat back through the rejoin. Classic has no chat yet (Mac: "in
+  enhanced format").
+- **Not done**: no local tab (the presence socket already carries a
+  line as far as a pose; the tab is the next row of CHAT_TABS); no
+  history past the tab's 200 (a reload is a clean log); no name
+  reservation (the tag beside the name is the cue - a reservation
+  would hand 'Traveller' to whoever came first), no mute, block or
+  moderation beyond the rate gates and the sanitizer; a line the room's
+  budget dropped is gone without a word beyond the missing echo; the
+  dead cannot chat; a channel's capacity unmeasured past a handful.
+
+Pinned in `test/chat1.test.js` (7) - below.
+
+## AUDIT CHAT (2026-09-12)
+
+Mac: "Lets do an audit on this before merging." Four opus finders (the
+relay's law and the Room; the session, the log and the host; the
+panel's input, keys, DOM and mobile; the pins and the record by
+mutation), each refuting its own candidates against the code and
+proving what stood with scratch tests - the panel's in headless
+Chromium with real trusted input. Every finding fixed here, on the PR:
+
+- **A1 (high) a channel was a prefix.** `isChatRoom` answered yes to
+  any `chat:` key, so anyone could mint a room with a channel's
+  privileges - and the channel's hello gate was OFF, so the chat
+  gate's strike cap was free (connect, twenty-three 16 KB frames,
+  reconnect at once). Now CHAT_ROOMS is a whitelist, the Worker 404s
+  a `chat:` key outside it, and a channel's hello gate runs at
+  CHAT_HELLO_HZ_MAX, deeper than a place's and never off.
+- **A2 (high) no room-wide budget.** Every gate was per socket and the
+  fan was everyone, so one object owed talkers × listeners frames a
+  second with nobody over the rate. CHAT_ROOM_HZ_MAX bounds the room.
+- **A3 (medium) ungated channel ingress.** A pose in a channel returned
+  above the gate, uncounted and never closed; a ping (pre-existing)
+  likewise. Both are gated on the socket's bucket first now.
+- **A4 (medium) / B3 (medium) the sanitizer.** Five hand-written ranges
+  missed U+061C, the soft hyphen, the tag block and the variation
+  selectors; two hundred combining marks on one letter painted over
+  the game; and two lone high surrogates made the sanitizer
+  non-idempotent, so the client could send a line the relay refused
+  with a terminal 1008. Every Cf, the selectors bar U+FE0F, lone
+  surrogates gone; marks cut to three; fuzzed idempotent.
+- **A5 (medium) the name.** The relay guards the id and the panel
+  showed only the name, so anyone could be 'Mac'. A tag from the id
+  rides beside the name.
+- **A6 / B6 (medium) a refused channel was dead for the page.** Only
+  `join` clears `terminal`, and a channel never changes rooms.
+  `rejoin` after CHAT_REJOIN_MS. **B4 (medium)** the page's goodbye
+  left every channel and destroyed the panel with no way back on a
+  cache restore: the panel stays and `rejoin` brings the links back.
+- **A7 (medium) storage.** The empty-hello sweep never runs in a room
+  that is never empty; the last socket out sweeps.
+- **A8 / B2 (medium) a lost line.** The client did not run the relay's
+  chat gate, the relay drops an over-rate line without a word, and the
+  field was cleared before the answer. `sendChat` gates first; a line
+  that did not go stays in the field.
+- **A9 / B1 (high) the back door.** A relay the law refused nulled the
+  presence session's url, and the channel's constructor resurrected
+  the public default from that null - the player's id, secret and name
+  went to a host they had opted out of. No url, no chat.
+- **B5 / D4 the status line** said `chat: closed` through every
+  reconnect; the session's own `statusLine` takes a label now.
+- **B7 / C10 / D-record** "the dead may still talk" was false (the
+  death screen pauses the game); the sentence now says what the code
+  does. **D3** "no pose ever out" was unenforced; `sendPose` refuses.
+  **D10** a pose never reaches the sender, a chat line does; said.
+  **D11** Multiplayer.md's open question was closed for text.
+- **C1 (high) the compass dial** was the one enhanced overlay
+  `overlayOpen()` could not see, so Enter over the rose opened the
+  chat under the scrim AND committed the dial. The dial registers with
+  the stack. **C2 (high)** the panel opened under pointer lock: the
+  mouse kept looking and swinging while the player typed and nothing
+  in the box could be clicked. The host frees the lock on open and
+  takes it back on close. **C3 (high)** the IME's Enter shipped the
+  half-composed line. **C4 (medium)** the panel ate Enter at the
+  window and starved DFU's ActivateCursor toggle for good, on a
+  hardcoded key; the open key is that binding now, through the
+  registry. **C5 (medium)** the box swallowed the RELEASE, so a swing
+  begun on the canvas and let go over the panel never let go. **C6**
+  a held Enter's first repeat sent a stale draft. **C7** Tab walked
+  focus onto Send and gave the keyboard back to the game. **C8** every
+  line rebuilt two hundred rows and yanked the reader down. **C9** the
+  root's `aria-live` re-announced the whole panel.
+- **D1 (high)** the "own bucket" pin ran in a channel where the pose
+  arm never reaches its gate; it runs in a place now. **D2 (high)**
+  CG2 rests on the host listening in the bubble phase and nothing
+  pinned it; the fake window has both phases and the source is pinned.
+  **D5-D9** the listener count, the form's preventDefault, the full
+  swallow lists, the relay's clock and the attachment bound are pinned.
+
+Refuted and left: the same id across a place and a channel (one object
+per key, disjoint storages); the look shared by reference (a channel
+keeps no look); the heartbeat clock on reconnect; the `at` stamp's
+domain; the peek and splice costs (microseconds); NumpadEnter (implicit
+submission still sends); a press inside the box released outside.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -366,8 +556,9 @@ here: Mac's two browsers are the gate.
 - **The look is sent once**, in the hello: gear changed mid-session is
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
-- No chat, no player-versus-player, no shared clock or weather, no
-  shared NPCs or loot: each player's world is their own.
+- **The live chat** ships (CHAT1, above): one World tab. No
+  player-versus-player, no shared clock or weather, no shared NPCs or
+  loot: each player's world is their own.
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -396,3 +587,25 @@ clamped, the others drawn through a fake renderer (the crop, the cache,
 the retry, the eviction, the name under the viewport rect), the
 compositor's door pure by source. Not seen with two real players from
 here - Mac's two browsers are the gate.
+`test/chat1.test.js` (7), re-pinned by AUDIT CHAT: the wire's chat law
+at both ends (the sanitizer's classes - every format character, the
+selectors, a lone surrogate, a stack of marks - and its idempotence
+fuzzed, the whitelist, the frame after hello, the gate's burst and
+refill), the Room as a channel over fake sockets (no roster, join,
+leave or look; a pose and a ping gated then declined; every line to
+everyone with the sender on the relay's clock; the secret; the hello
+gate deeper and never off; the deeper cap; the Worker's 404; the drain
+sweep) and a line in a place reaching as far as a pose with the gate's
+own bucket proved where the pose gate runs, the room's budget, the
+channel session over a fake socket (no pose, a pose refused, the ping
+heartbeat, sendChat gated, onChat with mine, rejoin after the goodbye
+and after a terminal close, the labelled status), the log (the tab and
+the whitelist, the cap, unread by open-and-active, the fade, the tag),
+the panel over a fake document and a two-phase window (the cursor key
+through the registry, the field's keys stopped before the host's
+bubble listener, F5 swallowed, the IME's Enter, a held Enter, Tab, a
+refused line kept, send-and-close, Escape, a press stopped and a
+release passed, the pointer hooks, hidden under a window or an
+overlay, text never markup and tagged, the list grown, the touch
+button and form), the host by source (the dial on the stack). Not seen
+with two real players from here either.

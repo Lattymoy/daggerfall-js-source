@@ -45,7 +45,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { closeTopOverlay } from './enhancedOverlays.js';   // PX28
+import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
 
 const el = (t, cls, txt) => {
@@ -75,6 +75,7 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
 
   let selected = null;
   let keyHandler = null;
+  let unregister = null;   // AUDIT CHAT C1: the dial's entry on the overlay stack, so overlayOpen() sees it
 
   const root = el('div', 'px-dial');
   const rose = el('div', 'px-rose');
@@ -138,6 +139,7 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
   function unmount() {
     if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
     keyHandler = null;
+    unregister?.(); unregister = null;
     root.remove();
   }
 
@@ -157,6 +159,10 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
     // half of U50's must-not law.
   };
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  // AUDIT CHAT C1: registered AFTER the dial's own capture listener, so on Tab the dial closes itself first and
+  // the stack's Tab arm finds nothing left to close; anything that asks overlayOpen() (the chat's open key,
+  // the touch layer) now sees the rose. The stack's closer is the dial's own close.
+  unregister = registerOverlay(close);
 
   hostEl.append(root);
   return { unmount };

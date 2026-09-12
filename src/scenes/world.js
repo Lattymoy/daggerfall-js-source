@@ -9,7 +9,7 @@
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
+import { requestLook, releaseLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -208,6 +208,8 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
+import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
+import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
@@ -6550,6 +6552,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // disagreed with this one's (AUDIT ONLINE D6/D8).
   const onlineOn = params.has('online');
   let online = null, remotePlayers = null, peerBodies = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0;
+  let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const onlineStart = () => {
@@ -6561,10 +6564,49 @@ export async function bootWorld(canvas, renderer, params, status) {
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
-    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
-    globalThis.addEventListener?.('pagehide', () => { online?.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
+    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
+    if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
+    globalThis.addEventListener?.('pagehide', () => { online?.leave(); for (const link of chatLinks?.values() ?? []) link.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // the panel stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4)   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
+  };
+  // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
+  // the ability to add more tabs at a later time"): one channel session
+  // per tab of the log, under the presence session's own id, secret,
+  // name and look (the relay guards an id by its secret per room, so the
+  // same identity holds in every room); a line heard on a tab's session
+  // lands on that tab; the panel sends a typed line on the ACTIVE tab's
+  // session. A later tab is a later row in net/chat.js CHAT_TABS.
+  const chatStart = () => {
+    if (!online.url) return;   // AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either - not the public default by the back door
+    chatLog = new ChatLog();
+    chatLinks = new Map();
+    for (const tab of chatLog.tabs) {
+      const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
+      link.onChat = (line) => chatLog.push(tab.id, line);
+      link.join(tab.room);
+      chatLinks.set(tab.id, link);
+    }
+    chatPanel = createChatPanel({
+      log: chatLog,
+      onSend: (tabId, text) => chatLinks.get(tabId)?.sendChat(text) ?? false,   // false keeps the line in the field (B2)
+      canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),   // no chat under a window: the window's keys are the window's
+      onOpen: () => releaseLook(),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open
+      onClose: () => { if (!gamePaused()) requestLook(canvas); },   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js)
+    });
+  };
+  const chatFrame = () => {
+    if (!chatLinks) return;
+    for (const [tabId, link] of chatLinks) {
+      link.rejoin(chatLog.tab(tabId).room, CHAT_REJOIN_MS);   // AUDIT CHAT A6/B4/B6: the page's goodbye and a terminal close both get a way back
+      link.tick();   // the retry and the heartbeat, on the session's own clock
+    }
+    const link = chatLinks.get(chatLog.active);
+    chatPanel.render({
+      hidden: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
+      status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
+    });
   };
   const onlineFrame = (now, dt) => {
+    chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
