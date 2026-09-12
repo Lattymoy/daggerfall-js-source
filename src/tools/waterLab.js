@@ -9,9 +9,7 @@
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
 import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
-import { WATER_MASK_TABLE, waterCoverage } from '../world/waterCorners.js';   // MAC2: the corner table's one home
-import { buildWaterArt } from '../world/waterArt.js';   // WATER4: the art's own water (the lab paints its art off the corner table)
-import { basinDepths, carveBasin, waterMesh } from '../render/waterBasin.js';   // WATER2
+import { WATER_MASK_TABLE } from '../world/waterCorners.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';
@@ -60,25 +58,6 @@ assignTiles(tileData, tilemap, true);
 const tilemapBytes = convertTilemap(tilemap);
 const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 const grid = buildTerrainGrid(heightmap, 1);
-// WATER4: the lab's ART - the archive's bitmaps are not here, so each
-// record is painted at texel resolution from the corner table's own
-// shape (index 200 water, 1 dry; record 0 all water), and the art path
-// draws what the corner path drew - `?noart` keeps the corner table;
-// WATER5: `?water=mask` paints the mask over the ground
-const artOn = !params.has('noart');
-const maskView = params.get('water') === 'mask';
-const artBitmaps = [];
-for (let r = 0; r < 64; r++) {
-  const m = WATER_MASK_TABLE[r << 2];
-  const data = new Uint8Array(64 * 64);
-  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) data[y * 64 + x] = waterCoverage(m, (x + 0.5) / 64, (y + 0.5) / 64) >= 0.5 ? 200 : 1;
-  artBitmaps.push({ width: 64, height: 64, data });
-}
-const labArt = artOn ? buildWaterArt(artBitmaps) : null;
-// WATER2: the water's mesh off the grid as it stands, then the basin carved under it
-const basin = basinDepths(tilemapBytes, 1, TERRAIN_TILE_DIM, labArt?.corners);
-const waterVerts = basin ? waterMesh(grid.positions, basin, 1) : null;
-if (basin) carveBasin(grid, basin, 1);
 const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, buildTerrainIndices(1));
 // sixty-four flat tiles: water, dirt, grass, stone, and every shore
 // record a mix of the two it joins, so a shape reads even without the art
@@ -107,10 +86,9 @@ for (let r = 0; r < 64; r++) {
 }
 const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
-const artEntry = labArt ? renderer.uploadWaterArt(ARCHIVE, labArt) : null;   // WATER4
 // WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
-const waterIndices = buildWaterIndices(tilemapBytes, 1, labArt?.any);
-const water = waterIndices && waterVerts ? renderer.createWaterSurface(waterVerts.positions, waterVerts.depths, waterIndices) : null;
+const waterIndices = buildWaterIndices(tilemapBytes, 1);
+const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
 const hasWater = !!water;
 
 const t0 = performance.now();
@@ -158,9 +136,8 @@ function frame() {
       wind: [s * 0.8, s * 0.6],
       rain: Number($('rain').value),
       sky: { zenith: state.zenith, horizon: state.horizon },
-      debug: maskView,
     });
-    for (const m of TILE_MATRICES) renderer.drawWaterSurface(water, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu, TERRAIN_TILE_DIM, artEntry);   // WATER4: the lab's art rides
+    for (const m of TILE_MATRICES) renderer.drawWaterSurface(water, m, renderer.tileArrays.get(ARCHIVE), tilemapTex, 6.4, wu);
   }
   for (const id of ['hour', 'wind', 'rain', 'yaw', 'pitch', 'height']) $(id + 'V').textContent = $(id).value;
   window.__waterReady = true;

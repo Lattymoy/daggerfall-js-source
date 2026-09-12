@@ -258,6 +258,8 @@ mutation killer - said so now).
 
 ## WATER2 - THE BASIN (2026-09-11)
 
+**REVERTED (2026-09-12, Mac: "Lets honestly revert to our original implementation before the depth") - see THE REVERT below. Kept here as the record of what was tried.**
+
 **Mac: "Ponds, rivers, oceans, and any source of water should receive
 actually detailed water details like waves, shorelines, ponds not
 sitting like a texture and having depth in the ground (same for
@@ -278,7 +280,7 @@ a lake a bowl, the sea a beach that falls away over four vertices.
 recomputes the normals of every vertex the carve reaches with
 `buildTerrainGrid`'s own kernel (the bank is lit as the slope it now
 is), and re-hangs the far ring's skirt from the carved edge. The
-random-field round trip in `test/water2.test.js` proves the wet set
+random-field round trip in `test/water2.test.js` (DELETED) proves the wet set
 IS the corner field, every vertex.
 
 **The surface** is no longer the ground's triangles: `waterMesh` takes
@@ -312,13 +314,15 @@ A pixel seam under water can show a bed step of up to half the depth
 where the nearest bank is across the seam, under at least one ring of
 water; the surface above hides most of it.
 
-**Pinned** in `test/water2.test.js` (5); WATER1's pins in
+**Pinned** in `test/water2.test.js` (DELETED) (5); WATER1's pins in
 `test/water.test.js` moved to the basin's shapes. Not seen on a GPU
 or with ARENA2 - the lab (`water.html`) carves the same basin, and
 `npm run perf` measures what it costs (nothing per frame: the walk and
 the carve are at the build).
 
 ## WATER3 - THE SWELL AND THE FOAM (2026-09-11)
+
+**REVERTED (2026-09-12, Mac: "Lets honestly revert to our original implementation before the depth") - see THE REVERT below. Kept here as the record of what was tried.**
 
 **Mac: "waves, shorelines".** WATER1's waves were a normal map: the
 gradient of three trains, lit as slopes on a flat sheet. The sheet
@@ -327,7 +331,7 @@ INTEGRAL of the fragment's `waveGradient` train for train - a gradient
 term `A cos(k x + w t)` is a height `A / k sin(k x + w t)`, the same
 crossing rotations, the same distance fade on the same scale - so the
 surface the eye sees heave and the slopes it is lit by are one field
-(`test/water3.test.js` reads both shaders and holds the six numbers of
+(`test/water3.test.js` (DELETED) reads both shaders and holds the six numbers of
 each train equal). The rain's fine trains are not ridden: pocks are a
 texture on the water, not a sea. Over a bed shallower than
 `SWELL_DEPTH` (1 unit) the ride scales down to nothing, so the sheet
@@ -345,10 +349,12 @@ calm pond has none. Foam is lit white by the ground's own ambient,
 sun and moon, fades with distance before it aliases, and is not glass:
 the alpha rises to it. No texture and no table - the lace is a hash.
 
-**Pinned** in `test/water3.test.js` (4). Not seen on a GPU; the lab
+**Pinned** in `test/water3.test.js` (DELETED) (4). Not seen on a GPU; the lab
 carries it.
 
 ## WATER4 - THE ART'S OWN WATER (2026-09-11)
+
+**REVERTED (2026-09-12, Mac: "Lets honestly revert to our original implementation before the depth") - see THE REVERT below. Kept here as the record of what was tried.**
 
 **Mac: "I noticed with the water, its still not taking into account
 all the water textures that are on land, and its not traced well, just
@@ -373,7 +379,7 @@ shore is a fraction and not a checker), uploaded as one R8 texture 16
 wide and 16 x records tall, LINEAR. The shader (`uWaterArt`,
 `uWaterArtOn`) reads the tile byte for the record and its turn exactly
 as TERRAIN_FS does - the same `ROT`/`TRANS`, character for character,
-gated in `test/water4.test.js` - and samples the record's cells
+gated in `test/water4.test.js` (DELETED) - and samples the record's cells
 bilinearly, a half-cell in from its edges so no neighbour record
 bleeds, then feathers the shore on `ART_SHORE` (0.2 to 0.6: low, so
 half-water reads as water and not as lace). The shore is the record's
@@ -405,7 +411,7 @@ before.
 **The glass.** `SHALLOW_OPACITY` 0.30 to 0.80. The bed shows through
 the shallows; it does not show them up.
 
-**Pinned** in `test/water4.test.js` (6): the leaf executes on
+**Pinned** in `test/water4.test.js` (DELETED) (6): the leaf executes on
 synthetic bitmaps (the palette off record 0, the grid, the four turns
 as GLSL's column-major mat2 applies them, the bilinear, the clamp, the
 tables, the ramp, the feet through `exteriorSurfaces`), with mutants
@@ -416,6 +422,8 @@ checks run through the art path: 10/10 on this change. Not seen on a
 real GPU with a real archive - Mac's eye is the gate.
 
 ## WATER5 - PER TEXEL, AND THE DISTANCE TO THE SHORE (2026-09-11)
+
+**REVERTED (2026-09-12, Mac: "Lets honestly revert to our original implementation before the depth") - see THE REVERT below. Kept here as the record of what was tried.**
 
 **Mac, of WATER4's trace: "It's still not a perfect trace. What can we
 do to make sure this is perfect."** WATER4 could not be perfect by
@@ -463,12 +471,48 @@ a blue is missed or a brown caught.
 samples its own texel): at or past the shore the texel is water and the
 player swims - a puddle, a one-texel stream.
 
-**Pinned** in `test/water4.test.js` (4, rewritten for the per-texel
+**Pinned** in `test/water4.test.js` (DELETED) (4, rewritten for the per-texel
 leaf: a one-texel stream survives whole, the reads step from texel to
-texel with no blend, the tables, the feet) and `test/water5.test.js`
+texel with no blend, the tables, the feet) and `test/water5.test.js` (DELETED)
 (5: the field's numbers with mutants - the sign flipped, the byte's
 centre moved - the palette widening, the shader arm with no ramp of
 its own, the renderer's array upload and its unit-3 fallback, the
 hosts' and the lab's mask view, the probe's check). The probe gains a
 shot in the mask view: the whole sea magenta, part of the shore band,
 none of the sky.
+
+## THE REVERT (2026-09-12)
+
+**Mac: "Lets honestly revert to our original implementation before
+the depth."** Four slices in one day - the basin (WATER2), the swell
+and the foam (WATER3), the art's own water (WATER4) and its per-texel
+field (WATER5) - and the water did not read better for them. The
+surface is WATER1's again, as the audit left it: the pixel's own
+terrain grid drawn a second time, lifted, every non-water texel
+discarded, the shore the corner table's diagonal feathered by
+`SHORE_SOFTNESS`, the waves a normal map on the eased wind, the sky by
+Fresnel, the sun's and the moon's glints, the deck's shadow, rain.
+
+**What stays**, because Mac asked for each of them on their own:
+MAC2's look - `WATER_OPACITY` 0.94 and the darker `WATER_TINT` on the
+one-opacity surface ("darker and not as see through"); MAC2's puddle
+records in the corner table (`SHALLOW_WHOLE`: the docks, moats and
+puddles drawn whole - "some puddle areas don't register as water");
+and MAC2's law that the player swims where the surface is drawn
+(`player/exteriorSurface.js` reads the same corner table; Ledger A
+row). The corner table's one home is still `world/waterCorners.js`.
+
+**What went.** `render/waterBasin.js` and `world/waterArt.js` are
+deleted; the water surface rides the terrain's own buffers again
+(`createWaterSurface(terrain, indices)`), the town draws its ground
+quad again; the shader has no depth attribute, no swell, no foam, no
+art sampler and no mask view; the swim law takes no art. The lab and
+the probe are WATER1's (10 checks). `test/water2..5.test.js` (DELETED) are
+deleted with their subjects; `test/water.test.js` is WATER1's suite
+with MAC2's pins. The Ledger rows THE BASIN and THE WATER IS THE
+ART'S are struck.
+
+**The lesson**, for the next arc that wants "more": the eye was never
+in the loop. Every one of the four slices was seen only in the lab,
+on synthetic art, and each was judged after it merged. A look change
+wants a shot from the real game before it lands, not a probe number.
