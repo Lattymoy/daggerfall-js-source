@@ -1246,7 +1246,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // B1 + AUDIT B-C2: the fetch is ASYNC, so by the time it resolves
   // the player may have opened something else - the reader takes the
   // slot only if it is still free (never clobbers a live window).
-  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!activeOverlay) activeOverlay = w; } });
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!activeOverlay || activeOverlay.done) activeOverlay = w; } });   // EB4: the pack is done, not yet dropped, when the file lands
   /** U42: the CLASSIC spellbook, ONE construction for the F5 sheet's
    *  button and the Backspace hotkey alike. PlayerEntity.GetSpells()
    *  is the player's own array and the window WRITES to it, so it is

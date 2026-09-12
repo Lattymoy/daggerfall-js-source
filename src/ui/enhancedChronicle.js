@@ -21,6 +21,7 @@
 // a COUNT beside each name, because "Notes 0" answers the question a
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction } from './input.js';
 
 const el = (tag, cls, text) => {
@@ -237,6 +238,7 @@ function render() {
   win.append(body);
   shell.append(win);
   host.append(shell);
+  closeOnOutsideTap(shell, '.px-win', () => onExit());   // OT1 (Mac: a tap outside the window closes it)
 }
 
 function onKey(e) {

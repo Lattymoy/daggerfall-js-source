@@ -29,6 +29,7 @@
 // that reorders a list you are looking at is a worse answer than the
 // order being right.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction } from './input.js';
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
@@ -162,6 +163,7 @@ function render() {
     win.append(body);
     shell.append(win);
     host.append(shell);
+    closeOnOutsideTap(shell, '.px-win', () => onExit());   // OT1
     return;
   }
   if (picked >= rows.length) picked = rows.length - 1;
@@ -291,6 +293,7 @@ function render() {
   }
   shell.append(win);
   host.append(shell);
+  closeOnOutsideTap(shell, '.px-win', () => onExit());   // OT1 (Mac: a tap outside the window closes it); the YesNo stands inside the window
 }
 
 /** DeleteSpellConfirm_OnButtonClick (:840-852).

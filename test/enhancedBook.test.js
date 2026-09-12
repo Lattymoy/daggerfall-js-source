@@ -40,6 +40,18 @@ test('EB1 door: the reader has ONE construction site, the hook lives there, and 
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
     assert.match(read(f), /import \{ makeOpenBookHook \} from '\.\.\/ui\/bookDoor\.js';/, `${f} opens through the door`);
   }
+  // EB4 (Mac: "tapping use doesn't do anything and then locks me out
+  // of pointerclick in inventory"): the pack hands over THEN closes,
+  // and the file lands a microtask after `done` and a frame before the
+  // slot is dropped - so every host takes the reader over a DONE
+  // occupant, and the door raises its canvas only when the host draws.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(read(f), /showReader: \(w\) => \{ if \(!townTalk\.overlayActive \|\| townTalk\.overlayDone\) townTalk\.showOverlay\(w\); \}/, `${f}: a done pack does not refuse the reader`);
+  }
+  assert.match(read('src/scenes/dungeonContext.js'), /showReader: \(w\) => \{ if \(!activeOverlay \|\| activeOverlay\.done\) activeOverlay = w; \}/);
+  assert.match(read('src/scenes/townTalk.js'), /get overlayDone\(\) \{ return !!overlay\?\.done; \},/);
+  assert.match(door, /draw\(renderer, canvas\) \{\s*\n\s*hostCanvas = canvas \?\? hostCanvas;\s*\n\s*if \(!mounted\) mount\(\);/, 'the canvas mounts on the first draw');
+  assert.doesNotMatch(door.slice(door.indexOf('function enhancedBookOverlay')).split('const mount = ')[0], /document\.body\.append/, 'and never at construction');
   // the hand-off law (UI-Arc: hand over, THEN close) is the inventory's and untouched
   assert.match(read('src/ui/enhancedInventory.js'), /kind: 'openBook', item: r\.item, failText: r\.failText, closeFirst: false/);
   // headless: the door hands back the classic window, and it is the model

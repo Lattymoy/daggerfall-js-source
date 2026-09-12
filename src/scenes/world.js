@@ -1847,7 +1847,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
-  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive || townTalk.overlayDone) townTalk.showOverlay(w); } });   // EB4: the pack is done, not yet dropped, when the file lands
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title

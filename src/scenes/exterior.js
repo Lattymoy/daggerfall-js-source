@@ -1023,7 +1023,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   preloadRestArt({ renderer, fetchBytes, palette });   // D3: REST00I0/01I0/02I0 for the rest window's two pages
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
-  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive || townTalk.overlayDone) townTalk.showOverlay(w); } });   // EB4: the pack is done, not yet dropped, when the file lands
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title

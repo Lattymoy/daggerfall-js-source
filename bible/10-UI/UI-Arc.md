@@ -12514,3 +12514,59 @@ ItemBuilder.CreateBook, the named path a quest reward takes, so the
 item is the item a shelf would hand over and the reader - and the
 enhanced book over it - opens from the pack's USE without a shelf or a
 shop. Pinned in `test/testroom.test.js`.
+
+## EB4 - THE BOOK THAT NEVER SHOWED, AND THE CANVAS THAT DID (2026-09-12)
+
+**Mac: "So tapping use doesn't do anything and then locks me out of
+pointerclick in inventory."**
+
+**What happened.** The enhanced pack's book arm hands over THEN closes
+(this arc's own finding): it calls the host's openBook hook and closes
+itself in the same press. The hook is async - it reads the BOK file
+first - and the pack's close is a `done` flag the host's frame loop
+drops on the NEXT frame. The file landed in the gap: `done` already
+true, the slot not yet dropped, and the hosts' showReader gate (`if
+(!townTalk.overlayActive)`) read the done pack as a live window and
+declined the reader. In the classic lane that was a book that silently
+never opened. In the enhanced lane it was worse: the door had raised
+its canvas at CONSTRUCTION, one line before showReader, so a full-view
+canvas stood over the pack with nothing painting it and nothing to
+drop it - every pointer swallowed, the pack unreachable. "Doesn't do
+anything, then locks me out", exactly.
+
+**Two fixes, one law each.** The hosts take a reader over a DONE
+occupant: townTalk grows `overlayDone` (is the slot's occupant closed
+by its own hand, waiting on the drop?) and world.js, exterior.js and
+the dungeon host's own slot gate on it - a window that has said it is
+done is not a window a hand-off must yield to. And the door raises its
+canvas on the host's FIRST DRAW, never at construction: the first
+draw is the host's acceptance, and an overlay the host never draws
+leaves nothing behind. Both pinned in `test/enhancedBook.test.js`.
+
+**The lesson, recorded.** A DOM overlay that mounts before its host
+has taken it is a leak waiting on any decline; the pause, pack,
+spellbook and talk doors mount at construction too, but their hosts
+show them synchronously in the same press. The book was the first door
+handed over across an await.
+
+## OT1 - A TAP OUTSIDE ANY UI CLOSES IT (2026-09-12)
+
+**Mac: "Also can you make it where tapping outside of any UI closes
+the UI."**
+
+One helper on the overlay registry (`ui/enhancedOverlays.js`
+`closeOnOutsideTap`): wired on a window's SHELL - the scrim around the
+framed panel - it closes the window on a primary press that lands
+outside everything the window keeps (the panel, and whatever stands
+with it: the pause face's clock and foot, the pack's loot column, a
+YesNo over the spellbook). The press is consumed so nothing under it
+fires, and the close runs inside the gesture, so a host's relock
+rides it (MAC1). Wired on the five windows that stand in a scrim: the
+PAUSE window resumes (the way Escape does; the front door has no scrim
+and nothing to close), the PACK closes through its own exit so the
+drop mints and the equip cue plays, the SPELLBOOK (empty or not; its
+delete YesNo stands inside the window, so a press on it is the box's),
+the CHRONICLE, and the TALK panel says goodbye through the model so
+the note is filed. The book already closed on a tap beside it
+(EB1) and the dial on its scrim (PX15). Pinned in
+`test/outsideTap.test.js`.

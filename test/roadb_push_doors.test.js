@@ -161,8 +161,16 @@ test('B5: the async BOOK READER keeps its race guard - the port has the race, DF
   // would drop a book on top of an unrelated window seconds later,
   // which is not what DFU does either. The guard stays and the reason
   // is the async, not the stack.
+  // EB4 (Mac: "tapping use doesn't do anything and then locks me out
+  // of pointerclick in inventory"): the guard yields to a DONE
+  // occupant - the pack that handed the book over and closed itself in
+  // the same press, waiting on the frame that drops it - and to
+  // nothing else. A live unrelated window still refuses the reader.
   assert.match(src('src/scenes/dungeonContext.js'),
-    /showReader: \(w\) => \{ if \(!activeOverlay\) activeOverlay = w; \}/);
+    /showReader: \(w\) => \{ if \(!activeOverlay \|\| activeOverlay\.done\) activeOverlay = w; \}/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /showReader: \(w\) => \{ if \(!townTalk\.overlayActive \|\| townTalk\.overlayDone\) townTalk\.showOverlay\(w\); \}/, `${f}: the guard, yielding only to a done occupant`);
+  }
 });
 
 test('B5: the LEVEL-UP screen keeps its slot test - it is the other half of PopToHUD', () => {

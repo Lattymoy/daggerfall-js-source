@@ -537,7 +537,9 @@ test('PX28b: TAB ITSELF closes an open window - the registry answers the key', (
   assert.match(reg, /window\.addEventListener\('keydown', onTab, true\);/, 'capture phase');
   assert.match(reg, /if \(e\.code !== 'Tab'/);
   assert.match(reg, /closeTopOverlay\(\);/);
-  assert.equal((reg.match(/addEventListener/g) ?? []).length, 1, 'ONE listener, not one per window');
+  // OT1 added closeOnOutsideTap, a listener on each window's SHELL (a
+  // pointer on a scrim is that scrim's); the Tab listener stays ONE.
+  assert.equal((reg.match(/window\.addEventListener/g) ?? []).length, 1, 'ONE window listener, not one per window');
   // ALIVE ONLY WHILE THE STACK IS: registering starts it, the last
   // unregister stops it, and closing the last one stops it too - or
   // Tab would be eaten in a world with nothing open.
