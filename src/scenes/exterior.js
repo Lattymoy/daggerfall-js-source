@@ -2185,7 +2185,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
-        relock: () => requestLook(canvas),   // MAC1 J: the pointer comes back with the resume gesture (ui/pauseDoor.js:153-170)
+        relock: () => requestLook(canvas),   // MAC1 J: the pointer comes back with the resume gesture (ui/pauseDoor.js:164-181)
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
         // PX3 SHIPPED (QX1): the Quests tab reads THIS host's own quest
@@ -3045,7 +3045,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // `host.relock` (:6832) and nothing else, so without this key the
     // pause taken inside a shop entered from THIS host resolved
     // undefined and fell back to the frame-late look gate - the exact
-    // double-click MAC1 J closed for ?world (ui/pauseDoor.js:153-170).
+    // double-click MAC1 J closed for ?world (ui/pauseDoor.js:164-181).
     relock: () => requestLook(canvas),
     // TP2: a Recall cast inside a shop or the crawl raises THIS host's
     // 4000 box, exactly as world.js hands its own prompt down. Without

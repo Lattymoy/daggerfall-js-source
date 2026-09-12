@@ -403,7 +403,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   "DR1: THE TWO WINDOW SEAMS, MOUNTED"), pinned by three DR1 cases in
   `test/x11b.test.js`. This was also Ledger row `:622`'s adjudication,
   and that row is struck with it.
-- **`src/ui/enhancedMenu.js:2053`** - the rest of the keyboard; the
+- **`src/ui/enhancedMenu.js:2127`** - the rest of the keyboard; the
   wizard walks to `done` with no pointer. *The enhanced menu is the
   enhanced skin, a Ledger A departure, so no C# line is owed. The flag
   names its own blocker: focus order across a rail, a settings list and

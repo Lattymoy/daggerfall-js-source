@@ -131,11 +131,42 @@ with this host's, and one host is one frame.
 **The door.** The front door's rail gains ONLINE on both skins
 (`src/ui/enhancedMenu.js` `paneOnline`): a name for over the head (24
 plain characters, the relay's bound, and the pane says so) and the
-relay to join, on the prefs shelf (`onlineName`, `onlineServer`); the
-most recent save is the character brought in; PLAY ONLINE resolves
-`'online'`, which `src/main.js`'s enhanced branch turns into `?online`
-beside `?load` under F12's set-or-delete law. Saving stays local; the
-relay never sees the save.
+relay to join, on the prefs shelf (`onlineName`, `onlineServer`); every
+restorable save is a card and the one pressed is the character brought
+in (SLOTS1, below); PLAY ONLINE resolves `'online'`, which
+`src/main.js`'s enhanced branch turns into `?online` beside `?load`
+and the picked slot's `?loadkey`, under F12's set-or-delete law.
+Saving stays local; the relay never sees the save.
+
+## SLOTS1 (2026-09-12): the save to bring in
+
+**Mac: "one thing we need to add so I can test myself is multiple save
+slots and then the ability to choose which save to use in online."**
+The slot store was SAV4's (`src/systems/saveSlots.js`: a save is the
+(character, slot name) pair, SaveLoadManager's own identity), and the
+classic save window had the whole list; the enhanced skin drew one
+card - the most recent - and its Save pane wrote QuickSave alone.
+Now:
+
+- `restorableSaves()` is the one walk: every slot this build can
+  restore, most recent first, with its info and snap; the most-recent
+  question is its head.
+- The Load and Online panes draw a card per slot (the slot's name as
+  the tag, the character's line and numbers); the pressed card's key
+  rides the door - the front door's `takePickedSaveKey` into
+  `?loadkey` (the SAV4 boot arm loads it), the pause door's into the
+  host's `loadKey` seam. Delete removes that slot alone.
+- The Save pane (pause) takes a slot name: a name the character
+  already has overwrites it and the card says which, a new name is a
+  new slot; the character's own slots stand below as cards, each an
+  Overwrite. The name rides `takePickedSaveName` into the pause door's
+  `quickSave` arm, which hands it to the host's `saveAs` seam - the
+  two verbs the MAC1 pin reads stay as they are.
+
+Pinned in `test/slots1.test.js` (3): the list executes over a fake
+storage; the seams hand a pick over once; the doors are pinned by
+source. Two browsers, two slots, two names over two heads: Mac's own
+test.
 
 ## AUDIT ONLINE (2026-09-12)
 

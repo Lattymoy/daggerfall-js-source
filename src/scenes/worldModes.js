@@ -4973,7 +4973,7 @@ export function createWorldModes(host) {
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
-          // context's togglePause (ui/pauseDoor.js:153-170).
+          // context's togglePause (ui/pauseDoor.js:164-181).
           relock: () => host.relock?.(),
           // B4: the dungeon quicksave rides the ONE composer - DFU
           // saves quest + conversation wherever the player stands
