@@ -549,3 +549,44 @@ The lab draws the same: `?sky=dynamic` shows the clouds over the mod's
 pass, with the synthesised state. The Dynamic Skies probe still passes
 (11/11); the VC and enhanced-sky probes unchanged. Pinned in
 ds2_cloudsUnderMod.test.js; the VC3 seam pins re-aimed at the lane.
+
+## PS3 - THE PROGRESSING CIRCLES (2026-09-12, Mac's report)
+
+Mac: "with the dynamic skies mod there's these progressing circles in
+the sky when I want it to be a smooth sky transition."
+
+**They are the mod's REDUCE_COLOR.** The keyword is baked on (the
+material ships it), and the block quantizes each channel with a bare
+`ceil()` and no dither, in linear light, at a step the sun's height
+drives: `_stepSize - lerpScale^5 * _stepSize + 0.001`. Two consequences
+the mod has always had and the port carried 1:1. The sky's
+iso-luminance contours around the sun are concentric RINGS, so a hard
+quantizer draws them as hard-edged bands. And the step changes as the
+sun climbs - `lerpScale` is a smoothstep on the sun's elevation - so the
+bands MIGRATE, which is the "progressing".
+
+**Measured**, on the shipped Sunny preset (`stepSize` 0.015) with the
+sun high, over a synthetic halo in the linear light the shader works in,
+encoded to sRGB the way the pass encodes its output: FIFTY flat plateaus
+through the halo, the worst of them a 0.033 sRGB edge - some eight
+levels of 255, several times the threshold at which a smooth gradient
+shows a contour. The shipped presets run `stepSize` 0.001 to 0.015, so
+every one of them bands; the finest (Thunder) least.
+
+**The fix is the device ES1e already applies to the port's own dome**:
+an ORDERED dither, the same Bayer cell, half a step either way, so the
+quantizer's threshold moves per cell and the contours dissolve into a
+stipple. The palette is untouched, the mod's step formula is untouched
+to the character, and the mod's upward `ceil()` bias survives - the mean
+of a symmetric half-step offset is the value it replaced. The same sweep
+resolves 577 distinct levels instead of 50. The dither is indexed by the
+retro CELL while the sky is pixelated, so the stipple lands on the sky's
+own pixels and reads as period dithering rather than noise, and by the
+fragment otherwise, so it is fine grain under a smooth sky.
+
+**Recorded as a departure from 1:1**, because it is one: the mod's raw
+threshold is one door away, `?bands=raw` (the uniform `uBandDither` at
+0), and the shader is otherwise the mod's. It is NOT a compatibility
+switch between mods (MM1) - it is this mod's own posterise, and it
+applies whether or not any other mod is loaded. Ledger row PS3. Pinned:
+`test/dynamicSkies.test.js`.

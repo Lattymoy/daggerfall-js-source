@@ -509,3 +509,57 @@ NOT MEASURED on a GPU in this session - no ARENA2 here; `npm run perf`
 (PERF9) before and after on Mac's machine is the number that matters,
 and the tier drops back to 3 or 4 in the pane if it says so. Ledger row
 LV1. Pinned: `test/macfive.test.js` LV1, `test/streaming.test.js`.
+
+ES1g (2026-09-12, Mac: "the returning pixelated sky look exposes the
+frame of a square skybox"): THE GRID IS RINGS. It did expose one, and
+the frame was real. ES1f fled the lat-long pole onto an equi-angular
+CUBE, and a cube has twelve edges. The GEOMETRY tiles across them
+continuously - snapped elevations run 44.5605, 44.7363, 44.9121 |
+45.0879, 45.2637, 45.4395, the boundary exactly at 45 - but a face's
+cell NUMBERING is its own, so the index counts up to an edge on one face
+and down from it on the other and the ordered dither MIRRORS there, with
+`face * 977.0` shifting its phase again on top. Drawn as a map the break
+is plain: above 45 degrees every row of the dither shears, because the
+top face's axes are x and z and azimuth crosses it diagonally; below 45
+degrees every row is identical, because a side face's axes are azimuth
+and elevation. That hard line, and the four of them meeting at the
+corners, is what Mac saw. It is not a bug in the snap - it is what a
+cube IS. Adjacent faces' axes differ by 90 degrees, so the pixel rows
+change direction at every edge whatever the cell id is keyed on.
+
+The replacement keeps the pole fix and drops the faces: RINGS of
+constant elevation, each one `step` tall, each holding
+`round(2*PI*cos(el)/step)` cells so a cell is one `step` wide as well.
+The ring count FALLING toward the pole is the whole trick, and it is the
+one thing the lat-long grid got wrong - that one kept `2*PI/step` cells
+on every ring, so they narrowed to slivers and the zenith pinwheeled.
+Measured over the whole sphere: cell width 0.3506-0.3533 degrees against
+a height of 0.3516; the largest jump between neighbouring directions is
+0.4966 where one cell's diagonal is 0.4972, i.e. quantization and no
+seam, through both poles and across the azimuth wrap. The cells stay
+SQUARE all the way up as well - even the top ring, which holds three of
+them, is 1.047 wide for one tall. RECORDED cost: the last couple of
+degrees around the zenith and the nadir, where consecutive rings hold
+very different counts (3, 9, 16, 22, 28 coming down) so the rows stop
+lining up and the grid reads there as a rosette rather than a
+checkerboard. The cube spent a hard edge across the entire sky to buy
+that. And rings are the painted sky's own
+shape - SKY??.DAT is a panorama STRIP, horizontal rows of pixels wrapped
+around the horizon, which is exactly what the artwork was drawn on.
+
+AND THE PIXEL IS ITS TRUE SIZE AGAIN, which is the defect underneath the
+defect. ES1f passed `n = (PI/2)/step` and its comment called that "256
+cells a face" - but the face coordinate spans [-1,1], so `floor(uv * n)`
+cut 2n of them: 512 a face, 1024 across 180 degrees, against SKY??.DAT's
+512. Every retro pixel has been HALF its documented width since ES1f,
+and the pin did not catch it because it asserted `n === 256` - the
+variable - rather than the angle the snap produced. The ring snap takes
+`step` itself, so the law and the code are one number, and the pin is
+numeric now: it measures the cell's angle and sweeps for seams, and it
+fails on the cube. The dome also writes the SHARED snap lines now
+(PS2 left it carrying its own copy), so the three sky passes cannot
+drift. The star field is untouched and keeps its own cube coordinate
+(EE2 F2): a sparse random field has no grid to break, and the face
+offset is what stops a mirrored id drawing the same star either side of
+an edge. Ledger row ES1g. Pinned: `test/enhancedSky.test.js` ES1g,
+`test/macfive.test.js` PS2, `test/audit39_render.test.js` F53.

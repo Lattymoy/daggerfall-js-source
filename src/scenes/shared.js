@@ -218,6 +218,13 @@ export function createSkyController(gl, params) {
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
   if (clouds && dynamicSky) dynamicSky.cloudsExternal = true;
   if (dynamicSky) dynamicSky.retro = retro;   // PS2: the mod's skybox takes the port's pixel too
+  // PS3 (Mac: "there's these progressing circles in the sky when I want it
+  // to be a smooth sky transition"): the mod's own REDUCE_COLOR quantizes
+  // with a bare ceil and no dither, so the sky's iso-luminance contours -
+  // rings around the sun - come out as hard bands that walk as the sun
+  // moves. The port gives it ES1e's ordered dither; `?bands=raw` is the
+  // door back to the mod's raw ceil, bug for bug.
+  if (dynamicSky) dynamicSky.bandDither = params.get('bands') !== 'raw';
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {

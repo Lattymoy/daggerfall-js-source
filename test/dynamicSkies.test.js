@@ -549,8 +549,44 @@ test('DS1 shader: every property the mod declares is a uniform of the same name,
     assert.ok(glslUniforms.has(p), `${p} is not a uniform of the GLSL`);
   }
   for (const s of TEXTURE_SLOTS) { assert.ok(glslUniforms.has(s)); assert.ok(glslUniforms.has(s + '_ST')); }
-  // the baked keywords: REDUCE_COLOR's posterise, HQ sun disk, both tidal locks
-  assert.match(FS, /ceil\(col\.r \/ \(_stepSize - \(lerpScale_pow \* _stepSize\) \+ 0\.001\)\)/, 'REDUCE_COLOR');
+  // the baked keywords: REDUCE_COLOR's posterise, HQ sun disk, both tidal locks.
+  // PS3 (2026-09-12) hoisted the mod's own step out of the three channel
+  // lines and gave the quantizer an ordered dither - the step formula is
+  // still the mod's to the character, the ceil is still the mod's, and
+  // uBandDither 0 is its raw threshold back (?bands=raw).
+  assert.match(FS, /float bandStep = _stepSize - \(lerpScale_pow \* _stepSize\) \+ 0\.001;/, 'REDUCE_COLOR: the mod\'s own step, unchanged');
+  for (const ch of ['r', 'g', 'b']) {
+    assert.match(FS, new RegExp(`col\\.${ch} = ceil\\(col\\.${ch} / bandStep - bandB\\) \\* bandStep;`), `REDUCE_COLOR: the mod's ceil on ${ch}`);
+  }
+  assert.match(FS, /float bandB = uBandDither \* \(bayer4\(uRetroStep > 0\.0 \? cell : gl_FragCoord\.xy\) - 0\.5\);/,
+    'PS3: half a step either way, on the sky\'s own cell while it is pixelated and on the fragment otherwise');
+  assert.ok(UNIFORM_NAMES.includes('uBandDither'), 'and the switch is fetched like every other uniform');
+  // THE CIRCLES, MEASURED. A JS mirror of the block over a radial sweep
+  // out of the sun, in the linear light the shader works in, encoded to
+  // sRGB the way the pass encodes its output. Raw, the shipped Sunny
+  // preset's step leaves a few dozen FLAT plateaus - the rings Mac saw.
+  // Dithered, the same sweep resolves an order of magnitude more levels.
+  const lin2srgb = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const bayer = (x, y) => BAYER[(((y % 4) + 4) % 4) * 4 + (((x % 4) + 4) % 4)] / 16;
+  const plateaus = (dither) => {
+    const step = 0.015 - 0 * 0.015 + 0.001;   // the Sunny preset with the sun high (lerpScale_pow 0)
+    let n = 0; let prev = null;
+    for (let px = 0; px < 900; px++) {
+      const lin = 0.06 + 0.9 / (1 + Math.pow((px * 0.1) / 2.2, 1.6));   // a sun halo falling off with angle
+      let acc = 0;
+      for (let py = 0; py < 4; py++) {
+        const b = dither ? bayer(px, py) - 0.5 : 0;
+        acc += lin2srgb(Math.min(1, Math.ceil(lin / step - b) * step));
+      }
+      const v = (acc / 4).toFixed(3);
+      if (v !== prev) { n++; prev = v; }
+    }
+    return n;
+  };
+  const raw = plateaus(false); const dithered = plateaus(true);
+  assert.ok(raw < 80, `the mod's bare ceil leaves ${raw} flat plateaus through the halo - the progressing circles`);
+  assert.ok(dithered > raw * 5, `and the ordered dither resolves ${dithered}, an order of magnitude more`);
   assert.match(FS, /getMiePhase\(-focusedEyeCos, focusedEyeCos \* focusedEyeCos, SunSize\)/, '_SUNDISK_HIGH_QUALITY');
   assert.match(FS, /moonFragNormal = phaseNormal;\s*\n\s*moonFragNormal = RotateWorldPosition\(moonFragNormal, vec3\(radiansOf\(_MoonTidalAngle\.x\)/, '_MOONSPINOPTION_TIDAL_LOCK');
   assert.match(FS, /SecundaMoonFragNormal = SecundaPhaseNormal;/, '_SECUNDASPINOPTION_TIDAL_LOCK');

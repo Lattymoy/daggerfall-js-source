@@ -59,19 +59,20 @@ test('PS1: the pixelated sky is the dome\'s default again, the Enhanced pane\'s 
 
 test('PS2: the pixel reaches every sky pass - the mod\'s skybox and the clouds\' composite carry the dome\'s snap and posterise, from the one retro', () => {
   // Mac: "Volumetric clouds and pixelated should be compatible with dynamic skies though"
-  assert.ok(RETRO_GLSL.includes('vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {') && RETRO_GLSL.includes('float bayer4(vec2 p) {'), 'the two functions, one string');
+  assert.ok(RETRO_GLSL.includes('vec3 ringSnap(vec3 dir, float step, out vec2 cellOut) {') && RETRO_GLSL.includes('float bayer4(vec2 p) {'), 'the two functions, one string');   // ES1g: rings, not a cube
   const dome = read('src/render/enhancedSky.js');
-  assert.ok(dome.includes('${RETRO_GLSL}') && !dome.includes('vec3 cubeSnap('), 'the dome interpolates the shared functions and no longer carries its own copy');
+  assert.ok(dome.includes('${RETRO_GLSL}') && !dome.includes('vec3 ringSnap('), 'the dome interpolates the shared functions and no longer carries its own copy');
+  assert.ok(dome.includes('${RETRO_SNAP_GLSL}'), 'ES1g: and the shared SNAP LINES too, so the three passes cannot drift');
   for (const [name, fs] of [['the mod\'s skybox', DS_FS], ['the clouds\' composite', COMPOSITE_FS]]) {
-    assert.ok(fs.includes('vec3 cubeSnap('), `${name} carries cubeSnap`);
+    assert.ok(fs.includes('vec3 ringSnap('), `${name} carries the snap`);
     assert.ok(fs.indexOf('float bayer4(') < fs.indexOf('void main() {'), `${name} declares the functions before main`);
     assert.match(fs, /uniform float uRetroStep;/); assert.match(fs, /uniform float uRetroLevels;/);
-    assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/, `${name} snaps its direction on the dome's grid`);
+    assert.match(fs, /if \(uRetroStep > 0\.0\) dir = ringSnap\(dir, uRetroStep, cell\);/, `${name} snaps its direction on the dome's grid`);
     assert.match(fs, /float b = bayer4\(uRetroStep > 0\.0 \? cell : gl_FragCoord\.xy\) - 0\.5;/, `${name} dithers by the cell`);
   }
-  assert.ok(DS_FS.indexOf('cubeSnap(dir') < DS_FS.indexOf('V2F IN = vertAsMesh(worldPos);'), 'the mod\'s shader snaps BEFORE anything is computed - sun, moons, stars and sheets all on the grid');
+  assert.ok(DS_FS.indexOf('ringSnap(dir') < DS_FS.indexOf('V2F IN = vertAsMesh(worldPos);'), 'the mod\'s shader snaps BEFORE anything is computed - sun, moons, stars and sheets all on the grid');
   assert.ok(DS_FS.indexOf('enc = floor(enc * uRetroLevels') < DS_FS.indexOf('outColor = vec4(enc, 1.0);'), 'and posterises the encoded colour last');
-  assert.ok(COMPOSITE_FS.indexOf('cubeSnap(dir') < COMPOSITE_FS.indexOf('float el = asin('), 'the composite snaps before it reads the map');
+  assert.ok(COMPOSITE_FS.indexOf('ringSnap(dir') < COMPOSITE_FS.indexOf('vec4 c = texture(uMap, uv);'), 'the composite snaps before it reads the map');   // ES1g: not 'float el = asin(' - the snap itself opens with that line now
   assert.ok(COMPOSITE_FS.indexOf('c = floor(c * uRetroLevels') < COMPOSITE_FS.indexOf('outColor = vec4(c.rgb'), 'and posterises colour AND transmittance before the blend');
   assert.deepEqual(COMPOSITE_UNIFORMS.slice(-2), ['uRetroStep', 'uRetroLevels']);
   assert.ok(DS_UNIFORMS.includes('uRetroStep') && DS_UNIFORMS.includes('uRetroLevels'));

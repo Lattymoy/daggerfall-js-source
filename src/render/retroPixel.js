@@ -1,55 +1,87 @@
-// PS2 - THE PIXEL ON EVERY SKY (2026-09-12, Mac: "Volumetric clouds and
-// pixelated should be compatible with dynamic skies though"). ES1e's
-// retro pass - the angular pixel on an equi-angular cube (cubeSnap) and
-// the ordered Bayer posterise (bayer4) - lived inside the dome's own
-// fragment shader, so the Pixelated sky switch (PS1) reached the port's
-// dome and nothing else: the volumetric clouds composited smooth over a
-// pixelated dome, and Dynamic Skies' skybox never saw it. The two
-// functions are ONE GLSL string now, moved out of the dome verbatim,
-// and three shaders carry it - the dome (render/enhancedSky.js), the
-// clouds' composite (render/volumetricClouds.js) and the mod's skybox
-// (render/dynamicSkiesRenderer.js) - each with the same two uniforms
-// (uRetroStep, uRetroLevels; 0 = the pass as it was) set from the one
-// `retro` the host decides (retroFor). The same cell grid on every
-// pass, so the clouds' pixels are the sky's pixels.
+// THE RETRO PIXEL - the port's own "painted sky" grid, shared by every
+// sky pass.
+//
+// PS2 (2026-09-12) moved ES1e's two functions out of the dome's shader
+// so the dome, the volumetric clouds' composite and Dynamic Skies'
+// skybox could all pixelate on ONE grid (uRetroStep, uRetroLevels; 0/0
+// is each pass exactly as it was).
+//
+// ES1g (2026-09-12, Mac: "the returning pixelated sky look exposes the
+// frame of a square skybox"). IT DID, and the frame was real. ES1f cast
+// the grid on an equi-angular CUBE to escape the lat-long pole, and a
+// cube has twelve edges. The geometry tiled across them continuously -
+// measured: snapped elevations run 44.5605, 44.7363, 44.9121 | 45.0879,
+// 45.2637, 45.4395 with the boundary exactly at 45 - but NOTHING ELSE
+// did. A face's cell numbering is its own: approaching the +Y/+Z edge
+// from above, the Bayer phase ran 3,0,1 and leaving it below it ran
+// 3,2,1 - the cell index counts UP to the edge on one face and DOWN
+// from it on the other, so the ordered dither MIRRORS there, and
+// `face * 977.0` shifted its phase again on top. Rendered as a map, the
+// break is unmistakable: above 45 degrees every row of the dither
+// pattern shears (the top face's axes are x and z, so azimuth runs
+// diagonally across it); below 45 degrees every row is identical (a
+// side face's axes are azimuth and elevation). That hard line at 45
+// degrees, four of them meeting at the corners, IS the square frame.
+// A cube cannot not have it: adjacent faces' axes differ by 90 degrees,
+// so the pixel rows change direction at every edge whatever you index.
+//
+// SO THE GRID IS RINGS NOW, and the pole ES1f fled is handled without
+// faces. Rows of constant elevation, one `step` tall; each ring's
+// azimuth count chosen as round(2*PI*cos(el)/step) so every cell is one
+// step WIDE as well - the count falls as the rings shorten, which is
+// exactly what the lat-long grid failed to do (it kept 2*PI/step cells
+// on every ring, so they became slivers and pinwheeled at the zenith).
+// Measured over the whole sphere: cell width 0.3506..0.3533 degrees
+// against a height of 0.3516, the largest jump between neighbouring
+// directions is 0.4966 degrees where one cell's diagonal is 0.4972 -
+// i.e. quantization, and NO seam anywhere, through both poles and
+// across the azimuth wrap. The cells stay SQUARE all the way up, too -
+// even the top ring, which holds three of them, is 1.047 wide for one
+// tall. What it costs is the last couple of degrees around the zenith
+// and the nadir, where consecutive rings hold very different counts (3,
+// 9, 16, 22, 28 coming down) so the rows no longer line up and the grid
+// reads there as a rosette rather than a checkerboard. The old cube
+// spent a hard edge across the whole sky to buy that.
+//
+// And this is the painted sky's own shape. SKY??.DAT is a PANORAMA
+// strip - horizontal rows of pixels wrapped around the horizon - so
+// rows of constant elevation are what the artwork was drawn on.
+//
+// THE PIXEL IS ITS TRUE SIZE AGAIN. ES1f passed n = (PI/2)/step as
+// "cells per face", but the face's coordinate spans [-1,1], so
+// floor(uv * n) cut 2n cells across it: 512 a face, 1024 across 180
+// degrees, against SKY??.DAT's 512 - every retro pixel was HALF the
+// width it is documented to be, and the pin guarded n rather than the
+// angle it produced. The ring grid takes `step` itself and a cell is
+// one `step`, so the law and the code are the same number now.
 //
 // Every caller writes the same two lines after its view direction and
 // before its output - kept as text here so a shader cannot drift from
-// its siblings, and pinned by test/macfive.test.js PS2.
+// its siblings, and pinned by test/macfive.test.js.
 
-/** cubeSnap(dir, n, cellOut) and bayer4(p). */
+/** ringSnap(dir, step, cellOut) and bayer4(p). */
 export const RETRO_GLSL = `
-vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
-  vec3 a = abs(dir);
-  float m = max(a.x, max(a.y, a.z));
-  vec2 raw; float face;
-  if (a.x >= m) { raw = dir.zy / a.x; face = dir.x > 0.0 ? 0.0 : 1.0; }
-  else if (a.y >= m) { raw = dir.xz / a.y; face = dir.y > 0.0 ? 2.0 : 3.0; }
-  else { raw = dir.xy / a.z; face = dir.z > 0.0 ? 4.0 : 5.0; }
-  // EQUI-ANGULAR faces (ES1f, second pass). A plain cube face is a
-  // TANGENT plane, so its cells cover 2.6x less sky at the corners than
-  // at the centre - and a cell size that varies across the frame beats
-  // against the screen's own grid and draws curved moire rings, which
-  // is the pole artifact's ghost rather than its cure. Warping the face
-  // by atan (the equi-angular cubemap of 360 video) makes every cell
-  // the SAME ANGLE everywhere, so the grid reads as an even bitmap in
-  // every direction. A face spans 90 degrees, so n = (PI/2)/step gives
-  // the painted sky's pixel: 256 a face, 512 across 180 degrees, which
-  // is SKY??.DAT's own width.
-  vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
-  vec2 cell = floor(uv * n);
-  vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
-  // AUDIT 39 F53: cellOut is CONTINUOUS - the cell id is floor(cellOut),
-  // and its fraction is where the fragment sits INSIDE the cell, which
-  // is what the star field draws a star at. Handing back the floored id
-  // made fract() of it exactly zero, so the bright first star layer
-  // could not produce a lit pixel anywhere on the sphere. Callers floor
-  // it for the id; the face offset is integral, so flooring here or
-  // there names the same cell.
-  cellOut = uv * n + face * 977.0;                  // a face's cells are its own
-  if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
-  if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
-  return normalize(vec3(t.x, t.y, sign(dir.z)));
+// The sky's pixel: rings of constant elevation, each one \`step\` tall,
+// each holding as many cells as fit at one \`step\` wide. No faces, so no
+// edge; the ring count falls toward the pole, so no pinwheel either.
+// cellOut is CONTINUOUS (AUDIT 39 F53's law): floor() is the cell's id
+// and fract() is where the fragment sits inside it, which is what the
+// dither indexes and what a per-cell feature would place against.
+vec3 ringSnap(vec3 dir, float step, out vec2 cellOut) {
+  float el = asin(clamp(dir.y, -1.0, 1.0));
+  // The last ring is clamped: a fragment at exactly the zenith would
+  // otherwise index one ring past the top and rebuild with a NEGATIVE
+  // cosine, mirroring itself through the pole.
+  float ring = min(floor((el + 1.57079633) / step), floor(3.14159265 / step) - 1.0);
+  float elC = (ring + 0.5) * step - 1.57079633;
+  float ce = cos(elC);
+  float m = max(1.0, floor(6.28318531 * ce / step + 0.5));   // floor(x+0.5), not round(): a tie must land the same way on every GPU
+  float az = atan(dir.x, dir.z);
+  az -= 6.28318531 * floor(az / 6.28318531);                 // [0, 2PI) - and the wrap is a cell boundary, not a seam
+  float g = az * m / 6.28318531;
+  float azC = (floor(g) + 0.5) * 6.28318531 / m;
+  cellOut = vec2(g, (el + 1.57079633) / step);
+  return vec3(sin(azC) * ce, sin(elC), cos(azC) * ce);       // already unit: ce is cos(elC)
 }
 
 // Bayer 4x4, the ordered dither a 256-colour gradient used.
@@ -61,9 +93,9 @@ float bayer4(vec2 p) {
 }
 `;
 
-/** The snap, after \`dir\` is built: uniforms uRetroStep (radians per pixel, 0 = smooth). */
+/** The snap, after \`dir\` is built: uniform uRetroStep (radians per pixel, 0 = smooth). */
 export const RETRO_SNAP_GLSL = `  vec2 cell = vec2(0.0);
-  if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
+  if (uRetroStep > 0.0) dir = ringSnap(dir, uRetroStep, cell);
   cell = floor(cell);                               // F53: bayer4 indexes the CELL, not its interior`;
 
 /** The posterise, on the value named, before the output: uRetroLevels (0 = none). */

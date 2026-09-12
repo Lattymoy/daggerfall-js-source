@@ -398,12 +398,16 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   assert.equal(retroFor('?sky=classic'), retroFor(''), 'classic is the OTHER pass entirely; it never reaches here - a door that is neither retro nor smooth is a silent URL');
   assert.match(read('src/scenes/shared.js'), /const retro = retroFor\(params\.toString\(\), getPref\('pixelatedSky'\)\);[\s\S]{0,200}if \(enhancedSky\) enhancedSky\.retro = retro;/);   // PS1: the pane's switch decides when the URL is silent; PS2: one retro for every sky pass
   assert.match(read('src/tools/skyLab.js'), /sky\.retro = retroFor\(location\.search\);/);
-  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2: cubeSnap and bayer4 are the shared module's, interpolated into the dome
+  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2/ES1g: the snap and bayer4 are the shared module's, interpolated into the dome
   // The snap happens to the DIRECTION, before anything is computed - so
   // the sun, the moons, the stars and the cloud edges are all ON the grid.
-  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/);
-  const body = fs.slice(fs.indexOf('void main() {'));
-  assert.ok(body.indexOf('uRetroStep > 0.0') < body.indexOf('float e = clamp(dir.y'), 'snapped BEFORE the dome is coloured');
+  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = ringSnap\(dir, uRetroStep, cell\);/);   // ES1g: the step itself, not a cells-per-face argument
+  // ES1g: the dome writes the SHARED snap lines (one law, three passes),
+  // so what has to come first is the interpolation.
+  const dome = read('src/render/enhancedSky.js');
+  const body = dome.slice(dome.indexOf('void main() {'));
+  assert.ok(body.indexOf('${RETRO_SNAP_GLSL}') >= 0 && body.indexOf('${RETRO_SNAP_GLSL}') < body.indexOf('float e = clamp(dir.y'),
+    'snapped BEFORE the dome is coloured');
   // Ordered dither, indexed by the angular cell (not the screen pixel,
   // which would crawl when the camera turned).
   assert.match(fs, /float bayer4\(vec2 p\)/);
@@ -421,41 +425,77 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
 // azimuth/elevation, which puts its POLE at the zenith: the elevation
 // rings became concentric circles and the azimuth cells converged to
 // nothing, so looking straight up was a bullseye.
-test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole and no beat', () => {
-  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2: cubeSnap and bayer4 are the shared module's, interpolated into the dome
-  // The lat-long snap is gone, root and branch.
-  assert.doesNotMatch(fs, /floor\(vec2\(az, el\) \/ uRetroStep\)/, 'no azimuth/elevation snap');
+test('ES1g: the grid is cast on RINGS - no pole, no face, no edge, and the cell is the painted pixel', () => {
+  const fs = read('src/render/enhancedSky.js') + read('src/render/retroPixel.js');   // PS2/ES1g: the snap and bayer4 are the shared module's, interpolated into the dome
+  // ES1f's cube is gone, root and branch - it is what put a hard line at
+  // 45 degrees elevation (Mac: "the frame of a square skybox").
+  assert.doesNotMatch(fs, /vec3 cubeSnap\(/, 'no cube snap');
+  assert.doesNotMatch(fs, /cellOut = uv \* n \+ face \* 977\.0;/, 'and no per-face cell id for the dither to break across');
+  // ...and the CONSTANT-count lat-long grid it fled stays gone too: that
+  // one kept 2*PI/step cells on every ring, so they narrowed to slivers
+  // and pinwheeled at the zenith. The ring count FALLS with the ring.
+  assert.doesNotMatch(fs, /floor\(vec2\(az, el\) \/ uRetroStep\)/, 'no fixed-count azimuth/elevation snap');
   assert.doesNotMatch(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'and no lat-long star field');
-  // A cube: six faces, the major axis chosen, the cell id carrying its face.
-  assert.match(fs, /vec3 cubeSnap\(vec3 dir, float n, out vec2 cellOut\) \{/);
-  assert.match(fs, /if \(a\.x >= m\) \{ raw = dir\.zy \/ a\.x; face = dir\.x > 0\.0 \? 0\.0 : 1\.0; \}/);
-  // AUDIT 39 F53 MOVED THIS PIN: cellOut is the CONTINUOUS face
-  // coordinate now (the id is floor(cellOut)), because the star field
-  // needs the fragment's position inside its cell and fract() of an
-  // integer is zero. The face offset is integral, so flooring before or
-  // after the add names the same cell and the seam law is unchanged.
-  assert.match(fs, /cellOut = uv \* n \+ face \* 977\.0;/, 'a face\'s cells are its own, so the dither does not run across a seam');
+  assert.match(fs, /vec3 ringSnap\(vec3 dir, float step, out vec2 cellOut\) \{/);
+  assert.match(fs, /float m = max\(1\.0, floor\(6\.28318531 \* ce \/ step \+ 0\.5\)\);/, 'as many cells as fit at one step wide');
+  assert.match(fs, /float ring = min\(floor\(\(el \+ 1\.57079633\) \/ step\), floor\(3\.14159265 \/ step\) - 1\.0\);/, 'and the top ring is clamped, or the zenith mirrors through the pole');
+  assert.match(fs, /az -= 6\.28318531 \* floor\(az \/ 6\.28318531\);/, 'the azimuth wrap is a cell boundary, not a seam');
   assert.match(fs, /cell = floor\(cell\);/, 'and the dither indexes the cell, not its interior');
-  // EQUI-ANGULAR: a plain cube face is a tangent plane, so its cells
-  // cover 2.6x less sky at the corners - a cell size that varies across
-  // the frame beats against the screen grid and draws curved rings,
-  // which is the pole's ghost rather than its cure.
-  assert.match(fs, /vec2 uv = atan\(raw\) \* 1\.27323954;/, '4/PI: the face is warped to equal angles');
-  assert.match(fs, /vec2 t = tan\(\(cell \+ 0\.5\) \/ n \* 0\.78539816\);/, 'PI/4: and warped back to rebuild the ray');
-  // ...which makes the count exact: 90 degrees a face over n cells at
-  // one step each, so n = (PI/2)/step, 256 a face, 512 across 180 -
-  // SKY??.DAT's own width, which is the whole point of the step.
-  const n = (Math.PI / 2) / RETRO.step;
-  assert.ok(Math.abs(n - 256) < 1e-9, `${n} cells a face`);
-  assert.ok(Math.abs(1.57079633 / RETRO.step - 256) < 1e-4, 'and the shader computes the same n');
-  // The star field rides the same cube, so it has no pinwheel and no
-  // density pile-up at a pole - and its scales were raised to keep the
-  // count, because a cube covers the sphere with far fewer cells.
-  // EE2 F2: the RETRO snap still uses cubeSnap on the turned frame - a
-  // cell id is exactly what IT wants. The stars no longer do.
-  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/);
+  // THE LAW THAT ES1f's PIN MISSED. It asserted n === 256 and called that
+  // "256 cells a face" - but the face coordinate spans [-1,1], so
+  // floor(uv*n) cut 2n of them and every retro pixel was HALF of
+  // SKY??.DAT's. Pin the ANGLE the snap actually produces instead, which
+  // is the number the law is written in.
+  const snap = ringSnapJs(RETRO.step);
+  const widths = [], heights = [];
+  for (let el = -85; el <= 85; el += 0.5) {
+    const a = snap(0.0001 * Math.PI / 180, el * Math.PI / 180);
+    const elC = (a.ring + 0.5) * RETRO.step - Math.PI / 2;
+    widths.push(360 * Math.cos(elC) / a.m);   // the arc ON THE SPHERE, not in azimuth
+    heights.push(RETRO.step * 180 / Math.PI);
+  }
+  const px = RETRO.step * 180 / Math.PI;   // 0.3516 deg: SKY??.DAT is 512 across 180
+  assert.ok(Math.abs(px - 180 / 512) < 1e-9, `${px} degrees a pixel`);
+  assert.ok(Math.max(...widths) - px < 0.01 && px - Math.min(...widths) < 0.01,
+    `cell width ${Math.min(...widths).toFixed(4)}..${Math.max(...widths).toFixed(4)} is the painted pixel ${px.toFixed(4)}`);
+  assert.deepEqual([...new Set(heights)], [px], 'and every ring is exactly one pixel tall');
+  // NO SEAM: neighbouring directions never snap further apart than one
+  // cell's diagonal, anywhere on the sphere - through both poles and
+  // across the azimuth wrap. On the cube this test fails at 45 degrees.
+  let worst = 0;
+  for (let el = -89.5; el <= 89.5; el += 1.7) {
+    for (let az = 0; az < 360; az += 1.3) {
+      const b = snap(az * Math.PI / 180, el * Math.PI / 180).dir;
+      for (const [da, de] of [[0.02, 0], [0, 0.02]]) {
+        const c = snap((az + da) * Math.PI / 180, (el + de) * Math.PI / 180).dir;
+        worst = Math.max(worst, Math.acos(Math.min(1, b[0] * c[0] + b[1] * c[1] + b[2] * c[2])) * 180 / Math.PI);
+      }
+    }
+  }
+  assert.ok(worst <= px * Math.SQRT2 + 1e-3, `worst neighbour jump ${worst.toFixed(4)} is one cell diagonal ${(px * Math.SQRT2).toFixed(4)}`);
+  // The star field keeps its OWN cube coordinate (EE2 F2): a sparse
+  // random field has no grid to break, and the face offset is what stops
+  // a mirrored id drawing the same star either side of an edge.
+  assert.match(fs, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/);
   assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
 });
+
+/** The GLSL ringSnap, mirrored in JS so the pins above can measure it. */
+function ringSnapJs(step) {
+  const HALF = 1.57079633, TAU = 6.28318531;
+  return (az0, el0) => {
+    const dir = [Math.sin(az0) * Math.cos(el0), Math.sin(el0), Math.cos(az0) * Math.cos(el0)];
+    const el = Math.asin(Math.max(-1, Math.min(1, dir[1])));
+    const ring = Math.min(Math.floor((el + HALF) / step), Math.floor(3.14159265 / step) - 1);
+    const elC = (ring + 0.5) * step - HALF;
+    const ce = Math.cos(elC);
+    const m = Math.max(1, Math.floor(TAU * ce / step + 0.5));
+    let az = Math.atan2(dir[0], dir[2]);
+    az -= TAU * Math.floor(az / TAU);
+    const azC = (Math.floor(az * m / TAU) + 0.5) * TAU / m;
+    return { dir: [Math.sin(azC) * ce, Math.sin(elC), Math.cos(azC) * ce], m, ring };
+  };
+}
 
 // ═══ EE2: the sky's four fixes, from the Enhanced Environments lab ═══
 test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has its band', async () => {

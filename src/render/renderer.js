@@ -633,7 +633,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 /** AUDIT 65 RS-3: the texture unit the cloud-shadow map is RESERVED on
  *  (_uploadCloudShadow). It used to be 7, which is also where the
  *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
- *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:834-841,
+ *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:863-870,
  *  over systems/dynamicSkies.js:432-435's nine names),
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
