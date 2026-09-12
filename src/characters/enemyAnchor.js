@@ -15,7 +15,7 @@
 // The capsule follows SetupDemoEnemy.cs:103-115: height from the idle
 // sprite, HALVED for a flyer ("assume body is the lower half",
 // bottom-justified so the bottom edge stays), and never under 1.6.
-import { billboardSize } from '../world/rmbFlats.js';
+import { mobileBillboardSize } from '../world/rmbFlats.js';
 
 /** SetupDemoEnemy.cs:103-115 - the CharacterController height. */
 export function enemyControllerHeight(idleH, behaviour) {
@@ -28,7 +28,7 @@ export function enemyControllerHeight(idleH, behaviour) {
 /** The idle record's scaled sprite height - dfMobile.GetSize() at setup
  *  (:104, the Idle state the unit is set up in). */
 export function idleSpriteHeight(t) {
-  return billboardSize(t, 0).h;
+  return mobileBillboardSize(t, 0).h;   // AUDIT MM1: dfMobile.GetSize() reads RecordSizes, the xml applied
 }
 
 /** DFU's transform is the sprite's CENTRE (localPosition zero); the

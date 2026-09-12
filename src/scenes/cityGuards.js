@@ -80,7 +80,7 @@ import {
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
   tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
@@ -923,7 +923,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
-      const sz = billboardSize(g.tex, o.record);
+      const sz = mobileBillboardSize(g.tex, o.record);   // AUDIT MM1: a mobile unit
       g.batch.record = rkey;
       g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       g.batch.origin = g.ai.feet;

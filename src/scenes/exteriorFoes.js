@@ -37,7 +37,7 @@ import { generateItems as generateLootItems, addEnemyLootExtras } from '../syste
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, spriteOriginY } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats)
 import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
@@ -864,7 +864,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const o = f._mout;
       const rkey = `${o.record}#${o.frame}`;
       if (!renderer.textures.has(`${f.archive}_${rkey}`)) uploadRecordFrame(f.archive, o.record, o.frame);
-      const sz = billboardSize(f.tex, o.record);
+      const sz = mobileBillboardSize(f.tex, o.record);   // AUDIT MM1: a mobile unit's record cache carries the xml scale
       f.batch.record = rkey;
       f.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
       // INCIDENT 2026-09-04: a flyer or swimmer keeps its CENTRE across

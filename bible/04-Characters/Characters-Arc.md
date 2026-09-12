@@ -3448,3 +3448,10 @@ gone: it reads the other mods' own switches through
 edit over it, as DFU Awakes the dependency first. Off by default. Pins:
 4 in `test/meanerMonsters.test.js`. The page:
 `04-Characters/Meaner-Monsters.md`.
+
+**AUDIT MM1 (the same day).** Two doors, not one: a mobile unit takes
+the xml scale on every record (`mobileBillboardSize`, six sites), a
+static billboard only with an imported texture for the record
+(`billboardSize`, DFU's GetStaticBillboardMaterial gate) - so the
+dragonling's corpse file is inert in both, as DFU has it; and the
+corpse field's packed int unpacks. The page's AUDIT MM1 section.

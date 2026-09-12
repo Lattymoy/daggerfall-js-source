@@ -32,7 +32,7 @@ repository's.
 | --- | --- | --- |
 | `Init` | makes the MonoBehaviour; with **Unleveled Mobs** loaded rewrites `RandomEncounters.EncounterTables[21]` and `[36]` (the Alternate Dragonling joins two wilderness tables); with **DEX** loaded arms two warning boxes | the arm and the boxes are NOT carried - neither mod is in the port; the arm's condition becomes Unleveled Mobs' own switch the day it is integrated |
 | `Awake` / `InitMod` | walks `mobEnemyDataArray` (or `pcoEnemyDataArray` behind `pco`, which nothing ever sets) and writes every field that is not -1 over `EnemyBasics.Enemies[id]` | `MEANER_MONSTERS_ROWS` (24 rows, the DLL's order), `foldMeanerMonsters` (the loop, folded), `MEANER_MONSTERS_EDIT` (21 monsters), `applyMeanerMonsters` at `enemyEntity.makeEnemyEntity` - DFU rewrites the global table once, the port overlays the row at mint |
-| the forty-six `xml` files | `<info><scaleX>..</scaleX><scaleY>..</scaleY></info>` - TextureReplacement.SetBillboardScale multiplies a mobile unit's record size (DaggerfallMobileUnit.cs:679) and a static billboard's (DaggerfallBillboard.cs:258) | `MEANER_MONSTERS_BILLBOARD_XML` registered on `world/billboardXml.js` by `installMeanerMonsters` (worldTick); `rmbFlats.billboardSize(t, record)` is the one door every billboard now sizes through |
+| the forty-six `xml` files | `<info><scaleX>..</scaleX><scaleY>..</scaleY></info>` - TextureReplacement.SetBillboardScale multiplies a mobile unit's record size on every record (DaggerfallMobileUnit.cs:679, MobilePersonBillboard.cs:343); a static billboard reads the same xml only with an imported texture for the record (GetStaticBillboardMaterial, TextureReplacement.cs:504-519, DaggerfallBillboard.cs:258) | `MEANER_MONSTERS_BILLBOARD_XML` registered on `world/billboardXml.js` by `installMeanerMonsters` (worldTick); `rmbFlats.mobileBillboardSize` (the six mobile-unit sites) and `rmbFlats.billboardSize` (every static billboard) are the two doors, on DFU's two rules (AUDIT MM1) |
 | `pcoEnemyDataArray` | dead - `private static bool pco = false;` | `MEANER_MONSTERS_PCO_ROWS`, data, unreachable, pinned so |
 
 The numbers: the Rat (1-4, 15-25, level 1, armour 8), Giant Bat, Grizzly
@@ -60,6 +60,18 @@ corpse (96/0) x2 - the "Large Dragonling" the row names.
   out in InitMod. The Dragonling keeps its name.
 - The Grizzly Bear and Sabertooth Tiger rows carry `level: -1`, so
   their levels stay the base table's.
+- **The corpse file is inert (AUDIT MM1).** `096_0-0.xml` doubles the
+  dragonling's corpse - but a corpse is a static DaggerfallBillboard,
+  and DFU reads a static billboard's xml only inside
+  `GetStaticBillboardMaterial`'s `if (LoadFromCacheOrImport(...))`: no
+  imported PNG for 96/0, no scale. The mod ships no PNG, so in DFU the
+  Large Dragonling's corpse stays classic-sized; the port's static door
+  reads the same gate (`hasTextureReplacement`), and a texture pack
+  that replaces 96/0 wakes the file in both. The living monsters'
+  files (264, 269, 295) are live: a mobile unit runs SetBillboardScale
+  on every record, PNG or not.
+- Both dispatches sit behind DaggerfallUnity.Settings.AssetInjection;
+  the port's Enhancements/AssetInjection gates them the same way.
 
 ## No compatibility switches between mods (Mac's rule)
 
@@ -92,12 +104,20 @@ not vendored - DFU's "not loaded"). So:
   record as a later-loaded mod's file does. `TextureFile.load` now
   stamps the archive number on the parsed file so `billboardSize` can
   ask.
-- **Every billboard goes through the door**, not only the mod's four
-  archives: mobile units, corpses, people, loot, flats, spell art -
-  which is DFU's reach (every DaggerfallMobileUnit and
-  DaggerfallBillboard). Nothing changes for an archive no mod names.
+- **Every billboard goes through one of the two doors**, not only the
+  mod's four archives: mobile units and street people through
+  `mobileBillboardSize` (six sites), corpses, loot, flats, people
+  stood still, spell art through `billboardSize` - which is DFU's
+  reach (every DaggerfallMobileUnit, MobilePersonBillboard and
+  DaggerfallBillboard) on DFU's two rules. Nothing changes for an
+  archive no mod names.
 
 ## Pinned (`test/meanerMonsters.test.js`, 4)
+
+(AUDIT MM1 added to the same four: the corpse field's unpacking, the
+corpse xml inert without a PNG and live with one, the werewolf's corpse
+untouched, the six mobile sites through the mobile door and the corpse
+through the static one.)
 
 The table row for row and its fold (the id-35 quartet, the name never
 applied, the dead pco array); the row at mint under the switch, the
@@ -108,3 +128,40 @@ truncated record size, a later registrant winning; and the seams - the
 archive stamp, no billboard sized past the door, the boot order, the
 Mods pane entry, the credit, the README, the overhaul's two switches
 gone. Not run here: a game.
+
+## AUDIT MM1 (2026-09-12, Mac: "Lets audit and ensure parity")
+
+Read again the same day, against the decompiled DLL and DFU's dispatch.
+Both EnemyData arrays diffed by script against the port's rows, field
+for field, in order: identical (24 and 22 rows). InitMod's loop, the
+fold, the id-35 quartet, the unapplied name, the dead `pco` flag, the
+mint under the switch, the overhaul's edit over it and the order, the
+Mods pane, the credit, the manifest byte for byte: standing.
+
+**Two findings, both fixed:**
+
+1. **The static billboard's xml gate was missing.** MM1 sized every
+   billboard through one door that applied the xml whenever the mod was
+   on; DFU applies it to a mobile unit unconditionally
+   (DaggerfallMobileUnit.cs:679, MobilePersonBillboard.cs:343) but to a
+   static billboard only when a replacement texture is imported for the
+   record (TextureReplacement.cs:504-519). With this mod alone, DFU
+   therefore scales the werewolf, the wereboar and the dragonling and
+   NOT the dragonling's corpse; the port doubled the corpse. Now two
+   doors: `mobileBillboardSize` at the six mobile-unit sites (the foe
+   draws in both pools, the guards, the idle height, the street people
+   in both hosts), `billboardSize` everywhere else with
+   `hasTextureReplacement(archive, record, 0)` as its gate; both behind
+   Enhancements/AssetInjection, DFU's own gate on both. Pinned: the
+   corpse inert without a PNG, live with one; the werewolf's corpse
+   untouched; the six sites.
+2. **`corpseTex` was folded raw.** The C#'s `CorpseTexture(archive,
+   record)` packs `(archive << 16) + record` into one int and InitMod
+   writes it to `CorpseTexture`; the port's rows carry {archive,
+   record}. No row sets it, so nothing changed in play; the fold now
+   unpacks it (`unpackCorpseTexture`), pinned with a synthetic row.
+
+Not changed, noted: DFU's ModManager does not reorder mods - a
+dependency listed in the manifest is checked, and the user's load order
+must put Meaner Monsters before the overhaul for the overhaul's arm to
+see it; the port's fixed order is that working order.

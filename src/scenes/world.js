@@ -30,7 +30,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y }
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
-import { collectBlockFlats, billboardSize } from '../world/rmbFlats.js';
+import { collectBlockFlats, billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
@@ -8211,7 +8211,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const pt = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
-        const sz = billboardSize(pt, out.record);
+        const sz = mobileBillboardSize(pt, out.record);   // AUDIT MM1: MobilePersonBillboard.cs:343 - the xml scale, on every record
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [

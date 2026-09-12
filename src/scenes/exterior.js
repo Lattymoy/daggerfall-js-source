@@ -53,7 +53,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, 
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { drawCharacterSprite } from '../render/characterSprite.js';
-import { collectBlockFlats, billboardSize } from '../world/rmbFlats.js';
+import { collectBlockFlats, billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { modSetting } from '../systems/modSettings.js';   // SIB1: the mod's own switch
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
@@ -4279,7 +4279,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const t = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
-        const sz = billboardSize(t, out.record);
+        const sz = mobileBillboardSize(t, out.record);   // AUDIT MM1: MobilePersonBillboard.cs:343
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [person.pos[0], person.pos[1], person.pos[2]];

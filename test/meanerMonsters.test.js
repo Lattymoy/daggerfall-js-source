@@ -6,11 +6,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import {
-  MEANER_MONSTERS_ROWS, MEANER_MONSTERS_PCO_ROWS, MEANER_MONSTERS_PCO_FLAG, MEANER_MONSTERS_EDIT, foldMeanerMonsters,
+  MEANER_MONSTERS_ROWS, MEANER_MONSTERS_PCO_ROWS, MEANER_MONSTERS_PCO_FLAG, MEANER_MONSTERS_EDIT, foldMeanerMonsters, unpackCorpseTexture,
   applyMeanerMonsters, meanerMonstersEnabled, MEANER_MONSTERS_BILLBOARD_XML, installMeanerMonsters, MEANER_MONSTERS_VENDOR,
 } from '../src/characters/meanerMonsters.js';
 import { registerBillboardXml, unregisterBillboardXml, billboardXmlScale, applyBillboardXml } from '../src/world/billboardXml.js';
-import { billboardSize, scaledBillboardSize } from '../src/world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize, scaledBillboardSize } from '../src/world/rmbFlats.js';
+import { setTextureReplacements, clearTextureReplacements } from '../src/systems/textureReplacement.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
 import { MEANER_MONSTERS as PCAAO_EDIT } from '../src/combat/pcaaoMeanerMonsters.js';
@@ -36,6 +37,9 @@ test('MM1: the table is the DLL\'s, row for row - twenty-four rows in its order,
   assert.deepEqual(foldMeanerMonsters(MEANER_MONSTERS_PCO_ROWS)[4].armorValue, 8, '...and foldable, were pco ever true');
   // no row sets a sound or a corpse
   assert.ok(MEANER_MONSTERS_ROWS.every((r) => r.moveSnd === -1 && r.barkSnd === -1 && r.attackSnd === -1 && r.corpseTex === -1));
+  // AUDIT MM1: were a row ever to set one, CorpseTexture's packed int unpacks to the port's {archive, record}
+  assert.deepEqual(unpackCorpseTexture((96 << 16) + 5), { archive: 96, record: 5 });
+  assert.deepEqual(foldMeanerMonsters([{ id: 9, level: -1, minHp: -1, maxHp: -1, armor: -1, minDmg: -1, maxDmg: -1, minDmg2: -1, maxDmg2: -1, minDmg3: -1, maxDmg3: -1, moveSnd: 12, barkSnd: -1, attackSnd: -1, corpseTex: (405 << 16) + 2 }])[9], { moveSound: 12, corpseTexture: { archive: 405, record: 2 } });
 });
 
 test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled, the base row otherwise, a class enemy untouched; the overhaul\'s edit over Ralzar\'s when both are on, with NO switch between them (mutant: the order swapped)', () => {
@@ -88,14 +92,29 @@ test('MM1: the forty-six xml files - the vendored files equal the table (werewol
   on = true;
   assert.deepEqual(billboardXmlScale(264, 3), { x: 1.2, y: 1.2 }); assert.deepEqual(billboardXmlScale(295, 14), { x: 2.5, y: 2.5 }); assert.deepEqual(billboardXmlScale(96, 0), { x: 2, y: 2 });
   assert.equal(billboardXmlScale(96, 5), null, 'the werewolf\'s corpse (96/5) has no file'); assert.equal(billboardXmlScale(264, 15), null);
-  // a TEXTURE.264 stand-in: a 97x109 record with the classic -70 scale, as the werewolf's are
+  // a TEXTURE.264 stand-in: a 97x109 record with the classic -70 scale, as the werewolf's are - a MOBILE UNIT
   const t = { archive: 264, getSize: () => ({ width: 97, height: 109 }), getScale: () => ({ width: -70, height: -70 }) };
   const plain = scaledBillboardSize(t.getSize(0), t.getScale(0));
-  const sized = billboardSize(t, 0);
+  const sized = mobileBillboardSize(t, 0);
   assert.ok(Math.abs(sized.w - plain.w * 1.2) < 1e-12 && Math.abs(sized.h - plain.h * 1.2) < 1e-12, 'the xml multiplies the TRUNCATED, scaled size (DaggerfallMobileUnit.cs:673-679)');
   on = false;
-  assert.deepEqual(billboardSize(t, 0), plain, 'off: the record\'s own size');
-  assert.deepEqual(billboardSize({ getSize: () => ({ width: 10, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }, 0), scaledBillboardSize({ width: 10, height: 10 }, { width: 0, height: 0 }), 'a texture with no archive: no xml');
+  assert.deepEqual(mobileBillboardSize(t, 0), plain, 'off: the record\'s own size');
+  assert.deepEqual(mobileBillboardSize({ getSize: () => ({ width: 10, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }, 0), scaledBillboardSize({ width: 10, height: 10 }, { width: 0, height: 0 }), 'a texture with no archive: no xml');
+  // AUDIT MM1: a STATIC billboard reads the xml only with an imported texture for the record
+  // (GetStaticBillboardMaterial's `if (LoadFromCacheOrImport(...))`, TextureReplacement.cs:504-519) - so the
+  // dragonling's corpse (96/0, x2 in the file) stays classic-sized under this mod, which ships no PNG
+  on = true;
+  const corpse = { archive: 96, getSize: () => ({ width: 60, height: 40 }), getScale: () => ({ width: 0, height: 0 }) };
+  const corpsePlain = scaledBillboardSize(corpse.getSize(0), corpse.getScale(0));
+  clearTextureReplacements();
+  assert.deepEqual(billboardSize(corpse, 0), corpsePlain, 'no PNG for 96/0: the corpse xml is inert, as in DFU');
+  assert.ok(Math.abs(mobileBillboardSize(corpse, 0).w - corpsePlain.w * 2) < 1e-12, '(a mobile unit on that archive would take it)');
+  setTextureReplacements(['096_0-0.png'], async () => null);
+  const doubled = billboardSize(corpse, 0);
+  assert.ok(Math.abs(doubled.w - corpsePlain.w * 2) < 1e-12 && Math.abs(doubled.h - corpsePlain.h * 2) < 1e-12, 'a pack that replaces 96/0: the xml scales the corpse');
+  assert.deepEqual(billboardSize({ archive: 96, getSize: () => ({ width: 60, height: 40 }), getScale: () => ({ width: 0, height: 0 }) }, 5), corpsePlain, 'the werewolf\'s corpse (96/5): no file, no PNG');
+  clearTextureReplacements();
+  on = false;
   // a later registrant wins, as a later-loaded mod's file does
   registerBillboardXml('later', { 264: { 3: [3, 3] } }, () => true);
   assert.deepEqual(billboardXmlScale(264, 3), { x: 3, y: 3 });
@@ -110,7 +129,15 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
     const s = rd(`src/scenes/${f}`);
     assert.doesNotMatch(s, /scaledBillboardSize\(\w+(?:\.\w+)*\.getSize\(/, `${f}: a billboard sized past the xml door`);
   }
-  assert.match(rd('src/characters/enemyAnchor.js'), /return billboardSize\(t, 0\)\.h;/, 'the idle height reads the scaled record');
+  // AUDIT MM1: the mobile units through the mobile door (DaggerfallMobileUnit / MobilePersonBillboard), everything else static
+  assert.match(rd('src/characters/enemyAnchor.js'), /return mobileBillboardSize\(t, 0\)\.h;/, 'the idle height reads the scaled record');
+  assert.match(rd('src/scenes/exteriorFoes.js'), /const sz = mobileBillboardSize\(f\.tex, o\.record\);/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /const sz = mobileBillboardSize\(f\.mobileTex, out\.record\);/);
+  assert.match(rd('src/scenes/cityGuards.js'), /const sz = mobileBillboardSize\(g\.tex, o\.record\);/);
+  assert.match(rd('src/scenes/world.js'), /const sz = mobileBillboardSize\(pt, out\.record\);/);
+  assert.match(rd('src/scenes/exterior.js'), /const sz = mobileBillboardSize\(t, out\.record\);/);
+  assert.match(rd('src/scenes/corpseMarker.js'), /const size = billboardSize\(t, record\) \?\? fallbackSize;/, 'a corpse is a static billboard');
+  assert.equal((rd('src/scenes/exteriorFoes.js').match(/mobileBillboardSize\(/g) || []).length, 1, 'the corpse fallback stays static');
   const wt = rd('src/systems/worldTick.js');
   assert.ok(wt.indexOf('installMeanerMonsters();') < wt.indexOf('installPcaao();'), 'the dependency Awakes first');
   const m = MOD_SETTINGS.meanerMonsters;

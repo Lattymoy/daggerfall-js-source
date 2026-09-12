@@ -36,6 +36,7 @@
 import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { applyBillboardXml } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
+import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js';   // AUDIT MM1: DFU's two gates on the xml scale
 
 const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
@@ -51,14 +52,33 @@ const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
  * @param {{width:number,height:number}} scale - record scale fields.
  * @returns {{w:number,h:number}}
  */
-/** MM1: the size a billboard of `t`'s record draws at - GetScaledBillboardSize
- *  over the record's own scale, then the xml scale a vendored mod
- *  registered for (archive, record) (TextureReplacement.SetBillboardScale,
- *  DaggerfallMobileUnit.cs:679 / DaggerfallBillboard.cs:258), then nothing
- *  when none. Every mobile unit, corpse, person and flat sizes through
- *  this one door; `scaledBillboardSize` below stays the pure law. */
+/** MM1 / AUDIT MM1: the size a billboard of `t`'s record draws at -
+ *  GetScaledBillboardSize over the record's own scale, then the xml
+ *  scale a vendored mod registered for (archive, record), on DFU's TWO
+ *  rules, which are not the same:
+ *
+ *  - A MOBILE UNIT (an enemy: DaggerfallMobileUnit.CacheRecordSizesAndFrames,
+ *    :657-682; a street person: MobilePersonBillboard.cs:343) runs
+ *    TextureReplacement.SetBillboardScale on every record, with or
+ *    without a replacement texture - `mobileBillboardSize`.
+ *  - A STATIC billboard (DaggerfallBillboard.SetMaterial, :252-258 - a
+ *    flat, a corpse, a loot pile, spell art) reads the xml only INSIDE
+ *    GetStaticBillboardMaterial's `if (LoadFromCacheOrImport(...))`
+ *    (TextureReplacement.cs:504-519): no imported PNG for the record,
+ *    no xml scale - `billboardSize`. So a mod that ships xml alone
+ *    scales its monsters and not their corpses (Meaner Monsters' 96/0).
+ *
+ *  Both sit behind DaggerfallUnity.Settings.AssetInjection (SetBillboardScale
+ *  :663-664, GetStaticBillboardMaterial :497-498) - the port's
+ *  Enhancements/AssetInjection. `scaledBillboardSize` below stays the
+ *  pure law, and a texture with no archive stamped takes no xml. */
+export function mobileBillboardSize(t, record) {
+  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+  return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;
+}
 export function billboardSize(t, record) {
-  return applyBillboardXml(t?.archive, record, scaledBillboardSize(t.getSize(record), t.getScale(record)));
+  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+  return t?.archive != null && hasTextureReplacement(t.archive, record, 0) ? applyBillboardXml(t.archive, record, size) : size;
 }
 
 export function scaledBillboardSize(size, scale) {

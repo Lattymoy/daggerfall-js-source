@@ -118,11 +118,14 @@ const FIELDS = Object.freeze([
   ['minDmg3', 'minDamage3'], ['maxDmg3', 'maxDamage3'], ['moveSnd', 'moveSound'], ['barkSnd', 'barkSound'],
   ['attackSnd', 'attackSound'], ['corpseTex', 'corpseTexture'],
 ]);
+/** `CorpseTexture(archive, record)` packs `(archive << 16) + record`
+ *  (the class's own static); the port's rows carry {archive, record}. */
+export const unpackCorpseTexture = (packed) => ({ archive: packed >> 16, record: packed & 0xffff });
 export function foldMeanerMonsters(rows = MEANER_MONSTERS_ROWS) {
   const edit = {};
   for (const r of rows) {
     const e = (edit[r.id] ??= {});
-    for (const [from, to] of FIELDS) if (r[from] !== -1) e[to] = r[from];
+    for (const [from, to] of FIELDS) if (r[from] !== -1) e[to] = to === 'corpseTexture' ? unpackCorpseTexture(r[from]) : r[from];
   }
   for (const k of Object.keys(edit)) Object.freeze(edit[k]);
   return Object.freeze(edit);

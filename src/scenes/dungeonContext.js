@@ -23,7 +23,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 28 W4: the save-tim
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
@@ -4116,7 +4116,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
-        const sz = billboardSize(f.mobileTex, out.record);
+        const sz = mobileBillboardSize(f.mobileTex, out.record);   // AUDIT MM1: a mobile unit's record cache carries the xml scale
         // C17: the texture-475 female casting records read too small
         // from the files - DFU post-scales 20-24 by 1.35 (OrientEnemy).
         if (f.mobileArchive === 475 && out.record >= 20 && out.record <= 24) { sz.w *= 1.35; sz.h *= 1.35; }
