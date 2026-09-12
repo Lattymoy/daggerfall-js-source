@@ -56,10 +56,20 @@ export const CREDITS = Object.freeze({
   ]),
   mods: Object.freeze([
     Object.freeze({
+      title: 'Meaner Monsters',
+      version: '1.5.2',
+      author: 'Ralzar',
+      what: 'Twenty monsters made meaner: their damage, health, level and armour rewritten (rats, bats and zombies gentler), werewolves and wereboars drawn a fifth larger, the dragonling two and a half times its size with a corpse to match. Ported 1:1 from the shipped 1.5.2 (characters/meanerMonsters.js); both lanes, under its own switch in the Mods pane. With the combat overhaul on, Kirk.O\u2019s edit of these numbers takes over, as in Daggerfall Unity.',
+      terms: 'Carried under its MIT License - the permission the source header grants (Copyright (C) 2020 Ralzar; Author: Hazelnut & Ralzar); see vendor/meanerMonsters/README.md.',
+      contact: 'forums.dfworkshop.com (the manifest\u2019s ContactInfo)',
+      vendor: Object.freeze(['meanerMonsters']),
+      link: 'https://github.com/Ralzar81/Meaner-Monsters',
+    }),
+    Object.freeze({
       title: 'Physical Combat And Armor Overhaul',
       version: '1.44',
       author: 'Kirk.O',
-      what: 'The combat overhaul: armour reduces the damage you take instead of your chance to be hit, skills and stats decide the hit, weapons and armour wear by their kind and material (his Believable Equipment Characteristics And Durability, built in), shields block by their material and your stats, critical strikes multiply damage, monsters have their own hides, and his edit of Ralzar\u2019s Meaner Monsters and Roleplay Realism\u2019s archery ride as switches. Ported 1:1 from the shipped 1.44 (combat/pcaao.js); both lanes, under its own switches in the Mods pane.',
+      what: 'The combat overhaul: armour reduces the damage you take instead of your chance to be hit, skills and stats decide the hit, weapons and armour wear by their kind and material (his Believable Equipment Characteristics And Durability, built in), shields block by their material and your stats, critical strikes multiply damage, monsters have their own hides, and his edit of Ralzar\u2019s Meaner Monsters and Roleplay Realism\u2019s archery follow those mods\u2019 own switches. Ported 1:1 from the shipped 1.44 (combat/pcaao.js); both lanes, under its own switches in the Mods pane.',
       terms: 'Ported from the shipped .dfmod and the public source (github.com/magicono43/DFU-Mod_Physical-Combat-And-Armor-Overhaul, no licence stated); see vendor/pcaao/README.md for the permission.',
       contact: 'kirkoliveri@gmail.com (the manifest\u2019s ContactInfo)',
       vendor: Object.freeze(['pcaao']),

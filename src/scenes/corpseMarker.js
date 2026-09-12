@@ -35,7 +35,7 @@
 
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
 import { SOUND } from '../systems/soundClips.js';
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
@@ -80,7 +80,7 @@ export async function mintCorpseMarker({
     ? floorLanding(collider, [feet[0], feet[1] + 0.1, feet[2]])
     : [feet[0], feet[1], feet[2]];
   uploadRecordFrame(archive, record, 0);
-  const size = scaledBillboardSize(t.getSize(record), t.getScale(record)) ?? fallbackSize;
+  const size = billboardSize(t, record) ?? fallbackSize;
   const batch = renderer.createBillboardBatch(archive, record, size, [[pos[0], pos[1], pos[2]]]);
   // FA1 slice 3: a BARE record plus a frame FIELD - the draw builds
   // `record#frame`, so the record must not carry one already.

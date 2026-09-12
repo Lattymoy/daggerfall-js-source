@@ -107,6 +107,7 @@ export class TextureFile extends BaseImageFile {
     else this._solidType = SOLID_TYPES.None;
 
     if (palette) this.palette = palette;
+    this.archive = Number.parseInt(fileName.slice('TEXTURE.'.length), 10);   // MM1: the archive number, for the xml billboard scale (world/billboardXml.js)
     this._setBytes(bytes, fileName);
 
     try {

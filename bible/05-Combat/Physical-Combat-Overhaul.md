@@ -99,9 +99,15 @@ its `modsettings.json`:
   port has no mod list, so the mod is a switch in the Mods pane (the
   Dynamic Skies precedent after VC1). The seven shipped module keys
   default as shipped (all on). Mac's to flip.
-- **Two derived arms became switches.** `rolePlayRealismArchery` (DFU:
-  Roleplay Realism loaded with `advancedArchery` on) and
-  `meanerMonsters` (DFU: Meaner Monsters loaded), both off by default.
+- **The two derived arms read the OTHER mods' own switches** (MM1, Mac:
+  "there shouldn't be compatibility switches between mods"; they were
+  switches of this mod's from PCO1 to MM1). `meanerMonsters` is
+  `meanerMonsters/Enabled` - Ralzar's mod, vendored
+  (`04-Characters/Meaner-Monsters.md`); `rolePlayRealismArchery` is
+  `roleplayRealism/advancedArchery`, undefined (not loaded) until that
+  mod is vendored. `modSettingIfDeclared` is the read. With both mods
+  on, Ralzar's row lands first and this mod's edit over it, as DFU
+  Awakes the dependency first.
 - **The bow's draw time.** DFU hands `weaponAnimTime` (FPSWeapon's
   animTime, ms) to CalculateAttackDamage. The port's classic bow now
   times its draw: `playerWeapon.lastDrawMs` starts when the drawback

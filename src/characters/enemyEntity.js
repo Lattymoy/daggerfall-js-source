@@ -16,7 +16,8 @@
 // Equipment (SetEnemyEquipment) and loot generation: E3b/E4.
 
 import { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from './mobileTypes.js';
-import { meanerMonstersRow } from '../combat/pcaaoMeanerMonsters.js';   // PCO1: Kirk.O's Meaner Monsters edit, when its switch is on
+import { meanerMonstersRow as pcaaoMeanerMonstersRow } from '../combat/pcaaoMeanerMonsters.js';   // PCO1: Kirk.O's Meaner Monsters edit, when both mods are on
+import { applyMeanerMonsters } from './meanerMonsters.js';   // MM1: Ralzar's Meaner Monsters, when its switch is on
 
 export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from './mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
@@ -66,10 +67,12 @@ export function skillsLevel(level) {
  */
 export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random) {
   const isClass = mobileType >= 128;
-  // PCO1: EnemyBasics.Enemies[i] as InitMod left it - the Meaner
-  // Monsters edit's damage pairs, health, level and armour over the base
-  // row when that module is on; the base row otherwise.
-  const basics = meanerMonstersRow(mobileType, basicsIn);
+  // MM1 + PCO1: EnemyBasics.Enemies[i] as the two Awakes left it -
+  // Ralzar's Meaner Monsters row over the base row when that mod is on,
+  // then Kirk.O's edit over THAT when the overhaul is on too (PCAAO
+  // lists Meaner Monsters as a dependency, so it Awakes after it and
+  // its values win where both write); the base row when neither.
+  const basics = pcaaoMeanerMonstersRow(mobileType, applyMeanerMonsters(mobileType, basicsIn));
   const stats = career
     ? {
         strength: career.strength, intelligence: career.intelligence,

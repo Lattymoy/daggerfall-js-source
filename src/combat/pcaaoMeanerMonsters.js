@@ -8,16 +8,17 @@
 // MinDamage/MaxDamage (and the second and third attack pairs where the
 // monster has them), MinHealth/MaxHealth, Level and ArmorValue. In DFU
 // the branch runs when the "Meaner Monsters" mod is LOADED beside this
-// one; the port has no mod list, so it is the `meanerMonsters` switch
-// on the Mods pane, off by default (the mod is not present unless the
-// player says so). The rows are the C#'s, index for index, value for
+// one; the port reads that mod's own `Enabled` (MM1: Ralzar's mod is
+// vendored as characters/meanerMonsters.js, and there are no
+// compatibility switches between mods - Mac). Its rows land AFTER
+// Ralzar's at mint, as PCAAO Awakes after its dependency. The rows are the C#'s, index for index, value for
 // value; every field the C# leaves alone is the base row's.
 //
 // A LEAF on purpose: characters/enemyEntity.js reads it when it mints a
 // foe, and that file must not reach the combat formulas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { modSetting } from '../systems/modSettings.js';
+import { modSetting, modSettingIfDeclared } from '../systems/modSettings.js';
 
 /** EnemyBasics.Enemies[i] <- {...}, exactly as InitMod writes them. */
 export const MEANER_MONSTERS = Object.freeze({
@@ -65,8 +66,12 @@ export const MEANER_MONSTERS = Object.freeze({
   31: { minDamage: 26, maxDamage: 42, minHealth: 170, maxHealth: 285, level: 21, armorValue: -9 },
 });
 
-/** Is the edit live: the mod on, and its Meaner Monsters switch on. */
-export const meanerMonstersOn = (read = (k) => modSetting('pcaao', k)) => !!read('Enabled') && !!read('meanerMonsters');
+/** Is the edit live: the overhaul on, AND Meaner Monsters on - DFU's
+ *  `ModManager.Instance.GetMod("Meaner Monsters") != null` (Awake),
+ *  read off that mod's own `Enabled` (MM1: no compatibility switch;
+ *  `other` is the cross-mod read, a test hands in its own). */
+export const meanerMonstersOn = (read = (k) => modSetting('pcaao', k), other = modSettingIfDeclared) =>
+  !!read('Enabled') && !!other('meanerMonsters', 'Enabled');
 
 /** The row a foe of `mobileType` is minted from: the base row with
  *  the edit's fields written over it when the edit is live, the base

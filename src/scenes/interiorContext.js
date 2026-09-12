@@ -23,7 +23,7 @@ import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   //
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
@@ -546,7 +546,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const t = await getTexture(archive);
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
-    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    const size = billboardSize(t, record);
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
@@ -567,7 +567,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     if (!pn.active) continue;   // SetActive(false) takes the BoxCollider with it
     const t = await getTexture(pn.textureArchive);
     if (!t || pn.textureRecord >= t.recordCount) continue;
-    const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+    const size = billboardSize(t, pn.textureRecord);
     pn.width = size.w;
     pn.height = size.h;
   }
@@ -595,7 +595,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     (async () => {
       const t = await getTexture(pn.textureArchive);
       if (!t || pn.textureRecord >= t.recordCount) return;
-      const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+      const size = billboardSize(t, pn.textureRecord);
       pn.width = size.w;
       pn.height = size.h;
       // Flipped back (or destroyed) while the archive was loading, or
@@ -630,7 +630,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
 
   const t210 = await getTexture(210);
   const lights = (t210 ? collectInteriorLights(interior.flats, (record) =>
-    scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [])
+    billboardSize(t210, record)) : [])
     .map((l) => {
       const [x, y, z] = parentPt(l.x, l.y, l.z);
       return { ...l, x, y, z };

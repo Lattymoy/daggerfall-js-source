@@ -21,7 +21,7 @@
 // via restorePiles below (AUDIT 23).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1 slice 3
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
 import { CONTAINER_IMAGES } from '../ui/targetIconPanel.js';   // AUDIT 63 F22: InventoryContainerImages, the picture both makers hand CreateLootContainer
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // AUDIT 65 MC-2: the ray's reach, the handler's own
@@ -94,7 +94,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // since its own audit; retire() marks, the continuation reads.
       if (pile.dead) return;
       uploadRecordFrame(pile.archive, pile.record, 0);
-      const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
+      const size = billboardSize(t, pile.record);
       pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
       // FA1 slice 3: the record is BARE and the frame is a field, so
       // the draw builds `record#frame` the one way. Hand-writing the

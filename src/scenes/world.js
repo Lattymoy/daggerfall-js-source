@@ -30,7 +30,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y }
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
-import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { collectBlockFlats, billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
@@ -876,7 +876,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pixelBoards = [];   // the block's BULLETIN BOARDS (model 41739), pixel-local boxes
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
-      scaledBillboardSize(light210.getSize(record), light210.getScale(record));
+      billboardSize(light210, record);
     const addFlat = (archive, record, x, y, z) => {
       const k = `${archive}_${record}`;
       if (!groups.has(k)) groups.set(k, []);
@@ -1187,7 +1187,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         continue;
       }
       uploadRecord(archive, record);
-      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const size = billboardSize(t, record);
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       unionBox(batch._box);
@@ -1208,7 +1208,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const flat of pixelNpcFlats) {
       const t = await getTexture(flat.archive);
       if (!t || flat.record >= t.recordCount) continue;
-      const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
+      const size = billboardSize(t, flat.record);
       const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
       // E3: `active` is the GameObject's own state (the away arm's
       // SetActive(false)) and `questBehaviour` the component
@@ -1362,7 +1362,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const t = await getTexture(archive);
       if (!t || record >= t.recordCount) continue;
       uploadRecord(archive, record);
-      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const size = billboardSize(t, record);
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       armFlatAnim(batch, t, archive, record, entry.flatAnims, uploadRecordFrame);
@@ -8211,7 +8211,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const pt = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
-        const sz = scaledBillboardSize(pt.getSize(out.record), pt.getScale(out.record));
+        const sz = mobileBillboardSize(pt, out.record);   // AUDIT MM1: MobilePersonBillboard.cs:343 - the xml scale, on every record
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [
