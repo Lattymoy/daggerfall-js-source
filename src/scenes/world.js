@@ -106,7 +106,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
@@ -2603,7 +2603,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2079 mounts the same one, gated on
+  // and dungeonContext.js:2080 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4505
@@ -4123,7 +4123,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:4712), so exterior mode and a
+    // composer, dungeonContext.js:4720), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -4282,6 +4282,27 @@ export async function bootWorld(canvas, renderer, params, status) {
         exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1],
           { reviveQuestBehaviour: _reviveQuestBehaviour });
         cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+      } else if (String(extras.locationKey ?? '').startsWith('dungeon:')) {
+        // MAC6 #1 (Mac, 2026-09-12: "When playing online it doesnt place
+        // you where you last saved"): a save taken INSIDE a dungeon - the
+        // world-hosted dungeon's own envelope, keyed dungeon:<id> with a
+        // dungeon-local position - came home to "saved elsewhere" and
+        // the start cell, from the Load door and the Online door alike.
+        // DFU's load respawns at the save's own map pixel and re-enters
+        // the dungeon BEFORE it restores the position: RespawnPlayer's
+        // insideDungeon arm (PlayerEnterExit.cs:534-537 -
+        // TeleportToCoordinates, GetLocation, StartDungeonInterior) and
+        // RestorePosition after it (SerializablePlayer.cs:441-454). The
+        // envelope names its pixel now (dungeonContext's composer); one
+        // from before it did is found by its id across the index.
+        const pixel = extras.dungeon?.pixel ?? dungeonPixelFor(extras.locationKey, locationIndex.values(), (mt) => longitudeLatitudeToMapPixel(mt.longitude, mt.latitude));
+        if (!pixel) townTalk.say('(saved in a dungeon this world cannot find - character restored; travel there yourself)');
+        else {
+          await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
+          const entered = await (modes?.startInDungeon?.() ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it
+          if (entered) { playerSpawned = true; modes?.restoreDungeonSave?.(extras); }
+          else townTalk.say('(the dungeon has no entrance here - character restored at its door)');
+        }
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }

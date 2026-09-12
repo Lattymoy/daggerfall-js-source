@@ -1200,10 +1200,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1505 states), so the same visual
+   *  the C11 law dungeonContext.js:1506 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1410, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1411, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -4969,7 +4969,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4723), so the OUTER host's one rides in.
+          // (dungeonContext.js:4738), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -5872,7 +5872,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6265's own wave-46 note); the interior
+          // a blow (world.js:6286's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -7457,6 +7457,16 @@ export function createWorldModes(host) {
       return mountSpellWindow(win);
     },
     startInDungeon,
+    /** MAC6 #1: a dungeon save's second half, once startInDungeon has
+     *  built the dungeon the save was taken in: the same position
+     *  applier the key route hands the context (routeKey's, above),
+     *  and no second session restore (the host did that before it
+     *  teleported). False when no dungeon stands. */
+    restoreDungeonSave(extras) {
+      if (mode !== 'dungeon' || !dungeonCtx) return false;
+      dungeonCtx.restoreSaved(extras, (p) => player.spawn(p[0], p[1], p[2]), { session: false });
+      return true;
+    },
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
      *  (CreateFoe.cs:194-211); false = retry next machine tick,
      *  verbatim.
@@ -7973,8 +7983,8 @@ export function createWorldModes(host) {
      *  building entry meets the outgoing session's drawn weapon. DFU
      *  has one manager, so the same bit belongs in every rig.
      *
-     *  FLAG ONLY, presence-gated, exactly as world.js:4306/:4306 and
-     *  dungeonContext.js:4788/:4794 are: the C# restore sets the
+     *  FLAG ONLY, presence-gated, exactly as world.js:4327/:4327 and
+     *  dungeonContext.js:4814/:4820 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

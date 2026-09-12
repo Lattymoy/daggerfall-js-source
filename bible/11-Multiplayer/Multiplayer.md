@@ -29,7 +29,7 @@ campaign. Nobody's save changes shape because they played with a friend.
 Each player's quest state, dialogue state, travel map and history are
 their own. You walk together; the story you are in is yours.
 
-Why: the save envelope (`systems/save.js:623`) already splits the world
+Why: the save envelope (`systems/save.js:630`) already splits the world
 from the player - `position, pose, classicMinutes, world, locationKey`
 on one side; `quest, talk, travelMap, escortingFaces, interior` on the
 other. That line IS the replication boundary. A shared campaign would
@@ -51,7 +51,7 @@ introduces peers and relays bytes; it runs no game.
 
 Why, and this is the constraint that decides everything: **lockstep is
 impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:6218`) and 110 source files call
+variable `dt` (`scenes/world.js:6239`) and 110 source files call
 `Math.random` unseeded. Two clients cannot simulate the same world in
 parallel and agree, and making them able to would mean a fixed-step
 deterministic rewrite of the simulation. So one authority owns the

@@ -253,7 +253,7 @@ test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at 
   // missile contact, dungeonContext's two enemy-missile player arms, and
   // the shared ArrowFlight the three world hosts fly (world.js:198,
   // exterior.js:30, worldModes.js:69; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:61) - so
+  // takes the shared player-arrow LAW at dungeonContext.js:62) - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.
