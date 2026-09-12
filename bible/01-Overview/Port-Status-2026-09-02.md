@@ -136,7 +136,7 @@ rows being the Health and Fatigue variants DFU also has. Four of the
 remaining five misses are abstract bases with no concrete counterpart
 to port (`VampiricFortifyEffect`, `FortifyEffect`, `HealEffect`,
 `DetectEffect`). The fifth, `RingOfNamiraEffect`, is ported under its
-in-game name: `combat/formulas.js:708` runs it at DFU's own dispatch
+in-game name: `combat/formulas.js:732` runs it at DFU's own dispatch
 site and `systems/artifactEffects.js` owns the reflection, wired at
 `systems/worldTick.js:34`.
 

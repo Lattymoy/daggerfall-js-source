@@ -1426,3 +1426,12 @@ half-to-even round and float32 arithmetic are kept, and so are the four
 clamps the C# throws away. Off by default in the Mods pane; the seven
 shipped module keys default as shipped. Pins: 22 in
 `test/pcaao.test.js`. Not filmed: a game.
+
+**AUDIT PCO1 (2026-09-12, the same day).** Read again method for method
+against the decompiled 1.44, the tables diffed by script. One gap fixed:
+the archery arm's two FormulaHelper hooks (`AdjustWeaponHitChanceMod`,
+`AdjustWeaponAttackDamage`) are registered whatever the armour module
+says and DFU's stock core calls them - the port's stock core now carries
+both (identity unregistered). One mod behaviour recorded and pinned: a
+class enemy's bare fists deal 0. Pins 24. The page's AUDIT PCO1 section
+has the list.
