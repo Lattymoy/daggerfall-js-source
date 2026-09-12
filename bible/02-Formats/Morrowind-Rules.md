@@ -6345,3 +6345,53 @@ incremental swap of the weapon part alone rather than a rebuild, which
 is a real piece of work and is NOT started here: what is recorded is
 the diagnosis and the correction of the false one, so the next session
 does not begin by trusting a sentence I got wrong.
+
+## DECLARED DIVERGENCE (MS1, 2026-09-12): the mirrored swing
+
+Mac: "classic Daggerfall has a swing animation for left and right while
+Morrowind only has the animation that swings right to left. Could we
+insert a mirrored swing so you're able to swing all directions?"
+
+**What the two games have.** Morrowind's melee is three clips per
+weapon group - chop, slash, thrust - and the slash is ONE motion: the
+weapon hand sweeps from the actor's right across to the left. Rule 11's
+recorded divergence (`DF_STRIKE_TO_MW_ATTACK`) folds Daggerfall's
+six-way gesture onto those three by the shape of the motion, so
+StrikeLeft and StrikeRight both played the same right-to-left slash
+and the diagonal chops the same chop. Classic Daggerfall draws each
+strike as its own frames, and its left-handed option (FPSWeapon's
+FlipHorizontal, the port's `combat/fpsWeapon.js`) mirrors the picture
+whole, weapon and all.
+
+**The departure.** `MIRRORED_STRIKES` (`formats/mwFirstPerson.js`) names
+the strikes that run the other way from Morrowind's clip - StrikeRight
+and StrikeDownRight - and a blow started from one of them is DRAWN
+MIRRORED for its phases (wind-up, release, follow-through; `mirrorNow`
+in `combat/fpArm.js` reads `attackMirror` only while `upper` is an
+attack phase, so the idle between blows never stands in the wrong
+hand). The first-person pass draws through `multiply(MIRROR_X, view)`:
+the view reflected in its own x, applied after lookAt so it is the
+picture that mirrors and not the eye, leaving MW-D23's chirality law
+untouched for every other frame. The third-person body flips the sign
+of MW-D34's `-u` chirality term for the same phases, so the wheel
+shows the same swing. Winding is safe (drawCharacter disables
+CULL_FACE) and the pack's flat normals mirror with the geometry under
+a pure reflection. A shot is never mirrored (a bow has one draw), a
+cast has no side, StrikeDown and StrikeUp have no side.
+
+**What it costs, said plainly.** A mirror swaps hands - nothing else
+can make a right-to-left clip travel left-to-right - so for the blow's
+duration the sword is in the left hand and the arm enters from the
+left side of the screen, exactly as a flipped classic sprite does, and
+the picture cuts back at the follow-through's end. That is the same
+cut classic's own frames make between states. Which strike is
+Morrowind's own direction is a one-line table if the chair says it is
+the other way round; no data here to film it.
+
+**Pinned (test/mirroredSwing.test.js).** The table and its two names;
+MIRROR_X reflects a view's x and nothing else; through a real build on
+the weapon fixture (slash and chop keys) a StrikeRight reports
+`attackMirror` true from the wind-up to the last follow frame and
+false the frame the hand is its own again, StrikeLeft never, the
+diagonal chops pair the same way, the overhead chop has no side; the
+two draws take the mirror and a shot and a cast do not.

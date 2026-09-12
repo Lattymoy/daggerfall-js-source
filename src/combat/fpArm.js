@@ -53,7 +53,7 @@ import {
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
-  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK, strikeMirrored,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
@@ -367,6 +367,9 @@ export function releaseSkip(keys, group, attackType, strength) {
  * MODEL space, and model space cannot see the frame it is drawn in.
  */
 export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
+/** MS1: the view-space reflection a mirrored blow draws through - x
+ *  negated, nothing else; the picture's left for its right. */
+export const MIRROR_X = trs(0, 0, 0, 0, 0, 0, -1, 1, 1);
 
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
@@ -1846,6 +1849,13 @@ export function createFpArm() {
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let attackType = null;
+  // MS1: the blow in flight is drawn MIRRORED (the strike ran the other
+  // way from Morrowind's one clip). Set by attack(), read only while an
+  // attack phase is up - between blows the flag is inert, so no clear
+  // site is needed and the arm never idles in the wrong hand.
+  let attackMirror = false;
+  const ATTACK_PHASES = new Set([UPPER_BODY.AttackWindUp, UPPER_BODY.AttackRelease, UPPER_BODY.AttackEnd]);
+  const mirrorNow = () => attackMirror && ATTACK_PHASES.has(upper);
   let attackStrength = 1;
   let sheathed = true;
   let weaponShown = false;
@@ -2904,6 +2914,7 @@ export function createFpArm() {
       });
       if (!type) return null;
       attackType = type;
+      attackMirror = type !== MW_SHOOT_ATTACK && strikeMirrored(strike);   // MS1
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       // `hold` is the caller's machine, not a guess about bows. The
@@ -2990,6 +3001,7 @@ export function createFpArm() {
       if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
       const type = spellAttackType(rangeType);
       attackType = type;
+      attackMirror = false;   // MS1: a cast has no side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       upper = UPPER_BODY.Casting;
@@ -3272,7 +3284,17 @@ export function createFpArm() {
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
       const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      // MS1: THE MIRRORED SWING. A strike that runs the other way from
+      // Morrowind's one clip (StrikeRight, StrikeDownRight - the table
+      // is mwFirstPerson.js's MIRRORED_STRIKES) is drawn through a view
+      // reflected in ITS OWN x, screen-left for screen-right, for the
+      // blow's phases only. Applied AFTER lookAt so it is the picture
+      // that mirrors and not the eye; MW-D23's chirality law is
+      // untouched for every other frame. Winding is safe: drawCharacter
+      // disables CULL_FACE, and the pack's flat normals mirror with the
+      // geometry under a pure reflection.
+      const viewM = mirrorNow() ? multiply(MIRROR_X, view) : view;
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, viewM, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;
     },
@@ -3373,8 +3395,12 @@ export function createFpArm() {
       // local x/z pair is the MW horizontal (side/forward through
       // Rx(-90)) and local y is the MW vertical.
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
+      // MS1: a mirrored blow reflects the body about its own yaw axis -
+      // the -u chirality term flips sign for the blow's phases, so the
+      // wheel shows the same left-to-right swing the first-person pass
+      // does, sword in the same (other) hand.
       const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, (mirrorNow() ? u : -u) * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
       // The box the sprite law needs, measured off the POSED pieces in
@@ -3550,6 +3576,7 @@ export function createFpArm() {
         upperName: UPPER_BODY_NAME[upper],
         aimFactor,
         attackType,
+        attackMirror: mirrorNow(),   // MS1
         sheathed,
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,

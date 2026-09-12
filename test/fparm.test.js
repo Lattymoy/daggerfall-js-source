@@ -233,7 +233,7 @@ test('MW-D10: the draw is rule 54 and nothing else - no framing, no offsets, no 
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
   assert.match(draw, /const eye = firstPersonEye\(built\.arm\.mats, built\.cameraRef\);/,
     'the eye is the camera node, read fresh from the pose');
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, ph, \{ lensLocal: true \}\)/,
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, viewM, pw, ph, \{ lensLocal: true \}\)/,   // MS1: viewM is `view`, or its x-reflection for a mirrored blow
     'and the model matrix is the basis change alone - no placement, no scale');
   assert.match(draw, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph,/, 'rule 29\'s own field of view');
   // THE RETIRED MECHANISM, and the sentence goes with it: none of the
@@ -2276,7 +2276,7 @@ test('MW-D34: the third-person model matrix carries the measured chirality flip 
   // Daggerfall asset; rs is adjustScale (npc.cpp:1124-1135) - x,y take
   // WEIGHT, z HEIGHT, and in this frame local y is the MW vertical.
   const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
-  assert.match(src, /trs\(feet\[0\], feet\[1\], feet\[2\], 0, yawDeg, 0, -u \* rs\.weight, u \* rs\.height, u \* rs\.weight\)/,
+  assert.match(src, /trs\(feet\[0\], feet\[1\], feet\[2\], 0, yawDeg, 0, \(mirrorNow\(\) \? u : -u\) \* rs\.weight, u \* rs\.height, u \* rs\.weight\)/,   // MS1: -u, or +u for a mirrored blow
     'the flip and the scale live in the model matrix');
   assert.match(src, /halfH = \(\(maxZ - minZ\) \* u \* rs\.height\) \/ 2/,
     'the sprite box grows with the height');
