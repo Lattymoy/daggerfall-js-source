@@ -6346,52 +6346,69 @@ is a real piece of work and is NOT started here: what is recorded is
 the diagnosis and the correction of the false one, so the next session
 does not begin by trusting a sentence I got wrong.
 
-## DECLARED DIVERGENCE (MS1, 2026-09-12): the mirrored swing
+## DECLARED DIVERGENCE (MS1, 2026-09-12): the backhand
 
 Mac: "classic Daggerfall has a swing animation for left and right while
 Morrowind only has the animation that swings right to left. Could we
-insert a mirrored swing so you're able to swing all directions?"
+insert a mirrored swing so you're able to swing all directions?" - and
+of the first cut, a mirror of the whole picture that put the sword in
+the left hand for the blow: "There must be a way to keep it correctly
+in the correct hand. I'm not okay with the honest cost."
 
 **What the two games have.** Morrowind's melee is three clips per
 weapon group - chop, slash, thrust - and the slash is ONE motion: the
 weapon hand sweeps from the actor's right across to the left. Rule 11's
 recorded divergence (`DF_STRIKE_TO_MW_ATTACK`) folds Daggerfall's
 six-way gesture onto those three by the shape of the motion, so
-StrikeLeft and StrikeRight both played the same right-to-left slash
-and the diagonal chops the same chop. Classic Daggerfall draws each
-strike as its own frames, and its left-handed option (FPSWeapon's
-FlipHorizontal, the port's `combat/fpsWeapon.js`) mirrors the picture
-whole, weapon and all.
+StrikeLeft and StrikeRight both played the same right-to-left slash.
 
-**The departure.** `MIRRORED_STRIKES` (`formats/mwFirstPerson.js`) names
-the strikes that run the other way from Morrowind's clip - StrikeRight
-and StrikeDownRight - and a blow started from one of them is DRAWN
-MIRRORED for its phases (wind-up, release, follow-through; `mirrorNow`
-in `combat/fpArm.js` reads `attackMirror` only while `upper` is an
-attack phase, so the idle between blows never stands in the wrong
-hand). The first-person pass draws through `multiply(MIRROR_X, view)`:
-the view reflected in its own x, applied after lookAt so it is the
-picture that mirrors and not the eye, leaving MW-D23's chirality law
-untouched for every other frame. The third-person body flips the sign
-of MW-D34's `-u` chirality term for the same phases, so the wheel
-shows the same swing. Winding is safe (drawCharacter disables
-CULL_FACE) and the pack's flat normals mirror with the geometry under
-a pure reflection. A shot is never mirrored (a bow has one draw), a
-cast has no side, StrikeDown and StrikeUp have no side.
+**Why not a mirror.** A mirror is the only transform that sends a
+right-to-left clip left-to-right AS A PICTURE, and it swaps hands
+doing it - the sword is in the left hand for the blow and the arm cuts
+to the other side of the screen at its start and end. Mac refused that
+cost, and he was right to: it is not a swing, it is a reflection of
+one.
 
-**What it costs, said plainly.** A mirror swaps hands - nothing else
-can make a right-to-left clip travel left-to-right - so for the blow's
-duration the sword is in the left hand and the arm enters from the
-left side of the screen, exactly as a flipped classic sprite does, and
-the picture cuts back at the follow-through's end. That is the same
-cut classic's own frames make between states. Which strike is
-Morrowind's own direction is a one-line table if the chair says it is
-the other way round; no data here to film it.
+**The departure: the same clip, backwards.** What sends the blade
+left-to-right on the SAME right arm is the slash run in reverse,
+section by section - the follow-through played backwards is a wind-up
+that carries the arm across the body to the left, the release played
+backwards sweeps the blade from left to right, and the wind-up played
+backwards settles the arm from its cocked side to rest. That is a
+backhand, the stroke a right-hander actually makes to swing that way,
+with the sword where it is. `REVERSED_STRIKES`
+(`formats/mwFirstPerson.js`) names StrikeRight alone: the chops have
+no side a reversal would honour (a chop backwards is an uppercut) and
+share the one chop as before, the thrust has none, and a shot is one
+draw. `attackKeys(type, strength, { reversed })` hands the machine the
+forward sections in reverse order - each key PAIR still in file order,
+because resetClip wants start before stop - and marks the answer
+`reversed`; `playAction` stamps that on the clip state; `poseTime`
+(`combat/fpArm.js`) samples `startTime + stopTime - time` for a
+reversed window while the state itself, every key it crosses and every
+completion it reports, walks forward as the reference's machine does.
+Both rigs pose through it, so the wheel's third-person body makes the
+same backhand. `attackReversed` is set by attack(), cleared by a cast,
+and read only while an attack phase is up, so the idle between blows
+is never reversed. The draws are untouched: no mirror anywhere.
 
-**Pinned (test/mirroredSwing.test.js).** The table and its two names;
-MIRROR_X reflects a view's x and nothing else; through a real build on
-the weapon fixture (slash and chop keys) a StrikeRight reports
-`attackMirror` true from the wind-up to the last follow frame and
-false the frame the hand is its own again, StrikeLeft never, the
-diagonal chops pair the same way, the overhead chop has no side; the
-two draws take the mirror and a shot and a cast do not.
+**What it costs, said plainly.** The backhand's timing is the slash's
+timing in reverse - its wind-up lasts as long as the follow-through
+did and its settle as long as the wind-up did - and the "slash hit"
+key fires where the forward walk crosses it, which for a reversed
+release is at the sweep's END rather than its start. Nothing listens
+to a melee hit key (Daggerfall's own machine owns damage - rule 24's
+note), so nothing moves. Which strike is Morrowind's own direction is
+a one-name table if the chair says it is the other way round; no data
+here to film it.
+
+**Pinned (test/reversedSwing.test.js).** The table and its one name;
+attackKeys reversed is the sections in reverse order with each pair in
+file order and a shot never; through a real build on the weapon
+fixture a StrikeRight begins its wind-up at the follow-through's end
+with the pose retreating while the state advances, enters the release
+at the hit and runs it back to max attack, settles from there to
+rest, and reports nothing reversed once the hand is its own again -
+while StrikeLeft begins at "slash start" forward and a diagonal chop
+keeps its one way; and the draws carry no mirror, both rigs posing
+through poseTime.

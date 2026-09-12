@@ -53,7 +53,7 @@ import {
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
-  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK, strikeMirrored,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK, strikeReversed,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
@@ -367,9 +367,6 @@ export function releaseSkip(keys, group, attackType, strength) {
  * MODEL space, and model space cannot see the frame it is drawn in.
  */
 export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
-/** MS1: the view-space reflection a mirrored blow draws through - x
- *  negated, nothing else; the picture's left for its right. */
-export const MIRROR_X = trs(0, 0, 0, 0, 0, 0, -1, 1, 1);
 
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
@@ -1849,13 +1846,21 @@ export function createFpArm() {
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let attackType = null;
-  // MS1: the blow in flight is drawn MIRRORED (the strike ran the other
-  // way from Morrowind's one clip). Set by attack(), read only while an
-  // attack phase is up - between blows the flag is inert, so no clear
-  // site is needed and the arm never idles in the wrong hand.
-  let attackMirror = false;
+  // MS1: THE BACKHAND. A strike that runs the other way from Morrowind's
+  // one slash (StrikeRight - mwFirstPerson.js's REVERSED_STRIKES) plays
+  // the slash BACKWARDS, section by section: the follow-through reversed
+  // is the wind-up (the arm crosses the body to the left), the release
+  // reversed sweeps the blade left to right, the wind-up reversed
+  // settles the arm. Same right arm, same hand, same keys - only the
+  // playhead's direction. Set by attack(); read only while an attack
+  // phase is up, so between blows it is inert and needs no clear site.
+  let attackReversed = false;
   const ATTACK_PHASES = new Set([UPPER_BODY.AttackWindUp, UPPER_BODY.AttackRelease, UPPER_BODY.AttackEnd]);
-  const mirrorNow = () => attackMirror && ATTACK_PHASES.has(upper);
+  const reversedNow = () => attackReversed && ATTACK_PHASES.has(upper);
+  /** The file time the pose samples: a reversed section runs its
+   *  window from stop to start while the clip state (and every key it
+   *  crosses, every completion it reports) still walks forward. */
+  const poseTime = (state) => (state && state.reversed ? state.startTime + state.stopTime - state.time : state.time);
   let attackStrength = 1;
   let sheathed = true;
   let weaponShown = false;
@@ -2132,7 +2137,7 @@ export function createFpArm() {
    *  slot empty when the file has no such window - it never substitutes
    *  a different one, because a substituted attack animation is the
    *  reverted arc's whole failure mode in miniature. */
-  function playAction(start, stop, startPoint = 0) {
+  function playAction(start, stop, startPoint = 0, reversed = false) {
     if (!rig() || !weaponGroup) return false;
     const pick = pickAnimSource(rig().sources, weaponGroup, resetClip, { start, stop, startPoint });
     if (!pick) {
@@ -2141,6 +2146,7 @@ export function createFpArm() {
       return false;
     }
     actionState = pick.state;
+    actionState.reversed = !!reversed;   // MS1: the pose reads this window backwards
     actionSource = pick.source;
     return true;
   }
@@ -2465,9 +2471,9 @@ export function createFpArm() {
   function beginRelease() {
     attackStrength = windUpStrength();
     upper = UPPER_BODY.AttackRelease;
-    const k = attackKeys(attackType, attackStrength);
+    const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
     const startPoint = releaseSkip(rig().keys, weaponGroup, attackType, attackStrength);
-    if (!playAction(k.release.start, k.release.stop, startPoint)) beginFollow();
+    if (!playAction(k.release.start, k.release.stop, startPoint, k.reversed)) beginFollow();
   }
 
   /** AttackRelease -> AttackEnd (:1793-1812): the follow-through, whose
@@ -2475,8 +2481,8 @@ export function createFpArm() {
    *  shot. */
   function beginFollow() {
     upper = UPPER_BODY.AttackEnd;
-    const k = attackKeys(attackType, attackStrength);
-    if (!playAction(k.follow.start, k.follow.stop, 0)) endAttack();
+    const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
+    if (!playAction(k.follow.start, k.follow.stop, 0, k.reversed)) endAttack();
   }
 
   /** AttackEnd -> WeaponEquipped (:1821-1856). */
@@ -2914,7 +2920,7 @@ export function createFpArm() {
       });
       if (!type) return null;
       attackType = type;
-      attackMirror = type !== MW_SHOOT_ATTACK && strikeMirrored(strike);   // MS1
+      attackReversed = type === 'slash' && strikeReversed(strike);   // MS1: the backhand - the slash alone has a side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       // `hold` is the caller's machine, not a guess about bows. The
@@ -2926,7 +2932,7 @@ export function createFpArm() {
       // game path never sends.
       holdWindUp = !!hold;
       upper = UPPER_BODY.AttackWindUp;
-      const k = attackKeys(type, 1);
+      const k = attackKeys(type, 1, { reversed: attackReversed });
       // MW-D42 (Mac: the arrow is not shown on the bow during the
       // animation): THE NOCK HAS A FLOOR AT THE DRAW. Rule 24's "shoot
       // attach" still drives it - the key is authoritative wherever the
@@ -2944,7 +2950,7 @@ export function createFpArm() {
       // not in the equip section, and why reloadCrossbow stays the
       // only other way in.
       if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
-      if (!playAction(k.windUp.start, k.windUp.stop, 0)) {
+      if (!playAction(k.windUp.start, k.windUp.stop, 0, attackReversed)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
         holdWindUp = false;
@@ -3001,7 +3007,7 @@ export function createFpArm() {
       if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
       const type = spellAttackType(rangeType);
       attackType = type;
-      attackMirror = false;   // MS1: a cast has no side
+      attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       upper = UPPER_BODY.Casting;
@@ -3111,7 +3117,7 @@ export function createFpArm() {
         poseAssembly(t.arm, {
           tracks: poseSource ? poseSource.trackMap : t.tracks,
           sampleTrack,
-          time: state.time,
+          time: poseTime(state),   // MS1: a backhand's window runs backwards
           accumRoot: t.accumRoot,
         });
         uploadThirdMesh(t);
@@ -3127,7 +3133,7 @@ export function createFpArm() {
       poseAssembly(built.arm, {
         tracks: poseSource ? poseSource.trackMap : built.tracks,
         sampleTrack,
-        time: state.time,
+        time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
         accumRoot: built.accumRoot,
@@ -3284,17 +3290,7 @@ export function createFpArm() {
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
       const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, built.reach * 4);
-      // MS1: THE MIRRORED SWING. A strike that runs the other way from
-      // Morrowind's one clip (StrikeRight, StrikeDownRight - the table
-      // is mwFirstPerson.js's MIRRORED_STRIKES) is drawn through a view
-      // reflected in ITS OWN x, screen-left for screen-right, for the
-      // blow's phases only. Applied AFTER lookAt so it is the picture
-      // that mirrors and not the eye; MW-D23's chirality law is
-      // untouched for every other frame. Winding is safe: drawCharacter
-      // disables CULL_FACE, and the pack's flat normals mirror with the
-      // geometry under a pure reflection.
-      const viewM = mirrorNow() ? multiply(MIRROR_X, view) : view;
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, viewM, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph, { lensLocal: true });   // VC5 review: lens-local - no cloud deck on the arm
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;
     },
@@ -3395,12 +3391,8 @@ export function createFpArm() {
       // local x/z pair is the MW horizontal (side/forward through
       // Rx(-90)) and local y is the MW vertical.
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      // MS1: a mirrored blow reflects the body about its own yaw axis -
-      // the -u chirality term flips sign for the blow's phases, so the
-      // wheel shows the same left-to-right swing the first-person pass
-      // does, sword in the same (other) hand.
       const model = multiply(
-        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, (mirrorNow() ? u : -u) * rs.weight, u * rs.height, u * rs.weight),
+        trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
       // The box the sprite law needs, measured off the POSED pieces in
@@ -3576,7 +3568,7 @@ export function createFpArm() {
         upperName: UPPER_BODY_NAME[upper],
         aimFactor,
         attackType,
-        attackMirror: mirrorNow(),   // MS1
+        attackReversed: reversedNow(),   // MS1: the backhand in flight
         sheathed,
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,
@@ -3598,6 +3590,7 @@ export function createFpArm() {
         jumpSource: jumpSource && jumpSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
+        poseTime: actionState ? poseTime(actionState) : (idleState ? idleState.time : null),   // MS1: what the pose sampled
         frames,
         // MW-D24: which rig the machine is driving, and the body's own
         // build verdict - a refusal is a sentence on the card, exactly
