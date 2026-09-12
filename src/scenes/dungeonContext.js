@@ -32,6 +32,7 @@ import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: Sta
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // MAC6 #1: the save names the pixel the dungeon stands on
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
@@ -1371,7 +1372,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:6500 / exterior.js:2919), set
+  // host's own townTalk sink (world.js:6520 / exterior.js:2919), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2781,7 +2782,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8377,
+              // playerArrowHitFoe is the one copy world.js:8398,
               // exterior.js:4200 and worldModes.js:5904 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -2959,6 +2960,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // restoreSaveData) - a mover's pose IS its {state, t}, and a door
   // carries a second pair for the record's Move tween.
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
+  /** MAC6 #1: where this dungeon stands - its map pixel and map id, for the save (null for a location with no map row: the probe). */
+  const dungeonHome = () => {
+    const mt = dfLocation?.mapTableData;
+    if (!mt || !Number.isFinite(mt.longitude) || !Number.isFinite(mt.latitude)) return null;
+    const p = longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
+    return { pixel: { x: p.x, y: p.y }, mapId: mt.mapId ?? null };
+  };
   function collectWorld() {
     return {
       foes: foes.map((f) => ({
@@ -4711,6 +4719,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // weapon, so both halves land here.
         pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand },
         locationKey: _locationKey,
+        // MAC6 #1 (Mac, 2026-09-12: "it doesnt place you where you last
+        // saved"): WHERE the dungeon stands - DFU's worldPosX/worldPosZ
+        // beside insideDungeon (SerializablePlayer.cs:215-217), which is
+        // what RespawnPlayer's dungeon arm teleports to before it
+        // re-enters (PlayerEnterExit.cs:534-537). The world host's boot
+        // load had no way home for a dungeon save without it.
+        dungeon: dungeonHome(),
         // AUDIT 28 W4: SerializablePlayer.cs:224 - the RAW setting as of
         // the save, so a load under the OTHER setting can warp to the
         // start marker (:462-472) instead of standing in blocks that no
@@ -4731,6 +4746,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
+      this.restoreSaved(extras, setPlayerPos);
+    },
+    /** MAC6 #1: the load's second half - everything after restorePlayer
+     *  - on its own, so the WORLD host's boot load can re-enter this
+     *  dungeon and hand it the envelope it already restored (DFU's
+     *  RespawnPlayer-then-RestorePosition order, PlayerEnterExit
+     *  .cs:534-537 / SerializablePlayer.cs:441-454). `session: false`
+     *  leaves the quest and conversation machines alone: that host
+     *  restored them before it teleported, and a second restore would
+     *  mount the quest resources twice. */
+    restoreSaved(extras, setPlayerPos, { session = true } = {}) {
       // AUDIT-39r: CleanupUntrackedObjects' MISSILE half. Its trigger
       // is SaveLoadManager_OnStartLoad - a LOAD, in every host - and
       // DFU reaches a dungeon's flights the other way round: the load
@@ -4749,7 +4775,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // initAtGameStart never re-runs over the restored machine.
       // AUDIT 63 F28: the orphaned-quest-item sweep rides the ONE
       // composer, so this host runs it too (SaveLoadManager.cs:1518).
-      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity })) opts.onQuestRestored?.();
+      if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       // A1: restorePlayer replaced the automap store, so the live

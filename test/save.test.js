@@ -28,7 +28,7 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   // smallerDungeonsState joined the extras (both hosts already passed
   // them and snapshotPlayer dropped them in silence), so the exact
   // shape grew three keys - null/null/0 when the caller passes none.
-  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, travelMap: null, escortingFaces: null, smallerDungeonsState: 0 });   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
+  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, dungeon: null, travelMap: null, escortingFaces: null, smallerDungeonsState: 0 });   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');

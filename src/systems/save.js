@@ -162,7 +162,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, smallerDungeonsState = 0 } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -191,7 +191,14 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // cleared, the travel map's filters and popup choices reset to the
   // struct defaults, and the SmallerDungeons start-marker warp could
   // never fire.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, travelMap, escortingFaces, smallerDungeonsState };
+  // MAC6 #1: `dungeon` is the inside-dungeon half of DFU's
+  // PlayerPositionData_v1 (worldPosX/worldPosZ + insideDungeon,
+  // SerializablePlayer.cs:215-217) - the map pixel the dungeon stands
+  // on and its map id, so a boot load can respawn there and re-enter
+  // before it restores the position (PlayerEnterExit.cs:534-537). Null
+  // anywhere but a dungeon; a save from before it was carried reads
+  // null and the world host finds the dungeon by its id instead.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, smallerDungeonsState };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -674,7 +681,25 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
+}
+
+/** MAC6 #1: the dungeon a save was taken in, found by its id across
+ *  the world's locations - for an envelope from before `dungeon`
+ *  carried the pixel. `locationKey` is the dungeon host's
+ *  `dungeon:<recordElement.header.locationId>`; `locations` is any
+ *  iterable of MapsFile locations; `toPixel(mapTableData)` is the
+ *  host's longitude/latitude-to-pixel. Null for anything else. */
+export function dungeonPixelFor(locationKey, locations, toPixel) {
+  const m = /^dungeon:(\d+)$/.exec(String(locationKey ?? ''));
+  if (!m) return null;
+  const id = Number(m[1]);
+  for (const loc of locations ?? []) {
+    if (!loc?.hasDungeon || loc.dungeon?.recordElement?.header?.locationId !== id || !loc.mapTableData) continue;
+    const p = toPixel(loc.mapTableData);
+    return p ? { x: p.x, y: p.y } : null;
+  }
+  return null;
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving

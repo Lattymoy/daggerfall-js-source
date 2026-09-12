@@ -548,6 +548,52 @@ keeps no look); the heartbeat clock on reconnect; the `at` stamp's
 domain; the peek and splice costs (microseconds); NumpadEnter (implicit
 submission still sends); a press inside the box released outside.
 
+## MAC6 (2026-09-12): the dungeon save comes home
+
+**Mac: "A bug. 1. When playing online it doesnt place you where you
+last saved your account."**
+
+Not the relay's: the BOOT LOAD's, through the Online door and the Load
+door alike. A save taken inside a world-hosted dungeon is the dungeon
+host's own envelope (`src/scenes/dungeonContext.js`'s composer - F9
+and the pause door's Save both route there in dungeon mode): keyed
+`dungeon:<id>`, a dungeon-local position, no map pixel. The world
+host's `worldQuickLoad` had two arms - the open world (teleport to the
+pixel, land, re-enter a building) and "saved elsewhere" - so a
+character saved in Privateer's Hold, where every new character
+begins, came back restored and standing at the start cell outdoors.
+
+DFU's load respawns at the save's own map pixel and re-enters the
+dungeon BEFORE it restores the position: `RespawnPlayer`'s
+insideDungeon arm (PlayerEnterExit.cs:534-537 - TeleportToCoordinates,
+GetLocation, StartDungeonInterior) and `RestorePosition` after it
+(SerializablePlayer.cs:441-454), off the worldPosX/worldPosZ it saved
+beside insideDungeon (:215-217). The port now:
+
+- **carries where the dungeon stands**: `snapshotPlayer` takes
+  `dungeon` ({pixel, mapId}, `src/systems/save.js`) and hands it back
+  from `restorePlayer`; the dungeon host's composer fills it from its
+  own map row through MapsFile's pixel law. A save from before the
+  field is found by its dungeon id across the world's location index
+  (`dungeonPixelFor`, pure - the host injects the pixel law).
+- **splits the dungeon host's load arm**: `quickLoad` is
+  `restorePlayer` then `restoreSaved(extras, setPlayerPos)`; the world
+  host calls the second half alone with `session: false`, since it
+  restored the quest and conversation machines before it teleported
+  and a second restore would mount the quest resources twice.
+- **the mode machine forwards**: `restoreDungeonSave(extras)`
+  (`src/scenes/worldModes.js`) with the same position applier the key
+  route hands the context.
+- **the boot's third arm** (`src/scenes/world.js`): teleport to the
+  pixel, `startInDungeon` (the enter marker first, DFU's
+  StartDungeonInterior), then the saved position over it. Never
+  silent: a dungeon the world cannot find, or a location with no
+  entrance, says so and leaves the character restored where it stands.
+
+Pinned in `test/mac6.test.js` (2): the envelope's field both ways and
+the finder over fake locations; the three hosts by source. Not seen
+with a real save from here - Mac's Privateer's Hold is the gate.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -609,6 +655,10 @@ release passed, the pointer hooks, hidden under a window or an
 overlay, text never markup and tagged, the list grown, the touch
 button and form), the host by source (the dial on the stack). Not seen
 with two real players from here either.
+`test/mac6.test.js` (2): the dungeon save's field through the envelope
+both ways, the finder by dungeon id over fake locations (any iterable,
+the first match), the dungeon host's split load arm, the mode
+machine's forward and the boot's third arm by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 
