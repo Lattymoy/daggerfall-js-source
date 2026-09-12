@@ -57,6 +57,29 @@ export const MOD_SETTINGS = Object.freeze({
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
     }),
   }),
+  // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
+  // Modules keys, names and descriptions as modsettings.json ships them
+  // (all seven on, as shipped), plus three of the port's: `Enabled`
+  // (DFU enables a mod by listing it), and the two arms DFU derives
+  // from OTHER mods being loaded - Roleplay Realism's advancedArchery
+  // switch and the presence of Meaner Monsters - which the port has no
+  // mod list to read, so they are switches here, off by default.
+  'pcaao': Object.freeze({
+    title: 'Physical Combat And Armor Overhaul',
+    author: 'Kirk.O',
+    keys: Object.freeze({
+      Enabled: Object.freeze({ default: false, description: 'Kirk.O\u2019s Physical Combat And Armor Overhaul 1.44, 1:1: armour reduces the damage you take instead of your chance to be hit, skills decide the hit, weapons wear by their kind and material, shields block by their material and your stats, critical strikes multiply damage. Off returns Daggerfall Unity\u2019s own combat formulas.' }),
+      equipmentDamageEnhanced: Object.freeze({ default: true, description: 'Equipment condition damage is increased significantly, the amount of wear your equipment takes is based on many different factors; Material, Damage Source, Etc' }),
+      fadingEnchantedItems: Object.freeze({ default: true, description: 'Enchanted Weapons and Armor will be destroyed upon breaking from physical combat. !!!! This Module Is Dependent On Equipment Damage Enhanced' }),
+      fixedStrengthDamageModifier: Object.freeze({ default: true, description: 'Fixes a bug in DFU 0.10.21, the strength modifier for damage is double what classic had. This module fixes that, so 10 points = +1, instead of 10 points = +2' }),
+      armorHitFormulaRedone: Object.freeze({ default: true, description: 'Armor no longer increases your chance to avoid damage, but instead reduces the damage that you do take in physical combat. The readme and mod-page provided goes into great detail if desired' }),
+      criticalStrikesIncreaseDamage: Object.freeze({ default: true, description: 'Critical Strikes Increase Damage, not just hit-chance. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
+      conditionBasedEffectiveness: Object.freeze({ default: true, description: 'Weapons and Armor Effectiveness is influenced by current Condition Value. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
+      softMaterialRequirements: Object.freeze({ default: true, description: 'Weapon Material Requirements are relaxed, large damage penalty for being below required material. !!!! This Module Is Dependent On Armor Hit Formula Redone' }),
+      rolePlayRealismArchery: Object.freeze({ default: false, description: 'Roleplay Realism\u2019s Archery module as this mod bakes it in (in DFU it runs when Roleplay Realism is loaded with advancedArchery on): a bow\u2019s draw time bends its hit chance and its damage - a snap shot is wild and weak, a long hold tires.' }),
+      meanerMonsters: Object.freeze({ default: false, description: 'Kirk.O\u2019s edit of Ralzar\u2019s Meaner Monsters (in DFU it runs when Meaner Monsters is loaded): every vanilla monster\u2019s damage, health, level and armour changed, most of them made much more powerful. Takes effect on monsters spawned after the switch.' }),
+    }),
+  }),
 });
 
 let memory = null;

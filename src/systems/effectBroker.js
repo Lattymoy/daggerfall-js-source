@@ -23,7 +23,7 @@
 //
 // WHY IT IS ITS OWN LEAF. The flag's natural home is worldTick.js, which
 // is this port's broker - but worldTick imports the enchantment pump
-// (worldTick.js:61) and enchantments.js is deliberately kept off that
+// (worldTick.js:65) and enchantments.js is deliberately kept off that
 // cycle (see its own note at :51). A leaf with no imports lets the pump
 // read the flag and the broker own its lifecycle without closing it.
 //

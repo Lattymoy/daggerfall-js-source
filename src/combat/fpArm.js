@@ -53,7 +53,7 @@ import {
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
   ammoTypeFor, arrowAttachBone, ARROW_FALLBACK_NODE, reloadsItself, shootsRatherThanSwings,
-  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK,
+  firstPersonCameraRef, composeStanceGroup, composeWeaponGroup, mwAttackType, attackKeys, MW_SHOOT_ATTACK, strikeReversed,
   weaponShortGroup, calculateWindUp, releaseStartPoint, EQUIP_KEYS, UNEQUIP_KEYS, isRealWeapon,
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
@@ -881,28 +881,47 @@ export function hasDaggerfallArrows(items) {
  * branches - is answered off skeleton bytes the caller already holds and
  * needs nothing from an archive.
  */
-export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons }) {
+export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = null }) {
   const paths = [];
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType === MW_WEAPON_TYPE.None) return paths;
-  const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);
+  const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D50: a record the archives carry
   if (rec) paths.push(`meshes/${rec.model}`);
   const ammoType = ammoTypeFor(mwType);
   if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
-    const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+    const ammoRec = pickWeaponRecord(allWeapons, ammoType, null, { has });
     if (ammoRec) paths.push(`meshes/${ammoRec.model}`);
   }
   return paths;
 }
 
-export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes }) {
+/** MW-D50: the archives' DIRECTORY - "is this path in any attached
+ *  .bsa" - the one question pickWeaponRecord asks of them. Not
+ *  findLoaded: that one throws for a path known but not yet read
+ *  (MW-LOAD's guard), and a candidate's presence is asked BEFORE the
+ *  preload that reads it. */
+export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.has(p));
+
+/** MW-D50: said ONCE per reason, on the console, beside the card. A
+ *  bow that resolves with ammunition in the pack and no arrow on it is
+ *  a fault the player sees from the chair and could not name - the
+ *  card's note is the same sentence, but the card is a menu away. */
+const saidArrow = new Set();
+function sayNoArrow(notes) {
+  const why = notes.filter((n) => n.startsWith('arrow')).join('; ') || 'no reason recorded';
+  if (saidArrow.has(why)) return;
+  saidArrow.add(why);
+  console.warn(`[mw] the bow carries no arrow - ${why}`);
+}
+
+export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, has = null }) {
   const notes = [];
   const parts = [];
   let weaponInfo = null;
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType !== MW_WEAPON_TYPE.None) {
-    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null);   // MW-D38
+    const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry
     if (!rec) {
       notes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
     } else {
@@ -931,7 +950,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
         // "shoot attach" key.
         const ammoType = ammoTypeFor(mwType);
         if (ammoType !== MW_WEAPON_TYPE.None && hasAmmo) {
-          const ammoRec = pickWeaponRecord(allWeapons, ammoType);
+          const ammoRec = pickWeaponRecord(allWeapons, ammoType, null, { has });   // MW-D50
           if (!ammoRec) {
             notes.push(`arrow: your archives carry no unenchanted Morrowind ammunition of type ${ammoType}`);
           } else {
@@ -975,6 +994,9 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   } else if (weapon) {
     notes.push('weapon: Morrowind has no weapon type for what you are holding');
   }
+  // MW-D50: ammunition in the pack, a weapon that takes it, and no
+  // arrow resolved - say so where the player can read it.
+  if (hasAmmo && weaponInfo && ammoTypeFor(mwType) !== MW_WEAPON_TYPE.None && !arrowInfo) sayNoArrow(notes);
   return { mwType, parts, weaponInfo, arrowInfo, notes };
 }
 
@@ -1024,7 +1046,7 @@ async function buildTpBody({
     // meshes resolveWeaponParts reads further down.
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
-      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
     ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
@@ -1041,7 +1063,7 @@ async function buildTpBody({
     // Rule 8 on THIS skeleton: the third-person rig carries its own
     // Weapon Bone (vanilla parents it under Bip01 R Hand), so the same
     // record hangs off the same column with no new law.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes });
@@ -1141,7 +1163,7 @@ export async function buildFpArm({
   // ONE line, never per file: a log per entry is what makes a slow boot
   // slower and a console unreadable.
   const t0 = mwNow();
-  const spans = { archives: 0, esm: 0, meshes: 0, textures: 0 };
+  const spans = { archives: 0, esm: 0, meshes: 0, textures: 0, sweep: 0 };
   let stageMark = t0;
   const stage = (name) => { const n = mwNow(); spans[name] += n - stageMark; stageMark = n; };
   try {
@@ -1375,7 +1397,7 @@ export async function buildFpArm({
     await loadFromArchives(archives, [
       ...fpRows.map((w) => w.path),
       ...fpWornAdds(worn.adds).map((add) => `meshes/${add.model}`),
-      ...weaponPartPaths({ weapon, hasAmmo, allWeapons }),
+      ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...sourcePaths,
     ]);
     for (const w of fpRows) {
@@ -1397,7 +1419,7 @@ export async function buildFpArm({
     // gave it so a live weapon swap resolves through the very same door
     // as the build. Its two reads are covered by the preload above,
     // through weaponPartPaths.
-    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes });
+    const resolvedWeapon = resolveWeaponParts({ weapon, hasAmmo, allWeapons, find, skeletonBytes, has: archiveHas(archives) });   // MW-D50
     partBytes.push(...resolvedWeapon.parts);
     const weaponNotes = resolvedWeapon.notes;
     const weaponInfo = resolvedWeapon.weaponInfo;
@@ -1528,6 +1550,7 @@ export async function buildFpArm({
     // "your full arms don't show", exactly. Sweeping every source's
     // every clip costs one build-time pass over poses already
     // computable, and cannot under-measure a pose the rig can reach.
+    stage('meshes');   // MF1: the sweep below is posing, not loading - it gets its own span
     const sweep = clipSweepTimes(sources, idleCheck);
     const union = clipUnionBounds(arm, poseAt, sweep);
     const c = idleCheck;
@@ -1564,17 +1587,21 @@ export async function buildFpArm({
     if (weaponInfo) weaponInfo.side = weaponRestSide(arm, weaponInfo.bone);
     if (arrowInfo) arrowInfo.side = weaponRestSide(arm, arrowInfo.bone);
 
-    stage('meshes');
+    stage('sweep');
     // MW-LOAD: the one line, at the end of a build that succeeded.
+    // MF1: `sweep` is PX27's every-clip reach sweep (and the idle's),
+    // which rode inside `meshes` and is pure posing - every equip
+    // rebuilds, and "where does the time go" needs it on its own.
     const timings = {
       archives: Math.round(spans.archives),
       esm: Math.round(spans.esm),
       meshes: Math.round(spans.meshes),
       textures: Math.round(spans.textures),
+      sweep: Math.round(spans.sweep),
       total: Math.round(mwNow() - t0),
     };
     console.log(`[mw] arm built in ${timings.total} ms - archives ${timings.archives}, `
-      + `esm ${timings.esm}, meshes ${timings.meshes}, textures ${timings.textures}`);
+      + `esm ${timings.esm}, meshes ${timings.meshes}, textures ${timings.textures}, sweep ${timings.sweep}`);
 
     return {
       ok: true,
@@ -1841,6 +1868,21 @@ export function createFpArm() {
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
   let attackType = null;
+  // MS1: THE BACKHAND. A strike that runs the other way from Morrowind's
+  // one slash (StrikeRight - mwFirstPerson.js's REVERSED_STRIKES) plays
+  // the slash BACKWARDS, section by section: the follow-through reversed
+  // is the wind-up (the arm crosses the body to the left), the release
+  // reversed sweeps the blade left to right, the wind-up reversed
+  // settles the arm. Same right arm, same hand, same keys - only the
+  // playhead's direction. Set by attack(); read only while an attack
+  // phase is up, so between blows it is inert and needs no clear site.
+  let attackReversed = false;
+  const ATTACK_PHASES = new Set([UPPER_BODY.AttackWindUp, UPPER_BODY.AttackRelease, UPPER_BODY.AttackEnd]);
+  const reversedNow = () => attackReversed && ATTACK_PHASES.has(upper);
+  /** The file time the pose samples: a reversed section runs its
+   *  window from stop to start while the clip state (and every key it
+   *  crosses, every completion it reports) still walks forward. */
+  const poseTime = (state) => (state && state.reversed ? state.startTime + state.stopTime - state.time : state.time);
   let attackStrength = 1;
   let sheathed = true;
   let weaponShown = false;
@@ -2084,6 +2126,23 @@ export function createFpArm() {
   // source plays it is a separate question, answered in reverse below.
   const hasGroup = (n) => { const r = rig(); return !!r && !!r.sources && anySourceHasGroup(r.sources, n); };
 
+  /** MF1: the third body's OWN idle for the drawn stance - the same
+   *  ladder refreshIdle climbs (composeStanceGroup: asked group, short
+   *  group, bare base) over the body's sources, not the arm's - and the
+   *  pick kept per body and group, so a repaint picks nothing twice.
+   *  Null when the body's .kf names no idle this stance can reach. */
+  const portraitPicks = new WeakMap();   // third body -> Map(group -> pick)
+  function portraitPose(t) {
+    if (!t || !t.ok || !t.sources) return null;
+    const type = animWeaponType(t.mwType ?? (built && built.mwType), false, spellReady);
+    const composed = composeStanceGroup(FP_IDLE_BASE, type, (n) => anySourceHasGroup(t.sources, n));
+    if (!composed.group) return null;
+    let memo = portraitPicks.get(t);
+    if (!memo) { memo = new Map(); portraitPicks.set(t, memo); }
+    if (!memo.has(composed.group)) memo.set(composed.group, pickAnimSource(t.sources, composed.group, resetClip, { loopFallback: true }));
+    return memo.get(composed.group);
+  }
+
   /** The source currently posing the arm - the one that won the clip
    *  being drawn, because its tracks are the ones the pose reads. */
   let poseSource = null;
@@ -2100,7 +2159,7 @@ export function createFpArm() {
    *  slot empty when the file has no such window - it never substitutes
    *  a different one, because a substituted attack animation is the
    *  reverted arc's whole failure mode in miniature. */
-  function playAction(start, stop, startPoint = 0) {
+  function playAction(start, stop, startPoint = 0, reversed = false) {
     if (!rig() || !weaponGroup) return false;
     const pick = pickAnimSource(rig().sources, weaponGroup, resetClip, { start, stop, startPoint });
     if (!pick) {
@@ -2109,6 +2168,7 @@ export function createFpArm() {
       return false;
     }
     actionState = pick.state;
+    actionState.reversed = !!reversed;   // MS1: the pose reads this window backwards
     actionSource = pick.source;
     return true;
   }
@@ -2434,9 +2494,9 @@ export function createFpArm() {
   function beginRelease() {
     attackStrength = windUpStrength();
     upper = UPPER_BODY.AttackRelease;
-    const k = attackKeys(attackType, attackStrength);
+    const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
     const startPoint = releaseSkip(rig().keys, weaponGroup, attackType, attackStrength);
-    if (!playAction(k.release.start, k.release.stop, startPoint)) beginFollow();
+    if (!playAction(k.release.start, k.release.stop, startPoint, k.reversed)) beginFollow();
   }
 
   /** AttackRelease -> AttackEnd (:1793-1812): the follow-through, whose
@@ -2444,8 +2504,8 @@ export function createFpArm() {
    *  shot. */
   function beginFollow() {
     upper = UPPER_BODY.AttackEnd;
-    const k = attackKeys(attackType, attackStrength);
-    if (!playAction(k.follow.start, k.follow.stop, 0)) endAttack();
+    const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
+    if (!playAction(k.follow.start, k.follow.stop, 0, k.reversed)) endAttack();
   }
 
   /** AttackEnd -> WeaponEquipped (:1821-1856). */
@@ -2735,10 +2795,10 @@ export function createFpArm() {
           // below read synchronously - this rig's and, further down, the
           // third-person one's. The two resolves pick the SAME records
           // off the same allWeapons, so one load serves both.
-          await loadFromArchives(archives, weaponPartPaths({ weapon: item, hasAmmo, allWeapons: token.allWeapons }));
+          await loadFromArchives(archives, weaponPartPaths({ weapon: item, hasAmmo, allWeapons: token.allWeapons, has: archiveHas(archives) }));   // MW-D50
           const resolved = resolveWeaponParts({
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
-            skeletonBytes: token.skeletonBytes,
+            skeletonBytes: token.skeletonBytes, has: archiveHas(archives),   // MW-D50
           });
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
@@ -2779,7 +2839,7 @@ export function createFpArm() {
             const t = thirdBuilt;
             const tResolved = resolveWeaponParts({
               weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
-              skeletonBytes: t.skeletonBytes,
+              skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
             });
             t.arm.pieces = t.arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
             bindPartsInto(t.arm, tResolved.parts);
@@ -2883,6 +2943,7 @@ export function createFpArm() {
       });
       if (!type) return null;
       attackType = type;
+      attackReversed = type === 'slash' && strikeReversed(strike);   // MS1: the backhand - the slash alone has a side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       // `hold` is the caller's machine, not a guess about bows. The
@@ -2894,7 +2955,7 @@ export function createFpArm() {
       // game path never sends.
       holdWindUp = !!hold;
       upper = UPPER_BODY.AttackWindUp;
-      const k = attackKeys(type, 1);
+      const k = attackKeys(type, 1, { reversed: attackReversed });
       // MW-D42 (Mac: the arrow is not shown on the bow during the
       // animation): THE NOCK HAS A FLOOR AT THE DRAW. Rule 24's "shoot
       // attach" still drives it - the key is authoritative wherever the
@@ -2912,7 +2973,7 @@ export function createFpArm() {
       // not in the equip section, and why reloadCrossbow stays the
       // only other way in.
       if (type === MW_SHOOT_ATTACK && built.arrow) arrowShown = true;
-      if (!playAction(k.windUp.start, k.windUp.stop, 0)) {
+      if (!playAction(k.windUp.start, k.windUp.stop, 0, attackReversed)) {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
         holdWindUp = false;
@@ -2969,6 +3030,7 @@ export function createFpArm() {
       if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
       const type = spellAttackType(rangeType);
       attackType = type;
+      attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
       upper = UPPER_BODY.Casting;
@@ -3078,7 +3140,7 @@ export function createFpArm() {
         poseAssembly(t.arm, {
           tracks: poseSource ? poseSource.trackMap : t.tracks,
           sampleTrack,
-          time: state.time,
+          time: poseTime(state),   // MS1: a backhand's window runs backwards
           accumRoot: t.accumRoot,
         });
         uploadThirdMesh(t);
@@ -3094,7 +3156,7 @@ export function createFpArm() {
       poseAssembly(built.arm, {
         tracks: poseSource ? poseSource.trackMap : built.tracks,
         sampleTrack,
-        time: state.time,
+        time: poseTime(state),   // MS1: a backhand's window runs backwards
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
         accumRoot: built.accumRoot,
@@ -3444,19 +3506,28 @@ export function createFpArm() {
       // arm never runs. So figure() uploaded whatever bone matrices
       // happened to be in t.arm from the last time the wheel was in
       // third person, or from the build if it never was. Not a stale
-      // frame: a stale SESSION. "Sometimes" is exactly the shape of
-      // that - it depends on whether the player has ever been in third
-      // person and what they were doing when they left it.
-      // Posed with the same inputs stepUpper uses, so the portrait is
-      // the body as it stands NOW rather than a leftover, and every
-      // caller gets the same answer for the same state.
-      // The live playhead, exactly as stepUpper picks it (:2620).
-      const shown = actionState || movementState || jumpState || idleState;
-      if (shown) {
+      // frame: a stale SESSION.
+      //
+      // MF1 (Mac: the model in the inventory "takes time to ... change
+      // stances and is just overall clunky"): THE PORTRAIT STANDS.
+      // PX32 posed the body at the wheel's live playhead, and in first
+      // person that playhead is a FIRST-PERSON clip: idleSource is the
+      // .1st.kf, its trackMap the ARM's tracks, its time the arm's
+      // time. The body took those tracks by bone name and stood in the
+      // arm's pose - the hands held up before a camera - shifting with
+      // the arm's idle loop and jumping on every rebuild, which is what
+      // "changes stances" looks like from the chair. The body is posed
+      // with ITS OWN sources now: the stance's idle (the DRAWN stance,
+      // since a paperdoll holds what it carries - PX26) at that clip's
+      // START, the standing frame Morrowind's own inventory doll holds.
+      // Deterministic, so the panel's cache is exact and two renders of
+      // one wardrobe are one picture.
+      const pose = portraitPose(t);
+      if (pose) {
         poseAssembly(t.arm, {
-          tracks: poseSource ? poseSource.trackMap : t.tracks,
+          tracks: pose.source.trackMap,
           sampleTrack,
-          time: shown.time,
+          time: pose.state.startTime,
           accumRoot: t.accumRoot,
         });
       }
@@ -3526,6 +3597,7 @@ export function createFpArm() {
         upperName: UPPER_BODY_NAME[upper],
         aimFactor,
         attackType,
+        attackReversed: reversedNow(),   // MS1: the backhand in flight
         sheathed,
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,
@@ -3547,6 +3619,7 @@ export function createFpArm() {
         jumpSource: jumpSource && jumpSource.name,
         clipNotes: notes.slice(-6),
         time: actionState ? actionState.time : (idleState ? idleState.time : null),
+        poseTime: actionState ? poseTime(actionState) : (idleState ? idleState.time : null),   // MS1: what the pose sampled
         frames,
         // MW-D24: which rig the machine is driving, and the body's own
         // build verdict - a refusal is a sentence on the card, exactly

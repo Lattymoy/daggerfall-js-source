@@ -516,7 +516,7 @@ Left, deliberately, each recorded at its site or here:
   **G1's review closed the arm the lane missed**: an ARROW reaches a pool
   through two seams, and only `dealDamage` (inside `arrowFlight`'s own
   `dmg > 0` fork) had been wired - the unconditional `onAttackFromPlayer`
-  seam, which is where :630 actually lives (`arrowFlight.js:228`), still
+  seam, which is where :630 actually lives (`arrowFlight.js:229`), still
   excluded the guards in all three hosts that resolve a player shaft. So
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the

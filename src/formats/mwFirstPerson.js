@@ -324,6 +324,30 @@ export const DF_STRIKE_TO_MW_ATTACK = Object.freeze({
   StrikeUp: 'thrust',
 });
 
+/**
+ * MS1 - THE BACKHAND (Mac, 2026-09-12: "classic Daggerfall has a swing
+ * animation for left and right while Morrowind only has the animation
+ * that swings right to left. Could we insert a mirrored swing so you're
+ * able to swing all directions?" - and, of a mirror that changed hands,
+ * "There must be a way to keep it correctly in the correct hand.").
+ *
+ * Morrowind's slash is ONE motion: the weapon hand sweeps from the
+ * actor's right across to the left. A mirror would send it the other
+ * way, but a mirror swaps hands. What keeps the sword in the right hand
+ * and sends it left-to-right is the SAME clip run BACKWARDS: the
+ * follow-through reversed is a wind-up that carries the arm across the
+ * body to the left, the release reversed sweeps the blade from left to
+ * right, and the wind-up reversed settles the arm from its cocked side
+ * back to rest. That is a backhand - the stroke a right-hander actually
+ * makes to swing left-to-right - on the right arm, with the sword where
+ * it is. StrikeLeft is Morrowind's own slash (the blade comes from
+ * screen-right and crosses to the left); StrikeRight is the backhand.
+ * The chops and the thrust have no side a reversal would honour (a chop
+ * backwards is an uppercut), and a shot is one draw.
+ */
+export const REVERSED_STRIKES = Object.freeze(['StrikeRight']);
+export const strikeReversed = (strike) => REVERSED_STRIKES.includes(strike);
+
 /** Rule 11's ranged case: every bow swing is "shoot", and the release
  *  key is "shoot release" where a melee blow is "<type> hit". */
 export const MW_SHOOT_ATTACK = 'shoot';
@@ -345,16 +369,26 @@ export function mwAttackType(strike, { bow = false } = {}) {
  * where strength is small (<0.33), medium (<0.66) or large - and "shoot"
  * has NO strength word at all.
  */
-export function attackKeys(attackType, strength = 0) {
+export function attackKeys(attackType, strength = 0, { reversed = false } = {}) {
   const shoot = attackType === MW_SHOOT_ATTACK;
   const hit = shoot ? 'release' : 'hit';
   const word = strength < 0.33 ? 'small' : strength < 0.66 ? 'medium' : 'large';
+  const windUp = { start: `${attackType} start`, stop: `${attackType} max attack` };
+  const release = { start: `${attackType} max attack`, stop: `${attackType} ${hit}` };
+  const follow = shoot
+    ? { start: `${attackType} follow start`, stop: `${attackType} follow stop` }
+    : { start: `${attackType} ${word} follow start`, stop: `${attackType} ${word} follow stop` };
+  // MS1: THE BACKHAND is the forward sections in reverse order, each
+  // played backwards - the key PAIRS stay in file order (resetClip
+  // wants start before stop) and the clip state carries `reversed`,
+  // which the pose reads as startTime + stopTime - time. A shot never
+  // reverses.
+  const back = reversed && !shoot;
   return {
-    windUp: { start: `${attackType} start`, stop: `${attackType} max attack` },
-    release: { start: `${attackType} max attack`, stop: `${attackType} ${hit}` },
-    follow: shoot
-      ? { start: `${attackType} follow start`, stop: `${attackType} follow stop` }
-      : { start: `${attackType} ${word} follow start`, stop: `${attackType} ${word} follow stop` },
+    reversed: back,
+    windUp: back ? follow : windUp,
+    release,
+    follow: back ? windUp : follow,
     hitKey: `${attackType} ${hit}`,
     // THE THREE KEYS NOBODY PLAYS, which only ever have their TIMES read
     // (character.cpp:1241-1242, :1779). They are not clip boundaries -
@@ -1230,16 +1264,34 @@ export function dfWeaponToMw(item, weaponsTable) {
   return MW_WEAPON_TYPE.None;
 }
 
-export function pickWeaponRecord(records, type, material = null) {
+export function pickWeaponRecord(records, type, material = null, { has = null } = {}) {
   // AUDIT MW-A F3: id-sorted, for the face's own reason (D27) - file
   // order is a property of the LOAD, and `ofType[0]` handed a player
   // whichever record their archive arrangement listed first. Sorted,
   // the same character draws the same sword on every machine, and on
   // retail the alphabetical first is the iron/chitin commons the old
   // pick usually landed on anyway.
-  const ofType = (records ?? []).filter((r) => r.type === type && !r.enchanted)
+  const sorted = (records ?? []).filter((r) => r.type === type && !r.enchanted)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  if (!ofType.length) return null;
+  if (!sorted.length) return null;
+  // MW-D50 (Mac: on a Morrowind bow "the arrow is never shown being
+  // ready"): A RECORD WHOSE MESH THE ARCHIVES CARRY. The records come
+  // from EVERY .esm attached and the meshes from whichever .bsa files
+  // are - and the two need not agree. With Tribunal.esm or
+  // Bloodmoon.esm beside Morrowind.esm, the id-sorted first Arrow is
+  // an expansion's ("adamantium arrow"), whose mesh lives in the
+  // expansion's .bsa; without that archive attached the pick landed
+  // on a file the store did not have, resolveWeaponParts noted "not in
+  // your archives", and the bow drew EMPTY, for ever, while the base
+  // game's own iron arrow sat one id further down. The bow itself
+  // escaped by its material chain (an iron bow finds "long bow" in
+  // the base game). So, given `has` (the archives' directory), the
+  // pool is first the records whose model is actually there; only
+  // when NONE is does the old pick stand, so the note still names the
+  // file the player is missing. weaponPartPaths and resolveWeaponParts
+  // pass the same `has`, so the preload and the read agree.
+  const present = has ? sorted.filter((r) => has(`meshes/${r.model}`)) : sorted;
+  const ofType = present.length ? present : sorted;
   const chain = material ? DF_TO_MW_MATERIAL[material] : null;
   for (const want of (Array.isArray(chain) ? chain : chain ? [chain] : [])) {
     const hit = ofType.find((r) => r.id.includes(want));

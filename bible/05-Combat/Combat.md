@@ -1405,3 +1405,24 @@ non-target foe in the way stops it and takes nothing; a player shaft
 drives all five cases and pins the pool's read and the three hosts'
 stores; the two AR1 infighting pins now carry the law they always
 described (the bear the shaft was loosed AT).
+
+## PCO1 - PHYSICAL COMBAT AND ARMOR OVERHAUL, THE MOD, 1:1 (2026-09-12, Mac's call) - SHIPPED
+
+Mac: "So next up, I want to implement this as our next integrated mod.
+The goal is 1:1 with complete parity." The whole account is
+`Physical-Combat-Overhaul.md` beside this file; the ledger row is
+Port-Ledger A. The short of it: Kirk.O's Physical Combat And Armor
+Overhaul v1.44 - the shipped DLL decompiled, since the repository's
+last source is v1.40 - ported method for method into
+`combat/pcaao.js` on DFU's own RegisterOverride shape, which
+`combat/formulas.js` grew for it: three members (damageModifier,
+damageEquipment, calculateAttackDamage's core) consult a registry first,
+and each of the mod's arms reads its module switch live and declines
+when off. Armour reduces damage instead of hit chance, skills decide the
+hit, gear wears by its kind and material, shields block by material and
+stats, critical strikes multiply, monsters have hides, and Kirk.O's
+Meaner Monsters edit rides `enemyEntity.makeEnemyEntity`'s row. Unity's
+half-to-even round and float32 arithmetic are kept, and so are the four
+clamps the C# throws away. Off by default in the Mods pane; the seven
+shipped module keys default as shipped. Pins: 22 in
+`test/pcaao.test.js`. Not filmed: a game.

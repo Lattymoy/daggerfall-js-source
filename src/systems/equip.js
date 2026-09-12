@@ -392,7 +392,7 @@ export const slotForBodyPart = (part) => BODY_PART_SLOT.get(part) ?? EQUIP_SLOTS
  *  only an ENCHANTED player item, and that arm rides the enchantment
  *  arc with the rest of the payloads. Returns true on a break. */
 const PLURAL_BREAK_TEMPLATES = new Set([103, 104, 108]);   // Armor.Gauntlets, Greaves, Boots
-export function lowerCondition(item, amount, owner = null, say = null) {
+export function lowerCondition(item, amount, owner = null, say = null, removeFrom = null) {
   mintCondition(item);
   if ((item.maxCondition ?? 0) <= 0) return false;   // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break
   item.currentCondition -= amount;
@@ -414,6 +414,11 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   // own corpse's loot is not hidden from every inventory tab), and
   // the mark-keyed call could never take a broken foe's shield off.
   if (owner) unequipItem(owner, item);
+  // PCO1: LowerCondition's third parameter, `removeFromCollectionWhenBreaks`
+  // (DaggerfallUnityItem.cs) - ItemBreaks removes the item from that
+  // collection. The port's one caller is the mod's fading enchanted
+  // items module: the PLAYER's enchanted piece is destroyed on breaking.
+  if (removeFrom) { const i = removeFrom.indexOf(item); if (i >= 0) removeFrom.splice(i, 1); }
   _hooks.onItemBroken?.(item, owner, say);
   return true;
 }

@@ -28,6 +28,7 @@ import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
 import { dice100, setRacialHitHook, setPlayerStruckHook } from '../combat/formulas.js';
+import { installPcaao } from '../combat/pcaao.js';   // PCO1: the mod's RegisterOverride, once, for every host
 import { onLycanthropeHit } from './lycanthropy.js';
 import { onVampireHit } from './vampirism.js';
 import { onPlayerStruckByEnemy } from './artifactEffects.js';   // V3: the Ring of Namira's reflection
@@ -42,6 +43,9 @@ setRacialHitHook((attacker, target, { nowMinutes = 0, mobileType = null, isCivil
 // V3: the other tail - an enemy damaging the player runs the Ring of
 // Namira's reflection (registered here for the same cycle reason).
 setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker, target, damage));
+// PCO1: Physical Combat And Armor Overhaul's three overrides - each
+// reads its module switch live and declines when off.
+installPcaao();
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';

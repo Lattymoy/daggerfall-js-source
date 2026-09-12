@@ -2711,7 +2711,7 @@ retired rather than reworded.
 it.** A player ARROW reaches a pool through two separate seams:
 `dealDamage`, which `arrowFlight` calls inside its own `dmg > 0` fork,
 and `onAttackFromPlayer`, which it calls unconditionally
-(`arrowFlight.js:228`) precisely because that is where :630 lives. All
+(`arrowFlight.js:229`) precisely because that is where :630 lives. All
 three hosts that resolve a player arrow EXCLUDED the guards from the
 second seam, on a sentence — "the watch pool's damage door carries no
 hostility pair of its own" — that this lane's own `handleAttackFromPlayer`

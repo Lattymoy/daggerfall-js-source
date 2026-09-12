@@ -6345,3 +6345,130 @@ incremental swap of the weapon part alone rather than a rebuild, which
 is a real piece of work and is NOT started here: what is recorded is
 the diagnosis and the correction of the false one, so the next session
 does not begin by trusting a sentence I got wrong.
+
+## DECLARED DIVERGENCE (MS1, 2026-09-12): the backhand
+
+Mac: "classic Daggerfall has a swing animation for left and right while
+Morrowind only has the animation that swings right to left. Could we
+insert a mirrored swing so you're able to swing all directions?" - and
+of the first cut, a mirror of the whole picture that put the sword in
+the left hand for the blow: "There must be a way to keep it correctly
+in the correct hand. I'm not okay with the honest cost."
+
+**What the two games have.** Morrowind's melee is three clips per
+weapon group - chop, slash, thrust - and the slash is ONE motion: the
+weapon hand sweeps from the actor's right across to the left. Rule 11's
+recorded divergence (`DF_STRIKE_TO_MW_ATTACK`) folds Daggerfall's
+six-way gesture onto those three by the shape of the motion, so
+StrikeLeft and StrikeRight both played the same right-to-left slash.
+
+**Why not a mirror.** A mirror is the only transform that sends a
+right-to-left clip left-to-right AS A PICTURE, and it swaps hands
+doing it - the sword is in the left hand for the blow and the arm cuts
+to the other side of the screen at its start and end. Mac refused that
+cost, and he was right to: it is not a swing, it is a reflection of
+one.
+
+**The departure: the same clip, backwards.** What sends the blade
+left-to-right on the SAME right arm is the slash run in reverse,
+section by section - the follow-through played backwards is a wind-up
+that carries the arm across the body to the left, the release played
+backwards sweeps the blade from left to right, and the wind-up played
+backwards settles the arm from its cocked side to rest. That is a
+backhand, the stroke a right-hander actually makes to swing that way,
+with the sword where it is. `REVERSED_STRIKES`
+(`formats/mwFirstPerson.js`) names StrikeRight alone: the chops have
+no side a reversal would honour (a chop backwards is an uppercut) and
+share the one chop as before, the thrust has none, and a shot is one
+draw. `attackKeys(type, strength, { reversed })` hands the machine the
+forward sections in reverse order - each key PAIR still in file order,
+because resetClip wants start before stop - and marks the answer
+`reversed`; `playAction` stamps that on the clip state; `poseTime`
+(`combat/fpArm.js`) samples `startTime + stopTime - time` for a
+reversed window while the state itself, every key it crosses and every
+completion it reports, walks forward as the reference's machine does.
+Both rigs pose through it, so the wheel's third-person body makes the
+same backhand. `attackReversed` is set by attack(), cleared by a cast,
+and read only while an attack phase is up, so the idle between blows
+is never reversed. The draws are untouched: no mirror anywhere.
+
+**What it costs, said plainly.** The backhand's timing is the slash's
+timing in reverse - its wind-up lasts as long as the follow-through
+did and its settle as long as the wind-up did - and the "slash hit"
+key fires where the forward walk crosses it, which for a reversed
+release is at the sweep's END rather than its start. Nothing listens
+to a melee hit key (Daggerfall's own machine owns damage - rule 24's
+note), so nothing moves. Which strike is Morrowind's own direction is
+a one-name table if the chair says it is the other way round; no data
+here to film it.
+
+**Pinned (test/reversedSwing.test.js).** The table and its one name;
+attackKeys reversed is the sections in reverse order with each pair in
+file order and a shot never; through a real build on the weapon
+fixture a StrikeRight begins its wind-up at the follow-through's end
+with the pose retreating while the state advances, enters the release
+at the hit and runs it back to max attack, settles from there to
+rest, and reports nothing reversed once the hand is its own again -
+while StrikeLeft begins at "slash start" forward and a diagonal chop
+keeps its one way; and the draws carry no mirror, both rigs posing
+through poseTime.
+
+## MW-D50 (2026-09-12): the arrow the archives carry
+
+Mac: "when wielding a Morrowind bow, the arrow isn't shown being drawn
+and shot from the bow. The actual projectile is correct and shoots
+properly, but on the bow itself, the arrow is never shown being ready.
+I'm not sure if it's a case of the arrow itself being offset or not
+being shown at all."
+
+**Read against the reference first, and the placement stands.** The
+whole chain was walked once more beside OpenMW's own source
+(npcanimation.cpp getArrowBone / attachArrow, weaponanimation.cpp
+attachArrow, attach.cpp's PositionAttitudeTransform, visitor.cpp's
+FindByNameVisitor): getArrowBone's two branches (MW-D16), the bare
+getInstance under the bow's ArrowBone with the weapon's own offset and
+mirror inherited (MW-D34, MW-D44), the composed node chain (MW-D48),
+the hidden-node search (MW-D49), the shoot keys and the floor at the
+draw (rule 24, MW-D42), the hidden range in both draws, and the
+classic bow's gesture reaching attack() through fpAttack for both the
+instant shot and the held draw. No divergence found; every step is
+pinned on the fixtures (test/mwarrow.test.js). "Offset" is not it.
+
+**What CAN empty the bow on retail data, and now does not.** The
+weapon records come from EVERY .esm attached (the load order) and the
+meshes from whichever .bsa files are - and the two need not agree.
+pickWeaponRecord takes the id-sorted first unenchanted record of the
+type (AUDIT MW-A F3), so with Tribunal.esm or Bloodmoon.esm beside
+Morrowind.esm the first Arrow is an expansion's ("adamantium arrow"),
+whose mesh lives in that expansion's .bsa. With only Morrowind.bsa
+attached, the pick landed on a file the store does not have,
+resolveWeaponParts noted "arrow: meshes/... is not in your archives",
+and the bow drew EMPTY for ever - while "iron arrow" sat one id
+further down. The bow itself escaped the same trap by its material
+chain: an iron bow's chain finds "long bow" in the base game. Nothing
+on screen said any of this; the card's note is a menu away.
+
+**The law now.** `pickWeaponRecord(records, type, material, { has })`
+takes the archives' DIRECTORY (`archiveHas(archives)` in
+`combat/fpArm.js`, "is this path in any attached .bsa" - deliberately
+not findLoaded, which throws for a path known but not yet read) and
+pools first the records whose model is actually there; only when NONE
+is does the old pick stand, so the note still names the file the
+player is missing. weaponPartPaths (the MW-LOAD preload) and
+resolveWeaponParts (the read) pass the same `has`, at all seven sites
+- the two builds' preloads, the first-person and third-person
+resolves, and the live swap's preload and two resolves - so the
+preload and the read cannot disagree. And a weapon that takes
+ammunition, with ammunition in the pack, that still resolves with no
+arrow, says why ONCE on the console: `[mw] the bow carries no arrow -
+<the card's arrow notes>`. If Mac's bow is still empty after this,
+that line is the next report.
+
+**Pinned (test/arrowPick.test.js).** The pick prefers a present mesh,
+keeps the old pick when none is present, still answers null for a type
+with no record; the preload and the read agree through one directory;
+a real build with an expansion arrow first in the .esm and only the
+base meshes attached resolves the iron arrow, carries it as a piece
+and leaves no arrow note; and the console line fires once per reason,
+never without ammunition; every preload and resolve passes the one
+directory.
