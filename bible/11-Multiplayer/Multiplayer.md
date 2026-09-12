@@ -51,7 +51,7 @@ introduces peers and relays bytes; it runs no game.
 
 Why, and this is the constraint that decides everything: **lockstep is
 impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:6217`) and 110 source files call
+variable `dt` (`scenes/world.js:6219`) and 110 source files call
 `Math.random` unseeded. Two clients cannot simulate the same world in
 parallel and agree, and making them able to would mean a fixed-step
 deterministic rewrite of the simulation. So one authority owns the
@@ -192,6 +192,6 @@ a convenience.
 
 - Host migration (a client becomes host when the host drops). Later.
 - Splitting the party across interiors. Later.
-- Voice or text chat. Probably text in the HUD; not basics.
+- Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.
 - Binary framing / WebRTC. When the numbers say so, not before.

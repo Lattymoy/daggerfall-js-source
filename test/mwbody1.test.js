@@ -227,7 +227,7 @@ test('MWBODY1: the host - the gate is the enhanced skin (read once), the arms sw
   assert.match(w, /online\.look = composeLook\(playerEntity\); online\.join\(key, \{ \.\.\.pose, mv \}\);/, 'the next room\'s hello carries the gear worn now');
   assert.match(w, /if \(peerBodies\) peerBodies\.offsetAll\(r\.offset\);/, 'the recenter shifts the bodies (D5)');
   assert.match(w, /instanceof DeathScreen\) \{ if \(online\.room\) online\.leave\(\); peerBodies\.destroy\(\); remotePlayers\.sync\(\[\], onlineToScene\); return; \}/, 'the dead stand no body and no doll');
-  assert.match(w, /'pagehide', \(\) => \{ online\?\.leave\(\); peerBodies\?\.destroy\(\); remotePlayers\?\.destroy\(\); \}/, 'the page\'s hide releases the rigs');
+  assert.match(w, /'pagehide', \(\) => \{ online\?\.leave\(\); for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\); peerBodies\?\.destroy\(\); remotePlayers\?\.destroy\(\); \}/, 'the page\'s hide releases the rigs (and, CHAT1, leaves every channel in the same goodbye - the panel stays for a restore, AUDIT CHAT B4)');
   const m = rd('src/scenes/worldModes.js');
   assert.equal((m.match(/mwViewDrawBody\(canvas, \{ proj, view, eye: mwv\.eye, feet: player\.feetAt\(\), yaw: cam\.yaw \}\);   \/\/ MW-D24\n\s*host\.drawPeerBodies\?\.\(\{ proj, view, eye: mwv\.eye \}\);/g) || []).length, 2, 'the dungeon\'s and the interior\'s passes');
   const pbSrc = rd('src/net/peerBodies.js');
