@@ -205,18 +205,19 @@ test('MW-LOAD: nothing in a lazy build ever says "not loaded"', async () => {
 
 test('MW-LOAD: the build reports its STAGE TIMINGS, and the total covers every stage', async () => {
   // Mac's question was "where does the time go", and one number cannot
-  // answer it. Four disjoint spans and their total, in whole
-  // milliseconds, printed once and carried on the result.
+  // answer it. Five disjoint spans (MF1 split the reach SWEEP out of
+  // `meshes`) and their total, in whole milliseconds, printed once and
+  // carried on the result.
   const res = await buildFpArm({ race: 'fprace', weapon: LONG_BOW, hasAmmo: true, deps: depsOver(await lazyArchive()) });
   assert.equal(res.ok, true, `${res.stage}: ${res.error}`);
   assert.ok(res.timings, 'a successful build carries its timings');
-  assert.deepEqual(Object.keys(res.timings).sort(), ['archives', 'esm', 'meshes', 'textures', 'total']);
+  assert.deepEqual(Object.keys(res.timings).sort(), ['archives', 'esm', 'meshes', 'sweep', 'textures', 'total']);
   for (const [name, v] of Object.entries(res.timings)) {
     assert.equal(typeof v, 'number', `${name} is a number`);
     assert.ok(Number.isInteger(v), `${name} is whole milliseconds (${v})`);
     assert.ok(v >= 0, `${name} is not negative (${v})`);
   }
-  for (const name of ['archives', 'esm', 'meshes', 'textures']) {
+  for (const name of ['archives', 'esm', 'meshes', 'textures', 'sweep']) {
     assert.ok(res.timings.total >= res.timings[name],
       `total (${res.timings.total}) must cover ${name} (${res.timings[name]})`);
   }
@@ -225,7 +226,7 @@ test('MW-LOAD: the build reports its STAGE TIMINGS, and the total covers every s
   const src = rd('src/combat/fpArm.js');
   assert.equal((src.match(/console\.log\(/g) || []).length, 1, 'exactly one log in the whole file');
   assert.match(src, /\[mw\] arm built in \$\{timings\.total\} ms - archives \$\{timings\.archives\}, /);
-  assert.match(src, /esm \$\{timings\.esm\}, meshes \$\{timings\.meshes\}, textures \$\{timings\.textures\}/);
+  assert.match(src, /esm \$\{timings\.esm\}, meshes \$\{timings\.meshes\}, textures \$\{timings\.textures\}, sweep \$\{timings\.sweep\}/);
 });
 
 // ── the doors a build does not go through ───────────────────────────

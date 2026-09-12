@@ -690,33 +690,55 @@ function dropGold(text) {
 
 // ── MW-D36: the model figure ─────────────────────────────────────────
 let _figureYaw = 0;
-let _figureCache = { key: null, url: null };
+let _figureCache = { key: null, img: null };   // MF1: the pixels (ImageData), not a PNG
+let _figureRaf = 0;   // MF1: the one pending drag repaint
 let _unsubscribeFigure = null;
-/** The built third-person body as a data URL at the current yaw, or
- *  null when no body stands. Cached per (yaw, build) so a re-render of
- *  the window does not re-read the GPU. */
-function modelFigureUrl() {
+/** The built third-person body's pixels at the current yaw, or null
+ *  when no body stands. Cached per (yaw, build) so a re-render of the
+ *  window does not re-read the GPU.
+ *
+ *  MF1 (Mac: the model in the inventory is "overall clunky"): THE
+ *  FIGURE IS PIXELS, NOT A PNG. This used to hand back a data URL:
+ *  every fresh yaw and every settlement was a GPU readback, a PNG
+ *  ENCODE of a 384px image, and an `<img>` DECODE of it on the other
+ *  side - three of the four costs were the encoding, and the decode
+ *  landed a frame or two late, which is the lag a drag felt. The
+ *  ImageData goes straight onto a canvas now (modelFigure), and a
+ *  drag repaints that one canvas on the animation frame instead of
+ *  rebuilding anything. */
+function modelFigureImage() {
   const armMod = deps.fpArm;
   if (!armMod || typeof armMod.figure !== 'function') return null;
   const st = armMod.status?.();
   // AUDIT 33 F2: the yaw is QUANTISED to a tenth of a radian, so a drag
-  // re-renders and re-encodes the figure about sixty times per turn
-  // instead of once per pixel, and dragging back lands on cached
-  // frames. The build's settlement clears this cache (subscribe).
+  // re-renders the figure about sixty times per turn instead of once
+  // per pixel, and dragging back lands on cached frames. The build's
+  // settlement clears this cache (subscribe).
   const yaw = Math.round(_figureYaw / 0.1) * 0.1;
   const key = `${st?.pieces ?? 0}:${st?.skeletonPath ?? ''}:${yaw.toFixed(1)}`;
-  if (_figureCache.key === key) return _figureCache.url;
+  if (_figureCache.key === key) return _figureCache.img;
+  let px = null;
+  try { px = armMod.figure({ yaw, height: 384 }); } catch { px = null; }
   let img = null;
-  try { img = armMod.figure({ yaw, height: 384 }); } catch { img = null; }
-  let url = null;
-  if (img && img.width && img.height) {
-    const cv = document.createElement('canvas');
-    cv.width = img.width; cv.height = img.height;
-    cv.getContext('2d').putImageData(new ImageData(img.data, img.width, img.height), 0, 0);
-    url = cv.toDataURL('image/png');
+  if (px && px.width && px.height) {
+    try { img = new ImageData(px.data, px.width, px.height); } catch { img = null; }
   }
-  _figureCache = { key, url };
-  return url;
+  _figureCache = { key, img };
+  return img;
+}
+/** MF1: the pixels onto a canvas - no encode, no decode. */
+function paintFigure(cv, img) {
+  if (cv.width !== img.width) cv.width = img.width;
+  if (cv.height !== img.height) cv.height = img.height;
+  cv.getContext('2d')?.putImageData(img, 0, 0);
+}
+/** The figure as a canvas element, or null when no body stands. */
+function modelFigure() {
+  const img = modelFigureImage();
+  if (!img) return null;
+  const cv = document.createElement('canvas');
+  paintFigure(cv, img);
+  return cv;
 }
 /** MW-D38: a Daggerfall item's Morrowind icon as a data URL, or null.
  *  The rig caches the pixels per record; this caches the encoding. */
@@ -736,20 +758,28 @@ function modelIconUrl(item, size) {
   return url;
 }
 
-/** Drag left/right to turn the figure; a tap does nothing (display only). */
-function attachFigureTurn(img) {
+/** Drag left/right to turn the figure; a tap does nothing (display only).
+ *  MF1: the move records the yaw and asks for ONE repaint on the next
+ *  animation frame - a pointer reports faster than the screen draws,
+ *  and rendering the body per report was work the eye never saw. */
+function attachFigureTurn(cv) {
   let down = null;
-  img.style.touchAction = 'pan-y';
-  img.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; img.setPointerCapture?.(e.pointerId); });
-  img.addEventListener('pointermove', (e) => {
+  cv.style.touchAction = 'pan-y';
+  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; cv.setPointerCapture?.(e.pointerId); });
+  cv.addEventListener('pointermove', (e) => {
     if (!down) return;
     _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
-    const url = modelFigureUrl();
-    if (url) img.src = url;
+    if (_figureRaf) return;
+    _figureRaf = requestAnimationFrame(() => {
+      _figureRaf = 0;
+      if (!cv.isConnected) return;   // the window repainted under the drag; its new canvas owns the next frame
+      const img = modelFigureImage();
+      if (img) paintFigure(cv, img);
+    });
   });
   const up = () => { down = null; };
-  img.addEventListener('pointerup', up);
-  img.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
 }
 
 /** The avatar, at whatever scale the column gives it. */
@@ -866,17 +896,23 @@ function equippedList() {
   // GPU as an image, turnable by drag. Display only, by Mac's call:
   // unequip stays with the list. No body built = the classic doll,
   // exactly as before; the classic skin never sees any of this.
-  const figureUrl = modelFigureUrl();
-  const dollUrl = figureUrl || paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // MF1: the model is a CANVAS of its pixels; the classic doll stays
+  // the data-URL `<img>` it was (one composite per equip, cached).
+  const figure = modelFigure();
+  const dollUrl = figure ? null : paperDollDataUrl(paperDollPixels(), { scale: 4 });
   // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
   // with art the figure stands on the window's own glass.
-  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}${figureUrl ? ' model' : ''}`);
+  const dollFrame = el('div', `wornmap-doll${figure || dollUrl ? ' hasart' : ' noart'}${figure ? ' model' : ''}`);
   dollFrame.style.gridArea = DOLL_AREA;
-  if (dollUrl) {
+  if (figure) {
+    figure.setAttribute('role', 'img');
+    figure.setAttribute('aria-label', 'Your character, as the Morrowind body wears it');
+    attachFigureTurn(figure);
+    dollFrame.append(figure);
+  } else if (dollUrl) {
     const img = document.createElement('img');
     img.src = dollUrl;
-    img.alt = figureUrl ? 'Your character, as the Morrowind body wears it' : 'Your character';
-    if (figureUrl) attachFigureTurn(img);
+    img.alt = 'Your character';
     dollFrame.append(img);
   } else {
     dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
@@ -1528,7 +1564,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // that rebuilt the model asynchronously shows on the panel.
   if (d.fpArm && typeof d.fpArm.subscribe === 'function') {
     _unsubscribeFigure?.();
-    _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, url: null }; if (host) render(); });
+    _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, img: null }; if (host) render(); });
   }
   onExit = d.onExit ?? (() => {});
   tab = PAGE_IDS[0];
