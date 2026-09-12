@@ -140,7 +140,7 @@ whenever there is no bake, no route, or the classic detour is running.
 
 The follow laws are project-final's at 8ba9100 - enemyShared.js
 `repathToward` and `stuckWatch` re-homed on `this`, enemyMelee.js
-htClose's `WP_REACH` advance, main.js:239 `navWalkable`, enemy.js:402
+htClose's `WP_REACH` advance, main.js:241 `navWalkable`, enemy.js:402
 `PATH_BUDGET_PER_FRAME` - constants and comments verbatim, pinned.
 The host chooses the motor by the pref at both construction sites,
 hands it the bake as a THUNK (a foe built before the bake lands is

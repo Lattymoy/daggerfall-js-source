@@ -104,7 +104,8 @@ import {
 } from '../systems/settings.js';
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
-import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';   // R7: the port's own switches; SO1: the folded tiers' memory
+import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
@@ -153,14 +154,16 @@ import { paneControls, discardControlsStaging, captureArmed } from './enhancedCo
 // packed armory, for trying gear on the rigs without playing there.
 // Boot-only for the same reason Continue and New Game are: it answers
 // "which game", which is settled once one is running.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'];
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Controls', 'Mods', 'About'];   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
 // so the classic player keeps every screen Daggerfall had and gains
 // the one it never did: settings before the game, without a wizard.
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
-const SECTIONS_CLASSIC = ['Begin', 'Settings', 'Controls', 'Mods', 'About'];
+// ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
+// other user's paperdoll" - the same pane, the same save brought in.
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Controls', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -416,6 +419,34 @@ function paneTest(body) {
 }
 
 // ── LOAD GAME ────────────────────────────────────────────────────
+// ONLINE1 (2026-09-12, Mac: "add an option to the menu labeled online
+// which allows you to bring your own developed character into a
+// massive server"): THE ONLINE DOOR. The most recent save is the
+// character brought in (the same card Load shows); a name for over the
+// head and the relay to join ride the prefs shelf. The action boots
+// the world host with ?online beside ?load (main.js).
+function paneOnline(body) {
+  const save = savedGame();
+  const c = el('div', 'card');
+  c.append(el('span', 'tag', 'Online'));
+  c.append(el('h3', null, 'Bring your character into the shared world'));
+  c.append(el('p', 'meta', 'Everyone runs their own game from their own save; you see each other and walk together. Nothing else is shared yet.'));
+  const field = (label, key, placeholder) => {
+    const wrap = el('label', 'field');
+    wrap.append(el('span', 'fieldlabel', label));
+    const input = el('input');
+    input.type = 'text'; input.maxLength = 64; input.placeholder = placeholder; input.value = getPref(key) || '';
+    input.oninput = () => setPref(key, input.value.trim());
+    wrap.append(input);
+    return wrap;
+  };
+  c.append(field('Name over your head', 'onlineName', save?.name ?? 'Your name'));
+  c.append(field('Relay', 'onlineServer', DEFAULT_SERVER));
+  c.append(el('p', 'meta', save ? `Playing as ${save.name}, from your most recent save.` : 'Save a game first: Online brings a saved character in.'));
+  c.append(acts([{ label: 'Play online', primary: true, disabled: !save, onClick: save ? () => onAction('online') : null }]));
+  body.append(c);
+}
+
 function paneLoad(body) {
   const save = savedGame();
   if (save) {
@@ -2041,7 +2072,7 @@ function renderInto() {
     if (confirming) body.append(confirmCard());
     else {
       ({
-        continue: paneContinue, new: paneNew, load: paneLoad,
+        continue: paneContinue, new: paneNew, load: paneLoad, online: paneOnline,   // ONLINE1
         test: paneTest,
         save: paneSave, exit: paneExit,
         mods: paneMods, about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now

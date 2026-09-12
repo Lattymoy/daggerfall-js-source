@@ -279,7 +279,7 @@ async function loadOverrideArt(file, record = 0) {
   return art;
 }
 
-export async function refreshPaperDoll(entity) {
+export async function refreshPaperDoll(entity, { background = true } = {}) {   // ONLINE1: background false leaves the panel clear (a peer's billboard)
   if (!_art || !_deps) return;
   // AUDIT 17e F16 / ASYNC NEVER DROPS: this guard used to DISCARD a
   // refresh requested while one was in flight, so an equip landing
@@ -300,7 +300,7 @@ export async function refreshPaperDoll(entity) {
     const bgOverride = bgOverrideName ? await loadOverrideArt(bgOverrideName) : null;
     // background subrect fills the panel
     const bg = (bgOverride ?? _art.bg).bmp;
-    for (let y = 0; y < PAPERDOLL_H; y++) {
+    for (let y = 0; background && y < PAPERDOLL_H; y++) {
       for (let x = 0; x < PAPERDOLL_W; x++) {
         const idx = bg.data[(y + BG_SUBRECT[1]) * bg.width + (x + BG_SUBRECT[0])];
         const c = _art.palette.get(idx);

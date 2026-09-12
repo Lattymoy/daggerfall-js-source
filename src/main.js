@@ -192,8 +192,10 @@ async function boot() {
   // ever set, never cleared, so a URL that already carried ?load made NEW
   // GAME restore the save instead - the one action whose whole point is
   // not to.
-  if (action === 'load') params.set('load', '1');
+  if (action === 'load' || action === 'online') params.set('load', '1');   // ONLINE1: Online brings the most recent save in
   else params.delete('load');
+  if (action === 'online') params.set('online', '1');   // ONLINE1: the world host joins the relay (world.js)
+  else params.delete('online');
   // SAV4: the slot the start menu's save window picked, when it
   // picked one - the boot's load arm reads it. Same SET-or-DELETE law.
   const { takePickedLoadKey } = await import('./scenes/menu.js');
