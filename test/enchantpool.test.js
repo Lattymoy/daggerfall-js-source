@@ -17,7 +17,7 @@
 // classic strike spells did nothing; the vampiric drain and both
 // artifact affinity scans saw an empty room. Nothing threw and nothing
 // was logged. The one ctx in play is that mount - no host passes an
-// enchantCtx at the strike site (formulas.js:465 defaults it null) -
+// enchantCtx at the strike site (formulas.js:481 defaults it null) -
 // so mergeCtx folds it under every dispatch, in every mode.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

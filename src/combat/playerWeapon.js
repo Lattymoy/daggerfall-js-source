@@ -282,14 +282,21 @@ export class PlayerWeapon {
         // an arrow (the >10 s timeout is the machine's own 'undraw'),
         // and letting the button go RELEASES (StrikeDown).
         if (m.state === 'StrikeUp' && m.frame === BOW_DRAWN_HOLD_FRAME) {
-          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); return null; }
-          if (!held && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
+          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); this._drawStartedAt = null; return null; }
+          if (!held && machineAttack(m, 'StrikeDown')) {
+            // PCO1: the draw's length in milliseconds - FPSWeapon's
+            // animTime, which WeaponManager hands CalculateAttackDamage
+            // as `weaponAnimTime` and Roleplay Realism's archery reads.
+            this.lastDrawMs = this._drawStartedAt == null ? 0 : Math.max(0, Math.round(nowMs() - this._drawStartedAt));
+            this._drawStartedAt = null;
+            return 'StrikeDown';
+          }
           return null;
         }
-        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
+        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) { this._drawStartedAt = nowMs(); return 'StrikeUp'; }
         return null;
       }
-      if (rise && machineAttack(m, 'StrikeDown')) return 'StrikeDown';
+      if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = 0; return 'StrikeDown'; }   // PCO1: the instant shot has no draw
       return null;
     }
     this._bowHeld = false;
@@ -478,3 +485,6 @@ export function playerAttackOptions(weapon, machineState, backstabChance = 0, ro
   const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };
   return { weapon, damageMod: swing.damage, toHitMod: swing.toHit, backstabChance, rolls };
 }
+/** PCO1: the clock the bow's draw is timed on - performance.now where
+ *  there is one (the browser), Date.now in node. */
+const nowMs = () => (typeof performance !== 'undefined' && performance && typeof performance.now === 'function' ? performance.now() : Date.now());

@@ -206,6 +206,7 @@ export function playerArrowHitFoe(m, foe, {
     weapon: m.weapon ?? null,
     damageMod: swing.damage, toHitMod: swing.toHit,
     backstabChance: backstabChanceOf(playerEntity, back),
+    weaponAnimTime: playerWeapon?.lastDrawMs ?? 0,   // PCO1: the draw's length, for Roleplay Realism's archery
     rolls, onInflictPoison, say,
   });
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];

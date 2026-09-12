@@ -42,8 +42,24 @@ import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wa
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
 
+// ── PCO1: FormulaHelper.RegisterOverride ────────────────────────────
+// DFU lets a mod replace a formula by name (FormulaHelper.cs
+// RegisterOverride / the `overrides` dictionary each member consults
+// first). Physical Combat And Armor Overhaul (combat/pcaao.js) is the
+// first mod here that does, on three members: damageModifier,
+// damageEquipment and calculateAttackDamage's core. A registered arm
+// returns `undefined` to DECLINE (its module switch is off), and the
+// stock formula stands; anything else is its answer. One registry, one
+// name per member, the mod's own install as the only writer.
+const _overrides = new Map();
+export function registerFormulaOverride(name, fn) { if (fn) _overrides.set(name, fn); else _overrides.delete(name); }
+export const formulaOverride = (name) => _overrides.get(name) ?? null;
+
 // ---- FormulaHelper.DamageModifier ----
-export const damageModifier = (strength) => Math.floor((strength - 50) / 5);
+export function damageModifier(strength) {
+  const r = _overrides.get('damageModifier')?.(strength);   // PCO1
+  return r === undefined ? Math.floor((strength - 50) / 5) : r;
+}
 
 // ---- U10 / ONE DFU MEMBER, ONE EXPORT: the rest of FormulaHelper's
 // DERIVED STATS (FormulaHelper.cs:66-125). The chargen bonus-stats
@@ -486,6 +502,10 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  classic never damaged shields - else to the struck part's armor
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  // PCO1: the registered override first (the mod's DamageEquipment,
+  // which wears gear on a fist's blow too, so no `!weapon` gate here).
+  const o = _overrides.get('damageEquipment');
+  if (o && o(attacker, target, damage, weapon, struckBodyPart, { rolls, say }) !== undefined) return;
   if (!weapon || damage <= 0) return;
   const hit = (item, owner) => {
     let amount = Math.trunc((10 * damage + 50) / 100);
@@ -504,7 +524,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null } = {}) {
   if (!attacker || !target) return 0;
   // HN1: THE RESOLUTION IS REPORTED, once per attack, through one seam
   // (setPlayerAttackHook - the enhanced HUD's damage numbers). Every
@@ -520,6 +540,17 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     }
     return damage;
   };
+  // PCO1: THE REGISTERED CORE. FormulaHelper.CalculateAttackDamage is
+  // one of the members a mod replaces whole; the port's tail below
+  // (concealment, the Strikes payload, the racial hit hook, the struck
+  // hook, the HUD report) is DFU's CALLERS' work and runs after either
+  // core. The override gets the whole option bag plus the notes.
+  const core = _overrides.get('calculateAttackDamage');
+  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes }) : undefined;
+  let damage = 0;
+  if (overridden !== undefined) {
+    damage = overridden;
+  } else {
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
     // too-low weapon material returns 0, and when the attacker is
@@ -556,7 +587,6 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // branch only, verbatim (audit F3).
   if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
   const struck = calculateStruckBodyPart(rolls());
-  let damage = 0;
   if (!weapon) {
     // Monster weaponless attacks (audit F2): DFU's multi-attack loop
     // over MobileEnemy.MinDamage/2/3 - NOT the H2H skill formula
@@ -633,6 +663,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
+  }   // PCO1: the stock core ends here; the tail is the callers' law
   // AUDIT 24 (wave 31) - A LANDED HIT ENDS THE ATTACKER'S NORMAL-POWER
   // CONCEALMENT, and it was unported at every door.
   //

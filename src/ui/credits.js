@@ -56,6 +56,16 @@ export const CREDITS = Object.freeze({
   ]),
   mods: Object.freeze([
     Object.freeze({
+      title: 'Physical Combat And Armor Overhaul',
+      version: '1.44',
+      author: 'Kirk.O',
+      what: 'The combat overhaul: armour reduces the damage you take instead of your chance to be hit, skills and stats decide the hit, weapons and armour wear by their kind and material (his Believable Equipment Characteristics And Durability, built in), shields block by their material and your stats, critical strikes multiply damage, monsters have their own hides, and his edit of Ralzar\u2019s Meaner Monsters and Roleplay Realism\u2019s archery ride as switches. Ported 1:1 from the shipped 1.44 (combat/pcaao.js); both lanes, under its own switches in the Mods pane.',
+      terms: 'Ported from the shipped .dfmod and the public source (github.com/magicono43/DFU-Mod_Physical-Combat-And-Armor-Overhaul, no licence stated); see vendor/pcaao/README.md for the permission.',
+      contact: 'kirkoliveri@gmail.com (the manifest\u2019s ContactInfo)',
+      vendor: Object.freeze(['pcaao']),
+      link: 'https://github.com/magicono43/DFU-Mod_Physical-Combat-And-Armor-Overhaul',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',
