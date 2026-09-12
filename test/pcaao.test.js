@@ -31,7 +31,7 @@ import {
   pcaaoProficiencyModifiers, pcaaoRacialModifiers, installPcaao, uninstallPcaao, SILVER_DOUBLED_CAREERS, PCAAO_REDUCTION_ROWS,
   MEANER_MONSTERS, meanerMonstersRow, _shieldBlockSuccess,
 } from '../src/combat/pcaao.js';
-import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride } from '../src/combat/formulas.js';
+import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
 import { EQUIP_SLOTS, equipTableOf } from '../src/systems/equip.js';
@@ -432,4 +432,51 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.equal((ws.match(/Mathf\.Clamp/g) || []).length >= 4, true, 'the four discarded clamps are named');
   assert.equal(pcaaoAdjustmentsToHit(mkPlayer()), -50);
   assert.ok(SKILLS.CriticalStrike === 34 && SKILLS.Dodging === 20, 'the skill ids the C# numbers');
+});
+
+// ═══ AUDIT PCO1 (2026-09-12) - the 1:1 audit, method for method against
+// the decompiled 1.44. Two findings, both pinned here.
+test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod registers AdjustWeaponHitChanceMod/AdjustWeaponAttackDamage whatever the armour module says (mutant: the hooks missing from formulas.js, or gated on armorHitFormulaRedone)', () => {
+  uninstallPcaao();
+  const p = mkPlayer();
+  const bow = { group: 'Weapons', templateIndex: 129, material: 1, flags: 0, maxCondition: 1000, currentCondition: 1000 };
+  const rat = monster(0);
+  // nothing registered: DFU's no-op hooks
+  assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), 30);
+  assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
+  // the mod on, its archery arm on, the REDONE FORMULA OFF: the stock core still bends the bow by its draw
+  let read = { ...ALL_ON, armorHitFormulaRedone: false, rolePlayRealismArchery: true };
+  installPcaao({ read: (k) => read[k] });
+  assert.equal(formulaOverride('calculateAttackDamage')(p, rat, {}), undefined, 'the redone core declines');
+  assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), -10, 'a snap shot: -40');
+  assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 2, '20 * 100/800, truncated');
+  assert.equal(adjustWeaponAttackDamage(p, rat, 20, 7000, bow), 15, 'a long hold: x0.75');
+  // ...and the stock weapon roll carries it: a bow with weaponAnimTime lands the adjust as CalculateWeaponAttackDamage's last line
+  const stock = weaponAttackDamage(p, rat, 0, bow, fixed(0.5), 0);
+  const drawn = weaponAttackDamage(p, rat, 0, bow, fixed(0.5), 100);
+  assert.ok(stock > 0 && drawn === Math.trunc(stock * 100 / 800), `the draw scales the stock roll (${stock} -> ${drawn})`);
+  // the arm off: identity again, live
+  read = { ...ALL_ON, armorHitFormulaRedone: false, rolePlayRealismArchery: false };
+  assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), 30);
+  assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
+  uninstallPcaao();
+  assert.equal(formulaOverride('adjustWeaponHitChanceMod'), null);
+  assert.equal(formulaOverride('adjustWeaponAttackDamage'), null);
+  // the source: both stock sites consult the registry where the C# calls its hooks
+  const f = rd('src/combat/formulas.js');
+  assert.match(f, /if \(weapon\) chanceToHitMod = adjustWeaponHitChanceMod\(attacker, target, chanceToHitMod, weaponAnimTime, weapon\);/, 'after CalculateWeaponToHit');
+  assert.match(f, /damage = adjustWeaponAttackDamage\(attacker, target, damage, weaponAnimTime, weapon\);\n\s+return damage;\n\}/, 'CalculateWeaponAttackDamage\'s last line');
+  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime\)/, 'the stock core hands the draw down');
+});
+
+test('AUDIT PCO1: a CLASS enemy\'s bare fists deal nothing under the overhaul - CalculateHandToHandAttackDamage gives a non-player only its damageModifier, which is 0 for anyone but the player (bug for bug; a knight whose sword the wear broke fights for 0)', () => {
+  const p = mkPlayer();
+  const foe = classEnemy(17);   // a Knight, unarmed
+  assert.equal(pcaaoHandToHandAttackDamage(foe, p, 0, false, fixed(0.5)), 0, 'the helper: 0 + 0, floored to 0, no enemy-type term');
+  let landed = 0;
+  for (let i = 0; i < 20; i++) landed += pcaaoAttackDamage(foe, p, { weapon: null, rolls: fixed(0.01), dfRand: fixed(0), modules: M });
+  assert.equal(landed, 0, 'the whole blow: every hit lands for 0');
+  // the player's fists still roll (the `player` arm), and a MONSTER's summed natural damage is its modifier
+  assert.ok(pcaaoHandToHandAttackDamage(p, foe, 0, true, fixed(0.5)) > 0);
+  assert.equal(pcaaoHandToHandAttackDamage(monster(0), p, 7, false, fixed(0.5)), 7, 'a monster: its summed damage, plus a 0 enemy-type term for a career with no bits');
 });

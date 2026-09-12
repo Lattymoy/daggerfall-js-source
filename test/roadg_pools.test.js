@@ -200,7 +200,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   const w = watchman({ hostile: false, team: 'PlayerAlly' });
   // FormulaHelper.cs:576-583: a weapon material the target refuses
   // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
-  // (formulas.js:554-562).
+  // (formulas.js:577-585).
   w.entity.minMetalToHit = 1;
   g.guards.push(w);
   const hits = [];
