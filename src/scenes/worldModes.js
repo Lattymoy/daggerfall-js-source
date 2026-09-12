@@ -3938,6 +3938,7 @@ export function createWorldModes(host) {
   }
   let exitReturn = null;
   let dungeonCtx = null;
+  let _dungeonAuthority = true;   // WORLD2: who steps the layout's foes - me, unless a world room's host is another (the seat as last told)
   let dungeonLoc = null;    // B2: the mounted dungeon's dfLocation (playerInside's dungeon arm)
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
@@ -5009,6 +5010,7 @@ export function createWorldModes(host) {
           },
         });
       dungeonCtx = ctx;
+      _dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);   // WORLD2: a dungeon built while another hosts starts as puppets
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and
       // no-opped): Teleport actions move the modal player.
@@ -7472,6 +7474,15 @@ export function createWorldModes(host) {
      *  teleported). False when no dungeon stands. */
     /** WORLD1: the standing dungeon's shared world for the room's memory, or null outside one. */
     dungeonSharedWorld() { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.sharedWorld() : null; },
+    /** WORLD2: the host's foes frame out (every changed layout foe, or every one when full), or null outside a dungeon. */
+    dungeonFoesFrame(full = false) { return mode === 'dungeon' && dungeonCtx ? (dungeonCtx.foesFrame?.(full) ?? null) : null; },
+    /** WORLD2: the host's foes frame in - the puppets follow it; false outside a dungeon. */
+    applyDungeonFoes(data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyFoes?.(data) : false; },
+    /** WORLD2: a peer's blow on my foe, applied through the dungeon's own damage door while I host. */
+    applyDungeonHit(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyHit?.(id, data) : false; },
+    /** WORLD2: who runs the layout's foes - me (the AI steps) or the room's host (my layout foes are puppets). Kept
+     *  here so a dungeon built later starts under the seat as it stands. */
+    setDungeonAuthority(on) { _dungeonAuthority = !!on; dungeonCtx?.setAuthority?.(_dungeonAuthority); },
     /** WORLD1: the room's memory over the standing dungeon; false outside one or for another dungeon's. */
     restoreDungeonSharedWorld(shared) { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.restoreSharedWorld(shared) : false; },
     restoreDungeonSave(extras) {

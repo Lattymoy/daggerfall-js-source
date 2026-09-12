@@ -196,10 +196,10 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(m, /if \(dungeonCtx\) \{\s*host\.onDungeonLeave\?\.\(\);[^\n]*\n\s*teardownDungeonQuestFlats\(\);\s*dungeonCtx\.overlayWindow/, 'a load or a teleport out: the same hook');
   assert.equal((m.match(/host\.onDungeonLeave\?\.\(\)/g) ?? []).length, 2, 'the two teardowns, no third');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS \} from '\.\.\/net\/online\.js';/);
+  assert.match(w, /import \{ OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS \} from '\.\.\/net\/online\.js';/);
   assert.match(w, /const worldPublish = \(now, force = false\) => \{\s*if \(!online \|\| !online\.isHost\(\) \|\| online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;\s*if \(!force && now - _worldPublishedAt < WORLD_PUBLISH_MS\) return false;\s*const shared = modes\?\.dungeonSharedWorld\?\.\(\);\s*if \(!shared\) return false;\s*_worldPublishedAt = now;\s*const ok = online\.sendWorld\(shared, \{ final: force \}\);\s*if \(!ok\) console\.warn\([^\n]*\);\s*return ok;\s*\};/, 'the host\'s alone, into a world room alone (AUDIT WORLD B8), on the publish clock unless forced - and forced is the farewell (B5); a refusal said once, never retried at frame rate (B9)');
   assert.match(w, /online\.onWorld = \(shared\) => \{ if \(modes\?\.restoreDungeonSharedWorld\?\.\(shared\)\)/, 'the welcome\'s memory lands on the standing dungeon');
-  assert.match(w, /online\.onHost = \(id, mine\) => \{ if \(mine\) _worldPublishedAt = -Infinity; \};/, 'a new host publishes at once');
+  assert.match(w, /online\.onHost = \(id, mine\) => \{ if \(mine\) \{ _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; \} modes\?\.setDungeonAuthority\?\.\(dungeonAuthority\(\)\); \};/, 'a new host publishes at once - and streams every foe at once, and the seat decides who steps them (WORLD2)');
   assert.match(w, /online\.tick\(\);\s*worldPublish\(now\);/, 'every frame asks');
   assert.match(w, /if \(online\.room\) \{ worldPublish\(now, true\); online\.leave\(\); \}/, 'the dead leave the room its memory');
   assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\);/, 'the page\'s hide too');

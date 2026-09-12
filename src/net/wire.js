@@ -12,11 +12,15 @@
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
+//                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
+//                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
+//                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
+//                    {t:'hit', id, data}                a blow on the host's foe, to the host alone (WORLD2)
 //                    {t:'error', m}                     then the socket closes
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
@@ -147,6 +151,15 @@ export const WORLD_CHUNK = 96 * 1024;
 export const WORLD_PREFIX = '{"t":"world"';
 /** A world room's memory is forgotten this long after the room last drained, unless someone came back (AUDIT WORLD A3). */
 export const WORLD_TTL_MS = 30 * 24 * 3600 * 1000;
+/** WORLD2: the largest foes frame (UTF-16 units) - the host's live foes, a delta a few times a second. */
+export const FOES_FRAME_MAX = 64 * 1024;
+/** WORLD2: foes frames a second at most, on their own bucket (a stream beside the poses, never starving them). */
+export const FOES_HZ_MAX = 12;
+/** How a foes frame begins on the wire - the other frame admitted past MAX_FRAME_BYTES, told before any parse. */
+export const FOES_PREFIX = '{"t":"foes"';
+/** The cap a frame's PREFIX earns before any parse (WORLD1/WORLD2): a world frame WORLD_FRAME_MAX, a foes frame
+ *  FOES_FRAME_MAX, anything else MAX_FRAME_BYTES; the type keeps the cap after the parse (AUDIT WORLD A2). */
+export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : MAX_FRAME_BYTES; }
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
@@ -277,19 +290,26 @@ export function inRange(roomKey, from, to) {
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
-  // WORLD1: the one frame past MAX_FRAME_BYTES is a world frame, told by its prefix before any parse (the client
-  // mints it with t first) and capped at WORLD_FRAME_MAX; everything else keeps the small cap, refused unparsed
-  if (text.length > MAX_FRAME_BYTES && !(text.length <= WORLD_FRAME_MAX && text.startsWith(WORLD_PREFIX))) return { error: 'frame too large' };
+  // WORLD1/WORLD2: the frames past MAX_FRAME_BYTES are the world frame and the foes frame, told by their prefix
+  // before any parse (the client mints them with t first) and capped by it; everything else keeps the small cap,
+  // refused unparsed
+  if (text.length > frameCap(text)) return { error: 'frame too large' };
   let m;
   try { m = JSON.parse(text); } catch { return { error: 'not JSON' }; }
   if (!m || typeof m !== 'object') return { error: 'not an object' };
   // AUDIT WORLD A2: the prefix admitted the size, the TYPE keeps the cap - JSON's last duplicate key wins, so a frame
   // that began {"t":"world" and ended "t":"pose" parsed as a 512 KiB pose under the pose gate
-  if (m.t !== 'world' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  if (m.t !== 'world' && m.t !== 'foes' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  if (m.t === 'foes' && text.length > FOES_FRAME_MAX) return { error: 'frame too large' };
   if (m.t === 'world') {   // the room's memory, an object from a hello'd socket; final marks the socket's one farewell (B5)
     if (!hasHello) return { error: 'world before hello' };
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
     return { t: 'world', data: m.data, final: m.final === true };
+  }
+  if (m.t === 'foes' || m.t === 'hit') {   // WORLD2: the host's live foes out, a blow on them in - objects from a hello'd socket, read by no relay
+    if (!hasHello) return { error: `${m.t} before hello` };
+    if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: `bad ${m.t}` };
+    return { t: m.t, data: m.data };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
@@ -328,6 +348,8 @@ export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
 
 /** The pose rate gate: POSE_HZ_MAX a second. */
 export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX);
+/** The foes rate gate: FOES_HZ_MAX a second (WORLD2), the stream's own bucket. */
+export const foesGate = (bucket, nowMs) => tokenGate(bucket, nowMs, FOES_HZ_MAX);
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 

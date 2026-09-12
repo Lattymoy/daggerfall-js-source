@@ -89,7 +89,7 @@ test('AUDIT WORLD A: the relay - a large frame is the host\'s memory or nothing,
   assert.equal(town.alarm.at, null, 'a town arms nothing');
   // A1 and A6 by source
   const room = rd('server/src/index.js');
-  assert.match(room, /if \(typeof message === 'string' && \(message\.length > MAX_FRAME_BYTES \|\| message\.startsWith\(WORLD_PREFIX\)\)\) \{\s*if \(!a\.id\) \{ this\._refuse\(ws, 'world before hello'\); return; \}\s*a = this\._meter\(ws, a, Date\.now\(\)\);\s*if \(!a\) return;\s*if \(!isWorldRoom\(a\.key\) \|\| a\.id !== this\._hostOf\(\)\) return;\s*\}\s*const m = parseClient\(/, 'A1: the door before the parse');
+  assert.match(room, /if \(typeof message === 'string' && \(message\.length > MAX_FRAME_BYTES \|\| message\.startsWith\(WORLD_PREFIX\) \|\| message\.startsWith\(FOES_PREFIX\)\)\) \{\s*if \(!a\.id\) \{ this\._refuse\(ws, 'world before hello'\); return; \}\s*a = message\.startsWith\(FOES_PREFIX\) \? this\._meterFoes\(ws, a, Date\.now\(\)\) : this\._meter\(ws, a, Date\.now\(\)\);\s*if \(!a\) return;\s*if \(!isWorldRoom\(a\.key\) \|\| a\.id !== this\._hostOf\(\)\) return;\s*doored = true;\s*\}\s*const m = parseClient\(/, 'A1: the door before the parse (WORLD2: the foes frame through it on its own bucket)');
   assert.match(room, /const ops = \[this\.state\.storage\.put\(puts\)\];\s*if \(old && old\.chunks > chunks\) ops\.push\(this\.state\.storage\.delete\(/, 'A6: the put and the tail\'s delete issued together');
   assert.match(room, /await Promise\.all\(ops\);/, 'and awaited together');
   assert.doesNotMatch(room, /worldAt/, 'A5: no stamp on the socket');
@@ -233,7 +233,7 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   assert.match(w, /online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;/, 'B8: a world room alone');
   assert.match(w, /if \(!shared\) return false;\s*_worldPublishedAt = now;\s*const ok = online\.sendWorld\(shared, \{ final: force \}\);\s*if \(!ok\) console\.warn\(/, 'B5/B9: forced is the farewell; the clock stamped before the send');
   const o = rd('src/net/online.js');
-  assert.match(o, /reconnects: 0, chats: 0, worlds: 0 \};/, 'D12'); assert.doesNotMatch(o, /nothing is shared but presence/, 'D2: the module\'s head');
+  assert.match(o, /reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0 \};/, 'D12'); assert.doesNotMatch(o, /nothing is shared but presence/, 'D2: the module\'s head');
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /if \(upper !== UPPER_BODY\.WeaponEquipped && upper !== UPPER_BODY\.Casting && !\(upper === UPPER_BODY\.None && sheathed\)\) return false;/, 'C2: the sheathed arm casts');
   assert.match(fp, /case UPPER_BODY\.Casting:[\s\S]*?upper = sheathed \? UPPER_BODY\.None : UPPER_BODY\.WeaponEquipped;/, 'C2: and comes back to None');

@@ -60,7 +60,7 @@
 // hello bucket ALONE - the world outlives an empty room, which is the
 // whole point of it - until WORLD_TTL_MS after the room last drained
 // with no one back (the alarm, A3).
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -183,6 +183,15 @@ export class Room {
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
     return next;
   }
+  /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
+  _meterFoes(ws, a, now) {
+    const gate = foesGate(a.fbucket, now);
+    const fdrops = gate.pass ? 0 : (a.fdrops ?? 0) + 1;
+    const next = { ...a, fbucket: gate.bucket, fdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (fdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many foes'); return null; }
+    return next;
+  }
 
   /** AUDIT WORLD A3: a world room's memory is forgotten WORLD_TTL_MS after the room last drained - armed on the
    *  drain, re-armed by every later one - unless someone is in the room when it fires: a world parked in a room
@@ -200,11 +209,14 @@ export class Room {
     // answered BEFORE any parse: a socket with no hello is refused, the frame is metered on the pose bucket, and
     // anyone but a world room's host is ignored unparsed (a handover races; parsing 512 KiB for a stranger was the
     // one unmetered cost in the object). The host's own is parsed under the same bucket, one socket per room.
-    if (typeof message === 'string' && (message.length > MAX_FRAME_BYTES || message.startsWith(WORLD_PREFIX))) {
+    // WORLD2: the foes frame is the other one, on the stream's own bucket
+    let doored = false;
+    if (typeof message === 'string' && (message.length > MAX_FRAME_BYTES || message.startsWith(WORLD_PREFIX) || message.startsWith(FOES_PREFIX))) {
       if (!a.id) { this._refuse(ws, 'world before hello'); return; }
-      a = this._meter(ws, a, Date.now());
+      a = message.startsWith(FOES_PREFIX) ? this._meterFoes(ws, a, Date.now()) : this._meter(ws, a, Date.now());
       if (!a) return;
       if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
+      doored = true;
     }
     const m = parseClient(message, { hasHello: !!a.id });
     if (m.error) { this._refuse(ws, m.error); return; }
@@ -255,6 +267,7 @@ export class Room {
       // (the stamp in storage - AUDIT WORLD A5: on the attachment a reconnect reset it) unless this is the socket's
       // one FINAL frame, the farewell on the way out (B5: the exit's frame fell inside the floor one time in three)
       const now = Date.now();
+      if (!doored) { a = this._meter(ws, a, now); if (!a) return; }   // a small frame without the prefix came in by the ordinary door: metered here
       if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
       const old = await this.state.storage.get(WORLD_META);
       const final = m.final && !a.finalUsed;
@@ -270,6 +283,27 @@ export class Room {
       const ops = [this.state.storage.put(puts)];
       if (old && old.chunks > chunks) ops.push(this.state.storage.delete(Array.from({ length: old.chunks - chunks }, (_, i) => worldChunkKey(chunks + i))));   // a smaller world leaves no stale tail
       await Promise.all(ops);
+      return;
+    }
+    if (m.t === 'foes') {
+      // WORLD2: the host's live foes - from the host, in a world room (answered before the parse for a prefixed
+      // frame, again here for a small one), on the stream's own bucket, to everyone hello'd but the host; the
+      // relay reads none of it
+      if (!doored) { a = this._meterFoes(ws, a, Date.now()); if (!a) return; }
+      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
+      const out = JSON.stringify({ t: 'foes', id: a.id, data: m.data });
+      for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
+      return;
+    }
+    if (m.t === 'hit') {
+      // WORLD2: a blow on the host's foe - from anyone but the host, in a world room, on the pose bucket, to the
+      // host's socket alone (the host applies it through its own damage door and the next foes frame says so)
+      a = this._meter(ws, a, Date.now()); if (!a) return;
+      if (!isWorldRoom(a.key)) return;
+      const host = this._hostOf();
+      if (!host || host === a.id) return;
+      const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
+      for (const [other, b] of [...this._all()]) if (other !== ws && b.id === host) { this._send(other, out); break; }
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
