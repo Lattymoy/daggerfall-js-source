@@ -17,6 +17,8 @@
 // or click is the transient user activation requestPointerLock needs;
 // a refusal is covered by the hosts' relock-on-gesture arms).
 
+import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
+
 let _errBound = false;
 
 // U45 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
@@ -69,6 +71,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
   if (typeof addEventListener !== 'function' || !actionOf) return () => {};
   const onKey = (e) => {
     if (isWindowUp()) return;
+    if (isTextEntryTarget(e.target)) return;   // PL2: a name being typed into a DOM field is not the toggle
     if (actionOf(e) !== 'ActivateCursor') return;
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
@@ -76,8 +79,26 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     if (cursorToggleRefused()) return;
     toggleCursorActive(canvas);
   };
-  addEventListener('keydown', onKey);
-  return () => removeEventListener('keydown', onKey);
+  // PL2 (2026-09-12, Mac: "Pointer can detach from the game and you're
+  // unable to click back in"). The hosts' keydown ladders are bubble
+  // listeners registered BEFORE this one, and a window that closes on
+  // Enter - a message box's Enter button, a conversation's, the rest
+  // and level-up prompts - closes INSIDE that ladder. By the time the
+  // event reached this listener `isWindowUp()` was already false, so
+  // the same press that dismissed the window flipped cursorActive,
+  // released the lock, and every later click was refused by
+  // requestLook's precedence line (a deliberately freed cursor is
+  // taken back only by the toggle). DFU never sees that press at all:
+  // InputManager.Update withholds every action for inputWaitTotal
+  // (0.0833 s) after a pause ends (InputManager.cs:49, :511-515 - "GUI
+  // actions do not 'fall-through' to main world as closing GUI and
+  // picking up next input all happen same-frame"), and ActionStarted
+  // is what PlayerMouseLook.cs:190 reads. The port's one-line copy of
+  // that skip is the CAPTURE phase: the guard is read before any
+  // bubble listener can pop the window, so a press under a window is
+  // the window's and only a press with nothing up is the toggle.
+  addEventListener('keydown', onKey, true);
+  return () => removeEventListener('keydown', onKey, true);
 }
 
 export function requestLook(canvas) {

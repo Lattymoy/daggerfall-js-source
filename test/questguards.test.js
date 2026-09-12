@@ -426,7 +426,7 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
     'both of this host\'s rays carry the arm - the dungeon one and the interior one');
   const tryExit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon('));
   assert.ok(tryExit.length > 0, 'the interior ray is found');
-  assert.match(tryExit, /if \(getInteractionMode\(\) !== 'info' && interiorCtx\) \{\n\s+const qf = pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\);\n\s+if \(qf\) qf\.questBehaviour\.doClick\(\);\n\s+\}/,
+  assert.match(tryExit, /if \(getInteractionMode\(\) !== 'info' && interiorCtx && !host\.activateLockOnly\?\.\(\)\) \{[^\n]*\n\s+const qf = pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\);\n\s+if \(qf\) qf\.questBehaviour\.doClick\(\);\n\s+\}/,   // TS1: the stick's tap is no click
     'the interior ray carries the dungeon ray\'s arm, over its own two pools');
   assert.ok(tryExit.indexOf('pickQuestFoe(') < tryExit.indexOf('const targets ='),
     'it opens the ladder rather than consuming the activation');

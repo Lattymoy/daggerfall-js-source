@@ -396,3 +396,25 @@ clamped, the others drawn through a fake renderer (the crop, the cache,
 the retry, the eviction, the name under the viewport rect), the
 compositor's door pure by source. Not seen with two real players from
 here - Mac's two browsers are the gate.
+
+## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
+
+Mac: "Paperdoll is upside down when viewing other players in
+multiplayer (morrowind is great)."
+
+**The mechanism.** `composePaperDollPixels` is the UI's compositor and
+its buffer is a UI image: row 0 at the top, the order `bitmapToColor32`
+writes and the HUD blit samples. The billboard shader samples GL's
+bottom-up texel order - `render/renderer.js`'s header ("Textures
+arrive from TextureFile.getColor32 already bottom-up ... upload as-is
+with flipY off") and its vUV note ("the quad top samples v = 1"). Every
+other billboard in the game arrives bottom-up from the texture
+reader; the doll's crop was the only top-down buffer ever handed to
+`createBillboardBatch`, so every peer stood on their head. The
+Morrowind bodies (MWBODY1) are meshes and were never affected.
+
+**The fix.** `cropRgba(rgba, w, r, { bottomUp: true })` writes the rows
+in reverse; `_composeDoll` asks for it. The classic composite and the
+inventory's own upload are untouched. Ledger row OD1. Pinned:
+`test/online.test.js` OD1 (the reversed crop, and the doll's upload
+with a marked top-left pixel on its last row).

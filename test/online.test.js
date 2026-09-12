@@ -227,9 +227,9 @@ function figure(x0, y0, x1, y1) {
   return { width: PAPERDOLL_W, height: PAPERDOLL_H, rgba };
 }
 function fakeRenderer() {
-  const log = { uploads: [], releases: [], batches: [], destroyed: [] };
+  const log = { uploads: [], colors: [], releases: [], batches: [], destroyed: [] };
   return { log,
-    uploadTexture(archive, record, c) { log.uploads.push({ archive, record, w: c.width, h: c.height }); },
+    uploadTexture(archive, record, c) { log.uploads.push({ archive, record, w: c.width, h: c.height }); log.colors.push(c.colors); },   // OD1: the texels beside the record
     releaseTexture(archive, record) { log.releases.push({ archive, record }); },
     createBillboardBatch(archive, record, size, centers) { const b = { archive, record, size, centers, origin: null }; log.batches.push(b); return b; },
     destroyBillboardBatch(b) { log.destroyed.push(b); },
@@ -295,4 +295,35 @@ test('ONLINE1: the compositor\'s door is PURE - composePaperDollPixels composes 
   assert.match(door, /_artSets\.set\(key, art\)/, 'an art set per identity');
   assert.match(rd('src/net/remotePlayers.js'), /import \{ composePaperDollPixels \} from '\.\.\/ui\/paperDoll\.js';/, 'the others compose through the door alone');
   assert.doesNotMatch(rd('src/net/remotePlayers.js'), /refreshPaperDoll|paperDollPixels\(|preloadPaperDoll/);
+});
+
+// OD1 (2026-09-12) - Mac: "Paperdoll is upside down when viewing other
+// players in multiplayer." The compositor's buffer is a UI image, row 0
+// at the top; the billboard shader samples GL's bottom-up order (every
+// other billboard arrives from TextureFile.getColor32 already so). The
+// crop the doll uploads is written bottom-up.
+test('OD1: the peer doll goes up BOTTOM-UP - the figure\'s top row is the texture\'s last (mutant: the crop as composed)', async () => {
+  // a 3x2 buffer: the top row red, the bottom row blue
+  const rgba = new Uint8Array(3 * 2 * 4);
+  for (let x = 0; x < 3; x++) { rgba[x * 4] = 255; rgba[x * 4 + 3] = 255; rgba[(3 + x) * 4 + 2] = 255; rgba[(3 + x) * 4 + 3] = 255; }
+  const r = { x: 0, y: 0, w: 3, h: 2 };
+  const asIs = cropRgba(rgba, 3, r);
+  assert.equal(asIs[0], 255, 'plain: row 0 is the top (red)'); assert.equal(asIs[3 * 4 + 2], 255);
+  const up = cropRgba(rgba, 3, r, { bottomUp: true });
+  assert.equal(up[2], 255, 'bottom-up: row 0 is the BOTTOM (blue)'); assert.equal(up[3 * 4], 255, 'and the last row is the top (red)');
+  assert.equal(up.length, asIs.length);
+  // ...and that is the crop the doll uploads: a figure with one marked pixel on its top row lands on the texture's last row
+  const renderer = fakeRenderer();
+  const compose = async () => {
+    const f = figure(30, 10, 79, 173);
+    f.rgba[(10 * PAPERDOLL_W + 30) * 4 + 1] = 77;   // the figure's top-left pixel, marked green
+    return f;
+  };
+  const rp = new RemotePlayers({ renderer, deps: { fetchBytes() {}, palette: null, getTexture() {} }, compose, now: () => 0 });
+  rp.sync([{ id: 'p', name: 'P', look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, shown: { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, mv: 0 } }]);
+  await flush(); await flush();
+  const up8 = new Uint8Array(renderer.log.colors[0].buffer);
+  const w = 50, h = 164;
+  assert.equal(up8[((h - 1) * w + 0) * 4 + 1], 77, 'the marked top-left pixel is on the LAST row of the upload');
+  assert.equal(up8[(0 * w + 0) * 4 + 1], 0, 'and not on the first');
 });

@@ -1597,7 +1597,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // which is when A8's gate fires the activation. player/lockOn.js
   // holds the lock; _lockChest is this frame's dot target.
   let swipeHeld = false;
-  let _tapArmed = 0, _tapPoint = null, _tapDir = null;
+  let _tapArmed = 0, _tapPoint = null, _tapDir = null, _tapLockOnly = false;   // TS1: the stick-half tap locks a foe and activates nothing else
   let _lastProj = null, _lastView = null, _lockChest = null;
   const lockOn = createLockOn();
   // P1: grounded first-person is the default; ?fly restores the fly cam.
@@ -5069,7 +5069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:54-81), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:56-102), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -5203,9 +5203,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TI1: the tap is a one-frame press of the activate action along
     // the finger's ray - A8's gate fires it on the release. A finger in
     // the docked bar's strip is no world tap at all.
-    tap: (x, y) => {
+    tap: (x, y, opts = null) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
       _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
+      _tapLockOnly = !!opts?.lockOnly;   // TS1: touch.js's stick-half tap (TI1b) - the lock pick and nothing below it
     },
     locked: () => lockOn.locked,
     // AUDIT 62 F10: the dial button is drawn only where Tab actually
@@ -5390,7 +5391,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7083-7095 -
+  // worldModes answers it in BOTH modes (worldModes.js:7090-7102 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6627,6 +6628,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
+    activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     // AUDIT 62 F8 (review): THE FINGER'S PRESS, published. worldModes
     // owns the interior and world-hosted-dungeon activate gate and has
     // no sight of `_tapArmed` - it is a host-local `let`. While the tap
@@ -7184,7 +7186,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the activation on that release. The frame after clears the ray.
     if (_tapArmed > 0 && --_tapArmed === 0) {
       _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
-    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; _tapLockOnly = false; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: gamePaused() });
@@ -7565,7 +7567,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // Info mode). A live foe carrying a QuestResourceBehaviour
           // takes the click through its own DoClick, and the ladder
           // below still runs - exactly the C# fall-through.
-          if (getInteractionMode() !== 'info') {
+          if (getInteractionMode() !== 'info' && !_tapLockOnly) {   // TS1: the stick's tap is no click
             const qf = pickQuestFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider);
             if (qf) qf.questBehaviour.doClick();
           }
@@ -7622,6 +7624,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const _rivalDist = Math.min(_nonPersonRival,
             ..._livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)));
           if (_lockFoe) lockOn.toggle(_lockFoe);
+          else if (_tapLockOnly) { /* TS1: the stick-half tap found no foe - it opens nothing */ }
           // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, still
           // decided against every rival above - DFU's one raycast
           // (:314) reaches MobileEnemyCheck (:419) only for the thing
