@@ -174,7 +174,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // which is when A8's gate fires the activation. player/lockOn.js
   // holds the lock; _lockChest is this frame's dot target.
   let swipeHeld = false;
-  let _tapArmed = 0, _tapPoint = null, _tapDir = null;
+  let _tapArmed = 0, _tapPoint = null, _tapDir = null, _tapLockOnly = false;   // TS1: the stick-half tap locks a foe and activates nothing else
   let _lastProj = null, _lastView = null, _lockChest = null;
   const lockOn = createLockOn();
   _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
@@ -229,6 +229,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (_tapDir) {
       const _lockFoe = pickFoe(eye, dir, ctx.foes, ctx.collider, LOCK_PICK_DISTANCE);
       if (_lockFoe) { lockOn.toggle(_lockFoe); return null; }
+      if (_tapLockOnly) return null;   // TS1: the stick-half tap found no foe - it opens nothing
     }
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841).
     // AUDIT 65 MC-2 collapsed F33's near/far pair into ONE call at the
@@ -419,9 +420,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // TI1: the tap is a one-frame press of the activate action along
     // the finger's ray - A8's gate fires it on the release. A finger in
     // the docked bar's strip is no world tap at all.
-    tap: (x, y) => {
+    tap: (x, y, opts = null) => {
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
       _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
+      _tapLockOnly = !!opts?.lockOnly;   // TS1: touch.js's stick-half tap (TI1b) - the lock pick and nothing below it
     },
     locked: () => lockOn.locked,
     // AUDIT 62 F10: the dial button is drawn only where Tab actually
@@ -623,7 +625,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // the activation on that release. The frame after clears the ray.
     if (_tapArmed > 0 && --_tapArmed === 0) {
       _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, walkMode ? player.eye : cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
-    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; }
+    } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; _tapLockOnly = false; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
     cameraRecoiler.update(dt, cam, { healthLost: lastHealthLost(), healthLostPercent: lastHealthLostPercent(), paused: ctx.uiOverlayActive });

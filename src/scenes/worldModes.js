@@ -4595,7 +4595,7 @@ export function createWorldModes(host) {
     // as the exterior arm runs over its own two; pickQuestFoe skips
     // any foe without a questBehaviour (activate.js:160), so the
     // watch costs nothing.
-    if (getInteractionMode() !== 'info' && interiorCtx) {
+    if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
@@ -4615,6 +4615,12 @@ export function createWorldModes(host) {
     if (host.activateDir?.() && interiorCtx) {
       const f = pickFoe(eye, dir, interiorFoePool(), interiorCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
+      // TS1 (2026-09-12, Mac: "walking into the exit door puts you
+      // outside without interaction"): touch.js's stick-half tap (TI1b)
+      // exists for the lock above and nothing else, and this ladder
+      // ran on from it - a thumb re-placed on the stick beside the exit
+      // door walked the player out. The host says which tap it was.
+      if (host.activateLockOnly?.()) return false;
     }
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
     // the arm this ladder never had - a LIVING foe under the ray was
@@ -5123,7 +5129,7 @@ export function createWorldModes(host) {
     // consume the activation (PlayerActivate.cs:325-339 - no return,
     // skipped in Info mode): a live quest foe under the ray takes the
     // click through its own DoClick, and the ladder below still runs.
-    if (getInteractionMode() !== 'info' && dungeonCtx) {
+    if (getInteractionMode() !== 'info' && dungeonCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);
       if (qf) qf.questBehaviour.doClick();
     }
@@ -5134,6 +5140,7 @@ export function createWorldModes(host) {
     if (host.activateDir?.() && dungeonCtx) {
       const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
+      if (host.activateLockOnly?.()) return false;   // TS1: the stick-half tap opens nothing (tryExit's note)
     }
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
     // the arm this ladder never had - a LIVING foe under the ray was
@@ -5158,7 +5165,7 @@ export function createWorldModes(host) {
         // never drawn, ticked, keyed or clicked in dungeon mode, so a
         // box mounted there orphaned until the next building entry and
         // a line said there opened a second popup column over the
-        // dungeon's own. scenes/dungeon.js:241-242 is the same pair.
+        // dungeon's own. scenes/dungeon.js:242-243 is the same pair.
         hud: (t) => dungeonCtx.hudSay(t),
         modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
@@ -5388,7 +5395,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:280's `held` already implements.
+    // which is what dungeon.js:281's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -5459,7 +5466,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:460 is this same gate
+    // the crouch edge still toggled. dungeon.js:462 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -5549,7 +5556,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:334 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:335 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -5717,7 +5724,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:281's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:282's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -5872,7 +5879,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:6286's own wave-46 note); the interior
+          // a blow (world.js:6287's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage();
@@ -6458,7 +6465,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:351-385 carries, so a probe could take the
+    // scenes/dungeon.js:352-386 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -6621,7 +6628,7 @@ export function createWorldModes(host) {
    *      ... cursorActive = !cursorActive;
    *  This mode machine used to register a SECOND bindCursorToggle of
    *  its own, and `bindCursorToggle` installs a fresh window listener
-   *  per call over a MODULE-global flag (player/pointerLock.js:54-81).
+   *  per call over a MODULE-global flag (player/pointerLock.js:56-102).
    *  ?world and ?exterior build this machine unconditionally, so one
    *  Enter ran both handlers and flipped the flag TWICE - net zero -
    *  and `cursorActive()` could never rise in the two shipping outdoor
@@ -7957,7 +7964,7 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2585-2607), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:2586-2608), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
      *  unconditionally (world.js:4161). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them

@@ -100,10 +100,21 @@ export function alphaBounds(rgba, w, h) {
   return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
 }
 
-/** A sub-rectangle of an RGBA buffer, copied out. */
-export function cropRgba(rgba, w, r) {
+/** A sub-rectangle of an RGBA buffer, copied out. `bottomUp` writes
+ *  the rows in reverse (OD1, 2026-09-12, Mac: "Paperdoll is upside down
+ *  when viewing other players in multiplayer"): the compositor's
+ *  buffer is a UI image, row 0 at the top, while the billboard shader
+ *  samples GL's bottom-up texel order (render/renderer.js's header and
+ *  its vUV note - "the quad top samples v = 1"). Every other billboard
+ *  arrives from TextureFile.getColor32 already bottom-up; this one was
+ *  the only top-down buffer ever handed to createBillboardBatch, so
+ *  the peers stood on their heads. */
+export function cropRgba(rgba, w, r, { bottomUp = false } = {}) {
   const out = new Uint8Array(r.w * r.h * 4);
-  for (let y = 0; y < r.h; y++) out.set(rgba.subarray(((r.y + y) * w + r.x) * 4, ((r.y + y) * w + r.x + r.w) * 4), y * r.w * 4);
+  for (let y = 0; y < r.h; y++) {
+    const dst = bottomUp ? r.h - 1 - y : y;
+    out.set(rgba.subarray(((r.y + y) * w + r.x) * 4, ((r.y + y) * w + r.x + r.w) * 4), dst * r.w * 4);
+  }
   return out;
 }
 
@@ -153,7 +164,7 @@ export class RemotePlayers {
     if (!px?.rgba) return null;
     const r = alphaBounds(px.rgba, px.width, px.height);
     if (!r) return null;
-    const crop = cropRgba(px.rgba, px.width, r);
+    const crop = cropRgba(px.rgba, px.width, r, { bottomUp: true });   // OD1: the billboard samples bottom-up
     const rec = `doll_${++_dollSeq}`;
     renderer.uploadTexture(PEER_ARCHIVE, rec, { width: r.w, height: r.h, colors: new Uint32Array(crop.buffer) });
     return { rec, w: PEER_HEIGHT * (r.w / r.h), h: PEER_HEIGHT };

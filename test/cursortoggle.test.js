@@ -50,10 +50,12 @@ function stubDom() {
   const dom = {
     keydowns, requests: 0, exits: 0,
     canvas: { requestPointerLock() { dom.requests++; return undefined; } },
-    press(code) {
+    press(code, target = null) {
       let prevented = false;
-      const e = { code, key: code, preventDefault() { prevented = true; } };
-      for (const fn of [...keydowns]) fn(e);
+      const e = { code, key: code, target, preventDefault() { prevented = true; } };
+      // PL2: the DOM's order - capture listeners before bubble ones
+      for (const fn of [...keydowns].filter((f) => f.capture)) fn(e);
+      for (const fn of [...keydowns].filter((f) => !f.capture)) fn(e);
       return prevented;
     },
     restore() {
@@ -62,7 +64,7 @@ function stubDom() {
       if (saved.hadDoc) globalThis.document = saved.doc; else delete globalThis.document;
     },
   };
-  globalThis.addEventListener = (t, fn) => { if (t === 'keydown') keydowns.push(fn); };
+  globalThis.addEventListener = (t, fn, capture = false) => { if (t === 'keydown') { fn.capture = !!capture; keydowns.push(fn); } };
   globalThis.removeEventListener = (t, fn) => { const i = keydowns.indexOf(fn); if (i >= 0) keydowns.splice(i, 1); };
   globalThis.document = {
     pointerLockElement: dom.canvas,
@@ -171,4 +173,39 @@ test('AUDIT 58 (f3/input): every ENTRY host binds ActivateCursor at most once (T
   }
   assert.match(src('scenes/dungeon.js'), /bindCursorToggle\(canvas, \(\) => ctx\.uiOverlayActive, actionOf\);/,
     'the standalone dungeon host is the control case - it always had exactly one');
+});
+
+// PL2 (2026-09-12) - Mac: "Pointer can detach from the game and you're
+// unable to click back in and use your pointer." The hosts' keydown
+// ladders are bubble listeners registered before the toggle's, and a
+// window that closes on Enter closes INSIDE them - so by the time the
+// toggle read `isWindowUp()` the window was gone, the same press flipped
+// cursorActive, and requestLook's precedence line then refused every
+// click. DFU never sees that press: InputManager withholds every action
+// for inputWaitTotal after a pause ends (InputManager.cs:49, :511-515).
+// The port's copy of that skip is the CAPTURE phase.
+test('PL2: the Enter that CLOSES a window is the window\'s - the toggle reads its guard in the capture phase, before the bubble ladder pops the window (mutant: a bubble listener)', () => {
+  const dom = stubDom();
+  const b = createBindings(); resetDefaults(b); setBindings(b);
+  setCursorActive(false);
+  try {
+    let modal = true;
+    // the host's ladder, registered FIRST as every host's is: Enter dismisses the window
+    globalThis.addEventListener('keydown', (e) => { if (modal && e.code === 'Enter') modal = false; });
+    const off = bindCursorToggle(dom.canvas, () => modal, actionOf);
+    assert.equal(dom.keydowns.filter((f) => f.capture).length, 1, 'the toggle listens in the capture phase');
+    assert.equal(dom.press('Enter'), false, 'the press closed the window and was NOT the toggle');
+    assert.equal(modal, false, 'the window did close');
+    assert.equal(cursorActive(), false, 'the cursor stays the game\'s');
+    assert.equal(dom.exits, 0, 'no lock was dropped');
+    assert.equal(dom.press('Enter'), true, 'the NEXT press, with nothing up, is the toggle');
+    assert.equal(cursorActive(), true);
+    // a typed DOM field's Enter is the field's (CG2)
+    assert.equal(dom.press('Enter', { tagName: 'INPUT', type: 'text' }), false, 'a text field keeps its Enter');
+    assert.equal(cursorActive(), true, 'no flip');
+    off();
+    assert.equal(dom.keydowns.filter((f) => f.capture).length, 0, 'the unbind removes the capture listener');
+  } finally {
+    setCursorActive(false); setBindings(null); dom.restore();
+  }
 });

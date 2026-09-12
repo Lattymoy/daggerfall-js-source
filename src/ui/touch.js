@@ -544,7 +544,14 @@ export function attachTouch(canvas, hooks = {}) {
         // key (the stick's dead zone) and it is how a foe left of centre
         // gets locked.
         if (e.type !== 'touchcancel' && stickTravel < TAP_PX && (e.timeStamp - stickStart) <= TAP_MS) {
-          hooks.tap?.(stickOrigin[0], stickOrigin[1]);
+          // TS1 (2026-09-12, Mac: "walking into the exit door puts you
+          // outside without interaction"): LOCK-ONLY. This tap exists so
+          // a foe left of centre can be locked; it went down the hosts'
+          // whole activation ladder, so a thumb re-placed on the stick
+          // beside a door, a chest or a townsperson opened it - the exit
+          // door being the biggest target in any building. The hosts
+          // stop after the lock pick when the flag rides the tap.
+          hooks.tap?.(stickOrigin[0], stickOrigin[1], { lockOnly: true });
         }
       } else if (t.identifier === lookId) {
         lookId = null;

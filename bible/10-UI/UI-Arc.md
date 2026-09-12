@@ -8481,7 +8481,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5317` and `dungeonContext.js:1361` answer the same
+`worldModes.js:5324` and `dungeonContext.js:1361` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -12739,3 +12739,68 @@ fallback; the CSS names the canvas; the clock closes `meshes` before
 the sweep and `sweep` after the reaches. Re-aimed: PX32's playhead line
 (fparm), MW-D36's data-URL lines (fparm, enhancedInventory), MW-LOAD's
 five spans (mwload_fparm).
+
+## TS1 - THE STICK'S TAP LOCKS AND OPENS NOTHING (2026-09-12, Mac's report)
+
+Mac: "Sometimes in the interiors, walking into the exit door puts you
+outside without interaction."
+
+**The mechanism.** TI1b gave the stick's half a tap of its own - a
+still touch under `TAP_PX` and `TAP_MS` that moved no key - so a foe
+left of centre could be locked. `touch.js` handed it to the hosts'
+one `tap` hook, and that hook is the activate action: a one-frame
+press A8's gate fires on the release, down the WHOLE ladder. A thumb
+re-placed on the stick beside the exit door, a chest, a ladder or a
+townsperson activated it along the ray through the stick's origin -
+the lower-left of the screen, which is exactly where a door the
+player has walked up to fills the view. The exit door is the biggest
+target in any building, so it was the one Mac saw.
+
+**The fix.** The stick-half tap carries `{ lockOnly: true }`. The three
+combat hosts hold `_tapLockOnly` beside `_tapDir`, set it with the
+arm and clear it with the ray; `world.js` and `exterior.js` publish
+`activateLockOnly` to the mode machine as they publish `activateDir`.
+Every ladder ends at the lock pick when the flag is up: the exterior
+pair's `if (_lockFoe) ... else if (_tapLockOnly) {}`, the standalone
+dungeon's `return null`, `tryExit`'s and `tryExitDungeon`'s `return
+false` - and the QG1 quest-click arm above each lock is gated too,
+since the stick's touch is no click. The look half's tap is unchanged.
+
+**Port-side.** DFU has no touch layer; TI1 is a recorded departure and
+this is its correction. Ledger row TS1. Pinned: `test/touchinput.test.js`
+TS1 (touch.js's call, the flag in every host, every ladder's end).
+
+## PL2 - THE ENTER THAT CLOSES A WINDOW IS THE WINDOW'S (2026-09-12, Mac's report)
+
+Mac: "Pointer can detach from the game and you're unable to click
+back in and use your pointer."
+
+**The mechanism.** U45 bound Enter to `Actions.ActivateCursor`
+(PlayerMouseLook.cursorActive) and gave the freed cursor DFU's
+precedence: `requestLook` refuses while `cursorActive` is up, so a
+click never takes a deliberately freed cursor back - only Enter does.
+PL1 covered the input box. Every OTHER window that closes on Enter
+did not: the hosts' keydown ladders are bubble listeners registered
+before `bindCursorToggle`'s, a message box's Enter button, a
+conversation's, the rest and level-up prompts all close inside that
+ladder, and when the event reached the toggle `isWindowUp()` was
+already false. The press that dismissed the window flipped the flag,
+`releaseLook` ran, and every click after was refused by the
+precedence line. The cursor was visible, went nowhere (the large HUD
+is the only thing it can operate), and Enter - the way back - is the
+one key the player has no reason to try.
+
+**DFU's law.** InputManager.Update withholds every action for
+`inputWaitTotal` (0.0833 s) after a pause ends (InputManager.cs:49,
+:511-515: "This ensures GUI actions do not 'fall-through' to main
+world as closing GUI and picking up next input all happen
+same-frame"), and `ActionStarted` is what PlayerMouseLook.cs:190
+reads - so DFU never sees the closing press as the toggle.
+
+**The fix.** The toggle listens in the CAPTURE phase. Capture
+listeners on the window run before any bubble listener, so the guard
+is read while the window is still up: a press under a window is the
+window's, and only a press with nothing up is the toggle. A typed DOM
+field keeps its Enter too (`isTextEntryTarget`, CG2). The unbind
+removes the capture listener. Ledger row PL2. Pinned:
+`test/cursortoggle.test.js` PL2.
