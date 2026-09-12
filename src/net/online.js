@@ -41,7 +41,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { appStorage } from '../systems/appStorage.js';   // the one storage question - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, validPose, validLook, sanitizeName, worldRoom, inRange } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, worldRoom, inRange, relayUrl } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -80,7 +80,7 @@ export const slug = (s) => String(s ?? '').replace(/[^A-Za-z0-9_.-]+/g, '_').sli
 export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locationName = '', buildingKey = 0, mapPixel = null }) {
   const loc = Number.isFinite(mapId) && mapId > 0 ? `m${mapId}` : (locationName && regionIndex >= 0 ? `${regionIndex}.${slug(locationName)}` : null);
   if (mode === 'dungeon') return loc ? `dungeon:${loc}` : null;
-  if (mode === 'interior') return loc ? `interior:${loc}.${buildingKey}` : null;
+  if (mode === 'interior') return loc && buildingKey ? `interior:${loc}.${buildingKey}` : null;   // a door the directory cannot key (0) is no room, not a pool of them
   if (host === 'exterior') return loc ? `town:${loc}` : null;
   if (!mapPixel) return null;
   return worldRoom(mapPixel.x, mapPixel.y);
@@ -113,17 +113,24 @@ export function lerpPose(from, to, t) {
 /** The distance between two poses on the ground. */
 const groundDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
-/** The player's id across sessions: minted once, kept in storage. */
-export function peerId(storage = appStorage()) {
-  const KEY = 'dagger.online.id';
+/** A token minted once and kept in storage under `key`, or fresh when storage will not keep it. */
+function keptToken(storage, key, re, mint) {
   try {
-    const have = storage?.getItem?.(KEY);
-    if (have && /^[A-Za-z0-9_-]{4,40}$/.test(have)) return have;
+    const have = storage?.getItem?.(key);
+    if (have && re.test(have)) return have;
   } catch { /* storage disabled */ }
-  const id = 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-  try { storage?.setItem?.(KEY, id); } catch { /* storage disabled */ }
-  return id;
+  const v = mint();
+  try { storage?.setItem?.(key, v); } catch { /* storage disabled */ }
+  return v;
 }
+
+/** The player's id across sessions: minted once, kept in storage. */
+export const peerId = (storage = appStorage()) => keptToken(storage, 'dagger.online.id', /^[A-Za-z0-9_-]{4,40}$/,
+  () => 'p' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4));
+
+/** The id's secret (AUDIT ONLINE A3): minted beside it, kept beside it, sent only in the hello. */
+export const peerSecret = (storage = appStorage()) => keptToken(storage, 'dagger.online.secret', /^[A-Za-z0-9_-]{8,64}$/,
+  () => Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 10)).join(''));
 
 /**
  * One player's connection to the relay: one room at a time, the
@@ -133,8 +140,9 @@ export function peerId(storage = appStorage()) {
  * otherwise); nothing outside passes a time in.
  */
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
-    this.url = String(url || DEFAULT_SERVER).replace(/\/+$/, '');
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
+    this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
+    this.secret = secret ?? peerSecret();
     this.name = name;
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
@@ -180,6 +188,7 @@ export class OnlineSession {
   }
 
   _open() {
+    if (!this.url) { this.status = 'error'; this.error = 'the relay must be a wss:// address'; this.terminal = true; return; }
     if (!this.room || !this._WS) { this.status = 'error'; this.error = 'no WebSocket'; return; }
     let ws;
     try { ws = new this._WS(`${this.url}/room/${this.room}`); } catch (e) { this.status = 'error'; this.error = String(e?.message ?? e); this._scheduleRetry(); return; }
@@ -189,7 +198,7 @@ export class OnlineSession {
       if (this._ws !== ws) return;
       this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
       this._lastSent = null; this._lastSentAt = -Infinity;
-      this._send({ t: 'hello', id: this.id, name: this.name, look: this.look, pose: this._pose });
+      this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this._pose });
     };
     ws.onmessage = (ev) => { if (this._ws === ws) this._receive(ev.data); };
     ws.onclose = (ev) => {
@@ -198,6 +207,7 @@ export class OnlineSession {
       const code = ev?.code ?? 1005;
       if (code === CLOSE_REPLACED) { this.terminal = true; this.status = 'error'; this.error = 'this character is online in another window'; return; }
       if (code === CLOSE_POLICY) { this.terminal = true; this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; return; }
+      if (code === CLOSE_BUSY) { this.status = 'closed'; this.error = 'the room is busy'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }   // full or gated: back off hard, then try again
       this.status = 'closed';
       if (!this._closedByUs) this._scheduleRetry();
     };

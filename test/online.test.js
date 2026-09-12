@@ -20,11 +20,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   POSE_HZ, HEARTBEAT_MS, WORLD_CELL, PEER_TIMEOUT_MS, BACKOFF_MIN_MS, BACKOFF_MAX_MS, DEFAULT_SERVER, SNAP_WORLD_UNITS, SNAP_SCENE_UNITS,
-  slug, worldRoom, roomKeyFor, poseChanged, lerpPose, peerId, OnlineSession,
+  slug, worldRoom, roomKeyFor, poseChanged, lerpPose, peerId, peerSecret, OnlineSession,
 } from '../src/net/online.js';
-import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, roomOf, validPose } from '../src/net/wire.js';
+import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, roomOf, validPose, relayUrl } from '../src/net/wire.js';
 import * as relay from '../server/src/relay.js';
 import { composeLook, lookKey, peerStubEntity, alphaBounds, cropRgba, LOOK_ITEM_FIELDS, LOOK_GROUPS, PEER_ARCHIVE, PEER_HEIGHT, DOLLS_MAX, DOLL_RETRY_MS, RemotePlayers } from '../src/net/remotePlayers.js';
+import { LOOK_GROUPS as WIRE_GROUPS, LOOK_ITEM_FIELDS as WIRE_FIELDS } from '../src/net/wire.js';
 import { createEquipTable } from '../src/characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { PAPERDOLL_W, PAPERDOLL_H } from '../src/ui/paperDoll.js';
@@ -75,6 +76,7 @@ test('ONLINE1: the room key - the world by cell, a town, a dungeon and an interi
   assert.equal(roomKeyFor({ host: 'exterior', mode: 'interior', mapId: 1234, buildingKey: 7 }), 'interior:m1234.7', 'the fixed city\'s interiors are the same rooms');
   assert.equal(roomKeyFor({ host: 'world', mode: 'interior', buildingKey: 7 }), null, 'an interior in a location the host cannot name: no room, not a pool');
   assert.equal(roomKeyFor({ host: 'world', mode: 'dungeon', regionIndex: -1, locationName: '' }), null);
+  assert.equal(roomKeyFor({ host: 'world', mode: 'interior', mapId: 1234, buildingKey: 0 }), null, 'a door the directory cannot key: no room (mutant: every unkeyed interior in one pool)');
   for (const k of ['world:25,15', 'town:m1234', 'dungeon:17.Privateer_s_Hold', 'interior:m1234.4021']) assert.equal(roomOf('/room/' + k), k, `${k} is a key the relay admits`);
   assert.equal(slug('The Sanctum of Ilyn / Mother\'s'), 'The_Sanctum_of_Ilyn_Mother_s'); assert.equal(slug(''), 'x');
   assert.equal(slug('x'.repeat(60)).length, 40);
@@ -92,20 +94,23 @@ test('ONLINE1: the pose - changed past a hair, eased between two with the yaw by
   const store = new Map(); const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
   const id = peerId(storage); assert.match(id, /^[A-Za-z0-9_-]{4,40}$/); assert.equal(peerId(storage), id, 'the same id next time');
   assert.match(peerId({ getItem() { throw new Error('no'); }, setItem() { throw new Error('no'); } }), /^p/, 'a storage that throws: a fresh id, never a crash');
+  const sec = peerSecret(storage); assert.match(sec, /^[A-Za-z0-9_-]{8,64}$/); assert.equal(peerSecret(storage), sec, 'the secret kept beside the id'); assert.notEqual(sec, id);
+  assert.equal(relayUrl('wss://daggerfall-online.example.workers.dev/'), 'wss://daggerfall-online.example.workers.dev'); assert.equal(relayUrl('ws://localhost:8787'), 'ws://localhost:8787');
+  for (const bad of ['http://relay.test', 'ws://relay.test', 'wss://relay.test/x?y=1', 'javascript:alert(1)', '']) assert.equal(relayUrl(bad), null, `${bad || 'empty'} is no relay`);
   assert.match(DEFAULT_SERVER, /^wss:\/\/daggerfall-online\./, 'the relay this port hosts');
 });
 
 test('ONLINE1: the session over a fake socket, on its own clock - hello on open, a pose at most POSE_HZ when moved and a heartbeat regardless, the welcome merged, join, pose, leave, a walk eased and a jump snapped, the silent peer hidden not dropped, the relay\'s frames checked (mutants: tick fed the frame\'s clock, a pose every frame, the welcome wiping the peers, a peer dropped for standing still)', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   let now = 1_700_000_000_000;   // Date.now()-sized: a tick(now) fed a rAF stamp would freeze everything
-  const s = new OnlineSession({ url: 'wss://relay.test/', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, id: 'mac-0001', WebSocketImpl: FakeWS, now: () => now });
+  const s = new OnlineSession({ url: 'wss://relay.test/', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now: () => now });
   s.join('world:25,15', pose(0));
   assert.equal(sockets.length, 1); assert.equal(sockets[0].url, 'wss://relay.test/room/world:25,15', 'the trailing slash trimmed, the room in the path');
   assert.equal(s.status, 'connecting'); assert.equal(s.statusLine(), 'online: connecting');
   assert.equal(s.sendPose(pose(1)), false, 'nothing goes before the socket opens');
   sockets[0].open();
   assert.equal(s.status, 'open'); assert.equal(s.statusLine(), null);
-  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: pose(1) }, 'the hello carries the latest pose');
+  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: pose(1) }, 'the hello carries the id, its secret and the latest pose');
   assert.equal(s.sendPose(pose(2)), true); now += 20; assert.equal(s.sendPose(pose(3)), false, 'twenty ms later: throttled');
   now += 100; assert.equal(s.sendPose(pose(3)), true, 'a tenth of a second: sent'); now += 100; assert.equal(s.sendPose(pose(3)), false, 'unmoved: not sent');
   assert.equal(sockets[0].sent.filter((m) => m.t === 'pose').length, 2); assert.equal(POSE_HZ, 10);
@@ -148,7 +153,7 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
 test('ONLINE1: the socket\'s lifecycle - a room change closes and reopens, a stale socket\'s events are ignored, a drop reconnects with a backoff that DOUBLES, the relay\'s error and its terminal close codes end the retries, the same room again opens nothing (mutants: the stale-socket guard gone, a constant backoff, 4000 retried into a two-tab eviction loop)', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   let now = 1_700_000_000_000;
-  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', WebSocketImpl: FakeWS, now: () => now });
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now: () => now });
   s.join('world:25,15', pose(0)); sockets[0].open();
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(1) }] });
   // a room change: the socket closes, a new one opens on the new room; the old socket's late events do nothing
@@ -176,7 +181,13 @@ test('ONLINE1: the socket\'s lifecycle - a room change closes and reopens, a sta
   sockets[4].open(); sockets[4].drop(CLOSE_REPLACED);
   assert.equal(s.terminal, true); assert.match(s.error, /another window/);
   now += BACKOFF_MAX_MS * 4; s.tick(); assert.equal(sockets.length, 5, 'replaced: not retried, or two tabs would evict each other forever');
+  // busy (1013): not terminal, but a hard backoff
+  s.join('town:m6', pose(0)); sockets[5].open(); sockets[5].drop(CLOSE_BUSY);
+  assert.equal(s.terminal, false); assert.ok(s._backoff >= BACKOFF_MAX_MS / 2, 'a full room is waited out, not hammered'); now += BACKOFF_MAX_MS + 1; s.tick(); assert.equal(sockets.length, 7, 'then tried again');
   s.leave(); const n = sockets.length; now += 60000; s.tick(); assert.equal(sockets.length, n, 'left: no reconnect');
+  // a relay that is not wss:// is no relay at all
+  const bad = new OnlineSession({ url: 'http://relay.test', id: 'mac-0002', secret: 'shh-shh-shh-0002', WebSocketImpl: FakeWS, now: () => now });
+  bad.join('world:0,0', pose(0)); assert.equal(sockets.length, n, 'no socket'); assert.equal(bad.terminal, true); assert.match(bad.statusLine(), /wss/);
 });
 
 test('ONLINE1: the look and the stub - the equipped items\' doll fields off the equip table, one key per look, a stand-in entity with the items in their slots, every field clamped at the door (mutant: relay data trusted)', () => {
@@ -199,7 +210,7 @@ test('ONLINE1: the look and the stub - the equipped items\' doll fields off the 
   assert.equal(bad.race.length, 16); assert.equal(bad.gender, 'male'); assert.equal(bad.faceIndex, 9);
   assert.deepEqual(bad.items, [{ templateIndex: 8, group: 'Weapons', equipSlot: 4, material: 4095 }], 'a slot past the table, a negative index, an unknown group, a string dye: dropped or clamped');
   assert.equal(peerStubEntity({ items: new Array(60).fill({ templateIndex: 1, group: 'Armor', equipSlot: 1 }) }).items.length, 27, 'the table\'s slots bound the items');
-  assert.deepEqual(LOOK_GROUPS, ['MensClothing', 'WomensClothing', 'Armor', 'Weapons', 'Jewellery']);
+  assert.deepEqual(LOOK_GROUPS, ['MensClothing', 'WomensClothing', 'Armor', 'Weapons', 'Jewellery']); assert.equal(LOOK_GROUPS, WIRE_GROUPS); assert.equal(LOOK_ITEM_FIELDS, WIRE_FIELDS, 'the look\'s vocabulary has one home');
   assert.equal(PEER_HEIGHT, CAPSULE_HEIGHT); assert.ok(PEER_ARCHIVE > 100000);
 });
 

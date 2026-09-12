@@ -190,7 +190,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `08-Audio/` - music (HMI/XMI), sound effects, audio state machine
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
-- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc
+- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc (the design that may follow ONLINE1, which shipped presence alone - `06-Systems/Online-Arc.md`)
 - `06-Systems/Morrowind-Assets.md` - THE MORROWIND ASSET LAYER's own page (opened by MW-LOAD, 2026-09-08, Mac: "improve the load time when Morrowind assets are enabled"): the load path from attach to the built arm, the measurements (a 300 MB archive cloned whole out of IndexedDB is 1-3 s; as a Blob its directory is 5 ms and an entry 1 ms), and the fix - archives stored as Blobs and opened by range, entries loaded when a reader needs them, the arm reporting its stage timings.
 - `03-World/Windmills.md` - WINDMILLS OF DAGGERFALL, Kamer's mod, 1:1 with permission - the page the WM1-WM4c arc (World-Arc.md) never had, written by the MODS AUDIT of 2026-09-08: the law table against his archive, the seams, the rotor re-anchored on the wind model's fair day, four items recorded (the roller's node matrix, his AutoMapData edit - the mill is not on the automap and NPCs walk through it, the building bound, the interior file's header counts - an open question for Mac, who has the rar).
 - `03-World/Roads.md` - roads and tracks: HIS DATA, 1:1 with permission (2026-09-02) - Basic Roads' four arrays vendored in `vendor/roads-hazelnut/` and credited - with OUR network from the player's own map as the fallback. Always on in both lanes; Port-Ledger section A carries the row
@@ -312,7 +312,7 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/scenes/exterior.js:1722` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
+- `src/scenes/exterior.js:1720` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
 - `src/ui/enhancedMenu.js:2097` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with

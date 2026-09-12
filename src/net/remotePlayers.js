@@ -25,15 +25,14 @@ import { createEquipTable } from '../characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
 import { projectToScreen } from '../player/tapRay.js';   // one home (audit24 onehome): the touch layer's own projection
+import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocabulary: the wire's own
+
+export { LOOK_ITEM_FIELDS, LOOK_GROUPS };
 
 /** A synthetic archive for the peers' dolls - no TEXTURE.### is this high. */
 export const PEER_ARCHIVE = 900000;
 /** The figure's height on the ground: the player's own capsule. */
 export const PEER_HEIGHT = CAPSULE_HEIGHT;
-/** The fields of an equipped item the doll art reads. */
-export const LOOK_ITEM_FIELDS = Object.freeze(['templateIndex', 'group', 'material', 'dye', 'variant', 'equipSlot']);
-/** The item groups the doll art knows; anything else draws nothing and is dropped at the door. */
-export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Armor', 'Weapons', 'Jewellery']);
 /** Names farther than this, in scene units, are not drawn. */
 export const NAME_RANGE = 60;
 /** The most distinct dolls kept on the GPU; past it the oldest is released (AUDIT ONLINE C7). */

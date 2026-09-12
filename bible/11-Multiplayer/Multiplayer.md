@@ -1,5 +1,12 @@
 # Multiplayer
 
+> **ONLINE1 (2026-09-12) shipped the first cut - `06-Systems/Online-Arc.md`.**
+> Of the three decisions below it keeps the first (your own character
+> from your own save) and none of the sharing: there is no host, no
+> host's world, no shared time, weather, enemies or doors - a Cloudflare
+> relay fans presence alone. This page is the co-op design that may
+> follow; where the two disagree, the arc is what runs.
+
 Co-op for the Daggerfall JavaScript port. Locked with Mac on 2026-09-01
 after a survey of what the port actually has; the three decisions below
 are his, the reasoning under each is why they are the version that
@@ -44,7 +51,7 @@ introduces peers and relays bytes; it runs no game.
 
 Why, and this is the constraint that decides everything: **lockstep is
 impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:6213`) and 110 source files call
+variable `dt` (`scenes/world.js:6214`) and 110 source files call
 `Math.random` unseeded. Two clients cannot simulate the same world in
 parallel and agree, and making them able to would mean a fixed-step
 deterministic rewrite of the simulation. So one authority owns the

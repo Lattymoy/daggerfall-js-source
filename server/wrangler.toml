@@ -9,6 +9,10 @@ compatibility_date = "2026-09-01"
 account_id = "a27adccb38c8e8b82fa32e5736274a94"
 workers_dev = true
 
+# AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
+[observability]
+enabled = true
+
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "Room"

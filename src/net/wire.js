@@ -7,7 +7,7 @@
 // No I/O: test/online_relay.test.js executes it.
 //
 // THE WIRE. JSON text frames, one message each.
-//   client -> room:  {t:'hello', id, name, look, pose}   once, first
+//   client -> room:  {t:'hello', id, secret, name, look, pose}   once, first
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}]}
@@ -18,7 +18,15 @@
 // cell's in MapsFile world units (the streaming world's map-pixel
 // origin, PIXEL_UNITS a pixel), every other room's in the scene's own -
 // mv 1 when moving. A look is the paperdoll's recipe: race, gender,
-// face, and the equipped items as the save writes them.
+// face, and the equipped items projected onto the six fields the doll
+// art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
+// by construction and never a stranger's junk rebroadcast).
+//
+// THE ID AND ITS SECRET (AUDIT ONLINE A3). Ids are public - every pose
+// carries one - so a hello with an id the room already holds must
+// carry the secret the first hello minted, or it is refused; a
+// reconnect with the same id and secret replaces its old socket.
+// Without this any client could kick and impersonate any peer.
 //
 // ROOMS. The client names the room in the path: /room/<key>. The
 // streaming world is sharded into WORLD_CELL-pixel cells
@@ -34,10 +42,22 @@ export const WORLD_CELL = 16;
 export const RANGE_PIXELS = 3;
 /** The most poses a client may send per second; the rest are dropped. */
 export const POSE_HZ_MAX = 20;
-/** The largest frame the room reads; bigger ones close the socket. */
+/** The most hellos a ROOM admits per second (AUDIT ONLINE A6: a reconnect storm is 2N frames a cycle for everyone). */
+export const HELLO_HZ_MAX = 10;
+/** The most sockets one room holds; past it the upgrade is refused. */
+export const SOCKETS_MAX = 256;
+/** The most peers a welcome carries: the nearest, in a world cell (AUDIT ONLINE A5). */
+export const ROSTER_MAX = 64;
+/** Over-rate poses dropped in a row before the socket is closed (AUDIT ONLINE A8: ungated ingress is a bill). */
+export const DROP_STRIKES_MAX = 200;
+/** The largest frame the room reads (UTF-16 units); bigger ones close the socket. */
 export const MAX_FRAME_BYTES = 16 * 1024;
 /** The most equipped items a look may carry (DFU's equip table has 27 slots). */
 export const MAX_LOOK_ITEMS = 27;
+/** The fields of an equipped item the doll art reads - all a look carries per item. */
+export const LOOK_ITEM_FIELDS = Object.freeze(['templateIndex', 'group', 'material', 'dye', 'variant', 'equipSlot']);
+/** The item groups the doll art knows; anything else draws nothing and is dropped. */
+export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Armor', 'Weapons', 'Jewellery']);
 /** A display name's bounds. */
 export const NAME_MAX = 24;
 /** World units per map pixel in the frame the streaming world's poses
@@ -50,10 +70,14 @@ export const POSE_BOUND = 1024 * PIXEL_UNITS;
 /** A pose's height bound, the scene's own units. */
 export const POSE_Y_BOUND = 1e5;
 /** The relay's close codes with a meaning of their own. */
-export const CLOSE_REPLACED = 4000;   // another socket said hello with this id
+export const CLOSE_REPLACED = 4000;   // another socket said hello with this id and its secret
 export const CLOSE_POLICY = 1008;     // a frame the relay refused; it said why in an error frame first
+export const CLOSE_BUSY = 1013;       // the room is full or its hello gate is shut: try again later
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
+const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
+const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
 /** A name the room will show: printable ASCII, trimmed, bounded, never empty. */
 export function sanitizeName(name) {
@@ -72,13 +96,23 @@ export function validPose(p) {
   return { x, y, z, yaw, pitch, mv: mv ? 1 : 0 };
 }
 
-/** A look the room will keep and repeat: the paperdoll's recipe, bounded. */
+/** One equipped item as the look carries it - the six fields, clamped - or null. */
+export function validLookItem(it) {
+  if (!it || typeof it !== 'object') return null;
+  const templateIndex = uint(it.templateIndex, 65535), equipSlot = uint(it.equipSlot, 1e6);
+  if (templateIndex == null || equipSlot == null || equipSlot >= MAX_LOOK_ITEMS || !LOOK_GROUPS.includes(it.group)) return null;   // a slot past the table is no item, not another slot's
+  const out = { templateIndex, group: it.group, equipSlot };
+  for (const k of ['material', 'dye', 'variant']) { const v = uint(it[k], 4095); if (v != null) out[k] = v; }
+  return out;
+}
+
+/** A look the room will keep and repeat: the paperdoll's recipe, bounded and projected. */
 export function validLook(look) {
   if (!look || typeof look !== 'object') return null;
-  const race = typeof look.race === 'string' ? look.race.slice(0, 16) : 'Breton';
+  const race = typeof look.race === 'string' && /^[A-Za-z]{1,16}$/.test(look.race) ? look.race : 'Breton';
   const gender = look.gender === 'female' ? 'female' : 'male';
-  const faceIndex = finite(look.faceIndex) ? Math.max(0, Math.min(9, Math.floor(look.faceIndex))) : 0;
-  const items = Array.isArray(look.items) ? look.items.slice(0, MAX_LOOK_ITEMS).filter((it) => it && typeof it === 'object') : [];
+  const faceIndex = uint(look.faceIndex, 9) ?? 0;
+  const items = Array.isArray(look.items) ? look.items.map(validLookItem).filter(Boolean).slice(0, MAX_LOOK_ITEMS) : [];
   return { race, gender, faceIndex, items };
 }
 
@@ -86,6 +120,14 @@ export function validLook(look) {
 export function roomOf(pathname) {
   const m = /^\/room\/([A-Za-z0-9_.,:+-]{1,80})$/.exec(pathname);
   return m ? m[1] : null;
+}
+
+/** A relay the client may connect to: wss:// anywhere, ws:// on localhost only (AUDIT ONLINE A16/E11). */
+export function relayUrl(url) {
+  const s = String(url ?? '').trim().replace(/\/+$/, '');
+  if (/^wss:\/\/[A-Za-z0-9.-]+(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(s)) return s;
+  if (/^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(s)) return s;
+  return null;
 }
 
 /** The streaming world's room for a MAP PIXEL (the client mints it; the relay only reads the key). */
@@ -97,13 +139,18 @@ export const worldRoom = (px, py) => `world:${Math.floor(px / WORLD_CELL)},${Mat
  *  pixel distances, which is all inRange asks (AUDIT ONLINE B8). */
 export const pixelOf = (p) => [Math.floor(p.x / PIXEL_UNITS), Math.floor(p.z / PIXEL_UNITS)];
 
+/** The Chebyshev distance between two poses, in map pixels. */
+export function pixelDistance(a, b) {
+  const [ax, ay] = pixelOf(a), [bx, by] = pixelOf(b);
+  return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+}
+
 /** Does a pose from `from` reach `to`? Inside a world cell, within
  *  RANGE_PIXELS by Chebyshev distance; in every other room, always. */
 export function inRange(roomKey, from, to) {
   if (!String(roomKey ?? '').startsWith('world:')) return true;
   if (!from || !to) return false;
-  const [ax, ay] = pixelOf(from), [bx, by] = pixelOf(to);
-  return Math.max(Math.abs(ax - bx), Math.abs(ay - by)) <= RANGE_PIXELS;
+  return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
 /** One client frame, parsed and checked: {t:'hello'|'pose'|'ping', ...}
@@ -117,12 +164,14 @@ export function parseClient(text, { hasHello = false } = {}) {
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
     if (hasHello) return { error: 'hello twice' };
-    const id = typeof m.id === 'string' && /^[A-Za-z0-9_-]{4,40}$/.test(m.id) ? m.id : null;
+    const id = typeof m.id === 'string' && ID_RE.test(m.id) ? m.id : null;
     if (!id) return { error: 'bad id' };
+    const secret = typeof m.secret === 'string' && SECRET_RE.test(m.secret) ? m.secret : null;
+    if (!secret) return { error: 'bad secret' };
     const look = validLook(m.look);
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
-    return { t: 'hello', id, name: sanitizeName(m.name), look, pose };
+    return { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
   }
   if (m.t === 'pose') {
     if (!hasHello) return { error: 'pose before hello' };
@@ -132,19 +181,25 @@ export function parseClient(text, { hasHello = false } = {}) {
   return { error: 'unknown message' };
 }
 
-/** The pose rate gate: a token bucket of POSE_HZ_MAX a second. Answers
- *  the bucket after the frame and whether the frame passes. */
-export function poseGate(bucket, nowMs) {
-  const b = bucket ?? { tokens: POSE_HZ_MAX, at: nowMs };
-  const refill = ((nowMs - b.at) / 1000) * POSE_HZ_MAX;
-  const tokens = Math.min(POSE_HZ_MAX, b.tokens + Math.max(0, refill));
+/** A token bucket of `rate` a second: the bucket after the frame and
+ *  whether the frame passes. The pose gate and the hello gate ride it. */
+export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
+  const b = bucket ?? { tokens: rate, at: nowMs };
+  const refill = ((nowMs - b.at) / 1000) * rate;
+  const tokens = Math.min(rate, b.tokens + Math.max(0, refill));
   if (tokens < 1) return { bucket: { tokens, at: nowMs }, pass: false };
   return { bucket: { tokens: tokens - 1, at: nowMs }, pass: true };
 }
 
-/** What a joiner is told: everyone else in the room who has said hello. */
-export function rosterFor(peers, meId) {
+/** The pose rate gate: POSE_HZ_MAX a second. */
+export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX);
+
+/** What a joiner is told: everyone else in the room who has said hello
+ *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
+ *  from (a world cell), the first ROSTER_MAX otherwise. */
+export function rosterFor(peers, meId, near = null) {
   const out = [];
   for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
-  return out;
+  if (near && out.length > ROSTER_MAX) out.sort((a, b) => (a.pose ? pixelDistance(near, a.pose) : Infinity) - (b.pose ? pixelDistance(near, b.pose) : Infinity));
+  return out.slice(0, ROSTER_MAX);
 }
