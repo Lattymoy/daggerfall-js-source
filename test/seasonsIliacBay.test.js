@@ -815,6 +815,7 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   assert.match(world, /reposition: REPOSITION\.DirectionFromStartMarker,\s*\n\s*travelStart, modEvent: 'travel' \}\);/, 'fastTravelTo: the travel (AUDIT 64 F18: DFU\'s own method for it)');
   assert.match(world, /await _teleportToPixel\(w\.pixel\.x, w\.pixel\.y, null, \{ modEvent: 'load' \}\);/, 'the quickload: a load');
   assert.match(world, /await _teleportToPixel\(px\.x, px\.y, null, \{ modEvent: 'load' \}\);/, 'the classic import: a load');
-  assert.equal((world.match(/modEvent: '(travel|load)'/g) || []).length, 3, 'and no other caller names an event');
+  assert.match(world, /await _teleportToPixel\(pixel\.x, pixel\.y, null, \{ modEvent: 'load' \}\);/, 'MAC6 #1: the dungeon save\'s load: a load too');
+  assert.equal((world.match(/modEvent: '(travel|load)'/g) || []).length, 4, 'and no other caller names an event');
   assert.equal((world.match(/seasons\.onLoad\(\)/g) || []).length, 2, 'boot and the teleport core - the two loads');
 });

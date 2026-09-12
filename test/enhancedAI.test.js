@@ -167,7 +167,7 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
 // What the body owes when the archives land: load the dungeon block
 // meshes through dungeonContext's own loader, feed them with
 // `collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)`
-// (src/scenes/dungeonContext.js:493), `bakeNavFromCollider(collider,
+// (src/scenes/dungeonContext.js:494), `bakeNavFromCollider(collider,
 // { anchor: <the entry marker's xyz> })` (src/ai/navBake.js), then assert
 // `bake.stats.polys > 0`, that the entry and every waypoint of
 // `navPath(bake, entry, firstHall)` locates via `__locatePolyIndexed`,
