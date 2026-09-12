@@ -90,7 +90,7 @@ export function roomKeyFor({ host, mode, mapId = null, regionIndex = -1, locatio
 export function poseChanged(a, b, eps = 0.01) {
   if (!a || !b) return true;
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
-    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv ? 1 : 0) !== (b.mv ? 1 : 0);
+    || Math.abs(a.yaw - b.yaw) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0);
 }
 
 const lerpAngle = (a, b, t) => {

@@ -5,10 +5,10 @@
 // iteration draws every peer as their PAPERDOLL: the same composite the
 // inventory shows, minus its panel background, cropped to the figure and
 // stood on the ground as a billboard at the peer's feet, the name over
-// its head. The Morrowind body rides the player's own rig
-// (combat/fpArm.js, one instance, built from the player's own race and
-// gear), so a peer in it is the next iteration's work: the rig made
-// instantiable per body. Recorded in Online-Arc.md.
+// its head. With the Morrowind layer on, the
+// body instead (MWBODY1, net/peerBodies.js: one rig instance per
+// peer), the doll standing wherever a body does not. Recorded in
+// Online-Arc.md.
 //
 // THE LOOK travels in the hello (net/online.js): race, gender, face,
 // and the equipped items' doll fields (paperdollItemImage reads

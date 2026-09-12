@@ -86,6 +86,7 @@ test('ONLINE1: the pose - changed past a hair, eased between two with the yaw by
   const a = pose(0);
   assert.equal(poseChanged(a, { ...a }), false); assert.equal(poseChanged(a, { ...a, x: 0.005 }), false, 'a hair is not a move');
   assert.equal(poseChanged(a, { ...a, x: 0.02 }), true); assert.equal(poseChanged(a, { ...a, yaw: 0.02 }), true); assert.equal(poseChanged(a, { ...a, mv: 0 }), true);
+  assert.equal(poseChanged(a, { ...a, mv: 2 }), true, 'a walk becoming a run is a change (the run bit)');
   assert.equal(poseChanged(null, a), true);
   const m = lerpPose({ ...a, x: 0, yaw: 0.1 }, { ...a, x: 10, yaw: 2 * Math.PI - 0.1, mv: 1 }, 0.5);
   assert.equal(m.x, 5); assert.ok(Math.abs(m.yaw - 0) < 1e-9, 'from 0.1 to -0.1 (spelled 2pi - 0.1): through zero, not round the back'); assert.equal(m.mv, 1);

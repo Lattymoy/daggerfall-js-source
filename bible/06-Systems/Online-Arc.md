@@ -251,7 +251,8 @@ ONLINE1 deferred it because the rig was read as a singleton. It is
 not: `src/combat/fpArm.js` exports one INSTANCE (`fpArm =
 createFpArm()`) of a factory, every mutable the machine owns lives in
 the instance's closure, and what the module keeps at its level (the
-ESM walk, the textures, the face matches, the clip reports, the icons)
+ESM walk, the textures, the face matches, the garment colours, the clip
+reports, the icons)
 is keyed by content and shared by design. So a peer is one more
 `createFpArm()` - `src/net/peerBodies.js`, `PeerBodies`:
 
@@ -266,11 +267,13 @@ is keyed by content and shared by design. So a peer is one more
   `BODIES_MAX` (a build parses meshes for seconds and holds a GPU
   mesh), and the rest keep the doll.
 - **Fed a camera of its own.** The rig reads a camera callback once a
-  frame (the player's own is world.js's `{ pos, yaw, pitch, move }`);
-  a peer's is a stub from the pose - the yaw, `mv` as the forward
-  move, so the movement slot (MW-D26) picks the walk and the idle
-  otherwise, and the ground speed measured off the drawn pose, which
-  sets the clip's rate and the run past `RUN_SPEED`. The view is
+  frame (the player's own is world.js's `{ pos, yaw, pitch, sneaking,
+  bob, move }`);
+  a peer's is a stub from the pose - the yaw (eased, so the rig sees a
+  turn every frame), `mv` as the forward move and, at 2, the run (the
+  wire's own bit, the sender's `isRunning`), so the movement slot
+  (MW-D26) picks the walk, the run or the idle, and the ground speed
+  measured off the drawn pose, which sets the clip's rate. The view is
   switched to third once built (`setViewMode`; a build resets it to
   first) and the machine stepped by the frame's dt. The pitch is not
   applied: the body stands level, vanilla's own law.
@@ -278,24 +281,86 @@ is keyed by content and shared by design. So a peer is one more
   the same sprite-box pass the player's body takes (MW-D24), right
   after it, in the exterior pass and in both modal passes
   (`host.drawPeerBodies`). A peer in a body draws no doll; its name
-  rides the doll pass's own list, at the capsule's head.
+  rides the doll pass's own list, at the capsule's head by the race's
+  height scale (MW-D34).
 - **The gate** is the host's: the enhanced skin, the player's own arms
   switch (MWA1's `mwArms` pref - the layer is on when the arms are)
   and Morrowind data attached. Off, every body is released and every
   peer is a doll. The name rides the doll pass's list at the body's own
-  head (the capsule by the race's height scale, MW-D34).
 
-Pinned in `test/mwbody1.test.js` (5): the look's mapping and the stub
-camera execute; PeerBodies over a fake rig factory (one rig per peer,
-the build order, the view, the step, the draw, the release, the cap,
-the retry, the gate); the doll pass's skip and the name; the host by
+## AUDIT MWBODY (2026-09-12)
+
+Mac: "Lets do an audit on this." Three opus finders (the rig as a peer
+body, the module and the host, the pins and the record - the last by
+mutation), each refuted against the code and fixed here:
+
+- **A throw was the frame's end (A1).** One peer's rig throwing in
+  `update` or `drawThird` took the game loop down for everyone. Both
+  are guarded now: the body stands down to its doll, the look waited
+  out, the reason said once.
+- **The recenter (B2).** The bodies' feet were placed before the
+  floating origin's step and drawn after it: every peer jumped a tile
+  for one frame at each crossing, the same D5 the dolls had. The feet
+  follow the origin (`offsetAll`).
+- **The run guess (B3/A7).** `RUN_SPEED` sat under the walk speed of
+  any character with SPD past 52; most peers ran while walking. The
+  wire carries the sender's own bit now (`mv` 2).
+- **The flicker (B1/A2/A6).** A peer at the range edge, silent past the
+  timeout, or across a room change left the drawable set and its body
+  was released and rebuilt - seconds of parsing per flicker, a queue
+  that never drained. A body lingers `BODY_LINGER_MS`; a released
+  body's build is skipped before it runs and unloaded when it lands.
+- **The cap (B5/B12).** First come, forever: the first eight peers
+  seen kept their bodies while the one in front of you stood as a
+  doll. The nearest first now, and a far body yields its slot past
+  `SWAP_MARGIN`; the sweep runs before the count.
+- **The range (B6/A3).** Eight rigs posed and re-uploaded every frame
+  for peers two kilometres off: past `BODY_RANGE` the rig sleeps and
+  the doll stands; a body behind the eye is not drawn.
+- **The step (B8).** A snap read as a sprint for half a second: a jump
+  past `JUMP_UNITS` resets the pace.
+- **The turn (A8).** The rig reads turning off the yaw's change frame
+  to frame, and an eased pose stops between arrivals: the turn clip
+  stuttered. The drawn yaw eases toward the pose's (`YAW_EASE`).
+- **The rest.** A build's failure said nothing and was never pruned
+  (B9/A16/A17: kept with its reason, said once, dropped on success);
+  the dead stood in their bodies over the death screen (B7); nothing
+  released the rigs on the page's hide (B11); a body was reported
+  standing on `state` alone while the rig had no clip to draw
+  (B4/A12: `thirdActive` gates it); a data re-attach left the peers in
+  the last generation's bodies (A9); a rejoin with new gear every
+  second rebuilt every second (A11: `BODY_REBUILD_MS`); two builds at
+  once opened every archive twice (B10/A13: the archives once); the
+  posed bounds were walked again per body per frame (A4); a movement
+  note grew per frame (A14); the record's stray sentences (C4-C6,
+  C10, C11, C18-C20).
+- **The pins (C1-C3, C5, C7-C9, C15, C17).** Ten of forty-three
+  mutations survived: the released-while-building guard, the serialized
+  builds, the host's draw hook, four constants pinned against
+  themselves, a fake that could not throw or refuse the third person,
+  a `drawThird` that drew before a step. All killed; the fake rig is
+  shaped like the instance API.
+
+Left as recorded: a peer's weapon stays sheathed and its arrows never
+show (the wire carries no drawn flag and no inventory); strafe and
+backpedal play the forward walk; a body's textures are the instance's
+own (no sharing across peers of one look); the first-person arm is
+built and refused alongside the body it never draws.
+
+Pinned in `test/mwbody1.test.js` (7): the constants once and
+literally; the look's mapping and the stub camera execute; PeerBodies
+over a fake rig factory shaped like the instance API (one rig per peer
+built one at a time, the view, the step, the draw only once stepped,
+the release, the origin's shift, the linger, the skipped and the
+unloaded build, the jump, the range, the nearest-first cap and the
+yield, the refused and the thrown failure with their reasons, the
+retry, the gate); the doll pass's skip and the name; the host by
 source. Not seen with two real players and the data attached from
-here: Mac's two browsers are the gate. The look is still sent once,
-so a peer's body wears what it logged in with.
+here: Mac's two browsers are the gate.
 
 ## What it does not do (yet)
 
-- **The Morrowind body** ships (MWBODY1, below); a client without the
+- **The Morrowind body** ships (MWBODY1, above); a client without the
   Morrowind data, or on the classic skin, sees the paperdoll instead
   (Mac: acceptable), and so does everyone past `BODIES_MAX` bodies.
 - **The look is sent once**, in the hello: gear changed mid-session is

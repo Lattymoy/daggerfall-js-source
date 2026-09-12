@@ -208,7 +208,7 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER } from '../net/online.js';   
 import { drawText } from '../ui/text.js';   // ONLINE1: the session's status line
 import { RemotePlayers, composeLook } from '../net/remotePlayers.js';   // ONLINE1: the others, drawn
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
-import { morrowindDataCount } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached
+import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
@@ -6560,12 +6560,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
-    peerBodies = new PeerBodies({ renderer, enabled: () => isEnhanced() && !!getPref('mwArms') && morrowindDataCount() > 0 });   // the player's own arms switch (MWA1) turns the layer on
-    globalThis.addEventListener?.('pagehide', () => online?.leave());   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence
+    const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
+    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
+    globalThis.addEventListener?.('pagehide', () => { online?.leave(); peerBodies?.destroy(); remotePlayers?.destroy(); });   // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released
   };
   const onlineFrame = (now, dt) => {
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
-    if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); return; }
+    if (townTalk.overlay instanceof DeathScreen) { if (online.room) online.leave(); peerBodies.destroy(); remotePlayers.sync([], onlineToScene); return; }   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -6596,12 +6597,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const moved = _onlineLast ? (player.pos[0] - _onlineLast[0]) ** 2 + (player.pos[2] - _onlineLast[2]) ** 2 > 1e-6 : false;
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
+    const mv = moved ? (player.isRunning ? 2 : 1) : 0;   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
-    else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) online.join(key, pose); }
-    else online.sendPose({ ...pose, mv: moved ? 1 : 0 });
+    else if (key !== online.room) { if (!online.room || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, mv }); } }   // the look re-composed: the next room's hello carries the gear worn now
+    else online.sendPose({ ...pose, mv });
     online.tick();
     const drawable = online.drawable();
-    peerBodies.sync(drawable, onlineToScene, dt);
+    peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id) });
   };
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
@@ -7712,6 +7714,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
       if (remotePlayers) for (const b of remotePlayers.batches()) { b.origin[0] += r.offset[0]; b.origin[1] += r.offset[1]; b.origin[2] += r.offset[2]; }
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
+      if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
