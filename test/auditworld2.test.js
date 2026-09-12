@@ -93,7 +93,7 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   // the header says the truth (A8)
   const room = rd('server/src/index.js');
   assert.match(room, /WORLD2 \(2026-09-12\): THE LIVE FOES\./, 'the head has a WORLD2 paragraph'); assert.match(room, /metered on the pose bucket, or the\n\/\/ stream's own for a foes frame \(A1/, 'and the A1 sentence names both buckets');
-  assert.match(rd('src/net/wire.js'), /\{t:'hello'\|'pose'\|'ping'\|'chat'\|'world'\|'foes'\|'hit', \.\.\.\}/, 'parseClient\'s doc names the two frames');
+  assert.match(rd('src/net/wire.js'), /\{t:'hello'\|'pose'\|'ping'\|'chat'\|'world'\|'foes'\|'hit'\|'act', \.\.\.\}/, 'parseClient\'s doc names the two frames (and WORLD3\'s third)');
 });
 
 test('AUDIT WORLD2: the session - a dead socket and a leave clear the seat through the one door, so the world host hears the seat go (A2/C2); the hits\' own gate at home refuses an over-rate blow to its caller (A6); my own id as the host is not the world in (D11); FOES_STALE_MS is three full frames', () => {

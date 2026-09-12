@@ -47,6 +47,11 @@ export const enemyInfightingEnabled = () => getBool('Enhancements', 'EnemyInfigh
  *  PLAYER_TARGET` is DFU's `target == player` reference compare. */
 export const PLAYER_TARGET = Object.freeze({ isPlayer: true });
 export const isPlayerTarget = (c) => c === PLAYER_TARGET || c?.isPlayer === true;
+/** WORLD3: a PEER - another player in the room, a candidate the world host mints off the pose stream:
+ *  `{ isPlayer: true, isPeer: true, id, feet, height, health }`. A player to every gate of GetTargets (the
+ *  team chain, the quest gate, the NoTarget mode) and to the melee fork, measured at its OWN feet and height
+ *  where the local player is measured at playerFeet; its health the host's word (0 once it left). */
+export const isPeerTarget = (c) => c?.isPeer === true;
 
 /**
  * `MobileEnemy.Team` - the per-instance STRUCT COPY's team, which
@@ -146,16 +151,16 @@ export function getTargets(self, candidates, playerFeet, {
     if (self.isQuestFoe && !self.questAttackable && !isPlayer) continue;
     // For now, quest AI can't be targeted (:814-815)
     if (targetAi && c.isQuestFoe && !c.questAttackable) continue;
-    const tFeet = isPlayer ? playerFeet : targetAi.feet;
+    const tFeet = isPlayer ? (c.feet ?? playerFeet) : targetAi.feet;   // WORLD3: a peer at its own feet
     if (!tFeet) continue;
+    const tHeight = isPlayer ? (c.height ?? playerHeight) : targetAi.height;   // WORLD3: and its own capsule
     // REVIEW 2026-09-05: EnemySenses.cs:818-819 measures transform to
     // transform - each side's feet lifted by its own centre offset.
-    const tOff = isPlayer ? playerHeight / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
+    const tOff = isPlayer ? tHeight / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
     const sOff = ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2;
     const dx = tFeet[0] - ai.feet[0], dy = (tFeet[1] + tOff) - (ai.feet[1] + sOff), dz = tFeet[2] - ai.feet[2];
     const distance = Math.hypot(dx, dy, dz);
-    const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet,
-      isPlayer ? playerHeight : targetAi.height, null, distance);
+    const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet, tHeight, null, distance);
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
@@ -215,6 +220,7 @@ export function getTargets(self, candidates, playerFeet, {
  * `_targetFeet` already falls back to.
  */
 export function targetAimPoint(target, playerFeet, playerHeight = CAPSULE_HEIGHT) {
+  if (isPeerTarget(target)) return target.feet ? [target.feet[0], target.feet[1] + (target.height ?? CAPSULE_HEIGHT) / 2, target.feet[2]] : null;   // WORLD3: a peer's transform, its own capsule's half
   if (target == null || isPlayerTarget(target)) {
     return playerFeet ? [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]] : null;
   }
@@ -318,7 +324,7 @@ export function arrowAimDirection(casterTransform, aimPoint, { targetIsPlayer = 
  *  .CurrentHealth`): the player's rides the context; without it the
  *  player is presumed standing. */
 const targetHealth = (c, playerEntity) =>
-  (isPlayerTarget(c) ? (playerEntity?.health ?? 1) : (c.entity?.health ?? 0));
+  (isPlayerTarget(c) ? (c.health ?? playerEntity?.health ?? 1) : (c.entity?.health ?? 0));   // WORLD3: a peer's is its own
 
 /**
  * The classic target machine - EnemySenses.Update:312-414's
@@ -381,6 +387,12 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   let playerInSight = false;
   if (!ai.wouldBeSpawned && playerFeet) {
     playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet, playerHeight);
+    // WORLD3: a PEER in sight is a player in sight - the area DFU draws around the one player is drawn around
+    // every player in the room, so a foe far from the host and beside a joiner still takes its targets
+    if (!playerInSight) for (const c of candidates ?? []) {
+      if (!isPeerTarget(c) || !c.feet) continue;
+      if (canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, c.feet, c.height ?? playerHeight)) { playerInSight = true; break; }
+    }
   }
   if (ai.classicTargetUpdateTimer > SENSES_INTERVAL_UNITS) {
     ai.classicTargetUpdateTimer = 0;
@@ -408,7 +420,7 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
     }
   }
   if (ai.target == null) return null;
-  return isPlayerTarget(ai.target) ? playerFeet : ai.target.ai.feet;
+  return isPlayerTarget(ai.target) ? (ai.target.feet ?? playerFeet) : ai.target.ai.feet;   // WORLD3: a peer's own feet
 }
 
 /**

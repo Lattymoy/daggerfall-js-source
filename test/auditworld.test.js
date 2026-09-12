@@ -209,8 +209,8 @@ test('AUDIT WORLD C: the peer\'s body - the doors in ORDER, sheathed before the 
 test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and applies one once (B1/B7), carries and reads the species (B4), keeps the drops the save\'s alone (B3), says its death and its rig (B6/C1) and its one "Game loaded." (B10); the mode machine names the live rig and the death screen (C1/B6); the world host publishes into a world room alone as a farewell when forced and says a refusal once (B5/B8/B9) and gates the dead on the mode\'s slot (B6); the arm casts sheathed (C2); the body re-latches on the linger (C7); the record\'s false sentences are gone (D2/D6/D7/D8)', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /const _sharedStamp = Math\.random\(\)\.toString\(36\)\.slice\(2\);/, 'B1: the stamp'); assert.match(d, /let _sharedApplied = false;/, 'B7: the once');
-  assert.match(d, /mobileType: f\.mobileType,\s*maxHealth: f\.entity\.maxHealth,/, 'B4: the record carries the species');
-  assert.match(d, /if \(!f\) return;\s*if \(sf\.mobileType != null && sf\.mobileType !== f\.mobileType\) return;/, 'B4: another species at the index is left alone');
+  assert.match(d, /mobileType: f\.mobileType,\s*gender: f\.gender,[^\n]*\n\s*maxHealth: f\.entity\.maxHealth,/, 'B4: the record carries the species (WORLD3: and the gender)');
+  assert.match(d, /if \(!f\) return;\s*if \(sf\.mobileType != null && sf\.mobileType !== f\.mobileType\) \{[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!truncate\) retypeFoe\(i, sf\.mobileType, sf\.gender \?\? null\)[^\n]*\n\s*return;/, 'B4: another species at the index is never patched blind (WORLD3: the room\'s memory rebuilds it as its own; a save\'s is left alone)');
   assert.match(d, /if \(truncate\) droppedLoot\.restorePiles\(w\.droppedLoot\);/, 'B3: the clearing restore is the save\'s alone');
   assert.match(d, /deathUp: \(\) => activeOverlay instanceof DeathScreen,/, 'B6: the dungeon says its death');
   assert.match(d, /restoreSaved\(extras, setPlayerPos, \{ session = true, announce = session \} = \{\}\) \{/, 'B10'); assert.match(d, /if \(announce\) hudText\.add\('Game loaded\.'\);/, 'B10: once');
@@ -223,7 +223,7 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   assert.match(w, /online\.status !== 'open' \|\| !isWorldRoom\(online\.room\)\) return false;/, 'B8: a world room alone');
   assert.match(w, /if \(!shared\) return false;\s*_worldPublishedAt = now;\s*const ok = online\.sendWorld\(shared, \{ final: force \}\);\s*if \(!ok\) console\.warn\(/, 'B5/B9: forced is the farewell; the clock stamped before the send');
   const o = rd('src/net/online.js');
-  assert.match(o, /reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0 \};/, 'D12'); assert.doesNotMatch(o, /nothing is shared but presence/, 'D2: the module\'s head');
+  assert.match(o, /reconnects: 0, chats: 0, worlds: 0, foes: 0, hits: 0, acts: 0 \};/, 'D12 (WORLD3: and the acts)'); assert.doesNotMatch(o, /nothing is shared but presence/, 'D2: the module\'s head');
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /if \(upper !== UPPER_BODY\.WeaponEquipped && upper !== UPPER_BODY\.Casting && !\(upper === UPPER_BODY\.None && sheathed\)\) return false;/, 'C2: the sheathed arm casts');
   assert.match(fp, /case UPPER_BODY\.Casting:[\s\S]*?upper = sheathed \? UPPER_BODY\.None : UPPER_BODY\.WeaponEquipped;/, 'C2: and comes back to None');

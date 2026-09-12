@@ -2614,7 +2614,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2091 mounts the same one, gated on
+  // and dungeonContext.js:2101 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:4520
@@ -4134,7 +4134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:4920), so exterior mode and a
+    // composer, dungeonContext.js:5037), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -5425,7 +5425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7111-7123 -
+  // worldModes answers it in BOTH modes (worldModes.js:7112-7124 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -6637,6 +6637,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onHost = (id, mine) => { if (mine) { _worldPublishedAt = -Infinity; _foesFullAt = -Infinity; } else if (id) _foesInAt = performance.now(); modes?.setDungeonAuthority?.(dungeonAuthority()); };   // WORLD2: the seat decides who steps the foes; a new host streams every foe at once; another's word is its first heartbeat
     online.onFoes = (id, data) => { _foesInAt = performance.now(); modes?.applyDungeonFoes?.(id, data); };   // AUDIT WORLD2 C5: the stream is the seat's heartbeat; A1: the host's id rides in
     online.onHit = (id, data) => { modes?.applyDungeonHit?.(id, data); };
+    online.onAct = (id, data) => { modes?.applyDungeonActions?.(id, data); };   // WORLD3: another's door, lever or platform
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture } });
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
@@ -6764,6 +6765,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onFoeHit: (hit) => online?.sendHit(hit) ?? false,   // WORLD2: a blow on a puppet goes to the host
+    // WORLD3: a door moved goes to the room (the session refuses it outside a world room); the peers in my room at
+    // their scene feet, for the foes to see and a puppet's shaft to fly at; whose blow a puppet's is
+    onActions: (data) => online?.sendAct(data) ?? false,
+    peers: () => {
+      if (!online || !online.room || online.status !== 'open') return null;
+      const now = performance.now(), out = [];
+      for (const p of online.peers.values()) if (online.visible(p, now)) out.push({ id: p.id, feet: onlineToScene(p.shown), height: peerBodies?.heightOf(p.id) || undefined });
+      return out;
+    },
+    selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick

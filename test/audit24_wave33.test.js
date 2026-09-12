@@ -66,12 +66,12 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
   // MT-iv: gated on a live TARGET, as EnemyAttack.MeleeDamage is
   // (:136-137 returns at `senses.Target == null`). The consume-and-
   // clear the pin guards is unchanged.
-  assert.ok(d.includes('if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }'),
+  assert.ok(d.includes('if ((_tgt || f._pupMine) && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf, { vsPlayer: !!f._pupMine }); }'),   // WORLD3: or a puppet's blow at ME
     'the dungeon consumes and clears');
   // ROAD-H tail (2026-09-07): the archer arm is gated on the live
   // TARGET too (BowDamage returns at `senses.Target == null`, :136-137),
   // the shape the exterior pool has carried since MT-ii.
-  assert.match(d, /if \(_tgt && !_fParalyzed && f\.mobile\.shootArrow\) \{[^\n]*\n\s+f\.mobile\.shootArrow = false;/,
+  assert.match(d, /if \(\(_tgt \|\| f\._pupTarget != null\) && !_fParalyzed && f\.mobile\.shootArrow\) \{[^\n]*\n\s+f\.mobile\.shootArrow = false;/,   // WORLD3: or a puppet's streamed target
     'and so does its archer arm');
 
   const xf = rd('src/scenes/exteriorFoes.js');
@@ -94,7 +94,7 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
     // WORLD2: a PUPPET drops both latches unconsumed (a puppet lands no blow of its own; the first live frame after a
     // handover fires none from its last puppet frame) - two marked lines, two latches each, in the dungeon alone
     const drops = (src.match(/^[^\n]*= false;[^\n]*WORLD2 dropped unconsumed[^\n]*$/gm) ?? []).reduce((n, line) => n + (line.match(/= false/g) ?? []).length, 0);
-    assert.equal(drops, name === 'dungeonContext.js' ? 4 : 0, `${name}: the puppet's drops, marked, and nowhere else`);
+    assert.equal(drops, name === 'dungeonContext.js' ? 4 : 0, `${name}: the puppet's drops, marked, and nowhere else (WORLD3: a puppet's own frame drops them unless the blow is at ME or a shaft flies at anyone - the arm consumes those)`);
     assert.equal(reads, clears - drops, `${name}: every latch read has a clear`);
   }
 

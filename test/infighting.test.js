@@ -100,7 +100,7 @@ test('IF1 (7): the DUNGEON host arms the machine and acts on a foe target', () =
   const dc = read('src/scenes/dungeonContext.js');
   // the candidate list is this host's live pool, filtered as DFU's
   // GetActiveEnemyBehaviours yields only active ones
-  assert.match(dc, /candidates: foeDeps \? \(\) => foes\.filter\(\(f\) => !f\.dead && f\.ai\) : null/);
+  assert.match(dc, /candidates: foeDeps \? \(\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(_authority \? peerCandidates\(\) : \[\]\)\] : null/);
   // ...and it survives the senses context rather than being dropped
   assert.match(read('src/scenes/shared.js'), /\n    candidates,\n/);
   // the per-foe targeting closure the motor arms itself from
@@ -108,7 +108,7 @@ test('IF1 (7): the DUNGEON host arms the machine and acts on a foe target', () =
   assert.match(read('src/characters/enemyMotor.js'), /this\._armedTargeting = !!targeting;/);
   // and all three action arms fork on a non-player target
   assert.match(dc, /function resolveFoeMeleeVsFoe\(f\)/, 'melee');
-  assert.match(dc, /if \(resolveFoeMeleeVsFoe\(f\)\) return;/, 'melee, from the one home');
+  assert.match(dc, /if \(!vsPlayer && resolveFoeMeleeVsFoe\(f\)\) return;/, 'melee, from the one home');
   assert.match(dc, /dealDamage: \(tt, d\) => tt\.hurtFromFoe\?\.\(d, m\.dir\)/, 'missiles');
   assert.match(dc, /f\.ai\.target\?\.entity \?\? playerEntity/, 'casting');
 });

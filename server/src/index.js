@@ -73,7 +73,15 @@
 // host's foe ({t:'hit', data}, on the pose bucket) from anyone but the
 // host goes to the host's socket alone, under the room's hit budget
 // (_roomHits, HIT_ROOM_HZ_MAX - A6). The relay reads neither.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+//
+// WORLD3 (2026-09-12): THE LIVE DOORS. A change to the room's doors,
+// levers and movers ({t:'act', data}, on its own bucket - _meterActs,
+// ACT_HZ_MAX - so a door never starves a pose) from anyone hello'd in a
+// world room goes to everyone hello'd but its author, under the room's
+// own budget (_roomActs, ACT_ROOM_HZ_MAX); over it the frame is dropped
+// and nobody struck. Not the host's alone: a door is whoever
+// touched it. The relay reads none of it.
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -101,6 +109,7 @@ export class Room {
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
     this._roomHits = null;   // AUDIT WORLD2 A6: the room's hit budget onto its host's one socket
+    this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -196,6 +205,15 @@ export class Room {
     const next = { ...a, ...patch, bucket: gate.bucket, drops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
+    return next;
+  }
+  /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
+  _meterActs(ws, a, now) {
+    const gate = actGate(a.abucket, now);
+    const adrops = gate.pass ? 0 : (a.adrops ?? 0) + 1;
+    const next = { ...a, abucket: gate.bucket, adrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (adrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many acts'); return null; }
     return next;
   }
   /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
@@ -342,6 +360,19 @@ export class Room {
       if (!funnel.pass) return;
       const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id === host) { this._send(other, out); break; }
+      return;
+    }
+    if (m.t === 'act') {
+      // WORLD3: a door, a lever or a platform moved - from anyone hello'd in a world room, on the actions' own
+      // bucket, to everyone hello'd but its author, under the room's own budget (over it dropped, nobody struck)
+      const now = Date.now();
+      a = this._meterActs(ws, a, now); if (!a) return;
+      if (!isWorldRoom(a.key)) return;
+      const budget = tokenGate(this._roomActs, now, ACT_ROOM_HZ_MAX);
+      this._roomActs = budget.bucket;
+      if (!budget.pass) return;
+      const out = JSON.stringify({ t: 'act', id: a.id, data: m.data });
+      for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {

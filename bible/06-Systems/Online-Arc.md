@@ -983,8 +983,8 @@ and everyone else's are puppets.
   forwards; a dungeon built while another hosts starts under the seat
   as it stands; the hit routed into the build.
 
-What it does not do: the host's foes TARGET THE HOST ALONE - a layout
-foe does not see a non-host, so a non-host beside the host is not
+What it did not do, until WORLD3 (below) took the first four: the
+host's foes TARGETED THE HOST ALONE - a layout foe did not see a non-host, so a non-host beside the host is not
 attacked and one alone with a foe strikes it unopposed (the host's
 senses see peers in slice 3); a blow carries no direction (a peer's
 blow never shoves) and no position (the aggro turns toward the host);
@@ -1168,6 +1168,121 @@ locally before the welcome; the host's pause freezing the room for
 everyone; a per-host stream epoch on the wire; the three
 object-shaped fake sockets to fold into `test/fakeSocket.mjs`.
 
+## WORLD3 (2026-09-12): the live world as events
+
+**Mac: "Begin."** Slice 3 of the persistent shared world: THE LIVE
+WORLD AS EVENTS. A dungeon's doors, levers and platforms are
+everyone's; the host's foes see every player; a puppet resolves the
+host's foe's blows against its own player; the roster is the room's;
+the hit carries the striker.
+
+- **The wire** (`src/net/wire.js`, `server/src/index.js`):
+  `{t:'act', data}` - a change to the room's doors, levers and movers,
+  from ANYONE hello'd in a world room (a door is whoever touched it,
+  not the host's alone), under the small cap, on the actions' own
+  bucket at the relay (`ACT_HZ_MAX`, `_meterActs` - a door never
+  starves a pose), fanned to everyone hello'd but its author as
+  `{t:'act', id, data}` under the room's budget (`ACT_ROOM_HZ_MAX`,
+  `_roomActs` - over it dropped, nobody struck). A town relays none.
+  The relay reads none of it.
+- **The session** (`src/net/online.js`): `sendAct` (anyone's, in a
+  world room, `ACT_HZ_MAX` at home, refused to the caller past it),
+  `onAct` (another's, in a world room, never my own back).
+- **The action graph** (`src/world/actionSystem.js`): THE CHANGE SEAM.
+  The five entries a player or a foe reaches the graph by (`activate`,
+  `attemptBash`, `toggleDoor`, `receive`, `attemptLockpicking`) ride
+  `_changed`: the OUTERMOST call snapshots the save record
+  (`collectSaveData` - what a save carries is what a room shares) and
+  hands `onChanged` the records that differ after; a nested entry (the
+  cascade's receive, a pick's toggle) diffs nothing of its own; a
+  refused entry (mid-play) and the tick emit nothing. `applyRemote`
+  lands another's records through `restoreSaveData` (the state, the
+  tweens, the lock; the settle) and is HEARD as the scene hears its
+  own - a door beginning to open (`onDoorState`), a mover or a door's
+  Move beginning to play (`onActionSound`, its own index); never back
+  through the seam. The per-player relays (a teleport, a text, a
+  trap's hurt) stay each player's own, as DFU runs them on the one who
+  triggered.
+- **The dungeon host** (`src/scenes/dungeonContext.js`):
+  `actions.onChanged` -> `opts.onActions({k, a})` keyed by this
+  dungeon; `applyActions` this dungeon's alone. THE PEERS AS
+  CANDIDATES: `peerCandidates` mints one stable identity per peer off
+  the world host's `peers()` (feet in the scene, the drawn pose; the
+  body's height), read once a frame, a peer gone dead to the machine
+  (`health` 0) and dropped; the candidate list carries them while I
+  step the foes. THE RECORD carries `g` (the target: `'.'` the host,
+  an id a peer, `''` none), `c` and `s` (the cast count and its spell
+  - minted where the caster decides) and `x` (the gender). A PUPPET
+  reads whose blow it is (`_pupTarget`, `_pupMine`) and, when the
+  streamed target is ME, keeps the mobile's damage frame for
+  `resolveFoeMelee(f, _pf, {vsPlayer})` (my own reach, my own stats -
+  the host decided the swing, I decide the hit), keeps its shoot
+  marker for a real shaft at me, and casts the streamed spell at me
+  (`castEnemySpell` at no cost - the host paid); at another the shaft
+  is loosed at the peer's body and pays nothing (`aimFoe` a peer: no
+  arm at impact), the cast is its one-shot alone. On the host a foe
+  with a PEER target swings its voice alone (the peer resolves), looses
+  its shaft and its spell missile TOWARD the peer (`targetAimPoint`'s
+  peer arm; `castEnemySpell`'s feet the peer's) and pays nothing on
+  the host on the way. THE ROSTER: `retypeFoe(i, type, gender)`
+  rebuilds a layout foe in place through the one build chain
+  (`buildFoeAt(..., {at})`: the old batch freed, the old record dead
+  to everything holding it, the new at its index; the source record
+  kept on every record as `src`) - the stream's mismatch (B5) and the
+  memory's (B4, `patchFoe` landing on the rebuilt foe) both take it;
+  the memory carries `gender`. THE HIT carries `p` (the striker's
+  feet), `d` (the blow's direction - melee and arrow; a spell knocks
+  nothing) and `ar` (an arrow's shaft): `applyHit` reads them, names
+  the striker (`peerId`) so `handleAttackFromPlayer` turns the foe on
+  the PEER's candidate at the striker's feet, and lands the shaft
+  where BowDamage puts it.
+- **The target machine** (`src/characters/enemyTargets.js`,
+  `src/characters/enemyMotor.js`): a peer candidate
+  (`{isPlayer, isPeer, id, feet, height, health}`) is a player to
+  every gate of GetTargets (the team chain, the quest gate, the
+  NoTarget mode - `isPlayerTarget` true; `isPeerTarget` names it),
+  measured at its OWN feet and capsule where the local player is
+  measured at `playerFeet`; a peer in sight is a player in sight (the
+  area DFU draws around the one player is drawn around every player in
+  the room); the machine hands the peer's own feet back; `targetHealth`
+  reads a peer's own; the motor aims its senses at the peer's feet and
+  reads its capsule.
+- **The mode machine and the world host** (`src/scenes/worldModes.js`,
+  `src/scenes/world.js`): `onActions`, `peers`, `selfId` into the
+  build; `applyDungeonActions`; `online.onAct` routed; the peers at
+  their scene feet off the session's drawn poses.
+
+What it does not do: a missed arrow's shaft stays home (the divert runs
+on a landed blow); the host's pause still freezes the room for everyone
+(the stream's full frames are its heartbeat); a foe's spell's other
+effects (a paralysis, a drain) land on the puppet locally and the stream
+overwrites what it carries; the bash's sound and the pick's line are the
+author's alone; loot is still slice 4; the shared clock and weather and
+the quest clocks are slice 5; no player-versus-player.
+
+Pinned in `test/world3.test.js` (5): the wire and the Room over the one
+fake (the act from a hello'd socket under the small cap, fanned to
+everyone hello'd but its author, on its own bucket, under the room's
+budget, a town relaying none); the session (sendAct anyone's in a world
+room under its gate and cap, onAct never mine, never in a town); the
+change seam and applyRemote executed on bare graphs (one set per
+outermost entry with the cascade inside it, nothing on a tick or a
+refused entry, the set landed and heard on another graph, never
+re-emitted, a lock riding); the target machine with a peer executed
+(the peer a player to every gate, at its own feet and capsule, a peer
+in sight arming the machine, its own feet handed back, a gone peer
+dropped, the aim point, the motor's senses); the hosts by source. Not
+seen with two real players from here - Mac's browsers are the gate: a
+door opened by the joiner swinging on the host's screen and a lever's
+platform rising on both; the host's foe turning on the joiner and its
+blows landing on the joiner's health; the joiner's arrow shoving the
+foe the way it flew.
+
+Relay redeployed (a3b12d0d); live, in a map-id room: a joiner's act
+reaching the host and the other joiner and never its author, the host's
+reaching both joiners, a town relaying none with the author's socket
+kept.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -1181,16 +1296,17 @@ object-shaped fake sockets to fold into `test/fakeSocket.mjs`.
   since WORLD2 the layout's foes are ONE simulation per room - the
   host's, streamed; a foe killed between two publishes by a host that
   vanished ALONE in the room comes back for the next visitor (a joiner
-  who was there mirrored the death and publishes it). The host's foes
-  target the host alone until slice 3; doors, levers and platforms
-  are still each client's own. Towns, cells and buildings keep
-  nothing yet; no shared clock or weather (slice 5); the quest clocks
-  still run online; no player-versus-player. A memory is forgotten
+  who was there mirrored the death and publishes it). Since WORLD3 the
+  host's foes hunt every player in the room and its doors, levers and
+  platforms move for everyone (an act from whoever touched them).
+  Towns, cells and buildings keep nothing yet; no shared clock or
+  weather (slice 5); the quest clocks still run online; no
+  player-versus-player. A memory is forgotten
   `WORLD_TTL_MS` (thirty days) after its room last emptied (AUDIT
   WORLD A3 - a bound on parked storage, Mac's to change), and two
-  players' random flats differ by level, so a record patches - and a
-  puppet mirrors - only its own index's species until the layout is
-  seeded (AUDIT WORLD B4, slice 3).
+  players' random flats differ by level, so a foe whose species the
+  room's memory or the host's stream disagrees with is REBUILT as the
+  room's at its index (WORLD3 - the roster is the room's).
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -1272,6 +1388,10 @@ resume executed - strengthened by AUDIT WORLD2.
 budgets, the type's bucket, the refusals, the strikes; the session's
 seat cleared on a dead socket and a leave, the hits' gate at home; the
 record.
+`test/world3.test.js` (5): the wire's act frame and the Room's fan
+over the one fake, the session's sendAct/onAct, the action graph's
+change seam and remote apply executed, the target machine with a peer
+executed, the hosts by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

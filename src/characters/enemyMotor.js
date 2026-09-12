@@ -1177,7 +1177,7 @@ export class EnemyAI {
     // AUDIT 62 F23: the PLAYER arm is the live capsule, not 1.8 - DFU
     // reads the controller component itself, and a crouched player's is
     // 0.9 (a mounted one's 2.6).
-    return (t && !t.isPlayer && t.ai?.height) || this._playerHeight;
+    return (t && !t.isPlayer && t.ai?.height) || (t?.isPeer && t.height) || this._playerHeight;   // WORLD3: a peer's own capsule
   }
 
   /** REVIEW 2026-09-05 (PR #57 review): where the TARGET's transform sits
@@ -1195,7 +1195,7 @@ export class EnemyAI {
     // (PlayerHeightChanger.cs:477-478 moves it by heightChange/2 while
     // the capsule bottom stays planted), so a crouched player's sits at
     // feet + 0.45.
-    if (!t || t.isPlayer || !t.ai) return this._playerHeight / 2;
+    if (!t || t.isPlayer || !t.ai) return ((t?.isPeer && t.height) || this._playerHeight) / 2;   // WORLD3: a peer's own capsule
     return t.ai.centreOffset ?? (t.ai.height ?? CAPSULE_HEIGHT) / 2;
   }
 
@@ -1562,7 +1562,7 @@ export class EnemyAI {
     if (targeting) {
       this._targetCandidate = this.target;
       targetFeet = this.target == null ? null
-        : (this.target.isPlayer ? playerFeet : this.target.ai.feet);
+        : (this.target.isPlayer ? (this.target.feet ?? playerFeet) : this.target.ai.feet);   // WORLD3: a peer target at its own feet
     } else this._targetCandidate = null;
     // MT-iii's hostility narrowing, now on THIS step's target machine.
     const foeTarget = this._armedTargeting && this.target != null && !this.target.isPlayer;

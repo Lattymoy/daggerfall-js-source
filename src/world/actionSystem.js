@@ -350,6 +350,55 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // owns the tween. Fires on every advance and on a restore settle,
     // the same shape onDoorState has for the audio seam.
     this.onFlatMoved = null;
+    // WORLD3 (the live doors): onChanged(records) - every action record
+    // whose state, tween or lock an OUTERMOST entry changed (a click, a
+    // bash, a pick, a trigger, a foe's door - activate / attemptBash /
+    // toggleDoor / receive / attemptLockpicking, the chain's cascade
+    // inside them), diffed on the save record (collectSaveData's law:
+    // what a save carries is what a room shares). The scene sends them;
+    // applyRemote lands another's on this graph.
+    this.onChanged = null;
+    this._depth = 0;
+  }
+
+  /** WORLD3: run one entry under the change seam - the outermost call
+   *  snapshots the graph before and hands onChanged the records that
+   *  differ after; a nested call (the cascade, a pick's toggle) rides
+   *  the outer one. Nothing is diffed without a listener. */
+  _changed(fn) {
+    if (!this.onChanged || this._depth > 0) { this._depth++; try { return fn(); } finally { this._depth--; } }
+    const before = new Map(this.collectSaveData().map((r) => [r.key, JSON.stringify(r)]));
+    this._depth++;
+    try { return fn(); } finally {
+      this._depth--;
+      const changed = this.collectSaveData().filter((r) => before.get(r.key) !== JSON.stringify(r));
+      if (changed.length) this.onChanged(changed);
+    }
+  }
+
+  /** WORLD3: another player's change to this graph - the records as
+   *  restoreSaveData takes them (state, tween, lock; the settle), the
+   *  transitions HEARD as this scene hears its own: a door beginning
+   *  to open (onDoorState true - the close's sound is the tick's, at the
+   *  swing's end, as ever), a mover or a door's Move beginning to play
+   *  (onActionSound, its record's own index). Never through the change
+   *  seam - what came in is not sent back. */
+  applyRemote(records) {
+    if (!Array.isArray(records)) return 0;
+    let n = 0;
+    for (const rec of records) {
+      const o = rec && this.objects.get(rec.key);
+      if (!o) continue;
+      const playing = (st) => st === 'forward' || st === 'reverse';
+      const opening = o.kind === 'door' && o.state !== 'forward' && rec.state === 'forward';
+      const started = o.kind !== 'door' ? (playing(rec.state) && rec.state !== o.state)
+        : (rec.moveState != null && playing(rec.moveState) && rec.moveState !== o.moveState);
+      this.restoreSaveData([rec]);
+      if (opening) this.onDoorState?.(o, true);
+      if (started && o.index > 0) this.onActionSound?.(o);
+      n++;
+    }
+    return n;
   }
 
   _register(ns, positionKey, o) {
@@ -1300,4 +1349,14 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // MakeTrigger(false)); a moving closed door drags its bucket along.
     if (o.state === 'start') this._settleDoorBucket(o);
   }
+}
+
+// WORLD3: the five ENTRIES a player or a foe reaches this graph by ride
+// the change seam (_changed) - wrapped here, on the prototype, so each
+// keeps its own signature and its own body above; a nested entry (the
+// cascade's receive, a pick's toggleDoor, activate's three) rides the
+// outermost one and diffs nothing of its own.
+for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking']) {
+  const body = ActionSystem.prototype[name];
+  ActionSystem.prototype[name] = function (...args) { return this._changed(() => body.apply(this, args)); };
 }

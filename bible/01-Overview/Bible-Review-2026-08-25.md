@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2275`). This is the one page whose live-queue
+(`dungeonContext.js:2285`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -121,7 +121,7 @@ prose; the standing lists were maintained inconsistently. The worst
 per arc:
 - *Systems-Arc*: `:1445-1454` (S27) "Open and Lock are still not
   wired" with a pin "that fails the moment either context calls
-  triggerOpen" - both are called from `world/actionSystem.js:821-822`
+  triggerOpen" - both are called from `world/actionSystem.js:870-871`
   (X1) and the pin never fired because it greps only
   dungeonContext/interiorContext, not the file the wiring landed in
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
@@ -219,7 +219,7 @@ opposite of their own code and deserve a slice's attention:
   frame" - no host reads it (the Ledger row `:385` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
-  they are (X1, `actionSystem.js:821-822`).
+  they are (X1, `actionSystem.js:870-871`).
 - `src/systems/regionPower.js` "alliance mutators... which the port
   does not have" - `factionRelations.js` ships them (S44).
 - `src/combat/fpsWeapon.js:22` weaponOffsetHeight 0 - now a real gap
