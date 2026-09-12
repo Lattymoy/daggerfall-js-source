@@ -188,6 +188,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 /* ── CARDS + ACTIONS ───────────────────────────────────────── */
 .card { border: 1px solid var(--iron); padding: 20px; margin-bottom: 16px; background: #12161b; }
+.card.slot { padding: 14px 18px; margin-bottom: 10px; }   /* SLOTS1: one save, one card, in a list */
+.card.slot h3 { font-size: 19px; }
+.card.slot .stats { margin-bottom: 12px; }
+.card.slot .meta { margin-bottom: 10px; }
 .card h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 4px; }
 .card .meta { color: var(--dim); font-size: 13px; margin: 0 0 16px; }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0 0 18px; }

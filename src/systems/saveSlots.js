@@ -211,17 +211,29 @@ export function restorableSlot(key, storage = store()) {
   return snap && snap.v === SAVE_VERSION ? snap : null;
 }
 
+/** SLOTS1 (Mac, 2026-09-12: "multiple save slots and then the ability
+ *  to choose which save to use in online"): EVERY slot this build can
+ *  restore, most recent first - { key, info, snap } each. The front
+ *  doors' lists (Load, Online) and the most-recent question below are
+ *  one walk, so a stale-version save never hides a good one and the
+ *  list never disagrees with the card. */
+export function restorableSaves(storage = store()) {
+  const out = [];
+  const entries = [...enumerateSaves(storage).info.entries()]
+    .sort((a, b) => (b[1].dateAndTime?.realTime ?? 0) - (a[1].dateAndTime?.realTime ?? 0));
+  for (const [key, info] of entries) {
+    const snap = restorableSlot(key, storage);
+    if (snap) out.push({ key, info, snap });
+  }
+  return out;
+}
+
 /** The front doors' question: the most recent slot this build can
  *  restore, or null. Walks recency order so one stale-version save
  *  does not hide an older good one. */
 export function mostRecentRestorable(storage = store()) {
-  const entries = [...enumerateSaves(storage).info.entries()]
-    .sort((a, b) => (b[1].dateAndTime?.realTime ?? 0) - (a[1].dateAndTime?.realTime ?? 0));
-  for (const [key] of entries) {
-    const snap = restorableSlot(key, storage);
-    if (snap) return { key, snap };
-  }
-  return null;
+  const first = restorableSaves(storage)[0];
+  return first ? { key: first.key, snap: first.snap } : null;
 }
 
 /** GetSaveScreenshot: the stored data URL or null. */

@@ -107,9 +107,20 @@ export function openPauseFlow(show, hooks = {}) {
  * outlives the object reporting it, so the order is: unmount, then
  * fire.
  */
-function enhancedPauseOverlay(show, hooks) {
+function enhancedPauseOverlay(show, base) {
   let fired = false;
   let view = null;
+  let seams = null;   // the enhanced menu module, once it lands: its takePickedSaveKey / takePickedSaveName
+  // SLOTS1: the enhanced Save pane names a slot and the Load pane picks
+  // one; the verbs below stay the two the pin reads, and THESE arms
+  // route a picked name onto the host's saveAs and a picked key onto
+  // its loadKey - the hosts' own slot seams (SAV4) - falling back to
+  // the quick verbs where a host hands none.
+  const hooks = {
+    ...base,
+    quickSave: () => { const n = seams?.takePickedSaveName?.() ?? null; return n && typeof base.saveAs === 'function' ? base.saveAs(n) : base.quickSave?.(); },
+    quickLoad: () => { const k = seams?.takePickedSaveKey?.() ?? null; return k != null && typeof base.loadKey === 'function' ? base.loadKey(k) : base.quickLoad?.(); },
+  };
 
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
@@ -176,7 +187,9 @@ function enhancedPauseOverlay(show, hooks) {
   // menu, so it says so loudly and takes the empty div with it rather
   // than leaving the host holding an overlay that draws nothing and
   // never reports done - which would be a frozen game.
-  import('./enhancedMenu.js').then(({ mountEnhancedMenu }) => {
+  import('./enhancedMenu.js').then((mod) => {
+    const { mountEnhancedMenu } = mod;
+    seams = mod;
     if (fired) { host.remove(); return; }   // disposed before the module landed
     view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
   }).catch((e) => {

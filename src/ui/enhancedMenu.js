@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:87-153, FD1: the
+// This is ONE screen, under BOTH skins (main.js:87-159, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -103,7 +103,7 @@ import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
-import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
+import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
@@ -227,6 +227,60 @@ const el = (t, cls, txt) => {
 // recent one (the boot Load arm loads exactly that), and the full
 // slot list is the classic save window's - an enhanced-skin slot
 // list is the PX lane's own card to design.
+// SLOTS1: THE PICK RIDES A SEAM, not the verb. Every onAction call
+// site names a game verb the census pins (load, online, save); the
+// slot a pane pressed is taken once, by the door that acts on it -
+// main.js's enhanced branch (the key -> ?loadkey), the pause door
+// (the key -> the host's loadKey, the name -> its saveAs).
+let _pickedSaveKey = null;
+let _pickedSaveName = null;
+let _saveNameDraft = '';
+export function takePickedSaveKey() { const k = _pickedSaveKey; _pickedSaveKey = null; return k; }
+export function takePickedSaveName() { const n = _pickedSaveName; _pickedSaveName = null; return n; }
+
+/** One slot as the cards draw it: the character's line and numbers, and the slot's own name. */
+function saveOf(entry) {
+  const snap = entry.snap;
+  const date = Number.isFinite(snap.classicMinutes) ? dateFromClassicMinutes(snap.classicMinutes) : null;
+  return {
+    key: entry.key,
+    saveName: entry.info?.saveName ?? QUICK_SAVE_NAME,
+    characterName: entry.info?.characterName ?? snap.name ?? '',
+    name: snap.name || 'Unnamed',
+    career: snap.career?.name ?? null,
+    level: snap.level ?? null,
+    health: snap.health, maxHealth: snap.maxHealth,
+    gold: snap.goldPieces ?? null,
+    when: date ? dateString(date) : null,
+    hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
+    chargenDone: snap.chargenDone !== false,
+  };
+}
+
+/** SLOTS1: every restorable slot, most recent first (systems/saveSlots.js restorableSaves). */
+function savedGames() {
+  try { return restorableSaves().map(saveOf); } catch { return []; }
+}
+
+/** One slot's card: the slot's name as the tag, the character's line and numbers, the press and (optionally) its delete. */
+function slotCard(save, { primaryLabel, onPrimary, disabled = false, deletable = false }) {
+  const c = el('div', 'card slot');
+  c.append(el('span', 'tag grey', save.saveName));
+  c.append(el('h3', null, save.name));
+  c.append(el('p', 'meta', saveLine(save)));
+  c.append(stats(saveStats(save)));
+  const list = [{ label: primaryLabel, primary: true, disabled, onClick: disabled ? null : onPrimary }];
+  // the destructive action asks first, and deletes THIS slot alone
+  if (deletable) list.push({ label: 'Delete', onClick: () => ask(
+    'Delete this save',
+    `Deleting ${save.name}'s "${save.saveName}" cannot be undone.`,
+    'Delete',
+    () => { try { deleteSave(save.key); } catch { /* storage disabled */ } render(); },
+  ) });
+  c.append(acts(list));
+  return c;
+}
+
 function savedGame() {
   let entry = null;
   try { entry = mostRecentRestorable(); } catch { entry = null; }
@@ -427,7 +481,7 @@ function paneTest(body) {
 // head and the relay to join ride the prefs shelf. The action boots
 // the world host with ?online beside ?load (main.js).
 function paneOnline(body) {
-  const save = savedGame();
+  const saves = savedGames();
   const c = el('div', 'card');
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
@@ -441,47 +495,46 @@ function paneOnline(body) {
     wrap.append(input);
     return wrap;
   };
-  c.append(field('Name over your head', 'onlineName', save?.name ?? 'Your name', 24));   // AUDIT ONLINE E14: the relay keeps 24 printable ASCII (NAME_MAX)
+  c.append(field('Name over your head', 'onlineName', saves[0]?.name ?? 'Your name', 24));   // AUDIT ONLINE E14: the relay keeps 24 printable ASCII (NAME_MAX)
   c.append(el('p', 'meta', 'Up to 24 plain letters and digits; anything else is dropped, and an empty name shows as Traveller.'));
   c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
-  c.append(el('p', 'meta', save ? `Playing as ${save.name}, from your most recent save.` : 'Save a game first: Online brings a saved character in.'));
-  c.append(acts([{ label: 'Play online', primary: true, disabled: !save, onClick: save ? () => onAction('online') : null }]));
+  // SLOTS1 (Mac: "the ability to choose which save to use in online"):
+  // every restorable slot is a card, and the one pressed is the
+  // character brought in - its key rides the boot (takePickedSaveKey).
+  c.append(el('p', 'meta', saves.length ? 'Pick the character to bring in:' : 'Save a game first: Online brings a saved character in.'));
   body.append(c);
+  for (const save of saves) {
+    body.append(slotCard(save, { primaryLabel: 'Play online', onPrimary: () => { _pickedSaveKey = save.key; onAction('online'); } }));
+  }
 }
 
 function paneLoad(body) {
-  const save = savedGame();
-  if (save) {
-    const c = el('div', 'card');
-    c.append(el('span', 'tag', 'Quicksave'));
-    c.append(el('h3', null, save.name));
-    c.append(el('p', 'meta', [save.when, save.hour].filter(Boolean).join(' · ')));
-    // U51: in pause mode the LOAD arm is the HOST's, and two of the
-    // four hand no quickLoad at all. No hook, no button - and the line
-    // below says which it is rather than dimming a control with no
-    // explanation attached to it.
-    const canLoad = mode !== 'pause' || typeof hooks.quickLoad === 'function';
-    c.append(acts([
-      // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
-      // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:307-309) and
-      // so does F11, and inventing a prompt on exactly one of the
-      // port's three load doors is a divergence, not a safety net.
-      { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
-      { label: 'Delete', onClick: () => ask(
-        'Delete this game',
-        `Deleting ${save.name}'s most recent save cannot be undone.`,
-        'Delete',
-        () => { try { deleteSave(save.key); } catch { /* storage disabled */ } },
-      ) },
-    ]));
-    body.append(c);
+  // SLOTS1: EVERY restorable slot, most recent first - the classic
+  // save window's list, as cards. The one pressed is the one loaded
+  // (its key rides the boot from the front door, and the host's
+  // loadKey seam from the pause door); Delete removes that slot alone.
+  const saves = savedGames();
+  // U51: in pause mode the LOAD arm is the HOST's, and two of the
+  // four hand no quickLoad at all. No hook, no button - and the line
+  // below says which it is rather than dimming a control with no
+  // explanation attached to it.
+  const canLoad = mode !== 'pause' || typeof hooks.quickLoad === 'function';
+  for (const save of saves) {
+    // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
+    // which is the shape AUDIT F3/F4 made confirm - but classic's
+    // own pause window loads on one press (pauseWindow.js:307-309) and
+    // so does F11, and inventing a prompt on exactly one of the
+    // port's three load doors is a divergence, not a safety net.
+    body.append(slotCard(save, {
+      primaryLabel: 'Load', disabled: !canLoad, deletable: true,
+      onPrimary: () => { _pickedSaveKey = save.key; onAction('load'); },
+    }));
   }
+  if (!saves.length) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));
   if (mode === 'pause' && typeof hooks.quickLoad !== 'function') {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));
   }
-  body.append(empty('More saves', 'This pane shows the most recent save; the full slot list rides the classic save window for now.'));
 }
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
@@ -508,20 +561,41 @@ function paneSave(body) {
       'This part of the game holds no save door. Step back outside and the quicksave returns.'));
     return;
   }
-  // THE CARD IS THE GAME BEING OVERWRITTEN, not a label for the
-  // button. It draws the same name, line and numbers the Continue card
-  // does, because that is precisely what the press replaces - and a
-  // player who can read it has been told, which is the part classic
-  // never does at any size.
-  const save = savedGame();
+  // SLOTS1 (Mac: "multiple save slots"): a save is (character, slot
+  // name) - SaveLoadManager's own identity (systems/saveSlots.js
+  // saveSlot). The name field says which slot; a name the character
+  // already has OVERWRITES it and the card says so, a new name is a
+  // new slot. The pressed name rides the pause door's quickSave
+  // through takePickedSaveName, onto the host's saveAs seam.
+  const me = hooks.playerName?.() ?? savedGame()?.name ?? '';
+  const mine = savedGames().filter((s) => s.characterName === me);
   const c = el('div', 'card');
-  if (save) c.append(el('span', 'tag', 'Overwrites'));
-  c.append(el('h3', null, save ? save.name : 'Quicksave'));
-  c.append(el('p', 'meta', save ? saveLine(save) : 'The first save in this slot.'));
-  if (save) c.append(stats(saveStats(save)));
-  c.append(acts([{ label: 'Save', primary: true, onClick: () => onAction('save') }]));
+  c.append(el('span', 'tag', 'Save as'));
+  c.append(el('h3', null, me || 'Your character'));
+  const wrap = el('label', 'field');
+  wrap.append(el('span', 'fieldlabel', 'Slot name'));
+  const input = el('input');
+  input.type = 'text'; input.maxLength = 32; input.placeholder = QUICK_SAVE_NAME; input.value = _saveNameDraft || QUICK_SAVE_NAME;
+  wrap.append(input);
+  c.append(wrap);
+  // THE LINE SAYS WHAT THE PRESS DOES: the slot it overwrites, drawn
+  // with the shared line and numbers, or that it is new
+  const line = el('p', 'meta', '');
+  const numbers = el('div');
+  const describe = () => {
+    const name = input.value.trim() || QUICK_SAVE_NAME;
+    const save = mine.find((s) => s.saveName.localeCompare(name, undefined, { sensitivity: 'accent' }) === 0) ?? null;
+    line.textContent = save ? `Overwrites "${save.saveName}" - ${saveLine(save)}` : `A new slot, "${name}".`;
+    numbers.replaceChildren(); if (save) numbers.append(stats(saveStats(save)));
+  };
+  input.oninput = () => { _saveNameDraft = input.value; describe(); };
+  describe();
+  c.append(line, numbers);
+  c.append(acts([{ label: 'Save', primary: true, onClick: () => { _pickedSaveName = input.value.trim() || QUICK_SAVE_NAME; onAction('save'); } }]));
   body.append(c);
-  body.append(empty('One slot', 'Every save writes the same quicksave, replacing whatever is above. Named slots are their own slice.'));
+  for (const save of mine) {
+    body.append(slotCard(save, { primaryLabel: 'Overwrite', onPrimary: () => { _pickedSaveName = save.saveName; onAction('save'); } }));
+  }
 }
 
 // ── EXIT (pause only) ────────────────────────────────────────────
@@ -2304,7 +2378,7 @@ export function runEnhancedMenu(doc = document) {
   return new Promise((resolve) => {
     const menu = mountEnhancedMenu(host, {
       onAction: (action) => {
-        // SAV4 shipped the save manager (systems/saveSlots.js:276
+        // SAV4 shipped the save manager (systems/saveSlots.js:288
         // deleteSave), and this file deletes through it at :387 behind
         // an ask() confirm. Nothing routes 'delete' out here - every
         // onAction call site names its own verb and RAIL_ACTS (:162) is

@@ -343,7 +343,8 @@ test('Load and Continue are only drawn when there IS a save', () => {
   assert.ok(cont.indexOf("onAction('continue')") > cont.indexOf('if (!save)'),
     'the Continue button is inside the has-a-save arm');
   const load = src.slice(src.indexOf('function paneLoad'), src.indexOf('// ── SETTINGS'));
-  assert.match(load, /if \(save\) \{/, 'Load draws its slot only when the slot is there');
+  assert.match(load, /for \(const save of saves\) \{/, 'SLOTS1: Load draws every restorable slot, a card each');
+  assert.match(load, /if \(!saves\.length\) body\.append\(empty\(/, '...and says so when there are none');
 });
 
 // ── AUDIT UI (2026-08-27): A THUMB IS NOT A SCREEN WIDTH ──────────

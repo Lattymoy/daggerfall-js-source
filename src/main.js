@@ -131,6 +131,12 @@ async function boot() {
     // new character with no relay at all.
     if (choice === 'online') params.set('online', '1');
     else params.delete('online');
+    // SLOTS1: the Load and Online panes pick a slot; the boot's load arm
+    // reads the key (world.js, the SAV4 arm). The same SET-or-DELETE law.
+    const { takePickedSaveKey } = await import('./ui/enhancedMenu.js');
+    const picked = takePickedSaveKey();
+    if ((choice === 'load' || choice === 'online') && picked != null) params.set('loadkey', String(picked));
+    else params.delete('loadkey');
     // TR3: the Test Room door - the pane answers 'test:<preset>' and
     // the world host seeds the character and the armory off the same
     // testRoom home the pane showed. The param family follows F12's

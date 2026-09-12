@@ -235,7 +235,7 @@ export class PauseOptionsWindow {
     this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
-    // MAC1 J, the classic twin (ui/pauseDoor.js:153-170): the close runs
+    // MAC1 J, the classic twin (ui/pauseDoor.js:164-181): the close runs
     // inside this click/keyup, the activation requestPointerLock needs.
     this.hooks.relock?.();
   }
@@ -252,7 +252,7 @@ export class PauseOptionsWindow {
     if (inRect(R.continue, vx, vy)) {
       this._click();
       this._closeWith();
-      // MAC1 J, the classic twin (ui/pauseDoor.js:153-170): the close runs
+      // MAC1 J, the classic twin (ui/pauseDoor.js:164-181): the close runs
       // inside this click/keyup, the activation requestPointerLock needs.
       // On the RESUME exits, never on the shared `_closeWith`: the SAVE
       // and LOAD arms below travel it to OPEN the slot window, and the
@@ -471,7 +471,7 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // MAC1 J: a COMPLETED save or load drains the whole stack back to
     // the HUD, inside the slot window's own click - so this exit is a
     // resume too, and the enhanced twin relocks on exactly it
-    // (ui/pauseDoor.js:165 fires for 'save' and 'load', not 'exit').
+    // (ui/pauseDoor.js:176 fires for 'save' and 'load', not 'exit').
     popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
     ...extra,
   });
