@@ -39,7 +39,7 @@
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 
 /** EnemyBlood.cs:23. */
 export const BLOOD_ARCHIVE = 380;
@@ -114,7 +114,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
       if (t.recordCount != null && record >= t.recordCount) { retire(entry); return; }
       const frameCount = t.getFrameCount?.(record) ?? 1;
       for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
-      entry.size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      entry.size = billboardSize(t, record);
       entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);

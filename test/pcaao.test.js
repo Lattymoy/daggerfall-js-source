@@ -40,8 +40,10 @@ import { CREDITS } from '../src/ui/credits.js';
 import { SKILLS } from '../src/systems/skills.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const ALL_ON = { Enabled: true, equipmentDamageEnhanced: true, fadingEnchantedItems: true, fixedStrengthDamageModifier: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true, rolePlayRealismArchery: false, meanerMonsters: false };
-const modsOf = (over = {}) => pcaaoModules((k) => ({ ...ALL_ON, ...over })[k]);
+const ALL_ON = { Enabled: true, equipmentDamageEnhanced: true, fadingEnchantedItems: true, fixedStrengthDamageModifier: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true };
+// MM1: the OTHER mods' switches, as DFU's ModManager answers them - none loaded unless a test says so
+const others = (o = {}) => (vendor, key) => o[`${vendor}/${key}`];
+const modsOf = (over = {}, other = others()) => pcaaoModules((k) => ({ ...ALL_ON, ...over })[k], other);
 const M = modsOf();
 const stats = (o = {}) => ({ strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50, ...o });
 const skillsAll = (v) => Object.fromEntries(Array.from({ length: 35 }, (_, i) => [i, v]));
@@ -60,7 +62,10 @@ test('PCO1: InitMod\'s ladder - the dependent modules stand down with their pare
   assert.equal(modsOf({ equipmentDamageEnhanced: false }).fadingEnchantedItems, false, 'fading rides enhanced wear');
   const off = modsOf({ Enabled: false });
   assert.ok(Object.entries(off).every(([k, v]) => v === false), `nothing on: ${JSON.stringify(off)}`);
-  assert.equal(modsOf({ meanerMonsters: true }).meanerMonsters, true);
+  // MM1: the two arms Awake derives from OTHER mods read those mods' own switches - no compatibility switch of this mod's
+  assert.equal(modsOf({}, others({ 'meanerMonsters/Enabled': true })).meanerMonsters, true, 'Meaner Monsters on: the edit arm');
+  assert.equal(modsOf({}, others({ 'roleplayRealism/advancedArchery': true })).rolePlayRealismArchery, true, 'Roleplay Realism with advancedArchery: the archery arm');
+  assert.equal(modsOf({ Enabled: false }, others({ 'meanerMonsters/Enabled': true, 'roleplayRealism/advancedArchery': true })).meanerMonsters, false, 'the overhaul off: neither');
 });
 
 test('PCO1: Mathf.Round rounds half to EVEN, and a float32 half lands where the C#\'s lands', () => {
@@ -395,10 +400,13 @@ test('PCO1: the Meaner Monsters edit rides the row a foe is minted from, only un
   assert.equal(on.minHealth, 15); assert.equal(on.maxHealth, 35); assert.equal(on.armorValue, 6); assert.equal(on.maleTexture, base.maleTexture, 'the rest is the base row\'s');
   assert.equal(meanerMonstersRow(128 + 17, ENEMY_BASICS[128 + 17], true), ENEMY_BASICS[128 + 17], 'a class enemy is untouched');
   _resetModSettings();
-  setModSetting('pcaao', 'Enabled', true); setModSetting('pcaao', 'meanerMonsters', true);
+  setModSetting('pcaao', 'Enabled', true); setModSetting('meanerMonsters', 'Enabled', true);   // MM1: the other mod's OWN switch is the arm's condition
   const rat = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(rat.basics.minHealth, 15, 'a minted rat carries the edit');
+  assert.equal(rat.basics.maxHealth, 35, 'the overhaul\'s 35 over Ralzar\'s 25 - PCAAO Awakes after its dependency');
   assert.equal(rat.maxHealth, 25, 'Range(15, 36) at a half roll');
+  setModSetting('meanerMonsters', 'Enabled', false);
+  assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth, 'Meaner Monsters off: the overhaul\'s edit has no mod to edit');
   _resetModSettings();
   const plain = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(plain.basics.minHealth, ENEMY_BASICS[0].minHealth);
@@ -415,7 +423,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
     assert.equal(m.keys[k.Name].description, k.Description, `${k.Name}'s description is the mod's own`);
   }
   assert.equal(m.keys.Enabled.default, false, 'the mod is the player\'s choice in the Mods pane (DFU enables a mod by listing it)');
-  assert.equal(m.keys.rolePlayRealismArchery.default, false); assert.equal(m.keys.meanerMonsters.default, false);
+  assert.equal(m.keys.rolePlayRealismArchery, undefined, 'MM1: no compatibility switches between mods (Mac)'); assert.equal(m.keys.meanerMonsters, undefined);
   const credit = CREDITS.mods.find((c) => c.title === 'Physical Combat And Armor Overhaul');
   assert.ok(credit); assert.equal(credit.author, 'Kirk.O'); assert.deepEqual([...credit.vendor], ['pcaao']); assert.equal(credit.version, '1.44');
   assert.match(rd('vendor/pcaao/README.md'), /Kirk\.O/);
@@ -427,7 +435,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
   assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
-  assert.match(rd('src/characters/enemyEntity.js'), /const basics = meanerMonstersRow\(mobileType, basicsIn\);/);
+  assert.match(rd('src/characters/enemyEntity.js'), /const basics = pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\);/, 'MM1: the overhaul\'s edit over Ralzar\'s row');
   const ws = rd('src/combat/pcaao.js');
   assert.equal((ws.match(/Mathf\.Clamp/g) || []).length >= 4, true, 'the four discarded clamps are named');
   assert.equal(pcaaoAdjustmentsToHit(mkPlayer()), -50);
@@ -445,8 +453,9 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), 30);
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
   // the mod on, its archery arm on, the REDONE FORMULA OFF: the stock core still bends the bow by its draw
-  let read = { ...ALL_ON, armorHitFormulaRedone: false, rolePlayRealismArchery: true };
-  installPcaao({ read: (k) => read[k] });
+  let read = { ...ALL_ON, armorHitFormulaRedone: false };
+  let rr = true;   // MM1: Roleplay Realism's own advancedArchery, as the port will read it once that mod is vendored
+  installPcaao({ read: (k) => read[k], other: (v, k) => (v === 'roleplayRealism' && k === 'advancedArchery' ? rr : undefined) });
   assert.equal(formulaOverride('calculateAttackDamage')(p, rat, {}), undefined, 'the redone core declines');
   assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), -10, 'a snap shot: -40');
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 2, '20 * 100/800, truncated');
@@ -456,7 +465,7 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   const drawn = weaponAttackDamage(p, rat, 0, bow, fixed(0.5), 100);
   assert.ok(stock > 0 && drawn === Math.trunc(stock * 100 / 800), `the draw scales the stock roll (${stock} -> ${drawn})`);
   // the arm off: identity again, live
-  read = { ...ALL_ON, armorHitFormulaRedone: false, rolePlayRealismArchery: false };
+  rr = false;
   assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), 30);
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
   uninstallPcaao();

@@ -44,7 +44,7 @@
 // entry itself is in systems/effects.js's BUFF_KINDS, which is where
 // the rounds live; this module is only ever asked about the player.
 
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { LIGHTS_ARCHIVE } from '../world/cityLights.js';
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */
@@ -197,7 +197,7 @@ export function createMagicCandle({
       if (!lit || batch || !t) return;
       if (t.recordCount != null && CANDLE.record >= t.recordCount) return;
       uploadRecord(CANDLE.archive, CANDLE.record);
-      const size = scaledBillboardSize(t.getSize(CANDLE.record), t.getScale(CANDLE.record));
+      const size = billboardSize(t, CANDLE.record);
       basePos = [pos[0], pos[1], pos[2]];
       batch = renderer.createBillboardBatch(CANDLE.archive, CANDLE.record, size, [basePos]);
       onSpawn?.(batch);

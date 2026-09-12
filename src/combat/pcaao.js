@@ -76,7 +76,7 @@
 // console line. Recorded in Combat-Arc PCO1.
 // ═══════════════════════════════════════════════════════════════════
 
-import { modSetting } from '../systems/modSettings.js';
+import { modSetting, modSettingIfDeclared } from '../systems/modSettings.js';
 import { liveStat } from '../systems/statMods.js';
 import { skillValue, SKILLS } from '../systems/skills.js';
 import { RACES } from '../systems/races.js';
@@ -126,7 +126,7 @@ const rangeExclusive = (n, rolls) => (n <= 0 ? 0 : Math.floor(rolls() * n));
  *  condition and soft-material modules need the redone armour formula.
  *  `Enabled` is the port's - DFU enables a mod by listing it. `read` is
  *  the Mods pane's store by default; a test hands in its own. */
-export function pcaaoModules(read = (k) => modSetting(PCAAO_VENDOR, k)) {
+export function pcaaoModules(read = (k) => modSetting(PCAAO_VENDOR, k), other = modSettingIfDeclared) {
   const enabled = !!read('Enabled');
   const on = (k) => enabled && !!read(k);
   const equipmentDamageEnhanced = on('equipmentDamageEnhanced');
@@ -140,8 +140,13 @@ export function pcaaoModules(read = (k) => modSetting(PCAAO_VENDOR, k)) {
     criticalStrikesIncreaseDamage: armorHitFormulaRedone && on('criticalStrikesIncreaseDamage'),
     conditionBasedEffectiveness: armorHitFormulaRedone && on('conditionBasedEffectiveness'),
     softMaterialRequirements: armorHitFormulaRedone && on('softMaterialRequirements'),
-    rolePlayRealismArchery: on('rolePlayRealismArchery'),
-    meanerMonsters: enabled && meanerMonstersOn(read),
+    // MM1 (Mac: no compatibility switches between mods): the two arms
+    // Awake derives from OTHER mods - `GetMod("RoleplayRealism")` and
+    // its `advancedArchery`, `GetMod("Meaner Monsters")` - read those
+    // mods' own switches through `other`; a mod the port has not
+    // vendored answers undefined, as one DFU has not loaded does.
+    rolePlayRealismArchery: enabled && !!other('roleplayRealism', 'advancedArchery'),
+    meanerMonsters: enabled && meanerMonstersOn(read, other),
   });
 }
 
@@ -1162,8 +1167,8 @@ export function pcaaoAttackDamage(attacker, target, {
 /** InitMod: the three FormulaHelper members the mod registers, each
  *  reading its module switch live and declining (undefined) when it is
  *  off, so the stock member stands. Idempotent; `read` for tests. */
-export function installPcaao({ read = null } = {}) {
-  const modules = () => (read ? pcaaoModules(read) : pcaaoModules());
+export function installPcaao({ read = null, other = null } = {}) {
+  const modules = () => pcaaoModules(read ?? undefined, other ?? undefined);
   registerFormulaOverride('damageModifier', (strength) => (modules().fixedStrengthDamageModifier ? pcaaoDamageModifier(strength) : undefined));
   registerFormulaOverride('damageEquipment', (attacker, target, damage, weapon, struckBodyPart, opts = {}) => {
     const m = modules();

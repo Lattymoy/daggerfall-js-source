@@ -53,7 +53,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, 
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { drawCharacterSprite } from '../render/characterSprite.js';
-import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { collectBlockFlats, billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { modSetting } from '../systems/modSettings.js';   // SIB1: the mod's own switch
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
@@ -403,7 +403,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
   const lightSize = (record) => {
     const t = textureFiles.get(LIGHTS_ARCHIVE);
-    return scaledBillboardSize(t.getSize(record), t.getScale(record));
+    return billboardSize(t, record);
   };
   const drawList = [];
   const windmills = [];   // WM2b: placed mills whose rotor turns each frame
@@ -797,7 +797,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       continue;
     }
     uploadRecord(archive, record);
-    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    const size = billboardSize(t, record);
     const batch = renderer.createBillboardBatch(archive, record, size, centers);
     batch._box = flatBatchAabb(centers, size);   // EV3: world-space here - this host has no floating origin
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
@@ -845,7 +845,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   for (const flat of exteriorNpcFlats) {
     const t = textureFiles.get(flat.archive) ?? await getTexture(flat.archive);
     if (!t || flat.record >= t.recordCount) continue;
-    const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
+    const size = billboardSize(t, flat.record);
     const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
     exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
   }
@@ -4279,7 +4279,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const t = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
-        const sz = scaledBillboardSize(t.getSize(out.record), t.getScale(out.record));
+        const sz = mobileBillboardSize(t, out.record);   // AUDIT MM1: MobilePersonBillboard.cs:343
         batch.record = rkey;
         batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
         batch.origin = [person.pos[0], person.pos[1], person.pos[2]];

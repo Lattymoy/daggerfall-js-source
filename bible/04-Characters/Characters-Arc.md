@@ -3424,3 +3424,34 @@ key recorded against `obstacleDetected` true with nothing recorded;
 the other two hold the wiring at all four factory/mount sites, the two
 street hosts' abstention, and the OpenDoors arm's five terms. Mutants:
 the mount's dep dropped, and the OpenDoors call dropped; 2 killed.
+
+## MM1 - MEANER MONSTERS, THE MOD, 1:1 (2026-09-12, Mac's call) - SHIPPED
+
+Mac: "Next is this mod to integrate 1-1. Additionally for mod options,
+everything should be compatible across the board and there shouldn't be
+compatibility switches between mods."
+
+Ralzar's Meaner Monsters 1.5.2 - twenty-one monsters' damage, health,
+level and armour rewritten (rats, bats and zombies gentler), werewolves
+and wereboars drawn a fifth larger, the dragonling two and a half times
+its size - ported from the shipped DLL decompiled, read beside the
+repository's source (they agree): `characters/meanerMonsters.js` (the
+table in the DLL's order, folded as InitMod's loop folds it - the four
+id-35 rows land on the Fire Atronach, bug for bug), applied at
+`enemyEntity.makeEnemyEntity` under the mod's own `Enabled`;
+`world/billboardXml.js`, DFU's TextureReplacement.SetBillboardScale as
+a registry, and `rmbFlats.billboardSize` the one door every billboard
+sizes through (thirty-two sites, thirteen files). The overhaul's two
+compatibility switches (`meanerMonsters`, `rolePlayRealismArchery`) are
+gone: it reads the other mods' own switches through
+`modSettingIfDeclared`, and Ralzar's row lands first, the overhaul's
+edit over it, as DFU Awakes the dependency first. Off by default. Pins:
+4 in `test/meanerMonsters.test.js`. The page:
+`04-Characters/Meaner-Monsters.md`.
+
+**AUDIT MM1 (the same day).** Two doors, not one: a mobile unit takes
+the xml scale on every record (`mobileBillboardSize`, six sites), a
+static billboard only with an imported texture for the record
+(`billboardSize`, DFU's GetStaticBillboardMaterial gate) - so the
+dragonling's corpse file is inert in both, as DFU has it; and the
+corpse field's packed int unpacks. The page's AUDIT MM1 section.

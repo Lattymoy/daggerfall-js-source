@@ -232,7 +232,7 @@ import { placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour as r
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { openDoorsStep } from '../characters/enemyMotor.js';   // AUDIT 63 F42: EnemyMotor.OpenDoors (EnemyMotor.cs:1424-1442), which lives in the motor and runs wherever an enemy does
-import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { billboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
 import { staticBuildingsHasHit } from '../world/staticBuildings.js';   // AUDIT 64 F11: DaggerfallStaticBuildings.HasHit
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
@@ -883,7 +883,7 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:209-210), and no killIfAnyLiveStatZero. Both pools
+   *  (worldTick.js:211-212), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:537-538 and
    *  cityGuards.js:766-767 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
@@ -1237,7 +1237,7 @@ export function createWorldModes(host) {
       const t = await getTexture(archive);
       if (!t || record >= t.recordCount || stand.dead || getCtx() !== ctx) return;
       uploadRecord(archive, record);
-      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      const size = billboardSize(t, record);
       stand.width = size.w; stand.height = size.h;
       // AUDIT 26 F068: an ITEM and an NPC are stood by DIFFERENT laws.
       // The old comment here said AddQuestNPC and AddQuestItem "both
