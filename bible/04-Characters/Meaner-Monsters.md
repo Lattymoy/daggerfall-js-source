@@ -15,7 +15,8 @@ the About screen, and it is ported as `src/characters/meanerMonsters.js`
 (the table, its fold, the xml table, the switch) and
 `src/world/billboardXml.js` (DFU's xml billboard scale, a registry). It
 is the player's choice in the Mods pane - `Enabled`, off by default, as
-DFU without the mod listed.
+DFU without the mod listed, until MO1 (2026-09-12, Mac: "All mods
+should be enabled by default") turned it on.
 
 ## The source the port reads
 
@@ -95,7 +96,8 @@ not vendored - DFU's "not loaded"). So:
 
 ## Port-side decisions, recorded
 
-- **`Enabled` off by default** (the Dynamic Skies precedent).
+- **`Enabled` off by default** (the Dynamic Skies precedent). ~~Off~~ ON
+  since MO1 (2026-09-12, Mac's law: every mod on).
 - **The edit takes effect on monsters spawned after the switch** - DFU
   rewrites the table at Awake; the port overlays the row at mint.
 - **The xml scale is a registry, not a file read.** DFU reads loose xml

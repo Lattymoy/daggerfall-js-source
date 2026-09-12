@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:900`, `world.js:786`), fired
+`playerTicker.advance(60)` (`exterior.js:900`, `world.js:795`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:1620` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:1629` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -7490,3 +7490,23 @@ NOT folded in: the `onLevelUp` `console.log` beside each of those sinks.
 `dfuiOpenCharacterSheetWindow` and adds no HUD text at all, so
 `worldModes`' `say('You have gained a level!')` is a separate
 pre-existing departure and not a law to copy outward.
+
+## UL1 - UNLEVELED LOOT, THE MOD, 1:1 (2026-09-12, Mac's call) - SHIPPED
+
+Mac: "Heres the next mod unleveled loot. Again 1:1"
+
+Ralzar's Unleveled Loot 1.1.2 - loot and shop materials that roll by
+luck, the shop's quality and the dungeon's kind instead of the level; a
+corpse's gold divided by the level and multiplied by luck; Daedra and
+Orcs dropping their own metal; ten material switches - ported from the
+shipped DLL decompiled beside the repository's 1.1.1 source (the DLL
+stands where they differ): `systems/unleveledLoot.js`, on formulas'
+registry (`enemyEquipment.randomMaterial` / `randomArmorMaterial` now
+consult it), a new OnEnemyDeath registry in `scenes/corpseMarker.js`
+raised at the three kills, the world published by `scenes/worldModes.js`
+and its two transition arms at DFU's six doors, and the Mods pane's new
+MultipleChoiceKey. Bug for bug: `ModifyFoundLootItems` is registered
+and read by nothing (DFU 1.1.1 has no such hook), the dungeon exit does
+not clear the mod's dungeon, the armour drop's condition comes from the
+random piece's max. Off by default. Pins: 8 in
+`test/unleveledLoot.test.js`. The page: `06-Systems/Unleveled-Loot.md`.

@@ -66,6 +66,16 @@ export const CREDITS = Object.freeze({
       link: 'https://github.com/Ralzar81/Meaner-Monsters',
     }),
     Object.freeze({
+      title: 'Unleveled Loot',
+      version: '1.1.2',
+      author: 'Ralzar',
+      what: 'Loot and shop stock that do not scale to your level: weapon and armour materials roll by your luck, the shop\u2019s quality and the dungeon\u2019s kind; a corpse\u2019s gold is divided by your level and multiplied by your luck; Daedra and Orcs may drop their own metal; any material can stand in for another. Ported 1:1 from the shipped 1.1.2 (systems/unleveledLoot.js); both lanes, under its own switches in the Mods pane.',
+      terms: 'Carried under its MIT License - the permission the source header grants (Copyright (C) 2020 Ralzar); see vendor/unleveledLoot/README.md.',
+      contact: 'Ralzar, through the Nexus page the manifest names as its ContactInfo (daggerfallunity mod 135)',
+      vendor: Object.freeze(['unleveledLoot']),
+      link: 'https://github.com/Ralzar81/Unleveled-Loot',
+    }),
+    Object.freeze({
       title: 'Physical Combat And Armor Overhaul',
       version: '1.44',
       author: 'Kirk.O',

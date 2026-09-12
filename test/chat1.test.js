@@ -608,13 +608,13 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ ChatLog, CHAT_REJOIN_MS \} from '\.\.\/net\/chat\.js';/);
   assert.match(w, /import \{ createChatPanel \} from '\.\.\/ui\/chatPanel\.js';/);
-  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle \} from '\.\.\/player\/pointerLock\.js';/);
+  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive \} from '\.\.\/player\/pointerLock\.js';/);
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
   assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
   assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
-  assert.match(w, /onOpen: \(\) => releaseLook\(\),/, 'AUDIT CHAT C2: the pointer freed on open');
+  assert.match(w, /onOpen: \(\) => \{ setCursorActive\(false\); releaseLook\(\); \},/, 'AUDIT CHAT C2: the pointer freed on open; PL3: the opening Enter reclaimed from the toggle');
   assert.match(w, /onClose: \(\) => \{ if \(!gamePaused\(\)\) requestLook\(canvas\); \},/, 'and taken back inside the closing gesture');
   assert.match(w, /for \(const \[tabId, link\] of chatLinks\) \{\s*link\.rejoin\(chatLog\.tab\(tabId\)\.room, CHAT_REJOIN_MS\);[^\n]*\n\s*link\.tick\(\);/, 'every channel rejoined when it must be, and ticked');
   assert.match(w, /chatPanel\.render\(\{\s*hidden: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'hidden under a window');

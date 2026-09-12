@@ -30,6 +30,7 @@ import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-
 import { dice100, setRacialHitHook, setPlayerStruckHook } from '../combat/formulas.js';
 import { installPcaao } from '../combat/pcaao.js';   // PCO1: the mod's RegisterOverride, once, for every host
 import { installMeanerMonsters } from '../characters/meanerMonsters.js';   // MM1: its xml billboard scales join the registry, once
+import { installUnleveledLoot } from './unleveledLoot.js';   // UL1: its two material overrides and its death handler, once
 import { onLycanthropeHit } from './lycanthropy.js';
 import { onVampireHit } from './vampirism.js';
 import { onPlayerStruckByEnemy } from './artifactEffects.js';   // V3: the Ring of Namira's reflection
@@ -48,6 +49,7 @@ setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker
 // reads its module switch live and declines when off.
 installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the dependency first
 installPcaao();
+installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';

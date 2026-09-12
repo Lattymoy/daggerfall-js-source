@@ -87,12 +87,13 @@ test('motor: walks a classic-riser staircase to the top (riser 0.3 <= stepOffset
 });
 
 test('motor: a half-unit riser (== stepOffset) climbs; the slope limit is the wall test', () => {
-  // stepOffset assists risers up to 0.5. Above that the capsule can
-  // still crest a lone box via a top-edge contact whose normal sits
-  // INSIDE slopeLimit 70 (a 0.6 edge presents ~45 deg) - Unity's
-  // controller does the same, so the SPECIFIED block criterion is the
-  // slope limit, pinned here: a 60 deg ramp climbs, a 78 deg ramp
-  // (steeper than slopeLimit) does not.
+  // stepOffset assists risers up to 0.5. The SPECIFIED block criterion
+  // for a SLOPE is the slope limit, pinned here: a 60 deg ramp climbs,
+  // a 78 deg ramp (steeper than slopeLimit) does not. (This comment
+  // once claimed a lone box above 0.5 "crests via its ~45-deg edge
+  // contact, as Unity" - the licence for mounting every table; SH1
+  // 2026-09-12 took it back: a step is a surface within stepOffset of
+  // the FEET, and test/macfive.test.js pins the box that blocks.)
   {
     const col = floored();
     addStairs(col, { riser: 0.45, run: 0.8, count: 4 });

@@ -1,5 +1,6 @@
 // E3a: the entity layer, verbatim - ClassFile parse on a crafted
 // 74-byte record, SetEnemyCareer rules, HP roll bounds.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ClassFile } from '../src/formats/classFile.js';

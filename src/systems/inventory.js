@@ -228,7 +228,7 @@ export function stacksWith(a, b) {
     // oil have none, and the one stackable WEAPON is the arrow, whose
     // material DFU itself zeroes - CreateWeapon's arrow arm writes
     // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
-    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:131-138
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:135-142
     // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
     // wherever ItemCollection.cs:706-714 would have matched, and the
     // `?? 0` above is the fix that keeps it that way.

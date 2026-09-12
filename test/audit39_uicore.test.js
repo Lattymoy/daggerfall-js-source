@@ -57,7 +57,7 @@ test('AUDIT 39 F125: choosing an arm leaves through the SAME exit the scrim does
   assert.ok(commit.indexOf('close()') < commit.indexOf('entry.open()'),
     'the dial still leaves BEFORE the window it opens takes the keys');
   assert.match(dial, /function close\(\) \{ unmount\(\); onClose\(\); \}/);
-  assert.match(dial, /onClose: \(\) => \{ _open = null; \},/, 'and onClose is what clears the singleton');
+  assert.match(dial, /onClose: \(\) => \{ _open = null; if \(lockEl\) requestLook\(lockEl\); \},/, 'and onClose is what clears the singleton (PL3: and gives the pointer back)');
 });
 
 // ---------------------------------------------------------------

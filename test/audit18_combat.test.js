@@ -1,6 +1,7 @@
 // AUDIT 18, combat-formulas lane. Every pin here was mutation-proven:
 // the fix was reverted, the pin observed to FAIL, then restored. The
 // mutation is named in the comment above each block.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';

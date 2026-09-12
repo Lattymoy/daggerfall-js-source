@@ -340,9 +340,19 @@ export class Collider {
     return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
   }
 
-  _resolveSphere(center, radius, out) {
+  _resolveSphere(center, radius, out, standCeil = Infinity) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
+    // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
+    // interior tables, tree trunks, etc)"): `standCeil` is the highest
+    // world y a contact may sit at and still be GROUND - the entry feet
+    // plus stepOffset, the step-up ladder's own law. A contact above it
+    // whose normal leans up (a tabletop's edge, a trunk's root flare, a
+    // wall's top) is a WALL here: it pushes the sphere out SIDEWAYS by
+    // its whole penetration and never grounds it, so the ladder cannot
+    // be lifted onto it and the edge cannot ratchet the capsule up a
+    // slice a frame. Infinity (every caller but the ladder) is the
+    // resolve exactly as it was.
     let grounded = false;
     let ceiling = false;
     let pushedDown = false;
@@ -381,11 +391,27 @@ export class Collider {
             const contactR = radius + SKIN;
             if (d2 >= contactR * contactR || d2 === 0) continue;
             const d = Math.sqrt(d2);
+            // SH1: the contact point's world y is center - dy (dy is
+            // center minus closest); above the stand ceiling with an
+            // upward-leaning normal it is a wall, not a tread.
+            const wallAbove = dy > 0 && center[1] - dy > standCeil;
             if (d < radius) {
-              const push = (radius - d) / d;   // only push out of true penetration
-              center[0] += dx * push;
-              center[1] += dy * push;
-              center[2] += dz * push;
+              if (wallAbove) {
+                const dh = Math.sqrt(dx * dx + dz * dz);
+                if (dh > 1e-6) {
+                  const pushH = (radius - d) / dh;   // the whole penetration, sideways
+                  center[0] += dx * pushH;
+                  center[2] += dz * pushH;
+                } else {
+                  const push = (radius - d) / d;   // dead under a face: the plain push is the only way out
+                  center[1] += dy * push;
+                }
+              } else {
+                const push = (radius - d) / d;   // only push out of true penetration
+                center[0] += dx * push;
+                center[1] += dy * push;
+                center[2] += dz * push;
+              }
             }
             const ny = dy / d;
             if (globalThis.__logContacts) {
@@ -403,7 +429,7 @@ export class Collider {
             // contact (d < radius), never from the shell. (Regression
             // from the g:0 SKIN change - Mac's stairs fell through.)
             const touching = d < radius;
-            if (ny >= GROUND_NY) {
+            if (ny >= GROUND_NY && !wallAbove) {
               grounded = true;
               // Platform riding (Ledger C row, 2026-08-14): the KEY of
               // the grounding bucket - a non-static bucket (mover)
@@ -422,7 +448,7 @@ export class Collider {
     if (groundKey != null && (out.groundKey == null || groundKey !== 'dungeon')) out.groundKey = groundKey;
   }
 
-  _resolveCapsule(feet, out, height = CAPSULE_HEIGHT) {
+  _resolveCapsule(feet, out, height = CAPSULE_HEIGHT, standCeil = Infinity) {
     // Two spheres: lower centered radius above the feet, upper below
     // the top. height varies with the player's stance (P12 crouch:
     // the PlayerHeightChanger controller heights) - passed per call
@@ -440,11 +466,11 @@ export class Collider {
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
     const high = [feet[0], feet[1] + CAPSULE_RADIUS + axis, feet[2]];
     for (let iter = 0; iter < 3; iter++) {
-      this._resolveSphere(low, CAPSULE_RADIUS, out);
+      this._resolveSphere(low, CAPSULE_RADIUS, out, standCeil);
       high[0] = low[0];
       high[2] = low[2];
       high[1] = low[1] + axis;
-      this._resolveSphere(high, CAPSULE_RADIUS, out);
+      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil);
       low[0] = high[0];
       low[2] = high[2];
       low[1] = high[1] - axis;
@@ -545,6 +571,11 @@ export class Collider {
     // Horizontal (phase-local flags; only the block test reads them).
     const beforeX = feet[0];
     const beforeZ = feet[2];
+    // SH1: the entry feet and the ladder's stand ceiling - a step is a
+    // surface at most stepOffset ABOVE THE FEET (CharacterController's
+    // own law), never "whatever height the raised capsule resolves to".
+    const entryY = feet[1];
+    const standCeil = entryY + STEP_OFFSET;
     feet[0] += dx;
     feet[2] += dz;
     const hOut = { grounded: false, hitCeiling: false, pushedDown: false };
@@ -573,23 +604,53 @@ export class Collider {
       for (const lift of [0.125, 0.25, 0.375, STEP_OFFSET]) {
         const raisedStart = [beforeX, feet[1] + lift, beforeZ];
         const startOut = { grounded: false, hitCeiling: false, pushedDown: false };
-        this._resolveCapsule(raisedStart, startOut, height);
+        this._resolveCapsule(raisedStart, startOut, height, standCeil);
         if (raisedStart[1] <= prevResolvedY + 1e-4) break;   // no headroom gained - the ladder tops out
         prevResolvedY = raisedStart[1];
         // Forward from the RESOLVED (possibly ceiling-capped) height,
         // full intent.
         const retry = [beforeX + dx, raisedStart[1], beforeZ + dz];
         const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
-        this._resolveCapsule(retry, retryOut, height);
+        this._resolveCapsule(retry, retryOut, height, standCeil);
         const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
         // The raised path must be GENUINELY clear (the same blocked
         // threshold the plain move failed), not merely jitter-better -
         // a wall blocks it at every lift exactly as at 0 (the P9
         // facade-ladder regression pin stands).
         if (retrySq < wantedSq * 0.25 || retryOut.pushedDown) continue;
-        feet[0] = retry[0];
-        feet[1] = retry[1];
-        feet[2] = retry[2];
+        // SH1: the resolve may have lifted the raised capsule further
+        // still (a top face under the lower sphere) - past the stand
+        // ceiling it is not a step.
+        if (retry[1] > standCeil + 1e-4) continue;
+        // SH1: THE DOWN LEG - Unity's third move (up, forward, DOWN).
+        // The old ladder kept the raised height and let the ground snap
+        // "settle it onto the tread as forward progress clears the
+        // edge" - which is exactly how a table was mounted: the capsule
+        // hovered at +stepOffset beside the tabletop's edge, the next
+        // frame's ladder lifted it +stepOffset again from the hover,
+        // and the edge grounded each slice. So: from the raised,
+        // advanced position come down to the first height at which the
+        // capsule STANDS - grounded, on a contact no higher than the
+        // stand ceiling, with the forward gain kept - and stop there.
+        // Nothing to stand on within the rung (the edge of something
+        // taller than a step, a wall's top) is not a step: the rung is
+        // refused and the plain move's block stands, and the player
+        // slides along the table as along any wall.
+        let landed = null;
+        for (let y = retry[1]; ; y -= STEP_OFFSET / 8) {
+          const probeY = Math.max(y, entryY);
+          const probe = [retry[0], probeY, retry[2]];
+          const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
+          this._resolveCapsule(probe, probeOut, height, standCeil);
+          const slidSq = (probe[0] - retry[0]) ** 2 + (probe[2] - retry[2]) ** 2;
+          if (probeOut.grounded && !probeOut.pushedDown && slidSq < 1e-8
+            && probe[1] <= standCeil + 1e-4 && probe[1] >= entryY - 1e-4) { landed = probe; break; }
+          if (probeY <= entryY) break;
+        }
+        if (!landed) continue;
+        feet[0] = landed[0];
+        feet[1] = landed[1];
+        feet[2] = landed[2];
         break;
       }
     }

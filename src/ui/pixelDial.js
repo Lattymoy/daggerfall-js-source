@@ -47,6 +47,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
+import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -190,10 +191,16 @@ export function openPixelDial(entries) {
   // Tab now means PUT THIS AWAY first, and only raises the dial when
   // there is nothing to put away.
   if (closeTopOverlay()) return true;
+  // PL3: the dial drops the lock to be clicked and never gave it back -
+  // the host's look gate never saw the dial as a window, so there was
+  // no closing edge to relock on, and the pointer stayed free until a
+  // canvas click found nothing in the way. The element that held the
+  // lock is remembered and asked for again as the dial goes.
+  const lockEl = document.pointerLockElement;
   document.exitPointerLock?.();
   const handle = mountPixelDial(document.body, {
     entries,
-    onClose: () => { _open = null; },
+    onClose: () => { _open = null; if (lockEl) requestLook(lockEl); },
   });
   const inner = handle.unmount;
   handle.unmount = () => { inner(); _open = null; };

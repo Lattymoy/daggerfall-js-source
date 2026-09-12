@@ -13,8 +13,9 @@ the provenance and the permission line), it is credited on the About
 screen, and it is ported as `src/combat/pcaao.js` (every formula) and
 `src/combat/pcaaoMeanerMonsters.js` (its Meaner Monsters table), on
 DFU's own RegisterOverride shape grown into `combat/formulas.js`. It is
-the player's choice in the Mods pane - `Enabled` is off by default, as
-DFU without the mod listed - and while it is on, both lanes fight by
+the player's choice in the Mods pane - `Enabled` was off by default, as
+DFU without the mod listed, until MO1 (2026-09-12, Mac: "All mods
+should be enabled by default") turned it on - and while it is on, both lanes fight by
 its formulas.
 
 ## The source the port reads
@@ -97,7 +98,8 @@ its `modsettings.json`:
 
 - **`Enabled` off by default.** DFU enables a mod by listing it; the
   port has no mod list, so the mod is a switch in the Mods pane (the
-  Dynamic Skies precedent after VC1). The seven shipped module keys
+  Dynamic Skies precedent after VC1). ~~Off~~ ON by default since MO1
+  (2026-09-12, Mac's law: every mod on; the pane is where it is turned off). The seven shipped module keys
   default as shipped (all on). Mac's to flip.
 - **The two derived arms read the OTHER mods' own switches** (MM1, Mac:
   "there shouldn't be compatibility switches between mods"; they were

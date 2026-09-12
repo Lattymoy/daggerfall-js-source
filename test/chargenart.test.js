@@ -1,5 +1,6 @@
 // U10: the classic chargen screens. Every pin fails under a
 // one-character mutation of the law it names.
+import './modsOff.js';   // MO1: this suite pins Daggerfall Unity's own numbers - the game without its mods
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RECTS, raceAtPickerPoint, chargenHit, ALT_SHADOW_1, SELECTED_TEXT, INPUT_TEXT } from '../src/ui/chargenArt.js';
