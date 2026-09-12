@@ -29,14 +29,40 @@
 // windows it drives, and that one must not open the chat.
 //
 // THE MOUSE IS THE PANEL'S. The host adds every window mousedown to
-// its ring and swings on the left button outdoors; a press inside the
-// open box is stopped at the box, so tapping Send draws no weapon.
+// its ring and swings on the left button outdoors; a PRESS inside the
+// open box is stopped at the box, so tapping Send draws no weapon. A
+// RELEASE is never stopped (AUDIT CHAT C5): the host's mouseup clears
+// its ring, and a press begun on the canvas and let go over the box
+// must still let go, or the weapon swings until the next click.
+//
+// AUDIT CHAT (2026-09-12, before the merge). The open key is the
+// ActivateCursor binding (Enter by default), resolved through the
+// registry, not a literal (C4: the panel was eating DFU's cursor key
+// at the window, and its own key could not be rebound); opening frees
+// the pointer and closing takes it back inside the same gesture (C2:
+// the panel opened under pointer lock, so the mouse kept looking and
+// swinging while the player typed and nothing in the box could be
+// clicked - the hosts' onOpen/onClose); an Enter that commits an IME
+// candidate is the IME's (C3: the first Enter of every Japanese word
+// shipped the half-composed line); a held Enter opens once and its
+// repeats send nothing (C6); Tab stays in the field (C7: it walked
+// focus onto Send and gave the keyboard back to the game); the list
+// grows by the lines that arrived and keeps a reader's scroll (C8);
+// the root is no live region (C9: every repaint re-announced the
+// whole panel); a refused line keeps the field and the panel (B2); a
+// name carries a tag from the guarded id (A5); the dial counts as an
+// overlay (C1, in pixelDial.js) and an open overlay hides the panel.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
-import { isTextEntryTarget, swallowBrowserKey } from './input.js';
+import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
+import { actionForCode } from '../systems/inputActions.js';
 import { overlayOpen } from './enhancedOverlays.js';
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
+import { tagOf } from '../net/chat.js';
+
+/** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
+export const CHAT_OPEN_ACTION = 'ActivateCursor';
 
 export const CHAT_STYLE_ID = 'dagger-chat-style';
 
@@ -47,8 +73,9 @@ export const CHAT_CSS = `
   font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }
 .dfchat.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
 .dfchat-peek { display: flex; flex-direction: column; gap: 3px; }
-.dfchat-line { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }
-.dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; margin-right: 6px; }
+.dfchat-line { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }
+.dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; }
+.dfchat-tag { color: var(--dim, #8b8578); font-size: 11px; margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
 .dfchat-time { color: var(--dim, #8b8578); font-size: 11px; margin-right: 6px; }
 .dfchat-hint { margin-top: 4px; font-size: 12px; color: var(--dim, #8b8578); opacity: .75; text-shadow: 0 1px 2px #000; }
@@ -86,24 +113,29 @@ export function injectChatStyle(doc = document) {
 /** HH:MM of a stamp, for the open list. */
 export const clockOf = (at) => { const d = new Date(at); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
-/** Is this keydown the one that opens the panel: Enter, unmodified, the keyboard's own, owned by no field and no overlay? */
-export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen } = {}) {
-  return e.code === 'Enter' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && e.isTrusted !== false
+/** The action a keydown resolves to through the registry (the default; the tests hand their own in). */
+export const actionOfKey = (e) => actionForCode(bindings(), e.code);
+
+/** Is this keydown the one that opens the panel: the cursor key (CHAT_OPEN_ACTION), unmodified, not a repeat,
+ *  the keyboard's own, owned by no field and no overlay, the host willing? */
+export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, action = actionOfKey } = {}) {
+  return action(e) === CHAT_OPEN_ACTION && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && e.isTrusted !== false
     && !isTextEntryTarget(e.target) && !overlay() && !!canOpen();
 }
 
 /**
  * The panel over `log` (net/chat.js). `onSend(tabId, text)` takes a
- * typed line; `canOpen()` is the host's word on whether the game can
- * take a chat right now. Handed the document and the window so the
- * tests drive it headless.
+ * typed line and answers false when it did not go (the field keeps
+ * it); `canOpen()` is the host's word on whether the game can take a
+ * chat right now; `onOpen`/`onClose` are the host's pointer-lock door
+ * (release on open, take back on close - inside the gesture). Handed
+ * the document and the window so the tests drive it headless.
  */
-export function createChatPanel({ log, onSend, canOpen = () => true, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createChatPanel({ log, onSend, canOpen = () => true, onOpen = null, onClose = null, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
   root.dataset.state = 'closed';
-  root.setAttribute('aria-live', 'polite');
   const peek = el('div', 'dfchat-peek');
   const hint = el('div', 'dfchat-hint', 'Enter to chat');
   const status = el('div', 'dfchat-status');
@@ -139,13 +171,35 @@ export function createChatPanel({ log, onSend, canOpen = () => true, doc = docum
 
   let painted = -1;
   let peekNodes = [];
+  let listNodes = [];      // the open list's rows, in order: [{ seq, node }] - grown, not rebuilt (AUDIT CHAT C8)
+  let listTab = null;
   let alive = true;
 
   const lineNode = (line, withTime) => {
     const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}`);
     if (withTime) n.append(el('span', 'dfchat-time', clockOf(line.at)));
-    n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-text', line.text));
+    n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
     return n;
+  };
+
+  /** The open list: the rows that left the cap dropped from the front, the rows that arrived appended at the
+   *  back, and the scroll kept where the reader had it unless it sat at the bottom (AUDIT CHAT C8: every line
+   *  rebuilt two hundred rows and yanked a reader who had scrolled up). A tab change rebuilds. */
+  const paintList = () => {
+    const tab = log.tab(log.active);
+    const msgs = tab ? tab.messages : [];
+    const atBottom = !listNodes.length || (list.scrollHeight - list.scrollTop - (list.clientHeight ?? 0)) <= 8;
+    const contiguous = listTab === log.active && listNodes.length && msgs.length && msgs.some((m) => m.seq === listNodes[listNodes.length - 1].seq);
+    if (!contiguous) {
+      listNodes = msgs.map((line) => ({ seq: line.seq, node: lineNode(line, true) }));
+      list.replaceChildren(...listNodes.map((r) => r.node));
+    } else {
+      while (listNodes.length && listNodes[0].seq < msgs[0].seq) listNodes.shift().node.remove();
+      const lastSeq = listNodes.length ? listNodes[listNodes.length - 1].seq : -1;
+      for (const line of msgs) if (line.seq > lastSeq) { const row = { seq: line.seq, node: lineNode(line, true) }; listNodes.push(row); list.append(row.node); }
+    }
+    listTab = log.active;
+    if (atBottom) list.scrollTop = list.scrollHeight ?? 0;
   };
 
   const paint = () => {
@@ -158,10 +212,7 @@ export function createChatPanel({ log, onSend, canOpen = () => true, doc = docum
     }
     const unread = log.unreadTotal();
     badgeOut.textContent = unread ? String(unread) : '';
-    if (log.open) {
-      list.replaceChildren(...log.recent().map((line) => lineNode(line, true)));
-      list.scrollTop = list.scrollHeight ?? 0;
-    }
+    if (log.open) paintList();
     peekNodes = [];
     peek.replaceChildren();
   };
@@ -184,6 +235,7 @@ export function createChatPanel({ log, onSend, canOpen = () => true, doc = docum
     log.setOpen(true);
     paint();
     input.focus?.();
+    onOpen?.();   // the host frees the pointer (C2) - inside the gesture that opened
     return true;
   };
   const closePanel = () => {
@@ -191,47 +243,52 @@ export function createChatPanel({ log, onSend, canOpen = () => true, doc = docum
     log.setOpen(false);
     input.blur?.();
     paint();
+    onClose?.();   // and takes it back - inside the gesture that closed, the only place a lock request is honoured
     return true;
   };
+  /** The field's line out; a line the host could not send (no socket, over the rate) stays in the field and the panel stays up (B2). */
   const submit = ({ keep = false } = {}) => {
     const text = String(input.value ?? '');
+    if (text.trim() && onSend?.(log.active, text) === false) return;
     input.value = '';
-    if (text.trim()) onSend?.(log.active, text);
     if (!keep) closePanel();
   };
 
   const onKey = (e) => {
     if (e.target === input) {
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
+      if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
       if (e.code === 'Escape') { e.preventDefault(); closePanel(); }
-      else if (e.code === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+      else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
+      else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);
       e.stopPropagation();
       return;
     }
     if (log.open) {
-      // open but the caret wandered (a tap on the canvas): Enter brings it back rather than reaching the game
-      if (e.code === 'Enter' && e.isTrusted !== false && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); input.focus?.(); }
+      // open but the caret wandered (a tap on the canvas): the open key brings it back rather than reaching the game
+      if (action(e) === CHAT_OPEN_ACTION && e.isTrusted !== false && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); input.focus?.(); }
       return;
     }
-    if (isOpenKey(e, { canOpen })) { e.preventDefault(); e.stopPropagation(); open(); }
+    if (isOpenKey(e, { canOpen, overlay, action })) { e.preventDefault(); e.stopPropagation(); open(); }
   };
   win.addEventListener('keydown', onKey, true);
   form.addEventListener('submit', (e) => { e.preventDefault(); submit({ keep: touch }); });
   close.addEventListener('click', () => closePanel());
   openBtn.addEventListener('click', () => open());
+  // a PRESS inside the panel is the panel's; a RELEASE is never stopped (C5: the host's mouseup clears its ring)
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend', 'wheel', 'contextmenu']) box.addEventListener(t, swallow);
-  for (const t of ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend']) openBtn.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) box.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart']) openBtn.addEventListener(t, swallow);
 
   return {
     root, input,
     open, close: closePanel, toggle: () => (log.open ? closePanel() : open()),
     isOpen: () => log.open,
-    /** Once a frame: hidden under a window that covers the HUD (and closed, if open); repainted on the log's new version; the fade stepped. */
+    /** Once a frame: hidden under a window that covers the HUD or an enhanced overlay (and closed, if open); repainted on the log's new version; the fade stepped. */
     render({ hidden = false, status: line = null } = {}) {
       if (!alive) return;
-      if (hidden) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
+      if (hidden || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
       if (root.style.display !== '') root.style.display = '';
       if (log.version !== painted) paint();
       paintPeek();

@@ -27,6 +27,16 @@ export const CHAT_KEEP = 200;
 export const CHAT_FADE_MS = 20000;
 /** The most lines shown over the world while the panel is closed. */
 export const CHAT_PEEK = 5;
+/** How long a channel's session waits after a terminal close before it tries the room again (AUDIT CHAT A6/B6). */
+export const CHAT_REJOIN_MS = 30000;
+
+/** A short tag from a peer's id - four base-36 characters of an FNV-1a hash - shown beside the name
+ *  (AUDIT CHAT A5: the relay guards the id, not the name, and two 'Mac's must read as two people). */
+export function tagOf(id) {
+  let h = 0x811c9dc5;
+  for (const ch of String(id ?? '')) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+  return (h % (36 ** 4)).toString(36).padStart(4, '0');
+}
 
 export class ChatLog {
   constructor({ tabs = CHAT_TABS, keep = CHAT_KEEP, now = () => Date.now() } = {}) {

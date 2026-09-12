@@ -192,6 +192,6 @@ a convenience.
 
 - Host migration (a client becomes host when the host drops). Later.
 - Splitting the party across interiors. Later.
-- Voice or text chat. Probably text in the HUD; not basics.
+- Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
 - Whether a client's damage claim ever gets validated. Not planned.
 - Binary framing / WebRTC. When the numbers say so, not before.

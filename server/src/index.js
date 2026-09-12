@@ -22,17 +22,27 @@
 // over-rate socket that keeps sending is closed (A8), and pings are
 // answered by the runtime while the object sleeps.
 //
-// CHAT1 (2026-09-12): a chat:<name> room is a channel (relay.js, CHAT
+// CHAT1 (2026-09-12): a room in CHAT_ROOMS is a channel (relay.js, CHAT
 // ROOMS) - a hello there keeps the secret and nothing else, is told an
 // empty roster and announced to no one, a pose there reaches no one,
 // and a chat line reaches every socket that said hello, the sender
-// included; in a place room a chat line reaches whoever a pose would.
-// The chat gate is CHAT_HZ_MAX a second with its own strikes; a chat
-// room holds CHAT_SOCKETS_MAX sockets, and its hello gate is off (the
-// cost a hello gate guards - the roster, the join to everyone - a
-// channel never pays). The chat client heartbeats with pings, which
-// the runtime answers while the object sleeps.
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, HELLO_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+// included; in a place room a chat line reaches whoever a pose would
+// and the sender. The chat gate is CHAT_HZ_MAX a second per socket with
+// its own strikes; a chat room holds CHAT_SOCKETS_MAX sockets. The chat
+// client heartbeats with pings, which the runtime answers while the
+// object sleeps.
+//
+// AUDIT CHAT (2026-09-12, before the merge): a channel is a whitelist,
+// not a prefix, and the Worker opens no object for a chat: key it does
+// not know (A1); its hello gate is never off - CHAT_HELLO_HZ_MAX, deeper
+// than a place's, because a hello there costs no roster (A1); the room
+// spends CHAT_ROOM_HZ_MAX lines a second for everyone, over which a
+// line is dropped and no strike counted - the sender's missing echo is
+// the word (A2); a pose or a ping is gated and counted BEFORE a channel
+// declines to relay it, so ungated ingress is not a channel's privilege
+// (A3); a room that drains sweeps its own storage on the way out, since
+// a channel never empties on the way in (A7).
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -41,7 +51,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', t: Date.now() });
     const key = roomOf(url.pathname);
-    if (!key) return json({ error: 'no such room' }, 404);
+    if (!key || (key.startsWith('chat:') && !isChatRoom(key))) return json({ error: 'no such room' }, 404);   // AUDIT CHAT A1: no object is minted for a channel the port does not run
     if (String(request.headers.get('Upgrade') ?? '').toLowerCase() !== 'websocket') return json({ error: 'websocket only' }, 426);
     const id = env.ROOMS.idFromName(key);
     return env.ROOMS.get(id).fetch(request);
@@ -55,6 +65,7 @@ export class Room {
   constructor(state) {
     this.state = state;
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
+    this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -106,13 +117,12 @@ export class Room {
     const a = this._attach(ws);
     const m = parseClient(message, { hasHello: !!a.id });
     if (m.error) { this._refuse(ws, m.error); return; }
-    if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }
     if (m.t === 'hello') {
       const now = Date.now();
       const chat = isChatRoom(a.key);
-      // the room's hello gate (A6): a storm is 2N frames a cycle for everyone - in a place; a channel's hello costs no one anything (CHAT1)
-      const gate = chat ? { pass: true, bucket: null } : tokenGate(await this.state.storage.get('hellos'), now, HELLO_HZ_MAX);
-      if (!chat) await this.state.storage.put('hellos', gate.bucket);
+      // the room's hello gate (A6): a storm is 2N frames a cycle for everyone in a place; a channel's hello costs no roster, so its gate runs deeper - never off (AUDIT CHAT A1)
+      const gate = tokenGate(await this.state.storage.get('hellos'), now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);
+      await this.state.storage.put('hellos', gate.bucket);
       if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
       // the id's secret (A3): the first hello mints it, a later one must match
       const held = await this.state.storage.get(secretKey(m.id));
@@ -126,7 +136,7 @@ export class Room {
       }
       const others = [];
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
-      if (!others.length) { await this.state.storage.deleteAll(); if (!chat) await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
+      if (!others.length) { await this.state.storage.deleteAll(); await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) await this.state.storage.put(lookKey(m.id), m.look);   // a channel keeps no look: nobody is drawn from it
       if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose })) { this._refuse(ws, 'hello too large'); return; }
@@ -138,12 +148,16 @@ export class Room {
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
       return;
     }
-    if (m.t === 'pose') {
-      if (isChatRoom(a.key)) return;   // a channel is no place: a pose there is kept by no one and reaches no one
+    if (m.t === 'pose' || m.t === 'ping') {
+      // the frame gate (A8): a pose and a ping share the socket's bucket, and a channel's pose is gated and counted
+      // BEFORE it is declined (AUDIT CHAT A3: the early return sat above the gate, so a channel took frames unmetered)
+      const chat = isChatRoom(a.key);
       const gate = poseGate(a.bucket, Date.now());
       const drops = gate.pass ? 0 : (a.drops ?? 0) + 1;
-      this._setAttach(ws, { ...a, pose: m.p, bucket: gate.bucket, drops });
+      this._setAttach(ws, { ...a, pose: m.t === 'pose' && !chat ? m.p : a.pose, bucket: gate.bucket, drops });
       if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return; }   // over the rate: kept as the latest, not relayed
+      if (m.t === 'ping') { this._send(ws, '{"t":"pong"}'); return; }   // a ping that reached the object (the runtime answers the exact one in its sleep)
+      if (chat) return;   // a channel is no place: a pose there is kept by no one and reaches no one
       const out = JSON.stringify({ t: 'pose', id: a.id, p: m.p });
       for (const [other, b] of [...this._all()]) {
         if (other === ws || !b.id) continue;
@@ -158,6 +172,10 @@ export class Room {
       const cdrops = gate.pass ? 0 : (a.cdrops ?? 0) + 1;
       this._setAttach(ws, { ...a, cbucket: gate.bucket, cdrops });
       if (!gate.pass) { if (cdrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many lines'); return; }   // over the rate: dropped, never queued
+      // AUDIT CHAT A2: the room's own budget, over which a line is dropped and nobody is struck - the fan is everyone
+      const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
+      this._roomChat = room.bucket;
+      if (!room.pass) return;
       const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now });
       const chat = isChatRoom(a.key);
       for (const [other, b] of [...this._all()]) {
@@ -177,8 +195,12 @@ export class Room {
   async _leave(ws) {
     const a = this._attach(ws);
     this._forget(ws);
+    // AUDIT CHAT A7: a room that drained sweeps its own storage on the way out - the empty-hello sweep never
+    // runs in a channel, which is never empty on the way in; what an unclean close left behind goes here
+    const last = this.state.getWebSockets().filter((w) => w !== ws).length === 0;
+    if (last) { try { await this.state.storage.deleteAll(); } catch { /* the next drain, or the next empty hello */ } }
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
-    try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ }
+    if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
     if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
     const out = JSON.stringify({ t: 'leave', id: a.id });
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);

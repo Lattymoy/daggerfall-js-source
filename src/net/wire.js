@@ -41,13 +41,22 @@
 //
 // CHAT ROOMS (CHAT1, 2026-09-12, Mac: "the live chat in enhanced format
 // ... one world tab with the ability to add more tabs at a later
-// time"). A chat:<name> room is a channel, not a place: it keeps no
-// looks and no roster, says no join and no leave, relays no pose, and
-// hands every chat line to every socket that said hello - the sender
-// included, which is how the sender learns the line was taken. The
-// World tab is chat:world; a later tab is a later room. A chat line
-// in a PLACE room reaches whoever a pose would (the range), so a local
-// tab can ride the presence socket when it comes.
+// time"). A channel is a room in CHAT_ROOMS - a WHITELIST, not a
+// prefix (AUDIT CHAT A1: a prefix let anyone mint a room with a
+// channel's privileges) - and not a place: it keeps no looks and no
+// roster, says no join and no leave, relays no pose (gated and counted
+// all the same, A3), and hands every chat line to every socket that
+// said hello - the sender included, which is how the sender learns the
+// line was taken. The World tab is chat:world; a later tab is a later
+// room in the list. A channel admits CHAT_HELLO_HZ_MAX hellos a second
+// (a channel's hello costs the roster nothing, so it runs deeper than a
+// place's) and spends CHAT_ROOM_HZ_MAX lines a second for the whole
+// room (A2: the fan is every line to everyone, so without a room-wide
+// budget one object owes talkers times listeners a second); a line
+// over the room's budget is dropped, and the sender's missing echo is
+// the only word of it. A chat line in a PLACE room reaches whoever a
+// pose would, and the sender besides, so a local tab can ride the
+// presence socket when it comes.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -94,8 +103,14 @@ export const CHAT_HZ_MAX = 2;
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
 export const CHAT_SOCKETS_MAX = 2048;
+/** The most hellos a CHANNEL admits a second (AUDIT CHAT A1: the gate is never off; a channel's hello costs no roster, so it runs deeper). */
+export const CHAT_HELLO_HZ_MAX = 50;
+/** The most chat lines a whole CHANNEL relays a second (AUDIT CHAT A2: the fan is every line to everyone - the room's budget, not the socket's). */
+export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
 export const CHAT_WORLD_ROOM = 'chat:world';
+/** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
+export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
@@ -110,25 +125,36 @@ export function sanitizeName(name) {
   return s || 'Traveller';
 }
 
-/** A chat line the room will relay: control, format and bidi
- *  characters gone (a line cannot rewrite the line before it, or hide
- *  in zero width), whitespace collapsed, trimmed, bounded - or '' when
- *  nothing is left to say. Every other character is a person's own
- *  (the panel is DOM text: nothing here is markup). */
+/** What a chat line may not carry: every FORMAT character (Unicode Cf -
+ *  the bidi controls, the zero widths, the joiners, the soft hyphen, the
+ *  tag block, the BOM: AUDIT CHAT A4 - five hand-written ranges missed
+ *  U+061C and the tags) and the variation selectors bar U+FE0F, which
+ *  emoji presentation needs. */
+const INVISIBLE = /[\p{Cf}\uFE00-\uFE0E\u{E0100}-\u{E01EF}]/u;
+
+/** A chat line the room will relay: control and format characters
+ *  gone (a line cannot rewrite the line before it, or hide in zero
+ *  width), a lone surrogate gone (B3: half a character is not a
+ *  character, and the one guard on the cut was not idempotent with two
+ *  of them), a stack of combining marks cut to three (A4: two hundred
+ *  on one letter paint over the game), whitespace collapsed, trimmed,
+ *  bounded - or '' when nothing is left to say. Idempotent, so what the
+ *  client sends the relay takes. Every other character is a person's
+ *  own (the panel is DOM text: nothing here is markup). */
 export function sanitizeChat(text) {
   let s = '';
   for (const ch of String(text ?? '')) {
     const c = ch.codePointAt(0);
-    if (c < 32 || (c >= 0x7f && c <= 0x9f) || (c >= 0x200b && c <= 0x200f) || (c >= 0x202a && c <= 0x202e) || (c >= 0x2066 && c <= 0x2069) || c === 0xfeff) continue;
+    if (c < 32 || (c >= 0x7f && c <= 0x9f) || (c >= 0xd800 && c <= 0xdfff) || INVISIBLE.test(ch)) continue;
     s += ch;
   }
-  s = s.replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX);
+  s = s.replace(/\s+/g, ' ').replace(/(\p{M}{3})\p{M}+/gu, '$1').trim().slice(0, CHAT_MAX);
   if (/[\uD800-\uDBFF]$/.test(s)) s = s.slice(0, -1);   // the bound fell inside a pair: no half of a character
   return s.trim();
 }
 
-/** Is this key a channel's (chat:<name>): no poses, no roster, every line to everyone. */
-export const isChatRoom = (key) => String(key ?? '').startsWith('chat:');
+/** Is this key a channel's: one of CHAT_ROOMS - no poses relayed, no roster, every line to everyone. */
+export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
