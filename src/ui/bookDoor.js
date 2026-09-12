@@ -28,6 +28,11 @@
 // actually shows"), so the reader mounts while the enhanced pack is
 // still on the screen: its canvas sits ABOVE the pack (z-index 14 to
 // the pack's 13) and the pack's close leaves it standing.
+// EB4: the file lands a microtask after the pack said it was done and
+// a frame before the slot drops it, so the hosts take a reader over a
+// DONE occupant (townTalk.overlayDone), and the canvas is raised on
+// the host's first draw - never at construction, where a declined
+// hand-off left it standing over the view with nothing painting it.
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -73,6 +78,7 @@ function enhancedBookOverlay(model) {
   let el = null;
   let view = null;
   let torn = false;
+  let mounted = false;
   let hostCanvas = null;   // the world's canvas, learned from draw(): the relock's target
   let unregister = () => {};
   const teardown = () => {
@@ -92,21 +98,32 @@ function enhancedBookOverlay(model) {
     if (view) view.key('Escape');
     else { if (!model.done) model.input('Escape'); relock(); teardown(); }
   };
-  el = document.createElement('canvas');
-  el.id = 'enhanced-book';
-  // Above the enhanced pack (z 13): the inventory hands over THEN
-  // closes, so for a moment both stand. No wash: the world reads
-  // through, and the canvas takes every pointer so the world does not.
-  el.style.cssText = 'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
-  document.body.append(el);
-  unregister = registerOverlay(exit);
-  import('./enhancedBook.js').then(({ mountEnhancedBook }) => {
-    if (torn) return;
-    view = mountEnhancedBook(el, { model, onExit: teardown, relock });
-  }).catch((e) => {
-    console.warn('[book] the enhanced book could not mount:', e?.message ?? e);
-    exit();
-  });
+  // EB4 (Mac: "tapping use doesn't do anything and then locks me out
+  // of pointerclick in inventory"): THE CANVAS MOUNTS ON THE HOST'S
+  // FIRST DRAW, not on construction. The hook builds this window
+  // before it knows whether the host will take it - showReader can
+  // decline - and a canvas raised at construction stood over the
+  // whole view with nothing painting it, taking every pointer. Now
+  // an overlay the host never draws leaves nothing behind.
+  const mount = () => {
+    if (mounted || torn) return;
+    mounted = true;
+    el = document.createElement('canvas');
+    el.id = 'enhanced-book';
+    // Above the enhanced pack (z 13): the inventory hands over THEN
+    // closes, so for a moment both stand. No wash: the world reads
+    // through, and the canvas takes every pointer so the world does not.
+    el.style.cssText = 'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
+    document.body.append(el);
+    unregister = registerOverlay(exit);
+    import('./enhancedBook.js').then(({ mountEnhancedBook }) => {
+      if (torn) return;
+      view = mountEnhancedBook(el, { model, onExit: teardown, relock });
+    }).catch((e) => {
+      console.warn('[book] the enhanced book could not mount:', e?.message ?? e);
+      exit();
+    });
+  };
   return {
     // THE HOST CONTRACT, in the hosts' own words (ui/pauseDoor.js's
     // shape): the arms the slots dereference, and dispose on
@@ -122,11 +139,13 @@ function enhancedBookOverlay(model) {
     wheel() { /* the canvas has its own wheel */ },
     hover() { /* no canvas hit-test: the book's own */ },
     tick() { /* the clock is paintBook's */ },
-    /** Per frame: the book paints itself against the host's default
-     *  font; the host's canvas is remembered for the relock. */
-    draw(renderer, canvas, font) {
+    /** Per frame: the first draw is the host's acceptance and mounts
+     *  the canvas; after that the book paints itself, and the host's
+     *  canvas is remembered for the relock. */
+    draw(renderer, canvas) {
       hostCanvas = canvas ?? hostCanvas;
-      view?.frame?.(font);
+      if (!mounted) mount();
+      view?.frame?.();
     },
     close: exit,
     dispose: teardown,

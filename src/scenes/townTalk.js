@@ -1283,6 +1283,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));   // AUDIT 64 F37: the same Draw gate as the frame above
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
+    /** EB4: ...and whether the occupant has already said it is DONE -
+     *  closed by its own hand, waiting on the frame that drops it. A
+     *  hand-off that lands in that gap (the pack's book arm: hand
+     *  over, THEN close, and the file lands a microtask later) must
+     *  not be refused as if a live window stood there. */
+    get overlayDone() { return !!overlay?.done; },
     /** AUDIT 64 F35 (review round): ...and the OTHER question the same
      *  stack answers - does what is open blank the HUD? A window is up
      *  (the latch) AND something on this stack cut the previousWindow
