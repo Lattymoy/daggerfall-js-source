@@ -358,6 +358,81 @@ retry, the gate); the doll pass's skip and the name; the host by
 source. Not seen with two real players and the data attached from
 here: Mac's two browsers are the gate.
 
+## CHAT1 (2026-09-12): the live chat
+
+**Mac: "So next for online, I want to add a new UI element. The live
+chat in enhanced format. Players will be able to type and chat live
+with other players. Currently I just want one world tab with the
+ability to add more tabs at a later time."**
+
+- **A channel is a room** (`src/net/wire.js` CHAT ROOMS): a `chat:<name>`
+  key is a channel, not a place. The Room (`server/src/index.js`) keeps
+  the secret and no look there, tells a joiner an empty roster,
+  announces no join and no leave, relays no pose, and hands every chat
+  line to every socket that said hello - the sender included, which is
+  the receipt. The World tab rides `chat:world` (CHAT_WORLD_ROOM); a
+  later tab is a later room. In a PLACE room a chat line reaches
+  whoever a pose would (the range), so a local tab can ride the
+  presence socket when it comes. The wire: `{t:'chat', text}` in,
+  `{t:'chat', id, name, text, at}` out, `at` the relay's clock.
+- **The law**, one home at both ends: `sanitizeChat` (control, format
+  and bidi characters gone, whitespace one, CHAT_MAX 240 and never a
+  bound inside a surrogate pair), the frame after hello only,
+  `chatGate` at CHAT_HZ_MAX (2 a second, the burst the same) with its
+  own bucket and strikes (CHAT_STRIKES_MAX 20, then 'too many lines'
+  and 1008). A channel holds CHAT_SOCKETS_MAX (2048) sockets and runs
+  no hello gate - the cost a hello gate guards (the roster, the join to
+  everyone) a channel never pays.
+- **The session** (`src/net/online.js`, `presence: false`): the hello
+  with no pose, no pose ever out, a `{t:'ping'}` every HEARTBEAT_MS
+  that the runtime's auto-response answers while the object sleeps (a
+  channel of idle players wakes its object for nothing); `sendChat`
+  sanitizes as the relay does and sends nothing for nothing; a line in
+  reaches `onChat` as {id, name, text, at, mine}. One such session per
+  tab, under the presence session's own id, secret, name and look (the
+  relay guards an id by its secret per room, so one identity holds in
+  every room).
+- **The log** (`src/net/chat.js`, pure): CHAT_TABS (the World tab
+  alone), CHAT_KEEP (200) lines a tab, unread unless the panel is open
+  ON that tab, a version the panel repaints on (never per frame), the
+  peek - the last CHAT_PEEK (5) lines younger than CHAT_FADE_MS (20 s),
+  held three quarters then faded - on the log's own clock (B1: one
+  clock, never the rAF's).
+- **The panel** (`src/ui/chatPanel.js`, the enhanced skin's DOM,
+  top-left under the touch layer's corner buttons): closed, the peek
+  over the world and "Enter to chat" (a Chat button with an unread
+  badge on a touch device); open, a tab bar (one button per row of
+  CHAT_TABS, a badge each), the tab's lines with the relay's time, the
+  field. Enter opens and puts the caret in the field; Enter in the
+  field sends on the active tab and closes; an empty Enter and Escape
+  close; a touch Send keeps it open. ONE capture listener on the
+  window: a key typed into the field is stopped there, so the host's
+  ring (`keys.add`) never fills from a chat line - CG2, typing 'w'
+  walks no one - and F5 stays swallowed; the key UP is not stopped, so
+  a key held when the panel opened leaves the ring on release. Enter
+  opens only when no enhanced overlay is up, no other field owns the
+  key, the host is willing (`canOpen`: not paused, no window over the
+  HUD) and the event is the keyboard's own (`isTrusted` - the touch
+  layer's ⏎ synthesizes an Enter for the windows it drives). A press
+  inside the open box is stopped at the box (the host adds every
+  window mousedown to its ring and swings on the left button
+  outdoors). Lines are textContent, never markup.
+- **The host** (`src/scenes/world.js`): `chatStart` from `onlineStart`
+  on the enhanced skin with a document; `chatFrame` ticks every
+  channel and renders the panel - hidden, and closed, under a window
+  over the HUD or the pause, the channel's state said (`chat:
+  connecting`, `chat: reconnecting`, a refusal) - BEFORE the dead
+  return: the dead may still talk. The page's hide leaves every
+  channel and takes the panel down. Classic has no chat yet (Mac: "in
+  enhanced format").
+- **Not done**: no local tab (the presence socket already carries a
+  line as far as a pose; the tab is the next row of CHAT_TABS); no
+  history past the tab's 200 (a reload is a clean log); no mute, block
+  or moderation beyond the rate gate and the sanitizer; a channel's
+  capacity unmeasured past a handful.
+
+Pinned in `test/chat1.test.js` (7) - below.
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -366,8 +441,9 @@ here: Mac's two browsers are the gate.
 - **The look is sent once**, in the hello: gear changed mid-session is
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
-- No chat, no player-versus-player, no shared clock or weather, no
-  shared NPCs or loot: each player's world is their own.
+- **The live chat** ships (CHAT1, above): one World tab. No
+  player-versus-player, no shared clock or weather, no shared NPCs or
+  loot: each player's world is their own.
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -396,3 +472,16 @@ clamped, the others drawn through a fake renderer (the crop, the cache,
 the retry, the eviction, the name under the viewport rect), the
 compositor's door pure by source. Not seen with two real players from
 here - Mac's two browsers are the gate.
+`test/chat1.test.js` (7): the wire's chat law at both ends (the
+sanitizer's controls, bidi and the pair at the bound, the frame after
+hello, the gate's burst and refill), the Room as a channel over fake
+sockets (no roster, join, leave, look or pose; every line to everyone
+with the sender; the secret; the hello gate off; the deeper cap) and a
+line in a place reaching as far as a pose with the gate's own strikes,
+the channel session over a fake socket (no pose, the ping heartbeat,
+sendChat, onChat with mine), the log (the tab, the cap, unread by
+open-and-active, the fade), the panel over a fake document and window
+(the open key and its refusals, the field's keys stopped, F5
+swallowed, send-and-close, Escape, the mouse stopped, hidden under a
+window, text never markup, the touch button), the host by source. Not
+seen with two real players from here either.

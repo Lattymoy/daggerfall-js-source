@@ -39,9 +39,19 @@
 // and the room key (B10: a location's map id, never a slug that could
 // collide or a '-1.x' fallback that pooled the unknown).
 //
+// CHAT1 (2026-09-12, Mac: "the live chat in enhanced format ... one
+// world tab with the ability to add more tabs at a later time"): a
+// session opened with `presence: false` is a CHANNEL's - it says hello
+// with no pose, sends no pose, heartbeats with a ping the relay's
+// runtime answers in its sleep, and carries chat lines both ways:
+// sendChat out, onChat in (net/chat.js keeps them, ui/chatPanel.js
+// shows them). One such session per tab; the World tab's room is
+// CHAT_WORLD_ROOM. The presence session can carry chat too (a place
+// room relays a line as far as a pose) - the local tab, when it comes.
+//
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, worldRoom, inRange, relayUrl } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, sanitizeChat, worldRoom, inRange, relayUrl } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -142,10 +152,12 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  * otherwise); nothing outside passes a time in.
  */
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
     this.name = name;
+    this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
+    this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -162,7 +174,7 @@ export class OnlineSession {
     this._backoff = BACKOFF_MIN_MS;
     this._retryAt = null;
     this._closedByUs = false;
-    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0 };
+    this.stats = { sent: 0, poses: 0, received: 0, reconnects: 0, chats: 0 };
   }
 
   /** Enter a room (leaving the last). The pose is the hello's. */
@@ -200,7 +212,8 @@ export class OnlineSession {
       if (this._ws !== ws) return;
       this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;
       this._lastSent = null; this._lastSentAt = -Infinity;
-      this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this._pose });
+      this._send({ t: 'hello', id: this.id, secret: this.secret, name: this.name, look: this.look, pose: this.presence ? this._pose : null });
+      if (!this.presence) this._lastSentAt = this._now();   // the heartbeat clock starts at the hello
     };
     ws.onmessage = (ev) => { if (this._ws === ws) this._receive(ev.data); };
     ws.onclose = (ev) => {
@@ -238,6 +251,14 @@ export class OnlineSession {
     return true;
   }
 
+  /** A chat line out (CHAT1): sanitized here as the relay sanitizes it, so the two agree; nothing to say sends nothing. */
+  sendChat(text) {
+    const line = sanitizeChat(text);
+    if (!line || !this._send({ t: 'chat', text: line })) return false;
+    this.stats.chats++;
+    return true;
+  }
+
   _receive(data) {
     let m;
     try { m = JSON.parse(data); } catch { return; }
@@ -265,6 +286,11 @@ export class OnlineSession {
       const p = this.peers.get(m.id);
       const pose = p ? validPose(m.p) : null;
       if (p && pose) this._arrive(p, pose, now);
+    } else if (m.t === 'chat') {
+      // CHAT1: checked by the relay's own law (B7) - the id's shape, the name's, the line's; `mine` is the sender's own line back
+      const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+      if (typeof m.id !== 'string' || !text) return;
+      this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id });
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }
@@ -295,6 +321,7 @@ export class OnlineSession {
   tick() {
     const now = this._now();
     if (this._retryAt != null && now >= this._retryAt && !this._ws && !this._closedByUs && !this.terminal && this.room) { this._retryAt = null; this.stats.reconnects++; this._open(); }
+    if (!this.presence && this.status === 'open' && now - this._lastSentAt >= HEARTBEAT_MS && this._send({ t: 'ping' })) this._lastSentAt = now;   // CHAT1: a channel's keepalive, answered without waking the room
     for (const p of this.peers.values()) {
       if (!p.pose) continue;
       const t = (now - p.at) / (1000 / POSE_HZ);

@@ -10,9 +10,11 @@
 //   client -> room:  {t:'hello', id, secret, name, look, pose}   once, first
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
+//                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
 //   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}]}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
+//                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'error', m}                     then the socket closes
 // A pose is {x, y, z, yaw, pitch, mv} in the room's frame - a world
 // cell's in MapsFile world units (the streaming world's map-pixel
@@ -36,6 +38,16 @@
 // RANGE_PIXELS of the sender (interest management: a cell may hold
 // many, a player sees the few around them); every other room is small
 // and hears everything.
+//
+// CHAT ROOMS (CHAT1, 2026-09-12, Mac: "the live chat in enhanced format
+// ... one world tab with the ability to add more tabs at a later
+// time"). A chat:<name> room is a channel, not a place: it keeps no
+// looks and no roster, says no join and no leave, relays no pose, and
+// hands every chat line to every socket that said hello - the sender
+// included, which is how the sender learns the line was taken. The
+// World tab is chat:world; a later tab is a later room. A chat line
+// in a PLACE room reaches whoever a pose would (the range), so a local
+// tab can ride the presence socket when it comes.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -74,6 +86,16 @@ export const POSE_Y_BOUND = 1e5;
 export const CLOSE_REPLACED = 4000;   // another socket said hello with this id and its secret
 export const CLOSE_POLICY = 1008;     // a frame the relay refused; it said why in an error frame first
 export const CLOSE_BUSY = 1013;       // the room is full or its hello gate is shut: try again later
+/** A chat line's bound (UTF-16 units) - CHAT1. */
+export const CHAT_MAX = 240;
+/** The most chat lines a client may send a second; the bucket's burst is the same number. */
+export const CHAT_HZ_MAX = 2;
+/** Over-rate chat lines dropped in a row before the socket is closed. */
+export const CHAT_STRIKES_MAX = 20;
+/** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
+export const CHAT_SOCKETS_MAX = 2048;
+/** The World tab's room: the one chat channel there is. */
+export const CHAT_WORLD_ROOM = 'chat:world';
 
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
@@ -87,6 +109,26 @@ export function sanitizeName(name) {
   s = s.trim().slice(0, NAME_MAX);
   return s || 'Traveller';
 }
+
+/** A chat line the room will relay: control, format and bidi
+ *  characters gone (a line cannot rewrite the line before it, or hide
+ *  in zero width), whitespace collapsed, trimmed, bounded - or '' when
+ *  nothing is left to say. Every other character is a person's own
+ *  (the panel is DOM text: nothing here is markup). */
+export function sanitizeChat(text) {
+  let s = '';
+  for (const ch of String(text ?? '')) {
+    const c = ch.codePointAt(0);
+    if (c < 32 || (c >= 0x7f && c <= 0x9f) || (c >= 0x200b && c <= 0x200f) || (c >= 0x202a && c <= 0x202e) || (c >= 0x2066 && c <= 0x2069) || c === 0xfeff) continue;
+    s += ch;
+  }
+  s = s.replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX);
+  if (/[\uD800-\uDBFF]$/.test(s)) s = s.slice(0, -1);   // the bound fell inside a pair: no half of a character
+  return s.trim();
+}
+
+/** Is this key a channel's (chat:<name>): no poses, no roster, every line to everyone. */
+export const isChatRoom = (key) => String(key ?? '').startsWith('chat:');
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
@@ -154,7 +196,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
@@ -179,6 +221,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     const p = validPose(m.p);
     return p ? { t: 'pose', p } : { error: 'bad pose' };
   }
+  if (m.t === 'chat') {
+    if (!hasHello) return { error: 'chat before hello' };
+    const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+    return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+  }
   return { error: 'unknown message' };
 }
 
@@ -194,6 +241,8 @@ export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
 
 /** The pose rate gate: POSE_HZ_MAX a second. */
 export const poseGate = (bucket, nowMs) => tokenGate(bucket, nowMs, POSE_HZ_MAX);
+/** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
+export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
