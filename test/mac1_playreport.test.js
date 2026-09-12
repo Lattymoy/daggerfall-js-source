@@ -492,7 +492,7 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   for (const [file, text] of OUT) {
     const s = spy();
     const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
-    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:165 a relock`);
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:176 a relock`);
     hooks.relock();
     assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }

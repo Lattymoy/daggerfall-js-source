@@ -47,6 +47,17 @@ function wrapShellStorage(bridge) {
   };
 }
 
+/** ONLINE1 (TABS1, Mac: "even though I load in with a different save,
+ *  it always says the character is open in another window"): THE TAB'S
+ *  OWN storage - what a session keeps for the life of one tab and no
+ *  other. The online id lived in the browser's storage, so two tabs of
+ *  one browser shared it and the second hello replaced the first,
+ *  whatever save each loaded. sessionStorage is per tab, survives a
+ *  reload of that tab, and dies with it. Storage-shaped object or null. */
+export function tabStorage() {
+  try { return globalThis.sessionStorage ?? null; } catch { return null; }
+}
+
 /** The one storage question. Storage-shaped object or null. */
 export function appStorage() {
   try {

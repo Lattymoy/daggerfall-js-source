@@ -93,7 +93,11 @@ reconnects with a backoff that doubles; the relay's own closes - a
 frame refused (1008), replaced by another window (4000) - are terminal,
 and `statusLine()` says which. The welcome merges into the peers
 known. Every frame the relay sends is checked by the wire's law. The
-player's id is minted once and kept through the storage seam. The
+player's id and its secret are minted once per TAB and kept in the
+tab's own storage (`tabStorage`, the seam's; TABS1 - Mac: "even though
+I load in with a different save, it always says the character is open
+in another window": the id lived in the browser's storage, so two tabs
+of one browser were one player). The
 WebSocket class and the clock are handed in, so `test/online.test.js`
 drives it over a fake socket.
 
@@ -131,11 +135,42 @@ with this host's, and one host is one frame.
 **The door.** The front door's rail gains ONLINE on both skins
 (`src/ui/enhancedMenu.js` `paneOnline`): a name for over the head (24
 plain characters, the relay's bound, and the pane says so) and the
-relay to join, on the prefs shelf (`onlineName`, `onlineServer`); the
-most recent save is the character brought in; PLAY ONLINE resolves
-`'online'`, which `src/main.js`'s enhanced branch turns into `?online`
-beside `?load` under F12's set-or-delete law. Saving stays local; the
-relay never sees the save.
+relay to join, on the prefs shelf (`onlineName`, `onlineServer`); every
+restorable save is a card and the one pressed is the character brought
+in (SLOTS1, below); PLAY ONLINE resolves `'online'`, which
+`src/main.js`'s enhanced branch turns into `?online` beside `?load`
+and the picked slot's `?loadkey`, under F12's set-or-delete law.
+Saving stays local; the relay never sees the save.
+
+## SLOTS1 (2026-09-12): the save to bring in
+
+**Mac: "one thing we need to add so I can test myself is multiple save
+slots and then the ability to choose which save to use in online."**
+The slot store was SAV4's (`src/systems/saveSlots.js`: a save is the
+(character, slot name) pair, SaveLoadManager's own identity), and the
+classic save window had the whole list; the enhanced skin drew one
+card - the most recent - and its Save pane wrote QuickSave alone.
+Now:
+
+- `restorableSaves()` is the one walk: every slot this build can
+  restore, most recent first, with its info and snap; the most-recent
+  question is its head.
+- The Load and Online panes draw a card per slot (the slot's name as
+  the tag, the character's line and numbers); the pressed card's key
+  rides the door - the front door's `takePickedSaveKey` into
+  `?loadkey` (the SAV4 boot arm loads it), the pause door's into the
+  host's `loadKey` seam. Delete removes that slot alone.
+- The Save pane (pause) takes a slot name: a name the character
+  already has overwrites it and the card says which, a new name is a
+  new slot; the character's own slots stand below as cards, each an
+  Overwrite. The name rides `takePickedSaveName` into the pause door's
+  `quickSave` arm, which hands it to the host's `saveAs` seam - the
+  two verbs the MAC1 pin reads stay as they are.
+
+Pinned in `test/slots1.test.js` (3): the list executes over a fake
+storage; the seams hand a pick over once; the doors are pinned by
+source. Two browsers, two slots, two names over two heads: Mac's own
+test.
 
 ## AUDIT ONLINE (2026-09-12)
 
@@ -209,12 +244,125 @@ What they found that was real:
   `test/online_relay.test.js` (7, the Room over fake sockets and a fake
   state).
 
+## MWBODY1 (2026-09-12): the others in the Morrowind body
+
+**Mac: "Can we go ahead and knock out the deferred morrowind model."**
+ONLINE1 deferred it because the rig was read as a singleton. It is
+not: `src/combat/fpArm.js` exports one INSTANCE (`fpArm =
+createFpArm()`) of a factory, every mutable the machine owns lives in
+the instance's closure, and what the module keeps at its level (the
+ESM walk, the textures, the face matches, the garment colours, the clip
+reports, the icons)
+is keyed by content and shared by design. So a peer is one more
+`createFpArm()` - `src/net/peerBodies.js`, `PeerBodies`:
+
+- **Built from the look** through the same door the player's own arms
+  take (`buildFpArm`): `peerBuildOpts` maps the look onto the inputs
+  weaponRig's `armBuildOptsOf` maps the entity onto - the race in the
+  ESM's spelling (`mwRaceId`), the female flag, the face, the worn
+  readout (`dfWornEquipment` over the stub's equip table), the right
+  hand. Builds run one at a time; a body that will not build (a race
+  with no body records, a build that threw) is released and the doll
+  stands, retried after `BODY_RETRY_MS`; bodies are capped at
+  `BODIES_MAX` (a build parses meshes for seconds and holds a GPU
+  mesh), and the rest keep the doll.
+- **Fed a camera of its own.** The rig reads a camera callback once a
+  frame (the player's own is world.js's `{ pos, yaw, pitch, sneaking,
+  bob, move }`);
+  a peer's is a stub from the pose - the yaw (eased, so the rig sees a
+  turn every frame), `mv` as the forward move and, at 2, the run (the
+  wire's own bit, the sender's `isRunning`), so the movement slot
+  (MW-D26) picks the walk, the run or the idle, and the ground speed
+  measured off the drawn pose, which sets the clip's rate. The view is
+  switched to third once built (`setViewMode`; a build resets it to
+  first) and the machine stepped by the frame's dt. The pitch is not
+  applied: the body stands level, vanilla's own law.
+- **Drawn by its own `drawThird`** at the peer's feet with its yaw -
+  the same sprite-box pass the player's body takes (MW-D24), right
+  after it, in the exterior pass and in both modal passes
+  (`host.drawPeerBodies`). A peer in a body draws no doll; its name
+  rides the doll pass's own list, at the capsule's head by the race's
+  height scale (MW-D34).
+- **The gate** is the host's: the enhanced skin, the player's own arms
+  switch (MWA1's `mwArms` pref - the layer is on when the arms are)
+  and Morrowind data attached. Off, every body is released and every
+  peer is a doll. The name rides the doll pass's list at the body's own
+
+## AUDIT MWBODY (2026-09-12)
+
+Mac: "Lets do an audit on this." Three opus finders (the rig as a peer
+body, the module and the host, the pins and the record - the last by
+mutation), each refuted against the code and fixed here:
+
+- **A throw was the frame's end (A1).** One peer's rig throwing in
+  `update` or `drawThird` took the game loop down for everyone. Both
+  are guarded now: the body stands down to its doll, the look waited
+  out, the reason said once.
+- **The recenter (B2).** The bodies' feet were placed before the
+  floating origin's step and drawn after it: every peer jumped a tile
+  for one frame at each crossing, the same D5 the dolls had. The feet
+  follow the origin (`offsetAll`).
+- **The run guess (B3/A7).** `RUN_SPEED` sat under the walk speed of
+  any character with SPD past 52; most peers ran while walking. The
+  wire carries the sender's own bit now (`mv` 2).
+- **The flicker (B1/A2/A6).** A peer at the range edge, silent past the
+  timeout, or across a room change left the drawable set and its body
+  was released and rebuilt - seconds of parsing per flicker, a queue
+  that never drained. A body lingers `BODY_LINGER_MS`; a released
+  body's build is skipped before it runs and unloaded when it lands.
+- **The cap (B5/B12).** First come, forever: the first eight peers
+  seen kept their bodies while the one in front of you stood as a
+  doll. The nearest first now, and a far body yields its slot past
+  `SWAP_MARGIN`; the sweep runs before the count.
+- **The range (B6/A3).** Eight rigs posed and re-uploaded every frame
+  for peers two kilometres off: past `BODY_RANGE` the rig sleeps and
+  the doll stands; a body behind the eye is not drawn.
+- **The step (B8).** A snap read as a sprint for half a second: a jump
+  past `JUMP_UNITS` resets the pace.
+- **The turn (A8).** The rig reads turning off the yaw's change frame
+  to frame, and an eased pose stops between arrivals: the turn clip
+  stuttered. The drawn yaw eases toward the pose's (`YAW_EASE`).
+- **The rest.** A build's failure said nothing and was never pruned
+  (B9/A16/A17: kept with its reason, said once, dropped on success);
+  the dead stood in their bodies over the death screen (B7); nothing
+  released the rigs on the page's hide (B11); a body was reported
+  standing on `state` alone while the rig had no clip to draw
+  (B4/A12: `thirdActive` gates it); a data re-attach left the peers in
+  the last generation's bodies (A9); a rejoin with new gear every
+  second rebuilt every second (A11: `BODY_REBUILD_MS`); two builds at
+  once opened every archive twice (B10/A13: the archives once); the
+  posed bounds were walked again per body per frame (A4); a movement
+  note grew per frame (A14); the record's stray sentences (C4-C6,
+  C10, C11, C18-C20).
+- **The pins (C1-C3, C5, C7-C9, C15, C17).** Ten of forty-three
+  mutations survived: the released-while-building guard, the serialized
+  builds, the host's draw hook, four constants pinned against
+  themselves, a fake that could not throw or refuse the third person,
+  a `drawThird` that drew before a step. All killed; the fake rig is
+  shaped like the instance API.
+
+Left as recorded: a peer's weapon stays sheathed and its arrows never
+show (the wire carries no drawn flag and no inventory); strafe and
+backpedal play the forward walk; a body's textures are the instance's
+own (no sharing across peers of one look); the first-person arm is
+built and refused alongside the body it never draws.
+
+Pinned in `test/mwbody1.test.js` (7): the constants once and
+literally; the look's mapping and the stub camera execute; PeerBodies
+over a fake rig factory shaped like the instance API (one rig per peer
+built one at a time, the view, the step, the draw only once stepped,
+the release, the origin's shift, the linger, the skipped and the
+unloaded build, the jump, the range, the nearest-first cap and the
+yield, the refused and the thrown failure with their reasons, the
+retry, the gate); the doll pass's skip and the name; the host by
+source. Not seen with two real players and the data attached from
+here: Mac's two browsers are the gate.
+
 ## What it does not do (yet)
 
-- **The Morrowind body for a peer.** The enhanced third person rides
-  the player's own rig (`src/combat/fpArm.js`: one instance, built from
-  the player's own race and gear), so a peer wears the paperdoll in
-  both skins. The next iteration makes the rig instantiable per body.
+- **The Morrowind body** ships (MWBODY1, above); a client without the
+  Morrowind data, or on the classic skin, sees the paperdoll instead
+  (Mac: acceptable), and so does everyone past `BODIES_MAX` bodies.
 - **The look is sent once**, in the hello: gear changed mid-session is
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
@@ -228,7 +376,7 @@ What they found that was real:
   past a handful of players; interest management filters what is sent,
   not what is iterated.
 - No identity beyond the display name: the id is a random token kept
-  in the browser.
+  in the tab.
 
 ## Pinned
 

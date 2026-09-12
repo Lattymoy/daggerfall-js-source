@@ -166,9 +166,9 @@ const mwNow = () => (typeof performance !== 'undefined' && performance && typeof
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
  *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
- *  vanilla archive), and Daggerfall has no beast race at all - the beast
- *  arm is here because the rule has one, not because a Daggerfall player
- *  can reach it. A skeleton this archive lacks is REPORTED, never
+ *  vanilla archive). Daggerfall's Khajiit and Argonian reach the beast
+ *  arm through the RADT bit (mwRaceId spells them as the ESM does) - a
+ *  peer's body drives it from the wire (MWBODY1). A skeleton this archive lacks is REPORTED, never
  *  silently swapped: a silent fallback here is how an empty view got
  *  called a working one for four releases. */
 export function fpSkeletonPath({ female = false, beast = false } = {}) {
@@ -2390,6 +2390,7 @@ export function createFpArm() {
         if (!pick) {
           resetMovement();
           notes.push(`movement: no source gives "${composed.group}" a start and a stop key`);
+          movementBase = base; movementStance = stance;   // AUDIT MWBODY A14: remembered, or the note is pushed again every frame
           return;
         }
         movementGroup = composed.group;
@@ -3421,13 +3422,19 @@ export function createFpArm() {
       // MW axes and mapped: MW z is world up, MW x/y are the horizontal
       // pair. The azimuth-safe half-width holds under yaw for free,
       // exactly as the voxel rigs' does.
-      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-      for (const r of armPieceRows(t.arm.pieces)) {
-        const b = r.bounds;
-        if (!b) continue;
-        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
-        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
-        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+      // AUDIT MWBODY A4: the POSED assembly's own bounds (poseAssembly sets
+      // them every step) - the per-piece table walked every vertex again
+      // per frame, and per body once the peers stood in the same pass.
+      let { minX, minY, minZ, maxX, maxY, maxZ } = t.arm.bounds ?? {};
+      if (!(maxX > minX)) {
+        minX = Infinity; minY = Infinity; minZ = Infinity; maxX = -Infinity; maxY = -Infinity; maxZ = -Infinity;
+        for (const r of armPieceRows(t.arm.pieces)) {
+          const b = r.bounds;
+          if (!b) continue;
+          if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+          if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+          if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+        }
       }
       if (!(maxX > minX)) return false;
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;

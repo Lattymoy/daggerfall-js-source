@@ -614,8 +614,17 @@ export const hasStoredMorrowind = async () =>
 
 /** Every stored .bsa opened, in override order: expansions and mods
  *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
+let _mwArchivesInflight = null;   // MWBODY1 (AUDIT MWBODY B10): two builds at once - a peer's beside the player's - open every archive once, not twice
 export async function loadMorrowindArchives() {
   if (_mwArchiveCache && _mwArchiveCache.gen === _mwGeneration) return _mwArchiveCache.archives;
+  if (_mwArchivesInflight && _mwArchivesInflight.gen === _mwGeneration) return _mwArchivesInflight.promise;
+  const gen = _mwGeneration;
+  const promise = _openMorrowindArchives().finally(() => { if (_mwArchivesInflight && _mwArchivesInflight.gen === gen) _mwArchivesInflight = null; });
+  _mwArchivesInflight = { gen, promise };
+  return promise;
+}
+
+async function _openMorrowindArchives() {
   const { MwBsaFile } = await import('../formats/mwBsaFile.js');
   const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
   const rank = (n) => {
@@ -906,7 +915,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:1746), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:1820), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */

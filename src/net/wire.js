@@ -17,7 +17,8 @@
 // A pose is {x, y, z, yaw, pitch, mv} in the room's frame - a world
 // cell's in MapsFile world units (the streaming world's map-pixel
 // origin, PIXEL_UNITS a pixel), every other room's in the scene's own -
-// mv 1 when moving. A look is the paperdoll's recipe: race, gender,
+// mv 1 when walking, 2 when running (the sender's own isRunning - AUDIT
+// MWBODY B3: a speed guess sat under every walk). A look is the paperdoll's recipe: race, gender,
 // face, and the equipped items projected onto the six fields the doll
 // art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
 // by construction and never a stranger's junk rebroadcast).
@@ -93,7 +94,7 @@ export function validPose(p) {
   const { x, y, z, yaw, pitch, mv } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
-  return { x, y, z, yaw, pitch, mv: mv ? 1 : 0 };
+  return { x, y, z, yaw, pitch, mv: mv === 2 ? 2 : mv ? 1 : 0 };
 }
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */
