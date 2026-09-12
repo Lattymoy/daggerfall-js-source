@@ -12606,3 +12606,69 @@ four alike, no item lost, none doubled, the worn one on neither
 its count and dims an empty page in its place, so the spine never
 shuffles under the hand; the page follows what just arrived from a
 pile; on the phone dock the pages sit three by three.
+
+## HM1 - THE HELM'S BLACK BOX (2026-09-12)
+
+Mac: "one pre existing issue is that I noticed some armor (mostly
+helmets) have a black background (paperdoll not morrowind)."
+
+**The cause is one palette index.** 0xFF is Daggerfall's MASK: the
+halo the artists painted around a helm, a hood, a cloak's edge, so the
+hair and the head are ERASED where the item sits rather than drawn
+through it. DFU knows it in three places, and the port had ported the
+first and stepped past the other two:
+
+1. `ImageProcessing.ChangeMask` - index 0xFF becomes index 0, on a
+   clone. The port's comment on `blit` said "masks removed" and the
+   blit did skip 0xFF, so the DOLL never drew a black box.
+2. `ItemHelper.GetInventoryImage` asks `GetItemImage(item, removeMask:
+   true)` - "Removes mask index (e.g. around helmets) from final
+   image" - so an ICON never carries it. The port's two icon
+   rasterizers cut out index 0 alone: `ui/bitmapCanvas.js` (the DOM
+   `<img>` the enhanced pack's tiles and cards wear when no Morrowind
+   mesh stands in - "paperdoll not morrowind" is exactly that arm) and
+   `scenes/dataPipeline.js`'s uploadRecord under the classic pack's
+   two drawers. Both drew 0xFF as ART_PAL's 255 - black - around the
+   helm, on every helmet whose art carries the halo and on the few
+   other pieces that do.
+3. `PaperDollRenderer.cs:435` strips it for the doll too, THEN draws
+   every item layer through `DaggerfallPaperDoll.shader`, whose second
+   pass reads the mask texture `ImageReader.UpdateMaskTexture` built
+   from the un-stripped bitmap: "Mask texture should use alpha 0 for
+   non-masked areas and alpha 1 for masked areas ... everything else
+   is cleared to expose background". The character layer is a panel
+   OVER the SCBG background panel (`PaperDoll.cs` RefreshBackground),
+   so a masked pixel shows the BACKGROUND. The port skipped it, so the
+   hair stood up through a helm - not the box Mac saw, but the same
+   index read wrong a third way.
+
+**The fix, three arms and one function.** `changeMask(bitmap,
+replaceWith = 0)` lives beside `getColor32` in
+`src/formats/baseImageFile.js`, the C#'s shape: a clone, never the
+cached record's own data, because the doll still reads the mask from
+that record. `requestIcon` rasterizes the stripped clone.
+`uploadRecord` grows `removeMask` and the two classic drawers pass it
+with `mips: false` - the option rides the same `#ui` variant key,
+since the item icons are the only art that asks for either, and the
+world-art law (index 0 the one cutout, a mesh opaque) is untouched.
+On the doll `blit` takes `under`, the background the compose started
+from (a copy of `out` after the SCBG subrect and before the first
+layer), and writes it at a mask pixel on every ITEM layer - the cloak
+interiors and the drawOrder walk, the layers DFU passes an item to
+DrawTexture for - while the body and head layers, which DFU draws
+with no shader, keep skipping it as they did. GetEquipIndex is
+unchanged: DFU samples the STRIPPED texture's alpha, so a mask pixel
+was never a hit, and `slotAtPaperDoll` already said so.
+
+**Pinned (test/helmMask.test.js).** changeMask on a clone with the
+C#'s `replaceWith` and its empty answer; the DOM icon and both
+classic drawers ask for the stripped art; uploadRecord through the
+production pipeline over a hand-built archive uploads the two mask
+pixels as cutouts with `removeMask` and opaque without, the cached
+record untouched; and a headless doll - SCBG, BODY and FACE as real
+IMG/CIF bytes, the helm through a fake archive - proves a mask pixel
+shows the background, an index-0 corner the head, the helm its own
+colour, the body below, every pixel opaque. Not pinned against ARENA2
+here (no data in this sandbox); the real-record compose in
+test/equipmechanics.test.js still runs under ARENA2_PATH and does not read
+the mask ring, so it stands.

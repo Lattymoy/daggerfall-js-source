@@ -4,7 +4,7 @@
 // interiors and dungeons reference meshes outside the host's own set.
 // Caches are per-scene and never destroyed (the world's contract).
 
-import { TextureFile } from '../formats/textureFile.js';
+import { TextureFile } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
@@ -68,7 +68,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-  const uploadRecord = (archive, record, { opaque = false, mips } = {}) => {   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain)
+  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false } = {}) => {   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -100,7 +100,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // palette index 0 transparent. This one door served both, so every
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
-    const color32 = swap ?? t.getColor32(bitmap, opaque ? -1 : 0);
+    const color32 = swap ?? t.getColor32(removeMask ? changeMask(bitmap) : bitmap, opaque ? -1 : 0);   // HM1: a clone - the cached record keeps its mask for the doll
     renderer.uploadTexture(archive, record, color32, { opaque, mips });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).

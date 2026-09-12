@@ -155,7 +155,7 @@ async function seasonsBundle() {
 // AUDIT 62 F26: rows reversed - a top-down RGBA raster (what a PNG
 // decodes to, and what `decodeTexture2D` hands back) in the port's
 // COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
-// `BaseImageFile.getColor32` produces (baseImageFile.js:123,
+// `BaseImageFile.getColor32` produces (baseImageFile.js:143,
 // BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
 // as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:1831).
 // In DFU the mod's asset is a Unity Texture2D, whose pixels are
