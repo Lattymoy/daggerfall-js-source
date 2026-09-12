@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
 const applyWorldSrc = () => {
-  const i = dc.indexOf('function applyWorld(w)');
+  const i = dc.indexOf('function applyWorld(w, { truncate = true } = {})');
   assert.ok(i > 0, 'applyWorld exists');
   // ...to the end of the function; the action-object half moved to
   // ActionSystem.restoreSaveData (save-load-11), so anchor on the

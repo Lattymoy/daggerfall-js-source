@@ -115,7 +115,7 @@ function fakeRoom(key) {
     acceptWebSocket: (ws) => sockets.push(ws),
     storage: {
       async get(k) { return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, store.get(x)])) : store.get(k); },
-      async put(k, v) { store.set(k, v); }, async delete(k) { for (const x of Array.isArray(k) ? k : [k]) store.delete(x); }, async deleteAll() { store.clear(); },
+      async put(k, v) { if (k && typeof k === 'object') { for (const [kk, vv] of Object.entries(k)) store.set(kk, vv); } else store.set(k, v); }, async delete(k) { for (const x of Array.isArray(k) ? k : [k]) store.delete(x); }, async deleteAll() { store.clear(); }, async list({ prefix = '' } = {}) { return new Map([...store].filter(([k]) => k.startsWith(prefix))); },
     },
   };
   const room = new Room(state);
@@ -648,7 +648,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /status: link\?\.statusLine\('chat'\) \?\? null,/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
   assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
-  assert.match(w, /'pagehide', \(\) => \{ online\?\.leave\(\); for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\); peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel');
+  assert.match(w, /'pagehide', \(\) => \{ worldPublish\(performance\.now\(\), true\); online\?\.leave\(\); for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\); peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel');
   assert.doesNotMatch(w, /chatPanel\?\.destroy\(\)/, 'AUDIT CHAT B4: and keeps the panel - a page restored from the cache gets its chat back');
   // CG2 rests on the host listening in the BUBBLE phase (AUDIT CHAT D2): a capture listener beside the panel's would fill the ring
   assert.match(w, /\n  addEventListener\('keydown', \(e\) => \{/, 'the host\'s window keydown listener');

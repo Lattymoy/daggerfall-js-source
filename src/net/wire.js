@@ -11,10 +11,12 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}]}
+//                    {t:'world', data}                  the room's memory, from its host alone (WORLD1)
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world}
 //                    {t:'join', id, name, look, pose}   {t:'leave', id}
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
+//                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'error', m}                     then the socket closes
 // A pose is {x, y, z, yaw, pitch, mv, wd, an, as} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
@@ -65,6 +67,20 @@
 // the only word of it. A chat line in a PLACE room reaches whoever a
 // pose would, and the sender besides, so a local tab can ride the
 // presence socket when it comes.
+//
+// THE ROOM'S MEMORY (WORLD1, 2026-09-12, Mac: "The world is the server
+// and every player should inhabit that world while also being able to
+// continue their progress ... True persistence"). A WORLD ROOM - a
+// dungeon, today - keeps a snapshot of its world in the object's own
+// storage: the foes the layout placed and how they stand, the piles,
+// the dropped loot, the actions and the door locks. The room's HOST
+// publishes it (the hello'd socket that has been in the room longest;
+// the relay says who in the welcome and in a host frame when it
+// changes) and a joiner is handed it in the welcome, so a dungeon one
+// player cleared is cleared for the next, and stays so through an empty
+// room. The relay reads none of it: a world frame is an object of
+// bounded size from the host, stored as it came, served as it came.
+// A frame from anyone else is ignored, not refused - a handover races.
 
 /** The streaming world's shard: a square of map pixels. */
 export const WORLD_CELL = 16;
@@ -121,6 +137,14 @@ export const CHAT_HELLO_HZ_MAX = 50;
 export const CHAT_ROOM_HZ_MAX = 20;
 /** The World tab's room: the one chat channel there is. */
 export const CHAT_WORLD_ROOM = 'chat:world';
+/** The largest world frame the room stores (UTF-16 units) - WORLD1; anything else keeps MAX_FRAME_BYTES. */
+export const WORLD_FRAME_MAX = 512 * 1024;
+/** The least time between two of one host's world frames, ms; a sooner one is dropped. */
+export const WORLD_MIN_MS = 5000;
+/** The room's storage chunk for a world (a Durable Object value is capped at 128 KiB). */
+export const WORLD_CHUNK = 96 * 1024;
+/** How a world frame begins on the wire - the one frame admitted past MAX_FRAME_BYTES, told before any parse. */
+export const WORLD_PREFIX = '{"t":"world"';
 /** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
 export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
 
@@ -167,6 +191,10 @@ export function sanitizeChat(text) {
 
 /** Is this key a channel's: one of CHAT_ROOMS - no poses relayed, no roster, every line to everyone. */
 export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
+
+/** Does this room keep a world (WORLD1): a dungeon's, today - the one place whose world is one self-contained
+ *  snapshot with a restore arm at both hosts; towns, cells and buildings are the next rooms. */
+export const isWorldRoom = (key) => String(key ?? '').startsWith('dungeon:');
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
@@ -239,14 +267,21 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
-  if (text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  // WORLD1: the one frame past MAX_FRAME_BYTES is a world frame, told by its prefix before any parse (the client
+  // mints it with t first) and capped at WORLD_FRAME_MAX; everything else keeps the small cap, refused unparsed
+  if (text.length > MAX_FRAME_BYTES && !(text.length <= WORLD_FRAME_MAX && text.startsWith(WORLD_PREFIX))) return { error: 'frame too large' };
   let m;
   try { m = JSON.parse(text); } catch { return { error: 'not JSON' }; }
   if (!m || typeof m !== 'object') return { error: 'not an object' };
+  if (m.t === 'world') {   // the room's memory, an object from a hello'd socket
+    if (!hasHello) return { error: 'world before hello' };
+    if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
+    return { t: 'world', data: m.data };
+  }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
     if (hasHello) return { error: 'hello twice' };

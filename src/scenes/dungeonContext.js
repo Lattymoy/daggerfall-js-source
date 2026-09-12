@@ -2316,7 +2316,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:898 against :917; worldModes.js:5777 against :5781).
+    // (dungeon.js:898 against :917; worldModes.js:5778 against :5781).
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2782,8 +2782,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:8410,
-              // exterior.js:4200 and worldModes.js:5904 already ran;
+              // playerArrowHitFoe is the one copy world.js:8428,
+              // exterior.js:4200 and worldModes.js:5905 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3030,7 +3030,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       teleportedIntoDungeon: !!playerEntity.playerTeleportedIntoDungeon,
     };
   }
-  function applyWorld(w) {
+  function applyWorld(w, { truncate = true } = {}) {
     // SL-3 (AUDIT 65): THE PICKPOCKET LATCH DIES WITH THE POOL - which
     // in this host means it has to be lowered by hand. DFU's load
     // REBUILDS the enemy set: SerializableStateManager.cs:404-425
@@ -3118,7 +3118,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // by hand. Without this a backward load kept the wave alive AND
     // let the rewound CreateFoe counter (quest/actions.js saveShape)
     // mint it a second time.
-    for (let i = foes.length - 1; i >= (w.foes?.length ?? 0); i--) {
+    // WORLD1: the room's memory carries the layout's foes alone, so a shared restore leaves the pool past its
+    // count standing - those are the quest owner's own foes; a save's restore still cuts to its record
+    for (let i = foes.length - 1; truncate && i >= (w.foes?.length ?? 0); i--) {
       const f = foes[i];
       if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
       if (f.corpseBatch) {
@@ -4842,6 +4844,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay instanceof DeathScreen || activeOverlay === chargenWindow) activeOverlay = null;
       hudText.add('Game loaded.');
     },
+    /** WORLD1 (Mac: "True persistence"): this dungeon's SHARED world for the room's memory - the layout's foes
+     *  (the leading run, before any quest foe: a quest's foes are the quest owner's alone, and the pool is
+     *  patched by index), the piles, the dropped loot and the actions; nothing of the player's own (the
+     *  teleported-in latch stays home). Keyed by this dungeon, so another dungeon's memory is refused. */
+    sharedWorld() {
+      const w = collectWorld();
+      const n = foes.findIndex((f) => f.isQuestFoe);
+      if (n >= 0) w.foes = w.foes.slice(0, n);
+      delete w.teleportedIntoDungeon;
+      return { locationKey: _locationKey, world: w };
+    },
+    /** WORLD1: the room's memory applied - the layout's foes patched in place and the quest foes past them left
+     *  standing (applyWorld without its cut), the piles, the loot and the actions as the room remembers them. */
+    restoreSharedWorld(shared) {
+      if (!shared || shared.locationKey !== _locationKey || !shared.world || typeof shared.world !== 'object') return false;
+      applyWorld(shared.world, { truncate: false });
+      return true;
+    },
+    locationKey: () => _locationKey,
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     // ROAD-B B1 asked the DEPTH here, for the same reason worldModes'

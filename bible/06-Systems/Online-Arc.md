@@ -47,8 +47,9 @@ object's storage under the id (an attachment is bounded - 16 KiB in
 the runtime that ships, 2 KiB in the docs - and a hello that overflowed
 it threw); a socket replaced by a reconnect with
 its own id loses the id before it closes, so no leave is broadcast for
-an id that lives on. It stores nothing past the connection: an empty
-room forgets every look. Deployed at
+an id that lives on. It stored nothing past the connection until
+WORLD1 (below): an empty room forgets every look and secret, and
+keeps its world. Deployed at
 `wss://daggerfall-online.mackcothran.workers.dev` (`npx wrangler
 deploy` in `server/`, the token in the environment, never in the
 tree; wrangler bundles the law from `src/net/wire.js`, so the relay
@@ -666,6 +667,94 @@ once per change and never without a weapon, the stance, the cast once
 per count); the rig and the host by source. Not seen with two real
 players from here - Mac's two browsers are the gate.
 
+## WORLD1 (2026-09-12): the room's memory
+
+**Mac: "So now that this is situated its now important that we bring
+the world in line for anyone online. Currently theres a lot
+disconnected like enemies, doors, etc. The world is the server and
+every player should inhabit that world while also being able to
+continue their progress. When it comes to time limits on quest, I
+think these should be naturally disabled while online. True
+persistance."** Then: "Begin. Take your time."
+
+The plan, five slices: (1) the room's memory - a place's world kept
+by the relay and handed to whoever comes next; (2) the authority's
+handover - one live simulation per room, passed on when its host
+leaves; (3) the live world as events - a blow, a door, a lever sent as
+it happens, so two players in one room fight one foe; (4) loot; (5)
+the shared clock and weather, and the quest clocks stood down online.
+Slice 1 ships here; a dungeon is its first room (the one place whose
+world is one self-contained snapshot with a restore arm at both hosts
+- MAC6's `collectWorld`/`applyWorld`); towns, cells and buildings are
+the next rooms.
+
+- **The host** (`src/net/wire.js`, `server/src/index.js`): every place
+  room has one - the hello'd socket that has been in the room longest
+  (the hello's `since` stamp on the attachment, ties by id; nothing on
+  the instance, so a wake changes no host) - and the relay says who:
+  `host` rides every welcome, and a `{t:'host', id}` frame goes to
+  everyone when the host leaves (the next-longest) or, on the
+  same-millisecond tie the smaller id wins, when a joiner leads. The
+  session (`src/net/online.js`) keeps `host`, answers `isHost()`, and
+  calls `onHost(id, mine)` on a change alone.
+- **The memory** (`server/src/index.js`): in a WORLD ROOM
+  (`isWorldRoom` - a `dungeon:` key, today) the host publishes
+  `{t:'world', data}` - the one frame admitted past `MAX_FRAME_BYTES`,
+  told by its prefix before any parse and capped at `WORLD_FRAME_MAX`
+  (512 KiB of UTF-16), an object from a hello'd socket - and the room
+  stores it AS IT CAME, never parsed there: the JSON in `WORLD_CHUNK`
+  (96 KiB) pieces under `world:<i>` with `world:meta` {chunks, size,
+  at, by}, a smaller world deleting its stale tail. A frame from
+  anyone but the host, a second one within `WORLD_MIN_MS` (5 s) of the
+  same socket's last (the stamp on the attachment, wake-proof), or one
+  into a room that keeps no world is IGNORED, not refused - a handover
+  races, and a late host's frame is not an offence. The next welcome
+  carries the memory raw (`"world":<the stored JSON>`), and the sweeps
+  - the empty hello's, the drain's - now forget looks, secrets and the
+  hello bucket by prefix (`_sweep`, `storage.list`) and never the
+  world: the memory outlives an empty room, which is the point.
+- **The dungeon host** (`src/scenes/dungeonContext.js`):
+  `sharedWorld()` is `collectWorld()` with the layout's foes alone
+  (the leading run before the first `isQuestFoe` - a quest's foes are
+  the quest owner's, and quests stay separate: Multiplayer.md's first
+  lock), nothing of the player's own (no `teleportedIntoDungeon`),
+  keyed by the dungeon's `locationKey`; `restoreSharedWorld(shared)`
+  refuses another dungeon's memory and applies with `truncate: false`
+  - `applyWorld`'s cut past the record's length is the save's alone
+  (a save holds the whole pool), so a memory from a player without
+  this quest leaves this player's quest foes standing.
+- **The world host** (`src/scenes/world.js`): `onWorld` (the welcome's
+  memory) lands on the standing dungeon through the mode machine's
+  `restoreDungeonSharedWorld`; `worldPublish(now, force)` sends the
+  host's snapshot every `WORLD_PUBLISH_MS` (15 s) while it hosts and
+  the socket is open, and at once - forced - when the dungeon is left
+  (`onDungeonLeave`, fired by `exitDungeonNow` and the load-or-teleport
+  teardown BEFORE the quest flats come down), on the death screen and
+  on the page's hide; a new host publishes at once. The client keeps
+  the cap too (`sendWorld` refuses a frame past `WORLD_FRAME_MAX`
+  rather than earn the relay's terminal close).
+
+Not done: the live moment. Two players in one dungeon still each run
+their own foes - the memory is a snapshot, so a foe killed between
+two publishes by a host that vanished comes back, and a joiner's foes
+are the host's as of the last publish, not as of now (slice 3's
+events). The shape of a day is `WORLD_PUBLISH_MS`: a save's world
+published every fifteen seconds and on every farewell.
+
+Pinned in `test/world1.test.js` (4): the wire's world frame at both
+ends (after hello, an object, past the small cap by its prefix alone,
+never past the large one; the world rooms; the constants one home);
+the Room over fake sockets and a fake state (the host in the welcome
+and the host frame on a leave alone, across a wake; the memory chunked
+with its meta, republished smaller with no tail, served verbatim; a
+non-host's, a too-soon and a town's frame ignored; the sweeps
+forgetting looks, secrets and the bucket and keeping the world; a
+channel's welcome unchanged); the session (host, isHost, onHost on a
+change, onWorld on a memory, sendWorld the host's and under the cap,
+the host forgotten on leave); the three hosts by source. Seen live:
+a host's publish into a `dungeon:` room and a second socket's welcome
+carrying `host` and `world` whole (122 KB, two chunks), the host handed over on a leave and the memory outliving an empty room, after the relay's redeploy (397de224).
+
 ## What it does not do (yet)
 
 - **The Morrowind body** ships (MWBODY1, above); a client without the
@@ -674,9 +763,14 @@ players from here - Mac's two browsers are the gate.
 - **The look is sent once**, in the hello: gear changed mid-session is
   not seen by the peers until the next room (a `look` frame is the
   next iteration's).
-- **The live chat** ships (CHAT1, above): one World tab. No
-  player-versus-player, no shared clock or weather, no shared NPCs or
-  loot: each player's world is their own.
+- **The live chat** ships (CHAT1, above): one World tab.
+- **The room's memory** (WORLD1, above) is a dungeon's alone and a
+  snapshot: the live simulation is still each player's own - two
+  players in one dungeon each fight their own copy of a foe until the
+  blows travel as events (slice 3), and a foe killed between two
+  publishes by a host that vanished comes back. Towns, cells and
+  buildings keep nothing yet; no shared clock or weather (slice 5);
+  the quest clocks still run online; no player-versus-player.
 - A peer across a world-cell border is not seen until both stand in
   the same cell (D9: two players a pixel apart astride a cell edge are
   in two rooms; the cell is sixteen pixels, the range three, so the
@@ -738,6 +832,11 @@ the cast ranges against spellcast's TargetTypes, a pose from before
 them sheathed, unswung, unarrowed and uncast), the session's change
 and easing, the body over a fake rig with every door recorded, the
 rig's two counters and the host's pose by source.
+`test/world1.test.js` (4): the wire's world frame at both ends and
+the world rooms, the Room's host election and memory over fake
+sockets across a wake (chunked, republished smaller, served verbatim,
+the ignored frames, the sweeps that keep it), the session's host and
+sendWorld, the three hosts by source.
 
 ## OD1 - THE PEER DOLL GOES UP BOTTOM-UP (2026-09-12, Mac's report)
 

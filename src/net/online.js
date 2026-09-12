@@ -55,9 +55,16 @@
 // session that never changes rooms (A6/B6) or was left by the page's
 // goodbye (B4); statusLine takes its label (B5).
 //
+// WORLD1 (2026-09-12, Mac: "The world is the server ... True
+// persistence"): the room's HOST - the relay's word, in the welcome
+// and in a host frame - and the room's MEMORY: a welcome may carry
+// the world the room keeps (onWorld), and the host publishes its own
+// through sendWorld (the host of a world room alone; the relay ignores
+// the rest). WORLD_PUBLISH_MS is how often.
+//
 // Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row.
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
-import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl } from './wire.js';
+import { WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl } from './wire.js';
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -73,6 +80,8 @@ export const PEER_TIMEOUT_MS = 20000;
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
+/** How often a world room's host publishes the room's memory (WORLD1); the relay drops one sooner than WORLD_MIN_MS. */
+export const WORLD_PUBLISH_MS = 15000;
 /** A pose farther than this from the drawn one is a teleport: the peer snaps rather than sweeps (world frame / scene frame). */
 export const SNAP_WORLD_UNITS = PIXEL_UNITS / 8;
 export const SNAP_SCENE_UNITS = 30;
@@ -168,6 +177,9 @@ export class OnlineSession {
     this.name = name;
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
+    this.host = null;             // WORLD1: the room's host, the relay's word; null until the welcome
+    this.onHost = null;           // (id, mine) => void: the host changed
+    this.onWorld = null;          // (world) => void: the welcome carried the room's memory
     this.look = look ?? { race: 'Breton', gender: 'male', faceIndex: 0, items: [] };
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
@@ -210,7 +222,28 @@ export class OnlineSession {
     this._retryAt = null;
     this.room = null;
     this.peers.clear();
+    this.host = null;
     this.status = 'closed';
+  }
+
+  /** Am I the room's host (WORLD1)? False until the welcome says so. */
+  isHost() { return !!this.id && this.host === this.id; }
+
+  /** The room's memory out (WORLD1): the host's alone - the relay ignores anyone else's - and never a frame past
+   *  WORLD_FRAME_MAX, which the relay would refuse with a terminal close. False when nothing went. */
+  sendWorld(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+    if (!this.isHost() || !this._ws || this.status !== 'open') return false;
+    const s = JSON.stringify({ t: 'world', data });
+    if (s.length > WORLD_FRAME_MAX) return false;
+    try { this._ws.send(s); this.stats.sent++; this.stats.worlds = (this.stats.worlds ?? 0) + 1; return true; } catch { return false; }
+  }
+
+  _setHost(id) {
+    const host = typeof id === 'string' ? id : null;
+    if (host === this.host) return;
+    this.host = host;
+    this.onHost?.(host, this.isHost());
   }
 
   _open() {
@@ -305,6 +338,10 @@ export class OnlineSession {
         if (have) this._refresh(have, p, now); else this.peers.set(p.id, this._peer(p, now));
       }
       for (const id of [...this.peers.keys()]) if (!keep.has(id)) this.peers.delete(id);
+      this._setHost(m.host);   // WORLD1: the room's host, and the room's memory when it keeps one
+      if (m.world && typeof m.world === 'object' && !Array.isArray(m.world)) this.onWorld?.(m.world);
+    } else if (m.t === 'host') {
+      this._setHost(m.id);
     } else if (m.t === 'join') {
       if (typeof m.id === 'string' && m.id !== this.id) {
         const have = this.peers.get(m.id);

@@ -100,7 +100,7 @@ test('AUDIT 39 #38: the dungeon pause doors call THIS host\'s builders, not memb
 // held the spliced-out record for ever.
 
 test('AUDIT 39 #40: the post-save foe cull runs dropCandidate, like every other removal', () => {
-  const at = DC.indexOf('for (let i = foes.length - 1; i >= (w.foes?.length ?? 0); i--) {');
+  const at = DC.indexOf('for (let i = foes.length - 1; truncate && i >= (w.foes?.length ?? 0); i--) {');
   assert.ok(at > 0, 'the restore cull is where the doc says it is');
   const loop = DC.slice(at, DC.indexOf('foes.splice(i, 1);', at) + 20);
   assert.match(loop, /f\.dead = true;/);

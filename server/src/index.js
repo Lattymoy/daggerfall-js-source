@@ -42,7 +42,19 @@
 // declines to relay it, so ungated ingress is not a channel's privilege
 // (A3); a room that drains sweeps its own storage on the way out, since
 // a channel never empties on the way in (A7).
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
+//
+// WORLD1 (2026-09-12): THE ROOM'S MEMORY. A world room (relay.js
+// isWorldRoom - a dungeon) keeps its world in storage under world:meta
+// and world:<n> chunks, published by the room's HOST - the hello'd
+// socket in the room longest (its hello's stamp rides the attachment,
+// so a wake recomputes it) - at most one frame in WORLD_MIN_MS, from
+// anyone else ignored. A joiner's welcome carries the stored world as
+// it came (spliced in raw: the relay parses no world twice) and the
+// host's id; a host change is a host frame to everyone. The sweeps
+// that forget a room's looks and secrets (the empty hello, the drain)
+// forget those and the hello bucket ALONE now - the world outlives an
+// empty room, which is the whole point of it.
+import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, isChatRoom, isWorldRoom, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY } from './relay.js';
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
@@ -60,6 +72,8 @@ export default {
 
 const lookKey = (id) => `look:${id}`;
 const secretKey = (id) => `secret:${id}`;
+const WORLD_META = 'world:meta';
+const worldChunkKey = (i) => `world:${i}`;
 
 export class Room {
   constructor(state) {
@@ -113,6 +127,44 @@ export class Room {
     try { ws.close(code, m); } catch { /* already closed */ }
   }
 
+  /** WORLD1: the room's host - the hello'd socket in the room longest (the earliest hello stamp; ties by id), or null. */
+  _hostOf(except = null) {
+    let best = null;
+    for (const [ws, a] of this._all()) {
+      if (ws === except || !a.id) continue;
+      if (!best || (a.since ?? 0) < (best.since ?? 0) || ((a.since ?? 0) === (best.since ?? 0) && a.id < best.id)) best = a;
+    }
+    return best?.id ?? null;
+  }
+  /** Does this hello'd attachment lead every other (but except's) - is it the room's host? */
+  _leads(a, except = null) {
+    for (const [ws, b] of this._all()) if (ws !== except && b.id && b.id !== a.id && ((b.since ?? 0) < (a.since ?? 0) || ((b.since ?? 0) === (a.since ?? 0) && b.id < a.id))) return false;
+    return true;
+  }
+  /** The host frame, the host counted without skip, to everyone but skip. Nothing on the instance: a wake changes no host. */
+  _sayHost(skip = null) {
+    const host = this._hostOf(skip);
+    if (!host) return;
+    const out = JSON.stringify({ t: 'host', id: host });
+    for (const [other, b] of [...this._all()]) if (other !== skip && b.id) this._send(other, out);
+  }
+  /** The stored world, raw (the JSON the host sent, chunked back together), or null. */
+  async _worldRaw() {
+    const meta = await this.state.storage.get(WORLD_META);
+    if (!meta || !(meta.chunks > 0)) return null;
+    const keys = Array.from({ length: meta.chunks }, (_, i) => worldChunkKey(i));
+    const parts = await this.state.storage.get(keys);
+    let raw = '';
+    for (const k of keys) { const c = parts.get(k); if (typeof c !== 'string') return null; raw += c; }
+    return raw;
+  }
+  /** The room forgets its looks and secrets (and its hello bucket) - never its world (WORLD1). */
+  async _sweep() {
+    const dead = ['hellos'];
+    for (const prefix of ['look:', 'secret:']) { const m = await this.state.storage.list({ prefix }); for (const k of m.keys()) dead.push(k); }
+    for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
+  }
+
   async webSocketMessage(ws, message) {
     const a = this._attach(ws);
     const m = parseClient(message, { hasHello: !!a.id });
@@ -136,16 +188,38 @@ export class Room {
       }
       const others = [];
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
-      if (!others.length) { await this.state.storage.deleteAll(); await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
+      if (!others.length) { await this._sweep(); await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) await this.state.storage.put(lookKey(m.id), m.look);   // a channel keeps no look: nobody is drawn from it
-      if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose })) { this._refuse(ws, 'hello too large'); return; }
+      if (!this._setAttach(ws, { ...a, id: m.id, name: m.name, pose: chat ? null : m.pose, since: now })) { this._refuse(ws, 'hello too large'); return; }
       if (chat) { this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: [] })); return; }   // told no one, announced to no one: a channel has no roster
       const looks = others.length ? await this.state.storage.get(others.map((b) => lookKey(b.id))) : new Map();
       const roster = rosterFor(others.map((b) => ({ ...b, look: looks.get(lookKey(b.id)) ?? null })), m.id, m.pose);
-      if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: roster }))) return;
+      // WORLD1: the host and the room's memory ride the welcome - the world raw, never parsed here; a joiner that
+      // leads the room (the same-millisecond tie the smaller id wins) is said to the rest
+      const host = this._hostOf();
+      if (host === m.id && others.length) this._sayHost(ws);
+      const world = isWorldRoom(a.key) ? await this._worldRaw() : null;
+      const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'}}`;
+      if (!this._send(ws, welcome)) return;
       const join = JSON.stringify({ t: 'join', id: m.id, name: m.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
+      return;
+    }
+    if (m.t === 'world') {
+      // WORLD1: the room's memory - from the host, in a world room, at most once in WORLD_MIN_MS; anything else is ignored, not refused
+      const now = Date.now();
+      if (!isWorldRoom(a.key) || a.id !== this._hostOf()) return;
+      if (a.worldAt && now - a.worldAt < WORLD_MIN_MS) return;
+      this._setAttach(ws, { ...a, worldAt: now });
+      const raw = JSON.stringify(m.data);
+      const chunks = Math.max(1, Math.ceil(raw.length / WORLD_CHUNK));
+      const old = await this.state.storage.get(WORLD_META);
+      const puts = {};
+      for (let i = 0; i < chunks; i++) puts[worldChunkKey(i)] = raw.slice(i * WORLD_CHUNK, (i + 1) * WORLD_CHUNK);
+      puts[WORLD_META] = { chunks, size: raw.length, at: now, by: a.id };
+      await this.state.storage.put(puts);
+      if (old && old.chunks > chunks) await this.state.storage.delete(Array.from({ length: old.chunks - chunks }, (_, i) => worldChunkKey(chunks + i)));   // a smaller world leaves no stale tail
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
@@ -198,11 +272,12 @@ export class Room {
     // AUDIT CHAT A7: a room that drained sweeps its own storage on the way out - the empty-hello sweep never
     // runs in a channel, which is never empty on the way in; what an unclean close left behind goes here
     const last = this.state.getWebSockets().filter((w) => w !== ws).length === 0;
-    if (last) { try { await this.state.storage.deleteAll(); } catch { /* the next drain, or the next empty hello */ } }
+    if (last) { try { await this._sweep(); } catch { /* the next drain, or the next empty hello */ } }
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     if (!last) { try { await this.state.storage.delete([lookKey(a.id), secretKey(a.id)]); } catch { /* the room forgets it on the next empty hello */ } }
     if (isChatRoom(a.key)) return;   // a channel announced no join, so it says no leave
     const out = JSON.stringify({ t: 'leave', id: a.id });
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
+    if (this._leads(a, ws)) this._sayHost(ws);   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone
   }
 }

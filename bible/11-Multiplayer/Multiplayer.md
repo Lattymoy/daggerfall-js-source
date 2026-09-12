@@ -1,11 +1,14 @@
 # Multiplayer
 
-> **ONLINE1 (2026-09-12) shipped the first cut - `06-Systems/Online-Arc.md`.**
-> Of the three decisions below it keeps the first (your own character
-> from your own save) and none of the sharing: there is no host, no
-> host's world, no shared time, weather, enemies or doors - a Cloudflare
-> relay fans presence alone. This page is the co-op design that may
-> follow; where the two disagree, the arc is what runs.
+> **ONLINE1 (2026-09-12) shipped the first cut - `06-Systems/Online-Arc.md`;
+> WORLD1 (2026-09-12) began the persistent shared world.** Of the three
+> decisions below the arc keeps the first (your own character from your
+> own save) whole; the second stands in a new shape - the relay names a
+> HOST per room (the player in it longest) and keeps the host's snapshot
+> of a dungeon's world for whoever comes next, while the world still
+> runs in the host's browser; shared time and weather are the arc's
+> next slices. This page is the co-op design the arc grows into; where
+> the two disagree, the arc is what runs.
 
 Co-op for the Daggerfall JavaScript port. Locked with Mac on 2026-09-01
 after a survey of what the port actually has; the three decisions below
@@ -19,8 +22,13 @@ with their own character from their own save, seeing each other, sharing
 the host's world - its time, its weather, its enemies, its doors - and
 fighting beside each other against NPCs.
 
-**It is not** PvP, an MMO, a persistent shared world, or a shared
-campaign. Nobody's save changes shape because they played with a friend.
+**It is not** PvP, an MMO, or a shared campaign. Nobody's save changes
+shape because they played with a friend. It IS, since WORLD1
+(2026-09-12, Mac: "The world is the server and every player should
+inhabit that world while also being able to continue their progress
+... True persistance"), a persistent shared world one room at a time:
+a dungeon's dead stay dead for whoever comes next, kept by the relay
+and not by anyone's save.
 
 ## The three locked decisions
 

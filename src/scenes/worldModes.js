@@ -4975,7 +4975,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:4738), so the OUTER host's one rides in.
+          // (dungeonContext.js:4740), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:524 -> the
@@ -5267,6 +5267,7 @@ export function createWorldModes(host) {
   function exitDungeonNow() {
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
+    host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands
     teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown
     dungeonCtx.destroy();
     dungeonCtx = null;
@@ -7469,6 +7470,10 @@ export function createWorldModes(host) {
      *  applier the key route hands the context (routeKey's, above),
      *  and no second session restore (the host did that before it
      *  teleported). False when no dungeon stands. */
+    /** WORLD1: the standing dungeon's shared world for the room's memory, or null outside one. */
+    dungeonSharedWorld() { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.sharedWorld() : null; },
+    /** WORLD1: the room's memory over the standing dungeon; false outside one or for another dungeon's. */
+    restoreDungeonSharedWorld(shared) { return mode === 'dungeon' && dungeonCtx ? dungeonCtx.restoreSharedWorld(shared) : false; },
     restoreDungeonSave(extras) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;
       dungeonCtx.restoreSaved(extras, (p) => player.spawn(p[0], p[1], p[2]), { session: false });
@@ -7762,6 +7767,7 @@ export function createWorldModes(host) {
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
       }
       if (dungeonCtx) {
+        host.onDungeonLeave?.();   // WORLD1: a load or a teleport out is a leave too
         teardownDungeonQuestFlats();
         dungeonCtx.overlayWindow?.()?.dispose?.();   // the same OnPop, for the dungeon context's own slot
         dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null;
@@ -7991,7 +7997,7 @@ export function createWorldModes(host) {
      *  has one manager, so the same bit belongs in every rig.
      *
      *  FLAG ONLY, presence-gated, exactly as world.js:4329/:4329 and
-     *  dungeonContext.js:4814/:4820 are: the C# restore sets the
+     *  dungeonContext.js:4816/:4822 are: the C# restore sets the
      *  property and calls no ApplyWeapon, because UpdateHands ends in
      *  ApplyWeapon on the next frame (WeaponManager.cs:699) - the
      *  port's twin is the rig's per-frame syncWorn. */

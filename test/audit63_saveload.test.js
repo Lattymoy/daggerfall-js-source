@@ -364,7 +364,7 @@ test('AUDIT 63 F27: both foe records carry the flag, and the dungeon applies it 
   }
   assert.match(XF, /if \(sf\.specialTransformationCompleted && f\.mobile\) f\.mobile\.setSpecialTransformationCompleted\(\);/,
     'the exterior restore replays it through the setter');
-  const aw = DC.slice(DC.indexOf('function applyWorld(w)'), DC.indexOf('\n  }\n', DC.indexOf('droppedLoot.restorePiles')));
+  const aw = DC.slice(DC.indexOf('function applyWorld(w, { truncate = true } = {})'), DC.indexOf('\n  }\n', DC.indexOf('droppedLoot.restorePiles')));
   const setter = aw.indexOf('f.mobile.setSpecialTransformationCompleted();');
   const corpse = aw.indexOf('if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }');
   assert.ok(setter > 0 && corpse > 0 && corpse > setter,
