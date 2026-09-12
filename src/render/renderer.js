@@ -945,7 +945,6 @@ export class Renderer {
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
-    this.waterArts = new Map();  // WATER4: archive -> { art, tex } (world/waterArt.js) beside its tile array
     /** EE5: the cloud deck the ground shadows under, handed over by the
      *  host from the SKY's own state. Null = no shadows, which is the
      *  classic skin and every interior. */
@@ -972,9 +971,6 @@ export class Renderer {
         lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
         moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
         zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
-        shoreDepth: u('uShoreDepth'), shallowOpacity: u('uShallowOpacity'), deep: u('uDeep'), absorb: u('uAbsorb'),   // WATER2: the bed
-        swellDepth: u('uSwellDepth'), foamDepth: u('uFoamDepth'),   // WATER3: the swell and the foam
-        waterArt: u('uWaterArt'), waterArtOn: u('uWaterArtOn'), waterArtRows: u('uWaterArtRows'),   // WATER4: the archive's water art
       };
       this._waterSurfaceFog = { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') };
       this._waterMaskUploaded = false;
@@ -2584,36 +2580,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, buffers, indexCount: indexSet.count };
   }
 
-  /** WATER-AUDIT (M4): the water's own index set (buildWaterIndices'
-   *  water quads) - the water pass draws this, not the whole grid.
-   *  WATER2: and its own VERTICES - the ground's heights before the
-   *  basin was carved under them (render/waterBasin.js waterMesh), with
-   *  the bed's depth under each as attribute 1. It no longer rides the
-   *  terrain's buffers, so it dies on its own. */
-  createWaterSurface(positions, depths, indices) {
+  /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
+   *  vertex buffers with an index set of its own (buildWaterIndices'
+   *  water quads) - the water pass draws this, not the whole grid. Dies
+   *  with the terrain it rides: destroy it before destroyMesh frees the
+   *  buffers it points at. */
+  createWaterSurface(terrain, indices) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
-    const pos = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, pos);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    const [positions, normals] = terrain.buffers;
+    gl.bindBuffer(gl.ARRAY_BUFFER, positions);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
-    const dep = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, dep);
-    gl.bufferData(gl.ARRAY_BUFFER, depths, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normals);
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 4, 0);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 12, 0);
     const ebo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     this._bindVao(null);
-    return { vao, ebo, buffers: [pos, dep], indexCount: indices.length };
+    return { vao, ebo, indexCount: indices.length };
   }
 
   destroyWaterSurface(water) {
     const gl = this.gl;
-    for (const b of water.buffers) gl.deleteBuffer(b);
     gl.deleteBuffer(water.ebo);
     gl.deleteVertexArray(water.vao);
   }
@@ -2632,35 +2623,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
     return tex;
   }
-
-  /** WATER4: the archive's water ART - the coverage grid world/waterArt.js
-   *  reads off its bitmaps, one R8 texture ART_GRID wide and
-   *  ART_GRID * records tall, LINEAR so the shore is traced between
-   *  cells, cached by archive beside the tile array it was read from.
-   *  Null art is cached too (an archive without a record 0): the hosts
-   *  ask once. Answers the cache entry, { art, tex } or null. */
-  uploadWaterArt(archive, art) {
-    if (this.waterArts.has(archive)) return this.waterArts.get(archive);
-    if (!art) { this.waterArts.set(archive, null); return null; }
-    const gl = this.gl;
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, art.grid, art.grid * art.records, 0, gl.RED, gl.UNSIGNED_BYTE, art.coverage);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-    const entry = { art, tex };
-    this.waterArts.set(archive, entry);
-    return entry;
-  }
-
-  /** WATER4: the art tables of an archive a host uploaded, or null (the
-   *  corner table stands in for the quads, the basin and the feet). */
-  waterArtOf(archive) { return this.waterArts.get(archive)?.art ?? null; }
-
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
     if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
@@ -2790,11 +2752,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    * alpha-blended above the ground it was drawn on, depth-tested and
    * never depth-written, both faces (a river bank seen from below the
    * lift is still the surface). Call after every opaque pass of the
-   * pixel and before the flats. `u` is waterUniforms' object. WATER4:
-   * `art` is uploadWaterArt's entry for the archive (or null): with it
-   * the shader traces the record's own art, without it the corner table.
+   * pixel and before the flats. `u` is waterUniforms' object.
    */
-  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128, art = null) {
+  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
     const gl = this.gl, L = this._ws;
     this._use(this.waterSurfaceProgram);
     if (!this._waterMaskUploaded) { gl.uniform4uiv(L.mask, packWaterMask()); this._waterMaskUploaded = true; }
@@ -2815,11 +2775,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(L.opacity, u.opacity);
     gl.uniform1f(L.f0, u.f0);
     gl.uniform1f(L.shoreSoft, u.shoreSoft);
-    gl.uniform1f(L.shoreDepth, u.shoreDepth);   // WATER2
-    gl.uniform1f(L.shallowOpacity, u.shallowOpacity);
-    gl.uniform3fv(L.deep, u.deep);
-    gl.uniform1f(L.absorb, u.absorb);
-    gl.uniform1f(L.swellDepth, u.swellDepth); gl.uniform1f(L.foamDepth, u.foamDepth);   // WATER3
     // the ground's own light, term for term, so the surface sits in the
     // frame the land beside it is lit in
     this._uploadCloudShadow('water');
@@ -2843,12 +2798,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    // WATER4: the archive's water art on unit 3 - or the black texel, and the corner table draws
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, art?.tex ?? this._blackTex);
-    gl.uniform1i(L.waterArt, 3);
-    gl.uniform1i(L.waterArtOn, art ? 1 : 0);
-    gl.uniform1f(L.waterArtRows, art ? art.art.grid * art.art.records : 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -2936,7 +2885,18 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // FA1: an animated flat's frames are uploaded under `record#frame`
       // (the key uploadRecordFrame already mints for enemy sprites);
       // a still flat is `record` alone, as before.
-      if (b._bbKey == null || b._bbKeyFrame !== b.frame) { b._bbKeyFrame = b.frame; b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`; }
+      // MAC4 (2026-09-11, Mac: "enemy animations are completely broken"):
+      // the cache re-minted on a FRAME change only, and the mobiles -
+      // every foe, guard and townsperson (exteriorFoes, dungeonContext,
+      // cityGuards, the two hosts' people) - animate by writing the
+      // RECORD (`record#frame`, orientation and frame folded into one)
+      // and never touch `frame`: their key was minted once and they
+      // stood on their first texture for the rest of the session. The
+      // key follows every field it is made of.
+      if (b._bbKey == null || b._bbKeyRecord !== b.record || b._bbKeyFrame !== b.frame || b._bbKeyArchive !== b.archive) {
+        b._bbKeyRecord = b.record; b._bbKeyFrame = b.frame; b._bbKeyArchive = b.archive;
+        b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
+      }
       return b._bbKey;
     };
     const drawOne = (b) => {

@@ -52,7 +52,7 @@
 //   node tools/citeShift.mjs --base <ref>       # map from another base (default HEAD)
 //   node tools/citeShift.mjs --target <path>    # one target only (repeatable)
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -186,6 +186,7 @@ function main(argv) {
     if (!hunks.length) continue;
     const map = lineMap(hunks);
     let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch { continue; }   // a new file cites nothing yet
+    if (!existsSync(join(ROOT, target))) continue;   // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
     const newLines = readFileSync(join(ROOT, target), 'utf8').split('\n');
     for (const doc of docs) {
       if (doc === target) continue;

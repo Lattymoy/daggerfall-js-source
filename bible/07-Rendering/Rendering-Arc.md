@@ -1163,6 +1163,24 @@ GPU's work and the number the culls and the sort are meant to move.
 
 **Pinned** in `test/perf3.test.js` (2). Not a departure.
 
+**MAC4 (2026-09-11, Mac: "enemy animations are completely broken").**
+The key cache above re-minted on a change of `frame` only - the field
+FA1's animated flats tick. The mobiles never touch `frame`: a foe, a
+guard or a townsperson animates by writing the RECORD, `record#frame`
+(uploadRecordFrame's own key, the orientation record and the frame
+folded into one), in `exteriorFoes.js`, `dungeonContext.js`,
+`cityGuards.js` and the two hosts' people. Their key was minted once,
+on the first draw, and every one of them stood on that first texture
+for the rest of the session - no walk, no swing, no turn - from the
+morning PERF3 landed until Mac met one. The key follows every field
+it is made of now (record, frame, archive - a transformed seducer
+swaps archives). `test/mac4_billboardkey.test.js` (2) drives the pass
+over a stub context and reads the binds: a record change binds the
+new texture, a frame change binds the new texture, a repeat binds
+nothing; and the five producers are pinned to the shape that broke it.
+The lesson is PERF3's own missed test: a cache keyed on one field
+needs a pin on every producer that animates by another.
+
 ## PERF4 - ONE MESH PER PIXEL: THE STATIC MODELS BATCHED (2026-09-11)
 
 The city frame's cost is its draw calls. A streamed pixel drew every
