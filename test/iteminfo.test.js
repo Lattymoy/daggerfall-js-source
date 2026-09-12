@@ -228,9 +228,11 @@ test('IM1: the %ba cache - the reader\'s load feeds it, an empty author line kee
   // DFU's `bookFile.Author != null` gate: an empty line stores nothing
   setBookAuthor(424243, '');
   assert.equal(getBookAuthor(424243), null);
-  // the reader is the ONE writer (bookReader.js feeds the cache on load)
-  const reader = readFileSync(join(SRC, 'ui', 'bookReader.js'), 'utf8');
-  assert.match(reader, /setBookAuthor\(item\?\.message, bookFile\.author\);/);
+  // the reader's door is the ONE writer (EB1 moved the open hook, and
+  // the load that feeds the cache, from bookReader.js to bookDoor.js)
+  const door = readFileSync(join(SRC, 'ui', 'bookDoor.js'), 'utf8');
+  assert.match(door, /setBookAuthor\(item\?\.message, bookFile\.author\);/);
+  assert.doesNotMatch(readFileSync(join(SRC, 'ui', 'bookReader.js'), 'utf8'), /setBookAuthor/, 'and the window itself no longer writes it');
 });
 
 test('IM1: a dungeon-loot book carries its id - CreateRandomBook\'s message roll, BEFORE the variant', () => {

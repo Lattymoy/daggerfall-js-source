@@ -99,7 +99,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
-import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
+import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b

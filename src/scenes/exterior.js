@@ -104,7 +104,7 @@ import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.j
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage
 import { preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors   // QX1 dropped the unused `QuestJournalWindow` beside it - the classic window is reached through the chronicle door, never constructed here
 import { createChronicleWindow } from '../ui/chronicleDoor.js';   // QX1/PX24d: the chronicle's ONE door - the skin fork lives behind it, and its classic arm IS the art gate
-import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
+import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
